@@ -97,6 +97,11 @@ android {
             )
             signingConfig = signingConfigs.getByName("release").takeIf { it.storeFile != null }
         }
+        create("nightly") {
+            initWith(getByName("release"))
+            versionNameSuffix = "-nightly"
+            matchingFallbacks += listOf("release")
+        }
     }
 
     /**
@@ -157,14 +162,21 @@ tasks.withType<Test> {
 
 androidComponents {
     onVariants { variant ->
+        if (variant.buildType == "nightly") {
+            val runNumber = System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 
+                            (System.currentTimeMillis() / 1000).toInt()
+            variant.outputs.forEach { it.versionCode.set(runNumber) }
+        }
+
         variant.outputs.forEach { variantOutput ->
             val output = variantOutput as com.android.build.api.variant.impl.VariantOutputImpl
             val abi = output.filters.find { it.filterType.toString() == "ABI" }?.identifier
-
+            
+            val suffix = if (variant.buildType == "nightly") "-nightly" else ""
             val newName = if (abi != null) {
-                "mybicocca-$abi-v$appBaseVersionName.apk"
+                "mybicocca-$abi-v$appBaseVersionName$suffix.apk"
             } else {
-                "mybicocca-universal-v$appBaseVersionName.apk"
+                "mybicocca-universal-v$appBaseVersionName$suffix.apk"
             }
             output.outputFileName = newName
         }

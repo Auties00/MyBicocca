@@ -2,7 +2,8 @@ name: Nightly Build
 
 on:
   push:
-    branches: [main]
+    branches: [main, feature/nightly-updates]
+  workflow_dispatch:
 
 jobs:
   nightly:
@@ -21,8 +22,8 @@ jobs:
           java-version: 21
           cache: gradle
 
-      - name: Build release APK
-        run: ./gradlew assembleRelease
+      - name: Build nightly APK
+        run: ./gradlew assembleNightly
         env:
           KEYSTORE_STORE_FILE: ${{ secrets.KEYSTORE_STORE_FILE }}
           KEYSTORE_PASSWORD:   ${{ secrets.KEYSTORE_PASSWORD }}
@@ -36,6 +37,6 @@ jobs:
           name:       "Nightly Build"
           prerelease: true
           body:       "commit: ${{ github.sha }}"
-          files:      android/app/build/outputs/apk/release/*.apk
+          files:      android/app/build/outputs/apk/nightly/*.apk
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
