@@ -216,6 +216,9 @@ fun MainShell(
             "No ViewModelStoreOwner was provided via LocalViewModelStoreOwner"
         }, null
     ),
+    adminMessageViewModel: it.attendance100.mybicocca.ui.screen.admin.AdminMessageViewModel = hiltViewModel(
+        checkNotNull(LocalViewModelStoreOwner.current) { "No ViewModelStoreOwner" }
+    )
 ) {
     val strShellSessionExpired = stringResource(R.string.shell_session_expired)
     val strShellUpdateAvailable = stringResource(R.string.shell_update_available)
@@ -239,6 +242,20 @@ fun MainShell(
     val scope = rememberCoroutineScope()
     val tab = ShellTab.entries[pagerState.currentPage]
     val photo by accountViewModel.userPhoto.collectAsStateWithLifecycle()
+
+    val adminMessage by adminMessageViewModel.message.collectAsStateWithLifecycle()
+    adminMessage?.let { msg ->
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { adminMessageViewModel.dismiss(msg.id) },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = { adminMessageViewModel.dismiss(msg.id) }) {
+                    androidx.compose.material3.Text("OK")
+                }
+            },
+            title = { androidx.compose.material3.Text(msg.title) },
+            text = { androidx.compose.material3.Text(msg.message) }
+        )
+    }
 
     /**
      * Every stored account's avatar, observed to warm Coil's cache as soon as the shell loads so
