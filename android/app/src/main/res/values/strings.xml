@@ -2003,9 +2003,6 @@
     <string name="app_info_logo_content_description">Logo MyBicocca</string>
     <string name="settings_security_minutes_format">%1$d min</string>
 
-    <!-- Profile -->
-    <string name="profile_no_active_badge">Nessun badge attivo</string>
-
     <!-- Registry: labels and counters -->
     <string name="registry_gdpr_prefix">"Ho letto "</string>
     <string name="registry_gdpr_policy_link">l\'informativa</string>
@@ -2047,7 +2044,12 @@
     <string name="registry_refund_details_subtitle">Dettagli rimborso</string>
     <string name="registry_taxes_due_subtitle">%1$s da pagare</string>
     <string name="registry_taxes_one_invoice">1 fattura</string>
-    <string name="registry_taxes_many_invoices">%1$d fatture</string>    <!-- Nightly update strings -->
-    <string name="settings_nightly_from">Nightly da %1$s</string>
+    <string name="registry_taxes_many_invoices">%1$d fatture</string>
+
+    <!-- Profile -->
+    <string name="profile_no_active_badge">Nessun badge attivo</string>
+
+    <!-- Nightly update strings -->
+    <string name="settings_nightly_from">Nightly del %1$s</string>
     <string name="settings_nightly_commit"> [commit %1$s]</string>
 </resources>

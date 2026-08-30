@@ -1999,9 +1999,6 @@
     <string name="settings_security_minutes_format">%1$d min</string>
 
     <!-- Registry: labels and counters -->
-    <!-- Nightly update strings -->
-    <string name="settings_nightly_from">Nightly from %1$s</string>
-    <string name="settings_nightly_commit"> [commit %1$s]</string>
     <string name="registry_gdpr_prefix">"I have read "</string>
     <string name="registry_gdpr_policy_link">the privacy notice</string>
     <string name="registry_gdpr_suffix">" on the processing of personal data"</string>
@@ -2045,4 +2042,8 @@
 
     <!-- Profile -->
     <string name="profile_no_active_badge">No active badge</string>
+
+    <!-- Nightly update strings -->
+    <string name="settings_nightly_from">Nightly from %1$s</string>
+    <string name="settings_nightly_commit"> [commit %1$s]</string>
 </resources>

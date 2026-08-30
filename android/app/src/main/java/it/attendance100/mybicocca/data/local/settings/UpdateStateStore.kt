@@ -75,13 +75,21 @@ class UpdateStateStore @Inject constructor(
         this[titleKey] = release.title
         this[notesKey] = release.notes
         this[urlKey] = release.pageUrl
-        release.publishedAt?.let { this[publishedMsKey] = it.toEpochMilli() }
-            ?: this.remove(publishedMsKey)
-        preReleaseKey?.let { this[it] = release.isPreRelease }
+        if (release.publishedAt != null) {
+            this[publishedMsKey] = release.publishedAt.toEpochMilli()
+        } else {
+            this.remove(publishedMsKey)
+        }
+        if (preReleaseKey != null) {
+            this[preReleaseKey] = release.isPreRelease
+        }
         this[assetsKey] = Json.encodeToString(release.assets)
         if (commitShaKey != null) {
-            release.commitSha?.let { this[commitShaKey] = it }
-                ?: this.remove(commitShaKey)
+            if (release.commitSha != null) {
+                this[commitShaKey] = release.commitSha
+            } else {
+                this.remove(commitShaKey)
+            }
         }
     }
 
@@ -100,9 +108,13 @@ class UpdateStateStore @Inject constructor(
         this.remove(notesKey)
         this.remove(urlKey)
         this.remove(publishedMsKey)
-        preReleaseKey?.let { this.remove(it) }
+        if (preReleaseKey != null) {
+            this.remove(preReleaseKey)
+        }
         this.remove(assetsKey)
-        commitShaKey?.let { this.remove(it) }
+        if (commitShaKey != null) {
+            this.remove(commitShaKey)
+        }
     }
 
     val state: Flow<PersistedUpdateState> = dataStore.data.map { prefs ->

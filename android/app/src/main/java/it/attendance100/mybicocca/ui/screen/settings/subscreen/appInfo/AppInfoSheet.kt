@@ -31,10 +31,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Bedtime
 import androidx.compose.material.icons.outlined.NewReleases
 import androidx.compose.material.icons.outlined.Update
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Link
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -43,13 +45,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.material3.Switch
-import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material.icons.outlined.Nightlight
-import androidx.compose.material.icons.outlined.BugReport
-import androidx.compose.ui.text.withStyle
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -104,7 +102,7 @@ private val versionText: String = buildString {
     append("Versione ${BuildConfig.VERSION_NAME}")
     @Suppress("KotlinConstantConditions", "SimplifyBooleanWithConstants")
     if (BuildConfig.DEBUG && BuildConfig.BUILD_TYPE != "release") append(" [Debug]")
-    
+
     val nightlyId = BuildConfig.NIGHTLY_IDENTIFIER
     if (BuildConfig.VERSION_NAME.contains("nightly") && nightlyId.isNotEmpty()) {
         append(" [$nightlyId]")
@@ -383,7 +381,7 @@ private fun AboutScene(
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             val nightlyAvailable = nightlyStatus as? UpdateStatus.UpdateAvailable
             val stableAvailable = updateStatus as? UpdateStatus.UpdateAvailable
-            
+
             if (nightlyAvailable != null) {
                 NightlyUpdateTile(
                     release = nightlyAvailable.release,
@@ -447,7 +445,7 @@ private fun AboutScene(
                 },
                 trailing = { TrailingGlyph(Icons.Rounded.ChevronRight) },
             )
-            
+
             SegmentedTile(
                 isFirst = false,
                 isLast = false,
@@ -466,12 +464,12 @@ private fun AboutScene(
                 },
                 leading = {
                     SegmentedIconChip(
-                        Icons.Outlined.BugReport,
+                        Icons.Outlined.Bedtime,
                         scheme.secondaryContainer,
                         scheme.onSecondaryContainer,
                     )
                 },
-                trailing = { 
+                trailing = {
                     Switch(
                         checked = nightlyEnabled,
                         onCheckedChange = null,
@@ -500,7 +498,7 @@ private fun AboutScene(
                 trailing = { TrailingGlyph(Icons.Rounded.Link) },
             )
         }
-        
+
         if (showRestoreStableDialog) {
             AlertDialog(
                 onDismissRequest = { setShowRestoreStableDialog(false) },
@@ -673,7 +671,7 @@ private fun NightlyUpdateTile(
     val isDownloading = downloadState is DownloadState.Downloading
     val progress = (downloadState as? DownloadState.Downloading)?.progress ?: 0
     val scheme = MaterialTheme.colorScheme
-    
+
     val base = release.versionName
     val sha = release.commitSha
     val downloadingStr = stringResource(R.string.update_modal_downloading, progress)
@@ -686,7 +684,7 @@ private fun NightlyUpdateTile(
         if (sha != null && commitStr != null) {
             androidx.compose.ui.text.buildAnnotatedString {
                 append(fromStr)
-                withStyle(androidx.compose.ui.text.SpanStyle(color = scheme.onSurfaceVariant.copy(alpha = 0.5f))) {
+                androidx.compose.ui.text.withStyle(androidx.compose.ui.text.SpanStyle(color = scheme.onSurfaceVariant.copy(alpha = 0.5f))) {
                     append(commitStr)
                 }
             }
@@ -710,7 +708,7 @@ private fun NightlyUpdateTile(
         },
         leading = {
             SegmentedIconChip(
-                Icons.Outlined.Nightlight,
+                ImageVector.vectorResource(R.drawable.moon_stars_24px),
                 scheme.tertiaryContainer,
                 scheme.onTertiaryContainer,
             )
