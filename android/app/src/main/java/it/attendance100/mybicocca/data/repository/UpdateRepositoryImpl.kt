@@ -25,6 +25,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.async
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -106,10 +107,11 @@ class UpdateRepositoryImpl @Inject constructor(
 
     override suspend fun checkForUpdates(force: Boolean): UpdateCheckResult = coroutineScope {
         // Trigger nightly check in parallel (it has its own internal error boundary)
-        if (store.nightlyEnabled.first()) {
-            launch { checkForNightlyUpdate(force) }
-        }
-        checkMutex.withLock {
+        val nightlyJob = if (store.nightlyEnabled.first()) {
+            async { checkForNightlyUpdate(force) }
+        } else null
+        
+        val stableResult = checkMutex.withLock {
             val current = store.state.first()
             val now = System.currentTimeMillis()
 
@@ -152,34 +154,40 @@ class UpdateRepositoryImpl @Inject constructor(
 
             UpdateCheckResult.UpdateAvailable(latest)
         }
+        
+        val nightlyResult = nightlyJob?.await()
+        if (nightlyResult is UpdateCheckResult.UpdateAvailable) {
+            return@coroutineScope nightlyResult
+        }
+        return@coroutineScope stableResult
     }
 
-    private suspend fun checkForNightlyUpdate(force: Boolean) = nightlyMutex.withLock {
+    private suspend fun checkForNightlyUpdate(force: Boolean): UpdateCheckResult? = nightlyMutex.withLock {
         val current = store.nightlyState.first()
         val now = System.currentTimeMillis()
 
         if (!force && current.lastCheckedAtMs != null) {
             val currentSlot = now / (30L * 60 * 1000)
             val lastSlot = current.lastCheckedAtMs / (30L * 60 * 1000)
-            if (currentSlot == lastSlot) return@withLock
+            if (currentSlot == lastSlot) return@withLock null
         }
 
         val remoteDto = try {
             withContext(Dispatchers.IO) { githubApi.getReleaseByTag("nightly") }
         } catch (cause: Throwable) {
             // Nightly checks silently swallow errors since it's an internal beta feature
-            return@withLock
+            return@withLock null
         }
 
         if (remoteDto == null) {
             store.setNightlyUpToDate(now)
-            return@withLock
+            return@withLock null
         }
 
         val remotePublishedMs = runCatching { java.time.Instant.parse(remoteDto.publishedAt).toEpochMilli() }.getOrNull()
         if (remotePublishedMs == null) {
             store.setNightlyUpToDate(now)
-            return@withLock
+            return@withLock null
         }
 
         val remoteDigest = remoteDto.assets.firstOrNull()?.digest
@@ -191,12 +199,14 @@ class UpdateRepositoryImpl @Inject constructor(
 
         if (!isNew) {
             store.updateNightlyCheckedAt(now)
-            return@withLock
+            return@withLock null
         }
 
-        val release = remoteDto.toNightlyAppReleaseOrNull(remotePublishedMs) ?: return@withLock
+        val release = remoteDto.toNightlyAppReleaseOrNull(remotePublishedMs) ?: return@withLock null
         store.setNightlyUpdateAvailable(release, remotePublishedMs, remoteDigest, now)
         _nightlyEvents.trySend(release)
+        
+        UpdateCheckResult.UpdateAvailable(release)
     }
 
     override suspend fun releases(): List<AppRelease> = withContext(Dispatchers.IO) {
@@ -224,7 +234,7 @@ class UpdateRepositoryImpl @Inject constructor(
     private fun PersistedUpdateState.toCheckResult(): UpdateCheckResult =
         if (available && release != null && SemVer.isNewer(
                 release.versionName,
-                BuildConfig.VERSION_NAME
+                BuildConfig.VERSION_NAME.substringBefore("-")
             )
         )
             UpdateCheckResult.UpdateAvailable(release)
