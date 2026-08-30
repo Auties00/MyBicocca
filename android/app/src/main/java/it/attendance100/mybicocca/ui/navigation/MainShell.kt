@@ -519,7 +519,10 @@ fun MainShell(
     val updateEventsViewModel: UpdateEventsViewModel = hiltViewModel()
 
     LaunchedEffect(updateEventsViewModel, snackbarController) {
-        updateEventsViewModel.events.collect {
+        kotlinx.coroutines.flow.merge(
+            updateEventsViewModel.events,
+            updateEventsViewModel.nightlyEvents
+        ).collect {
             snackbarController.showInfo(strShellUpdateAvailable)
         }
     }

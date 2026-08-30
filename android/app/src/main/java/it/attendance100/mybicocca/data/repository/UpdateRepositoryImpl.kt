@@ -5,6 +5,7 @@ import it.attendance100.mybicocca.core.version.SemVer
 import it.attendance100.mybicocca.data.local.settings.PersistedUpdateState
 import it.attendance100.mybicocca.data.local.settings.UpdateStateStore
 import it.attendance100.mybicocca.data.mapper.update.toAppReleaseOrNull
+import it.attendance100.mybicocca.data.mapper.update.toNightlyAppReleaseOrNull
 import it.attendance100.mybicocca.data.update.GithubReleaseApi
 import it.attendance100.mybicocca.data.update.InstallSourceProvider
 import it.attendance100.mybicocca.domain.model.update.AppRelease
@@ -22,6 +23,8 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -47,11 +50,38 @@ class UpdateRepositoryImpl @Inject constructor(
 ) : UpdateRepository {
 
     private val checkMutex = Mutex()
+    private val nightlyMutex = Mutex()
     private val _events = Channel<AppRelease>(Channel.BUFFERED)
+    private val _nightlyEvents = Channel<AppRelease>(Channel.BUFFERED)
 
     private val distributionSource: DistributionSource by lazy { installSourceProvider.resolve() }
 
     override val newUpdateEvents: Flow<AppRelease> = _events.receiveAsFlow()
+    override val newNightlyUpdateEvents: Flow<AppRelease> = _nightlyEvents.receiveAsFlow()
+
+    override fun observeNightlyEnabled(): Flow<Boolean> = store.nightlyEnabled
+
+    override suspend fun setNightlyEnabled(enabled: Boolean) {
+        store.setNightlyEnabled(enabled)
+        if (!enabled) {
+            store.clearNightlyState()
+        } else {
+            // Immediately run a forced check to populate the state
+            checkForNightlyUpdate(force = true)
+        }
+    }
+
+    override fun observeNightlyStatus(): Flow<UpdateStatus> =
+        store.nightlyState
+            .map { persisted ->
+                when {
+                    persisted.lastCheckedAtMs == null -> UpdateStatus.Unknown
+                    persisted.available && persisted.release != null ->
+                        UpdateStatus.UpdateAvailable(persisted.release)
+                    else -> UpdateStatus.UpToDate
+                }
+            }
+            .distinctUntilChanged()
 
     override fun observeStatus(): Flow<UpdateStatus> =
         store.state
@@ -73,42 +103,109 @@ class UpdateRepositoryImpl @Inject constructor(
             }
             .distinctUntilChanged()
 
-    override suspend fun checkForUpdates(force: Boolean): UpdateCheckResult = checkMutex.withLock {
-        val current = store.state.first()
+    override suspend fun checkForUpdates(force: Boolean): UpdateCheckResult = coroutineScope {
+        // Trigger nightly check in parallel (it has its own internal error boundary)
+        if (store.nightlyEnabled.first()) {
+            launch { checkForNightlyUpdate(force) }
+        }
+        checkMutex.withLock {
+            val current = store.state.first()
+            val now = System.currentTimeMillis()
+
+            if (!force && current.lastCheckedAtMs != null && now - current.lastCheckedAtMs < DAILY_TTL_MS) {
+                return@withLock current.toCheckResult()
+            }
+
+            val latest = try {
+                withContext(Dispatchers.IO) { githubApi.getLatestRelease()?.toAppReleaseOrNull() }
+            } catch (cause: Throwable) {
+                return@withLock UpdateCheckResult.Failed(cause)
+            }
+
+            if (latest == null) {
+                store.setUpToDate(now)
+                return@withLock UpdateCheckResult.UpToDate
+            }
+
+            val isNewer = SemVer.isNewer(latest.versionName, BuildConfig.VERSION_NAME)
+            val isSameAndForced = force && latest.versionName == BuildConfig.VERSION_NAME
+
+            if (!isNewer && !isSameAndForced) {
+                store.setUpToDate(now)
+                return@withLock UpdateCheckResult.UpToDate
+            }
+
+            store.setUpdateAvailable(latest, now)
+
+            // First time this version surfaces, mark it notified so it is announced at most once. The
+            // app-wide snackbar is raised only by the silent daily check; the manual button shows its
+            // own result in the About sheet, so it marks-but-does-not-emit to avoid a later repeat.
+            if (latest.versionName != current.lastNotifiedVersion) {
+                store.setLastNotifiedVersion(latest.versionName)
+                if (!force) _events.trySend(latest)
+            }
+
+            UpdateCheckResult.UpdateAvailable(latest)
+        }
+    }
+
+    private suspend fun checkForNightlyUpdate(force: Boolean) = nightlyMutex.withLock {
+        val current = store.nightlyState.first()
         val now = System.currentTimeMillis()
 
-        if (!force && current.lastCheckedAtMs != null && now - current.lastCheckedAtMs < DAILY_TTL_MS) {
-            return@withLock current.toCheckResult()
+        if (!force && current.lastCheckedAtMs != null && now - current.lastCheckedAtMs < NIGHTLY_TTL_MS) {
+            return@withLock
         }
 
-        val latest = try {
-            withContext(Dispatchers.IO) { githubApi.getLatestRelease()?.toAppReleaseOrNull() }
+        val remoteDto = try {
+            withContext(Dispatchers.IO) { githubApi.getReleaseByTag("nightly") }
         } catch (cause: Throwable) {
-            return@withLock UpdateCheckResult.Failed(cause)
+            // Nightly checks silently swallow errors since it's an internal beta feature
+            return@withLock
         }
 
-        if (latest == null || !SemVer.isNewer(latest.versionName, BuildConfig.VERSION_NAME)) {
-            store.setUpToDate(now)
-            return@withLock UpdateCheckResult.UpToDate
+        if (remoteDto == null) {
+            store.setNightlyUpToDate(now)
+            return@withLock
         }
 
-        store.setUpdateAvailable(latest, now)
-
-        // First time this version surfaces, mark it notified so it is announced at most once. The
-        // app-wide snackbar is raised only by the silent daily check; the manual button shows its
-        // own result in the About sheet, so it marks-but-does-not-emit to avoid a later repeat.
-        if (latest.versionName != current.lastNotifiedVersion) {
-            store.setLastNotifiedVersion(latest.versionName)
-            if (!force) _events.trySend(latest)
+        val remotePublishedMs = runCatching { java.time.Instant.parse(remoteDto.publishedAt).toEpochMilli() }.getOrNull()
+        if (remotePublishedMs == null) {
+            store.setNightlyUpToDate(now)
+            return@withLock
         }
 
-        UpdateCheckResult.UpdateAvailable(latest)
+        val remoteDigest = remoteDto.assets.firstOrNull()?.digest
+
+        // Freshness check: if both timestamp and digest match what we last saw, it's not new.
+        // If digest is null (missing on GitHub), we rely solely on timestamp.
+        val isNew = current.lastSeenPublishedAtMs != remotePublishedMs ||
+                (remoteDigest != null && current.lastSeenDigest != remoteDigest)
+
+        if (!isNew) {
+            store.updateNightlyCheckedAt(now)
+            return@withLock
+        }
+
+        val release = remoteDto.toNightlyAppReleaseOrNull(remotePublishedMs) ?: return@withLock
+        store.setNightlyUpdateAvailable(release, remotePublishedMs, remoteDigest, now)
+        _nightlyEvents.trySend(release)
     }
 
     override suspend fun releases(): List<AppRelease> = withContext(Dispatchers.IO) {
-        githubApi.getReleases()
-            .mapNotNull { it.toAppReleaseOrNull() }
-            .sortedByDescending { it.publishedAt }
+        val stablereleases = githubApi.getReleases().mapNotNull { it.toAppReleaseOrNull() }
+        
+        // Include nightly in the What's New page if channel is enabled
+        val allReleases = if (store.nightlyEnabled.first()) {
+            val nightlyState = store.nightlyState.first()
+            if (nightlyState.available && nightlyState.release != null) {
+                stablereleases + nightlyState.release
+            } else stablereleases
+        } else {
+            stablereleases
+        }
+        
+        allReleases.sortedByDescending { it.publishedAt }
     }
 
     override fun updatePageUrl(release: AppRelease): String = when (distributionSource) {
@@ -128,5 +225,6 @@ class UpdateRepositoryImpl @Inject constructor(
 
     private companion object {
         const val DAILY_TTL_MS = 24L * 60 * 60 * 1000
+        const val NIGHTLY_TTL_MS = 12L * 60 * 60 * 1000
     }
 }

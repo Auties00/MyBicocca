@@ -852,6 +852,13 @@
     <string name="settings_no_other_versions">There are no other versions yet!</string>
     <string name="settings_whats_new_title">What\'s New</string>
     <string name="settings_whats_new_subtitle">Latest version highlights</string>
+    <string name="settings_nightly_available_title">Nightly Update available</string>
+    <string name="settings_beta_updates_title">Beta Updates</string>
+    <string name="settings_beta_updates_subtitle">Get nightly builds with the latest features</string>
+    <string name="settings_beta_restore_stable_title">Turn off Beta updates</string>
+    <string name="settings_beta_restore_stable_desc">Do you want to revert to the latest stable version or keep this nightly build?</string>
+    <string name="settings_beta_restore_stable_confirm">Revert to stable</string>
+    <string name="settings_beta_restore_stable_dismiss">Keep Nightly</string>
     <string name="settings_github_title">GitHub</string>
     <string name="settings_github_subtitle">Project source code</string>
     <string name="settings_credits_title">Credits</string>
@@ -1992,7 +1999,9 @@
     <string name="settings_security_minutes_format">%1$d min</string>
 
     <!-- Registry: labels and counters -->
-    <string name="registry_taxes_many_invoices">%1$d invoices</string>
+    <!-- Nightly update strings -->
+    <string name="settings_nightly_from">Nightly from %1$s</string>
+    <string name="settings_nightly_commit"> [commit %1$s]</string>
     <string name="registry_gdpr_prefix">"I have read "</string>
     <string name="registry_gdpr_policy_link">the privacy notice</string>
     <string name="registry_gdpr_suffix">" on the processing of personal data"</string>

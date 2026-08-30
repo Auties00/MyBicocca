@@ -33,3 +33,42 @@ fun GithubReleaseDto.toAppReleaseOrNull(): AppRelease? {
         }
     )
 }
+
+private val COMMIT_SHA_REGEX = Regex("""commit:\s*([0-9a-f]{7,40})""", RegexOption.IGNORE_CASE)
+
+/**
+ * Maps a "nightly" [GithubReleaseDto] to an [AppRelease].
+ *
+ * - [AppRelease.versionName] is set to the formatted publish date (e.g. "29 ago 2026"),
+ *   since the tag is always "nightly" rather than a semver.
+ * - [AppRelease.commitSha] is the first 7 chars of the SHA parsed from the release body
+ *   (CI writes "commit: {full-sha}"). Null when absent.
+ * - [AppRelease.isPreRelease] is always true.
+ */
+fun GithubReleaseDto.toNightlyAppReleaseOrNull(publishedAtMs: Long): AppRelease? {
+    val url = htmlUrl?.trim()?.takeIf { it.isNotEmpty() } ?: return null
+    val publishedInstant = Instant.ofEpochMilli(publishedAtMs)
+    val dateLabel = java.time.format.DateTimeFormatter
+        .ofLocalizedDate(java.time.format.FormatStyle.MEDIUM)
+        .withZone(java.time.ZoneId.systemDefault())
+        .format(publishedInstant)
+    val commitSha = body?.let { COMMIT_SHA_REGEX.find(it)?.groupValues?.getOrNull(1) }
+        ?.take(7)
+    return AppRelease(
+        versionName = dateLabel,
+        title = "Nightly Build",
+        notes = body?.trim().orEmpty(),
+        pageUrl = url,
+        publishedAt = publishedInstant,
+        isPreRelease = true,
+        assets = assets.map {
+            AppReleaseAsset(
+                name = it.name,
+                downloadUrl = it.browserDownloadUrl,
+                size = it.size,
+                digest = it.digest
+            )
+        },
+        commitSha = commitSha,
+    )
+}

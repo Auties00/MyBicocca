@@ -13,9 +13,18 @@ import javax.inject.Inject
  * (and only once per newly-discovered version); the manual Settings check reports its own
  * outcome through its sheet instead.
  */
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.shareIn
+import androidx.lifecycle.viewModelScope
+import it.attendance100.mybicocca.domain.usecase.update.ObserveNightlyEventsUseCase
+
 @HiltViewModel
 class UpdateEventsViewModel @Inject constructor(
     observeUpdateEvents: ObserveUpdateEventsUseCase,
+    observeNightlyEvents: ObserveNightlyEventsUseCase,
 ) : ViewModel() {
     val events: Flow<AppRelease> = observeUpdateEvents()
+        .shareIn(viewModelScope, SharingStarted.WhileSubscribed(5000))
+    val nightlyEvents: Flow<AppRelease> = observeNightlyEvents()
+        .shareIn(viewModelScope, SharingStarted.WhileSubscribed(5000))
 }

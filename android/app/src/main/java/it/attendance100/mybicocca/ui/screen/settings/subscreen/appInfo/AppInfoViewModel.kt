@@ -27,9 +27,16 @@ import javax.inject.Inject
  * [checking] guarding against overlapping taps. [updatePageUrl] resolves the store-aware tap
  * target for an available release.
  */
+import it.attendance100.mybicocca.domain.usecase.update.ObserveNightlyEnabledUseCase
+import it.attendance100.mybicocca.domain.usecase.update.ObserveNightlyStatusUseCase
+import it.attendance100.mybicocca.domain.usecase.update.SetNightlyEnabledUseCase
+
 @HiltViewModel
 class AppInfoViewModel @Inject constructor(
     observeUpdateStatus: ObserveUpdateStatusUseCase,
+    private val observeNightlyEnabled: ObserveNightlyEnabledUseCase,
+    private val observeNightlyStatus: ObserveNightlyStatusUseCase,
+    private val setNightlyEnabledUseCase: SetNightlyEnabledUseCase,
     private val checkForUpdates: CheckForUpdatesUseCase,
     private val getUpdatePageUrl: GetUpdatePageUrlUseCase,
     private val downloader: ApkDownloader,
@@ -47,7 +54,11 @@ class AppInfoViewModel @Inject constructor(
     fun startDownload(release: AppRelease) = downloader.startDownload(release)
 
     /** Launches the installer for a finished download; call only from the foreground. */
-    fun installDownload(file: File) = downloader.installApk(file)
+    fun installDownload(file: File, silent: Boolean = false) {
+        viewModelScope.launch {
+            downloader.installApk(file, silent)
+        }
+    }
 
     fun clearDownload() = downloader.resetState()
 
@@ -65,4 +76,21 @@ class AppInfoViewModel @Inject constructor(
     }
 
     fun updatePageUrl(release: AppRelease): String = getUpdatePageUrl(release)
+    
+    val nightlyEnabled: StateFlow<Boolean> = observeNightlyEnabled()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+        
+    val nightlyStatus: StateFlow<UpdateStatus> = observeNightlyStatus()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, UpdateStatus.Unknown)
+        
+    fun setNightlyEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            setNightlyEnabledUseCase(enabled)
+        }
+    }
+    
+    fun checkAndOfferStable(onOfferStable: () -> Unit) {
+        if (!nightlyEnabled.value) return
+        onOfferStable()
+    }
 }

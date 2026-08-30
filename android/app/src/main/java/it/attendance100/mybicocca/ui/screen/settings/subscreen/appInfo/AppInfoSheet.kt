@@ -44,6 +44,12 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.Switch
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.TextButton
+import androidx.compose.material.icons.outlined.Nightlight
+import androidx.compose.material.icons.outlined.BugReport
+import androidx.compose.ui.text.withStyle
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -146,19 +152,21 @@ fun AppInfoSheet(
     val githubIcon = ImageVector.vectorResource(R.drawable.ic_github)
 
     val updateStatus by viewModel.status.collectAsStateWithLifecycle()
+    val nightlyStatus by viewModel.nightlyStatus.collectAsStateWithLifecycle()
+    val nightlyEnabled by viewModel.nightlyEnabled.collectAsStateWithLifecycle()
     val checking by viewModel.checking.collectAsStateWithLifecycle()
+    var showRestoreStableDialog by remember { mutableStateOf(false) }
     // In-sheet depth: 0 = About, 1 = What's New (merged), 2 = All versions.
     var depth by rememberSaveable { mutableIntStateOf(0) }
     var showUpdateModal by remember { mutableStateOf<AppRelease?>(null) }
-    val downloadState by viewModel.downloadState.collectAsStateWithLifecycle()
 
     showUpdateModal?.let { release ->
         UpdateModalSheet(
             release = release,
-            downloadState = downloadState,
+            downloadStateFlow = viewModel.downloadState,
             onDownload = { viewModel.startDownload(release) },
             onInstall = { file ->
-                viewModel.installDownload(file)
+                viewModel.installDownload(file, silent = release.isPreRelease)
                 viewModel.clearDownload()
                 showUpdateModal = null
             },
@@ -276,8 +284,11 @@ fun AppInfoSheet(
                                 viewModel = viewModel,
                                 updateStatus = updateStatus,
                                 checking = checking,
-                                downloadState = downloadState,
                                 githubIcon = githubIcon,
+                                nightlyStatus = nightlyStatus,
+                                nightlyEnabled = nightlyEnabled,
+                                showRestoreStableDialog = showRestoreStableDialog,
+                                setShowRestoreStableDialog = { showRestoreStableDialog = it },
                                 onOpenWhatsNew = { depth = 1 },
                                 onCheckResult = onCheckResult,
                                 onShowUpdateModal = { showUpdateModal = it }
@@ -322,8 +333,11 @@ private fun AboutScene(
     viewModel: AppInfoViewModel,
     updateStatus: UpdateStatus,
     checking: Boolean,
-    downloadState: DownloadState,
     githubIcon: ImageVector,
+    nightlyStatus: UpdateStatus,
+    nightlyEnabled: Boolean,
+    showRestoreStableDialog: Boolean,
+    setShowRestoreStableDialog: (Boolean) -> Unit,
     onOpenWhatsNew: () -> Unit,
     onCheckResult: (UpdateCheckResult) -> Unit,
     onShowUpdateModal: (AppRelease) -> Unit,
@@ -364,35 +378,12 @@ private fun AboutScene(
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             val available = updateStatus as? UpdateStatus.UpdateAvailable
             if (available != null) {
-                val isDownloading = downloadState is DownloadState.Downloading
-                val progress = (downloadState as? DownloadState.Downloading)?.progress ?: 0
-                val subtitle =
-                    if (isDownloading) stringResource(R.string.update_modal_downloading, progress)
-                    else stringResource(
-                        R.string.settings_update_available_subtitle,
-                        available.release.versionName
-                    )
-                
-                SegmentedTile(
+                UpdateAvailableTile(
+                    release = available.release,
+                    downloadStateFlow = viewModel.downloadState,
+                    onShowUpdateModal = onShowUpdateModal,
                     isFirst = true,
-                    isLast = false,
-                    title = stringResource(R.string.settings_update_available_title),
-                    subtitle = subtitle,
-                    progress = if (isDownloading) progress / 100f else null,
-                    onClick = if (isDownloading) null else {
-                        {
-                            haptic.tap()
-                            onShowUpdateModal(available.release)
-                        }
-                    },
-                    leading = {
-                        SegmentedIconChip(
-                            Icons.Outlined.Update,
-                            scheme.primaryContainer,
-                            scheme.onPrimaryContainer,
-                        )
-                    },
-                    trailing = { TrailingGlyph(Icons.Rounded.ChevronRight) },
+                    isLast = false
                 )
             } else {
                 SegmentedTile(
@@ -441,6 +432,50 @@ private fun AboutScene(
                 },
                 trailing = { TrailingGlyph(Icons.Rounded.ChevronRight) },
             )
+            
+            val nightlyAvailable = nightlyStatus as? UpdateStatus.UpdateAvailable
+            if (nightlyAvailable != null) {
+                NightlyUpdateTile(
+                    release = nightlyAvailable.release,
+                    downloadStateFlow = viewModel.downloadState,
+                    onShowUpdateModal = onShowUpdateModal,
+                    isFirst = false,
+                    isLast = false
+                )
+            }
+            
+            SegmentedTile(
+                isFirst = false,
+                isLast = false,
+                role = androidx.compose.ui.semantics.Role.Switch,
+                title = stringResource(R.string.settings_beta_updates_title),
+                subtitle = stringResource(R.string.settings_beta_updates_subtitle),
+                onClick = {
+                    haptic.tap()
+                    if (nightlyEnabled) {
+                        viewModel.checkAndOfferStable {
+                            setShowRestoreStableDialog(true)
+                        }
+                    } else {
+                        viewModel.setNightlyEnabled(true)
+                    }
+                },
+                leading = {
+                    SegmentedIconChip(
+                        Icons.Outlined.BugReport,
+                        scheme.secondaryContainer,
+                        scheme.onSecondaryContainer,
+                    )
+                },
+                trailing = { 
+                    Switch(
+                        checked = nightlyEnabled,
+                        onCheckedChange = null,
+                        modifier = Modifier.padding(end = 6.dp)
+                    )
+                },
+            )
+
             SegmentedTile(
                 isFirst = false,
                 isLast = true,
@@ -459,6 +494,32 @@ private fun AboutScene(
                     )
                 },
                 trailing = { TrailingGlyph(Icons.Rounded.Link) },
+            )
+        }
+        
+        if (showRestoreStableDialog) {
+            AlertDialog(
+                onDismissRequest = { setShowRestoreStableDialog(false) },
+                title = { Text(stringResource(R.string.settings_beta_restore_stable_title)) },
+                text = { Text(stringResource(R.string.settings_beta_restore_stable_desc)) },
+                confirmButton = {
+                    TextButton(onClick = {
+                        setShowRestoreStableDialog(false)
+                        viewModel.setNightlyEnabled(false)
+                        viewModel.check { result ->
+                            if (result is UpdateCheckResult.UpdateAvailable) {
+                                onShowUpdateModal(result.release)
+                            }
+                        }
+                    }) {
+                        Text(stringResource(R.string.settings_beta_restore_stable_confirm))
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { setShowRestoreStableDialog(false) }) {
+                        Text(stringResource(R.string.settings_beta_restore_stable_dismiss))
+                    }
+                }
             )
         }
 
@@ -551,4 +612,105 @@ private fun CreditTile(
             TrailingGlyph(Icons.Rounded.ChevronRight)
         }
     }
+}
+
+@Composable
+private fun UpdateAvailableTile(
+    release: AppRelease,
+    downloadStateFlow: kotlinx.coroutines.flow.StateFlow<DownloadState>,
+    onShowUpdateModal: (AppRelease) -> Unit,
+    isFirst: Boolean,
+    isLast: Boolean,
+) {
+    val downloadState by downloadStateFlow.collectAsStateWithLifecycle()
+    val isDownloading = downloadState is DownloadState.Downloading
+    val progress = (downloadState as? DownloadState.Downloading)?.progress ?: 0
+    val subtitle =
+        if (isDownloading) stringResource(R.string.update_modal_downloading, progress)
+        else stringResource(
+            R.string.settings_update_available_subtitle,
+            release.versionName
+        )
+    val haptic = rememberHapticManager()
+    val scheme = MaterialTheme.colorScheme
+
+    SegmentedTile(
+        isFirst = isFirst,
+        isLast = isLast,
+        title = stringResource(R.string.settings_update_available_title),
+        subtitle = subtitle,
+        progress = if (isDownloading) progress / 100f else null,
+        onClick = if (isDownloading) null else {
+            {
+                haptic.tap()
+                onShowUpdateModal(release)
+            }
+        },
+        leading = {
+            SegmentedIconChip(
+                Icons.Outlined.Update,
+                scheme.primaryContainer,
+                scheme.onPrimaryContainer,
+            )
+        },
+        trailing = { TrailingGlyph(Icons.Rounded.ChevronRight) },
+    )
+}
+
+@Composable
+private fun NightlyUpdateTile(
+    release: AppRelease,
+    downloadStateFlow: kotlinx.coroutines.flow.StateFlow<DownloadState>,
+    onShowUpdateModal: (AppRelease) -> Unit,
+    isFirst: Boolean,
+    isLast: Boolean,
+) {
+    val downloadState by downloadStateFlow.collectAsStateWithLifecycle()
+    val isDownloading = downloadState is DownloadState.Downloading
+    val progress = (downloadState as? DownloadState.Downloading)?.progress ?: 0
+    val scheme = MaterialTheme.colorScheme
+    
+    val base = release.versionName
+    val sha = release.commitSha
+    val downloadingStr = stringResource(R.string.update_modal_downloading, progress)
+    val fromStr = stringResource(R.string.settings_nightly_from, base)
+    val commitStr = sha?.let { stringResource(R.string.settings_nightly_commit, it) }
+
+    val subtitleAnnotated = if (isDownloading) {
+        androidx.compose.ui.text.AnnotatedString(downloadingStr)
+    } else {
+        if (sha != null && commitStr != null) {
+            androidx.compose.ui.text.buildAnnotatedString {
+                append(fromStr)
+                withStyle(androidx.compose.ui.text.SpanStyle(color = scheme.onSurfaceVariant.copy(alpha = 0.5f))) {
+                    append(commitStr)
+                }
+            }
+        } else {
+            androidx.compose.ui.text.AnnotatedString(fromStr)
+        }
+    }
+    val haptic = rememberHapticManager()
+
+    SegmentedTile(
+        isFirst = isFirst,
+        isLast = isLast,
+        title = stringResource(R.string.settings_nightly_available_title),
+        subtitleAnnotated = subtitleAnnotated,
+        progress = if (isDownloading) progress / 100f else null,
+        onClick = if (isDownloading) null else {
+            {
+                haptic.tap()
+                onShowUpdateModal(release)
+            }
+        },
+        leading = {
+            SegmentedIconChip(
+                Icons.Outlined.Nightlight,
+                scheme.tertiaryContainer,
+                scheme.onTertiaryContainer,
+            )
+        },
+        trailing = { TrailingGlyph(Icons.Rounded.ChevronRight) },
+    )
 }

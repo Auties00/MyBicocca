@@ -853,6 +853,13 @@
     <string name="settings_no_other_versions">Non ci sono ancora altre versioni!</string>
     <string name="settings_whats_new_title">Novità</string>
     <string name="settings_whats_new_subtitle">Leggi le novità dell\'ultima versione</string>
+    <string name="settings_nightly_available_title">Aggiornamento Nightly disponibile</string>
+    <string name="settings_beta_updates_title">Aggiornamenti Beta</string>
+    <string name="settings_beta_updates_subtitle">Ricevi le build notturne con le ultime funzionalità</string>
+    <string name="settings_beta_restore_stable_title">Disattiva aggiornamenti Beta</string>
+    <string name="settings_beta_restore_stable_desc">Vuoi tornare all\'ultima versione stabile o mantenere questa build notturna?</string>
+    <string name="settings_beta_restore_stable_confirm">Torna a stabile</string>
+    <string name="settings_beta_restore_stable_dismiss">Mantieni Nightly</string>
     <string name="settings_github_title">GitHub</string>
     <string name="settings_github_subtitle">Codice sorgente del progetto</string>
     <string name="settings_credits_title">Credits</string>
@@ -2040,5 +2047,7 @@
     <string name="registry_refund_details_subtitle">Dettagli rimborso</string>
     <string name="registry_taxes_due_subtitle">%1$s da pagare</string>
     <string name="registry_taxes_one_invoice">1 fattura</string>
-    <string name="registry_taxes_many_invoices">%1$d fatture</string>
+    <string name="registry_taxes_many_invoices">%1$d fatture</string>    <!-- Nightly update strings -->
+    <string name="settings_nightly_from">Nightly da %1$s</string>
+    <string name="settings_nightly_commit"> [commit %1$s]</string>
 </resources>

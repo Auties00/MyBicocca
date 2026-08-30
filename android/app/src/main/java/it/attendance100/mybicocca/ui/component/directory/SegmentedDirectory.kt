@@ -14,6 +14,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.role
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -123,7 +125,9 @@ fun SegmentedTile(
     modifier: Modifier = Modifier,
     titleAnnotated: AnnotatedString? = null,
     subtitle: String? = null,
+    subtitleAnnotated: AnnotatedString? = null,
     onClick: (() -> Unit)? = null,
+    role: androidx.compose.ui.semantics.Role? = null,
     enabled: Boolean = true,
     progress: Float? = null,
     leading: (@Composable () -> Unit)? = null,
@@ -172,7 +176,17 @@ fun SegmentedTile(
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
-                if (subtitle != null) {
+                if (subtitleAnnotated != null) {
+                    Text(
+                        text = subtitleAnnotated,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (enabled) scheme.onSurfaceVariant else scheme.onSurfaceVariant.copy(
+                            alpha = disabledAlpha
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                } else if (subtitle != null) {
                     Text(
                         text = subtitle,
                         style = MaterialTheme.typography.bodySmall,
@@ -194,7 +208,11 @@ fun SegmentedTile(
                 onClick()
             },
             enabled = enabled,
-            modifier = modifier.fillMaxWidth(),
+            modifier = modifier
+                .fillMaxWidth()
+                .semantics {
+                    role?.let { this.role = it }
+                },
             color = scheme.surfaceContainer,
             contentColor = scheme.onSurface,
             shape = shape,

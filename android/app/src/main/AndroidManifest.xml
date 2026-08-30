@@ -15,6 +15,7 @@
   <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
   <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />
   <uses-permission
           android:name="android.permission.WRITE_EXTERNAL_STORAGE"
           android:maxSdkVersion="29" />
@@ -132,5 +133,7 @@
         android:name="com.google.android.gms.oss.licenses.OssLicensesActivity"
         android:theme="@style/Theme.MyBicocca.OssLicenses"
         tools:replace="android:theme" />
+
+    <receiver android:name=".data.update.InstallResultReceiver" android:exported="false" />
   </application>
 </manifest>

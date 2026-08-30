@@ -180,11 +180,23 @@ class ApkDownloader @Inject constructor(
     }
 
     /**
-     * Fires the system installer for a downloaded APK. Called from the foreground UI once the
-     * download reaches [DownloadState.Success], never from the background download coroutine, so
-     * the activity start isn't silently dropped by Android's background-start restrictions.
+     * Installs a downloaded APK.
+     * When [silent] is false, or on older Android versions where silent installs aren't supported,
+     * fires the system installer UI via `ACTION_VIEW`.
+     * When [silent] is true and the device runs API 31+, uses the `PackageInstaller` session API
+     * with `USER_ACTION_NOT_REQUIRED` to install the update in the background.
      */
-    fun installApk(file: File) {
+    suspend fun installApk(file: File, silent: Boolean) {
+        if (silent && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            withContext(kotlinx.coroutines.Dispatchers.IO) {
+                installSilently(file)
+            }
+        } else {
+            installWithSystemUi(file)
+        }
+    }
+
+    private fun installWithSystemUi(file: File) {
         val uri = FileProvider.getUriForFile(
             context,
             "${context.packageName}.fileprovider",
@@ -196,6 +208,60 @@ class ApkDownloader @Inject constructor(
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
         context.startActivity(intent)
+    }
+
+    private suspend fun installSilently(file: File) {
+        val packageInstaller = context.packageManager.packageInstaller
+        val params = android.content.pm.PackageInstaller.SessionParams(
+            android.content.pm.PackageInstaller.SessionParams.MODE_FULL_INSTALL
+        ).apply {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                setRequireUserAction(android.content.pm.PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED)
+            }
+        }
+        
+        var sessionId = -1
+        try {
+            sessionId = packageInstaller.createSession(params)
+            val session = packageInstaller.openSession(sessionId)
+
+            session.openWrite("package", 0, file.length()).use { out ->
+                file.inputStream().use { input ->
+                    input.copyTo(out)
+                }
+                session.fsync(out)
+            }
+
+            val intent = Intent(context, InstallResultReceiver::class.java)
+            val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_MUTABLE
+            } else {
+                android.app.PendingIntent.FLAG_UPDATE_CURRENT
+            }
+            val pendingIntent = android.app.PendingIntent.getBroadcast(context, sessionId, intent, flags)
+
+            session.commit(pendingIntent.intentSender)
+            session.close()
+        } catch (e: Exception) {
+            e.printStackTrace()
+            if (sessionId != -1) {
+                try {
+                    packageInstaller.abandonSession(sessionId)
+                } catch (ignored: Exception) {}
+            }
+            _downloadState.value = DownloadState.Error(
+                UiText.StringResource(it.attendance100.mybicocca.R.string.apk_downloader_failed)
+            )
+        }
+    }
+
+    fun onInstallResult(status: Int, message: String?) {
+        if (status == android.content.pm.PackageInstaller.STATUS_SUCCESS) {
+            _downloadState.value = DownloadState.Idle
+        } else {
+            val errorMsg = message ?: "Install failed (code $status)"
+            _downloadState.value = DownloadState.Error(UiText.DynamicString(errorMsg))
+        }
     }
 
     companion object {

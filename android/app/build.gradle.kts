@@ -149,6 +149,12 @@ android {
     }
 }
 
+tasks.withType<Test> {
+    maxHeapSize = "2g"
+    jvmArgs("-XX:MaxMetaspaceSize=1g")
+    setForkEvery(10)
+}
+
 androidComponents {
     onVariants { variant ->
         variant.outputs.forEach { variantOutput ->

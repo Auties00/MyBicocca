@@ -38,4 +38,16 @@ interface UpdateRepository {
 
     /** The store-aware destination for [release]: its GitHub page now, the Play listing later. */
     fun updatePageUrl(release: AppRelease): String
+
+    /** Whether the beta/nightly channel is currently enabled. */
+    fun observeNightlyEnabled(): Flow<Boolean>
+
+    /** Enables or disables the nightly update channel. Disabling clears any pending nightly update immediately. */
+    suspend fun setNightlyEnabled(enabled: Boolean)
+
+    /** The last nightly check's persisted outcome. */
+    fun observeNightlyStatus(): Flow<UpdateStatus>
+
+    /** One-shot events for the nightly channel (mirrors [newUpdateEvents]). */
+    val newNightlyUpdateEvents: Flow<AppRelease>
 }

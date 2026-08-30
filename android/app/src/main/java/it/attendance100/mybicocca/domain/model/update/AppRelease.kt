@@ -24,7 +24,8 @@ data class AppRelease(
     val pageUrl: String,
     val publishedAt: Instant?,
     val isPreRelease: Boolean,
-    val assets: List<AppReleaseAsset> = emptyList()
+    val assets: List<AppReleaseAsset> = emptyList(),
+    val commitSha: String? = null
 )
 
 @Serializable

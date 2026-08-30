@@ -28,33 +28,96 @@ class UpdateStateStore @Inject constructor(
     private val dataStore: DataStore<Preferences>,
 ) {
 
+    private fun Preferences.parseRelease(
+        versionKey: Preferences.Key<String>,
+        titleKey: Preferences.Key<String>,
+        notesKey: Preferences.Key<String>,
+        urlKey: Preferences.Key<String>,
+        publishedMsKey: Preferences.Key<Long>,
+        preReleaseKey: Preferences.Key<Boolean>?,
+        assetsKey: Preferences.Key<String>,
+        commitShaKey: Preferences.Key<String>? = null,
+        isNightly: Boolean = false
+    ): AppRelease? {
+        val version = this[versionKey] ?: return null
+        val assetsJson = this[assetsKey]
+        val assetsList = if (assetsJson == null) emptyList() else {
+            try {
+                Json.decodeFromString<List<AppReleaseAsset>>(assetsJson)
+            } catch (_: Exception) {
+                emptyList()
+            }
+        }
+        return AppRelease(
+            versionName = version,
+            title = this[titleKey] ?: if (isNightly) "Nightly Build" else version,
+            notes = this[notesKey].orEmpty(),
+            pageUrl = this[urlKey].orEmpty(),
+            publishedAt = this[publishedMsKey]?.let(Instant::ofEpochMilli),
+            isPreRelease = preReleaseKey?.let { this[it] } ?: isNightly,
+            assets = assetsList,
+            commitSha = commitShaKey?.let { this[it] }
+        )
+    }
+
+    private fun androidx.datastore.preferences.core.MutablePreferences.saveRelease(
+        release: AppRelease,
+        versionKey: Preferences.Key<String>,
+        titleKey: Preferences.Key<String>,
+        notesKey: Preferences.Key<String>,
+        urlKey: Preferences.Key<String>,
+        publishedMsKey: Preferences.Key<Long>,
+        preReleaseKey: Preferences.Key<Boolean>?,
+        assetsKey: Preferences.Key<String>,
+        commitShaKey: Preferences.Key<String>? = null
+    ) {
+        this[versionKey] = release.versionName
+        this[titleKey] = release.title
+        this[notesKey] = release.notes
+        this[urlKey] = release.pageUrl
+        release.publishedAt?.let { this[publishedMsKey] = it.toEpochMilli() }
+            ?: this.remove(publishedMsKey)
+        preReleaseKey?.let { this[it] = release.isPreRelease }
+        this[assetsKey] = Json.encodeToString(release.assets)
+        if (commitShaKey != null) {
+            release.commitSha?.let { this[commitShaKey] = it }
+                ?: this.remove(commitShaKey)
+        }
+    }
+
+    private fun androidx.datastore.preferences.core.MutablePreferences.clearRelease(
+        versionKey: Preferences.Key<String>,
+        titleKey: Preferences.Key<String>,
+        notesKey: Preferences.Key<String>,
+        urlKey: Preferences.Key<String>,
+        publishedMsKey: Preferences.Key<Long>,
+        preReleaseKey: Preferences.Key<Boolean>?,
+        assetsKey: Preferences.Key<String>,
+        commitShaKey: Preferences.Key<String>? = null
+    ) {
+        this.remove(versionKey)
+        this.remove(titleKey)
+        this.remove(notesKey)
+        this.remove(urlKey)
+        this.remove(publishedMsKey)
+        preReleaseKey?.let { this.remove(it) }
+        this.remove(assetsKey)
+        commitShaKey?.let { this.remove(it) }
+    }
+
     val state: Flow<PersistedUpdateState> = dataStore.data.map { prefs ->
         val available = prefs[AVAILABLE_KEY] ?: false
-        val version = prefs[REL_VERSION_KEY]
-        val release = if (available && version != null) {
-            val assetsJson = prefs[REL_ASSETS_KEY]
-            if (assetsJson == null) {
-                null
-            } else {
-                val assetsList = try {
-                    Json.decodeFromString<List<AppReleaseAsset>>(assetsJson)
-                } catch (_: Exception) {
-                    emptyList()
-                }
-
-                AppRelease(
-                    versionName = version,
-                    title = prefs[REL_TITLE_KEY] ?: version,
-                    notes = prefs[REL_NOTES_KEY].orEmpty(),
-                    pageUrl = prefs[REL_URL_KEY].orEmpty(),
-                    publishedAt = prefs[REL_PUBLISHED_MS_KEY]?.let(Instant::ofEpochMilli),
-                    isPreRelease = prefs[REL_PRERELEASE_KEY] ?: false,
-                    assets = assetsList
-                )
-            }
-        } else {
-            null
-        }
+        val release = if (available) {
+            prefs.parseRelease(
+                versionKey = REL_VERSION_KEY,
+                titleKey = REL_TITLE_KEY,
+                notesKey = REL_NOTES_KEY,
+                urlKey = REL_URL_KEY,
+                publishedMsKey = REL_PUBLISHED_MS_KEY,
+                preReleaseKey = REL_PRERELEASE_KEY,
+                assetsKey = REL_ASSETS_KEY
+            )
+        } else null
         PersistedUpdateState(
             lastCheckedAtMs = prefs[LAST_CHECKED_MS_KEY],
             available = available,
@@ -68,13 +131,15 @@ class UpdateStateStore @Inject constructor(
         dataStore.edit { prefs ->
             prefs[LAST_CHECKED_MS_KEY] = checkedAtMs
             prefs[AVAILABLE_KEY] = false
-            prefs.remove(REL_VERSION_KEY)
-            prefs.remove(REL_TITLE_KEY)
-            prefs.remove(REL_NOTES_KEY)
-            prefs.remove(REL_URL_KEY)
-            prefs.remove(REL_PUBLISHED_MS_KEY)
-            prefs.remove(REL_PRERELEASE_KEY)
-            prefs.remove(REL_ASSETS_KEY)
+            prefs.clearRelease(
+                versionKey = REL_VERSION_KEY,
+                titleKey = REL_TITLE_KEY,
+                notesKey = REL_NOTES_KEY,
+                urlKey = REL_URL_KEY,
+                publishedMsKey = REL_PUBLISHED_MS_KEY,
+                preReleaseKey = REL_PRERELEASE_KEY,
+                assetsKey = REL_ASSETS_KEY
+            )
         }
     }
 
@@ -83,14 +148,16 @@ class UpdateStateStore @Inject constructor(
         dataStore.edit { prefs ->
             prefs[LAST_CHECKED_MS_KEY] = checkedAtMs
             prefs[AVAILABLE_KEY] = true
-            prefs[REL_VERSION_KEY] = release.versionName
-            prefs[REL_TITLE_KEY] = release.title
-            prefs[REL_NOTES_KEY] = release.notes
-            prefs[REL_URL_KEY] = release.pageUrl
-            release.publishedAt?.let { prefs[REL_PUBLISHED_MS_KEY] = it.toEpochMilli() }
-                ?: prefs.remove(REL_PUBLISHED_MS_KEY)
-            prefs[REL_PRERELEASE_KEY] = release.isPreRelease
-            prefs[REL_ASSETS_KEY] = Json.encodeToString(release.assets)
+            prefs.saveRelease(
+                release = release,
+                versionKey = REL_VERSION_KEY,
+                titleKey = REL_TITLE_KEY,
+                notesKey = REL_NOTES_KEY,
+                urlKey = REL_URL_KEY,
+                publishedMsKey = REL_PUBLISHED_MS_KEY,
+                preReleaseKey = REL_PRERELEASE_KEY,
+                assetsKey = REL_ASSETS_KEY
+            )
         }
     }
 
@@ -110,6 +177,117 @@ class UpdateStateStore @Inject constructor(
         val REL_PRERELEASE_KEY = booleanPreferencesKey("update_release_prerelease")
         val REL_ASSETS_KEY = stringPreferencesKey("update_release_assets")
         val LAST_NOTIFIED_VERSION_KEY = stringPreferencesKey("update_last_notified_version")
+
+        val NIGHTLY_ENABLED_KEY = booleanPreferencesKey("update_nightly_enabled")
+        val NIGHTLY_LAST_CHECKED_MS_KEY = longPreferencesKey("update_nightly_last_checked_ms")
+        val NIGHTLY_LAST_PUBLISHED_MS_KEY = longPreferencesKey("update_nightly_last_published_ms")
+        val NIGHTLY_LAST_DIGEST_KEY = stringPreferencesKey("update_nightly_last_digest")
+        val NIGHTLY_AVAILABLE_KEY = booleanPreferencesKey("update_nightly_available")
+        val NIGHTLY_REL_VERSION_NAME_KEY = stringPreferencesKey("update_nightly_rel_version_name")
+        val NIGHTLY_REL_TITLE_KEY = stringPreferencesKey("update_nightly_rel_title")
+        val NIGHTLY_REL_NOTES_KEY = stringPreferencesKey("update_nightly_rel_notes")
+        val NIGHTLY_REL_URL_KEY = stringPreferencesKey("update_nightly_rel_url")
+        val NIGHTLY_REL_PUBLISHED_MS_KEY = longPreferencesKey("update_nightly_rel_published_ms")
+        val NIGHTLY_REL_ASSETS_KEY = stringPreferencesKey("update_nightly_rel_assets")
+        val NIGHTLY_REL_COMMIT_SHA_KEY = stringPreferencesKey("update_nightly_rel_commit_sha")
+    }
+
+    val nightlyEnabled: Flow<Boolean> = dataStore.data.map { it[NIGHTLY_ENABLED_KEY] ?: false }
+
+    suspend fun setNightlyEnabled(enabled: Boolean) {
+        dataStore.edit { it[NIGHTLY_ENABLED_KEY] = enabled }
+    }
+
+    val nightlyState: Flow<PersistedNightlyState> = dataStore.data.map { prefs ->
+        val available = prefs[NIGHTLY_AVAILABLE_KEY] ?: false
+        val release = if (available) {
+            prefs.parseRelease(
+                versionKey = NIGHTLY_REL_VERSION_NAME_KEY,
+                titleKey = NIGHTLY_REL_TITLE_KEY,
+                notesKey = NIGHTLY_REL_NOTES_KEY,
+                urlKey = NIGHTLY_REL_URL_KEY,
+                publishedMsKey = NIGHTLY_REL_PUBLISHED_MS_KEY,
+                preReleaseKey = null,
+                assetsKey = NIGHTLY_REL_ASSETS_KEY,
+                commitShaKey = NIGHTLY_REL_COMMIT_SHA_KEY,
+                isNightly = true
+            )
+        } else null
+        PersistedNightlyState(
+            lastCheckedAtMs = prefs[NIGHTLY_LAST_CHECKED_MS_KEY],
+            lastSeenPublishedAtMs = prefs[NIGHTLY_LAST_PUBLISHED_MS_KEY],
+            lastSeenDigest = prefs[NIGHTLY_LAST_DIGEST_KEY],
+            available = available,
+            release = release,
+        )
+    }
+
+    suspend fun updateNightlyCheckedAt(checkedAtMs: Long) {
+        dataStore.edit { prefs ->
+            prefs[NIGHTLY_LAST_CHECKED_MS_KEY] = checkedAtMs
+        }
+    }
+
+    suspend fun setNightlyUpToDate(checkedAtMs: Long) {
+        dataStore.edit { prefs ->
+            prefs[NIGHTLY_LAST_CHECKED_MS_KEY] = checkedAtMs
+            prefs[NIGHTLY_AVAILABLE_KEY] = false
+            prefs.clearRelease(
+                versionKey = NIGHTLY_REL_VERSION_NAME_KEY,
+                titleKey = NIGHTLY_REL_TITLE_KEY,
+                notesKey = NIGHTLY_REL_NOTES_KEY,
+                urlKey = NIGHTLY_REL_URL_KEY,
+                publishedMsKey = NIGHTLY_REL_PUBLISHED_MS_KEY,
+                preReleaseKey = null,
+                assetsKey = NIGHTLY_REL_ASSETS_KEY,
+                commitShaKey = NIGHTLY_REL_COMMIT_SHA_KEY
+            )
+        }
+    }
+
+    suspend fun setNightlyUpdateAvailable(
+        release: AppRelease,
+        publishedAtMs: Long,
+        digest: String?,
+        checkedAtMs: Long,
+    ) {
+        dataStore.edit { prefs ->
+            prefs[NIGHTLY_LAST_CHECKED_MS_KEY] = checkedAtMs
+            prefs[NIGHTLY_LAST_PUBLISHED_MS_KEY] = publishedAtMs
+            digest?.let { prefs[NIGHTLY_LAST_DIGEST_KEY] = it }
+                ?: prefs.remove(NIGHTLY_LAST_DIGEST_KEY)
+            prefs[NIGHTLY_AVAILABLE_KEY] = true
+            prefs.saveRelease(
+                release = release,
+                versionKey = NIGHTLY_REL_VERSION_NAME_KEY,
+                titleKey = NIGHTLY_REL_TITLE_KEY,
+                notesKey = NIGHTLY_REL_NOTES_KEY,
+                urlKey = NIGHTLY_REL_URL_KEY,
+                publishedMsKey = NIGHTLY_REL_PUBLISHED_MS_KEY,
+                preReleaseKey = null,
+                assetsKey = NIGHTLY_REL_ASSETS_KEY,
+                commitShaKey = NIGHTLY_REL_COMMIT_SHA_KEY
+            )
+        }
+    }
+
+    suspend fun clearNightlyState() {
+        dataStore.edit { prefs ->
+            prefs[NIGHTLY_AVAILABLE_KEY] = false
+            prefs.remove(NIGHTLY_LAST_CHECKED_MS_KEY)
+            prefs.remove(NIGHTLY_LAST_PUBLISHED_MS_KEY)
+            prefs.remove(NIGHTLY_LAST_DIGEST_KEY)
+            prefs.clearRelease(
+                versionKey = NIGHTLY_REL_VERSION_NAME_KEY,
+                titleKey = NIGHTLY_REL_TITLE_KEY,
+                notesKey = NIGHTLY_REL_NOTES_KEY,
+                urlKey = NIGHTLY_REL_URL_KEY,
+                publishedMsKey = NIGHTLY_REL_PUBLISHED_MS_KEY,
+                preReleaseKey = null,
+                assetsKey = NIGHTLY_REL_ASSETS_KEY,
+                commitShaKey = NIGHTLY_REL_COMMIT_SHA_KEY
+            )
+        }
     }
 }
 
@@ -126,4 +304,12 @@ data class PersistedUpdateState(
     val available: Boolean,
     val release: AppRelease?,
     val lastNotifiedVersion: String?,
+)
+
+data class PersistedNightlyState(
+    val lastCheckedAtMs: Long?,
+    val lastSeenPublishedAtMs: Long?,
+    val lastSeenDigest: String?,
+    val available: Boolean,
+    val release: AppRelease?,
 )

@@ -46,6 +46,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.release.parseReleaseNotes
 import it.attendance100.mybicocca.data.update.DownloadState
@@ -57,15 +58,17 @@ import java.io.File
 @Composable
 fun UpdateModalSheet(
     release: AppRelease,
-    downloadState: DownloadState,
+    downloadStateFlow: kotlinx.coroutines.flow.StateFlow<DownloadState>,
     onDownload: () -> Unit,
     onInstall: (File) -> Unit,
     onDismiss: () -> Unit,
 ) {
+    val downloadState by downloadStateFlow.collectAsStateWithLifecycle()
     val uriHandler = LocalUriHandler.current
     LaunchedEffect(downloadState) {
-        if (downloadState is DownloadState.Success) {
-            onInstall(downloadState.file)
+        val state = downloadState
+        if (state is DownloadState.Success) {
+            onInstall(state.file)
         }
     }
 
@@ -214,7 +217,7 @@ fun UpdateModalSheet(
 
                     if (hasError) {
                         Text(
-                            text = downloadState.message.asString(),
+                            text = (downloadState as DownloadState.Error).message.asString(),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.error,
                             modifier = Modifier.fillMaxWidth(),
