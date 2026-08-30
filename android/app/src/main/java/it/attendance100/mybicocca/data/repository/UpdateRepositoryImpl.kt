@@ -95,7 +95,7 @@ class UpdateRepositoryImpl @Inject constructor(
                     persisted.available && persisted.release != null &&
                             SemVer.isNewer(
                                 persisted.release.versionName,
-                                BuildConfig.VERSION_NAME
+                                BuildConfig.VERSION_NAME.substringBefore("-")
                             ) ->
                         UpdateStatus.UpdateAvailable(persisted.release)
 
@@ -128,9 +128,12 @@ class UpdateRepositoryImpl @Inject constructor(
                 return@withLock UpdateCheckResult.UpToDate
             }
 
+            val isNightly = BuildConfig.VERSION_NAME.contains("nightly", ignoreCase = true)
             val currentVersion = BuildConfig.VERSION_NAME.substringBefore("-")
             val isNewer = SemVer.isNewer(latest.versionName, currentVersion)
-            val isSameAndForced = force && latest.versionName == currentVersion
+            // A nightly is newer than its stable base, so we shouldn't allow re-installing the stable version
+            // over it just because the base versions match.
+            val isSameAndForced = force && latest.versionName == currentVersion && !isNightly
 
             if (!isNewer && !isSameAndForced) {
                 store.setUpToDate(now)
