@@ -22,6 +22,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
 import androidx.compose.material.icons.outlined.NewReleases
+import androidx.compose.material.icons.outlined.Nightlight
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -100,18 +101,18 @@ fun UpdateModalSheet(
                         .padding(24.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Outlined.NewReleases,
+                        imageVector = if (release.isPreRelease) Icons.Outlined.Nightlight else Icons.Outlined.NewReleases,
                         contentDescription = null,
                         modifier = Modifier.size(48.dp),
                         tint = MaterialTheme.colorScheme.primary
                     )
                     Spacer(Modifier.height(16.dp))
                     Text(
-                        text = stringResource(R.string.update_modal_title),
+                        text = if (release.isPreRelease) "New Nightly available!" else stringResource(R.string.update_modal_title),
                         style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold)
                     )
                     Text(
-                        text = stringResource(R.string.update_modal_version, release.versionName),
+                        text = if (release.isPreRelease) release.versionName else stringResource(R.string.update_modal_version, release.versionName),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )

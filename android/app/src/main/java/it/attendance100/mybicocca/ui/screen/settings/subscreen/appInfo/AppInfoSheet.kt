@@ -376,10 +376,20 @@ private fun AboutScene(
         Spacer(Modifier.height(28.dp))
 
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            val available = updateStatus as? UpdateStatus.UpdateAvailable
-            if (available != null) {
+            val nightlyAvailable = nightlyStatus as? UpdateStatus.UpdateAvailable
+            val stableAvailable = updateStatus as? UpdateStatus.UpdateAvailable
+            
+            if (nightlyAvailable != null) {
+                NightlyUpdateTile(
+                    release = nightlyAvailable.release,
+                    downloadStateFlow = viewModel.downloadState,
+                    onShowUpdateModal = onShowUpdateModal,
+                    isFirst = true,
+                    isLast = false
+                )
+            } else if (stableAvailable != null) {
                 UpdateAvailableTile(
-                    release = available.release,
+                    release = stableAvailable.release,
                     downloadStateFlow = viewModel.downloadState,
                     onShowUpdateModal = onShowUpdateModal,
                     isFirst = true,
@@ -432,17 +442,6 @@ private fun AboutScene(
                 },
                 trailing = { TrailingGlyph(Icons.Rounded.ChevronRight) },
             )
-            
-            val nightlyAvailable = nightlyStatus as? UpdateStatus.UpdateAvailable
-            if (nightlyAvailable != null) {
-                NightlyUpdateTile(
-                    release = nightlyAvailable.release,
-                    downloadStateFlow = viewModel.downloadState,
-                    onShowUpdateModal = onShowUpdateModal,
-                    isFirst = false,
-                    isLast = false
-                )
-            }
             
             SegmentedTile(
                 isFirst = false,

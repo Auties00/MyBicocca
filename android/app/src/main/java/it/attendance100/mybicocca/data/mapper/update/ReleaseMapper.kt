@@ -49,7 +49,7 @@ fun GithubReleaseDto.toNightlyAppReleaseOrNull(publishedAtMs: Long): AppRelease?
     val url = htmlUrl?.trim()?.takeIf { it.isNotEmpty() } ?: return null
     val publishedInstant = Instant.ofEpochMilli(publishedAtMs)
     val dateLabel = java.time.format.DateTimeFormatter
-        .ofLocalizedDate(java.time.format.FormatStyle.MEDIUM)
+        .ofLocalizedDateTime(java.time.format.FormatStyle.MEDIUM, java.time.format.FormatStyle.SHORT)
         .withZone(java.time.ZoneId.systemDefault())
         .format(publishedInstant)
     val commitSha = body?.let { COMMIT_SHA_REGEX.find(it)?.groupValues?.getOrNull(1) }
