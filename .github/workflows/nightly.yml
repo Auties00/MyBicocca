@@ -38,6 +38,13 @@ jobs:
             echo "KEY_PASSWORD=$KEY_PASSWORD" >> $GITHUB_ENV
           fi
 
+      - name: Debug Keystore Aliases
+        run: |
+          if [ -f "release.keystore" ]; then
+            echo "Listing aliases in the keystore (password will be automatically masked by GitHub if printed):"
+            keytool -list -v -keystore release.keystore -storepass "${{ secrets.KEYSTORE_PASSWORD }}" | grep "Alias name:" || echo "Failed to read keystore (wrong password?)"
+          fi
+
       - name: Build nightly APK
         run: ./gradlew assembleNightly
 
