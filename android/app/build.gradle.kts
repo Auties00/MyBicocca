@@ -1,4 +1,7 @@
 import java.util.Properties
+import java.util.TimeZone
+import java.text.SimpleDateFormat
+import java.util.Date
 
 // Plugins
 plugins {
@@ -78,10 +81,10 @@ android {
 
         val isCi = System.getenv("GITHUB_ACTIONS") == "true"
         val nightlyIdentifier = if (isCi) {
-            val tz = java.util.TimeZone.getTimeZone("Europe/Rome")
-            val format = java.text.SimpleDateFormat("dd MMM yyyy, HH:mm")
+            val tz = TimeZone.getTimeZone("Europe/Rome")
+            val format = SimpleDateFormat("dd MMM yyyy, HH:mm")
             format.timeZone = tz
-            format.format(java.util.Date())
+            format.format(Date())
         } else {
             ""
         }
