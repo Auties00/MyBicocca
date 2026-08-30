@@ -154,8 +154,10 @@ class UpdateRepositoryImpl @Inject constructor(
         val current = store.nightlyState.first()
         val now = System.currentTimeMillis()
 
-        if (!force && current.lastCheckedAtMs != null && now - current.lastCheckedAtMs < NIGHTLY_TTL_MS) {
-            return@withLock
+        if (!force && current.lastCheckedAtMs != null) {
+            val currentSlot = now / (30L * 60 * 1000)
+            val lastSlot = current.lastCheckedAtMs / (30L * 60 * 1000)
+            if (currentSlot == lastSlot) return@withLock
         }
 
         val remoteDto = try {
