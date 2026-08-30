@@ -127,8 +127,9 @@ class UpdateRepositoryImpl @Inject constructor(
                 return@withLock UpdateCheckResult.UpToDate
             }
 
-            val isNewer = SemVer.isNewer(latest.versionName, BuildConfig.VERSION_NAME)
-            val isSameAndForced = force && latest.versionName == BuildConfig.VERSION_NAME
+            val currentVersion = BuildConfig.VERSION_NAME.substringBefore("-")
+            val isNewer = SemVer.isNewer(latest.versionName, currentVersion)
+            val isSameAndForced = force && latest.versionName == currentVersion
 
             if (!isNewer && !isSameAndForced) {
                 store.setUpToDate(now)
