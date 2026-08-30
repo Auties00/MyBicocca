@@ -101,6 +101,8 @@ android {
             initWith(getByName("release"))
             versionNameSuffix = "-nightly"
             matchingFallbacks += listOf("release")
+            signingConfig = signingConfigs.getByName("release").takeIf { it.storeFile != null }
+                ?: signingConfigs.getByName("debug")
         }
     }
 
