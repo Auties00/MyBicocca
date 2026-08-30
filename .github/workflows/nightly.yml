@@ -30,15 +30,15 @@ jobs:
           if [ ! -z "$KEYSTORE_BASE64" ]; then
             echo "$KEYSTORE_BASE64" | base64 --decode > release.keystore
             echo "KEYSTORE_FILE=release.keystore" >> $GITHUB_ENV
+            cat << 'EOF' >> $GITHUB_ENV
+          KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS=${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}
+          EOF
           fi
 
       - name: Build nightly APK
         run: ./gradlew assembleNightly
-        env:
-          KEYSTORE_FILE:       ${{ env.KEYSTORE_FILE }}
-          KEYSTORE_PASSWORD:   ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_ALIAS:           ${{ secrets.KEY_ALIAS }}
-          KEY_PASSWORD:        ${{ secrets.KEY_PASSWORD }}
 
       - name: Generate Changelog
         id: changelog
