@@ -18,40 +18,25 @@ interface UpdateRepository {
     /** The last completed check's persisted outcome; survives restarts. */
     fun observeStatus(): Flow<UpdateStatus>
 
-    /**
-     * Emits once each time a check discovers a version newer than the one the user was last
-     * notified about, so the shell can raise the "new version available" snackbar — regardless of
-     * whether that check ran in the foreground, from the periodic background worker, or was
-     * force-refreshed. Suppressed per-call by [checkForUpdates]'s `announce` parameter for checks
-     * that already surface their own result directly (the manual "Check for Updates" button), so
-     * the user isn't shown the same discovery twice.
-     */
+    /** Raises the shell's "new version available" snackbar. See [checkForUpdates]'s `announce`. */
     val newUpdateEvents: Flow<AppRelease>
 
     /**
-     * Checks the distribution source for a newer release and updates the persisted status.
-     * When [force] is false the check is skipped (returning the cached outcome) while the last
-     * check is still within its daily freshness window; the manual button and periodic worker
-     * pass true. [announce] controls [newUpdateEvents]/[newNightlyUpdateEvents] independently of
-     * [force] — it's not "was this forced," it's "is anyone already being shown this result
-     * directly," so pass false from call sites that already surface their own feedback UI.
+     * Checks the distribution source for a newer release and updates the persisted status. When
+     * [force] is false the check is skipped (returning the cached outcome) within the daily
+     * freshness window. [announce] is independent of [force]: it's "is anyone already being shown
+     * this result directly," so pass false from call sites that surface their own feedback UI.
      *
-     * This answers "is there something newer than what's running" — deliberately unsuitable for
-     * "restore to stable" (a nightly's version routinely equals or already exceeds the latest
-     * stable tag, so this would report up-to-date and never surface a release to install); use
-     * [getLatestStableRelease] for that instead.
+     * Answers "is there something newer than what's running" — unsuitable for "restore to stable"
+     * (see [getLatestStableRelease]).
      */
     suspend fun checkForUpdates(force: Boolean, announce: Boolean = true): UpdateCheckResult
 
     /**
-     * Fetches the latest stable release directly, with no comparison against the running build —
-     * for "restore to stable", which wants the current stable release regardless of whether it's
-     * numerically newer than the nightly in use (see [checkForUpdates]'s doc for why that check
-     * can't serve this). Not TTL-gated, not persisted to [observeStatus], never announces via
-     * [newUpdateEvents] — a one-off, user-driven fetch, not part of the regular check machinery.
-     * Result is always [UpdateCheckResult.Failed] or [UpdateCheckResult.UpdateAvailable], never
-     * [UpdateCheckResult.UpToDate] in practice (that would require GitHub reporting zero releases
-     * for a repo that demonstrably has at least one, its nightly).
+     * Fetches the latest stable release with no comparison against the running build, for
+     * "restore to stable": a nightly's version routinely equals or already exceeds the latest
+     * stable tag, so [checkForUpdates] would report up-to-date and never surface it. Not
+     * TTL-gated, not persisted, never announces — a one-off fetch outside the regular check flow.
      */
     suspend fun getLatestStableRelease(): UpdateCheckResult
 

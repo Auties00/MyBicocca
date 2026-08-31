@@ -28,21 +28,11 @@ data class AppRelease(
     val commitSha: String? = null
 )
 
-/**
- * Whether an already-downloaded [AppRelease] should install without an explicit user tap — true
- * only for a nightly with the beta auto-install setting on. Distinct from
- * [AppRelease.shouldRunFullyUnattended]: this only asks about the install step, regardless of how
- * the file got downloaded (a manual tap or an automatic download both count).
- */
+/** Whether an already-downloaded [AppRelease] should install without an explicit user tap. */
 fun AppRelease.shouldInstallSilently(nightlyAutoInstall: Boolean): Boolean =
     isPreRelease && nightlyAutoInstall
 
-/**
- * Whether [AppRelease]'s entire discovery-to-install flow should run with zero user interaction —
- * true only for a nightly with both beta auto-download and auto-install on. Distinct from
- * [AppRelease.shouldInstallSilently]: this also requires the *download* to have been unattended,
- * so it only applies to a background/automatic download, never one started by an explicit tap.
- */
+/** Whether [AppRelease] should be downloaded *and* installed with zero user interaction. */
 fun AppRelease.shouldRunFullyUnattended(nightlyAutoDownload: Boolean, nightlyAutoInstall: Boolean): Boolean =
     isPreRelease && nightlyAutoDownload && nightlyAutoInstall
 

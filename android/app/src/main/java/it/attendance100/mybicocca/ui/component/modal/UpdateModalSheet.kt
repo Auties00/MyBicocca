@@ -55,6 +55,11 @@ import it.attendance100.mybicocca.domain.model.update.AppRelease
 import it.attendance100.mybicocca.ui.screen.settings.subscreen.appInfo.component.ReleaseNotesView
 import java.io.File
 
+/**
+ * [onInstall] fires both from the manual "Install" button and, when [autoInstallOnSuccess] is
+ * true, automatically on a successful download with no tap at all — the button is hidden in that
+ * case, so a `silent` computed from the same [autoInstallOnSuccess] value is correct either way.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UpdateModalSheet(

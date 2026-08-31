@@ -33,18 +33,11 @@ import javax.inject.Singleton
  * Update repository over the GitHub Releases API and the persisted [UpdateStateStore].
  *
  * The persisted state is the single source of truth the Settings tile observes; every check
- * writes through to it so an available update survives restarts and shows whichever trigger
- * found it. [checkForUpdates]'s `force` is TTL-gated (a day for stable, a 30-minute slot for
- * nightly) unless forced, and serialized by a mutex so a manual tap and a background check never
- * race the network or the store.
- *
- * `announce` is a separate axis from `force`: it controls whether a newly-discovered version is
- * pushed through [newUpdateEvents]/[newNightlyUpdateEvents] (the app-wide snackbar), independent
- * of whether the check itself was forced. A version is marked "already notified"
- * (`lastNotifiedVersion` for stable, the seen-digest/timestamp pair for nightly) the first time
- * any check discovers it, whether or not that check announced it — so a suppressed discovery
- * (the manual button, "restore to stable") still prevents a later announcing check from
- * re-raising the snackbar for the same version the user already saw directly.
+ * writes through to it, and is serialized by a mutex so a manual tap and a background check never
+ * race the network or the store. `announce` is independent of `force`: a version is marked
+ * "already notified" the first time any check discovers it, whether or not that check announced
+ * it, so a suppressed discovery still blocks a later announcing check from re-raising the
+ * snackbar for a version the user already saw directly.
  *
  * Version comparison is installed [BuildConfig.VERSION_NAME] vs the release tag, via [SemVer];
  * an unparseable tag is treated as not-newer rather than a phantom update.
@@ -73,9 +66,8 @@ class UpdateRepositoryImpl @Inject constructor(
         if (!enabled) {
             store.clearNightlyState()
         } else {
-            // Immediately run a forced check to populate the state. Not announced: the user is
-            // already looking at the toggle they just flipped, so an app-wide snackbar on top of
-            // that would be redundant.
+            // Forced check to populate the state; not announced, the user is already looking at
+            // the toggle they just flipped.
             checkForNightlyUpdate(force = true, announce = false)
         }
     }
@@ -153,8 +145,7 @@ class UpdateRepositoryImpl @Inject constructor(
             val isNightly = BuildConfig.VERSION_NAME.contains("nightly", ignoreCase = true)
             val currentVersion = BuildConfig.VERSION_NAME.substringBefore("-")
             val isNewer = SemVer.isNewer(latest.versionName, currentVersion)
-            // A nightly is newer than its stable base, so we shouldn't allow re-installing the stable version
-            // over it just because the base versions match.
+            // A nightly is newer than its stable base, so matching base versions isn't "same".
             val isSameAndForced = force && latest.versionName == currentVersion && !isNightly
 
             if (!isNewer && !isSameAndForced) {
@@ -164,10 +155,7 @@ class UpdateRepositoryImpl @Inject constructor(
 
             store.setUpdateAvailable(latest, now)
 
-            // First time this version surfaces, mark it notified so it is announced at most once,
-            // regardless of whether this particular check is the one that announces it — that way
-            // a suppressed (announce = false) discovery still prevents a later announcing check
-            // from re-raising the snackbar for a version the user already saw directly.
+            // First time this version surfaces, mark it notified regardless of whether it's announced.
             if (latest.versionName != current.lastNotifiedVersion) {
                 store.setLastNotifiedVersion(latest.versionName)
                 if (announce) _events.trySend(latest)
@@ -233,9 +221,6 @@ class UpdateRepositoryImpl @Inject constructor(
         }
 
         val release = remoteDto.toNightlyAppReleaseOrNull(remotePublishedMs) ?: return@withLock null
-        // isNew above already makes this idempotent per digest/timestamp, same role lastNotifiedVersion
-        // plays for stable — so a suppressed discovery here still blocks a later announcing check
-        // from re-sending for the same build.
         store.setNightlyUpdateAvailable(release, remotePublishedMs, remoteDigest, now)
         if (announce) _nightlyEvents.trySend(release)
 

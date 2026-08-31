@@ -67,12 +67,7 @@ class AppInfoViewModel @Inject constructor(
 
     fun dismissDownloadError() = downloader.dismissError()
 
-    /**
-     * Forces a check; ignores re-taps while one is in flight. Delivers the outcome to [onResult].
-     * Never announces app-wide — the "Check for Updates" tile shows its own feedback from
-     * [onResult], so the shell's snackbar would just be a redundant second notification for the
-     * same discovery (see [CheckForUpdatesUseCase]).
-     */
+    /** Forces a check; ignores re-taps while one is in flight. Delivers the outcome to [onResult]. */
     fun check(onResult: (UpdateCheckResult) -> Unit) {
         if (_checking.value) return
         viewModelScope.launch {
@@ -84,12 +79,8 @@ class AppInfoViewModel @Inject constructor(
     }
 
     /**
-     * Fetches the latest stable release for "restore to stable" — deliberately not [check]: a
-     * nightly's version routinely equals or already exceeds the latest stable tag, so [check]
-     * would report up-to-date and never surface anything to install (see
-     * [UpdateRepository.getLatestStableRelease]). No re-entrancy guard: this doesn't share
-     * [check]'s `_checking` flag, so it can't be silently dropped by an unrelated in-flight
-     * manual check, and it doesn't touch [setNightlyEnabled]'s persisted state, so it can't race it.
+     * Fetches the latest stable release for "restore to stable" — deliberately not [check], see
+     * [UpdateRepository.getLatestStableRelease].
      */
     fun restoreToStable(onResult: (UpdateCheckResult) -> Unit) {
         viewModelScope.launch { onResult(updateRepository.getLatestStableRelease()) }

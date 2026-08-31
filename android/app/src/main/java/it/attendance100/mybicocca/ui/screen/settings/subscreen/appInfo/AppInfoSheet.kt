@@ -177,8 +177,6 @@ fun AppInfoSheet(
     val nightlyAutoInstall by viewModel.nightlyAutoInstall.collectAsStateWithLifecycle()
 
     showUpdateModal?.let { release ->
-        // A manual "Install" tap only ever reaches onInstall when this is false (the button is
-        // hidden otherwise), so it naturally falls through to the normal package-installer dialog.
         val autoInstallOnSuccess = release.shouldInstallSilently(nightlyAutoInstall)
         UpdateModalSheet(
             release = release,
@@ -348,9 +346,8 @@ fun AppInfoSheet(
         }
     }
 
-    // Hoisted above the in-sheet pages (rather than scoped to AboutScene) so it shows up
-    // immediately when toggling beta updates off from the Update Settings page itself, not just
-    // after navigating back to About.
+    // Hoisted above the in-sheet pages so it still shows up when toggled off from Update Settings,
+    // not just after navigating back to About.
     if (showRestoreStableDialog) {
         AlertDialog(
             onDismissRequest = { showRestoreStableDialog = false },
@@ -360,16 +357,10 @@ fun AppInfoSheet(
                 TextButton(onClick = {
                     showRestoreStableDialog = false
                     viewModel.setNightlyEnabled(false)
-                    // restoreToStable, not check: a nightly's version routinely equals or already
-                    // exceeds the latest stable tag, so a newer-than check would report up-to-date
-                    // and never surface anything to install.
                     viewModel.restoreToStable { result ->
                         if (result is UpdateCheckResult.UpdateAvailable) {
-                            // The user just explicitly confirmed "go back to stable" — the download
-                            // starts immediately regardless of the general auto-download setting
-                            // (that setting governs unattended background behavior; this is already
-                            // a deliberate, attended action). Install still waits for an explicit
-                            // tap on the modal's Install button.
+                            // Download starts immediately, ignoring stableAutoDownload — this is
+                            // already a deliberate, attended action. Install still waits for a tap.
                             showUpdateModal = result.release
                             viewModel.startDownload(result.release)
                         } else {
