@@ -3,6 +3,7 @@ package it.attendance100.mybicocca.ui.screen.settings.subscreen.appInfo
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import it.attendance100.mybicocca.data.local.settings.DEFAULT_UPDATE_CHECK_INTERVAL_MINUTES
 import it.attendance100.mybicocca.data.update.ApkDownloader
 import it.attendance100.mybicocca.data.update.DownloadState
 import it.attendance100.mybicocca.domain.model.update.AppRelease
@@ -115,5 +116,12 @@ class AppInfoViewModel @Inject constructor(
 
     fun setNightlyAutoInstall(enabled: Boolean) {
         viewModelScope.launch { updateRepository.setNightlyAutoInstall(enabled) }
+    }
+
+    val checkIntervalMinutes: StateFlow<Int> = updateRepository.observeCheckIntervalMinutes()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, DEFAULT_UPDATE_CHECK_INTERVAL_MINUTES)
+
+    fun setCheckIntervalMinutes(minutes: Int) {
+        viewModelScope.launch { updateRepository.setCheckIntervalMinutes(minutes) }
     }
 }

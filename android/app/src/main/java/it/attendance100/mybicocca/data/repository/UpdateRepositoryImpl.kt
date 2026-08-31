@@ -81,6 +81,9 @@ class UpdateRepositoryImpl @Inject constructor(
     override fun observeNightlyAutoInstall(): Flow<Boolean> = store.nightlyAutoInstall
     override suspend fun setNightlyAutoInstall(enabled: Boolean) = store.setNightlyAutoInstall(enabled)
 
+    override fun observeCheckIntervalMinutes(): Flow<Int> = store.checkIntervalMinutes
+    override suspend fun setCheckIntervalMinutes(minutes: Int) = store.setCheckIntervalMinutes(minutes)
+
     override fun observeNightlyStatus(): Flow<UpdateStatus> =
         store.nightlyState
             .map { persisted ->

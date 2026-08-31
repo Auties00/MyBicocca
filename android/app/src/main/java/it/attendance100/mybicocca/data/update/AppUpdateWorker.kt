@@ -7,7 +7,6 @@ import androidx.work.WorkerParameters
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import it.attendance100.mybicocca.data.local.settings.UpdateStateStore
-import it.attendance100.mybicocca.domain.model.update.UpdateCheckResult
 import it.attendance100.mybicocca.domain.repository.UpdateRepository
 import kotlinx.coroutines.flow.first
 
@@ -25,7 +24,7 @@ class AppUpdateWorker @AssistedInject constructor(
             // Trigger fresh checks for both Stable and Nightly
             repository.checkForUpdates(force = true)
 
-            // 1. Process Stable Update
+            // Process Stable Update
             val stableState = updateStateStore.state.first()
             val stableAutoDownload = updateStateStore.stableAutoDownload.first()
 
@@ -35,13 +34,15 @@ class AppUpdateWorker @AssistedInject constructor(
                     val terminalState = apkDownloader.downloadState
                         .first { it is DownloadState.Success || it is DownloadState.Error }
                     if (terminalState is DownloadState.Success) {
-                        // 5. Stable never auto-installs. Notify user.
-                        // TODO: Implement System Notification Manager to notify user of ready update
+                        // Stable never auto-installs. Notify user.
+                        // TODO(update-notifications): see /UPDATE_NOTIFICATIONS_PLAN.md — also
+                        // needs setForeground()/a progress notification so this download survives
+                        // the app being backgrounded, not just the terminal "ready" notification.
                     }
                 }
             }
 
-            // 2. Process Nightly Update if Beta is enabled
+            // Process Nightly Update if Beta is enabled
             val nightlyEnabled = updateStateStore.nightlyEnabled.first()
             if (nightlyEnabled) {
                 val nightlyState = updateStateStore.nightlyState.first()
@@ -55,11 +56,13 @@ class AppUpdateWorker @AssistedInject constructor(
                         if (terminalState is DownloadState.Success) {
                             val nightlyAutoInstall = updateStateStore.nightlyAutoInstall.first()
                             if (nightlyAutoInstall) {
-                                // 4. Silent install
+                                // Silent install
                                 apkDownloader.installApk(terminalState.file, silent = true)
                             } else {
-                                // 5. Do nothing, wait for user to open app
-                                // TODO: Implement System Notification Manager to notify user of ready update
+                                // Do nothing, wait for user to open app
+                                // TODO(update-notifications): see /UPDATE_NOTIFICATIONS_PLAN.md — also
+                                // needs setForeground()/a progress notification so this download survives
+                                // the app being backgrounded, not just the terminal "ready" notification.
                             }
                         }
                     }

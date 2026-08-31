@@ -45,6 +45,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetValue
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -55,6 +57,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -72,6 +75,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
@@ -83,6 +87,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import it.attendance100.mybicocca.BuildConfig
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.currentLocale
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.data.update.DownloadState
 import it.attendance100.mybicocca.domain.model.update.AppRelease
@@ -99,6 +104,7 @@ import it.attendance100.mybicocca.ui.component.modal.sheetPageTransform
 import kotlinx.coroutines.launch
 import java.time.Year
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.math.roundToInt
 
 private const val COPYRIGHT_START_YEAR = 2025
 private const val GITHUB_URL = "https://github.com/Auties00/MyBicocca"
@@ -732,6 +738,7 @@ private fun UpdateSettingsScene(
     val stableAutoDownload by viewModel.stableAutoDownload.collectAsStateWithLifecycle()
     val nightlyAutoDownload by viewModel.nightlyAutoDownload.collectAsStateWithLifecycle()
     val nightlyAutoInstall by viewModel.nightlyAutoInstall.collectAsStateWithLifecycle()
+    val checkIntervalMinutes by viewModel.checkIntervalMinutes.collectAsStateWithLifecycle()
 
     Column(modifier = modifier) {
         TopAppBar(
@@ -755,6 +762,20 @@ private fun UpdateSettingsScene(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp, vertical = 8.dp)
         ) {
+            Text(
+                text = stringResource(R.string.settings_update_check_frequency_header),
+                style = MaterialTheme.typography.labelLarge,
+                color = scheme.primary,
+                modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+            )
+
+            CheckIntervalSlider(
+                intervalMinutes = checkIntervalMinutes,
+                onIntervalChange = { viewModel.setCheckIntervalMinutes(it) },
+            )
+
+            Spacer(Modifier.height(24.dp))
+
             Text(
                 text = stringResource(R.string.settings_update_stable_header),
                 style = MaterialTheme.typography.labelLarge,
@@ -860,5 +881,78 @@ private fun UpdateSettingsScene(
                 modifier = Modifier.alpha(alpha)
             )
         }
+    }
+}
+
+/** Discrete steps (in minutes) offered by [CheckIntervalSlider], from WorkManager's own floor up to a day. */
+private val CHECK_INTERVAL_STEPS_MINUTES = listOf(15, 30, 60, 120, 180, 360, 720, 1440)
+
+/**
+ * The "Controlla aggiornamenti ogni" control: a discrete slider over [CHECK_INTERVAL_STEPS_MINUTES]
+ * choosing how often UpdateChecker's periodic worker fires. Mirrors SettingsSecuritySheet's
+ * TimeoutSlider: haptic ticks on step-crossing only, commit on release.
+ */
+@Composable
+private fun CheckIntervalSlider(
+    intervalMinutes: Int,
+    onIntervalChange: (Int) -> Unit,
+) {
+    val haptic = rememberHapticManager()
+
+    var sliderPos by remember(intervalMinutes) {
+        mutableFloatStateOf(
+            CHECK_INTERVAL_STEPS_MINUTES.indexOf(intervalMinutes).coerceAtLeast(0).toFloat()
+        )
+    }
+    val index = sliderPos.roundToInt().coerceIn(0, CHECK_INTERVAL_STEPS_MINUTES.lastIndex)
+    val colors = SliderDefaults.colors(
+        activeTickColor = MaterialTheme.colorScheme.onSurface,
+        inactiveTrackColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
+        inactiveTickColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.4f),
+    )
+
+    val locale = currentLocale()
+    val minutesFormat = stringResource(R.string.settings_security_minutes_format)
+    val selectedMinutes = CHECK_INTERVAL_STEPS_MINUTES[index]
+    val intervalLabel = if (selectedMinutes < 60) {
+        String.format(locale, minutesFormat, selectedMinutes)
+    } else {
+        val hours = selectedMinutes / 60
+        pluralStringResource(R.plurals.update_check_interval_hours, hours, hours)
+    }
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = stringResource(R.string.settings_update_check_interval_title),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.weight(1f),
+            )
+            Text(
+                text = intervalLabel,
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Slider(
+            value = sliderPos,
+            onValueChange = { newPos ->
+                if (newPos.roundToInt().coerceIn(0, CHECK_INTERVAL_STEPS_MINUTES.lastIndex) != index)
+                    haptic.feather()
+                sliderPos = newPos
+            },
+            onValueChangeFinished = { onIntervalChange(CHECK_INTERVAL_STEPS_MINUTES[index]) },
+            valueRange = 0f..CHECK_INTERVAL_STEPS_MINUTES.lastIndex.toFloat(),
+            steps = CHECK_INTERVAL_STEPS_MINUTES.size - 2,
+            colors = colors,
+            track = { state ->
+                SliderDefaults.Track(
+                    sliderState = state,
+                    colors = colors,
+                    drawStopIndicator = null,
+                )
+            }
+        )
     }
 }

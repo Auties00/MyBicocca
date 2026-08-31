@@ -8,6 +8,8 @@ import it.attendance100.mybicocca.domain.model.update.AppRelease
 import it.attendance100.mybicocca.domain.repository.UpdateRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -36,31 +38,48 @@ class UpdateChecker @Inject constructor(
 ) : DefaultLifecycleObserver {
 
     /**
-     * Registers the process-lifecycle observer. Called from the activity's onCreate; safe to call
-     * again on every activity recreation, since re-adding the same singleton observer is a no-op.
+     * Registers the process-lifecycle observer and the periodic background check. Called from the
+     * activity's onCreate; safe to call again on every activity recreation, since re-adding the
+     * same singleton observer is a no-op and re-collecting the interval setting just re-emits the
+     * current value.
      */
     fun start() {
+        // Reactive so a change to the check-interval setting (see the Update Settings slider)
+        // reschedules the periodic worker immediately, not just on the next app start.
+        scope.launch {
+            repository.observeCheckIntervalMinutes()
+                .distinctUntilChanged()
+                .collectLatest { intervalMinutes -> enqueuePeriodicWork(intervalMinutes) }
+        }
+
+        scope.launch(Dispatchers.Main) {
+            ProcessLifecycleOwner.get().lifecycle.addObserver(this@UpdateChecker)
+        }
+    }
+
+    private fun enqueuePeriodicWork(intervalMinutes: Int) {
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)
             .build()
-            
-        val workRequest = PeriodicWorkRequestBuilder<AppUpdateWorker>(12, TimeUnit.HOURS)
+
+        // WorkManager silently clamps anything below its own 15-minute floor, so intervalMinutes
+        // is only meaningful at or above that.
+        val workRequest = PeriodicWorkRequestBuilder<AppUpdateWorker>(intervalMinutes.toLong(), TimeUnit.MINUTES)
             .setConstraints(constraints)
             .setBackoffCriteria(
                 androidx.work.BackoffPolicy.EXPONENTIAL,
                 10, TimeUnit.MINUTES
             )
             .build()
-            
+
+        // UPDATE (not KEEP) so a changed interval — from the settings slider, or a schedule left
+        // over from an older build — replaces whatever is currently enqueued instead of running
+        // forever under the stale one.
         WorkManager.getInstance(context).enqueueUniquePeriodicWork(
             "AppUpdateWorker",
-            ExistingPeriodicWorkPolicy.KEEP,
+            ExistingPeriodicWorkPolicy.UPDATE,
             workRequest
         )
-
-        scope.launch(Dispatchers.Main) {
-            ProcessLifecycleOwner.get().lifecycle.addObserver(this@UpdateChecker)
-        }
     }
 
     override fun onStart(owner: LifecycleOwner) {

@@ -41,6 +41,10 @@ sealed interface DownloadState {
     data class Error(val message: UiText) : DownloadState
 }
 
+// TODO(update-notifications): startDownload runs on @ApplicationScope with no foreground-service
+// promotion, so the OS can freeze/kill it seconds after the app backgrounds mid-download (see
+// /UPDATE_NOTIFICATIONS_PLAN.md). Every caller — the manual "Download" tap, the restore-to-stable
+// flow, MainShell's auto-download effects, and AppUpdateWorker — is affected equally.
 @Singleton
 class ApkDownloader @Inject constructor(
     @ApplicationContext private val context: Context,

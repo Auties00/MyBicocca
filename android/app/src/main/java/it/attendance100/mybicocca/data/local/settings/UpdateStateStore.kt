@@ -4,6 +4,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import it.attendance100.mybicocca.domain.model.update.AppRelease
@@ -14,6 +15,13 @@ import kotlinx.serialization.json.Json
 import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
+
+/**
+ * Default periodic-check interval, in minutes, until the user picks one via the settings slider.
+ * Currently kept low (WorkManager's own 15-minute floor) while the update-notifications work is
+ * being tested; expected to move up to something like 6-12 hours once that settles.
+ */
+const val DEFAULT_UPDATE_CHECK_INTERVAL_MINUTES = 15
 
 /**
  * Persists the outcome of the last update check in the shared `mybicocca_settings` DataStore so
@@ -190,6 +198,8 @@ class UpdateStateStore @Inject constructor(
         val REL_ASSETS_KEY = stringPreferencesKey("update_release_assets")
         val LAST_NOTIFIED_VERSION_KEY = stringPreferencesKey("update_last_notified_version")
 
+        val CHECK_INTERVAL_MINUTES_KEY = intPreferencesKey("update_check_interval_minutes")
+
         val STABLE_AUTO_DOWNLOAD_KEY = booleanPreferencesKey("update_stable_auto_download")
         val NIGHTLY_AUTO_DOWNLOAD_KEY = booleanPreferencesKey("update_nightly_auto_download")
         val NIGHTLY_AUTO_INSTALL_KEY = booleanPreferencesKey("update_nightly_auto_install")
@@ -206,6 +216,14 @@ class UpdateStateStore @Inject constructor(
         val NIGHTLY_REL_PUBLISHED_MS_KEY = longPreferencesKey("update_nightly_rel_published_ms")
         val NIGHTLY_REL_ASSETS_KEY = stringPreferencesKey("update_nightly_rel_assets")
         val NIGHTLY_REL_COMMIT_SHA_KEY = stringPreferencesKey("update_nightly_rel_commit_sha")
+    }
+
+    /** How often (in minutes) the periodic background update check fires. */
+    val checkIntervalMinutes: Flow<Int> =
+        dataStore.data.map { it[CHECK_INTERVAL_MINUTES_KEY] ?: DEFAULT_UPDATE_CHECK_INTERVAL_MINUTES }
+
+    suspend fun setCheckIntervalMinutes(minutes: Int) {
+        dataStore.edit { it[CHECK_INTERVAL_MINUTES_KEY] = minutes }
     }
 
     val stableAutoDownload: Flow<Boolean> = dataStore.data.map { it[STABLE_AUTO_DOWNLOAD_KEY] ?: true }

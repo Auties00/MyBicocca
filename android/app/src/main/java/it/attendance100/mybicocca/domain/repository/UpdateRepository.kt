@@ -59,4 +59,8 @@ interface UpdateRepository {
 
     fun observeNightlyAutoInstall(): Flow<Boolean>
     suspend fun setNightlyAutoInstall(enabled: Boolean)
+
+    /** How often (in minutes) the periodic background update check fires. */
+    fun observeCheckIntervalMinutes(): Flow<Int>
+    suspend fun setCheckIntervalMinutes(minutes: Int)
 }
