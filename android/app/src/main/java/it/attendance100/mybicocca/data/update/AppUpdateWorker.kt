@@ -21,8 +21,17 @@ class AppUpdateWorker @AssistedInject constructor(
 
     override suspend fun doWork(): Result {
         try {
-            // Trigger fresh checks for both Stable and Nightly
-            repository.checkForUpdates(force = true)
+            // Trigger fresh checks for both Stable and Nightly. announce = true (the default, kept
+            // explicit here deliberately): this worker is the primary reason announce exists at all
+            // — it's the one path that can discover an update with nobody looking, so it's the one
+            // that most needs the app-wide snackbar to actually fire once the app is next opened.
+            //
+            // TODO(update-notifications): if this worker's own auto-download/install below already
+            // finished a release by the time the app reopens and drains the buffered event, MainShell
+            // will still try to download it again (see /UPDATE_NOTIFICATIONS_PLAN.md) — nothing here
+            // marks the release as "already handled" for that consumer. Worth folding into the same
+            // notification work rather than solving twice.
+            repository.checkForUpdates(force = true, announce = true)
 
             // Process Stable Update
             val stableState = updateStateStore.state.first()

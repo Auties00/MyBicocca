@@ -60,6 +60,8 @@ import it.attendance100.mybicocca.core.state.valueOrNull
 import it.attendance100.mybicocca.data.mapper.calendar.examCalendarEventId
 import it.attendance100.mybicocca.domain.model.calendar.CalendarEvent
 import it.attendance100.mybicocca.domain.model.settings.FileOpenChoice
+import it.attendance100.mybicocca.domain.model.update.shouldInstallSilently
+import it.attendance100.mybicocca.domain.model.update.shouldRunFullyUnattended
 import it.attendance100.mybicocca.ui.component.bar.BottomBarItem
 import it.attendance100.mybicocca.ui.component.bar.MyBicoccaBottomBar
 import it.attendance100.mybicocca.ui.component.bar.MyBicoccaTopBar
@@ -543,6 +545,9 @@ fun MainShell(
     var downloadingRelease by remember { mutableStateOf<it.attendance100.mybicocca.domain.model.update.AppRelease?>(null) }
 
     showUpdateModal?.let { release ->
+        // A manual "Install" tap only ever reaches onInstall when this is false (the button is
+        // hidden otherwise), so it naturally falls through to the normal package-installer dialog.
+        val autoInstallOnSuccess = release.shouldInstallSilently(nightlyAutoInstall)
         it.attendance100.mybicocca.ui.component.modal.UpdateModalSheet(
             release = release,
             downloadStateFlow = updateEventsViewModel.downloadState,
@@ -551,8 +556,7 @@ fun MainShell(
                 updateEventsViewModel.startDownload(release)
             },
             onInstall = { file ->
-                // Both trigger Silent Install from the button
-                updateEventsViewModel.installApk(file, silent = true)
+                updateEventsViewModel.installApk(file, silent = autoInstallOnSuccess)
                 updateEventsViewModel.clearDownload()
                 showUpdateModal = null
             },
@@ -560,7 +564,7 @@ fun MainShell(
                 updateEventsViewModel.dismissDownloadError()
                 showUpdateModal = null
             },
-            autoInstallOnSuccess = release.isPreRelease && nightlyAutoInstall
+            autoInstallOnSuccess = autoInstallOnSuccess
         )
     }
 
@@ -599,7 +603,7 @@ fun MainShell(
             val file = (downloadState as it.attendance100.mybicocca.data.update.DownloadState.Success).file
             val release = downloadingRelease ?: return@LaunchedEffect
 
-            if (release.isPreRelease && nightlyAutoDownload && nightlyAutoInstall) {
+            if (release.shouldRunFullyUnattended(nightlyAutoDownload, nightlyAutoInstall)) {
                 val strInstalling = context.getString(R.string.update_modal_installing)
                 snackbarController.showInfo(strInstalling)
                 updateEventsViewModel.installApk(file, silent = true)
@@ -607,8 +611,9 @@ fun MainShell(
             } else if (showUpdateModal == null) {
                 // Background download completed and modal is NOT open, notify user
                 snackbarController.showInfo(strInstallUpdate) {
-                    // Tapping triggers silent install
-                    updateEventsViewModel.installApk(file, silent = true)
+                    // An explicit tap here always shows the normal system install confirmation —
+                    // silent installs are reserved for the fully-unattended path handled above.
+                    updateEventsViewModel.installApk(file, silent = false)
                     updateEventsViewModel.clearDownload()
                 }
             }

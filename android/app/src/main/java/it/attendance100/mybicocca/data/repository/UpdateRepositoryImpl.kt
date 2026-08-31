@@ -34,11 +34,17 @@ import javax.inject.Singleton
  *
  * The persisted state is the single source of truth the Settings tile observes; every check
  * writes through to it so an available update survives restarts and shows whichever trigger
- * found it. [checkForUpdates] is TTL-gated (a day) unless forced by the manual button, and
- * serialized by a mutex so a manual tap and the foreground daily check never race the network
- * or the store. Only the background path emits [newUpdateEvents], and only for a version the
- * user has not already been notified about, so the app-wide snackbar fires once per new release
- * rather than on every foreground.
+ * found it. [checkForUpdates]'s `force` is TTL-gated (a day for stable, a 30-minute slot for
+ * nightly) unless forced, and serialized by a mutex so a manual tap and a background check never
+ * race the network or the store.
+ *
+ * `announce` is a separate axis from `force`: it controls whether a newly-discovered version is
+ * pushed through [newUpdateEvents]/[newNightlyUpdateEvents] (the app-wide snackbar), independent
+ * of whether the check itself was forced. A version is marked "already notified"
+ * (`lastNotifiedVersion` for stable, the seen-digest/timestamp pair for nightly) the first time
+ * any check discovers it, whether or not that check announced it — so a suppressed discovery
+ * (the manual button, "restore to stable") still prevents a later announcing check from
+ * re-raising the snackbar for the same version the user already saw directly.
  *
  * Version comparison is installed [BuildConfig.VERSION_NAME] vs the release tag, via [SemVer];
  * an unparseable tag is treated as not-newer rather than a phantom update.
@@ -67,8 +73,10 @@ class UpdateRepositoryImpl @Inject constructor(
         if (!enabled) {
             store.clearNightlyState()
         } else {
-            // Immediately run a forced check to populate the state
-            checkForNightlyUpdate(force = true)
+            // Immediately run a forced check to populate the state. Not announced: the user is
+            // already looking at the toggle they just flipped, so an app-wide snackbar on top of
+            // that would be redundant.
+            checkForNightlyUpdate(force = true, announce = false)
         }
     }
 
@@ -117,10 +125,10 @@ class UpdateRepositoryImpl @Inject constructor(
             }
             .distinctUntilChanged()
 
-    override suspend fun checkForUpdates(force: Boolean): UpdateCheckResult = coroutineScope {
+    override suspend fun checkForUpdates(force: Boolean, announce: Boolean): UpdateCheckResult = coroutineScope {
         // Trigger nightly check in parallel (it has its own internal error boundary)
         val nightlyJob = if (store.nightlyEnabled.first()) {
-            async { checkForNightlyUpdate(force) }
+            async { checkForNightlyUpdate(force, announce) }
         } else null
         
         val stableResult = checkMutex.withLock {
@@ -156,12 +164,13 @@ class UpdateRepositoryImpl @Inject constructor(
 
             store.setUpdateAvailable(latest, now)
 
-            // First time this version surfaces, mark it notified so it is announced at most once. The
-            // app-wide snackbar is raised only by the silent daily check; the manual button shows its
-            // own result in the About sheet, so it marks-but-does-not-emit to avoid a later repeat.
+            // First time this version surfaces, mark it notified so it is announced at most once,
+            // regardless of whether this particular check is the one that announces it — that way
+            // a suppressed (announce = false) discovery still prevents a later announcing check
+            // from re-raising the snackbar for a version the user already saw directly.
             if (latest.versionName != current.lastNotifiedVersion) {
                 store.setLastNotifiedVersion(latest.versionName)
-                if (!force) _events.trySend(latest)
+                if (announce) _events.trySend(latest)
             }
 
             UpdateCheckResult.UpdateAvailable(latest)
@@ -174,7 +183,16 @@ class UpdateRepositoryImpl @Inject constructor(
         return@coroutineScope stableResult
     }
 
-    private suspend fun checkForNightlyUpdate(force: Boolean): UpdateCheckResult? = nightlyMutex.withLock {
+    override suspend fun getLatestStableRelease(): UpdateCheckResult = withContext(Dispatchers.IO) {
+        try {
+            val latest = githubApi.getLatestRelease()?.toAppReleaseOrNull()
+            if (latest != null) UpdateCheckResult.UpdateAvailable(latest) else UpdateCheckResult.UpToDate
+        } catch (cause: Throwable) {
+            UpdateCheckResult.Failed(cause)
+        }
+    }
+
+    private suspend fun checkForNightlyUpdate(force: Boolean, announce: Boolean): UpdateCheckResult? = nightlyMutex.withLock {
         val current = store.nightlyState.first()
         val now = System.currentTimeMillis()
 
@@ -215,9 +233,12 @@ class UpdateRepositoryImpl @Inject constructor(
         }
 
         val release = remoteDto.toNightlyAppReleaseOrNull(remotePublishedMs) ?: return@withLock null
+        // isNew above already makes this idempotent per digest/timestamp, same role lastNotifiedVersion
+        // plays for stable — so a suppressed discovery here still blocks a later announcing check
+        // from re-sending for the same build.
         store.setNightlyUpdateAvailable(release, remotePublishedMs, remoteDigest, now)
-        _nightlyEvents.trySend(release)
-        
+        if (announce) _nightlyEvents.trySend(release)
+
         UpdateCheckResult.UpdateAvailable(release)
     }
 

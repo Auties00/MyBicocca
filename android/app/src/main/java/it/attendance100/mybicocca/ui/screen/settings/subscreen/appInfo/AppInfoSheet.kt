@@ -93,6 +93,7 @@ import it.attendance100.mybicocca.data.update.DownloadState
 import it.attendance100.mybicocca.domain.model.update.AppRelease
 import it.attendance100.mybicocca.domain.model.update.UpdateCheckResult
 import it.attendance100.mybicocca.domain.model.update.UpdateStatus
+import it.attendance100.mybicocca.domain.model.update.shouldInstallSilently
 import it.attendance100.mybicocca.ui.component.brand.MyBicoccaWordmark
 import it.attendance100.mybicocca.ui.component.directory.SegmentedIconChip
 import it.attendance100.mybicocca.ui.component.directory.SegmentedTile
@@ -176,12 +177,15 @@ fun AppInfoSheet(
     val nightlyAutoInstall by viewModel.nightlyAutoInstall.collectAsStateWithLifecycle()
 
     showUpdateModal?.let { release ->
+        // A manual "Install" tap only ever reaches onInstall when this is false (the button is
+        // hidden otherwise), so it naturally falls through to the normal package-installer dialog.
+        val autoInstallOnSuccess = release.shouldInstallSilently(nightlyAutoInstall)
         UpdateModalSheet(
             release = release,
             downloadStateFlow = viewModel.downloadState,
             onDownload = { viewModel.startDownload(release) },
             onInstall = { file ->
-                viewModel.installDownload(file, silent = release.isPreRelease)
+                viewModel.installDownload(file, silent = autoInstallOnSuccess)
                 viewModel.clearDownload()
                 showUpdateModal = null
             },
@@ -189,7 +193,7 @@ fun AppInfoSheet(
                 viewModel.dismissDownloadError()
                 showUpdateModal = null
             },
-            autoInstallOnSuccess = release.isPreRelease && nightlyAutoInstall
+            autoInstallOnSuccess = autoInstallOnSuccess
         )
     }
 
@@ -356,15 +360,20 @@ fun AppInfoSheet(
                 TextButton(onClick = {
                     showRestoreStableDialog = false
                     viewModel.setNightlyEnabled(false)
-                    viewModel.check { result ->
+                    // restoreToStable, not check: a nightly's version routinely equals or already
+                    // exceeds the latest stable tag, so a newer-than check would report up-to-date
+                    // and never surface anything to install.
+                    viewModel.restoreToStable { result ->
                         if (result is UpdateCheckResult.UpdateAvailable) {
+                            // The user just explicitly confirmed "go back to stable" — the download
+                            // starts immediately regardless of the general auto-download setting
+                            // (that setting governs unattended background behavior; this is already
+                            // a deliberate, attended action). Install still waits for an explicit
+                            // tap on the modal's Install button.
                             showUpdateModal = result.release
-                            // Respect the same auto-download setting the background checker
-                            // honors, so this deliberate action doesn't silently ignore it —
-                            // the modal still opens so progress stays visible either way.
-                            if (viewModel.stableAutoDownload.value) {
-                                viewModel.startDownload(result.release)
-                            }
+                            viewModel.startDownload(result.release)
+                        } else {
+                            onCheckResult(result)
                         }
                     }
                 }) {

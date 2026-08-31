@@ -23,12 +23,17 @@ import androidx.work.Constraints
 import androidx.work.NetworkType
 
 /**
- * Fires the once-a-day update check. Observes the process lifecycle (like the app-lock manager)
- * and, on every foreground, asks the repository for a non-forced check — which is a no-op while
- * the daily freshness window holds, so a frequently-reopened app still hits the network at most
- * once per day. The work runs on the application scope so it outlives the brief foreground event
- * and never blocks startup; failures are swallowed, since a missed update check is harmless and
- * surfaces nothing to the user.
+ * Owns both of this app's update-check triggers. On every foreground it observes the process
+ * lifecycle (like the app-lock manager) and asks the repository for a non-forced check — a no-op
+ * while the daily (stable) / 30-minute-slot (nightly) freshness window holds, so a
+ * frequently-reopened app still hits the network at most that often. It also schedules
+ * [AppUpdateWorker] as a periodic background job, reactively rescheduled whenever the user changes
+ * the check-interval setting (the Update Settings slider), so updates can be discovered — and, per
+ * the auto-download settings, fetched — without the app ever being opened. Both triggers run
+ * force = true/false as appropriate but always let a genuine discovery announce itself (see
+ * [UpdateRepository.checkForUpdates]'s `announce` parameter). The foreground check runs on the
+ * application scope so it outlives the brief foreground event and never blocks startup; failures
+ * are swallowed, since a missed check is harmless and surfaces nothing to the user.
  */
 @Singleton
 class UpdateChecker @Inject constructor(
