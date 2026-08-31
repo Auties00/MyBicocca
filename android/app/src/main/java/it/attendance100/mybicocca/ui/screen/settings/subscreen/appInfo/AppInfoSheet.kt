@@ -32,7 +32,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.ArrowBack
-import androidx.compose.material.icons.outlined.Bedtime
 import androidx.compose.material.icons.outlined.NewReleases
 import androidx.compose.material.icons.outlined.Update
 import androidx.compose.material.icons.rounded.ChevronRight
@@ -298,8 +297,6 @@ fun AppInfoSheet(
                                 githubIcon = githubIcon,
                                 nightlyStatus = nightlyStatus,
                                 nightlyEnabled = nightlyEnabled,
-                                showRestoreStableDialog = showRestoreStableDialog,
-                                setShowRestoreStableDialog = { showRestoreStableDialog = it },
                                 onOpenWhatsNew = { depth = 1 },
                                 onOpenUpdateSettings = { depth = 3 },
                                 onCheckResult = onCheckResult,
@@ -322,7 +319,6 @@ fun AppInfoSheet(
                                 viewModel = viewModel,
                                 nightlyEnabled = nightlyEnabled,
                                 onBack = { depth = 0 },
-                                showRestoreStableDialog = showRestoreStableDialog,
                                 setShowRestoreStableDialog = { showRestoreStableDialog = it }
                             )
                         }
@@ -341,6 +337,41 @@ fun AppInfoSheet(
             }
         }
     }
+
+    // Hoisted above the in-sheet pages (rather than scoped to AboutScene) so it shows up
+    // immediately when toggling beta updates off from the Update Settings page itself, not just
+    // after navigating back to About.
+    if (showRestoreStableDialog) {
+        AlertDialog(
+            onDismissRequest = { showRestoreStableDialog = false },
+            title = { Text(stringResource(R.string.settings_beta_restore_stable_title)) },
+            text = { Text(stringResource(R.string.settings_beta_restore_stable_desc)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    showRestoreStableDialog = false
+                    viewModel.setNightlyEnabled(false)
+                    viewModel.check { result ->
+                        if (result is UpdateCheckResult.UpdateAvailable) {
+                            showUpdateModal = result.release
+                            // Respect the same auto-download setting the background checker
+                            // honors, so this deliberate action doesn't silently ignore it —
+                            // the modal still opens so progress stays visible either way.
+                            if (viewModel.stableAutoDownload.value) {
+                                viewModel.startDownload(result.release)
+                            }
+                        }
+                    }
+                }) {
+                    Text(stringResource(R.string.settings_beta_restore_stable_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRestoreStableDialog = false }) {
+                    Text(stringResource(R.string.settings_beta_restore_stable_dismiss))
+                }
+            }
+        )
+    }
 }
 
 /**
@@ -357,8 +388,6 @@ private fun AboutScene(
     githubIcon: ImageVector,
     nightlyStatus: UpdateStatus,
     nightlyEnabled: Boolean,
-    showRestoreStableDialog: Boolean,
-    setShowRestoreStableDialog: (Boolean) -> Unit,
     onOpenWhatsNew: () -> Unit,
     onOpenUpdateSettings: () -> Unit,
     onCheckResult: (UpdateCheckResult) -> Unit,
@@ -502,32 +531,6 @@ private fun AboutScene(
                     )
                 },
                 trailing = { TrailingGlyph(Icons.Rounded.Link) },
-            )
-        }
-
-        if (showRestoreStableDialog) {
-            AlertDialog(
-                onDismissRequest = { setShowRestoreStableDialog(false) },
-                title = { Text(stringResource(R.string.settings_beta_restore_stable_title)) },
-                text = { Text(stringResource(R.string.settings_beta_restore_stable_desc)) },
-                confirmButton = {
-                    TextButton(onClick = {
-                        setShowRestoreStableDialog(false)
-                        viewModel.setNightlyEnabled(false)
-                        viewModel.check { result ->
-                            if (result is UpdateCheckResult.UpdateAvailable) {
-                                onShowUpdateModal(result.release)
-                            }
-                        }
-                    }) {
-                        Text(stringResource(R.string.settings_beta_restore_stable_confirm))
-                    }
-                },
-                dismissButton = {
-                    TextButton(onClick = { setShowRestoreStableDialog(false) }) {
-                        Text(stringResource(R.string.settings_beta_restore_stable_dismiss))
-                    }
-                }
             )
         }
 
@@ -721,7 +724,6 @@ private fun UpdateSettingsScene(
     viewModel: AppInfoViewModel,
     nightlyEnabled: Boolean,
     onBack: () -> Unit,
-    showRestoreStableDialog: Boolean,
     setShowRestoreStableDialog: (Boolean) -> Unit,
 ) {
     val haptic = rememberHapticManager()

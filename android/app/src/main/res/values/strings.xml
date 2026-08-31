@@ -857,7 +857,7 @@
     <string name="settings_beta_updates_title">Aggiornamenti Beta</string>
     <string name="settings_beta_updates_subtitle">Ricevi le build notturne con le ultime funzionalità</string>
     <string name="settings_beta_restore_stable_title">Disattiva aggiornamenti Beta</string>
-    <string name="settings_beta_restore_stable_desc">Vuoi tornare all\'ultima versione stabile o mantenere questa build notturna?</string>
+    <string name="settings_beta_restore_stable_desc">Vuoi tornare all\'ultima versione stabile o mantenere questa build notturna? Verrai portato alla pagina di download della versione stabile.</string>
     <string name="settings_beta_restore_stable_confirm">Torna a stabile</string>
     <string name="settings_beta_restore_stable_dismiss">Mantieni Nightly</string>
     <string name="settings_github_title">GitHub</string>
