@@ -43,6 +43,13 @@ val versionProps = Properties().apply { versionPropsFile.inputStream().use(::loa
 val appBaseVersionName: String = versionProps.getProperty("baseVersion")?.trim()
     ?: error("version.properties is missing baseVersion")
 
+// Shared between a stable release and the nightlies built against the same base version, so
+// "restore to stable" is a same-or-higher versionCode install, not a downgrade PackageManager
+// refuses — Android only blocks a strictly lower versionCode, not an equal one.
+val appVersionCode: Int = appBaseVersionName.split(".")
+    .map { it.toIntOrNull() ?: 0 }
+    .let { (it.getOrElse(0) { 0 }) * 10_000 + (it.getOrElse(1) { 0 }) * 100 + it.getOrElse(2) { 0 } }
+
 val buildNumber: Int = run {
     val current = versionProps.getProperty("buildNumber")?.trim()?.toIntOrNull() ?: 0
     val buildTaskWords = listOf("assemble", "install", "bundle", "package", "build")
@@ -75,7 +82,7 @@ android {
         applicationId = "it.attendance100.mybicocca"
         minSdk = 25
         targetSdk = 36
-        versionCode = 1
+        versionCode = appVersionCode
         versionName = appBaseVersionName
         manifestPlaceholders["buildNumber"] = buildNumber.toString()
 
@@ -180,11 +187,6 @@ tasks.withType<Test> {
 
 androidComponents {
     onVariants { variant ->
-        if (variant.buildType == "nightly") {
-            val runNumber = (System.currentTimeMillis() / 1000).toInt()
-            variant.outputs.forEach { it.versionCode.set(runNumber) }
-        }
-
         variant.outputs.forEach { variantOutput ->
             val output = variantOutput as com.android.build.api.variant.impl.VariantOutputImpl
             val abi = output.filters.find { it.filterType.toString() == "ABI" }?.identifier
