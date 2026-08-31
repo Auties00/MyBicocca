@@ -7,6 +7,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
+import it.attendance100.mybicocca.core.version.isNightlyBuild
 import it.attendance100.mybicocca.domain.model.update.AppRelease
 import it.attendance100.mybicocca.domain.model.update.AppReleaseAsset
 import kotlinx.coroutines.flow.Flow
@@ -244,7 +245,9 @@ class UpdateStateStore @Inject constructor(
         dataStore.edit { it[NIGHTLY_AUTO_INSTALL_KEY] = enabled }
     }
 
-    val nightlyEnabled: Flow<Boolean> = dataStore.data.map { it[NIGHTLY_ENABLED_KEY] ?: false }
+    // Defaults on for a nightly build itself — you're already running one, so the toggle should
+    // reflect that rather than making you re-enable the channel you're already on.
+    val nightlyEnabled: Flow<Boolean> = dataStore.data.map { it[NIGHTLY_ENABLED_KEY] ?: isNightlyBuild }
 
     suspend fun setNightlyEnabled(enabled: Boolean) {
         dataStore.edit { it[NIGHTLY_ENABLED_KEY] = enabled }

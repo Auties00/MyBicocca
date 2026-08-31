@@ -89,6 +89,7 @@ import it.attendance100.mybicocca.BuildConfig
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.currentLocale
 import it.attendance100.mybicocca.core.os.rememberHapticManager
+import it.attendance100.mybicocca.core.version.isNightlyBuild
 import it.attendance100.mybicocca.data.update.DownloadState
 import it.attendance100.mybicocca.domain.model.update.AppRelease
 import it.attendance100.mybicocca.domain.model.update.UpdateCheckResult
@@ -116,7 +117,7 @@ private val versionText: String = buildString {
     if (BuildConfig.DEBUG && BuildConfig.BUILD_TYPE != "release") append(" [Debug]")
 
     val nightlyId = BuildConfig.NIGHTLY_IDENTIFIER
-    if (BuildConfig.VERSION_NAME.contains("nightly") && nightlyId.isNotEmpty()) {
+    if (isNightlyBuild && nightlyId.isNotEmpty()) {
         append(" [$nightlyId]")
     }
 }

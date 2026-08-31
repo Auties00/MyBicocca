@@ -2,6 +2,7 @@ package it.attendance100.mybicocca.data.repository
 
 import it.attendance100.mybicocca.BuildConfig
 import it.attendance100.mybicocca.core.version.SemVer
+import it.attendance100.mybicocca.core.version.isNightlyBuild
 import it.attendance100.mybicocca.data.local.settings.PersistedUpdateState
 import it.attendance100.mybicocca.data.local.settings.UpdateStateStore
 import it.attendance100.mybicocca.data.mapper.update.toAppReleaseOrNull
@@ -142,11 +143,10 @@ class UpdateRepositoryImpl @Inject constructor(
                 return@withLock UpdateCheckResult.UpToDate
             }
 
-            val isNightly = BuildConfig.VERSION_NAME.contains("nightly", ignoreCase = true)
             val currentVersion = BuildConfig.VERSION_NAME.substringBefore("-")
             val isNewer = SemVer.isNewer(latest.versionName, currentVersion)
             // A nightly is newer than its stable base, so matching base versions isn't "same".
-            val isSameAndForced = force && latest.versionName == currentVersion && !isNightly
+            val isSameAndForced = force && latest.versionName == currentVersion && !isNightlyBuild
 
             if (!isNewer && !isSameAndForced) {
                 store.setUpToDate(now)
