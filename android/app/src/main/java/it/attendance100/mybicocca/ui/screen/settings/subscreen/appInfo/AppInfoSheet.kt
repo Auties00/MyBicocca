@@ -476,9 +476,9 @@ private fun AboutScene(
                 },
                 leading = {
                     SegmentedIconChip(
-                        Icons.Outlined.Bedtime,
+                        ImageVector.vectorResource(R.drawable.rule_settings_24px),
                         scheme.secondaryContainer,
-                        scheme.onSecondaryContainer,
+                        scheme.onSecondaryContainer
                     )
                 },
                 trailing = { TrailingGlyph(Icons.Rounded.ChevronRight) },
