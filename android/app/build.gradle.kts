@@ -116,7 +116,19 @@ android {
         } else {
             ""
         }
-        val commitSha = System.getenv("GITHUB_SHA")?.take(7) ?: ""
+        // Two nightlies built against the same baseVersion share a versionCode *and* a versionName,
+        // so the commit is the only thing telling them apart — which is what the update check
+        // compares. GITHUB_SHA is only set on CI, so fall back to git locally rather than leaving
+        // every local build with the same empty SHA and no way to tell them apart.
+        val commitSha: String = System.getenv("GITHUB_SHA")?.take(7)
+            ?: runCatching {
+                val process = ProcessBuilder("git", "rev-parse", "--short=7", "HEAD")
+                    .directory(rootDir)
+                    .redirectErrorStream(true)
+                    .start()
+                val output = process.inputStream.bufferedReader().use { it.readText() }.trim()
+                output.takeIf { process.waitFor() == 0 && it.isNotEmpty() }
+            }.getOrNull() ?: ""
         buildConfigField("String", "NIGHTLY_IDENTIFIER", "\"$nightlyIdentifier\"")
         buildConfigField("String", "COMMIT_SHA", "\"$commitSha\"")
 
@@ -214,7 +226,7 @@ android {
 tasks.withType<Test> {
     maxHeapSize = "2g"
     jvmArgs("-XX:MaxMetaspaceSize=1g")
-    setForkEvery(10)
+    forkEvery = 10
 }
 
 androidComponents {

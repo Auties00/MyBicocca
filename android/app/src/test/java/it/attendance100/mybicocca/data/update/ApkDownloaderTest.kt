@@ -59,4 +59,44 @@ class ApkDownloaderTest {
         io.mockk.unmockkStatic(androidx.core.content.FileProvider::class)
         file.delete()
     }
+
+    @Test
+    fun returningFromInstallerWithInstallPending_reportsDeclined() = testScope.runTest {
+        val file = stubInstallerLaunch()
+
+        downloader.installApk(file)
+        downloader.onAppBackgrounded()
+        downloader.onAppForegrounded()
+
+        assertThat(downloader.downloadState.value)
+            .isEqualTo(DownloadState.InstallDeclined(file))
+
+        io.mockk.unmockkStatic(androidx.core.content.FileProvider::class)
+        file.delete()
+    }
+
+    /** Foregrounding without the installer ever having taken us away isn't a decline. */
+    @Test
+    fun foregroundedWithoutLeaving_doesNotReportDeclined() = testScope.runTest {
+        val file = stubInstallerLaunch()
+
+        downloader.installApk(file)
+        downloader.onAppForegrounded()
+
+        assertThat(downloader.downloadState.value).isEqualTo(DownloadState.Idle)
+
+        io.mockk.unmockkStatic(androidx.core.content.FileProvider::class)
+        file.delete()
+    }
+
+    private fun stubInstallerLaunch(): File {
+        val file = File.createTempFile("test", ".apk")
+        every { context.startActivity(any()) } returns Unit
+        every { context.packageName } returns "it.attendance100.mybicocca"
+        io.mockk.mockkStatic(androidx.core.content.FileProvider::class)
+        every {
+            androidx.core.content.FileProvider.getUriForFile(context, any(), file)
+        } returns android.net.Uri.parse("content://dummy")
+        return file
+    }
 }

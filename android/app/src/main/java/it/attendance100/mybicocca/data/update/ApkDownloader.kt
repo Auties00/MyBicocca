@@ -38,6 +38,8 @@ sealed interface DownloadState {
     data object Idle : DownloadState
     data class Downloading(val progress: Int) : DownloadState
     data class Success(val file: File) : DownloadState
+    /** The system installer was dismissed without installing. [file] is still downloaded and valid. */
+    data class InstallDeclined(val file: File) : DownloadState
     data class Error(val message: UiText) : DownloadState
 }
 
@@ -55,8 +57,35 @@ class ApkDownloader @Inject constructor(
     private val _downloadState = MutableStateFlow<DownloadState>(DownloadState.Idle)
     val downloadState: StateFlow<DownloadState> = _downloadState.asStateFlow()
 
+    // The APK handed to the system installer, if we're waiting on that dialog. ACTION_VIEW reports
+    // nothing back, so a decline has to be inferred: a successful install replaces the process, so
+    // coming back with this still set means the user dismissed the dialog.
+    private var pendingInstall: File? = null
+
+    // ...but only once the installer actually took us to the background, so a resume that never
+    // left (or one the installer never fronted) isn't mistaken for a decline.
+    private var leftForInstaller = false
+
+    /** Driven by [UpdateChecker]'s process-lifecycle observer rather than one registered here. */
+    fun onAppBackgrounded() {
+        if (pendingInstall != null) leftForInstaller = true
+    }
+
+    fun onAppForegrounded() {
+        val file = pendingInstall
+        if (file == null || !leftForInstaller) return
+        clearPendingInstall()
+        _downloadState.value = DownloadState.InstallDeclined(file)
+    }
+
+    private fun clearPendingInstall() {
+        pendingInstall = null
+        leftForInstaller = false
+    }
+
     fun startDownload(release: AppRelease) {
         if (_downloadState.value is DownloadState.Downloading) return
+        clearPendingInstall()
 
         scope.launch {
             _downloadState.value = DownloadState.Downloading(0)
@@ -163,6 +192,7 @@ class ApkDownloader @Inject constructor(
     }
 
     fun resetState() {
+        clearPendingInstall()
         _downloadState.value = DownloadState.Idle
     }
 
@@ -189,6 +219,8 @@ class ApkDownloader @Inject constructor(
      * ready", and the tap that opens this dialog is the user's.
      */
     fun installApk(file: File) {
+        pendingInstall = file
+        leftForInstaller = false
         val uri = FileProvider.getUriForFile(
             context,
             "${context.packageName}.fileprovider",

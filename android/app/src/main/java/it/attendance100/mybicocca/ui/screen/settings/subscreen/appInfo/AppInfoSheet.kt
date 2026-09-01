@@ -182,7 +182,6 @@ fun AppInfoSheet(
             onDownload = { viewModel.startDownload(release) },
             onInstall = { file ->
                 viewModel.installDownload(file)
-                viewModel.clearDownload()
                 showUpdateModal = null
             },
             onDismiss = {

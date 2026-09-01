@@ -1659,6 +1659,7 @@
     <string name="update_modal_github">Open on GitHub</string>
     <string name="update_modal_download">Download update</string>
     <string name="update_modal_install">Install update</string>
+    <string name="update_modal_install_cancelled">Installation cancelled. The update is already downloaded, you can install it whenever you want.</string>
     <string name="update_modal_installing">Installing update...</string>
     <string name="update_modal_not_now">Not now</string>
     <string name="update_modal_downloading">Downloading… %1$d%%</string>

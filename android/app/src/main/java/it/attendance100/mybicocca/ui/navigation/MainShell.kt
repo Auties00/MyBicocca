@@ -548,8 +548,9 @@ fun MainShell(
                 updateEventsViewModel.startDownload(release)
             },
             onInstall = { file ->
+                // State deliberately left alone: the APK stays downloaded and ready, and the
+                // downloader needs its pending-install marker to notice a dismissed dialog.
                 updateEventsViewModel.installApk(file)
-                updateEventsViewModel.clearDownload()
                 showUpdateModal = null
             },
             onDismiss = {
@@ -600,7 +601,6 @@ fun MainShell(
             if (showUpdateModal == null) {
                 snackbarController.showInfo(strInstallUpdate) {
                     updateEventsViewModel.installApk(file)
-                    updateEventsViewModel.clearDownload()
                 }
             }
         }

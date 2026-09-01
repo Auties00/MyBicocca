@@ -139,6 +139,11 @@ fun UpdateModalSheet(
                 ) {
                     val isDownloading = downloadState is DownloadState.Downloading
                     val hasError = downloadState is DownloadState.Error
+                    // A declined install leaves a perfectly good APK behind, so it offers the same
+                    // button as a fresh download rather than sending the user through it again.
+                    val readyToInstall = (downloadState as? DownloadState.Success)?.file
+                        ?: (downloadState as? DownloadState.InstallDeclined)?.file
+                    val wasDeclined = downloadState is DownloadState.InstallDeclined
                     val progress = (downloadState as? DownloadState.Downloading)?.progress ?: 0
                     val progressFraction = (progress / 100f).coerceIn(0f, 1f)
                     val textToShow = stringResource(R.string.update_modal_downloading, progress)
@@ -193,9 +198,9 @@ fun UpdateModalSheet(
                                     )
                                 }
                             }
-                        } else if (downloadState is DownloadState.Success) {
+                        } else if (readyToInstall != null) {
                             Button(
-                                onClick = { onInstall((downloadState as DownloadState.Success).file) },
+                                onClick = { onInstall(readyToInstall) },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(48.dp)
@@ -224,6 +229,14 @@ fun UpdateModalSheet(
                             text = (downloadState as DownloadState.Error).message.asString(),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.Center,
+                        )
+                    } else if (wasDeclined) {
+                        Text(
+                            text = stringResource(R.string.update_modal_install_cancelled),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.fillMaxWidth(),
                             textAlign = TextAlign.Center,
                         )

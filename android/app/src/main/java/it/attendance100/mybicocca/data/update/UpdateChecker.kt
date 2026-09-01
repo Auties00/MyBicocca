@@ -32,6 +32,7 @@ class UpdateChecker @Inject constructor(
     private val repository: UpdateRepository,
     @ApplicationScope private val scope: CoroutineScope,
     @ApplicationContext private val context: Context,
+    private val apkDownloader: ApkDownloader,
 ) : DefaultLifecycleObserver {
 
     // start() is called from the activity's onCreate, which can re-run within the same process
@@ -85,6 +86,13 @@ class UpdateChecker @Inject constructor(
     }
 
     override fun onStart(owner: LifecycleOwner) {
+        // Coming back from the system installer with an install still pending means it was
+        // dismissed; this is the only signal ACTION_VIEW gives us that it happened.
+        apkDownloader.onAppForegrounded()
         scope.launch { runCatching { repository.checkForUpdates(force = false) } }
+    }
+
+    override fun onStop(owner: LifecycleOwner) {
+        apkDownloader.onAppBackgrounded()
     }
 }
