@@ -25,7 +25,7 @@ import androidx.work.NetworkType
 /**
  * Owns both of this app's update-check triggers: a foreground non-forced check on every resume,
  * and [AppUpdateWorker] as a periodic background job. Safe to call [start] again on every activity
- * recreation — re-adding the same singleton observer is a no-op.
+ * recreation — internally guarded to run its setup once per process.
  */
 @Singleton
 class UpdateChecker @Inject constructor(
@@ -34,7 +34,17 @@ class UpdateChecker @Inject constructor(
     @ApplicationContext private val context: Context,
 ) : DefaultLifecycleObserver {
 
+    // start() is called from the activity's onCreate, which can re-run within the same process
+    // (e.g. the OS recreating the activity after reclaiming memory while backgrounded) even though
+    // this singleton outlives it — without this guard, each call launches another never-cancelled
+    // collector on the application scope, so a later interval change fires enqueuePeriodicWork once
+    // per launched collector instead of once.
+    private var started = false
+
     fun start() {
+        if (started) return
+        started = true
+
         // Reactive so a check-interval change reschedules the worker immediately.
         scope.launch {
             repository.observeCheckIntervalMinutes()
@@ -61,11 +71,15 @@ class UpdateChecker @Inject constructor(
             )
             .build()
 
-        // UPDATE so a changed interval replaces the currently-enqueued schedule instead of a stale
-        // one running forever.
+        // REPLACE (not UPDATE): UPDATE is meant to preserve identity across an in-place change, but
+        // a periodic work's platform-level JobScheduler entry can't actually be mutated once
+        // scheduled, and in practice the old entry wasn't reliably cleaned up on reschedule
+        // (observed via Background Task Inspector: a new SystemJobService row per interval change,
+        // old ones never clearing). REPLACE explicitly cancels-and-deletes before enqueueing fresh
+        // — losing an in-progress run isn't a real cost for a lightweight periodic check.
         WorkManager.getInstance(context).enqueueUniquePeriodicWork(
             "AppUpdateWorker",
-            ExistingPeriodicWorkPolicy.UPDATE,
+            ExistingPeriodicWorkPolicy.REPLACE,
             workRequest
         )
     }

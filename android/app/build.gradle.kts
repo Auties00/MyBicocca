@@ -1,7 +1,8 @@
-import java.util.Properties
-import java.util.TimeZone
+
 import java.text.SimpleDateFormat
 import java.util.Date
+import java.util.Properties
+import java.util.TimeZone
 
 // Plugins
 plugins {
@@ -131,6 +132,12 @@ android {
     }
 
     buildTypes {
+        // Empty otherwise, but the oss-licenses-plugin's per-variant task wiring appears to need
+        // this block to exist explicitly (removing it broke nightlyOssLicensesTask with an
+        // unrelated-looking "addDebugLicense()" Groovy error) -- isDebuggable is already AGP's
+        // default true for the literal "debug" build type, this doesn't change anything.
+        debug {
+        }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
@@ -142,6 +149,11 @@ android {
         }
         create("nightly") {
             initWith(getByName("release"))
+            // initWith(release) also carries over isDebuggable = false, which is why a nightly
+            // build doesn't show up as an attachable process for Android Studio's debugger/App
+            // Inspection at all (a non-debuggable process is invisible to adb jdwp, not just
+            // access-restricted) -- debug itself doesn't need this, AGP already defaults it true.
+            isDebuggable = true
             versionNameSuffix = "-nightly"
             matchingFallbacks += listOf("release")
             signingConfig = signingConfigs.getByName("release").takeIf { it.storeFile != null }
