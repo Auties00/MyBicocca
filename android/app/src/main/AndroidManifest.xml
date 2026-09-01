@@ -144,7 +144,5 @@
           android:value="androidx.startup"
           tools:node="remove" />
     </provider>
-
-    <receiver android:name=".data.update.InstallResultReceiver" android:exported="false" />
   </application>
 </manifest>

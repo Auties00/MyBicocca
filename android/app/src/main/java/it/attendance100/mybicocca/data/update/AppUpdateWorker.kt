@@ -19,33 +19,32 @@ class AppUpdateWorker @AssistedInject constructor(
     private val updateStateStore: UpdateStateStore
 ) : CoroutineWorker(context, params) {
 
+    // The worker never installs: it only gets an update as far as "downloaded and ready", and the
+    // user starts the install themselves from the foreground.
     // TODO(update-notifications): see /UPDATE_NOTIFICATIONS_PLAN.md — the downloads below have no
     // setForeground()/progress notification, so the OS can kill them mid-download while
     // backgrounded, and a finished download here still isn't reflected to MainShell, which may
-    // redundantly redownload once the app reopens and drains the buffered event.
+    // redundantly redownload once the app reopens and drains the buffered event. Until that lands,
+    // a background check surfaces nothing on its own; the next foreground open raises the snackbar.
     override suspend fun doWork(): Result {
         try {
             repository.checkForUpdates(force = true, announce = true)
 
             val stableState = updateStateStore.state.first()
-            val stableAutoDownload = updateStateStore.stableAutoDownload.first()
-            if (stableState.available && stableState.release != null && stableAutoDownload) {
+            if (stableState.available && stableState.release != null &&
+                updateStateStore.stableAutoDownload.first()
+            ) {
                 apkDownloader.startDownload(stableState.release)
                 apkDownloader.downloadState.first { it is DownloadState.Success || it is DownloadState.Error }
-                // Stable never auto-installs; the user installs manually once notified.
             }
 
-            val nightlyEnabled = updateStateStore.nightlyEnabled.first()
-            if (nightlyEnabled) {
+            if (updateStateStore.nightlyEnabled.first()) {
                 val nightlyState = updateStateStore.nightlyState.first()
-                val nightlyAutoDownload = updateStateStore.nightlyAutoDownload.first()
-                if (nightlyState.available && nightlyState.release != null && nightlyAutoDownload) {
+                if (nightlyState.available && nightlyState.release != null &&
+                    updateStateStore.nightlyAutoDownload.first()
+                ) {
                     apkDownloader.startDownload(nightlyState.release)
-                    val terminalState = apkDownloader.downloadState
-                        .first { it is DownloadState.Success || it is DownloadState.Error }
-                    if (terminalState is DownloadState.Success && updateStateStore.nightlyAutoInstall.first()) {
-                        apkDownloader.installApk(terminalState.file, silent = true)
-                    }
+                    apkDownloader.downloadState.first { it is DownloadState.Success || it is DownloadState.Error }
                 }
             }
 

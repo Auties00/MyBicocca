@@ -29,7 +29,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.io.asSink
 import java.io.File
-import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.roundToInt
@@ -56,17 +55,8 @@ class ApkDownloader @Inject constructor(
     private val _downloadState = MutableStateFlow<DownloadState>(DownloadState.Idle)
     val downloadState: StateFlow<DownloadState> = _downloadState.asStateFlow()
 
-    // downloadState is one shared StateFlow with multiple independent watchers for a Success
-    // transition (AppUpdateWorker's own completion wait, MainShell's reactive effect,
-    // UpdateModalSheet's auto-install effect) — nothing coordinates which one "claims" a given
-    // completion, so with both nightly settings on, more than one would silently install the same
-    // file. This guard makes the silent path idempotent per download cycle instead of relying on
-    // every call site to coordinate perfectly.
-    private val silentInstallTriggered = AtomicBoolean(false)
-
     fun startDownload(release: AppRelease) {
         if (_downloadState.value is DownloadState.Downloading) return
-        silentInstallTriggered.set(false)
 
         scope.launch {
             _downloadState.value = DownloadState.Downloading(0)
@@ -174,7 +164,6 @@ class ApkDownloader @Inject constructor(
 
     fun resetState() {
         _downloadState.value = DownloadState.Idle
-        silentInstallTriggered.set(false)
     }
 
     /**
@@ -195,26 +184,11 @@ class ApkDownloader @Inject constructor(
     }
 
     /**
-     * Installs a downloaded APK.
-     * When [silent] is false, or on older Android versions where silent installs aren't supported,
-     * fires the system installer UI via `ACTION_VIEW`.
-     * When [silent] is true and the device runs API 31+, uses the `PackageInstaller` session API
-     * with `USER_ACTION_NOT_REQUIRED` to install the update in the background.
+     * Hands a downloaded APK to the system installer, which always asks the user to confirm.
+     * Installing is never automatic: the app only ever gets an update as far as "downloaded and
+     * ready", and the tap that opens this dialog is the user's.
      */
-    suspend fun installApk(file: File, silent: Boolean) {
-        if (silent && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            // Only the first of possibly several concurrent watchers gets to install; see
-            // silentInstallTriggered's declaration for why this exists.
-            if (!silentInstallTriggered.compareAndSet(false, true)) return
-            withContext(kotlinx.coroutines.Dispatchers.IO) {
-                installSilently(file)
-            }
-        } else {
-            installWithSystemUi(file)
-        }
-    }
-
-    private fun installWithSystemUi(file: File) {
+    fun installApk(file: File) {
         val uri = FileProvider.getUriForFile(
             context,
             "${context.packageName}.fileprovider",
@@ -226,64 +200,6 @@ class ApkDownloader @Inject constructor(
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
         context.startActivity(intent)
-    }
-
-    private suspend fun installSilently(file: File) {
-        val packageInstaller = context.packageManager.packageInstaller
-        val params = android.content.pm.PackageInstaller.SessionParams(
-            android.content.pm.PackageInstaller.SessionParams.MODE_FULL_INSTALL
-        ).apply {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                setRequireUserAction(android.content.pm.PackageInstaller.SessionParams.USER_ACTION_NOT_REQUIRED)
-            }
-        }
-        
-        var sessionId = -1
-        try {
-            sessionId = packageInstaller.createSession(params)
-            val session = packageInstaller.openSession(sessionId)
-
-            session.openWrite("package", 0, file.length()).use { out ->
-                file.inputStream().use { input ->
-                    input.copyTo(out)
-                }
-                session.fsync(out)
-            }
-
-            val intent = Intent(context, InstallResultReceiver::class.java)
-            val flags = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_MUTABLE
-            } else {
-                android.app.PendingIntent.FLAG_UPDATE_CURRENT
-            }
-            val pendingIntent = android.app.PendingIntent.getBroadcast(context, sessionId, intent, flags)
-
-            session.commit(pendingIntent.intentSender)
-            // Note: After a successful commit, the system takes ownership of the session.
-            // Calling close() here is a no-op on some API levels, but is kept for safety.
-            session.close()
-        } catch (e: Exception) {
-            e.printStackTrace()
-            if (sessionId != -1) {
-                try {
-                    packageInstaller.abandonSession(sessionId)
-                } catch (ignored: Exception) {}
-            }
-            silentInstallTriggered.set(false)
-            _downloadState.value = DownloadState.Error(
-                UiText.StringResource(it.attendance100.mybicocca.R.string.apk_downloader_failed)
-            )
-        }
-    }
-
-    fun onInstallResult(status: Int, message: String?) {
-        if (status == android.content.pm.PackageInstaller.STATUS_SUCCESS) {
-            _downloadState.value = DownloadState.Idle
-        } else {
-            silentInstallTriggered.set(false)
-            val errorMsg = message ?: "Install failed (code $status)"
-            _downloadState.value = DownloadState.Error(UiText.DynamicString(errorMsg))
-        }
     }
 
     companion object {

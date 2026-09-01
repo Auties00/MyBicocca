@@ -28,14 +28,6 @@ data class AppRelease(
     val commitSha: String? = null
 )
 
-/** Whether an already-downloaded [AppRelease] should install without an explicit user tap. */
-fun AppRelease.shouldInstallSilently(nightlyAutoInstall: Boolean): Boolean =
-    isPreRelease && nightlyAutoInstall
-
-/** Whether [AppRelease] should be downloaded *and* installed with zero user interaction. */
-fun AppRelease.shouldRunFullyUnattended(nightlyAutoDownload: Boolean, nightlyAutoInstall: Boolean): Boolean =
-    isPreRelease && nightlyAutoDownload && nightlyAutoInstall
-
 @Serializable
 data class AppReleaseAsset(
     val name: String,

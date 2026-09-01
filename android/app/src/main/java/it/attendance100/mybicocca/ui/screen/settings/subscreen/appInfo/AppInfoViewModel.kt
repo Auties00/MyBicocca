@@ -57,11 +57,7 @@ class AppInfoViewModel @Inject constructor(
     fun startDownload(release: AppRelease) = downloader.startDownload(release)
 
     /** Launches the installer for a finished download; call only from the foreground. */
-    fun installDownload(file: File, silent: Boolean = false) {
-        viewModelScope.launch {
-            downloader.installApk(file, silent)
-        }
-    }
+    fun installDownload(file: File) = downloader.installApk(file)
 
     fun clearDownload() = downloader.resetState()
 
@@ -106,7 +102,7 @@ class AppInfoViewModel @Inject constructor(
     }
 
     val stableAutoDownload: StateFlow<Boolean> = updateRepository.observeStableAutoDownload()
-        .stateIn(viewModelScope, SharingStarted.Eagerly, true)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     fun setStableAutoDownload(enabled: Boolean) {
         viewModelScope.launch { updateRepository.setStableAutoDownload(enabled) }
@@ -117,13 +113,6 @@ class AppInfoViewModel @Inject constructor(
 
     fun setNightlyAutoDownload(enabled: Boolean) {
         viewModelScope.launch { updateRepository.setNightlyAutoDownload(enabled) }
-    }
-
-    val nightlyAutoInstall: StateFlow<Boolean> = updateRepository.observeNightlyAutoInstall()
-        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
-
-    fun setNightlyAutoInstall(enabled: Boolean) {
-        viewModelScope.launch { updateRepository.setNightlyAutoInstall(enabled) }
     }
 
     val checkIntervalMinutes: StateFlow<Int> = updateRepository.observeCheckIntervalMinutes()

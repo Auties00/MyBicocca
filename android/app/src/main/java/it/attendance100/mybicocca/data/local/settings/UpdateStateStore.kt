@@ -203,7 +203,6 @@ class UpdateStateStore @Inject constructor(
 
         val STABLE_AUTO_DOWNLOAD_KEY = booleanPreferencesKey("update_stable_auto_download")
         val NIGHTLY_AUTO_DOWNLOAD_KEY = booleanPreferencesKey("update_nightly_auto_download")
-        val NIGHTLY_AUTO_INSTALL_KEY = booleanPreferencesKey("update_nightly_auto_install")
 
         val NIGHTLY_ENABLED_KEY = booleanPreferencesKey("update_nightly_enabled")
         val NIGHTLY_LAST_CHECKED_MS_KEY = longPreferencesKey("update_nightly_last_checked_ms")
@@ -227,7 +226,10 @@ class UpdateStateStore @Inject constructor(
         dataStore.edit { it[CHECK_INTERVAL_MINUTES_KEY] = minutes }
     }
 
-    val stableAutoDownload: Flow<Boolean> = dataStore.data.map { it[STABLE_AUTO_DOWNLOAD_KEY] ?: true }
+    // Off by default: stable releases are rare and large, so spending someone's data on one they
+    // haven't asked for isn't a fair default. Nightlies are opt-in already, and whoever opted in
+    // wants each build as it lands.
+    val stableAutoDownload: Flow<Boolean> = dataStore.data.map { it[STABLE_AUTO_DOWNLOAD_KEY] ?: false }
 
     suspend fun setStableAutoDownload(enabled: Boolean) {
         dataStore.edit { it[STABLE_AUTO_DOWNLOAD_KEY] = enabled }
@@ -237,12 +239,6 @@ class UpdateStateStore @Inject constructor(
 
     suspend fun setNightlyAutoDownload(enabled: Boolean) {
         dataStore.edit { it[NIGHTLY_AUTO_DOWNLOAD_KEY] = enabled }
-    }
-
-    val nightlyAutoInstall: Flow<Boolean> = dataStore.data.map { it[NIGHTLY_AUTO_INSTALL_KEY] ?: false }
-
-    suspend fun setNightlyAutoInstall(enabled: Boolean) {
-        dataStore.edit { it[NIGHTLY_AUTO_INSTALL_KEY] = enabled }
     }
 
     // Defaults on for a nightly build itself — you're already running one, so the toggle should

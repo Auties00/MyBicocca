@@ -94,7 +94,6 @@ import it.attendance100.mybicocca.data.update.DownloadState
 import it.attendance100.mybicocca.domain.model.update.AppRelease
 import it.attendance100.mybicocca.domain.model.update.UpdateCheckResult
 import it.attendance100.mybicocca.domain.model.update.UpdateStatus
-import it.attendance100.mybicocca.domain.model.update.shouldInstallSilently
 import it.attendance100.mybicocca.ui.component.brand.MyBicoccaWordmark
 import it.attendance100.mybicocca.ui.component.directory.SegmentedIconChip
 import it.attendance100.mybicocca.ui.component.directory.SegmentedTile
@@ -175,16 +174,14 @@ fun AppInfoSheet(
     // In-sheet depth: 0 = About, 1 = What's New (merged), 2 = All versions, 3 = Update Settings.
     var depth by rememberSaveable { mutableIntStateOf(0) }
     var showUpdateModal by remember { mutableStateOf<AppRelease?>(null) }
-    val nightlyAutoInstall by viewModel.nightlyAutoInstall.collectAsStateWithLifecycle()
 
     showUpdateModal?.let { release ->
-        val autoInstallOnSuccess = release.shouldInstallSilently(nightlyAutoInstall)
         UpdateModalSheet(
             release = release,
             downloadStateFlow = viewModel.downloadState,
             onDownload = { viewModel.startDownload(release) },
             onInstall = { file ->
-                viewModel.installDownload(file, silent = autoInstallOnSuccess)
+                viewModel.installDownload(file)
                 viewModel.clearDownload()
                 showUpdateModal = null
             },
@@ -192,7 +189,6 @@ fun AppInfoSheet(
                 viewModel.dismissDownloadError()
                 showUpdateModal = null
             },
-            autoInstallOnSuccess = autoInstallOnSuccess
         )
     }
 
@@ -738,7 +734,6 @@ private fun UpdateSettingsScene(
 
     val stableAutoDownload by viewModel.stableAutoDownload.collectAsStateWithLifecycle()
     val nightlyAutoDownload by viewModel.nightlyAutoDownload.collectAsStateWithLifecycle()
-    val nightlyAutoInstall by viewModel.nightlyAutoInstall.collectAsStateWithLifecycle()
     val checkIntervalMinutes by viewModel.checkIntervalMinutes.collectAsStateWithLifecycle()
 
     Column(modifier = modifier) {
@@ -842,7 +837,7 @@ private fun UpdateSettingsScene(
 
             SegmentedTile(
                 isFirst = false,
-                isLast = false,
+                isLast = true,
                 role = androidx.compose.ui.semantics.Role.Switch,
                 title = stringResource(R.string.settings_update_beta_auto_download_title),
                 subtitle = stringResource(R.string.settings_update_beta_auto_download_subtitle),
@@ -853,27 +848,6 @@ private fun UpdateSettingsScene(
                 trailing = {
                     Switch(
                         checked = nightlyAutoDownload && betaTogglesEnabled,
-                        onCheckedChange = null,
-                        enabled = betaTogglesEnabled,
-                        modifier = Modifier.padding(end = 6.dp)
-                    )
-                },
-                modifier = Modifier.alpha(alpha)
-            )
-
-            SegmentedTile(
-                isFirst = false,
-                isLast = true,
-                role = androidx.compose.ui.semantics.Role.Switch,
-                title = stringResource(R.string.settings_update_beta_auto_install_title),
-                subtitle = stringResource(R.string.settings_update_beta_auto_install_subtitle),
-                onClick = if (!betaTogglesEnabled) null else { {
-                    haptic.tap()
-                    viewModel.setNightlyAutoInstall(!nightlyAutoInstall)
-                } },
-                trailing = {
-                    Switch(
-                        checked = nightlyAutoInstall && betaTogglesEnabled,
                         onCheckedChange = null,
                         enabled = betaTogglesEnabled,
                         modifier = Modifier.padding(end = 6.dp)

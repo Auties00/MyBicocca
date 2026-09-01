@@ -60,8 +60,6 @@ import it.attendance100.mybicocca.core.state.valueOrNull
 import it.attendance100.mybicocca.data.mapper.calendar.examCalendarEventId
 import it.attendance100.mybicocca.domain.model.calendar.CalendarEvent
 import it.attendance100.mybicocca.domain.model.settings.FileOpenChoice
-import it.attendance100.mybicocca.domain.model.update.shouldInstallSilently
-import it.attendance100.mybicocca.domain.model.update.shouldRunFullyUnattended
 import it.attendance100.mybicocca.ui.component.bar.BottomBarItem
 import it.attendance100.mybicocca.ui.component.bar.MyBicoccaBottomBar
 import it.attendance100.mybicocca.ui.component.bar.MyBicoccaTopBar
@@ -537,13 +535,11 @@ fun MainShell(
     val snackbarController = rememberAppSnackbarController()
     val updateEventsViewModel: UpdateEventsViewModel = hiltViewModel()
 
-    val nightlyAutoInstall by updateEventsViewModel.nightlyAutoInstall.collectAsStateWithLifecycle()
     val downloadState by updateEventsViewModel.downloadState.collectAsStateWithLifecycle()
     var showUpdateModal by remember { mutableStateOf<it.attendance100.mybicocca.domain.model.update.AppRelease?>(null) }
     var downloadingRelease by remember { mutableStateOf<it.attendance100.mybicocca.domain.model.update.AppRelease?>(null) }
 
     showUpdateModal?.let { release ->
-        val autoInstallOnSuccess = release.shouldInstallSilently(nightlyAutoInstall)
         it.attendance100.mybicocca.ui.component.modal.UpdateModalSheet(
             release = release,
             downloadStateFlow = updateEventsViewModel.downloadState,
@@ -552,7 +548,7 @@ fun MainShell(
                 updateEventsViewModel.startDownload(release)
             },
             onInstall = { file ->
-                updateEventsViewModel.installApk(file, silent = autoInstallOnSuccess)
+                updateEventsViewModel.installApk(file)
                 updateEventsViewModel.clearDownload()
                 showUpdateModal = null
             },
@@ -560,18 +556,16 @@ fun MainShell(
                 updateEventsViewModel.dismissDownloadError()
                 showUpdateModal = null
             },
-            autoInstallOnSuccess = autoInstallOnSuccess
         )
     }
 
     val strInstallUpdate = stringResource(R.string.update_modal_install)
 
+    // Both channels take the same path — announce, then either start the download straight away or
+    // let the tap open the modal to download from. Only the event source differs.
     LaunchedEffect(updateEventsViewModel, snackbarController) {
         updateEventsViewModel.events.collect { release ->
-            // Fresh read, not the cached StateFlow above: right after a process restart (every
-            // silent install causes one) the cached value can still show its eager placeholder
-            // default for a moment rather than the real persisted setting.
-            if (updateEventsViewModel.freshStableAutoDownload()) {
+            if (updateEventsViewModel.stableAutoDownload()) {
                 snackbarController.showInfo(strShellUpdateAvailable)
                 downloadingRelease = release
                 updateEventsViewModel.startDownload(release)
@@ -585,7 +579,7 @@ fun MainShell(
 
     LaunchedEffect(updateEventsViewModel, snackbarController) {
         updateEventsViewModel.nightlyEvents.collect { release ->
-            if (updateEventsViewModel.freshNightlyAutoDownload()) {
+            if (updateEventsViewModel.nightlyAutoDownload()) {
                 snackbarController.showInfo(strShellUpdateAvailable)
                 downloadingRelease = release
                 updateEventsViewModel.startDownload(release)
@@ -597,24 +591,15 @@ fun MainShell(
         }
     }
 
+    // A finished download is only ever offered, never acted on: the install starts from the tap.
     LaunchedEffect(downloadState) {
         if (downloadState is it.attendance100.mybicocca.data.update.DownloadState.Success) {
             val file = (downloadState as it.attendance100.mybicocca.data.update.DownloadState.Success).file
-            val release = downloadingRelease ?: return@LaunchedEffect
+            if (downloadingRelease == null) return@LaunchedEffect
 
-            val fullyUnattended = release.shouldRunFullyUnattended(
-                updateEventsViewModel.freshNightlyAutoDownload(),
-                updateEventsViewModel.freshNightlyAutoInstall()
-            )
-            if (fullyUnattended) {
-                val strInstalling = context.getString(R.string.update_modal_installing)
-                snackbarController.showInfo(strInstalling)
-                updateEventsViewModel.installApk(file, silent = true)
-                updateEventsViewModel.clearDownload()
-            } else if (showUpdateModal == null) {
+            if (showUpdateModal == null) {
                 snackbarController.showInfo(strInstallUpdate) {
-                    // Explicit tap: normal system install confirmation, never silent.
-                    updateEventsViewModel.installApk(file, silent = false)
+                    updateEventsViewModel.installApk(file)
                     updateEventsViewModel.clearDownload()
                 }
             }

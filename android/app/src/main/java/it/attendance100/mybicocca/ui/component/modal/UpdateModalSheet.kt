@@ -32,7 +32,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -55,11 +54,7 @@ import it.attendance100.mybicocca.domain.model.update.AppRelease
 import it.attendance100.mybicocca.ui.screen.settings.subscreen.appInfo.component.ReleaseNotesView
 import java.io.File
 
-/**
- * [onInstall] fires both from the manual "Install" button and, when [autoInstallOnSuccess] is
- * true, automatically on a successful download with no tap at all — the button is hidden in that
- * case, so a `silent` computed from the same [autoInstallOnSuccess] value is correct either way.
- */
+/** [onInstall] fires only from the "Install" button; a finished download never installs itself. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UpdateModalSheet(
@@ -68,16 +63,9 @@ fun UpdateModalSheet(
     onDownload: () -> Unit,
     onInstall: (File) -> Unit,
     onDismiss: () -> Unit,
-    autoInstallOnSuccess: Boolean = false,
 ) {
     val downloadState by downloadStateFlow.collectAsStateWithLifecycle()
     val uriHandler = LocalUriHandler.current
-    LaunchedEffect(downloadState, autoInstallOnSuccess) {
-        val state = downloadState
-        if (state is DownloadState.Success && autoInstallOnSuccess) {
-            onInstall(state.file)
-        }
-    }
 
     Dialog(
         onDismissRequest = {
@@ -205,7 +193,7 @@ fun UpdateModalSheet(
                                     )
                                 }
                             }
-                        } else if (downloadState is DownloadState.Success && !autoInstallOnSuccess) {
+                        } else if (downloadState is DownloadState.Success) {
                             Button(
                                 onClick = { onInstall((downloadState as DownloadState.Success).file) },
                                 modifier = Modifier
