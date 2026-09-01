@@ -14,14 +14,15 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.role
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -127,7 +128,7 @@ fun SegmentedTile(
     subtitle: String? = null,
     subtitleAnnotated: AnnotatedString? = null,
     onClick: (() -> Unit)? = null,
-    role: androidx.compose.ui.semantics.Role? = null,
+    role: Role? = null,
     enabled: Boolean = true,
     progress: Float? = null,
     leading: (@Composable () -> Unit)? = null,
@@ -154,9 +155,12 @@ fun SegmentedTile(
         ) {
             if (leading != null) {
                 leading()
-                Spacer(Modifier.width(14.dp))
+                Spacer(Modifier.width(9.dp))
             }
-            Column(Modifier.weight(1f)) {
+            Column(Modifier
+                .weight(1f)
+                .padding(start=5.dp)
+            ) {
                 if (titleAnnotated != null) {
                     Text(
                         text = titleAnnotated,

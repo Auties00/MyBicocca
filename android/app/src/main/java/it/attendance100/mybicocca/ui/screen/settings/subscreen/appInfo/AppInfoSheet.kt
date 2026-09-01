@@ -78,6 +78,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -312,7 +313,7 @@ fun AppInfoSheet(
                                 onAllVersions = { depth = 2 },
                                 modifier = pageModifier,
                             )
-                            
+
                             2 -> WhatsNewAllVersionsScene(
                                 onBack = { depth = 1 },
                                 modifier = pageModifier,
@@ -757,13 +758,6 @@ private fun UpdateSettingsScene(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 20.dp, vertical = 8.dp)
         ) {
-            Text(
-                text = stringResource(R.string.settings_update_check_frequency_header),
-                style = MaterialTheme.typography.labelLarge,
-                color = scheme.primary,
-                modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
-            )
-
             CheckIntervalSlider(
                 intervalMinutes = checkIntervalMinutes,
                 onIntervalChange = { viewModel.setCheckIntervalMinutes(it) },
@@ -777,11 +771,11 @@ private fun UpdateSettingsScene(
                 color = scheme.primary,
                 modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
             )
-            
+
             SegmentedTile(
                 isFirst = true,
                 isLast = true,
-                role = androidx.compose.ui.semantics.Role.Switch,
+                role = Role.Switch,
                 title = stringResource(R.string.settings_update_stable_auto_download_title),
                 subtitle = stringResource(R.string.settings_update_stable_auto_download_subtitle),
                 onClick = {
@@ -809,7 +803,7 @@ private fun UpdateSettingsScene(
             SegmentedTile(
                 isFirst = true,
                 isLast = false,
-                role = androidx.compose.ui.semantics.Role.Switch,
+                role = Role.Switch,
                 title = stringResource(R.string.settings_beta_updates_title),
                 subtitle = stringResource(R.string.settings_beta_updates_subtitle),
                 onClick = {
@@ -837,13 +831,15 @@ private fun UpdateSettingsScene(
             SegmentedTile(
                 isFirst = false,
                 isLast = true,
-                role = androidx.compose.ui.semantics.Role.Switch,
+                role = Role.Switch,
                 title = stringResource(R.string.settings_update_beta_auto_download_title),
                 subtitle = stringResource(R.string.settings_update_beta_auto_download_subtitle),
-                onClick = if (!betaTogglesEnabled) null else { {
-                    haptic.tap()
-                    viewModel.setNightlyAutoDownload(!nightlyAutoDownload)
-                } },
+                onClick = if (!betaTogglesEnabled) null else {
+                    {
+                        haptic.tap()
+                        viewModel.setNightlyAutoDownload(!nightlyAutoDownload)
+                    }
+                },
                 trailing = {
                     Switch(
                         checked = nightlyAutoDownload && betaTogglesEnabled,
@@ -872,6 +868,7 @@ private fun CheckIntervalSlider(
     onIntervalChange: (Int) -> Unit,
 ) {
     val haptic = rememberHapticManager()
+    val scheme = MaterialTheme.colorScheme
 
     var sliderPos by remember(intervalMinutes) {
         mutableFloatStateOf(
@@ -895,14 +892,17 @@ private fun CheckIntervalSlider(
         pluralStringResource(R.plurals.update_check_interval_hours, hours, hours)
     }
 
-    Column(modifier = Modifier.fillMaxWidth()) {
+    Column(
+        modifier = Modifier.fillMaxWidth()
+    ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = stringResource(R.string.settings_update_check_interval_title),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                modifier = Modifier.weight(1f),
+                text = stringResource(R.string.settings_update_check_frequency_header),
+                style = MaterialTheme.typography.labelLarge,
+                color = scheme.primary,
+                modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
             )
+            Spacer(Modifier.weight(1f))
             Text(
                 text = intervalLabel,
                 style = MaterialTheme.typography.labelLarge,
@@ -910,10 +910,10 @@ private fun CheckIntervalSlider(
             )
         }
         Slider(
+            modifier = Modifier.padding(start = 16.dp),
             value = sliderPos,
             onValueChange = { newPos ->
-                if (newPos.roundToInt().coerceIn(0, CHECK_INTERVAL_STEPS_MINUTES.lastIndex) != index)
-                    haptic.feather()
+                if (newPos.roundToInt().coerceIn(0, CHECK_INTERVAL_STEPS_MINUTES.lastIndex) != index) haptic.feather()
                 sliderPos = newPos
             },
             onValueChangeFinished = { onIntervalChange(CHECK_INTERVAL_STEPS_MINUTES[index]) },
