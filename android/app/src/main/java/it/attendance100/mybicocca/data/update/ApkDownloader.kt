@@ -29,6 +29,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.io.asSink
 import java.io.File
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.roundToInt
@@ -55,8 +56,17 @@ class ApkDownloader @Inject constructor(
     private val _downloadState = MutableStateFlow<DownloadState>(DownloadState.Idle)
     val downloadState: StateFlow<DownloadState> = _downloadState.asStateFlow()
 
+    // downloadState is one shared StateFlow with multiple independent watchers for a Success
+    // transition (AppUpdateWorker's own completion wait, MainShell's reactive effect,
+    // UpdateModalSheet's auto-install effect) — nothing coordinates which one "claims" a given
+    // completion, so with both nightly settings on, more than one would silently install the same
+    // file. This guard makes the silent path idempotent per download cycle instead of relying on
+    // every call site to coordinate perfectly.
+    private val silentInstallTriggered = AtomicBoolean(false)
+
     fun startDownload(release: AppRelease) {
         if (_downloadState.value is DownloadState.Downloading) return
+        silentInstallTriggered.set(false)
 
         scope.launch {
             _downloadState.value = DownloadState.Downloading(0)
@@ -164,6 +174,7 @@ class ApkDownloader @Inject constructor(
 
     fun resetState() {
         _downloadState.value = DownloadState.Idle
+        silentInstallTriggered.set(false)
     }
 
     /**
@@ -192,6 +203,9 @@ class ApkDownloader @Inject constructor(
      */
     suspend fun installApk(file: File, silent: Boolean) {
         if (silent && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            // Only the first of possibly several concurrent watchers gets to install; see
+            // silentInstallTriggered's declaration for why this exists.
+            if (!silentInstallTriggered.compareAndSet(false, true)) return
             withContext(kotlinx.coroutines.Dispatchers.IO) {
                 installSilently(file)
             }
@@ -255,6 +269,7 @@ class ApkDownloader @Inject constructor(
                     packageInstaller.abandonSession(sessionId)
                 } catch (ignored: Exception) {}
             }
+            silentInstallTriggered.set(false)
             _downloadState.value = DownloadState.Error(
                 UiText.StringResource(it.attendance100.mybicocca.R.string.apk_downloader_failed)
             )
@@ -265,6 +280,7 @@ class ApkDownloader @Inject constructor(
         if (status == android.content.pm.PackageInstaller.STATUS_SUCCESS) {
             _downloadState.value = DownloadState.Idle
         } else {
+            silentInstallTriggered.set(false)
             val errorMsg = message ?: "Install failed (code $status)"
             _downloadState.value = DownloadState.Error(UiText.DynamicString(errorMsg))
         }
