@@ -21,6 +21,7 @@ import it.attendance100.mybicocca.data.update.ApkDownloader
 import it.attendance100.mybicocca.data.update.DownloadState
 import it.attendance100.mybicocca.domain.usecase.update.ObserveNightlyEventsUseCase
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import java.io.File
@@ -30,7 +31,7 @@ class UpdateEventsViewModel @Inject constructor(
     observeUpdateEvents: ObserveUpdateEventsUseCase,
     observeNightlyEvents: ObserveNightlyEventsUseCase,
     private val downloader: ApkDownloader,
-    updateRepository: it.attendance100.mybicocca.domain.repository.UpdateRepository
+    private val updateRepository: it.attendance100.mybicocca.domain.repository.UpdateRepository
 ) : ViewModel() {
     val events: Flow<AppRelease> = observeUpdateEvents()
         .shareIn(viewModelScope, SharingStarted.WhileSubscribed(5000))
@@ -47,6 +48,19 @@ class UpdateEventsViewModel @Inject constructor(
 
     val nightlyAutoInstall: StateFlow<Boolean> = updateRepository.observeNightlyAutoInstall()
         .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    /**
+     * Fresh reads of the auto-download/auto-install settings, bypassing the cached StateFlows
+     * above — those are eagerly shared from ViewModel creation, so right after a process restart
+     * (every silent install causes one) there's a real window where they still show their
+     * placeholder default rather than the actual persisted value, since DataStore's read hasn't
+     * completed yet. That's exactly the kind of race a one-shot "should this install silently"
+     * decision can't afford to get wrong; a suspend read on the underlying flow always waits for
+     * the real value instead.
+     */
+    suspend fun freshStableAutoDownload(): Boolean = updateRepository.observeStableAutoDownload().first()
+    suspend fun freshNightlyAutoDownload(): Boolean = updateRepository.observeNightlyAutoDownload().first()
+    suspend fun freshNightlyAutoInstall(): Boolean = updateRepository.observeNightlyAutoInstall().first()
 
     fun startDownload(release: AppRelease) {
         downloader.startDownload(release)
