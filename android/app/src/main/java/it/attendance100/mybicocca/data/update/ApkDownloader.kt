@@ -46,6 +46,19 @@ sealed interface DownloadState {
     data class Error(val message: UiText) : DownloadState
 }
 
+/**
+ * The APK sitting on disk waiting to be installed, or null. A declined install counts: the file is
+ * still downloaded and verified, the user just dismissed the system dialog.
+ */
+val DownloadState.readyToInstall: File?
+    get() = when (this) {
+        is DownloadState.Success -> file
+        is DownloadState.InstallDeclined -> file
+        else -> null
+    }
+
+fun DownloadState.isReadyToInstall(): Boolean = readyToInstall != null
+
 // TODO(update-notifications): startDownload runs on @ApplicationScope with no foreground-service
 // promotion, so the OS can freeze/kill it seconds after the app backgrounds mid-download (see
 // /UPDATE_NOTIFICATIONS_PLAN.md). Every caller — the manual "Download" tap, the restore-to-stable

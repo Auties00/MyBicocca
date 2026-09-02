@@ -92,6 +92,7 @@ import it.attendance100.mybicocca.core.os.currentLocale
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.version.isNightlyBuild
 import it.attendance100.mybicocca.data.update.DownloadState
+import it.attendance100.mybicocca.data.update.isReadyToInstall
 import it.attendance100.mybicocca.domain.model.update.AppRelease
 import it.attendance100.mybicocca.domain.model.update.UpdateCheckResult
 import it.attendance100.mybicocca.domain.model.update.UpdateStatus
@@ -638,6 +639,7 @@ private fun UpdateAvailableTile(
 ) {
     val downloadState by downloadStateFlow.collectAsStateWithLifecycle()
     val isDownloading = downloadState is DownloadState.Downloading
+    val isDownloaded = downloadState.isReadyToInstall()
     val progress = (downloadState as? DownloadState.Downloading)?.progress ?: 0
     val subtitle =
         if (isDownloading) stringResource(R.string.update_modal_downloading, progress)
@@ -651,7 +653,13 @@ private fun UpdateAvailableTile(
     SegmentedTile(
         isFirst = isFirst,
         isLast = isLast,
-        title = stringResource(R.string.settings_update_available_title),
+        title = stringResource(
+            when {
+                isDownloading -> R.string.settings_update_downloading_title
+                isDownloaded -> R.string.settings_update_downloaded_title
+                else -> R.string.settings_update_available_title
+            }
+        ),
         subtitle = subtitle,
         progress = if (isDownloading) progress / 100f else null,
         onClick = if (isDownloading) null else {
@@ -681,6 +689,7 @@ private fun NightlyUpdateTile(
 ) {
     val downloadState by downloadStateFlow.collectAsStateWithLifecycle()
     val isDownloading = downloadState is DownloadState.Downloading
+    val isDownloaded = downloadState.isReadyToInstall()
     val progress = (downloadState as? DownloadState.Downloading)?.progress ?: 0
     val scheme = MaterialTheme.colorScheme
 
@@ -700,7 +709,13 @@ private fun NightlyUpdateTile(
     SegmentedTile(
         isFirst = isFirst,
         isLast = isLast,
-        title = stringResource(R.string.settings_nightly_available_title),
+        title = stringResource(
+            when {
+                isDownloading -> R.string.settings_nightly_downloading_title
+                isDownloaded -> R.string.settings_nightly_downloaded_title
+                else -> R.string.settings_nightly_available_title
+            }
+        ),
         subtitleAnnotated = subtitleAnnotated,
         progress = if (isDownloading) progress / 100f else null,
         onClick = if (isDownloading) null else {

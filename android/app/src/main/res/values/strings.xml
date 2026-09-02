@@ -843,6 +843,8 @@
     <string name="settings_check_updates_title">Controlla Aggiornamenti</string>
     <string name="settings_check_updates_subtitle">Cerca nuove versioni</string>
     <string name="settings_update_available_title">Aggiornamento disponibile</string>
+    <string name="settings_update_downloading_title">Download aggiornamento in corso</string>
+    <string name="settings_update_downloaded_title">Aggiornamento scaricato</string>
     <string name="settings_update_available_subtitle">Versione %1$s · tocca per aggiornare</string>
     <string name="settings_update_check_failed">Controllo aggiornamenti non riuscito</string>
     <string name="whats_new_error">Impossibile caricare le novità</string>
@@ -854,6 +856,8 @@
     <string name="settings_whats_new_title">Novità</string>
     <string name="settings_whats_new_subtitle">Leggi le novità dell\'ultima versione</string>
     <string name="settings_nightly_available_title">Aggiornamento Nightly disponibile</string>
+    <string name="settings_nightly_downloading_title">Download Nightly in corso</string>
+    <string name="settings_nightly_downloaded_title">Aggiornamento Nightly scaricato</string>
     <string name="settings_beta_updates_title">Aggiornamenti Beta</string>
     <string name="settings_beta_updates_subtitle">Ricevi le build notturne con le ultime funzionalità</string>
     <string name="settings_beta_restore_stable_title">Disattiva aggiornamenti Beta</string>
@@ -1659,7 +1663,7 @@
     <string name="update_modal_version">v%1$s</string>
     <string name="update_modal_github">Apri su GitHub</string>
     <string name="update_modal_download">Scarica aggiornamento</string>
-    <string name="update_modal_install">Installa aggiornamento</string>
+    <string name="update_modal_install">Clicca per installare l\'Aggiornamento</string>
     <string name="update_modal_install_cancelled">Installazione annullata. L\'aggiornamento è già scaricato, puoi installarlo quando vuoi.</string>
     <string name="update_modal_installing">Installazione in corso...</string>
     <string name="update_modal_not_now">Non ora</string>

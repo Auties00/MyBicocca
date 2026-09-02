@@ -842,6 +842,8 @@
     <string name="settings_check_updates_title">Check for Updates</string>
     <string name="settings_check_updates_subtitle">Look for new versions</string>
     <string name="settings_update_available_title">Update available</string>
+    <string name="settings_update_downloading_title">Update downloading</string>
+    <string name="settings_update_downloaded_title">Update downloaded</string>
     <string name="settings_update_available_subtitle">Version %1$s · tap to update</string>
     <string name="settings_update_check_failed">Couldn\'t check for updates</string>
     <string name="whats_new_error">Couldn\'t load what\'s new</string>
@@ -853,6 +855,8 @@
     <string name="settings_whats_new_title">What\'s New</string>
     <string name="settings_whats_new_subtitle">Latest version highlights</string>
     <string name="settings_nightly_available_title">Nightly Update available</string>
+    <string name="settings_nightly_downloading_title">Nightly Update downloading</string>
+    <string name="settings_nightly_downloaded_title">Nightly Update downloaded</string>
     <string name="settings_beta_updates_title">Beta Updates</string>
     <string name="settings_beta_updates_subtitle">Get nightly builds with the latest features</string>
     <string name="settings_beta_restore_stable_title">Turn off Beta updates</string>
@@ -1086,7 +1090,6 @@
     <string name="common_logo">Logo</string>
 
     <!-- Taxes -->
-    <string name="taxes_pagopa" translatable="false">pagoPA</string>
     <string name="taxes_transaction_outcome">Transaction Outcome</string>
     <string name="taxes_payment_success">The payment was completed successfully for the entire amount due</string>
     <string name="taxes_date_label">"Date "</string>
@@ -1658,7 +1661,7 @@
     <string name="update_modal_version">v%1$s</string>
     <string name="update_modal_github">Open on GitHub</string>
     <string name="update_modal_download">Download update</string>
-    <string name="update_modal_install">Install update</string>
+    <string name="update_modal_install">Click to install the Update</string>
     <string name="update_modal_install_cancelled">Installation cancelled. The update is already downloaded, you can install it whenever you want.</string>
     <string name="update_modal_installing">Installing update...</string>
     <string name="update_modal_not_now">Not now</string>

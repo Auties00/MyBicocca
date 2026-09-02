@@ -50,6 +50,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.release.parseReleaseNotes
 import it.attendance100.mybicocca.data.update.DownloadState
+import it.attendance100.mybicocca.data.update.readyToInstall
 import it.attendance100.mybicocca.domain.model.update.AppRelease
 import it.attendance100.mybicocca.ui.screen.settings.subscreen.appInfo.component.ReleaseNotesView
 import java.io.File
@@ -141,8 +142,7 @@ fun UpdateModalSheet(
                     val hasError = downloadState is DownloadState.Error
                     // A declined install leaves a perfectly good APK behind, so it offers the same
                     // button as a fresh download rather than sending the user through it again.
-                    val readyToInstall = (downloadState as? DownloadState.Success)?.file
-                        ?: (downloadState as? DownloadState.InstallDeclined)?.file
+                    val readyToInstall = downloadState.readyToInstall
                     val wasDeclined = downloadState is DownloadState.InstallDeclined
                     val progress = (downloadState as? DownloadState.Downloading)?.progress ?: 0
                     val progressFraction = (progress / 100f).coerceIn(0f, 1f)
