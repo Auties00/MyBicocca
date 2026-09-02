@@ -226,19 +226,26 @@ class UpdateRepositoryImpl @Inject constructor(
     }
 
     override suspend fun releases(): List<AppRelease> = withContext(Dispatchers.IO) {
-        val stablereleases = githubApi.getReleases().mapNotNull { it.toAppReleaseOrNull() }
-        
-        // Include nightly in the What's New page if channel is enabled
-        val allReleases = if (store.nightlyEnabled.first()) {
-            val nightlyState = store.nightlyState.first()
-            if (nightlyState.available && nightlyState.release != null) {
-                stablereleases + nightlyState.release
-            } else stablereleases
+        // The nightly is a real GitHub release (rolling, tag "nightly"), so it comes back in this
+        // list too — but the generic mapper renders it off its raw tag, and it has no business
+        // showing at all to someone who never opted into the channel. It's added from the persisted
+        // nightly state below instead, which maps it properly.
+        val stableReleases = githubApi.getReleases()
+            .filterNot { it.prerelease }
+            .mapNotNull { it.toAppReleaseOrNull() }
+
+        val nightly = if (store.nightlyEnabled.first()) {
+            store.nightlyState.first().takeIf { it.available }?.release
         } else {
-            stablereleases
+            null
         }
-        
-        allReleases.sortedByDescending { it.publishedAt }
+
+        // Keyed on the release page rather than the version: the two mappings of a nightly don't
+        // agree on a version name (one uses the "nightly" tag, the other a formatted publish date),
+        // but both carry the same GitHub URL. Nightly goes first so it survives as the richer copy.
+        (listOfNotNull(nightly) + stableReleases)
+            .distinctBy { it.pageUrl }
+            .sortedByDescending { it.publishedAt }
     }
 
     override fun updatePageUrl(release: AppRelease): String = when (distributionSource) {
