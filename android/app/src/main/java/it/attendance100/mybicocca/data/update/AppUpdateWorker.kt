@@ -6,7 +6,11 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import it.attendance100.mybicocca.core.version.isRunningBuild
+import it.attendance100.mybicocca.data.local.settings.PersistedNightlyState
+import it.attendance100.mybicocca.data.local.settings.PersistedUpdateState
 import it.attendance100.mybicocca.data.local.settings.UpdateStateStore
+import it.attendance100.mybicocca.domain.model.update.AppRelease
 import it.attendance100.mybicocca.domain.repository.UpdateRepository
 import kotlinx.coroutines.flow.first
 
@@ -30,20 +34,16 @@ class AppUpdateWorker @AssistedInject constructor(
         try {
             repository.checkForUpdates(force = true, announce = true)
 
-            val stableState = updateStateStore.state.first()
-            if (stableState.available && stableState.release != null &&
-                updateStateStore.stableAutoDownload.first()
-            ) {
-                apkDownloader.startDownload(stableState.release)
+            val stable = updateStateStore.state.first().availableRelease()
+            if (stable != null && updateStateStore.stableAutoDownload.first()) {
+                apkDownloader.startDownload(stable)
                 apkDownloader.downloadState.first { it is DownloadState.Success || it is DownloadState.Error }
             }
 
             if (updateStateStore.nightlyEnabled.first()) {
-                val nightlyState = updateStateStore.nightlyState.first()
-                if (nightlyState.available && nightlyState.release != null &&
-                    updateStateStore.nightlyAutoDownload.first()
-                ) {
-                    apkDownloader.startDownload(nightlyState.release)
+                val nightly = updateStateStore.nightlyState.first().availableRelease()
+                if (nightly != null && updateStateStore.nightlyAutoDownload.first()) {
+                    apkDownloader.startDownload(nightly)
                     apkDownloader.downloadState.first { it is DownloadState.Success || it is DownloadState.Error }
                 }
             }
@@ -54,3 +54,15 @@ class AppUpdateWorker @AssistedInject constructor(
         }
     }
 }
+
+/**
+ * The release worth downloading, or null. Installing an update never clears the stored "available"
+ * flag, so it stays set for the build that is now running — acting on it alone re-downloads and
+ * re-offers the update the user just installed. This is the same reconciliation
+ * `observeNightlyStatus` already applies before reporting a status to the UI.
+ */
+private fun PersistedUpdateState.availableRelease(): AppRelease? =
+    release?.takeIf { available && !it.isRunningBuild() }
+
+private fun PersistedNightlyState.availableRelease(): AppRelease? =
+    release?.takeIf { available && !it.isRunningBuild() }

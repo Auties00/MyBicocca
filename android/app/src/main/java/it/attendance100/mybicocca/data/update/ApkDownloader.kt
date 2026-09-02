@@ -13,9 +13,9 @@ import io.ktor.http.contentLength
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.exhausted
 import io.ktor.utils.io.readRemaining
-import it.attendance100.mybicocca.BuildConfig
 import it.attendance100.mybicocca.core.io.sha256Hex
 import it.attendance100.mybicocca.core.text.UiText
+import it.attendance100.mybicocca.core.version.isRunningBuild
 import it.attendance100.mybicocca.data.local.settings.UpdateStateStore
 import it.attendance100.mybicocca.di.ApplicationScope
 import it.attendance100.mybicocca.domain.model.update.AppRelease
@@ -223,14 +223,10 @@ class ApkDownloader @Inject constructor(
         if (_downloadState.value !is DownloadState.Idle) return
         val record = store.downloadedApk.first() ?: return
 
-        val alreadyRunning = if (!record.commitSha.isNullOrBlank()) {
-            record.commitSha == BuildConfig.COMMIT_SHA
-        } else {
-            record.versionName == BuildConfig.VERSION_NAME.substringBefore("-")
-        }
-
         val file = File(record.path)
-        if (alreadyRunning || !file.isFile || file.length() != record.size) {
+        if (isRunningBuild(record.commitSha, record.versionName) ||
+            !file.isFile || file.length() != record.size
+        ) {
             store.clearDownloadedApk()
             return
         }
