@@ -46,6 +46,8 @@ class UpdateChecker @Inject constructor(
         if (started) return
         started = true
 
+        scope.launch { runCatching { apkDownloader.restorePendingDownload() } }
+
         // Reactive so a check-interval change reschedules the worker immediately.
         scope.launch {
             repository.observeCheckIntervalMinutes()

@@ -204,6 +204,11 @@ class UpdateStateStore @Inject constructor(
         val STABLE_AUTO_DOWNLOAD_KEY = booleanPreferencesKey("update_stable_auto_download")
         val NIGHTLY_AUTO_DOWNLOAD_KEY = booleanPreferencesKey("update_nightly_auto_download")
 
+        val DOWNLOADED_APK_PATH_KEY = stringPreferencesKey("update_downloaded_apk_path")
+        val DOWNLOADED_APK_SIZE_KEY = longPreferencesKey("update_downloaded_apk_size")
+        val DOWNLOADED_APK_VERSION_KEY = stringPreferencesKey("update_downloaded_apk_version")
+        val DOWNLOADED_APK_COMMIT_SHA_KEY = stringPreferencesKey("update_downloaded_apk_commit_sha")
+
         val NIGHTLY_ENABLED_KEY = booleanPreferencesKey("update_nightly_enabled")
         val NIGHTLY_LAST_CHECKED_MS_KEY = longPreferencesKey("update_nightly_last_checked_ms")
         val NIGHTLY_LAST_PUBLISHED_MS_KEY = longPreferencesKey("update_nightly_last_published_ms")
@@ -239,6 +244,39 @@ class UpdateStateStore @Inject constructor(
 
     suspend fun setNightlyAutoDownload(enabled: Boolean) {
         dataStore.edit { it[NIGHTLY_AUTO_DOWNLOAD_KEY] = enabled }
+    }
+
+    /** A finished download waiting to be installed, remembered across process death. */
+    val downloadedApk: Flow<DownloadedApk?> = dataStore.data.map { prefs ->
+        val path = prefs[DOWNLOADED_APK_PATH_KEY] ?: return@map null
+        DownloadedApk(
+            path = path,
+            size = prefs[DOWNLOADED_APK_SIZE_KEY] ?: 0L,
+            versionName = prefs[DOWNLOADED_APK_VERSION_KEY].orEmpty(),
+            commitSha = prefs[DOWNLOADED_APK_COMMIT_SHA_KEY],
+        )
+    }
+
+    suspend fun setDownloadedApk(path: String, size: Long, versionName: String, commitSha: String?) {
+        dataStore.edit { prefs ->
+            prefs[DOWNLOADED_APK_PATH_KEY] = path
+            prefs[DOWNLOADED_APK_SIZE_KEY] = size
+            prefs[DOWNLOADED_APK_VERSION_KEY] = versionName
+            if (commitSha != null) {
+                prefs[DOWNLOADED_APK_COMMIT_SHA_KEY] = commitSha
+            } else {
+                prefs.remove(DOWNLOADED_APK_COMMIT_SHA_KEY)
+            }
+        }
+    }
+
+    suspend fun clearDownloadedApk() {
+        dataStore.edit { prefs ->
+            prefs.remove(DOWNLOADED_APK_PATH_KEY)
+            prefs.remove(DOWNLOADED_APK_SIZE_KEY)
+            prefs.remove(DOWNLOADED_APK_VERSION_KEY)
+            prefs.remove(DOWNLOADED_APK_COMMIT_SHA_KEY)
+        }
     }
 
     // Defaults on for a nightly build itself — you're already running one, so the toggle should
@@ -363,4 +401,21 @@ data class PersistedNightlyState(
     val lastSeenDigest: String?,
     val available: Boolean,
     val release: AppRelease?,
+)
+
+/**
+ * A downloaded-and-verified APK still waiting to be installed.
+ *
+ * @property path Absolute path of the file in the app's cache.
+ * @property size Its size when it passed verification, re-checked before the record is trusted.
+ * @property versionName The release's version, used to recognise an already-installed stable build.
+ * @property commitSha The release's commit, or null when the source didn't give one. This is what
+ *   identifies a nightly: two nightlies share a versionCode *and* a versionName, so the commit is
+ *   the only thing that distinguishes the one on disk from the one already running.
+ */
+data class DownloadedApk(
+    val path: String,
+    val size: Long,
+    val versionName: String,
+    val commitSha: String?,
 )

@@ -13,8 +13,10 @@ import io.ktor.http.contentLength
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.exhausted
 import io.ktor.utils.io.readRemaining
+import it.attendance100.mybicocca.BuildConfig
 import it.attendance100.mybicocca.core.io.sha256Hex
 import it.attendance100.mybicocca.core.text.UiText
+import it.attendance100.mybicocca.data.local.settings.UpdateStateStore
 import it.attendance100.mybicocca.di.ApplicationScope
 import it.attendance100.mybicocca.domain.model.update.AppRelease
 import it.attendance100.mybicocca.domain.model.update.AppReleaseAsset
@@ -25,6 +27,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.io.asSink
@@ -50,7 +53,8 @@ sealed interface DownloadState {
 @Singleton
 class ApkDownloader @Inject constructor(
     @ApplicationContext private val context: Context,
-    @ApplicationScope private val scope: CoroutineScope
+    @ApplicationScope private val scope: CoroutineScope,
+    private val store: UpdateStateStore,
 ) {
     private val client = HttpClient(OkHttp)
 
@@ -131,7 +135,7 @@ class ApkDownloader @Inject constructor(
                         delay(100.milliseconds)
                     }
                     delay(500.milliseconds)
-                    _downloadState.value = DownloadState.Success(apkFile)
+                    markDownloaded(apkFile, release)
                     return@launch
                 }
 
@@ -145,7 +149,7 @@ class ApkDownloader @Inject constructor(
                 }
 
                 _downloadState.value = DownloadState.Downloading(100)
-                _downloadState.value = DownloadState.Success(apkFile)
+                markDownloaded(apkFile, release)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
@@ -194,6 +198,44 @@ class ApkDownloader @Inject constructor(
     fun resetState() {
         clearPendingInstall()
         _downloadState.value = DownloadState.Idle
+        scope.launch { store.clearDownloadedApk() }
+    }
+
+    private suspend fun markDownloaded(file: File, release: AppRelease) {
+        store.setDownloadedApk(
+            path = file.absolutePath,
+            size = file.length(),
+            versionName = release.versionName,
+            commitSha = release.commitSha,
+        )
+        _downloadState.value = DownloadState.Success(file)
+    }
+
+    /**
+     * Re-offers a download that finished before the process died, so a ready APK isn't forgotten
+     * and re-fetched. Called once at startup.
+     *
+     * The record is dropped rather than restored when it turns out to describe the build that's
+     * now running — which is the normal case after the user actually installs it, since a
+     * successful install replaces the process and never gets to clear it.
+     */
+    suspend fun restorePendingDownload() {
+        if (_downloadState.value !is DownloadState.Idle) return
+        val record = store.downloadedApk.first() ?: return
+
+        val alreadyRunning = if (!record.commitSha.isNullOrBlank()) {
+            record.commitSha == BuildConfig.COMMIT_SHA
+        } else {
+            record.versionName == BuildConfig.VERSION_NAME.substringBefore("-")
+        }
+
+        val file = File(record.path)
+        if (alreadyRunning || !file.isFile || file.length() != record.size) {
+            store.clearDownloadedApk()
+            return
+        }
+
+        _downloadState.value = DownloadState.Success(file)
     }
 
     /**

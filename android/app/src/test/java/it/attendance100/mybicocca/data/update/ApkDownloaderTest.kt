@@ -4,6 +4,9 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import com.google.common.truth.Truth.assertThat
+import it.attendance100.mybicocca.BuildConfig
+import it.attendance100.mybicocca.data.local.settings.DownloadedApk
+import it.attendance100.mybicocca.data.local.settings.UpdateStateStore
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
@@ -24,12 +27,14 @@ class ApkDownloaderTest {
     private lateinit var context: Context
     private lateinit var downloader: ApkDownloader
     private lateinit var testScope: TestScope
+    private lateinit var store: UpdateStateStore
 
     @Before
     fun setup() {
         context = mockk<Context>(relaxed = true)
+        store = mockk<UpdateStateStore>(relaxed = true)
         testScope = TestScope()
-        downloader = ApkDownloader(context, testScope)
+        downloader = ApkDownloader(context, testScope, store)
     }
 
     /**
@@ -89,6 +94,47 @@ class ApkDownloaderTest {
         file.delete()
     }
 
+    @Test
+    fun restorePendingDownload_reOffersAVerifiedFileFromAnotherBuild() = testScope.runTest {
+        val file = File.createTempFile("pending", ".apk").apply { writeText("payload") }
+        every { store.downloadedApk } returns kotlinx.coroutines.flow.flowOf(
+            DownloadedApk(file.absolutePath, file.length(), "0.0.6", NOT_THIS_BUILD_SHA)
+        )
+
+        downloader.restorePendingDownload()
+
+        assertThat(downloader.downloadState.value).isEqualTo(DownloadState.Success(file))
+        file.delete()
+    }
+
+    /** The cache is evictable, so a record outliving its file has to be dropped, not restored. */
+    @Test
+    fun restorePendingDownload_dropsTheRecordWhenTheFileIsGone() = testScope.runTest {
+        every { store.downloadedApk } returns kotlinx.coroutines.flow.flowOf(
+            DownloadedApk("/does/not/exist.apk", 123L, "0.0.6", NOT_THIS_BUILD_SHA)
+        )
+
+        downloader.restorePendingDownload()
+
+        assertThat(downloader.downloadState.value).isEqualTo(DownloadState.Idle)
+        io.mockk.coVerify(exactly = 1) { store.clearDownloadedApk() }
+    }
+
+    /** Matching BuildConfig.COMMIT_SHA means it's already installed; anything else must not. */
+    @Test
+    fun restorePendingDownload_dropsTheRecordForTheRunningBuild() = testScope.runTest {
+        val file = File.createTempFile("pending", ".apk").apply { writeText("payload") }
+        every { store.downloadedApk } returns kotlinx.coroutines.flow.flowOf(
+            DownloadedApk(file.absolutePath, file.length(), "0.0.6", BuildConfig.COMMIT_SHA)
+        )
+
+        downloader.restorePendingDownload()
+
+        assertThat(downloader.downloadState.value).isEqualTo(DownloadState.Idle)
+        io.mockk.coVerify(exactly = 1) { store.clearDownloadedApk() }
+        file.delete()
+    }
+
     private fun stubInstallerLaunch(): File {
         val file = File.createTempFile("test", ".apk")
         every { context.startActivity(any()) } returns Unit
@@ -98,5 +144,10 @@ class ApkDownloaderTest {
             androidx.core.content.FileProvider.getUriForFile(context, any(), file)
         } returns android.net.Uri.parse("content://dummy")
         return file
+    }
+
+    private companion object {
+        /** Any SHA the running build can't have, so "already installed" never matches by accident. */
+        const val NOT_THIS_BUILD_SHA = "deadbee"
     }
 }
