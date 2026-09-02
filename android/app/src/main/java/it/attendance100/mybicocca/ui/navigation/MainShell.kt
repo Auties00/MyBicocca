@@ -533,6 +533,9 @@ fun MainShell(
     }
 
     val snackbarController = rememberAppSnackbarController()
+
+    it.attendance100.mybicocca.ui.component.permission.NotificationPermissionPrompt()
+
     val updateEventsViewModel: UpdateEventsViewModel = hiltViewModel()
 
     val downloadState by updateEventsViewModel.downloadState.collectAsStateWithLifecycle()
