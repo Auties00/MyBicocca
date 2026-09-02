@@ -270,7 +270,12 @@ class ApkDownloader @Inject constructor(
         )
         val intent = Intent(Intent.ACTION_VIEW).apply {
             setDataAndType(uri, "application/vnd.android.package-archive")
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            // CLEAR_TASK because NEW_TASK on its own reuses a matching existing task: after an
+            // earlier install in the same session, the installer's own task can still be winding
+            // down, and the intent gets delivered to whatever activity is on top of it (observed:
+            // START_DELIVERED_TO_TOP onto a dying DeleteStagedFileOnResult) instead of starting a
+            // fresh install. Nothing is shown and the tap is silently lost.
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
         context.startActivity(intent)

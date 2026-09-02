@@ -61,6 +61,12 @@ class ApkDownloaderTest {
         assertThat(intentSlot.captured.type).isEqualTo("application/vnd.android.package-archive")
         verify(exactly = 0) { context.packageManager.packageInstaller }
 
+        // Without CLEAR_TASK the intent can land on a still-closing installer task and be lost.
+        val flags = intentSlot.captured.flags
+        assertThat(flags and Intent.FLAG_ACTIVITY_NEW_TASK).isNotEqualTo(0)
+        assertThat(flags and Intent.FLAG_ACTIVITY_CLEAR_TASK).isNotEqualTo(0)
+        assertThat(flags and Intent.FLAG_GRANT_READ_URI_PERMISSION).isNotEqualTo(0)
+
         io.mockk.unmockkStatic(androidx.core.content.FileProvider::class)
         file.delete()
     }
