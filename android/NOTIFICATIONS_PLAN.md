@@ -227,6 +227,38 @@ Responsible for:
   policy.
 - **Cancellation** — `cancel(id)` and `cancelAll(channel)`.
 
+### 4.7 media3's playback channel
+
+`VideoPlaybackService` is a media3 `MediaSessionService`, and media3's
+`DefaultMediaNotificationProvider` creates its own channel outside this registry
+(`default_channel_id`, named "Now playing"). That makes §4.2's claim — nothing
+creates a channel outside the enum — false, and leaves an ungrouped, generically
+named channel sitting in system settings next to ours.
+
+**Take over the channel, not the notification.** media3 builds that notification
+itself, with the transport controls bound to the `MediaSession`. Reimplementing
+`MediaNotification.Provider` to route it through our poster would mean owning
+play/pause/seek for no user-visible gain. Owning just the channel is a few lines:
+
+```kotlin
+DefaultMediaNotificationProvider.Builder(context)
+    .setChannelId(NotificationChannelId.MEDIA_PLAYBACK.id)
+    .setChannelName(R.string.notification_channel_media_playback_name)
+    .build()
+```
+
+handed to `setMediaNotificationProvider()` in `VideoPlaybackService.onCreate`,
+with a `MEDIA` group and a `media_playback_v1` channel added to the enum.
+
+**Migration wrinkle:** existing installs already have media3's
+`default_channel_id`. Taking over means adding that id to `RETIRED_CHANNEL_IDS` --
+the one legitimate case for retiring an id this app didn't create, since we are
+replacing the channel rather than deleting a library's live one. Anyone who had
+customised the old channel loses that customisation; that is the cost.
+
+Independent of the update flow, so it can land whenever. Keeping it out of the
+update flow's own test cycle avoids a media regression muddying that read.
+
 ---
 
 ## 5. Foreground-service downloads
@@ -546,7 +578,9 @@ foreground service.
 8. **Live Updates** promotion on the progress notification (API 36 gate).
 9. **Foreground suppression policy** (§7.6).
 10. **Debug screen** (§9).
-11. **Housekeeping:** retarget the two `TODO(update-notifications)` markers from
+11. **media3 channel takeover** (§4.7) — independent of everything above; keep it
+    out of the update flow's test cycle.
+12. **Housekeeping:** retarget the two `TODO(update-notifications)` markers from
     `/UPDATE_NOTIFICATIONS_PLAN.md` to this file, and delete the old file.
 
 Steps 1–3 are the reusable spine; 4–9 are the first consumer.
@@ -623,6 +657,21 @@ ephemeral and students will swipe away a grade notification.
 ---
 
 ## 12. Revision history
+
+**Rev 3** — during implementation of step 1.
+
+- **§4.7 added.** media3 creating its own channel was recorded in rev 2 as an
+  accepted exception; taking the channel over instead is cheap and makes 4.2's
+  "nothing creates a channel outside this enum" actually true. The notification
+  itself stays media3's.
+- `UPDATE_PACKAGES_WITHOUT_USER_ACTION` removed from the manifest: it existed for
+  the silent `PackageInstaller` path deleted before #43, and nothing has used it
+  since. `REQUEST_INSTALL_PACKAGES` is still required by `installApk`'s
+  `ACTION_VIEW`.
+- §4.4 resolved: `logo_mono.xml` is **not** usable as a small icon. It is a 108dp
+  launcher asset whose mark is knocked out of a filled square, so it would flatten
+  to a solid block in the status bar, and its other path is stroke-only. The
+  status-bar glyph is `res/drawable/notification.xml`.
 
 **Rev 2** — after review against the codebase. Changes worth knowing if you
 read rev 1:
