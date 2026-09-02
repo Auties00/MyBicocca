@@ -842,6 +842,8 @@
     <string name="settings_check_updates_title">Check for Updates</string>
     <string name="settings_check_updates_subtitle">Look for new versions</string>
     <string name="settings_update_available_title">Update available</string>
+    <string name="settings_update_downloading_title">Update downloading</string>
+    <string name="settings_update_downloaded_title">Update downloaded</string>
     <string name="settings_update_available_subtitle">Version %1$s · tap to update</string>
     <string name="settings_update_check_failed">Couldn\'t check for updates</string>
     <string name="whats_new_error">Couldn\'t load what\'s new</string>
@@ -852,6 +854,15 @@
     <string name="settings_no_other_versions">There are no other versions yet!</string>
     <string name="settings_whats_new_title">What\'s New</string>
     <string name="settings_whats_new_subtitle">Latest version highlights</string>
+    <string name="settings_nightly_available_title">Nightly Update available</string>
+    <string name="settings_nightly_downloading_title">Nightly Update downloading</string>
+    <string name="settings_nightly_downloaded_title">Nightly Update downloaded</string>
+    <string name="settings_beta_updates_title">Beta Updates</string>
+    <string name="settings_beta_updates_subtitle">Get nightly builds with the latest features</string>
+    <string name="settings_beta_restore_stable_title">Turn off Beta updates</string>
+    <string name="settings_beta_restore_stable_desc">Do you want to revert to the latest stable version or keep this nightly build? You\'ll be taken to the download page for the stable release.</string>
+    <string name="settings_beta_restore_stable_confirm">Revert to stable</string>
+    <string name="settings_beta_restore_stable_dismiss">Keep Nightly</string>
     <string name="settings_github_title">GitHub</string>
     <string name="settings_github_subtitle">Project source code</string>
     <string name="settings_credits_title">Credits</string>
@@ -1079,7 +1090,6 @@
     <string name="common_logo">Logo</string>
 
     <!-- Taxes -->
-    <string name="taxes_pagopa" translatable="false">pagoPA</string>
     <string name="taxes_transaction_outcome">Transaction Outcome</string>
     <string name="taxes_payment_success">The payment was completed successfully for the entire amount due</string>
     <string name="taxes_date_label">"Date "</string>
@@ -1161,6 +1171,10 @@
     <plurals name="agenda_event_count">
         <item quantity="one">1 event</item>
         <item quantity="other">%1$d events</item>
+    </plurals>
+    <plurals name="update_check_interval_hours">
+        <item quantity="one">1 hour</item>
+        <item quantity="other">%1$d hours</item>
     </plurals>
     <plurals name="registry_urgent">
         <item quantity="one">1 urgent</item>
@@ -1647,8 +1661,21 @@
     <string name="update_modal_version">v%1$s</string>
     <string name="update_modal_github">Open on GitHub</string>
     <string name="update_modal_download">Download update</string>
+    <string name="update_modal_install">Click to install the Update</string>
+    <string name="update_modal_install_cancelled">Installation cancelled. The update is already downloaded, you can install it whenever you want.</string>
+    <string name="update_modal_installing">Installing update...</string>
     <string name="update_modal_not_now">Not now</string>
     <string name="update_modal_downloading">Downloading… %1$d%%</string>
+    <string name="settings_update_settings_title">Update Settings</string>
+    <string name="settings_update_settings_subtitle">Manage auto-downloads and beta releases</string>
+    <string name="settings_update_check_frequency_header">Check Frequency</string>
+    <string name="settings_update_check_interval_title">Check for updates every</string>
+    <string name="settings_update_stable_header">Stable Updates</string>
+    <string name="settings_update_beta_header">Beta Updates</string>
+    <string name="settings_update_stable_auto_download_title">Auto download updates</string>
+    <string name="settings_update_stable_auto_download_subtitle">Download new stable releases in the background</string>
+    <string name="settings_update_beta_auto_download_title">Auto download beta updates</string>
+    <string name="settings_update_beta_auto_download_subtitle">Download new beta releases in the background</string>
 
     <!-- Settings: Language -->
     <string name="settings_language_help_translate">Help us translate the app in %1$s!</string>
@@ -1992,7 +2019,6 @@
     <string name="settings_security_minutes_format">%1$d min</string>
 
     <!-- Registry: labels and counters -->
-    <string name="registry_taxes_many_invoices">%1$d invoices</string>
     <string name="registry_gdpr_prefix">"I have read "</string>
     <string name="registry_gdpr_policy_link">the privacy notice</string>
     <string name="registry_gdpr_suffix">" on the processing of personal data"</string>
@@ -2036,4 +2062,8 @@
 
     <!-- Profile -->
     <string name="profile_no_active_badge">No active badge</string>
+
+    <!-- Nightly update strings -->
+    <string name="settings_nightly_from">Nightly from %1$s</string>
+    <string name="settings_nightly_commit"> [commit %1$s]</string>
 </resources>

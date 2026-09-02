@@ -22,6 +22,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.OpenInNew
 import androidx.compose.material.icons.outlined.NewReleases
+import androidx.compose.material.icons.outlined.Nightlight
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -31,7 +32,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -46,28 +46,27 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.release.parseReleaseNotes
 import it.attendance100.mybicocca.data.update.DownloadState
+import it.attendance100.mybicocca.data.update.readyToInstall
 import it.attendance100.mybicocca.domain.model.update.AppRelease
 import it.attendance100.mybicocca.ui.screen.settings.subscreen.appInfo.component.ReleaseNotesView
 import java.io.File
 
+/** [onInstall] fires only from the "Install" button; a finished download never installs itself. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UpdateModalSheet(
     release: AppRelease,
-    downloadState: DownloadState,
+    downloadStateFlow: kotlinx.coroutines.flow.StateFlow<DownloadState>,
     onDownload: () -> Unit,
     onInstall: (File) -> Unit,
     onDismiss: () -> Unit,
 ) {
+    val downloadState by downloadStateFlow.collectAsStateWithLifecycle()
     val uriHandler = LocalUriHandler.current
-    LaunchedEffect(downloadState) {
-        if (downloadState is DownloadState.Success) {
-            onInstall(downloadState.file)
-        }
-    }
 
     Dialog(
         onDismissRequest = {
@@ -97,18 +96,18 @@ fun UpdateModalSheet(
                         .padding(24.dp)
                 ) {
                     Icon(
-                        imageVector = Icons.Outlined.NewReleases,
+                        imageVector = if (release.isPreRelease) Icons.Outlined.Nightlight else Icons.Outlined.NewReleases,
                         contentDescription = null,
                         modifier = Modifier.size(48.dp),
                         tint = MaterialTheme.colorScheme.primary
                     )
                     Spacer(Modifier.height(16.dp))
                     Text(
-                        text = stringResource(R.string.update_modal_title),
+                        text = if (release.isPreRelease) "New Nightly available!" else stringResource(R.string.update_modal_title),
                         style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold)
                     )
                     Text(
-                        text = stringResource(R.string.update_modal_version, release.versionName),
+                        text = if (release.isPreRelease) release.versionName else stringResource(R.string.update_modal_version, release.versionName),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -141,6 +140,10 @@ fun UpdateModalSheet(
                 ) {
                     val isDownloading = downloadState is DownloadState.Downloading
                     val hasError = downloadState is DownloadState.Error
+                    // A declined install leaves a perfectly good APK behind, so it offers the same
+                    // button as a fresh download rather than sending the user through it again.
+                    val readyToInstall = downloadState.readyToInstall
+                    val wasDeclined = downloadState is DownloadState.InstallDeclined
                     val progress = (downloadState as? DownloadState.Downloading)?.progress ?: 0
                     val progressFraction = (progress / 100f).coerceIn(0f, 1f)
                     val textToShow = stringResource(R.string.update_modal_downloading, progress)
@@ -195,6 +198,15 @@ fun UpdateModalSheet(
                                     )
                                 }
                             }
+                        } else if (readyToInstall != null) {
+                            Button(
+                                onClick = { onInstall(readyToInstall) },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(48.dp)
+                            ) {
+                                Text(stringResource(R.string.update_modal_install))
+                            }
                         } else {
                             Button(
                                 onClick = onDownload,
@@ -214,9 +226,17 @@ fun UpdateModalSheet(
 
                     if (hasError) {
                         Text(
-                            text = downloadState.message.asString(),
+                            text = (downloadState as DownloadState.Error).message.asString(),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.Center,
+                        )
+                    } else if (wasDeclined) {
+                        Text(
+                            text = stringResource(R.string.update_modal_install_cancelled),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.fillMaxWidth(),
                             textAlign = TextAlign.Center,
                         )

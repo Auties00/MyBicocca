@@ -20,6 +20,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -123,7 +126,9 @@ fun SegmentedTile(
     modifier: Modifier = Modifier,
     titleAnnotated: AnnotatedString? = null,
     subtitle: String? = null,
+    subtitleAnnotated: AnnotatedString? = null,
     onClick: (() -> Unit)? = null,
+    role: Role? = null,
     enabled: Boolean = true,
     progress: Float? = null,
     leading: (@Composable () -> Unit)? = null,
@@ -150,9 +155,12 @@ fun SegmentedTile(
         ) {
             if (leading != null) {
                 leading()
-                Spacer(Modifier.width(14.dp))
+                Spacer(Modifier.width(9.dp))
             }
-            Column(Modifier.weight(1f)) {
+            Column(Modifier
+                .weight(1f)
+                .padding(start=5.dp)
+            ) {
                 if (titleAnnotated != null) {
                     Text(
                         text = titleAnnotated,
@@ -172,7 +180,17 @@ fun SegmentedTile(
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
-                if (subtitle != null) {
+                if (subtitleAnnotated != null) {
+                    Text(
+                        text = subtitleAnnotated,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = if (enabled) scheme.onSurfaceVariant else scheme.onSurfaceVariant.copy(
+                            alpha = disabledAlpha
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                } else if (subtitle != null) {
                     Text(
                         text = subtitle,
                         style = MaterialTheme.typography.bodySmall,
@@ -194,7 +212,11 @@ fun SegmentedTile(
                 onClick()
             },
             enabled = enabled,
-            modifier = modifier.fillMaxWidth(),
+            modifier = modifier
+                .fillMaxWidth()
+                .semantics {
+                    role?.let { this.role = it }
+                },
             color = scheme.surfaceContainer,
             contentColor = scheme.onSurface,
             shape = shape,

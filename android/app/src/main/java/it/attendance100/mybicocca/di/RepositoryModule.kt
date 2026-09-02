@@ -85,6 +85,10 @@ abstract class RepositoryModule {
 
     @Binds
     @Singleton
+    abstract fun bindAdminMessageRepository(impl: it.attendance100.mybicocca.data.admin.AdminMessageRepositoryImpl): it.attendance100.mybicocca.domain.repository.admin.AdminMessageRepository
+
+    @Binds
+    @Singleton
     abstract fun bindAccountRepository(impl: AccountRepositoryImpl): AccountRepository
 
     @Binds

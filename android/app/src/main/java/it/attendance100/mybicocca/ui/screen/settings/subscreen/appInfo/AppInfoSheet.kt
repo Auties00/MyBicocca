@@ -31,23 +31,33 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.outlined.NewReleases
 import androidx.compose.material.icons.outlined.Update
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Link
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetValue
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -57,14 +67,18 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -74,8 +88,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import it.attendance100.mybicocca.BuildConfig
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.currentLocale
 import it.attendance100.mybicocca.core.os.rememberHapticManager
+import it.attendance100.mybicocca.core.version.isNightlyBuild
 import it.attendance100.mybicocca.data.update.DownloadState
+import it.attendance100.mybicocca.data.update.isReadyToInstall
 import it.attendance100.mybicocca.domain.model.update.AppRelease
 import it.attendance100.mybicocca.domain.model.update.UpdateCheckResult
 import it.attendance100.mybicocca.domain.model.update.UpdateStatus
@@ -90,6 +107,7 @@ import it.attendance100.mybicocca.ui.component.modal.sheetPageTransform
 import kotlinx.coroutines.launch
 import java.time.Year
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.math.roundToInt
 
 private const val COPYRIGHT_START_YEAR = 2025
 private const val GITHUB_URL = "https://github.com/Auties00/MyBicocca"
@@ -98,6 +116,11 @@ private val versionText: String = buildString {
     append("Versione ${BuildConfig.VERSION_NAME}")
     @Suppress("KotlinConstantConditions", "SimplifyBooleanWithConstants")
     if (BuildConfig.DEBUG && BuildConfig.BUILD_TYPE != "release") append(" [Debug]")
+
+    val nightlyId = BuildConfig.NIGHTLY_IDENTIFIER
+    if (isNightlyBuild && nightlyId.isNotEmpty()) {
+        append(" [$nightlyId]")
+    }
 }
 
 private val copyrightText: String
@@ -146,26 +169,27 @@ fun AppInfoSheet(
     val githubIcon = ImageVector.vectorResource(R.drawable.ic_github)
 
     val updateStatus by viewModel.status.collectAsStateWithLifecycle()
+    val nightlyStatus by viewModel.nightlyStatus.collectAsStateWithLifecycle()
+    val nightlyEnabled by viewModel.nightlyEnabled.collectAsStateWithLifecycle()
     val checking by viewModel.checking.collectAsStateWithLifecycle()
-    // In-sheet depth: 0 = About, 1 = What's New (merged), 2 = All versions.
+    var showRestoreStableDialog by remember { mutableStateOf(false) }
+    // In-sheet depth: 0 = About, 1 = What's New (merged), 2 = All versions, 3 = Update Settings.
     var depth by rememberSaveable { mutableIntStateOf(0) }
     var showUpdateModal by remember { mutableStateOf<AppRelease?>(null) }
-    val downloadState by viewModel.downloadState.collectAsStateWithLifecycle()
 
     showUpdateModal?.let { release ->
         UpdateModalSheet(
             release = release,
-            downloadState = downloadState,
+            downloadStateFlow = viewModel.downloadState,
             onDownload = { viewModel.startDownload(release) },
             onInstall = { file ->
                 viewModel.installDownload(file)
-                viewModel.clearDownload()
                 showUpdateModal = null
             },
             onDismiss = {
                 viewModel.dismissDownloadError()
                 showUpdateModal = null
-            }
+            },
         )
     }
 
@@ -276,9 +300,11 @@ fun AppInfoSheet(
                                 viewModel = viewModel,
                                 updateStatus = updateStatus,
                                 checking = checking,
-                                downloadState = downloadState,
                                 githubIcon = githubIcon,
+                                nightlyStatus = nightlyStatus,
+                                nightlyEnabled = nightlyEnabled,
                                 onOpenWhatsNew = { depth = 1 },
+                                onOpenUpdateSettings = { depth = 3 },
                                 onCheckResult = onCheckResult,
                                 onShowUpdateModal = { showUpdateModal = it }
                             )
@@ -289,9 +315,17 @@ fun AppInfoSheet(
                                 modifier = pageModifier,
                             )
 
-                            else -> WhatsNewAllVersionsScene(
+                            2 -> WhatsNewAllVersionsScene(
                                 onBack = { depth = 1 },
                                 modifier = pageModifier,
+                            )
+
+                            3 -> UpdateSettingsScene(
+                                modifier = pageModifier,
+                                viewModel = viewModel,
+                                nightlyEnabled = nightlyEnabled,
+                                onBack = { depth = 0 },
+                                setShowRestoreStableDialog = { showRestoreStableDialog = it }
                             )
                         }
                     }
@@ -309,6 +343,39 @@ fun AppInfoSheet(
             }
         }
     }
+
+    // Hoisted above the in-sheet pages so it still shows up when toggled off from Update Settings,
+    // not just after navigating back to About.
+    if (showRestoreStableDialog) {
+        AlertDialog(
+            onDismissRequest = { showRestoreStableDialog = false },
+            title = { Text(stringResource(R.string.settings_beta_restore_stable_title)) },
+            text = { Text(stringResource(R.string.settings_beta_restore_stable_desc)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    showRestoreStableDialog = false
+                    viewModel.setNightlyEnabled(false)
+                    viewModel.restoreToStable { result ->
+                        if (result is UpdateCheckResult.UpdateAvailable) {
+                            // Download starts immediately, ignoring stableAutoDownload — this is
+                            // already a deliberate, attended action. Install still waits for a tap.
+                            showUpdateModal = result.release
+                            viewModel.startDownload(result.release)
+                        } else {
+                            onCheckResult(result)
+                        }
+                    }
+                }) {
+                    Text(stringResource(R.string.settings_beta_restore_stable_confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRestoreStableDialog = false }) {
+                    Text(stringResource(R.string.settings_beta_restore_stable_dismiss))
+                }
+            }
+        )
+    }
 }
 
 /**
@@ -322,9 +389,11 @@ private fun AboutScene(
     viewModel: AppInfoViewModel,
     updateStatus: UpdateStatus,
     checking: Boolean,
-    downloadState: DownloadState,
     githubIcon: ImageVector,
+    nightlyStatus: UpdateStatus,
+    nightlyEnabled: Boolean,
     onOpenWhatsNew: () -> Unit,
+    onOpenUpdateSettings: () -> Unit,
     onCheckResult: (UpdateCheckResult) -> Unit,
     onShowUpdateModal: (AppRelease) -> Unit,
 ) {
@@ -362,37 +431,24 @@ private fun AboutScene(
         Spacer(Modifier.height(28.dp))
 
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            val available = updateStatus as? UpdateStatus.UpdateAvailable
-            if (available != null) {
-                val isDownloading = downloadState is DownloadState.Downloading
-                val progress = (downloadState as? DownloadState.Downloading)?.progress ?: 0
-                val subtitle =
-                    if (isDownloading) stringResource(R.string.update_modal_downloading, progress)
-                    else stringResource(
-                        R.string.settings_update_available_subtitle,
-                        available.release.versionName
-                    )
-                
-                SegmentedTile(
+            val nightlyAvailable = nightlyStatus as? UpdateStatus.UpdateAvailable
+            val stableAvailable = updateStatus as? UpdateStatus.UpdateAvailable
+
+            if (nightlyAvailable != null) {
+                NightlyUpdateTile(
+                    release = nightlyAvailable.release,
+                    downloadStateFlow = viewModel.downloadState,
+                    onShowUpdateModal = onShowUpdateModal,
                     isFirst = true,
-                    isLast = false,
-                    title = stringResource(R.string.settings_update_available_title),
-                    subtitle = subtitle,
-                    progress = if (isDownloading) progress / 100f else null,
-                    onClick = if (isDownloading) null else {
-                        {
-                            haptic.tap()
-                            onShowUpdateModal(available.release)
-                        }
-                    },
-                    leading = {
-                        SegmentedIconChip(
-                            Icons.Outlined.Update,
-                            scheme.primaryContainer,
-                            scheme.onPrimaryContainer,
-                        )
-                    },
-                    trailing = { TrailingGlyph(Icons.Rounded.ChevronRight) },
+                    isLast = false
+                )
+            } else if (stableAvailable != null) {
+                UpdateAvailableTile(
+                    release = stableAvailable.release,
+                    downloadStateFlow = viewModel.downloadState,
+                    onShowUpdateModal = onShowUpdateModal,
+                    isFirst = true,
+                    isLast = false
                 )
             } else {
                 SegmentedTile(
@@ -441,6 +497,26 @@ private fun AboutScene(
                 },
                 trailing = { TrailingGlyph(Icons.Rounded.ChevronRight) },
             )
+
+            SegmentedTile(
+                isFirst = false,
+                isLast = false,
+                title = stringResource(R.string.settings_update_settings_title),
+                subtitle = stringResource(R.string.settings_update_settings_subtitle),
+                onClick = {
+                    haptic.tap()
+                    onOpenUpdateSettings()
+                },
+                leading = {
+                    SegmentedIconChip(
+                        ImageVector.vectorResource(R.drawable.rule_settings_24px),
+                        scheme.secondaryContainer,
+                        scheme.onSecondaryContainer
+                    )
+                },
+                trailing = { TrailingGlyph(Icons.Rounded.ChevronRight) },
+            )
+
             SegmentedTile(
                 isFirst = false,
                 isLast = true,
@@ -550,5 +626,322 @@ private fun CreditTile(
             Spacer(Modifier.weight(1f))
             TrailingGlyph(Icons.Rounded.ChevronRight)
         }
+    }
+}
+
+@Composable
+private fun UpdateAvailableTile(
+    release: AppRelease,
+    downloadStateFlow: kotlinx.coroutines.flow.StateFlow<DownloadState>,
+    onShowUpdateModal: (AppRelease) -> Unit,
+    isFirst: Boolean,
+    isLast: Boolean,
+) {
+    val downloadState by downloadStateFlow.collectAsStateWithLifecycle()
+    val isDownloading = downloadState is DownloadState.Downloading
+    val isDownloaded = downloadState.isReadyToInstall()
+    val progress = (downloadState as? DownloadState.Downloading)?.progress ?: 0
+    val subtitle =
+        if (isDownloading) stringResource(R.string.update_modal_downloading, progress)
+        else stringResource(
+            R.string.settings_update_available_subtitle,
+            release.versionName
+        )
+    val haptic = rememberHapticManager()
+    val scheme = MaterialTheme.colorScheme
+
+    SegmentedTile(
+        isFirst = isFirst,
+        isLast = isLast,
+        title = stringResource(
+            when {
+                isDownloading -> R.string.settings_update_downloading_title
+                isDownloaded -> R.string.settings_update_downloaded_title
+                else -> R.string.settings_update_available_title
+            }
+        ),
+        subtitle = subtitle,
+        progress = if (isDownloading) progress / 100f else null,
+        onClick = if (isDownloading) null else {
+            {
+                haptic.tap()
+                onShowUpdateModal(release)
+            }
+        },
+        leading = {
+            SegmentedIconChip(
+                Icons.Outlined.Update,
+                scheme.primaryContainer,
+                scheme.onPrimaryContainer,
+            )
+        },
+        trailing = { TrailingGlyph(Icons.Rounded.ChevronRight) },
+    )
+}
+
+@Composable
+private fun NightlyUpdateTile(
+    release: AppRelease,
+    downloadStateFlow: kotlinx.coroutines.flow.StateFlow<DownloadState>,
+    onShowUpdateModal: (AppRelease) -> Unit,
+    isFirst: Boolean,
+    isLast: Boolean,
+) {
+    val downloadState by downloadStateFlow.collectAsStateWithLifecycle()
+    val isDownloading = downloadState is DownloadState.Downloading
+    val isDownloaded = downloadState.isReadyToInstall()
+    val progress = (downloadState as? DownloadState.Downloading)?.progress ?: 0
+    val scheme = MaterialTheme.colorScheme
+
+    val base = release.versionName
+    val sha = release.commitSha
+    val downloadingStr = stringResource(R.string.update_modal_downloading, progress)
+    val fromStr = stringResource(R.string.settings_nightly_from, base)
+    val commitStr = sha?.let { stringResource(R.string.settings_nightly_commit, it) }
+
+    val subtitleAnnotated = if (isDownloading) {
+        androidx.compose.ui.text.AnnotatedString(downloadingStr)
+    } else {
+        androidx.compose.ui.text.AnnotatedString(fromStr)
+    }
+    val haptic = rememberHapticManager()
+
+    SegmentedTile(
+        isFirst = isFirst,
+        isLast = isLast,
+        title = stringResource(
+            when {
+                isDownloading -> R.string.settings_nightly_downloading_title
+                isDownloaded -> R.string.settings_nightly_downloaded_title
+                else -> R.string.settings_nightly_available_title
+            }
+        ),
+        subtitleAnnotated = subtitleAnnotated,
+        progress = if (isDownloading) progress / 100f else null,
+        onClick = if (isDownloading) null else {
+            {
+                haptic.tap()
+                onShowUpdateModal(release)
+            }
+        },
+        leading = {
+            SegmentedIconChip(
+                ImageVector.vectorResource(R.drawable.moon_stars_24px),
+                scheme.tertiaryContainer,
+                scheme.onTertiaryContainer,
+            )
+        },
+        trailing = { TrailingGlyph(Icons.Rounded.ChevronRight) },
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun UpdateSettingsScene(
+    modifier: Modifier,
+    viewModel: AppInfoViewModel,
+    nightlyEnabled: Boolean,
+    onBack: () -> Unit,
+    setShowRestoreStableDialog: (Boolean) -> Unit,
+) {
+    val haptic = rememberHapticManager()
+    val scheme = MaterialTheme.colorScheme
+
+    val stableAutoDownload by viewModel.stableAutoDownload.collectAsStateWithLifecycle()
+    val nightlyAutoDownload by viewModel.nightlyAutoDownload.collectAsStateWithLifecycle()
+    val checkIntervalMinutes by viewModel.checkIntervalMinutes.collectAsStateWithLifecycle()
+
+    Column(modifier = modifier) {
+        TopAppBar(
+            title = { Text(stringResource(R.string.settings_update_settings_title)) },
+            navigationIcon = {
+                IconButton(onClick = onBack) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
+                        contentDescription = stringResource(R.string.common_back),
+                    )
+                }
+            },
+            colors = TopAppBarDefaults.topAppBarColors(
+                containerColor = Color.Transparent
+            )
+        )
+
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp, vertical = 8.dp)
+        ) {
+            CheckIntervalSlider(
+                intervalMinutes = checkIntervalMinutes,
+                onIntervalChange = { viewModel.setCheckIntervalMinutes(it) },
+            )
+
+            Spacer(Modifier.height(24.dp))
+
+            Text(
+                text = stringResource(R.string.settings_update_stable_header),
+                style = MaterialTheme.typography.labelLarge,
+                color = scheme.primary,
+                modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+            )
+
+            SegmentedTile(
+                isFirst = true,
+                isLast = true,
+                role = Role.Switch,
+                title = stringResource(R.string.settings_update_stable_auto_download_title),
+                subtitle = stringResource(R.string.settings_update_stable_auto_download_subtitle),
+                onClick = {
+                    haptic.tap()
+                    viewModel.setStableAutoDownload(!stableAutoDownload)
+                },
+                trailing = {
+                    Switch(
+                        checked = stableAutoDownload,
+                        onCheckedChange = null,
+                        modifier = Modifier.padding(end = 6.dp)
+                    )
+                }
+            )
+
+            Spacer(Modifier.height(24.dp))
+
+            Text(
+                text = stringResource(R.string.settings_update_beta_header),
+                style = MaterialTheme.typography.labelLarge,
+                color = scheme.primary,
+                modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+            )
+
+            SegmentedTile(
+                isFirst = true,
+                isLast = false,
+                role = Role.Switch,
+                title = stringResource(R.string.settings_beta_updates_title),
+                subtitle = stringResource(R.string.settings_beta_updates_subtitle),
+                onClick = {
+                    haptic.tap()
+                    if (nightlyEnabled) {
+                        viewModel.checkAndOfferStable {
+                            setShowRestoreStableDialog(true)
+                        }
+                    } else {
+                        viewModel.setNightlyEnabled(true)
+                    }
+                },
+                trailing = {
+                    Switch(
+                        checked = nightlyEnabled,
+                        onCheckedChange = null,
+                        modifier = Modifier.padding(end = 6.dp)
+                    )
+                }
+            )
+
+            val betaTogglesEnabled = nightlyEnabled
+            val alpha = if (betaTogglesEnabled) 1f else 0.5f
+
+            SegmentedTile(
+                isFirst = false,
+                isLast = true,
+                role = Role.Switch,
+                title = stringResource(R.string.settings_update_beta_auto_download_title),
+                subtitle = stringResource(R.string.settings_update_beta_auto_download_subtitle),
+                onClick = if (!betaTogglesEnabled) null else {
+                    {
+                        haptic.tap()
+                        viewModel.setNightlyAutoDownload(!nightlyAutoDownload)
+                    }
+                },
+                trailing = {
+                    Switch(
+                        checked = nightlyAutoDownload && betaTogglesEnabled,
+                        onCheckedChange = null,
+                        enabled = betaTogglesEnabled,
+                        modifier = Modifier.padding(end = 6.dp)
+                    )
+                },
+                modifier = Modifier.alpha(alpha)
+            )
+        }
+    }
+}
+
+/** Discrete steps (in minutes) offered by [CheckIntervalSlider], from WorkManager's own floor up to a day. */
+private val CHECK_INTERVAL_STEPS_MINUTES = listOf(15, 30, 60, 120, 180, 360, 720, 1440)
+
+/**
+ * The "Controlla aggiornamenti ogni" control: a discrete slider over [CHECK_INTERVAL_STEPS_MINUTES]
+ * choosing how often UpdateChecker's periodic worker fires. Mirrors SettingsSecuritySheet's
+ * TimeoutSlider: haptic ticks on step-crossing only, commit on release.
+ */
+@Composable
+private fun CheckIntervalSlider(
+    intervalMinutes: Int,
+    onIntervalChange: (Int) -> Unit,
+) {
+    val haptic = rememberHapticManager()
+    val scheme = MaterialTheme.colorScheme
+
+    var sliderPos by remember(intervalMinutes) {
+        mutableFloatStateOf(
+            CHECK_INTERVAL_STEPS_MINUTES.indexOf(intervalMinutes).coerceAtLeast(0).toFloat()
+        )
+    }
+    val index = sliderPos.roundToInt().coerceIn(0, CHECK_INTERVAL_STEPS_MINUTES.lastIndex)
+    val colors = SliderDefaults.colors(
+        activeTickColor = MaterialTheme.colorScheme.onSurface,
+        inactiveTrackColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.6f),
+        inactiveTickColor = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.4f),
+    )
+
+    val locale = currentLocale()
+    val minutesFormat = stringResource(R.string.settings_security_minutes_format)
+    val selectedMinutes = CHECK_INTERVAL_STEPS_MINUTES[index]
+    val intervalLabel = if (selectedMinutes < 60) {
+        String.format(locale, minutesFormat, selectedMinutes)
+    } else {
+        val hours = selectedMinutes / 60
+        pluralStringResource(R.plurals.update_check_interval_hours, hours, hours)
+    }
+
+    Column(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = stringResource(R.string.settings_update_check_frequency_header),
+                style = MaterialTheme.typography.labelLarge,
+                color = scheme.primary,
+                modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+            )
+            Spacer(Modifier.weight(1f))
+            Text(
+                text = intervalLabel,
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Slider(
+            modifier = Modifier.padding(start = 16.dp),
+            value = sliderPos,
+            onValueChange = { newPos ->
+                if (newPos.roundToInt().coerceIn(0, CHECK_INTERVAL_STEPS_MINUTES.lastIndex) != index) haptic.feather()
+                sliderPos = newPos
+            },
+            onValueChangeFinished = { onIntervalChange(CHECK_INTERVAL_STEPS_MINUTES[index]) },
+            valueRange = 0f..CHECK_INTERVAL_STEPS_MINUTES.lastIndex.toFloat(),
+            steps = CHECK_INTERVAL_STEPS_MINUTES.size - 2,
+            colors = colors,
+            track = { state ->
+                SliderDefaults.Track(
+                    sliderState = state,
+                    colors = colors,
+                    drawStopIndicator = null,
+                )
+            }
+        )
     }
 }

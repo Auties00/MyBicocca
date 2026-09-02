@@ -216,6 +216,9 @@ fun MainShell(
             "No ViewModelStoreOwner was provided via LocalViewModelStoreOwner"
         }, null
     ),
+    adminMessageViewModel: it.attendance100.mybicocca.ui.screen.admin.AdminMessageViewModel = hiltViewModel(
+        checkNotNull(LocalViewModelStoreOwner.current) { "No ViewModelStoreOwner" }
+    )
 ) {
     val strShellSessionExpired = stringResource(R.string.shell_session_expired)
     val strShellUpdateAvailable = stringResource(R.string.shell_update_available)
@@ -239,6 +242,20 @@ fun MainShell(
     val scope = rememberCoroutineScope()
     val tab = ShellTab.entries[pagerState.currentPage]
     val photo by accountViewModel.userPhoto.collectAsStateWithLifecycle()
+
+    val adminMessage by adminMessageViewModel.message.collectAsStateWithLifecycle()
+    adminMessage?.let { msg ->
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { adminMessageViewModel.dismiss(msg.id) },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = { adminMessageViewModel.dismiss(msg.id) }) {
+                    androidx.compose.material3.Text("OK")
+                }
+            },
+            title = { androidx.compose.material3.Text(msg.title) },
+            text = { androidx.compose.material3.Text(msg.message) }
+        )
+    }
 
     /**
      * Every stored account's avatar, observed to warm Coil's cache as soon as the shell loads so
@@ -518,9 +535,71 @@ fun MainShell(
     val snackbarController = rememberAppSnackbarController()
     val updateEventsViewModel: UpdateEventsViewModel = hiltViewModel()
 
+    val downloadState by updateEventsViewModel.downloadState.collectAsStateWithLifecycle()
+    var showUpdateModal by remember { mutableStateOf<it.attendance100.mybicocca.domain.model.update.AppRelease?>(null) }
+
+    showUpdateModal?.let { release ->
+        it.attendance100.mybicocca.ui.component.modal.UpdateModalSheet(
+            release = release,
+            downloadStateFlow = updateEventsViewModel.downloadState,
+            onDownload = {
+                updateEventsViewModel.startDownload(release)
+            },
+            onInstall = { file ->
+                // State deliberately left alone: the APK stays downloaded and ready, and the
+                // downloader needs its pending-install marker to notice a dismissed dialog.
+                updateEventsViewModel.installApk(file)
+                showUpdateModal = null
+            },
+            onDismiss = {
+                updateEventsViewModel.dismissDownloadError()
+                showUpdateModal = null
+            },
+        )
+    }
+
+    val strInstallUpdate = stringResource(R.string.update_modal_install)
+
+    // Both channels take the same path — announce, then either start the download straight away or
+    // let the tap open the modal to download from. Only the event source differs.
     LaunchedEffect(updateEventsViewModel, snackbarController) {
-        updateEventsViewModel.events.collect {
-            snackbarController.showInfo(strShellUpdateAvailable)
+        updateEventsViewModel.events.collect { release ->
+            if (updateEventsViewModel.stableAutoDownload()) {
+                snackbarController.showInfo(strShellUpdateAvailable)
+                updateEventsViewModel.startDownload(release)
+            } else {
+                snackbarController.showInfo(strShellUpdateAvailable) {
+                    showUpdateModal = release
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(updateEventsViewModel, snackbarController) {
+        updateEventsViewModel.nightlyEvents.collect { release ->
+            if (updateEventsViewModel.nightlyAutoDownload()) {
+                snackbarController.showInfo(strShellUpdateAvailable)
+                updateEventsViewModel.startDownload(release)
+            } else {
+                snackbarController.showInfo(strShellUpdateAvailable) {
+                    showUpdateModal = release
+                }
+            }
+        }
+    }
+
+    // A finished download is only ever offered, never acted on: the install starts from the tap.
+    // Deliberately not gated on this shell having started the download — AppUpdateWorker starts
+    // every auto-download, and gating on a shell-local flag silently swallowed the offer for it.
+    LaunchedEffect(downloadState) {
+        if (downloadState is it.attendance100.mybicocca.data.update.DownloadState.Success) {
+            val file = (downloadState as it.attendance100.mybicocca.data.update.DownloadState.Success).file
+
+            if (showUpdateModal == null) {
+                snackbarController.showInfo(strInstallUpdate) {
+                    updateEventsViewModel.installApk(file)
+                }
+            }
         }
     }
 

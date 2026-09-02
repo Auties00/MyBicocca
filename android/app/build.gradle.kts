@@ -1,4 +1,8 @@
+
+import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Properties
+import java.util.TimeZone
 
 // Plugins
 plugins {
@@ -40,6 +44,33 @@ val versionProps = Properties().apply { versionPropsFile.inputStream().use(::loa
 val appBaseVersionName: String = versionProps.getProperty("baseVersion")?.trim()
     ?: error("version.properties is missing baseVersion")
 
+// Nightlies before this scheme used a raw unix timestamp (seconds) as versionCode — already past
+// 1.79 billion as of writing and only growing — so anything installed under the old scheme needs
+// a floor comfortably above "now" or those users could never install a future release without
+// uninstalling first. 2 billion clears it until 2033, stays well under Int.MAX_VALUE (2,147,483,647)
+// with room for the addend below, and stays easy to read at a glance (e.g. 2000000005).
+val VERSION_CODE_FLOOR = 2_000_000_000
+
+// Shared between a stable release and the nightlies built against the same base version, so
+// "restore to stable" is a same-or-higher versionCode install, not a downgrade PackageManager
+// refuses — Android only blocks a strictly lower versionCode, not an equal one. Deliberately NOT
+// bumped for nightlyVersionName below: nightlies stay tied to the last-shipped release's code so
+// rollback between a nightly and the latest stable release is always a same-version install, while
+// rolling back further (an older stable, or a nightly predating the current one) stays a genuine
+// downgrade that requires an uninstall — intentional, not a bug.
+val appVersionCode: Int = VERSION_CODE_FLOOR + appBaseVersionName.split(".")
+    .map { it.toIntOrNull() ?: 0 }
+    .let { (it.getOrElse(0) { 0 }) * 10_000 + (it.getOrElse(1) { 0 }) * 100 + it.getOrElse(2) { 0 } }
+
+// Nightlies advertise the version they're heading towards, not the last-shipped one — bumping
+// baseVersion itself is what actually cuts a new release, so this is purely a display/filename
+// label until that happens.
+val nightlyVersionName: String = appBaseVersionName.split(".")
+    .map { it.toIntOrNull() ?: 0 }
+    .toMutableList()
+    .apply { if (isNotEmpty()) this[lastIndex] += 1 }
+    .joinToString(".")
+
 val buildNumber: Int = run {
     val current = versionProps.getProperty("buildNumber")?.trim()?.toIntOrNull() ?: 0
     val buildTaskWords = listOf("assemble", "install", "bundle", "package", "build")
@@ -72,9 +103,34 @@ android {
         applicationId = "it.attendance100.mybicocca"
         minSdk = 25
         targetSdk = 36
-        versionCode = 1
+        versionCode = appVersionCode
         versionName = appBaseVersionName
         manifestPlaceholders["buildNumber"] = buildNumber.toString()
+
+        val isCi = System.getenv("GITHUB_ACTIONS") == "true"
+        val nightlyIdentifier = if (isCi) {
+            val tz = TimeZone.getTimeZone("Europe/Rome")
+            val format = SimpleDateFormat("dd MMM yyyy, HH:mm")
+            format.timeZone = tz
+            format.format(Date())
+        } else {
+            ""
+        }
+        // Two nightlies built against the same baseVersion share a versionCode *and* a versionName,
+        // so the commit is the only thing telling them apart — which is what the update check
+        // compares. GITHUB_SHA is only set on CI, so fall back to git locally rather than leaving
+        // every local build with the same empty SHA and no way to tell them apart.
+        val commitSha: String = System.getenv("GITHUB_SHA")?.take(7)
+            ?: runCatching {
+                val process = ProcessBuilder("git", "rev-parse", "--short=7", "HEAD")
+                    .directory(rootDir)
+                    .redirectErrorStream(true)
+                    .start()
+                val output = process.inputStream.bufferedReader().use { it.readText() }.trim()
+                output.takeIf { process.waitFor() == 0 && it.isNotEmpty() }
+            }.getOrNull() ?: ""
+        buildConfigField("String", "NIGHTLY_IDENTIFIER", "\"$nightlyIdentifier\"")
+        buildConfigField("String", "COMMIT_SHA", "\"$commitSha\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -88,6 +144,12 @@ android {
     }
 
     buildTypes {
+        // Empty otherwise, but the oss-licenses-plugin's per-variant task wiring appears to need
+        // this block to exist explicitly (removing it broke nightlyOssLicensesTask with an
+        // unrelated-looking "addDebugLicense()" Groovy error) -- isDebuggable is already AGP's
+        // default true for the literal "debug" build type, this doesn't change anything.
+        debug {
+        }
         release {
             isMinifyEnabled = true
             isShrinkResources = true
@@ -96,6 +158,18 @@ android {
                 "proguard-rules.pro"
             )
             signingConfig = signingConfigs.getByName("release").takeIf { it.storeFile != null }
+        }
+        create("nightly") {
+            initWith(getByName("release"))
+            // initWith(release) also carries over isDebuggable = false, which is why a nightly
+            // build doesn't show up as an attachable process for Android Studio's debugger/App
+            // Inspection at all (a non-debuggable process is invisible to adb jdwp, not just
+            // access-restricted) -- debug itself doesn't need this, AGP already defaults it true.
+            isDebuggable = true
+            versionNameSuffix = "-nightly"
+            matchingFallbacks += listOf("release")
+            signingConfig = signingConfigs.getByName("release").takeIf { it.storeFile != null }
+                ?: signingConfigs.getByName("debug")
         }
     }
 
@@ -149,16 +223,30 @@ android {
     }
 }
 
+tasks.withType<Test> {
+    maxHeapSize = "2g"
+    jvmArgs("-XX:MaxMetaspaceSize=1g")
+    forkEvery = 10
+}
+
 androidComponents {
     onVariants { variant ->
+        val isNightly = variant.buildType == "nightly"
+        // versionName isn't settable per build type via the classic DSL (unlike versionNameSuffix),
+        // so the "advertise the next version" bump has to happen here instead, same as versionCode
+        // used to before it moved to defaultConfig.
+        val fileVersion = if (isNightly) nightlyVersionName else appBaseVersionName
+        val suffix = if (isNightly) "-nightly" else ""
+
         variant.outputs.forEach { variantOutput ->
             val output = variantOutput as com.android.build.api.variant.impl.VariantOutputImpl
-            val abi = output.filters.find { it.filterType.toString() == "ABI" }?.identifier
+            if (isNightly) output.versionName.set(fileVersion + suffix)
 
+            val abi = output.filters.find { it.filterType.toString() == "ABI" }?.identifier
             val newName = if (abi != null) {
-                "mybicocca-$abi-v$appBaseVersionName.apk"
+                "mybicocca-$abi-v$fileVersion$suffix.apk"
             } else {
-                "mybicocca-universal-v$appBaseVersionName.apk"
+                "mybicocca-universal-v$fileVersion$suffix.apk"
             }
             output.outputFileName = newName
         }
@@ -222,6 +310,11 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.10.0")
     // ProcessLifecycleOwner — app-wide foreground/background signal for the app lock.
     implementation("androidx.lifecycle:lifecycle-process:2.10.0")
+
+    // WorkManager
+    implementation("androidx.work:work-runtime-ktx:2.9.1")
+    implementation("androidx.hilt:hilt-work:1.2.0")
+    ksp("androidx.hilt:hilt-compiler:1.2.0")
 
     // DataStore
     implementation("androidx.datastore:datastore-preferences:1.1.4")
@@ -302,6 +395,7 @@ dependencies {
     // Crashlytics and Analytics
     implementation("com.google.firebase:firebase-crashlytics")
     implementation("com.google.firebase:firebase-analytics")
+    implementation("com.google.firebase:firebase-config")
 
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")

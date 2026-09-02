@@ -843,6 +843,8 @@
     <string name="settings_check_updates_title">Controlla Aggiornamenti</string>
     <string name="settings_check_updates_subtitle">Cerca nuove versioni</string>
     <string name="settings_update_available_title">Aggiornamento disponibile</string>
+    <string name="settings_update_downloading_title">Download aggiornamento in corso</string>
+    <string name="settings_update_downloaded_title">Aggiornamento scaricato</string>
     <string name="settings_update_available_subtitle">Versione %1$s · tocca per aggiornare</string>
     <string name="settings_update_check_failed">Controllo aggiornamenti non riuscito</string>
     <string name="whats_new_error">Impossibile caricare le novità</string>
@@ -853,6 +855,15 @@
     <string name="settings_no_other_versions">Non ci sono ancora altre versioni!</string>
     <string name="settings_whats_new_title">Novità</string>
     <string name="settings_whats_new_subtitle">Leggi le novità dell\'ultima versione</string>
+    <string name="settings_nightly_available_title">Aggiornamento Nightly disponibile</string>
+    <string name="settings_nightly_downloading_title">Download Nightly in corso</string>
+    <string name="settings_nightly_downloaded_title">Aggiornamento Nightly scaricato</string>
+    <string name="settings_beta_updates_title">Aggiornamenti Beta</string>
+    <string name="settings_beta_updates_subtitle">Ricevi le build notturne con le ultime funzionalità</string>
+    <string name="settings_beta_restore_stable_title">Disattiva aggiornamenti Beta</string>
+    <string name="settings_beta_restore_stable_desc">Vuoi tornare all\'ultima versione stabile o mantenere questa build notturna? Verrai portato alla pagina di download della versione stabile.</string>
+    <string name="settings_beta_restore_stable_confirm">Torna a stabile</string>
+    <string name="settings_beta_restore_stable_dismiss">Mantieni Nightly</string>
     <string name="settings_github_title">GitHub</string>
     <string name="settings_github_subtitle">Codice sorgente del progetto</string>
     <string name="settings_credits_title">Credits</string>
@@ -1163,6 +1174,10 @@
     <plurals name="agenda_event_count">
         <item quantity="one">1 evento</item>
         <item quantity="other">%1$d eventi</item>
+    </plurals>
+    <plurals name="update_check_interval_hours">
+        <item quantity="one">1 ora</item>
+        <item quantity="other">%1$d ore</item>
     </plurals>
     <plurals name="registry_urgent">
         <item quantity="one">1 urgente</item>
@@ -1648,8 +1663,21 @@
     <string name="update_modal_version">v%1$s</string>
     <string name="update_modal_github">Apri su GitHub</string>
     <string name="update_modal_download">Scarica aggiornamento</string>
+    <string name="update_modal_install">Clicca per installare l\'Aggiornamento</string>
+    <string name="update_modal_install_cancelled">Installazione annullata. L\'aggiornamento è già scaricato, puoi installarlo quando vuoi.</string>
+    <string name="update_modal_installing">Installazione in corso...</string>
     <string name="update_modal_not_now">Non ora</string>
     <string name="update_modal_downloading">Download... %1$d%%</string>
+    <string name="settings_update_settings_title">Impostazioni aggiornamenti</string>
+    <string name="settings_update_settings_subtitle">Gestisci download automatici e versioni beta</string>
+    <string name="settings_update_check_frequency_header">Frequenza di controllo</string>
+    <string name="settings_update_check_interval_title">Controlla aggiornamenti ogni</string>
+    <string name="settings_update_stable_header">Aggiornamenti stabili</string>
+    <string name="settings_update_beta_header">Aggiornamenti beta</string>
+    <string name="settings_update_stable_auto_download_title">Download automatico</string>
+    <string name="settings_update_stable_auto_download_subtitle">Scarica i nuovi aggiornamenti stabili in background</string>
+    <string name="settings_update_beta_auto_download_title">Download automatico beta</string>
+    <string name="settings_update_beta_auto_download_subtitle">Scarica le nuove versioni beta in background</string>
 
     <!-- Settings: Language -->
     <string name="settings_language_help_translate">Aiutaci a tradurre l\'app in %1$s!</string>
@@ -1996,9 +2024,6 @@
     <string name="app_info_logo_content_description">Logo MyBicocca</string>
     <string name="settings_security_minutes_format">%1$d min</string>
 
-    <!-- Profile -->
-    <string name="profile_no_active_badge">Nessun badge attivo</string>
-
     <!-- Registry: labels and counters -->
     <string name="registry_gdpr_prefix">"Ho letto "</string>
     <string name="registry_gdpr_policy_link">l\'informativa</string>
@@ -2041,4 +2066,11 @@
     <string name="registry_taxes_due_subtitle">%1$s da pagare</string>
     <string name="registry_taxes_one_invoice">1 fattura</string>
     <string name="registry_taxes_many_invoices">%1$d fatture</string>
+
+    <!-- Profile -->
+    <string name="profile_no_active_badge">Nessun badge attivo</string>
+
+    <!-- Nightly update strings -->
+    <string name="settings_nightly_from">Nightly del %1$s</string>
+    <string name="settings_nightly_commit"> [commit %1$s]</string>
 </resources>

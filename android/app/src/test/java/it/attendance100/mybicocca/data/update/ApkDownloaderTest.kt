@@ -1,0 +1,159 @@
+package it.attendance100.mybicocca.data.update
+
+import android.content.Context
+import android.content.Intent
+import android.os.Build
+import com.google.common.truth.Truth.assertThat
+import it.attendance100.mybicocca.BuildConfig
+import it.attendance100.mybicocca.data.local.settings.DownloadedApk
+import it.attendance100.mybicocca.data.local.settings.UpdateStateStore
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.slot
+import io.mockk.verify
+import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.runTest
+import org.junit.Before
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
+import java.io.File
+
+@RunWith(RobolectricTestRunner::class)
+@Config(sdk = [33])
+class ApkDownloaderTest {
+
+    private lateinit var context: Context
+    private lateinit var downloader: ApkDownloader
+    private lateinit var testScope: TestScope
+    private lateinit var store: UpdateStateStore
+
+    @Before
+    fun setup() {
+        context = mockk<Context>(relaxed = true)
+        store = mockk<UpdateStateStore>(relaxed = true)
+        testScope = TestScope()
+        downloader = ApkDownloader(context, testScope, store)
+    }
+
+    /**
+     * API 31+ is where the silent `PackageInstaller` path used to take over. Installing is now
+     * always the user's call, so even here it has to be the system installer dialog.
+     */
+    @Test
+    @Config(sdk = [Build.VERSION_CODES.S])
+    fun installApk_api31_usesSystemInstallerDialog() = testScope.runTest {
+        val file = File.createTempFile("test", ".apk")
+        val intentSlot = slot<Intent>()
+        every { context.startActivity(capture(intentSlot)) } returns Unit
+        every { context.packageName } returns "it.attendance100.mybicocca"
+
+        io.mockk.mockkStatic(androidx.core.content.FileProvider::class)
+        every {
+            androidx.core.content.FileProvider.getUriForFile(context, any(), file)
+        } returns android.net.Uri.parse("content://dummy")
+
+        downloader.installApk(file)
+
+        verify(exactly = 1) { context.startActivity(any()) }
+        assertThat(intentSlot.captured.action).isEqualTo(Intent.ACTION_VIEW)
+        assertThat(intentSlot.captured.type).isEqualTo("application/vnd.android.package-archive")
+        verify(exactly = 0) { context.packageManager.packageInstaller }
+
+        // Without CLEAR_TASK the intent can land on a still-closing installer task and be lost.
+        val flags = intentSlot.captured.flags
+        assertThat(flags and Intent.FLAG_ACTIVITY_NEW_TASK).isNotEqualTo(0)
+        assertThat(flags and Intent.FLAG_ACTIVITY_CLEAR_TASK).isNotEqualTo(0)
+        assertThat(flags and Intent.FLAG_GRANT_READ_URI_PERMISSION).isNotEqualTo(0)
+
+        io.mockk.unmockkStatic(androidx.core.content.FileProvider::class)
+        file.delete()
+    }
+
+    @Test
+    fun returningFromInstallerWithInstallPending_reportsDeclined() = testScope.runTest {
+        val file = stubInstallerLaunch()
+
+        downloader.installApk(file)
+        downloader.onAppBackgrounded()
+        downloader.onAppForegrounded()
+
+        assertThat(downloader.downloadState.value)
+            .isEqualTo(DownloadState.InstallDeclined(file))
+
+        io.mockk.unmockkStatic(androidx.core.content.FileProvider::class)
+        file.delete()
+    }
+
+    /** Foregrounding without the installer ever having taken us away isn't a decline. */
+    @Test
+    fun foregroundedWithoutLeaving_doesNotReportDeclined() = testScope.runTest {
+        val file = stubInstallerLaunch()
+
+        downloader.installApk(file)
+        downloader.onAppForegrounded()
+
+        assertThat(downloader.downloadState.value).isEqualTo(DownloadState.Idle)
+
+        io.mockk.unmockkStatic(androidx.core.content.FileProvider::class)
+        file.delete()
+    }
+
+    @Test
+    fun restorePendingDownload_reOffersAVerifiedFileFromAnotherBuild() = testScope.runTest {
+        val file = File.createTempFile("pending", ".apk").apply { writeText("payload") }
+        every { store.downloadedApk } returns kotlinx.coroutines.flow.flowOf(
+            DownloadedApk(file.absolutePath, file.length(), "0.0.6", NOT_THIS_BUILD_SHA)
+        )
+
+        downloader.restorePendingDownload()
+
+        assertThat(downloader.downloadState.value).isEqualTo(DownloadState.Success(file))
+        file.delete()
+    }
+
+    /** The cache is evictable, so a record outliving its file has to be dropped, not restored. */
+    @Test
+    fun restorePendingDownload_dropsTheRecordWhenTheFileIsGone() = testScope.runTest {
+        every { store.downloadedApk } returns kotlinx.coroutines.flow.flowOf(
+            DownloadedApk("/does/not/exist.apk", 123L, "0.0.6", NOT_THIS_BUILD_SHA)
+        )
+
+        downloader.restorePendingDownload()
+
+        assertThat(downloader.downloadState.value).isEqualTo(DownloadState.Idle)
+        io.mockk.coVerify(exactly = 1) { store.clearDownloadedApk() }
+    }
+
+    /** Matching BuildConfig.COMMIT_SHA means it's already installed; anything else must not. */
+    @Test
+    fun restorePendingDownload_dropsTheRecordForTheRunningBuild() = testScope.runTest {
+        val file = File.createTempFile("pending", ".apk").apply { writeText("payload") }
+        every { store.downloadedApk } returns kotlinx.coroutines.flow.flowOf(
+            DownloadedApk(file.absolutePath, file.length(), "0.0.6", BuildConfig.COMMIT_SHA)
+        )
+
+        downloader.restorePendingDownload()
+
+        assertThat(downloader.downloadState.value).isEqualTo(DownloadState.Idle)
+        io.mockk.coVerify(exactly = 1) { store.clearDownloadedApk() }
+        file.delete()
+    }
+
+    private fun stubInstallerLaunch(): File {
+        val file = File.createTempFile("test", ".apk")
+        every { context.startActivity(any()) } returns Unit
+        every { context.packageName } returns "it.attendance100.mybicocca"
+        io.mockk.mockkStatic(androidx.core.content.FileProvider::class)
+        every {
+            androidx.core.content.FileProvider.getUriForFile(context, any(), file)
+        } returns android.net.Uri.parse("content://dummy")
+        return file
+    }
+
+    private companion object {
+        /** Any SHA the running build can't have, so "already installed" never matches by accident. */
+        const val NOT_THIS_BUILD_SHA = "deadbee"
+    }
+}
