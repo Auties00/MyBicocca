@@ -537,14 +537,12 @@ fun MainShell(
 
     val downloadState by updateEventsViewModel.downloadState.collectAsStateWithLifecycle()
     var showUpdateModal by remember { mutableStateOf<it.attendance100.mybicocca.domain.model.update.AppRelease?>(null) }
-    var downloadingRelease by remember { mutableStateOf<it.attendance100.mybicocca.domain.model.update.AppRelease?>(null) }
 
     showUpdateModal?.let { release ->
         it.attendance100.mybicocca.ui.component.modal.UpdateModalSheet(
             release = release,
             downloadStateFlow = updateEventsViewModel.downloadState,
             onDownload = {
-                downloadingRelease = release
                 updateEventsViewModel.startDownload(release)
             },
             onInstall = { file ->
@@ -568,7 +566,6 @@ fun MainShell(
         updateEventsViewModel.events.collect { release ->
             if (updateEventsViewModel.stableAutoDownload()) {
                 snackbarController.showInfo(strShellUpdateAvailable)
-                downloadingRelease = release
                 updateEventsViewModel.startDownload(release)
             } else {
                 snackbarController.showInfo(strShellUpdateAvailable) {
@@ -582,7 +579,6 @@ fun MainShell(
         updateEventsViewModel.nightlyEvents.collect { release ->
             if (updateEventsViewModel.nightlyAutoDownload()) {
                 snackbarController.showInfo(strShellUpdateAvailable)
-                downloadingRelease = release
                 updateEventsViewModel.startDownload(release)
             } else {
                 snackbarController.showInfo(strShellUpdateAvailable) {
@@ -593,10 +589,11 @@ fun MainShell(
     }
 
     // A finished download is only ever offered, never acted on: the install starts from the tap.
+    // Deliberately not gated on this shell having started the download — AppUpdateWorker starts
+    // every auto-download, and gating on a shell-local flag silently swallowed the offer for it.
     LaunchedEffect(downloadState) {
         if (downloadState is it.attendance100.mybicocca.data.update.DownloadState.Success) {
             val file = (downloadState as it.attendance100.mybicocca.data.update.DownloadState.Success).file
-            if (downloadingRelease == null) return@LaunchedEffect
 
             if (showUpdateModal == null) {
                 snackbarController.showInfo(strInstallUpdate) {
