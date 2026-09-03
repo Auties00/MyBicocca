@@ -1,5 +1,6 @@
 package it.attendance100.mybicocca.data.repository
 
+import it.attendance100.mybicocca.core.notification.NotificationRoute
 import it.attendance100.mybicocca.domain.model.library.LibraryDeepLinkAction
 import it.attendance100.mybicocca.domain.repository.DeepLinkRepository
 import kotlinx.coroutines.flow.Flow
@@ -18,6 +19,7 @@ class DeepLinkRepositoryImpl @Inject constructor() : DeepLinkRepository {
 
     private val pendingPresenceScan = MutableStateFlow<String?>(null)
     private val pendingLibraryAction = MutableStateFlow<LibraryDeepLinkAction?>(null)
+    private val pendingNotificationRoute = MutableStateFlow<NotificationRoute?>(null)
 
     override fun observePendingPresenceScan(): Flow<String?> = pendingPresenceScan.asStateFlow()
 
@@ -37,5 +39,15 @@ class DeepLinkRepositoryImpl @Inject constructor() : DeepLinkRepository {
 
     override fun consumeLibraryAction() {
         pendingLibraryAction.value = null
+    }
+
+    override fun observePendingNotificationRoute(): Flow<NotificationRoute?> = pendingNotificationRoute.asStateFlow()
+
+    override fun submitNotificationRoute(route: NotificationRoute) {
+        pendingNotificationRoute.value = route
+    }
+
+    override fun consumeNotificationRoute() {
+        pendingNotificationRoute.value = null
     }
 }

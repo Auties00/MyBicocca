@@ -28,12 +28,14 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.google.android.gms.oss.licenses.OssLicensesMenuActivity
+import it.attendance100.mybicocca.BuildConfig
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.ui.screen.settings.component.SettingsEntrySection
 import it.attendance100.mybicocca.ui.screen.settings.state.SettingsEntry
 import it.attendance100.mybicocca.ui.screen.settings.state.SettingsEntryGroup
 import it.attendance100.mybicocca.ui.screen.settings.subscreen.appInfo.AppInfoSheet
+import it.attendance100.mybicocca.ui.screen.settings.subscreen.notificationDebug.NotificationDebugSheet
 import it.attendance100.mybicocca.ui.screen.settings.subscreen.fileAssociations.FileAssociationsSheet
 import it.attendance100.mybicocca.ui.screen.settings.subscreen.language.LanguageSheet
 import it.attendance100.mybicocca.ui.screen.settings.subscreen.language.currentAppLanguageLabel
@@ -66,6 +68,7 @@ fun SettingsScreen() {
     var showFileAssocSheet by remember { mutableStateOf(false) }
     var showHapticSheet by remember { mutableStateOf(false) }
     var showAppInfoSheet by remember { mutableStateOf(false) }
+    var showNotificationDebugSheet by remember { mutableStateOf(false) }
 
     val languageLabel = remember(showLanguageSheet) { currentAppLanguageLabel(context) }
 
@@ -113,35 +116,52 @@ fun SettingsScreen() {
             SettingsEntryGroup(
                 name = stringResource(R.string.settings_information_title),
                 caption = stringResource(R.string.settings_information_subtitle),
-                entries = listOf(
-                    SettingsEntry(
-                        "about",
-                        stringResource(R.string.settings_about_title),
-                        stringResource(R.string.settings_about_subtitle),
-                        Icons.Outlined.Info,
-                        onClick = { showAppInfoSheet = true }),
-                    SettingsEntry(
-                        "privacy",
-                        stringResource(R.string.settings_privacy_title),
-                        stringResource(R.string.settings_privacy_subtitle),
-                        Icons.Outlined.PrivacyTip,
-                        onClick = { haptic.tap() }),
-                    SettingsEntry(
-                        "license",
-                        stringResource(R.string.settings_license_title),
-                        stringResource(R.string.settings_license_subtitle),
-                        Icons.Outlined.Description,
-                        onClick = {
-                            OssLicensesMenuActivity.setActivityTitle(strSettingsOssLicensesTitle)
-                            context.startActivity(
-                                Intent(
-                                    context,
-                                    OssLicensesMenuActivity::class.java
+                entries = buildList {
+                    add(
+                        SettingsEntry(
+                            "about",
+                            stringResource(R.string.settings_about_title),
+                            stringResource(R.string.settings_about_subtitle),
+                            Icons.Outlined.Info,
+                            onClick = { showAppInfoSheet = true })
+                    )
+                    // Debug-only, so its copy is hardcoded rather than translated.
+                    if (BuildConfig.DEBUG) {
+                        add(
+                            SettingsEntry(
+                                "notification-debug",
+                                "Notifications debug",
+                                "Fire one of every notification spec",
+                                Icons.Outlined.Info,
+                                onClick = { showNotificationDebugSheet = true })
+                        )
+                    }
+                    add(
+                        SettingsEntry(
+                            "privacy",
+                            stringResource(R.string.settings_privacy_title),
+                            stringResource(R.string.settings_privacy_subtitle),
+                            Icons.Outlined.PrivacyTip,
+                            onClick = { haptic.tap() })
+                    )
+                    add(
+                        SettingsEntry(
+                            "license",
+                            stringResource(R.string.settings_license_title),
+                            stringResource(R.string.settings_license_subtitle),
+                            Icons.Outlined.Description,
+                            onClick = {
+                                OssLicensesMenuActivity.setActivityTitle(strSettingsOssLicensesTitle)
+                                context.startActivity(
+                                    Intent(
+                                        context,
+                                        OssLicensesMenuActivity::class.java
+                                    )
                                 )
-                            )
-                        }
-                    ),
-                ),
+                            }
+                        )
+                    )
+                },
             ),
             scheme.secondaryContainer, scheme.onSecondaryContainer,
         ),
@@ -186,5 +206,9 @@ fun SettingsScreen() {
 
     if (showAppInfoSheet) {
         AppInfoSheet(onDismiss = { showAppInfoSheet = false })
+    }
+
+    if (showNotificationDebugSheet) {
+        NotificationDebugSheet(onDismiss = { showNotificationDebugSheet = false })
     }
 }

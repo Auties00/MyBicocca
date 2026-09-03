@@ -37,6 +37,7 @@ import it.attendance100.mybicocca.core.os.PipController
 import it.attendance100.mybicocca.core.os.PipState
 import it.attendance100.mybicocca.core.os.ProvideHapticManager
 import it.attendance100.mybicocca.core.os.getDeviceType
+import it.attendance100.mybicocca.data.notification.NotificationRouter
 import it.attendance100.mybicocca.data.update.UpdateChecker
 import it.attendance100.mybicocca.domain.model.library.LibraryActionKind
 import it.attendance100.mybicocca.domain.model.library.LibraryDeepLinkAction
@@ -44,6 +45,7 @@ import it.attendance100.mybicocca.domain.model.settings.AppTheme
 import it.attendance100.mybicocca.domain.model.settings.ThemeMode
 import it.attendance100.mybicocca.domain.usecase.attendance.SubmitPresenceScanUseCase
 import it.attendance100.mybicocca.domain.usecase.library.SubmitLibraryActionUseCase
+import it.attendance100.mybicocca.domain.usecase.notification.SubmitNotificationRouteUseCase
 import it.attendance100.mybicocca.domain.usecase.security.ObserveAppLockEnabledUseCase
 import it.attendance100.mybicocca.domain.usecase.security.ObserveSecureScreenUseCase
 import it.attendance100.mybicocca.domain.usecase.settings.ObserveAppThemeUseCase
@@ -96,6 +98,9 @@ class MyBicoccaActivity : AppCompatActivity() {
     @Inject
     lateinit var submitLibraryAction: SubmitLibraryActionUseCase
 
+    @Inject
+    lateinit var submitNotificationRoute: SubmitNotificationRouteUseCase
+
     // Drives the once-a-day update check; started in onCreate.
     @Inject
     lateinit var updateChecker: UpdateChecker
@@ -130,6 +135,7 @@ class MyBicoccaActivity : AppCompatActivity() {
 
         captureAttendanceDeepLink(intent)
         captureLibraryDeepLink(intent)
+        captureNotificationRoute(intent)
 
         updateChecker.start()
 
@@ -193,6 +199,16 @@ class MyBicoccaActivity : AppCompatActivity() {
         setIntent(intent)
         captureAttendanceDeepLink(intent)
         captureLibraryDeepLink(intent)
+        captureNotificationRoute(intent)
+    }
+
+    /**
+     * A tap on one of this app's notifications lands here rather than on a receiver: since
+     * Android 12 a notification may not reach an Activity by way of one, and the system drops
+     * such a tap silently. The route is handed to the shell, which owns the navigation.
+     */
+    private fun captureNotificationRoute(intent: Intent) {
+        NotificationRouter.routeOf(intent)?.let(submitNotificationRoute::invoke)
     }
 
     /**
