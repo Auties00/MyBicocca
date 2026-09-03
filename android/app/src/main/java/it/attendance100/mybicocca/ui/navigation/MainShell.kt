@@ -56,6 +56,7 @@ import coil.imageLoader
 import coil.request.ImageRequest
 import coil.size.Size
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.notification.NotificationRoute
 import it.attendance100.mybicocca.core.state.valueOrNull
 import it.attendance100.mybicocca.data.mapper.calendar.examCalendarEventId
 import it.attendance100.mybicocca.domain.model.calendar.CalendarEvent
@@ -165,6 +166,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
+import java.io.File
 
 /**
  * The signed-in shell: a Scaffold whose global chrome (morphing top bar, bottom tab bar, snackbar
@@ -562,6 +564,7 @@ fun MainShell(
     }
 
     val strInstallUpdate = stringResource(R.string.update_modal_install)
+    val strShellUpdateGone = stringResource(R.string.shell_update_no_longer_available)
 
     // Both channels take the same path — announce, then either start the download straight away or
     // let the tap open the modal to download from. Only the event source differs.
@@ -595,14 +598,38 @@ fun MainShell(
     // Deliberately not gated on this shell having started the download — AppUpdateWorker starts
     // every auto-download, and gating on a shell-local flag silently swallowed the offer for it.
     LaunchedEffect(downloadState) {
-        if (downloadState is it.attendance100.mybicocca.data.update.DownloadState.Success) {
-            val file = (downloadState as it.attendance100.mybicocca.data.update.DownloadState.Success).file
+        if (downloadState is it.attendance100.mybicocca.domain.model.update.DownloadState.Success) {
+            val file = (downloadState as it.attendance100.mybicocca.domain.model.update.DownloadState.Success).file
 
             if (showUpdateModal == null) {
                 snackbarController.showInfo(strInstallUpdate) {
                     updateEventsViewModel.installApk(file)
                 }
             }
+        }
+    }
+
+    // Where a notification tap ends up. The activity captures the route and parks it; the shell
+    // is what actually owns the modal and the install, so it acts on it and clears it.
+    LaunchedEffect(updateEventsViewModel) {
+        updateEventsViewModel.notificationRoutes.collect { route ->
+            when (route) {
+                is NotificationRoute.UpdatePage -> {
+                    // A notification outlives the state that produced it: the release can be gone
+                    // by the time it is tapped (installed another way, or a later check cleared
+                    // it). Say so, rather than opening the app to nothing and looking broken.
+                    val release = updateEventsViewModel.availableRelease()
+                    if (release != null) {
+                        showUpdateModal = release
+                    } else {
+                        snackbarController.showInfo(strShellUpdateGone)
+                    }
+                }
+
+                is NotificationRoute.InstallApk ->
+                    updateEventsViewModel.installApk(File(route.apkPath))
+            }
+            updateEventsViewModel.onNotificationRouteHandled()
         }
     }
 

@@ -49,8 +49,8 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.release.parseReleaseNotes
-import it.attendance100.mybicocca.data.update.DownloadState
-import it.attendance100.mybicocca.data.update.readyToInstall
+import it.attendance100.mybicocca.domain.model.update.DownloadState
+import it.attendance100.mybicocca.domain.model.update.readyToInstall
 import it.attendance100.mybicocca.domain.model.update.AppRelease
 import it.attendance100.mybicocca.ui.screen.settings.subscreen.appInfo.component.ReleaseNotesView
 import java.io.File

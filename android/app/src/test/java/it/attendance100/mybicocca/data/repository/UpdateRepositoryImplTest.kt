@@ -51,7 +51,8 @@ class UpdateRepositoryImplTest {
         every { store.nightlyState } returns nightlyStateFlow
         every { store.state } returns stateFlow
 
-        repository = UpdateRepositoryImpl(api, store, provider)
+        // The repository only forwards download calls; these tests are about the check flow.
+        repository = UpdateRepositoryImpl(api, store, provider, mockk(relaxed = true))
     }
 
     @Test

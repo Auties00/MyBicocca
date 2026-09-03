@@ -7,10 +7,13 @@ import it.attendance100.mybicocca.data.local.settings.PersistedUpdateState
 import it.attendance100.mybicocca.data.local.settings.UpdateStateStore
 import it.attendance100.mybicocca.data.mapper.update.toAppReleaseOrNull
 import it.attendance100.mybicocca.data.mapper.update.toNightlyAppReleaseOrNull
+import it.attendance100.mybicocca.data.update.ApkDownloader
 import it.attendance100.mybicocca.data.update.GithubReleaseApi
 import it.attendance100.mybicocca.data.update.InstallSourceProvider
+import it.attendance100.mybicocca.data.update.availableRelease
 import it.attendance100.mybicocca.domain.model.update.AppRelease
 import it.attendance100.mybicocca.domain.model.update.DistributionSource
+import it.attendance100.mybicocca.domain.model.update.DownloadState
 import it.attendance100.mybicocca.domain.model.update.UpdateCheckResult
 import it.attendance100.mybicocca.domain.model.update.UpdateStatus
 import it.attendance100.mybicocca.domain.repository.UpdateRepository
@@ -21,6 +24,8 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.StateFlow
+import java.io.File
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -48,7 +53,18 @@ class UpdateRepositoryImpl @Inject constructor(
     private val githubApi: GithubReleaseApi,
     private val store: UpdateStateStore,
     private val installSourceProvider: InstallSourceProvider,
+    private val apkDownloader: ApkDownloader,
 ) : UpdateRepository {
+
+    override val downloadState: StateFlow<DownloadState> = apkDownloader.downloadState
+
+    override fun startDownload(release: AppRelease) = apkDownloader.startDownload(release)
+
+    override fun installApk(file: File) = apkDownloader.installApk(file)
+
+    override fun resetDownload() = apkDownloader.resetState()
+
+    override fun dismissDownloadError() = apkDownloader.dismissError()
 
     private val checkMutex = Mutex()
     private val nightlyMutex = Mutex()
@@ -168,6 +184,9 @@ class UpdateRepositoryImpl @Inject constructor(
         }
         return@coroutineScope stableResult
     }
+
+    override suspend fun availableRelease(): AppRelease? =
+        store.state.first().availableRelease() ?: store.nightlyState.first().availableRelease()
 
     override suspend fun getLatestStableRelease(): UpdateCheckResult = withContext(Dispatchers.IO) {
         try {

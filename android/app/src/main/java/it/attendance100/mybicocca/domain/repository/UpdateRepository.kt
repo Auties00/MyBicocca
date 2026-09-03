@@ -1,9 +1,12 @@
 package it.attendance100.mybicocca.domain.repository
 
 import it.attendance100.mybicocca.domain.model.update.AppRelease
+import it.attendance100.mybicocca.domain.model.update.DownloadState
 import it.attendance100.mybicocca.domain.model.update.UpdateCheckResult
 import it.attendance100.mybicocca.domain.model.update.UpdateStatus
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
+import java.io.File
 
 /**
  * App self-update contract. Hides which backend serves release metadata (GitHub today, the Play
@@ -42,6 +45,33 @@ interface UpdateRepository {
 
     /** All published releases, newest first, for the "What's New" page. */
     suspend fun releases(): List<AppRelease>
+
+    /**
+     * The release currently worth offering, stable first then nightly, or null if there is none.
+     *
+     * Reads the persisted state rather than the network, for a caller acting on something the
+     * user has already been told about — a notification tap, which can arrive long after the
+     * check that produced it and even in a later process.
+     */
+    suspend fun availableRelease(): AppRelease?
+
+    /**
+     * The in-flight update download, so a screen can reflect it without depending on whatever
+     * performs the download.
+     */
+    val downloadState: StateFlow<DownloadState>
+
+    /** Starts downloading [release] in the background, if nothing is downloading already. */
+    fun startDownload(release: AppRelease)
+
+    /** Opens the system installer for a downloaded APK. The user always confirms. */
+    fun installApk(file: File)
+
+    /** Forgets a finished or failed download, including the persisted record of the APK. */
+    fun resetDownload()
+
+    /** Clears an error state without touching anything else. */
+    fun dismissDownloadError()
 
     /** The store-aware destination for [release]: its GitHub page now, the Play listing later. */
     fun updatePageUrl(release: AppRelease): String

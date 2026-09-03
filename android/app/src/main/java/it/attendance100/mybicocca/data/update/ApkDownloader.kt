@@ -19,6 +19,7 @@ import it.attendance100.mybicocca.core.version.isRunningBuild
 import it.attendance100.mybicocca.data.local.settings.UpdateStateStore
 import it.attendance100.mybicocca.di.ApplicationScope
 import it.attendance100.mybicocca.domain.model.update.AppRelease
+import it.attendance100.mybicocca.domain.model.update.DownloadState
 import it.attendance100.mybicocca.domain.model.update.AppReleaseAsset
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -29,6 +30,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withContext
 import kotlinx.io.asSink
 import java.io.File
@@ -37,32 +39,10 @@ import javax.inject.Singleton
 import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.milliseconds
 
-sealed interface DownloadState {
-    data object Idle : DownloadState
-    data class Downloading(val progress: Int) : DownloadState
-    data class Success(val file: File) : DownloadState
-    /** The system installer was dismissed without installing. [file] is still downloaded and valid. */
-    data class InstallDeclined(val file: File) : DownloadState
-    data class Error(val message: UiText) : DownloadState
-}
-
-/**
- * The APK sitting on disk waiting to be installed, or null. A declined install counts: the file is
- * still downloaded and verified, the user just dismissed the system dialog.
- */
-val DownloadState.readyToInstall: File?
-    get() = when (this) {
-        is DownloadState.Success -> file
-        is DownloadState.InstallDeclined -> file
-        else -> null
-    }
-
-fun DownloadState.isReadyToInstall(): Boolean = readyToInstall != null
-
-// TODO(update-notifications): startDownload runs on @ApplicationScope with no foreground-service
-// promotion, so the OS can freeze/kill it seconds after the app backgrounds mid-download (see
-// /UPDATE_NOTIFICATIONS_PLAN.md). Every caller — the manual "Download" tap, the restore-to-stable
-// flow, MainShell's auto-download effects, and AppUpdateWorker — is affected equally.
+// TODO(update-notifications): the interactive call sites still go through startDownload, which
+// launches on @ApplicationScope with no foreground-service promotion, so the OS can freeze/kill
+// them seconds after the app backgrounds mid-download. download() below is the shape that fixes
+// it; see /NOTIFICATIONS_PLAN.md step 6 for the migration.
 @Singleton
 class ApkDownloader @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -73,6 +53,11 @@ class ApkDownloader @Inject constructor(
 
     private val _downloadState = MutableStateFlow<DownloadState>(DownloadState.Idle)
     val downloadState: StateFlow<DownloadState> = _downloadState.asStateFlow()
+
+    // One updates directory and one downloadState, so one download at a time. tryLock rather than
+    // lock: a second caller is told "already running" instead of queueing behind the first and
+    // then re-downloading the moment it finishes.
+    private val downloadLock = Mutex()
 
     // The APK handed to the system installer, if we're waiting on that dialog. ACTION_VIEW reports
     // nothing back, so a decline has to be inferred: a successful install replaces the process, so
@@ -100,84 +85,123 @@ class ApkDownloader @Inject constructor(
         leftForInstaller = false
     }
 
-    fun startDownload(release: AppRelease) {
-        if (_downloadState.value is DownloadState.Downloading) return
-        clearPendingInstall()
+    /**
+     * Downloads [release] **in the caller's coroutine**, returning the terminal state, or null
+     * when a download is already in flight.
+     *
+     * Running in the caller's coroutine is the whole point. Whoever calls owns the download's
+     * lifetime: cancelling the caller cancels the download, and a foreground service wrapped
+     * around this call covers exactly the work it is protecting. Neither holds for a download
+     * launched onto an application-wide scope, which outlives whatever started it and leaves the
+     * service protecting nothing.
+     *
+     * [onProgress] reports percentage as it goes, for a caller driving its own progress display.
+     * It exists so such a caller doesn't have to collect [downloadState] and guess which download
+     * the values belong to.
+     */
+    suspend fun download(release: AppRelease, onProgress: (Int) -> Unit = {}): DownloadState? {
+        if (!downloadLock.tryLock()) return null
 
-        scope.launch {
-            _downloadState.value = DownloadState.Downloading(0)
-
-            try {
-                val defaultAbi = "universal"
-                val supportedAbi = Build.SUPPORTED_ABIS.firstOrNull() ?: defaultAbi
-
-                // Find the best asset
-                val asset =
-                    release.assets.find { it.name.contains(supportedAbi, ignoreCase = true) }
-                        ?: release.assets.find { it.name.contains("universal", ignoreCase = true) }
-                        ?: release.assets.firstOrNull { it.name.endsWith(".apk") }
-
-                if (asset == null) {
-                    val availableAssets = release.assets.joinToString { it.name }
-                    _downloadState.value =
-                        DownloadState.Error(
-                            UiText.StringResource(
-                                it.attendance100.mybicocca.R.string.apk_downloader_no_suitable_apk,
-                                supportedAbi,
-                                availableAssets
-                            )
-                        )
-                    return@launch
-                }
-
-                // Never hand a plaintext-fetched binary to the installer
-                if (!asset.downloadUrl.startsWith("https://", ignoreCase = true)) {
-                    _downloadState.value =
-                        DownloadState.Error(UiText.StringResource(it.attendance100.mybicocca.R.string.apk_downloader_insecure_connection))
-                    return@launch
-                }
-
-                val updatesDir = File(context.cacheDir, "updates")
-                if (!updatesDir.exists()) updatesDir.mkdirs()
-                val apkFile = File(updatesDir, asset.name)
-
-                if (apkFile.exists() && apkFile.passesIntegrityCheck(asset)) {
-                    // Already downloaded and verified; play the progress animation for UX
-                    for (i in 0..100 step 10) {
-                        _downloadState.value = DownloadState.Downloading(i)
-                        delay(100.milliseconds)
-                    }
-                    delay(500.milliseconds)
-                    markDownloaded(apkFile, release)
-                    return@launch
-                }
-
-                downloadToFile(asset, apkFile)
-
-                if (!apkFile.passesIntegrityCheck(asset)) {
-                    apkFile.delete()
-                    _downloadState.value =
-                        DownloadState.Error(UiText.StringResource(it.attendance100.mybicocca.R.string.apk_downloader_integrity_check_failed))
-                    return@launch
-                }
-
-                _downloadState.value = DownloadState.Downloading(100)
-                markDownloaded(apkFile, release)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                e.printStackTrace()
-                _downloadState.value =
-                    DownloadState.Error(e.message?.let { UiText.DynamicString(it) }
-                        ?: UiText.StringResource(it.attendance100.mybicocca.R.string.apk_downloader_failed))
-            }
+        return try {
+            clearPendingInstall()
+            publish(DownloadState.Downloading(0), onProgress)
+            runDownload(release, onProgress)
+        } finally {
+            downloadLock.unlock()
         }
     }
 
     /**
+     * Starts a download on the application scope, for a caller with no coroutine of its own and
+     * no way to be told when it finishes.
+     */
+    fun startDownload(release: AppRelease) {
+        scope.launch { download(release) }
+    }
+
+    private suspend fun runDownload(release: AppRelease, onProgress: (Int) -> Unit): DownloadState =
+        try {
+            val defaultAbi = "universal"
+            val supportedAbi = Build.SUPPORTED_ABIS.firstOrNull() ?: defaultAbi
+
+            // Find the best asset
+            val asset = release.assets.find { it.name.contains(supportedAbi, ignoreCase = true) }
+                ?: release.assets.find { it.name.contains("universal", ignoreCase = true) }
+                ?: release.assets.firstOrNull { it.name.endsWith(".apk") }
+
+            if (asset == null) {
+                val availableAssets = release.assets.joinToString { it.name }
+                fail(
+                    UiText.StringResource(
+                        it.attendance100.mybicocca.R.string.apk_downloader_no_suitable_apk,
+                        supportedAbi,
+                        availableAssets
+                    )
+                )
+            } else if (!asset.downloadUrl.startsWith("https://", ignoreCase = true)) {
+                // Never hand a plaintext-fetched binary to the installer
+                fail(UiText.StringResource(it.attendance100.mybicocca.R.string.apk_downloader_insecure_connection))
+            } else {
+                fetch(asset, release, onProgress)
+            }
+        } catch (e: CancellationException) {
+            // Cancellation leaves no terminal state behind: whoever cancelled decides what to show.
+            _downloadState.value = DownloadState.Idle
+            throw e
+        } catch (e: Exception) {
+            e.printStackTrace()
+            fail(
+                e.message?.let { UiText.DynamicString(it) }
+                    ?: UiText.StringResource(it.attendance100.mybicocca.R.string.apk_downloader_failed)
+            )
+        }
+
+    private suspend fun fetch(
+        asset: AppReleaseAsset,
+        release: AppRelease,
+        onProgress: (Int) -> Unit,
+    ): DownloadState {
+        val updatesDir = File(context.cacheDir, "updates")
+        if (!updatesDir.exists()) updatesDir.mkdirs()
+        val apkFile = File(updatesDir, asset.name)
+
+        if (apkFile.exists() && apkFile.passesIntegrityCheck(asset)) {
+            // Already downloaded and verified; play the progress animation for UX
+            for (i in 0..100 step 10) {
+                publish(DownloadState.Downloading(i), onProgress)
+                delay(100.milliseconds)
+            }
+            delay(500.milliseconds)
+            return markDownloaded(apkFile, release)
+        }
+
+        downloadToFile(asset, apkFile, onProgress)
+
+        if (!apkFile.passesIntegrityCheck(asset)) {
+            apkFile.delete()
+            return fail(UiText.StringResource(it.attendance100.mybicocca.R.string.apk_downloader_integrity_check_failed))
+        }
+
+        publish(DownloadState.Downloading(100), onProgress)
+        return markDownloaded(apkFile, release)
+    }
+
+    private fun publish(state: DownloadState, onProgress: (Int) -> Unit) {
+        _downloadState.value = state
+        if (state is DownloadState.Downloading) onProgress(state.progress)
+    }
+
+    private fun fail(message: UiText): DownloadState =
+        DownloadState.Error(message).also { _downloadState.value = it }
+
+    /**
      * Streams [asset] to [target] in fixed-size chunks, publishing download progress as it goes.
      */
-    private suspend fun downloadToFile(asset: AppReleaseAsset, target: File) {
+    private suspend fun downloadToFile(
+        asset: AppReleaseAsset,
+        target: File,
+        onProgress: (Int) -> Unit,
+    ) {
         withContext(Dispatchers.IO) {
             client.prepareGet(asset.downloadUrl).execute { response ->
                 val channel: ByteReadChannel = response.body()
@@ -193,7 +217,7 @@ class ApkDownloader @Inject constructor(
                                 ((received.toFloat() / total) * 100).roundToInt().coerceIn(0, 100)
                             if (progress != lastProgress) {
                                 lastProgress = progress
-                                _downloadState.value = DownloadState.Downloading(progress)
+                                publish(DownloadState.Downloading(progress), onProgress)
                             }
                         }
                     }
@@ -214,14 +238,14 @@ class ApkDownloader @Inject constructor(
         scope.launch { store.clearDownloadedApk() }
     }
 
-    private suspend fun markDownloaded(file: File, release: AppRelease) {
+    private suspend fun markDownloaded(file: File, release: AppRelease): DownloadState {
         store.setDownloadedApk(
             path = file.absolutePath,
             size = file.length(),
             versionName = release.versionName,
             commitSha = release.commitSha,
         )
-        _downloadState.value = DownloadState.Success(file)
+        return DownloadState.Success(file).also { _downloadState.value = it }
     }
 
     /**

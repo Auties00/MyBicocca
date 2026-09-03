@@ -9,6 +9,7 @@ import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import it.attendance100.mybicocca.core.version.isNightlyBuild
 import it.attendance100.mybicocca.domain.model.update.AppRelease
+import it.attendance100.mybicocca.domain.model.update.DEFAULT_UPDATE_CHECK_INTERVAL_MINUTES
 import it.attendance100.mybicocca.domain.model.update.AppReleaseAsset
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -16,13 +17,6 @@ import kotlinx.serialization.json.Json
 import java.time.Instant
 import javax.inject.Inject
 import javax.inject.Singleton
-
-/**
- * Default periodic-check interval, in minutes, until the user picks one via the settings slider.
- * Currently kept low (WorkManager's own 15-minute floor) while the update-notifications work is
- * being tested; expected to move up to something like 6-12 hours once that settles.
- */
-const val DEFAULT_UPDATE_CHECK_INTERVAL_MINUTES = 15
 
 /**
  * Persists the outcome of the last update check in the shared `mybicocca_settings` DataStore so

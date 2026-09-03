@@ -3,9 +3,8 @@ package it.attendance100.mybicocca.ui.screen.settings.subscreen.appInfo
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import it.attendance100.mybicocca.data.local.settings.DEFAULT_UPDATE_CHECK_INTERVAL_MINUTES
-import it.attendance100.mybicocca.data.update.ApkDownloader
-import it.attendance100.mybicocca.data.update.DownloadState
+import it.attendance100.mybicocca.domain.model.update.DEFAULT_UPDATE_CHECK_INTERVAL_MINUTES
+import it.attendance100.mybicocca.domain.model.update.DownloadState
 import it.attendance100.mybicocca.domain.model.update.AppRelease
 import it.attendance100.mybicocca.domain.model.update.UpdateCheckResult
 import it.attendance100.mybicocca.domain.model.update.UpdateStatus
@@ -41,7 +40,6 @@ class AppInfoViewModel @Inject constructor(
     private val setNightlyEnabledUseCase: SetNightlyEnabledUseCase,
     private val checkForUpdates: CheckForUpdatesUseCase,
     private val getUpdatePageUrl: GetUpdatePageUrlUseCase,
-    private val downloader: ApkDownloader,
     private val updateRepository: UpdateRepository,
 ) : ViewModel() {
 
@@ -52,16 +50,16 @@ class AppInfoViewModel @Inject constructor(
     val checking: StateFlow<Boolean> = _checking.asStateFlow()
 
     /** The in-flight update download, surfaced to the UI without exposing the downloader itself. */
-    val downloadState: StateFlow<DownloadState> = downloader.downloadState
+    val downloadState: StateFlow<DownloadState> = updateRepository.downloadState
 
-    fun startDownload(release: AppRelease) = downloader.startDownload(release)
+    fun startDownload(release: AppRelease) = updateRepository.startDownload(release)
 
     /** Launches the installer for a finished download; call only from the foreground. */
-    fun installDownload(file: File) = downloader.installApk(file)
+    fun installDownload(file: File) = updateRepository.installApk(file)
 
-    fun clearDownload() = downloader.resetState()
+    fun clearDownload() = updateRepository.resetDownload()
 
-    fun dismissDownloadError() = downloader.dismissError()
+    fun dismissDownloadError() = updateRepository.dismissDownloadError()
 
     /** Forces a check; ignores re-taps while one is in flight. Delivers the outcome to [onResult]. */
     fun check(onResult: (UpdateCheckResult) -> Unit) {

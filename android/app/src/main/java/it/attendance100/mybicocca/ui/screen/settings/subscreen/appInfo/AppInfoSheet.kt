@@ -91,8 +91,8 @@ import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.currentLocale
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.version.isNightlyBuild
-import it.attendance100.mybicocca.data.update.DownloadState
-import it.attendance100.mybicocca.data.update.isReadyToInstall
+import it.attendance100.mybicocca.domain.model.update.DownloadState
+import it.attendance100.mybicocca.domain.model.update.isReadyToInstall
 import it.attendance100.mybicocca.domain.model.update.AppRelease
 import it.attendance100.mybicocca.domain.model.update.UpdateCheckResult
 import it.attendance100.mybicocca.domain.model.update.UpdateStatus
