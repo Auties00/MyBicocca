@@ -20,6 +20,7 @@ import it.attendance100.mybicocca.data.local.settings.UpdateStateStore
 import it.attendance100.mybicocca.di.ApplicationScope
 import it.attendance100.mybicocca.domain.model.update.AppRelease
 import it.attendance100.mybicocca.domain.model.update.DownloadState
+import it.attendance100.mybicocca.domain.model.update.isActive
 import it.attendance100.mybicocca.domain.model.update.AppReleaseAsset
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -39,10 +40,6 @@ import javax.inject.Singleton
 import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.milliseconds
 
-// TODO(update-notifications): the interactive call sites still go through startDownload, which
-// launches on @ApplicationScope with no foreground-service promotion, so the OS can freeze/kill
-// them seconds after the app backgrounds mid-download. download() below is the shape that fixes
-// it; see /NOTIFICATIONS_PLAN.md step 6 for the migration.
 @Singleton
 class ApkDownloader @Inject constructor(
     @ApplicationContext private val context: Context,
@@ -112,11 +109,20 @@ class ApkDownloader @Inject constructor(
     }
 
     /**
-     * Starts a download on the application scope, for a caller with no coroutine of its own and
-     * no way to be told when it finishes.
+     * Records that a download has been asked for but hasn't begun — see [DownloadState.Enqueued].
+     *
+     * A no-op while one is already active, so a second request can't blank out the progress the
+     * first is still reporting: WorkManager drops the duplicate, and the state has to agree with
+     * that rather than describe a download nobody is going to run.
      */
-    fun startDownload(release: AppRelease) {
-        scope.launch { download(release) }
+    fun markEnqueued() {
+        if (_downloadState.value.isActive) return
+        _downloadState.value = DownloadState.Enqueued
+    }
+
+    /** Undoes [markEnqueued] for a request that never became a download. */
+    fun clearEnqueued() {
+        if (_downloadState.value is DownloadState.Enqueued) _downloadState.value = DownloadState.Idle
     }
 
     private suspend fun runDownload(release: AppRelease, onProgress: (Int) -> Unit): DownloadState =

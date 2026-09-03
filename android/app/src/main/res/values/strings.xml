@@ -1668,6 +1668,7 @@
     <string name="update_modal_installing">Installazione in corso...</string>
     <string name="update_modal_not_now">Non ora</string>
     <string name="update_modal_downloading">Download... %1$d%%</string>
+    <string name="update_modal_queued">In coda...</string>
     <string name="settings_update_settings_title">Impostazioni aggiornamenti</string>
     <string name="settings_update_settings_subtitle">Gestisci download automatici e versioni beta</string>
     <string name="settings_update_check_frequency_header">Frequenza di controllo</string>

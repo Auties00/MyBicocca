@@ -1666,6 +1666,7 @@
     <string name="update_modal_installing">Installing update...</string>
     <string name="update_modal_not_now">Not now</string>
     <string name="update_modal_downloading">Downloading… %1$d%%</string>
+    <string name="update_modal_queued">Queued…</string>
     <string name="settings_update_settings_title">Update Settings</string>
     <string name="settings_update_settings_subtitle">Manage auto-downloads and beta releases</string>
     <string name="settings_update_check_frequency_header">Check Frequency</string>

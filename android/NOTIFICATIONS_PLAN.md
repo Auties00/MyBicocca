@@ -356,6 +356,13 @@ small; serializing the `AppRelease` into `Data` is acceptable if simpler, in
 which case the "not a serialized `AppRelease`" preference stated for the
 channel-driven path is explicitly waived here.
 
+**Settled, and restore-to-stable stopped being a special case.** Every
+*interactive* tap uses the explicit source, not just that one: a tap means
+*this* release, so resolving it back to a channel would be guessing at
+something the caller already knows. The channel sources are what the periodic
+worker uses, where re-reading durable state at run time is the point. So there
+is one interactive path, and restore-to-stable is simply on it.
+
 ### 5.2 The worker
 
 `ApkDownloadWorker`:
@@ -401,6 +408,22 @@ interactive paths are the point, not an afterthought. Call sites:
 `UpdateModalSheet`'s `onDownload` (via both `MainShell` and `AppInfoSheet`),
 the restore-to-stable handler, `MainShell`'s two auto-download effects, and
 `AppUpdateWorker`.
+
+**They all converge on one function.** Every one of those call sites reaches
+`UpdateRepository.startDownload`, so the switch is made there and
+`ApkDownloader.startDownload` — the app-scope launch that is the original bug —
+is deleted rather than left as a second way to do it.
+
+**The switch needs a state the flow didn't have.** WorkManager decides when a
+download starts, and with a network constraint that can be much later, so there
+is now a gap between the tap and the first byte. `DownloadState.Idle` through
+that gap leaves an apparently untouched Download button; an optimistic
+`Downloading(0)` is worse, since the modal blocks dismissal while downloading
+and would trap the user behind a bar that can never move. Hence
+`DownloadState.Enqueued`, set synchronously on the tap and replaced when the
+download actually begins. It is deliberately a no-op while one is already
+active: WorkManager drops the duplicate request, and the state has to agree
+with that rather than blank out the progress the running download is reporting.
 
 **`AppUpdateWorker` has a semantics consequence, not just a style choice.** If
 it *enqueues* `ApkDownloadWorker` rather than inlining the foreground
@@ -689,8 +712,9 @@ ephemeral and students will swipe away a grade notification.
   would have left two places that own a download. Its `Result.success()` now
   means "the check ran and a download was scheduled"; nothing reads it but
   WorkManager's retry logic, for which that is the right meaning anyway.
-- §5.1: persist the requested release under its own key, or serialize it into
-  WorkManager `Data`.
+- ~~§5.1: persist the requested release under its own key, or serialize it into
+  WorkManager `Data`.~~ **Decided: its own key.** Every interactive download
+  now uses it, so restore-to-stable needed no path of its own.
 - §7.1: trigger at the discovery site, or convert the event channels to
   `SharedFlow`.
 - §7.6: suppress `UPDATE_ACTIONABLE` while foregrounded, or always post.
@@ -704,6 +728,22 @@ ephemeral and students will swipe away a grade notification.
 ---
 
 ## 12. Revision history
+
+**Rev 6** — during implementation of step 6.
+
+- §5.3 landed. All five interactive call sites reach
+  `UpdateRepository.startDownload`, so the switch was one function, and
+  `ApkDownloader.startDownload` is gone — the app-scope launch behind §1's bug
+  can no longer be reached by anything.
+- **`DownloadState.Enqueued` added**, which the plan did not anticipate. Going
+  through WorkManager puts an open-ended gap between the tap and the first byte,
+  and neither `Idle` nor a fake `Downloading(0)` describes it honestly.
+- §5.1 resolved, and smaller than written: the explicit source is what *every*
+  interactive tap uses, so restore-to-stable is on the ordinary path rather
+  than being the one case the input shape existed for.
+- The worker now clears `pendingDownloadRelease` once it has served it, and
+  leaves the notification and state alone when `download()` returns null —
+  that null means another download owns both.
 
 **Rev 5** — review of steps 1–5 against the code.
 

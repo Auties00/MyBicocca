@@ -92,6 +92,7 @@ import it.attendance100.mybicocca.core.os.currentLocale
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.version.isNightlyBuild
 import it.attendance100.mybicocca.domain.model.update.DownloadState
+import it.attendance100.mybicocca.domain.model.update.isActive
 import it.attendance100.mybicocca.domain.model.update.isReadyToInstall
 import it.attendance100.mybicocca.domain.model.update.AppRelease
 import it.attendance100.mybicocca.domain.model.update.UpdateCheckResult
@@ -639,14 +640,16 @@ private fun UpdateAvailableTile(
 ) {
     val downloadState by downloadStateFlow.collectAsStateWithLifecycle()
     val isDownloading = downloadState is DownloadState.Downloading
+    // A queued download reads as downloading here — it has been asked for, and the tile has no
+    // room to explain the difference. Only the bar waits for a real percentage.
+    val isActive = downloadState.isActive
     val isDownloaded = downloadState.isReadyToInstall()
     val progress = (downloadState as? DownloadState.Downloading)?.progress ?: 0
-    val subtitle =
-        if (isDownloading) stringResource(R.string.update_modal_downloading, progress)
-        else stringResource(
-            R.string.settings_update_available_subtitle,
-            release.versionName
-        )
+    val subtitle = when {
+        downloadState is DownloadState.Enqueued -> stringResource(R.string.update_modal_queued)
+        isDownloading -> stringResource(R.string.update_modal_downloading, progress)
+        else -> stringResource(R.string.settings_update_available_subtitle, release.versionName)
+    }
     val haptic = rememberHapticManager()
     val scheme = MaterialTheme.colorScheme
 
@@ -655,14 +658,14 @@ private fun UpdateAvailableTile(
         isLast = isLast,
         title = stringResource(
             when {
-                isDownloading -> R.string.settings_update_downloading_title
+                isActive -> R.string.settings_update_downloading_title
                 isDownloaded -> R.string.settings_update_downloaded_title
                 else -> R.string.settings_update_available_title
             }
         ),
         subtitle = subtitle,
         progress = if (isDownloading) progress / 100f else null,
-        onClick = if (isDownloading) null else {
+        onClick = if (isActive) null else {
             {
                 haptic.tap()
                 onShowUpdateModal(release)
@@ -689,6 +692,7 @@ private fun NightlyUpdateTile(
 ) {
     val downloadState by downloadStateFlow.collectAsStateWithLifecycle()
     val isDownloading = downloadState is DownloadState.Downloading
+    val isActive = downloadState.isActive
     val isDownloaded = downloadState.isReadyToInstall()
     val progress = (downloadState as? DownloadState.Downloading)?.progress ?: 0
     val scheme = MaterialTheme.colorScheme
@@ -696,14 +700,17 @@ private fun NightlyUpdateTile(
     val base = release.versionName
     val sha = release.commitSha
     val downloadingStr = stringResource(R.string.update_modal_downloading, progress)
+    val queuedStr = stringResource(R.string.update_modal_queued)
     val fromStr = stringResource(R.string.settings_nightly_from, base)
     val commitStr = sha?.let { stringResource(R.string.settings_nightly_commit, it) }
 
-    val subtitleAnnotated = if (isDownloading) {
-        androidx.compose.ui.text.AnnotatedString(downloadingStr)
-    } else {
-        androidx.compose.ui.text.AnnotatedString(fromStr)
-    }
+    val subtitleAnnotated = androidx.compose.ui.text.AnnotatedString(
+        when {
+            downloadState is DownloadState.Enqueued -> queuedStr
+            isDownloading -> downloadingStr
+            else -> fromStr
+        }
+    )
     val haptic = rememberHapticManager()
 
     SegmentedTile(
@@ -711,14 +718,14 @@ private fun NightlyUpdateTile(
         isLast = isLast,
         title = stringResource(
             when {
-                isDownloading -> R.string.settings_nightly_downloading_title
+                isActive -> R.string.settings_nightly_downloading_title
                 isDownloaded -> R.string.settings_nightly_downloaded_title
                 else -> R.string.settings_nightly_available_title
             }
         ),
         subtitleAnnotated = subtitleAnnotated,
         progress = if (isDownloading) progress / 100f else null,
-        onClick = if (isDownloading) null else {
+        onClick = if (isActive) null else {
             {
                 haptic.tap()
                 onShowUpdateModal(release)

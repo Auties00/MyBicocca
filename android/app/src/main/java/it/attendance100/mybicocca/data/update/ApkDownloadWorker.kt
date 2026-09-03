@@ -53,7 +53,13 @@ class ApkDownloadWorker @AssistedInject constructor(
     override suspend fun doWork(): Result {
         // Resolved here rather than carried in the input: a queued download can start long after
         // it was asked for, and the persisted state is what is still true by then.
-        val release = resolveRelease() ?: return Result.success()
+        val release = resolveRelease()
+        if (release == null) {
+            // Nothing left to download — the update was installed or withdrawn between the
+            // request and this run. Take back the "queued" the UI is showing on its behalf.
+            downloader.clearEnqueued()
+            return Result.success()
+        }
 
         promoteToForeground()
 
@@ -61,13 +67,23 @@ class ApkDownloadWorker @AssistedInject constructor(
             notifier.post(UpdateNotifications.downloadProgress(context, percent))
         }
 
-        notifier.cancel(NotificationId.UpdateProgress)
+        // Null means another download already holds the single-flight lock. Leave its notification
+        // and its state alone: they belong to a download that is still running.
+        if (outcome == null) return Result.success()
 
-        return when (outcome) {
-            // Null means another download already holds the single-flight lock; nothing to retry.
-            null, is DownloadState.Success -> Result.success()
-            else -> Result.failure()
-        }
+        notifier.cancel(NotificationId.UpdateProgress)
+        clearServedRequest()
+
+        return if (outcome is DownloadState.Success) Result.success() else Result.failure()
+    }
+
+    /**
+     * Drops the explicit request now that it has been carried out. Only once the download has
+     * actually ended: a worker killed mid-download is re-run, and re-running needs the release
+     * still to be there.
+     */
+    private suspend fun clearServedRequest() {
+        if (inputData.getString(KEY_SOURCE) == SOURCE_EXPLICIT) store.clearPendingDownloadRelease()
     }
 
     private suspend fun resolveRelease(): AppRelease? = when (inputData.getString(KEY_SOURCE)) {

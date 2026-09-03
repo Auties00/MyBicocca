@@ -12,6 +12,15 @@ import java.io.File
  */
 sealed interface DownloadState {
     data object Idle : DownloadState
+
+    /**
+     * Asked for, not started yet. Downloads run inside a foreground service that WorkManager
+     * starts, so there is a gap between the tap and the first byte — and if the request is waiting
+     * on a connection, that gap is open-ended. Without a state of its own the UI would sit on
+     * [Idle] showing an untouched Download button, or lie with a 0% bar that can never move.
+     */
+    data object Enqueued : DownloadState
+
     data class Downloading(val progress: Int) : DownloadState
     data class Success(val file: File) : DownloadState
 
@@ -32,3 +41,7 @@ val DownloadState.readyToInstall: File?
     }
 
 fun DownloadState.isReadyToInstall(): Boolean = readyToInstall != null
+
+/** Asked for and not yet finished, queued included — the window in which a new request is ignored. */
+val DownloadState.isActive: Boolean
+    get() = this is DownloadState.Enqueued || this is DownloadState.Downloading

@@ -207,6 +207,62 @@ class ApkDownloaderTest {
         assertThat(seen).isInOrder()
     }
 
+    /**
+     * The gap this state exists for: WorkManager decides when the download starts, so between the
+     * tap and the first byte there is nothing else to show the request happened.
+     */
+    @Test
+    fun markEnqueued_recordsARequestThatHasNotStarted() = testScope.runTest {
+        downloader.markEnqueued()
+
+        assertThat(downloader.downloadState.value).isEqualTo(DownloadState.Enqueued)
+    }
+
+    /**
+     * A second request is dropped by WorkManager's unique work, so the state has to agree: showing
+     * "queued" would blank out the progress the running download is still reporting, and nothing
+     * would ever come along to correct it.
+     */
+    @Test
+    fun markEnqueued_leavesARunningDownloadAlone() = testScope.runTest {
+        val first = async { downloader.download(cachedRelease()) }
+        advanceTimeBy(150)
+
+        downloader.markEnqueued()
+
+        assertThat(downloader.downloadState.value).isInstanceOf(DownloadState.Downloading::class.java)
+        advanceUntilIdle()
+        first.await()
+    }
+
+    /** A request the worker finds nothing to download for must not leave the UI queued forever. */
+    @Test
+    fun clearEnqueued_takesBackARequestThatNeverStarted() = testScope.runTest {
+        downloader.markEnqueued()
+
+        downloader.clearEnqueued()
+
+        assertThat(downloader.downloadState.value).isEqualTo(DownloadState.Idle)
+    }
+
+    @Test
+    fun clearEnqueued_leavesAnythingElseAlone() = testScope.runTest {
+        val result = downloader.download(cachedRelease())
+
+        downloader.clearEnqueued()
+
+        assertThat(downloader.downloadState.value).isEqualTo(result)
+    }
+
+    @Test
+    fun download_replacesTheEnqueuedMarkerOnceItStarts() = testScope.runTest {
+        downloader.markEnqueued()
+
+        val result = downloader.download(cachedRelease())
+
+        assertThat(result).isInstanceOf(DownloadState.Success::class.java)
+    }
+
     @Test
     fun download_withNoApkAsset_failsWithoutTouchingTheNetwork() = testScope.runTest {
         val release = releaseWith(

@@ -14,6 +14,7 @@ import it.attendance100.mybicocca.data.update.GithubReleaseDto
 import it.attendance100.mybicocca.data.update.InstallSourceProvider
 import it.attendance100.mybicocca.domain.model.update.DistributionSource
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
@@ -52,7 +53,14 @@ class UpdateRepositoryImplTest {
         every { store.state } returns stateFlow
 
         // The repository only forwards download calls; these tests are about the check flow.
-        repository = UpdateRepositoryImpl(api, store, provider, mockk(relaxed = true))
+        repository = UpdateRepositoryImpl(
+            context = mockk(relaxed = true),
+            scope = TestScope(),
+            githubApi = api,
+            store = store,
+            installSourceProvider = provider,
+            apkDownloader = mockk(relaxed = true),
+        )
     }
 
     @Test

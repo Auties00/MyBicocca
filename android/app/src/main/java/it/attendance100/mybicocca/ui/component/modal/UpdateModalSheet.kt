@@ -139,6 +139,9 @@ fun UpdateModalSheet(
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     val isDownloading = downloadState is DownloadState.Downloading
+                    // Queued shares the progress box rather than leaving the Download button
+                    // sitting there looking untapped: the request is real, it just hasn't started.
+                    val isQueued = downloadState is DownloadState.Enqueued
                     val hasError = downloadState is DownloadState.Error
                     // A declined install leaves a perfectly good APK behind, so it offers the same
                     // button as a fresh download rather than sending the user through it again.
@@ -146,7 +149,9 @@ fun UpdateModalSheet(
                     val wasDeclined = downloadState is DownloadState.InstallDeclined
                     val progress = (downloadState as? DownloadState.Downloading)?.progress ?: 0
                     val progressFraction = (progress / 100f).coerceIn(0f, 1f)
-                    val textToShow = stringResource(R.string.update_modal_downloading, progress)
+                    val textToShow =
+                        if (isQueued) stringResource(R.string.update_modal_queued)
+                        else stringResource(R.string.update_modal_downloading, progress)
 
                     val animatedProgress by animateFloatAsState(
                         targetValue = progressFraction,
@@ -155,7 +160,7 @@ fun UpdateModalSheet(
                     )
 
                     Box(modifier = Modifier.fillMaxWidth()) {
-                        if (isDownloading) {
+                        if (isDownloading || isQueued) {
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()

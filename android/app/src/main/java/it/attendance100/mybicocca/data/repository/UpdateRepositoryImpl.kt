@@ -1,5 +1,9 @@
 package it.attendance100.mybicocca.data.repository
 
+import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
+import it.attendance100.mybicocca.di.ApplicationScope
+import kotlinx.coroutines.CoroutineScope
 import it.attendance100.mybicocca.BuildConfig
 import it.attendance100.mybicocca.core.version.SemVer
 import it.attendance100.mybicocca.core.version.isNightlyBuild
@@ -8,6 +12,7 @@ import it.attendance100.mybicocca.data.local.settings.UpdateStateStore
 import it.attendance100.mybicocca.data.mapper.update.toAppReleaseOrNull
 import it.attendance100.mybicocca.data.mapper.update.toNightlyAppReleaseOrNull
 import it.attendance100.mybicocca.data.update.ApkDownloader
+import it.attendance100.mybicocca.data.update.ApkDownloadWorker
 import it.attendance100.mybicocca.data.update.GithubReleaseApi
 import it.attendance100.mybicocca.data.update.InstallSourceProvider
 import it.attendance100.mybicocca.data.update.availableRelease
@@ -50,6 +55,8 @@ import javax.inject.Singleton
  */
 @Singleton
 class UpdateRepositoryImpl @Inject constructor(
+    @ApplicationContext private val context: Context,
+    @ApplicationScope private val scope: CoroutineScope,
     private val githubApi: GithubReleaseApi,
     private val store: UpdateStateStore,
     private val installSourceProvider: InstallSourceProvider,
@@ -58,7 +65,26 @@ class UpdateRepositoryImpl @Inject constructor(
 
     override val downloadState: StateFlow<DownloadState> = apkDownloader.downloadState
 
-    override fun startDownload(release: AppRelease) = apkDownloader.startDownload(release)
+    /**
+     * Every download goes through [ApkDownloadWorker], so it runs inside a foreground service and
+     * survives the app being backgrounded — which a download started on a plain coroutine does
+     * not: the OS freezes and then kills it seconds later.
+     *
+     * The release is persisted and requested by name rather than resolved from a channel. A tap
+     * means *this* release, and one of them can't be named any other way: restore-to-stable is a
+     * downgrade fetched straight from GitHub, so it never lands in either channel's slot and a
+     * channel-reading worker would silently download nothing.
+     *
+     * Marking it enqueued is synchronous so the button reacts on the tap rather than when
+     * WorkManager gets round to it.
+     */
+    override fun startDownload(release: AppRelease) {
+        apkDownloader.markEnqueued()
+        scope.launch {
+            store.setPendingDownloadRelease(release)
+            ApkDownloadWorker.enqueue(context, ApkDownloadWorker.SOURCE_EXPLICIT)
+        }
+    }
 
     override fun installApk(file: File) = apkDownloader.installApk(file)
 

@@ -61,7 +61,13 @@ interface UpdateRepository {
      */
     val downloadState: StateFlow<DownloadState>
 
-    /** Starts downloading [release] in the background, if nothing is downloading already. */
+    /**
+     * Requests [release] be downloaded in the background, if nothing is downloading already.
+     *
+     * Returns immediately, having only *asked*: the download runs inside a foreground service that
+     * the system starts when it can, so [downloadState] goes to `Enqueued` first and reaches
+     * `Downloading` when it actually begins.
+     */
     fun startDownload(release: AppRelease)
 
     /** Opens the system installer for a downloaded APK. The user always confirms. */
