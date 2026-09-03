@@ -25,8 +25,7 @@ enum class NotificationChannelGroupId(
  *
  * **Id versioning.** A channel's importance, sound and vibration belong to the user once it has been created —
  * the system ignores any later change from code. So changing one means retiring
- * the id and creating a new one: bump the `_v1` suffix and add the old id to
- * [it.attendance100.mybicocca.data.notification.NotificationChannelRegistrar.RETIRED_CHANNEL_IDS]
+ * the id and creating a new one: bump the `_v1` suffix and add the old id to [RETIRED_CHANNEL_IDS]
  * so it stops cluttering settings. The suffix exists from the first release precisely because
  * adding it later would mean every existing install keeps an unversioned id forever.
  */
@@ -55,3 +54,12 @@ enum class NotificationChannelId(
         descriptionRes = R.string.notification_channel_update_actionable_desc,
     ),
 }
+
+/**
+ * Ids this app used to create and no longer does. Registration deletes them, so a retired channel
+ * doesn't sit in system settings forever on an upgraded install.
+ *
+ * Only ever list an id this app created: deleting a channel a library owns breaks that library's
+ * notification.
+ */
+val RETIRED_CHANNEL_IDS = emptyList<String>()

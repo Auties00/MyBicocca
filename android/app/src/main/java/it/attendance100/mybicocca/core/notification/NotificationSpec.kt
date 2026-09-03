@@ -24,9 +24,12 @@ sealed interface Progress {
 /**
  * A running timer in place of the timestamp.
  *
- * @property baseElapsedRealtimeMs the `SystemClock.elapsedRealtime()` the timer counts from or to.
+ * @property baseWallClockMs the `System.currentTimeMillis()` the timer counts from or to.
+ *   Wall-clock, not `elapsedRealtime()`: the platform converts the notification's `when` into the
+ *   chronometer's own base itself (`when + elapsedRealtime() - currentTimeMillis()`), so handing
+ *   it an uptime reading puts the base decades in the past and the timer starts at that age.
  */
-data class Chronometer(val baseElapsedRealtimeMs: Long, val countDown: Boolean = false)
+data class Chronometer(val baseWallClockMs: Long, val countDown: Boolean = false)
 
 /** Notifications sharing a key are bundled, with a summary the poster generates. */
 data class GroupKey(val key: String)

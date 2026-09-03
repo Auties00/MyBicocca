@@ -103,7 +103,7 @@ class AppNotifier @Inject constructor(
 
         spec.chronometer?.let {
             builder.setUsesChronometer(true)
-                .setWhen(it.baseElapsedRealtimeMs)
+                .setWhen(it.baseWallClockMs)
                 .setChronometerCountDown(it.countDown)
         }
 

@@ -2066,4 +2066,25 @@
     <!-- Nightly update strings -->
     <string name="settings_nightly_from">Nightly from %1$s</string>
     <string name="settings_nightly_commit"> [commit %1$s]</string>
+
+    <!-- Notifications: channels as they appear in Android's system settings -->
+    <string name="notification_group_updates">Updates</string>
+    <string name="notification_channel_update_progress_name">Download in progress</string>
+    <string name="notification_channel_update_progress_desc">Progress of an update download. Silent.</string>
+    <string name="notification_channel_update_actionable_name">Available updates</string>
+    <string name="notification_channel_update_actionable_desc">A new update is available or ready to install.</string>
+
+    <!-- Notifications: permission request -->
+    <string name="notification_permission_title">Turn on notifications</string>
+    <string name="notification_permission_message">Without notifications the app can only reach you while it\'s open. They\'re used for download progress and to tell you when an update is ready to install.</string>
+    <string name="notification_permission_confirm">Turn on</string>
+    <string name="notification_permission_dismiss">Not now</string>
+
+    <!-- Notifications: update download -->
+    <string name="notification_update_downloading_title">Downloading update</string>
+    <string name="notification_update_downloading_text">%1$d%%</string>
+    <string name="notification_update_preparing">Starting download…</string>
+    <string name="notification_update_cancel">Cancel</string>
+
+    <string name="shell_update_no_longer_available">That update is no longer available</string>
 </resources>

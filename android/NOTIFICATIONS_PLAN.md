@@ -377,10 +377,21 @@ download nothing while mirroring the first's bytes and terminal state — postin
 genuinely per-request, per-channel keys become viable; until then, one key.
 `ExistingWorkPolicy.KEEP`.
 
+**Corollary: one enqueue per caller run.** One key plus `KEEP` means a caller
+that enqueues twice loses the second request outright — dropped, not queued. So
+`AppUpdateWorker`, which can find an update waiting on *both* channels, must
+choose one rather than ask for both. That is the honest shape anyway:
+`UpdateStateStore.downloadedApk` is a single slot that `markDownloaded`
+overwrites, so two downloads would leave one file orphaned and unrecorded even
+if both ran. Stable wins, matching the precedence `availableRelease()` already
+offers updates in; the loser is re-offered by the next check once the winner is
+installed.
+
 **Cancellation:** the progress notification carries a **Cancel** action. This
 is not optional polish — an FGS notification is not swipe-dismissable, so
 without it the user has no way out. Cancel means `cancelUniqueWork` **plus**
-`resetState()`, not just flipping the flow.
+`resetState()`, not just flipping the flow. It also has a manifest dependency
+that is silent when missing — see §5.4.
 
 ### 5.3 Call-site migration
 
@@ -407,17 +418,37 @@ deliberately (§11).
     android:name="androidx.work.impl.foreground.SystemForegroundService"
     android:foregroundServiceType="dataSync"
     tools:node="merge" />
+
+<receiver android:name=".data.update.CancelDownloadReceiver" android:exported="false">
+  <intent-filter>
+    <action android:name="it.attendance100.mybicocca.action.CANCEL_DOWNLOAD" />
+  </intent-filter>
+</receiver>
 ```
 
 The manifest today has only `FOREGROUND_SERVICE` and
 `FOREGROUND_SERVICE_MEDIA_PLAYBACK`. `POST_NOTIFICATIONS` is also absent and
 must be added.
 
-**Verify before relying on it:** `work-runtime-ktx` is pinned at **2.9.1**
-against compileSdk 37 / targetSdk 36. This is not an assertion that it's
-broken — it is untested here — but `setForeground`'s FGS-type handling across
-API 34–36 should be confirmed early, because a version bump would be a
-prerequisite rather than a cleanup.
+**The receiver's filter is load-bearing.** `ActionIntent.Broadcast` is sent as
+an implicit intent scoped to the package, and a manifest receiver declaring no
+filter is reachable by component only — so a filter-less declaration leaves the
+Cancel button resolving to nothing, with no error in logcat and no way for the
+user to stop a download. A test asserts the spec's action resolves to a
+receiver, which is what keeps the two from drifting apart.
+
+**The download worker needs its own constraints.** `UpdateChecker` gives
+`AppUpdateWorker` `NetworkType.CONNECTED`; `ApkDownloadWorker` inherits nothing
+from it. Without the same constraint it runs offline, fails, and is done — a
+failed download is terminal, so the request is spent rather than waiting for
+the connection it needs.
+
+**Resolved:** `work-runtime-ktx` moved from **2.9.1** to **2.10.1**. 2.9.1's
+`SystemForegroundService` does not implement `Service.onTimeout`, which
+Android 15+ calls when a `dataSync` foreground service exhausts its budget;
+without it the process is killed rather than stopped cleanly. An APK download
+is minutes, nowhere near the cap, so this was never likely to fire — but the
+bump costs nothing and removes the whole class of question at targetSdk 36.
 
 ### 5.5 Edge cases
 
@@ -652,9 +683,12 @@ ephemeral and students will swipe away a grade notification.
   caller is told nothing started rather than queueing behind the first. What remains is
   whether the UI should observe one process-wide "current download" at all, or a
   per-call handle. Not urgent while only one download can run.
-- Whether `AppUpdateWorker` enqueues `ApkDownloadWorker` or inlines the
-  foreground promotion — a **semantics** decision, since enqueuing changes what
-  its `Result.success()` means (§5.3).
+- ~~Whether `AppUpdateWorker` enqueues `ApkDownloadWorker` or inlines the
+  foreground promotion.~~ **Decided: enqueue.** Inlining would have promoted the
+  whole periodic run — network check included — to a foreground service, and
+  would have left two places that own a download. Its `Result.success()` now
+  means "the check ran and a download was scheduled"; nothing reads it but
+  WorkManager's retry logic, for which that is the right meaning anyway.
 - §5.1: persist the requested release under its own key, or serialize it into
   WorkManager `Data`.
 - §7.1: trigger at the discovery site, or convert the event channels to
@@ -670,6 +704,39 @@ ephemeral and students will swipe away a grade notification.
 ---
 
 ## 12. Revision history
+
+**Rev 5** — review of steps 1–5 against the code.
+
+- §5.2 gained the **one enqueue per caller run** corollary. The global unique
+  key was chosen against two callers racing; it was never checked against one
+  caller with two releases, which `AppUpdateWorker` was — it asked for stable
+  and nightly in the same run and `KEEP` silently dropped the second forever.
+- §5.4 gained the **receiver's intent filter**, which was missing from the
+  manifest and from this document's snippet. The Cancel action resolved to
+  nothing: an FGS notification cannot be swiped away, so a backgrounded
+  download had no escape at all — the exact failure §5.2 calls "not optional
+  polish". Verified by a test that fails without the filter.
+- §5.4 also gained the download worker's own `NetworkType.CONNECTED`
+  constraint. It had none, and a failed download is terminal, so an enqueue
+  with no connection was spent rather than deferred.
+- Fixed alongside, too small for the plan proper: `NotificationSpec`'s
+  `Chronometer` named its base `elapsedRealtime` where the platform wants
+  wall-clock (it does the conversion itself), and every notification string was
+  missing from `values-en`.
+
+**Rev 4** — during implementation of steps 4–5.
+
+- §5.4 resolved: `work-runtime-ktx` bumped to 2.10.1 for `Service.onTimeout`.
+- §5.3 resolved: `AppUpdateWorker` enqueues rather than inlines.
+- §5.1 implemented as the plan preferred: `stable` / `nightly` read the durable
+  per-channel state, `explicit` reads a new `pendingDownloadRelease` slot in
+  `UpdateStateStore` — which is what restore-to-stable will use in step 6.
+- The debug screen fires the **production** progress spec
+  (`UpdateNotifications.downloadProgress`) rather than a lookalike, so what is
+  tested by hand is what ships.
+- Step 5 deliberately stops short of the terminal notification: the worker
+  cancels the progress notification when the download ends and posts nothing in
+  its place. "Ready to install" is step 7.
 
 **Rev 3** — during implementation of steps 1–3.
 

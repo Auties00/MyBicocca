@@ -2086,5 +2086,11 @@
     <string name="notification_permission_message">Senza notifiche l\'app può avvisarti solo mentre è aperta. Servono per l\'avanzamento dei download e per dirti quando un aggiornamento è pronto da installare.</string>
     <string name="notification_permission_confirm">Attiva</string>
     <string name="notification_permission_dismiss">Non ora</string>
+
+    <!-- Notifications: update download -->
+    <string name="notification_update_downloading_title">Download aggiornamento</string>
+    <string name="notification_update_downloading_text">%1$d%%</string>
+    <string name="notification_update_preparing">Avvio del download…</string>
+    <string name="notification_update_cancel">Annulla</string>
     <string name="shell_update_no_longer_available">Quell\'aggiornamento non è più disponibile</string>
 </resources>

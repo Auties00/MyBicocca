@@ -1,19 +1,19 @@
 package it.attendance100.mybicocca.ui.screen.settings.subscreen.notificationDebug
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import it.attendance100.mybicocca.core.notification.ActionIntent
+import dagger.hilt.android.qualifiers.ApplicationContext
 import it.attendance100.mybicocca.core.notification.Alert
 import it.attendance100.mybicocca.core.notification.GroupKey
-import it.attendance100.mybicocca.core.notification.NotificationAction
 import it.attendance100.mybicocca.core.notification.NotificationChannelId
 import it.attendance100.mybicocca.core.notification.NotificationId
 import it.attendance100.mybicocca.core.notification.NotificationRoute
 import it.attendance100.mybicocca.core.notification.NotificationSpec
-import it.attendance100.mybicocca.core.notification.Progress
 import it.attendance100.mybicocca.data.local.settings.UpdateStateStore
 import it.attendance100.mybicocca.data.notification.AppNotifier
+import it.attendance100.mybicocca.data.notification.UpdateNotifications
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -32,6 +32,7 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class NotificationDebugViewModel @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val notifier: AppNotifier,
     private val updateStateStore: UpdateStateStore,
 ) : ViewModel() {
@@ -53,36 +54,11 @@ class NotificationDebugViewModel @Inject constructor(
         ),
     )
 
-    fun progress(percent: Int) = post(
-        "Progress $percent%",
-        NotificationSpec(
-            channel = NotificationChannelId.UPDATE_PROGRESS,
-            id = NotificationId.UpdateProgress,
-            title = "Download aggiornamento",
-            text = "$percent%",
-            ongoing = true,
-            autoCancel = false,
-            progress = Progress.Determinate(percent),
-            route = NotificationRoute.UpdatePage,
-            actions = listOf(
-                NotificationAction("Annulla", ActionIntent.Broadcast(DEBUG_CANCEL_ACTION)),
-            ),
-        ),
-    )
+    fun progress(percent: Int) =
+        post("Progress $percent%", UpdateNotifications.downloadProgress(context, percent))
 
-    fun indeterminateProgress() = post(
-        "Indeterminate",
-        NotificationSpec(
-            channel = NotificationChannelId.UPDATE_PROGRESS,
-            id = NotificationId.UpdateProgress,
-            title = "Download aggiornamento",
-            text = "Avvio…",
-            ongoing = true,
-            autoCancel = false,
-            progress = Progress.Indeterminate,
-            route = NotificationRoute.UpdatePage,
-        ),
-    )
+    fun indeterminateProgress() =
+        post("Indeterminate", UpdateNotifications.downloadProgress(context, percent = null))
 
     /**
      * Routes to the real downloaded APK when there is one, so the install tap can be exercised
@@ -144,9 +120,5 @@ class NotificationDebugViewModel @Inject constructor(
         } else {
             "$label — suppressed (throttled, or the channel can't notify)"
         }
-    }
-
-    companion object {
-        const val DEBUG_CANCEL_ACTION = "it.attendance100.mybicocca.debug.CANCEL"
     }
 }

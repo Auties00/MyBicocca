@@ -1,7 +1,6 @@
 package it.attendance100.mybicocca.core.notification
 
 import com.google.common.truth.Truth.assertThat
-import it.attendance100.mybicocca.data.notification.NotificationChannelRegistrar
 import org.junit.Test
 
 /**
@@ -31,7 +30,7 @@ class NotificationChannelsTest {
         // Registration creates channels and then deletes the retired ones, so an id in both lists
         // would delete the channel it had just created.
         val live = NotificationChannelId.entries.map { it.id }.toSet()
-        assertThat(NotificationChannelRegistrar.RETIRED_CHANNEL_IDS.intersect(live)).isEmpty()
+        assertThat(RETIRED_CHANNEL_IDS.intersect(live)).isEmpty()
     }
 
     @Test

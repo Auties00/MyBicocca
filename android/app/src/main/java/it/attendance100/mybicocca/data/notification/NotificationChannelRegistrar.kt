@@ -10,6 +10,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import it.attendance100.mybicocca.core.notification.NotificationChannelGroupId
 import it.attendance100.mybicocca.core.notification.NotificationChannelId
 import it.attendance100.mybicocca.core.notification.NotificationImportance
+import it.attendance100.mybicocca.core.notification.RETIRED_CHANNEL_IDS
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -58,15 +59,6 @@ class NotificationChannelRegistrar @Inject constructor(
         }
 
         RETIRED_CHANNEL_IDS.forEach(manager::deleteNotificationChannel)
-    }
-
-    companion object {
-        /**
-         * Ids of channels this app used to create and no longer does
-         * Deleting them stops a retired channel sitting in system settings forever on an upgraded installation.
-         * Only ever list an id this app created: deleting a channel a library owns breaks that library's notification.
-         */
-        val RETIRED_CHANNEL_IDS = emptyList<String>()
     }
 }
 

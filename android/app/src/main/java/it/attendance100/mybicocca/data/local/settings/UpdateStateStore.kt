@@ -176,6 +176,56 @@ class UpdateStateStore @Inject constructor(
         }
     }
 
+    /**
+     * A release someone asked to download outright, for the cases the stable and nightly slots
+     * cannot express. "Restore to stable" is the one that matters: it fetches its release
+     * straight from GitHub and is a downgrade, so it never appears as an available update and a
+     * worker reading only those slots would silently download nothing.
+     */
+    val pendingDownloadRelease: Flow<AppRelease?> = dataStore.data.map { prefs ->
+        prefs.parseRelease(
+            versionKey = PENDING_DL_VERSION_KEY,
+            titleKey = PENDING_DL_TITLE_KEY,
+            notesKey = PENDING_DL_NOTES_KEY,
+            urlKey = PENDING_DL_URL_KEY,
+            publishedMsKey = PENDING_DL_PUBLISHED_MS_KEY,
+            preReleaseKey = PENDING_DL_PRERELEASE_KEY,
+            assetsKey = PENDING_DL_ASSETS_KEY,
+            commitShaKey = PENDING_DL_COMMIT_SHA_KEY,
+        )
+    }
+
+    suspend fun setPendingDownloadRelease(release: AppRelease) {
+        dataStore.edit { prefs ->
+            prefs.saveRelease(
+                release = release,
+                versionKey = PENDING_DL_VERSION_KEY,
+                titleKey = PENDING_DL_TITLE_KEY,
+                notesKey = PENDING_DL_NOTES_KEY,
+                urlKey = PENDING_DL_URL_KEY,
+                publishedMsKey = PENDING_DL_PUBLISHED_MS_KEY,
+                preReleaseKey = PENDING_DL_PRERELEASE_KEY,
+                assetsKey = PENDING_DL_ASSETS_KEY,
+                commitShaKey = PENDING_DL_COMMIT_SHA_KEY,
+            )
+        }
+    }
+
+    suspend fun clearPendingDownloadRelease() {
+        dataStore.edit { prefs ->
+            prefs.clearRelease(
+                versionKey = PENDING_DL_VERSION_KEY,
+                titleKey = PENDING_DL_TITLE_KEY,
+                notesKey = PENDING_DL_NOTES_KEY,
+                urlKey = PENDING_DL_URL_KEY,
+                publishedMsKey = PENDING_DL_PUBLISHED_MS_KEY,
+                preReleaseKey = PENDING_DL_PRERELEASE_KEY,
+                assetsKey = PENDING_DL_ASSETS_KEY,
+                commitShaKey = PENDING_DL_COMMIT_SHA_KEY,
+            )
+        }
+    }
+
     /** Marks [version] as the one the user has been notified about, suppressing repeat snackbars. */
     suspend fun setLastNotifiedVersion(version: String) {
         dataStore.edit { prefs -> prefs[LAST_NOTIFIED_VERSION_KEY] = version }
@@ -192,6 +242,15 @@ class UpdateStateStore @Inject constructor(
         val REL_PRERELEASE_KEY = booleanPreferencesKey("update_release_prerelease")
         val REL_ASSETS_KEY = stringPreferencesKey("update_release_assets")
         val LAST_NOTIFIED_VERSION_KEY = stringPreferencesKey("update_last_notified_version")
+
+        val PENDING_DL_VERSION_KEY = stringPreferencesKey("update_pending_dl_version")
+        val PENDING_DL_TITLE_KEY = stringPreferencesKey("update_pending_dl_title")
+        val PENDING_DL_NOTES_KEY = stringPreferencesKey("update_pending_dl_notes")
+        val PENDING_DL_URL_KEY = stringPreferencesKey("update_pending_dl_url")
+        val PENDING_DL_PUBLISHED_MS_KEY = longPreferencesKey("update_pending_dl_published_ms")
+        val PENDING_DL_PRERELEASE_KEY = booleanPreferencesKey("update_pending_dl_prerelease")
+        val PENDING_DL_ASSETS_KEY = stringPreferencesKey("update_pending_dl_assets")
+        val PENDING_DL_COMMIT_SHA_KEY = stringPreferencesKey("update_pending_dl_commit_sha")
 
         val CHECK_INTERVAL_MINUTES_KEY = intPreferencesKey("update_check_interval_minutes")
 
