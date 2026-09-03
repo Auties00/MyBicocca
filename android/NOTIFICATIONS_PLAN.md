@@ -216,11 +216,19 @@ Responsible for:
   `setSilent(true)`.
 - **Progress throttling** — `downloadToFile` emits on every 1% change, so a
   naive implementation issues up to 100 `notify()` calls on one id. The
-  platform rate-limits rapid same-id updates (~5/sec) and starts dropping them.
-  In practice only a fast connection with a large APK exceeds that, so this is
-  hygiene rather than a live bug — but the rule belongs in the poster, not in
-  each caller: **coalesce to at most one update per second, or per 5% change,
-  whichever is coarser.**
+  platform rate-limits rapid same-id updates (~5/sec) and starts dropping them,
+  which would eat the *end* of a fast download — the bar appears to freeze just
+  before finishing. The rule belongs in the poster, not in each caller:
+  **at most one post per second per slot.**
+
+  Two exceptions always go through: the first post to a slot, and any post that
+  isn't determinate progress — the second is what lets "Ready to install" land
+  immediately after a throttled 99% instead of waiting out the window.
+
+  An earlier draft added "or per 5% change, whichever is coarser". That is
+  **dropped**: one per second already holds posts under the platform's limit,
+  and a percentage gate on top makes a slow download look stalled for as long
+  as it takes to move five points. Time alone is the honest bound.
 - **Grouping** — auto-attaching group key + generating the summary notification.
 - **Coalescing / rate limiting** — beyond progress: don't fire twelve
   notifications when twelve forum posts sync. Roll up, or drop, per channel
@@ -481,7 +489,9 @@ discoveries. Either way, **do not** just add a collector.
 2. Tap → opens the in-app update page (§4.5). Existing in-app behaviour must
    not regress: a user already inside the app still gets the snackbar and modal.
 3. User taps Download → progress notification (`UPDATE_PROGRESS`, id
-   `UpdateProgress`), FGS-backed, with a Cancel action.
+   `UpdateProgress`), FGS-backed, with a Cancel action. It carries the
+   `UpdatePage` route as well, so tapping the progress notification opens the
+   update page, where the same download is already shown as a progress bar.
 4. On success → **cancel the progress notification and post `UpdateReady`
    fresh.** See §7.3.
 5. Tap → the system package-installer dialog. See §7.4.
@@ -636,9 +646,12 @@ ephemeral and students will swipe away a grade notification.
 
 ## 11. Open questions
 
-- **What replaces the singleton `downloadState`** once downloads are per-call
-  (§5.0). This is the largest one: the current shape is what produced the #43
-  reinstall loop.
+- **What replaces the singleton `downloadState`** (§5.0). Still open, but
+  narrowed: `download()` is now single-flight behind a `Mutex.tryLock()`, so the
+  cross-download corruption the shared flow allowed can no longer happen — a second
+  caller is told nothing started rather than queueing behind the first. What remains is
+  whether the UI should observe one process-wide "current download" at all, or a
+  per-call handle. Not urgent while only one download can run.
 - Whether `AppUpdateWorker` enqueues `ApkDownloadWorker` or inlines the
   foreground promotion — a **semantics** decision, since enqueuing changes what
   its `Result.success()` means (§5.3).
@@ -658,7 +671,7 @@ ephemeral and students will swipe away a grade notification.
 
 ## 12. Revision history
 
-**Rev 3** — during implementation of step 1.
+**Rev 3** — during implementation of steps 1–3.
 
 - **§4.7 added.** media3 creating its own channel was recorded in rev 2 as an
   accepted exception; taking the channel over instead is cheap and makes 4.2's
@@ -668,7 +681,17 @@ ephemeral and students will swipe away a grade notification.
   the silent `PackageInstaller` path deleted before #43, and nothing has used it
   since. `REQUEST_INSTALL_PACKAGES` is still required by `installApk`'s
   `ACTION_VIEW`.
-- §4.4 resolved: `logo_mono.xml` is **not** usable as a small icon. It is a 108dp
+- §5.0 landed: `ApkDownloader.download(release, onProgress)` runs in the caller's
+  coroutine and returns the terminal state, single-flight via `Mutex.tryLock()`.
+  `startDownload` stays as a fire-and-forget wrapper until step 6 switches the interactive
+  call sites. `AppUpdateWorker` now awaits `download()` directly instead of starting a
+  download on the application scope and collecting the shared flow for a terminal value —
+  the pattern that made the worker not the owner of what it was waiting on.
+- §4.6's progress rule corrected to time-only, matching `ProgressThrottle`.
+- §4.5 resolved: notification routes reuse the existing `DeepLinkRepository`
+  hand-off (activity parses the intent, submits; the shell observes and consumes),
+  rather than a new mechanism.
+- - §4.4 resolved: `logo_mono.xml` is **not** usable as a small icon. It is a 108dp
   launcher asset whose mark is knocked out of a filled square, so it would flatten
   to a solid block in the status bar, and its other path is stroke-only. The
   status-bar glyph is `res/drawable/notification.xml`.
