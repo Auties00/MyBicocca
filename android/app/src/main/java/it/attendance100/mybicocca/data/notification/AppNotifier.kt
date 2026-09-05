@@ -32,6 +32,7 @@ class AppNotifier @Inject constructor(
     @ApplicationContext private val context: Context,
     private val permissions: NotificationPermissions,
     private val router: NotificationRouter,
+    private val foreground: AppForegroundState,
 ) {
 
     private val manager = NotificationManagerCompat.from(context)
@@ -88,7 +89,9 @@ class AppNotifier @Inject constructor(
             // Below API 26 there are no channels, so importance has to ride on the builder.
             .setPriority(spec.channel.importance.compatPriority())
 
-        when (spec.alert) {
+        // The foreground rule lives on the spec, so a feature opts into it rather than the poster
+        // guessing which of its notifications duplicate something on screen.
+        when (spec.effectiveAlert(foreground.isForegrounded)) {
             Alert.Every -> Unit
             Alert.Once -> builder.setOnlyAlertOnce(true)
             Alert.Never -> builder.setSilent(true)

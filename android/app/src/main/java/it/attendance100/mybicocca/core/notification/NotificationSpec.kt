@@ -83,6 +83,15 @@ data class NotificationSpec(
     @ColorInt val color: Int? = null,
     val colorized: Boolean = false,
     val alert: Alert = Alert.Once,
+    /**
+     * How to alert instead while the app is on screen. Null keeps [alert] whatever the app is
+     * doing.
+     *
+     * [Alert.Never] is the usual choice for anything the shell also raises a snackbar for: the
+     * user is being told already, so a second buzz is noise — but the tray entry is still worth
+     * posting, because a snackbar is gone in seconds and a notification is what they come back to.
+     */
+    val foregroundAlert: Alert? = null,
     val ongoing: Boolean = false,
     val autoCancel: Boolean = true,
     /** Self-dismisses after this long. Null leaves it until cancelled or dismissed. */
@@ -106,6 +115,13 @@ data class NotificationSpec(
     /** False lets the notification bridge to a paired watch. */
     val localOnly: Boolean = true,
 ) {
+    /**
+     * How this should actually announce itself right now. Kept here rather than in the poster so
+     * the rule is comparable in a test without a device.
+     */
+    fun effectiveAlert(foregrounded: Boolean): Alert =
+        if (foregrounded) foregroundAlert ?: alert else alert
+
     /** Progress as a percentage, clamped, or null when this isn't a determinate-progress spec. */
     val progressPercent: Int?
         get() = (progress as? Progress.Determinate)?.percent?.coerceIn(0, 100)

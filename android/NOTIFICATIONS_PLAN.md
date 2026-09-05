@@ -668,16 +668,31 @@ a week.
 ### 7.6 Foreground suppression
 
 `MainShell` already raises a snackbar on discovery *and* another on `Success`.
-Without a policy, a user with the app open gets snackbar **and** notification
-for the same event.
+Without a policy, a user with the app open gets snackbar **and** notification for
+the same event.
 
-Decide explicitly whether `UPDATE_ACTIONABLE` is suppressed while the process
-is foregrounded — `ProcessLifecycleOwner` is already observed by
-`UpdateChecker`, so the signal exists. Note the `UPDATE_PROGRESS` FGS
-notification **cannot** be suppressed regardless; that one is the price of the
-foreground service.
+**Decided: silence, not suppress.** While the app is on screen the actionable
+notifications post with `Alert.Never` instead of `Alert.Once`. Suppressing them
+outright was the obvious reading of "suppression" and is the wrong trade: a
+snackbar is gone in seconds, so a user who glances away has no way back to the
+update except the Settings tile, and `lastNotifiedVersion` means no later check
+will announce it again. Silencing keeps the tray entry — the thing you come back
+to — and removes only the duplicate buzz. The channel is `DEFAULT`, so there is
+no heads-up to suppress either way; sound and vibration are the whole difference.
 
----
+The rule is per spec (`NotificationSpec.foregroundAlert`), not per channel and
+not a blanket rule in the poster, because it only applies to notifications the
+app *also* says in-app. A future lecture reminder should still be heard with the
+app open, and opting in one spec at a time is what keeps that possible.
+
+The signal is `AppForegroundState`, a `ProcessLifecycleOwner` observer started
+from `MyBicoccaApplication.onCreate` — not from the activity, because the run
+where the answer matters most is the periodic check in a process that never
+creates one. It reads false there, which is correct rather than a gap.
+
+The `UPDATE_PROGRESS` foreground-service notification **cannot** be suppressed
+regardless; that one is the price of the foreground service. It is silent
+already.
 
 ## 8. Implementation order
 
@@ -778,7 +793,8 @@ ephemeral and students will swipe away a grade notification.
 - ~~§7.1: trigger at the discovery site, or convert the event channels to
   `SharedFlow`.~~ **Decided: the discovery site.** A collector has nowhere to
   live that runs when the app was never opened.
-- §7.6: suppress `UPDATE_ACTIONABLE` while foregrounded, or always post.
+- ~~§7.6: suppress `UPDATE_ACTIONABLE` while foregrounded, or always post.~~
+  **Decided: neither — post, but silently.** See §7.6.
 - Package split between `core/notification` and `data/notification`.
 - Naming for the poster, avoiding the platform `NotificationManager`.
 - Whether the in-app notification centre lands with the spine or later — it
@@ -789,6 +805,17 @@ ephemeral and students will swipe away a grade notification.
 ---
 
 ## 12. Revision history
+
+**Rev 10** — during implementation of step 9.
+
+- §7.6 decided, and the framing in the question turned out to be a false choice.
+  "Suppress or always post" both lose something; posting *silently* keeps the
+  persistence and drops only the duplicate alert.
+- The rule is a per-spec opt-in rather than a channel property, so a future
+  notification with no in-app equivalent is still heard with the app open.
+- `AppForegroundState` starts from `Application.onCreate`, following
+  `AppLockManager`'s existing `ProcessLifecycleOwner` pattern, so a background
+  run has a correct answer instead of a stale one.
 
 **Rev 9** — during implementation of step 8.
 

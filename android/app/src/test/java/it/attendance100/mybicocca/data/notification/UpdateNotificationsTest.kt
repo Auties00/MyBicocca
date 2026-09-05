@@ -46,6 +46,25 @@ class UpdateNotificationsTest {
     }
 
     /**
+     * Everything the shell also raises a snackbar for goes quiet while the app is open — the same
+     * news twice, once of it buzzing, is the failure this prevents. It still reaches the tray,
+     * because the snackbar is gone in seconds and the notification is what the user comes back to.
+     */
+    @Test
+    fun `the actionable notifications stay silent while the app is on screen`() {
+        val specs = listOf(
+            UpdateNotifications.updateAvailable(context, "9.9.9"),
+            UpdateNotifications.nightlyUpdateAvailable(context, "nightly-1"),
+            UpdateNotifications.updateReady(context, "9.9.9", "/apk"),
+        )
+
+        specs.forEach { spec ->
+            assertThat(spec.effectiveAlert(foregrounded = true)).isEqualTo(Alert.Never)
+            assertThat(spec.effectiveAlert(foregrounded = false)).isNotEqualTo(Alert.Never)
+        }
+    }
+
+    /**
      * The Live Update ask. Inert below Android 16, so it costs nothing to carry — but the chip has
      * room for a few characters only, which is what the short text is for.
      */

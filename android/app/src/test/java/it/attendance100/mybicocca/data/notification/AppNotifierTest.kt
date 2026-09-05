@@ -15,6 +15,8 @@ import it.attendance100.mybicocca.core.notification.NotificationId
 import it.attendance100.mybicocca.core.notification.NotificationRoute
 import it.attendance100.mybicocca.core.notification.NotificationSpec
 import it.attendance100.mybicocca.core.notification.Progress
+import androidx.lifecycle.LifecycleOwner
+import io.mockk.mockk
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -29,6 +31,7 @@ class AppNotifierTest {
     private lateinit var app: Application
     private lateinit var notifier: AppNotifier
     private lateinit var manager: NotificationManager
+    private lateinit var foreground: AppForegroundState
 
     @Before
     fun setUp() {
@@ -36,7 +39,14 @@ class AppNotifierTest {
         manager = app.getSystemService(NotificationManager::class.java)
         NotificationChannelRegistrar(app).register()
         shadowOf(app).grantPermissions(Manifest.permission.POST_NOTIFICATIONS)
-        notifier = AppNotifier(app, NotificationPermissions(app), NotificationRouter(app))
+        foreground = AppForegroundState()
+        notifier = AppNotifier(app, NotificationPermissions(app), NotificationRouter(app), foreground)
+    }
+
+    /** Drives the lifecycle callbacks directly; nothing here needs a real process lifecycle. */
+    private fun appOnScreen(onScreen: Boolean) {
+        val owner = mockk<LifecycleOwner>(relaxed = true)
+        if (onScreen) foreground.onStart(owner) else foreground.onStop(owner)
     }
 
     private fun spec(
@@ -102,6 +112,28 @@ class AppNotifierTest {
 
         val flags = posted().single().flags
         assertThat(flags and Notification.FLAG_ONLY_ALERT_ONCE).isEqualTo(0)
+    }
+
+    /**
+     * Alert.Once sets FLAG_ONLY_ALERT_ONCE; going silent instead does not, which is what makes the
+     * downgrade observable at all from a posted notification.
+     */
+    @Test
+    fun `a spec with a foreground alert goes silent while the app is on screen`() {
+        appOnScreen(true)
+
+        notifier.post(spec(alert = Alert.Once).copy(foregroundAlert = Alert.Never))
+
+        assertThat(posted().single().flags and Notification.FLAG_ONLY_ALERT_ONCE).isEqualTo(0)
+    }
+
+    @Test
+    fun `the same spec alerts normally once the app is off screen`() {
+        appOnScreen(false)
+
+        notifier.post(spec(alert = Alert.Once).copy(foregroundAlert = Alert.Never))
+
+        assertThat(posted().single().flags and Notification.FLAG_ONLY_ALERT_ONCE).isNotEqualTo(0)
     }
 
     @Test

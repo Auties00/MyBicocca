@@ -8,6 +8,7 @@ import it.attendance100.mybicocca.core.crash.GlobalExceptionHandler
 import it.attendance100.mybicocca.core.os.applyAppLanguage
 import it.attendance100.mybicocca.core.os.currentProcessName
 import it.attendance100.mybicocca.core.os.systemAppLanguage
+import it.attendance100.mybicocca.data.notification.AppForegroundState
 import it.attendance100.mybicocca.data.notification.NotificationChannelRegistrar
 import it.attendance100.mybicocca.data.observability.CrashReportingController
 import javax.inject.Inject
@@ -23,6 +24,9 @@ class MyBicoccaApplication : Application(), Configuration.Provider {
 
     @Inject
     lateinit var notificationChannelRegistrar: NotificationChannelRegistrar
+
+    @Inject
+    lateinit var appForegroundState: AppForegroundState
 
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
@@ -43,6 +47,10 @@ class MyBicoccaApplication : Application(), Configuration.Provider {
         // Channels must exist before anything posts to them, and creating one the user has
         // already customized leaves their settings alone, so the earliest point is the right one.
         notificationChannelRegistrar.register()
+
+        // Started here rather than from the activity: the run that most needs to know the app is
+        // *not* on screen is the one that never creates an activity at all.
+        appForegroundState.start()
 
         val prefs = getSharedPreferences("language_prefs", MODE_PRIVATE)
         if (prefs.getBoolean("is_system", true)) {
