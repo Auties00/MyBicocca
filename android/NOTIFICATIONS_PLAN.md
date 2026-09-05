@@ -718,8 +718,10 @@ already.
 10. **Debug screen** (§9).
 11. **media3 channel takeover** (§4.7) — independent of everything above; keep it
     out of the update flow's test cycle.
-12. **Housekeeping:** retarget the two `TODO(update-notifications)` markers from
-    `/UPDATE_NOTIFICATIONS_PLAN.md` to this file, and delete the old file.
+12. ~~**Housekeeping:** retarget the two `TODO(update-notifications)` markers from
+    `/UPDATE_NOTIFICATIONS_PLAN.md` to this file, and delete the old file.~~ **Done.**
+    Both markers went with the code that made them stale (steps 5 and 6); the old
+    file is deleted.
 
 Steps 1–3 are the reusable spine; 4–9 are the first consumer.
 
@@ -805,6 +807,14 @@ ephemeral and students will swipe away a grade notification.
 ---
 
 ## 12. Revision history
+
+**Rev 11** — step 12 housekeeping.
+
+- `UPDATE_NOTIFICATIONS_PLAN.md` deleted. It described a silent auto-install flow
+  (`installSilently`, `InstallResultReceiver`, `nightlyAutoInstall`) that was
+  removed before #43 merged, so everything in it was either wrong or carried over
+  into this document. Both `TODO(update-notifications)` markers had already gone
+  with the code that made them stale, in steps 5 and 6.
 
 **Rev 10** — during implementation of step 9.
 
