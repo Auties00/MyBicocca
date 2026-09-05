@@ -4,8 +4,10 @@ import android.Manifest
 import android.app.Application
 import android.app.Notification
 import android.app.NotificationManager
+import androidx.lifecycle.LifecycleOwner
 import androidx.test.core.app.ApplicationProvider
 import com.google.common.truth.Truth.assertThat
+import io.mockk.mockk
 import it.attendance100.mybicocca.core.notification.ActionIntent
 import it.attendance100.mybicocca.core.notification.Alert
 import it.attendance100.mybicocca.core.notification.GroupKey
@@ -15,8 +17,6 @@ import it.attendance100.mybicocca.core.notification.NotificationId
 import it.attendance100.mybicocca.core.notification.NotificationRoute
 import it.attendance100.mybicocca.core.notification.NotificationSpec
 import it.attendance100.mybicocca.core.notification.Progress
-import androidx.lifecycle.LifecycleOwner
-import io.mockk.mockk
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -43,7 +43,15 @@ class AppNotifierTest {
         notifier = AppNotifier(app, NotificationPermissions(app), NotificationRouter(app), foreground)
     }
 
-    /** Drives the lifecycle callbacks directly; nothing here needs a real process lifecycle. */
+    /**
+     * Drives the lifecycle callbacks directly instead of going through
+     * [AppForegroundState.start].
+     *
+     * The subject here is the poster, not the observer: registering against the real
+     * `ProcessLifecycleOwner` would leave the alert these tests assert on decided by whatever
+     * lifecycle state the test runtime happens to be in, which is neither controllable from a test
+     * nor the thing being tested.
+     */
     private fun appOnScreen(onScreen: Boolean) {
         val owner = mockk<LifecycleOwner>(relaxed = true)
         if (onScreen) foreground.onStart(owner) else foreground.onStop(owner)

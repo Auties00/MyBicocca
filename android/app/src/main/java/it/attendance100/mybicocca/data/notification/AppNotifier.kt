@@ -77,6 +77,10 @@ class AppNotifier @Inject constructor(
     /**
      * Builds the platform notification for [spec] without posting it. Public for the caller that
      * owns a notification's lifetime itself, rather than handing it to the tray.
+     *
+     * [NotificationSpec.foregroundAlert] is applied here, from the foreground state *at the time
+     * of this call* — so a notification built once and shown across a foreground/background
+     * transition keeps whichever alert was chosen when it was built. Build again to re-decide.
      */
     fun build(spec: NotificationSpec): Notification {
         val builder = NotificationCompat.Builder(context, spec.channel.id)
