@@ -46,6 +46,23 @@ class NotificationPermissions @Inject constructor(
     }
 
     /**
+     * Whether a Live Update would actually be promoted to the status-bar chip.
+     *
+     * Two separate things can stop it and only this one is visible from here: the notification
+     * also has to be *shaped* right (ongoing, a supported style, not colorized, not a group
+     * summary, channel importance above minimum). The system declines silently either way, so a
+     * notification that looks correct and simply never appears in the chip is the normal symptom.
+     *
+     * False is never a reason to skip posting: an unpromoted Live Update is an ordinary progress
+     * notification, which is exactly the pre-Android-16 behaviour.
+     */
+    fun canPromoteOngoing(): Boolean {
+        if (Build.VERSION.SDK_INT < PROMOTED_ONGOING_SDK) return false
+        val manager = context.getSystemService(NotificationManager::class.java) ?: return false
+        return manager.canPostPromotedNotifications()
+    }
+
+    /**
      * Whether there is a permission to ask for at all: it exists on this OS and isn't held yet.
      *
      * Deliberately not "will a prompt appear" — after two denials the system request becomes a
@@ -54,4 +71,9 @@ class NotificationPermissions @Inject constructor(
      * where asking is meaningless.
      */
     fun needsPermissionRequest(): Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU && !hasPostPermission()
+
+    private companion object {
+        /** Android 16, where promoted ongoing notifications arrive. */
+        const val PROMOTED_ONGOING_SDK = 36
+    }
 }

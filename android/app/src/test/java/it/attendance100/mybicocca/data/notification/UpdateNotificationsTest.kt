@@ -45,6 +45,27 @@ class UpdateNotificationsTest {
         assertThat(spec.progressPercent).isEqualTo(40)
     }
 
+    /**
+     * The Live Update ask. Inert below Android 16, so it costs nothing to carry — but the chip has
+     * room for a few characters only, which is what the short text is for.
+     */
+    @Test
+    fun `download progress asks to be promoted, with text short enough for the chip`() {
+        val spec = UpdateNotifications.downloadProgress(context, percent = 42)
+
+        assertThat(spec.promoted).isTrue()
+        assertThat(spec.shortCriticalText).isEqualTo("42%")
+    }
+
+    /** Nothing to show in a chip that reads "null%" — the spinner speaks for itself. */
+    @Test
+    fun `a download with nothing reported yet has no chip text`() {
+        val spec = UpdateNotifications.downloadProgress(context, percent = null)
+
+        assertThat(spec.promoted).isTrue()
+        assertThat(spec.shortCriticalText).isNull()
+    }
+
     /** Nothing reported yet is a spinner, not a bar sitting convincingly at zero. */
     @Test
     fun `no reported percentage is indeterminate`() {

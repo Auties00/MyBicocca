@@ -88,6 +88,17 @@ data class NotificationSpec(
     /** Self-dismisses after this long. Null leaves it until cancelled or dismissed. */
     val timeoutAfterMs: Long? = null,
     val progress: Progress? = null,
+    /**
+     * Asks Android 16 to promote this into the status-bar chip and a richer lock-screen
+     * presentation — a "Live Update". Only meaningful alongside [ongoing] and [progress]; below
+     * API 36 it is inert and the notification stays an ordinary progress notification.
+     */
+    val promoted: Boolean = false,
+    /**
+     * The handful of characters the status-bar chip has room for, e.g. "42%". Shown only where
+     * [promoted] takes effect; the chip is too small for [title] or [text].
+     */
+    val shortCriticalText: String? = null,
     val chronometer: Chronometer? = null,
     val route: NotificationRoute? = null,
     val actions: List<NotificationAction> = emptyList(),

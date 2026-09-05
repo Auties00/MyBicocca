@@ -40,6 +40,13 @@ class NotificationDebugViewModel @Inject constructor(
 
     fun canNotify(channel: NotificationChannelId): Boolean = notifier.canNotify(channel)
 
+    /**
+     * Surfaced because the failure is otherwise invisible: a Live Update that isn't promoted looks
+     * exactly like an ordinary progress notification, so "the chip never appeared" gives no clue
+     * whether the permission is missing, the OEM declined, or the spec is shaped wrong.
+     */
+    fun canPromoteOngoing(): Boolean = notifier.canPromoteOngoing()
+
     fun updateAvailable() =
         post("Update available", UpdateNotifications.updateAvailable(context, DEBUG_VERSION))
 

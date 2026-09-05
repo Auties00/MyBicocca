@@ -83,6 +83,10 @@ object UpdateNotifications {
         // Silent throughout: this updates many times and never warrants a buzz.
         alert = Alert.Never,
         progress = percent?.let(Progress::Determinate) ?: Progress.Indeterminate,
+        // An APK download is the case Live Updates were designed for: long, ongoing, and with a
+        // number worth glancing at. Inert below Android 16, where it stays an ordinary bar.
+        promoted = true,
+        shortCriticalText = percent?.let { context.getString(R.string.notification_update_percent, it) },
         // A foreground service's notification can't be swiped away, so the action is the only way
         // out of a download the user no longer wants.
         actions = listOf(

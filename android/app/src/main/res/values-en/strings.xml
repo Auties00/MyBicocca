@@ -2104,6 +2104,7 @@
     <string name="notification_update_downloading_title">Downloading update</string>
     <string name="notification_update_downloading_text">%1$d%%</string>
     <string name="notification_update_preparing">Starting download…</string>
+    <string name="notification_update_percent">%1$d%%</string>
     <string name="notification_update_cancel">Cancel</string>
 
     <string name="shell_update_no_longer_available">That update is no longer available</string>

@@ -71,6 +71,12 @@ fun NotificationDebugSheet(
                 )
             }
 
+            Text(
+                text = "Live Update chip: ${if (viewModel.canPromoteOngoing()) "promotable" else "NOT promoted"}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+
             Spacer(Modifier.height(16.dp))
             HorizontalDivider()
             Spacer(Modifier.height(16.dp))

@@ -488,21 +488,67 @@ bump costs nothing and removes the whole class of question at targetSdk 36.
 
 ---
 
-## 6. Live Updates (Android 16) & Samsung Now Bar
+## 6. Live Updates (Android 16) & OEM chips
 
-Android 16 adds `Notification.ProgressStyle` and
-`setRequestPromotedOngoing(true)`, which promote an ongoing notification into
-the status-bar chip and a richer lock-screen presentation.
+Android 16 adds `Notification.ProgressStyle` and `setRequestPromotedOngoing(true)`,
+which promote an ongoing notification into the status-bar chip and a richer
+lock-screen presentation. An APK download is the intended use case, so this rides
+along with §5 once `NotificationSpec.progress` exists.
 
-APK download progress is precisely the intended use case, so this rides along
-with §5 at near-zero extra cost once `NotificationSpec.progress` exists. Gate it
-behind an API-36 check and let it degrade to an ordinary progress notification
-below that — which is the majority of installs today.
+`androidx.core` 1.17.0 carries both on `NotificationCompat` and version-gates
+them internally, so no platform `Notification.Builder` and no reflection. We are
+on exactly 1.17.0; anything older silently lacks the API.
 
-**Samsung Now Bar** (One UI 7+) surfaces promoted ongoing notifications, so it
-should largely come for free. Treat that as *unverified* until checked on real
-Samsung hardware — OEM behaviour here varies and is poorly documented. Do not
-advertise it as supported on the strength of the standard API alone.
+### 6.1 Eligibility — every one of these, or it is declined silently
+
+Researched 2026-09-05 against `developer.android.com`'s Live Update and
+progress-centric-notification pages.
+
+- **`POST_PROMOTED_NOTIFICATIONS` in the manifest.** Install-time, but the user
+  can revoke it. Without it nothing is ever promoted, with no error.
+- Ongoing, and `contentTitle` set.
+- A supported style: none, `BigTextStyle`, `CallStyle`, `ProgressStyle` or
+  `MetricStyle`. Custom `RemoteViews` disqualify it outright.
+- **Not** colorized, **not** a group summary.
+- Channel importance above `IMPORTANCE_MIN` (`UPDATE_PROGRESS` is `LOW`).
+- No `CATEGORY_PROGRESS` requirement — category plays no part in the gate.
+
+Two different questions, two different APIs, and testing only the first is the
+trap: `Notification.hasPromotableCharacteristics()` says the notification is
+*shaped* right; `NotificationManager.canPostPromotedNotifications()` says the
+user and system will actually allow it. The debug screen shows the second.
+
+**`SDK_INT >= 36` is not sufficient.** Promotion shipped disabled in Android 16
+stable and was enabled system-side in QPR1, which does not bump `SDK_INT`. Only
+one promoted chip exists system-wide, so another app can hold it. And the user
+can switch it off per app. Never treat promotion as guaranteed or permanent —
+an unpromoted Live Update is an ordinary progress notification, which is exactly
+the pre-Android-16 behaviour, so degrading costs nothing.
+
+### 6.2 OEM chips: implement the standard path, and nothing else
+
+The premise worth testing was whether the OEM variations are few enough to
+support directly. They are not — most are undocumented for third parties.
+
+| Surface | Standard API is enough? | Otherwise |
+|---|---|---|
+| Samsung Now Bar (One UI 7) | **No** | Proprietary `com.samsung.android.support.ongoing_activity` manifest flag plus a Now-Bar-specific extras bundle, and an allowlist submission. No public SDK. |
+| Samsung Now Bar (One UI 8) | **Reportedly yes** | Tech press consistently reports One UI 8 opens the Now Bar to any app using the standard API. **Not confirmed against a primary Samsung source.** |
+| OPPO/OnePlus/realme Fluid Cloud | **No** | Vendor push SDK through OPPO's console, fixed templates. Whether ColorOS 16 also honours the standard API is press inference only. |
+| Xiaomi HyperOS Focus Notifications | **Unknown** | No third-party developer documentation found anywhere. |
+| vivo Atomic Island, Honor Magic Capsule | **Unknown** | Same — consumer coverage only, no developer docs. |
+| Motorola | Possibly, on Android 17 beta | Outside our target. |
+
+So: **build the standard path, ship it, and chase no vendor SDKs.** Samsung is
+the one that may light up for free on One UI 8. Everything else is unverified,
+and a vendor integration would be a per-OEM allowlist project for a cosmetic
+gain on a download that already works.
+
+Google's own wording is that "OEMs can enforce additional criteria" — an
+acknowledgement that this stays fragmented, not a promise of convergence.
+
+Do not advertise Now Bar support on the strength of the standard API alone;
+treat it as unverified until seen on real Samsung hardware.
 
 Later Live Update candidates (not now): time-until-next-lecture, attendance
 check-in window.
@@ -651,7 +697,8 @@ foreground service.
    via §5.1. This is the step that fixes the original bug.
 7. **Terminal notifications** — trigger site (§7.1), `UpdateReady`, install tap
    option B (§7.4), decline handling and post-install cleanup (§7.5).
-8. **Live Updates** promotion on the progress notification (API 36 gate).
+8. **Live Updates** promotion on the progress notification (API 36 gate), with
+   `POST_PROMOTED_NOTIFICATIONS` in the manifest (§6.1).
 9. **Foreground suppression policy** (§7.6).
 10. **Debug screen** (§9).
 11. **media3 channel takeover** (§4.7) — independent of everything above; keep it
@@ -676,7 +723,8 @@ Steps 1–3 are the reusable spine; 4–9 are the first consumer.
   auto-download on and off, restore-to-stable (the §5.1 path), notification
   permission denied, Cancel action, install declined, install succeeded (stale
   `UpdateReady` must not survive), app foregrounded during discovery (§7.6),
-  API 25 (no channels), API 36 (Live Update), and a real Samsung for Now Bar.
+  API 25 (no channels), API 36 (Live Update — check the debug screen says
+  "promotable" first), and a real One UI 8 Samsung for the Now Bar.
 
 ---
 
@@ -741,6 +789,21 @@ ephemeral and students will swipe away a grade notification.
 ---
 
 ## 12. Revision history
+
+**Rev 9** — during implementation of step 8.
+
+- §6 rewritten around what promotion actually requires. The one that would have
+  cost a debugging session: `POST_PROMOTED_NOTIFICATIONS` must be in the
+  manifest or nothing is ever promoted, silently. `ProgressStyle` is applied
+  only on API 36+, alongside the plain `setProgress` bar that renders below it.
+- §6.2 answers the question the research was for: the OEM variations are *not*
+  few enough to support directly. Samsung's One UI 7 path needed a proprietary
+  manifest flag and an allowlist; OPPO needs a vendor push SDK; Xiaomi, vivo and
+  Honor publish no third-party documentation at all. The standard path is the
+  whole strategy.
+- The debug screen reports `canPostPromotedNotifications()`, because an
+  unpromoted Live Update is indistinguishable from an ordinary progress
+  notification and "the chip never appeared" otherwise gives nothing to go on.
 
 **Rev 8** — update-flow UX, outside the plan's own scope but enabled by it.
 

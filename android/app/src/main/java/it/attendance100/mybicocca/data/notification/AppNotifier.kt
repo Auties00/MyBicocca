@@ -40,6 +40,9 @@ class AppNotifier @Inject constructor(
     /** Delegates to [NotificationPermissions.canNotify]; see there for why it never gates work. */
     fun canNotify(channel: NotificationChannelId): Boolean = permissions.canNotify(channel)
 
+    /** Whether a [NotificationSpec.promoted] spec would actually reach the status-bar chip. */
+    fun canPromoteOngoing(): Boolean = permissions.canPromoteOngoing()
+
     /**
      * Posts [spec], or doesn't. Returns whether it reached the tray, which callers may log but
      * should not act on: a false means the user won't see this, never that the work behind it
@@ -98,7 +101,20 @@ class AppNotifier @Inject constructor(
         when (val progress = spec.progress) {
             null -> Unit
             Progress.Indeterminate -> builder.setProgress(0, 0, true)
-            is Progress.Determinate -> builder.setProgress(100, progress.percent.coerceIn(0, 100), false)
+            is Progress.Determinate ->
+                builder.setProgress(PROGRESS_MAX, progress.percent.coerceIn(0, PROGRESS_MAX), false)
+        }
+
+        // Android 16 promotes only through ProgressStyle, so a promoted spec gets it *as well as*
+        // the plain bar above: below API 36 the style is inert and the bar is what renders, above
+        // it the style wins. Applied after bigText, since a promoted progress notification is a
+        // progress bar first and a spec asking for both is asking for the wrong thing.
+        if (spec.promoted) {
+            builder.setRequestPromotedOngoing(true)
+            spec.shortCriticalText?.let(builder::setShortCriticalText)
+            if (Build.VERSION.SDK_INT >= PROMOTED_ONGOING_SDK) {
+                spec.progress?.let { builder.setStyle(progressStyle(it)) }
+            }
         }
 
         spec.chronometer?.let {
@@ -144,7 +160,28 @@ class AppNotifier @Inject constructor(
         manager.notify(summaryIdFor(group.key), summary)
     }
 
+    /**
+     * The Android 16 progress bar. One segment spanning the whole track: segments exist to colour
+     * distinct legs of a journey (a delivery's pickup, transit, arrival), and a download has one.
+     */
+    private fun progressStyle(progress: Progress): NotificationCompat.ProgressStyle =
+        NotificationCompat.ProgressStyle()
+            .setProgressSegments(listOf(NotificationCompat.ProgressStyle.Segment(PROGRESS_MAX)))
+            .also { style ->
+                when (progress) {
+                    is Progress.Determinate ->
+                        style.setProgress(progress.percent.coerceIn(0, PROGRESS_MAX))
+
+                    Progress.Indeterminate -> style.setProgressIndeterminate(true)
+                }
+            }
+
     private companion object {
+        const val PROGRESS_MAX = 100
+
+        /** Android 16, where `ProgressStyle` and promoted ongoing notifications arrive. */
+        const val PROMOTED_ONGOING_SDK = 36
+
         /**
          * Distinct per action *within one notification*, which is what the actions on a single
          * notification need: without it, PendingIntent equality collapses two buttons into
