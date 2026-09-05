@@ -96,6 +96,7 @@ import it.attendance100.mybicocca.domain.model.update.isActive
 import it.attendance100.mybicocca.domain.model.update.isReadyToInstall
 import it.attendance100.mybicocca.domain.model.update.AppRelease
 import it.attendance100.mybicocca.domain.model.update.UpdateCheckResult
+import it.attendance100.mybicocca.domain.model.update.UpdateModalKind
 import it.attendance100.mybicocca.domain.model.update.UpdateStatus
 import it.attendance100.mybicocca.ui.component.brand.MyBicoccaWordmark
 import it.attendance100.mybicocca.ui.component.directory.SegmentedIconChip
@@ -103,7 +104,9 @@ import it.attendance100.mybicocca.ui.component.directory.SegmentedTile
 import it.attendance100.mybicocca.ui.component.directory.segmentedShape
 import it.attendance100.mybicocca.ui.component.feedback.AppSnackbarHost
 import it.attendance100.mybicocca.ui.component.feedback.rememberAppSnackbarController
+import it.attendance100.mybicocca.ui.component.modal.UpdateModalRequest
 import it.attendance100.mybicocca.ui.component.modal.UpdateModalSheet
+import it.attendance100.mybicocca.ui.component.modal.channelSwitch
 import it.attendance100.mybicocca.ui.component.modal.sheetPageTransform
 import kotlinx.coroutines.launch
 import java.time.Year
@@ -142,13 +145,34 @@ private val CREDITS = listOf(
 )
 
 /**
- * The settings About modal — a full-height, three-level bottom sheet built on the same
- * predictive-back machinery as the account switcher. The levels form a stack by [depth]:
- * 0 = About, 1 = What's New (the merged changelog), 2 = All versions (the per-release list).
+ * Where a back gesture goes from [depth].
+ *
+ * Not `depth - 1`: the depths order the pages for the slide animation, but they do not describe
+ * who opened whom. What's New and Update Settings are both opened from About, so decrementing out
+ * of Update Settings walks *into* All versions — a page the user never opened, and then two more
+ * backs to get out of. Each in-page back arrow already encodes the real parent; this is the same
+ * mapping for the gesture and the drag-down.
+ */
+private fun parentPage(depth: Int): Int = when (depth) {
+    ALL_VERSIONS_PAGE -> WHATS_NEW_PAGE
+    else -> ABOUT_PAGE
+}
+
+private const val ABOUT_PAGE = 0
+private const val WHATS_NEW_PAGE = 1
+private const val ALL_VERSIONS_PAGE = 2
+private const val UPDATE_SETTINGS_PAGE = 3
+
+/**
+ * The settings About modal — a full-height, four-level bottom sheet built on the same
+ * predictive-back machinery as the account switcher. The levels are ordered by [depth] for the
+ * page animation, but they are a tree rather than a stack: 0 = About, with 1 = What's New (the
+ * merged changelog) and 3 = Update Settings both opening from it, and 2 = All versions opening
+ * from What's New. [parentPage] is what a back gesture follows.
  *
  * The sheet always expands to the full available height even when the About content is short, so
  * every level shares one stable frame. A back gesture is staged through a seekable transition:
- * above the root it drives the page back one level (springing back if cancelled); at the root it
+ * above the root it drives the page back to its parent (springing back if cancelled); at the root it
  * drives the close transition, shrinking the sheet's height in step with the finger before
  * dismissing. Tapping a tile / the "All versions" button / an in-page back arrow walks the same
  * stack with the shared in-sheet page push.
@@ -174,24 +198,61 @@ fun AppInfoSheet(
     val nightlyEnabled by viewModel.nightlyEnabled.collectAsStateWithLifecycle()
     val checking by viewModel.checking.collectAsStateWithLifecycle()
     var showRestoreStableDialog by remember { mutableStateOf(false) }
-    // In-sheet depth: 0 = About, 1 = What's New (merged), 2 = All versions, 3 = Update Settings.
-    var depth by rememberSaveable { mutableIntStateOf(0) }
-    var showUpdateModal by remember { mutableStateOf<AppRelease?>(null) }
+    var depth by rememberSaveable { mutableIntStateOf(ABOUT_PAGE) }
+    var showUpdateModal by remember { mutableStateOf<UpdateModalRequest?>(null) }
 
-    showUpdateModal?.let { release ->
+    // Opening is remembered across process death, so a download the user was watching isn't lost
+    // behind a cold start; the shell reads the slot back and reopens the sheet there.
+    fun openUpdateModal(release: AppRelease, kind: UpdateModalKind = UpdateModalKind.Standard) {
+        showUpdateModal = UpdateModalRequest(release, kind)
+        viewModel.rememberOpenModal(release, kind)
+    }
+
+    fun closeUpdateModal() {
+        showUpdateModal = null
+        viewModel.forgetOpenModal()
+    }
+
+    showUpdateModal?.let { request ->
+        val release = request.release
         UpdateModalSheet(
             release = release,
             downloadStateFlow = viewModel.downloadState,
             onDownload = { viewModel.startDownload(release) },
             onInstall = { file ->
                 viewModel.installDownload(file)
-                showUpdateModal = null
+                closeUpdateModal()
             },
             onDismiss = {
                 viewModel.dismissDownloadError()
-                showUpdateModal = null
+                closeUpdateModal()
+            },
+            channelSwitch = request.kind.channelSwitch { nightlyEnabled ->
+                // Backing out of a channel change puts the switch back and stops the download it
+                // started. Left running, it would finish and go on offering itself through the
+                // install snackbar and the "ready to install" notification.
+                viewModel.setNightlyEnabled(nightlyEnabled)
+                viewModel.cancelDownload()
+                closeUpdateModal()
             },
         )
+    }
+
+    val downloadBusyMsg = stringResource(R.string.settings_download_already_running)
+
+    /**
+     * Starts a channel change and shows it, in that order.
+     *
+     * The order is the point: the sheet renders the one process-wide download state, so opening it
+     * for a release that was refused would show another download's progress and then offer to
+     * install *its* APK under this release's name.
+     */
+    fun startChannelChange(release: AppRelease, kind: UpdateModalKind) {
+        if (viewModel.startDownload(release)) {
+            openUpdateModal(release, kind)
+        } else {
+            scope.launch { snackbar.showInfo(downloadBusyMsg) }
+        }
     }
 
     val noUpdatesMsg = stringResource(R.string.settings_no_updates_found)
@@ -239,15 +300,15 @@ fun AppInfoSheet(
     val fullHeight = screenHeight - topWindowInsets - handleHeight
 
     ModalBottomSheet(
-        onDismissRequest = { if (depth > 0) depth -= 1 else onDismiss() },
+        onDismissRequest = { if (depth > ABOUT_PAGE) depth = parentPage(depth) else onDismiss() },
         sheetState = sheetState,
         contentWindowInsets = { WindowInsets(0) },
         dragHandle = { Box(Modifier.padding(top = handleHeight)) },
         shape = BottomSheetDefaults.ExpandedShape,
         containerColor = scheme.surfaceContainerLow,
     ) {
-        PredictiveBackHandler(enabled = depth > 0) { progress ->
-            val target = depth - 1
+        PredictiveBackHandler(enabled = depth > ABOUT_PAGE) { progress ->
+            val target = parentPage(depth)
             try {
                 progress.collect { backEvent ->
                     pageSeekable.seekTo(backEvent.progress, targetState = target)
@@ -259,7 +320,7 @@ fun AppInfoSheet(
             }
         }
 
-        PredictiveBackHandler(enabled = depth == 0 && sheetState.isVisible) { progress ->
+        PredictiveBackHandler(enabled = depth == ABOUT_PAGE && sheetState.isVisible) { progress ->
             try {
                 progress.collect { backEvent ->
                     closeSeekable.seekTo(
@@ -296,7 +357,7 @@ fun AppInfoSheet(
                             .fillMaxWidth()
                             .height(fullHeight)
                         when (pageDepth) {
-                            0 -> AboutScene(
+                            ABOUT_PAGE -> AboutScene(
                                 modifier = pageModifier,
                                 viewModel = viewModel,
                                 updateStatus = updateStatus,
@@ -304,29 +365,42 @@ fun AppInfoSheet(
                                 githubIcon = githubIcon,
                                 nightlyStatus = nightlyStatus,
                                 nightlyEnabled = nightlyEnabled,
-                                onOpenWhatsNew = { depth = 1 },
-                                onOpenUpdateSettings = { depth = 3 },
+                                onOpenWhatsNew = { depth = WHATS_NEW_PAGE },
+                                onOpenUpdateSettings = { depth = UPDATE_SETTINGS_PAGE },
                                 onCheckResult = onCheckResult,
-                                onShowUpdateModal = { showUpdateModal = it }
+                                onShowUpdateModal = { openUpdateModal(it) }
                             )
 
-                            1 -> WhatsNewScene(
-                                onBack = { depth = 0 },
-                                onAllVersions = { depth = 2 },
+                            WHATS_NEW_PAGE -> WhatsNewScene(
+                                onBack = { depth = ABOUT_PAGE },
+                                onAllVersions = { depth = ALL_VERSIONS_PAGE },
                                 modifier = pageModifier,
                             )
 
-                            2 -> WhatsNewAllVersionsScene(
-                                onBack = { depth = 1 },
+                            ALL_VERSIONS_PAGE -> WhatsNewAllVersionsScene(
+                                onBack = { depth = WHATS_NEW_PAGE },
                                 modifier = pageModifier,
                             )
 
-                            3 -> UpdateSettingsScene(
+                            UPDATE_SETTINGS_PAGE -> UpdateSettingsScene(
                                 modifier = pageModifier,
                                 viewModel = viewModel,
                                 nightlyEnabled = nightlyEnabled,
-                                onBack = { depth = 0 },
-                                setShowRestoreStableDialog = { showRestoreStableDialog = it }
+                                onBack = { depth = ABOUT_PAGE },
+                                setShowRestoreStableDialog = { showRestoreStableDialog = it },
+                                onSwitchToNightly = {
+                                    // Symmetrical with restoring to stable: flip the switch, then
+                                    // offer the build switching is for, on a sheet that can put it
+                                    // back. Nothing to offer means the switch is all there was.
+                                    viewModel.enableNightlyAndOffer { release ->
+                                        if (release != null) {
+                                            startChannelChange(
+                                                release,
+                                                UpdateModalKind.SwitchToNightly,
+                                            )
+                                        }
+                                    }
+                                },
                             )
                         }
                     }
@@ -360,8 +434,10 @@ fun AppInfoSheet(
                         if (result is UpdateCheckResult.UpdateAvailable) {
                             // Download starts immediately, ignoring stableAutoDownload — this is
                             // already a deliberate, attended action. Install still waits for a tap.
-                            showUpdateModal = result.release
-                            viewModel.startDownload(result.release)
+                            startChannelChange(
+                                result.release,
+                                UpdateModalKind.RestoreStable,
+                            )
                         } else {
                             onCheckResult(result)
                         }
@@ -750,6 +826,7 @@ private fun UpdateSettingsScene(
     nightlyEnabled: Boolean,
     onBack: () -> Unit,
     setShowRestoreStableDialog: (Boolean) -> Unit,
+    onSwitchToNightly: () -> Unit,
 ) {
     val haptic = rememberHapticManager()
     val scheme = MaterialTheme.colorScheme
@@ -835,7 +912,7 @@ private fun UpdateSettingsScene(
                             setShowRestoreStableDialog(true)
                         }
                     } else {
-                        viewModel.setNightlyEnabled(true)
+                        onSwitchToNightly()
                     }
                 },
                 trailing = {

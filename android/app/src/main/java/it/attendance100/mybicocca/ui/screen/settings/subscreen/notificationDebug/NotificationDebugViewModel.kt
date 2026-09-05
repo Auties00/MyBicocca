@@ -5,11 +5,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
-import it.attendance100.mybicocca.core.notification.Alert
 import it.attendance100.mybicocca.core.notification.GroupKey
 import it.attendance100.mybicocca.core.notification.NotificationChannelId
 import it.attendance100.mybicocca.core.notification.NotificationId
-import it.attendance100.mybicocca.core.notification.NotificationRoute
 import it.attendance100.mybicocca.core.notification.NotificationSpec
 import it.attendance100.mybicocca.data.local.settings.UpdateStateStore
 import it.attendance100.mybicocca.data.notification.AppNotifier
@@ -42,17 +40,8 @@ class NotificationDebugViewModel @Inject constructor(
 
     fun canNotify(channel: NotificationChannelId): Boolean = notifier.canNotify(channel)
 
-    fun updateAvailable() = post(
-        "Update available",
-        NotificationSpec(
-            channel = NotificationChannelId.UPDATE_ACTIONABLE,
-            id = NotificationId.UpdateAvailable,
-            title = "Nuova versione disponibile",
-            text = "v9.9.9 — tocca per aprire",
-            bigText = "Riga espansa, per controllare che BigTextStyle sia applicato.",
-            route = NotificationRoute.UpdatePage,
-        ),
-    )
+    fun updateAvailable() =
+        post("Update available", UpdateNotifications.updateAvailable(context, DEBUG_VERSION))
 
     fun progress(percent: Int) =
         post("Progress $percent%", UpdateNotifications.downloadProgress(context, percent))
@@ -61,22 +50,16 @@ class NotificationDebugViewModel @Inject constructor(
         post("Indeterminate", UpdateNotifications.downloadProgress(context, percent = null))
 
     /**
-     * Routes to the real downloaded APK when there is one, so the install tap can be exercised
-     * end to end; falls back to the update page when nothing has been downloaded yet.
+     * Fires the production spec against the real downloaded APK when there is one, so the install
+     * tap can be exercised end to end. With nothing downloaded it still posts — the tap then lands
+     * on a path that isn't there, which is itself worth seeing.
      */
     fun readyToInstall() {
         viewModelScope.launch {
             val apkPath = updateStateStore.downloadedApk.first()?.path
             post(
                 if (apkPath != null) "Ready to install (real APK)" else "Ready to install (no APK)",
-                NotificationSpec(
-                    channel = NotificationChannelId.UPDATE_ACTIONABLE,
-                    id = NotificationId.UpdateReady,
-                    title = "Aggiornamento pronto",
-                    text = "Tocca per installare",
-                    alert = Alert.Once,
-                    route = apkPath?.let(NotificationRoute::InstallApk) ?: NotificationRoute.UpdatePage,
-                ),
+                UpdateNotifications.updateReady(context, DEBUG_VERSION, apkPath ?: "/no/such.apk"),
             )
         }
     }
@@ -112,6 +95,10 @@ class NotificationDebugViewModel @Inject constructor(
     fun cancelAll() {
         NotificationChannelId.entries.forEach(notifier::cancelAll)
         _lastResult.value = "All channels cleared"
+    }
+
+    private companion object {
+        const val DEBUG_VERSION = "9.9.9"
     }
 
     private fun post(label: String, spec: NotificationSpec) {

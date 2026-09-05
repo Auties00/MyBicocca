@@ -145,8 +145,19 @@ class AppNotifier @Inject constructor(
     }
 
     private companion object {
+        /**
+         * Distinct per action *within one notification*, which is what the actions on a single
+         * notification need: without it, PendingIntent equality collapses two buttons into
+         * whichever was created first.
+         *
+         * Across notifications it is a hash, not an injection - the Long arithmetic keeps the
+         * result stable and non-negative, but squeezing (id, index) into an Int cannot be
+         * collision-free, and multiplying by 100 loses two more bits. Two entity notifications
+         * whose ids differ by exactly 2^29 would share request codes. Live entity notifications
+         * number in the dozens, so that is a theoretical loss rather than one to design around.
+         */
         fun actionRequestCode(id: NotificationId, index: Int): Int =
-            (id.value * 100 + index) and Int.MAX_VALUE
+            ((id.value.toLong() * 100L + index) and Int.MAX_VALUE.toLong()).toInt()
 
         /** Summaries live in the entity id space, keyed by group, so they can't hit a real slot. */
         fun summaryIdFor(groupKey: String): Int = NotificationId.idFor("group-summary", groupKey)

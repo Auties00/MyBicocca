@@ -535,6 +535,18 @@ Two acceptable options:
 (1) is smaller; (2) is better if anything else ever needs to observe
 discoveries. Either way, **do not** just add a collector.
 
+**Decided: (1).** Not on size — (2) cannot work. A notification collector has
+to be process-scoped, and the only place that reliably starts on the run that
+matters (the periodic check, app never opened) is `Application.onCreate`;
+`UpdateChecker.start()` is called from the activity, so it would not be running.
+Converting to `SharedFlow` doesn't fix that, it only makes a second collector
+possible — and you would still be adding a hot one for the life of the process.
+The discovery site also already owns the "is this worth announcing" gate
+(`lastNotifiedVersion` for stable, the timestamp/digest `isNew` for nightly), so
+posting there reuses it instead of reimplementing it, and keeps the notification
+and the snackbar agreeing on what counts as a discovery — `announce = false`
+included.
+
 ### 7.2 Flow
 
 **Auto-download off:**
@@ -715,8 +727,9 @@ ephemeral and students will swipe away a grade notification.
 - ~~§5.1: persist the requested release under its own key, or serialize it into
   WorkManager `Data`.~~ **Decided: its own key.** Every interactive download
   now uses it, so restore-to-stable needed no path of its own.
-- §7.1: trigger at the discovery site, or convert the event channels to
-  `SharedFlow`.
+- ~~§7.1: trigger at the discovery site, or convert the event channels to
+  `SharedFlow`.~~ **Decided: the discovery site.** A collector has nowhere to
+  live that runs when the app was never opened.
 - §7.6: suppress `UPDATE_ACTIONABLE` while foregrounded, or always post.
 - Package split between `core/notification` and `data/notification`.
 - Naming for the poster, avoiding the platform `NotificationManager`.
@@ -728,6 +741,54 @@ ephemeral and students will swipe away a grade notification.
 ---
 
 ## 12. Revision history
+
+**Rev 8** — update-flow UX, outside the plan's own scope but enabled by it.
+
+- Switching *to* nightly now mirrors restoring to stable: flip the switch, then
+  offer the build the switch was for on the same sheet, which can put it back.
+  `UpdateModalKind` names the three jobs the sheet does; the two channel changes
+  carry the undo with them (`ChannelSwitch`), so asking for the wording without
+  an escape route isn't expressible.
+- **The sheet no longer blocks leaving while a download runs.** That guard
+  predates foreground-service downloads, when closing really would have killed
+  one. It now only traps whoever is on a slow connection. For a channel change,
+  leaving *is* declining it, so the back gesture goes to the same undo as the
+  button — and that undo has to `cancelDownload()`, not just reset: the download
+  lives in a worker, so clearing the state alone leaves it running and
+  re-reporting itself seconds later. `cancelDownload()` is now the single
+  definition of that, shared with the notification's Cancel action.
+- **A sheet open when the process dies is restored on next launch.** The shell
+  reads the remembered slot once at startup rather than observing it, because
+  the sheet's two hosts write that slot as they open and a live collector would
+  answer by opening a second copy on top. A remembered sheet whose release is
+  the build now running is dropped — installing from the sheet replaces the
+  process before it can clear its own record.
+
+**Rev 7** — during implementation of step 7.
+
+- §7.1 decided and implemented at the discovery site, both channels. Not posted
+  when that channel auto-downloads (the download *is* the announcement), and
+  not for the build already running — which the nightly channel needs, since its
+  freshness check compares against what the store last saw and a fresh install
+  reads the running nightly as new.
+- A check that comes back up to date now cancels `UpdateAvailable`. The plan
+  only asked for post-install cleanup of `UpdateReady`; a tray notification
+  outlives the state that produced it either way, and this also covers an update
+  installed by some other route.
+- §7.2 step 4 and §7.4 option B landed: the worker cancels the progress
+  notification and posts `UpdateReady` fresh, routed into the activity so
+  `installApk` still runs and a declined install is still detected. It also
+  cancels `UpdateAvailable`, which "downloaded" has overtaken.
+- §7.5's post-install cleanup rides `restorePendingDownload`'s existing
+  `isRunningBuild()` reconciliation; `resetState()` cancels the offer too, since
+  it is the path that forgets the APK.
+- The debug screen now fires the production `updateAvailable` / `updateReady`
+  specs, as rev 4 did for progress.
+- **Outside the plan, from device testing:** the About sheet's back gesture
+  walked `depth - 1` through pages that are a tree, not a stack — backing out of
+  Update Settings landed on All versions. And restore-to-stable now has its own
+  presentation of the update modal, since it is the one flow that moves
+  backwards and the ordinary copy describes the opposite.
 
 **Rev 6** — during implementation of step 6.
 

@@ -71,10 +71,24 @@ class ApkDownloadWorker @AssistedInject constructor(
         // and its state alone: they belong to a download that is still running.
         if (outcome == null) return Result.success()
 
+        // The progress notification's lifetime belongs to WorkManager, which tears it down when
+        // this worker ends — so "ready to install" cannot be the same notification updated in
+        // place. It is a separate slot, posted fresh.
         notifier.cancel(NotificationId.UpdateProgress)
         clearServedRequest()
 
-        return if (outcome is DownloadState.Success) Result.success() else Result.failure()
+        if (outcome !is DownloadState.Success) return Result.failure()
+
+        // "Available" has been overtaken by "downloaded"; leaving either would offer this update
+        // twice. Cancelling both rather than picking by source is harmless — cancel() is a no-op
+        // on a slot nothing was posted to — and covers explicit downloads, whose release isn't
+        // reliably tied to one channel's notification.
+        notifier.cancel(NotificationId.UpdateAvailable)
+        notifier.cancel(NotificationId.NightlyUpdateAvailable)
+        notifier.post(
+            UpdateNotifications.updateReady(context, release.versionName, outcome.file.absolutePath)
+        )
+        return Result.success()
     }
 
     /**

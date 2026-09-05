@@ -7,11 +7,16 @@ import kotlinx.coroutines.CoroutineScope
 import it.attendance100.mybicocca.BuildConfig
 import it.attendance100.mybicocca.core.version.SemVer
 import it.attendance100.mybicocca.core.version.isNightlyBuild
+import it.attendance100.mybicocca.core.version.isRunningBuild
 import it.attendance100.mybicocca.data.local.settings.PersistedUpdateState
 import it.attendance100.mybicocca.data.local.settings.UpdateStateStore
 import it.attendance100.mybicocca.data.mapper.update.toAppReleaseOrNull
 import it.attendance100.mybicocca.data.mapper.update.toNightlyAppReleaseOrNull
+import it.attendance100.mybicocca.core.notification.NotificationId
+import it.attendance100.mybicocca.data.notification.AppNotifier
+import it.attendance100.mybicocca.data.notification.UpdateNotifications
 import it.attendance100.mybicocca.data.update.ApkDownloader
+import androidx.work.WorkManager
 import it.attendance100.mybicocca.data.update.ApkDownloadWorker
 import it.attendance100.mybicocca.data.update.GithubReleaseApi
 import it.attendance100.mybicocca.data.update.InstallSourceProvider
@@ -19,6 +24,9 @@ import it.attendance100.mybicocca.data.update.availableRelease
 import it.attendance100.mybicocca.domain.model.update.AppRelease
 import it.attendance100.mybicocca.domain.model.update.DistributionSource
 import it.attendance100.mybicocca.domain.model.update.DownloadState
+import it.attendance100.mybicocca.domain.model.update.isActive
+import it.attendance100.mybicocca.domain.model.update.PendingUpdateModal
+import it.attendance100.mybicocca.domain.model.update.UpdateModalKind
 import it.attendance100.mybicocca.domain.model.update.UpdateCheckResult
 import it.attendance100.mybicocca.domain.model.update.UpdateStatus
 import it.attendance100.mybicocca.domain.repository.UpdateRepository
@@ -61,6 +69,7 @@ class UpdateRepositoryImpl @Inject constructor(
     private val store: UpdateStateStore,
     private val installSourceProvider: InstallSourceProvider,
     private val apkDownloader: ApkDownloader,
+    private val notifier: AppNotifier,
 ) : UpdateRepository {
 
     override val downloadState: StateFlow<DownloadState> = apkDownloader.downloadState
@@ -78,17 +87,34 @@ class UpdateRepositoryImpl @Inject constructor(
      * Marking it enqueued is synchronous so the button reacts on the tap rather than when
      * WorkManager gets round to it.
      */
-    override fun startDownload(release: AppRelease) {
+    override fun startDownload(release: AppRelease): Boolean {
+        // WorkManager's KEEP policy would drop a duplicate request silently, leaving the caller
+        // believing its release is the one downloading. Refusing here says so out loud instead.
+        if (downloadState.value.isActive) return false
+
         apkDownloader.markEnqueued()
         scope.launch {
             store.setPendingDownloadRelease(release)
             ApkDownloadWorker.enqueue(context, ApkDownloadWorker.SOURCE_EXPLICIT)
         }
+        return true
     }
 
     override fun installApk(file: File) = apkDownloader.installApk(file)
 
     override fun resetDownload() = apkDownloader.resetState()
+
+    /**
+     * The single definition of "stop this download", used by the notification's Cancel action and
+     * by backing out of a channel change. Cancelling the worker is what stops the transfer — it
+     * cancels the coroutine `download` runs in — and resetting is what stops the UI still
+     * describing it.
+     */
+    override fun cancelDownload() {
+        WorkManager.getInstance(context).cancelUniqueWork(ApkDownloadWorker.UNIQUE_WORK_NAME)
+        apkDownloader.resetState()
+        notifier.cancel(NotificationId.UpdateProgress)
+    }
 
     override fun dismissDownloadError() = apkDownloader.dismissError()
 
@@ -108,6 +134,9 @@ class UpdateRepositoryImpl @Inject constructor(
         store.setNightlyEnabled(enabled)
         if (!enabled) {
             store.clearNightlyState()
+            // The channel is off; an outstanding offer from it is no longer anything the user can
+            // act on, and the tray keeps it long after the state behind it is gone.
+            notifier.cancel(NotificationId.NightlyUpdateAvailable)
         } else {
             // Forced check to populate the state; not announced, the user is already looking at
             // the toggle they just flipped.
@@ -190,6 +219,10 @@ class UpdateRepositoryImpl @Inject constructor(
 
             if (!isNewer && !isSameAndForced) {
                 store.setUpToDate(now)
+                // Whatever we last offered is gone — installed, or withdrawn upstream. A tray
+                // notification outlives the state that produced it, so it has to be taken back
+                // here rather than left pointing at nothing.
+                notifier.cancel(NotificationId.UpdateAvailable)
                 return@withLock UpdateCheckResult.UpToDate
             }
 
@@ -198,7 +231,10 @@ class UpdateRepositoryImpl @Inject constructor(
             // First time this version surfaces, mark it notified regardless of whether it's announced.
             if (latest.versionName != current.lastNotifiedVersion) {
                 store.setLastNotifiedVersion(latest.versionName)
-                if (announce) _events.trySend(latest)
+                if (announce) {
+                    _events.trySend(latest)
+                    notifyAvailable(latest, autoDownloading = store.stableAutoDownload.first())
+                }
             }
 
             UpdateCheckResult.UpdateAvailable(latest)
@@ -210,6 +246,56 @@ class UpdateRepositoryImpl @Inject constructor(
         }
         return@coroutineScope stableResult
     }
+
+    /**
+     * Posts "a new version is available" at the point of discovery, which is the only place that
+     * reliably runs.
+     *
+     * The alternative — collecting [newUpdateEvents] — cannot work: it is a single-consumer
+     * channel, so a second collector would *steal* events from the shell rather than duplicate
+     * them, and any process-wide collector would have to be started from `Application.onCreate`
+     * to exist at all on the run that matters, the periodic check with the app never opened.
+     *
+     * Not posted when the update is [autoDownloading]: the download starting on its own is the
+     * announcement, and the progress notification is already on its way. Announcing first would
+     * be two notifications for one event, the first of them immediately stale.
+     *
+     * Never posted for the build already running — the same reconciliation `availableRelease()`
+     * applies to the stored flag. The nightly channel needs it: its freshness check compares
+     * against what the *store* last saw, so on a fresh install with an empty store the running
+     * nightly reads as newly discovered.
+     */
+    private fun notifyAvailable(release: AppRelease, autoDownloading: Boolean) {
+        if (autoDownloading || release.isRunningBuild()) return
+        notifier.post(UpdateNotifications.updateAvailable(context, release.versionName))
+    }
+
+    private fun notifyNightlyAvailable(release: AppRelease, autoDownloading: Boolean) {
+        if (autoDownloading || release.isRunningBuild()) return
+        notifier.post(UpdateNotifications.nightlyUpdateAvailable(context, release.versionName))
+    }
+
+    override suspend fun availableNightlyRelease(): AppRelease? =
+        store.nightlyState.first().availableRelease()
+
+    /**
+     * Drops a remembered sheet whose release is the build now running, and forgets it for good.
+     * The record is only cleared when a sheet is closed, and installing from one replaces the
+     * process before that can happen — so without this, installing an update and reopening the app
+     * puts the sheet back, offering what was just installed.
+     */
+    override suspend fun pendingUpdateModal(): PendingUpdateModal? {
+        val pending = store.pendingUpdateModal.first() ?: return null
+        if (!pending.release.isRunningBuild()) return pending
+
+        store.clearPendingUpdateModal()
+        return null
+    }
+
+    override suspend fun setPendingUpdateModal(release: AppRelease, kind: UpdateModalKind) =
+        store.setPendingUpdateModal(release, kind)
+
+    override suspend fun clearPendingUpdateModal() = store.clearPendingUpdateModal()
 
     override suspend fun availableRelease(): AppRelease? =
         store.state.first().availableRelease() ?: store.nightlyState.first().availableRelease()
@@ -260,12 +346,22 @@ class UpdateRepositoryImpl @Inject constructor(
 
         if (!isNew) {
             store.updateNightlyCheckedAt(now)
+            // "Not new" only means nothing changed upstream since the last look — the offer itself
+            // usually still stands, so cancelling unconditionally would take the notification away
+            // within half an hour of posting it. Pull it only when the stored state has nothing
+            // left to offer, which after an install is the running build filtering itself out.
+            if (current.availableRelease() == null) {
+                notifier.cancel(NotificationId.NightlyUpdateAvailable)
+            }
             return@withLock null
         }
 
         val release = remoteDto.toNightlyAppReleaseOrNull(remotePublishedMs) ?: return@withLock null
         store.setNightlyUpdateAvailable(release, remotePublishedMs, remoteDigest, now)
-        if (announce) _nightlyEvents.trySend(release)
+        if (announce) {
+            _nightlyEvents.trySend(release)
+            notifyNightlyAvailable(release, autoDownloading = store.nightlyAutoDownload.first())
+        }
 
         UpdateCheckResult.UpdateAvailable(release)
     }

@@ -40,7 +40,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -50,12 +53,62 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.release.parseReleaseNotes
 import it.attendance100.mybicocca.domain.model.update.DownloadState
+import it.attendance100.mybicocca.domain.model.update.UpdateModalKind
 import it.attendance100.mybicocca.domain.model.update.readyToInstall
 import it.attendance100.mybicocca.domain.model.update.AppRelease
 import it.attendance100.mybicocca.ui.screen.settings.subscreen.appInfo.component.ReleaseNotesView
 import java.io.File
 
-/** [onInstall] fires only from the "Install" button; a finished download never installs itself. */
+/**
+ * A channel change in progress: the switch is already flipped, and this sheet is where it is
+ * carried out or taken back.
+ *
+ * Carrying the callback rather than sitting beside a flag means there is no way to ask for the
+ * channel-change wording without an escape route out of it.
+ */
+/** A request to open [UpdateModalSheet], in the form the two hosts and the saved slot share. */
+data class UpdateModalRequest(
+    val release: AppRelease,
+    val kind: UpdateModalKind = UpdateModalKind.Standard,
+)
+
+/**
+ * The sheet's channel-change behaviour for this kind, or null for an ordinary update.
+ *
+ * [onStay] is handed the value the beta switch must be put *back* to, so a host writes the undo
+ * once rather than once per direction and can't get the direction backwards.
+ */
+fun UpdateModalKind.channelSwitch(onStay: (nightlyEnabled: Boolean) -> Unit): ChannelSwitch? =
+    when (this) {
+        UpdateModalKind.Standard -> null
+        UpdateModalKind.SwitchToNightly -> ChannelSwitch.ToNightly { onStay(false) }
+        UpdateModalKind.RestoreStable -> ChannelSwitch.ToStable { onStay(true) }
+    }
+
+sealed interface ChannelSwitch {
+    /** Undoes the switch that opened the sheet, and stops whatever it started. */
+    val onStay: () -> Unit
+
+    /** Stable to nightly. */
+    data class ToNightly(override val onStay: () -> Unit) : ChannelSwitch
+
+    /** Nightly back to stable, the one update flow that moves backwards. */
+    data class ToStable(override val onStay: () -> Unit) : ChannelSwitch
+}
+
+/**
+ * [onInstall] fires only from the "Install" button; a finished download never installs itself.
+ *
+ * [channelSwitch] non-null re-words the sheet for a channel change, whose ordinary copy ("New
+ * version available", "Install the update") would describe a move the user isn't making. It also
+ * changes what *leaving* means: the switch was flipped before the sheet opened, so dismissing has
+ * to put it back rather than merely close, which is why the back gesture goes to `onStay` too and
+ * not just the button.
+ *
+ * Leaving is never blocked, download in flight or not. It used to be, from before downloads ran in
+ * a foreground service and closing the sheet really would have killed one; now the download
+ * outlives the sheet, and blocking only traps whoever is on a slow connection.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UpdateModalSheet(
@@ -64,16 +117,18 @@ fun UpdateModalSheet(
     onDownload: () -> Unit,
     onInstall: (File) -> Unit,
     onDismiss: () -> Unit,
+    channelSwitch: ChannelSwitch? = null,
 ) {
     val downloadState by downloadStateFlow.collectAsStateWithLifecycle()
     val uriHandler = LocalUriHandler.current
+    val isDowngrade = channelSwitch is ChannelSwitch.ToStable
+    val isSwitchToNightly = channelSwitch is ChannelSwitch.ToNightly
+    // For a channel change, leaving *is* declining it; otherwise leaving just closes the sheet and
+    // lets the download carry on in the background.
+    val onLeave = channelSwitch?.onStay ?: onDismiss
 
     Dialog(
-        onDismissRequest = {
-            if (downloadState !is DownloadState.Downloading) {
-                onDismiss()
-            }
-        },
+        onDismissRequest = onLeave,
         properties = DialogProperties(
             usePlatformDefaultWidth = false,
             decorFitsSystemWindows = false
@@ -96,14 +151,24 @@ fun UpdateModalSheet(
                         .padding(24.dp)
                 ) {
                     Icon(
-                        imageVector = if (release.isPreRelease) Icons.Outlined.Nightlight else Icons.Outlined.NewReleases,
+                        imageVector = when {
+                            isDowngrade -> ImageVector.vectorResource(R.drawable.sync_arrow_down_24px)
+                            isSwitchToNightly -> ImageVector.vectorResource(R.drawable.moon_stars_24px)
+                            release.isPreRelease -> Icons.Outlined.Nightlight
+                            else -> Icons.Outlined.NewReleases
+                        },
                         contentDescription = null,
                         modifier = Modifier.size(48.dp),
                         tint = MaterialTheme.colorScheme.primary
                     )
                     Spacer(Modifier.height(16.dp))
                     Text(
-                        text = if (release.isPreRelease) "New Nightly available!" else stringResource(R.string.update_modal_title),
+                        text = when {
+                            isDowngrade -> stringResource(R.string.update_modal_downgrade_title)
+                            isSwitchToNightly -> stringResource(R.string.update_modal_switch_nightly_title)
+                            release.isPreRelease -> "New Nightly available!"
+                            else -> stringResource(R.string.update_modal_title)
+                        },
                         style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold)
                     )
                     Text(
@@ -165,7 +230,8 @@ fun UpdateModalSheet(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(48.dp)
-                                    .clip(RoundedCornerShape(50)),
+                                    .clip(RoundedCornerShape(50))
+                                    .testTag(UpdateModalTestTags.PROGRESS),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Box(
@@ -209,8 +275,23 @@ fun UpdateModalSheet(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(48.dp)
+                                    .testTag(UpdateModalTestTags.INSTALL)
                             ) {
-                                Text(stringResource(R.string.update_modal_install))
+                                Text(
+                                    when {
+                                        isDowngrade -> stringResource(
+                                            R.string.update_modal_downgrade_install,
+                                            release.versionName,
+                                        )
+
+                                        isSwitchToNightly -> stringResource(
+                                            R.string.update_modal_switch_nightly_install,
+                                            release.versionName,
+                                        )
+
+                                        else -> stringResource(R.string.update_modal_install)
+                                    }
+                                )
                             }
                         } else {
                             Button(
@@ -218,12 +299,23 @@ fun UpdateModalSheet(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(48.dp)
+                                    .testTag(UpdateModalTestTags.DOWNLOAD)
                             ) {
                                 Text(
-                                    stringResource(
-                                        if (hasError) R.string.common_retry
-                                        else R.string.update_modal_download
-                                    )
+                                    when {
+                                        hasError -> stringResource(R.string.common_retry)
+                                        isDowngrade -> stringResource(
+                                            R.string.update_modal_downgrade_download,
+                                            release.versionName,
+                                        )
+
+                                        isSwitchToNightly -> stringResource(
+                                            R.string.update_modal_switch_nightly_download,
+                                            release.versionName,
+                                        )
+
+                                        else -> stringResource(R.string.update_modal_download)
+                                    }
                                 )
                             }
                         }
@@ -248,13 +340,21 @@ fun UpdateModalSheet(
                     }
 
                     OutlinedButton(
-                        onClick = onDismiss,
+                        onClick = onLeave,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(48.dp),
-                        enabled = !isDownloading
+                            .height(48.dp)
+                            .testTag(UpdateModalTestTags.LEAVE),
                     ) {
-                        Text(stringResource(R.string.update_modal_not_now))
+                        Text(
+                            stringResource(
+                                when {
+                                    isDowngrade -> R.string.update_modal_remain_on_nightly
+                                    isSwitchToNightly -> R.string.update_modal_remain_on_stable
+                                    else -> R.string.update_modal_not_now
+                                }
+                            )
+                        )
                     }
                 }
             }

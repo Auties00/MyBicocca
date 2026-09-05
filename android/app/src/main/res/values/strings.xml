@@ -851,6 +851,7 @@
     <string name="whats_new_retry">Riprova</string>
     <string name="whats_new_all_versions">Tutte le versioni</string>
     <string name="whats_new_merged_subtitle">Anteprima combinata di tutte le modifiche dalla v%1$s</string>
+    <string name="settings_download_already_running">Un altro download è già in corso</string>
     <string name="settings_no_updates_found">Sei già all\'ultima versione</string>
     <string name="settings_no_other_versions">Non ci sono ancora altre versioni!</string>
     <string name="settings_whats_new_title">Novità</string>
@@ -1667,6 +1668,18 @@
     <string name="update_modal_install_cancelled">Installazione annullata. L\'aggiornamento è già scaricato, puoi installarlo quando vuoi.</string>
     <string name="update_modal_installing">Installazione in corso...</string>
     <string name="update_modal_not_now">Non ora</string>
+
+    <!-- Restoring to stable off the nightly channel: the one update flow that goes backwards. -->
+    <string name="update_modal_downgrade_title">Ritorno alla release stabile!</string>
+    <string name="update_modal_downgrade_download">Scarica la %1$s</string>
+    <string name="update_modal_downgrade_install">Clicca per tornare alla %1$s</string>
+    <string name="update_modal_remain_on_nightly">Rimani sulla nightly</string>
+
+    <!-- Passing from stable to the nightly channel. -->
+    <string name="update_modal_switch_nightly_title">Passaggio alla nightly!</string>
+    <string name="update_modal_switch_nightly_download">Scarica la nightly %1$s</string>
+    <string name="update_modal_switch_nightly_install">Clicca per passare alla %1$s</string>
+    <string name="update_modal_remain_on_stable">Rimani sulla stabile</string>
     <string name="update_modal_downloading">Download... %1$d%%</string>
     <string name="update_modal_queued">In coda...</string>
     <string name="settings_update_settings_title">Impostazioni aggiornamenti</string>
@@ -2087,6 +2100,12 @@
     <string name="notification_permission_message">Senza notifiche l\'app può avvisarti solo mentre è aperta. Servono per l\'avanzamento dei download e per dirti quando un aggiornamento è pronto da installare.</string>
     <string name="notification_permission_confirm">Attiva</string>
     <string name="notification_permission_dismiss">Non ora</string>
+
+    <!-- Notifications: the update flow -->
+    <string name="notification_update_available_title">Nuova versione disponibile</string>
+    <string name="notification_update_available_text">Tocca per vedere la %1$s</string>
+    <string name="notification_update_ready_title">Aggiornamento pronto</string>
+    <string name="notification_update_ready_text">Tocca per installare la %1$s</string>
 
     <!-- Notifications: update download -->
     <string name="notification_update_downloading_title">Download aggiornamento</string>

@@ -84,6 +84,55 @@ class UpdateNotificationsTest {
         assertThat(spec.route).isEqualTo(NotificationRoute.UpdatePage)
     }
 
+    /**
+     * A declined install leaves the APK on disk and the offer standing, so this one has to outlive
+     * its own tap — and must not buzz again when it is re-posted.
+     */
+    @Test
+    fun `ready to install survives being tapped and does not re-alert`() {
+        val spec = UpdateNotifications.updateReady(context, "9.9.9", "/cache/updates/app.apk")
+
+        assertThat(spec.autoCancel).isFalse()
+        assertThat(spec.alert).isEqualTo(Alert.Once)
+    }
+
+    /**
+     * Through the app, not straight at the system installer: a tap can't run code, so going direct
+     * would skip installApk and silently stop declined installs being detected at all.
+     */
+    @Test
+    fun `ready to install routes through the app rather than at the installer`() {
+        val spec = UpdateNotifications.updateReady(context, "9.9.9", "/cache/updates/app.apk")
+
+        assertThat(spec.route).isEqualTo(NotificationRoute.InstallApk("/cache/updates/app.apk"))
+    }
+
+    /** Nothing is downloaded yet, so the tap can only offer the page it would be downloaded from. */
+    @Test
+    fun `update available opens the update page`() {
+        val spec = UpdateNotifications.updateAvailable(context, "9.9.9")
+
+        assertThat(spec.channel).isEqualTo(NotificationChannelId.UPDATE_ACTIONABLE)
+        assertThat(spec.route).isEqualTo(NotificationRoute.UpdatePage)
+    }
+
+    /**
+     * A slot each, so none of them replaces another by accident. The two channels matter most:
+     * their checks run concurrently, so a shared slot means whichever finishes second silently
+     * erases the other's notification.
+     */
+    @Test
+    fun `every update notification holds its own slot`() {
+        val ids = listOf(
+            UpdateNotifications.updateAvailable(context, "9.9.9").id,
+            UpdateNotifications.nightlyUpdateAvailable(context, "nightly-1").id,
+            UpdateNotifications.downloadProgress(context, 10).id,
+            UpdateNotifications.updateReady(context, "9.9.9", "/apk").id,
+        )
+
+        assertThat(ids.map { it.value }).containsNoDuplicates()
+    }
+
     /** Indeterminate and determinate must share a slot, or the bar would appear twice. */
     @Test
     fun `every progress spec targets the same slot`() {

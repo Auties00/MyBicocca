@@ -6,6 +6,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import it.attendance100.mybicocca.domain.model.update.DEFAULT_UPDATE_CHECK_INTERVAL_MINUTES
 import it.attendance100.mybicocca.domain.model.update.DownloadState
 import it.attendance100.mybicocca.domain.model.update.AppRelease
+import it.attendance100.mybicocca.domain.model.update.UpdateModalKind
 import it.attendance100.mybicocca.domain.model.update.UpdateCheckResult
 import it.attendance100.mybicocca.domain.model.update.UpdateStatus
 import it.attendance100.mybicocca.domain.usecase.update.CheckForUpdatesUseCase
@@ -52,7 +53,7 @@ class AppInfoViewModel @Inject constructor(
     /** The in-flight update download, surfaced to the UI without exposing the downloader itself. */
     val downloadState: StateFlow<DownloadState> = updateRepository.downloadState
 
-    fun startDownload(release: AppRelease) = updateRepository.startDownload(release)
+    fun startDownload(release: AppRelease): Boolean = updateRepository.startDownload(release)
 
     /** Launches the installer for a finished download; call only from the foreground. */
     fun installDownload(file: File) = updateRepository.installApk(file)
@@ -92,6 +93,29 @@ class AppInfoViewModel @Inject constructor(
         viewModelScope.launch {
             setNightlyEnabledUseCase(enabled)
         }
+    }
+
+    /**
+     * Turns the beta channel on and reports the nightly to offer, or null when there is nothing to
+     * offer - already running it, or the forced check found nothing. Enabling runs that check
+     * itself, so the answer is ready by the time this returns.
+     */
+    fun enableNightlyAndOffer(onResult: (AppRelease?) -> Unit) {
+        viewModelScope.launch {
+            setNightlyEnabledUseCase(true)
+            onResult(updateRepository.availableNightlyRelease())
+        }
+    }
+
+    /** Backing out of a channel change: stop the download it started, not merely forget it. */
+    fun cancelDownload() = updateRepository.cancelDownload()
+
+    fun rememberOpenModal(release: AppRelease, kind: UpdateModalKind) {
+        viewModelScope.launch { updateRepository.setPendingUpdateModal(release, kind) }
+    }
+
+    fun forgetOpenModal() {
+        viewModelScope.launch { updateRepository.clearPendingUpdateModal() }
     }
     
     fun checkAndOfferStable(onOfferStable: () -> Unit) {

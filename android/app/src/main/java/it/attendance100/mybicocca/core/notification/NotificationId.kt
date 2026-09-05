@@ -14,6 +14,8 @@ sealed class NotificationId(val value: Int) {
     data object UpdateAvailable : NotificationId(1)
     data object UpdateProgress : NotificationId(2)
     data object UpdateReady : NotificationId(3)
+    /** Separate slot so a nightly discovery doesn't overwrite a pending stable notification. */
+    data object NightlyUpdateAvailable : NotificationId(4)
 
     /**
      * One instance per thing, so a re-post updates the notification about *that* course or exam

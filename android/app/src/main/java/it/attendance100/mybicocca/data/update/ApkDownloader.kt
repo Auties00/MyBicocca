@@ -16,7 +16,9 @@ import io.ktor.utils.io.readRemaining
 import it.attendance100.mybicocca.core.io.sha256Hex
 import it.attendance100.mybicocca.core.text.UiText
 import it.attendance100.mybicocca.core.version.isRunningBuild
+import it.attendance100.mybicocca.core.notification.NotificationId
 import it.attendance100.mybicocca.data.local.settings.UpdateStateStore
+import it.attendance100.mybicocca.data.notification.AppNotifier
 import it.attendance100.mybicocca.di.ApplicationScope
 import it.attendance100.mybicocca.domain.model.update.AppRelease
 import it.attendance100.mybicocca.domain.model.update.DownloadState
@@ -45,6 +47,7 @@ class ApkDownloader @Inject constructor(
     @ApplicationContext private val context: Context,
     @ApplicationScope private val scope: CoroutineScope,
     private val store: UpdateStateStore,
+    private val notifier: AppNotifier,
 ) {
     private val client = HttpClient(OkHttp)
 
@@ -55,6 +58,11 @@ class ApkDownloader @Inject constructor(
     // lock: a second caller is told "already running" instead of queueing behind the first and
     // then re-downloading the moment it finishes.
     private val downloadLock = Mutex()
+
+    // Set by resetState() / cancelDownload() and cleared at the start of every new download.
+    // Checked inside publish() so a progress update that races past WorkManager's cancellation
+    // signal is silently discarded rather than resurrecting the just-cancelled notification.
+    @Volatile private var cancelled = false
 
     // The APK handed to the system installer, if we're waiting on that dialog. ACTION_VIEW reports
     // nothing back, so a decline has to be inferred: a successful install replaces the process, so
@@ -100,6 +108,7 @@ class ApkDownloader @Inject constructor(
         if (!downloadLock.tryLock()) return null
 
         return try {
+            cancelled = false
             clearPendingInstall()
             publish(DownloadState.Downloading(0), onProgress)
             runDownload(release, onProgress)
@@ -193,6 +202,7 @@ class ApkDownloader @Inject constructor(
     }
 
     private fun publish(state: DownloadState, onProgress: (Int) -> Unit) {
+        if (cancelled) return
         _downloadState.value = state
         if (state is DownloadState.Downloading) onProgress(state.progress)
     }
@@ -239,8 +249,12 @@ class ApkDownloader @Inject constructor(
     }
 
     fun resetState() {
+        cancelled = true
         clearPendingInstall()
         _downloadState.value = DownloadState.Idle
+        // The APK is being forgotten, so the notification offering it has to go too — otherwise
+        // the tray keeps pointing at a download the app no longer knows about.
+        notifier.cancel(NotificationId.UpdateReady)
         scope.launch { store.clearDownloadedApk() }
     }
 
@@ -271,6 +285,10 @@ class ApkDownloader @Inject constructor(
             !file.isFile || file.length() != record.size
         ) {
             store.clearDownloadedApk()
+            // Installing replaces the process, so nothing gets to clean up on the way out: this
+            // start is the first chance to take down a "ready to install" notification still
+            // offering the build that is now running.
+            notifier.cancel(NotificationId.UpdateReady)
             return
         }
 

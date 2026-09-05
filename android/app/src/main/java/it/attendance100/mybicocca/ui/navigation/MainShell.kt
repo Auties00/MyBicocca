@@ -57,6 +57,10 @@ import coil.request.ImageRequest
 import coil.size.Size
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.notification.NotificationRoute
+import it.attendance100.mybicocca.domain.model.update.AppRelease
+import it.attendance100.mybicocca.domain.model.update.UpdateModalKind
+import it.attendance100.mybicocca.ui.component.modal.UpdateModalRequest
+import it.attendance100.mybicocca.ui.component.modal.channelSwitch
 import it.attendance100.mybicocca.core.state.valueOrNull
 import it.attendance100.mybicocca.data.mapper.calendar.examCalendarEventId
 import it.attendance100.mybicocca.domain.model.calendar.CalendarEvent
@@ -541,9 +545,32 @@ fun MainShell(
     val updateEventsViewModel: UpdateEventsViewModel = hiltViewModel()
 
     val downloadState by updateEventsViewModel.downloadState.collectAsStateWithLifecycle()
-    var showUpdateModal by remember { mutableStateOf<it.attendance100.mybicocca.domain.model.update.AppRelease?>(null) }
+    var showUpdateModal by remember { mutableStateOf<UpdateModalRequest?>(null) }
 
-    showUpdateModal?.let { release ->
+    fun openUpdateModal(release: AppRelease, kind: UpdateModalKind = UpdateModalKind.Standard) {
+        showUpdateModal = UpdateModalRequest(release, kind)
+        updateEventsViewModel.rememberOpenModal(release, kind)
+    }
+
+    fun closeUpdateModal() {
+        showUpdateModal = null
+        updateEventsViewModel.forgetOpenModal()
+    }
+
+    // Puts back a sheet the user was watching when the process died — most likely mid-download,
+    // which is the longest they ever sit on it. Read once here rather than observed: the sheet's
+    // two hosts write that slot as they open, and a live collector would answer by opening a
+    // second copy on top of the one already up.
+    LaunchedEffect(updateEventsViewModel) {
+        updateEventsViewModel.pendingUpdateModal()?.let { pending ->
+            if (showUpdateModal == null) {
+                showUpdateModal = UpdateModalRequest(pending.release, pending.kind)
+            }
+        }
+    }
+
+    showUpdateModal?.let { request ->
+        val release = request.release
         it.attendance100.mybicocca.ui.component.modal.UpdateModalSheet(
             release = release,
             downloadStateFlow = updateEventsViewModel.downloadState,
@@ -551,14 +578,19 @@ fun MainShell(
                 updateEventsViewModel.startDownload(release)
             },
             onInstall = { file ->
-                // State deliberately left alone: the APK stays downloaded and ready, and the
-                // downloader needs its pending-install marker to notice a dismissed dialog.
+                // Download state deliberately left alone: the APK stays downloaded and ready, and
+                // the downloader needs its pending-install marker to notice a dismissed dialog.
                 updateEventsViewModel.installApk(file)
-                showUpdateModal = null
+                closeUpdateModal()
             },
             onDismiss = {
                 updateEventsViewModel.dismissDownloadError()
-                showUpdateModal = null
+                closeUpdateModal()
+            },
+            channelSwitch = request.kind.channelSwitch { nightlyEnabled ->
+                updateEventsViewModel.setNightlyEnabled(nightlyEnabled)
+                updateEventsViewModel.cancelDownload()
+                closeUpdateModal()
             },
         )
     }
@@ -575,7 +607,7 @@ fun MainShell(
                 updateEventsViewModel.startDownload(release)
             } else {
                 snackbarController.showInfo(strShellUpdateAvailable) {
-                    showUpdateModal = release
+                    openUpdateModal(release)
                 }
             }
         }
@@ -588,7 +620,7 @@ fun MainShell(
                 updateEventsViewModel.startDownload(release)
             } else {
                 snackbarController.showInfo(strShellUpdateAvailable) {
-                    showUpdateModal = release
+                    openUpdateModal(release)
                 }
             }
         }
@@ -620,7 +652,7 @@ fun MainShell(
                     // it). Say so, rather than opening the app to nothing and looking broken.
                     val release = updateEventsViewModel.availableRelease()
                     if (release != null) {
-                        showUpdateModal = release
+                        openUpdateModal(release)
                     } else {
                         snackbarController.showInfo(strShellUpdateGone)
                     }

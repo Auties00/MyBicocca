@@ -51,6 +51,10 @@ class UpdateRepositoryImplTest {
         every { store.nightlyEnabled } returns nightlyEnabledFlow
         every { store.nightlyState } returns nightlyStateFlow
         every { store.state } returns stateFlow
+        // Read on discovery to decide whether an "update available" notification is worth posting;
+        // a relaxed mock hands back an empty flow, which first() treats as a missing value.
+        every { store.stableAutoDownload } returns MutableStateFlow(false)
+        every { store.nightlyAutoDownload } returns MutableStateFlow(false)
 
         // The repository only forwards download calls; these tests are about the check flow.
         repository = UpdateRepositoryImpl(
@@ -60,6 +64,7 @@ class UpdateRepositoryImplTest {
             store = store,
             installSourceProvider = provider,
             apkDownloader = mockk(relaxed = true),
+            notifier = mockk(relaxed = true),
         )
     }
 

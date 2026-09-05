@@ -9,6 +9,8 @@ import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import it.attendance100.mybicocca.core.version.isNightlyBuild
 import it.attendance100.mybicocca.domain.model.update.AppRelease
+import it.attendance100.mybicocca.domain.model.update.PendingUpdateModal
+import it.attendance100.mybicocca.domain.model.update.UpdateModalKind
 import it.attendance100.mybicocca.domain.model.update.DEFAULT_UPDATE_CHECK_INTERVAL_MINUTES
 import it.attendance100.mybicocca.domain.model.update.AppReleaseAsset
 import kotlinx.coroutines.flow.Flow
@@ -226,6 +228,61 @@ class UpdateStateStore @Inject constructor(
         }
     }
 
+    /**
+     * The update sheet that was on screen, so a process death mid-download doesn't lose the user's
+     * place. Written when the sheet opens, cleared when it closes — not when it is read back, so a
+     * second death restores it again.
+     */
+    val pendingUpdateModal: Flow<PendingUpdateModal?> = dataStore.data.map { prefs ->
+        val kind = prefs[PENDING_MODAL_KIND_KEY]
+            ?.let { name -> UpdateModalKind.entries.firstOrNull { it.name == name } }
+            ?: return@map null
+
+        prefs.parseRelease(
+            versionKey = PENDING_MODAL_VERSION_KEY,
+            titleKey = PENDING_MODAL_TITLE_KEY,
+            notesKey = PENDING_MODAL_NOTES_KEY,
+            urlKey = PENDING_MODAL_URL_KEY,
+            publishedMsKey = PENDING_MODAL_PUBLISHED_MS_KEY,
+            preReleaseKey = PENDING_MODAL_PRERELEASE_KEY,
+            assetsKey = PENDING_MODAL_ASSETS_KEY,
+            commitShaKey = PENDING_MODAL_COMMIT_SHA_KEY,
+        )?.let { PendingUpdateModal(it, kind) }
+    }
+
+    suspend fun setPendingUpdateModal(release: AppRelease, kind: UpdateModalKind) {
+        dataStore.edit { prefs ->
+            prefs[PENDING_MODAL_KIND_KEY] = kind.name
+            prefs.saveRelease(
+                release = release,
+                versionKey = PENDING_MODAL_VERSION_KEY,
+                titleKey = PENDING_MODAL_TITLE_KEY,
+                notesKey = PENDING_MODAL_NOTES_KEY,
+                urlKey = PENDING_MODAL_URL_KEY,
+                publishedMsKey = PENDING_MODAL_PUBLISHED_MS_KEY,
+                preReleaseKey = PENDING_MODAL_PRERELEASE_KEY,
+                assetsKey = PENDING_MODAL_ASSETS_KEY,
+                commitShaKey = PENDING_MODAL_COMMIT_SHA_KEY,
+            )
+        }
+    }
+
+    suspend fun clearPendingUpdateModal() {
+        dataStore.edit { prefs ->
+            prefs.remove(PENDING_MODAL_KIND_KEY)
+            prefs.clearRelease(
+                versionKey = PENDING_MODAL_VERSION_KEY,
+                titleKey = PENDING_MODAL_TITLE_KEY,
+                notesKey = PENDING_MODAL_NOTES_KEY,
+                urlKey = PENDING_MODAL_URL_KEY,
+                publishedMsKey = PENDING_MODAL_PUBLISHED_MS_KEY,
+                preReleaseKey = PENDING_MODAL_PRERELEASE_KEY,
+                assetsKey = PENDING_MODAL_ASSETS_KEY,
+                commitShaKey = PENDING_MODAL_COMMIT_SHA_KEY,
+            )
+        }
+    }
+
     /** Marks [version] as the one the user has been notified about, suppressing repeat snackbars. */
     suspend fun setLastNotifiedVersion(version: String) {
         dataStore.edit { prefs -> prefs[LAST_NOTIFIED_VERSION_KEY] = version }
@@ -251,6 +308,16 @@ class UpdateStateStore @Inject constructor(
         val PENDING_DL_PRERELEASE_KEY = booleanPreferencesKey("update_pending_dl_prerelease")
         val PENDING_DL_ASSETS_KEY = stringPreferencesKey("update_pending_dl_assets")
         val PENDING_DL_COMMIT_SHA_KEY = stringPreferencesKey("update_pending_dl_commit_sha")
+
+        val PENDING_MODAL_KIND_KEY = stringPreferencesKey("update_pending_modal_kind")
+        val PENDING_MODAL_VERSION_KEY = stringPreferencesKey("update_pending_modal_version")
+        val PENDING_MODAL_TITLE_KEY = stringPreferencesKey("update_pending_modal_title")
+        val PENDING_MODAL_NOTES_KEY = stringPreferencesKey("update_pending_modal_notes")
+        val PENDING_MODAL_URL_KEY = stringPreferencesKey("update_pending_modal_url")
+        val PENDING_MODAL_PUBLISHED_MS_KEY = longPreferencesKey("update_pending_modal_published_ms")
+        val PENDING_MODAL_PRERELEASE_KEY = booleanPreferencesKey("update_pending_modal_prerelease")
+        val PENDING_MODAL_ASSETS_KEY = stringPreferencesKey("update_pending_modal_assets")
+        val PENDING_MODAL_COMMIT_SHA_KEY = stringPreferencesKey("update_pending_modal_commit_sha")
 
         val CHECK_INTERVAL_MINUTES_KEY = intPreferencesKey("update_check_interval_minutes")
 

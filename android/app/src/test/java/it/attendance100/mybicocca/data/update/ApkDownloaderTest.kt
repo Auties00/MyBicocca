@@ -47,7 +47,7 @@ class ApkDownloaderTest {
         context = mockk<Context>(relaxed = true)
         store = mockk<UpdateStateStore>(relaxed = true)
         testScope = TestScope()
-        downloader = ApkDownloader(context, testScope, store)
+        downloader = ApkDownloader(context, testScope, store, mockk(relaxed = true))
     }
 
     /**

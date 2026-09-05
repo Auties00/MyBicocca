@@ -850,6 +850,7 @@
     <string name="whats_new_retry">Retry</string>
     <string name="whats_new_all_versions">All versions</string>
     <string name="whats_new_merged_subtitle">Merged preview of all the changes since v%1$s</string>
+    <string name="settings_download_already_running">Another download is already running</string>
     <string name="settings_no_updates_found">You\'re up to date</string>
     <string name="settings_no_other_versions">There are no other versions yet!</string>
     <string name="settings_whats_new_title">What\'s New</string>
@@ -1665,6 +1666,18 @@
     <string name="update_modal_install_cancelled">Installation cancelled. The update is already downloaded, you can install it whenever you want.</string>
     <string name="update_modal_installing">Installing update...</string>
     <string name="update_modal_not_now">Not now</string>
+
+    <!-- Restoring to stable off the nightly channel: the one update flow that goes backwards. -->
+    <string name="update_modal_downgrade_title">Downgrading to the latest release!</string>
+    <string name="update_modal_downgrade_download">Download %1$s</string>
+    <string name="update_modal_downgrade_install">Click to downgrade to %1$s</string>
+    <string name="update_modal_remain_on_nightly">Remain on nightly</string>
+
+    <!-- Passing from stable to the nightly channel. -->
+    <string name="update_modal_switch_nightly_title">Switching to nightly!</string>
+    <string name="update_modal_switch_nightly_download">Download nightly %1$s</string>
+    <string name="update_modal_switch_nightly_install">Click to switch to %1$s</string>
+    <string name="update_modal_remain_on_stable">Remain on stable</string>
     <string name="update_modal_downloading">Downloading… %1$d%%</string>
     <string name="update_modal_queued">Queued…</string>
     <string name="settings_update_settings_title">Update Settings</string>
@@ -2080,6 +2093,12 @@
     <string name="notification_permission_message">Without notifications the app can only reach you while it\'s open. They\'re used for download progress and to tell you when an update is ready to install.</string>
     <string name="notification_permission_confirm">Turn on</string>
     <string name="notification_permission_dismiss">Not now</string>
+
+    <!-- Notifications: the update flow -->
+    <string name="notification_update_available_title">New version available</string>
+    <string name="notification_update_available_text">Tap to see %1$s</string>
+    <string name="notification_update_ready_title">Update ready</string>
+    <string name="notification_update_ready_text">Tap to install %1$s</string>
 
     <!-- Notifications: update download -->
     <string name="notification_update_downloading_title">Downloading update</string>

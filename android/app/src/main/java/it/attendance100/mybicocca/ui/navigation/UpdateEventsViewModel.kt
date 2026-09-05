@@ -18,6 +18,9 @@ import kotlinx.coroutines.flow.shareIn
 import androidx.lifecycle.viewModelScope
 import it.attendance100.mybicocca.core.notification.NotificationRoute
 import it.attendance100.mybicocca.domain.model.update.DownloadState
+import it.attendance100.mybicocca.domain.model.update.PendingUpdateModal
+import it.attendance100.mybicocca.domain.model.update.UpdateModalKind
+import kotlinx.coroutines.launch
 import it.attendance100.mybicocca.domain.usecase.notification.ConsumeNotificationRouteUseCase
 import it.attendance100.mybicocca.domain.usecase.notification.ObservePendingNotificationRouteUseCase
 import kotlinx.coroutines.flow.filterNotNull
@@ -63,11 +66,33 @@ class UpdateEventsViewModel @Inject constructor(
     suspend fun stableAutoDownload(): Boolean = updateRepository.observeStableAutoDownload().first()
     suspend fun nightlyAutoDownload(): Boolean = updateRepository.observeNightlyAutoDownload().first()
 
-    fun startDownload(release: AppRelease) = updateRepository.startDownload(release)
+    fun startDownload(release: AppRelease): Boolean = updateRepository.startDownload(release)
 
     fun installApk(file: File) = updateRepository.installApk(file)
 
     fun clearDownload() = updateRepository.resetDownload()
+
+    /** Backing out of a channel change: stop the download it started, not merely forget it. */
+    fun cancelDownload() = updateRepository.cancelDownload()
+
+    fun setNightlyEnabled(enabled: Boolean) {
+        viewModelScope.launch { updateRepository.setNightlyEnabled(enabled) }
+    }
+
+    /**
+     * The sheet that was open when the process died, so the shell can put it back. Read once at
+     * startup rather than observed: the sheet's own hosts write this slot as they open, and a live
+     * collector here would answer by opening a second copy on top.
+     */
+    suspend fun pendingUpdateModal(): PendingUpdateModal? = updateRepository.pendingUpdateModal()
+
+    fun rememberOpenModal(release: AppRelease, kind: UpdateModalKind) {
+        viewModelScope.launch { updateRepository.setPendingUpdateModal(release, kind) }
+    }
+
+    fun forgetOpenModal() {
+        viewModelScope.launch { updateRepository.clearPendingUpdateModal() }
+    }
 
     fun dismissDownloadError() = updateRepository.dismissDownloadError()
 }
