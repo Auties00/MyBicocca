@@ -78,7 +78,8 @@ class AdminMessageRepositoryImpl @Inject constructor(
 
     private fun parseAndUpdate() {
         val jsonString = Firebase.remoteConfig.getString("admin_announcement")
-        if (jsonString.isNotBlank()) {
+
+        if (jsonString.isNotBlank() && !jsonString.contains("{}")) { // Ignore empty messages
             val element = runCatching { Json.parseToJsonElement(jsonString).jsonObject }.getOrNull() ?: return
             val id = element["id"]?.jsonPrimitive?.content ?: return
             val title = element["title"]?.jsonPrimitive?.content ?: return
