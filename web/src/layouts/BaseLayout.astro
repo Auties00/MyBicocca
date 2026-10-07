@@ -35,8 +35,7 @@ const structuredData = {
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>{title}</title>
     <meta name="description" content={description} />
-    <meta name="theme-color" content={site.themeColor} />
-    <meta name="color-scheme" content="dark" />
+    <meta name="theme-color" content="#d81648" />
     <meta name="generator" content={Astro.generator} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
@@ -50,8 +49,8 @@ const structuredData = {
     {ogImage && <meta property="og:image" content={ogImage} />}
     <meta name="twitter:card" content="summary_large_image" />
 
-    <Font cssVariable="--font-sans" preload />
-    <Font cssVariable="--font-display" preload />
+    <Font cssVariable="--font-archivo" preload />
+    <Font cssVariable="--font-martian" preload />
 
     <script type="application/ld+json" set:html={JSON.stringify(structuredData)} />
   </head>
@@ -68,9 +67,9 @@ const structuredData = {
     top: 0.75rem;
     left: 0.75rem;
     padding: 0.6rem 1rem;
-    border-radius: var(--radius-sm);
-    background: var(--text);
-    color: var(--bg);
+    border-radius: 0.35rem;
+    background: var(--brand);
+    color: #fff;
     font-weight: 600;
     translate: 0 -200%;
     transition: translate 0.2s;

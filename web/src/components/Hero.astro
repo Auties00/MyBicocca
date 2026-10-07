@@ -1,0 +1,177 @@
+---
+import { site } from '~/data/site';
+import Screen from './Screen.astro';
+
+import dayView from '@screenshots/Screenshot_Calendar1.png';
+
+// The headline is set on the quarter hours of a zoomed-in day view.
+const lines = [
+  { time: '07:00', text: 'Your entire' },
+  { time: '07:15', text: 'university.' },
+  { time: '07:30', text: 'One app.' },
+] as const;
+---
+
+<section class="hero" id="top" aria-labelledby="hero-title">
+  <h1 id="hero-title" class="hero__title">
+    {
+      lines.map(({ time, text }, index) => (
+        <span class="row hero__row" data-time={time}>
+          <span class="row__time mono" aria-hidden="true">
+            {time}
+          </span>
+          <span class:list={['hero__line', { 'hero__line--brand': index === lines.length - 1 }]}>{text}</span>
+        </span>
+      ))
+    }
+  </h1>
+
+  <div class="row hero__intro" data-time="07:45">
+    <p class="row__time mono" aria-hidden="true">07:45</p>
+    <div class="hero__body">
+      <p class="hero__lede">
+        Esse3, Moodle, the timetable, the campus map and the library, folded into one fast Android app by Bicocca
+        students. Scroll, and spend a day with it.
+      </p>
+      <div class="hero__actions">
+        <a class="hero__download" href={site.links.download} rel="noopener">
+          Download for Android
+          <span aria-hidden="true">↓</span>
+        </a>
+        <a class="hero__source" href={site.links.repository} rel="noopener">Read the source</a>
+      </div>
+      <p class="hero__meta mono">Android {site.minAndroidVersion}+ · Free · MIT licensed</p>
+    </div>
+  </div>
+
+  <Screen
+    class="hero__screen"
+    image={dayView}
+    alt="The MyBicocca day view: two lectures on an hourly timeline"
+    caption="Today, in the app"
+    sizes="(min-width: 72rem) 19rem, 62vw"
+    priority
+  />
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    z-index: 1;
+  }
+
+  .hero__title {
+    font-size: var(--display-lg);
+    font-weight: 850;
+    font-stretch: 62%;
+    letter-spacing: -0.015em;
+    word-spacing: 0.06em;
+    line-height: 0.84;
+  }
+
+  .hero__row {
+    align-items: start;
+  }
+
+  .hero__row .row__time {
+    font-size: var(--text-xs);
+    font-weight: 450;
+    letter-spacing: 0.02em;
+    line-height: 1.5;
+    color: var(--ink-soft);
+  }
+
+  @media (max-width: 40rem) {
+    .hero__row .row__time,
+    .hero__intro .row__time {
+      font-size: 0.625rem;
+    }
+  }
+
+  .hero__line {
+    display: block;
+    padding-block: 0.06em 0.02em;
+  }
+
+  .hero__line--brand {
+    color: var(--brand);
+  }
+
+  .hero__intro {
+    padding-bottom: clamp(3rem, 8vw, 6rem);
+  }
+
+  .hero__intro .row__time {
+    color: var(--ink-soft);
+  }
+
+  .hero__body {
+    display: grid;
+    justify-items: start;
+    gap: 1.5rem;
+    max-width: 36rem;
+    padding-top: clamp(1.25rem, 3vw, 2.25rem);
+  }
+
+  .hero__lede {
+    font-size: var(--text-lg);
+    line-height: 1.45;
+  }
+
+  .hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1.75rem;
+  }
+
+  .hero__download {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 0.95rem 1.3rem;
+    border-radius: 0.45rem;
+    background: var(--brand);
+    color: #fff;
+    font-size: var(--text-lg);
+    font-weight: 750;
+    font-stretch: 85%;
+    text-decoration: none;
+    transition: background-color 0.2s;
+  }
+
+  .hero__download:hover {
+    background: var(--brand-deep);
+  }
+
+  .hero__download span {
+    transition: translate 0.3s var(--ease);
+  }
+
+  .hero__download:hover span {
+    translate: 0 3px;
+  }
+
+  .hero__source {
+    font-weight: 600;
+  }
+
+  .hero__meta {
+    color: var(--ink-soft);
+  }
+
+  .hero :global(.hero__screen) {
+    position: absolute;
+    top: 1rem;
+    right: var(--edge);
+    width: clamp(15rem, 20vw, 19rem);
+  }
+
+  @media (max-width: 72rem) {
+    .hero :global(.hero__screen) {
+      position: static;
+      width: min(62vw, 17rem);
+      margin: 0 var(--edge) clamp(3rem, 8vw, 5rem) var(--gutter);
+    }
+  }
+</style>

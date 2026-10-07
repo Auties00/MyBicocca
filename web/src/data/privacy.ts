@@ -1,34 +1,10 @@
-import type { AstroComponent } from '@lucide/astro';
-import EyeOff from '@lucide/astro/icons/eye-off';
-import KeyRound from '@lucide/astro/icons/key-round';
-import LockKeyhole from '@lucide/astro/icons/lock-keyhole';
-import ScanFace from '@lucide/astro/icons/scan-face';
+import type { Source } from './day';
 
-export interface PrivacyPoint {
-  readonly title: string;
-  readonly description: string;
-  readonly icon: AstroComponent;
-}
-
-export const privacyPoints: readonly PrivacyPoint[] = [
-  {
-    title: 'Encrypted on your device',
-    description: 'Credentials are encrypted locally and only ever sent to the platform they belong to.',
-    icon: KeyRound,
-  },
-  {
-    title: 'HTTPS everywhere',
-    description: 'Every request and every response travels over an encrypted connection.',
-    icon: LockKeyhole,
-  },
-  {
-    title: 'Zero third parties',
-    description: 'No trackers, no analytics, no ads, and nobody selling your data. Ever.',
-    icon: EyeOff,
-  },
-  {
-    title: 'Biometric app lock',
-    description: 'Optionally lock MyBicocca behind your fingerprint or face, so your career stays yours.',
-    icon: ScanFace,
-  },
+/** What stays private, written in the same platform/detail ledger as the day's sources. */
+export const privacy: readonly Source[] = [
+  { platform: 'On device', detail: 'Credentials encrypted, data cached locally' },
+  { platform: 'HTTPS', detail: 'Every request, every response' },
+  { platform: 'Nobody', detail: 'No trackers, no analytics, no ads' },
+  { platform: 'Biometrics', detail: 'Optional fingerprint or face lock' },
+  { platform: 'MIT', detail: 'Open source. Read every line.' },
 ];

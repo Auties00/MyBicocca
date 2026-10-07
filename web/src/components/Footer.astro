@@ -1,0 +1,44 @@
+---
+import { site } from '~/data/site';
+import Logo from './Logo.astro';
+
+const year = new Date().getFullYear();
+---
+
+<footer class="row footer">
+  <p class="row__time" aria-hidden="true">
+    <Logo class="footer__mark" />
+  </p>
+  <div class="footer__body">
+    <p>
+      MyBicocca is an unofficial app and is not affiliated with the University of Milano-Bicocca. It uses the public
+      services of the platforms it brings together: Esse3 by CINECA, Moodle, EasyStaff and Affluences.
+    </p>
+    <p>
+      © 2025–{year} {site.authors.join(', ')}. Released under the{' '}
+      <a href={site.links.license} rel="noopener">MIT License</a>. Found
+      a bug? <a href={site.links.issues} rel="noopener">Open an issue</a>.
+    </p>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    position: relative;
+    z-index: 1;
+    padding-block: 1.5rem 2.5rem;
+  }
+
+  .footer :global(.footer__mark) {
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+
+  .footer__body {
+    display: grid;
+    gap: 0.75rem;
+    max-width: 46rem;
+    color: var(--ink-soft);
+    font-size: var(--text-sm);
+  }
+</style>

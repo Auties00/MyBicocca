@@ -1,0 +1,59 @@
+---
+import type { ImageMetadata } from 'astro';
+import { Picture } from 'astro:assets';
+
+interface Props {
+  image: ImageMetadata;
+  alt: string;
+  caption?: string;
+  /** The `sizes` attribute: how wide the screen renders at each breakpoint. */
+  sizes: string;
+  /** Load eagerly with high priority. Only for the hero. */
+  priority?: boolean;
+  class?: string;
+}
+
+const { image, alt, caption, sizes, priority = false, class: className } = Astro.props;
+
+// Fixed widths cover 1x–3x displays at the sizes rendered. (Reading properties of
+// `image` here would make Astro ship the full-size original as well.)
+const widths = [240, 360, 480, 640, 800];
+---
+
+<figure class:list={['screen', className]}>
+  <Picture
+    src={image}
+    alt={alt}
+    widths={widths}
+    sizes={sizes}
+    formats={['avif']}
+    fallbackFormat="webp"
+    quality={72}
+    loading={priority ? 'eager' : 'lazy'}
+    fetchpriority={priority ? 'high' : 'auto'}
+    decoding="async"
+  />
+  {caption && <figcaption class="mono">{caption}</figcaption>}
+</figure>
+
+<style>
+  .screen {
+    display: grid;
+    gap: 0.6rem;
+  }
+
+  .screen :global(img) {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1080 / 2340;
+    border-radius: clamp(1rem, 2vw, 1.75rem);
+    background: #0b0808;
+    box-shadow:
+      0 0 0 1px var(--rule),
+      0 1.5rem 3rem -1.5rem rgb(33 26 27 / 0.35);
+  }
+
+  figcaption {
+    color: var(--ink-soft);
+  }
+</style>

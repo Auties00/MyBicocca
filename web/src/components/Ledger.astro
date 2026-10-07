@@ -1,0 +1,54 @@
+---
+import type { Source } from '~/data/day';
+
+interface Props {
+  entries: readonly Source[];
+  label: string;
+}
+
+const { entries, label } = Astro.props;
+---
+
+<!-- Which platform does what, set like a timetable legend. -->
+<dl class="ledger" aria-label={label}>
+  {
+    entries.map(({ platform, detail }) => (
+      <div class="ledger__entry">
+        <dt class="mono">{platform}</dt>
+        <dd>{detail}</dd>
+      </div>
+    ))
+  }
+</dl>
+
+<style>
+  .ledger {
+    display: grid;
+    border-top: 1px solid var(--rule);
+  }
+
+  .ledger__entry {
+    display: grid;
+    grid-template-columns: 8.5rem minmax(0, 1fr);
+    gap: 1rem;
+    padding-block: 0.6rem;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  dt {
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  dd {
+    color: var(--ink-soft);
+    font-size: var(--text-sm);
+  }
+
+  @media (max-width: 26rem) {
+    .ledger__entry {
+      grid-template-columns: 1fr;
+      gap: 0.15rem;
+    }
+  }
+</style>

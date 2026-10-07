@@ -1,0 +1,129 @@
+---
+import type { Chapter } from '~/data/day';
+import HourMark from './HourMark.astro';
+import Ledger from './Ledger.astro';
+import Moment from './Moment.astro';
+import Screen from './Screen.astro';
+
+interface Props {
+  chapter: Chapter;
+}
+
+const { chapter } = Astro.props;
+const { id, time, tab, heading, body, moment, sources, screens } = chapter;
+---
+
+<section id={id} class="row chapter" data-time={time} aria-labelledby={`${id}-heading`}>
+  <HourMark time={time} />
+
+  <div class="chapter__grid">
+    <div class="chapter__text">
+      <p class="chapter__tab mono">{tab}</p>
+      <Moment moment={moment} />
+      <h2 id={`${id}-heading`}>{heading}</h2>
+      <div class="chapter__body">
+        {body.map((paragraph) => <p>{paragraph}</p>)}
+      </div>
+      {sources.length > 0 && <Ledger entries={sources} label={`Where ${tab} gets its data`} />}
+    </div>
+
+    <div class:list={['chapter__screens', `chapter__screens--${screens.length}`]}>
+      {
+        screens.map((screen) => (
+          <Screen {...screen} sizes="(min-width: 64rem) 15rem, (min-width: 40rem) 30vw, 58vw" />
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .chapter {
+    position: relative;
+    z-index: 1;
+    padding-block: clamp(1.25rem, 3vw, 2rem) clamp(4rem, 10vw, 8rem);
+  }
+
+  .chapter__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 30rem) minmax(0, 1fr);
+    gap: clamp(2rem, 5vw, 5rem);
+    padding-top: 0.5rem;
+  }
+
+  .chapter__text {
+    display: grid;
+    align-content: start;
+    gap: 1.6rem;
+  }
+
+  .chapter__tab {
+    color: var(--ink-soft);
+    text-transform: uppercase;
+  }
+
+  h2 {
+    margin-top: 0.5rem;
+    font-size: var(--display-sm);
+    font-weight: 800;
+    font-stretch: 70%;
+    letter-spacing: -0.01em;
+  }
+
+  .chapter__body {
+    display: grid;
+    gap: 0.9rem;
+    max-width: 34rem;
+    color: var(--ink-soft);
+  }
+
+  /* Screens hang from the timeline like later events in the same hour. */
+  .chapter__screens {
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-end;
+    gap: clamp(1rem, 2vw, 1.75rem);
+  }
+
+  .chapter__screens > :global(.screen) {
+    flex: 0 1 15rem;
+  }
+
+  .chapter__screens > :global(.screen:nth-child(2)) {
+    margin-top: clamp(2rem, 6vw, 5rem);
+  }
+
+  .chapter__screens > :global(.screen:nth-child(3)) {
+    margin-top: clamp(4rem, 12vw, 10rem);
+  }
+
+  @media (max-width: 64rem) {
+    .chapter__grid {
+      grid-template-columns: 1fr;
+    }
+
+    .chapter__screens {
+      justify-content: flex-start;
+    }
+  }
+
+  @media (max-width: 40rem) {
+    /* A swipeable strip, like the app's own carousels. */
+    .chapter__screens {
+      margin-right: calc(-1 * var(--edge));
+      padding-right: var(--edge);
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+    }
+
+    .chapter__screens > :global(.screen) {
+      flex: 0 0 min(58vw, 15rem);
+      scroll-snap-align: start;
+    }
+
+    .chapter__screens > :global(.screen:nth-child(n)) {
+      margin-top: 0;
+    }
+  }
+</style>

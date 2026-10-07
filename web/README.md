@@ -1,7 +1,18 @@
 # MyBicocca website
 
 The landing page for MyBicocca, built with [Astro](https://astro.build) and TypeScript.
-It's a fully static site, and the only client-side script is a tiny custom element for the tour tabs.
+
+## The idea
+
+The page is the app's calendar day view at the scale of a website. An hour gutter runs
+down the left edge, and a red "now" line is fixed across the screen. As you scroll, its
+clock runs from 07:00 to midnight. Each feature is a moment in a student's day: the
+09:30 lecture, finding room U24-DISCO-C2, booking an appello, a 28 arriving at 18:47, the
+project submitted at 23:39. Along the way the page moves from the app's light theme
+to its dark one.
+
+The colours, the event blocks and the exam chips are taken from the Android app itself
+(`ui/theme/Color.kt`, `calendar/theme/EventPalette.kt`).
 
 ## Getting started
 
@@ -20,30 +31,33 @@ Open Graph URLs.
 
 ```
 src/
-├── components/
-│   ├── sections/   # One component per page section (Hero, Tour, FAQ, ...)
-│   └── ui/         # Reusable primitives (Button, PhoneFrame, Wordmark, ...)
-├── data/           # Typed page content: features, tour chapters, FAQ, links
-├── layouts/        # Document shell, meta tags and fonts
-├── pages/          # Routes
-├── scripts/        # Client-side TypeScript (the <feature-tabs> element)
-└── styles/         # Design tokens and global styles
+├── components/   # Hero, Chapter (one moment of the day), Moment (app UI fragments), NowLine, ...
+├── data/         # Typed content: the day's chapters, privacy points, links
+├── lib/clock.ts  # Pure time-of-day helpers shared by the server render and the client
+├── scripts/      # <day-clock>: maps scroll position to the time of day
+├── layouts/      # Document shell, meta tags and fonts
+└── styles/       # Tokens, the `sky` keyframes and the timeline grid
 ```
 
-Content lives in `src/data/*.ts`, so most copy changes don't touch markup.
+To add or change a moment, edit `src/data/day.ts`. Times must increase down the page.
 
-## Assets
+## How the day works
 
-App screenshots are imported straight from the repository's `/screenshots` folder through
-the `@screenshots/*` alias, so the README and the website always show the same images.
-Astro converts them at build time into responsive AVIF images with WebP fallbacks.
+- Every element with `data-time="HH:MM"` is a waypoint. `<day-clock>` interpolates
+  between the waypoints around the "now" line to read the time, then writes the day's
+  progress to `--day` on the root.
+- `--day` scrubs a paused CSS animation (`@keyframes sky`) through registered custom
+  properties (`@property --paper`, `--ink`, `--night`…). That keeps all the colour logic
+  in CSS, and every browser can interpolate it.
+- Event blocks blend the app's light and dark palettes with `color-mix()`, driven by
+  `--night`.
+- Without JavaScript the page renders as a static, readable morning, with no clock.
 
-## Performance notes
+## Assets and performance
 
-- Fonts (Inter, Bricolage Grotesque) are self-hosted Latin-only variable subsets,
-  preloaded, with metric-matched fallbacks so they don't shift the layout.
-- Scroll reveals and the header backdrop use CSS scroll-driven animations, so they need
-  no JavaScript. Browsers without support just show the content.
-- The mobile menu uses the Popover API and the FAQ uses exclusive `<details>`. Both work
-  without JavaScript.
-- Animations respect `prefers-reduced-motion`.
+- Screenshots are imported from the repository's `/screenshots` folder (`@screenshots/*`),
+  so the README and the website always match. They're converted at build time to
+  responsive AVIF with WebP fallbacks.
+- Fonts (Archivo with its width axis, and Martian Mono) are self-hosted Latin subsets,
+  preloaded, with metric-matched fallbacks.
+- The only client script is the clock: one passive scroll listener, batched per frame.

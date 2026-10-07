@@ -1,0 +1,63 @@
+---
+import { privacy } from '~/data/privacy';
+import HourMark from './HourMark.astro';
+import Ledger from './Ledger.astro';
+---
+
+<!-- Midnight. The clock's last waypoint: by now the page has gone fully dark. -->
+<section id="privacy" class="row night" data-time="24:00" aria-labelledby="privacy-heading">
+  <HourMark time="00:00" />
+  <div class="night__grid">
+    <h2 id="privacy-heading">Airplane mode.<br />Still all here.</h2>
+    <div class="night__text">
+      <p>
+        Your timetable, courses, career and the campus map are cached on the phone. They open instantly and keep
+        working without a connection.
+      </p>
+      <p>Nothing leaves the device except the requests MyBicocca makes to the university’s own services.</p>
+      <Ledger entries={privacy} label="Privacy and security" />
+    </div>
+  </div>
+</section>
+
+<style>
+  .night {
+    position: relative;
+    z-index: 1;
+    padding-block: clamp(1.25rem, 3vw, 2rem) clamp(5rem, 12vw, 10rem);
+  }
+
+  .night__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    align-items: start;
+    gap: clamp(2rem, 5vw, 5rem);
+    padding-top: 0.5rem;
+  }
+
+  h2 {
+    font-size: clamp(3rem, 1.4rem + 7vw, 8.5rem);
+    font-weight: 850;
+    font-stretch: 62%;
+    line-height: 0.86;
+    letter-spacing: -0.015em;
+    word-spacing: 0.06em;
+  }
+
+  .night__text {
+    display: grid;
+    gap: 1rem;
+    max-width: 34rem;
+    color: var(--ink-soft);
+  }
+
+  .night__text :global(.ledger) {
+    margin-top: 1rem;
+  }
+
+  @media (max-width: 64rem) {
+    .night__grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

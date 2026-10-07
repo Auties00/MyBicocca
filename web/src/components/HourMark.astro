@@ -1,0 +1,80 @@
+---
+import type { ClockTime } from '~/lib/clock';
+
+interface Props {
+  time: ClockTime;
+  /** A short note under the time, e.g. "tomorrow". */
+  note?: string;
+}
+
+const { time, note } = Astro.props;
+const [hours, mins] = time.split(':');
+---
+
+<!-- The gutter label: tall condensed hours, minutes set small beside them. -->
+<p class="row__time hour">
+  <time datetime={time}>
+    <span class="hour__h">{hours}</span><span class="hour__m mono">:{mins}</span>
+  </time>
+  {note && <span class="hour__note mono">{note}</span>}
+</p>
+
+<style>
+  .hour {
+    display: grid;
+    align-content: start;
+    gap: 0.4rem;
+  }
+
+  time {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.1rem;
+    transition: color 0.3s;
+  }
+
+  .hour__h {
+    font-size: clamp(2.25rem, 1.4rem + 4.6vw, 6.5rem);
+    font-weight: 250;
+    font-stretch: 62%;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+    line-height: 0.82;
+  }
+
+  .hour__m {
+    padding-top: 0.2em;
+  }
+
+  .hour__note {
+    color: var(--ink-soft);
+  }
+
+  /* Narrower gutters stack the minutes under the hour. */
+  @media (max-width: 64rem) {
+    time {
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .hour__m {
+      padding-top: 0;
+    }
+  }
+
+  @media (max-width: 40rem) {
+    .hour__m {
+      font-size: 0.625rem;
+    }
+
+    /* No room for the note; the heading beside it says the same. */
+    .hour__note {
+      display: none;
+    }
+  }
+
+  /* The moment the now line is passing through. */
+  :global([data-now]) > .hour time {
+    color: var(--brand);
+  }
+</style>

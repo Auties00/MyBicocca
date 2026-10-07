@@ -1,0 +1,84 @@
+---
+// The red "now" line from the app's day view, fixed across the viewport.
+// Purely decorative: the times it shows are in the page's own <time> elements.
+---
+
+<day-clock class="now" aria-hidden="true">
+  <time class="now__time" datetime="07:00">07:00</time>
+</day-clock>
+
+<script>
+  import '~/scripts/day-clock';
+</script>
+
+<style>
+  .now {
+    position: fixed;
+    z-index: 0;
+    top: var(--now-at);
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    height: 0;
+    pointer-events: none;
+  }
+
+  .now {
+    transition: opacity 0.4s;
+  }
+
+  .now[data-ended] {
+    opacity: 0;
+  }
+
+  /* Without the script there is no clock to show. */
+  .now:not(:defined) {
+    display: none;
+  }
+
+  .now::before {
+    /* The line itself, starting where the hour gutter ends, as in the app. */
+    content: '';
+    position: absolute;
+    left: calc(var(--gutter) - 0.3rem);
+    right: 0;
+    height: 2px;
+    background: var(--brand);
+    translate: 0 -50%;
+  }
+
+  .now::after {
+    content: '';
+    position: absolute;
+    left: calc(var(--gutter) - 0.3rem);
+    width: 0.6rem;
+    height: 0.6rem;
+    border-radius: 50%;
+    background: var(--brand);
+    translate: -50% -50%;
+  }
+
+  .now__time {
+    position: absolute;
+    left: var(--edge);
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.3rem;
+    background: var(--brand);
+    color: var(--signal);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
+    translate: 0 -50%;
+  }
+
+  @media (max-width: 40rem) {
+    .now__time {
+      left: 0.5rem;
+      padding: 0.15rem 0.3rem;
+      font-size: 0.625rem;
+    }
+  }
+</style>

@@ -13,19 +13,21 @@ export default defineConfig({
   build: {
     inlineStylesheets: 'auto',
   },
-  // Self-hosted variable fonts (Latin subset only). Astro generates metric-matched
-  // fallbacks so swapping in the web font doesn't shift the layout.
+  // Self-hosted variable fonts (Latin subset). Archivo carries a width axis, used from
+  // condensed timetable numerals to regular text. Astro generates metric-matched
+  // fallbacks so swapping the web fonts in doesn't shift the layout.
   fonts: [
     {
       provider: fontProviders.local(),
-      name: 'Inter',
-      cssVariable: '--font-sans',
-      fallbacks: ['system-ui', 'sans-serif'],
+      name: 'Archivo',
+      cssVariable: '--font-archivo',
+      fallbacks: ['Arial Narrow', 'sans-serif'],
       options: {
         variants: [
           {
-            src: ['@fontsource-variable/inter/files/inter-latin-wght-normal.woff2'],
+            src: ['@fontsource-variable/archivo/files/archivo-latin-wdth-normal.woff2'],
             weight: '100 900',
+            stretch: '62% 125%',
             style: 'normal',
           },
         ],
@@ -33,14 +35,14 @@ export default defineConfig({
     },
     {
       provider: fontProviders.local(),
-      name: 'Bricolage Grotesque',
-      cssVariable: '--font-display',
-      fallbacks: ['system-ui', 'sans-serif'],
+      name: 'Martian Mono',
+      cssVariable: '--font-martian',
+      fallbacks: ['monospace'],
       options: {
         variants: [
           {
-            src: ['@fontsource-variable/bricolage-grotesque/files/bricolage-grotesque-latin-wght-normal.woff2'],
-            weight: '200 800',
+            src: ['@fontsource-variable/martian-mono/files/martian-mono-latin-wght-normal.woff2'],
+            weight: '100 800',
             style: 'normal',
           },
         ],

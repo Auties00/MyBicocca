@@ -1,0 +1,103 @@
+---
+import { siGithub } from 'simple-icons';
+import { site } from '~/data/site';
+import BrandIcon from './BrandIcon.astro';
+import Logo from './Logo.astro';
+---
+
+<header class="masthead">
+  <a class="masthead__brand" href="#top">
+    <Logo class="masthead__mark" />
+    <span>{site.name}</span>
+  </a>
+  <p class="masthead__note mono">Unofficial · Università degli Studi di Milano-Bicocca</p>
+  <nav class="masthead__nav" aria-label="Project">
+    <a class="masthead__source" href={site.links.repository} rel="noopener">
+      <BrandIcon icon={siGithub} size={18} />
+      <span>Source</span>
+    </a>
+    <a class="masthead__download" href={site.links.download} rel="noopener">Download APK</a>
+  </nav>
+</header>
+
+<style>
+  .masthead {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1.1rem var(--edge);
+  }
+
+  .masthead__brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 1.15rem;
+    font-weight: 800;
+    font-stretch: 85%;
+    letter-spacing: -0.01em;
+    text-decoration: none;
+  }
+
+  .masthead__brand :global(.masthead__mark) {
+    width: 1.9rem;
+    height: 1.9rem;
+  }
+
+  .masthead__note {
+    color: var(--ink-soft);
+  }
+
+  .masthead__nav {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+  }
+
+  .masthead__source {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .masthead__source:hover span {
+    text-decoration: underline;
+  }
+
+  .masthead__download {
+    padding: 0.55rem 0.9rem;
+    border-radius: 0.35rem;
+    background: var(--brand);
+    color: #fff;
+    font-weight: 700;
+    font-stretch: 90%;
+    text-decoration: none;
+    transition: background-color 0.2s;
+  }
+
+  .masthead__download:hover {
+    background: var(--brand-deep);
+  }
+
+  @media (max-width: 52rem) {
+    .masthead__note {
+      display: none;
+    }
+
+    .masthead {
+      grid-template-columns: auto auto;
+      justify-content: space-between;
+    }
+  }
+
+  @media (max-width: 26rem) {
+    .masthead__source span {
+      display: none;
+    }
+  }
+</style>

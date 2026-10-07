@@ -1,0 +1,79 @@
+---
+import { site } from '~/data/site';
+import HourMark from './HourMark.astro';
+---
+
+<section id="download" class="row tomorrow" aria-labelledby="download-heading">
+  <HourMark time="08:30" note="tomorrow" />
+  <div class="tomorrow__body">
+    <h2 id="download-heading">See you at 08:30.</h2>
+    <div class="tomorrow__actions">
+      <a class="tomorrow__download" href={site.links.download} rel="noopener">
+        <span>Download MyBicocca</span>
+        <span class="mono">APK · Android {site.minAndroidVersion}+ · GitHub Releases</span>
+      </a>
+      <a class="tomorrow__source" href={site.links.repository} rel="noopener">Read the source on GitHub</a>
+    </div>
+  </div>
+</section>
+
+<style>
+  .tomorrow {
+    position: relative;
+    z-index: 1;
+    padding-block: clamp(1.25rem, 3vw, 2rem) clamp(4rem, 10vw, 8rem);
+  }
+
+  .tomorrow__body {
+    display: grid;
+    justify-items: start;
+    gap: clamp(2rem, 4vw, 3rem);
+    padding-top: 0.5rem;
+  }
+
+  h2 {
+    font-size: var(--display-lg);
+    font-weight: 850;
+    font-stretch: 62%;
+    line-height: 0.84;
+    letter-spacing: -0.015em;
+    word-spacing: 0.06em;
+  }
+
+  .tomorrow__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem 2rem;
+  }
+
+  .tomorrow__download {
+    display: grid;
+    gap: 0.35rem;
+    padding: 1.1rem 1.5rem 1.15rem;
+    border-radius: 0.5rem;
+    background: var(--brand);
+    color: #fff;
+    text-decoration: none;
+    transition: background-color 0.2s;
+  }
+
+  .tomorrow__download:hover {
+    background: var(--brand-deep);
+  }
+
+  .tomorrow__download span:first-child {
+    font-size: clamp(1.3rem, 1.1rem + 1vw, 1.9rem);
+    font-weight: 750;
+    font-stretch: 80%;
+    line-height: 1.1;
+  }
+
+  .tomorrow__download .mono {
+    opacity: 0.85;
+  }
+
+  .tomorrow__source {
+    font-weight: 600;
+  }
+</style>
