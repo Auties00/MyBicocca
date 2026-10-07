@@ -95,13 +95,12 @@ import kotlinx.coroutines.flow.filter
  * loading/error/content states in place, so the catalog landing never reads as a page change.
  *
  * Enrol outcomes and missing-session events reset the browse stack, dismiss the sheet, and are
- * reported to the host through [onEnrolSucceeded], [onEnrolFailed], and [onRequireSignIn].
+ * reported to the host through [onEnrolSucceeded] and [onEnrolFailed].
  */
 @Composable
 fun AddCoursePage(
     onEnrolFailed: (Throwable) -> Unit,
     onEnrolSucceeded: (CourseId, String) -> Unit,
-    onRequireSignIn: () -> Unit,
     viewModel: AddCourseViewModel = hiltViewModel(
         checkNotNull(
             LocalViewModelStoreOwner.current
@@ -141,10 +140,6 @@ fun AddCoursePage(
                     onEnrolSucceeded(event.courseId, event.courseName)
                 }
 
-                AddCourseOneShotEvent.RequireSignIn -> {
-                    closeSheet()
-                    onRequireSignIn()
-                }
             }
         }
     }

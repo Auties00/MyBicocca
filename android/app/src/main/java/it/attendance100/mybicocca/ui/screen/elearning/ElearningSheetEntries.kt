@@ -128,7 +128,6 @@ fun EntryProviderScope<NavKey>.elearningSheetEntries(
                 scope.launch { snackbarController.showInfo(strEnrolledSuccess.format(name)) }
                 elearningViewModel.revealEnrolledCourse(courseId)
             },
-            onRequireSignIn = {},
             viewModel = addCourseViewModel,
         )
     }

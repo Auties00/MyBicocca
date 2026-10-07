@@ -116,7 +116,6 @@ class AddCoursePageTest {
             AddCoursePage(
                 onEnrolFailed = {},
                 onEnrolSucceeded = { _, _ -> },
-                onRequireSignIn = {},
                 viewModel = viewModel,
             )
         }
