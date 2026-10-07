@@ -1,6 +1,5 @@
 package it.attendance100.mybicocca.ui.screen.elearning.subscreen.assignmentDetail
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,11 +22,12 @@ import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,10 +48,12 @@ import it.attendance100.mybicocca.domain.model.elearning.assignment.SubmissionFo
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.ui.component.modal.SheetConfirmPage
 import it.attendance100.mybicocca.ui.component.modal.SheetOutcome
-import it.attendance100.mybicocca.ui.component.modal.SheetPagerHeader
+import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
+import it.attendance100.mybicocca.ui.component.modal.SheetPager
 import it.attendance100.mybicocca.ui.component.modal.SheetResultPage
-import it.attendance100.mybicocca.ui.component.modal.sheetPageTransform
+import it.attendance100.mybicocca.ui.navigation.DisposableEffectOnPop
 import it.attendance100.mybicocca.ui.navigation.route.AppRoute
+import it.attendance100.mybicocca.ui.navigation.scene.LocalSheetDismissControl
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.assignmentDetail.component.AssignmentOverviewPage
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.assignmentDetail.component.SubmissionComposePage
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.assignmentDetail.state.AssignmentDetailOneShotEvent
@@ -64,13 +66,14 @@ import java.time.format.DateTimeFormatter
 
 /**
  * The compito (assignment) detail as a multi-state bottom-sheet modal, hosted as a single
- * BottomSheetSceneStrategy entry.
+ * ModalSceneStrategy entry.
  *
- * An in-sheet pager — overview, submission editor, finalize-for-grading confirmation — is driven
- * by the ViewModel's back stack under one morphing [SheetPagerHeader], in the same mold as the
- * Biblioteca sheet; the remove-confirmation and result pages are overlays held by the composable
- * and drawn on top of it. System back walks the stack up one level and is ignored while an
- * action is in flight.
+ * An in-sheet [SheetPager] — overview, submission editor, finalize-for-grading confirmation — is
+ * driven by the ViewModel's back stack, in the same mold as the Biblioteca sheet; the
+ * remove-confirmation and result pages are overlays held by the composable and drawn on top of
+ * it. System back walks the stack up one level and is ignored while an action is in flight.
+ * While the editor flow is open or an action is in flight the sheet refuses swipe/scrim/back
+ * dismissal (via [LocalSheetDismissControl]) so a draft is never dropped by a stray gesture.
  *
  * Attachment opens are wired directly through [onOpenFile] and refresh failures keep the cached
  * content visible, so neither surfaces an in-sheet result page.
@@ -95,11 +98,9 @@ fun AssignmentDetailPage(
     val submitting by viewModel.submitting.collectAsStateWithLifecycle()
 
     var outcome by remember { mutableStateOf<SheetOutcome?>(null) }
-    var pendingRemove by remember { mutableStateOf(false) }
+    var pendingRemove by rememberSaveable { mutableStateOf(false) }
 
-    DisposableEffect(Unit) {
-        onDispose { viewModel.resetNavigation() }
-    }
+    DisposableEffectOnPop { viewModel.resetNavigation() }
 
     val context = LocalContext.current
     val draftSavedMessage = stringResource(R.string.elearning_assign_draft_saved)
@@ -130,150 +131,131 @@ fun AssignmentDetailPage(
         else -> Display.Page(current)
     }
 
-    val seekableState =
-        remember { androidx.compose.animation.core.SeekableTransitionState(display) }
-    val transition = androidx.compose.animation.core.rememberTransition(
-        seekableState,
-        label = "assignment_sheet_pages"
-    )
-
-    LaunchedEffect(display) {
-        if (seekableState.targetState != display) {
-            seekableState.animateTo(display)
-        }
-    }
-
-    androidx.activity.compose.PredictiveBackHandler(enabled = display !is Display.Page || (backStack.size > 1 && !submitting)) { progress ->
-        try {
-            val fallback = when (display) {
-                Display.Outcome -> if (pendingRemove) Display.ConfirmRemove else Display.Page(
-                    current
-                )
-
-                Display.ConfirmRemove -> Display.Page(current)
-                is Display.Page -> if (backStack.size > 1) Display.Page(backStack[backStack.size - 2]) else display
-            }
-            progress.collect { event ->
-                seekableState.seekTo(event.progress, targetState = fallback)
-            }
-            seekableState.animateTo(fallback)
-            when (display) {
-                Display.Outcome -> outcome = null
-                Display.ConfirmRemove -> pendingRemove = false
-                is Display.Page -> if (!submitting) viewModel.back()
-            }
-        } catch (_: kotlinx.coroutines.CancellationException) {
-            seekableState.animateTo(display)
-        }
+    // A swipe/scrim/back dismissal would drop the editor draft or abandon an action in flight:
+    // there is no discard confirm to route to, so the sheet refuses it until the user backs out.
+    val control = LocalSheetDismissControl.current
+    val locked = submitting || current != AssignmentPage.Detail
+    SideEffect {
+        control?.gesturesEnabled = !locked
+        control?.confirmDismiss = { !locked }
     }
 
     CourseDetailTheme(courseId = remember(courseId) { CourseId(courseId) }) {
-        Column(
+        SheetPager(
+            page = display,
+            depth = ::displayDepth,
+            backTo = when (display) {
+                Display.Outcome -> if (pendingRemove) Display.ConfirmRemove else Display.Page(current)
+                Display.ConfirmRemove -> Display.Page(current)
+                is Display.Page ->
+                    if (backStack.size > 1 && !submitting) Display.Page(backStack[backStack.size - 2]) else null
+            },
+            onBack = {
+                when (display) {
+                    Display.Outcome -> outcome = null
+                    Display.ConfirmRemove -> pendingRemove = false
+                    is Display.Page -> if (!submitting) viewModel.back()
+                }
+            },
             modifier = Modifier
                 .testTag(AssignmentDetailTestTags.ROOT)
                 .fillMaxWidth()
                 .heightIn(max = 760.dp)
                 .padding(top = 8.dp),
-        ) {
-            SheetPagerHeader(
-                depth = displayDepth(display),
-                title = when (display) {
-                    Display.Outcome -> ""
-                    Display.ConfirmRemove -> stringResource(R.string.elearning_assign_confirm_remove_title)
-                    is Display.Page -> when (display.page) {
-                        AssignmentPage.Detail -> (assignmentLoadable as? Loadable.Loaded)?.value?.name
-                            ?: stringResource(R.string.elearning_assign_overview_title)
-                        AssignmentPage.Compose -> stringResource(R.string.elearning_assign_submission_title)
-                        AssignmentPage.ConfirmSubmit -> stringResource(R.string.elearning_assign_confirm_title)
-                    }
-                },
-                subtitle = when (display) {
-                    is Display.Page -> when (display.page) {
-                        AssignmentPage.Detail ->
-                            (assignmentLoadable as? Loadable.Loaded)?.value?.let { deadlineSubtitle(it) }
-                        AssignmentPage.Compose, AssignmentPage.ConfirmSubmit ->
-                            (assignmentLoadable as? Loadable.Loaded)?.value?.name
-                    }
-                    else -> null
-                },
-                onBack = when (display) {
-                    Display.Outcome -> null
-                    Display.ConfirmRemove -> ({ pendingRemove = false })
-                    is Display.Page -> if (backStack.size > 1 && !submitting) viewModel::back else null
-                },
-            )
-
-            transition.AnimatedContent(
-                transitionSpec = {
-                    sheetPageTransform(forward = displayDepth(targetState) >= displayDepth(initialState))
-                },
-                contentKey = { displayKey(it) },
-            ) { shown ->
-                when (shown) {
-                    Display.Outcome -> outcome?.let { current ->
-                        SheetResultPage(outcome = current, onDismiss = { outcome = null })
-                    }
-
-                    Display.ConfirmRemove -> SheetConfirmPage(
-                        body = stringResource(R.string.elearning_assign_confirm_remove_body),
-                        onConfirm = {
-                            pendingRemove = false
-                            viewModel.removeSubmission()
-                        },
-                        onKeep = { pendingRemove = false },
-                        confirmLabel = stringResource(R.string.elearning_assign_remove_button),
-                        keepLabel = stringResource(R.string.elearning_assign_cancel),
-                    )
-
-                    is Display.Page -> when (shown.page) {
-                        AssignmentPage.Detail -> when (val loadable = assignmentLoadable) {
-                            Loadable.NotYetLoaded -> LoadingBox(
-                                modifier = Modifier.testTag(AssignmentDetailTestTags.STATE_LOADING),
-                            )
-                            is Loadable.Loaded -> AssignmentOverviewPage(
-                                assignment = loadable.value,
-                                onOpenFile = onOpenFile,
-                                onCompose = viewModel::openCompose,
-                                onRemove = { pendingRemove = true },
-                                modifier = Modifier.testTag(AssignmentDetailTestTags.OVERVIEW),
-                            )
+            key = ::displayKey,
+            header = { target ->
+                SheetHeaderSpec(
+                    title = when (target) {
+                        Display.Outcome -> ""
+                        Display.ConfirmRemove -> stringResource(R.string.elearning_assign_confirm_remove_title)
+                        is Display.Page -> when (target.page) {
+                            AssignmentPage.Detail -> (assignmentLoadable as? Loadable.Loaded)?.value?.name
+                                ?: stringResource(R.string.elearning_assign_overview_title)
+                            AssignmentPage.Compose -> stringResource(R.string.elearning_assign_submission_title)
+                            AssignmentPage.ConfirmSubmit -> stringResource(R.string.elearning_assign_confirm_title)
                         }
-
-                        AssignmentPage.Compose -> when (val form = submissionForm) {
-                            Loadable.NotYetLoaded -> LoadingBox()
-                            is Loadable.Loaded -> SubmissionComposePage(
-                                form = form.value,
-                                draftText = draftText,
-                                pickedFiles = pickedFiles,
-                                keptExistingFiles = keptExistingFiles,
-                                submitting = submitting,
-                                onTextChange = viewModel::setText,
-                                onAddFiles = viewModel::addFiles,
-                                onRemoveFile = viewModel::removeFile,
-                                onRemoveExistingFile = viewModel::removeExistingFile,
-                                onSaveDraft = viewModel::saveDraft,
-                                onContinue = {
-                                    if (form.value.submissionDraftsEnabled || form.value.requiresSubmissionStatement) {
-                                        viewModel.goToConfirm()
-                                    } else {
-                                        viewModel.confirmSubmit()
-                                    }
-                                },
-                            )
+                    },
+                    subtitle = when (target) {
+                        is Display.Page -> when (target.page) {
+                            AssignmentPage.Detail ->
+                                (assignmentLoadable as? Loadable.Loaded)?.value?.let { deadlineSubtitle(it) }
+                            AssignmentPage.Compose, AssignmentPage.ConfirmSubmit ->
+                                (assignmentLoadable as? Loadable.Loaded)?.value?.name
                         }
+                        else -> null
+                    },
+                    showBack = when (target) {
+                        Display.Outcome -> false
+                        Display.ConfirmRemove -> true
+                        is Display.Page -> !submitting
+                    },
+                )
+            },
+        ) { shown ->
+            when (shown) {
+                Display.Outcome -> outcome?.let { current ->
+                    SheetResultPage(outcome = current, onDismiss = { outcome = null })
+                }
 
-                        AssignmentPage.ConfirmSubmit -> (submissionForm as? Loadable.Loaded)?.value?.let { form ->
-                            ConfirmSubmitPage(
-                                form = form,
-                                fileCount = pickedFiles.size + keptExistingFiles.size,
-                                hasText = form.onlineTextEnabled && draftText.isNotBlank(),
-                                statementAccepted = statementAccepted,
-                                submitting = submitting,
-                                onStatementChange = viewModel::setStatementAccepted,
-                                onConfirm = viewModel::confirmSubmit,
-                                onCancel = viewModel::back,
-                            )
-                        }
+                Display.ConfirmRemove -> SheetConfirmPage(
+                    body = stringResource(R.string.elearning_assign_confirm_remove_body),
+                    onConfirm = {
+                        pendingRemove = false
+                        viewModel.removeSubmission()
+                    },
+                    onKeep = { pendingRemove = false },
+                    confirmLabel = stringResource(R.string.elearning_assign_remove_button),
+                    keepLabel = stringResource(R.string.elearning_assign_cancel),
+                )
+
+                is Display.Page -> when (shown.page) {
+                    AssignmentPage.Detail -> when (val loadable = assignmentLoadable) {
+                        Loadable.NotYetLoaded -> LoadingBox(
+                            modifier = Modifier.testTag(AssignmentDetailTestTags.STATE_LOADING),
+                        )
+                        is Loadable.Loaded -> AssignmentOverviewPage(
+                            assignment = loadable.value,
+                            onOpenFile = onOpenFile,
+                            onCompose = viewModel::openCompose,
+                            onRemove = { pendingRemove = true },
+                            modifier = Modifier.testTag(AssignmentDetailTestTags.OVERVIEW),
+                        )
+                    }
+
+                    AssignmentPage.Compose -> when (val form = submissionForm) {
+                        Loadable.NotYetLoaded -> LoadingBox()
+                        is Loadable.Loaded -> SubmissionComposePage(
+                            form = form.value,
+                            draftText = draftText,
+                            pickedFiles = pickedFiles,
+                            keptExistingFiles = keptExistingFiles,
+                            submitting = submitting,
+                            onTextChange = viewModel::setText,
+                            onAddFiles = viewModel::addFiles,
+                            onRemoveFile = viewModel::removeFile,
+                            onRemoveExistingFile = viewModel::removeExistingFile,
+                            onSaveDraft = viewModel::saveDraft,
+                            onContinue = {
+                                if (form.value.submissionDraftsEnabled || form.value.requiresSubmissionStatement) {
+                                    viewModel.goToConfirm()
+                                } else {
+                                    viewModel.confirmSubmit()
+                                }
+                            },
+                        )
+                    }
+
+                    AssignmentPage.ConfirmSubmit -> (submissionForm as? Loadable.Loaded)?.value?.let { form ->
+                        ConfirmSubmitPage(
+                            form = form,
+                            fileCount = pickedFiles.size + keptExistingFiles.size,
+                            hasText = form.onlineTextEnabled && draftText.isNotBlank(),
+                            statementAccepted = statementAccepted,
+                            submitting = submitting,
+                            onStatementChange = viewModel::setStatementAccepted,
+                            onConfirm = viewModel::confirmSubmit,
+                            onCancel = viewModel::back,
+                        )
                     }
                 }
             }

@@ -29,7 +29,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,14 +42,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.transcript.GradeRollup
-import it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet
 import java.util.Locale
 
 private const val MIN_PASSING_GRADE = 18
 private const val MAX_GRADE = 31
 
 /**
- * Hypothetical-average calculator sheet: a stat card showing the current arithmetic or
+ * Hypothetical-average calculator sheet page: a stat card showing the current arithmetic or
  * weighted average with an animated arrow to the projected value, a signed delta chip
  * beneath it, and the grade input — plus an optional CFU input in weighted mode. The
  * projection extends the displayed [currentArithmetic]/[currentWeighted] average — the same
@@ -60,136 +59,130 @@ private const val MAX_GRADE = 31
  * inline and produces no projection.
  */
 @Composable
-fun HypotheticalGradeSheet(
+fun HypotheticalGradePage(
     rollup: GradeRollup?,
     currentArithmetic: Float?,
     currentWeighted: Float?,
     isWeighted: Boolean,
-    onDismiss: () -> Unit,
 ) {
     val primaryColor = MaterialTheme.colorScheme.primary
     val textColor = MaterialTheme.colorScheme.onSurface
     val grayColor = MaterialTheme.colorScheme.onSurfaceVariant
 
-    PredictiveModalBottomSheet(
-        onDismiss = onDismiss,
-        sizeDuration = 500,
-    ) { _, _ ->
-        var gradeText by remember { mutableStateOf("") }
-        var cfuText by remember { mutableStateOf("") }
+    var gradeText by rememberSaveable { mutableStateOf("") }
+    var cfuText by rememberSaveable { mutableStateOf("") }
 
-        val grade = gradeText.toIntOrNull()
-        val cfu = cfuText.toIntOrNull()
-        val gradeValid = grade != null && grade in MIN_PASSING_GRADE..MAX_GRADE
+    val grade = gradeText.toIntOrNull()
+    val cfu = cfuText.toIntOrNull()
+    val gradeValid = grade != null && grade in MIN_PASSING_GRADE..MAX_GRADE
 
-        val current = if (isWeighted) currentWeighted else currentArithmetic
-        val projected: Float? = when {
-            rollup == null || current == null || grade == null || !gradeValid -> null
-            !isWeighted -> {
-                val n = rollup.gradedExamCount
-                (current * n + grade) / (n + 1)
-            }
-
-            cfu != null && cfu > 0 -> {
-                val credits = rollup.gradedCreditsSum
-                (current * credits + grade * cfu) / (credits + cfu)
-            }
-            else -> null
+    val current = if (isWeighted) currentWeighted else currentArithmetic
+    val projected: Float? = when {
+        rollup == null || current == null || grade == null || !gradeValid -> null
+        !isWeighted -> {
+            val n = rollup.gradedExamCount
+            (current * n + grade) / (n + 1)
         }
 
+        cfu != null && cfu > 0 -> {
+            val credits = rollup.gradedCreditsSum
+            (current * credits + grade * cfu) / (credits + cfu)
+        }
+        else -> null
+    }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = 24.dp, end = 24.dp, bottom = 24.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(Icons.Filled.Calculate, contentDescription = null, tint = primaryColor)
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = stringResource(R.string.hyp_title),
+                color = textColor,
+                fontSize = 22.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(start = 24.dp, end = 24.dp, bottom = 24.dp),
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.Filled.Calculate, contentDescription = null, tint = primaryColor)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = stringResource(R.string.hyp_title),
-                    color = textColor,
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.SemiBold,
-                )
-            }
+            HypotheticalStatCard(
+                title = if (isWeighted) {
+                    stringResource(R.string.profile_weighted_average)
+                } else {
+                    stringResource(R.string.profile_arithmetic_average)
+                },
+                currentValue = current,
+                newValue = projected,
+                textColor = textColor,
+                grayColor = grayColor,
+                primaryColor = primaryColor,
+            )
+            DifferenceIndicator(difference = if (projected != null && current != null) projected - current else null)
+        }
 
-            Spacer(modifier = Modifier.height(16.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            OutlinedTextField(
+                value = gradeText,
+                onValueChange = { if (it.length <= 2) gradeText = it.filter(Char::isDigit) },
+                label = { Text(stringResource(R.string.hyp_grade_label)) },
+                placeholder = {
+                    Text(
+                        stringResource(R.string.hyp_grade_placeholder),
+                        color = grayColor
+                    )
+                },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                singleLine = true,
+                isError = grade != null && grade < MIN_PASSING_GRADE,
+                supportingText = when {
+                    grade != null && grade < MIN_PASSING_GRADE -> {
+                        { Text(stringResource(R.string.hyp_grade_invalid)) }
+                    }
 
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                verticalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                HypotheticalStatCard(
-                    title = if (isWeighted) {
-                        stringResource(R.string.profile_weighted_average)
-                    } else {
-                        stringResource(R.string.profile_arithmetic_average)
-                    },
-                    currentValue = current,
-                    newValue = projected,
-                    textColor = textColor,
-                    grayColor = grayColor,
-                    primaryColor = primaryColor,
-                )
-                DifferenceIndicator(difference = if (projected != null && current != null) projected - current else null)
-            }
+                    grade != null && grade > MAX_GRADE -> {
+                        { Text(stringResource(R.string.hyp_grade_too_high)) }
+                    }
+                    else -> null
+                },
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(12.dp),
+            )
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
+            if (isWeighted) {
                 OutlinedTextField(
-                    value = gradeText,
-                    onValueChange = { if (it.length <= 2) gradeText = it.filter(Char::isDigit) },
-                    label = { Text(stringResource(R.string.hyp_grade_label)) },
+                    value = cfuText,
+                    onValueChange = { if (it.length <= 2) cfuText = it.filter(Char::isDigit) },
+                    label = { Text(stringResource(R.string.common_cfu)) },
                     placeholder = {
                         Text(
-                            stringResource(R.string.hyp_grade_placeholder),
+                            stringResource(R.string.common_optional),
                             color = grayColor
                         )
                     },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     singleLine = true,
-                    isError = grade != null && grade < MIN_PASSING_GRADE,
-                    supportingText = when {
-                        grade != null && grade < MIN_PASSING_GRADE -> {
-                            { Text(stringResource(R.string.hyp_grade_invalid)) }
-                        }
-
-                        grade != null && grade > MAX_GRADE -> {
-                            { Text(stringResource(R.string.hyp_grade_too_high)) }
-                        }
-                        else -> null
-                    },
+                    isError = cfu != null && cfu <= 0,
+                    supportingText = if (cfu != null && cfu <= 0) {
+                        { Text(stringResource(R.string.hyp_cfu_invalid)) }
+                    } else null,
                     modifier = Modifier.weight(1f),
                     shape = RoundedCornerShape(12.dp),
                 )
-
-                if (isWeighted) {
-                    OutlinedTextField(
-                        value = cfuText,
-                        onValueChange = { if (it.length <= 2) cfuText = it.filter(Char::isDigit) },
-                        label = { Text(stringResource(R.string.common_cfu)) },
-                        placeholder = {
-                            Text(
-                                stringResource(R.string.common_optional),
-                                color = grayColor
-                            )
-                        },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        singleLine = true,
-                        isError = cfu != null && cfu <= 0,
-                        supportingText = if (cfu != null && cfu <= 0) {
-                            { Text(stringResource(R.string.hyp_cfu_invalid)) }
-                        } else null,
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(12.dp),
-                    )
-                }
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
         }
+
+        Spacer(modifier = Modifier.height(16.dp))
     }
 }
 

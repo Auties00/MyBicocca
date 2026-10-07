@@ -2,20 +2,12 @@ package it.attendance100.mybicocca.ui.screen.elearning.subscreen.addCourse
 
 import androidx.activity.compose.PredictiveBackHandler
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedContentTransitionScope
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.SeekableTransitionState
-import androidx.compose.animation.core.Transition
 import androidx.compose.animation.core.rememberTransition
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.shrinkHorizontally
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
@@ -23,7 +15,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -38,11 +29,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.outlined.CloudOff
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -50,7 +37,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -61,7 +47,6 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -75,9 +60,12 @@ import it.attendance100.mybicocca.domain.model.elearning.catalog.CatalogSection
 import it.attendance100.mybicocca.domain.model.elearning.catalog.ElearningCatalog
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.ui.component.button.RetryButton
-import it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet
+import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
 import it.attendance100.mybicocca.ui.component.modal.SheetLoadingIndicator
 import it.attendance100.mybicocca.ui.component.modal.SheetMessage
+import it.attendance100.mybicocca.ui.component.modal.SheetPager
+import it.attendance100.mybicocca.ui.navigation.DisposableEffectOnPop
+import it.attendance100.mybicocca.ui.navigation.scene.LocalSheetDismissControl
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.addCourse.component.AddCourseSearchField
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.addCourse.component.AreaTile
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.addCourse.component.AreaTileVisual
@@ -99,22 +87,18 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.filter
 
 /**
- * Add-course modal: browses the university's public course catalog and self-enrols into a
- * course. Modelled on the app's multi-state sheets (see AccountSwitcherSheet): a
- * [PredictiveModalBottomSheet] gives the scrub-to-close gesture for free, while an inner
- * seekable transition turns the catalog stack into horizontally-scrubbable pages. The system
- * back gesture pops one level (scrubbed) when deep, and closes the sheet when at the root.
- * There is no explicit close button — the drag handle and the back gesture are the two ways
- * out. The root page hosts its own loading/error/content states in place, so the catalog
- * landing never reads as a page change.
+ * Add-course sheet page: browses the university's public course catalog and self-enrols into a
+ * course. The catalog stack is a [SheetPager]: each level is a page with its title and
+ * breadcrumb in the pinned header, and the system back gesture pops one level (scrubbed) when
+ * deep and closes the sheet when at the root. There is no explicit close button — the drag
+ * handle and the back gesture are the two ways out. The root page hosts its own
+ * loading/error/content states in place, so the catalog landing never reads as a page change.
  *
  * Enrol outcomes and missing-session events reset the browse stack, dismiss the sheet, and are
  * reported to the host through [onEnrolSucceeded], [onEnrolFailed], and [onRequireSignIn].
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddCourseSheet(
-    onDismiss: () -> Unit,
+fun AddCoursePage(
     onEnrolFailed: (Throwable) -> Unit,
     onEnrolSucceeded: (CourseId, String) -> Unit,
     onRequireSignIn: () -> Unit,
@@ -135,78 +119,74 @@ fun AddCourseSheet(
 
     LaunchedEffect(Unit) { viewModel.ensureCatalogLoaded() }
 
+    val dismissControl = LocalSheetDismissControl.current
     val focusManager = LocalFocusManager.current
     val dismissInput: () -> Unit = { focusManager.clearFocus(force = true) }
+    val closeSheet: () -> Unit = {
+        dismissInput()
+        viewModel.resetStack()
+        dismissControl?.dismiss()
+    }
 
     LaunchedEffect(viewModel) {
         viewModel.oneShotEvents.collectLatest { event ->
             when (event) {
                 is AddCourseOneShotEvent.EnrolFailed -> {
-                    dismissInput()
-                    viewModel.resetStack()
+                    closeSheet()
                     onEnrolFailed(event.cause)
-                    onDismiss()
                 }
 
                 is AddCourseOneShotEvent.EnrolSucceeded -> {
-                    dismissInput()
-                    viewModel.resetStack()
+                    closeSheet()
                     onEnrolSucceeded(event.courseId, event.courseName)
-                    onDismiss()
                 }
 
-                AddCourseOneShotEvent.RequireSignIn -> onRequireSignIn()
+                AddCourseOneShotEvent.RequireSignIn -> {
+                    closeSheet()
+                    onRequireSignIn()
+                }
             }
         }
     }
 
-    PredictiveModalBottomSheet(
-        onDismiss = {
-            dismissInput()
-            viewModel.resetStack()
-            onDismiss()
-        },
-        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-        sizeDuration = 500,
-    ) { _, _ ->
-        ProvideAreaAccentPalette {
-            AddCourseContent(
-                catalog = catalog,
-                catalogFailed = catalogFailed,
-                stack = stack,
-                searchQuery = searchQuery,
-                searchResults = searchResults,
-                enrolment = enrolment,
-                onRetryCatalog = viewModel::retryCatalog,
-                onSetSearch = viewModel::setSearch,
-                onOpen = { entry -> dismissInput(); viewModel.open(entry) },
-                onOpenPath = { entries -> dismissInput(); viewModel.openPath(entries) },
-                onBack = { dismissInput(); viewModel.back() },
-                onEnrol = { course -> dismissInput(); viewModel.enrol(course.id, course.name) },
-                onUserScroll = dismissInput,
-            )
-        }
+    DisposableEffectOnPop { viewModel.resetStack() }
+
+    ProvideAreaAccentPalette {
+        AddCourseContent(
+            catalog = catalog,
+            catalogFailed = catalogFailed,
+            stack = stack,
+            searchQuery = searchQuery,
+            searchResults = searchResults,
+            enrolment = enrolment,
+            onRetryCatalog = viewModel::retryCatalog,
+            onSetSearch = viewModel::setSearch,
+            onOpen = { entry -> dismissInput(); viewModel.open(entry) },
+            onOpenPath = { entries -> dismissInput(); viewModel.openPath(entries) },
+            onBack = { dismissInput(); viewModel.back() },
+            onEnrol = { course -> dismissInput(); viewModel.enrol(course.id, course.name) },
+            onUserScroll = dismissInput,
+        )
     }
 }
 
 /**
- * Sheet body: breadcrumb header, scoped search field, and a stable-height page panel. The pages
- * slide horizontally inside that panel, so the morph reads as a true page transition with no
- * vertical jump between levels of different lengths.
+ * Page body: a [SheetPager] over the catalog levels, each page a scoped search field above a
+ * stable-height panel, so the push between levels of different lengths never jumps vertically.
+ * The pager's header carries the level title and a subtitle on every level (the root explains
+ * the page, deeper levels show the breadcrumb home-first), keeping a stable two-line height.
  *
- * One seekable transition drives BOTH the title and the page body, so the header text tracks
- * the back-gesture scrub in lockstep with the content. The search-overlay/browse swap is
- * seekable too, so the back gesture scrubs the results away and reveals the page underneath.
- * Back precedence: while searching, clear the search first; otherwise pop one level when deep.
- * At the root with no search, neither handler is enabled, so the host sheet takes the gesture
- * and scrubs itself closed; the two handlers are gated mutually exclusively, so registration
- * order never matters.
+ * The search-overlay/browse swap is its own seekable transition inside the current level's
+ * panel, so the back gesture scrubs the results away and reveals the page underneath. Back
+ * precedence: while searching, clear the search first; otherwise pop one level when deep. At the
+ * root with no search, neither the overlay's handler nor the pager's is enabled, so the host
+ * sheet takes the gesture and scrubs itself closed; the two handlers are gated mutually
+ * exclusively, so registration order never matters.
  *
- * While the catalog loads, the level chain is a placeholder Root and the seekable transition is
- * SEEDED with it: level equality is by key ("root"), so when the real catalog lands there is no
- * page transition — the root page just crossfades its own loading state into content.
- * Consequence: the transition can keep rendering the captured placeholder instance, so the root
- * page must read its sections from LIVE state, never from the level object.
+ * While the catalog loads, the level chain is a placeholder Root and the pager is SEEDED with it:
+ * level identity is by key ("root"), so when the real catalog lands there is no page transition —
+ * the root page just crossfades its own loading state into content. The root page still reads its
+ * sections from LIVE state, never from the level object.
  */
 @Composable
 private fun AddCourseContent(
@@ -231,18 +211,11 @@ private fun AddCourseContent(
         catalogValue?.let { buildCatalogLevels(it, stack) } ?: listOf(placeholderRoot)
     }
     val currentLevel = levels.last()
-    val depth = currentLevel.depth
+    val parentLevel = levels.getOrNull(levels.size - 2)
     val searchActive = searchQuery.isNotBlank()
 
     val configuration = LocalConfiguration.current
     val pageHeight = configuration.screenHeightDp.dp * 0.60f
-
-    val levelSeek = remember { SeekableTransitionState<CatalogLevel>(placeholderRoot) }
-    val levelTransition = rememberTransition(levelSeek, label = "catalogLevel")
-
-    LaunchedEffect(currentLevel) {
-        if (levelSeek.targetState != currentLevel) levelSeek.animateTo(currentLevel)
-    }
 
     val searchSeek = remember { SeekableTransitionState(false) }
     val searchTransition = rememberTransition(searchSeek, label = "searchVsBrowse")
@@ -263,75 +236,74 @@ private fun AddCourseContent(
         }
     }
 
-    val levelsState = rememberUpdatedState(levels)
-    PredictiveBackHandler(enabled = depth > 0 && !searchActive) { progress ->
-        val chain = levelsState.value
-        val parent = chain.getOrNull(chain.size - 2) ?: chain.first()
-        val current = chain.last()
-        try {
-            progress.collect { event -> levelSeek.seekTo(event.progress, targetState = parent) }
-            levelSeek.animateTo(parent)
-            onBack()
-        } catch (_: CancellationException) {
-            levelSeek.animateTo(current)
-        }
-    }
+    val addCourseTitle = stringResource(R.string.elearning_add_course)
+    SheetPager(
+        page = currentLevel,
+        depth = { it.depth },
+        backTo = if (searchActive) null else parentLevel,
+        onBack = onBack,
+        key = { it.key },
+        header = { level ->
+            when (level) {
+                is CatalogLevel.Root -> SheetHeaderSpec(
+                    title = stringResource(R.string.catalog_add_course),
+                    subtitle = stringResource(R.string.elearning_select_area),
+                )
 
-    Column(modifier = Modifier.fillMaxWidth()) {
-        Header(
-            levelTransition = levelTransition,
-            showBack = depth > 0,
-            onBack = onBack,
-        )
-        AddCourseSearchField(
-            query = searchQuery,
-            placeholder = searchPlaceholder(depth),
-            onQueryChange = onSetSearch,
-            modifier = Modifier
-                .testTag(AddCourseTestTags.SEARCH_FIELD)
-                .padding(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 6.dp),
-        )
+                is CatalogLevel.Inside -> SheetHeaderSpec(
+                    title = level.title,
+                    subtitle = (listOf(addCourseTitle) + level.ancestors).joinToString(separator = "  ›  "),
+                )
+            }
+        },
+    ) { level ->
+        Column(modifier = Modifier.fillMaxWidth()) {
+            AddCourseSearchField(
+                query = searchQuery,
+                placeholder = searchPlaceholder(level.depth),
+                onQueryChange = onSetSearch,
+                modifier = Modifier
+                    .testTag(AddCourseTestTags.SEARCH_FIELD)
+                    .padding(start = 20.dp, end = 20.dp, top = 10.dp, bottom = 6.dp),
+            )
 
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(pageHeight)
-                .padding(horizontal = 16.dp)
-                .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
-        ) {
-            searchTransition.AnimatedContent(
-                modifier = Modifier.fillMaxSize(),
-                transitionSpec = { fadeIn(tween(220)) togetherWith fadeOut(tween(220)) },
-                contentKey = { it },
-            ) { searching ->
-                val haptic = rememberHapticManager()
-                if (searching) {
-                    SearchResults(
-                        rows = searchResults,
-                        enrolment = enrolment,
-                        insideAccent = (currentLevel as? CatalogLevel.Inside)?.accent,
-                        onOpenCategory = { row, accent ->
-                            haptic.tap()
-                            onOpenPath(
-                                row.path.map { node ->
-                                    CatalogStackEntry(
-                                        node = node,
-                                        areaTileId = row.areaTileId,
-                                        accent = accent,
-                                    )
-                                },
-                            )
-                        },
-                        onEnrol = { haptic.tap(); onEnrol(it) },
-                        onUserScroll = onUserScroll,
-                        modifier = Modifier.fillMaxSize(),
-                    )
-                } else {
-                    levelTransition.AnimatedContent(
-                        modifier = Modifier.fillMaxSize(),
-                        transitionSpec = { pageTransition(forward = isForward()) },
-                        contentKey = { it.key },
-                    ) { level ->
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(pageHeight)
+                    .padding(horizontal = 16.dp)
+                    .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
+            ) {
+                searchTransition.AnimatedContent(
+                    modifier = Modifier.fillMaxSize(),
+                    transitionSpec = { fadeIn(tween(220)) togetherWith fadeOut(tween(220)) },
+                    contentKey = { it },
+                ) { searching ->
+                    val haptic = rememberHapticManager()
+                    // Only the level on screen hosts the results; a level sliding in or out of a
+                    // page change keeps showing its own content.
+                    if (searching && level.key == currentLevel.key) {
+                        SearchResults(
+                            rows = searchResults,
+                            enrolment = enrolment,
+                            insideAccent = (level as? CatalogLevel.Inside)?.accent,
+                            onOpenCategory = { row, accent ->
+                                haptic.tap()
+                                onOpenPath(
+                                    row.path.map { node ->
+                                        CatalogStackEntry(
+                                            node = node,
+                                            areaTileId = row.areaTileId,
+                                            accent = accent,
+                                        )
+                                    },
+                                )
+                            },
+                            onEnrol = { haptic.tap(); onEnrol(it) },
+                            onUserScroll = onUserScroll,
+                            modifier = Modifier.fillMaxSize(),
+                        )
+                    } else {
                         when (level) {
                             is CatalogLevel.Root -> RootPage(
                                 sections = catalogValue?.sections,
@@ -355,74 +327,6 @@ private fun AddCourseContent(
                         }
                     }
                 }
-            }
-        }
-    }
-}
-
-/**
- * Sheet header: a back arrow that expands in below the root, and a title/subtitle block that
- * slides with the level transition. Every level carries a subtitle so the header keeps a stable
- * two-line height: the root explains the page, deeper levels show the breadcrumb home-first.
- */
-@Composable
-private fun Header(
-    levelTransition: Transition<CatalogLevel>,
-    showBack: Boolean,
-    onBack: () -> Unit,
-) {
-    val scheme = MaterialTheme.colorScheme
-    val haptic = rememberHapticManager()
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(start = 8.dp, end = 20.dp, top = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        AnimatedVisibility(
-            visible = showBack,
-            enter = fadeIn() + expandHorizontally(),
-            exit = fadeOut() + shrinkHorizontally(),
-        ) {
-            IconButton(onClick = { haptic.tap(); onBack() }) {
-                Icon(
-                    imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                    contentDescription = stringResource(R.string.elearning_back),
-                    tint = scheme.onSurface,
-                )
-            }
-        }
-        levelTransition.AnimatedContent(
-            modifier = Modifier.weight(1f),
-            transitionSpec = { titleTransition(forward = isForward()) },
-            contentKey = { it.key },
-        ) { level ->
-            Column(modifier = Modifier.padding(start = if (showBack) 4.dp else 12.dp)) {
-                Text(
-                    text = if (level is CatalogLevel.Root) stringResource(R.string.catalog_add_course) else level.title,
-                    color = scheme.onSurface,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = (-0.6).sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                val subtitle = when (level) {
-                    is CatalogLevel.Root -> stringResource(R.string.elearning_select_area)
-                    is CatalogLevel.Inside ->
-                        (listOf(stringResource(R.string.elearning_add_course)) + level.ancestors).joinToString(
-                            separator = "  ›  "
-                        )
-                }
-                Text(
-                    text = subtitle,
-                    color = scheme.onSurfaceVariant,
-                    fontSize = 11.5.sp,
-                    letterSpacing = 0.1.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(top = 2.dp),
-                )
             }
         }
     }
@@ -760,26 +664,4 @@ private fun customAreaImage(nameLower: String): Int? = when {
     nameLower.contains("formazione tutor") -> R.drawable.elearning_formazionetutor
     nameLower.contains("idoneità linguistica") || nameLower.contains("idoneita' linguistica") -> R.drawable.elearning_idoling
     else -> null
-}
-
-/** Forward = navigating deeper (open); reverse = popping back. */
-private fun AnimatedContentTransitionScope<CatalogLevel>.isForward(): Boolean =
-    targetState.depth >= initialState.depth
-
-private fun pageTransition(forward: Boolean): ContentTransform {
-    val dur = 320
-    val enter = slideInHorizontally(tween(dur)) { w -> if (forward) w else -w } + fadeIn(tween(dur))
-    val exit = slideOutHorizontally(tween(dur)) { w -> if (forward) -w else w } + fadeOut(tween(220))
-    return enter togetherWith exit
-}
-
-/**
- * Title counterpart of [pageTransition]: a fifth of the travel, so the header tracks the page
- * without duplicating its motion.
- */
-private fun titleTransition(forward: Boolean): ContentTransform {
-    val dur = 300
-    val enter = slideInHorizontally(tween(dur)) { w -> (if (forward) w else -w) / 5 } + fadeIn(tween(dur))
-    val exit = slideOutHorizontally(tween(dur)) { w -> (if (forward) -w else w) / 5 } + fadeOut(tween(180))
-    return enter togetherWith exit
 }

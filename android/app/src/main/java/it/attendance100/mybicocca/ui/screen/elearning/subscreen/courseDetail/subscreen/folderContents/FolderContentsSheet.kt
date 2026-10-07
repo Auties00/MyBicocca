@@ -49,7 +49,7 @@ fun FolderContentsSheet(
     onOpenContent: (content: ModuleContent, forceChooser: Boolean) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    PredictiveModalBottomSheet(onDismiss = onDismiss) { _, _ ->
+    PredictiveModalBottomSheet(onDismiss = onDismiss) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()

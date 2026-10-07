@@ -36,7 +36,7 @@ fun QualityPickerSheet(
     onDismiss: () -> Unit,
 ) {
     val haptic = rememberHapticManager()
-    it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet(onDismiss = onDismiss) { _, _ ->
+    it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet(onDismiss = onDismiss) {
         Column(modifier = Modifier
             .fillMaxWidth()
             .padding(bottom = 16.dp)) {

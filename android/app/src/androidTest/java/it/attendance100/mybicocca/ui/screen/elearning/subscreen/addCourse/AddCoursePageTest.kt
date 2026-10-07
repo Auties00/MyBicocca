@@ -34,14 +34,14 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * State and behaviour coverage for the add-course catalog browser. The sheet is driven by a real
+ * State and behaviour coverage for the add-course catalog browser. The page is driven by a real
  * [AddCourseViewModel] over MockK-faked use cases — the same construction the Wave 1
  * `AddCourseViewModelTest` uses. The root catalog landing is stubbed to its loading, error and
  * content states; the enrol behaviour pre-seeds the browse stack so an inside level lists an
  * enrollable course, then taps its enrol affordance and verifies the enrol use case fires and the
  * row advances out of the idle state. Anchored on [AddCourseTestTags] and wrapped in the shared
  * `setBicoccaContent` harness, which installs the app-wide CompositionLocals (HapticManager,
- * AppSnackbar controller, DeviceType) the sheet reads alongside the production theme. The sheet
+ * AppSnackbar controller, DeviceType) the page reads alongside the production theme. The page
  * receives an explicit ViewModel, bypassing its `hiltViewModel()` default.
  *
  * No `MainDispatcherRule`: like [AppLockScreenTest], this drives a real ViewModel through the
@@ -51,7 +51,7 @@ import org.junit.runner.RunWith
  * Letting the looper drive both keeps a tap's resulting coroutine ordered behind `waitForIdle()`.
  */
 @RunWith(AndroidJUnit4::class)
-class AddCourseSheetTest {
+class AddCoursePageTest {
 
     @get:Rule
     val compose = createComposeRule()
@@ -111,10 +111,9 @@ class AddCourseSheetTest {
         enrolIntoCourse = enrol,
     )
 
-    private fun setSheet(viewModel: AddCourseViewModel) {
+    private fun setPage(viewModel: AddCourseViewModel) {
         compose.setBicoccaContent {
-            AddCourseSheet(
-                onDismiss = {},
+            AddCoursePage(
                 onEnrolFailed = {},
                 onEnrolSucceeded = { _, _ -> },
                 onRequireSignIn = {},
@@ -129,7 +128,7 @@ class AddCourseSheetTest {
         val loader = mockk<LoadElearningCatalogUseCase>()
         coEvery { loader.invoke() } coAnswers { gate.await() }
         val vm = build(loadCatalog = loader)
-        setSheet(vm)
+        setPage(vm)
 
         compose.onNodeWithTag(AddCourseTestTags.ROOT_STATE_LOADING).assertIsDisplayed()
     }
@@ -139,7 +138,7 @@ class AddCourseSheetTest {
         val loader = mockk<LoadElearningCatalogUseCase>()
         coEvery { loader.invoke() } throws java.io.IOException("missing index")
         val vm = build(loadCatalog = loader)
-        setSheet(vm)
+        setPage(vm)
 
         compose.onNodeWithTag(AddCourseTestTags.ROOT_STATE_ERROR).assertIsDisplayed()
         compose.onNodeWithTag(AddCourseTestTags.RETRY_BUTTON).assertExists()
@@ -148,7 +147,7 @@ class AddCourseSheetTest {
     @Test
     fun root_shows_the_area_grid_once_the_catalog_loads() {
         val vm = build()
-        setSheet(vm)
+        setPage(vm)
 
         compose.onNodeWithTag(AddCourseTestTags.ROOT_STATE_CONTENT).assertIsDisplayed()
     }
@@ -157,7 +156,7 @@ class AddCourseSheetTest {
     fun an_inside_level_lists_an_enrollable_course_row() {
         val vm = build()
         vm.open(stackEntry)
-        setSheet(vm)
+        setPage(vm)
 
         compose.onNodeWithTag(AddCourseTestTags.courseRow(5)).assertIsDisplayed()
     }
@@ -169,7 +168,7 @@ class AddCourseSheetTest {
         coEvery { enrol.invoke(accountId, CourseId(5), any()) } coAnswers { inFlight.await() }
         val vm = build(enrol = enrol)
         vm.open(stackEntry)
-        setSheet(vm)
+        setPage(vm)
 
         compose.waitUntil(timeoutMillis = 5000) {
             compose.onAllNodesWithTag(AddCourseTestTags.enrolButton(5))

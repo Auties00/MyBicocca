@@ -1,6 +1,5 @@
 package it.attendance100.mybicocca.ui.screen.profile.subscreen.examsByYear
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -50,9 +49,9 @@ import it.attendance100.mybicocca.domain.model.transcript.PrerequisiteStatus
 import it.attendance100.mybicocca.domain.model.transcript.TranscriptRow
 import it.attendance100.mybicocca.domain.model.transcript.TranscriptRowState
 import it.attendance100.mybicocca.ui.component.input.SegmentedSwitch
-import it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet
-import it.attendance100.mybicocca.ui.component.modal.SheetPagerHeader
-import it.attendance100.mybicocca.ui.component.modal.sheetPageTransform
+import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
+import it.attendance100.mybicocca.ui.component.modal.SheetPager
+import it.attendance100.mybicocca.ui.navigation.scene.LocalSheetDismissControl
 import it.attendance100.mybicocca.ui.screen.profile.subscreen.courseDetail.CourseDetailPage
 import it.attendance100.mybicocca.ui.screen.registry.state.RegistryBadgeTone
 import it.attendance100.mybicocca.ui.screen.registry.theme.registryBadgeTone
@@ -63,7 +62,7 @@ enum class ExamValueMode { Grade, Credits }
 private val PassedGreen = Color(0xFF1FA84B)
 
 /**
- * Libretto modal: a bottom sheet hosting a pinned morphing header over a two-level body.
+ * Libretto sheet page: a [SheetPager] (pinned morphing header over a two-level body).
  * The root level pages between the grades (Voti) and credits (Crediti) views of the exams
  * grouped by study-plan year — passed exams first within each year — with the segmented
  * switch and swipes driving the same pager. Tapping a course pushes [CourseDetailPage] in
@@ -71,18 +70,18 @@ private val PassedGreen = Color(0xFF1FA84B)
  *
  * The header title and switch follow [PagerState.targetPage] so they track a swipe as soon
  * as it commits rather than when the page settles. System back walks the detail level up
- * to the list before dismissing the sheet, and the in-detail appelli action closes both
- * the detail page and the modal before driving [onOpenAppelli], so the back stack lands on
- * the appelli view.
+ * to the list before dismissing the sheet, and the in-detail appelli action closes the
+ * sheet before driving [onOpenAppelli], so the appelli sheet replaces it rather than
+ * stacking above it.
  */
 @Composable
-fun ExamsByYearSheet(
+fun ExamsByYearPage(
     rows: List<TranscriptRow>,
     initialMode: ExamValueMode,
     prerequisiteStatuses: Map<Long, PrerequisiteStatus>,
     onOpenAppelli: (courseKey: String) -> Unit,
-    onDismiss: () -> Unit,
 ) {
+    val dismissControl = LocalSheetDismissControl.current
     var detailRow by remember { mutableStateOf<TranscriptRow?>(null) }
 
     val byYear = rows
@@ -95,78 +94,65 @@ fun ExamsByYearSheet(
         .groupBy { it.courseYear }
         .toSortedMap()
 
-    PredictiveModalBottomSheet(
-        onDismiss = onDismiss,
-        sizeDuration = 500,
-    ) { _, _ ->
-        val pagerState = rememberPagerState(
-            initialPage = if (initialMode == ExamValueMode.Grade) 0 else 1,
-        ) { 2 }
-        val mode = if (pagerState.targetPage == 0) ExamValueMode.Grade else ExamValueMode.Credits
-        val current = detailRow
+    val pagerState = rememberPagerState(
+        initialPage = if (initialMode == ExamValueMode.Grade) 0 else 1,
+    ) { 2 }
+    val mode = if (pagerState.targetPage == 0) ExamValueMode.Grade else ExamValueMode.Credits
+    val current = detailRow
+    val page: ExamsPage = current?.let { ExamsPage.Detail(it) } ?: ExamsPage.Exams
 
-        val seekableState =
-            remember { androidx.compose.animation.core.SeekableTransitionState(current) }
-        val transition = androidx.compose.animation.core.rememberTransition(
-            seekableState,
-            label = "exams_sheet_pages"
-        )
-
-        androidx.compose.runtime.LaunchedEffect(current) {
-            if (seekableState.targetState != current) seekableState.animateTo(current)
-        }
-
-        androidx.activity.compose.PredictiveBackHandler(enabled = current != null) { progress ->
-            try {
-                progress.collect { event ->
-                    seekableState.seekTo(
-                        event.progress,
-                        targetState = null
-                    )
-                }
-                seekableState.animateTo(null)
-                detailRow = null
-            } catch (_: kotlinx.coroutines.CancellationException) {
-                seekableState.animateTo(current)
+    SheetPager(
+        page = page,
+        depth = { if (it is ExamsPage.Detail) 1 else 0 },
+        backTo = if (current != null) ExamsPage.Exams else null,
+        onBack = { detailRow = null },
+        key = { target ->
+            when (target) {
+                ExamsPage.Exams -> -1L
+                is ExamsPage.Detail -> target.row.id
             }
-        }
+        },
+        header = { target ->
+            when (target) {
+                ExamsPage.Exams -> SheetHeaderSpec(
+                    title = if (mode == ExamValueMode.Grade) {
+                        stringResource(R.string.profile_exams_passed)
+                    } else {
+                        stringResource(R.string.profile_cfu_acquired)
+                    },
+                )
 
-        Column {
-            SheetPagerHeader(
-                depth = if (current == null) 0 else 1,
-                title = when {
-                    current != null -> current.activityName
-                    mode == ExamValueMode.Grade -> stringResource(R.string.profile_exams_passed)
-                    else -> stringResource(R.string.profile_cfu_acquired)
-                },
-                subtitle = current?.activityCode?.takeIf { it.isNotBlank() },
-                onBack = if (current != null) ({ detailRow = null }) else null,
+                is ExamsPage.Detail -> SheetHeaderSpec(
+                    title = target.row.activityName,
+                    subtitle = target.row.activityCode?.takeIf { it.isNotBlank() },
+                )
+            }
+        },
+    ) { target ->
+        when (target) {
+            ExamsPage.Exams -> ExamsListPage(
+                byYear = byYear,
+                mode = mode,
+                pagerState = pagerState,
+                prerequisiteStatuses = prerequisiteStatuses,
+                onExamClick = { detailRow = it },
             )
-            transition.AnimatedContent(
-                transitionSpec = { sheetPageTransform(forward = targetState != null) },
-                contentKey = { it?.id ?: -1L },
-            ) { row ->
-                if (row == null) {
-                    ExamsListPage(
-                        byYear = byYear,
-                        mode = mode,
-                        pagerState = pagerState,
-                        prerequisiteStatuses = prerequisiteStatuses,
-                        onExamClick = { detailRow = it },
-                    )
-                } else {
-                    CourseDetailPage(
-                        row = row,
-                        onOpenAppelli = { courseKey ->
-                            detailRow = null
-                            onDismiss()
-                            onOpenAppelli(courseKey)
-                        },
-                    )
-                }
-            }
+
+            is ExamsPage.Detail -> CourseDetailPage(
+                row = target.row,
+                onOpenAppelli = { courseKey ->
+                    detailRow = null
+                    dismissControl?.dismiss()
+                    onOpenAppelli(courseKey)
+                },
+            )
         }
     }
+}
+
+private sealed interface ExamsPage {
+    data object Exams : ExamsPage
+    data class Detail(val row: TranscriptRow) : ExamsPage
 }
 
 /**

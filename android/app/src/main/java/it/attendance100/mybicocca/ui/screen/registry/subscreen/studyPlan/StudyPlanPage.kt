@@ -1,7 +1,6 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlan
 
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -75,12 +74,12 @@ import it.attendance100.mybicocca.ui.component.feedback.rememberMinDurationLoadi
 import it.attendance100.mybicocca.ui.component.modal.SheetLoadingIndicator
 import it.attendance100.mybicocca.ui.component.modal.SheetMessage
 import it.attendance100.mybicocca.ui.component.modal.SheetOutcome
-import it.attendance100.mybicocca.ui.component.modal.SheetPagerHeader
+import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
+import it.attendance100.mybicocca.ui.component.modal.SheetPager
 import it.attendance100.mybicocca.ui.component.modal.SheetResultPage
-import it.attendance100.mybicocca.ui.component.modal.sheetBodyGestureBarrier
-import it.attendance100.mybicocca.ui.component.modal.sheetPageTransform
 import it.attendance100.mybicocca.ui.navigation.scene.LocalSheetDismissControl
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlan.state.StudyPlanEvent
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlanEdit.EditWizardHeader
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlanEdit.StudyPlanEditPage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlanEdit.StudyPlanEditViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlanEdit.editWizardHeader
@@ -92,13 +91,11 @@ import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * "Percorso e piano" as a single sheet entry, in the same modal language as the maps
- * "Edifici" sheet: a pinned morphing header over a multi-level body pager — year
+ * "Edifici" sheet: a [SheetPager] (pinned morphing header over a multi-level body) — year
  * directory, per-year course list, the plan-compiler wizard, the "uscire senza inviare?"
  * confirm, and a print/submit result page — with a connected modifica/stampa action
- * footer under the directory. BottomSheetSceneStrategy owns the sheet container; this
- * keeps its own page state machine and morphing header. Swipes on the pages scroll their
- * content, never the sheet: the header above (and the drag handle) is the only
- * swipe-to-dismiss surface.
+ * footer under the directory. ModalSceneStrategy owns the sheet container; this keeps its
+ * own page state machine.
  *
  * The ViewModel is shell-scoped and outlives the sheet: re-opening shows the cached
  * snapshot instantly while a background refresh is kicked. The header subtitle waits for
@@ -118,8 +115,8 @@ import kotlin.time.Duration.Companion.milliseconds
  * be swiped away; a result page is always freely dismissable since the operation is
  * over. The confirm page carries what the user was trying to do (closing just the
  * editor vs dismissing the whole sheet) so Esci finishes that exact intent and discards
- * the wizard's progress. System back walks the pager up one level before dismissing the
- * sheet; the wizard registers its own deeper handler (internal step-back + exit confirm)
+ * the wizard's progress. System back walks the pager up one level (predictively, header
+ * and body in lockstep) before dismissing the sheet; the wizard registers its own deeper handler (internal step-back + exit confirm)
  * that wins while enabled, and the header's back routes through the back dispatcher so
  * it shares the exact system-back semantics.
  *
@@ -181,13 +178,11 @@ fun StudyPlanPage(
         editWizardHeader(it, fallbackSubtitle = if (loaded) headerSubtitle(plan, path) else null)
     }
     val activeYear = selectedYear?.takeIf { coursesByYear.containsKey(it) }
-    val page = when {
-        outcome != null -> PlanSheetPage.Result
-        pendingExit != null -> PlanSheetPage.ConfirmExit
-        editRequest != null -> PlanSheetPage.Edit
-        activeYear != null -> PlanSheetPage.Year(activeYear)
-        else -> PlanSheetPage.Root
-    }
+    // Each layer sits over the one below it, which is where a back step from it lands.
+    val browsePage = if (activeYear != null) PlanSheetPage.Year(activeYear) else PlanSheetPage.Root
+    val editPage = if (editRequest != null) PlanSheetPage.Edit else browsePage
+    val flowPage = if (pendingExit != null) PlanSheetPage.ConfirmExit else editPage
+    val page = if (outcome != null) PlanSheetPage.Result else flowPage
 
     val control = LocalSheetDismissControl.current
     val editing = rememberUpdatedState(editRequest != null)
@@ -229,38 +224,24 @@ fun StudyPlanPage(
             }
         }
 
-        val seekableState =
-            remember { androidx.compose.animation.core.SeekableTransitionState(page) }
-        val transition = androidx.compose.animation.core.rememberTransition(
-            seekableState,
-            label = "study_plan_pages"
-        )
+        val backDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
 
-        LaunchedEffect(page) {
-            if (seekableState.targetState != page) {
-                seekableState.animateTo(page)
-            }
-        }
+        // While the editor slides out its ViewModel is already gone; keep its header readable.
+        val lastEditHeader = remember { arrayOf<EditWizardHeader?>(null) }
+        if (editHeader != null) lastEditHeader[0] = editHeader
+        val shownEditHeader = editHeader ?: lastEditHeader[0]
 
-        androidx.activity.compose.PredictiveBackHandler(enabled = page != PlanSheetPage.Root) { progress ->
-            try {
-                val fallback = when (page) {
-                    PlanSheetPage.Result -> if (pendingExit != null) PlanSheetPage.ConfirmExit else if (editRequest != null) PlanSheetPage.Edit else if (activeYear != null) PlanSheetPage.Year(
-                        activeYear
-                    ) else PlanSheetPage.Root
-
-                    PlanSheetPage.ConfirmExit -> if (editRequest != null) PlanSheetPage.Edit else if (activeYear != null) PlanSheetPage.Year(
-                        activeYear
-                    ) else PlanSheetPage.Root
-
-                    PlanSheetPage.Edit -> if (activeYear != null) PlanSheetPage.Year(activeYear) else PlanSheetPage.Root
-                    is PlanSheetPage.Year -> PlanSheetPage.Root
-                    PlanSheetPage.Root -> PlanSheetPage.Root
-                }
-                progress.collect { event ->
-                    seekableState.seekTo(event.progress, targetState = fallback)
-                }
-                seekableState.animateTo(fallback)
+        SheetPager(
+            page = page,
+            depth = { it.depth },
+            backTo = when (page) {
+                PlanSheetPage.Result -> flowPage
+                PlanSheetPage.ConfirmExit -> editPage
+                PlanSheetPage.Edit -> browsePage
+                is PlanSheetPage.Year -> PlanSheetPage.Root
+                PlanSheetPage.Root -> null
+            },
+            onBack = {
                 when {
                     outcome != null -> outcome = null
                     pendingExit != null -> pendingExit = null
@@ -271,131 +252,113 @@ fun StudyPlanPage(
 
                     else -> selectedYear = null
                 }
-            } catch (_: kotlinx.coroutines.CancellationException) {
-                seekableState.animateTo(page)
-            }
-        }
-        val backDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
-
-        Column(modifier = Modifier.testTag(StudyPlanTestTags.ROOT)) {
-            SheetPagerHeader(
-                depth = when (page) {
-                    PlanSheetPage.Root -> 0
-                    is PlanSheetPage.Year, PlanSheetPage.Edit -> 1
-                    PlanSheetPage.ConfirmExit -> 2
-                    PlanSheetPage.Result -> 1
-                },
-                title = when (page) {
-                    PlanSheetPage.Root -> stringResource(R.string.studyplan_path_title)
-                    is PlanSheetPage.Year -> page.year.label()
-                    PlanSheetPage.Edit -> editHeader?.title ?: stringResource(R.string.studyplan_edit_path)
-                    PlanSheetPage.ConfirmExit -> stringResource(R.string.studyplan_exit_confirm_title)
-                    PlanSheetPage.Result -> ""
-                },
-                subtitle = when (page) {
-                    PlanSheetPage.Root -> if (loaded) headerSubtitle(plan, path) else null
-                    is PlanSheetPage.Year -> yearSummary(coursesByYear[page.year].orEmpty())
-                    PlanSheetPage.Edit -> editHeader?.subtitle
-                    PlanSheetPage.ConfirmExit -> stringResource(R.string.studyplan_edit_path)
-                    PlanSheetPage.Result -> null
-                },
-                onBack = when (page) {
-                    PlanSheetPage.Root -> null
-                    is PlanSheetPage.Year -> ({ selectedYear = null })
-                    PlanSheetPage.Edit -> ({ backDispatcher?.onBackPressed() })
-                    PlanSheetPage.ConfirmExit -> ({ pendingExit = null })
-                    PlanSheetPage.Result -> null
-                },
-            )
-            transition.AnimatedContent(
-                modifier = Modifier.sheetBodyGestureBarrier(),
-                transitionSpec = {
-                    sheetPageTransform(forward = targetState.depth >= initialState.depth)
-                },
-                contentKey = { target ->
-                    when (target) {
-                        PlanSheetPage.Root -> "root"
-                        is PlanSheetPage.Year -> "year_${target.year.value}"
-                        PlanSheetPage.Edit -> "edit"
-                        PlanSheetPage.ConfirmExit -> "confirm_exit"
-                        PlanSheetPage.Result -> "result"
-                    }
-                },
-            ) { target ->
+            },
+            modifier = Modifier.testTag(StudyPlanTestTags.ROOT),
+            key = { target ->
                 when (target) {
-                    PlanSheetPage.Root -> SheetBody(
-                        loaded = loaded,
-                        plan = plan,
-                        coursesByYear = coursesByYear,
-                        syncStatus = syncStatus,
-                        onRetry = viewModel::refresh,
-                        onYearClick = { selectedYear = it },
-                        editAvailable = editAvailable,
-                        onEdit = {
-                            if (regulationId != null && studentId != null) {
-                                editRequest = StudyPlanEditRequest(
-                                    studentId = studentId,
-                                    choiceRegulationId = regulationId,
-                                    schemaId = plan?.schemaId ?: path?.currentSchemaId ?: 0L,
-                                    planId = plan?.planId ?: 0L,
-                                )
-                            }
-                        },
-                        printing = actionInProgress,
-                        onPrint = viewModel::printPlan,
-                    )
+                    PlanSheetPage.Root -> "root"
+                    is PlanSheetPage.Year -> "year_${target.year.value}"
+                    PlanSheetPage.Edit -> "edit"
+                    PlanSheetPage.ConfirmExit -> "confirm_exit"
+                    PlanSheetPage.Result -> "result"
+                }
+            },
+            header = { target ->
+                SheetHeaderSpec(
+                    title = when (target) {
+                        PlanSheetPage.Root -> stringResource(R.string.studyplan_path_title)
+                        is PlanSheetPage.Year -> target.year.label()
+                        PlanSheetPage.Edit -> shownEditHeader?.title ?: stringResource(R.string.studyplan_edit_path)
+                        PlanSheetPage.ConfirmExit -> stringResource(R.string.studyplan_exit_confirm_title)
+                        PlanSheetPage.Result -> ""
+                    },
+                    subtitle = when (target) {
+                        PlanSheetPage.Root -> if (loaded) headerSubtitle(plan, path) else null
+                        is PlanSheetPage.Year -> yearSummary(coursesByYear[target.year].orEmpty())
+                        PlanSheetPage.Edit -> shownEditHeader?.subtitle
+                        PlanSheetPage.ConfirmExit -> stringResource(R.string.studyplan_edit_path)
+                        PlanSheetPage.Result -> null
+                    },
+                    showBack = target != PlanSheetPage.Result,
+                    // The arrow goes through the dispatcher so the wizard's own handler (step back,
+                    // exit confirm) gets it first, exactly like system back.
+                    onBack = if (target == PlanSheetPage.Edit) ({ backDispatcher?.onBackPressed() }) else null,
+                )
+            },
+        ) { target ->
+            when (target) {
+                PlanSheetPage.Root -> SheetBody(
+                    loaded = loaded,
+                    plan = plan,
+                    coursesByYear = coursesByYear,
+                    syncStatus = syncStatus,
+                    onRetry = viewModel::refresh,
+                    onYearClick = { selectedYear = it },
+                    editAvailable = editAvailable,
+                    onEdit = {
+                        if (regulationId != null && studentId != null) {
+                            editRequest = StudyPlanEditRequest(
+                                studentId = studentId,
+                                choiceRegulationId = regulationId,
+                                schemaId = plan?.schemaId ?: path?.currentSchemaId ?: 0L,
+                                planId = plan?.planId ?: 0L,
+                            )
+                        }
+                    },
+                    printing = actionInProgress,
+                    onPrint = viewModel::printPlan,
+                )
 
-                    is PlanSheetPage.Year -> YearCoursesPage(
-                        courses = coursesByYear[target.year].orEmpty(),
-                        modifier = Modifier.testTag(StudyPlanTestTags.YEAR_COURSES),
-                    )
+                is PlanSheetPage.Year -> YearCoursesPage(
+                    courses = coursesByYear[target.year].orEmpty(),
+                    modifier = Modifier.testTag(StudyPlanTestTags.YEAR_COURSES),
+                )
 
-                    PlanSheetPage.Edit -> editViewModel?.let { editVm ->
-                        StudyPlanEditPage(
-                            viewModel = editVm,
-                            onExitAttempt = { pendingExit = ExitIntent.CloseEditor },
-                            onSubmitted = { message ->
-                                pendingExit = null
-                                editRequest = null
-                                outcomeTerminal = true
-                                outcome = SheetOutcome.Success(message)
-                                viewModel.refresh()
-                            },
-                            onSubmitFailed = { message ->
-                                outcomeTerminal = true
-                                outcome = SheetOutcome.Error(
-                                    strStudyplanSubmitFailed,
-                                    body = message,
-                                )
-                            },
-                        )
-                    }
-
-                    PlanSheetPage.ConfirmExit -> DiscardChangesPage(
-                        onContinue = { pendingExit = null },
-                        onExit = {
-                            val intent = pendingExit
+                PlanSheetPage.Edit -> editViewModel?.let { editVm ->
+                    StudyPlanEditPage(
+                        viewModel = editVm,
+                        onExitAttempt = { pendingExit = ExitIntent.CloseEditor },
+                        onSubmitted = { message ->
                             pendingExit = null
-                            editViewModel?.reset()
                             editRequest = null
-                            if (intent == ExitIntent.DismissSheet) control?.dismiss()
+                            outcomeTerminal = true
+                            outcome = SheetOutcome.Success(message)
+                            viewModel.refresh()
+                        },
+                        onSubmitFailed = { message ->
+                            outcomeTerminal = true
+                            outcome = SheetOutcome.Error(
+                                strStudyplanSubmitFailed,
+                                body = message,
+                            )
                         },
                     )
+                }
 
-                    PlanSheetPage.Result -> outcome?.let { current ->
-                        SheetResultPage(
-                            outcome = current,
-                            onDismiss = {
-                                if (outcomeTerminal) control?.dismiss() else outcome = null
-                            },
-                            onRetry = if (outcomeTerminal && current is SheetOutcome.Error && editRequest != null) {
-                                { retrying = true }
-                            } else {
-                                null
-                            },
-                            retryInProgress = retrying,
-                        )
-                    }
+                PlanSheetPage.ConfirmExit -> DiscardChangesPage(
+                    onContinue = { pendingExit = null },
+                    onExit = {
+                        val intent = pendingExit
+                        pendingExit = null
+                        editViewModel?.reset()
+                        editRequest = null
+                        if (intent == ExitIntent.DismissSheet) control?.dismiss()
+                    },
+                )
+
+                PlanSheetPage.Result -> outcome?.let { current ->
+                    SheetResultPage(
+                        outcome = current,
+                        onDismiss = {
+                            if (outcomeTerminal) control?.dismiss() else outcome = null
+                        },
+                        onRetry = if (outcomeTerminal && current is SheetOutcome.Error && editRequest != null) {
+                            { retrying = true }
+                        } else {
+                            null
+                        },
+                        retryInProgress = retrying,
+                    )
                 }
             }
         }

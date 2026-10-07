@@ -44,7 +44,7 @@ import it.attendance100.mybicocca.domain.usecase.elearning.course.ObserveCourses
 import it.attendance100.mybicocca.testing.setBicoccaContent
 import it.attendance100.mybicocca.ui.screen.calendar.state.CalendarViewMode
 import it.attendance100.mybicocca.ui.screen.calendar.subscreen.eventDetail.EventDetailContent
-import it.attendance100.mybicocca.ui.screen.calendar.subscreen.eventDetail.EventDetailSheet
+import it.attendance100.mybicocca.ui.screen.calendar.subscreen.eventDetail.EventDetailPage
 import kotlinx.coroutines.flow.flowOf
 import org.junit.Rule
 import org.junit.Test
@@ -59,7 +59,7 @@ import java.time.LocalTime
  * [CalendarViewModel] over MockK-faked use cases (the same construction as
  * [CalendarViewModelTest]), so each data/sync state can be staged and the resulting state
  * marker asserted; the event detail body is exercised directly as the stateless composable
- * [EventDetailContent] it is, sidestepping the modal-sheet window so the action click lands
+ * [EventDetailContent] it is, without the shell's modal sheet so the action click lands
  * synchronously. Tests anchor on [CalendarTestTags] and render under [setBicoccaContent], which
  * installs the app-wide CompositionLocals the screen reads (haptics, snackbar, device type)
  * over the production theme.
@@ -264,15 +264,14 @@ class CalendarScreenTest {
     }
 
     @Test
-    fun event_detail_sheet_renders_the_event_title_and_kind_label() {
+    fun event_detail_page_renders_the_event_title_and_kind_label() {
         compose.setBicoccaContent {
-            EventDetailSheet(
+            EventDetailPage(
                 event = lesson("lesson_1"),
                 elearningCourses = emptyList(),
                 onOpenCourse = mockk(relaxed = true),
                 onOpenAssignment = mockk(relaxed = true),
                 onOpenReservation = mockk(relaxed = true),
-                onDismiss = mockk(relaxed = true),
             )
         }
         compose.waitForIdle()

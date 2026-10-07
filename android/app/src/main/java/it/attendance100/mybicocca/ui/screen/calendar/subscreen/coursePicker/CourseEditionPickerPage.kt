@@ -34,47 +34,39 @@ import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.domain.model.elearning.course.EnrolledCourse
 import it.attendance100.mybicocca.domain.model.elearning.course.courseCode
-import it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet
 
 /**
- * Modal bottom sheet choosing which e-learning edition "Apri corso" should open when an
- * event's activity code resolves to more than one course — the base course plus streams,
- * or several yearly editions. A bold header counting the editions, styled after the
- * profile's "Iscrizioni" sheet, sits over a grouped list of rows showing each edition's
- * period label and full name; picking a row hands its course id to [onPick].
+ * Page choosing which e-learning edition "Apri corso" should open when an event's activity code
+ * resolves to more than one course — the base course plus streams, or several yearly editions
+ * ([SheetRoute.CourseEditionPicker]). A bold header counting the editions, styled after the
+ * profile's "Iscrizioni" sheet, sits over a grouped list of rows showing each edition's period
+ * label and full name; picking a row hands its course id to [onPick].
  */
 @Composable
-fun CourseEditionPickerSheet(
+fun CourseEditionPickerPage(
     courses: List<EnrolledCourse>,
     onPick: (CourseId) -> Unit,
-    onDismiss: () -> Unit,
 ) {
-    PredictiveModalBottomSheet(
-        onDismiss = onDismiss,
-        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-        sizeDuration = 500,
-    ) { _, _ ->
-        Column(
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(max = 640.dp),
+    ) {
+        Header(count = courses.size)
+        LazyColumn(
             modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(max = 640.dp),
+                .weight(1f, fill = false)
+                .padding(horizontal = 20.dp),
+            contentPadding = PaddingValues(top = 10.dp, bottom = 28.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
-            Header(count = courses.size)
-            LazyColumn(
-                modifier = Modifier
-                    .weight(1f, fill = false)
-                    .padding(horizontal = 20.dp),
-                contentPadding = PaddingValues(top = 10.dp, bottom = 28.dp),
-                verticalArrangement = Arrangement.spacedBy(2.dp),
-            ) {
-                itemsIndexed(courses, key = { _, course -> course.id.value }) { index, course ->
-                    EditionRow(
-                        course = course,
-                        isFirst = index == 0,
-                        isLast = index == courses.lastIndex,
-                        onClick = { onPick(course.id) },
-                    )
-                }
+            itemsIndexed(courses, key = { _, course -> course.id.value }) { index, course ->
+                EditionRow(
+                    course = course,
+                    isFirst = index == 0,
+                    isLast = index == courses.lastIndex,
+                    onClick = { onPick(course.id) },
+                )
             }
         }
     }

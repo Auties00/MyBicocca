@@ -56,6 +56,7 @@ import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.ui.component.feedback.LocalAppSnackbarController
 import it.attendance100.mybicocca.ui.navigation.route.AppRoute
+import it.attendance100.mybicocca.ui.navigation.scene.LocalSheetDismissControl
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.FileViewerViewModel
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.launchExternalViewer
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.launchOfficeUri
@@ -87,11 +88,12 @@ import java.util.Locale
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun OfficeOpenSheet(
+fun OfficeOpenPage(
     app: OfficeApp,
     route: AppRoute.FileViewer,
-    onDismiss: () -> Unit,
 ) {
+    val control = LocalSheetDismissControl.current
+    val onDismiss: () -> Unit = { control?.dismiss() }
     val context = LocalContext.current
     val snackbar = LocalAppSnackbarController.current
     val scope = rememberCoroutineScope()
@@ -136,137 +138,133 @@ fun OfficeOpenSheet(
         }
     }
 
-    it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet(
-        onDismiss = onDismiss,
-    ) { _, _ ->
-        Column(modifier = Modifier.fillMaxWidth()) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f, fill = false)
+                .padding(start = 24.dp, end = 24.dp, top = 8.dp),
+        ) {
+            Box(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f, fill = false)
-                    .padding(start = 24.dp, end = 24.dp, top = 8.dp),
+                    .size(112.dp)
+                    .clip(app.heroShape().toShape())
+                    .background(app.brandColor()),
+                contentAlignment = Alignment.Center,
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(112.dp)
-                        .clip(app.heroShape().toShape())
-                        .background(app.brandColor()),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Icon(
-                        imageVector = app.icon(),
-                        contentDescription = null,
-                        tint = Color.White,
-                        modifier = Modifier.size(52.dp),
-                    )
-                }
-                Spacer(Modifier.height(20.dp))
-                Text(
-                    text = route.fileName,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    textAlign = TextAlign.Center,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Spacer(Modifier.height(10.dp))
-                Surface(
-                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    shape = MaterialTheme.shapes.extraLarge,
-                ) {
-                    Text(
-                        text = listOfNotNull(app.documentLabel(), formatSize(route.sizeBytes))
-                            .joinToString(" · "),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                    )
-                }
-                Spacer(Modifier.height(16.dp))
-                Text(
-                    text = if (installed) {
-                        stringResource(R.string.elearning_file_office_opens_readonly, app.label)
-                    } else {
-                        stringResource(R.string.elearning_file_office_install_needed, app.label)
-                    },
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
+                Icon(
+                    imageVector = app.icon(),
+                    contentDescription = null,
+                    tint = Color.White,
+                    modifier = Modifier.size(52.dp),
                 )
             }
-
-            Spacer(Modifier.height(24.dp))
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 20.dp, end = 20.dp, bottom = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            Spacer(Modifier.height(20.dp))
+            Text(
+                text = route.fileName,
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Spacer(Modifier.height(10.dp))
+            Surface(
+                color = MaterialTheme.colorScheme.surfaceContainerHigh,
+                shape = MaterialTheme.shapes.extraLarge,
             ) {
-                val playStoreFailedMessage = stringResource(R.string.elearning_file_play_store_failed)
-                Button(
-                    onClick = {
-                        if (installed) viewModel.openInOffice()
-                        else if (!launchPlayStore(context, app.packageName)) {
-                            scope.launch { snackbar.showError(playStoreFailedMessage) }
-                        }
+                Text(
+                    text = listOfNotNull(app.documentLabel(), formatSize(route.sizeBytes))
+                        .joinToString(" · "),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                )
+            }
+            Spacer(Modifier.height(16.dp))
+            Text(
+                text = if (installed) {
+                    stringResource(R.string.elearning_file_office_opens_readonly, app.label)
+                } else {
+                    stringResource(R.string.elearning_file_office_install_needed, app.label)
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+            )
+        }
+
+        Spacer(Modifier.height(24.dp))
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 20.dp, end = 20.dp, bottom = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            val playStoreFailedMessage = stringResource(R.string.elearning_file_play_store_failed)
+            Button(
+                onClick = {
+                    if (installed) viewModel.openInOffice()
+                    else if (!launchPlayStore(context, app.packageName)) {
+                        scope.launch { snackbar.showError(playStoreFailedMessage) }
+                    }
+                },
+                modifier = Modifier
+                    .weight(1.4f)
+                    .height(56.dp),
+                shape = ButtonGroupDefaults.connectedLeadingButtonShape,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = app.brandColor(),
+                    contentColor = Color.White,
+                ),
+            ) {
+                Icon(
+                    imageVector = if (installed) {
+                        Icons.AutoMirrored.Outlined.OpenInNew
+                    } else {
+                        Icons.Outlined.Download
                     },
-                    modifier = Modifier
-                        .weight(1.4f)
-                        .height(56.dp),
-                    shape = ButtonGroupDefaults.connectedLeadingButtonShape,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = app.brandColor(),
-                        contentColor = Color.White,
-                    ),
-                ) {
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = if (installed) {
+                        stringResource(R.string.elearning_file_office_open_in, app.label)
+                    } else {
+                        stringResource(R.string.elearning_file_office_install, app.label)
+                    },
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+            FilledTonalButton(
+                onClick = viewModel::openWithExternalApp,
+                enabled = !downloading,
+                modifier = Modifier
+                    .weight(1f)
+                    .height(56.dp),
+                shape = ButtonGroupDefaults.connectedTrailingButtonShape,
+                colors = ButtonDefaults.filledTonalButtonColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                ),
+            ) {
+                if (downloading) {
+                    LoadingIndicator(modifier = Modifier.size(24.dp))
+                } else {
                     Icon(
-                        imageVector = if (installed) {
-                            Icons.AutoMirrored.Outlined.OpenInNew
-                        } else {
-                            Icons.Outlined.Download
-                        },
+                        imageVector = Icons.Outlined.Apps,
                         contentDescription = null,
                         modifier = Modifier.size(20.dp),
                     )
                     Spacer(Modifier.width(8.dp))
                     Text(
-                        text = if (installed) {
-                            stringResource(R.string.elearning_file_office_open_in, app.label)
-                        } else {
-                            stringResource(R.string.elearning_file_office_install, app.label)
-                        },
+                        stringResource(R.string.settings_file_association_external),
                         fontWeight = FontWeight.SemiBold,
                     )
-                }
-                FilledTonalButton(
-                    onClick = viewModel::openWithExternalApp,
-                    enabled = !downloading,
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(56.dp),
-                    shape = ButtonGroupDefaults.connectedTrailingButtonShape,
-                    colors = ButtonDefaults.filledTonalButtonColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        contentColor = MaterialTheme.colorScheme.onSurface,
-                    ),
-                ) {
-                    if (downloading) {
-                        LoadingIndicator(modifier = Modifier.size(24.dp))
-                    } else {
-                        Icon(
-                            imageVector = Icons.Outlined.Apps,
-                            contentDescription = null,
-                            modifier = Modifier.size(20.dp),
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            stringResource(R.string.settings_file_association_external),
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                    }
                 }
             }
         }

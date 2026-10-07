@@ -64,7 +64,8 @@ import it.attendance100.mybicocca.ui.screen.calendar.component.TodayFab
 import it.attendance100.mybicocca.ui.screen.calendar.component.WeekView
 import it.attendance100.mybicocca.ui.screen.calendar.state.CalendarOneShotEvent
 import it.attendance100.mybicocca.ui.screen.calendar.state.CalendarViewMode
-import it.attendance100.mybicocca.ui.screen.calendar.subscreen.eventDetail.EventDetailSheet
+import it.attendance100.mybicocca.ui.navigation.LocalAppNavigator
+import it.attendance100.mybicocca.ui.navigation.route.SheetRoute
 import it.attendance100.mybicocca.ui.screen.calendar.subscreen.monthAgenda.MonthAgendaSheet
 import it.attendance100.mybicocca.ui.screen.calendar.theme.ProvideEventPalette
 import java.time.Instant
@@ -337,35 +338,16 @@ fun CalendarScreen(
                 }
             }
 
-            val selected = remember(selectedEventId, monthEventsLoadable, dayEventsLoadable) {
-                val id = selectedEventId ?: return@remember null
-                monthEventsLoadable.valueOrNull()?.firstOrNull { it.id == id }
-                    ?: dayEventsLoadable.valueOrNull()?.firstOrNull { it.id == id }
-            }
-            if (selected != null) {
-                LaunchedEffect(selected.id) {
-                    (selected as? CalendarEvent.Exam)?.let(onExamEventShown)
+            // An event tap (or a search hit) selects an event; the detail itself is a sheet route
+            // on the shell's back stack, so it gets the shared modal behaviour and survives process
+            // death there. The selection is consumed once the sheet is opened.
+            val navigator = LocalAppNavigator.current
+            LaunchedEffect(selectedEventId, navigator) {
+                val id = selectedEventId ?: return@LaunchedEffect
+                if (navigator != null) {
+                    navigator.navigate(SheetRoute.CalendarEvent(id.value))
+                    viewModel.closeEventDetail()
                 }
-                EventDetailSheet(
-                    event = selected,
-                    examTotalBookings = (selected as? CalendarEvent.Exam)
-                        ?.let { examBookingTotals[it.id] },
-                    elearningCourses = selected.activityCode?.let(coursesByActivityCode::get)
-                        .orEmpty(),
-                    onOpenCourse = { course ->
-                        onOpenCourse(course)
-                        viewModel.closeEventDetail()
-                    },
-                    onOpenAssignment = { assignmentId, courseId ->
-                        onOpenAssignment(assignmentId, courseId)
-                        viewModel.closeEventDetail()
-                    },
-                    onOpenReservation = { reservation ->
-                        onOpenReservation(reservation)
-                        viewModel.closeEventDetail()
-                    },
-                    onDismiss = viewModel::closeEventDetail,
-                )
             }
         }
     }

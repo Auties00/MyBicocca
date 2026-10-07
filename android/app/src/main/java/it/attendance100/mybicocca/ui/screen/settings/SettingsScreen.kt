@@ -18,10 +18,7 @@ import androidx.compose.material.icons.outlined.Translate
 import androidx.compose.material.icons.outlined.Vibration
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
@@ -30,28 +27,24 @@ import androidx.compose.ui.unit.dp
 import com.google.android.gms.oss.licenses.OssLicensesMenuActivity
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.rememberHapticManager
+import it.attendance100.mybicocca.ui.navigation.LocalAppNavigator
+import it.attendance100.mybicocca.ui.navigation.route.SheetRoute
 import it.attendance100.mybicocca.ui.screen.settings.component.SettingsEntrySection
 import it.attendance100.mybicocca.ui.screen.settings.state.SettingsEntry
 import it.attendance100.mybicocca.ui.screen.settings.state.SettingsEntryGroup
-import it.attendance100.mybicocca.ui.screen.settings.subscreen.appInfo.AppInfoSheet
-import it.attendance100.mybicocca.ui.screen.settings.subscreen.fileAssociations.FileAssociationsSheet
-import it.attendance100.mybicocca.ui.screen.settings.subscreen.language.LanguageSheet
 import it.attendance100.mybicocca.ui.screen.settings.subscreen.language.currentAppLanguageLabel
-import it.attendance100.mybicocca.ui.screen.settings.subscreen.settingsAppearance.SettingsAppearanceSheet
-import it.attendance100.mybicocca.ui.screen.settings.subscreen.settingsHaptic.SettingsHapticSheet
-import it.attendance100.mybicocca.ui.screen.settings.subscreen.settingsSecurity.SettingsSecuritySheet
 
 /**
  * Landing page of the settings feature: a scrollable directory grouped into connected segmented
- * cards, mirroring the Registry tab's service directory style. Everything is handled in place —
- * Aspetto, Lingua, Sicurezza, Apertura file and About each open a modal bottom sheet over the
- * directory — so the screen has no sub-routes. Licenze hands off to the play-services
- * [OssLicensesMenuActivity], which lists the bundled open-source libraries; the Privacy Policy
- * entry is a placeholder that only acknowledges the tap with haptic feedback. The Lingua tile's
- * subtitle shows the language the app is running with, re-read whenever its sheet closes (a
- * language change also recreates the activity).
+ * cards, mirroring the Registry tab's service directory style. Aspetto, Lingua, Sicurezza,
+ * Apertura file, Vibrazione and About each push their [SheetRoute] on the shell navigator, which
+ * shows them as modal sheets over the directory (outside the shell, e.g. in a standalone UI test,
+ * those taps do nothing). Licenze hands off to the play-services [OssLicensesMenuActivity], which
+ * lists the bundled open-source libraries; the Privacy Policy entry is a placeholder that only
+ * acknowledges the tap with haptic feedback. The Lingua tile's subtitle shows the language the app
+ * is running with, re-read whenever its sheet opens or closes (a language change also recreates
+ * the activity).
  */
-@Suppress("AssignedValueIsNeverRead")
 @Composable
 fun SettingsScreen() {
     val strSettingsOssLicensesTitle = stringResource(R.string.settings_oss_licenses_title)
@@ -60,14 +53,10 @@ fun SettingsScreen() {
     val context = LocalContext.current
     val haptic = rememberHapticManager()
 
-    var showAppearanceSheet by remember { mutableStateOf(false) }
-    var showLanguageSheet by remember { mutableStateOf(false) }
-    var showSecuritySheet by remember { mutableStateOf(false) }
-    var showFileAssocSheet by remember { mutableStateOf(false) }
-    var showHapticSheet by remember { mutableStateOf(false) }
-    var showAppInfoSheet by remember { mutableStateOf(false) }
+    val navigator = LocalAppNavigator.current
 
-    val languageLabel = remember(showLanguageSheet) { currentAppLanguageLabel(context) }
+    val languageSheetOpen = navigator?.entries?.any { it.route == SheetRoute.SettingsLanguage } == true
+    val languageLabel = remember(languageSheetOpen) { currentAppLanguageLabel(context) }
 
     val sections = listOf(
         Triple(
@@ -80,31 +69,31 @@ fun SettingsScreen() {
                         stringResource(R.string.settings_appearance_title),
                         stringResource(R.string.settings_appearance_subtitle),
                         Icons.Outlined.Palette,
-                        onClick = { showAppearanceSheet = true }),
+                        onClick = { navigator?.navigate(SheetRoute.SettingsAppearance) }),
                     SettingsEntry(
                         "language",
                         stringResource(R.string.settings_language_title),
                         languageLabel,
                         Icons.Outlined.Translate,
-                        onClick = { showLanguageSheet = true }),
+                        onClick = { navigator?.navigate(SheetRoute.SettingsLanguage) }),
                     SettingsEntry(
                         "app_lock",
                         stringResource(R.string.settings_security_title),
                         stringResource(R.string.settings_security_subtitle),
                         Icons.Outlined.Lock,
-                        onClick = { showSecuritySheet = true }),
+                        onClick = { navigator?.navigate(SheetRoute.SettingsSecurity) }),
                     SettingsEntry(
                         "file_open",
                         stringResource(R.string.settings_file_opening_title),
                         stringResource(R.string.settings_file_opening_subtitle),
                         Icons.Outlined.FileOpen,
-                        onClick = { showFileAssocSheet = true }),
+                        onClick = { navigator?.navigate(SheetRoute.FileAssociations) }),
                     SettingsEntry(
                         "haptic",
                         stringResource(R.string.settings_haptic_title),
                         stringResource(R.string.settings_haptic_subtitle),
                         Icons.Outlined.Vibration,
-                        onClick = { showHapticSheet = true }),
+                        onClick = { navigator?.navigate(SheetRoute.SettingsHaptic) }),
                 ),
             ),
             scheme.primaryContainer, scheme.onPrimaryContainer,
@@ -119,7 +108,7 @@ fun SettingsScreen() {
                         stringResource(R.string.settings_about_title),
                         stringResource(R.string.settings_about_subtitle),
                         Icons.Outlined.Info,
-                        onClick = { showAppInfoSheet = true }),
+                        onClick = { navigator?.navigate(SheetRoute.AppInfo) }),
                     SettingsEntry(
                         "privacy",
                         stringResource(R.string.settings_privacy_title),
@@ -162,29 +151,5 @@ fun SettingsScreen() {
                 accentOnContainer = onContainer,
             )
         }
-    }
-
-    if (showAppearanceSheet) {
-        SettingsAppearanceSheet(onDismiss = { showAppearanceSheet = false })
-    }
-
-    if (showLanguageSheet) {
-        LanguageSheet(onDismiss = { showLanguageSheet = false })
-    }
-
-    if (showSecuritySheet) {
-        SettingsSecuritySheet(onDismiss = { showSecuritySheet = false })
-    }
-
-    if (showFileAssocSheet) {
-        FileAssociationsSheet(onDismiss = { showFileAssocSheet = false })
-    }
-
-    if (showHapticSheet) {
-        SettingsHapticSheet(onDismiss = { showHapticSheet = false })
-    }
-
-    if (showAppInfoSheet) {
-        AppInfoSheet(onDismiss = { showAppInfoSheet = false })
     }
 }

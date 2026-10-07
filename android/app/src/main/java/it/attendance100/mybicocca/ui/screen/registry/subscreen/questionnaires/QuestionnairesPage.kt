@@ -1,7 +1,6 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.questionnaires
 
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -40,7 +39,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
@@ -76,13 +74,14 @@ import it.attendance100.mybicocca.ui.component.feedback.rememberMinDurationLoadi
 import it.attendance100.mybicocca.ui.component.modal.SheetLoadingIndicator
 import it.attendance100.mybicocca.ui.component.modal.SheetMessage
 import it.attendance100.mybicocca.ui.component.modal.SheetOutcome
-import it.attendance100.mybicocca.ui.component.modal.SheetPagerHeader
+import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
+import it.attendance100.mybicocca.ui.component.modal.SheetPager
 import it.attendance100.mybicocca.ui.component.modal.SheetResultPage
-import it.attendance100.mybicocca.ui.component.modal.sheetBodyGestureBarrier
-import it.attendance100.mybicocca.ui.component.modal.sheetPageTransform
+import it.attendance100.mybicocca.ui.navigation.DisposableEffectOnPop
 import it.attendance100.mybicocca.ui.navigation.scene.LocalSheetDismissControl
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.questionnaires.ext.displayName
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.questionnaires.ext.pending
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.questionnaires.subscreen.compilation.CompilationWizardHeader
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.questionnaires.subscreen.compilation.QuestionnaireCompilationPage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.questionnaires.subscreen.compilation.QuestionnaireCompilationViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.questionnaires.subscreen.compilation.compilationWizardHeader
@@ -93,17 +92,16 @@ import kotlinx.coroutines.flow.collectLatest
 
 /**
  * "Questionari" (VAL_DID course-evaluation surveys) as a single sheet entry, in the same
- * modal language as the percorso sheet: a pinned morphing header over a multi-level body
- * pager — activity list, the activity's units, the compilation wizard, the
+ * modal language as the percorso sheet: a [SheetPager] (pinned morphing header over a
+ * multi-level body) — activity list, the activity's units, the compilation wizard, the
  * leave-without-sending and definitive-send confirms pushed over the wizard, and a
  * result page. The whole flow, including compiling a questionnaire, happens inside the
- * one sheet. BottomSheetSceneStrategy owns the container; this keeps its own state
- * machine and morphing header. Swipes on the pages scroll their content, never the
- * sheet: the header above (and the drag handle) is the only swipe-to-dismiss surface.
+ * one sheet. ModalSceneStrategy owns the container; this keeps its own state machine.
  *
  * The ViewModel outlives the sheet (shell-scoped): re-opening shows the cached list
- * instantly while a background refresh is kicked, and any dismissal clears the selection
- * so the next open never starts on a stale units / compile page. The compilation target
+ * instantly while a background refresh is kicked, and closing the sheet (its entry leaving
+ * the back stack) clears the selection so the next open never starts on a stale units /
+ * compile page. The compilation target
  * is set when a unit's Compila is tapped and keys an entry-scoped wizard ViewModel, so a
  * new unit gets a fresh server session (Esse3 never resumes drafts); while the compiler
  * is up the header carries the wizard's per-step status. Mid-wizard a stray scrim tap
@@ -113,7 +111,8 @@ import kotlinx.coroutines.flow.collectLatest
  * the whole sheet should close after Esci; Esci discards the wizard's session so the
  * next open starts fresh.
  *
- * System back walks the pager up one level before dismissing the sheet; the wizard
+ * System back walks the pager up one level (predictively, header and body in lockstep)
+ * before dismissing the sheet; the wizard
  * registers its own deeper handler (internal step-back + exit confirm) that wins while
  * enabled, and the header's back routes through the back dispatcher so it shares the
  * exact system-back semantics. A confirmed submission shows a success result page and
@@ -157,19 +156,18 @@ fun QuestionnairesPage(
     val compileHeader = compileViewModel?.let { compilationWizardHeader(it) }
 
     val control = LocalSheetDismissControl.current
-    DisposableEffect(Unit) {
-        onDispose { viewModel.dismissActivity() }
-    }
+    DisposableEffectOnPop { viewModel.dismissActivity() }
     val resetAndDismiss = { control?.dismiss() }
 
-    val page = when {
-        outcome != null -> QPage.Result
-        pendingConfirm == ConfirmIntent.Send -> QPage.ConfirmSend
-        pendingConfirm != null -> QPage.ConfirmExit
-        compileRequest != null -> QPage.Compile
-        activity != null -> QPage.Units
-        else -> QPage.Root
+    // Each layer sits over the one below it, which is where a back step from it lands.
+    val browsePage = if (activity != null) QPage.Units else QPage.Root
+    val compilePage = if (compileRequest != null) QPage.Compile else browsePage
+    val flowPage = when (pendingConfirm) {
+        ConfirmIntent.Send -> QPage.ConfirmSend
+        null -> compilePage
+        else -> QPage.ConfirmExit
     }
+    val page = if (outcome != null) QPage.Result else flowPage
 
     val compiling = rememberUpdatedState(compileRequest != null)
     val onConfirmDismiss = remember {
@@ -211,33 +209,31 @@ fun QuestionnairesPage(
             }
         }
 
-        val seekableState =
-            remember { androidx.compose.animation.core.SeekableTransitionState(page) }
-        val transition = androidx.compose.animation.core.rememberTransition(
-            seekableState,
-            label = "questionnaires_pages"
-        )
+        val backDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
 
-        LaunchedEffect(page) {
-            if (seekableState.targetState != page) {
-                seekableState.animateTo(page)
-            }
+        // While the units or the wizard slide out their state is already cleared; keep their
+        // headers readable.
+        val lastActivity = remember { arrayOf<QuestionnaireActivity?>(null) }
+        val lastUnitsSubtitle = remember { arrayOf<String?>(null) }
+        if (activity != null) {
+            lastActivity[0] = activity
+            lastUnitsSubtitle[0] = activityDetail.valueOrNull()?.questionnaireName
         }
+        val lastCompileHeader = remember { arrayOf<CompilationWizardHeader?>(null) }
+        if (compileHeader != null) lastCompileHeader[0] = compileHeader
+        val shownCompileHeader = compileHeader ?: lastCompileHeader[0]
 
-        androidx.activity.compose.PredictiveBackHandler(enabled = page != QPage.Root) { progress ->
-            try {
-                val fallback = when (page) {
-                    QPage.Result -> if (pendingConfirm == ConfirmIntent.Send) QPage.ConfirmSend else if (pendingConfirm != null) QPage.ConfirmExit else if (compileRequest != null) QPage.Compile else if (activity != null) QPage.Units else QPage.Root
-                    QPage.ConfirmSend -> if (compileRequest != null) QPage.Compile else if (activity != null) QPage.Units else QPage.Root
-                    QPage.ConfirmExit -> if (compileRequest != null) QPage.Compile else if (activity != null) QPage.Units else QPage.Root
-                    QPage.Compile -> if (activity != null) QPage.Units else QPage.Root
-                    QPage.Units -> QPage.Root
-                    QPage.Root -> QPage.Root
-                }
-                progress.collect { event ->
-                    seekableState.seekTo(event.progress, targetState = fallback)
-                }
-                seekableState.animateTo(fallback)
+        SheetPager(
+            page = page,
+            depth = { it.depth },
+            backTo = when (page) {
+                QPage.Result -> flowPage
+                QPage.ConfirmSend, QPage.ConfirmExit -> compilePage
+                QPage.Compile -> browsePage
+                QPage.Units -> QPage.Root
+                QPage.Root -> null
+            },
+            onBack = {
                 when {
                     outcome != null -> outcome = null
                     pendingConfirm != null -> pendingConfirm = null
@@ -248,114 +244,101 @@ fun QuestionnairesPage(
 
                     else -> viewModel.dismissActivity()
                 }
-            } catch (_: kotlinx.coroutines.CancellationException) {
-                seekableState.animateTo(page)
-            }
-        }
-        val backDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
+            },
+            modifier = Modifier.testTag(QuestionnairesTestTags.ROOT),
+            key = { it.name },
+            header = { target ->
+                SheetHeaderSpec(
+                    title = when (target) {
+                        QPage.Root -> stringResource(R.string.questionnaire_root_title)
+                        QPage.Units -> lastActivity[0]?.displayName
+                            ?: stringResource(R.string.questionnaire_root_title)
 
-        Column(modifier = Modifier.testTag(QuestionnairesTestTags.ROOT)) {
-            SheetPagerHeader(
-                depth = page.depth,
-                title = when (page) {
-                    QPage.Root -> stringResource(R.string.questionnaire_root_title)
-                    QPage.Units -> activity?.displayName
-                        ?: stringResource(R.string.questionnaire_root_title)
+                        QPage.Compile -> shownCompileHeader?.title
+                            ?: stringResource(R.string.questionnaire_compile_title)
 
-                    QPage.Compile -> compileHeader?.title
-                        ?: stringResource(R.string.questionnaire_compile_title)
+                        QPage.ConfirmExit -> stringResource(R.string.questionnaire_confirm_exit_title)
+                        QPage.ConfirmSend -> stringResource(R.string.questionnaire_confirm_send_title)
+                        QPage.Result -> ""
+                    },
+                    subtitle = when (target) {
+                        QPage.Root -> rootSubtitle(loaded, pendingCount)
+                        QPage.Units -> lastUnitsSubtitle[0]?.let(::AnnotatedString)
+                        QPage.Compile -> shownCompileHeader?.subtitle
+                        QPage.ConfirmExit, QPage.ConfirmSend -> shownCompileHeader?.title?.let(::AnnotatedString)
+                        QPage.Result -> null
+                    },
+                    showBack = target != QPage.Result,
+                    // The arrow goes through the dispatcher so the wizard's own handler (step back,
+                    // exit confirm) gets it first, exactly like system back.
+                    onBack = if (target == QPage.Compile) ({ backDispatcher?.onBackPressed() }) else null,
+                )
+            },
+        ) { target ->
+            when (target) {
+                QPage.Root -> ActivitiesPage(
+                    loaded = loaded,
+                    activities = activities,
+                    syncStatus = syncStatus,
+                    onRetry = viewModel::refresh,
+                    onOpenActivity = viewModel::openActivity,
+                )
 
-                    QPage.ConfirmExit -> stringResource(R.string.questionnaire_confirm_exit_title)
-                    QPage.ConfirmSend -> stringResource(R.string.questionnaire_confirm_send_title)
-                    QPage.Result -> ""
-                },
-                subtitle = when (page) {
-                    QPage.Root -> rootSubtitle(loaded, pendingCount)
-                    QPage.Units -> activityDetail.valueOrNull()?.questionnaireName?.let(::AnnotatedString)
-                    QPage.Compile -> compileHeader?.subtitle
-                    QPage.ConfirmExit, QPage.ConfirmSend -> compileHeader?.title?.let(::AnnotatedString)
-                    QPage.Result -> null
-                },
-                onBack = when (page) {
-                    QPage.Root -> null
-                    QPage.Units -> ({ viewModel.dismissActivity() })
-                    QPage.Compile -> ({ backDispatcher?.onBackPressed() })
-                    QPage.ConfirmExit, QPage.ConfirmSend -> ({ pendingConfirm = null })
-                    QPage.Result -> null
-                },
-            )
-            transition.AnimatedContent(
-                modifier = Modifier.sheetBodyGestureBarrier(),
-                transitionSpec = {
-                    sheetPageTransform(forward = targetState.depth >= initialState.depth)
-                },
-                contentKey = { it.name },
-            ) { target ->
-                when (target) {
-                    QPage.Root -> ActivitiesPage(
-                        loaded = loaded,
-                        activities = activities,
-                        syncStatus = syncStatus,
-                        onRetry = viewModel::refresh,
-                        onOpenActivity = viewModel::openActivity,
-                    )
-
-                    QPage.Units -> Box(modifier = Modifier.testTag(QuestionnairesTestTags.UNITS_PAGE)) {
-                        val activityName = activity?.displayName.orEmpty()
-                        QuestionnaireUnitsPage(
-                            detail = activityDetail,
-                            detailStatus = detailStatus,
-                            onCompileUnit = { detail, unit ->
-                                val questionnaireId = detail.questionnaireId
-                                val questionnaireConfigId = detail.questionnaireConfigId
-                                if (questionnaireId != null && questionnaireConfigId != null) {
-                                    compileRequest = QuestionnaireCompilationRequest(
-                                        activityChoiceId = detail.activityChoiceId,
-                                        questionnaireId = questionnaireId,
-                                        questionnaireConfigId = questionnaireConfigId,
-                                        anonymous = detail.anonymous,
-                                        tags = unit.tags,
-                                        activityName = activityName,
-                                        lecturerName = unit.lecturerName,
-                                        partitionName = unit.partitionName,
-                                    )
-                                }
-                            },
-                            onRetry = viewModel::retryDetail,
-                        )
-                    }
-
-                    QPage.Compile -> compileViewModel?.let { compileVm ->
-                        QuestionnaireCompilationPage(
-                            viewModel = compileVm,
-                            onExitAttempt = { pendingConfirm = ConfirmIntent.Leave },
-                            onConfirmAttempt = { pendingConfirm = ConfirmIntent.Send },
-                        )
-                    }
-
-                    QPage.ConfirmExit -> ConfirmPage(
-                        body = stringResource(R.string.questionnaire_confirm_exit_body),
-                        confirmLabel = stringResource(R.string.questionnaire_confirm_exit_action),
-                        onContinue = { pendingConfirm = null },
-                        onConfirm = {
-                            val intent = pendingConfirm
-                            pendingConfirm = null
-                            compileViewModel?.reset()
-                            compileRequest = null
-                            if (intent == ConfirmIntent.LeaveAndDismiss) resetAndDismiss()
+                QPage.Units -> Box(modifier = Modifier.testTag(QuestionnairesTestTags.UNITS_PAGE)) {
+                    val activityName = activity?.displayName.orEmpty()
+                    QuestionnaireUnitsPage(
+                        detail = activityDetail,
+                        detailStatus = detailStatus,
+                        onCompileUnit = { detail, unit ->
+                            val questionnaireId = detail.questionnaireId
+                            val questionnaireConfigId = detail.questionnaireConfigId
+                            if (questionnaireId != null && questionnaireConfigId != null) {
+                                compileRequest = QuestionnaireCompilationRequest(
+                                    activityChoiceId = detail.activityChoiceId,
+                                    questionnaireId = questionnaireId,
+                                    questionnaireConfigId = questionnaireConfigId,
+                                    anonymous = detail.anonymous,
+                                    tags = unit.tags,
+                                    activityName = activityName,
+                                    lecturerName = unit.lecturerName,
+                                    partitionName = unit.partitionName,
+                                )
+                            }
                         },
+                        onRetry = viewModel::retryDetail,
                     )
+                }
 
-                    QPage.ConfirmSend -> ConfirmPage(
-                        body = stringResource(R.string.questionnaire_confirm_send_body),
-                        confirmLabel = stringResource(R.string.questionnaire_confirm_send_action),
-                        onContinue = { pendingConfirm = null },
-                        onConfirm = { compileViewModel?.confirm() },
+                QPage.Compile -> compileViewModel?.let { compileVm ->
+                    QuestionnaireCompilationPage(
+                        viewModel = compileVm,
+                        onExitAttempt = { pendingConfirm = ConfirmIntent.Leave },
+                        onConfirmAttempt = { pendingConfirm = ConfirmIntent.Send },
                     )
+                }
 
-                    QPage.Result -> outcome?.let { current ->
-                        SheetResultPage(outcome = current, onDismiss = { outcome = null })
-                    }
+                QPage.ConfirmExit -> ConfirmPage(
+                    body = stringResource(R.string.questionnaire_confirm_exit_body),
+                    confirmLabel = stringResource(R.string.questionnaire_confirm_exit_action),
+                    onContinue = { pendingConfirm = null },
+                    onConfirm = {
+                        val intent = pendingConfirm
+                        pendingConfirm = null
+                        compileViewModel?.reset()
+                        compileRequest = null
+                        if (intent == ConfirmIntent.LeaveAndDismiss) resetAndDismiss()
+                    },
+                )
+
+                QPage.ConfirmSend -> ConfirmPage(
+                    body = stringResource(R.string.questionnaire_confirm_send_body),
+                    confirmLabel = stringResource(R.string.questionnaire_confirm_send_action),
+                    onContinue = { pendingConfirm = null },
+                    onConfirm = { compileViewModel?.confirm() },
+                )
+
+                QPage.Result -> outcome?.let { current ->
+                    SheetResultPage(outcome = current, onDismiss = { outcome = null })
                 }
             }
         }

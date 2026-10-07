@@ -37,7 +37,7 @@ import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.settings.AppTheme
 import it.attendance100.mybicocca.domain.model.settings.ThemeMode
 import it.attendance100.mybicocca.ui.component.input.SegmentedSwitch
-import it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet
+import it.attendance100.mybicocca.ui.navigation.route.SheetRoute
 import it.attendance100.mybicocca.ui.screen.settings.subscreen.settingsAppearance.component.AppThemePreviewItem
 import it.attendance100.mybicocca.ui.theme.BicoccaTheme
 import it.attendance100.mybicocca.ui.theme.isDynamicColorAvailable
@@ -49,7 +49,7 @@ private val THEME_MODES = listOf(ThemeMode.System, ThemeMode.Light, ThemeMode.Da
 // The lambda is called within a Composable but not directly composed
 
 /**
- * The "Aspetto" settings page, shown as a modal bottom sheet: a two-per-row grid of palette
+ * The "Aspetto" settings page ([SheetRoute.SettingsAppearance]): a two-per-row grid of palette
  * candidates scrolls in the body while the Sistema/Chiaro/Scuro mode switcher stays pinned to
  * the bottom in a pill container, mirroring the libretto (CFU/voti) modal layout. Each grid
  * cell is a live mini-screen mockup rendered inside its own candidate palette, with previews
@@ -60,8 +60,7 @@ private val THEME_MODES = listOf(ThemeMode.System, ThemeMode.Light, ThemeMode.Da
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun SettingsAppearanceSheet(
-    onDismiss: () -> Unit,
+fun SettingsAppearancePage(
     viewModel: SettingsAppearanceViewModel = hiltViewModel(),
 ) {
     val appTheme by viewModel.appTheme.collectAsStateWithLifecycle()
@@ -92,55 +91,51 @@ fun SettingsAppearanceSheet(
             .chunked(2)
     }
 
-    PredictiveModalBottomSheet(
-        onDismiss = onDismiss,
-        sizeDuration = 500,
-    ) { _, _ ->
-        Column(modifier = Modifier.fillMaxWidth()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 20.dp)
-                    .weight(1f, fill = false)
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp)
+                .weight(1f, fill = false)
+        ) {
+            Text(
+                text = stringResource(R.string.settings_appearance_sheet_title),
+                style = MaterialTheme.typography.titleLargeEmphasized,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                text = stringResource(R.string.settings_appearance_sheet_subtitle),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Spacer(Modifier.height(12.dp))
+
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth(),
+                contentPadding = PaddingValues(bottom = 16.dp),
             ) {
-                Text(
-                    text = stringResource(R.string.settings_appearance_sheet_title),
-                    style = MaterialTheme.typography.titleLargeEmphasized,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Text(
-                    text = stringResource(R.string.settings_appearance_sheet_subtitle),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Spacer(Modifier.height(12.dp))
-
-                LazyColumn(
-                    modifier = Modifier.fillMaxWidth(),
-                    contentPadding = PaddingValues(bottom = 16.dp),
-                ) {
-                    items(paletteRows) { pair ->
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 6.dp),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        ) {
-                            pair.forEach { palette ->
-                                PaletteCell(
-                                    appTheme = palette,
-                                    selected = palette == appTheme,
-                                    dark = dark,
-                                    onClick = { viewModel.setAppTheme(palette) },
-                                    modifier = Modifier.weight(1f),
-                                )
-                            }
-
-                            if (pair.size == 1) Spacer(Modifier.weight(1f))
+                items(paletteRows) { pair ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 6.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
+                        pair.forEach { palette ->
+                            PaletteCell(
+                                appTheme = palette,
+                                selected = palette == appTheme,
+                                dark = dark,
+                                onClick = { viewModel.setAppTheme(palette) },
+                                modifier = Modifier.weight(1f),
+                            )
                         }
+
+                        if (pair.size == 1) Spacer(Modifier.weight(1f))
                     }
                 }
             }
+        }
 
 //            Column(
 //                modifier = Modifier
@@ -164,23 +159,22 @@ fun SettingsAppearanceSheet(
 //                    )
 //                }
 //
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(
-                        MaterialTheme.colorScheme.surfaceContainerLow,
-                        RoundedCornerShape(100)
-                    )
-            ) {
-                SegmentedSwitch(
-                    options = THEME_MODES,
-                    selected = themeMode,
-                    onSelected = viewModel::setThemeMode,
-                    label = themeModeLabel,
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(
+                    MaterialTheme.colorScheme.surfaceContainerLow,
+                    RoundedCornerShape(100)
                 )
-            }
-//            }
+        ) {
+            SegmentedSwitch(
+                options = THEME_MODES,
+                selected = themeMode,
+                onSelected = viewModel::setThemeMode,
+                label = themeModeLabel,
+            )
         }
+//            }
     }
 }
 

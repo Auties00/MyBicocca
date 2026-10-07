@@ -43,11 +43,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.MotionScheme
-import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -90,6 +87,10 @@ import it.attendance100.mybicocca.ui.screen.account.subscreen.accountSwitcher.co
 import it.attendance100.mybicocca.ui.screen.account.subscreen.accountSwitcher.component.UndoRemovalBar
 import it.attendance100.mybicocca.ui.screen.auth.AuthScreenSheetContent
 import it.attendance100.mybicocca.ui.screen.auth.AuthViewModel
+import it.attendance100.mybicocca.ui.navigation.route.SheetRoute
+import it.attendance100.mybicocca.ui.navigation.scene.LocalSheetDismissControl
+import it.attendance100.mybicocca.ui.navigation.scene.SheetContainerStyle
+import androidx.compose.runtime.SideEffect
 import it.attendance100.mybicocca.ui.theme.BicoccaTheme
 import it.attendance100.mybicocca.ui.theme.PreviewBgLowest
 import kotlinx.coroutines.CancellationException
@@ -100,12 +101,33 @@ import java.time.Instant
 private val CardShape = RoundedCornerShape(28.dp)
 private const val ADD_ACCOUNT_KEY = "__add_account__"
 
+/**
+ * Container look of the account switcher sheet ([SheetRoute.AccountSwitcher]): larger corners,
+ * an invisible handle spacer and no window insets, since the add-account page grows to the full
+ * screen height and lays out its own insets.
+ */
+val AccountSwitcherSheetStyle = SheetContainerStyle(
+    shape = RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp),
+    dragHandle = { Box(Modifier.padding(top = AccountSwitcherHandleHeight)) },
+    contentWindowInsets = { WindowInsets(0) },
+)
+
+private val AccountSwitcherHandleHeight = 16.dp
+
+/**
+ * The account switcher sheet page: the roster of stored accounts, and the add-account sign-in
+ * that slides up over it and grows the sheet to the full screen height.
+ *
+ * Back is predictive on both levels: on the sign-in page the system back gesture seeks the slide
+ * back to the roster (and rewinds when cancelled); on the roster it falls through to the sheet's
+ * native predictive dismiss. While signing in the sheet cannot be swiped away — a swipe, scrim tap
+ * or back press returns to the roster instead, so a half-typed sign-in is never dropped silently.
+ */
 @Suppress("LABEL_NAME_CLASH")
 @SuppressLint("ConfigurationScreenWidthHeight")
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
-fun AccountSwitcherSheet(
-    onDismiss: () -> Unit,
+fun AccountSwitcherPage(
     onOpenProfile: () -> Unit,
     onOpenSettings: () -> Unit,
     viewModel: AccountViewModel = hiltViewModel(),
@@ -123,16 +145,19 @@ fun AccountSwitcherSheet(
     val pending by viewModel.pendingRemoval.collectAsStateWithLifecycle()
     val inflight by authViewModel.inflight.collectAsStateWithLifecycle()
 
-    val scope = rememberCoroutineScope()
     val motion = MaterialTheme.motionScheme
+    val control = LocalSheetDismissControl.current
 
     var isAddingAccount by rememberSaveable { mutableStateOf(false) }
 
-    val seekableState = remember { SeekableTransitionState(false) }
+    val seekableState = remember { SeekableTransitionState(isAddingAccount) }
     val transition = rememberTransition(seekableState, label = "addAccountTransition")
+    // A cancelled gesture cancels the back handler's own job, so the rewind runs here.
+    val rewindScope = rememberCoroutineScope()
 
     LaunchedEffect(isAddingAccount) {
-        if (seekableState.targetState != isAddingAccount) {
+        // Also when a predictive back already seeked toward the new value: finish from there.
+        if (seekableState.currentState != isAddingAccount || seekableState.targetState != isAddingAccount) {
             seekableState.animateTo(
                 isAddingAccount,
                 tween(durationMillis = 800, easing = FastOutLinearInEasing)
@@ -140,17 +165,15 @@ fun AccountSwitcherSheet(
         }
     }
 
-    val isAddingAccountState = rememberUpdatedState(isAddingAccount)
-    val sheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = true,
-        confirmValueChange = { newState ->
-            !(isAddingAccountState.value && newState == SheetValue.Hidden)
-        },
-    )
-
-    val close: () -> Unit = {
-        scope.launch { sheetState.hide() }.invokeOnCompletion {
-            if (!sheetState.isVisible) onDismiss()
+    SideEffect {
+        control?.gesturesEnabled = !isAddingAccount
+        control?.confirmDismiss = {
+            if (isAddingAccount) {
+                if (!inflight) isAddingAccount = false
+                false
+            } else {
+                true
+            }
         }
     }
 
@@ -167,172 +190,121 @@ fun AccountSwitcherSheet(
 
     val windowInsets = WindowInsets.safeDrawing.asPaddingValues(LocalDensity.current)
     val topWindowInsets = windowInsets.calculateTopPadding()
-    val handleHeight = 16.dp
 
-    val closeSeekableState = remember { SeekableTransitionState(true) }
-    val closeTransition = rememberTransition(closeSeekableState, label = "closeTransition")
-
-    ModalBottomSheet(
-        onDismissRequest = {
-            if (isAddingAccount) {
-                isAddingAccount = false
-            } else {
-                onDismiss()
+    PredictiveBackHandler(enabled = isAddingAccount && !inflight) { progress ->
+        try {
+            progress.collect { backEvent ->
+                seekableState.seekTo(backEvent.progress, targetState = false)
             }
-        },
-        sheetState = sheetState,
-        contentWindowInsets = { WindowInsets(0) },
-        dragHandle = { Box(Modifier.padding(top = handleHeight)) },
-        shape = RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp),
+        } catch (cancelled: CancellationException) {
+            rewindScope.launch { seekableState.animateTo(true) }
+            throw cancelled
+        }
+        // Commit first; the isAddingAccount effect finishes the slide from where the finger left it.
+        isAddingAccount = false
+    }
+
+    Box(
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .clip(
+                RoundedCornerShape(
+                    topStart = 24.dp,
+                    topEnd = 24.dp,
+                    bottomEnd = 0.dp,
+                    bottomStart = 0.dp
+                )
+            )
     ) {
-        PredictiveBackHandler(enabled = isAddingAccount && !inflight) { progress ->
-            try {
-                progress.collect { backEvent ->
-                    seekableState.seekTo(backEvent.progress, targetState = false)
-                }
-                isAddingAccount = false
-                seekableState.animateTo(false)
-            } catch (_: CancellationException) {
-                seekableState.animateTo(true)
-            }
-        }
-
-        PredictiveBackHandler(enabled = !isAddingAccount && sheetState.isVisible) { progress ->
-            try {
-                progress.collect { backEvent ->
-                    closeSeekableState.seekTo(backEvent.progress, targetState = false)
-                }
-                closeSeekableState.animateTo(false)
-                onDismiss()
-            } catch (_: kotlin.coroutines.cancellation.CancellationException) {
-                closeSeekableState.animateTo(true)
-            }
-        }
-
-        closeTransition.AnimatedContent(
-            modifier = Modifier.fillMaxWidth(),
+        transition.AnimatedContent(
+            modifier = Modifier
+                .fillMaxWidth(),
             transitionSpec = {
+                val isForward = targetState
+                val enter = slideInVertically(
+                    tween(durationMillis = 400)
+                ) { h ->
+                    if (isForward) h else -h
+                } + fadeIn(
+                    tween(durationMillis = 400),
+                    initialAlpha = 0.2f
+                )
+
+                val exit = slideOutVertically(
+                    tween(durationMillis = 600)
+                ) { h ->
+                    if (isForward) -h else h
+                } + fadeOut(
+                    tween(durationMillis = 400),
+                    targetAlpha = 0.2f
+                )
+
+                val modalShrinkDownSpeed = 500
+
                 ContentTransform(
-                    targetContentEnter = fadeIn(tween(durationMillis = 400)),
-                    initialContentExit = fadeOut(tween(durationMillis = 400)),
+                    targetContentEnter = enter,
+                    initialContentExit = exit,
                     sizeTransform = SizeTransform(clip = true) { _, _ ->
-                        tween(durationMillis = 500)
+                        tween(durationMillis = modalShrinkDownSpeed)
                     },
                 )
             },
-            contentKey = { it }
-        ) { isVisible ->
-            if (isVisible) {
-                Box(
-                    modifier = Modifier
-                        .padding(horizontal = 16.dp)
-                        .clip(
-                            RoundedCornerShape(
-                                topStart = 24.dp,
-                                topEnd = 24.dp,
-                                bottomEnd = 0.dp,
-                                bottomStart = 0.dp
-                            )
+            contentKey = { it },
+        ) { adding ->
+            if (adding) {
+                val animatedCancelPadding by this@AnimatedContent.transition.animateDp(
+                    transitionSpec = {
+                        tween(
+                            durationMillis = 200,
+                            easing = FastOutSlowInEasing
                         )
-                ) {
-                    transition.AnimatedContent(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        transitionSpec = {
-                            val isForward = targetState
-                            val enter = slideInVertically(
-                                tween(durationMillis = 400)
-                            ) { h ->
-                                if (isForward) h else -h
-                            } + fadeIn(
-                                tween(durationMillis = 400),
-                                initialAlpha = 0.2f
-                            )
-
-                            val exit = slideOutVertically(
-                                tween(durationMillis = 600)
-                            ) { h ->
-                                if (isForward) -h else h
-                            } + fadeOut(
-                                tween(durationMillis = 400),
-                                targetAlpha = 0.2f
-                            )
-
-                            val modalShrinkDownSpeed = 500
-
-                            ContentTransform(
-                                targetContentEnter = enter,
-                                initialContentExit = exit,
-                                sizeTransform = SizeTransform(clip = true) { _, _ ->
-                                    tween(durationMillis = modalShrinkDownSpeed)
-                                },
-                            )
-                        },
-                        contentKey = { it },
-                    ) { adding ->
-                        if (adding) {
-                            val animatedCancelPadding by this@AnimatedContent.transition.animateDp(
-                                transitionSpec = {
-                                    tween(
-                                        durationMillis = 200,
-                                        easing = FastOutSlowInEasing
-                                    )
-                                },
-                                label = "cancelPadding"
-                            ) { state ->
-                                if (state == EnterExitState.Visible) 32.dp else 0.dp
-                            }
-                            val animatedCancelOpacity by this@AnimatedContent.transition.animateFloat(
-                                transitionSpec = { tween(durationMillis = 500) },
-                                label = "cancelOpacity"
-                            ) { state ->
-                                if (state == EnterExitState.Visible) 0f else 1f
-                            }
-                            DisposableEffect(Unit) {
-                                onDispose { authViewModel.reset() }
-                            }
-                            AuthScreenSheetContent(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(screenHeight - topWindowInsets - handleHeight),
-                                onSignedIn = { _, requiresCareerPick ->
-                                    if (!requiresCareerPick) isAddingAccount = false
-                                },
-                                onCancel = { isAddingAccount = false },
-                                cancelPaddingProvider = { animatedCancelPadding },
-                                cancelOpacityProvider = { animatedCancelOpacity },
-                                viewModel = authViewModel,
-                            )
-                        } else {
-                            AccountsScene(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .wrapContentHeight(),
-                                ordered = ordered,
-                                activeId = activeId,
-                                photos = photos,
-                                pending = pending,
-                                lastRemovedName = lastRemovedName,
-                                maxListHeight = maxListHeight,
-                                motion = motion,
-                                onOpenDetails = { onOpenProfile(); close() },
-                                onOpenSettings = { onOpenSettings(); close() },
-                                onSwitchAccount = { viewModel.switchAccount(it) },
-                                onSelectCareer = { id, careerId ->
-                                    viewModel.selectAccountCareer(id, careerId)
-                                },
-                                onRequestRemove = { viewModel.requestRemove(it) },
-                                onUndoRemove = { viewModel.undoRemove() },
-                                onAddAccount = { isAddingAccount = true },
-                            )
-                        }
-                    }
+                    },
+                    label = "cancelPadding"
+                ) { state ->
+                    if (state == EnterExitState.Visible) 32.dp else 0.dp
                 }
-            } else {
-                Spacer(
+                val animatedCancelOpacity by this@AnimatedContent.transition.animateFloat(
+                    transitionSpec = { tween(durationMillis = 500) },
+                    label = "cancelOpacity"
+                ) { state ->
+                    if (state == EnterExitState.Visible) 0f else 1f
+                }
+                DisposableEffect(Unit) {
+                    onDispose { authViewModel.reset() }
+                }
+                AuthScreenSheetContent(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(0.dp)
+                        .height(screenHeight - topWindowInsets - AccountSwitcherHandleHeight),
+                    onSignedIn = { _, requiresCareerPick ->
+                        if (!requiresCareerPick) isAddingAccount = false
+                    },
+                    onCancel = { isAddingAccount = false },
+                    cancelPaddingProvider = { animatedCancelPadding },
+                    cancelOpacityProvider = { animatedCancelOpacity },
+                    viewModel = authViewModel,
+                )
+            } else {
+                AccountsScene(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentHeight(),
+                    ordered = ordered,
+                    activeId = activeId,
+                    photos = photos,
+                    pending = pending,
+                    lastRemovedName = lastRemovedName,
+                    maxListHeight = maxListHeight,
+                    motion = motion,
+                    onOpenDetails = { control?.dismiss(); onOpenProfile() },
+                    onOpenSettings = { control?.dismiss(); onOpenSettings() },
+                    onSwitchAccount = { viewModel.switchAccount(it) },
+                    onSelectCareer = { id, careerId ->
+                        viewModel.selectAccountCareer(id, careerId)
+                    },
+                    onRequestRemove = { viewModel.requestRemove(it) },
+                    onUndoRemove = { viewModel.undoRemove() },
+                    onAddAccount = { isAddingAccount = true },
                 )
             }
         }

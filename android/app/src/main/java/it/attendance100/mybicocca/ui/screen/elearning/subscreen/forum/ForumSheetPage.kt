@@ -4,7 +4,6 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -69,10 +68,9 @@ import it.attendance100.mybicocca.ui.component.feedback.EmptyState
 import it.attendance100.mybicocca.ui.component.modal.SheetConfirmPage
 import it.attendance100.mybicocca.ui.component.modal.SheetLoadingIndicator
 import it.attendance100.mybicocca.ui.component.modal.SheetOutcome
-import it.attendance100.mybicocca.ui.component.modal.SheetPagerHeader
+import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
+import it.attendance100.mybicocca.ui.component.modal.SheetPager
 import it.attendance100.mybicocca.ui.component.modal.SheetResultPage
-import it.attendance100.mybicocca.ui.component.modal.sheetBodyGestureBarrier
-import it.attendance100.mybicocca.ui.component.modal.sheetPageTransform
 import it.attendance100.mybicocca.ui.navigation.route.SheetRoute
 import it.attendance100.mybicocca.ui.navigation.scene.LocalSheetDismissControl
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.forum.component.DiscussionRow
@@ -91,8 +89,8 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
- * The whole course forum in one modal sheet entry, driving an internal page machine over a single
- * morphing header: discussions list (0) -> thread (1) -> composer (2) -> confirm/result. The list
+ * The whole course forum in one modal sheet entry, driving an internal page machine on a
+ * [SheetPager]: discussions list (0) -> thread (1) -> composer (2) -> confirm/result. The list
  * and thread are observed from Room; the composer (new discussion / reply / edit) handles its own
  * text + attachments and submits via the ViewModel. A failed action morphs onto an in-sheet
  * result page, and system back walks the internal pages up one level.
@@ -135,8 +133,8 @@ fun ForumSheetPage(
     val submitting by viewModel.submitting.collectAsStateWithLifecycle()
 
     var outcome by remember { mutableStateOf<SheetOutcome?>(null) }
-    var pendingDeletePostId by remember { mutableStateOf<Int?>(null) }
-    var confirmDiscard by remember { mutableStateOf(false) }
+    var pendingDeletePostId by rememberSaveable { mutableStateOf<Int?>(null) }
+    var confirmDiscard by rememberSaveable { mutableStateOf(false) }
     var collapsedIds by remember(openDiscussionId) { mutableStateOf<Set<Int>>(emptySet()) }
 
     LaunchedEffect(viewModel) {
@@ -198,159 +196,134 @@ fun ForumSheetPage(
             control?.confirmDismiss = onConfirmDismiss
         }
 
-        val seekableState =
-            remember { androidx.compose.animation.core.SeekableTransitionState(display) }
-        val transition = androidx.compose.animation.core.rememberTransition(
-            seekableState,
-            label = "forum_sheet_pages"
-        )
+        val hasDraft = subject.isNotBlank() || message.isNotBlank()
+        val threadOrList = if (openDiscussionId != null) Display.Thread else Display.List
+        val composerOrBelow = if (composerTarget != null) Display.Composer else threadOrList
+        val discardOrBelow = if (confirmDiscard) Display.ConfirmDiscard else composerOrBelow
 
-        LaunchedEffect(display) {
-            if (seekableState.targetState != display) {
-                seekableState.animateTo(display)
-            }
-        }
+        // While the composer slides out its target is already cleared; keep its header readable.
+        val lastComposerTarget = remember { arrayOf<ComposerTarget?>(null) }
+        if (composerTarget != null) lastComposerTarget[0] = composerTarget
+        val shownComposerTarget = composerTarget ?: lastComposerTarget[0]
+        val shownDiscussion = openDiscussion ?: lastDiscussion
 
-        androidx.activity.compose.PredictiveBackHandler(enabled = display != Display.List) { progress ->
-            try {
-                val fallback = when (display) {
-                    Display.Result -> if (pendingDeletePostId != null) Display.ConfirmDelete else if (confirmDiscard) Display.ConfirmDiscard else if (composerTarget != null) Display.Composer else if (openDiscussionId != null) Display.Thread else Display.List
-                    Display.ConfirmDelete -> if (confirmDiscard) Display.ConfirmDiscard else if (composerTarget != null) Display.Composer else if (openDiscussionId != null) Display.Thread else Display.List
-                    Display.ConfirmDiscard -> if (composerTarget != null) Display.Composer else if (openDiscussionId != null) Display.Thread else Display.List
-                    Display.Composer -> if (subject.isNotBlank() || message.isNotBlank()) Display.ConfirmDiscard else if (openDiscussionId != null) Display.Thread else Display.List
-                    Display.Thread -> Display.List
-                    Display.List -> display
-                }
-                progress.collect { event ->
-                    seekableState.seekTo(event.progress, targetState = fallback)
-                }
-                seekableState.animateTo(fallback)
+        SheetPager(
+            page = display,
+            depth = { it.depth },
+            backTo = when (display) {
+                Display.Result -> if (pendingDeletePostId != null) Display.ConfirmDelete else discardOrBelow
+                Display.ConfirmDelete -> discardOrBelow
+                Display.ConfirmDiscard -> composerOrBelow
+                Display.Composer -> if (hasDraft) Display.ConfirmDiscard else threadOrList
+                Display.Thread -> Display.List
+                Display.List -> null
+            },
+            onBack = {
                 when (display) {
                     Display.Result -> outcome = null
                     Display.ConfirmDelete -> pendingDeletePostId = null
                     Display.ConfirmDiscard -> confirmDiscard = false
-                    Display.Composer -> if (subject.isNotBlank() || message.isNotBlank()) confirmDiscard =
-                        true else viewModel.cancelComposer()
-
+                    Display.Composer -> if (hasDraft) confirmDiscard = true else viewModel.cancelComposer()
                     Display.Thread -> viewModel.closeThread()
                     Display.List -> Unit
                 }
-            } catch (_: kotlinx.coroutines.CancellationException) {
-                seekableState.animateTo(display)
-            }
-        }
+            },
+            modifier = Modifier.testTag(ForumSheetTestTags.ROOT),
+            key = { it.key },
+            header = { target ->
+                SheetHeaderSpec(
+                    title = when (target) {
+                        Display.List -> forum?.name ?: stringResource(R.string.elearning_course_generic_forum)
+                        Display.Thread -> shownDiscussion?.subject
+                            ?: stringResource(R.string.elearning_forum_discussion_fallback)
+                        Display.Composer -> when (shownComposerTarget) {
+                            is ComposerTarget.NewDiscussion -> stringResource(R.string.elearning_forum_new_discussion)
+                            is ComposerTarget.Edit -> stringResource(R.string.elearning_forum_edit_message_title)
+                            else -> stringResource(R.string.elearning_forum_reply)
+                        }
+                        Display.ConfirmDelete -> stringResource(R.string.elearning_forum_delete_confirm_title)
+                        Display.ConfirmDiscard -> stringResource(R.string.elearning_forum_discard_confirm_title)
+                        Display.Result -> ""
+                    },
+                    subtitle = when (target) {
+                        Display.List -> forum?.let { discussionsSubtitle(it, discussions) }
+                        Display.Thread -> shownDiscussion?.let { threadSubtitle(it) }
+                        else -> null
+                    },
+                )
+            },
+        ) { target ->
+            when (target) {
+                Display.List -> DiscussionsListBody(
+                    forum = forum,
+                    discussionsLoadable = discussionsLoadable,
+                    initialFetchInProgress = initialFetchInProgress,
+                    isLoadingMore = pageState.isLoadingMore,
+                    hasMore = pageState.hasMore,
+                    onLoadMore = viewModel::loadMore,
+                    onOpenDiscussion = { viewModel.openThread(it.id) },
+                    onNewDiscussion = viewModel::startNewDiscussion,
+                )
 
-        val composerBack = {
-            if (subject.isNotBlank() || message.isNotBlank()) confirmDiscard = true else viewModel.cancelComposer()
-        }
+                Display.Thread -> ThreadBody(
+                    discussion = shownDiscussion,
+                    thread = thread,
+                    collapsedIds = collapsedIds,
+                    onToggleCollapse = { id ->
+                        collapsedIds = if (id in collapsedIds) collapsedIds - id else collapsedIds + id
+                    },
+                    onReplyToDiscussion = {
+                        postsLoadable.valueOrNull()?.firstOrNull { it.parentId == null }?.let(viewModel::startReply)
+                    },
+                    onReplyToPost = viewModel::startReply,
+                    onEditPost = viewModel::startEdit,
+                    onDeletePost = { pendingDeletePostId = it.id.value },
+                    onSubscribe = { openDiscussionId?.let { viewModel.setSubscribed(it, true) } },
+                    onOpenAttachment = { att -> onOpenFile(att.fileName, att.fileUrl, att.mimeType, att.sizeBytes) },
+                )
 
-        Column(modifier = Modifier.testTag(ForumSheetTestTags.ROOT)) {
-            SheetPagerHeader(
-                depth = display.depth,
-                title = when (display) {
-                    Display.List -> forum?.name ?: stringResource(R.string.elearning_course_generic_forum)
-                    Display.Thread -> openDiscussion?.subject ?: stringResource(R.string.elearning_forum_discussion_fallback)
-                    Display.Composer -> when (composerTarget) {
-                        is ComposerTarget.NewDiscussion -> stringResource(R.string.elearning_forum_new_discussion)
-                        is ComposerTarget.Edit -> stringResource(R.string.elearning_forum_edit_message_title)
-                        else -> stringResource(R.string.elearning_forum_reply)
-                    }
-                    Display.ConfirmDelete -> stringResource(R.string.elearning_forum_delete_confirm_title)
-                    Display.ConfirmDiscard -> stringResource(R.string.elearning_forum_discard_confirm_title)
-                    Display.Result -> ""
-                },
-                subtitle = when (display) {
-                    Display.List -> forum?.let { discussionsSubtitle(it, discussions) }
-                    Display.Thread -> openDiscussion?.let { threadSubtitle(it) }
-                    else -> null
-                },
-                onBack = when (display) {
-                    Display.Thread -> viewModel::closeThread
-                    Display.Composer -> composerBack
-                    Display.ConfirmDelete -> ({ pendingDeletePostId = null })
-                    Display.ConfirmDiscard -> ({ confirmDiscard = false })
-                    Display.Result -> ({ outcome = null })
-                    Display.List -> null
-                },
-            )
-
-            transition.AnimatedContent(
-                modifier = Modifier.sheetBodyGestureBarrier(),
-                transitionSpec = { sheetPageTransform(forward = targetState.depth >= initialState.depth) },
-                contentKey = { it.key },
-            ) { target ->
-                when (target) {
-                    Display.List -> DiscussionsListBody(
-                        forum = forum,
-                        discussionsLoadable = discussionsLoadable,
-                        initialFetchInProgress = initialFetchInProgress,
-                        isLoadingMore = pageState.isLoadingMore,
-                        hasMore = pageState.hasMore,
-                        onLoadMore = viewModel::loadMore,
-                        onOpenDiscussion = { viewModel.openThread(it.id) },
-                        onNewDiscussion = viewModel::startNewDiscussion,
+                Display.Composer -> composerTarget?.let { target ->
+                    ForumComposer(
+                        modifier = Modifier.testTag(ForumSheetTestTags.COMPOSER),
+                        target = target,
+                        subject = subject,
+                        onSubjectChange = { subject = it },
+                        message = message,
+                        onMessageChange = { message = it },
+                        attachments = pendingAttachments,
+                        onAddAttachment = { filePicker.launch(arrayOf("*/*")) },
+                        onRemoveAttachment = viewModel::removeAttachment,
+                        groups = composerGroups,
+                        selectedGroupId = selectedGroupId,
+                        onSelectGroup = viewModel::selectGroup,
+                        submitting = submitting,
+                        onSubmit = { viewModel.submitComposer(subject, message) },
                     )
+                }
 
-                    Display.Thread -> ThreadBody(
-                        discussion = openDiscussion ?: lastDiscussion,
-                        thread = thread,
-                        collapsedIds = collapsedIds,
-                        onToggleCollapse = { id ->
-                            collapsedIds = if (id in collapsedIds) collapsedIds - id else collapsedIds + id
-                        },
-                        onReplyToDiscussion = {
-                            postsLoadable.valueOrNull()?.firstOrNull { it.parentId == null }?.let(viewModel::startReply)
-                        },
-                        onReplyToPost = viewModel::startReply,
-                        onEditPost = viewModel::startEdit,
-                        onDeletePost = { pendingDeletePostId = it.id.value },
-                        onSubscribe = { openDiscussionId?.let { viewModel.setSubscribed(it, true) } },
-                        onOpenAttachment = { att -> onOpenFile(att.fileName, att.fileUrl, att.mimeType, att.sizeBytes) },
-                    )
+                Display.ConfirmDelete -> SheetConfirmPage(
+                    body = stringResource(R.string.elearning_forum_delete_confirm_body),
+                    onConfirm = {
+                        val id = pendingDeletePostId
+                        pendingDeletePostId = null
+                        postsLoadable.valueOrNull()?.firstOrNull { it.id.value == id }?.let(viewModel::deletePost)
+                    },
+                    onKeep = { pendingDeletePostId = null },
+                    confirmLabel = stringResource(R.string.elearning_forum_delete),
+                )
 
-                    Display.Composer -> composerTarget?.let { target ->
-                        ForumComposer(
-                            modifier = Modifier.testTag(ForumSheetTestTags.COMPOSER),
-                            target = target,
-                            subject = subject,
-                            onSubjectChange = { subject = it },
-                            message = message,
-                            onMessageChange = { message = it },
-                            attachments = pendingAttachments,
-                            onAddAttachment = { filePicker.launch(arrayOf("*/*")) },
-                            onRemoveAttachment = viewModel::removeAttachment,
-                            groups = composerGroups,
-                            selectedGroupId = selectedGroupId,
-                            onSelectGroup = viewModel::selectGroup,
-                            submitting = submitting,
-                            onSubmit = { viewModel.submitComposer(subject, message) },
-                        )
-                    }
+                Display.ConfirmDiscard -> SheetConfirmPage(
+                    body = stringResource(R.string.elearning_forum_discard_confirm_body),
+                    onConfirm = {
+                        confirmDiscard = false
+                        viewModel.cancelComposer()
+                    },
+                    onKeep = { confirmDiscard = false },
+                    confirmIsPrimary = true,
+                )
 
-                    Display.ConfirmDelete -> SheetConfirmPage(
-                        body = stringResource(R.string.elearning_forum_delete_confirm_body),
-                        onConfirm = {
-                            val id = pendingDeletePostId
-                            pendingDeletePostId = null
-                            postsLoadable.valueOrNull()?.firstOrNull { it.id.value == id }?.let(viewModel::deletePost)
-                        },
-                        onKeep = { pendingDeletePostId = null },
-                        confirmLabel = stringResource(R.string.elearning_forum_delete),
-                    )
-
-                    Display.ConfirmDiscard -> SheetConfirmPage(
-                        body = stringResource(R.string.elearning_forum_discard_confirm_body),
-                        onConfirm = {
-                            confirmDiscard = false
-                            viewModel.cancelComposer()
-                        },
-                        onKeep = { confirmDiscard = false },
-                        confirmIsPrimary = true,
-                    )
-
-                    Display.Result -> outcome?.let { current ->
-                        SheetResultPage(outcome = current, onDismiss = { outcome = null })
-                    }
+                Display.Result -> outcome?.let { current ->
+                    SheetResultPage(outcome = current, onDismiss = { outcome = null })
                 }
             }
         }

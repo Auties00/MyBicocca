@@ -1,30 +1,17 @@
 package it.attendance100.mybicocca.ui.screen.settings.subscreen.appInfo
 
-import android.annotation.SuppressLint
-import androidx.activity.compose.PredictiveBackHandler
 import androidx.browser.customtabs.CustomTabsIntent
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.ContentTransform
-import androidx.compose.animation.SizeTransform
-import androidx.compose.animation.core.SeekableTransitionState
-import androidx.compose.animation.core.rememberTransition
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -37,14 +24,11 @@ import androidx.compose.material.icons.outlined.Update
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Link
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Surface
@@ -53,16 +37,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -71,9 +51,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -100,13 +78,12 @@ import it.attendance100.mybicocca.ui.component.brand.MyBicoccaWordmark
 import it.attendance100.mybicocca.ui.component.directory.SegmentedIconChip
 import it.attendance100.mybicocca.ui.component.directory.SegmentedTile
 import it.attendance100.mybicocca.ui.component.directory.segmentedShape
-import it.attendance100.mybicocca.ui.component.feedback.AppSnackbarHost
-import it.attendance100.mybicocca.ui.component.feedback.rememberAppSnackbarController
+import it.attendance100.mybicocca.ui.component.feedback.LocalAppSnackbarController
+import it.attendance100.mybicocca.ui.component.modal.SheetPager
 import it.attendance100.mybicocca.ui.component.modal.UpdateModalSheet
-import it.attendance100.mybicocca.ui.component.modal.sheetPageTransform
+import it.attendance100.mybicocca.ui.navigation.route.SheetRoute
 import kotlinx.coroutines.launch
 import java.time.Year
-import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.roundToInt
 
 private const val COPYRIGHT_START_YEAR = 2025
@@ -141,31 +118,43 @@ private val CREDITS = listOf(
 )
 
 /**
- * The settings About modal — a full-height, three-level bottom sheet built on the same
- * predictive-back machinery as the account switcher. The levels form a stack by [depth]:
- * 0 = About, 1 = What's New (the merged changelog), 2 = All versions (the per-release list).
+ * The About sheet's pages. [depth] drives the slide direction; [parent] is where back lands —
+ * Update Settings hangs off About, so it is a sibling of What's New rather than a level below
+ * All versions.
+ */
+private enum class AppInfoSubPage(val depth: Int) {
+    About(0),
+    WhatsNew(1),
+    AllVersions(2),
+    UpdateSettings(1);
+
+    val parent: AppInfoSubPage?
+        get() = when (this) {
+            About -> null
+            WhatsNew -> About
+            AllVersions -> WhatsNew
+            UpdateSettings -> About
+        }
+}
+
+/**
+ * The settings About page ([SheetRoute.AppInfo]) — a full-height sheet whose pages are navigated
+ * with [SheetPager]: About, What's New (the merged changelog), All versions (the per-release list,
+ * below What's New) and Update Settings (below About). Every page fills the sheet's height so all
+ * of them share one stable frame. Tiles, the "All versions" button and the in-page back arrows
+ * walk the pages; the back gesture is predictive and steps to the page's parent, and on About it
+ * dismisses the sheet natively.
  *
- * The sheet always expands to the full available height even when the About content is short, so
- * every level shares one stable frame. A back gesture is staged through a seekable transition:
- * above the root it drives the page back one level (springing back if cancelled); at the root it
- * drives the close transition, shrinking the sheet's height in step with the finger before
- * dismissing. Tapping a tile / the "All versions" button / an in-page back arrow walks the same
- * stack with the shared in-sheet page push.
- *
- * Level 0 keeps the update-aware "Check for Updates" tile (forced check + sheet snackbar while up
- * to date; an "Update available" tile that opens the store-aware page once a newer release is
+ * About keeps the update-aware "Check for Updates" tile (forced check + sheet snackbar while up
+ * to date; an "Update available" tile that opens the store-aware dialog once a newer release is
  * known), the "What's New" navigation tile, the "GitHub" Custom Tab link, and the credits.
  */
-@SuppressLint("ConfigurationScreenWidthHeight")
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AppInfoSheet(
-    onDismiss: () -> Unit,
+fun AppInfoPage(
     viewModel: AppInfoViewModel = hiltViewModel(),
 ) {
-    val scheme = MaterialTheme.colorScheme
     val scope = rememberCoroutineScope()
-    val snackbar = rememberAppSnackbarController()
+    val snackbar = LocalAppSnackbarController.current
     val githubIcon = ImageVector.vectorResource(R.drawable.ic_github)
 
     val updateStatus by viewModel.status.collectAsStateWithLifecycle()
@@ -173,8 +162,7 @@ fun AppInfoSheet(
     val nightlyEnabled by viewModel.nightlyEnabled.collectAsStateWithLifecycle()
     val checking by viewModel.checking.collectAsStateWithLifecycle()
     var showRestoreStableDialog by remember { mutableStateOf(false) }
-    // In-sheet depth: 0 = About, 1 = What's New (merged), 2 = All versions, 3 = Update Settings.
-    var depth by rememberSaveable { mutableIntStateOf(0) }
+    var page by rememberSaveable { mutableStateOf(AppInfoSubPage.About) }
     var showUpdateModal by remember { mutableStateOf<AppRelease?>(null) }
 
     showUpdateModal?.let { release ->
@@ -207,140 +195,49 @@ fun AppInfoSheet(
         }
     }
 
-    // Seekable depth pager (About -> Merged -> All versions), advanced by the tiles/buttons and
-    // driven frame-by-frame by the back gesture while not at the root.
-    val pageSeekable = remember { SeekableTransitionState(0) }
-    val pageTransition = rememberTransition(pageSeekable, label = "appInfoPage")
-    LaunchedEffect(depth) {
-        if (pageSeekable.targetState != depth) {
-            pageSeekable.animateTo(depth, tween(durationMillis = 450))
-        }
-    }
-    val depthState = rememberUpdatedState(depth)
+    SheetPager(
+        page = page,
+        depth = { it.depth },
+        backTo = page.parent,
+        onBack = { page.parent?.let { page = it } },
+        modifier = Modifier.fillMaxWidth(),
+    ) { target ->
+        val pageModifier = Modifier
+            .fillMaxWidth()
+            .fillMaxHeight()
+        when (target) {
+            AppInfoSubPage.About -> AboutScene(
+                modifier = pageModifier,
+                viewModel = viewModel,
+                updateStatus = updateStatus,
+                checking = checking,
+                githubIcon = githubIcon,
+                nightlyStatus = nightlyStatus,
+                nightlyEnabled = nightlyEnabled,
+                onOpenWhatsNew = { page = AppInfoSubPage.WhatsNew },
+                onOpenUpdateSettings = { page = AppInfoSubPage.UpdateSettings },
+                onCheckResult = onCheckResult,
+                onShowUpdateModal = { showUpdateModal = it }
+            )
 
-    val sheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = true,
-        confirmValueChange = { newState ->
-            !(depthState.value > 0 && newState == SheetValue.Hidden)
-        },
-    )
+            AppInfoSubPage.WhatsNew -> WhatsNewScene(
+                onBack = { page = AppInfoSubPage.About },
+                onAllVersions = { page = AppInfoSubPage.AllVersions },
+                modifier = pageModifier,
+            )
 
-    // Seekable close transition, driven by the back gesture in the About state so the sheet's
-    // height collapses with the finger before it dismisses.
-    val closeSeekable = remember { SeekableTransitionState(true) }
-    val closeTransition = rememberTransition(closeSeekable, label = "appInfoClose")
+            AppInfoSubPage.AllVersions -> WhatsNewAllVersionsScene(
+                onBack = { page = AppInfoSubPage.WhatsNew },
+                modifier = pageModifier,
+            )
 
-    val configuration = LocalConfiguration.current
-    val screenHeight = configuration.screenHeightDp.dp
-    val topWindowInsets =
-        WindowInsets.safeDrawing.asPaddingValues(LocalDensity.current).calculateTopPadding()
-    val handleHeight = 16.dp
-    val fullHeight = screenHeight - topWindowInsets - handleHeight
-
-    ModalBottomSheet(
-        onDismissRequest = { if (depth > 0) depth -= 1 else onDismiss() },
-        sheetState = sheetState,
-        contentWindowInsets = { WindowInsets(0) },
-        dragHandle = { Box(Modifier.padding(top = handleHeight)) },
-        shape = BottomSheetDefaults.ExpandedShape,
-        containerColor = scheme.surfaceContainerLow,
-    ) {
-        PredictiveBackHandler(enabled = depth > 0) { progress ->
-            val target = depth - 1
-            try {
-                progress.collect { backEvent ->
-                    pageSeekable.seekTo(backEvent.progress, targetState = target)
-                }
-                depth = target
-                pageSeekable.animateTo(target)
-            } catch (_: CancellationException) {
-                pageSeekable.animateTo(depth)
-            }
-        }
-
-        PredictiveBackHandler(enabled = depth == 0 && sheetState.isVisible) { progress ->
-            try {
-                progress.collect { backEvent ->
-                    closeSeekable.seekTo(
-                        backEvent.progress,
-                        targetState = false
-                    )
-                }
-                closeSeekable.animateTo(false)
-                onDismiss()
-            } catch (_: CancellationException) {
-                closeSeekable.animateTo(true)
-            }
-        }
-
-        closeTransition.AnimatedContent(
-            modifier = Modifier.fillMaxWidth(),
-            transitionSpec = {
-                ContentTransform(
-                    targetContentEnter = fadeIn(tween(durationMillis = 400)),
-                    initialContentExit = fadeOut(tween(durationMillis = 400)),
-                    sizeTransform = SizeTransform(clip = true) { _, _ -> tween(durationMillis = 450) },
-                )
-            },
-            contentKey = { it },
-        ) { isVisible ->
-            if (isVisible) {
-                Box(Modifier.fillMaxWidth()) {
-                    pageTransition.AnimatedContent(
-                        modifier = Modifier.fillMaxWidth(),
-                        transitionSpec = { sheetPageTransform(forward = targetState > initialState) },
-                        contentKey = { it },
-                    ) { pageDepth ->
-                        val pageModifier = Modifier
-                            .fillMaxWidth()
-                            .height(fullHeight)
-                        when (pageDepth) {
-                            0 -> AboutScene(
-                                modifier = pageModifier,
-                                viewModel = viewModel,
-                                updateStatus = updateStatus,
-                                checking = checking,
-                                githubIcon = githubIcon,
-                                nightlyStatus = nightlyStatus,
-                                nightlyEnabled = nightlyEnabled,
-                                onOpenWhatsNew = { depth = 1 },
-                                onOpenUpdateSettings = { depth = 3 },
-                                onCheckResult = onCheckResult,
-                                onShowUpdateModal = { showUpdateModal = it }
-                            )
-
-                            1 -> WhatsNewScene(
-                                onBack = { depth = 0 },
-                                onAllVersions = { depth = 2 },
-                                modifier = pageModifier,
-                            )
-
-                            2 -> WhatsNewAllVersionsScene(
-                                onBack = { depth = 1 },
-                                modifier = pageModifier,
-                            )
-
-                            3 -> UpdateSettingsScene(
-                                modifier = pageModifier,
-                                viewModel = viewModel,
-                                nightlyEnabled = nightlyEnabled,
-                                onBack = { depth = 0 },
-                                setShowRestoreStableDialog = { showRestoreStableDialog = it }
-                            )
-                        }
-                    }
-                    AppSnackbarHost(
-                        controller = snackbar,
-                        modifier = Modifier.align(Alignment.BottomCenter),
-                    )
-                }
-            } else {
-                Spacer(
-                    Modifier
-                        .fillMaxWidth()
-                        .height(0.dp),
-                )
-            }
+            AppInfoSubPage.UpdateSettings -> UpdateSettingsScene(
+                modifier = pageModifier,
+                viewModel = viewModel,
+                nightlyEnabled = nightlyEnabled,
+                onBack = { page = AppInfoSubPage.About },
+                setShowRestoreStableDialog = { showRestoreStableDialog = it }
+            )
         }
     }
 
@@ -874,7 +771,7 @@ private val CHECK_INTERVAL_STEPS_MINUTES = listOf(15, 30, 60, 120, 180, 360, 720
 
 /**
  * The "Controlla aggiornamenti ogni" control: a discrete slider over [CHECK_INTERVAL_STEPS_MINUTES]
- * choosing how often UpdateChecker's periodic worker fires. Mirrors SettingsSecuritySheet's
+ * choosing how often UpdateChecker's periodic worker fires. Mirrors SettingsSecurityPage's
  * TimeoutSlider: haptic ticks on step-crossing only, commit on release.
  */
 @Composable

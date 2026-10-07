@@ -52,9 +52,10 @@ import it.attendance100.mybicocca.ui.component.feedback.friendlyMessage
 import it.attendance100.mybicocca.ui.component.feedback.rememberMinDurationLoading
 import it.attendance100.mybicocca.ui.component.modal.SheetLoadingIndicator
 import it.attendance100.mybicocca.ui.component.modal.SheetMessage
-import it.attendance100.mybicocca.ui.component.modal.SheetPagerHeader
-import it.attendance100.mybicocca.ui.component.modal.sheetBodyGestureBarrier
-import it.attendance100.mybicocca.ui.component.modal.sheetPageTransform
+import it.attendance100.mybicocca.ui.component.modal.SheetPager
+import it.attendance100.mybicocca.ui.navigation.scene.LocalSheetDismissControl
+import androidx.compose.runtime.SideEffect
+import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.component.AttendanceCourseCard
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.state.AttendanceEvent
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.state.MarkUiState
@@ -67,15 +68,13 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.subscr
 
 /**
  * Body of the Presenze modal: per-course attendance as a single sheet entry whose container
- * is owned by the navigation-level BottomSheetSceneStrategy, in the same modal language as
+ * is owned by the navigation-level ModalSceneStrategy, in the same modal language as
  * the percorso sheet.
  *
- * A pinned morphing [SheetPagerHeader] sits over a multi-level body pager driven by a local
+ * A [SheetPager] (pinned morphing header over a multi-level body) is driven by a local
  * state machine: the root lists the courses still to attend, a course row pushes its
  * overview, and the footer's "Rileva presenza" pushes the QR/code marking flow, whose
- * progress and result pages ride the in-flight [MarkUiState]. Swipes on the pages scroll
- * their content, never the sheet — the header (and drag handle) is the only swipe-to-dismiss
- * surface. System back walks the pager up one level before dismissing the sheet and is
+ * progress and result pages ride the in-flight [MarkUiState]. System back walks the pager up one level before dismissing the sheet and is
  * swallowed mid-submission, when there is nothing sensible to go back to.
  *
  * The ViewModel is shell-scoped and outlives the sheet, so re-opening shows the cached
@@ -142,122 +141,102 @@ fun AttendancePage(
             else -> AttendancePage.Root
         }
 
-        val seekableState =
-            remember { androidx.compose.animation.core.SeekableTransitionState(page) }
-        val transition = androidx.compose.animation.core.rememberTransition(
-            seekableState,
-            label = "attendance_pages"
-        )
-
-        LaunchedEffect(page) {
-            if (seekableState.targetState != page) {
-                seekableState.animateTo(page)
-            }
+        // A mark in flight cannot be abandoned half-way: lock swipe/scrim/back dismissal.
+        val control = LocalSheetDismissControl.current
+        val submitting = markState == MarkUiState.Submitting
+        SideEffect {
+            control?.gesturesEnabled = !submitting
+            control?.confirmDismiss = { !submitting }
         }
 
-        androidx.activity.compose.PredictiveBackHandler(enabled = page != AttendancePage.Root) { progress ->
-            try {
-                val fallback = when (page) {
-                    is AttendancePage.Course -> AttendancePage.Root
-                    AttendancePage.RilevaCode -> AttendancePage.Rileva
-                    AttendancePage.Rileva -> AttendancePage.Root
-                    AttendancePage.RilevaResult -> AttendancePage.Root
-                    AttendancePage.RilevaProgress -> page
-                    AttendancePage.Root -> page
-                }
-                progress.collect { event ->
-                    seekableState.seekTo(event.progress, targetState = fallback)
-                }
-                seekableState.animateTo(fallback)
+        // System back walks the pager up one level; mid-submission there is nowhere to go.
+        val backTo: AttendancePage? = when (page) {
+            is AttendancePage.Course -> AttendancePage.Root
+            AttendancePage.RilevaCode -> AttendancePage.Rileva
+            AttendancePage.Rileva, AttendancePage.RilevaResult -> AttendancePage.Root
+            AttendancePage.RilevaProgress, AttendancePage.Root -> null
+        }
+
+        SheetPager(
+            page = page,
+            depth = { it.depth },
+            backTo = backTo,
+            onBack = {
                 when (page) {
                     is AttendancePage.Course -> closeCourse()
                     AttendancePage.RilevaCode -> enteringCode = false
                     AttendancePage.Rileva, AttendancePage.RilevaResult -> closeRileva()
                     AttendancePage.RilevaProgress, AttendancePage.Root -> Unit
                 }
-            } catch (_: kotlinx.coroutines.CancellationException) {
-                seekableState.animateTo(page)
-            }
-        }
-
-        Column(modifier = Modifier.testTag(AttendanceTestTags.ROOT)) {
-            SheetPagerHeader(
-                depth = page.depth,
-                title = when (page) {
-                    AttendancePage.Root -> stringResource(R.string.attendance_title)
-                    is AttendancePage.Course -> page.course.name
-                    AttendancePage.Rileva -> stringResource(R.string.attendance_rileva_title)
-                    AttendancePage.RilevaCode -> stringResource(R.string.attendance_lesson_title)
-                    AttendancePage.RilevaProgress -> stringResource(R.string.attendance_registration_title)
-                    AttendancePage.RilevaResult -> stringResource(R.string.attendance_result_title)
-                },
-                subtitle = when (page) {
-                    AttendancePage.Root -> if (loaded) coursesSummary(courses.size) else null
-                    is AttendancePage.Course -> page.course.teacherName
-                    AttendancePage.Rileva -> stringResource(R.string.attendance_rileva_subtitle)
-                    AttendancePage.RilevaCode -> stringResource(R.string.attendance_lesson_code_subtitle)
-                    AttendancePage.RilevaProgress, AttendancePage.RilevaResult -> null
-                },
-                onBack = when (page) {
-                    AttendancePage.Root, AttendancePage.RilevaProgress, AttendancePage.RilevaResult -> null
-                    is AttendancePage.Course -> ({ closeCourse() })
-                    AttendancePage.RilevaCode -> ({ enteringCode = false })
-                    AttendancePage.Rileva -> ({ closeRileva() })
-                },
-            )
-            transition.AnimatedContent(
-                modifier = Modifier.sheetBodyGestureBarrier(),
-                transitionSpec = {
-                    sheetPageTransform(forward = targetState.depth >= initialState.depth)
-                },
-                contentKey = { target ->
-                    when (target) {
-                        AttendancePage.Root -> "root"
-                        is AttendancePage.Course -> "course"
-                        AttendancePage.Rileva -> "rileva"
-                        AttendancePage.RilevaCode -> "rileva_code"
-                        AttendancePage.RilevaProgress -> "rileva_progress"
-                        AttendancePage.RilevaResult -> "rileva_result"
-                    }
-                },
-            ) { target ->
+            },
+            modifier = Modifier.testTag(AttendanceTestTags.ROOT),
+            key = { target ->
                 when (target) {
-                    AttendancePage.Root -> SheetBody(
-                        loaded = loaded,
-                        courses = courses,
-                        syncStatus = syncStatus,
-                        onRetry = viewModel::refresh,
-                        onOpenCourse = { detailCourse = it },
-                        onStartRileva = {
-                            viewModel.resetMarkState()
-                            rilevaOpen = true
-                        },
-                    )
+                    AttendancePage.Root -> "root"
+                    is AttendancePage.Course -> "course"
+                    AttendancePage.Rileva -> "rileva"
+                    AttendancePage.RilevaCode -> "rileva_code"
+                    AttendancePage.RilevaProgress -> "rileva_progress"
+                    AttendancePage.RilevaResult -> "rileva_result"
+                }
+            },
+            header = { target ->
+                SheetHeaderSpec(
+                    title = when (target) {
+                        AttendancePage.Root -> stringResource(R.string.attendance_title)
+                        is AttendancePage.Course -> target.course.name
+                        AttendancePage.Rileva -> stringResource(R.string.attendance_rileva_title)
+                        AttendancePage.RilevaCode -> stringResource(R.string.attendance_lesson_title)
+                        AttendancePage.RilevaProgress -> stringResource(R.string.attendance_registration_title)
+                        AttendancePage.RilevaResult -> stringResource(R.string.attendance_result_title)
+                    },
+                    subtitle = when (target) {
+                        AttendancePage.Root -> if (loaded) coursesSummary(courses.size) else null
+                        is AttendancePage.Course -> target.course.teacherName
+                        AttendancePage.Rileva -> stringResource(R.string.attendance_rileva_subtitle)
+                        AttendancePage.RilevaCode -> stringResource(R.string.attendance_lesson_code_subtitle)
+                        AttendancePage.RilevaProgress, AttendancePage.RilevaResult -> null
+                    },
+                    showBack = target !is AttendancePage.RilevaProgress && target !is AttendancePage.RilevaResult,
+                )
+            },
+        ) { target ->
+            when (target) {
+                AttendancePage.Root -> SheetBody(
+                    loaded = loaded,
+                    courses = courses,
+                    syncStatus = syncStatus,
+                    onRetry = viewModel::refresh,
+                    onOpenCourse = { detailCourse = it },
+                    onStartRileva = {
+                        viewModel.resetMarkState()
+                        rilevaOpen = true
+                    },
+                )
 
-                    is AttendancePage.Course -> androidx.compose.foundation.layout.Box(
-                        modifier = Modifier.testTag(AttendanceTestTags.COURSE_PAGE),
-                    ) {
-                        CourseOverviewPage(course = target.course)
-                    }
+                is AttendancePage.Course -> androidx.compose.foundation.layout.Box(
+                    modifier = Modifier.testTag(AttendanceTestTags.COURSE_PAGE),
+                ) {
+                    CourseOverviewPage(course = target.course)
+                }
 
-                    AttendancePage.Rileva -> RilevaChooserPage(
-                        onLessonCode = { enteringCode = true },
-                        onScanActivities = { showScanner = true },
-                    )
+                AttendancePage.Rileva -> RilevaChooserPage(
+                    onLessonCode = { enteringCode = true },
+                    onScanActivities = { showScanner = true },
+                )
 
-                    AttendancePage.RilevaCode -> RilevaCodePage(onSubmit = viewModel::submitScan)
+                AttendancePage.RilevaCode -> RilevaCodePage(onSubmit = viewModel::submitScan)
 
-                    AttendancePage.RilevaProgress -> PresenceMarkingProgress(
+                AttendancePage.RilevaProgress -> PresenceMarkingProgress(
+                    modifier = Modifier.padding(horizontal = 24.dp),
+                )
+
+                AttendancePage.RilevaResult -> lastOutcome?.let { outcome ->
+                    PresenceResultContent(
+                        outcome = outcome,
+                        onDone = { closeRileva() },
                         modifier = Modifier.padding(horizontal = 24.dp),
                     )
-
-                    AttendancePage.RilevaResult -> lastOutcome?.let { outcome ->
-                        PresenceResultContent(
-                            outcome = outcome,
-                            onDone = { closeRileva() },
-                            modifier = Modifier.padding(horizontal = 24.dp),
-                        )
-                    }
                 }
             }
         }

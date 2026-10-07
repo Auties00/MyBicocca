@@ -60,75 +60,67 @@ import it.attendance100.mybicocca.domain.model.calendar.CalendarEvent
 import it.attendance100.mybicocca.domain.model.calendar.EventStatus
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.domain.model.elearning.course.EnrolledCourse
-import it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet
 import it.attendance100.mybicocca.ui.screen.calendar.CalendarTestTags
 import it.attendance100.mybicocca.ui.screen.calendar.ext.durationMinutes
 import it.attendance100.mybicocca.ui.screen.calendar.ext.formatTimeRange
 import it.attendance100.mybicocca.ui.screen.calendar.ext.isPointInTime
 import it.attendance100.mybicocca.ui.screen.calendar.ext.locationLine
 import it.attendance100.mybicocca.ui.screen.calendar.ext.peopleLine
-import it.attendance100.mybicocca.ui.screen.calendar.subscreen.coursePicker.CourseEditionPickerSheet
+import it.attendance100.mybicocca.ui.navigation.LocalAppNavigator
+import it.attendance100.mybicocca.ui.navigation.route.SheetRoute
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 /**
- * Modal bottom sheet showing one calendar event in full: the headline title with the kind
+ * The calendar event sheet page ([SheetRoute.CalendarEvent]): the headline title with the kind
  * label under it — struck through and dimmed when the event is cancelled — above
- * [EventDetailContent]. Hosted in a predictive-back-aware sheet on the low surface tone,
- * scrolling internally when the content outgrows the screen.
+ * [EventDetailContent], scrolling internally when the content outgrows the screen. The sheet
+ * itself (container, dismissal, back) is the shell's modal scene.
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EventDetailSheet(
+fun EventDetailPage(
     event: CalendarEvent,
     elearningCourses: List<EnrolledCourse>,
     onOpenCourse: (CourseId) -> Unit,
     onOpenAssignment: (assignmentId: Int, courseId: Int) -> Unit,
     onOpenReservation: (CalendarEvent) -> Unit,
-    onDismiss: () -> Unit,
     /** Total students booked on the exam's call, joined from the live bookable list; null when unknown. */
     examTotalBookings: Int? = null,
 ) {
     val cancelled = event.status == EventStatus.CANCELLED
     val scheme = MaterialTheme.colorScheme
 
-    PredictiveModalBottomSheet(
-        onDismiss = onDismiss,
-        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-        modalColor = scheme.surfaceContainerLow,
-    ) { _, _ ->
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(max = 720.dp)
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 24.dp)
-                .verticalScroll(rememberScrollState()),
-        ) {
-            Text(
-                text = event.title,
-                modifier = Modifier.testTag(CalendarTestTags.EVENT_TITLE),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.SemiBold,
-                color = if (cancelled) scheme.onSurfaceVariant else scheme.onSurface,
-                textDecoration = if (cancelled) TextDecoration.LineThrough else TextDecoration.None,
-            )
-            Spacer(Modifier.height(4.dp))
-            Text(
-                text = activityLabel(event),
-                modifier = Modifier.testTag(CalendarTestTags.EVENT_ACTIVITY_LABEL),
-                style = MaterialTheme.typography.bodyMedium,
-                color = scheme.onSurfaceVariant,
-            )
-            EventDetailContent(
-                event = event,
-                elearningCourses = elearningCourses,
-                onOpenCourse = onOpenCourse,
-                onOpenAssignment = onOpenAssignment,
-                onOpenReservation = onOpenReservation,
-                examTotalBookings = examTotalBookings,
-            )
-        }
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(max = 720.dp)
+            .padding(horizontal = 24.dp)
+            .padding(bottom = 24.dp)
+            .verticalScroll(rememberScrollState()),
+    ) {
+        Text(
+            text = event.title,
+            modifier = Modifier.testTag(CalendarTestTags.EVENT_TITLE),
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = if (cancelled) scheme.onSurfaceVariant else scheme.onSurface,
+            textDecoration = if (cancelled) TextDecoration.LineThrough else TextDecoration.None,
+        )
+        Spacer(Modifier.height(4.dp))
+        Text(
+            text = activityLabel(event),
+            modifier = Modifier.testTag(CalendarTestTags.EVENT_ACTIVITY_LABEL),
+            style = MaterialTheme.typography.bodyMedium,
+            color = scheme.onSurfaceVariant,
+        )
+        EventDetailContent(
+            event = event,
+            elearningCourses = elearningCourses,
+            onOpenCourse = onOpenCourse,
+            onOpenAssignment = onOpenAssignment,
+            onOpenReservation = onOpenReservation,
+            examTotalBookings = examTotalBookings,
+        )
     }
 }
 
@@ -143,8 +135,9 @@ fun EventDetailSheet(
  * reservation-backed events — booked exams, appointments, library seats — lead to their
  * managing sheet, where the booking can be inspected or cancelled; lessons open their
  * e-learning course when one matches, with the map demoted to the secondary slot. A
- * single matching course edition navigates directly, several hand off to
- * [CourseEditionPickerSheet]. Locations open externally through geo: URIs.
+ * single matching course edition navigates directly, several hand off to the edition picker
+ * ([SheetRoute.CourseEditionPicker]: a page inside the event sheet, or its own sheet from the
+ * month agenda). Locations open externally through geo: URIs.
  */
 @Composable
 fun EventDetailContent(
@@ -158,7 +151,7 @@ fun EventDetailContent(
     examTotalBookings: Int? = null,
 ) {
     val context = LocalContext.current
-    var showEditionPicker by remember { mutableStateOf(false) }
+    val navigator = LocalAppNavigator.current
 
     Column(modifier = modifier.testTag(CalendarTestTags.EVENT_CONTENT)) {
         Spacer(Modifier.height(24.dp))
@@ -245,7 +238,9 @@ fun EventDetailContent(
         val openCourse: (() -> Unit)? = elearningCourses.takeIf { it.isNotEmpty() }?.let { courses ->
             {
                 courses.singleOrNull()?.let { onOpenCourse(it.id) }
-                    ?: run { showEditionPicker = true }
+                    ?: event.activityCode?.let { code ->
+                        navigator?.navigate(SheetRoute.CourseEditionPicker(code))
+                    }
             }
         }
 
@@ -293,17 +288,6 @@ fun EventDetailContent(
             Spacer(Modifier.height(24.dp))
             ActionRow(primary = primary, secondary = secondary)
         }
-    }
-
-    if (showEditionPicker) {
-        CourseEditionPickerSheet(
-            courses = elearningCourses,
-            onPick = { courseId ->
-                showEditionPicker = false
-                onOpenCourse(courseId)
-            },
-            onDismiss = { showEditionPicker = false },
-        )
     }
 }
 

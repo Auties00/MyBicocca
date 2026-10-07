@@ -45,7 +45,7 @@ import it.attendance100.mybicocca.core.os.currentLocale
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.security.UnlockResult
 import it.attendance100.mybicocca.ui.component.input.PasswordTextField
-import it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet
+import it.attendance100.mybicocca.ui.navigation.route.SheetRoute
 import it.attendance100.mybicocca.ui.screen.lock.BiometricCapability
 import it.attendance100.mybicocca.ui.screen.lock.errorMessageRes
 import it.attendance100.mybicocca.ui.screen.lock.findFragmentActivity
@@ -57,7 +57,7 @@ import kotlin.math.roundToInt
 private val TIMEOUT_STEPS = listOf(0, 1, 5, 10, 15, 30, 60, 240)
 
 /**
- * The "Sicurezza" settings page, shown as a modal bottom sheet. The app-lock master toggle is a
+ * The "Sicurezza" settings page ([SheetRoute.SettingsSecurity]). The app-lock master toggle is a
  * pair of side-by-side radio cells, each playing a looping [UnlockPreview] of what that state
  * looks like (a mock phone launching the app into the lock gate vs straight into the calendar).
  * Flipping the toggle requires proving identity first: a biometric prompt where available, with
@@ -70,8 +70,7 @@ private val TIMEOUT_STEPS = listOf(0, 1, 5, 10, 15, 30, 60, 240)
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun SettingsSecuritySheet(
-    onDismiss: () -> Unit,
+fun SettingsSecurityPage(
     viewModel: SettingsSecurityViewModel = hiltViewModel(),
 ) {
     val context = LocalContext.current
@@ -118,98 +117,93 @@ fun SettingsSecuritySheet(
         }
     }
 
-    PredictiveModalBottomSheet(
-        onDismiss = onDismiss,
-        sizeDuration = 500,
-    ) { _, _ ->
-        Column(
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .verticalScroll(rememberScrollState())
+            .padding(bottom = 24.dp),
+    ) {
+        Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+            Text(
+                text = stringResource(R.string.settings_security_sheet_title),
+                style = MaterialTheme.typography.titleLargeEmphasized,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                text = stringResource(R.string.settings_security_sheet_subtitle),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Spacer(Modifier.height(12.dp))
+
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .verticalScroll(rememberScrollState())
-                .padding(bottom = 24.dp),
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Column(modifier = Modifier.padding(horizontal = 20.dp)) {
-                Text(
-                    text = stringResource(R.string.settings_security_sheet_title),
-                    style = MaterialTheme.typography.titleLargeEmphasized,
-                    fontWeight = FontWeight.SemiBold,
-                )
-                Text(
-                    text = stringResource(R.string.settings_security_sheet_subtitle),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            Spacer(Modifier.height(12.dp))
+            val device = LocalDeviceType.current
 
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                val device = LocalDeviceType.current
+            FingerprintModeCell(
+                targetEnabled = false,
+                selected = !enabled,
+                deviceType = device,
+                onClick = { if (enabled) startToggle() },
+                modifier = Modifier.weight(1f),
+            )
+            FingerprintModeCell(
+                targetEnabled = true,
+                selected = enabled,
+                deviceType = device,
+                onClick = { if (!enabled) startToggle() },
+                modifier = Modifier.weight(1f),
+            )
+        }
 
-                FingerprintModeCell(
-                    targetEnabled = false,
-                    selected = !enabled,
-                    deviceType = device,
-                    onClick = { if (enabled) startToggle() },
-                    modifier = Modifier.weight(1f),
-                )
-                FingerprintModeCell(
-                    targetEnabled = true,
-                    selected = enabled,
-                    deviceType = device,
-                    onClick = { if (!enabled) startToggle() },
-                    modifier = Modifier.weight(1f),
-                )
-            }
-
-            AnimatedVisibility(visible = enabled) {
-                Column(modifier = Modifier.padding(horizontal = 20.dp)) {
-                    Spacer(Modifier.height(20.dp))
-                    TimeoutSlider(
-                        timeoutMinutes = timeoutMinutes,
-                        onTimeoutChange = { viewModel.setTimeout(it) },
-                    )
-                    Spacer(Modifier.height(24.dp))
-                    SettingToggleRow(
-                        title = stringResource(R.string.settings_security_private_screen_title),
-                        subtitle = stringResource(R.string.settings_security_private_screen_subtitle),
-                        checked = secureScreen,
-                        onCheckedChange = { viewModel.setSecureScreen(it) },
-                    )
-                    Spacer(Modifier.height(4.dp))
-                }
-            }
-
+        AnimatedVisibility(visible = enabled) {
             Column(modifier = Modifier.padding(horizontal = 20.dp)) {
                 Spacer(Modifier.height(20.dp))
+                TimeoutSlider(
+                    timeoutMinutes = timeoutMinutes,
+                    onTimeoutChange = { viewModel.setTimeout(it) },
+                )
+                Spacer(Modifier.height(24.dp))
                 SettingToggleRow(
-                    title = stringResource(R.string.settings_security_crash_reporting_title),
-                    subtitle = stringResource(R.string.settings_security_crash_reporting_subtitle),
-                    checked = crashReporting,
-                    onCheckedChange = { viewModel.setCrashReporting(it) },
+                    title = stringResource(R.string.settings_security_private_screen_title),
+                    subtitle = stringResource(R.string.settings_security_private_screen_subtitle),
+                    checked = secureScreen,
+                    onCheckedChange = { viewModel.setSecureScreen(it) },
                 )
                 Spacer(Modifier.height(4.dp))
             }
+        }
 
-            if (capability == BiometricCapability.NoneEnrolled) {
-                Text(
-                    text = stringResource(R.string.settings_security_biometric_unavailable),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
-                )
-            } else if (capability == BiometricCapability.Unavailable) {
-                Text(
-                    text = stringResource(R.string.settings_security_biometric_not_available),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
-                )
-            }
+        Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+            Spacer(Modifier.height(20.dp))
+            SettingToggleRow(
+                title = stringResource(R.string.settings_security_crash_reporting_title),
+                subtitle = stringResource(R.string.settings_security_crash_reporting_subtitle),
+                checked = crashReporting,
+                onCheckedChange = { viewModel.setCrashReporting(it) },
+            )
+            Spacer(Modifier.height(4.dp))
+        }
+
+        if (capability == BiometricCapability.NoneEnrolled) {
+            Text(
+                text = stringResource(R.string.settings_security_biometric_unavailable),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
+            )
+        } else if (capability == BiometricCapability.Unavailable) {
+            Text(
+                text = stringResource(R.string.settings_security_biometric_not_available),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp),
+            )
         }
     }
 

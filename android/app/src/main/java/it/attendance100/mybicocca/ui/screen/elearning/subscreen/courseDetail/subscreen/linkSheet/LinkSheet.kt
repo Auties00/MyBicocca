@@ -73,7 +73,7 @@ fun LinkSheet(
 
     it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet(
         onDismiss = onDismiss,
-    ) { _, _ ->
+    ) {
         Column(modifier = Modifier.fillMaxWidth()) {
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,

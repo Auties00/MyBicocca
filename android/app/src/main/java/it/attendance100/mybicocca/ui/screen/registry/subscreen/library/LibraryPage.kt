@@ -1,12 +1,10 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.library
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.ReadOnlyComposable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,9 +23,11 @@ import it.attendance100.mybicocca.domain.model.library.LibraryZoneColor
 import it.attendance100.mybicocca.domain.model.library.isBookableAt
 import it.attendance100.mybicocca.ui.component.modal.SheetConfirmPage
 import it.attendance100.mybicocca.ui.component.modal.SheetOutcome
-import it.attendance100.mybicocca.ui.component.modal.SheetPagerHeader
+import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
+import it.attendance100.mybicocca.ui.component.modal.SheetPager
 import it.attendance100.mybicocca.ui.component.modal.SheetResultPage
-import it.attendance100.mybicocca.ui.component.modal.sheetPageTransform
+import it.attendance100.mybicocca.ui.navigation.DisposableEffectOnPop
+import it.attendance100.mybicocca.ui.navigation.scene.LocalSheetDismissControl
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.subscreen.rilevaPresenza.component.QrScannerScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.component.ConfirmPage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.component.DateTimePage
@@ -52,8 +52,8 @@ private val TimeFormat = DateTimeFormatter.ofPattern("HH:mm")
 /**
  * The whole Biblioteca experience — Affluences seat booking for the university libraries — as a
  * single bottom-sheet entry. The sheet container is owned by the navigation layer
- * (BottomSheetSceneStrategy); this composable keeps its own VM-driven in-sheet pager and morphing
- * [SheetPagerHeader]. Bookings are server-synced (Room-cached); the user logs in by validating
+ * (ModalSceneStrategy); this composable keeps its own VM-driven in-sheet [SheetPager] with a
+ * morphing pinned header. Bookings are server-synced (Room-cached); the user logs in by validating
  * their institutional email.
  *
  * The pager renders the ViewModel's back stack (home, then login / reservation detail / the
@@ -63,7 +63,10 @@ private val TimeFormat = DateTimeFormatter.ofPattern("HH:mm")
  *
  * Behavior:
  * - System back dismisses the overlays first, then pops the stack; it is blocked on the Done page
- *   (the booking is committed) and while a submission is in flight.
+ *   (the booking is committed) and while a submission is in flight, which also locks sheet
+ *   dismissal.
+ * - Closing the sheet (its entry leaving the back stack) rewinds the pager and forgets the
+ *   booking session.
  * - The email-sent login event surfaces no result page: the login page advances to its
  *   check-your-email state through the login phase stream.
  * - A reservation-detail page pops itself when a cancellation or sync drops its reservation.
@@ -84,9 +87,7 @@ fun LibraryPage(
     val strLibraryInvalidCodeBody = stringResource(R.string.library_invalid_code_body)
     val strLibrarySendFailed = stringResource(R.string.library_send_failed)
 
-    DisposableEffect(Unit) {
-        onDispose { viewModel.resetNavigation() }
-    }
+    DisposableEffectOnPop { viewModel.resetNavigation() }
 
     run {
         var outcome by remember { mutableStateOf<SheetOutcome?>(null) }
@@ -190,44 +191,26 @@ fun LibraryPage(
 
         BackHandler(enabled = onDonePage && display is LibraryDisplay.Page) { }
 
-        val seekableState =
-            remember { androidx.compose.animation.core.SeekableTransitionState(display) }
-        val transition = androidx.compose.animation.core.rememberTransition(
-            seekableState,
-            label = "library_sheet_pages"
-        )
-
-        LaunchedEffect(display) {
-            if (seekableState.targetState != display) {
-                seekableState.animateTo(display)
-            }
+        // A booking in flight cannot be abandoned half-way: lock swipe/scrim/back dismissal.
+        val control = LocalSheetDismissControl.current
+        SideEffect {
+            control?.gesturesEnabled = !submitting
+            control?.confirmDismiss = { !submitting }
         }
 
-        androidx.activity.compose.PredictiveBackHandler(
-            enabled = display !is LibraryDisplay.Page || (depth > 0 && !submitting && !onDonePage),
-        ) { progress ->
-            try {
-                val fallback = when (display) {
-                    LibraryDisplay.Outcome -> if (pendingCancel != null) LibraryDisplay.ConfirmCancel else LibraryDisplay.Page(
-                        current
-                    )
+        val backTo: LibraryDisplay? = when (display) {
+            LibraryDisplay.Outcome ->
+                if (pendingCancel != null) LibraryDisplay.ConfirmCancel else LibraryDisplay.Page(current)
 
-                    LibraryDisplay.ConfirmCancel -> LibraryDisplay.Page(current)
-                    is LibraryDisplay.Page -> if (depth > 0) LibraryDisplay.Page(backStack[depth - 1]) else display
-                }
-                progress.collect { event ->
-                    seekableState.seekTo(event.progress, targetState = fallback)
-                }
-                seekableState.animateTo(fallback)
-                when (display) {
-                    LibraryDisplay.Outcome -> outcome = null
-                    LibraryDisplay.ConfirmCancel -> pendingCancel = null
-                    is LibraryDisplay.Page -> viewModel.back()
-                }
-            } catch (_: kotlinx.coroutines.CancellationException) {
-                seekableState.animateTo(display)
-            }
+            LibraryDisplay.ConfirmCancel -> LibraryDisplay.Page(current)
+            is LibraryDisplay.Page ->
+                if (depth > 0 && !submitting && !onDonePage) LibraryDisplay.Page(backStack[depth - 1]) else null
         }
+
+        // While the confirmation slides out its reservation is already cleared; keep its header readable.
+        val lastCancel = remember { arrayOf<LibraryReservation?>(null) }
+        if (pendingCancel != null) lastCancel[0] = pendingCancel
+        val shownCancel = pendingCancel ?: lastCancel[0]
 
         val seatsAtTime = remember(seats, selectedStartTime) {
             val time = selectedStartTime
@@ -242,206 +225,213 @@ fun LibraryPage(
             ).joinToString(" · ").ifBlank { null }
         }
 
-        Column(modifier = Modifier.testTag(LibraryTestTags.ROOT)) {
-            SheetPagerHeader(
-                depth = displayDepth(display),
-                title = when (display) {
-                    LibraryDisplay.Outcome -> ""
-                    LibraryDisplay.ConfirmCancel -> stringResource(R.string.library_cancel_confirmation)
-                    is LibraryDisplay.Page -> when (val current = display.page) {
-                        LibraryPage.Home -> stringResource(R.string.library_title)
-                        LibraryPage.Login -> stringResource(R.string.library_login)
-                        LibraryPage.Libraries -> stringResource(R.string.library_libraries)
-                        is LibraryPage.ReservationDetail -> detailReservation?.libraryName
-                            ?: stringResource(R.string.library_reservation)
-                        is LibraryPage.LibraryDetail ->
-                            libraryList.firstOrNull { it.id == current.libraryId }?.name
-                                ?: stringResource(R.string.library_title)
-                        LibraryPage.Zones -> bookingLibrary?.name
-                            ?: stringResource(R.string.library_book)
-                        LibraryPage.DateTime -> selectedZone?.name
-                            ?: stringResource(R.string.library_book)
-                        LibraryPage.Seats -> stringResource(R.string.library_choose_seat)
-                        LibraryPage.Confirm -> stringResource(R.string.common_confirm)
-                        LibraryPage.Done -> stringResource(R.string.library_confirmed)
-                    }
-                },
-                subtitle = when (display) {
-                    LibraryDisplay.Outcome -> null
-                    LibraryDisplay.ConfirmCancel -> pendingCancel?.libraryName
-                    is LibraryDisplay.Page -> when (val current = display.page) {
-                        LibraryPage.Home ->
-                            if (linkedEmail == null) stringResource(R.string.library_login_and_book)
-                            else if (reservations !is Loadable.Loaded) null
-                            else if (reservationList.isEmpty()) stringResource(R.string.library_no_bookings)
-                            else pluralStringResource(
-                                R.plurals.library_booking_count,
-                                reservationList.size,
-                                reservationList.size
+        SheetPager(
+            page = display,
+            depth = { displayDepth(it) },
+            backTo = backTo,
+            onBack = {
+                when (display) {
+                    LibraryDisplay.Outcome -> outcome = null
+                    LibraryDisplay.ConfirmCancel -> pendingCancel = null
+                    is LibraryDisplay.Page -> viewModel.back()
+                }
+            },
+            modifier = Modifier.testTag(LibraryTestTags.ROOT),
+            key = { displayKey(it) },
+            header = { target ->
+                SheetHeaderSpec(
+                    title = when (target) {
+                        LibraryDisplay.Outcome -> ""
+                        LibraryDisplay.ConfirmCancel -> stringResource(R.string.library_cancel_confirmation)
+                        is LibraryDisplay.Page -> when (val page = target.page) {
+                            LibraryPage.Home -> stringResource(R.string.library_title)
+                            LibraryPage.Login -> stringResource(R.string.library_login)
+                            LibraryPage.Libraries -> stringResource(R.string.library_libraries)
+                            is LibraryPage.ReservationDetail ->
+                                reservationList.firstOrNull { it.reservationId == page.reservationId }?.libraryName
+                                    ?: stringResource(R.string.library_reservation)
+                            is LibraryPage.LibraryDetail ->
+                                libraryList.firstOrNull { it.id == page.libraryId }?.name
+                                    ?: stringResource(R.string.library_title)
+                            LibraryPage.Zones -> bookingLibrary?.name
+                                ?: stringResource(R.string.library_book)
+                            LibraryPage.DateTime -> selectedZone?.name
+                                ?: stringResource(R.string.library_book)
+                            LibraryPage.Seats -> stringResource(R.string.library_choose_seat)
+                            LibraryPage.Confirm -> stringResource(R.string.common_confirm)
+                            LibraryPage.Done -> stringResource(R.string.library_confirmed)
+                        }
+                    },
+                    subtitle = when (target) {
+                        LibraryDisplay.Outcome -> null
+                        LibraryDisplay.ConfirmCancel -> shownCancel?.libraryName
+                        is LibraryDisplay.Page -> when (val page = target.page) {
+                            LibraryPage.Home ->
+                                if (linkedEmail == null) stringResource(R.string.library_login_and_book)
+                                else if (reservations !is Loadable.Loaded) null
+                                else if (reservationList.isEmpty()) stringResource(R.string.library_no_bookings)
+                                else pluralStringResource(
+                                    R.plurals.library_booking_count,
+                                    reservationList.size,
+                                    reservationList.size
+                                )
+                            LibraryPage.Login -> stringResource(R.string.library_verify_email)
+                            LibraryPage.Libraries -> stringResource(R.string.library_choose_library)
+                            is LibraryPage.ReservationDetail -> stringResource(R.string.library_reservation_details)
+                            is LibraryPage.LibraryDetail -> libraryList.firstOrNull { it.id == page.libraryId }?.secondaryName
+                            LibraryPage.Zones -> stringResource(R.string.library_choose_zone)
+                            LibraryPage.DateTime -> stringResource(R.string.library_choose_datetime)
+                            LibraryPage.Seats -> slotRecap
+                            LibraryPage.Confirm -> slotRecap
+                            LibraryPage.Done -> bookingLibrary?.name
+                        }
+                    },
+                    showBack = when (target) {
+                        LibraryDisplay.Outcome -> false
+                        LibraryDisplay.ConfirmCancel -> true
+                        is LibraryDisplay.Page -> !submitting && target.page != LibraryPage.Done
+                    },
+                )
+            },
+        ) { shown ->
+            when (shown) {
+                LibraryDisplay.Outcome -> outcome?.let { current ->
+                    SheetResultPage(outcome = current, onDismiss = { outcome = null })
+                }
+
+                LibraryDisplay.ConfirmCancel -> pendingCancel?.let { reservation ->
+                    SheetConfirmPage(
+                        body = stringResource(
+                            R.string.library_confirm_cancel,
+                            reservation.libraryName
+                        ),
+                        onConfirm = {
+                            pendingCancel = null
+                            viewModel.cancel(reservation)
+                        },
+                        onKeep = { pendingCancel = null },
+                        confirmIsPrimary = true,
+                    )
+                }
+
+                is LibraryDisplay.Page -> when (val page = shown.page) {
+                    LibraryPage.Home -> HomePage(
+                        reservations = reservations,
+                        loggedIn = linkedEmail != null,
+                        onOpenReservation = viewModel::openReservation,
+                        onLogin = viewModel::openLogin,
+                        onPrenota = viewModel::openLibraries,
+                    )
+
+                    LibraryPage.Login -> LoginPage(
+                        email = email,
+                        phase = loginPhase,
+                        feedback = loginFeedback,
+                        onSendEmail = viewModel::sendLoginEmail,
+                        onVerify = viewModel::verifyLogin,
+                        onFeedbackDismiss = viewModel::dismissLoginFeedback,
+                    )
+
+                    LibraryPage.Libraries -> LibrariesPage(
+                        libraries = libraries,
+                        librariesStatus = librariesStatus,
+                        onOpenLibrary = viewModel::openLibrary,
+                        onRetry = viewModel::refreshLibraries,
+                    )
+
+                    is LibraryPage.ReservationDetail -> {
+                        val reservation =
+                            reservationList.firstOrNull { it.reservationId == page.reservationId }
+                        if (reservation != null) {
+                            LibraryReservationDetailPage(
+                                reservation = reservation,
+                                isCancelling = cancellingId == reservation.reservationId,
+                                onVerifyPresence = { showScanner = true },
+                                onCancel = { pendingCancel = it },
                             )
-                        LibraryPage.Login -> stringResource(R.string.library_verify_email)
-                        LibraryPage.Libraries -> stringResource(R.string.library_choose_library)
-                        is LibraryPage.ReservationDetail -> stringResource(R.string.library_reservation_details)
-                        is LibraryPage.LibraryDetail -> libraryList.firstOrNull { it.id == current.libraryId }?.secondaryName
-                        LibraryPage.Zones -> stringResource(R.string.library_choose_zone)
-                        LibraryPage.DateTime -> stringResource(R.string.library_choose_datetime)
-                        LibraryPage.Seats -> slotRecap
-                        LibraryPage.Confirm -> slotRecap
-                        LibraryPage.Done -> bookingLibrary?.name
-                    }
-                },
-                onBack = when (display) {
-                    LibraryDisplay.Outcome -> null
-                    LibraryDisplay.ConfirmCancel -> ({ pendingCancel = null })
-                    is LibraryDisplay.Page -> if (depth > 0 && !submitting && !onDonePage) viewModel::back else null
-                },
-            )
-
-            transition.AnimatedContent(
-                transitionSpec = {
-                    sheetPageTransform(forward = displayDepth(targetState) >= displayDepth(initialState))
-                },
-                contentKey = { displayKey(it) },
-            ) { shown ->
-                when (shown) {
-                    LibraryDisplay.Outcome -> outcome?.let { current ->
-                        SheetResultPage(outcome = current, onDismiss = { outcome = null })
-                    }
-
-                    LibraryDisplay.ConfirmCancel -> pendingCancel?.let { reservation ->
-                        SheetConfirmPage(
-                            body = stringResource(
-                                R.string.library_confirm_cancel,
-                                reservation.libraryName
-                            ),
-                            onConfirm = {
-                                pendingCancel = null
-                                viewModel.cancel(reservation)
-                            },
-                            onKeep = { pendingCancel = null },
-                            confirmIsPrimary = true,
-                        )
-                    }
-
-                    is LibraryDisplay.Page -> when (val page = shown.page) {
-                        LibraryPage.Home -> HomePage(
-                            reservations = reservations,
-                            loggedIn = linkedEmail != null,
-                            onOpenReservation = viewModel::openReservation,
-                            onLogin = viewModel::openLogin,
-                            onPrenota = viewModel::openLibraries,
-                        )
-
-                        LibraryPage.Login -> LoginPage(
-                            email = email,
-                            phase = loginPhase,
-                            feedback = loginFeedback,
-                            onSendEmail = viewModel::sendLoginEmail,
-                            onVerify = viewModel::verifyLogin,
-                            onFeedbackDismiss = viewModel::dismissLoginFeedback,
-                        )
-
-                        LibraryPage.Libraries -> LibrariesPage(
-                            libraries = libraries,
-                            librariesStatus = librariesStatus,
-                            onOpenLibrary = viewModel::openLibrary,
-                            onRetry = viewModel::refreshLibraries,
-                        )
-
-                        is LibraryPage.ReservationDetail -> {
-                            val reservation =
-                                reservationList.firstOrNull { it.reservationId == page.reservationId }
-                            if (reservation != null) {
-                                LibraryReservationDetailPage(
-                                    reservation = reservation,
-                                    isCancelling = cancellingId == reservation.reservationId,
-                                    onVerifyPresence = { showScanner = true },
-                                    onCancel = { pendingCancel = it },
-                                )
-                            }
                         }
-
-                        is LibraryPage.LibraryDetail -> LibraryDetailPage(
-                            library = libraryList.firstOrNull { it.id == page.libraryId },
-                            liveStatus = liveStatus,
-                            weekHours = weekHours,
-                            detailStatus = detailStatus,
-                            onPrenota = {
-                                libraryList.firstOrNull { it.id == page.libraryId }
-                                    ?.let(viewModel::startBooking)
-                            },
-                            onRetry = viewModel::retryDetail,
-                        )
-
-                        LibraryPage.Zones -> ZonesPage(
-                            zones = zones,
-                            zonesStatus = zonesStatus,
-                            onSelectZone = viewModel::selectZone,
-                            onRetry = viewModel::retryZones,
-                        )
-
-                        LibraryPage.DateTime -> DateTimePage(
-                            constraints = constraints,
-                            constraintsStatus = constraintsStatus,
-                            selectedDate = selectedDate,
-                            selectedDuration = selectedDuration,
-                            seats = seats,
-                            seatsStatus = seatsStatus,
-                            availableStartTimes = availableStartTimes,
-                            selectedStartTime = selectedStartTime,
-                            enabled = !submitting,
-                            onSelectDate = viewModel::selectDate,
-                            onSelectDuration = viewModel::selectDuration,
-                            onSelectStartTime = viewModel::selectStartTime,
-                            onContinue = viewModel::goToSeats,
-                            onRetryConstraints = viewModel::retryConstraints,
-                            onRetrySeats = viewModel::retrySeats,
-                        )
-
-                        LibraryPage.Seats -> SeatsPage(
-                            seats = seatsAtTime,
-                            zoneColor = selectedZone?.color ?: LibraryZoneColor.Other,
-                            onSelectSeat = viewModel::selectSeat,
-                            onAutoSelect = viewModel::autoSelectSeat,
-                        )
-
-                        LibraryPage.Confirm -> {
-                            val seat = selectedSeat
-                            val date = selectedDate
-                            val start = selectedStartTime
-                            val duration = selectedDuration
-                            val library = bookingLibrary
-                            val zone = selectedZone
-                            if (seat != null && date != null && start != null && duration != null && library != null && zone != null) {
-                                ConfirmPage(
-                                    libraryName = library.name,
-                                    zoneName = zone.name,
-                                    seat = seat,
-                                    date = date,
-                                    startTime = start,
-                                    durationMinutes = duration,
-                                    email = email,
-                                    note = note,
-                                    onNoteChange = viewModel::setNote,
-                                    agreement = mandatoryAgreement,
-                                    consentAccepted = consentAccepted,
-                                    onConsentChange = viewModel::setConsent,
-                                    submitting = submitting,
-                                    onSubmit = viewModel::submit,
-                                )
-                            }
-                        }
-
-                        LibraryPage.Done -> LibraryDonePage(
-                            libraryName = bookingLibrary?.name.orEmpty(),
-                            zoneName = selectedZone?.name.orEmpty(),
-                            seatName = selectedSeat?.shortName.orEmpty(),
-                            date = selectedDate,
-                            startTime = selectedStartTime,
-                            durationMinutes = selectedDuration,
-                            onDone = viewModel::finishBooking,
-                        )
                     }
+
+                    is LibraryPage.LibraryDetail -> LibraryDetailPage(
+                        library = libraryList.firstOrNull { it.id == page.libraryId },
+                        liveStatus = liveStatus,
+                        weekHours = weekHours,
+                        detailStatus = detailStatus,
+                        onPrenota = {
+                            libraryList.firstOrNull { it.id == page.libraryId }
+                                ?.let(viewModel::startBooking)
+                        },
+                        onRetry = viewModel::retryDetail,
+                    )
+
+                    LibraryPage.Zones -> ZonesPage(
+                        zones = zones,
+                        zonesStatus = zonesStatus,
+                        onSelectZone = viewModel::selectZone,
+                        onRetry = viewModel::retryZones,
+                    )
+
+                    LibraryPage.DateTime -> DateTimePage(
+                        constraints = constraints,
+                        constraintsStatus = constraintsStatus,
+                        selectedDate = selectedDate,
+                        selectedDuration = selectedDuration,
+                        seats = seats,
+                        seatsStatus = seatsStatus,
+                        availableStartTimes = availableStartTimes,
+                        selectedStartTime = selectedStartTime,
+                        enabled = !submitting,
+                        onSelectDate = viewModel::selectDate,
+                        onSelectDuration = viewModel::selectDuration,
+                        onSelectStartTime = viewModel::selectStartTime,
+                        onContinue = viewModel::goToSeats,
+                        onRetryConstraints = viewModel::retryConstraints,
+                        onRetrySeats = viewModel::retrySeats,
+                    )
+
+                    LibraryPage.Seats -> SeatsPage(
+                        seats = seatsAtTime,
+                        zoneColor = selectedZone?.color ?: LibraryZoneColor.Other,
+                        onSelectSeat = viewModel::selectSeat,
+                        onAutoSelect = viewModel::autoSelectSeat,
+                    )
+
+                    LibraryPage.Confirm -> {
+                        val seat = selectedSeat
+                        val date = selectedDate
+                        val start = selectedStartTime
+                        val duration = selectedDuration
+                        val library = bookingLibrary
+                        val zone = selectedZone
+                        if (seat != null && date != null && start != null && duration != null && library != null && zone != null) {
+                            ConfirmPage(
+                                libraryName = library.name,
+                                zoneName = zone.name,
+                                seat = seat,
+                                date = date,
+                                startTime = start,
+                                durationMinutes = duration,
+                                email = email,
+                                note = note,
+                                onNoteChange = viewModel::setNote,
+                                agreement = mandatoryAgreement,
+                                consentAccepted = consentAccepted,
+                                onConsentChange = viewModel::setConsent,
+                                submitting = submitting,
+                                onSubmit = viewModel::submit,
+                            )
+                        }
+                    }
+
+                    LibraryPage.Done -> LibraryDonePage(
+                        libraryName = bookingLibrary?.name.orEmpty(),
+                        zoneName = selectedZone?.name.orEmpty(),
+                        seatName = selectedSeat?.shortName.orEmpty(),
+                        date = selectedDate,
+                        startTime = selectedStartTime,
+                        durationMinutes = selectedDuration,
+                        onDone = viewModel::finishBooking,
+                    )
                 }
             }
         }

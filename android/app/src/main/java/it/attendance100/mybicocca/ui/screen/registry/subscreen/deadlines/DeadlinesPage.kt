@@ -45,9 +45,9 @@ import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.ui.component.button.RetryButton
 import it.attendance100.mybicocca.ui.component.feedback.friendlyMessage
 import it.attendance100.mybicocca.ui.component.feedback.rememberMinDurationLoading
-import it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet
 import it.attendance100.mybicocca.ui.component.modal.SheetLoadingIndicator
 import it.attendance100.mybicocca.ui.component.modal.SheetMessage
+import it.attendance100.mybicocca.ui.navigation.scene.LocalSheetDismissControl
 import it.attendance100.mybicocca.ui.screen.registry.state.DeadlineUrgency
 import it.attendance100.mybicocca.ui.screen.registry.state.RegistryDeadline
 import java.time.LocalDate
@@ -65,11 +65,12 @@ private val NextFormat: DateTimeFormatter
     get() = DateTimeFormatter.ofPattern("d MMM", currentLocale())
 
 /**
- * Scadenzario: the registry deadline spine rendered as a vertical timeline inside a modal
- * sheet, opened from the Scadenze banner. Each entry pairs a big date column with a ringed
- * node on a continuous connector rail and a tappable card (accented kicker + relative
- * label, title, optional detail); tapping routes to the owning sub-screen and dismisses
- * the sheet. A count summary sits under the "Scadenzario" title once data settles.
+ * Scadenzario: the registry deadline spine rendered as a vertical timeline on a sheet page,
+ * opened from the Scadenze banner. Each entry pairs a big date column with a ringed node on a
+ * continuous connector rail and a tappable card (accented kicker + relative label, title,
+ * optional detail); tapping dismisses the sheet, then routes to the owning sub-screen, so its
+ * sheet replaces this one rather than stacking above it. A count summary sits under the
+ * "Scadenzario" title once data settles.
  *
  * The spine merges several live feature streams (outcomes, taxes, bookings, calls), so the
  * sheet waits for ALL of them behind one loading state instead of showing a partial list:
@@ -79,94 +80,88 @@ private val NextFormat: DateTimeFormatter
  * and a settled empty spine shows the empty copy.
  */
 @Composable
-fun DeadlinesSheet(
+fun DeadlinesPage(
     deadlines: List<RegistryDeadline>,
     loading: Boolean,
     failure: Throwable?,
     onRetry: () -> Unit,
-    onDismiss: () -> Unit,
 ) {
+    val dismissControl = LocalSheetDismissControl.current
     val scheme = MaterialTheme.colorScheme
     val today = remember { LocalDate.now() }
 
     val showLoading = rememberMinDurationLoading(loading = loading)
     val settled = !loading && !showLoading
 
-    PredictiveModalBottomSheet(
-        onDismiss = onDismiss,
-        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
-        sizeDuration = 500,
-    ) { _, _ ->
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(max = 720.dp),
-        ) {
-            Column(modifier = Modifier.padding(start = 22.dp, top = 4.dp, end = 22.dp, bottom = 8.dp)) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(max = 720.dp),
+    ) {
+        Column(modifier = Modifier.padding(start = 22.dp, top = 4.dp, end = 22.dp, bottom = 8.dp)) {
+            Text(
+                text = stringResource(R.string.deadlines_title),
+                fontSize = 27.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = (-0.9).sp,
+                color = scheme.onSurface,
+            )
+            if (settled) {
                 Text(
-                    text = stringResource(R.string.deadlines_title),
-                    fontSize = 27.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = (-0.9).sp,
-                    color = scheme.onSurface,
-                )
-                if (settled) {
-                    Text(
-                        text = buildAnnotatedString {
-                            if (deadlines.isEmpty()) {
-                                append(stringResource(R.string.deadlines_none_next_30))
-                            } else {
-                                withStyle(SpanStyle(color = scheme.primary, fontWeight = FontWeight.Bold)) {
-                                    append(
-                                        pluralStringResource(R.plurals.deadlines_count, deadlines.size, deadlines.size)
-                                    )
-                                }
-                                append(stringResource(R.string.deadlines_next_30_suffix))
+                    text = buildAnnotatedString {
+                        if (deadlines.isEmpty()) {
+                            append(stringResource(R.string.deadlines_none_next_30))
+                        } else {
+                            withStyle(SpanStyle(color = scheme.primary, fontWeight = FontWeight.Bold)) {
+                                append(
+                                    pluralStringResource(R.plurals.deadlines_count, deadlines.size, deadlines.size)
+                                )
                             }
-                        },
-                        fontSize = 13.5.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = scheme.onSurfaceVariant,
-                    )
-                }
+                            append(stringResource(R.string.deadlines_next_30_suffix))
+                        }
+                    },
+                    fontSize = 13.5.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    color = scheme.onSurfaceVariant,
+                )
+            }
+        }
+
+        when {
+            failure != null && loading -> SheetError(cause = failure, onRetry = onRetry)
+
+            !settled -> SheetLoadingIndicator(label = stringResource(R.string.deadlines_loading))
+
+            deadlines.isEmpty() -> Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(180.dp)
+                    .padding(bottom = 24.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = stringResource(R.string.deadlines_none_imminent),
+                    fontSize = 14.sp,
+                    color = scheme.onSurfaceVariant,
+                )
             }
 
-            when {
-                failure != null && loading -> SheetError(cause = failure, onRetry = onRetry)
-
-                !settled -> SheetLoadingIndicator(label = stringResource(R.string.deadlines_loading))
-
-                deadlines.isEmpty() -> Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(180.dp)
-                        .padding(bottom = 24.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = stringResource(R.string.deadlines_none_imminent),
-                        fontSize = 14.sp,
-                        color = scheme.onSurfaceVariant,
+            else -> Column(
+                modifier = Modifier
+                    .weight(1f, fill = false)
+                    .verticalScroll(rememberScrollState())
+                    .padding(start = 20.dp, top = 6.dp, end = 20.dp, bottom = 24.dp),
+            ) {
+                deadlines.forEachIndexed { index, deadline ->
+                    TimelineEvent(
+                        deadline = deadline,
+                        today = today,
+                        isLast = index == deadlines.lastIndex,
+                        onClick = {
+                            dismissControl?.dismiss()
+                            deadline.onClick()
+                        },
                     )
-                }
-
-                else -> Column(
-                    modifier = Modifier
-                        .weight(1f, fill = false)
-                        .verticalScroll(rememberScrollState())
-                        .padding(start = 20.dp, top = 6.dp, end = 20.dp, bottom = 24.dp),
-                ) {
-                    deadlines.forEachIndexed { index, deadline ->
-                        TimelineEvent(
-                            deadline = deadline,
-                            today = today,
-                            isLast = index == deadlines.lastIndex,
-                            onClick = {
-                                deadline.onClick()
-                                onDismiss()
-                            },
-                        )
-                    }
                 }
             }
         }

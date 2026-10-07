@@ -39,7 +39,7 @@ import it.attendance100.mybicocca.core.os.systemAppLanguage
 import it.attendance100.mybicocca.core.os.systemPrimaryLocale
 import it.attendance100.mybicocca.ui.component.button.MorphKnob
 import it.attendance100.mybicocca.ui.component.directory.SegmentedTile
-import it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet
+import it.attendance100.mybicocca.ui.navigation.route.SheetRoute
 import it.attendance100.mybicocca.ui.screen.settings.subscreen.language.component.DeformingFlagBox
 import it.attendance100.mybicocca.ui.screen.settings.subscreen.language.component.FlagFrame
 import it.attendance100.mybicocca.ui.screen.settings.subscreen.language.component.ItalyFlag
@@ -87,7 +87,7 @@ fun currentAppLanguageLabel(context: Context): String {
 }
 
 /**
- * The language picker, shown as a modal bottom sheet in the app's expressive language: a
+ * The language picker page ([SheetRoute.SettingsLanguage]), in the app's expressive language: a
  * connected segmented card of neutral tiles — selection lives in the trailing [MorphKnob]
  * (circle morphing to sunny on the motion-scheme springs), not in a container wash, like the
  * Piano di Studi picks. Each tile leads with its custom flag, which ripples on the AGSL waving
@@ -98,99 +98,94 @@ fun currentAppLanguageLabel(context: Context): String {
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun LanguageSheet(onDismiss: () -> Unit) {
+fun LanguagePage() {
     val context = LocalContext.current
     val haptic = rememberHapticManager()
     var selectedLocale by remember { mutableStateOf(currentAppLanguage(context)) }
 
-    PredictiveModalBottomSheet(
-        onDismiss = onDismiss,
-        sizeDuration = 500,
-    ) { _, _ ->
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 20.dp)
-                .padding(bottom = 24.dp),
-        ) {
-            Text(
-                text = stringResource(R.string.settings_language_sheet_title),
-                style = MaterialTheme.typography.titleLargeEmphasized,
-                fontWeight = FontWeight.SemiBold,
-            )
-            Text(
-                text = stringResource(R.string.settings_language_sheet_subtitle),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Spacer(Modifier.height(12.dp))
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp)
+            .padding(bottom = 24.dp),
+    ) {
+        Text(
+            text = stringResource(R.string.settings_language_sheet_title),
+            style = MaterialTheme.typography.titleLargeEmphasized,
+            fontWeight = FontWeight.SemiBold,
+        )
+        Text(
+            text = stringResource(R.string.settings_language_sheet_subtitle),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Spacer(Modifier.height(12.dp))
 
-            val osLocale = systemPrimaryLocale(context)
-            val osLanguage = osLocale?.language
-            // An unresolvable system locale is treated as supported, so the "help translate" hint
-            // only appears when we positively know the OS language is one the app doesn't ship.
-            val isOsLanguageSupported =
-                osLanguage == null || isAppLanguageSupported(context, osLanguage)
-            val appLocale = currentLocale()
-            val osLangName =
-                osLocale?.getDisplayLanguage(appLocale)?.replaceFirstChar { it.uppercase() } ?: ""
+        val osLocale = systemPrimaryLocale(context)
+        val osLanguage = osLocale?.language
+        // An unresolvable system locale is treated as supported, so the "help translate" hint
+        // only appears when we positively know the OS language is one the app doesn't ship.
+        val isOsLanguageSupported =
+            osLanguage == null || isAppLanguageSupported(context, osLanguage)
+        val appLocale = currentLocale()
+        val osLangName =
+            osLocale?.getDisplayLanguage(appLocale)?.replaceFirstChar { it.uppercase() } ?: ""
 
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                LANGUAGE_OPTIONS.forEachIndexed { index, option ->
-                    val selected = selectedLocale == option.code
+        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            LANGUAGE_OPTIONS.forEachIndexed { index, option ->
+                val selected = selectedLocale == option.code
 
-                    val titleStr = stringResource(option.labelRes)
-                    val titleAnnotated = if (option.code == LOCALE_SYSTEM) {
-                        buildAnnotatedString {
-                            append(titleStr)
-                            append(" - ")
-                            append(osLangName)
+                val titleStr = stringResource(option.labelRes)
+                val titleAnnotated = if (option.code == LOCALE_SYSTEM) {
+                    buildAnnotatedString {
+                        append(titleStr)
+                        append(" - ")
+                        append(osLangName)
+                    }
+                } else null
+
+                val isEnabled =
+                    if (option.code == LOCALE_SYSTEM) isOsLanguageSupported else true
+
+                SegmentedTile(
+                    isFirst = index == 0,
+                    isLast = index == LANGUAGE_OPTIONS.lastIndex,
+                    title = titleStr,
+                    titleAnnotated = titleAnnotated,
+                    enabled = isEnabled,
+                    onClick = {
+                        if (selectedLocale != option.code) {
+                            selectedLocale = option.code
+                            haptic.tap()
+                            setAppLanguage(context, option.code)
                         }
-                    } else null
-
-                    val isEnabled =
-                        if (option.code == LOCALE_SYSTEM) isOsLanguageSupported else true
-
-                    SegmentedTile(
-                        isFirst = index == 0,
-                        isLast = index == LANGUAGE_OPTIONS.lastIndex,
-                        title = titleStr,
-                        titleAnnotated = titleAnnotated,
-                        enabled = isEnabled,
-                        onClick = {
-                            if (selectedLocale != option.code) {
-                                selectedLocale = option.code
-                                haptic.tap()
-                                setAppLanguage(context, option.code)
-                            }
-                        },
-                        leading = {
-                            LanguageFlag(
-                                option = option,
-                                selected = selected,
-                                modifier = Modifier
-                                    .width(46.dp)
-                                    .alpha(if (isEnabled) 1f else 0.38f),
-                            )
-                        },
-                        trailing = {
-                            Spacer(Modifier.width(10.dp))
-                            MorphKnob(checked = selected, uncheckedIcon = null)
-                        },
-                    )
-                }
-            }
-
-            if (!isOsLanguageSupported) {
-                Spacer(Modifier.height(16.dp))
-                Text(
-                    text = stringResource(R.string.settings_language_help_translate, osLangName),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.fillMaxWidth(),
-                    textAlign = TextAlign.Center
+                    },
+                    leading = {
+                        LanguageFlag(
+                            option = option,
+                            selected = selected,
+                            modifier = Modifier
+                                .width(46.dp)
+                                .alpha(if (isEnabled) 1f else 0.38f),
+                        )
+                    },
+                    trailing = {
+                        Spacer(Modifier.width(10.dp))
+                        MorphKnob(checked = selected, uncheckedIcon = null)
+                    },
                 )
             }
+        }
+
+        if (!isOsLanguageSupported) {
+            Spacer(Modifier.height(16.dp))
+            Text(
+                text = stringResource(R.string.settings_language_help_translate, osLangName),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center
+            )
         }
     }
 }
