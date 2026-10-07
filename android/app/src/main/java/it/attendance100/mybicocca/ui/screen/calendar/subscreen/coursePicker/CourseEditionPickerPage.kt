@@ -28,72 +28,59 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.domain.model.elearning.course.EnrolledCourse
 import it.attendance100.mybicocca.domain.model.elearning.course.courseCode
+import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
+
+/**
+ * Pinned header of the edition picker ([SheetRoute.CourseEditionPicker]): "Apri corso" over the
+ * [count] of editions, the count picked out in the brand colour.
+ */
+@Composable
+fun courseEditionPickerHeader(count: Int): SheetHeaderSpec {
+    val scheme = MaterialTheme.colorScheme
+    val editions = stringResource(R.string.course_picker_editions, count)
+    val available = stringResource(R.string.course_picker_available)
+    return SheetHeaderSpec(
+        title = stringResource(R.string.course_picker_title),
+        subtitle = buildAnnotatedString {
+            withStyle(SpanStyle(color = scheme.primary, fontWeight = FontWeight.Bold)) { append(editions) }
+            append(" $available")
+        },
+    )
+}
 
 /**
  * Page choosing which e-learning edition "Apri corso" should open when an event's activity code
  * resolves to more than one course — the base course plus streams, or several yearly editions
- * ([SheetRoute.CourseEditionPicker]). A bold header counting the editions, styled after the
- * profile's "Iscrizioni" sheet, sits over a grouped list of rows showing each edition's period
- * label and full name; picking a row hands its course id to [onPick].
+ * ([SheetRoute.CourseEditionPicker]). Under the sheet's pinned header
+ * ([courseEditionPickerHeader]) sits a grouped list of rows showing each edition's period label
+ * and full name; picking a row hands its course id to [onPick].
  */
 @Composable
 fun CourseEditionPickerPage(
     courses: List<EnrolledCourse>,
     onPick: (CourseId) -> Unit,
 ) {
-    Column(
+    LazyColumn(
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(max = 640.dp),
+            .heightIn(max = 640.dp)
+            .padding(horizontal = 20.dp),
+        contentPadding = PaddingValues(top = 4.dp, bottom = 28.dp),
+        verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
-        Header(count = courses.size)
-        LazyColumn(
-            modifier = Modifier
-                .weight(1f, fill = false)
-                .padding(horizontal = 20.dp),
-            contentPadding = PaddingValues(top = 10.dp, bottom = 28.dp),
-            verticalArrangement = Arrangement.spacedBy(2.dp),
-        ) {
-            itemsIndexed(courses, key = { _, course -> course.id.value }) { index, course ->
-                EditionRow(
-                    course = course,
-                    isFirst = index == 0,
-                    isLast = index == courses.lastIndex,
-                    onClick = { onPick(course.id) },
-                )
-            }
+        itemsIndexed(courses, key = { _, course -> course.id.value }) { index, course ->
+            EditionRow(
+                course = course,
+                isFirst = index == 0,
+                isLast = index == courses.lastIndex,
+                onClick = { onPick(course.id) },
+            )
         }
-    }
-}
-
-@Composable
-private fun Header(count: Int) {
-    val scheme = MaterialTheme.colorScheme
-    Column(modifier = Modifier.padding(start = 22.dp, top = 4.dp, end = 22.dp, bottom = 4.dp)) {
-        Text(
-            text = stringResource(R.string.course_picker_title),
-            fontSize = 27.sp,
-            fontWeight = FontWeight.Bold,
-            letterSpacing = (-0.9).sp,
-            color = scheme.onSurface,
-        )
-        Text(
-            text = buildAnnotatedString {
-                withStyle(SpanStyle(color = scheme.primary, fontWeight = FontWeight.Bold)) {
-                    append(stringResource(R.string.course_picker_editions, count))
-                }
-                append(" " + stringResource(R.string.course_picker_available))
-            },
-            fontSize = 13.5.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = scheme.onSurfaceVariant,
-        )
     }
 }
 

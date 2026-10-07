@@ -270,14 +270,16 @@ fun StudyPlanPage(
                         is PlanSheetPage.Year -> target.year.label()
                         PlanSheetPage.Edit -> shownEditHeader?.title ?: stringResource(R.string.studyplan_edit_path)
                         PlanSheetPage.ConfirmExit -> stringResource(R.string.studyplan_exit_confirm_title)
-                        PlanSheetPage.Result -> ""
+                        PlanSheetPage.Result -> stringResource(
+                            if (outcomeTerminal) R.string.studyplan_edit_path else R.string.studyplan_result_print_title,
+                        )
                     },
                     subtitle = when (target) {
                         PlanSheetPage.Root -> if (loaded) headerSubtitle(plan, path) else null
                         is PlanSheetPage.Year -> yearSummary(coursesByYear[target.year].orEmpty())
                         PlanSheetPage.Edit -> shownEditHeader?.subtitle
                         PlanSheetPage.ConfirmExit -> stringResource(R.string.studyplan_edit_path)
-                        PlanSheetPage.Result -> null
+                        PlanSheetPage.Result -> if (loaded) headerSubtitle(plan, path) else stringResource(R.string.studyplan_path_title)
                     },
                     showBack = target != PlanSheetPage.Result,
                     // The arrow goes through the dispatcher so the wizard's own handler (step back,

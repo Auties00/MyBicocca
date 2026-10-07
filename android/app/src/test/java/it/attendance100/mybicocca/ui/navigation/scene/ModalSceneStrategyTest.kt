@@ -83,14 +83,16 @@ class ModalSceneStrategyTest {
                 entry<AppRoute.Profile> { Text("profile page") }
                 entry<AppRoute.FileViewer> { key -> Text("viewer ${key.fileName}") }
                 entry<SheetRoute.Isee>(
-                    metadata = sheetHeader<SheetRoute.Isee> { SheetHeaderSpec(title = "ISEE") },
+                    metadata = sheetHeader<SheetRoute.Isee> { SheetHeaderSpec(title = "ISEE", subtitle = "dichiarazioni") },
                 ) { Page("isee list") }
                 entry<SheetRoute.IseeDetail>(
                     metadata = sheetHeader<SheetRoute.IseeDetail> { key ->
-                        SheetHeaderSpec(title = "ISEE ${key.year}")
+                        SheetHeaderSpec(title = "ISEE ${key.year}", subtitle = "dettaglio")
                     },
                 ) { key -> Page("isee ${key.year}") }
-                entry<SheetRoute.Appelli> { Page("appelli") }
+                entry<SheetRoute.Appelli>(
+                    metadata = sheetHeader<SheetRoute.Appelli> { SheetHeaderSpec(title = "Appelli", subtitle = "prenotazioni") },
+                ) { Page("appelli") }
             }),
         )
         val strategies = remember(navigator) {

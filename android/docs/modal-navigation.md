@@ -66,6 +66,19 @@ own state machine (wizards, confirm and result pages). One `SeekableTransitionSt
 The system back gesture seeks that one transition toward the previous page, commits on release and
 rewinds on cancel. Header, body and height therefore move in lockstep.
 
+The header holds no animation state of its own. Back arrow, inset, title and subtitle cross-slide
+and header height are computed in one layout pass from the transition's two pages and its progress.
+It can't lag behind a seek, jump when the transition settles, or clip its texts.
+`SheetPagerMotionTest` checks this frame by frame, through a seeked predictive back as well.
+
+**Every modal page has a title and a subtitle.** Each `SheetRoute` entry declares one of:
+- `sheetHeader<Route> { SheetHeaderSpec(title, subtitle) }` for its pinned header;
+- `sheetHeaderInPage()` when its own nested `SheetPager` draws the header of each of its pages.
+
+`SheetPager` requires a header for every page, and `SheetHeaderSpec.subtitle` has no default. It is
+null only while the data it summarises loads. Local single-page sheets use `SheetPage(header) { … }`.
+Pages never draw their own title in their content.
+
 ## Rules of thumb
 
 - **Open a sheet or page:** `navigator.navigate(route)`. Pushes are single-top, so a double tap is
@@ -79,11 +92,13 @@ rewinds on cancel. Header, body and height therefore move in lockstep.
   before its data. Use `PopWhenMissing(loaded, missing)`.
 - **Resetting a flow when its sheet closes:** use `DisposableEffectOnPop { … }`, not `DisposableEffect`.
   A sheet hidden under a full-screen page is disposed but still on the stack.
-- **Body gestures are native:** content scrolls, and at the top a downward drag or fling moves and
-  dismisses the sheet. Lock it with `SheetDismissControl.gesturesEnabled` where a dismissal would
+- **Body gestures are native:** content scrolls, and at the top a downward drag moves the sheet and
+  dismisses it. Leftover fling velocity reaches the sheet only when the gesture actually dragged it.
+  Over-scroll at the end of a list therefore releases at once, and a fling that hits the top of a list
+  can't dismiss the sheet. Lock it with `SheetDismissControl.gesturesEnabled` where a dismissal would
   lose work.
 - **Small pickers tied to a screen's transient state** may stay local, but must still use
-  `PredictiveModalBottomSheet` (and `SheetPager` for sub-pages). Examples: the course page's folder and
+  `PredictiveModalBottomSheet`, with `SheetPage`, or `SheetPager` for sub-pages. Examples: the course page's folder and
   link sheets, the video quality picker, and the map's building panel that follows the map selection.
   Alert dialogs stay local.
 

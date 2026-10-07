@@ -57,6 +57,7 @@ import it.attendance100.mybicocca.ui.navigation.scene.LocalSheetDismissControl
 import androidx.compose.runtime.SideEffect
 import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.component.AttendanceCourseCard
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.ext.label
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.state.AttendanceEvent
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.state.MarkUiState
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.subscreen.courseAttendanceDetail.CourseOverviewPage
@@ -65,6 +66,8 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.subscr
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.subscreen.rilevaPresenza.component.PresenceMarkingProgress
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.subscreen.rilevaPresenza.component.PresenceResultContent
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.subscreen.rilevaPresenza.component.QrScannerScreen
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 
 /**
  * Body of the Presenze modal: per-course attendance as a single sheet entry whose container
@@ -98,9 +101,13 @@ fun AttendancePage(
     var enteringCode by remember { mutableStateOf(false) }
     var showScanner by remember { mutableStateOf(false) }
     var lastOutcome by remember { mutableStateOf<PresenceMarkOutcome?>(null) }
+    var lastOutcomeAt by remember { mutableStateOf<LocalTime?>(null) }
 
     LaunchedEffect(markState) {
-        (markState as? MarkUiState.Done)?.let { lastOutcome = it.outcome }
+        (markState as? MarkUiState.Done)?.let {
+            lastOutcome = it.outcome
+            lastOutcomeAt = LocalTime.now()
+        }
     }
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
@@ -192,10 +199,13 @@ fun AttendancePage(
                     },
                     subtitle = when (target) {
                         AttendancePage.Root -> if (loaded) coursesSummary(courses.size) else null
-                        is AttendancePage.Course -> target.course.teacherName
+                        is AttendancePage.Course -> target.course.teacherName ?: target.course.year.label()
                         AttendancePage.Rileva -> stringResource(R.string.attendance_rileva_subtitle)
                         AttendancePage.RilevaCode -> stringResource(R.string.attendance_lesson_code_subtitle)
-                        AttendancePage.RilevaProgress, AttendancePage.RilevaResult -> null
+                        AttendancePage.RilevaProgress -> stringResource(R.string.attendance_progress_subtitle)
+                        AttendancePage.RilevaResult -> lastOutcomeAt?.let {
+                            stringResource(R.string.attendance_result_subtitle, it.format(TimeFormat))
+                        } ?: stringResource(R.string.attendance_rileva_title)
                     },
                     showBack = target !is AttendancePage.RilevaProgress && target !is AttendancePage.RilevaResult,
                 )
@@ -284,11 +294,14 @@ private sealed interface AttendancePage {
     }
 }
 
-private fun coursesSummary(count: Int): String? = when (count) {
-    0 -> null
-    1 -> "1 corso da frequentare"
-    else -> "$count corsi da frequentare"
+@Composable
+private fun coursesSummary(count: Int): String = when (count) {
+    0 -> stringResource(R.string.registry_attendance_desc)
+    1 -> stringResource(R.string.registry_attendance_one_to_attend)
+    else -> stringResource(R.string.registry_attendance_many_to_attend, count)
 }
+
+private val TimeFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
 
 /**
  * Root page body: error / loading / empty / course-list states over the optional "Rileva

@@ -10,6 +10,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.lifecycle.SavedStateHandle
@@ -42,9 +43,12 @@ import it.attendance100.mybicocca.domain.usecase.calendar.PrefetchAdjacentMonths
 import it.attendance100.mybicocca.domain.usecase.calendar.RefreshCalendarMonthUseCase
 import it.attendance100.mybicocca.domain.usecase.elearning.course.ObserveCoursesByActivityCodeUseCase
 import it.attendance100.mybicocca.testing.setBicoccaContent
+import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
+import it.attendance100.mybicocca.ui.component.modal.SheetPage
 import it.attendance100.mybicocca.ui.screen.calendar.state.CalendarViewMode
 import it.attendance100.mybicocca.ui.screen.calendar.subscreen.eventDetail.EventDetailContent
 import it.attendance100.mybicocca.ui.screen.calendar.subscreen.eventDetail.EventDetailPage
+import it.attendance100.mybicocca.ui.screen.calendar.subscreen.eventDetail.eventDetailHeader
 import kotlinx.coroutines.flow.flowOf
 import org.junit.Rule
 import org.junit.Test
@@ -265,19 +269,26 @@ class CalendarScreenTest {
 
     @Test
     fun event_detail_page_renders_the_event_title_and_kind_label() {
+        val event = lesson("lesson_1")
+        var header: SheetHeaderSpec? = null
         compose.setBicoccaContent {
-            EventDetailPage(
-                event = lesson("lesson_1"),
-                elearningCourses = emptyList(),
-                onOpenCourse = mockk(relaxed = true),
-                onOpenAssignment = mockk(relaxed = true),
-                onOpenReservation = mockk(relaxed = true),
-            )
+            val spec = eventDetailHeader(event).also { header = it }
+            SheetPage(header = spec) {
+                EventDetailPage(
+                    event = event,
+                    elearningCourses = emptyList(),
+                    onOpenCourse = mockk(relaxed = true),
+                    onOpenAssignment = mockk(relaxed = true),
+                    onOpenReservation = mockk(relaxed = true),
+                )
+            }
         }
         compose.waitForIdle()
 
-        compose.onNodeWithTag(CalendarTestTags.EVENT_TITLE).assertIsDisplayed()
-        compose.onNodeWithTag(CalendarTestTags.EVENT_ACTIVITY_LABEL).assertIsDisplayed()
+        val spec = checkNotNull(header)
+        assertThat(spec.title).isEqualTo(event.title)
+        compose.onNodeWithText(spec.title).assertIsDisplayed()
+        compose.onNodeWithText(checkNotNull(spec.subtitle).toString()).assertIsDisplayed()
         compose.onNodeWithTag(CalendarTestTags.EVENT_CONTENT).assertIsDisplayed()
     }
 

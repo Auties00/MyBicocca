@@ -28,8 +28,6 @@ import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
@@ -42,17 +40,19 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.ui.component.feedback.LocalAppSnackbarController
+import it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet
+import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
+import it.attendance100.mybicocca.ui.component.modal.SheetPage
 import kotlinx.coroutines.launch
 
 /**
- * Modal bottom sheet shown when a mod/url link is tapped, so the app never leaves blindly: a
- * cookie-shaped link icon, the link title, a host pill, an "off-app" warning line, and a
- * connected expressive button group pinned at the bottom — a leading "Apri" launching the
+ * Modal bottom sheet shown when a mod/url link is tapped, so the app never leaves blindly: the
+ * link title over its host as the pinned header, a cookie-shaped link icon, an "off-app" warning
+ * line, and a connected expressive button group pinned at the bottom — a leading "Apri" launching the
  * Custom Tabs browser and a neutral tonal "Copia" copying the url, each confirming via
  * snackbar and dismissing the sheet.
  *
@@ -71,114 +71,95 @@ fun LinkSheet(
     val scope = rememberCoroutineScope()
     val host = remember(url) { prettyHost(url) }
 
-    it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet(
-        onDismiss = onDismiss,
-    ) {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f, fill = false)
-                    .padding(start = 24.dp, end = 24.dp, top = 8.dp),
-            ) {
-                Box(
+    PredictiveModalBottomSheet(onDismiss = onDismiss) {
+        SheetPage(
+            header = SheetHeaderSpec(
+                title = title,
+                subtitle = host ?: stringResource(R.string.elearning_link_external),
+            ),
+        ) {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
-                        .size(112.dp)
-                        .clip(MaterialShapes.Cookie9Sided.toShape())
-                        .background(MaterialTheme.colorScheme.primaryContainer),
-                    contentAlignment = Alignment.Center,
+                        .fillMaxWidth()
+                        .weight(1f, fill = false)
+                        .padding(start = 24.dp, end = 24.dp, top = 8.dp),
                 ) {
-                    Icon(
-                        imageVector = Icons.Outlined.Link,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(52.dp),
-                    )
-                }
-                Spacer(Modifier.height(20.dp))
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    textAlign = TextAlign.Center,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                if (host != null) {
-                    Spacer(Modifier.height(10.dp))
-                    Surface(
-                        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        shape = MaterialTheme.shapes.extraLarge,
+                    Box(
+                        modifier = Modifier
+                            .size(112.dp)
+                            .clip(MaterialShapes.Cookie9Sided.toShape())
+                            .background(MaterialTheme.colorScheme.primaryContainer),
+                        contentAlignment = Alignment.Center,
                     ) {
-                        Text(
-                            text = host,
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        Icon(
+                            imageVector = Icons.Outlined.Link,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.size(52.dp),
                         )
                     }
-                }
-                Spacer(Modifier.height(16.dp))
-                Text(
-                    text = stringResource(R.string.elearning_link_outside_app),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                )
-            }
-
-            Spacer(Modifier.height(24.dp))
-
-            val openFailedMessage = stringResource(R.string.elearning_link_open_failed)
-            val copiedMessage = stringResource(R.string.elearning_link_copied)
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 20.dp, end = 20.dp, bottom = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                Button(
-                    onClick = {
-                        if (openInBrowser(context, url)) onDismiss()
-                        else scope.launch { snackbar.showError(openFailedMessage) }
-                    },
-                    modifier = Modifier
-                        .weight(1.4f)
-                        .height(56.dp),
-                    shape = ButtonGroupDefaults.connectedLeadingButtonShape,
-                ) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Outlined.OpenInNew,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp),
+                    Spacer(Modifier.height(20.dp))
+                    Text(
+                        text = stringResource(R.string.elearning_link_outside_app),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
                     )
-                    Spacer(Modifier.width(8.dp))
-                    Text(stringResource(R.string.elearning_link_open), fontWeight = FontWeight.SemiBold)
                 }
-                FilledTonalButton(
-                    onClick = {
-                        copyToClipboard(context, title, url)
-                        scope.launch { snackbar.showInfo(copiedMessage) }
-                        onDismiss()
-                    },
+
+                Spacer(Modifier.height(24.dp))
+
+                val openFailedMessage = stringResource(R.string.elearning_link_open_failed)
+                val copiedMessage = stringResource(R.string.elearning_link_copied)
+                Row(
                     modifier = Modifier
-                        .weight(1f)
-                        .height(56.dp),
-                    shape = ButtonGroupDefaults.connectedTrailingButtonShape,
-                    colors = ButtonDefaults.filledTonalButtonColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                        contentColor = MaterialTheme.colorScheme.onSurface,
-                    ),
+                        .fillMaxWidth()
+                        .padding(start = 20.dp, end = 20.dp, bottom = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
-                    Icon(
-                        imageVector = Icons.Outlined.ContentCopy,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp),
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(stringResource(R.string.elearning_link_copy), fontWeight = FontWeight.SemiBold)
+                    Button(
+                        onClick = {
+                            if (openInBrowser(context, url)) onDismiss()
+                            else scope.launch { snackbar.showError(openFailedMessage) }
+                        },
+                        modifier = Modifier
+                            .weight(1.4f)
+                            .height(56.dp),
+                        shape = ButtonGroupDefaults.connectedLeadingButtonShape,
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Outlined.OpenInNew,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp),
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(stringResource(R.string.elearning_link_open), fontWeight = FontWeight.SemiBold)
+                    }
+                    FilledTonalButton(
+                        onClick = {
+                            copyToClipboard(context, title, url)
+                            scope.launch { snackbar.showInfo(copiedMessage) }
+                            onDismiss()
+                        },
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(56.dp),
+                        shape = ButtonGroupDefaults.connectedTrailingButtonShape,
+                        colors = ButtonDefaults.filledTonalButtonColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                            contentColor = MaterialTheme.colorScheme.onSurface,
+                        ),
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.ContentCopy,
+                            contentDescription = null,
+                            modifier = Modifier.size(20.dp),
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(stringResource(R.string.elearning_link_copy), fontWeight = FontWeight.SemiBold)
+                    }
                 }
             }
         }

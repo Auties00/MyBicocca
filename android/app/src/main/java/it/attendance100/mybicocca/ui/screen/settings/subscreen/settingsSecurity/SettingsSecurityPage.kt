@@ -123,20 +123,6 @@ fun SettingsSecurityPage(
             .verticalScroll(rememberScrollState())
             .padding(bottom = 24.dp),
     ) {
-        Column(modifier = Modifier.padding(horizontal = 20.dp)) {
-            Text(
-                text = stringResource(R.string.settings_security_sheet_title),
-                style = MaterialTheme.typography.titleLargeEmphasized,
-                fontWeight = FontWeight.SemiBold,
-            )
-            Text(
-                text = stringResource(R.string.settings_security_sheet_subtitle),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        Spacer(Modifier.height(12.dp))
-
         Row(
             modifier = Modifier
                 .fillMaxWidth()

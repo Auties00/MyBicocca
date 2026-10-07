@@ -29,7 +29,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
@@ -47,7 +46,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
@@ -55,6 +53,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.ui.component.feedback.LocalAppSnackbarController
+import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
 import it.attendance100.mybicocca.ui.navigation.route.AppRoute
 import it.attendance100.mybicocca.ui.navigation.scene.LocalSheetDismissControl
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.FileViewerViewModel
@@ -68,6 +67,16 @@ import kotlinx.coroutines.launch
 import java.util.Locale
 
 /**
+ * Pinned header of the Office hand-off sheet (`SheetRoute.OfficeOpen`): the file name over its
+ * document type and size.
+ */
+@Composable
+fun officeOpenHeader(app: OfficeApp, file: AppRoute.FileViewer): SheetHeaderSpec = SheetHeaderSpec(
+    title = file.fileName.ifBlank { app.documentLabel() },
+    subtitle = listOfNotNull(app.documentLabel(), formatSize(file.sizeBytes)).joinToString(" · "),
+)
+
+/**
  * Hand-off sheet for Office documents. Office formats have no free native renderer on Android,
  * so opening one is a hand-off, not a viewing experience — hence a modal over the requesting
  * screen rather than a viewer page. The document goes to Microsoft's app through their
@@ -76,10 +85,10 @@ import java.util.Locale
  * from the store flips the CTA to "open". The secondary action downloads the file and hands it
  * to any other app.
  *
- * Visually: a brand-colored hero shape with the family icon, the file name, a document-type +
- * size chip, an explanatory line, and a pinned connected button pair in the app's shared
- * sheet-action shape language (brand-filled leading, tonal trailing with an inline progress
- * indicator while downloading).
+ * Visually: a brand-colored hero shape with the family icon, an explanatory line, and a pinned
+ * connected button pair in the app's shared sheet-action shape language (brand-filled leading,
+ * tonal trailing with an inline progress indicator while downloading). The file name, document
+ * type and size ride the sheet's pinned header ([officeOpenHeader]).
  *
  * Reuses the file-viewer ViewModel, which owns the office hand-off paths (protocol launch, lazy
  * download for the external-app fallback). It is keyed per file because the sheet lives in the
@@ -161,29 +170,6 @@ fun OfficeOpenPage(
                 )
             }
             Spacer(Modifier.height(20.dp))
-            Text(
-                text = route.fileName,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface,
-                textAlign = TextAlign.Center,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
-            Spacer(Modifier.height(10.dp))
-            Surface(
-                color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                shape = MaterialTheme.shapes.extraLarge,
-            ) {
-                Text(
-                    text = listOfNotNull(app.documentLabel(), formatSize(route.sizeBytes))
-                        .joinToString(" · "),
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                )
-            }
-            Spacer(Modifier.height(16.dp))
             Text(
                 text = if (installed) {
                     stringResource(R.string.elearning_file_office_opens_readonly, app.label)

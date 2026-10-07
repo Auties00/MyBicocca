@@ -27,7 +27,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -56,7 +55,7 @@ private val THEME_MODES = listOf(ThemeMode.System, ThemeMode.Light, ThemeMode.Da
  * resolved to the same light/dark mode the app is currently using; a lone last palette keeps
  * its half-width slot. The Material You palette is only listed where dynamic color is
  * available. Picks apply immediately through the ViewModel, retheming the whole app (and the
- * sheet itself) in place. Header text follows the edifici sheet style.
+ * sheet itself) in place.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -98,18 +97,6 @@ fun SettingsAppearancePage(
                 .padding(horizontal = 20.dp)
                 .weight(1f, fill = false)
         ) {
-            Text(
-                text = stringResource(R.string.settings_appearance_sheet_title),
-                style = MaterialTheme.typography.titleLargeEmphasized,
-                fontWeight = FontWeight.SemiBold,
-            )
-            Text(
-                text = stringResource(R.string.settings_appearance_sheet_subtitle),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Spacer(Modifier.height(12.dp))
-
             LazyColumn(
                 modifier = Modifier.fillMaxWidth(),
                 contentPadding = PaddingValues(bottom = 16.dp),

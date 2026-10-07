@@ -45,6 +45,7 @@ import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.ui.component.button.RetryButton
 import it.attendance100.mybicocca.ui.component.feedback.friendlyMessage
 import it.attendance100.mybicocca.ui.component.feedback.rememberMinDurationLoading
+import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
 import it.attendance100.mybicocca.ui.component.modal.SheetLoadingIndicator
 import it.attendance100.mybicocca.ui.component.modal.SheetMessage
 import it.attendance100.mybicocca.ui.navigation.scene.LocalSheetDismissControl
@@ -65,12 +66,35 @@ private val NextFormat: DateTimeFormatter
     get() = DateTimeFormatter.ofPattern("d MMM", currentLocale())
 
 /**
+ * The scadenzario sheet's pinned header: the "Scadenzario" title over the count summary for
+ * the next 30 days, the count accented in the primary colour. The summary appears once the
+ * spine has loaded.
+ */
+@Composable
+fun deadlinesHeader(deadlines: List<RegistryDeadline>, loading: Boolean): SheetHeaderSpec {
+    val primary = MaterialTheme.colorScheme.primary
+    return SheetHeaderSpec(
+        title = stringResource(R.string.deadlines_title),
+        subtitle = if (loading) null else buildAnnotatedString {
+            if (deadlines.isEmpty()) {
+                append(stringResource(R.string.deadlines_none_next_30))
+            } else {
+                withStyle(SpanStyle(color = primary, fontWeight = FontWeight.Bold)) {
+                    append(pluralStringResource(R.plurals.deadlines_count, deadlines.size, deadlines.size))
+                }
+                append(stringResource(R.string.deadlines_next_30_suffix))
+            }
+        },
+    )
+}
+
+/**
  * Scadenzario: the registry deadline spine rendered as a vertical timeline on a sheet page,
  * opened from the Scadenze banner. Each entry pairs a big date column with a ringed node on a
  * continuous connector rail and a tappable card (accented kicker + relative label, title,
  * optional detail); tapping dismisses the sheet, then routes to the owning sub-screen, so its
- * sheet replaces this one rather than stacking above it. A count summary sits under the
- * "Scadenzario" title once data settles.
+ * sheet replaces this one rather than stacking above it. The title and count summary live in
+ * the sheet's pinned header ([deadlinesHeader]).
  *
  * The spine merges several live feature streams (outcomes, taxes, bookings, calls), so the
  * sheet waits for ALL of them behind one loading state instead of showing a partial list:
@@ -98,35 +122,6 @@ fun DeadlinesPage(
             .fillMaxWidth()
             .heightIn(max = 720.dp),
     ) {
-        Column(modifier = Modifier.padding(start = 22.dp, top = 4.dp, end = 22.dp, bottom = 8.dp)) {
-            Text(
-                text = stringResource(R.string.deadlines_title),
-                fontSize = 27.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = (-0.9).sp,
-                color = scheme.onSurface,
-            )
-            if (settled) {
-                Text(
-                    text = buildAnnotatedString {
-                        if (deadlines.isEmpty()) {
-                            append(stringResource(R.string.deadlines_none_next_30))
-                        } else {
-                            withStyle(SpanStyle(color = scheme.primary, fontWeight = FontWeight.Bold)) {
-                                append(
-                                    pluralStringResource(R.plurals.deadlines_count, deadlines.size, deadlines.size)
-                                )
-                            }
-                            append(stringResource(R.string.deadlines_next_30_suffix))
-                        }
-                    },
-                    fontSize = 13.5.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    color = scheme.onSurfaceVariant,
-                )
-            }
-        }
-
         when {
             failure != null && loading -> SheetError(cause = failure, onRetry = onRetry)
 

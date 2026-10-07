@@ -1,6 +1,7 @@
 package it.attendance100.mybicocca.ui.component.modal
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -19,7 +20,13 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.unit.Velocity
 import it.attendance100.mybicocca.ui.component.feedback.SnackbarScope
 import kotlinx.coroutines.launch
 
@@ -150,6 +157,35 @@ fun PredictiveModalBottomSheet(
         BackHandler(enabled = !gesturesEnabled) {
             if (latestConfirmDismiss()) latestOnDismiss()
         }
-        SnackbarScope { content() }
+        val bodyScroll = remember { SheetBodyScrollConnection() }
+        Box(Modifier.nestedScroll(bodyScroll)) {
+            SnackbarScope { content() }
+        }
+    }
+}
+
+/**
+ * Sits between the sheet's scrollable content and Material's sheet nested-scroll handling, so a
+ * list in a sheet behaves like on stock Android:
+ * - scroll leftovers pass through unchanged, so pulling down at the top of a list drags the sheet
+ *   (and a long or fast enough pull dismisses it);
+ * - leftover fling velocity reaches the sheet only when this gesture actually dragged the sheet.
+ *   Material's sheet otherwise runs its settle animation on every fling the list hands up — an
+ *   over-scroll at the end of a list then kept the stretch stuck until that animation finished,
+ *   and a fling reaching the top of a list could move or even dismiss a sheet nobody dragged.
+ */
+private class SheetBodyScrollConnection : NestedScrollConnection {
+    private var draggedSheet = false
+
+    override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
+        // A downward drag left over by the content (it is at its top) moves the sheet.
+        if (source == NestedScrollSource.UserInput && available.y > 0f) draggedSheet = true
+        return Offset.Zero
+    }
+
+    override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
+        val handOver = draggedSheet
+        draggedSheet = false
+        return if (handOver) Velocity.Zero else available
     }
 }

@@ -283,10 +283,13 @@ private fun HeroInvoiceCard(
     )
 }
 
-/** Pinned-header subtitle: the outstanding total while anything is due, else the invoice count. */
+/**
+ * Pinned-header subtitle: the outstanding total while anything is due, else the invoice count
+ * ("Nessuna tassa" when there are none).
+ */
 @Composable
-fun taxesHeaderSubtitle(invoices: List<TaxInvoice>): String? {
-    if (invoices.isEmpty()) return null
+fun taxesHeaderSubtitle(invoices: List<TaxInvoice>): String {
+    if (invoices.isEmpty()) return stringResource(R.string.taxes_empty_title)
     val due = invoices
         .filter { it.status == TaxStatus.PENDING || it.status == TaxStatus.EXPIRED }
         .sumOf { it.amount }

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Registry sheets: pinned header titles and subtitles -->
+
+    <!-- Certificates -->
+    <string name="certs_result_title">Apertura certificato</string>
+
+    <!-- Exam results -->
+    <string name="exam_results_result_accept_title">Accettazione esito</string>
+    <string name="exam_results_result_reject_title">Rifiuto esito</string>
+
+    <!-- Attendance -->
+    <string name="attendance_progress_subtitle">Invio in corso…</string>
+    <string name="attendance_result_subtitle">Oggi alle %1$s</string>
+
+    <!-- Appelli -->
+    <plurals name="appelli_active_summary">
+        <item quantity="one">%1$d esame in programma</item>
+        <item quantity="other">%1$d esami in programma</item>
+    </plurals>
+    <string name="appelli_result_booking_title">Prenotazione</string>
+    <string name="appelli_result_cancellation_title">Annullamento</string>
+    <string name="appelli_result_document_title">Documento</string>
+
+    <!-- Study plan -->
+    <string name="studyplan_result_print_title">Stampa piano</string>
+
+    <!-- Questionnaires -->
+    <string name="questionnaire_units_subtitle">Questionario di valutazione</string>
+    <string name="questionnaire_page_number">Pagina %1$d</string>
+    <string name="questionnaire_result_title">Invio questionario</string>
+
+    <!-- Appointments -->
+    <string name="appointments_result_cancellation_title">Annullamento</string>
+    <string name="appointments_result_document_title">Promemoria PDF</string>
+    <string name="appointments_result_booking_title">Prenotazione</string>
+
+    <!-- Library -->
+    <string name="library_result_cancellation_title">Annullamento</string>
+    <string name="library_result_login_title">Accesso</string>
+    <string name="library_result_sync_title">Sincronizzazione</string>
+</resources>

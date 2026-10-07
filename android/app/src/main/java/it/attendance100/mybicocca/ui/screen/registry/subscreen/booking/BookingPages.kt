@@ -622,7 +622,9 @@ private fun ExamCall.windowStatus(today: LocalDate): WindowStatus {
     }
 }
 
-internal fun ExamCall.title(): String = activityDescription?.takeIf { it.isNotBlank() } ?: "Esame"
+@Composable
+internal fun ExamCall.title(): String =
+    activityDescription?.takeIf { it.isNotBlank() } ?: stringResource(R.string.appelli_exam)
 
 /**
  * "Esame scritto · 22 giu 2026, ore 14:00" — the appello sub-modal has no hero card, so the

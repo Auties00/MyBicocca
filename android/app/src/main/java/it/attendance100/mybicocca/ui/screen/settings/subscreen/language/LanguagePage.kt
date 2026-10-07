@@ -26,7 +26,6 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
@@ -93,8 +92,7 @@ fun currentAppLanguageLabel(context: Context): String {
  * Piano di Studi picks. Each tile leads with its custom flag, which ripples on the AGSL waving
  * shader the moment it becomes the active selection (Android 13+). The locale lands as a
  * configuration change (the activity declares locale|layoutDirection), so the app re-localizes
- * in place and the sheet stays open on the new selection rather than being torn down. Header
- * text follows the edifici sheet style.
+ * in place and the sheet stays open on the new selection rather than being torn down.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -109,18 +107,6 @@ fun LanguagePage() {
             .padding(horizontal = 20.dp)
             .padding(bottom = 24.dp),
     ) {
-        Text(
-            text = stringResource(R.string.settings_language_sheet_title),
-            style = MaterialTheme.typography.titleLargeEmphasized,
-            fontWeight = FontWeight.SemiBold,
-        )
-        Text(
-            text = stringResource(R.string.settings_language_sheet_subtitle),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(Modifier.height(12.dp))
-
         val osLocale = systemPrimaryLocale(context)
         val osLanguage = osLocale?.language
         // An unresolvable system locale is treated as supported, so the "help translate" hint

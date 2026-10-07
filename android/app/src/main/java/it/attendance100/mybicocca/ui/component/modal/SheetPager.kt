@@ -50,8 +50,7 @@ import kotlin.coroutines.cancellation.CancellationException
  * (first page, or a page that must not be left, e.g. mid-submission).
  * @param onBack commits a back step: the caller moves its state (pops the back stack, clears the
  * selection, …) so that [page] becomes [backTo]. Called after a completed gesture or an arrow tap.
- * @param header resolves the pinned header of a page; null draws no pinned header (pages that
- * render their own).
+ * @param header resolves the pinned header (title and subtitle) of every page.
  */
 @Composable
 fun <P : Any> SheetPager(
@@ -61,7 +60,46 @@ fun <P : Any> SheetPager(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     key: (P) -> Any = { it },
-    header: (@Composable (P) -> SheetHeaderSpec?)? = null,
+    header: @Composable (P) -> SheetHeaderSpec,
+    content: @Composable (P) -> Unit,
+) {
+    SheetPagerImpl(page, depth, backTo, onBack, modifier, key, header, content)
+}
+
+/**
+ * A single-page modal body under the standard pinned header ([header]'s title and subtitle) — for
+ * the few sheets that live in a screen's local state (pickers) rather than on the back stack, so
+ * they look exactly like every navigation sheet.
+ */
+@Composable
+fun SheetPage(
+    header: SheetHeaderSpec,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit,
+) {
+    SheetPager(
+        page = Unit,
+        depth = { 0 },
+        backTo = null,
+        onBack = {},
+        modifier = modifier,
+        header = { header },
+    ) { content() }
+}
+
+/**
+ * [SheetPager] for the modal scene, whose pages may draw their own header through a nested pager
+ * (a null spec: no room in this header).
+ */
+@Composable
+internal fun <P : Any> SheetPagerImpl(
+    page: P,
+    depth: (P) -> Int,
+    backTo: P?,
+    onBack: () -> Unit,
+    modifier: Modifier,
+    key: (P) -> Any,
+    header: @Composable (P) -> SheetHeaderSpec?,
     content: @Composable (P) -> Unit,
 ) {
     val state = remember { SeekableTransitionState(page) }
@@ -76,8 +114,15 @@ fun <P : Any> SheetPager(
     // commit) is a no-op. Keyed by page identity, not data: a page whose data refreshes keeps its
     // place and simply renders the fresh value (see [fresh]).
     LaunchedEffect(key(page)) {
-        if (key(state.currentState) != key(page) || key(state.targetState) != key(page)) {
-            state.animateTo(page)
+        val pageKey = key(page)
+        when {
+            key(state.currentState) == pageKey && key(state.targetState) == pageKey -> Unit
+            // A predictive back already seeked toward this page: finish that same motion. Page
+            // objects can be rebuilt between the seek and the commit (the sheet scene rebuilds them
+            // from the live stack), and retargeting to an equal-but-new object would restart the
+            // transition — dropping the outgoing page and snapping the height at the end.
+            key(state.targetState) == pageKey -> state.animateTo(state.targetState)
+            else -> state.animateTo(page)
         }
     }
 
@@ -107,16 +152,15 @@ fun <P : Any> SheetPager(
     fun fresh(shown: P): P = if (key(shown) == key(latestPage)) latestPage else shown
 
     Column(modifier) {
-        if (header != null) {
-            val specs = rememberHeaderSpecs(transition, key) { header(fresh(it)) }
-            SheetPagerHeader(
-                transition = transition,
-                specs = specs,
-                keyOf = key,
-                depthOf = depth,
-                onBack = onBack,
-            )
-        }
+        val specs = rememberHeaderSpecs(transition, key) { header(fresh(it)) }
+        SheetPagerHeader(
+            transition = transition,
+            specs = specs,
+            keyOf = key,
+            depthOf = depth,
+            progress = { state.fraction },
+            onBack = onBack,
+        )
         transition.AnimatedContent(
             transitionSpec = { sheetPageTransform(forward = depth(targetState) >= depth(initialState)) },
             contentKey = key,

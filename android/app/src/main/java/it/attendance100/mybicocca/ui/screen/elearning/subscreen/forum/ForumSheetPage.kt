@@ -231,9 +231,12 @@ fun ForumSheetPage(
             modifier = Modifier.testTag(ForumSheetTestTags.ROOT),
             key = { it.key },
             header = { target ->
+                val forumName = forum?.name ?: stringResource(R.string.elearning_course_generic_forum)
+                // The thread a page acts on, or the forum itself on list-level pages.
+                val actedOn = shownDiscussion?.subject?.takeIf { openDiscussionId != null } ?: forumName
                 SheetHeaderSpec(
                     title = when (target) {
-                        Display.List -> forum?.name ?: stringResource(R.string.elearning_course_generic_forum)
+                        Display.List -> forumName
                         Display.Thread -> shownDiscussion?.subject
                             ?: stringResource(R.string.elearning_forum_discussion_fallback)
                         Display.Composer -> when (shownComposerTarget) {
@@ -243,12 +246,19 @@ fun ForumSheetPage(
                         }
                         Display.ConfirmDelete -> stringResource(R.string.elearning_forum_delete_confirm_title)
                         Display.ConfirmDiscard -> stringResource(R.string.elearning_forum_discard_confirm_title)
-                        Display.Result -> ""
+                        Display.Result -> stringResource(R.string.elearning_sheet_result_title)
                     },
                     subtitle = when (target) {
                         Display.List -> forum?.let { discussionsSubtitle(it, discussions) }
                         Display.Thread -> shownDiscussion?.let { threadSubtitle(it) }
-                        else -> null
+                        Display.Composer -> when (val composing = shownComposerTarget) {
+                            is ComposerTarget.NewDiscussion -> forumName
+                            is ComposerTarget.Reply -> shownDiscussion?.subject ?: composing.replySubject
+                            is ComposerTarget.Edit -> shownDiscussion?.subject ?: composing.subject
+                            null -> actedOn
+                        }
+                        Display.ConfirmDiscard -> subject.takeIf { it.isNotBlank() } ?: actedOn
+                        Display.ConfirmDelete, Display.Result -> actedOn
                     },
                 )
             },

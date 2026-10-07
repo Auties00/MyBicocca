@@ -67,6 +67,7 @@ fun AppointmentsPage(
     run {
         val context = androidx.compose.ui.platform.LocalContext.current
         var outcome by remember { mutableStateOf<SheetOutcome?>(null) }
+        var outcomeKind by remember { mutableStateOf(AppointmentsOutcomeKind.Cancellation) }
         var pendingCancel by remember { mutableStateOf<AppointmentReservation?>(null) }
 
         val backStack by viewModel.backStack.collectAsStateWithLifecycle()
@@ -91,14 +92,18 @@ fun AppointmentsPage(
         LaunchedEffect(Unit) {
             viewModel.events.collect { event ->
                 when (event) {
-                    AppointmentsEvent.ReservationCancelled ->
+                    AppointmentsEvent.ReservationCancelled -> {
+                        outcomeKind = AppointmentsOutcomeKind.Cancellation
                         outcome = SheetOutcome.Success(strAppointmentsCancelled)
+                    }
 
-                    is AppointmentsEvent.CancelFailed ->
+                    is AppointmentsEvent.CancelFailed -> {
+                        outcomeKind = AppointmentsOutcomeKind.Cancellation
                         outcome = SheetOutcome.Error(
                             strAppointmentsCancelFailed,
                             event.cause
                         )
+                    }
 
                     is AppointmentsEvent.PdfReady -> {
                         val path = withContext(Dispatchers.IO) {
@@ -108,17 +113,21 @@ fun AppointmentsPage(
                         onOpenPdf(path, event.fileName)
                     }
 
-                    is AppointmentsEvent.PdfFailed ->
+                    is AppointmentsEvent.PdfFailed -> {
+                        outcomeKind = AppointmentsOutcomeKind.Document
                         outcome = SheetOutcome.Error(
                             strAppointmentsPdfFailed,
                             event.cause
                         )
+                    }
 
-                    is AppointmentsEvent.BookingFailed ->
+                    is AppointmentsEvent.BookingFailed -> {
+                        outcomeKind = AppointmentsOutcomeKind.Booking
                         outcome = SheetOutcome.Error(
                             strAppointmentsBookingFailed,
                             event.cause
                         )
+                    }
                 }
             }
         }
@@ -164,7 +173,7 @@ fun AppointmentsPage(
         val serviceName = bookingService?.displayName.orEmpty()
         val slotRecap = listOfNotNull(
             selectedDate?.format(DetailDateFormat)?.replaceFirstChar { it.titlecase(Locale.ITALIAN) },
-            selectedSlot?.start?.format(TimeFormat)?.let { "ore $it" },
+            selectedSlot?.start?.format(TimeFormat)?.let { stringResource(R.string.registry_time_at, it) },
         ).joinToString(" · ").ifBlank { null }
 
         SheetPager(
@@ -183,7 +192,13 @@ fun AppointmentsPage(
             header = { target ->
                 SheetHeaderSpec(
                     title = when (target) {
-                        AppointmentsDisplay.Outcome -> ""
+                        AppointmentsDisplay.Outcome -> stringResource(
+                            when (outcomeKind) {
+                                AppointmentsOutcomeKind.Cancellation -> R.string.appointments_result_cancellation_title
+                                AppointmentsOutcomeKind.Document -> R.string.appointments_result_document_title
+                                AppointmentsOutcomeKind.Booking -> R.string.appointments_result_booking_title
+                            },
+                        )
                         AppointmentsDisplay.ConfirmCancel -> stringResource(R.string.appointments_cancel_title)
                         is AppointmentsDisplay.Page -> when (val page = target.page) {
                             AppointmentsPage.Reservations -> stringResource(R.string.appointments_title)
@@ -199,8 +214,13 @@ fun AppointmentsPage(
                         }
                     },
                     subtitle = when (target) {
-                        AppointmentsDisplay.Outcome -> null
+                        AppointmentsDisplay.Outcome -> when (outcomeKind) {
+                            AppointmentsOutcomeKind.Cancellation -> shownCancel?.serviceName
+                            AppointmentsOutcomeKind.Document -> detailReservation?.serviceName
+                            AppointmentsOutcomeKind.Booking -> serviceName.ifBlank { null }
+                        } ?: stringResource(R.string.appointments_title)
                         AppointmentsDisplay.ConfirmCancel -> shownCancel?.serviceName
+                            ?: stringResource(R.string.appointments_single)
                         is AppointmentsDisplay.Page -> when (val page = target.page) {
                             AppointmentsPage.Reservations ->
                                 if (reservations !is Loadable.Loaded) null
@@ -213,9 +233,11 @@ fun AppointmentsPage(
                             is AppointmentsPage.ReservationDetail -> stringResource(R.string.appointments_details)
                             AppointmentsPage.Sections -> stringResource(R.string.appointments_choose_service)
                             is AppointmentsPage.Types -> sections.firstOrNull { it.name == page.sectionName }?.caption
+                                ?: stringResource(R.string.appointments_choose_service)
                             AppointmentsPage.Slots -> stringResource(R.string.appointments_choose_date_time)
-                            AppointmentsPage.Form -> slotRecap
+                            AppointmentsPage.Form -> slotRecap ?: stringResource(R.string.appointments_details)
                             AppointmentsPage.Done -> serviceName.ifBlank { null }
+                                ?: stringResource(R.string.appointments_single)
                         }
                     },
                     showBack = when (target) {
@@ -299,6 +321,9 @@ private sealed interface AppointmentsDisplay {
     data object ConfirmCancel : AppointmentsDisplay
     data object Outcome : AppointmentsDisplay
 }
+
+/** The operation an outcome page reports on, naming its header. */
+private enum class AppointmentsOutcomeKind { Cancellation, Document, Booking }
 
 private fun displayDepth(display: AppointmentsDisplay): Int = when (display) {
     is AppointmentsDisplay.Page -> pageDepth(display.page)

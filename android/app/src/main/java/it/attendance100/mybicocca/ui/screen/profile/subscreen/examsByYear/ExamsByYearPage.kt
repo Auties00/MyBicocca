@@ -48,6 +48,7 @@ import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.transcript.PrerequisiteStatus
 import it.attendance100.mybicocca.domain.model.transcript.TranscriptRow
 import it.attendance100.mybicocca.domain.model.transcript.TranscriptRowState
+import it.attendance100.mybicocca.domain.model.transcript.TranscriptStats
 import it.attendance100.mybicocca.ui.component.input.SegmentedSwitch
 import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
 import it.attendance100.mybicocca.ui.component.modal.SheetPager
@@ -65,8 +66,9 @@ private val PassedGreen = Color(0xFF1FA84B)
  * Libretto sheet page: a [SheetPager] (pinned morphing header over a two-level body).
  * The root level pages between the grades (Voti) and credits (Crediti) views of the exams
  * grouped by study-plan year — passed exams first within each year — with the segmented
- * switch and swipes driving the same pager. Tapping a course pushes [CourseDetailPage] in
- * place while the header morphs to the exam name and code.
+ * switch and swipes driving the same pager; its header counts passed exams or earned CFU
+ * against the career totals in [stats] (the same figures as the profile tiles). Tapping a course
+ * pushes [CourseDetailPage] in place while the header morphs to the exam name and code.
  *
  * The header title and switch follow [PagerState.targetPage] so they track a swipe as soon
  * as it commits rather than when the page settles. System back walks the detail level up
@@ -77,6 +79,7 @@ private val PassedGreen = Color(0xFF1FA84B)
 @Composable
 fun ExamsByYearPage(
     rows: List<TranscriptRow>,
+    stats: TranscriptStats?,
     initialMode: ExamValueMode,
     prerequisiteStatuses: Map<Long, PrerequisiteStatus>,
     onOpenAppelli: (courseKey: String) -> Unit,
@@ -114,17 +117,30 @@ fun ExamsByYearPage(
         },
         header = { target ->
             when (target) {
-                ExamsPage.Exams -> SheetHeaderSpec(
-                    title = if (mode == ExamValueMode.Grade) {
-                        stringResource(R.string.profile_exams_passed)
-                    } else {
-                        stringResource(R.string.profile_cfu_acquired)
-                    },
-                )
+                ExamsPage.Exams -> if (mode == ExamValueMode.Grade) {
+                    SheetHeaderSpec(
+                        title = stringResource(R.string.profile_exams_passed),
+                        subtitle = stats?.let {
+                            stringResource(R.string.profile_exams_passed_of, it.passedExamCount, it.plannedExamCount)
+                        },
+                    )
+                } else {
+                    SheetHeaderSpec(
+                        title = stringResource(R.string.profile_cfu_acquired),
+                        subtitle = stats?.let {
+                            stringResource(
+                                R.string.profile_cfu_acquired_of,
+                                it.passedCredits.toInt(),
+                                it.totalCreditsRequired.toInt(),
+                            )
+                        },
+                    )
+                }
 
                 is ExamsPage.Detail -> SheetHeaderSpec(
                     title = target.row.activityName,
-                    subtitle = target.row.activityCode?.takeIf { it.isNotBlank() },
+                    subtitle = target.row.activityCode?.takeIf { it.isNotBlank() }
+                        ?: "${formatCredits(target.row.credits)} CFU",
                 )
             }
         },

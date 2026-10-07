@@ -17,8 +17,6 @@ object CalendarTestTags {
     /** Tag of the Day/Week/Month segment for [mode], used to drive the view switch. */
     fun segment(mode: CalendarViewMode): String = "calendar:segment:${mode.name}"
 
-    const val EVENT_TITLE = "calendar:event:title"
-    const val EVENT_ACTIVITY_LABEL = "calendar:event:activityLabel"
     const val EVENT_CONTENT = "calendar:event:content"
     const val EVENT_PRIMARY_ACTION = "calendar:event:primaryAction"
     const val EVENT_SECONDARY_ACTION = "calendar:event:secondaryAction"

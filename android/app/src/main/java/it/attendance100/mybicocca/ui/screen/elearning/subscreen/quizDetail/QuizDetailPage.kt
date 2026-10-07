@@ -178,6 +178,9 @@ fun QuizDetailPage(
         val currentAttempt = remember(attempts, lastInProgress) {
             attempts.firstOrNull { it.id == lastInProgress?.attemptId }
         }
+        val reviewedAttempt = remember(attempts, lastReview) {
+            attempts.firstOrNull { it.id == lastReview?.attemptId }
+        }
         val totalPages = remember(currentAttempt?.layout) {
             currentAttempt?.layout?.split(',')?.count { it.trim() == "0" }?.takeIf { it > 0 }
         }
@@ -234,23 +237,34 @@ fun QuizDetailPage(
             modifier = Modifier.testTag(QuizDetailTestTags.ROOT),
             key = { it.key },
             header = { target ->
+                val quizName = quiz?.name ?: stringResource(R.string.elearning_quiz_title)
                 SheetHeaderSpec(
                     title = when (target) {
                         QuizSheetPage.Overview,
                         QuizSheetPage.AttemptLoading,
                         QuizSheetPage.Attempt,
                         QuizSheetPage.Submitting,
-                        QuizSheetPage.Review -> quiz?.name ?: stringResource(R.string.elearning_quiz_title)
+                        QuizSheetPage.Review -> quizName
 
                         QuizSheetPage.History -> stringResource(R.string.elearning_quiz_history)
                         QuizSheetPage.ConfirmSubmit -> stringResource(R.string.elearning_quiz_confirm_submit_title)
                         QuizSheetPage.ConfirmClose -> stringResource(R.string.elearning_quiz_confirm_close_title)
                     },
                     subtitle = when (target) {
+                        QuizSheetPage.Overview -> quiz?.let {
+                            stringResource(R.string.elearning_quiz_header_overview, attemptsCountLabel(attempts.size))
+                        }
                         QuizSheetPage.History -> attemptsCountLabel(attempts.size)
+                        QuizSheetPage.AttemptLoading -> stringResource(R.string.elearning_quiz_loading_attempt)
                         QuizSheetPage.Attempt -> attemptSubtitle
                         QuizSheetPage.Submitting -> stringResource(R.string.elearning_quiz_submitting)
-                        else -> null
+                        QuizSheetPage.Review -> reviewedAttempt
+                            ?.let { stringResource(R.string.elearning_quiz_header_review_attempt, it.attemptNumber) }
+                            ?: stringResource(R.string.elearning_quiz_header_review)
+                        QuizSheetPage.ConfirmSubmit,
+                        QuizSheetPage.ConfirmClose -> currentAttempt
+                            ?.let { stringResource(R.string.elearning_quiz_header_attempt_of, it.attemptNumber, quizName) }
+                            ?: quizName
                     },
                     showBack = target != QuizSheetPage.AttemptLoading &&
                         target != QuizSheetPage.Attempt &&

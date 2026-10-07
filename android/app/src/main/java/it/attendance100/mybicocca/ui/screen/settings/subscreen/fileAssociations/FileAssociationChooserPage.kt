@@ -43,15 +43,17 @@ import it.attendance100.mybicocca.domain.model.settings.FileOpenChoice
 import it.attendance100.mybicocca.ui.component.file.FileKind
 import it.attendance100.mybicocca.ui.component.file.openChooserIcon
 import it.attendance100.mybicocca.ui.component.file.openChooserLabel
+import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
 import it.attendance100.mybicocca.ui.navigation.route.SheetRoute
 
 /**
  * The settings sibling of the file viewer's open chooser: a fileless page inside the "Apertura
  * file" sheet ([SheetRoute.FileAssociationChooser]) that sets the default for a whole file kind.
  * Same centered-hero language — the kind's icon in a nine-sided cookie on primary-container over
- * a title and explainer — but with three picks rather than two: a connected "In app" / "Altra
- * app" button pair plus a full-width "Chiedi ogni volta" button that clears the saved default.
- * The current default is shown filled; [current] == null means no default is saved yet.
+ * an explainer — but with three picks rather than two: a connected "In app" / "Altra app" button
+ * pair plus a full-width "Chiedi ogni volta" button that clears the saved default. The current
+ * default is shown filled; [current] == null means no default is saved yet. The kind's name and
+ * its current default sit in the pinned header ([fileAssociationChooserHeader]).
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -82,15 +84,7 @@ fun FileAssociationChooserPage(
                     modifier = Modifier.size(52.dp),
                 )
             }
-            Spacer(Modifier.height(20.dp))
-            Text(
-                text = stringResource(kind.openChooserLabel()),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface,
-                textAlign = TextAlign.Center,
-            )
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(16.dp))
             Text(
                 text = stringResource(R.string.settings_file_association_choose_hint),
                 style = MaterialTheme.typography.bodyMedium,
@@ -139,6 +133,24 @@ fun FileAssociationChooserPage(
         )
     }
 }
+
+/**
+ * Pinned header of the chooser page: the kind's name over its current default ("Attuale: Apri in
+ * app"); a key that names no association kind falls back to the sheet's own title.
+ */
+@Composable
+fun fileAssociationChooserHeader(kind: FileKind?, current: FileOpenChoice?): SheetHeaderSpec =
+    if (kind == null) {
+        SheetHeaderSpec(
+            title = stringResource(R.string.settings_file_opening_title),
+            subtitle = stringResource(R.string.settings_file_opening_subtitle),
+        )
+    } else {
+        SheetHeaderSpec(
+            title = stringResource(kind.openChooserLabel()),
+            subtitle = stringResource(R.string.settings_file_association_current, current.associationLabel()),
+        )
+    }
 
 /**
  * One pick. The active default is brand-filled (explicit white content) and swaps its icon for

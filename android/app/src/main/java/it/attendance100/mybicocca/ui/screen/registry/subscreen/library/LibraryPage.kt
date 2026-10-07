@@ -91,6 +91,7 @@ fun LibraryPage(
 
     run {
         var outcome by remember { mutableStateOf<SheetOutcome?>(null) }
+        var outcomeKind by remember { mutableStateOf(LibraryOutcomeKind.Cancellation) }
         var pendingCancel by remember { mutableStateOf<LibraryReservation?>(null) }
 
         val backStack by viewModel.backStack.collectAsStateWithLifecycle()
@@ -137,41 +138,45 @@ fun LibraryPage(
         LaunchedEffect(Unit) {
             viewModel.events.collect { event ->
                 when (event) {
-                    LibraryEvent.ReservationCancelled -> outcome =
-                        SheetOutcome.Success(strLibraryReservationCancelled)
-                    is LibraryEvent.CancelFailed -> outcome = SheetOutcome.Error(
-                        strLibraryCancellationFailed,
-                        event.cause
-                    )
-                    is LibraryEvent.BookingFailed -> outcome = SheetOutcome.Error(
-                        strLibraryBookingFailed,
-                        event.cause
-                    )
+                    LibraryEvent.ReservationCancelled -> {
+                        outcomeKind = LibraryOutcomeKind.Cancellation
+                        outcome = SheetOutcome.Success(strLibraryReservationCancelled)
+                    }
+                    is LibraryEvent.CancelFailed -> {
+                        outcomeKind = LibraryOutcomeKind.Cancellation
+                        outcome = SheetOutcome.Error(strLibraryCancellationFailed, event.cause)
+                    }
+                    is LibraryEvent.BookingFailed -> {
+                        outcomeKind = LibraryOutcomeKind.Booking
+                        outcome = SheetOutcome.Error(strLibraryBookingFailed, event.cause)
+                    }
                     is LibraryEvent.LoginEmailSent -> Unit
-                    is LibraryEvent.LoginRequestFailed -> outcome = SheetOutcome.Error(
-                        strLibrarySendFailed,
-                        event.cause
-                    )
-                    is LibraryEvent.LoginFailed -> outcome = SheetOutcome.Error(
-                        strLibraryLoginFailed,
-                        event.cause
-                    )
-                    is LibraryEvent.SyncFailed -> outcome = SheetOutcome.Error(
-                        strLibrarySyncFailed,
-                        event.cause
-                    )
+                    is LibraryEvent.LoginRequestFailed -> {
+                        outcomeKind = LibraryOutcomeKind.Login
+                        outcome = SheetOutcome.Error(strLibrarySendFailed, event.cause)
+                    }
+                    is LibraryEvent.LoginFailed -> {
+                        outcomeKind = LibraryOutcomeKind.Login
+                        outcome = SheetOutcome.Error(strLibraryLoginFailed, event.cause)
+                    }
+                    is LibraryEvent.SyncFailed -> {
+                        outcomeKind = LibraryOutcomeKind.Sync
+                        outcome = SheetOutcome.Error(strLibrarySyncFailed, event.cause)
+                    }
 
-                    LibraryEvent.PresenceVerified -> outcome =
-                        SheetOutcome.Success(strLibraryPresenceVerified)
+                    LibraryEvent.PresenceVerified -> {
+                        outcomeKind = LibraryOutcomeKind.Presence
+                        outcome = SheetOutcome.Success(strLibraryPresenceVerified)
+                    }
 
-                    LibraryEvent.PresenceInvalidCode -> outcome = SheetOutcome.Error(
-                        strLibraryInvalidCode,
-                        body = strLibraryInvalidCodeBody
-                    )
-                    is LibraryEvent.PresenceFailed -> outcome = SheetOutcome.Error(
-                        strLibraryPresenceFailed,
-                        event.cause
-                    )
+                    LibraryEvent.PresenceInvalidCode -> {
+                        outcomeKind = LibraryOutcomeKind.Presence
+                        outcome = SheetOutcome.Error(strLibraryInvalidCode, body = strLibraryInvalidCodeBody)
+                    }
+                    is LibraryEvent.PresenceFailed -> {
+                        outcomeKind = LibraryOutcomeKind.Presence
+                        outcome = SheetOutcome.Error(strLibraryPresenceFailed, event.cause)
+                    }
                 }
             }
         }
@@ -218,10 +223,11 @@ fun LibraryPage(
         }
         val locale = currentLocale()
         val recapDateFormat = RecapDateFormat
-        val slotRecap = remember(selectedDate, selectedStartTime, locale, recapDateFormat) {
+        val timeRecap = selectedStartTime?.format(TimeFormat)?.let { stringResource(R.string.registry_time_at, it) }
+        val slotRecap = remember(selectedDate, timeRecap, locale, recapDateFormat) {
             listOfNotNull(
                 selectedDate?.format(recapDateFormat)?.replaceFirstChar { it.titlecase(locale) },
-                selectedStartTime?.format(TimeFormat)?.let { "ore $it" },
+                timeRecap,
             ).joinToString(" · ").ifBlank { null }
         }
 
@@ -241,7 +247,15 @@ fun LibraryPage(
             header = { target ->
                 SheetHeaderSpec(
                     title = when (target) {
-                        LibraryDisplay.Outcome -> ""
+                        LibraryDisplay.Outcome -> stringResource(
+                            when (outcomeKind) {
+                                LibraryOutcomeKind.Cancellation -> R.string.library_result_cancellation_title
+                                LibraryOutcomeKind.Booking -> R.string.library_reservation
+                                LibraryOutcomeKind.Login -> R.string.library_result_login_title
+                                LibraryOutcomeKind.Sync -> R.string.library_result_sync_title
+                                LibraryOutcomeKind.Presence -> R.string.library_verify_presence
+                            },
+                        )
                         LibraryDisplay.ConfirmCancel -> stringResource(R.string.library_cancel_confirmation)
                         is LibraryDisplay.Page -> when (val page = target.page) {
                             LibraryPage.Home -> stringResource(R.string.library_title)
@@ -263,8 +277,15 @@ fun LibraryPage(
                         }
                     },
                     subtitle = when (target) {
-                        LibraryDisplay.Outcome -> null
+                        LibraryDisplay.Outcome -> when (outcomeKind) {
+                            LibraryOutcomeKind.Cancellation -> shownCancel?.libraryName
+                            LibraryOutcomeKind.Booking -> bookingLibrary?.name
+                            LibraryOutcomeKind.Login, LibraryOutcomeKind.Sync ->
+                                linkedEmail ?: email.ifBlank { null }
+                            LibraryOutcomeKind.Presence -> detailReservation?.libraryName
+                        } ?: stringResource(R.string.library_title)
                         LibraryDisplay.ConfirmCancel -> shownCancel?.libraryName
+                            ?: stringResource(R.string.library_reservation)
                         is LibraryDisplay.Page -> when (val page = target.page) {
                             LibraryPage.Home ->
                                 if (linkedEmail == null) stringResource(R.string.library_login_and_book)
@@ -278,12 +299,16 @@ fun LibraryPage(
                             LibraryPage.Login -> stringResource(R.string.library_verify_email)
                             LibraryPage.Libraries -> stringResource(R.string.library_choose_library)
                             is LibraryPage.ReservationDetail -> stringResource(R.string.library_reservation_details)
-                            is LibraryPage.LibraryDetail -> libraryList.firstOrNull { it.id == page.libraryId }?.secondaryName
+                            is LibraryPage.LibraryDetail -> libraryList.firstOrNull { it.id == page.libraryId }
+                                ?.secondaryName?.takeIf { it.isNotBlank() }
+                                ?: stringResource(R.string.registry_library_desc)
                             LibraryPage.Zones -> stringResource(R.string.library_choose_zone)
                             LibraryPage.DateTime -> stringResource(R.string.library_choose_datetime)
-                            LibraryPage.Seats -> slotRecap
-                            LibraryPage.Confirm -> slotRecap
+                            LibraryPage.Seats, LibraryPage.Confirm -> slotRecap
+                                ?: selectedZone?.name
+                                ?: stringResource(R.string.library_choose_datetime)
                             LibraryPage.Done -> bookingLibrary?.name
+                                ?: stringResource(R.string.library_booked)
                         }
                     },
                     showBack = when (target) {
@@ -447,6 +472,9 @@ fun LibraryPage(
         }
     }
 }
+
+/** The operation an outcome page reports on, naming its header. */
+private enum class LibraryOutcomeKind { Cancellation, Booking, Login, Sync, Presence }
 
 /**
  * What the pager currently shows. The ViewModel owns the booking back stack; the result and

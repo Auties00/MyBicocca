@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Registry sheets: pinned header titles and subtitles -->
+
+    <!-- Certificates -->
+    <string name="certs_result_title">Opening certificate</string>
+
+    <!-- Exam results -->
+    <string name="exam_results_result_accept_title">Accept result</string>
+    <string name="exam_results_result_reject_title">Reject result</string>
+
+    <!-- Attendance -->
+    <string name="attendance_progress_subtitle">Sending…</string>
+    <string name="attendance_result_subtitle">Today at %1$s</string>
+
+    <!-- Appelli -->
+    <plurals name="appelli_active_summary">
+        <item quantity="one">%1$d upcoming exam</item>
+        <item quantity="other">%1$d upcoming exams</item>
+    </plurals>
+    <string name="appelli_result_booking_title">Booking</string>
+    <string name="appelli_result_cancellation_title">Cancellation</string>
+    <string name="appelli_result_document_title">Document</string>
+
+    <!-- Study plan -->
+    <string name="studyplan_result_print_title">Print plan</string>
+
+    <!-- Questionnaires -->
+    <string name="questionnaire_units_subtitle">Course evaluation questionnaire</string>
+    <string name="questionnaire_page_number">Page %1$d</string>
+    <string name="questionnaire_result_title">Questionnaire submission</string>
+
+    <!-- Appointments -->
+    <string name="appointments_result_cancellation_title">Cancellation</string>
+    <string name="appointments_result_document_title">PDF reminder</string>
+    <string name="appointments_result_booking_title">Booking</string>
+
+    <!-- Library -->
+    <string name="library_result_cancellation_title">Cancellation</string>
+    <string name="library_result_login_title">Sign-in</string>
+    <string name="library_result_sync_title">Sync</string>
+</resources>

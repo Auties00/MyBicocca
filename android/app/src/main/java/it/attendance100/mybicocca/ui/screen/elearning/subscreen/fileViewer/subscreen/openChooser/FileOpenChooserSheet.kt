@@ -38,15 +38,29 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.settings.FileOpenChoice
 import it.attendance100.mybicocca.ui.component.file.FileKind
 import it.attendance100.mybicocca.ui.component.file.openChooserIcon
 import it.attendance100.mybicocca.ui.component.file.openChooserLabel
+import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
+import it.attendance100.mybicocca.ui.navigation.route.AppRoute
 import java.util.Locale
+
+/**
+ * Pinned header of the open chooser (`SheetRoute.FileOpenChooser`): the file name over its kind
+ * and size.
+ */
+@Composable
+fun fileOpenChooserHeader(file: AppRoute.FileViewer): SheetHeaderSpec {
+    val kind = remember(file.fileName, file.mimeType) { FileKind.classify(file.fileName, file.mimeType) }
+    return SheetHeaderSpec(
+        title = file.fileName.ifBlank { stringResource(R.string.file_kind_generic) },
+        subtitle = listOfNotNull(stringResource(kind.openChooserLabel()), formatSize(file.sizeBytes))
+            .joinToString(" · "),
+    )
+}
 
 /**
  * Asks whether to open an in-app-capable file inside the app or hand it to an external app,
@@ -54,9 +68,10 @@ import java.util.Locale
  * on a file re-shows the chooser, as the switch's helper text explains).
  *
  * Follows the app's hand-off-sheet language (LinkSheet / OfficeOpenSheet): a centered hero
- * shape with the per-kind icon, the file name, a kind + size chip, the remember toggle, and a
- * pinned connected button pair — brand-filled "In app" leading with explicit white content
- * (a theme-reactive onPrimary would flip dark in dark mode), tonal "Altra app" trailing.
+ * shape with the per-kind icon, the remember toggle, and a pinned connected button pair —
+ * brand-filled "In app" leading with explicit white content (a theme-reactive onPrimary would
+ * flip dark in dark mode), tonal "Altra app" trailing. The file name, kind and size ride the
+ * sheet's pinned header ([fileOpenChooserHeader]).
  *
  * This is sheet CONTENT, not a sheet: it renders as a back-stack page (the FileOpenChooser
  * sheet route) inside whatever sheet container the scene strategy provides — a sub-page of an
@@ -65,8 +80,6 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun FileOpenChooserContent(
-    fileName: String,
-    sizeBytes: Long?,
     kind: FileKind,
     onChoose: (choice: FileOpenChoice, remember: Boolean) -> Unit,
 ) {
@@ -95,32 +108,7 @@ fun FileOpenChooserContent(
                         modifier = Modifier.size(52.dp),
                     )
                 }
-                Spacer(Modifier.height(20.dp))
-                Text(
-                    text = fileName,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    textAlign = TextAlign.Center,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Spacer(Modifier.height(10.dp))
-                Surface(
-                    color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    shape = MaterialTheme.shapes.extraLarge,
-                ) {
-                    Text(
-                        text = listOfNotNull(
-                            stringResource(kind.openChooserLabel()),
-                            formatSize(sizeBytes)
-                        ).joinToString(" · "),
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                    )
-                }
-                Spacer(Modifier.height(20.dp))
+                Spacer(Modifier.height(24.dp))
                 Surface(
                     onClick = { rememberChoice = !rememberChoice },
                     shape = MaterialTheme.shapes.large,

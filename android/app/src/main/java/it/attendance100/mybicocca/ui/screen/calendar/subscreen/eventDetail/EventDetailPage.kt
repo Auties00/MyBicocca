@@ -49,8 +49,11 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import it.attendance100.mybicocca.R
@@ -60,6 +63,7 @@ import it.attendance100.mybicocca.domain.model.calendar.CalendarEvent
 import it.attendance100.mybicocca.domain.model.calendar.EventStatus
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.domain.model.elearning.course.EnrolledCourse
+import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
 import it.attendance100.mybicocca.ui.screen.calendar.CalendarTestTags
 import it.attendance100.mybicocca.ui.screen.calendar.ext.durationMinutes
 import it.attendance100.mybicocca.ui.screen.calendar.ext.formatTimeRange
@@ -72,10 +76,37 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 /**
- * The calendar event sheet page ([SheetRoute.CalendarEvent]): the headline title with the kind
- * label under it — struck through and dimmed when the event is cancelled — above
- * [EventDetailContent], scrolling internally when the content outgrows the screen. The sheet
- * itself (container, dismissal, back) is the shell's modal scene.
+ * Pinned header of the calendar event sheet ([SheetRoute.CalendarEvent]): the event title over its
+ * kind label, led by an error-tinted "Evento annullato" when the event is cancelled. [event] is
+ * null while the event is still loading.
+ */
+@Composable
+fun eventDetailHeader(event: CalendarEvent?): SheetHeaderSpec {
+    if (event == null) {
+        return SheetHeaderSpec(title = stringResource(R.string.event_detail_title_fallback), subtitle = null)
+    }
+    val kind = activityLabel(event)
+    val cancelled = event.status == EventStatus.CANCELLED
+    val cancelledLabel = stringResource(R.string.event_detail_cancelled)
+    val error = MaterialTheme.colorScheme.error
+    return SheetHeaderSpec(
+        title = event.title.ifBlank { kind },
+        subtitle = if (cancelled) {
+            buildAnnotatedString {
+                withStyle(SpanStyle(color = error, fontWeight = FontWeight.SemiBold)) { append(cancelledLabel) }
+                append(" · ")
+                append(kind)
+            }
+        } else {
+            kind
+        },
+    )
+}
+
+/**
+ * The calendar event sheet page ([SheetRoute.CalendarEvent]): [EventDetailContent] under the
+ * sheet's pinned header ([eventDetailHeader]), scrolling internally when the content outgrows the
+ * screen. The sheet itself (container, dismissal, back) is the shell's modal scene.
  */
 @Composable
 fun EventDetailPage(
@@ -87,41 +118,21 @@ fun EventDetailPage(
     /** Total students booked on the exam's call, joined from the live bookable list; null when unknown. */
     examTotalBookings: Int? = null,
 ) {
-    val cancelled = event.status == EventStatus.CANCELLED
-    val scheme = MaterialTheme.colorScheme
-
-    Column(
+    EventDetailContent(
+        event = event,
+        elearningCourses = elearningCourses,
+        onOpenCourse = onOpenCourse,
+        onOpenAssignment = onOpenAssignment,
+        onOpenReservation = onOpenReservation,
+        examTotalBookings = examTotalBookings,
+        topSpacing = 4.dp,
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(max = 720.dp)
             .padding(horizontal = 24.dp)
             .padding(bottom = 24.dp)
             .verticalScroll(rememberScrollState()),
-    ) {
-        Text(
-            text = event.title,
-            modifier = Modifier.testTag(CalendarTestTags.EVENT_TITLE),
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.SemiBold,
-            color = if (cancelled) scheme.onSurfaceVariant else scheme.onSurface,
-            textDecoration = if (cancelled) TextDecoration.LineThrough else TextDecoration.None,
-        )
-        Spacer(Modifier.height(4.dp))
-        Text(
-            text = activityLabel(event),
-            modifier = Modifier.testTag(CalendarTestTags.EVENT_ACTIVITY_LABEL),
-            style = MaterialTheme.typography.bodyMedium,
-            color = scheme.onSurfaceVariant,
-        )
-        EventDetailContent(
-            event = event,
-            elearningCourses = elearningCourses,
-            onOpenCourse = onOpenCourse,
-            onOpenAssignment = onOpenAssignment,
-            onOpenReservation = onOpenReservation,
-            examTotalBookings = examTotalBookings,
-        )
-    }
+    )
 }
 
 /**
@@ -149,12 +160,14 @@ fun EventDetailContent(
     modifier: Modifier = Modifier,
     /** Total students booked on the exam's call, joined from the live bookable list; null when unknown. */
     examTotalBookings: Int? = null,
+    /** Gap above the info rows, separating them from whatever heads the body. */
+    topSpacing: Dp = 24.dp,
 ) {
     val context = LocalContext.current
     val navigator = LocalAppNavigator.current
 
     Column(modifier = modifier.testTag(CalendarTestTags.EVENT_CONTENT)) {
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(topSpacing))
 
         val rows = buildList {
             add(

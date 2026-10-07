@@ -217,7 +217,10 @@ fun QuestionnairesPage(
         val lastUnitsSubtitle = remember { arrayOf<String?>(null) }
         if (activity != null) {
             lastActivity[0] = activity
-            lastUnitsSubtitle[0] = activityDetail.valueOrNull()?.questionnaireName
+            lastUnitsSubtitle[0] = activityDetail.valueOrNull()?.let { detail ->
+                detail.questionnaireName?.takeIf { it.isNotBlank() }
+                    ?: stringResource(R.string.questionnaire_units_subtitle)
+            }
         }
         val lastCompileHeader = remember { arrayOf<CompilationWizardHeader?>(null) }
         if (compileHeader != null) lastCompileHeader[0] = compileHeader
@@ -259,14 +262,16 @@ fun QuestionnairesPage(
 
                         QPage.ConfirmExit -> stringResource(R.string.questionnaire_confirm_exit_title)
                         QPage.ConfirmSend -> stringResource(R.string.questionnaire_confirm_send_title)
-                        QPage.Result -> ""
+                        QPage.Result -> stringResource(R.string.questionnaire_result_title)
                     },
                     subtitle = when (target) {
                         QPage.Root -> rootSubtitle(loaded, pendingCount)
                         QPage.Units -> lastUnitsSubtitle[0]?.let(::AnnotatedString)
                         QPage.Compile -> shownCompileHeader?.subtitle
                         QPage.ConfirmExit, QPage.ConfirmSend -> shownCompileHeader?.title?.let(::AnnotatedString)
-                        QPage.Result -> null
+                        QPage.Result -> AnnotatedString(
+                            lastActivity[0]?.displayName ?: stringResource(R.string.questionnaire_root_title),
+                        )
                     },
                     showBack = target != QPage.Result,
                     // The arrow goes through the dispatcher so the wizard's own handler (step back,

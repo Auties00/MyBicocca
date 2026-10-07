@@ -6,8 +6,11 @@ import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import it.attendance100.mybicocca.core.state.valueOrNull
 import it.attendance100.mybicocca.ui.navigation.route.SheetRoute
+import it.attendance100.mybicocca.ui.navigation.scene.sheetHeader
+import it.attendance100.mybicocca.ui.navigation.scene.sheetHeaderInPage
 import it.attendance100.mybicocca.ui.screen.profile.subscreen.examsByYear.ExamsByYearPage
 import it.attendance100.mybicocca.ui.screen.profile.subscreen.hypotheticalGrade.HypotheticalGradePage
+import it.attendance100.mybicocca.ui.screen.profile.subscreen.hypotheticalGrade.hypotheticalGradeHeader
 
 /**
  * The Profilo sheets: the hypothetical-average calculator and the libretto by year, both fed by
@@ -18,7 +21,12 @@ fun EntryProviderScope<NavKey>.profileSheetEntries(
     profileViewModel: ProfileViewModel,
     onOpenAppelli: (courseKey: String) -> Unit,
 ) {
-    entry<SheetRoute.HypotheticalGrade> { key ->
+    entry<SheetRoute.HypotheticalGrade>(
+        metadata = sheetHeader<SheetRoute.HypotheticalGrade> { key ->
+            val rollup by profileViewModel.gradeRollup.collectAsStateWithLifecycle()
+            hypotheticalGradeHeader(rollup = rollup.valueOrNull(), isWeighted = key.weighted)
+        },
+    ) { key ->
         val rollup by profileViewModel.gradeRollup.collectAsStateWithLifecycle()
         val stats by profileViewModel.stats.collectAsStateWithLifecycle()
         val current = stats.valueOrNull()
@@ -29,11 +37,13 @@ fun EntryProviderScope<NavKey>.profileSheetEntries(
             isWeighted = key.weighted,
         )
     }
-    entry<SheetRoute.ExamsByYear> { key ->
+    entry<SheetRoute.ExamsByYear>(metadata = sheetHeaderInPage()) { key ->
         val rows by profileViewModel.transcriptRows.collectAsStateWithLifecycle()
+        val stats by profileViewModel.stats.collectAsStateWithLifecycle()
         val prerequisiteStatuses by profileViewModel.prerequisiteStatuses.collectAsStateWithLifecycle()
         ExamsByYearPage(
             rows = rows.valueOrNull().orEmpty(),
+            stats = stats.valueOrNull(),
             initialMode = key.mode,
             prerequisiteStatuses = prerequisiteStatuses,
             onOpenAppelli = onOpenAppelli,

@@ -29,6 +29,8 @@ import it.attendance100.mybicocca.ui.component.modal.ModalSheetController
 import it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet
 import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
 import it.attendance100.mybicocca.ui.component.modal.SheetPager
+import it.attendance100.mybicocca.ui.component.modal.SheetPagerImpl
+import androidx.compose.ui.Modifier
 import it.attendance100.mybicocca.ui.navigation.AppNavigator
 import it.attendance100.mybicocca.ui.navigation.Destination
 import it.attendance100.mybicocca.ui.navigation.destination
@@ -60,24 +62,36 @@ val LocalSheetDismissControl = staticCompositionLocalOf<SheetDismissControl?> { 
  */
 val LocalModalEntries = compositionLocalOf<List<NavEntry<NavKey>>> { emptyList() }
 
-/** Sheet-page metadata payload: the page's pinned header resolver (null: the page draws its own). */
-class SheetPageOptions(val header: @Composable (Route) -> SheetHeaderSpec?)
+/**
+ * Sheet-page metadata payload: the page's pinned header resolver, or null when the page draws
+ * its header itself through a nested [SheetPager] ([sheetHeaderInPage]).
+ */
+class SheetPageOptions(val header: (@Composable (Route) -> SheetHeaderSpec)?)
 
 private const val SheetPageMetadataKey: String = "it.attendance100.mybicocca.sheetPage"
 
 /**
- * Metadata for a sheet entry whose sheet draws a pinned [SheetHeaderSpec] header above it, e.g.
+ * Metadata giving a sheet entry its pinned [SheetHeaderSpec] header (title and subtitle), e.g.
  * `entry<SheetRoute.IseeDetail>(metadata = sheetHeader<SheetRoute.IseeDetail> { key -> … })`.
- * The resolver gets the entry's own route, so a page can render its header even while it is the
- * outgoing side of a transition. Sheet entries without it render their own header.
+ * Required on every sheet route: a page without it fails fast when shown. The resolver gets the
+ * entry's own route, so a page can render its header even while it is the outgoing side of a
+ * transition. Pages with their own internal pager (wizards) resolve their root page's header here
+ * and nest a [SheetPager] for deeper pages.
  */
 inline fun <reified R : Route> sheetHeader(
-    noinline header: @Composable (R) -> SheetHeaderSpec?,
+    noinline header: @Composable (R) -> SheetHeaderSpec,
 ): Map<String, Any> = sheetHeaderMetadata { route -> header(route as R) }
 
 @PublishedApi
-internal fun sheetHeaderMetadata(header: @Composable (Route) -> SheetHeaderSpec?): Map<String, Any> =
+internal fun sheetHeaderMetadata(header: (@Composable (Route) -> SheetHeaderSpec)?): Map<String, Any> =
     mapOf(SheetPageMetadataKey to SheetPageOptions(header))
+
+/**
+ * Metadata for a sheet page that has its own page machine on a nested [SheetPager] (a wizard, a
+ * list -> detail -> result flow): that pager draws the title and subtitle of each of its pages,
+ * so the sheet adds no header of its own above it.
+ */
+fun sheetHeaderInPage(): Map<String, Any> = sheetHeaderMetadata(null)
 
 private fun NavEntry<*>.sheetPageOptions(): SheetPageOptions? =
     metadata[SheetPageMetadataKey] as? SheetPageOptions
@@ -274,14 +288,20 @@ private fun ModalSheetHost(
             else -> { { SheetDragHandle(gesturesEnabled) } }
         },
     ) {
-        SheetPager(
+        SheetPagerImpl(
             page = top,
             depth = { it.depth },
             key = { it.id },
             backTo = refs.getOrNull(refs.lastIndex - 1),
             onBack = { navigator.pop(top.id) },
+            modifier = Modifier,
             header = { page ->
-                page.entry.sheetPageOptions()?.header?.invoke(page.entry.destination.route)
+                val route = page.entry.destination.route
+                val options = checkNotNull(page.entry.sheetPageOptions()) {
+                    "Sheet route $route declares neither sheetHeader nor sheetHeaderInPage: " +
+                        "every modal page needs a title and subtitle"
+                }
+                options.header?.invoke(route)
             },
         ) { page ->
             CompositionLocalProvider(LocalSheetDismissControl provides controlFor(page.id)) {

@@ -38,6 +38,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntSize
@@ -165,6 +166,7 @@ fun AppelliPage(
     var confirmingCancel by rememberSaveable { mutableStateOf(false) }
     var booking by rememberSaveable { mutableStateOf(false) }
     var outcome by remember { mutableStateOf<SheetOutcome?>(null) }
+    var outcomeKind by remember { mutableStateOf(AppelliOutcomeKind.Booking) }
     val detailBooking = detailKey?.let { key -> bookings.firstOrNull { it.identityKey() == key } }
 
     LaunchedEffect(pendingFocus) { if (pendingFocus != null) booking = true }
@@ -198,29 +200,35 @@ fun AppelliPage(
             viewModel.events.collectLatest { event ->
                 when (event) {
                     BookedEvent.CancellationSucceeded -> {
+                        outcomeKind = AppelliOutcomeKind.Cancellation
                         confirmingCancel = false
                         detailKey = null
                         outcome =
                             SheetOutcome.Success(strAppelliBookingCancelled)
                     }
 
-                    is BookedEvent.CancellationFailed ->
+                    is BookedEvent.CancellationFailed -> {
+                        outcomeKind = AppelliOutcomeKind.Cancellation
                         outcome = SheetOutcome.Error(
                             strAppelliCancellationFailed,
                             event.cause
                         )
+                    }
 
                     is BookedEvent.OpenPdf ->
                         runCatching { openPdfDocument(context, event.bytes, event.fileName) }
                             .onFailure {
+                                outcomeKind = AppelliOutcomeKind.Document
                                 outcome = SheetOutcome.Error(
                                     strAppelliPdfOpenFailed,
                                     it
                                 )
                             }
 
-                    is BookedEvent.ShowMessage -> outcome =
-                        SheetOutcome.Info(event.message.asString(context))
+                    is BookedEvent.ShowMessage -> {
+                        outcomeKind = AppelliOutcomeKind.Document
+                        outcome = SheetOutcome.Info(event.message.asString(context))
+                    }
                 }
             }
         }
@@ -229,6 +237,7 @@ fun AppelliPage(
             sheetViewModel.events.collectLatest { event ->
                 when (event) {
                     BookingSheetEvent.BookedSuccessfully -> {
+                        outcomeKind = AppelliOutcomeKind.Booking
                         sheetViewModel.close()
                         booking = false
                         viewModel.refresh()
@@ -238,6 +247,7 @@ fun AppelliPage(
                     }
 
                     is BookingSheetEvent.BookingFailed -> {
+                        outcomeKind = AppelliOutcomeKind.Booking
                         sheetViewModel.close()
                         outcome = SheetOutcome.Error(
                             strAppelliBookingFailed,
@@ -284,12 +294,18 @@ fun AppelliPage(
                 SheetHeaderSpec(
                     title = when (shownPage) {
                         AppelliPage.Root -> stringResource(R.string.appelli_title)
-                        AppelliPage.Detail -> shownDetail?.displayTitle() ?: ""
+                        AppelliPage.Detail -> shownDetail?.displayTitle() ?: stringResource(R.string.appelli_exam)
                         AppelliPage.ConfirmCancel -> stringResource(R.string.appelli_cancel_confirmation_title)
                         AppelliPage.BookingCalendar -> stringResource(R.string.appelli_book_exam)
-                        AppelliPage.BookingCall -> shownTarget?.call?.title() ?: ""
+                        AppelliPage.BookingCall -> shownTarget?.call?.title() ?: stringResource(R.string.appelli_exam)
                         AppelliPage.BookingConfirm -> stringResource(R.string.appelli_confirm_booking)
-                        AppelliPage.Result -> ""
+                        AppelliPage.Result -> stringResource(
+                            when (outcomeKind) {
+                                AppelliOutcomeKind.Booking -> R.string.appelli_result_booking_title
+                                AppelliOutcomeKind.Cancellation -> R.string.appelli_result_cancellation_title
+                                AppelliOutcomeKind.Document -> R.string.appelli_result_document_title
+                            },
+                        )
                     },
                     subtitle = when (shownPage) {
                         AppelliPage.Root -> if (loaded) activeSummary(active.size) else null
@@ -298,7 +314,10 @@ fun AppelliPage(
                         AppelliPage.BookingCalendar -> callGroups?.let { rootSubtitle(it) }
                         AppelliPage.BookingCall -> shownTarget?.call?.headerSubtitle()
                         AppelliPage.BookingConfirm -> shownTarget?.call?.title()
-                        AppelliPage.Result -> null
+                        AppelliPage.Result -> when (outcomeKind) {
+                            AppelliOutcomeKind.Booking -> shownTarget?.call?.title()
+                            AppelliOutcomeKind.Cancellation, AppelliOutcomeKind.Document -> shownDetail?.displayTitle()
+                        } ?: stringResource(R.string.appelli_title)
                     },
                     showBack = when (shownPage) {
                         AppelliPage.Result -> false
@@ -386,6 +405,9 @@ private enum class AppelliPage(val depth: Int, val key: String) {
     BookingCall(2, "booking_call"),
     BookingConfirm(3, "booking_confirm"),
 }
+
+/** The operation a result page reports on, naming its header. */
+private enum class AppelliOutcomeKind { Booking, Cancellation, Document }
 
 /**
  * Root page: the active prenotazioni list with the Prenota footer pinned at the bottom. The
@@ -569,8 +591,7 @@ private fun CancelConfirmPage(
     }
 }
 
-private fun activeSummary(count: Int): String = when (count) {
-    0 -> "Nessun esame in programma"
-    1 -> "1 esame in programma"
-    else -> "$count esami in programma"
-}
+@Composable
+private fun activeSummary(count: Int): String =
+    if (count == 0) stringResource(R.string.appelli_no_exams)
+    else pluralStringResource(R.plurals.appelli_active_summary, count, count)

@@ -15,14 +15,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Calculate
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -35,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -42,13 +39,36 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.transcript.GradeRollup
+import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
 import java.util.Locale
 
 private const val MIN_PASSING_GRADE = 18
 private const val MAX_GRADE = 31
 
 /**
- * Hypothetical-average calculator sheet page: a stat card showing the current arithmetic or
+ * Pinned header of the hypothetical-average sheet: what the projection extends — the graded exam
+ * count (arithmetic) or the graded credits (weighted) — once [rollup] has loaded.
+ */
+@Composable
+fun hypotheticalGradeHeader(rollup: GradeRollup?, isWeighted: Boolean): SheetHeaderSpec =
+    SheetHeaderSpec(
+        title = stringResource(R.string.hyp_title),
+        subtitle = rollup?.let {
+            if (isWeighted) {
+                stringResource(R.string.hyp_subtitle_weighted, formatCredits(it.gradedCreditsSum))
+            } else {
+                pluralStringResource(R.plurals.hyp_subtitle_arithmetic, it.gradedExamCount, it.gradedExamCount)
+            }
+        },
+    )
+
+private fun formatCredits(value: Float): String {
+    val asInt = value.toInt()
+    return if (value == asInt.toFloat()) asInt.toString() else String.format(Locale.getDefault(), "%.1f", value)
+}
+
+/**
+ * Hypothetical-average calculator sheet page (titled by [hypotheticalGradeHeader]): a stat card showing the current arithmetic or
  * weighted average with an animated arrow to the projected value, a signed delta chip
  * beneath it, and the grade input — plus an optional CFU input in weighted mode. The
  * projection extends the displayed [currentArithmetic]/[currentWeighted] average — the same
@@ -96,19 +116,6 @@ fun HypotheticalGradePage(
             .fillMaxWidth()
             .padding(start = 24.dp, end = 24.dp, bottom = 24.dp),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Filled.Calculate, contentDescription = null, tint = primaryColor)
-            Spacer(modifier = Modifier.width(8.dp))
-            Text(
-                text = stringResource(R.string.hyp_title),
-                color = textColor,
-                fontSize = 22.sp,
-                fontWeight = FontWeight.SemiBold,
-            )
-        }
-
-        Spacer(modifier = Modifier.height(16.dp))
-
         Column(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(6.dp),

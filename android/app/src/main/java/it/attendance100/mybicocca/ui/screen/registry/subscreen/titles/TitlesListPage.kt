@@ -244,13 +244,13 @@ private fun TitleRow(
 }
 
 /**
- * "3 titoli"-style count shown as the sheet's header subtitle; null when the list is
- * empty. Public so MainShell's sheet entry can build the pinned header from the
+ * "3 titoli"-style count shown as the sheet's header subtitle ("Nessun titolo" when the list
+ * is empty). Public so MainShell's sheet entry can build the pinned header from the
  * shell-hoisted ViewModel's titles.
  */
 @Composable
-fun titlesHeaderSubtitle(titles: List<AcademicTitle>): String? {
-    if (titles.isEmpty()) return null
+fun titlesHeaderSubtitle(titles: List<AcademicTitle>): String {
+    if (titles.isEmpty()) return stringResource(R.string.titles_empty_title)
     return if (titles.size == 1) {
         stringResource(R.string.titles_count_one)
     } else {
@@ -268,13 +268,15 @@ fun AcademicTitle.headline(): String =
 
 /**
  * Detail-page header subtitle: the title type when the headline is the subject, else the
- * awarding institution.
+ * awarding institution, else the year, else the generic "Titoli" label.
  */
 @Composable
-fun AcademicTitle.headlineSubtitle(): String? {
+fun AcademicTitle.headlineSubtitle(): String {
     val headline = headline()
     return typeDescription?.takeIf { it.isNotBlank() && it != headline }
         ?: institution?.takeIf { it.isNotBlank() && it != headline }
+        ?: year?.takeIf { it.isNotBlank() }
+        ?: stringResource(R.string.registry_titles)
 }
 
 @Composable

@@ -61,6 +61,7 @@ import it.attendance100.mybicocca.domain.model.tax.IseeDeclaration
 import it.attendance100.mybicocca.ui.component.button.RetryButton
 import it.attendance100.mybicocca.ui.component.feedback.EmptyState
 import it.attendance100.mybicocca.ui.component.feedback.rememberMinDurationLoading
+import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
 import it.attendance100.mybicocca.ui.component.modal.SheetLoadingIndicator
 import it.attendance100.mybicocca.ui.component.modal.SheetMessage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.TaxesViewModel
@@ -136,12 +137,22 @@ fun IseeDeclarationsPage(
     )
 }
 
-/** "3 anni accademici": how many years carry a declaration, in place of a sub-page title. */
-fun iseeHeaderSubtitle(declarations: List<IseeDeclaration>): String? {
-    val count = declarations.size
-    if (count == 0) return null
-    return if (count == 1) "1 anno accademico" else "$count anni accademici"
-}
+/**
+ * The ISEE sheet's pinned header: the title over how many years carry a declaration ("3 anni
+ * accademici", or "Nessuna dichiarazione ISEE" when none); the subtitle is null only while
+ * [declarations] (already filtered to the listed ones) are still loading.
+ */
+@Composable
+fun iseeHeader(declarations: List<IseeDeclaration>?): SheetHeaderSpec = SheetHeaderSpec(
+    title = stringResource(R.string.registry_isee),
+    subtitle = declarations?.size?.let { count ->
+        when (count) {
+            0 -> stringResource(R.string.isee_no_declarations)
+            1 -> stringResource(R.string.registry_enrollments_one_year)
+            else -> stringResource(R.string.registry_enrollments_many_years, count)
+        }
+    },
+)
 
 /**
  * Declarations list body. [declareYear] is non-null while the current academic year has no

@@ -96,6 +96,8 @@ fun CertificatesPage(
 
     val context = LocalContext.current
     var outcome by remember { mutableStateOf<SheetOutcome?>(null) }
+    // The certificate last tapped, named in the result page's header.
+    var requested by remember { mutableStateOf<Certificate?>(null) }
     LaunchedEffect(viewModel) {
         viewModel.events.collectLatest { event ->
             when (event) {
@@ -125,12 +127,13 @@ fun CertificatesPage(
             SheetHeaderSpec(
                 title = when (target) {
                     CertificatesSheetPage.Certificates -> stringResource(R.string.certs_title)
-                    CertificatesSheetPage.Result -> ""
+                    CertificatesSheetPage.Result -> stringResource(R.string.certs_result_title)
                 },
                 subtitle = when (target) {
                     CertificatesSheetPage.Certificates -> stringResource(R.string.certs_subtitle)
                         .takeIf { certificatesLoadable is Loadable.Loaded }
-                    CertificatesSheetPage.Result -> null
+                    CertificatesSheetPage.Result -> requested?.description?.takeIf { it.isNotBlank() }
+                        ?: stringResource(R.string.certs_certificate)
                 },
                 showBack = false,
             )
@@ -150,7 +153,10 @@ fun CertificatesPage(
                 downloading = downloading,
                 downloaded = downloaded,
                 onRetry = viewModel::refresh,
-                onDownload = viewModel::download,
+                onDownload = { certificate ->
+                    requested = certificate
+                    viewModel.download(certificate)
+                },
             )
         }
     }

@@ -221,12 +221,17 @@ fun ExamResultsPage(
                 SheetHeaderSpec(
                     title = when (target) {
                         EsitiSheetPage.Root -> stringResource(R.string.exam_results_title)
-                        EsitiSheetPage.Detail -> shownDetail?.displayTitle() ?: ""
+                        EsitiSheetPage.Detail -> shownDetail?.displayTitle()
+                            ?: stringResource(R.string.exam_results_title)
                         EsitiSheetPage.ConfirmReject -> stringResource(R.string.exam_results_confirm_reject_title)
-                        EsitiSheetPage.Result -> ""
+                        EsitiSheetPage.Result -> stringResource(
+                            if (acceptInFlight) R.string.exam_results_result_accept_title
+                            else R.string.exam_results_result_reject_title,
+                        )
                     },
                     subtitle = when (target) {
-                        EsitiSheetPage.Result -> null
+                        EsitiSheetPage.Result -> shownDetail?.displayTitle()
+                            ?: stringResource(R.string.exam_results_title)
                         EsitiSheetPage.Root -> if (loaded) sectionSummary(section, grouped) else null
                         EsitiSheetPage.Detail -> shownDetail?.let { result ->
                             result.acknowledgmentDeadline

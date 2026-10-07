@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Profilo: media ipotetica -->
+    <string name="hyp_subtitle_weighted">Media ponderata su %1$s CFU</string>
+    <plurals name="hyp_subtitle_arithmetic">
+        <item quantity="one">Media aritmetica su 1 esame</item>
+        <item quantity="other">Media aritmetica su %1$d esami</item>
+    </plurals>
+
+    <!-- Profilo: libretto -->
+    <string name="profile_exams_passed_of">%1$d su %2$d superati</string>
+    <string name="profile_cfu_acquired_of">%1$d su %2$d CFU</string>
+
+    <!-- Impostazioni: apertura file -->
+    <string name="settings_file_association_current">Attuale: %1$s</string>
+
+    <!-- Impostazioni: novità -->
+    <plurals name="whats_new_subtitle_merged">
+        <item quantity="one">1 nuova versione dalla v%2$s</item>
+        <item quantity="other">%1$d nuove versioni dalla v%2$s</item>
+    </plurals>
+    <plurals name="whats_new_subtitle_versions">
+        <item quantity="one">1 versione</item>
+        <item quantity="other">%1$d versioni</item>
+    </plurals>
+    <string name="whats_new_subtitle_installed">Installata: v%1$s</string>
+
+    <!-- Selettore account -->
+    <plurals name="account_switcher_count">
+        <item quantity="one">1 account</item>
+        <item quantity="other">%1$d account</item>
+    </plurals>
+    <string name="account_switcher_add_title">Aggiungi account</string>
+    <string name="account_switcher_add_subtitle">Gli account salvati restano disponibili</string>
+</resources>

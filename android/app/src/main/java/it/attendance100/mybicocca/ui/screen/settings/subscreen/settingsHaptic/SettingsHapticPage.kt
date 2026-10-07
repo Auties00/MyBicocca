@@ -42,17 +42,7 @@ fun SettingsHapticPage(
             .padding(horizontal = 20.dp)
             .padding(bottom = 32.dp),
     ) {
-        Text(
-            text = stringResource(R.string.settings_haptic_sheet_title),
-            style = MaterialTheme.typography.titleLargeEmphasized,
-            fontWeight = FontWeight.SemiBold,
-        )
-        Text(
-            text = stringResource(R.string.settings_haptic_sheet_subtitle),
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-        Spacer(Modifier.height(20.dp))
+        Spacer(Modifier.height(8.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,

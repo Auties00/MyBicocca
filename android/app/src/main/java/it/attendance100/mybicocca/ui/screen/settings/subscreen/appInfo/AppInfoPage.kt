@@ -18,16 +18,13 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.ArrowBack
 import androidx.compose.material.icons.outlined.NewReleases
 import androidx.compose.material.icons.outlined.Update
 import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.Link
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -35,8 +32,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -49,7 +44,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -79,6 +73,7 @@ import it.attendance100.mybicocca.ui.component.directory.SegmentedIconChip
 import it.attendance100.mybicocca.ui.component.directory.SegmentedTile
 import it.attendance100.mybicocca.ui.component.directory.segmentedShape
 import it.attendance100.mybicocca.ui.component.feedback.LocalAppSnackbarController
+import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
 import it.attendance100.mybicocca.ui.component.modal.SheetPager
 import it.attendance100.mybicocca.ui.component.modal.UpdateModalSheet
 import it.attendance100.mybicocca.ui.navigation.route.SheetRoute
@@ -141,9 +136,10 @@ private enum class AppInfoSubPage(val depth: Int) {
  * The settings About page ([SheetRoute.AppInfo]) — a full-height sheet whose pages are navigated
  * with [SheetPager]: About, What's New (the merged changelog), All versions (the per-release list,
  * below What's New) and Update Settings (below About). Every page fills the sheet's height so all
- * of them share one stable frame. Tiles, the "All versions" button and the in-page back arrows
- * walk the pages; the back gesture is predictive and steps to the page's parent, and on About it
- * dismisses the sheet natively.
+ * of them share one stable frame, under the pager's pinned header (each page's title and
+ * subtitle, plus the back arrow below About). Tiles, the "All versions" button and the header's
+ * back arrow walk the pages; the back gesture is predictive and steps to the page's parent, and on
+ * About it dismisses the sheet natively.
  *
  * About keeps the update-aware "Check for Updates" tile (forced check + sheet snackbar while up
  * to date; an "Update available" tile that opens the store-aware dialog once a newer release is
@@ -201,6 +197,21 @@ fun AppInfoPage(
         backTo = page.parent,
         onBack = { page.parent?.let { page = it } },
         modifier = Modifier.fillMaxWidth(),
+        header = { target ->
+            when (target) {
+                AppInfoSubPage.About -> SheetHeaderSpec(
+                    title = stringResource(R.string.settings_about_title),
+                    subtitle = stringResource(R.string.settings_about_subtitle),
+                )
+
+                AppInfoSubPage.WhatsNew -> whatsNewHeader()
+                AppInfoSubPage.AllVersions -> whatsNewAllVersionsHeader()
+                AppInfoSubPage.UpdateSettings -> SheetHeaderSpec(
+                    title = stringResource(R.string.settings_update_settings_title),
+                    subtitle = stringResource(R.string.settings_update_settings_subtitle),
+                )
+            }
+        },
     ) { target ->
         val pageModifier = Modifier
             .fillMaxWidth()
@@ -221,13 +232,11 @@ fun AppInfoPage(
             )
 
             AppInfoSubPage.WhatsNew -> WhatsNewScene(
-                onBack = { page = AppInfoSubPage.About },
                 onAllVersions = { page = AppInfoSubPage.AllVersions },
                 modifier = pageModifier,
             )
 
             AppInfoSubPage.AllVersions -> WhatsNewAllVersionsScene(
-                onBack = { page = AppInfoSubPage.WhatsNew },
                 modifier = pageModifier,
             )
 
@@ -235,7 +244,6 @@ fun AppInfoPage(
                 modifier = pageModifier,
                 viewModel = viewModel,
                 nightlyEnabled = nightlyEnabled,
-                onBack = { page = AppInfoSubPage.About },
                 setShowRestoreStableDialog = { showRestoreStableDialog = it }
             )
         }
@@ -632,13 +640,11 @@ private fun NightlyUpdateTile(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun UpdateSettingsScene(
     modifier: Modifier,
     viewModel: AppInfoViewModel,
     nightlyEnabled: Boolean,
-    onBack: () -> Unit,
     setShowRestoreStableDialog: (Boolean) -> Unit,
 ) {
     val haptic = rememberHapticManager()
@@ -649,26 +655,11 @@ private fun UpdateSettingsScene(
     val checkIntervalMinutes by viewModel.checkIntervalMinutes.collectAsStateWithLifecycle()
 
     Column(modifier = modifier) {
-        TopAppBar(
-            title = { Text(stringResource(R.string.settings_update_settings_title)) },
-            navigationIcon = {
-                IconButton(onClick = onBack) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Rounded.ArrowBack,
-                        contentDescription = stringResource(R.string.common_back),
-                    )
-                }
-            },
-            colors = TopAppBarDefaults.topAppBarColors(
-                containerColor = Color.Transparent
-            )
-        )
-
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .verticalScroll(rememberScrollState())
-                .padding(horizontal = 20.dp, vertical = 8.dp)
+                .padding(start = 20.dp, end = 20.dp, bottom = 8.dp)
         ) {
             CheckIntervalSlider(
                 intervalMinutes = checkIntervalMinutes,

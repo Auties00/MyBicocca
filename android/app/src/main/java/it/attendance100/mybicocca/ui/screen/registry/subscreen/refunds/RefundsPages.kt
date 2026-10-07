@@ -85,10 +85,10 @@ fun RefundsListPage(
     )
 }
 
-/** "3 rimborsi · 2 in lavorazione" — count line in place of a sub-page title. */
+/** "3 rimborsi · 2 in lavorazione" — count line in place of a sub-page title ("Nessun rimborso" when empty). */
 @Composable
-fun refundsHeaderSubtitle(refunds: List<Refund>): String? {
-    if (refunds.isEmpty()) return null
+fun refundsHeaderSubtitle(refunds: List<Refund>): String {
+    if (refunds.isEmpty()) return stringResource(R.string.refunds_empty_title)
     val total =
         if (refunds.size == 1) stringResource(R.string.registry_refund_one) else stringResource(
             R.string.registry_refund_many,

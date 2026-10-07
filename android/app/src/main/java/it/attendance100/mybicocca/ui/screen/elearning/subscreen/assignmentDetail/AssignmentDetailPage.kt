@@ -164,12 +164,13 @@ fun AssignmentDetailPage(
                 .padding(top = 8.dp),
             key = ::displayKey,
             header = { target ->
+                val assignmentName = (assignmentLoadable as? Loadable.Loaded)?.value?.name
                 SheetHeaderSpec(
                     title = when (target) {
-                        Display.Outcome -> ""
+                        Display.Outcome -> stringResource(R.string.elearning_sheet_result_title)
                         Display.ConfirmRemove -> stringResource(R.string.elearning_assign_confirm_remove_title)
                         is Display.Page -> when (target.page) {
-                            AssignmentPage.Detail -> (assignmentLoadable as? Loadable.Loaded)?.value?.name
+                            AssignmentPage.Detail -> assignmentName
                                 ?: stringResource(R.string.elearning_assign_overview_title)
                             AssignmentPage.Compose -> stringResource(R.string.elearning_assign_submission_title)
                             AssignmentPage.ConfirmSubmit -> stringResource(R.string.elearning_assign_confirm_title)
@@ -179,10 +180,11 @@ fun AssignmentDetailPage(
                         is Display.Page -> when (target.page) {
                             AssignmentPage.Detail ->
                                 (assignmentLoadable as? Loadable.Loaded)?.value?.let { deadlineSubtitle(it) }
-                            AssignmentPage.Compose, AssignmentPage.ConfirmSubmit ->
-                                (assignmentLoadable as? Loadable.Loaded)?.value?.name
+                            AssignmentPage.Compose, AssignmentPage.ConfirmSubmit -> assignmentName
+                                ?: stringResource(R.string.elearning_assign_overview_title)
                         }
-                        else -> null
+                        Display.ConfirmRemove, Display.Outcome -> assignmentName
+                            ?: stringResource(R.string.elearning_assign_overview_title)
                     },
                     showBack = when (target) {
                         Display.Outcome -> false

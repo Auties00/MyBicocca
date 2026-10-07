@@ -79,6 +79,7 @@ import it.attendance100.mybicocca.ui.navigation.scene.LocalSheetDismissControl
 import it.attendance100.mybicocca.ui.navigation.scene.SheetDismissControl
 import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
 import it.attendance100.mybicocca.ui.navigation.scene.sheetHeader
+import it.attendance100.mybicocca.ui.navigation.scene.sheetHeaderInPage
 import it.attendance100.mybicocca.ui.navigation.scene.LocalModalEntries
 import it.attendance100.mybicocca.ui.navigation.scene.ModalSceneStrategy
 import it.attendance100.mybicocca.ui.navigation.transitions.LocalAnimatedContentScope
@@ -93,6 +94,11 @@ import it.attendance100.mybicocca.ui.screen.account.subscreen.accountSwitcher.Ac
 import it.attendance100.mybicocca.ui.screen.account.subscreen.accountSwitcher.AccountSwitcherSheetStyle
 import it.attendance100.mybicocca.ui.screen.calendar.subscreen.coursePicker.CourseEditionPickerPage
 import it.attendance100.mybicocca.ui.screen.calendar.subscreen.eventDetail.EventDetailPage
+import it.attendance100.mybicocca.ui.screen.calendar.subscreen.eventDetail.eventDetailHeader
+import it.attendance100.mybicocca.ui.screen.calendar.subscreen.coursePicker.courseEditionPickerHeader
+import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.subscreen.officeOpen.officeOpenHeader
+import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.subscreen.openChooser.fileOpenChooserHeader
+import it.attendance100.mybicocca.ui.screen.map.subscreen.mapFilter.mapFilterHeader
 import it.attendance100.mybicocca.ui.screen.map.subscreen.mapFilter.MapFilterPage
 import it.attendance100.mybicocca.ui.navigation.scene.sheetStyle
 import it.attendance100.mybicocca.ui.screen.calendar.CalendarScreen
@@ -129,7 +135,7 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.certificates.Cert
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.certificates.CertificatesViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.enrollments.EnrollmentsTimelinePage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.enrollments.EnrollmentsViewModel
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.enrollments.enrollmentsHeaderSubtitle
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.enrollments.enrollmentsHeader
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.enrollments.ext.academicYearLabel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.enrollments.ext.courseYearLabel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.enrollments.ext.statusLabel
@@ -140,7 +146,7 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.isee.IseeDeclarat
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.isee.IseeDetailPage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.isee.iseeDetailSubtitle
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.isee.iseeDetailTitle
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.isee.iseeHeaderSubtitle
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.isee.iseeHeader
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.LibraryPage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.LibraryViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.questionnaires.QuestionnairesPage
@@ -1019,11 +1025,7 @@ fun MainShell(
                                         metadata = sheetHeader<SheetRoute.Enrollments> {
                                             val history by enrollmentsViewModel.history
                                                 .collectAsStateWithLifecycle()
-                                            SheetHeaderSpec(
-                                                title = stringResource(R.string.registry_enrollments),
-                                                subtitle = history.valueOrNull()
-                                                    ?.let(::enrollmentsHeaderSubtitle),
-                                            )
+                                            enrollmentsHeader(history.valueOrNull())
                                         },
                                     ) {
                                         EnrollmentsTimelinePage(
@@ -1035,8 +1037,7 @@ fun MainShell(
                                     }
                                     entry<SheetRoute.EnrollmentDetail>(
                                         metadata = sheetHeader<SheetRoute.EnrollmentDetail> {
-                                            val top =
-                                                it
+                                            val top = it
                                             val history by enrollmentsViewModel.history
                                                 .collectAsStateWithLifecycle()
                                             top?.let { k ->
@@ -1050,7 +1051,10 @@ fun MainShell(
                                                     ),
                                                     subtitle = "${enrollment.courseYearLabel()} · ${enrollment.statusLabel()}",
                                                 )
-                                            }
+                                            } ?: SheetHeaderSpec(
+                                                title = stringResource(R.string.registry_enrollments),
+                                                subtitle = null,
+                                            )
                                         },
                                     ) { key ->
                                         val history by enrollmentsViewModel.history
@@ -1086,8 +1090,7 @@ fun MainShell(
                                     }
                                     entry<SheetRoute.TitleDetail>(
                                         metadata = sheetHeader<SheetRoute.TitleDetail> {
-                                            val top =
-                                                it
+                                            val top = it
                                             val titles by titlesViewModel.titles
                                                 .collectAsStateWithLifecycle()
                                             top?.let { k ->
@@ -1098,7 +1101,10 @@ fun MainShell(
                                                     title = title.headline(),
                                                     subtitle = title.headlineSubtitle(),
                                                 )
-                                            }
+                                            } ?: SheetHeaderSpec(
+                                                title = stringResource(R.string.registry_titles),
+                                                subtitle = null,
+                                            )
                                         },
                                     ) { key ->
                                         val titles by titlesViewModel.titles
@@ -1108,7 +1114,7 @@ fun MainShell(
                                         PopWhenMissing(loaded = titles.valueOrNull() != null, missing = title == null)
                                         if (title != null) TitleDetailPage(title = title)
                                     }
-                                    entry<SheetRoute.Certificates> {
+                                    entry<SheetRoute.Certificates>(metadata = sheetHeaderInPage()) {
                                         CertificatesPage(viewModel = certificatesViewModel)
                                     }
                                     entry<SheetRoute.Refunds>(
@@ -1135,8 +1141,7 @@ fun MainShell(
                                     }
                                     entry<SheetRoute.RefundDetail>(
                                         metadata = sheetHeader<SheetRoute.RefundDetail> {
-                                            val top =
-                                                it
+                                            val top = it
                                             val refunds by refundsViewModel.refunds
                                                 .collectAsStateWithLifecycle()
                                             top?.let { k ->
@@ -1147,7 +1152,10 @@ fun MainShell(
                                                     title = refundHeaderTitle(refund),
                                                     subtitle = refundHeaderSubtitle(refund),
                                                 )
-                                            }
+                                            } ?: SheetHeaderSpec(
+                                                title = stringResource(R.string.registry_refunds),
+                                                subtitle = null,
+                                            )
                                         },
                                     ) { key ->
                                         val refunds by refundsViewModel.refunds
@@ -1163,10 +1171,7 @@ fun MainShell(
                                                 .collectAsStateWithLifecycle()
                                             val declarations = state.valueOrNull()
                                                 ?.filter { it.isee != null && it.academicYearEnrollmentId != null }
-                                            SheetHeaderSpec(
-                                                title = stringResource(R.string.registry_isee),
-                                                subtitle = declarations?.let(::iseeHeaderSubtitle),
-                                            )
+                                            iseeHeader(declarations)
                                         },
                                     ) {
                                         IseeDeclarationsPage(
@@ -1182,8 +1187,7 @@ fun MainShell(
                                     }
                                     entry<SheetRoute.IseeDetail>(
                                         metadata = sheetHeader<SheetRoute.IseeDetail> {
-                                            val top =
-                                                it
+                                            val top = it
                                             val state by taxesViewModel.isee
                                                 .collectAsStateWithLifecycle()
                                             top?.let { k ->
@@ -1194,7 +1198,10 @@ fun MainShell(
                                                     title = iseeDetailTitle(declaration),
                                                     subtitle = iseeDetailSubtitle(declaration),
                                                 )
-                                            }
+                                            } ?: SheetHeaderSpec(
+                                                title = stringResource(R.string.registry_isee),
+                                                subtitle = null,
+                                            )
                                         },
                                     ) { key ->
                                         val state by taxesViewModel.isee
@@ -1204,7 +1211,7 @@ fun MainShell(
                                         PopWhenMissing(loaded = state.valueOrNull() != null, missing = declaration == null)
                                         if (declaration != null) IseeDetailPage(declaration = declaration)
                                     }
-                                    entry<SheetRoute.ExamResults> {
+                                    entry<SheetRoute.ExamResults>(metadata = sheetHeaderInPage()) {
                                         ExamResultsPage(viewModel = examResultsViewModel)
                                     }
                                     entry<SheetRoute.Taxes>(
@@ -1220,13 +1227,13 @@ fun MainShell(
                                     ) {
                                         TaxesPage(viewModel = taxesViewModel)
                                     }
-                                    entry<SheetRoute.QuizDetail> { key ->
+                                    entry<SheetRoute.QuizDetail>(metadata = sheetHeaderInPage()) { key ->
                                         QuizDetailPage(
                                             quizId = key.quizId,
                                             courseId = key.courseId,
                                         )
                                     }
-                                    entry<SheetRoute.Forum> { key ->
+                                    entry<SheetRoute.Forum>(metadata = sheetHeaderInPage()) { key ->
                                         ForumSheetPage(
                                             forumId = key.forumId,
                                             courseId = key.courseId,
@@ -1244,7 +1251,7 @@ fun MainShell(
                                             },
                                         )
                                     }
-                                    entry<SheetRoute.AssignmentDetail> { key ->
+                                    entry<SheetRoute.AssignmentDetail>(metadata = sheetHeaderInPage()) { key ->
                                         AssignmentDetailPage(
                                             assignId = key.assignId,
                                             courseId = key.courseId,
@@ -1261,22 +1268,22 @@ fun MainShell(
                                             },
                                         )
                                     }
-                                    entry<SheetRoute.Attendance> {
+                                    entry<SheetRoute.Attendance>(metadata = sheetHeaderInPage()) {
                                         AttendancePage(viewModel = attendanceViewModel)
                                     }
-                                    entry<SheetRoute.Appelli> {
+                                    entry<SheetRoute.Appelli>(metadata = sheetHeaderInPage()) {
                                         AppelliPage(
                                             bookableViewModel = bookableExamsViewModel,
                                             viewModel = bookedExamsViewModel,
                                         )
                                     }
-                                    entry<SheetRoute.StudyPlan> {
+                                    entry<SheetRoute.StudyPlan>(metadata = sheetHeaderInPage()) {
                                         StudyPlanPage(viewModel = studyPlanViewModel)
                                     }
-                                    entry<SheetRoute.Questionnaires> {
+                                    entry<SheetRoute.Questionnaires>(metadata = sheetHeaderInPage()) {
                                         QuestionnairesPage(viewModel = questionnairesViewModel)
                                     }
-                                    entry<SheetRoute.Appointments> {
+                                    entry<SheetRoute.Appointments>(metadata = sheetHeaderInPage()) {
                                         AppointmentsPage(
                                             viewModel = appointmentsViewModel,
                                             onOpenPdf = { path, name ->
@@ -1290,10 +1297,25 @@ fun MainShell(
                                             },
                                         )
                                     }
-                                    entry<SheetRoute.Library> {
+                                    entry<SheetRoute.Library>(metadata = sheetHeaderInPage()) {
                                         LibraryPage(viewModel = libraryViewModel)
                                     }
-                                    entry<SheetRoute.CalendarEvent> { key ->
+                                    entry<SheetRoute.CalendarEvent>(
+                                        metadata = sheetHeader<SheetRoute.CalendarEvent> { route ->
+                                            val monthEvents by calendarViewModel.events
+                                                .collectAsStateWithLifecycle()
+                                            val dayEvents by calendarViewModel.dayEvents
+                                                .collectAsStateWithLifecycle()
+                                            val live = monthEvents.valueOrNull()
+                                                ?.firstOrNull { it.id.value == route.eventId }
+                                                ?: dayEvents.valueOrNull()
+                                                    ?.firstOrNull { it.id.value == route.eventId }
+                                            // Keep the last header while the event closes.
+                                            val last = remember { arrayOf<CalendarEvent?>(null) }
+                                            if (live != null) last[0] = live
+                                            eventDetailHeader(live ?: last[0])
+                                        },
+                                    ) { key ->
                                         val monthEvents by calendarViewModel.events
                                             .collectAsStateWithLifecycle()
                                         val dayEvents by calendarViewModel.dayEvents
@@ -1340,7 +1362,15 @@ fun MainShell(
                                             )
                                         }
                                     }
-                                    entry<SheetRoute.CourseEditionPicker> { key ->
+                                    entry<SheetRoute.CourseEditionPicker>(
+                                        metadata = sheetHeader<SheetRoute.CourseEditionPicker> { route ->
+                                            val coursesByActivityCode by calendarViewModel
+                                                .coursesByActivityCode.collectAsStateWithLifecycle()
+                                            courseEditionPickerHeader(
+                                                count = coursesByActivityCode[route.activityCode].orEmpty().size,
+                                            )
+                                        },
+                                    ) { key ->
                                         val coursesByActivityCode by calendarViewModel
                                             .coursesByActivityCode.collectAsStateWithLifecycle()
                                         val self = checkNotNull(LocalDestination.current)
@@ -1355,7 +1385,7 @@ fun MainShell(
                                         )
                                     }
                                     entry<SheetRoute.AccountSwitcher>(
-                                        metadata = sheetStyle(AccountSwitcherSheetStyle),
+                                        metadata = sheetHeaderInPage() + sheetStyle(AccountSwitcherSheetStyle),
                                     ) {
                                         AccountSwitcherPage(
                                             onOpenProfile = { navigator.navigate(AppRoute.Profile) },
@@ -1363,10 +1393,20 @@ fun MainShell(
                                             viewModel = accountViewModel,
                                         )
                                     }
-                                    entry<SheetRoute.OfficeOpen> { key ->
+                                    entry<SheetRoute.OfficeOpen>(
+                                        metadata = sheetHeader<SheetRoute.OfficeOpen> { route ->
+                                            officeOpenHeader(app = route.app, file = route.file)
+                                        },
+                                    ) { key ->
                                         OfficeOpenPage(app = key.app, route = key.file)
                                     }
-                                    entry<SheetRoute.MapFilter> {
+                                    entry<SheetRoute.MapFilter>(
+                                        metadata = sheetHeader<SheetRoute.MapFilter> {
+                                            val categoryFilter by mapViewModel.categoryFilter
+                                                .collectAsStateWithLifecycle()
+                                            mapFilterHeader(selectedCount = categoryFilter.size)
+                                        },
+                                    ) {
                                         val categoryFilter by mapViewModel.categoryFilter
                                             .collectAsStateWithLifecycle()
                                         MapFilterPage(
@@ -1401,14 +1441,16 @@ fun MainShell(
                                         snackbarController = snackbarController,
                                         scope = scope,
                                     )
-                                    entry<SheetRoute.FileOpenChooser> { key ->
+                                    entry<SheetRoute.FileOpenChooser>(
+                                        metadata = sheetHeader<SheetRoute.FileOpenChooser> { route ->
+                                            fileOpenChooserHeader(route.file)
+                                        },
+                                    ) { key ->
                                         val closeChooser = rememberPopSelf()
                                         val kind = remember(key) {
                                             FileKind.classify(key.file.fileName, key.file.mimeType)
                                         }
                                         FileOpenChooserContent(
-                                            fileName = key.file.fileName,
-                                            sizeBytes = key.file.sizeBytes,
                                             kind = kind,
                                             onChoose = { choice, rememberChoice ->
                                                 kind.preferenceKey
