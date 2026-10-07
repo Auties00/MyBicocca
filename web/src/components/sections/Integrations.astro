@@ -1,0 +1,116 @@
+---
+import { integrations } from '~/data/integrations';
+---
+
+<section class="integrations" aria-labelledby="integrations-title">
+  <h2 id="integrations-title" class="integrations__title">
+    Talks to every platform you already use
+  </h2>
+  <div class="marquee">
+    {
+      // The list is rendered twice so the track can loop seamlessly; the copy is hidden from assistive tech.
+      [false, true].map((isCopy) => (
+        <ul class="marquee__track" role="list" aria-hidden={isCopy ? 'true' : undefined}>
+          {integrations.map(({ name, role }) => (
+            <li class="marquee__item">
+              <strong>{name}</strong>
+              <span>{role}</span>
+            </li>
+          ))}
+        </ul>
+      ))
+    }
+  </div>
+</section>
+
+<style>
+  .integrations {
+    padding-block: 1rem clamp(2rem, 5vw, 3.5rem);
+  }
+
+  .integrations__title {
+    margin-bottom: 1.5rem;
+    color: var(--text-subtle);
+    font-family: var(--font-body);
+    font-size: var(--step--1);
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-align: center;
+    text-transform: uppercase;
+  }
+
+  .marquee {
+    --gap: 0.75rem;
+
+    display: flex;
+    gap: var(--gap);
+    overflow: hidden;
+    mask-image: linear-gradient(to right, transparent, #000 12%, #000 88%, transparent);
+  }
+
+  .marquee__track {
+    display: flex;
+    flex-shrink: 0;
+    gap: var(--gap);
+    min-width: 100%;
+    padding: 0;
+    list-style: none;
+    justify-content: space-around;
+  }
+
+  .marquee__item {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    padding: 0.75rem 1.25rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-pill);
+    background: var(--surface);
+    white-space: nowrap;
+  }
+
+  .marquee__item strong {
+    font-family: var(--font-heading);
+    font-size: 1.1rem;
+    font-weight: 700;
+  }
+
+  .marquee__item span {
+    color: var(--text-subtle);
+    font-size: var(--step--1);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .marquee__track {
+      animation: scroll 40s linear infinite;
+    }
+
+    .marquee:hover .marquee__track {
+      animation-play-state: paused;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .marquee {
+      flex-wrap: wrap;
+      justify-content: center;
+      mask-image: none;
+    }
+
+    .marquee__track {
+      flex-wrap: wrap;
+      justify-content: center;
+      min-width: 0;
+    }
+
+    .marquee__track[aria-hidden='true'] {
+      display: none;
+    }
+  }
+
+  @keyframes scroll {
+    to {
+      translate: calc(-100% - var(--gap));
+    }
+  }
+</style>

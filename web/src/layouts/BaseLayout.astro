@@ -1,0 +1,82 @@
+---
+import { Font } from 'astro:assets';
+import { site } from '~/data/site';
+import '~/styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const { title = `${site.name}: ${site.tagline}`, description = site.description } = Astro.props;
+
+// Absolute URLs need `site` (set via SITE_URL); without it the tags are simply omitted.
+const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site).href : undefined;
+const ogImage = Astro.site ? new URL('/og-image.png', Astro.site).href : undefined;
+
+const structuredData = {
+  '@context': 'https://schema.org',
+  '@type': 'MobileApplication',
+  name: site.name,
+  description,
+  operatingSystem: `Android ${site.minAndroidVersion}+`,
+  applicationCategory: 'EducationalApplication',
+  downloadUrl: site.links.download,
+  license: site.links.license,
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'EUR' },
+  author: site.authors.map((name) => ({ '@type': 'Person', name })),
+};
+---
+
+<!doctype html>
+<html lang={site.locale}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="theme-color" content={site.themeColor} />
+    <meta name="color-scheme" content="dark" />
+    <meta name="generator" content={Astro.generator} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    {canonical && <link rel="canonical" href={canonical} />}
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={site.name} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    {canonical && <meta property="og:url" content={canonical} />}
+    {ogImage && <meta property="og:image" content={ogImage} />}
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <Font cssVariable="--font-sans" preload />
+    <Font cssVariable="--font-display" preload />
+
+    <script type="application/ld+json" set:html={JSON.stringify(structuredData)} />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <slot />
+  </body>
+</html>
+
+<style>
+  .skip-link {
+    position: fixed;
+    z-index: 100;
+    top: 0.75rem;
+    left: 0.75rem;
+    padding: 0.6rem 1rem;
+    border-radius: var(--radius-sm);
+    background: var(--text);
+    color: var(--bg);
+    font-weight: 600;
+    translate: 0 -200%;
+    transition: translate 0.2s;
+  }
+
+  .skip-link:focus-visible {
+    translate: 0 0;
+  }
+</style>

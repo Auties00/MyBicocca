@@ -1,0 +1,28 @@
+---
+import DownloadCta from '~/components/sections/DownloadCta.astro';
+import Faq from '~/components/sections/Faq.astro';
+import Hero from '~/components/sections/Hero.astro';
+import Highlights from '~/components/sections/Highlights.astro';
+import Integrations from '~/components/sections/Integrations.astro';
+import Privacy from '~/components/sections/Privacy.astro';
+import SiteFooter from '~/components/sections/SiteFooter.astro';
+import SiteHeader from '~/components/sections/SiteHeader.astro';
+import Stats from '~/components/sections/Stats.astro';
+import Tour from '~/components/sections/Tour.astro';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+---
+
+<BaseLayout>
+  <SiteHeader />
+  <main id="main">
+    <Hero />
+    <Integrations />
+    <Highlights />
+    <Tour />
+    <Stats />
+    <Privacy />
+    <Faq />
+    <DownloadCta />
+  </main>
+  <SiteFooter />
+</BaseLayout>

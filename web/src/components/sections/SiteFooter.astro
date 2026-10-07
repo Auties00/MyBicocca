@@ -1,0 +1,152 @@
+---
+import Wordmark from '~/components/ui/Wordmark.astro';
+import { navLinks, site } from '~/data/site';
+
+interface FooterColumn {
+  readonly title: string;
+  readonly links: readonly { readonly label: string; readonly href: string }[];
+}
+
+const columns: readonly FooterColumn[] = [
+  { title: 'Explore', links: navLinks },
+  {
+    title: 'Project',
+    links: [
+      { label: 'Source code', href: site.links.repository },
+      { label: 'Releases', href: site.links.download },
+      { label: 'Report an issue', href: site.links.issues },
+      { label: 'MIT License', href: site.links.license },
+    ],
+  },
+  {
+    title: 'Powered by',
+    links: [
+      { label: 'University of Milano-Bicocca', href: 'https://www.unimib.it/' },
+      { label: 'CINECA Esse3', href: 'https://www.cineca.it/' },
+      { label: 'Moodle', href: 'https://moodle.org/' },
+      { label: 'Affluences', href: 'https://www.affluences.com/' },
+    ],
+  },
+];
+
+const year = new Date().getFullYear();
+---
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer__top">
+      <div class="footer__brand">
+        <Wordmark />
+        <p>{site.tagline} Made with care by Bicocca students, for Bicocca students.</p>
+      </div>
+
+      {
+        columns.map(({ title, links }) => (
+          <nav class="footer__column" aria-label={title}>
+            <h2>{title}</h2>
+            <ul role="list">
+              {links.map(({ label, href }) => (
+                <li>
+                  <a href={href} {...(href.startsWith('http') ? { rel: 'noopener' } : {})}>
+                    {label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        ))
+      }
+    </div>
+
+    <div class="footer__bottom">
+      <p class="footer__disclaimer">
+        MyBicocca is an unofficial application and is not affiliated with the University of Milano-Bicocca. It uses
+        publicly available APIs and web services of the platforms it integrates.
+      </p>
+      <p>© 2025–{year} {site.authors.join(', ')}.</p>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    padding-block: clamp(3rem, 7vw, 5rem) 2rem;
+    border-top: 1px solid var(--line);
+    background: var(--surface);
+    font-size: 0.95rem;
+  }
+
+  .footer__top {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) repeat(3, minmax(0, 1fr));
+    gap: 2.5rem;
+  }
+
+  .footer__brand {
+    display: grid;
+    align-content: start;
+    gap: 1rem;
+  }
+
+  .footer__brand p {
+    max-width: 22rem;
+    color: var(--text-subtle);
+  }
+
+  .footer__column h2 {
+    margin-bottom: 1rem;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .footer__column ul {
+    display: grid;
+    gap: 0.6rem;
+    padding: 0;
+    list-style: none;
+  }
+
+  .footer__column a {
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  .footer__column a:hover {
+    color: var(--text);
+  }
+
+  .footer__bottom {
+    display: grid;
+    gap: 0.75rem;
+    margin-top: clamp(2.5rem, 6vw, 4rem);
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--line);
+    color: var(--text-subtle);
+    font-size: 0.85rem;
+  }
+
+  .footer__disclaimer {
+    max-width: 52rem;
+  }
+
+  @media (max-width: 52rem) {
+    .footer__top {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .footer__brand {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (max-width: 26rem) {
+    .footer__top {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

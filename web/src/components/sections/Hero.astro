@@ -1,0 +1,345 @@
+---
+import ArrowUpRight from '@lucide/astro/icons/arrow-up-right';
+import Check from '@lucide/astro/icons/check';
+import Download from '@lucide/astro/icons/download';
+import { siGithub } from 'simple-icons';
+import BrandIcon from '~/components/ui/BrandIcon.astro';
+import Button from '~/components/ui/Button.astro';
+import PhoneFrame from '~/components/ui/PhoneFrame.astro';
+import { site } from '~/data/site';
+
+import calendar from '@screenshots/Screenshot_Calendar1.png';
+import elearning from '@screenshots/Screenshot_Elearning.png';
+import map from '@screenshots/Screenshot_Map.png';
+
+const perks = ['Free & open source', `Android ${site.minAndroidVersion}+`, 'No trackers, ever'];
+---
+
+<section class="hero" aria-labelledby="hero-title">
+  <div class="hero__glow" aria-hidden="true"></div>
+
+  <div class="container hero__grid">
+    <div class="hero__copy">
+      <a class="hero__badge" href={site.links.repository} rel="noopener">
+        <span class="hero__badge-dot" aria-hidden="true"></span>
+        By Bicocca students, for Bicocca students
+        <ArrowUpRight size={16} aria-hidden="true" />
+      </a>
+
+      <h1 id="hero-title">
+        Your entire university. <span class="text-gradient">One app.</span>
+      </h1>
+
+      <p class="hero__lede">
+        Lessons, exams, courses, campus maps and every Esse3 service, folded into a single fast, offline-first Android
+        app for the University of Milano-Bicocca.
+      </p>
+
+      <div class="hero__actions">
+        <Button href={site.links.download} size="lg">
+          <Download size={20} aria-hidden="true" />
+          Download for Android
+        </Button>
+        <Button href={site.links.repository} variant="secondary" size="lg">
+          <BrandIcon icon={siGithub} />
+          Star on GitHub
+        </Button>
+      </div>
+
+      <ul class="hero__perks" role="list">
+        {
+          perks.map((perk) => (
+            <li>
+              <Check size={16} stroke-width={2.5} aria-hidden="true" />
+              {perk}
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+
+    <div class="hero__visual">
+      <div class="shape shape--lime" aria-hidden="true"></div>
+      <div class="shape shape--lavender" aria-hidden="true"></div>
+      <div class="shape shape--mint" aria-hidden="true"></div>
+      <div class="shape shape--peach" aria-hidden="true"></div>
+
+      <PhoneFrame
+        class="hero__phone hero__phone--left"
+        image={elearning}
+        alt="E-learning tab listing enrolled courses"
+        sizes="(min-width: 64rem) 15rem, 34vw"
+        priority
+      />
+      <PhoneFrame
+        class="hero__phone hero__phone--right"
+        image={map}
+        alt="Offline campus map with building pins"
+        sizes="(min-width: 64rem) 15rem, 34vw"
+        priority
+      />
+      <PhoneFrame
+        class="hero__phone hero__phone--center"
+        image={calendar}
+        alt="MyBicocca calendar showing today's lectures on a timeline"
+        sizes="(min-width: 64rem) 18rem, 46vw"
+        priority
+      />
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero {
+    position: relative;
+    isolation: isolate;
+    margin-top: calc(-1 * var(--header-height));
+    padding-top: calc(var(--header-height) + clamp(2.5rem, 7vw, 5.5rem));
+    padding-bottom: clamp(3rem, 8vw, 6rem);
+  }
+
+  .hero__glow {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+      radial-gradient(60rem 36rem at 75% 30%, rgb(156 12 53 / 0.38), transparent 65%),
+      radial-gradient(40rem 30rem at 5% 0%, rgb(96 5 40 / 0.45), transparent 70%);
+    mask-image: linear-gradient(to bottom, #000 60%, transparent);
+  }
+
+  .hero__glow::after {
+    /* Faint grid, echoing the app's timeline rules. */
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(to right, rgb(255 255 255 / 0.035) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(255 255 255 / 0.035) 1px, transparent 1px);
+    background-size: 4rem 4rem;
+    mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, #000, transparent);
+  }
+
+  .hero__grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    align-items: center;
+    gap: clamp(2rem, 5vw, 4rem);
+  }
+
+  .hero__copy {
+    display: grid;
+    justify-items: start;
+    gap: 1.6rem;
+  }
+
+  .hero__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.4rem 0.9rem 0.4rem 0.7rem;
+    border: 1px solid var(--line-strong);
+    border-radius: var(--radius-pill);
+    background: rgb(255 255 255 / 0.04);
+    color: var(--text-muted);
+    font-size: var(--step--1);
+    font-weight: 500;
+    text-decoration: none;
+    transition: border-color 0.2s;
+  }
+
+  .hero__badge:hover {
+    border-color: var(--brand-300);
+    color: var(--text);
+  }
+
+  .hero__badge-dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: var(--pastel-lime);
+    box-shadow: 0 0 0 4px rgb(220 248 75 / 0.18);
+  }
+
+  h1 {
+    font-size: var(--step-4);
+    letter-spacing: -0.035em;
+  }
+
+  .hero__lede {
+    max-width: 34rem;
+    color: var(--text-muted);
+    font-size: var(--step-1);
+    line-height: 1.55;
+  }
+
+  .hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 0.4rem;
+  }
+
+  .hero__perks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.4rem;
+    padding: 0;
+    color: var(--text-subtle);
+    font-size: var(--step--1);
+    list-style: none;
+  }
+
+  .hero__perks li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .hero__perks :global(svg) {
+    color: var(--accent-mint);
+  }
+
+  /* ---- Visual: three phones fanned over pastel shapes ---- */
+  .hero__visual {
+    position: relative;
+    display: grid;
+    place-items: center;
+    aspect-ratio: 1 / 1.05;
+  }
+
+  .hero__visual > :global(.hero__phone) {
+    position: absolute;
+  }
+
+  .hero__visual > :global(.hero__phone--center) {
+    z-index: 2;
+    width: 46%;
+  }
+
+  .hero__visual > :global(.hero__phone--left),
+  .hero__visual > :global(.hero__phone--right) {
+    width: 37%;
+    filter: brightness(0.82);
+  }
+
+  .hero__visual > :global(.hero__phone--left) {
+    translate: -62% 5%;
+    rotate: -9deg;
+  }
+
+  .hero__visual > :global(.hero__phone--right) {
+    translate: 62% 5%;
+    rotate: 9deg;
+  }
+
+  .shape {
+    position: absolute;
+    z-index: -1;
+    opacity: 0.9;
+  }
+
+  .shape--lime {
+    top: 6%;
+    left: 2%;
+    width: 30%;
+    aspect-ratio: 1.1;
+    background: var(--pastel-lime);
+    border-radius: 0.75rem 0.75rem 0.75rem 40%;
+  }
+
+  .shape--lavender {
+    top: 0;
+    right: 8%;
+    width: 24%;
+    aspect-ratio: 0.8;
+    background: var(--pastel-lavender);
+    border-radius: 40% 0.75rem 0.75rem 0.75rem;
+  }
+
+  .shape--mint {
+    right: 0;
+    bottom: 10%;
+    width: 22%;
+    aspect-ratio: 1;
+    background: var(--pastel-mint);
+    border-radius: 0.75rem 50% 0.75rem 0.75rem;
+  }
+
+  .shape--peach {
+    bottom: 4%;
+    left: 12%;
+    width: 16%;
+    aspect-ratio: 1;
+    background: var(--pastel-peach);
+    border-radius: 50% 50% 0.75rem 0.75rem;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .hero__copy > * {
+      animation: rise 0.9s var(--ease-out) both;
+    }
+
+    .hero__copy > :nth-child(2) { animation-delay: 0.06s; }
+    .hero__copy > :nth-child(3) { animation-delay: 0.12s; }
+    .hero__copy > :nth-child(4) { animation-delay: 0.18s; }
+    .hero__copy > :nth-child(5) { animation-delay: 0.24s; }
+
+    .hero__visual > :global(.hero__phone) {
+      animation: rise 1.1s 0.15s var(--ease-out) both;
+    }
+
+    .hero__visual > :global(.hero__phone--center) {
+      animation-delay: 0.05s;
+    }
+
+    .shape {
+      animation: drift 9s ease-in-out infinite alternate;
+    }
+
+    .shape--lavender { animation-delay: -3s; }
+    .shape--mint { animation-delay: -5s; }
+    .shape--peach { animation-delay: -7s; }
+  }
+
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(1.75rem);
+    }
+  }
+
+  @keyframes drift {
+    to {
+      transform: translate(0.6rem, -0.9rem) rotate(4deg);
+    }
+  }
+
+  @media (max-width: 64rem) {
+    .hero__grid {
+      grid-template-columns: 1fr;
+    }
+
+    .hero__copy {
+      justify-items: center;
+      text-align: center;
+    }
+
+    .hero__actions,
+    .hero__perks {
+      justify-content: center;
+    }
+
+    .hero__visual {
+      width: min(100%, 36rem);
+      margin-inline: auto;
+    }
+  }
+
+  @media (max-width: 30rem) {
+    .hero__actions {
+      display: grid;
+      width: 100%;
+    }
+  }
+</style>

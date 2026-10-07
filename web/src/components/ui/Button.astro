@@ -1,0 +1,97 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+
+type Props = Omit<HTMLAttributes<'a'>, 'href'> & {
+  href: string;
+  variant?: 'primary' | 'secondary' | 'light';
+  size?: 'md' | 'lg';
+};
+
+const { href, variant = 'primary', size = 'md', class: className, ...attrs } = Astro.props;
+const isExternal = /^https?:\/\//.test(href);
+---
+
+<a
+  href={href}
+  class:list={['button', `button--${variant}`, `button--${size}`, className]}
+  {...(isExternal ? { rel: 'noopener' } : {})}
+  {...attrs}
+>
+  <slot />
+</a>
+
+<style>
+  .button {
+    --button-bg: var(--brand-600);
+    --button-fg: #fff;
+    --button-border: transparent;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    min-height: 2.75rem;
+    padding: 0.6rem 1.15rem;
+    border: 1px solid var(--button-border);
+    border-radius: var(--radius-pill);
+    background: var(--button-bg);
+    color: var(--button-fg);
+    font-weight: 600;
+    line-height: 1.2;
+    text-decoration: none;
+    white-space: nowrap;
+    transition:
+      background-color 0.2s,
+      border-color 0.2s,
+      translate 0.3s var(--ease-out),
+      box-shadow 0.3s var(--ease-out);
+  }
+
+  .button :global(svg) {
+    flex-shrink: 0;
+  }
+
+  .button--lg {
+    min-height: 3.35rem;
+    padding: 0.85rem 1.6rem;
+    font-size: 1.05rem;
+  }
+
+  .button--primary {
+    background: linear-gradient(180deg, var(--brand-500), var(--brand-600));
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.18),
+      0 0.75rem 2rem -0.75rem rgb(192 20 69 / 0.7);
+  }
+
+  .button--secondary {
+    --button-bg: rgb(255 255 255 / 0.04);
+    --button-border: var(--line-strong);
+    --button-fg: var(--text);
+  }
+
+  .button--light {
+    --button-bg: #fff;
+    --button-fg: var(--brand-800);
+  }
+
+  @media (hover: hover) {
+    .button:hover {
+      translate: 0 -2px;
+    }
+
+    .button--primary:hover {
+      box-shadow:
+        inset 0 1px 0 rgb(255 255 255 / 0.18),
+        0 1rem 2.5rem -0.75rem rgb(192 20 69 / 0.9);
+    }
+
+    .button--secondary:hover {
+      --button-bg: rgb(255 255 255 / 0.08);
+    }
+
+    .button--light:hover {
+      --button-bg: #ffe9ef;
+    }
+  }
+</style>

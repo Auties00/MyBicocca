@@ -1,0 +1,120 @@
+---
+import ShieldCheck from '@lucide/astro/icons/shield-check';
+import Logo from '~/components/ui/Logo.astro';
+import { privacyPoints } from '~/data/privacy';
+---
+
+<section id="privacy" class="section" aria-labelledby="privacy-title">
+  <div class="container privacy">
+    <div class="privacy__intro reveal">
+      <p class="eyebrow"><ShieldCheck size={16} aria-hidden="true" /> Privacy &amp; security</p>
+      <h2 id="privacy-title">Your data stays yours.</h2>
+      <p>
+        MyBicocca talks to the university on your behalf and keeps the results on your phone. Nowhere else. The code is
+        open, so you never have to take our word for it.
+      </p>
+      <div class="privacy__seal" aria-hidden="true">
+        <Logo />
+      </div>
+    </div>
+
+    <ul class="privacy__points" role="list">
+      {
+        privacyPoints.map(({ title, description, icon: Icon }) => (
+          <li class="point reveal">
+            <span class="point__icon">
+              <Icon size={22} aria-hidden="true" />
+            </span>
+            <h3>{title}</h3>
+            <p>{description}</p>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<style>
+  .privacy {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    align-items: center;
+    gap: clamp(2.5rem, 6vw, 5rem);
+  }
+
+  .privacy__intro {
+    position: relative;
+    display: grid;
+    gap: 1rem;
+  }
+
+  .privacy__intro h2 {
+    font-size: var(--step-3);
+  }
+
+  .privacy__intro p:not(.eyebrow) {
+    color: var(--text-muted);
+    font-size: var(--step-1);
+    line-height: 1.55;
+  }
+
+  .privacy__seal {
+    position: absolute;
+    z-index: -1;
+    top: -3rem;
+    right: 0;
+    width: 11rem;
+    opacity: 0.07;
+    rotate: 12deg;
+  }
+
+  .privacy__points {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+    padding: 0;
+    list-style: none;
+  }
+
+  .point {
+    display: grid;
+    align-content: start;
+    gap: 0.55rem;
+    padding: 1.5rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-lg);
+    background: linear-gradient(160deg, var(--surface-2), var(--surface));
+  }
+
+  .point__icon {
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    margin-bottom: 0.4rem;
+    border-radius: 0.85rem;
+    background: rgb(240 71 111 / 0.14);
+    color: var(--brand-300);
+  }
+
+  .point h3 {
+    font-size: var(--step-1);
+  }
+
+  .point p {
+    color: var(--text-muted);
+    font-size: 0.95rem;
+  }
+
+  @media (max-width: 52rem) {
+    .privacy {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 34rem) {
+    .privacy__points {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

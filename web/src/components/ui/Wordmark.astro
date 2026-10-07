@@ -1,0 +1,39 @@
+---
+import Logo from './Logo.astro';
+
+interface Props {
+  /** Rendered size of the mark, as any CSS length. */
+  size?: string;
+}
+
+const { size = '2rem' } = Astro.props;
+---
+
+<span class="wordmark" style={`--mark-size: ${size}`}>
+  <Logo class="wordmark__mark" />
+  <span class="wordmark__text">My<span>Bicocca</span></span>
+</span>
+
+<style>
+  .wordmark {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+    font-family: var(--font-heading);
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+  }
+
+  .wordmark__mark {
+    flex-shrink: 0;
+    width: var(--mark-size);
+    height: var(--mark-size);
+    border-radius: 0.3rem;
+  }
+
+  .wordmark__text span {
+    color: var(--brand-300);
+  }
+</style>

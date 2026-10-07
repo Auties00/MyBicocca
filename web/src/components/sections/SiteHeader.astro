@@ -1,0 +1,271 @@
+---
+import Download from '@lucide/astro/icons/download';
+import Menu from '@lucide/astro/icons/menu';
+import X from '@lucide/astro/icons/x';
+import { siGithub } from 'simple-icons';
+import BrandIcon from '~/components/ui/BrandIcon.astro';
+import Button from '~/components/ui/Button.astro';
+import Wordmark from '~/components/ui/Wordmark.astro';
+import { navLinks, site } from '~/data/site';
+---
+
+<header class="header">
+  <div class="container header__inner">
+    <a href="/" class="header__home" aria-label={`${site.name} home`}>
+      <Wordmark />
+    </a>
+
+    <nav class="header__nav" aria-label="Primary">
+      <ul role="list">
+        {navLinks.map((link) => <li><a href={link.href}>{link.label}</a></li>)}
+      </ul>
+    </nav>
+
+    <div class="header__actions">
+      <a class="header__icon-link" href={site.links.repository} rel="noopener" aria-label="MyBicocca on GitHub">
+        <BrandIcon icon={siGithub} />
+      </a>
+      <Button href={site.links.download} class="header__download">
+        <Download size={18} aria-hidden="true" />
+        Download
+      </Button>
+      <button class="header__menu-button" type="button" popovertarget="mobile-menu" aria-label="Open menu">
+        <Menu size={22} aria-hidden="true" />
+      </button>
+    </div>
+  </div>
+
+  <div id="mobile-menu" class="mobile-menu" popover>
+    <div class="mobile-menu__top">
+      <Wordmark />
+      <button
+        class="header__menu-button"
+        type="button"
+        popovertarget="mobile-menu"
+        popovertargetaction="hide"
+        aria-label="Close menu"
+      >
+        <X size={22} aria-hidden="true" />
+      </button>
+    </div>
+    <nav aria-label="Mobile">
+      <ul role="list">
+        {navLinks.map((link) => <li><a href={link.href}>{link.label}</a></li>)}
+        <li><a href={site.links.repository} rel="noopener">GitHub</a></li>
+      </ul>
+    </nav>
+    <Button href={site.links.download} size="lg">
+      <Download size={20} aria-hidden="true" />
+      Download for Android
+    </Button>
+  </div>
+</header>
+
+<script>
+  // Popovers don't close when one of their own links is followed; close it so the
+  // page is visible as it scrolls to the target section.
+  const menu = document.querySelector<HTMLElement>('#mobile-menu');
+  menu?.addEventListener('click', (event) => {
+    if (event.target instanceof Element && event.target.closest('a')) menu.hidePopover();
+  });
+</script>
+
+<style>
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    border-bottom: 1px solid transparent;
+    background-color: rgb(12 7 9 / 0.9);
+    -webkit-backdrop-filter: blur(16px) saturate(1.4);
+    backdrop-filter: blur(16px) saturate(1.4);
+  }
+
+  /* Fade the bar in as the page scrolls; it stays transparent over the hero. */
+  @supports (animation-timeline: scroll()) {
+    .header {
+      background-color: transparent;
+      animation: header-solid linear both;
+      animation-timeline: scroll();
+      animation-range: 0 8rem;
+    }
+  }
+
+  @keyframes header-solid {
+    to {
+      background-color: rgb(12 7 9 / 0.9);
+      border-bottom-color: var(--line);
+    }
+  }
+
+  .header__inner {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    height: var(--header-height);
+  }
+
+  .header__home {
+    text-decoration: none;
+  }
+
+  .header__nav {
+    margin-inline: auto;
+  }
+
+  .header__nav ul {
+    display: flex;
+    gap: 0.25rem;
+    padding: 0.3rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-pill);
+    background: rgb(255 255 255 / 0.025);
+    list-style: none;
+  }
+
+  .header__nav a {
+    display: block;
+    padding: 0.4rem 0.95rem;
+    border-radius: var(--radius-pill);
+    color: var(--text-muted);
+    font-size: 0.925rem;
+    font-weight: 500;
+    text-decoration: none;
+    transition:
+      color 0.2s,
+      background-color 0.2s;
+  }
+
+  .header__nav a:hover {
+    background: rgb(255 255 255 / 0.06);
+    color: var(--text);
+  }
+
+  .header__actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .header__icon-link,
+  .header__menu-button {
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    background: transparent;
+    color: var(--text-muted);
+    transition:
+      color 0.2s,
+      border-color 0.2s;
+  }
+
+  .header__icon-link:hover,
+  .header__menu-button:hover {
+    border-color: var(--line-strong);
+    color: var(--text);
+  }
+
+  .header__menu-button {
+    display: none;
+  }
+
+  @media (max-width: 52rem) {
+    .header__nav,
+    .header__icon-link {
+      display: none;
+    }
+
+    .header__actions {
+      margin-left: auto;
+    }
+
+    .header__menu-button {
+      display: grid;
+    }
+  }
+
+  @media (max-width: 30rem) {
+    .header__inner {
+      gap: 1rem;
+    }
+
+    .header__actions {
+      gap: 0.5rem;
+    }
+
+    .header__download {
+      min-height: 2.5rem;
+      padding: 0.45rem 0.9rem;
+      font-size: 0.9rem;
+    }
+  }
+
+  @media (max-width: 22rem) {
+    .header__download {
+      display: none;
+    }
+  }
+
+  .mobile-menu {
+    inset: 0;
+    width: 100%;
+    max-width: none;
+    height: 100dvh;
+    max-height: none;
+    margin: 0;
+    padding: 0 var(--gutter) 2rem;
+    border: 0;
+    background: var(--bg);
+    color: var(--text);
+    flex-direction: column;
+    gap: 2rem;
+    opacity: 0;
+    translate: 0 -1rem;
+    transition:
+      opacity 0.25s,
+      translate 0.35s var(--ease-out),
+      display 0.35s allow-discrete,
+      overlay 0.35s allow-discrete;
+  }
+
+  .mobile-menu:popover-open {
+    display: flex;
+    opacity: 1;
+    translate: 0 0;
+
+    @starting-style {
+      opacity: 0;
+      translate: 0 -1rem;
+    }
+  }
+
+  .mobile-menu__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: var(--header-height);
+  }
+
+  .mobile-menu__top .header__menu-button {
+    display: grid;
+  }
+
+  .mobile-menu ul {
+    display: grid;
+    list-style: none;
+    padding: 0;
+  }
+
+  .mobile-menu li a {
+    display: block;
+    padding: 0.9rem 0;
+    border-bottom: 1px solid var(--line);
+    font-family: var(--font-heading);
+    font-size: var(--step-2);
+    font-weight: 600;
+    text-decoration: none;
+  }
+</style>

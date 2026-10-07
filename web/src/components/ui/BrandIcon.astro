@@ -1,0 +1,15 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+import type { SimpleIcon } from 'simple-icons';
+
+type Props = HTMLAttributes<'svg'> & {
+  icon: SimpleIcon;
+  size?: number;
+};
+
+const { icon, size = 20, ...props } = Astro.props;
+---
+
+<svg viewBox="0 0 24 24" width={size} height={size} fill="currentColor" aria-hidden="true" focusable="false" {...props}>
+  <path d={icon.path}></path>
+</svg>

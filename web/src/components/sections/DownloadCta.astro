@@ -1,0 +1,96 @@
+---
+import Download from '@lucide/astro/icons/download';
+import { siGithub } from 'simple-icons';
+import BrandIcon from '~/components/ui/BrandIcon.astro';
+import Button from '~/components/ui/Button.astro';
+import Logo from '~/components/ui/Logo.astro';
+import { site } from '~/data/site';
+---
+
+<section id="download" class="section download" aria-labelledby="download-title">
+  <div class="container">
+    <div class="download__card reveal">
+      <Logo class="download__mark" />
+      <h2 id="download-title">Your whole university is one download away.</h2>
+      <p>Free, open source and ready for any phone running Android {site.minAndroidVersion} or newer.</p>
+      <div class="download__actions">
+        <Button href={site.links.download} variant="light" size="lg">
+          <Download size={20} aria-hidden="true" />
+          Download the APK
+        </Button>
+        <Button href={site.links.repository} variant="secondary" size="lg" class="download__secondary">
+          <BrandIcon icon={siGithub} />
+          View the source
+        </Button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .download {
+    padding-top: 0;
+  }
+
+  .download__card {
+    position: relative;
+    isolation: isolate;
+    display: grid;
+    justify-items: center;
+    gap: 1.25rem;
+    overflow: hidden;
+    padding: clamp(3rem, 8vw, 6rem) clamp(1.5rem, 5vw, 4rem);
+    border-radius: calc(var(--radius-lg) * 1.4);
+    background:
+      radial-gradient(40rem 20rem at 50% 120%, rgb(255 157 182 / 0.35), transparent 70%),
+      linear-gradient(160deg, var(--brand-500), var(--brand-800) 70%);
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.15);
+    text-align: center;
+  }
+
+  .download__card :global(.download__mark) {
+    position: absolute;
+    z-index: -1;
+    top: 50%;
+    left: 50%;
+    width: 46rem;
+    max-width: none;
+    opacity: 0.18;
+    mix-blend-mode: multiply;
+    translate: -50% -50%;
+    rotate: -8deg;
+  }
+
+  h2 {
+    max-width: 18ch;
+    font-size: var(--step-4);
+    color: #fff;
+  }
+
+  p {
+    max-width: 34rem;
+    color: rgb(255 255 255 / 0.82);
+    font-size: var(--step-1);
+  }
+
+  .download__actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-top: 0.75rem;
+  }
+
+  .download__actions :global(.download__secondary) {
+    --button-bg: rgb(0 0 0 / 0.18);
+    --button-border: rgb(255 255 255 / 0.3);
+    --button-fg: #fff;
+  }
+
+  @media (max-width: 30rem) {
+    .download__actions {
+      display: grid;
+      width: 100%;
+    }
+  }
+</style>
