@@ -1,8 +1,11 @@
 package it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.component
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.layout
 import androidx.compose.ui.unit.Constraints
@@ -38,6 +41,10 @@ import kotlin.math.roundToInt
  * collapse range while the hero is expanded, and the surplus must not bleed outside the page
  * during nav transitions.
  *
+ * While a bar sits below it, the hero is clipped at its bottom edge: its accent shapes drift
+ * downward as it collapses and, on a short hero, would otherwise show through the pager under
+ * the bar. With no bar nothing sits below the hero, so the shapes stay free to overflow.
+ *
  * Each slot must emit exactly one layout node; bar and pages come and go together.
  */
 @Composable
@@ -53,8 +60,9 @@ fun CollapsingHeaderScaffold(
 ) {
     Layout(
         content = {
-            hero()
-            if (bar != null && pages != null) {
+            val hasBar = bar != null && pages != null
+            Box(if (hasBar) Modifier.clipBottomEdge() else Modifier) { hero() }
+            if (hasBar) {
                 bar()
                 pages()
             }
@@ -89,6 +97,18 @@ fun CollapsingHeaderScaffold(
                 pagerPlaceable.place(0, barY + barPlaceable.height + spacingPx)
             }
         }
+    }
+}
+
+/** Clips drawing at the node's bottom edge only; the top and sides may still overflow. */
+private fun Modifier.clipBottomEdge(): Modifier = drawWithContent {
+    clipRect(
+        left = -size.width,
+        top = -size.height,
+        right = size.width * 2f,
+        bottom = size.height,
+    ) {
+        this@drawWithContent.drawContent()
     }
 }
 
