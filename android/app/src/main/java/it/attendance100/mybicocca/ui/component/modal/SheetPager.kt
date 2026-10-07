@@ -2,6 +2,7 @@ package it.attendance100.mybicocca.ui.component.modal
 
 import androidx.activity.compose.PredictiveBackHandler
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.SizeTransform
@@ -11,11 +12,14 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -50,7 +54,10 @@ import kotlin.coroutines.cancellation.CancellationException
  * (first page, or a page that must not be left, e.g. mid-submission).
  * @param onBack commits a back step: the caller moves its state (pops the back stack, clears the
  * selection, …) so that [page] becomes [backTo]. Called after a completed gesture or an arrow tap.
+ * @param slide how the body moves between pages; the header always cross-slides.
  * @param header resolves the pinned header (title and subtitle) of every page.
+ * @param content a page's body; its [AnimatedContentScope] lets it animate parts of itself with
+ * the page change.
  */
 @Composable
 fun <P : Any> SheetPager(
@@ -60,10 +67,20 @@ fun <P : Any> SheetPager(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     key: (P) -> Any = { it },
+    slide: SheetPageSlide = SheetPageSlide.Horizontal,
     header: @Composable (P) -> SheetHeaderSpec,
-    content: @Composable (P) -> Unit,
+    content: @Composable AnimatedContentScope.(P) -> Unit,
 ) {
-    SheetPagerImpl(page, depth, backTo, onBack, modifier, key, header, content)
+    SheetPagerImpl(page, depth, backTo, onBack, modifier, key, slide, header, content)
+}
+
+/** How a [SheetPager]'s body moves to a deeper page (and back). */
+enum class SheetPageSlide {
+    /** The next page pushes in from the end: navigating into an item. */
+    Horizontal,
+
+    /** The next page rises from the bottom: a flow layered over the page (e.g. a sign-in). */
+    Vertical,
 }
 
 /**
@@ -99,8 +116,9 @@ internal fun <P : Any> SheetPagerImpl(
     onBack: () -> Unit,
     modifier: Modifier,
     key: (P) -> Any,
+    slide: SheetPageSlide,
     header: @Composable (P) -> SheetHeaderSpec?,
-    content: @Composable (P) -> Unit,
+    content: @Composable AnimatedContentScope.(P) -> Unit,
 ) {
     val state = remember { SeekableTransitionState(page) }
     val transition = rememberTransition(state, label = "sheet_pager")
@@ -162,18 +180,43 @@ internal fun <P : Any> SheetPagerImpl(
             onBack = onBack,
         )
         transition.AnimatedContent(
-            transitionSpec = { sheetPageTransform(forward = depth(targetState) >= depth(initialState)) },
+            transitionSpec = { sheetPageTransform(slide, forward = depth(targetState) >= depth(initialState)) },
             contentKey = key,
         ) { shown -> content(fresh(shown)) }
     }
 }
 
 /**
- * Forward/back page transition for in-sheet navigation: a soft horizontal push with a
- * synchronized sheet-height morph. Scoped to [AnimatedContentTransitionScope] because `using` is a
- * member of the transitionSpec scope.
+ * Forward/back page transition for in-sheet navigation: a soft push with a synchronized
+ * sheet-height morph.
  */
-fun AnimatedContentTransitionScope<*>.sheetPageTransform(forward: Boolean): ContentTransform =
-    (fadeIn(tween(280, delayMillis = 40)) + slideInHorizontally(tween(SheetMotion.PAGE_MS)) { if (forward) it / 8 else -it / 8 })
-        .togetherWith(fadeOut(tween(180)) + slideOutHorizontally(tween(SheetMotion.PAGE_MS)) { if (forward) -it / 8 else it / 8 })
+private fun AnimatedContentTransitionScope<*>.sheetPageTransform(slide: SheetPageSlide, forward: Boolean): ContentTransform {
+    val sign = if (forward) 1 else -1
+    val enter = when (slide) {
+        SheetPageSlide.Horizontal -> slideInHorizontally(tween(SheetMotion.PAGE_MS)) { sign * it / 8 }
+        SheetPageSlide.Vertical -> slideInVertically(tween(SheetMotion.PAGE_MS)) { sign * it / 4 }
+    }
+    val exit = when (slide) {
+        SheetPageSlide.Horizontal -> slideOutHorizontally(tween(SheetMotion.PAGE_MS)) { -sign * it / 8 }
+        SheetPageSlide.Vertical -> slideOutVertically(tween(SheetMotion.PAGE_MS)) { -sign * it / 4 }
+    }
+    return (fadeIn(tween(SheetMotion.IN_FADE_MS, delayMillis = SheetMotion.IN_FADE_DELAY_MS)) + enter)
+        .togetherWith(fadeOut(tween(SheetMotion.OUT_FADE_MS)) + exit)
         .using(SizeTransform(clip = true) { _, _ -> tween(SheetMotion.PAGE_MS) })
+}
+
+/**
+ * [value], or — while it is null — the last non-null value it had. For a page that is sliding out
+ * after the state it renders was cleared (a confirm page whose item was just acted on, a result
+ * page whose outcome was consumed): it keeps showing what it showed until it is gone.
+ */
+@Composable
+fun <T : Any> rememberLastNonNull(value: T?): T? {
+    val last = remember { LastValue<T>() }
+    SideEffect { if (value != null) last.value = value }
+    return value ?: last.value
+}
+
+private class LastValue<T : Any> {
+    var value: T? = null
+}

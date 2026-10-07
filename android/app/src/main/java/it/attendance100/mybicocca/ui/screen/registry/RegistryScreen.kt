@@ -56,7 +56,7 @@ import java.time.LocalDate
  * Landing of the Registry (Segreterie) tab: a pinned "Scadenze" banner over a scrollable
  * directory of Esse3 services grouped into connected segmented cards, one icon-chip accent
  * hue per group (see [serviceAccents]). Tapping the banner opens the scadenzario timeline
- * sheet; tapping a row routes to the owning service sheet.
+ * sheet; tapping a row opens the owning service sheet, both through [LocalAppNavigator].
  *
  * The banner summary and the deadline spine derive from the in-memory streams of four
  * feature ViewModels (bookings, exam calls, invoices, exam results). The spine counts as
@@ -73,24 +73,14 @@ fun RegistryScreen(
     taxesViewModel: TaxesViewModel,
     examResultsViewModel: ExamResultsViewModel,
     studyPlanViewModel: StudyPlanViewModel,
-    onOpenAppelli: () -> Unit,
-    onOpenTaxes: () -> Unit,
-    onOpenIsee: () -> Unit,
-    onOpenRefunds: () -> Unit,
-    onOpenExamResults: () -> Unit,
-    onOpenStudyPlan: () -> Unit,
-    onOpenQuestionnaires: () -> Unit,
-    onOpenAppointments: () -> Unit,
-    onOpenLibrary: () -> Unit,
-    onOpenAttendance: () -> Unit,
-    onOpenEnrollments: () -> Unit,
-    onOpenTitles: () -> Unit,
-    onOpenCertificates: () -> Unit,
     modifier: Modifier = Modifier,
     isActive: Boolean = true,
     onProvideFilterToggle: ((() -> Unit)?) -> Unit = {},
 ) {
     LaunchedEffect(isActive) { if (isActive) onProvideFilterToggle(null) }
+
+    val navigator = LocalAppNavigator.current
+    fun open(route: SheetRoute): () -> Unit = { navigator?.navigate(route) }
 
     val deadlineState = rememberRegistryDeadlines(
         bookedExamsViewModel = bookedExamsViewModel,
@@ -98,9 +88,9 @@ fun RegistryScreen(
         taxesViewModel = taxesViewModel,
         examResultsViewModel = examResultsViewModel,
         studyPlanViewModel = studyPlanViewModel,
-        onOpenExamResults = onOpenExamResults,
-        onOpenTaxes = onOpenTaxes,
-        onOpenBookedExams = onOpenAppelli,
+        onOpenExamResults = open(SheetRoute.ExamResults),
+        onOpenTaxes = open(SheetRoute.Taxes),
+        onOpenBookedExams = open(SheetRoute.Appelli),
     )
     val deadlines = deadlineState.deadlines
     val deadlinesLoading = deadlineState.loading
@@ -134,28 +124,28 @@ fun RegistryScreen(
                     stringResource(R.string.registry_study_plan),
                     stringResource(R.string.registry_study_plan_desc),
                     Icons.Outlined.AccountTree,
-                    onClick = onOpenStudyPlan
+                    onClick = open(SheetRoute.StudyPlan),
                 ),
                 RegistryService(
                     "attendance",
                     stringResource(R.string.registry_attendance),
                     stringResource(R.string.registry_attendance_desc),
                     Icons.Outlined.CoPresent,
-                    onClick = onOpenAttendance
+                    onClick = open(SheetRoute.Attendance),
                 ),
                 RegistryService(
                     "exam_results",
                     stringResource(R.string.registry_exam_results),
                     stringResource(R.string.registry_exam_results_desc),
                     Icons.AutoMirrored.Outlined.Grading,
-                    onClick = onOpenExamResults
+                    onClick = open(SheetRoute.ExamResults),
                 ),
                 RegistryService(
                     "questionnaires",
                     stringResource(R.string.registry_questionnaires),
                     stringResource(R.string.registry_questionnaires_desc),
                     Icons.AutoMirrored.Outlined.FactCheck,
-                    onClick = onOpenQuestionnaires
+                    onClick = open(SheetRoute.Questionnaires),
                 ),
             ),
         ),
@@ -168,21 +158,21 @@ fun RegistryScreen(
                     stringResource(R.string.appelli_title),
                     stringResource(R.string.appelli_desc),
                     Icons.Outlined.EventAvailable,
-                    onClick = onOpenAppelli
+                    onClick = open(SheetRoute.Appelli),
                 ),
                 RegistryService(
                     "appointments",
                     stringResource(R.string.appointments_title),
                     stringResource(R.string.appointments_desc),
                     Icons.Outlined.SupportAgent,
-                    onClick = onOpenAppointments
+                    onClick = open(SheetRoute.Appointments),
                 ),
                 RegistryService(
                     "library",
                     stringResource(R.string.registry_library),
                     stringResource(R.string.registry_library_desc),
                     Icons.Outlined.LocalLibrary,
-                    onClick = onOpenLibrary
+                    onClick = open(SheetRoute.Library),
                 ),
             ),
         ),
@@ -195,21 +185,21 @@ fun RegistryScreen(
                     stringResource(R.string.registry_enrollments),
                     stringResource(R.string.registry_enrollments_desc),
                     Icons.Outlined.School,
-                    onClick = onOpenEnrollments
+                    onClick = open(SheetRoute.Enrollments),
                 ),
                 RegistryService(
                     "titles",
                     stringResource(R.string.registry_titles),
                     stringResource(R.string.registry_titles_desc),
                     Icons.Outlined.WorkspacePremium,
-                    onClick = onOpenTitles
+                    onClick = open(SheetRoute.Titles),
                 ),
                 RegistryService(
                     "certificates",
                     stringResource(R.string.registry_certificates),
                     stringResource(R.string.registry_certificates_desc),
                     Icons.Outlined.Description,
-                    onClick = onOpenCertificates
+                    onClick = open(SheetRoute.Certificates),
                 ),
             ),
         ),
@@ -222,34 +212,32 @@ fun RegistryScreen(
                     stringResource(R.string.registry_fees),
                     stringResource(R.string.registry_fees_desc),
                     Icons.Outlined.Payments,
-                    onClick = onOpenTaxes
+                    onClick = open(SheetRoute.Taxes),
                 ),
                 RegistryService(
                     "isee",
                     stringResource(R.string.registry_isee),
                     stringResource(R.string.registry_isee_desc),
                     Icons.Outlined.Savings,
-                    onClick = onOpenIsee
+                    onClick = open(SheetRoute.Isee),
                 ),
                 RegistryService(
                     "refunds",
                     stringResource(R.string.registry_refunds),
                     stringResource(R.string.registry_refunds_desc),
                     Icons.Outlined.CurrencyExchange,
-                    onClick = onOpenRefunds
+                    onClick = open(SheetRoute.Refunds),
                 ),
             ),
         ),
     )
-
-    val navigator = LocalAppNavigator.current
 
     Column(modifier = modifier
         .fillMaxSize()
         .testTag(RegistryTestTags.ROOT)) {
         ScadenzeHeader(
             summary = headerSummary,
-            onClick = { navigator?.navigate(SheetRoute.Deadlines) },
+            onClick = open(SheetRoute.Deadlines),
             modifier = Modifier
                 .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 12.dp)
                 .testTag(RegistryTestTags.SCADENZE_HEADER),

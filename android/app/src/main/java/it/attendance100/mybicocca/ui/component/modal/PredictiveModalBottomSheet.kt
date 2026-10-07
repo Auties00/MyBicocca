@@ -108,15 +108,7 @@ fun PredictiveModalBottomSheet(
     gesturesEnabled: Boolean = true,
     controller: ModalSheetController? = null,
     contentWindowInsets: @Composable () -> WindowInsets = { BottomSheetDefaults.modalWindowInsets },
-    dragHandle: @Composable (() -> Unit)? = {
-        if (gesturesEnabled) {
-            BottomSheetDefaults.DragHandle()
-        } else {
-            BottomSheetDefaults.DragHandle(
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.12f),
-            )
-        }
-    },
+    dragHandle: @Composable (() -> Unit)? = { SheetDragHandle(gesturesEnabled) },
     content: @Composable () -> Unit,
 ) {
     val latestConfirmDismiss by rememberUpdatedState(confirmDismiss)
@@ -161,6 +153,17 @@ fun PredictiveModalBottomSheet(
         Box(Modifier.nestedScroll(bodyScroll)) {
             SnackbarScope { content() }
         }
+    }
+}
+
+/** The standard drag handle, muted (but kept) while the sheet's gestures are locked. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SheetDragHandle(gesturesEnabled: Boolean) {
+    if (gesturesEnabled) {
+        BottomSheetDefaults.DragHandle()
+    } else {
+        BottomSheetDefaults.DragHandle(color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.12f))
     }
 }
 

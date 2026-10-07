@@ -714,7 +714,7 @@ private fun SummaryContent(complete: Boolean, anonymous: Boolean) {
 private enum class CompilationAction { Next, Confirm, Working }
 
 /**
- * The app's connected button pair (see StudyPlanEditPage/EventDetailSheet): an icon-only
+ * The app's connected button pair (see StudyPlanEditPage/EventDetailPage): an icon-only
  * tonal back that springs in once the wizard can step backwards, and one brand-filled
  * primary action (red in light, primaryContainer in dark — the shared CTA scheme)
  * morphing between Avanti, Conferma and the in-flight state, flattening its start

@@ -9,6 +9,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -27,8 +28,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.Layout
-import androidx.compose.ui.layout.Measurable
 import androidx.compose.ui.layout.Placeable
+import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.util.lerp
 import kotlin.math.roundToInt
@@ -51,6 +52,7 @@ import it.attendance100.mybicocca.core.os.rememberHapticManager
  * terminal result page).
  * @param onBack overrides the pager's own back step for the arrow, for pages whose back must be
  * routed through a nested handler first (e.g. a wizard that asks before leaving).
+ * @param trailing an action at the header's end (an icon button), which moves with the texts.
  */
 @Immutable
 data class SheetHeaderSpec(
@@ -59,6 +61,7 @@ data class SheetHeaderSpec(
     val onSubtitleClick: (() -> Unit)? = null,
     val showBack: Boolean = true,
     val onBack: (() -> Unit)? = null,
+    val trailing: (@Composable () -> Unit)? = null,
 )
 
 /**
@@ -101,6 +104,8 @@ internal fun <P : Any> SheetPagerHeader(
 
     val backFrom = if (hasBack(current)) 1f else 0f
     val backTo = if (hasBack(target)) 1f else 0f
+    val currentKey = keyOf(current)
+    val targetKey = keyOf(target)
     val currentSpec = spec(current)
     val targetSpec = spec(target)
 
@@ -119,49 +124,72 @@ internal fun <P : Any> SheetPagerHeader(
                     )
                 }
             },
-            { if (currentSpec != null) key(keyOf(current)) { HeaderTexts(currentSpec) } },
-            { if (!settled && targetSpec != null) key(keyOf(target)) { HeaderTexts(targetSpec) } },
+            {
+                // Keyed by page, so the incoming texts stay the same node when they become the
+                // settled ones.
+                if (currentSpec != null) key(currentKey) { HeaderTexts(currentSpec, Modifier.layoutId(currentKey)) }
+                if (targetSpec != null && !settled) key(targetKey) { HeaderTexts(targetSpec, Modifier.layoutId(targetKey)) }
+            },
+            {
+                currentSpec?.trailing?.let { key(currentKey) { Box(Modifier.layoutId(currentKey)) { it() } } }
+                if (!settled) targetSpec?.trailing?.let { key(targetKey) { Box(Modifier.layoutId(targetKey)) { it() } } }
+            },
         ),
         modifier = modifier.padding(end = 24.dp),
-    ) { (backMeasurables, currentMeasurables, targetMeasurables), constraints ->
+    ) { (backMeasurables, textMeasurables, trailingMeasurables), constraints ->
         // The page pair comes from composition, the progress is read live here. On the frame a
         // transition settles the live state has already moved on (progress resets) while the
         // composition still holds the in-flight pair; rest on the page it settled on instead of
         // re-reading the reset progress as "just started".
         val restingKey = keyOf(transition.targetState)
         val liveSettled = keyOf(transition.currentState) == restingKey
-        val restsOnTarget = settled || keyOf(target) == restingKey
+        val restsOnTarget = settled || targetKey == restingKey
 
         val insetRoot = 24.dp.toPx()
         val insetWithBack = 10.dp.toPx()
         val backSlot = 54.dp.toPx() // 48dp button + 6dp gap: the text lands at 64dp
+        // Trailing actions are icon buttons: their 12dp touch padding overhangs the end inset so
+        // the icon lines up with it.
+        val trailingOverhang = 12.dp.roundToPx()
         fun insetX(presence: Float) = lerp(insetRoot, insetWithBack, presence)
         fun textX(presence: Float) = insetX(presence) + backSlot * presence
 
         val width = constraints.maxWidth
         val button = backMeasurables.first().measure(Constraints())
-        fun measureTexts(measurables: List<Measurable>, presence: Float): Placeable? =
-            measurables.firstOrNull()?.measure(
-                Constraints(maxWidth = (width - textX(presence).roundToInt()).coerceAtLeast(0)),
-            )
-        val shown = measureTexts(currentMeasurables, if (settled) backTo else backFrom)
-        val incoming = measureTexts(targetMeasurables, backTo)
+        fun side(pageKey: Any, presence: Float): HeaderSide? {
+            val trailing = trailingMeasurables.firstOrNull { it.layoutId == pageKey }?.measure(Constraints())
+            val textsWidth = width - textX(presence).roundToInt() - ((trailing?.width ?: 0) - trailingOverhang).coerceAtLeast(0)
+            val texts = textMeasurables.firstOrNull { it.layoutId == pageKey }
+                ?.measure(Constraints(maxWidth = textsWidth.coerceAtLeast(0)))
+            return if (texts == null && trailing == null) null else HeaderSide(texts, trailing)
+        }
+        val shown = side(currentKey, if (settled) backTo else backFrom)
+        val incoming = if (settled) null else side(targetKey, backTo)
 
         // A page whose own nested pager draws its header (null spec) takes no room here.
         val bottomGap = 12.dp.toPx()
-        fun heightOf(texts: Placeable?, presence: Float): Float {
-            val content = maxOf(texts?.height ?: 0, if (presence > 0f) button.height else 0)
+        fun heightOf(side: HeaderSide?, presence: Float): Float {
+            val content = maxOf(side?.height ?: 0, if (presence > 0f) button.height else 0)
             return if (content == 0) 0f else content + bottomGap
+        }
+        fun Placeable.PlacementScope.placeSide(side: HeaderSide?, x: Float, body: Float, alpha: Float) {
+            side?.texts?.placeWithLayer(x.roundToInt(), ((body - side.texts.height) / 2).roundToInt()) {
+                this.alpha = alpha
+            }
+            side?.trailing?.placeWithLayer(
+                x = width - side.trailing.width + trailingOverhang,
+                y = ((body - side.trailing.height) / 2).roundToInt(),
+            ) { this.alpha = alpha }
         }
 
         if (settled || liveSettled || (incoming == null && targetSpec != null)) {
-            val texts = if (!settled && restsOnTarget) incoming else shown
+            val side = if (!settled && restsOnTarget) incoming else shown
             val presence = if (restsOnTarget) backTo else backFrom
-            val height = heightOf(texts, presence).roundToInt()
+            val height = heightOf(side, presence).roundToInt()
             val body = (height - bottomGap).coerceAtLeast(0f)
             return@Layout layout(width, height) {
                 if (presence > 0f) button.place(insetX(presence).roundToInt(), ((body - button.height) / 2).roundToInt())
-                texts?.place(textX(presence).roundToInt(), ((body - texts.height) / 2).roundToInt())
+                placeSide(side, textX(presence), body, alpha = 1f)
             }
         }
 
@@ -172,9 +200,7 @@ internal fun <P : Any> SheetPagerHeader(
         val height = lerp(heightFrom, heightTo, t).roundToInt()
         // Vertical centre of each side within its own (resting) band, so a page growing a header
         // from nothing (or losing it) slides its texts with the band rather than jumping.
-        val bodyFrom = (heightFrom - bottomGap).coerceAtLeast(0f)
-        val bodyTo = (heightTo - bottomGap).coerceAtLeast(0f)
-        val body = lerp(bodyFrom, bodyTo, t)
+        val body = lerp((heightFrom - bottomGap).coerceAtLeast(0f), (heightTo - bottomGap).coerceAtLeast(0f), t)
         layout(width, height) {
             if (back > 0f) {
                 button.placeWithLayer(
@@ -184,30 +210,39 @@ internal fun <P : Any> SheetPagerHeader(
             }
             val x = textX(back)
             val direction = if (forward) 1 else -1
-            shown?.placeWithLayer(
-                x = (x + direction * shown.width / 6f * t).roundToInt(),
-                y = ((body - shown.height) / 2).roundToInt(),
-            ) { alpha = 1f - (t * PageMs / OutFadeMs).coerceIn(0f, 1f) }
-            incoming?.placeWithLayer(
-                x = (x - direction * incoming.width / 6f * (1f - t)).roundToInt(),
-                y = ((body - incoming.height) / 2).roundToInt(),
-            ) { alpha = ((t * PageMs - InFadeDelayMs) / InFadeMs).coerceIn(0f, 1f) }
+            placeSide(
+                side = shown,
+                x = x + direction * (shown?.texts?.width ?: 0) / 6f * t,
+                body = body,
+                alpha = 1f - (t * PageMs / OutFadeMs).coerceIn(0f, 1f),
+            )
+            placeSide(
+                side = incoming,
+                x = x - direction * (incoming?.texts?.width ?: 0) / 6f * (1f - t),
+                body = body,
+                alpha = ((t * PageMs - InFadeDelayMs) / InFadeMs).coerceIn(0f, 1f),
+            )
         }
     }
 }
 
+/** One page's measured header: its title/subtitle block and its trailing action, if any. */
+private class HeaderSide(val texts: Placeable?, val trailing: Placeable?) {
+    val height: Int get() = maxOf(texts?.height ?: 0, trailing?.height ?: 0)
+}
+
 private const val PageMs = SheetMotion.PAGE_MS.toFloat()
-private const val OutFadeMs = 180f
-private const val InFadeDelayMs = 40f
-private const val InFadeMs = 280f
+private const val OutFadeMs = SheetMotion.OUT_FADE_MS.toFloat()
+private const val InFadeDelayMs = SheetMotion.IN_FADE_DELAY_MS.toFloat()
+private const val InFadeMs = SheetMotion.IN_FADE_MS.toFloat()
 
 /** One page's title over its subtitle; live changes on the same page crossfade in place. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun HeaderTexts(spec: SheetHeaderSpec) {
+private fun HeaderTexts(spec: SheetHeaderSpec, modifier: Modifier) {
     val haptic = rememberHapticManager()
     val scheme = MaterialTheme.colorScheme
-    Column {
+    Column(modifier) {
         AnimatedContent(
             targetState = spec.title,
             transitionSpec = {
@@ -278,5 +313,13 @@ internal fun <P : Any> rememberHeaderSpecs(
 
 /** Shared timings of the in-sheet page morph (header and body move as one). */
 internal object SheetMotion {
+    /** Slide and height morph. */
     const val PAGE_MS: Int = 350
+
+    /** The outgoing page fades out over the start of the slide. */
+    const val OUT_FADE_MS: Int = 180
+
+    /** The incoming page fades in after a short delay. */
+    const val IN_FADE_DELAY_MS: Int = 40
+    const val IN_FADE_MS: Int = 280
 }

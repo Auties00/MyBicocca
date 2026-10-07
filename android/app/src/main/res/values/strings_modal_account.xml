@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Selettore account -->
+    <plurals name="account_switcher_count">
+        <item quantity="one">1 account</item>
+        <item quantity="other">%1$d account</item>
+    </plurals>
+    <string name="account_switcher_add_title">Aggiungi account</string>
+    <string name="account_switcher_add_subtitle">Gli account salvati restano disponibili</string>
+</resources>

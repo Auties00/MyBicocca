@@ -78,10 +78,10 @@ import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
 import it.attendance100.mybicocca.ui.component.modal.SheetPager
 import it.attendance100.mybicocca.ui.component.modal.SheetResultPage
 import it.attendance100.mybicocca.ui.navigation.DisposableEffectOnPop
-import it.attendance100.mybicocca.ui.navigation.scene.LocalSheetDismissControl
+import it.attendance100.mybicocca.ui.component.modal.LocalSheetDismissControl
+import it.attendance100.mybicocca.ui.component.modal.rememberLastNonNull
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.questionnaires.ext.displayName
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.questionnaires.ext.pending
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.questionnaires.subscreen.compilation.CompilationWizardHeader
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.questionnaires.subscreen.compilation.QuestionnaireCompilationPage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.questionnaires.subscreen.compilation.QuestionnaireCompilationViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.questionnaires.subscreen.compilation.compilationWizardHeader
@@ -211,20 +211,17 @@ fun QuestionnairesPage(
 
         val backDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
 
-        // While the units or the wizard slide out their state is already cleared; keep their
-        // headers readable.
-        val lastActivity = remember { arrayOf<QuestionnaireActivity?>(null) }
-        val lastUnitsSubtitle = remember { arrayOf<String?>(null) }
-        if (activity != null) {
-            lastActivity[0] = activity
-            lastUnitsSubtitle[0] = activityDetail.valueOrNull()?.let { detail ->
-                detail.questionnaireName?.takeIf { it.isNotBlank() }
-                    ?: stringResource(R.string.questionnaire_units_subtitle)
-            }
+        val unitsSubtitle = activityDetail.valueOrNull()?.let { detail ->
+            detail.questionnaireName?.takeIf { it.isNotBlank() }
+                ?: stringResource(R.string.questionnaire_units_subtitle)
         }
-        val lastCompileHeader = remember { arrayOf<CompilationWizardHeader?>(null) }
-        if (compileHeader != null) lastCompileHeader[0] = compileHeader
-        val shownCompileHeader = compileHeader ?: lastCompileHeader[0]
+        // While the units or the wizard slide out their state is already cleared; keep their
+        // headers readable. The activity and its subtitle are held as one (the subtitle is null
+        // while the units load).
+        val shownUnits = rememberLastNonNull(activity?.let { it to unitsSubtitle })
+        val shownActivity = shownUnits?.first
+        val shownUnitsSubtitle = shownUnits?.second
+        val shownCompileHeader = rememberLastNonNull(compileHeader)
 
         SheetPager(
             page = page,
@@ -254,7 +251,7 @@ fun QuestionnairesPage(
                 SheetHeaderSpec(
                     title = when (target) {
                         QPage.Root -> stringResource(R.string.questionnaire_root_title)
-                        QPage.Units -> lastActivity[0]?.displayName
+                        QPage.Units -> shownActivity?.displayName
                             ?: stringResource(R.string.questionnaire_root_title)
 
                         QPage.Compile -> shownCompileHeader?.title
@@ -266,11 +263,11 @@ fun QuestionnairesPage(
                     },
                     subtitle = when (target) {
                         QPage.Root -> rootSubtitle(loaded, pendingCount)
-                        QPage.Units -> lastUnitsSubtitle[0]?.let(::AnnotatedString)
+                        QPage.Units -> shownUnitsSubtitle?.let(::AnnotatedString)
                         QPage.Compile -> shownCompileHeader?.subtitle
                         QPage.ConfirmExit, QPage.ConfirmSend -> shownCompileHeader?.title?.let(::AnnotatedString)
                         QPage.Result -> AnnotatedString(
-                            lastActivity[0]?.displayName ?: stringResource(R.string.questionnaire_root_title),
+                            shownActivity?.displayName ?: stringResource(R.string.questionnaire_root_title),
                         )
                     },
                     showBack = target != QPage.Result,

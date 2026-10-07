@@ -2,7 +2,6 @@ package it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -20,8 +19,9 @@ import it.attendance100.mybicocca.ui.component.modal.SheetOutcome
 import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
 import it.attendance100.mybicocca.ui.component.modal.SheetPager
 import it.attendance100.mybicocca.ui.component.modal.SheetResultPage
+import it.attendance100.mybicocca.ui.component.modal.LockSheetWhile
+import it.attendance100.mybicocca.ui.component.modal.rememberLastNonNull
 import it.attendance100.mybicocca.ui.navigation.DisposableEffectOnPop
-import it.attendance100.mybicocca.ui.navigation.scene.LocalSheetDismissControl
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.component.DonePage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.component.FormPage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.component.ReservationDetailPage
@@ -147,11 +147,7 @@ fun AppointmentsPage(
         }
 
         // A booking in flight cannot be abandoned half-way: lock swipe/scrim/back dismissal.
-        val control = LocalSheetDismissControl.current
-        SideEffect {
-            control?.gesturesEnabled = !submitting
-            control?.confirmDismiss = { !submitting }
-        }
+        LockSheetWhile(submitting)
 
         // System back dismisses the overlays first, then walks the pager up one level; it is
         // blocked while a booking is being submitted.
@@ -165,9 +161,7 @@ fun AppointmentsPage(
         }
 
         // While the confirmation slides out its reservation is already cleared; keep its header readable.
-        val lastCancel = remember { arrayOf<AppointmentReservation?>(null) }
-        if (pendingCancel != null) lastCancel[0] = pendingCancel
-        val shownCancel = pendingCancel ?: lastCancel[0]
+        val shownCancel = rememberLastNonNull(pendingCancel)
 
         val sections = (services as? Loadable.Loaded)?.value?.toDirectorySections().orEmpty()
         val serviceName = bookingService?.displayName.orEmpty()

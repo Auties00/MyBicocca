@@ -67,6 +67,7 @@ import it.attendance100.mybicocca.ui.component.modal.SheetOutcome
 import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
 import it.attendance100.mybicocca.ui.component.modal.SheetPager
 import it.attendance100.mybicocca.ui.component.modal.SheetResultPage
+import it.attendance100.mybicocca.ui.component.modal.rememberLastNonNull
 import kotlinx.coroutines.flow.collectLatest
 import java.io.File
 
@@ -76,7 +77,7 @@ import java.io.File
  * the disk cache) and hands it to an external viewer; download failures and a missing
  * PDF viewer surface as a dedicated in-sheet result page that the title morphs into. The
  * sheet container is owned by ModalSceneStrategy, but this entry keeps its OWN [SheetPager]
- * header because of that in-place title morph (its metadata header is left null).
+ * header because of that in-place title morph (its entry declares `sheetHeaderInPage()`).
  *
  * The ViewModel outlives the sheet (shell-scoped): re-opening shows the cached list
  * instantly while a background refresh is kicked.
@@ -113,9 +114,7 @@ fun CertificatesPage(
 
     val page = if (outcome != null) CertificatesSheetPage.Result else CertificatesSheetPage.Certificates
     // While the result page slides out its outcome is already cleared; keep it rendered.
-    val lastOutcome = remember { arrayOf<SheetOutcome?>(null) }
-    if (outcome != null) lastOutcome[0] = outcome
-    val shownOutcome = outcome ?: lastOutcome[0]
+    val shownOutcome = rememberLastNonNull(outcome)
 
     SheetPager(
         page = page,

@@ -302,7 +302,6 @@ fun MapScreen(
     val roomDetail by viewModel.roomDetail.collectAsStateWithLifecycle()
     val daySchedule by viewModel.daySchedule.collectAsStateWithLifecycle()
     val syncStatus by viewModel.syncStatus.collectAsStateWithLifecycle()
-    val categoryFilter by viewModel.categoryFilter.collectAsStateWithLifecycle()
 
     val haptic = rememberHapticManager()
     val navigator = LocalAppNavigator.current

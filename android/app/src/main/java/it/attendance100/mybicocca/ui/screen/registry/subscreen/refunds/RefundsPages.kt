@@ -51,6 +51,7 @@ import it.attendance100.mybicocca.domain.model.tax.Refund
 import it.attendance100.mybicocca.ui.component.button.RetryButton
 import it.attendance100.mybicocca.ui.component.feedback.EmptyState
 import it.attendance100.mybicocca.ui.component.feedback.rememberMinDurationLoading
+import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
 import it.attendance100.mybicocca.ui.component.modal.SheetLoadingIndicator
 import it.attendance100.mybicocca.ui.component.modal.SheetMessage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.formatEuro
@@ -59,8 +60,8 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.taxFriendly
 
 /**
  * Root page of the Rimborsi sheet (the refunds list), in the same modal language as ISEE /
- * percorso. The sheet container, pinned morphing header and the list -> detail page
- * transition are owned by BottomSheetSceneStrategy; the refund detail is a separate
+ * percorso. The sheet container, pinned morphing header ([refundsHeader]) and the list -> detail
+ * page transition are owned by ModalSceneStrategy; the refund detail is a separate
  * back-stack entry (SheetRoute.RefundDetail rendering [RefundDetailPage]). Reads its own
  * [RefundsViewModel] (no local cache — the Esse3 lista-rimborsi is fetched live), refreshing
  * in the background when re-opened on an already-loaded snapshot.
@@ -85,9 +86,18 @@ fun RefundsListPage(
     )
 }
 
-/** "3 rimborsi · 2 in lavorazione" — count line in place of a sub-page title ("Nessun rimborso" when empty). */
+/**
+ * The Rimborsi sheet's pinned header: "3 rimborsi · 2 in lavorazione" ("Nessun rimborso" when
+ * empty); the subtitle is null only while [refunds] load.
+ */
 @Composable
-fun refundsHeaderSubtitle(refunds: List<Refund>): String {
+fun refundsHeader(refunds: List<Refund>?): SheetHeaderSpec = SheetHeaderSpec(
+    title = stringResource(R.string.registry_refunds),
+    subtitle = refunds?.let { refundsHeaderSubtitle(it) },
+)
+
+@Composable
+private fun refundsHeaderSubtitle(refunds: List<Refund>): String {
     if (refunds.isEmpty()) return stringResource(R.string.refunds_empty_title)
     val total =
         if (refunds.size == 1) stringResource(R.string.registry_refund_one) else stringResource(
@@ -447,15 +457,19 @@ private fun Refund.academicYearLabel(): String? =
     academicYear?.let { "$it/${"%02d".format((it + 1) % 100)}" }
 
 /**
- * Detail header text (paired with [refundHeaderSubtitle]), exposed for the sheet entry's
- * pinned header in MainShell.
+ * A refund's detail page header: its amount over its academic year; [refund] is null only while it
+ * loads (or as it is evicted).
  */
 @Composable
-fun refundHeaderTitle(refund: Refund): String = refund.amount?.let { formatEuro(it) }
-    ?: stringResource(R.string.registry_refund_fallback_title)
-
-@Composable
-fun refundHeaderSubtitle(refund: Refund): String =
-    refund.academicYearLabel()
-        ?.let { stringResource(R.string.registry_refund_academic_year_subtitle, it) }
-        ?: stringResource(R.string.registry_refund_details_subtitle)
+fun refundDetailHeader(refund: Refund?): SheetHeaderSpec =
+    if (refund == null) {
+        SheetHeaderSpec(title = stringResource(R.string.registry_refunds), subtitle = null)
+    } else {
+        SheetHeaderSpec(
+            title = refund.amount?.let { formatEuro(it) }
+                ?: stringResource(R.string.registry_refund_fallback_title),
+            subtitle = refund.academicYearLabel()
+                ?.let { stringResource(R.string.registry_refund_academic_year_subtitle, it) }
+                ?: stringResource(R.string.registry_refund_details_subtitle),
+        )
+    }

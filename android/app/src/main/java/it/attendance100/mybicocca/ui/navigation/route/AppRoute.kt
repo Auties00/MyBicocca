@@ -58,9 +58,6 @@ sealed interface AppRoute : Route {
         override val appTitle get() = AppTitle.SubPage("")
         override val extendsBehindTopBar get() = true
     }
-    @Serializable data class AssignmentDetail(val assignId: Int, val courseId: Int) : AppRoute {
-        override val appTitle get() = AppTitle.SubPage("Compito") // TODO localize
-    }
     /**
      * In-app viewer for course files. Carries either a remote pluginfile URL (the common case,
      * downloaded on open) or an already-local path (e.g. a file extracted from a zip archive).

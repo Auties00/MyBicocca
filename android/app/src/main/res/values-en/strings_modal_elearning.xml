@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- E-learning, calendar and map sheets: pinned header titles and subtitles -->
+    <!-- E-learning sheets: pinned header titles and subtitles -->
 
     <!-- Shared outcome page -->
     <string name="elearning_sheet_result_title">Outcome</string>
@@ -22,15 +22,4 @@
 
     <!-- Video quality -->
     <string name="elearning_video_quality_current">Current: %1$s</string>
-
-    <!-- Calendar event -->
-    <string name="event_detail_title_fallback">Event</string>
-    <string name="event_detail_cancelled">Event cancelled</string>
-
-    <!-- Map filter -->
-    <string name="map_filter_none">No filters active</string>
-    <plurals name="map_filter_selected_count">
-        <item quantity="one">1 category selected</item>
-        <item quantity="other">%1$d categories selected</item>
-    </plurals>
 </resources>

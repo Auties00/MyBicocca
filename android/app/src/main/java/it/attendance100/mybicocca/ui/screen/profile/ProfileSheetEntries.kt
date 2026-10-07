@@ -6,8 +6,8 @@ import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import it.attendance100.mybicocca.core.state.valueOrNull
 import it.attendance100.mybicocca.ui.navigation.route.SheetRoute
-import it.attendance100.mybicocca.ui.navigation.scene.sheetHeader
-import it.attendance100.mybicocca.ui.navigation.scene.sheetHeaderInPage
+import it.attendance100.mybicocca.ui.navigation.sheetHeader
+import it.attendance100.mybicocca.ui.navigation.sheetHeaderInPage
 import it.attendance100.mybicocca.ui.screen.profile.subscreen.examsByYear.ExamsByYearPage
 import it.attendance100.mybicocca.ui.screen.profile.subscreen.hypotheticalGrade.HypotheticalGradePage
 import it.attendance100.mybicocca.ui.screen.profile.subscreen.hypotheticalGrade.hypotheticalGradeHeader

@@ -248,7 +248,7 @@ private fun RemainingTimePill(start: Instant, limitSeconds: Long) {
 }
 
 /**
- * The app's connected button pair (see StudyPlanEditPage/EventDetailSheet), fixed under the
+ * The app's connected button pair (see StudyPlanEditPage/EventDetailPage), fixed under the
  * sliding question list: an icon-only tonal back that springs in past the first page, and the
  * primary action morphing between Avanti and Consegna on the last page. The primary stays a
  * full pill while alone and flattens its start corners when the back button joins; its

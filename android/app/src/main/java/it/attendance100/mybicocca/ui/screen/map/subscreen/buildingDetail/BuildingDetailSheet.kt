@@ -77,9 +77,8 @@ private val StatusTimeFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("H
 
 /**
  * Building detail content: a [SheetPager] (pinned morphing header over a two-level body: room
- * list <-> room detail). Hosted by the standalone pin modal; a host that nests it below a level
- * of its own supplies [onBack], which puts a back arrow on the building page. System back pops
- * the room page before closing or dismissing anything above it.
+ * list <-> room detail), hosted by the standalone pin modal. System back pops the room page
+ * before dismissing the modal.
  */
 @Composable
 fun BuildingDetailSheet(
@@ -92,19 +91,16 @@ fun BuildingDetailSheet(
     onRoomClick: (MapRoom) -> Unit,
     onCloseRoom: () -> Unit,
     modifier: Modifier = Modifier,
-    onBack: (() -> Unit)? = null,
     onRetryRooms: (() -> Unit)? = null,
 ) {
     val context = LocalContext.current
     val scheduleMap = (daySchedule as? Loadable.Loaded)?.value
     val buildingTitle = remember(building.name) { buildingDisplayName(building) }
     val page: BuildingDetailPage = selectedRoom?.let { BuildingDetailPage.Room(it) } ?: BuildingDetailPage.Rooms
-    // The building page sits one level deep when the host offers a way back from it.
-    val baseDepth = if (onBack != null) 1 else 0
 
     SheetPager(
         page = page,
-        depth = { if (it is BuildingDetailPage.Room) baseDepth + 1 else baseDepth },
+        depth = { if (it is BuildingDetailPage.Room) 1 else 0 },
         backTo = if (selectedRoom != null) BuildingDetailPage.Rooms else null,
         onBack = onCloseRoom,
         modifier = modifier.fillMaxWidth(),
@@ -121,8 +117,6 @@ fun BuildingDetailSheet(
                     subtitle = building.address ?: building.city
                         ?: stringResource(building.category.labelRes),
                     onSubtitleClick = { context.openBuildingInMaps(building) },
-                    showBack = onBack != null,
-                    onBack = onBack,
                 )
 
                 is BuildingDetailPage.Room -> SheetHeaderSpec(

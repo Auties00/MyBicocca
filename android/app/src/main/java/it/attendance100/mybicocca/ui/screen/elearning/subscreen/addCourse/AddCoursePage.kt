@@ -65,7 +65,7 @@ import it.attendance100.mybicocca.ui.component.modal.SheetLoadingIndicator
 import it.attendance100.mybicocca.ui.component.modal.SheetMessage
 import it.attendance100.mybicocca.ui.component.modal.SheetPager
 import it.attendance100.mybicocca.ui.navigation.DisposableEffectOnPop
-import it.attendance100.mybicocca.ui.navigation.scene.LocalSheetDismissControl
+import it.attendance100.mybicocca.ui.component.modal.LocalSheetDismissControl
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.addCourse.component.AddCourseSearchField
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.addCourse.component.AreaTile
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.addCourse.component.AreaTileVisual

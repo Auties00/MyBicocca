@@ -64,7 +64,6 @@ import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.state.valueOrNull
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.domain.model.elearning.quiz.AttemptId
-import it.attendance100.mybicocca.domain.model.elearning.quiz.AttemptReview
 import it.attendance100.mybicocca.domain.model.elearning.quiz.AttemptState
 import it.attendance100.mybicocca.domain.model.elearning.quiz.BestGrade
 import it.attendance100.mybicocca.domain.model.elearning.quiz.Quiz
@@ -75,9 +74,10 @@ import it.attendance100.mybicocca.ui.component.modal.SheetConfirmPage
 import it.attendance100.mybicocca.ui.component.modal.SheetLoadingIndicator
 import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
 import it.attendance100.mybicocca.ui.component.modal.SheetPager
+import it.attendance100.mybicocca.ui.component.modal.rememberLastNonNull
 import it.attendance100.mybicocca.ui.component.text.HtmlBody
 import it.attendance100.mybicocca.ui.navigation.route.SheetRoute
-import it.attendance100.mybicocca.ui.navigation.scene.LocalSheetDismissControl
+import it.attendance100.mybicocca.ui.component.modal.LocalSheetDismissControl
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail.component.AttemptReviewContent
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail.component.AttemptWizard
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail.component.formatGradeValue
@@ -102,7 +102,7 @@ import java.util.Locale
  * the encouraged choice in the emphasized brand slot (the confirm page's keep slot): "Consegna"
  * on the submit confirm, "Continua" on the close confirm, whose exit leaves the attempt in
  * progress server-side. Mid-attempt the sheet locks and turns a stray dismissal (scrim tap,
- * swipe) into the "chiudere il quiz?" confirm via the scene's [LocalSheetDismissControl], and
+ * swipe) into the "chiudere il quiz?" confirm via [LocalSheetDismissControl], and
  * refuses dismissal outright while loading or submitting. System back walks the in-sheet pages
  * up one level; on the attempt page the wizard's own deeper handlers (step back / close
  * confirm) win.
@@ -150,10 +150,8 @@ fun QuizDetailPage(
 
         val inProgress = attemptUi as? AttemptUiState.InProgress
         val reviewing = attemptUi as? AttemptUiState.Reviewing
-        var lastInProgress by remember { mutableStateOf<AttemptUiState.InProgress?>(null) }
-        if (inProgress != null) lastInProgress = inProgress
-        var lastReview by remember { mutableStateOf<AttemptReview?>(null) }
-        if (reviewing != null) lastReview = reviewing.review
+        val lastInProgress = rememberLastNonNull(inProgress)
+        val lastReview = rememberLastNonNull(reviewing?.review)
 
         val showAttemptLoading = rememberMinDurationLoading(attemptUi == AttemptUiState.Loading)
 

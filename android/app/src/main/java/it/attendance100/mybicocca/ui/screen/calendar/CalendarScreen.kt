@@ -49,7 +49,6 @@ import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.state.SyncStatus
-import it.attendance100.mybicocca.core.state.valueOrNull
 import it.attendance100.mybicocca.domain.model.calendar.CalendarEvent
 import it.attendance100.mybicocca.domain.model.calendar.CalendarEventId
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
@@ -78,8 +77,8 @@ import java.time.ZoneId
  * pinch-zoomable timelines sharing one zoom level; month is a busy-tinted grid with a
  * draggable agenda sheet for the selected day. A "go to today" FAB floats whenever today
  * is off-screen, mode changes slide the content horizontally toward the picked mode, and
- * the whole tab is pull-to-refresh. Tapping any event opens its detail sheet, which shows
- * whenever the selected event id resolves to an event in the loaded month or day data.
+ * the whole tab is pull-to-refresh. Tapping any event opens its detail sheet
+ * ([SheetRoute.CalendarEvent]).
  *
  * A month's first-ever load renders the empty calendar with the refresh indicator pinned
  * for the entire initial fetch (the same language as the e-learning tab), driven by
@@ -126,6 +125,7 @@ fun CalendarScreen(
     ),
 ) {
     val haptic = rememberHapticManager()
+    val navigator = LocalAppNavigator.current
     val viewMode by viewModel.viewMode.collectAsStateWithLifecycle()
     val selectedDay by viewModel.selectedDay.collectAsStateWithLifecycle()
     val selectedMonth by viewModel.selectedMonth.collectAsStateWithLifecycle()
@@ -133,8 +133,10 @@ fun CalendarScreen(
     val syncStatus by viewModel.syncStatus.collectAsStateWithLifecycle()
     val initialLoading by viewModel.initialLoading.collectAsStateWithLifecycle()
     val eventsByDay by viewModel.eventsByDay.collectAsStateWithLifecycle()
-    val dayEventsLoadable by viewModel.dayEvents.collectAsStateWithLifecycle()
-    val monthEventsLoadable by viewModel.events.collectAsStateWithLifecycle()
+    // The event sheet resolves its event from these lists: keep them subscribed while the tab is
+    // shown, so a tapped event opens with its data instead of an empty first frame.
+    viewModel.events.collectAsStateWithLifecycle()
+    viewModel.dayEvents.collectAsStateWithLifecycle()
     val selectedEventId by viewModel.selectedEventId.collectAsStateWithLifecycle()
     val coursesByActivityCode by viewModel.coursesByActivityCode.collectAsStateWithLifecycle()
 
@@ -313,6 +315,9 @@ fun CalendarScreen(
                         it.activityCode?.let(coursesByActivityCode::get).orEmpty()
                     },
                     onOpenCourse = onOpenCourse,
+                    onPickCourseEdition = { activityCode ->
+                        navigator?.navigate(SheetRoute.CourseEditionPicker(activityCode))
+                    },
                     onOpenAssignment = onOpenAssignment,
                     onOpenReservation = onOpenReservation,
                     examBookingTotals = examBookingTotals,
@@ -341,7 +346,6 @@ fun CalendarScreen(
             // An event tap (or a search hit) selects an event; the detail itself is a sheet route
             // on the shell's back stack, so it gets the shared modal behaviour and survives process
             // death there. The selection is consumed once the sheet is opened.
-            val navigator = LocalAppNavigator.current
             LaunchedEffect(selectedEventId, navigator) {
                 val id = selectedEventId ?: return@LaunchedEffect
                 if (navigator != null) {

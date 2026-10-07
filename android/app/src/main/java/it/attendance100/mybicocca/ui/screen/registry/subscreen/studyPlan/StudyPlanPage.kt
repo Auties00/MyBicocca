@@ -77,9 +77,9 @@ import it.attendance100.mybicocca.ui.component.modal.SheetOutcome
 import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
 import it.attendance100.mybicocca.ui.component.modal.SheetPager
 import it.attendance100.mybicocca.ui.component.modal.SheetResultPage
-import it.attendance100.mybicocca.ui.navigation.scene.LocalSheetDismissControl
+import it.attendance100.mybicocca.ui.component.modal.LocalSheetDismissControl
+import it.attendance100.mybicocca.ui.component.modal.rememberLastNonNull
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlan.state.StudyPlanEvent
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlanEdit.EditWizardHeader
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlanEdit.StudyPlanEditPage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlanEdit.StudyPlanEditViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlanEdit.editWizardHeader
@@ -227,9 +227,7 @@ fun StudyPlanPage(
         val backDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
 
         // While the editor slides out its ViewModel is already gone; keep its header readable.
-        val lastEditHeader = remember { arrayOf<EditWizardHeader?>(null) }
-        if (editHeader != null) lastEditHeader[0] = editHeader
-        val shownEditHeader = editHeader ?: lastEditHeader[0]
+        val shownEditHeader = rememberLastNonNull(editHeader)
 
         SheetPager(
             page = page,

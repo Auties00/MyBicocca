@@ -67,7 +67,7 @@ fun fileOpenChooserHeader(file: AppRoute.FileViewer): SheetHeaderSpec {
  * with an optional "remember this" switch so the choice sticks for that file type (a long-press
  * on a file re-shows the chooser, as the switch's helper text explains).
  *
- * Follows the app's hand-off-sheet language (LinkSheet / OfficeOpenSheet): a centered hero
+ * Follows the app's hand-off-sheet language (LinkSheet / OfficeOpenPage): a centered hero
  * shape with the per-kind icon, the remember toggle, and a pinned connected button pair —
  * brand-filled "In app" leading with explicit white content (a theme-reactive onPrimary would
  * flip dark in dark mode), tonal "Altra app" trailing. The file name, kind and size ride the

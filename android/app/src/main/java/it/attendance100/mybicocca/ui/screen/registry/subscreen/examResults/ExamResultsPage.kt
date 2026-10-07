@@ -1,6 +1,5 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.examResults
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
@@ -93,6 +92,7 @@ import it.attendance100.mybicocca.ui.component.modal.SheetOutcome
 import it.attendance100.mybicocca.ui.component.modal.SheetResultPage
 import it.attendance100.mybicocca.ui.component.modal.SheetPager
 import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
+import it.attendance100.mybicocca.ui.component.modal.rememberLastNonNull
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.examResults.state.ExamResultActionState
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.examResults.state.ExamResultEvent
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.examResults.state.ExamResultFilter
@@ -185,9 +185,7 @@ fun ExamResultsPage(
         }
 
         // While the detail slides out its id is already cleared; keep its header readable.
-        val lastDetail = remember { arrayOf<ExamResult?>(null) }
-        if (detailResult != null) lastDetail[0] = detailResult
-        val shownDetail = detailResult ?: lastDetail[0]
+        val shownDetail = rememberLastNonNull(detailResult)
 
         SheetPager(
             page = page,

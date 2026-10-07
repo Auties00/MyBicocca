@@ -301,6 +301,7 @@ class CalendarScreenTest {
                     event = lesson("lesson_2"),
                     elearningCourses = listOf(course(42)),
                     onOpenCourse = onOpenCourse,
+                    onPickCourseEdition = mockk(relaxed = true),
                     onOpenAssignment = mockk(relaxed = true),
                     onOpenReservation = mockk(relaxed = true),
                 )
@@ -316,5 +317,34 @@ class CalendarScreenTest {
         compose.waitForIdle()
 
         verify { onOpenCourse(CourseId(42)) }
+    }
+
+    @Test
+    fun tapping_the_lesson_primary_action_with_several_editions_opens_the_edition_picker() {
+        val onOpenCourse: (CourseId) -> Unit = mockk(relaxed = true)
+        val onPickCourseEdition: (String) -> Unit = mockk(relaxed = true)
+        compose.setBicoccaContent {
+            Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+                EventDetailContent(
+                    event = lesson("lesson_3"),
+                    elearningCourses = listOf(course(42), course(43)),
+                    onOpenCourse = onOpenCourse,
+                    onPickCourseEdition = onPickCourseEdition,
+                    onOpenAssignment = mockk(relaxed = true),
+                    onOpenReservation = mockk(relaxed = true),
+                )
+            }
+        }
+
+        compose.waitUntil(timeoutMillis = 5000) {
+            compose.onAllNodesWithTag(CalendarTestTags.EVENT_PRIMARY_ACTION)
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+
+        compose.onNodeWithTag(CalendarTestTags.EVENT_PRIMARY_ACTION).performScrollTo().performClick()
+        compose.waitForIdle()
+
+        verify { onPickCourseEdition("E3101Q123") }
+        verify(exactly = 0) { onOpenCourse(any()) }
     }
 }

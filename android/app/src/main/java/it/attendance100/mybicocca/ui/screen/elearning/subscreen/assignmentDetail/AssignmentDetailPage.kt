@@ -23,7 +23,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -38,7 +37,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.currentLocale
@@ -52,8 +51,8 @@ import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
 import it.attendance100.mybicocca.ui.component.modal.SheetPager
 import it.attendance100.mybicocca.ui.component.modal.SheetResultPage
 import it.attendance100.mybicocca.ui.navigation.DisposableEffectOnPop
-import it.attendance100.mybicocca.ui.navigation.route.AppRoute
-import it.attendance100.mybicocca.ui.navigation.scene.LocalSheetDismissControl
+import it.attendance100.mybicocca.ui.navigation.route.SheetRoute
+import it.attendance100.mybicocca.ui.component.modal.LockSheetWhile
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.assignmentDetail.component.AssignmentOverviewPage
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.assignmentDetail.component.SubmissionComposePage
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.assignmentDetail.state.AssignmentDetailOneShotEvent
@@ -73,7 +72,7 @@ import java.time.format.DateTimeFormatter
  * remove-confirmation and result pages are overlays held by the composable and drawn on top of
  * it. System back walks the stack up one level and is ignored while an action is in flight.
  * While the editor flow is open or an action is in flight the sheet refuses swipe/scrim/back
- * dismissal (via [LocalSheetDismissControl]) so a draft is never dropped by a stray gesture.
+ * dismissal (via [LockSheetWhile]) so a draft is never dropped by a stray gesture.
  *
  * Attachment opens are wired directly through [onOpenFile] and refresh failures keep the cached
  * content visible, so neither surfaces an in-sheet result page.
@@ -83,9 +82,9 @@ fun AssignmentDetailPage(
     assignId: Int,
     courseId: Int,
     onOpenFile: (fileName: String, fileUrl: String, mimeType: String?, sizeBytes: Long?, forceChooser: Boolean) -> Unit,
-    @Suppress("DEPRECATION") viewModel: AssignmentDetailViewModel = hiltViewModel<AssignmentDetailViewModel, AssignmentDetailViewModel.Factory>(
+    viewModel: AssignmentDetailViewModel = hiltViewModel<AssignmentDetailViewModel, AssignmentDetailViewModel.Factory>(
         key = "assign-sheet-$assignId",
-        creationCallback = { it.create(AppRoute.AssignmentDetail(assignId = assignId, courseId = courseId)) },
+        creationCallback = { it.create(SheetRoute.AssignmentDetail(assignId = assignId, courseId = courseId)) },
     ),
 ) {
     val assignmentLoadable by viewModel.assignment.collectAsStateWithLifecycle()
@@ -133,12 +132,7 @@ fun AssignmentDetailPage(
 
     // A swipe/scrim/back dismissal would drop the editor draft or abandon an action in flight:
     // there is no discard confirm to route to, so the sheet refuses it until the user backs out.
-    val control = LocalSheetDismissControl.current
-    val locked = submitting || current != AssignmentPage.Detail
-    SideEffect {
-        control?.gesturesEnabled = !locked
-        control?.confirmDismiss = { !locked }
-    }
+    LockSheetWhile(submitting || current != AssignmentPage.Detail)
 
     CourseDetailTheme(courseId = remember(courseId) { CourseId(courseId) }) {
         SheetPager(

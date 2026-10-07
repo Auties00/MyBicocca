@@ -1,7 +1,16 @@
 # Modal navigation
 
-How MyBicocca shows modal sheets and the pages inside them. Everything here lives in
-`app/src/main/java/it/attendance100/mybicocca/ui/navigation` and `ui/component/modal`.
+How MyBicocca shows modal sheets and the pages inside them. The code lives under
+`app/src/main/java/it/attendance100/mybicocca/ui/`:
+
+| Where | What |
+|---|---|
+| `navigation/AppNavigator.kt`, `Destination.kt`, `ModalLayout.kt` | the back stack and how it splits into sheets |
+| `navigation/EntryEffects.kt` | `DisposableEffectOnPop`, `rememberPopSelf`, `PopWhenMissing` |
+| `navigation/SheetEntryMetadata.kt` | `sheetHeader`, `staticSheetHeader`, `sheetHeaderInPage`, `sheetStyle` |
+| `navigation/scene/ModalSceneStrategy.kt` | turns sheet entries into sheets |
+| `component/modal/` | the sheet container, `SheetPager`, its header, `SheetDismissControl` |
+| `screen/<feature>/<Feature>SheetEntries.kt` | each feature's sheet routes and their headers |
 
 ## The model
 
@@ -57,10 +66,12 @@ the sheet's first page.
 ## Pages inside a sheet: `SheetPager`
 
 Every multi-page sheet uses `SheetPager`, whether its pages are back-stack entries or come from its
-own state machine (wizards, confirm and result pages). One `SeekableTransitionState` drives:
-- the **pinned header**: back arrow, inset, title and subtitle (from `SheetHeaderSpec`, via
-  `sheetHeader<Route> { … }` metadata for back-stack pages);
-- the **body**: a horizontal push;
+own state machine (wizards, confirm and result pages, the account switcher's sign-in). One
+`SeekableTransitionState` drives:
+- the **pinned header**: back arrow, inset, title, subtitle and an optional trailing action (from
+  `SheetHeaderSpec`, via `sheetHeader<Route> { … }` metadata for back-stack pages);
+- the **body**: a horizontal push, or a vertical rise (`SheetPageSlide.Vertical`) for a flow layered
+  over the page;
 - the **sheet height**: a `SizeTransform` that re-measures the sheet every frame.
 
 The system back gesture seeks that one transition toward the previous page, commits on release and
@@ -83,8 +94,10 @@ Pages never draw their own title in their content.
 
 - **Open a sheet or page:** `navigator.navigate(route)`. Pushes are single-top, so a double tap is
   harmless.
+- **Declare a sheet** in its feature's `<Feature>SheetEntries.kt`, with its header metadata. Entry
+  providers get the navigator with `requireAppNavigator()`.
 - **Close the current sheet from inside it:** `LocalSheetDismissControl.current?.dismiss()`.
-- **Close just this page:** `navigator.pop(LocalDestination.current!!.id)`.
+- **Close just this page:** `rememberPopSelf()`.
 - **Close the sheet a page belongs to:** `navigator.dismissSheetOf(id)`.
 - **Never pop by count, and never pop "whatever is on top" from a callback.** Pops are addressed by id,
   are idempotent, and can never remove the root.
@@ -95,8 +108,10 @@ Pages never draw their own title in their content.
 - **Body gestures are native:** content scrolls, and at the top a downward drag moves the sheet and
   dismisses it. Leftover fling velocity reaches the sheet only when the gesture actually dragged it.
   Over-scroll at the end of a list therefore releases at once, and a fling that hits the top of a list
-  can't dismiss the sheet. Lock it with `SheetDismissControl.gesturesEnabled` where a dismissal would
-  lose work.
+  can't dismiss the sheet. Lock it with `LockSheetWhile(submitting)` where a dismissal would lose
+  work, or set `SheetDismissControl.confirmDismiss` to turn a dismissal into a confirm page.
+- **A page sliding out after its state was cleared** (a confirm page whose item was just acted on)
+  keeps rendering what it showed with `rememberLastNonNull(item)`.
 - **Small pickers tied to a screen's transient state** may stay local, but must still use
   `PredictiveModalBottomSheet`, with `SheetPage`, or `SheetPager` for sub-pages. Examples: the course page's folder and
   link sheets, the video quality picker, and the map's building panel that follows the map selection.

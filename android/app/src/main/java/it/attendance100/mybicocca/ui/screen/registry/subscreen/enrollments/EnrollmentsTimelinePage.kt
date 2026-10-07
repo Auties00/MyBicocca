@@ -47,8 +47,8 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.enrollments.compo
 /**
  * Root page of the "Iscrizioni" sheet: the student's enrollment years as a tappable
  * annual-enrollment timeline, with a pinned renewal footer when renewal applies. The
- * sheet container, pinned morphing header and the timeline-to-detail page transition are
- * owned by BottomSheetSceneStrategy; this is just the root entry's body, and the year
+ * sheet container, pinned morphing header ([enrollmentsHeader]) and the timeline-to-detail page
+ * transition are owned by ModalSceneStrategy; this is just the root entry's body, and the year
  * detail is a separate back-stack entry (SheetRoute.EnrollmentDetail rendering
  * EnrollmentDetailPage).
  *
@@ -95,8 +95,7 @@ fun EnrollmentsTimelinePage(
 /**
  * The Iscrizioni sheet's pinned header: the title over the timeline depth ("5 anni
  * accademici", or "Nessuna iscrizione" when empty); the subtitle is null only while
- * [history] is still loading. Public so MainShell's sheet entry can build it from the
- * shell-hoisted ViewModel's history.
+ * [history] is still loading.
  */
 @Composable
 fun enrollmentsHeader(history: EnrollmentHistory?): SheetHeaderSpec = SheetHeaderSpec(

@@ -5,6 +5,8 @@ import android.content.pm.PackageManager
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
@@ -45,10 +47,13 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.navigation3.rememberViewModelStoreNavEntryDecorator
+import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberDecoratedNavEntries
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
+import androidx.navigation3.scene.Scene
+import androidx.navigation3.scene.SceneStrategy
 import androidx.navigation3.scene.SinglePaneSceneStrategy
 import androidx.navigation3.ui.LocalNavAnimatedContentScope
 import androidx.navigation3.ui.NavDisplay
@@ -68,18 +73,11 @@ import it.attendance100.mybicocca.ui.component.feedback.AppSnackbarHost
 import it.attendance100.mybicocca.ui.component.feedback.LocalAppSnackbarController
 import it.attendance100.mybicocca.ui.component.feedback.rememberAppSnackbarController
 import it.attendance100.mybicocca.ui.component.file.FileKind
-import it.attendance100.mybicocca.ui.component.file.OfficeApp
-import it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet
 import it.attendance100.mybicocca.ui.navigation.route.AppRoute
 import it.attendance100.mybicocca.ui.navigation.route.AppTitle
 import it.attendance100.mybicocca.ui.navigation.route.SheetRoute
 import it.attendance100.mybicocca.ui.navigation.route.ShellTab
 import it.attendance100.mybicocca.ui.navigation.route.isSubPage
-import it.attendance100.mybicocca.ui.navigation.scene.LocalSheetDismissControl
-import it.attendance100.mybicocca.ui.navigation.scene.SheetDismissControl
-import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
-import it.attendance100.mybicocca.ui.navigation.scene.sheetHeader
-import it.attendance100.mybicocca.ui.navigation.scene.sheetHeaderInPage
 import it.attendance100.mybicocca.ui.navigation.scene.LocalModalEntries
 import it.attendance100.mybicocca.ui.navigation.scene.ModalSceneStrategy
 import it.attendance100.mybicocca.ui.navigation.transitions.LocalAnimatedContentScope
@@ -89,86 +87,42 @@ import it.attendance100.mybicocca.ui.navigation.transitions.defaultExitTransitio
 import it.attendance100.mybicocca.ui.navigation.transitions.defaultPopEnterTransition
 import it.attendance100.mybicocca.ui.navigation.transitions.defaultPopExitTransition
 import it.attendance100.mybicocca.ui.screen.account.AccountViewModel
+import it.attendance100.mybicocca.ui.screen.account.accountSheetEntries
 import it.attendance100.mybicocca.ui.screen.account.state.AccountEvent
-import it.attendance100.mybicocca.ui.screen.account.subscreen.accountSwitcher.AccountSwitcherPage
-import it.attendance100.mybicocca.ui.screen.account.subscreen.accountSwitcher.AccountSwitcherSheetStyle
-import it.attendance100.mybicocca.ui.screen.calendar.subscreen.coursePicker.CourseEditionPickerPage
-import it.attendance100.mybicocca.ui.screen.calendar.subscreen.eventDetail.EventDetailPage
-import it.attendance100.mybicocca.ui.screen.calendar.subscreen.eventDetail.eventDetailHeader
-import it.attendance100.mybicocca.ui.screen.calendar.subscreen.coursePicker.courseEditionPickerHeader
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.subscreen.officeOpen.officeOpenHeader
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.subscreen.openChooser.fileOpenChooserHeader
-import it.attendance100.mybicocca.ui.screen.map.subscreen.mapFilter.mapFilterHeader
-import it.attendance100.mybicocca.ui.screen.map.subscreen.mapFilter.MapFilterPage
-import it.attendance100.mybicocca.ui.navigation.scene.sheetStyle
 import it.attendance100.mybicocca.ui.screen.calendar.CalendarScreen
 import it.attendance100.mybicocca.ui.screen.calendar.CalendarViewModel
+import it.attendance100.mybicocca.ui.screen.calendar.calendarSheetEntries
+import it.attendance100.mybicocca.ui.screen.calendar.openReservation
 import it.attendance100.mybicocca.ui.screen.calendar.subscreen.teacherDetail.TeacherDetailScreen
 import it.attendance100.mybicocca.ui.screen.elearning.ElearningScreen
 import it.attendance100.mybicocca.ui.screen.elearning.ElearningViewModel
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.addCourse.AddCourseViewModel
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.assignmentDetail.AssignmentDetailPage
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.CourseDetailScreen
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.courseDetail.CourseDetailViewModel
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.ExternalFileLauncher
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.FileViewerScreen
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.FileViewerViewModel
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.subscreen.officeOpen.OfficeOpenPage
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.subscreen.openChooser.FileOpenChooserContent
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.forum.ForumSheetPage
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail.QuizDetailPage
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.VideoPlayerScreen
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.VideoPlayerViewModel
 import it.attendance100.mybicocca.ui.screen.map.MapScreen
 import it.attendance100.mybicocca.ui.screen.map.MapViewModel
+import it.attendance100.mybicocca.ui.screen.map.mapSheetEntries
 import it.attendance100.mybicocca.ui.screen.profile.ProfileScreen
 import it.attendance100.mybicocca.ui.screen.profile.ProfileViewModel
 import it.attendance100.mybicocca.ui.screen.registry.RegistryScreen
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.AppelliPage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.BookedExamsViewModel
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.AppointmentsPage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.AppointmentsViewModel
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.AttendancePage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.AttendanceViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.BookableExamsViewModel
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.certificates.CertificatesPage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.certificates.CertificatesViewModel
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.enrollments.EnrollmentsTimelinePage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.enrollments.EnrollmentsViewModel
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.enrollments.enrollmentsHeader
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.enrollments.ext.academicYearLabel
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.enrollments.ext.courseYearLabel
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.enrollments.ext.statusLabel
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.enrollments.subscreen.yearDetail.EnrollmentDetailPage
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.examResults.ExamResultsPage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.examResults.ExamResultsViewModel
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.isee.IseeDeclarationsPage
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.isee.IseeDetailPage
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.isee.iseeDetailSubtitle
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.isee.iseeDetailTitle
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.isee.iseeHeader
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.LibraryPage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.LibraryViewModel
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.questionnaires.QuestionnairesPage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.questionnaires.QuestionnairesViewModel
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.refunds.RefundDetailPage
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.refunds.RefundsListPage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.refunds.RefundsViewModel
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.refunds.refundHeaderSubtitle
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.refunds.refundHeaderTitle
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.refunds.refundKey
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.refunds.refundsHeaderSubtitle
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlan.StudyPlanPage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlan.StudyPlanViewModel
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.TaxesPage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.TaxesViewModel
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.taxesHeaderSubtitle
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.titles.TitleDetailPage
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.titles.TitlesListPage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.titles.TitlesViewModel
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.titles.headline
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.titles.headlineSubtitle
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.titles.titlesHeaderSubtitle
 import it.attendance100.mybicocca.ui.screen.search.SearchOverlay
 import it.attendance100.mybicocca.ui.screen.search.SearchViewModel
 import it.attendance100.mybicocca.ui.screen.settings.SettingsScreen
@@ -187,7 +141,7 @@ import kotlinx.coroutines.launch
  * The signed-in shell: a Scaffold whose global chrome (morphing top bar, bottom tab bar, snackbar
  * host) frames one Navigation3 NavDisplay. [AppRoute.TabRoot] is always the root entry and hosts
  * the four-tab pager; full-screen sub-pages push over it, and modal sheets ([SheetRoute]) ride the
- * SAME back stack as overlay scenes via [BottomSheetSceneStrategy], floating over the current
+ * SAME back stack as overlay scenes via [ModalSceneStrategy], floating over the current
  * page. Hosting the pager INSIDE the TabRoot entry puts a list ticket and its detail page in the
  * same NavDisplay AnimatedContent, which is what makes list-to-detail shared-element morphs seek
  * with the predictive-back gesture; a SharedTransitionLayout around the NavDisplay provides the
@@ -210,10 +164,9 @@ import kotlinx.coroutines.launch
  * open a sheet close it.
  *
  * Tab and sheet ViewModels are hoisted at shell level so a sheet's pages share one owner that
- * outlives the sheet and eager fetches start on shell load; sheet detail pages resolve their item
- * from the live ViewModel stream against the top back-stack key, so an item evicted underneath an
- * open detail (e.g. by a career switch) collapses the header and pops the page back to its list
- * instead of rendering a stale snapshot.
+ * outlives the sheet and eager fetches start on shell load. The sheets themselves are declared by
+ * their features (`registrySheetEntries`, `calendarSheetEntries`, …); the shell only declares its
+ * full-screen pages.
  *
  * External entry points land here as well: an Affluences confirm/cancel email link opens the
  * Biblioteca sheet so its snackbar can report the outcome, a mod_attendance QR scanned outside
@@ -326,8 +279,7 @@ fun MainShell(
     val questionnairesViewModel: QuestionnairesViewModel = hiltViewModel()
 
     /**
-     * Hoisted so the whole Appuntamenti modal (reservations + booking wizard) shares one owner;
-     * opened as a shell sheet rather than a back-stack route.
+     * Hoisted so the whole Appuntamenti modal (reservations + booking wizard) shares one owner.
      */
     val appointmentsViewModel: AppointmentsViewModel = hiltViewModel()
     val libraryViewModel: LibraryViewModel = hiltViewModel()
@@ -357,7 +309,7 @@ fun MainShell(
             .distinctUntilChanged()
             .flowOn(Dispatchers.Default)
     }
-    val examBookingTotals by examBookingTotalsFlow.collectAsStateWithLifecycle(
+    val examBookingTotals = examBookingTotalsFlow.collectAsStateWithLifecycle(
         initialValue = emptyMap(),
     )
 
@@ -367,20 +319,6 @@ fun MainShell(
             .orEmpty()
             .firstOrNull { examCalendarEventId(it.key) == examEvent.id }
             ?.let(bookedExamsViewModel::loadTotalBookings)
-    }
-
-    /**
-     * "Vai alla prenotazione" on a calendar event: the managing sheet (appelli / appuntamenti /
-     * biblioteca) opens as a sheet STACKED over the still-open event sheet, so dismissing it lands
-     * back on the event.
-     */
-    val openReservation: (CalendarEvent) -> Unit = { event ->
-        when (event) {
-            is CalendarEvent.Exam -> navigator.navigate(SheetRoute.Appelli)
-            is CalendarEvent.Appointment -> navigator.navigate(SheetRoute.Appointments)
-            is CalendarEvent.LibraryReservation -> navigator.navigate(SheetRoute.Library)
-            else -> Unit
-        }
     }
 
     /**
@@ -413,7 +351,7 @@ fun MainShell(
      * this whenever a sheet opens, dropping the page's title / actions / back arrow from
      * the chrome (which sits dimmed behind the sheet) and animating them away.
      */
-    val currentRoute = navigator.currentPage.route as AppRoute
+    val currentRoute by remember(navigator) { derivedStateOf { navigator.currentPage.route as AppRoute } }
 
     /** Renders sheet routes as modal overlay scenes; remembered so scenes stay stable. */
     val sceneStrategies = remember(navigator) {
@@ -423,8 +361,8 @@ fun MainShell(
     val presenceDeepLinkViewModel: PresenceDeepLinkViewModel = hiltViewModel()
     val pendingPresenceScan by presenceDeepLinkViewModel.pending.collectAsStateWithLifecycle()
 
-    val isOnSubPage = currentRoute?.isSubPage == true
-    val subPageTitle = (currentRoute?.appTitle as? AppTitle.SubPage)?.title
+    val isOnSubPage = currentRoute.isSubPage == true
+    val subPageTitle = (currentRoute.appTitle as? AppTitle.SubPage)?.title
 
     /**
      * Video playback and the file viewer are immersive: the global chrome is hidden and the page
@@ -575,12 +513,9 @@ fun MainShell(
         onSubmit = searchViewModel::submit,
     )
 
-    val bottomBarItems = ShellTab.entries.map {
-        BottomBarItem(
-            key = it,
-            label = stringResource(it.labelRes),
-            icon = it.icon
-        )
+    val tabLabels = ShellTab.entries.map { stringResource(it.labelRes) }
+    val bottomBarItems = remember(tabLabels) {
+        ShellTab.entries.mapIndexed { index, tab -> BottomBarItem(key = tab, label = tabLabels[index], icon = tab.icon) }
     }
 
     val snackbarController = rememberAppSnackbarController()
@@ -708,7 +643,7 @@ fun MainShell(
                         onFilterToggle = filterToggle,
                         filterActive = filterActive,
                         trailingActions = subPageActions,
-                        transparentBackground = currentRoute?.extendsBehindTopBar == true &&
+                        transparentBackground = currentRoute.extendsBehindTopBar == true &&
                                 subPageTitleOverride == null,
                     )
                 },
@@ -729,754 +664,294 @@ fun MainShell(
                 Box(modifier = Modifier.fillMaxSize()) {
                     SharedTransitionLayout(modifier = Modifier.fillMaxSize()) {
                         CompositionLocalProvider(LocalSharedTransitionScope provides this) {
-                            /**
-                             * The decorated entries of the whole stack (per-entry saveable state and
-                             * ViewModel store, keyed by each push's unique id). Built here rather
-                             * than inside NavDisplay so the modal sheets — which NavDisplay keeps
-                             * as one stable overlay per sheet — can render their pages from the
-                             * live stack through [LocalModalEntries].
-                             */
-                            val shellEntries = rememberDecoratedNavEntries(
-                                backStack = navigator.keys,
-                                entryDecorators = listOf(
-                                    rememberSaveableStateHolderNavEntryDecorator(),
-                                    rememberViewModelStoreNavEntryDecorator(),
-                                    rememberEntryPopActionsDecorator(),
-                                ),
-                                entryProvider = destinationEntryProvider(entryProvider {
-                                    entry<AppRoute.TabRoot> {
-                                        /**
-                                         * NavDisplay's AnimatedContentScope for this entry, bridged into
-                                         * LocalAnimatedContentScope so the tabs' list tickets can be true
-                                         * shared elements that seek into the detail entry.
-                                         */
-                                        val tabRootScope = LocalNavAnimatedContentScope.current
+                            ShellNavDisplay(
+                                navigator = navigator,
+                                sceneStrategies = sceneStrategies,
+                                transitionSpec = { enterTransition togetherWith exitTransition },
+                                popTransitionSpec = { popEnterTransition togetherWith popExitTransition },
+                            ) {
+                                entry<AppRoute.TabRoot> {
+                                    /**
+                                     * NavDisplay's AnimatedContentScope for this entry, bridged into
+                                     * LocalAnimatedContentScope so the tabs' list tickets can be true
+                                     * shared elements that seek into the detail entry.
+                                     */
+                                    val tabRootScope = LocalNavAnimatedContentScope.current
 
-                                        /**
-                                         * The bar/bottom-bar morph fraction published off THIS entry's
-                                         * enter/exit. animateFloat rides the same (seekable) transition that
-                                         * slides the page and seeks the shared elements, so the chrome tracks
-                                         * the predictive-back gesture frame-for-frame. Presence is 1 when
-                                         * TabRoot fully covers the screen and 0 once a sub-page has fully
-                                         * replaced it.
-                                         */
-                                        val tabRootPresence = tabRootScope.transition.animateFloat(
-                                            transitionSpec = { motion.defaultSpatialSpec() },
-                                            label = "tabRootPresence",
-                                        ) { state -> if (state == EnterExitState.Visible) 1f else 0f }
-                                        LaunchedEffect(tabRootPresence) {
-                                            snapshotFlow { tabRootPresence.value }
-                                                .collect { navProgress.floatValue = 1f - it }
-                                        }
-                                        CompositionLocalProvider(
-                                            LocalAnimatedContentScope provides tabRootScope,
-                                        ) {
-                                            HorizontalPager(
-                                                state = pagerState,
-                                                beyondViewportPageCount = ShellTab.entries.size - 1,
-                                                userScrollEnabled = false,
-                                                modifier = Modifier.fillMaxSize(),
-                                            ) { page ->
-                                                val pageTab = ShellTab.entries[page]
-                                                val isActive = page == pagerState.settledPage
-                                                val onProvideFilterToggle: ((() -> Unit)?) -> Unit =
-                                                    { filterToggle = it }
+                                    /**
+                                     * The bar/bottom-bar morph fraction published off THIS entry's
+                                     * enter/exit. animateFloat rides the same (seekable) transition that
+                                     * slides the page and seeks the shared elements, so the chrome tracks
+                                     * the predictive-back gesture frame-for-frame. Presence is 1 when
+                                     * TabRoot fully covers the screen and 0 once a sub-page has fully
+                                     * replaced it.
+                                     */
+                                    val tabRootPresence = tabRootScope.transition.animateFloat(
+                                        transitionSpec = { motion.defaultSpatialSpec() },
+                                        label = "tabRootPresence",
+                                    ) { state -> if (state == EnterExitState.Visible) 1f else 0f }
+                                    LaunchedEffect(tabRootPresence) {
+                                        snapshotFlow { tabRootPresence.value }
+                                            .collect { navProgress.floatValue = 1f - it }
+                                    }
+                                    CompositionLocalProvider(
+                                        LocalAnimatedContentScope provides tabRootScope,
+                                    ) {
+                                        HorizontalPager(
+                                            state = pagerState,
+                                            beyondViewportPageCount = ShellTab.entries.size - 1,
+                                            userScrollEnabled = false,
+                                            modifier = Modifier.fillMaxSize(),
+                                        ) { page ->
+                                            val pageTab = ShellTab.entries[page]
+                                            val isActive = page == pagerState.settledPage
+                                            val onProvideFilterToggle: ((() -> Unit)?) -> Unit =
+                                                { filterToggle = it }
 
-                                                /** The map renders behind the floating top bar; other tabs inset under both bars. */
-                                                val pagePadding = if (pageTab == ShellTab.Map) {
-                                                    PaddingValues(bottom = innerPadding.calculateBottomPadding())
-                                                } else {
-                                                    innerPadding
-                                                }
-                                                Box(
-                                                    modifier = Modifier
-                                                        .fillMaxSize()
-                                                        .padding(pagePadding)
-                                                ) {
-                                                    when (pageTab) {
-                                                        ShellTab.Calendar -> CalendarScreen(
-                                                            viewModel = calendarViewModel,
-                                                            isActive = isActive,
-                                                            examBookingTotals = examBookingTotals,
-                                                            onExamEventShown = onExamEventShown,
-                                                            coverProgress = remember {
-                                                                derivedStateOf {
-                                                                    maxOf(
-                                                                        navProgress.floatValue,
-                                                                        searchProgress.value,
-                                                                    )
-                                                                }
-                                                            },
-                                                            onProvideFilterToggle = onProvideFilterToggle,
-                                                            onOpenCourse = { courseId ->
-                                                                navigator.navigate(
-                                                                    AppRoute.CourseDetail(
-                                                                        courseId.value
-                                                                    )
+                                            /** The map renders behind the floating top bar; other tabs inset under both bars. */
+                                            val pagePadding = if (pageTab == ShellTab.Map) {
+                                                PaddingValues(bottom = innerPadding.calculateBottomPadding())
+                                            } else {
+                                                innerPadding
+                                            }
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxSize()
+                                                    .padding(pagePadding)
+                                            ) {
+                                                when (pageTab) {
+                                                    ShellTab.Calendar -> CalendarScreen(
+                                                        viewModel = calendarViewModel,
+                                                        isActive = isActive,
+                                                        examBookingTotals = examBookingTotals.value,
+                                                        onExamEventShown = onExamEventShown,
+                                                        coverProgress = remember {
+                                                            derivedStateOf {
+                                                                maxOf(
+                                                                    navProgress.floatValue,
+                                                                    searchProgress.value,
                                                                 )
-                                                            },
-                                                            onOpenAssignment = { assignmentId, courseId ->
-                                                                navigator.navigate(
-                                                                    SheetRoute.AssignmentDetail(
-                                                                        assignId = assignmentId,
-                                                                        courseId = courseId,
-                                                                    )
+                                                            }
+                                                        },
+                                                        onProvideFilterToggle = onProvideFilterToggle,
+                                                        onOpenCourse = { courseId ->
+                                                            navigator.navigate(
+                                                                AppRoute.CourseDetail(
+                                                                    courseId.value
                                                                 )
-                                                            },
-                                                            onOpenReservation = openReservation,
-                                                            bottomNavBarPadding = innerPadding,
-                                                        )
+                                                            )
+                                                        },
+                                                        onOpenAssignment = { assignmentId, courseId ->
+                                                            navigator.navigate(
+                                                                SheetRoute.AssignmentDetail(
+                                                                    assignId = assignmentId,
+                                                                    courseId = courseId,
+                                                                )
+                                                            )
+                                                        },
+                                                        onOpenReservation = navigator::openReservation,
+                                                        bottomNavBarPadding = innerPadding,
+                                                    )
 
-                                                        ShellTab.Elearning -> ElearningScreen(
-                                                            viewModel = elearningViewModel,
-                                                            isActive = isActive,
-                                                            onProvideFilterToggle = onProvideFilterToggle,
-                                                            onOpenCourse = { courseId ->
-                                                                navigator.navigate(
-                                                                    AppRoute.CourseDetail(
-                                                                        courseId.value
-                                                                    )
+                                                    ShellTab.Elearning -> ElearningScreen(
+                                                        viewModel = elearningViewModel,
+                                                        isActive = isActive,
+                                                        onProvideFilterToggle = onProvideFilterToggle,
+                                                        onOpenCourse = { courseId ->
+                                                            navigator.navigate(
+                                                                AppRoute.CourseDetail(
+                                                                    courseId.value
                                                                 )
-                                                            },
-                                                            onOpenAssignment = { courseId, assignmentId ->
-                                                                navigator.navigate(
-                                                                    SheetRoute.AssignmentDetail(
-                                                                        assignId = assignmentId.value,
-                                                                        courseId = courseId.value,
-                                                                    )
+                                                            )
+                                                        },
+                                                        onOpenAssignment = { courseId, assignmentId ->
+                                                            navigator.navigate(
+                                                                SheetRoute.AssignmentDetail(
+                                                                    assignId = assignmentId.value,
+                                                                    courseId = courseId.value,
                                                                 )
-                                                            },
-                                                            onOpenQuiz = { courseId, quizId ->
-                                                                navigator.navigate(
-                                                                    SheetRoute.QuizDetail(
-                                                                        quizId = quizId.value,
-                                                                        courseId = courseId.value,
-                                                                    )
+                                                            )
+                                                        },
+                                                        onOpenQuiz = { courseId, quizId ->
+                                                            navigator.navigate(
+                                                                SheetRoute.QuizDetail(
+                                                                    quizId = quizId.value,
+                                                                    courseId = courseId.value,
                                                                 )
-                                                            },
-                                                        )
+                                                            )
+                                                        },
+                                                    )
 
-                                                        ShellTab.Map -> MapScreen(
-                                                            viewModel = mapViewModel,
-                                                            isActive = isActive,
-                                                            contentInsets = innerPadding,
-                                                            onProvideFilterToggle = onProvideFilterToggle,
-                                                        )
+                                                    ShellTab.Map -> MapScreen(
+                                                        viewModel = mapViewModel,
+                                                        isActive = isActive,
+                                                        contentInsets = innerPadding,
+                                                        onProvideFilterToggle = onProvideFilterToggle,
+                                                    )
 
-                                                        ShellTab.Registry -> RegistryScreen(
-                                                            bookedExamsViewModel = bookedExamsViewModel,
-                                                            bookableExamsViewModel = bookableExamsViewModel,
-                                                            taxesViewModel = taxesViewModel,
-                                                            examResultsViewModel = examResultsViewModel,
-                                                            studyPlanViewModel = studyPlanViewModel,
-                                                            isActive = isActive,
-                                                            onOpenAppelli = {
-                                                                navigator.navigate(SheetRoute.Appelli)
-                                                            },
-                                                            onOpenTaxes = {
-                                                                navigator.navigate(SheetRoute.Taxes)
-                                                            },
-                                                            onOpenIsee = {
-                                                                navigator.navigate(SheetRoute.Isee)
-                                                            },
-                                                            onOpenRefunds = {
-                                                                navigator.navigate(SheetRoute.Refunds)
-                                                            },
-                                                            onOpenExamResults = {
-                                                                navigator.navigate(SheetRoute.ExamResults)
-                                                            },
-                                                            onOpenStudyPlan = {
-                                                                navigator.navigate(SheetRoute.StudyPlan)
-                                                            },
-                                                            onOpenQuestionnaires = {
-                                                                navigator.navigate(SheetRoute.Questionnaires)
-                                                            },
-                                                            onOpenAppointments = {
-                                                                navigator.navigate(SheetRoute.Appointments)
-                                                            },
-                                                            onOpenLibrary = {
-                                                                navigator.navigate(SheetRoute.Library)
-                                                            },
-                                                            onOpenAttendance = {
-                                                                navigator.navigate(SheetRoute.Attendance)
-                                                            },
-                                                            onOpenEnrollments = {
-                                                                navigator.navigate(SheetRoute.Enrollments)
-                                                            },
-                                                            onOpenTitles = {
-                                                                navigator.navigate(SheetRoute.Titles)
-                                                            },
-                                                            onOpenCertificates = {
-                                                                navigator.navigate(SheetRoute.Certificates)
-                                                            },
-                                                            onProvideFilterToggle = onProvideFilterToggle,
-                                                        )
-                                                    }
+                                                    ShellTab.Registry -> RegistryScreen(
+                                                        bookedExamsViewModel = bookedExamsViewModel,
+                                                        bookableExamsViewModel = bookableExamsViewModel,
+                                                        taxesViewModel = taxesViewModel,
+                                                        examResultsViewModel = examResultsViewModel,
+                                                        studyPlanViewModel = studyPlanViewModel,
+                                                        isActive = isActive,
+                                                        onProvideFilterToggle = onProvideFilterToggle,
+                                                    )
                                                 }
                                             }
                                         }
                                     }
+                                }
 
-                                    entry<AppRoute.Profile> {
-                                        SubPage(topInset) {
-                                            ProfileScreen(viewModel = profileViewModel)
-                                        }
+                                entry<AppRoute.Profile> {
+                                    SubPage(topInset) {
+                                        ProfileScreen(viewModel = profileViewModel)
                                     }
-                                    entry<AppRoute.Settings> {
-                                        SubPage(topInset) { SettingsScreen() }
-                                    }
+                                }
+                                entry<AppRoute.Settings> {
+                                    SubPage(topInset) { SettingsScreen() }
+                                }
 
-                                    entry<AppRoute.CourseDetail> { key ->
-                                        val vm =
-                                            hiltViewModel<CourseDetailViewModel, CourseDetailViewModel.Factory>(
-                                                creationCallback = { it.create(key) },
-                                            )
-                                        SubPage(
-                                            topInset,
-                                            extendBehindBar = key.extendsBehindTopBar
-                                        ) {
-                                            CourseDetailScreen(
-                                                courseId = key.courseId,
-                                                topBarInset = topInset,
-                                                viewModel = vm,
-                                                onProvideTitle = { subPageTitleOverride = it },
-                                                onProvideActions = { subPageActions = it },
-                                                onOpenAssignment = { id ->
-                                                    navigator.navigate(
-                                                        SheetRoute.AssignmentDetail(
-                                                            assignId = id.value,
-                                                            courseId = key.courseId,
-                                                        )
-                                                    )
-                                                },
-                                                onOpenQuiz = { id ->
-                                                    navigator.navigate(
-                                                        SheetRoute.QuizDetail(
-                                                            quizId = id.value,
-                                                            courseId = key.courseId,
-                                                        )
-                                                    )
-                                                },
-                                                onOpenForum = { id ->
-                                                    navigator.navigate(
-                                                        SheetRoute.Forum(
-                                                            forumId = id.value,
-                                                            courseId = key.courseId,
-                                                        )
-                                                    )
-                                                },
-                                                onOpenDiscussion = { forumId, discussionId ->
-                                                    navigator.navigate(
-                                                        SheetRoute.Forum(
-                                                            forumId = forumId.value,
-                                                            courseId = key.courseId,
-                                                            initialDiscussionId = discussionId.value,
-                                                        )
-                                                    )
-                                                },
-                                                onOpenVideo = { cmId, title ->
-                                                    navigator.navigate(
-                                                        AppRoute.VideoPlayback(
-                                                            courseId = key.courseId,
-                                                            cmId = cmId,
-                                                            title = title
-                                                        )
-                                                    )
-                                                },
-                                                onOpenFile = openFile,
-                                            )
-                                        }
-                                    }
-                                    entry<AppRoute.FileViewer> { key ->
-                                        val vm =
-                                            hiltViewModel<FileViewerViewModel, FileViewerViewModel.Factory>(
-                                                creationCallback = { it.create(key) },
-                                            )
-                                        val close = rememberPopSelf()
-                                        SubPage(topInset, immersive = true) {
-                                            FileViewerScreen(
-                                                onOpenFile = openFile,
-                                                onClose = close,
-                                                viewModel = vm,
-                                            )
-                                        }
-                                    }
-
-                                    entry<AppRoute.VideoPlayback> { key ->
-                                        val vm =
-                                            hiltViewModel<VideoPlayerViewModel, VideoPlayerViewModel.Factory>(
-                                                creationCallback = { it.create(key) },
-                                            )
-                                        val close = rememberPopSelf()
-                                        SubPage(topInset, immersive = true) {
-                                            VideoPlayerScreen(
-                                                courseId = key.courseId,
-                                                cmId = key.cmId,
-                                                onBack = close,
-                                                viewModel = vm,
-                                            )
-                                        }
-                                    }
-                                    entry<AppRoute.TeacherDetail> { key ->
-                                        SubPage(topInset) { TeacherDetailScreen(teacherCode = key.teacherCode) }
-                                    }
-
-                                    entry<SheetRoute.Enrollments>(
-                                        metadata = sheetHeader<SheetRoute.Enrollments> {
-                                            val history by enrollmentsViewModel.history
-                                                .collectAsStateWithLifecycle()
-                                            enrollmentsHeader(history.valueOrNull())
-                                        },
-                                    ) {
-                                        EnrollmentsTimelinePage(
-                                            viewModel = enrollmentsViewModel,
-                                            onOpenDetail = { id ->
-                                                navigator.navigate(SheetRoute.EnrollmentDetail(id.value))
-                                            },
+                                entry<AppRoute.CourseDetail> { key ->
+                                    val vm =
+                                        hiltViewModel<CourseDetailViewModel, CourseDetailViewModel.Factory>(
+                                            creationCallback = { it.create(key) },
                                         )
-                                    }
-                                    entry<SheetRoute.EnrollmentDetail>(
-                                        metadata = sheetHeader<SheetRoute.EnrollmentDetail> {
-                                            val top = it
-                                            val history by enrollmentsViewModel.history
-                                                .collectAsStateWithLifecycle()
-                                            top?.let { k ->
-                                                history.valueOrNull()?.years
-                                                    ?.firstOrNull { it.id.value == k.enrollmentId }
-                                            }?.let { enrollment ->
-                                                SheetHeaderSpec(
-                                                    title = stringResource(
-                                                        R.string.enrollments_detail_title,
-                                                        enrollment.academicYearLabel()
-                                                    ),
-                                                    subtitle = "${enrollment.courseYearLabel()} · ${enrollment.statusLabel()}",
-                                                )
-                                            } ?: SheetHeaderSpec(
-                                                title = stringResource(R.string.registry_enrollments),
-                                                subtitle = null,
-                                            )
-                                        },
-                                    ) { key ->
-                                        val history by enrollmentsViewModel.history
-                                            .collectAsStateWithLifecycle()
-                                        val enrollment = history.valueOrNull()?.years
-                                            ?.firstOrNull { it.id.value == key.enrollmentId }
-                                        PopWhenMissing(loaded = history.valueOrNull() != null, missing = enrollment == null)
-                                        if (enrollment != null) {
-                                            EnrollmentDetailPage(enrollment = enrollment)
-                                        }
-                                    }
-                                    entry<SheetRoute.Titles>(
-                                        metadata = sheetHeader<SheetRoute.Titles> {
-                                            val titles by titlesViewModel.titles
-                                                .collectAsStateWithLifecycle()
-                                            SheetHeaderSpec(
-                                                title = stringResource(R.string.registry_titles),
-                                                subtitle = titles.valueOrNull()
-                                                    ?.let { titlesHeaderSubtitle(it) },
-                                            )
-                                        },
+                                    SubPage(
+                                        topInset,
+                                        extendBehindBar = key.extendsBehindTopBar
                                     ) {
-                                        TitlesListPage(
-                                            viewModel = titlesViewModel,
-                                            onOpenDetail = { id ->
-                                                navigator.navigate(
-                                                    SheetRoute.TitleDetail(
-                                                        id
-                                                    )
-                                                )
-                                            },
-                                        )
-                                    }
-                                    entry<SheetRoute.TitleDetail>(
-                                        metadata = sheetHeader<SheetRoute.TitleDetail> {
-                                            val top = it
-                                            val titles by titlesViewModel.titles
-                                                .collectAsStateWithLifecycle()
-                                            top?.let { k ->
-                                                titles.valueOrNull()
-                                                    ?.firstOrNull { it.id == k.titleId }
-                                            }?.let { title ->
-                                                SheetHeaderSpec(
-                                                    title = title.headline(),
-                                                    subtitle = title.headlineSubtitle(),
-                                                )
-                                            } ?: SheetHeaderSpec(
-                                                title = stringResource(R.string.registry_titles),
-                                                subtitle = null,
-                                            )
-                                        },
-                                    ) { key ->
-                                        val titles by titlesViewModel.titles
-                                            .collectAsStateWithLifecycle()
-                                        val title = titles.valueOrNull()
-                                            ?.firstOrNull { it.id == key.titleId }
-                                        PopWhenMissing(loaded = titles.valueOrNull() != null, missing = title == null)
-                                        if (title != null) TitleDetailPage(title = title)
-                                    }
-                                    entry<SheetRoute.Certificates>(metadata = sheetHeaderInPage()) {
-                                        CertificatesPage(viewModel = certificatesViewModel)
-                                    }
-                                    entry<SheetRoute.Refunds>(
-                                        metadata = sheetHeader<SheetRoute.Refunds> {
-                                            val refunds by refundsViewModel.refunds
-                                                .collectAsStateWithLifecycle()
-                                            SheetHeaderSpec(
-                                                title = stringResource(R.string.registry_refunds),
-                                                subtitle = refunds.valueOrNull()
-                                                    ?.let { refundsHeaderSubtitle(it) },
-                                            )
-                                        },
-                                    ) {
-                                        RefundsListPage(
-                                            viewModel = refundsViewModel,
-                                            onOpenDetail = { key ->
-                                                navigator.navigate(
-                                                    SheetRoute.RefundDetail(
-                                                        key
-                                                    )
-                                                )
-                                            },
-                                        )
-                                    }
-                                    entry<SheetRoute.RefundDetail>(
-                                        metadata = sheetHeader<SheetRoute.RefundDetail> {
-                                            val top = it
-                                            val refunds by refundsViewModel.refunds
-                                                .collectAsStateWithLifecycle()
-                                            top?.let { k ->
-                                                refunds.valueOrNull()
-                                                    ?.firstOrNull { it.refundKey() == k.refundKey }
-                                            }?.let { refund ->
-                                                SheetHeaderSpec(
-                                                    title = refundHeaderTitle(refund),
-                                                    subtitle = refundHeaderSubtitle(refund),
-                                                )
-                                            } ?: SheetHeaderSpec(
-                                                title = stringResource(R.string.registry_refunds),
-                                                subtitle = null,
-                                            )
-                                        },
-                                    ) { key ->
-                                        val refunds by refundsViewModel.refunds
-                                            .collectAsStateWithLifecycle()
-                                        val refund = refunds.valueOrNull()
-                                            ?.firstOrNull { it.refundKey() == key.refundKey }
-                                        PopWhenMissing(loaded = refunds.valueOrNull() != null, missing = refund == null)
-                                        if (refund != null) RefundDetailPage(refund = refund)
-                                    }
-                                    entry<SheetRoute.Isee>(
-                                        metadata = sheetHeader<SheetRoute.Isee> {
-                                            val state by taxesViewModel.isee
-                                                .collectAsStateWithLifecycle()
-                                            val declarations = state.valueOrNull()
-                                                ?.filter { it.isee != null && it.academicYearEnrollmentId != null }
-                                            iseeHeader(declarations)
-                                        },
-                                    ) {
-                                        IseeDeclarationsPage(
-                                            viewModel = taxesViewModel,
-                                            onOpenDetail = { year ->
-                                                navigator.navigate(
-                                                    SheetRoute.IseeDetail(
-                                                        year
-                                                    )
-                                                )
-                                            },
-                                        )
-                                    }
-                                    entry<SheetRoute.IseeDetail>(
-                                        metadata = sheetHeader<SheetRoute.IseeDetail> {
-                                            val top = it
-                                            val state by taxesViewModel.isee
-                                                .collectAsStateWithLifecycle()
-                                            top?.let { k ->
-                                                state.valueOrNull()
-                                                    ?.firstOrNull { it.academicYearEnrollmentId == k.year }
-                                            }?.let { declaration ->
-                                                SheetHeaderSpec(
-                                                    title = iseeDetailTitle(declaration),
-                                                    subtitle = iseeDetailSubtitle(declaration),
-                                                )
-                                            } ?: SheetHeaderSpec(
-                                                title = stringResource(R.string.registry_isee),
-                                                subtitle = null,
-                                            )
-                                        },
-                                    ) { key ->
-                                        val state by taxesViewModel.isee
-                                            .collectAsStateWithLifecycle()
-                                        val declaration = state.valueOrNull()
-                                            ?.firstOrNull { it.academicYearEnrollmentId == key.year }
-                                        PopWhenMissing(loaded = state.valueOrNull() != null, missing = declaration == null)
-                                        if (declaration != null) IseeDetailPage(declaration = declaration)
-                                    }
-                                    entry<SheetRoute.ExamResults>(metadata = sheetHeaderInPage()) {
-                                        ExamResultsPage(viewModel = examResultsViewModel)
-                                    }
-                                    entry<SheetRoute.Taxes>(
-                                        metadata = sheetHeader<SheetRoute.Taxes> {
-                                            val state by taxesViewModel.invoices
-                                                .collectAsStateWithLifecycle()
-                                            SheetHeaderSpec(
-                                                title = stringResource(R.string.registry_fees),
-                                                subtitle = state.valueOrNull()
-                                                    ?.let { taxesHeaderSubtitle(it) },
-                                            )
-                                        },
-                                    ) {
-                                        TaxesPage(viewModel = taxesViewModel)
-                                    }
-                                    entry<SheetRoute.QuizDetail>(metadata = sheetHeaderInPage()) { key ->
-                                        QuizDetailPage(
-                                            quizId = key.quizId,
+                                        CourseDetailScreen(
                                             courseId = key.courseId,
-                                        )
-                                    }
-                                    entry<SheetRoute.Forum>(metadata = sheetHeaderInPage()) { key ->
-                                        ForumSheetPage(
-                                            forumId = key.forumId,
-                                            courseId = key.courseId,
-                                            initialDiscussionId = key.initialDiscussionId,
-                                            onOpenFile = { fileName, fileUrl, mimeType, sizeBytes ->
-                                                openFile(
-                                                    AppRoute.FileViewer(
-                                                        fileName = fileName,
-                                                        fileUrl = fileUrl,
-                                                        mimeType = mimeType,
-                                                        sizeBytes = sizeBytes,
-                                                    ),
-                                                    false,
-                                                )
-                                            },
-                                        )
-                                    }
-                                    entry<SheetRoute.AssignmentDetail>(metadata = sheetHeaderInPage()) { key ->
-                                        AssignmentDetailPage(
-                                            assignId = key.assignId,
-                                            courseId = key.courseId,
-                                            onOpenFile = { fileName, fileUrl, mimeType, sizeBytes, forceChooser ->
-                                                openFile(
-                                                    AppRoute.FileViewer(
-                                                        fileName = fileName,
-                                                        fileUrl = fileUrl,
-                                                        mimeType = mimeType,
-                                                        sizeBytes = sizeBytes,
-                                                    ),
-                                                    forceChooser,
-                                                )
-                                            },
-                                        )
-                                    }
-                                    entry<SheetRoute.Attendance>(metadata = sheetHeaderInPage()) {
-                                        AttendancePage(viewModel = attendanceViewModel)
-                                    }
-                                    entry<SheetRoute.Appelli>(metadata = sheetHeaderInPage()) {
-                                        AppelliPage(
-                                            bookableViewModel = bookableExamsViewModel,
-                                            viewModel = bookedExamsViewModel,
-                                        )
-                                    }
-                                    entry<SheetRoute.StudyPlan>(metadata = sheetHeaderInPage()) {
-                                        StudyPlanPage(viewModel = studyPlanViewModel)
-                                    }
-                                    entry<SheetRoute.Questionnaires>(metadata = sheetHeaderInPage()) {
-                                        QuestionnairesPage(viewModel = questionnairesViewModel)
-                                    }
-                                    entry<SheetRoute.Appointments>(metadata = sheetHeaderInPage()) {
-                                        AppointmentsPage(
-                                            viewModel = appointmentsViewModel,
-                                            onOpenPdf = { path, name ->
+                                            topBarInset = topInset,
+                                            viewModel = vm,
+                                            onProvideTitle = { subPageTitleOverride = it },
+                                            onProvideActions = { subPageActions = it },
+                                            onOpenAssignment = { id ->
                                                 navigator.navigate(
-                                                    AppRoute.FileViewer(
-                                                        fileName = name,
-                                                        localPath = path,
-                                                        mimeType = "application/pdf",
+                                                    SheetRoute.AssignmentDetail(
+                                                        assignId = id.value,
+                                                        courseId = key.courseId,
                                                     )
                                                 )
                                             },
-                                        )
-                                    }
-                                    entry<SheetRoute.Library>(metadata = sheetHeaderInPage()) {
-                                        LibraryPage(viewModel = libraryViewModel)
-                                    }
-                                    entry<SheetRoute.CalendarEvent>(
-                                        metadata = sheetHeader<SheetRoute.CalendarEvent> { route ->
-                                            val monthEvents by calendarViewModel.events
-                                                .collectAsStateWithLifecycle()
-                                            val dayEvents by calendarViewModel.dayEvents
-                                                .collectAsStateWithLifecycle()
-                                            val live = monthEvents.valueOrNull()
-                                                ?.firstOrNull { it.id.value == route.eventId }
-                                                ?: dayEvents.valueOrNull()
-                                                    ?.firstOrNull { it.id.value == route.eventId }
-                                            // Keep the last header while the event closes.
-                                            val last = remember { arrayOf<CalendarEvent?>(null) }
-                                            if (live != null) last[0] = live
-                                            eventDetailHeader(live ?: last[0])
-                                        },
-                                    ) { key ->
-                                        val monthEvents by calendarViewModel.events
-                                            .collectAsStateWithLifecycle()
-                                        val dayEvents by calendarViewModel.dayEvents
-                                            .collectAsStateWithLifecycle()
-                                        val coursesByActivityCode by calendarViewModel
-                                            .coursesByActivityCode.collectAsStateWithLifecycle()
-                                        val liveEvent = monthEvents.valueOrNull()
-                                            ?.firstOrNull { it.id.value == key.eventId }
-                                            ?: dayEvents.valueOrNull()
-                                                ?.firstOrNull { it.id.value == key.eventId }
-                                        PopWhenMissing(
-                                            loaded = monthEvents.valueOrNull() != null,
-                                            missing = liveEvent == null,
-                                            onlyAfterSeen = true,
-                                        )
-                                        // Keep showing the event while it closes (or while a
-                                        // sheet stacked above it removed it, e.g. a cancelled
-                                        // booking) instead of blanking the page.
-                                        val lastEvent = remember { arrayOf<CalendarEvent?>(null) }
-                                        if (liveEvent != null) lastEvent[0] = liveEvent
-                                        val event = liveEvent ?: lastEvent[0]
-                                        if (event != null) {
-                                            LaunchedEffect(event.id) {
-                                                (event as? CalendarEvent.Exam)?.let(onExamEventShown)
-                                            }
-                                            val closeEvent = rememberPopSelf()
-                                            EventDetailPage(
-                                                event = event,
-                                                examTotalBookings = (event as? CalendarEvent.Exam)
-                                                    ?.let { examBookingTotals[it.id] },
-                                                elearningCourses = event.activityCode
-                                                    ?.let(coursesByActivityCode::get).orEmpty(),
-                                                onOpenCourse = { course ->
-                                                    closeEvent()
-                                                    navigator.navigate(AppRoute.CourseDetail(course.value))
-                                                },
-                                                onOpenAssignment = { assignmentId, courseId ->
-                                                    closeEvent()
-                                                    navigator.navigate(
-                                                        SheetRoute.AssignmentDetail(assignmentId, courseId),
+                                            onOpenQuiz = { id ->
+                                                navigator.navigate(
+                                                    SheetRoute.QuizDetail(
+                                                        quizId = id.value,
+                                                        courseId = key.courseId,
                                                     )
-                                                },
-                                                onOpenReservation = openReservation,
-                                            )
-                                        }
-                                    }
-                                    entry<SheetRoute.CourseEditionPicker>(
-                                        metadata = sheetHeader<SheetRoute.CourseEditionPicker> { route ->
-                                            val coursesByActivityCode by calendarViewModel
-                                                .coursesByActivityCode.collectAsStateWithLifecycle()
-                                            courseEditionPickerHeader(
-                                                count = coursesByActivityCode[route.activityCode].orEmpty().size,
-                                            )
-                                        },
-                                    ) { key ->
-                                        val coursesByActivityCode by calendarViewModel
-                                            .coursesByActivityCode.collectAsStateWithLifecycle()
-                                        val self = checkNotNull(LocalDestination.current)
-                                        CourseEditionPickerPage(
-                                            courses = coursesByActivityCode[key.activityCode].orEmpty(),
-                                            onPick = { courseId ->
-                                                // Leave the whole sheet the picker belongs to (the
-                                                // event sheet when it was opened from there).
-                                                navigator.dismissSheetOf(self.id)
-                                                navigator.navigate(AppRoute.CourseDetail(courseId.value))
+                                                )
                                             },
-                                        )
-                                    }
-                                    entry<SheetRoute.AccountSwitcher>(
-                                        metadata = sheetHeaderInPage() + sheetStyle(AccountSwitcherSheetStyle),
-                                    ) {
-                                        AccountSwitcherPage(
-                                            onOpenProfile = { navigator.navigate(AppRoute.Profile) },
-                                            onOpenSettings = { navigator.navigate(AppRoute.Settings) },
-                                            viewModel = accountViewModel,
-                                        )
-                                    }
-                                    entry<SheetRoute.OfficeOpen>(
-                                        metadata = sheetHeader<SheetRoute.OfficeOpen> { route ->
-                                            officeOpenHeader(app = route.app, file = route.file)
-                                        },
-                                    ) { key ->
-                                        OfficeOpenPage(app = key.app, route = key.file)
-                                    }
-                                    entry<SheetRoute.MapFilter>(
-                                        metadata = sheetHeader<SheetRoute.MapFilter> {
-                                            val categoryFilter by mapViewModel.categoryFilter
-                                                .collectAsStateWithLifecycle()
-                                            mapFilterHeader(selectedCount = categoryFilter.size)
-                                        },
-                                    ) {
-                                        val categoryFilter by mapViewModel.categoryFilter
-                                            .collectAsStateWithLifecycle()
-                                        MapFilterPage(
-                                            selected = categoryFilter,
-                                            onToggle = mapViewModel::toggleCategory,
-                                            onClear = mapViewModel::clearCategories,
-                                        )
-                                    }
-                                    settingsSheetEntries(fileOpenViewModel = fileOpenViewModel)
-                                    profileSheetEntries(
-                                        profileViewModel = profileViewModel,
-                                        onOpenAppelli = { courseKey ->
-                                            // A libretto course deep-links into booking: land on the
-                                            // Servizi tab with the Appelli sheet focused on it.
-                                            bookableExamsViewModel.requestFocus(courseKey)
-                                            scope.launch {
-                                                pagerState.scrollToPage(ShellTab.Registry.ordinal)
-                                            }
-                                            navigator.navigate(SheetRoute.Appelli)
-                                        },
-                                    )
-                                    registrySheetEntries(
-                                        bookedExamsViewModel = bookedExamsViewModel,
-                                        bookableExamsViewModel = bookableExamsViewModel,
-                                        taxesViewModel = taxesViewModel,
-                                        examResultsViewModel = examResultsViewModel,
-                                        studyPlanViewModel = studyPlanViewModel,
-                                    )
-                                    elearningSheetEntries(
-                                        elearningViewModel = elearningViewModel,
-                                        addCourseViewModel = addCourseViewModel,
-                                        snackbarController = snackbarController,
-                                        scope = scope,
-                                    )
-                                    entry<SheetRoute.FileOpenChooser>(
-                                        metadata = sheetHeader<SheetRoute.FileOpenChooser> { route ->
-                                            fileOpenChooserHeader(route.file)
-                                        },
-                                    ) { key ->
-                                        val closeChooser = rememberPopSelf()
-                                        val kind = remember(key) {
-                                            FileKind.classify(key.file.fileName, key.file.mimeType)
-                                        }
-                                        FileOpenChooserContent(
-                                            kind = kind,
-                                            onChoose = { choice, rememberChoice ->
-                                                kind.preferenceKey
-                                                    ?.takeIf { rememberChoice }
-                                                    ?.let { fileOpenViewModel.remember(it, choice) }
-                                                closeChooser()
-                                                when (choice) {
-                                                    FileOpenChoice.InApp -> navigator.navigate(key.file)
-                                                    FileOpenChoice.External -> externalFile =
-                                                        key.file
-                                                }
+                                            onOpenForum = { id ->
+                                                navigator.navigate(
+                                                    SheetRoute.Forum(
+                                                        forumId = id.value,
+                                                        courseId = key.courseId,
+                                                    )
+                                                )
                                             },
+                                            onOpenDiscussion = { forumId, discussionId ->
+                                                navigator.navigate(
+                                                    SheetRoute.Forum(
+                                                        forumId = forumId.value,
+                                                        courseId = key.courseId,
+                                                        initialDiscussionId = discussionId.value,
+                                                    )
+                                                )
+                                            },
+                                            onOpenVideo = { cmId, title ->
+                                                navigator.navigate(
+                                                    AppRoute.VideoPlayback(
+                                                        courseId = key.courseId,
+                                                        cmId = cmId,
+                                                        title = title
+                                                    )
+                                                )
+                                            },
+                                            onOpenFile = openFile,
                                         )
                                     }
-                                }),
-                            )
-                            CompositionLocalProvider(LocalModalEntries provides shellEntries) {
-                                NavDisplay(
-                                    entries = shellEntries,
-                                    onBack = { navigator.back() },
-                                    modifier = Modifier.fillMaxSize(),
-                                    sceneStrategies = sceneStrategies,
-                                    transitionSpec = { enterTransition togetherWith exitTransition },
-                                    popTransitionSpec = { popEnterTransition togetherWith popExitTransition },
-                                    predictivePopTransitionSpec = { popEnterTransition togetherWith popExitTransition },
+                                }
+                                entry<AppRoute.FileViewer> { key ->
+                                    val vm =
+                                        hiltViewModel<FileViewerViewModel, FileViewerViewModel.Factory>(
+                                            creationCallback = { it.create(key) },
+                                        )
+                                    val close = rememberPopSelf()
+                                    SubPage(topInset, immersive = true) {
+                                        FileViewerScreen(
+                                            onOpenFile = openFile,
+                                            onClose = close,
+                                            viewModel = vm,
+                                        )
+                                    }
+                                }
+
+                                entry<AppRoute.VideoPlayback> { key ->
+                                    val vm =
+                                        hiltViewModel<VideoPlayerViewModel, VideoPlayerViewModel.Factory>(
+                                            creationCallback = { it.create(key) },
+                                        )
+                                    val close = rememberPopSelf()
+                                    SubPage(topInset, immersive = true) {
+                                        VideoPlayerScreen(
+                                            courseId = key.courseId,
+                                            cmId = key.cmId,
+                                            onBack = close,
+                                            viewModel = vm,
+                                        )
+                                    }
+                                }
+                                entry<AppRoute.TeacherDetail> { key ->
+                                    SubPage(topInset) { TeacherDetailScreen(teacherCode = key.teacherCode) }
+                                }
+
+                                settingsSheetEntries(fileOpenViewModel = fileOpenViewModel)
+                                profileSheetEntries(
+                                    profileViewModel = profileViewModel,
+                                    onOpenAppelli = { courseKey ->
+                                        // A libretto course deep-links into booking: land on the
+                                        // Servizi tab with the Appelli sheet focused on it.
+                                        bookableExamsViewModel.requestFocus(courseKey)
+                                        scope.launch {
+                                            pagerState.scrollToPage(ShellTab.Registry.ordinal)
+                                        }
+                                        navigator.navigate(SheetRoute.Appelli)
+                                    },
                                 )
+                                registrySheetEntries(
+                                    bookedExamsViewModel = bookedExamsViewModel,
+                                    bookableExamsViewModel = bookableExamsViewModel,
+                                    taxesViewModel = taxesViewModel,
+                                    examResultsViewModel = examResultsViewModel,
+                                    studyPlanViewModel = studyPlanViewModel,
+                                    enrollmentsViewModel = enrollmentsViewModel,
+                                    titlesViewModel = titlesViewModel,
+                                    certificatesViewModel = certificatesViewModel,
+                                    refundsViewModel = refundsViewModel,
+                                    attendanceViewModel = attendanceViewModel,
+                                    questionnairesViewModel = questionnairesViewModel,
+                                    appointmentsViewModel = appointmentsViewModel,
+                                    libraryViewModel = libraryViewModel,
+                                )
+                                calendarSheetEntries(
+                                    calendarViewModel = calendarViewModel,
+                                    examBookingTotals = examBookingTotals,
+                                    onExamEventShown = onExamEventShown,
+                                )
+                                elearningSheetEntries(
+                                    elearningViewModel = elearningViewModel,
+                                    addCourseViewModel = addCourseViewModel,
+                                    fileOpenViewModel = fileOpenViewModel,
+                                    snackbarController = snackbarController,
+                                    scope = scope,
+                                    openFile = openFile,
+                                    openExternally = { externalFile = it },
+                                )
+                                accountSheetEntries(accountViewModel = accountViewModel)
+                                mapSheetEntries(mapViewModel = mapViewModel)
                             }
                         }
                     }
@@ -1610,36 +1085,38 @@ private fun SubPage(
 }
 
 /**
- * Pops the calling entry (and anything above it) — the safe "close this page" action: addressed by
- * the entry's own id, it can neither pop an unrelated entry nor run twice.
+ * The shell's NavDisplay over the whole back stack. Its entries are decorated here (per-entry
+ * saveable state, ViewModel store and pop actions, keyed by each push's unique id) rather than
+ * inside NavDisplay so the modal sheets — which NavDisplay keeps as one stable overlay per sheet —
+ * can render their pages from the live stack through [LocalModalEntries]. Being its own
+ * composable, it is the only part of the shell that recomposes on every push and pop.
  */
 @Composable
-private fun rememberPopSelf(): () -> Unit {
-    val navigator = requireAppNavigator()
-    val self = checkNotNull(LocalDestination.current)
-    return remember(navigator, self) { { navigator.pop(self.id) } }
-}
-
-/**
- * Closes a detail sheet page whose item disappeared from its list (e.g. evicted by a career
- * switch), with three guards:
- * - only once the list has actually loaded: right after a process-death restore the page is back
- *   on the stack before its data is, and popping then would throw away the very page the user was on;
- * - only while the page is on top: a sheet stacked above it (e.g. the booking manager opened from a
- *   calendar event, where cancelling the booking removes the event) must not be torn down with it —
- *   the page closes once it is back on top;
- * - with [onlyAfterSeen], only after the item was present at least once, for lists that can briefly
- *   hold a previous query's rows (the calendar month list right after a month switch).
- */
-@Composable
-private fun PopWhenMissing(loaded: Boolean, missing: Boolean, onlyAfterSeen: Boolean = false) {
-    val navigator = requireAppNavigator()
-    val self = checkNotNull(LocalDestination.current)
-    var seen by rememberSaveable { mutableStateOf(false) }
-    if (!missing) seen = true
-    val onTop = navigator.top.id == self.id
-    val shouldPop = loaded && missing && onTop && (seen || !onlyAfterSeen)
-    LaunchedEffect(shouldPop) {
-        if (shouldPop) navigator.pop(self.id)
+private fun ShellNavDisplay(
+    navigator: AppNavigator,
+    sceneStrategies: List<SceneStrategy<NavKey>>,
+    transitionSpec: AnimatedContentTransitionScope<Scene<NavKey>>.() -> ContentTransform,
+    popTransitionSpec: AnimatedContentTransitionScope<Scene<NavKey>>.() -> ContentTransform,
+    entries: EntryProviderScope<NavKey>.() -> Unit,
+) {
+    val decorated = rememberDecoratedNavEntries(
+        backStack = navigator.backStackKeys,
+        entryDecorators = listOf(
+            rememberSaveableStateHolderNavEntryDecorator(),
+            rememberViewModelStoreNavEntryDecorator(),
+            rememberEntryPopActionsDecorator(),
+        ),
+        entryProvider = destinationEntryProvider(entryProvider(builder = entries)),
+    )
+    CompositionLocalProvider(LocalModalEntries provides decorated) {
+        NavDisplay(
+            entries = decorated,
+            onBack = { navigator.back() },
+            modifier = Modifier.fillMaxSize(),
+            sceneStrategies = sceneStrategies,
+            transitionSpec = transitionSpec,
+            popTransitionSpec = popTransitionSpec,
+            predictivePopTransitionSpec = { popTransitionSpec() },
+        )
     }
 }

@@ -28,6 +28,7 @@ import it.attendance100.mybicocca.ui.navigation.destinationEntryProvider
 import it.attendance100.mybicocca.ui.navigation.rememberAppNavigator
 import it.attendance100.mybicocca.ui.navigation.route.AppRoute
 import it.attendance100.mybicocca.ui.navigation.route.SheetRoute
+import it.attendance100.mybicocca.ui.navigation.sheetHeader
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -56,6 +57,15 @@ class ModalSceneStrategyTest {
     /** How many times each page's "left the back stack" action ran. */
     private val popped = mutableMapOf<String, Int>()
 
+    private lateinit var navigator: AppNavigator
+
+    private fun setShell() {
+        rule.setContent {
+            navigator = rememberAppNavigator()
+            Shell(navigator)
+        }
+    }
+
     @Composable
     private fun Page(label: String) {
         remember { compositions[label] = (compositions[label] ?: 0) + 1 }
@@ -73,7 +83,7 @@ class ModalSceneStrategyTest {
     private fun Shell(navigator: AppNavigator, recompositionKey: Int = 0) {
         @Suppress("UNUSED_EXPRESSION") recompositionKey
         val entries = rememberDecoratedNavEntries(
-            backStack = navigator.keys,
+            backStack = navigator.backStackKeys,
             entryDecorators = listOf(
                 rememberSaveableStateHolderNavEntryDecorator(),
                 rememberEntryPopActionsDecorator(),
@@ -114,13 +124,12 @@ class ModalSceneStrategyTest {
 
     @Test
     fun `shell recompositions never re-create an open sheet`() {
-        var navigator: AppNavigator? = null
         var trigger by mutableIntStateOf(0)
         rule.setContent {
             navigator = rememberAppNavigator()
-            Shell(navigator!!, trigger)
+            Shell(navigator, trigger)
         }
-        rule.runOnIdle { navigator!!.navigate(SheetRoute.Isee) }
+        rule.runOnIdle { navigator.navigate(SheetRoute.Isee) }
         rule.waitForIdle()
         repeat(5) {
             trigger++
@@ -133,14 +142,10 @@ class ModalSceneStrategyTest {
 
     @Test
     fun `in-sheet pages navigate inside one sheet and back`() {
-        var navigator: AppNavigator? = null
-        rule.setContent {
-            navigator = rememberAppNavigator()
-            Shell(navigator!!)
-        }
-        rule.runOnIdle { navigator!!.navigate(SheetRoute.Isee) }
+        setShell()
+        rule.runOnIdle { navigator.navigate(SheetRoute.Isee) }
         rule.waitForIdle()
-        rule.runOnIdle { navigator!!.navigate(SheetRoute.IseeDetail(2024)) }
+        rule.runOnIdle { navigator.navigate(SheetRoute.IseeDetail(2024)) }
         rule.waitForIdle()
         rule.onNodeWithText("isee 2024").assertExists()
         rule.onNodeWithText("ISEE 2024").assertExists()
@@ -148,7 +153,7 @@ class ModalSceneStrategyTest {
         assertThat(live["isee list"] ?: 0).isEqualTo(0)
         assertThat(live["isee 2024"]).isEqualTo(1)
 
-        rule.runOnIdle { navigator!!.back() }
+        rule.runOnIdle { navigator.back() }
         rule.waitForIdle()
         rule.onNodeWithText("isee list").assertExists()
         assertThat(live["isee 2024"] ?: 0).isEqualTo(0)
@@ -156,27 +161,23 @@ class ModalSceneStrategyTest {
 
     @Test
     fun `a stacked sheet and repeated dismissals never pop below the sheet`() {
-        var navigator: AppNavigator? = null
-        rule.setContent {
-            navigator = rememberAppNavigator()
-            Shell(navigator!!)
-        }
+        setShell()
         rule.runOnIdle {
-            navigator!!.navigate(AppRoute.Profile)
-            navigator!!.navigate(SheetRoute.Isee)
-            navigator!!.navigate(SheetRoute.Appelli)
+            navigator.navigate(AppRoute.Profile)
+            navigator.navigate(SheetRoute.Isee)
+            navigator.navigate(SheetRoute.Appelli)
         }
         rule.waitForIdle()
         rule.onNodeWithText("isee list").assertExists()
         rule.onNodeWithText("appelli").assertExists()
 
         rule.runOnIdle {
-            val iseeRoot = navigator!!.entries.first { it.route == SheetRoute.Isee }.id
-            repeat(3) { navigator!!.pop(iseeRoot) }
+            val iseeRoot = navigator.entries.first { it.route == SheetRoute.Isee }.id
+            repeat(3) { navigator.pop(iseeRoot) }
         }
         rule.waitForIdle()
         rule.runOnIdle {
-            assertThat(navigator!!.entries.map { it.route })
+            assertThat(navigator.entries.map { it.route })
                 .containsExactly(AppRoute.TabRoot, AppRoute.Profile).inOrder()
         }
         rule.onNodeWithText("profile page").assertExists()
@@ -185,24 +186,23 @@ class ModalSceneStrategyTest {
     @Test
     fun `an open sheet with an in-sheet page survives process death`() {
         val restoration = StateRestorationTester(rule)
-        var navigator: AppNavigator? = null
         restoration.setContent {
             navigator = rememberAppNavigator()
-            Shell(navigator!!)
+            Shell(navigator)
         }
         rule.runOnIdle {
-            navigator!!.navigate(SheetRoute.Isee)
-            navigator!!.navigate(SheetRoute.IseeDetail(2023))
+            navigator.navigate(SheetRoute.Isee)
+            navigator.navigate(SheetRoute.IseeDetail(2023))
         }
         rule.waitForIdle()
-        val idsBefore = rule.runOnIdle { navigator!!.entries.map { it.id } }
+        val idsBefore = rule.runOnIdle { navigator.entries.map { it.id } }
 
         restoration.emulateSavedInstanceStateRestore()
         rule.waitForIdle()
 
         rule.runOnIdle {
-            assertThat(navigator!!.entries.map { it.id }).isEqualTo(idsBefore)
-            assertThat(navigator!!.top.route).isEqualTo(SheetRoute.IseeDetail(2023))
+            assertThat(navigator.entries.map { it.id }).isEqualTo(idsBefore)
+            assertThat(navigator.top.route).isEqualTo(SheetRoute.IseeDetail(2023))
         }
         rule.onNodeWithText("isee 2023").assertExists()
         assertThat(live["isee 2023"]).isEqualTo(1)
@@ -210,14 +210,10 @@ class ModalSceneStrategyTest {
 
     @Test
     fun `a sheet hidden under a full-screen page keeps its flow until it is really popped`() {
-        var navigator: AppNavigator? = null
-        rule.setContent {
-            navigator = rememberAppNavigator()
-            Shell(navigator!!)
-        }
-        rule.runOnIdle { navigator!!.navigate(SheetRoute.Appelli) }
+        setShell()
+        rule.runOnIdle { navigator.navigate(SheetRoute.Appelli) }
         rule.waitForIdle()
-        rule.runOnIdle { navigator!!.navigate(AppRoute.FileViewer("slip.pdf")) }
+        rule.runOnIdle { navigator.navigate(AppRoute.FileViewer("slip.pdf")) }
         rule.waitForIdle()
         rule.onNodeWithText("viewer slip.pdf").assertExists()
         // The sheet slid away and left composition, but it is still on the stack.
@@ -225,23 +221,19 @@ class ModalSceneStrategyTest {
         assertThat(popped["appelli"] ?: 0).isEqualTo(0)
 
         // Clearing the stack while the sheet is not composed still runs its pop action, once.
-        rule.runOnIdle { navigator!!.popToRoot() }
+        rule.runOnIdle { navigator.popToRoot() }
         rule.waitForIdle()
         assertThat(popped["appelli"]).isEqualTo(1)
     }
 
     @Test
     fun `returning from a full-screen page brings the sheet back`() {
-        var navigator: AppNavigator? = null
-        rule.setContent {
-            navigator = rememberAppNavigator()
-            Shell(navigator!!)
-        }
-        rule.runOnIdle { navigator!!.navigate(SheetRoute.Appelli) }
+        setShell()
+        rule.runOnIdle { navigator.navigate(SheetRoute.Appelli) }
         rule.waitForIdle()
-        rule.runOnIdle { navigator!!.navigate(AppRoute.FileViewer("slip.pdf")) }
+        rule.runOnIdle { navigator.navigate(AppRoute.FileViewer("slip.pdf")) }
         rule.waitForIdle()
-        rule.runOnIdle { navigator!!.back() }
+        rule.runOnIdle { navigator.back() }
         rule.waitForIdle()
         rule.onNodeWithText("appelli").assertExists()
         assertThat(live["appelli"]).isEqualTo(1)

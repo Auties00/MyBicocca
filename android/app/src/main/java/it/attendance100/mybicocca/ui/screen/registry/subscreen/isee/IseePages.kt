@@ -86,8 +86,8 @@ private const val ISEE_GUIDE_URL =
 /**
  * Root page of the ISEE sheet: the list of academic years carrying a declaration, newest
  * first, with a "Dichiara ISEE" footer when the current year can still be filed. The sheet
- * container, the pinned morphing header and the list -> detail transition are owned by
- * BottomSheetSceneStrategy; the year detail is a separate back-stack entry
+ * container, the pinned morphing header ([iseeHeader]) and the list -> detail transition are
+ * owned by ModalSceneStrategy; the year detail is a separate back-stack entry
  * (SheetRoute.IseeDetail rendering [IseeDetailPage]).
  *
  * Reads the hoisted TaxesViewModel — the same in-memory fetch as the Tasse page — so
@@ -505,15 +505,20 @@ private fun IseeDeclaration.academicYearLabel(): String =
 /** aaIscrId 2025 -> "2025/26", for titles. */
 private fun academicYearLabel(year: Long): String = "$year/${"%02d".format((year + 1) % 100)}"
 
-/** Detail header title, exposed for the sheet entry's pinned header in MainShell. */
+/**
+ * A declaration's detail page header: its academic year over its course; [declaration] is null
+ * only while it loads (or as it is evicted).
+ */
 @Composable
-fun iseeDetailTitle(declaration: IseeDeclaration): String =
-    stringResource(R.string.registry_isee_detail_title, declaration.academicYearLabel())
-
-/** Detail header subtitle, exposed for the sheet entry's pinned header in MainShell. */
-@Composable
-fun iseeDetailSubtitle(declaration: IseeDeclaration): String =
-    declaration.courseDescription ?: stringResource(R.string.registry_isee_default_subtitle)
+fun iseeDetailHeader(declaration: IseeDeclaration?): SheetHeaderSpec =
+    if (declaration == null) {
+        SheetHeaderSpec(title = stringResource(R.string.registry_isee), subtitle = null)
+    } else {
+        SheetHeaderSpec(
+            title = stringResource(R.string.registry_isee_detail_title, declaration.academicYearLabel()),
+            subtitle = declaration.courseDescription ?: stringResource(R.string.registry_isee_default_subtitle),
+        )
+    }
 
 private fun Context.openUrl(url: String) {
     runCatching {

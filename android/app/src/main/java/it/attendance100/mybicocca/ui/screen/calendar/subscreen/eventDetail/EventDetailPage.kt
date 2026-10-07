@@ -106,7 +106,8 @@ fun eventDetailHeader(event: CalendarEvent?): SheetHeaderSpec {
 /**
  * The calendar event sheet page ([SheetRoute.CalendarEvent]): [EventDetailContent] under the
  * sheet's pinned header ([eventDetailHeader]), scrolling internally when the content outgrows the
- * screen. The sheet itself (container, dismissal, back) is the shell's modal scene.
+ * screen. Several matching course editions push the edition picker
+ * ([SheetRoute.CourseEditionPicker]) as a page of this sheet.
  */
 @Composable
 fun EventDetailPage(
@@ -118,10 +119,14 @@ fun EventDetailPage(
     /** Total students booked on the exam's call, joined from the live bookable list; null when unknown. */
     examTotalBookings: Int? = null,
 ) {
+    val navigator = LocalAppNavigator.current
     EventDetailContent(
         event = event,
         elearningCourses = elearningCourses,
         onOpenCourse = onOpenCourse,
+        onPickCourseEdition = { activityCode ->
+            navigator?.navigate(SheetRoute.CourseEditionPicker(activityCode))
+        },
         onOpenAssignment = onOpenAssignment,
         onOpenReservation = onOpenReservation,
         examTotalBookings = examTotalBookings,
@@ -146,15 +151,15 @@ fun EventDetailPage(
  * reservation-backed events — booked exams, appointments, library seats — lead to their
  * managing sheet, where the booking can be inspected or cancelled; lessons open their
  * e-learning course when one matches, with the map demoted to the secondary slot. A
- * single matching course edition navigates directly, several hand off to the edition picker
- * ([SheetRoute.CourseEditionPicker]: a page inside the event sheet, or its own sheet from the
- * month agenda). Locations open externally through geo: URIs.
+ * single matching course edition opens through [onOpenCourse]; several hand the event's
+ * activity code to [onPickCourseEdition]. Locations open externally through geo: URIs.
  */
 @Composable
 fun EventDetailContent(
     event: CalendarEvent,
     elearningCourses: List<EnrolledCourse>,
     onOpenCourse: (CourseId) -> Unit,
+    onPickCourseEdition: (activityCode: String) -> Unit,
     onOpenAssignment: (assignmentId: Int, courseId: Int) -> Unit,
     onOpenReservation: (CalendarEvent) -> Unit,
     modifier: Modifier = Modifier,
@@ -164,7 +169,6 @@ fun EventDetailContent(
     topSpacing: Dp = 24.dp,
 ) {
     val context = LocalContext.current
-    val navigator = LocalAppNavigator.current
 
     Column(modifier = modifier.testTag(CalendarTestTags.EVENT_CONTENT)) {
         Spacer(Modifier.height(topSpacing))
@@ -251,9 +255,7 @@ fun EventDetailContent(
         val openCourse: (() -> Unit)? = elearningCourses.takeIf { it.isNotEmpty() }?.let { courses ->
             {
                 courses.singleOrNull()?.let { onOpenCourse(it.id) }
-                    ?: event.activityCode?.let { code ->
-                        navigator?.navigate(SheetRoute.CourseEditionPicker(code))
-                    }
+                    ?: event.activityCode?.let(onPickCourseEdition)
             }
         }
 

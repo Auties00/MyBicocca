@@ -18,6 +18,8 @@ import androidx.compose.material.icons.outlined.Translate
 import androidx.compose.material.icons.outlined.Vibration
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -55,7 +57,9 @@ fun SettingsScreen() {
 
     val navigator = LocalAppNavigator.current
 
-    val languageSheetOpen = navigator?.entries?.any { it.route == SheetRoute.SettingsLanguage } == true
+    val languageSheetOpen by remember(navigator) {
+        derivedStateOf { navigator?.entries?.any { it.route == SheetRoute.SettingsLanguage } == true }
+    }
     val languageLabel = remember(languageSheetOpen) { currentAppLanguageLabel(context) }
 
     val sections = listOf(

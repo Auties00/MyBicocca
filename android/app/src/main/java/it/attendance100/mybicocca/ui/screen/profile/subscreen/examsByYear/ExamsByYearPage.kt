@@ -52,7 +52,7 @@ import it.attendance100.mybicocca.domain.model.transcript.TranscriptStats
 import it.attendance100.mybicocca.ui.component.input.SegmentedSwitch
 import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
 import it.attendance100.mybicocca.ui.component.modal.SheetPager
-import it.attendance100.mybicocca.ui.navigation.scene.LocalSheetDismissControl
+import it.attendance100.mybicocca.ui.component.modal.LocalSheetDismissControl
 import it.attendance100.mybicocca.ui.screen.profile.subscreen.courseDetail.CourseDetailPage
 import it.attendance100.mybicocca.ui.screen.registry.state.RegistryBadgeTone
 import it.attendance100.mybicocca.ui.screen.registry.theme.registryBadgeTone

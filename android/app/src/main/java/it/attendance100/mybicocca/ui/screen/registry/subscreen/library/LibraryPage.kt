@@ -4,7 +4,6 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.ReadOnlyComposable
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -26,8 +25,9 @@ import it.attendance100.mybicocca.ui.component.modal.SheetOutcome
 import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
 import it.attendance100.mybicocca.ui.component.modal.SheetPager
 import it.attendance100.mybicocca.ui.component.modal.SheetResultPage
+import it.attendance100.mybicocca.ui.component.modal.LockSheetWhile
+import it.attendance100.mybicocca.ui.component.modal.rememberLastNonNull
 import it.attendance100.mybicocca.ui.navigation.DisposableEffectOnPop
-import it.attendance100.mybicocca.ui.navigation.scene.LocalSheetDismissControl
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.subscreen.rilevaPresenza.component.QrScannerScreen
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.component.ConfirmPage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.component.DateTimePage
@@ -197,11 +197,7 @@ fun LibraryPage(
         BackHandler(enabled = onDonePage && display is LibraryDisplay.Page) { }
 
         // A booking in flight cannot be abandoned half-way: lock swipe/scrim/back dismissal.
-        val control = LocalSheetDismissControl.current
-        SideEffect {
-            control?.gesturesEnabled = !submitting
-            control?.confirmDismiss = { !submitting }
-        }
+        LockSheetWhile(submitting)
 
         val backTo: LibraryDisplay? = when (display) {
             LibraryDisplay.Outcome ->
@@ -213,9 +209,7 @@ fun LibraryPage(
         }
 
         // While the confirmation slides out its reservation is already cleared; keep its header readable.
-        val lastCancel = remember { arrayOf<LibraryReservation?>(null) }
-        if (pendingCancel != null) lastCancel[0] = pendingCancel
-        val shownCancel = pendingCancel ?: lastCancel[0]
+        val shownCancel = rememberLastNonNull(pendingCancel)
 
         val seatsAtTime = remember(seats, selectedStartTime) {
             val time = selectedStartTime

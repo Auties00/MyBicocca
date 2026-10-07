@@ -27,7 +27,7 @@ import java.time.Instant
 /**
  * State and behaviour coverage for the account switcher's roster scene ([AccountsScene]), the
  * stateless content the modal sheet hosts. Rendering the scene directly avoids the sheet's modal
- * window and its 800ms seekable scene transition, neither of which settle deterministically under
+ * window and its seekable page transition, neither of which settle deterministically under
  * Robolectric. The active card surfaces its careers, an inactive card offers a switch, and the
  * "Aggiungi un altro account" tile closes the list. Verifies the roster, the active and inactive
  * account rows and the add-account tile render, that tapping an inactive row invokes the
@@ -37,7 +37,7 @@ import java.time.Instant
  * [ProvideHapticManager] the swipe-to-remove rows require, and driven by relaxed-mock callbacks.
  */
 @RunWith(AndroidJUnit4::class)
-class AccountSwitcherSheetTest {
+class AccountSwitcherPageTest {
 
     @get:Rule
     val compose = createComposeRule()

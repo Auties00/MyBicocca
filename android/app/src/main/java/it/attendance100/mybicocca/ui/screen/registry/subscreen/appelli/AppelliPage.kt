@@ -29,7 +29,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -61,7 +60,8 @@ import it.attendance100.mybicocca.ui.component.modal.SheetOutcome
 import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
 import it.attendance100.mybicocca.ui.component.modal.SheetPager
 import it.attendance100.mybicocca.ui.component.modal.SheetResultPage
-import it.attendance100.mybicocca.ui.navigation.scene.LocalSheetDismissControl
+import it.attendance100.mybicocca.ui.component.modal.LockSheetWhile
+import it.attendance100.mybicocca.ui.component.modal.rememberLastNonNull
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.component.BookedExamCard
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.ext.displayTitle
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.state.BookedEvent
@@ -80,7 +80,6 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.rootSubti
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.state.BookingActionState
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.state.BookingSheetEvent
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.state.BookingSheetStep
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.state.BookingTarget
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.state.groupByCourse
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.title
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.openPdfDocument
@@ -108,7 +107,7 @@ import java.time.LocalDate
  * cancel drops the pager back to the list rather than rendering a stale snapshot. A pending
  * deep-link focus (from a libretto course) opens straight into the booking calendar.
  *
- * While a booking call is in flight the sheet locks via LocalSheetDismissControl — swipe,
+ * While a booking call is in flight the sheet locks via [LockSheetWhile] — swipe,
  * scrim tap and back go inert so it can't be torn down mid-submit (the result page needs a
  * living sheet). A confirmed booking refreshes both lists and lands back on the root with a
  * success result page; a failed booking returns to the calendar with the error carried by
@@ -187,11 +186,7 @@ fun AppelliPage(
     }
     val page = if (outcome != null) AppelliPage.Result else flowPage
 
-    val control = LocalSheetDismissControl.current
-    SideEffect {
-        control?.gesturesEnabled = !submitting
-        control?.confirmDismiss = { !submitting }
-    }
+    LockSheetWhile(submitting)
 
     run {
         val context = LocalContext.current
@@ -259,12 +254,8 @@ fun AppelliPage(
         }
 
         // While the detail or call slides out its state is already cleared; keep its page readable.
-        val lastDetail = remember { arrayOf<BookedExam?>(null) }
-        if (detailBooking != null) lastDetail[0] = detailBooking
-        val shownDetail = detailBooking ?: lastDetail[0]
-        val lastTarget = remember { arrayOf<BookingTarget?>(null) }
-        if (target != null) lastTarget[0] = target
-        val shownTarget = target ?: lastTarget[0]
+        val shownDetail = rememberLastNonNull(detailBooking)
+        val shownTarget = rememberLastNonNull(target)
 
         SheetPager(
             page = page,

@@ -55,7 +55,7 @@ import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.ui.component.feedback.LocalAppSnackbarController
 import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
 import it.attendance100.mybicocca.ui.navigation.route.AppRoute
-import it.attendance100.mybicocca.ui.navigation.scene.LocalSheetDismissControl
+import it.attendance100.mybicocca.ui.component.modal.LocalSheetDismissControl
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.FileViewerViewModel
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.launchExternalViewer
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.launchOfficeUri
@@ -90,10 +90,9 @@ fun officeOpenHeader(app: OfficeApp, file: AppRoute.FileViewer): SheetHeaderSpec
  * tonal trailing with an inline progress indicator while downloading). The file name, document
  * type and size ride the sheet's pinned header ([officeOpenHeader]).
  *
- * Reuses the file-viewer ViewModel, which owns the office hand-off paths (protocol launch, lazy
- * download for the external-app fallback). It is keyed per file because the sheet lives in the
- * shell's store, which would otherwise hand back the instance created for the first file.
- * Zip-extraction, share, and save events never originate from this sheet and are ignored.
+ * Reuses the file-viewer ViewModel, keyed per file, which owns the office hand-off paths
+ * (protocol launch, lazy download for the external-app fallback). Zip-extraction, share, and
+ * save events never originate from this sheet and are ignored.
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable

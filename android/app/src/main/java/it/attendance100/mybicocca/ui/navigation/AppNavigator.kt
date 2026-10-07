@@ -1,44 +1,15 @@
 package it.attendance100.mybicocca.ui.navigation
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.currentCompositeKeyHashCode
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.navigation3.runtime.NavBackStack
-import androidx.navigation3.runtime.NavEntry
-import androidx.navigation3.runtime.NavEntryDecorator
 import androidx.navigation3.runtime.NavKey
 import androidx.navigation3.runtime.rememberNavBackStack
 import it.attendance100.mybicocca.ui.navigation.route.AppRoute
 import it.attendance100.mybicocca.ui.navigation.route.Route
 import it.attendance100.mybicocca.ui.navigation.route.SheetRoute
-import it.attendance100.mybicocca.ui.navigation.scene.ModalLayout
-import kotlinx.serialization.Serializable
-import java.util.UUID
-
-/**
- * One back-stack slot: a [route] plus the [id] of this particular push. Routes are value types —
- * the ISEE sheet is always `SheetRoute.Isee`, a course is always `CourseDetail(42)` — so two pushes
- * of the same route are indistinguishable by the route alone. Navigation3 keys every per-entry
- * state holder (saveable state, ViewModel store, scene movable content) by the entry's contentKey,
- * and two live entries sharing one ends in `IllegalArgumentException: Key … was used multiple
- * times` (issue #44). The id makes every push unique, exactly like Navigation2's
- * NavBackStackEntry.id: it is the contentKey of the entry, the identity of the sheet a modal page
- * opens, and the handle [AppNavigator] pops by, so a stale pop can never remove the wrong entry.
- *
- * Serializable (the id included) so the whole stack is restored after process death with the same
- * identities the saved per-entry state was filed under.
- */
-@Serializable
-data class Destination(
-    val route: Route,
-    val id: String = UUID.randomUUID().toString(),
-) : NavKey
 
 /**
  * The single entry point for every navigation action of the signed-in shell: full-screen pages,
@@ -57,7 +28,7 @@ data class Destination(
 class AppNavigator(private val backStack: NavBackStack<NavKey>) {
 
     /** The raw Navigation3 back stack (of [Destination]s), for building the entries to display. */
-    val keys: List<NavKey>
+    internal val backStackKeys: List<NavKey>
         get() = backStack
 
     /** The live stack, bottom to top. Reading it in composition subscribes to changes. */
@@ -79,9 +50,6 @@ class AppNavigator(private val backStack: NavBackStack<NavKey>) {
     val isAtRoot: Boolean
         get() = backStack.size <= 1
 
-    /** Whether the entry with [id] is still on the stack. */
-    operator fun contains(id: String): Boolean = backStack.any { (it as Destination).id == id }
-
     /**
      * Pushes [route]. Single-top: when the same route is already on top (a double tap, a deep link
      * re-delivered on resume) nothing happens and false is returned.
@@ -90,15 +58,6 @@ class AppNavigator(private val backStack: NavBackStack<NavKey>) {
         if (top.route == route) return false
         backStack.add(Destination(route))
         return true
-    }
-
-    /** Replaces the top entry with [route] (e.g. a chooser page handing over to its result). */
-    fun replaceTop(route: Route) {
-        if (isAtRoot) {
-            navigate(route)
-            return
-        }
-        backStack[backStack.lastIndex] = Destination(route)
     }
 
     /** Pops the top entry. Never pops the root; returns whether anything was popped. */
@@ -134,24 +93,9 @@ class AppNavigator(private val backStack: NavBackStack<NavKey>) {
         return pop(stack[start].id)
     }
 
-    /** Pops everything above the entry [id], leaving it on top. No-op when it is gone. */
-    fun popAbove(id: String): Boolean {
-        val index = backStack.indexOfFirst { (it as Destination).id == id }
-        if (index < 0 || index == backStack.lastIndex) return false
-        while (backStack.size > index + 1) backStack.removeAt(backStack.lastIndex)
-        return true
-    }
-
     /** Pops back to the tab root. */
     fun popToRoot() {
         while (backStack.size > 1) backStack.removeAt(backStack.lastIndex)
-    }
-
-    /** Removes every entry above the root whose route matches [predicate]. */
-    fun removeAll(predicate: (Route) -> Boolean) {
-        for (index in backStack.lastIndex downTo 1) {
-            if (predicate((backStack[index] as Destination).route)) backStack.removeAt(index)
-        }
     }
 
     companion object {
@@ -178,88 +122,3 @@ val LocalAppNavigator = staticCompositionLocalOf<AppNavigator?> { null }
 fun requireAppNavigator(): AppNavigator =
     LocalAppNavigator.current ?: error("No AppNavigator: only available inside MainShell")
 
-/**
- * Per-entry "left the back stack" actions registered by [DisposableEffectOnPop]. Navigation3 calls
- * a decorator's onPop for every popped entry — when its content leaves composition, or right away
- * if it was not composed at the time — so the actions run exactly once per pop, including for a
- * sheet that was hidden under a full-screen page when the stack was cleared.
- */
-class EntryPopActions internal constructor() {
-    private val actions = HashMap<Any, MutableMap<Long, () -> Unit>>()
-
-    internal fun register(contentKey: Any, slot: Long, action: () -> Unit) {
-        actions.getOrPut(contentKey) { HashMap() }[slot] = action
-    }
-
-    internal fun onPop(contentKey: Any) {
-        actions.remove(contentKey)?.values?.forEach { it() }
-    }
-}
-
-private val LocalEntryPopActions = staticCompositionLocalOf<EntryPopActions?> { null }
-
-/** The shell's entry decorator backing [DisposableEffectOnPop]. */
-@Composable
-fun rememberEntryPopActionsDecorator(): NavEntryDecorator<NavKey> {
-    val actions = remember { EntryPopActions() }
-    return remember(actions) {
-        NavEntryDecorator(onPop = actions::onPop) { entry ->
-            CompositionLocalProvider(LocalEntryPopActions provides actions) { entry.Content() }
-        }
-    }
-}
-
-/**
- * Runs [onPopped] once the calling entry is removed from the back stack — and NOT when its content
- * merely stops being shown while the entry stays on the stack (a sheet sliding away under a
- * full-screen page pushed from it, e.g. a PDF, comes back with its flow intact). Outside a shell
- * entry (a standalone UI test) it runs when the content is disposed.
- */
-@Composable
-fun DisposableEffectOnPop(onPopped: () -> Unit) {
-    val actions = LocalEntryPopActions.current
-    val self = LocalDestination.current
-    val latest = rememberUpdatedState(onPopped)
-    val slot = currentCompositeKeyHashCode
-    DisposableEffect(actions, self, slot) {
-        // Stays registered after disposal on purpose: the pop may come later.
-        if (actions != null && self != null) actions.register(self.id, slot) { latest.value() }
-        onDispose {
-            if (actions == null || self == null) latest.value()
-        }
-    }
-}
-
-/**
- * Adapts a route-keyed entry provider (the `entryProvider { entry<Route> { … } }` DSL) to the
- * [Destination] back stack: the route's entry keeps its metadata and content, while the
- * destination's unique id becomes the contentKey every per-entry state holder is filed under. The
- * destination itself rides along in the metadata ([NavEntry.destination]) because NavEntry keeps
- * its key private and scenes need the route (e.g. to resolve a sheet page's header).
- */
-fun destinationEntryProvider(
-    routeProvider: (NavKey) -> NavEntry<NavKey>,
-): (NavKey) -> NavEntry<NavKey> = { key ->
-    val destination = key as Destination
-    val routeEntry = routeProvider(destination.route)
-    NavEntry(
-        key = key,
-        contentKey = destination.id,
-        metadata = routeEntry.metadata + (DestinationMetadataKey to destination),
-    ) {
-        CompositionLocalProvider(LocalDestination provides destination) { routeEntry.Content() }
-    }
-}
-
-/**
- * The [Destination] whose entry is being composed — lets an entry address itself (e.g. a detail
- * page popping only itself when its item disappears) without depending on what is on top.
- */
-val LocalDestination = staticCompositionLocalOf<Destination?> { null }
-
-private const val DestinationMetadataKey = "it.attendance100.mybicocca.destination"
-
-/** The [Destination] behind an entry built by [destinationEntryProvider]. */
-val NavEntry<*>.destination: Destination
-    get() = metadata[DestinationMetadataKey] as? Destination
-        ?: error("Entry $contentKey was not built by destinationEntryProvider")

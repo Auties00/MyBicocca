@@ -71,8 +71,9 @@ import it.attendance100.mybicocca.ui.component.modal.SheetOutcome
 import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
 import it.attendance100.mybicocca.ui.component.modal.SheetPager
 import it.attendance100.mybicocca.ui.component.modal.SheetResultPage
+import it.attendance100.mybicocca.ui.component.modal.rememberLastNonNull
 import it.attendance100.mybicocca.ui.navigation.route.SheetRoute
-import it.attendance100.mybicocca.ui.navigation.scene.LocalSheetDismissControl
+import it.attendance100.mybicocca.ui.component.modal.LocalSheetDismissControl
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.forum.component.DiscussionRow
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.forum.component.ForumComposer
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.forum.component.ThreadPostItem
@@ -159,8 +160,6 @@ fun ForumSheetPage(
         val openDiscussion = remember(discussions, openDiscussionId) {
             discussions?.firstOrNull { it.id == openDiscussionId }
         }
-        var lastDiscussion by remember { mutableStateOf(openDiscussion) }
-        if (openDiscussion != null) lastDiscussion = openDiscussion
         var subject by rememberSaveable(composerTarget) {
             mutableStateOf((composerTarget as? ComposerTarget.Edit)?.subject
                 ?: (composerTarget as? ComposerTarget.Reply)?.replySubject
@@ -202,10 +201,8 @@ fun ForumSheetPage(
         val discardOrBelow = if (confirmDiscard) Display.ConfirmDiscard else composerOrBelow
 
         // While the composer slides out its target is already cleared; keep its header readable.
-        val lastComposerTarget = remember { arrayOf<ComposerTarget?>(null) }
-        if (composerTarget != null) lastComposerTarget[0] = composerTarget
-        val shownComposerTarget = composerTarget ?: lastComposerTarget[0]
-        val shownDiscussion = openDiscussion ?: lastDiscussion
+        val shownComposerTarget = rememberLastNonNull(composerTarget)
+        val shownDiscussion = rememberLastNonNull(openDiscussion)
 
         SheetPager(
             page = display,

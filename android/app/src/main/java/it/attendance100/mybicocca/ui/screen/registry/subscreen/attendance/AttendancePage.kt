@@ -1,6 +1,5 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -53,8 +52,7 @@ import it.attendance100.mybicocca.ui.component.feedback.rememberMinDurationLoadi
 import it.attendance100.mybicocca.ui.component.modal.SheetLoadingIndicator
 import it.attendance100.mybicocca.ui.component.modal.SheetMessage
 import it.attendance100.mybicocca.ui.component.modal.SheetPager
-import it.attendance100.mybicocca.ui.navigation.scene.LocalSheetDismissControl
-import androidx.compose.runtime.SideEffect
+import it.attendance100.mybicocca.ui.component.modal.LockSheetWhile
 import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.component.AttendanceCourseCard
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.ext.label
@@ -149,12 +147,7 @@ fun AttendancePage(
         }
 
         // A mark in flight cannot be abandoned half-way: lock swipe/scrim/back dismissal.
-        val control = LocalSheetDismissControl.current
-        val submitting = markState == MarkUiState.Submitting
-        SideEffect {
-            control?.gesturesEnabled = !submitting
-            control?.confirmDismiss = { !submitting }
-        }
+        LockSheetWhile(markState == MarkUiState.Submitting)
 
         // System back walks the pager up one level; mid-submission there is nowhere to go.
         val backTo: AttendancePage? = when (page) {

@@ -48,7 +48,7 @@ import it.attendance100.mybicocca.ui.component.feedback.rememberMinDurationLoadi
 import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
 import it.attendance100.mybicocca.ui.component.modal.SheetLoadingIndicator
 import it.attendance100.mybicocca.ui.component.modal.SheetMessage
-import it.attendance100.mybicocca.ui.navigation.scene.LocalSheetDismissControl
+import it.attendance100.mybicocca.ui.component.modal.LocalSheetDismissControl
 import it.attendance100.mybicocca.ui.screen.registry.state.DeadlineUrgency
 import it.attendance100.mybicocca.ui.screen.registry.state.RegistryDeadline
 import java.time.LocalDate
