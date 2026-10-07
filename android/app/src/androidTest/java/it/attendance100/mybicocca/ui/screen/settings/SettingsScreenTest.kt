@@ -1,5 +1,6 @@
 package it.attendance100.mybicocca.ui.screen.settings
 
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -9,7 +10,12 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import it.attendance100.mybicocca.core.os.ProvideHapticManager
 import it.attendance100.mybicocca.testing.setBicoccaContent
+import it.attendance100.mybicocca.ui.navigation.AppNavigator
+import it.attendance100.mybicocca.ui.navigation.LocalAppNavigator
+import it.attendance100.mybicocca.ui.navigation.rememberAppNavigator
+import it.attendance100.mybicocca.ui.navigation.route.SheetRoute
 import it.attendance100.mybicocca.ui.theme.BicoccaTheme
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -20,10 +26,11 @@ import org.junit.runner.RunWith
  * supplies the [it.attendance100.mybicocca.core.os.LocalHapticManager] the screen reads (its default
  * value errors). Tests anchor on [SettingsTestTags]: the directory renders the full Preferenze and
  * Informazioni groups, every entry is a clickable row, and tapping the Privacy Policy entry — the
- * one that only acknowledges with haptic feedback rather than opening a `hiltViewModel` sheet — keeps
- * the directory on screen. Entries that open modal sheets backed by a `hiltViewModel`
- * (Aspetto/Lingua/Sicurezza/Apertura file/About) and the Licenze entry that launches an external
- * Activity are asserted as present and clickable only, never tapped.
+ * one that only acknowledges with haptic feedback rather than opening a sheet — keeps the
+ * directory on screen. The sheet entries (Aspetto/Lingua/Sicurezza/Apertura file/Vibrazione/About)
+ * push their [SheetRoute] on the shell's [AppNavigator]; with a bare navigator provided (and no
+ * NavDisplay rendering the stack, so no `hiltViewModel` page is composed) a tap is asserted to push
+ * exactly that route. The Licenze entry, which launches an external Activity, is never tapped.
  */
 @RunWith(AndroidJUnit4::class)
 class SettingsScreenTest {
@@ -63,6 +70,33 @@ class SettingsScreenTest {
 
         entryIds.forEach { id ->
             compose.onNodeWithTag(SettingsTestTags.entry(id)).assertHasClickAction()
+        }
+    }
+
+    @Test
+    fun tapping_a_sheet_entry_pushes_its_sheet_route() {
+        val sheetRoutes = mapOf(
+            "appearance" to SheetRoute.SettingsAppearance,
+            "language" to SheetRoute.SettingsLanguage,
+            "app_lock" to SheetRoute.SettingsSecurity,
+            "file_open" to SheetRoute.FileAssociations,
+            "haptic" to SheetRoute.SettingsHaptic,
+            "about" to SheetRoute.AppInfo,
+        )
+        lateinit var navigator: AppNavigator
+        compose.setBicoccaContent {
+            navigator = rememberAppNavigator()
+            CompositionLocalProvider(LocalAppNavigator provides navigator) {
+                SettingsScreen()
+            }
+        }
+
+        sheetRoutes.forEach { (id, route) ->
+            compose.onNodeWithTag(SettingsTestTags.entry(id)).performScrollTo().performClick()
+            compose.waitForIdle()
+
+            assertEquals(route, navigator.top.route)
+            compose.runOnIdle { navigator.popToRoot() }
         }
     }
 

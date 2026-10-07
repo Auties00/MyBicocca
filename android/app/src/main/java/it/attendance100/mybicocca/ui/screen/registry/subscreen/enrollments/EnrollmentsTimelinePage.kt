@@ -38,6 +38,7 @@ import it.attendance100.mybicocca.domain.model.enrollment.EnrollmentId
 import it.attendance100.mybicocca.domain.model.enrollment.RenewalState
 import it.attendance100.mybicocca.ui.component.button.RetryButton
 import it.attendance100.mybicocca.ui.component.feedback.rememberMinDurationLoading
+import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
 import it.attendance100.mybicocca.ui.component.modal.SheetLoadingIndicator
 import it.attendance100.mybicocca.ui.component.modal.SheetMessage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.enrollments.component.EnrollmentRenewalButton
@@ -46,8 +47,8 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.enrollments.compo
 /**
  * Root page of the "Iscrizioni" sheet: the student's enrollment years as a tappable
  * annual-enrollment timeline, with a pinned renewal footer when renewal applies. The
- * sheet container, pinned morphing header and the timeline-to-detail page transition are
- * owned by BottomSheetSceneStrategy; this is just the root entry's body, and the year
+ * sheet container, pinned morphing header ([enrollmentsHeader]) and the timeline-to-detail page
+ * transition are owned by ModalSceneStrategy; this is just the root entry's body, and the year
  * detail is a separate back-stack entry (SheetRoute.EnrollmentDetail rendering
  * EnrollmentDetailPage).
  *
@@ -92,15 +93,21 @@ fun EnrollmentsTimelinePage(
 }
 
 /**
- * "5 anni accademici"-style timeline depth, shown as the header subtitle; null when the
- * history is empty. Public so MainShell's sheet entry can build the pinned header from
- * the shell-hoisted ViewModel's history.
+ * The Iscrizioni sheet's pinned header: the title over the timeline depth ("5 anni
+ * accademici", or "Nessuna iscrizione" when empty); the subtitle is null only while
+ * [history] is still loading.
  */
-fun enrollmentsHeaderSubtitle(history: EnrollmentHistory): String? {
-    val count = history.years.size
-    if (count == 0) return null
-    return if (count == 1) "1 anno accademico" else "$count anni accademici"
-}
+@Composable
+fun enrollmentsHeader(history: EnrollmentHistory?): SheetHeaderSpec = SheetHeaderSpec(
+    title = stringResource(R.string.registry_enrollments),
+    subtitle = history?.years?.size?.let { count ->
+        when (count) {
+            0 -> stringResource(R.string.enrollments_none)
+            1 -> stringResource(R.string.registry_enrollments_one_year)
+            else -> stringResource(R.string.registry_enrollments_many_years, count)
+        }
+    },
+)
 
 /**
  * Stateless timeline body. Shows an error message with retry when the first load failed,

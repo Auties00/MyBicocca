@@ -1,13 +1,9 @@
 package it.attendance100.mybicocca.ui.screen.map.subscreen.buildingsList
 
-import androidx.activity.compose.PredictiveBackHandler
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColor
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.SeekableTransitionState
 import androidx.compose.animation.core.animateDp
 import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.rememberTransition
 import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -44,7 +40,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -69,22 +64,21 @@ import it.attendance100.mybicocca.domain.model.map.MapRoom
 import it.attendance100.mybicocca.domain.model.map.MapRoomDetail
 import it.attendance100.mybicocca.domain.model.map.RoomScheduleEntry
 import it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet
-import it.attendance100.mybicocca.ui.component.modal.SheetPagerHeader
-import it.attendance100.mybicocca.ui.component.modal.sheetPageTransform
+import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
+import it.attendance100.mybicocca.ui.component.modal.SheetPager
 import it.attendance100.mybicocca.ui.screen.map.component.labelRes
 import it.attendance100.mybicocca.ui.screen.map.ext.buildingDisplayName
 import it.attendance100.mybicocca.ui.screen.map.ext.openBuildingInMaps
 import it.attendance100.mybicocca.ui.screen.map.ext.splitLegacyAlias
 import it.attendance100.mybicocca.ui.screen.map.subscreen.buildingDetail.BuildingPageBody
 import it.attendance100.mybicocca.ui.screen.map.subscreen.buildingDetail.RoomDetailPage
-import kotlinx.coroutines.CancellationException
 
 
 /**
- * Edifici sheet: a single modal hosting a pinned morphing header over a three-level body
- * pager (list -> building -> room). "Informazioni" pushes the building page in place; the
- * header itself never swaps, it morphs (back button slides in, title/subtitle crossfade).
- * System back walks the pager up one level before dismissing the sheet.
+ * Edifici sheet: a single modal hosting a [SheetPager] (pinned morphing header over a
+ * three-level body: list -> building -> room). "Informazioni" pushes the building page in
+ * place; the header itself never swaps, it morphs (back button slides in, title/subtitle
+ * crossfade). System back walks the pager up one level before dismissing the sheet.
  */
 @Composable
 fun BuildingsListSheet(
@@ -104,97 +98,64 @@ fun BuildingsListSheet(
 ) {
     PredictiveModalBottomSheet(
         onDismiss = onDismiss,
-        sizeDuration = 500,
-    ) { _, _ ->
+    ) {
         val context = LocalContext.current
         val scheduleMap = (daySchedule as? Loadable.Loaded)?.value
-        val detailTitle = detailBuilding?.let { buildingDisplayName(it) }
 
-        val targetStatePair = detailBuilding to selectedRoom
-        val seekableState = remember { SeekableTransitionState(targetStatePair) }
-        val transition = rememberTransition(seekableState, label = "buildings_sheet_pages")
-
-        LaunchedEffect(targetStatePair) {
-            if (seekableState.targetState != targetStatePair) seekableState.animateTo(
-                targetStatePair
-            )
+        val page: Pair<MapBuilding?, MapRoom?> = detailBuilding to selectedRoom
+        val backTo: Pair<MapBuilding?, MapRoom?>? = when {
+            detailBuilding == null -> null
+            selectedRoom != null -> detailBuilding to null
+            else -> null to null
         }
 
-        PredictiveBackHandler(enabled = detailBuilding != null) { progress ->
-            val isRoomLevel = selectedRoom != null
-            val fallbackState = if (isRoomLevel) detailBuilding to null else null to null
-            try {
-                progress.collect { event ->
-                    seekableState.seekTo(
-                        event.progress,
-                        targetState = fallbackState
-                    )
-                }
-                seekableState.animateTo(fallbackState)
-                if (isRoomLevel) onCloseRoom() else onBack()
-            } catch (_: CancellationException) {
-                seekableState.animateTo(targetStatePair)
-            }
-        }
-
-        Column {
-            SheetPagerHeader(
-                depth = when {
-                    detailBuilding == null -> 0
-                    selectedRoom == null -> 1
-                    else -> 2
-                },
-                title = when {
-                    detailBuilding == null -> stringResource(R.string.map_buildings_title)
-                    selectedRoom == null -> detailTitle.orEmpty()
-                    else -> selectedRoom.name
-                },
-                subtitle = when {
-                    detailBuilding == null ->
-                        pluralStringResource(R.plurals.map_site_count, buildings.size, buildings.size)
-                    selectedRoom == null ->
-                        detailBuilding.address ?: detailBuilding.city
-                        ?: stringResource(detailBuilding.category.labelRes)
-                    else -> detailTitle
-                },
-                onBack = when {
-                    detailBuilding == null -> null
-                    selectedRoom == null -> onBack
-                    else -> onCloseRoom
-                },
-                onSubtitleClick = if (detailBuilding != null && selectedRoom == null) {
-                    { context.openBuildingInMaps(detailBuilding) }
-                } else {
-                    null
-                },
-            )
-            transition.AnimatedContent(
-                transitionSpec = {
-                    sheetPageTransform(forward = pageDepth(targetState) >= pageDepth(initialState))
-                },
-                contentKey = { (building, room) -> room?.code?.value ?: building?.code?.value ?: "list" },
-            ) { (building, room) ->
+        SheetPager(
+            page = page,
+            depth = ::pageDepth,
+            backTo = backTo,
+            onBack = { if (selectedRoom != null) onCloseRoom() else onBack() },
+            key = { (building, room) -> room?.code?.value ?: building?.code?.value ?: "list" },
+            header = { (building, room) ->
                 when {
-                    building == null -> BuildingsListPage(
-                        buildings = buildings,
-                        onShowInfo = onShowInfo,
+                    building == null -> SheetHeaderSpec(
+                        title = stringResource(R.string.map_buildings_title),
+                        subtitle = pluralStringResource(R.plurals.map_site_count, buildings.size, buildings.size),
                     )
 
-                    room == null -> BuildingPageBody(
-                        rooms = rooms,
-                        daySchedule = daySchedule,
-                        syncStatus = syncStatus,
-                        onRoomClick = onRoomClick,
-                        onRetry = onRetryRooms,
+                    room == null -> SheetHeaderSpec(
+                        title = buildingDisplayName(building),
+                        subtitle = building.address ?: building.city
+                            ?: stringResource(building.category.labelRes),
+                        onSubtitleClick = { context.openBuildingInMaps(building) },
                     )
 
-                    else -> RoomDetailPage(
-                        room = room,
-                        detail = roomDetail,
-                        todayEntries = scheduleMap?.get(room.code.value)
-                            ?: if (scheduleMap != null) emptyList() else null,
+                    else -> SheetHeaderSpec(
+                        title = room.name,
+                        subtitle = buildingDisplayName(building),
                     )
                 }
+            },
+        ) { (building, room) ->
+            when {
+                building == null -> BuildingsListPage(
+                    buildings = buildings,
+                    onShowInfo = onShowInfo,
+                )
+
+                room == null -> BuildingPageBody(
+                    rooms = rooms,
+                    daySchedule = daySchedule,
+                    syncStatus = syncStatus,
+                    onRoomClick = onRoomClick,
+                    onRetry = onRetryRooms,
+                )
+
+                else -> RoomDetailPage(
+                    room = room,
+                    detail = roomDetail,
+                    todayEntries = scheduleMap?.get(room.code.value)
+                        ?: if (scheduleMap != null) emptyList() else null,
+                )
             }
         }
     }

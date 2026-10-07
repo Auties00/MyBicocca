@@ -181,8 +181,8 @@ class AddCourseViewModel @Inject constructor(
 
     /**
      * Fires a self-enrolment request, tracking it in the local status map and emitting the
-     * outcome as a one-shot event; without an active account it emits a sign-in request
-     * instead. Short-circuits (haptic only, no request) when already subscribed on the server
+     * outcome as a one-shot event. Without an active account (the last one was just removed and
+     * the shell is about to close) the tap is dropped. Short-circuits (haptic only, no request) when already subscribed on the server
      * or a tap is already in flight. Both guard sources are read directly/synchronously — NOT
      * via the combined [enrolment] flow, whose value lags the local map, so two fast taps would
      * otherwise both pass the guard and fire duplicate enrol requests.
@@ -196,7 +196,6 @@ class AddCourseViewModel @Inject constructor(
             val accountId = activeAccountId.first()
             if (accountId == null) {
                 _localEnrolment.update { it + (courseId to EnrolmentStatus.Idle) }
-                oneShotChannel.trySend(AddCourseOneShotEvent.RequireSignIn)
                 return@launch
             }
             runCatching { enrolIntoCourse(accountId, courseId) }

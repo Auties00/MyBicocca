@@ -56,6 +56,7 @@ import it.attendance100.mybicocca.ui.component.button.RetryButton
 import it.attendance100.mybicocca.ui.component.feedback.EmptyState
 import it.attendance100.mybicocca.ui.component.feedback.rememberMinDurationLoading
 import it.attendance100.mybicocca.ui.component.input.SegmentedSwitch
+import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
 import it.attendance100.mybicocca.ui.component.modal.SheetLoadingIndicator
 import it.attendance100.mybicocca.ui.component.modal.SheetMessage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.component.TaxInvoiceCard
@@ -66,7 +67,7 @@ import kotlinx.coroutines.launch
 
 /**
  * Tasse as a single sheet entry, in the same modal language as ISEE / Rimborsi. The sheet
- * container and the pinned "Tasse" header are owned by BottomSheetSceneStrategy; this body is
+ * container and the pinned [taxesHeader] are owned by ModalSceneStrategy; this body is
  * the Da pagare / Pagate pager plus the full-screen hero detail ([TaxDetailOverlay]) a tapped
  * fattura row expands into, growing from the row's on-screen bounds.
  *
@@ -283,10 +284,19 @@ private fun HeroInvoiceCard(
     )
 }
 
-/** Pinned-header subtitle: the outstanding total while anything is due, else the invoice count. */
+/**
+ * The Tasse sheet's pinned header: the outstanding total while anything is due, else the invoice
+ * count ("Nessuna tassa" when there are none); the subtitle is null only while [invoices] load.
+ */
 @Composable
-fun taxesHeaderSubtitle(invoices: List<TaxInvoice>): String? {
-    if (invoices.isEmpty()) return null
+fun taxesHeader(invoices: List<TaxInvoice>?): SheetHeaderSpec = SheetHeaderSpec(
+    title = stringResource(R.string.registry_fees),
+    subtitle = invoices?.let { taxesHeaderSubtitle(it) },
+)
+
+@Composable
+private fun taxesHeaderSubtitle(invoices: List<TaxInvoice>): String {
+    if (invoices.isEmpty()) return stringResource(R.string.taxes_empty_title)
     val due = invoices
         .filter { it.status == TaxStatus.PENDING || it.status == TaxStatus.EXPIRED }
         .sumOf { it.amount }

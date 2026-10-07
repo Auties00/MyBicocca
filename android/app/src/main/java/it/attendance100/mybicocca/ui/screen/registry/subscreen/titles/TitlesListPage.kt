@@ -43,6 +43,7 @@ import it.attendance100.mybicocca.domain.model.document.AcademicTitle
 import it.attendance100.mybicocca.domain.model.document.TitleCategory
 import it.attendance100.mybicocca.ui.component.button.RetryButton
 import it.attendance100.mybicocca.ui.component.feedback.rememberMinDurationLoading
+import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
 import it.attendance100.mybicocca.ui.component.modal.SheetLoadingIndicator
 import it.attendance100.mybicocca.ui.component.modal.SheetMessage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.titles.ext.icon
@@ -52,8 +53,8 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.titles.ext.labelR
  * Root page of the "Titoli" sheet: the student's qualifications as a category-grouped
  * directory list, one chevron row per title. Picking a title pushes its detail page in
  * place while the header morphs (back button slides in, title and subtitle crossfade)
- * rather than swapping. The sheet container, pinned morphing header and the
- * list-to-detail page transition are owned by BottomSheetSceneStrategy; the title detail
+ * rather than swapping. The sheet container, pinned morphing header ([titlesHeader]) and the
+ * list-to-detail page transition are owned by ModalSceneStrategy; the title detail
  * is a separate back-stack entry (SheetRoute.TitleDetail rendering [TitleDetailPage]).
  *
  * The ViewModel outlives the sheet (shell-scoped): a re-open shows the cached snapshot
@@ -244,13 +245,27 @@ private fun TitleRow(
 }
 
 /**
- * "3 titoli"-style count shown as the sheet's header subtitle; null when the list is
- * empty. Public so MainShell's sheet entry can build the pinned header from the
- * shell-hoisted ViewModel's titles.
+ * The Titoli sheet's pinned header: a "3 titoli"-style count ("Nessun titolo" when the list is
+ * empty); the subtitle is null only while [titles] load.
  */
 @Composable
-fun titlesHeaderSubtitle(titles: List<AcademicTitle>): String? {
-    if (titles.isEmpty()) return null
+fun titlesHeader(titles: List<AcademicTitle>?): SheetHeaderSpec = SheetHeaderSpec(
+    title = stringResource(R.string.registry_titles),
+    subtitle = titles?.let { titlesHeaderSubtitle(it) },
+)
+
+/** A title's detail page header; [title] is null only while it loads (or as it is evicted). */
+@Composable
+fun titleDetailHeader(title: AcademicTitle?): SheetHeaderSpec =
+    if (title == null) {
+        SheetHeaderSpec(title = stringResource(R.string.registry_titles), subtitle = null)
+    } else {
+        SheetHeaderSpec(title = title.headline(), subtitle = title.headlineSubtitle())
+    }
+
+@Composable
+private fun titlesHeaderSubtitle(titles: List<AcademicTitle>): String {
+    if (titles.isEmpty()) return stringResource(R.string.titles_empty_title)
     return if (titles.size == 1) {
         stringResource(R.string.titles_count_one)
     } else {
@@ -268,13 +283,15 @@ fun AcademicTitle.headline(): String =
 
 /**
  * Detail-page header subtitle: the title type when the headline is the subject, else the
- * awarding institution.
+ * awarding institution, else the year, else the generic "Titoli" label.
  */
 @Composable
-fun AcademicTitle.headlineSubtitle(): String? {
+private fun AcademicTitle.headlineSubtitle(): String {
     val headline = headline()
     return typeDescription?.takeIf { it.isNotBlank() && it != headline }
         ?: institution?.takeIf { it.isNotBlank() && it != headline }
+        ?: year?.takeIf { it.isNotBlank() }
+        ?: stringResource(R.string.registry_titles)
 }
 
 @Composable

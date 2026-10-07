@@ -245,9 +245,10 @@ fun QuestionnaireCompilationPage(
 
 /**
  * What the hosting sheet's pinned header shows while the compiler is up: the unit being
- * evaluated as the title, with the partition (when present) as the subtitle.
+ * evaluated as the title, with the partition as the subtitle (or, without one, the page
+ * number on question pages and the generic questionnaire label elsewhere).
  */
-data class CompilationWizardHeader(val title: String, val subtitle: AnnotatedString?)
+data class CompilationWizardHeader(val title: String, val subtitle: AnnotatedString)
 
 /**
  * Builds the compiler's per-step header. The unit (lecturer/turno) is what's being
@@ -262,13 +263,17 @@ fun compilationWizardHeader(
 ): CompilationWizardHeader {
     val step by viewModel.step.collectAsStateWithLifecycle()
 
-    val unitTitle = viewModel.lecturerName ?: viewModel.activityName
+    val unitTitle = (viewModel.lecturerName ?: viewModel.activityName)
+        .ifBlank { stringResource(R.string.questionnaire_compile_title) }
+    val partition = viewModel.partitionName?.takeIf { it.isNotBlank() }
 
     return when (val current = step) {
         is QuestionnaireCompilationStep.Page -> CompilationWizardHeader(
             title = unitTitle,
-            subtitle = viewModel.partitionName?.takeIf { it.isNotBlank() }
-                ?.let { AnnotatedString(it.uppercase()) },
+            subtitle = AnnotatedString(
+                partition?.uppercase()
+                    ?: stringResource(R.string.questionnaire_page_number, current.index + 1),
+            ),
         )
 
         is QuestionnaireCompilationStep.Summary -> {
@@ -292,7 +297,7 @@ fun compilationWizardHeader(
 
         else -> CompilationWizardHeader(
             title = unitTitle,
-            subtitle = viewModel.partitionName?.takeIf { it.isNotBlank() }?.let(::AnnotatedString),
+            subtitle = AnnotatedString(partition ?: stringResource(R.string.questionnaire_compile_title)),
         )
     }
 }
@@ -709,7 +714,7 @@ private fun SummaryContent(complete: Boolean, anonymous: Boolean) {
 private enum class CompilationAction { Next, Confirm, Working }
 
 /**
- * The app's connected button pair (see StudyPlanEditPage/EventDetailSheet): an icon-only
+ * The app's connected button pair (see StudyPlanEditPage/EventDetailPage): an icon-only
  * tonal back that springs in once the wizard can step backwards, and one brand-filled
  * primary action (red in light, primaryContainer in dark — the shared CTA scheme)
  * morphing between Avanti, Conferma and the in-flight state, flattening its start

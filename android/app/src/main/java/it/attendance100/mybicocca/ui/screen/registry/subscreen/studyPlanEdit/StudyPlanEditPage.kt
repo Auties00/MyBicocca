@@ -871,7 +871,7 @@ private fun NoteTile(text: String, capTop: Boolean, capBottom: Boolean) {
 }
 
 /**
- * The app's connected button pair (see EventDetailSheet/ExamResultsPage): an icon-only
+ * The app's connected button pair (see EventDetailPage/ExamResultsPage): an icon-only
  * tonal back that springs in past the first page, and one persistent brand-filled
  * primary action (red in light, primaryContainer in dark — the shared CTA scheme) whose
  * label and icon slide between the Avanti / Invia / in-flight states, flattening its

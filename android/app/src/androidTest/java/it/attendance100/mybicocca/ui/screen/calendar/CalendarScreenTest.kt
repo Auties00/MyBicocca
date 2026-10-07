@@ -10,6 +10,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.lifecycle.SavedStateHandle
@@ -42,9 +43,12 @@ import it.attendance100.mybicocca.domain.usecase.calendar.PrefetchAdjacentMonths
 import it.attendance100.mybicocca.domain.usecase.calendar.RefreshCalendarMonthUseCase
 import it.attendance100.mybicocca.domain.usecase.elearning.course.ObserveCoursesByActivityCodeUseCase
 import it.attendance100.mybicocca.testing.setBicoccaContent
+import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
+import it.attendance100.mybicocca.ui.component.modal.SheetPage
 import it.attendance100.mybicocca.ui.screen.calendar.state.CalendarViewMode
 import it.attendance100.mybicocca.ui.screen.calendar.subscreen.eventDetail.EventDetailContent
-import it.attendance100.mybicocca.ui.screen.calendar.subscreen.eventDetail.EventDetailSheet
+import it.attendance100.mybicocca.ui.screen.calendar.subscreen.eventDetail.EventDetailPage
+import it.attendance100.mybicocca.ui.screen.calendar.subscreen.eventDetail.eventDetailHeader
 import kotlinx.coroutines.flow.flowOf
 import org.junit.Rule
 import org.junit.Test
@@ -59,7 +63,7 @@ import java.time.LocalTime
  * [CalendarViewModel] over MockK-faked use cases (the same construction as
  * [CalendarViewModelTest]), so each data/sync state can be staged and the resulting state
  * marker asserted; the event detail body is exercised directly as the stateless composable
- * [EventDetailContent] it is, sidestepping the modal-sheet window so the action click lands
+ * [EventDetailContent] it is, without the shell's modal sheet so the action click lands
  * synchronously. Tests anchor on [CalendarTestTags] and render under [setBicoccaContent], which
  * installs the app-wide CompositionLocals the screen reads (haptics, snackbar, device type)
  * over the production theme.
@@ -264,21 +268,27 @@ class CalendarScreenTest {
     }
 
     @Test
-    fun event_detail_sheet_renders_the_event_title_and_kind_label() {
+    fun event_detail_page_renders_the_event_title_and_kind_label() {
+        val event = lesson("lesson_1")
+        var header: SheetHeaderSpec? = null
         compose.setBicoccaContent {
-            EventDetailSheet(
-                event = lesson("lesson_1"),
-                elearningCourses = emptyList(),
-                onOpenCourse = mockk(relaxed = true),
-                onOpenAssignment = mockk(relaxed = true),
-                onOpenReservation = mockk(relaxed = true),
-                onDismiss = mockk(relaxed = true),
-            )
+            val spec = eventDetailHeader(event).also { header = it }
+            SheetPage(header = spec) {
+                EventDetailPage(
+                    event = event,
+                    elearningCourses = emptyList(),
+                    onOpenCourse = mockk(relaxed = true),
+                    onOpenAssignment = mockk(relaxed = true),
+                    onOpenReservation = mockk(relaxed = true),
+                )
+            }
         }
         compose.waitForIdle()
 
-        compose.onNodeWithTag(CalendarTestTags.EVENT_TITLE).assertIsDisplayed()
-        compose.onNodeWithTag(CalendarTestTags.EVENT_ACTIVITY_LABEL).assertIsDisplayed()
+        val spec = checkNotNull(header)
+        assertThat(spec.title).isEqualTo(event.title)
+        compose.onNodeWithText(spec.title).assertIsDisplayed()
+        compose.onNodeWithText(checkNotNull(spec.subtitle).toString()).assertIsDisplayed()
         compose.onNodeWithTag(CalendarTestTags.EVENT_CONTENT).assertIsDisplayed()
     }
 
@@ -291,6 +301,7 @@ class CalendarScreenTest {
                     event = lesson("lesson_2"),
                     elearningCourses = listOf(course(42)),
                     onOpenCourse = onOpenCourse,
+                    onPickCourseEdition = mockk(relaxed = true),
                     onOpenAssignment = mockk(relaxed = true),
                     onOpenReservation = mockk(relaxed = true),
                 )
@@ -306,5 +317,34 @@ class CalendarScreenTest {
         compose.waitForIdle()
 
         verify { onOpenCourse(CourseId(42)) }
+    }
+
+    @Test
+    fun tapping_the_lesson_primary_action_with_several_editions_opens_the_edition_picker() {
+        val onOpenCourse: (CourseId) -> Unit = mockk(relaxed = true)
+        val onPickCourseEdition: (String) -> Unit = mockk(relaxed = true)
+        compose.setBicoccaContent {
+            Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+                EventDetailContent(
+                    event = lesson("lesson_3"),
+                    elearningCourses = listOf(course(42), course(43)),
+                    onOpenCourse = onOpenCourse,
+                    onPickCourseEdition = onPickCourseEdition,
+                    onOpenAssignment = mockk(relaxed = true),
+                    onOpenReservation = mockk(relaxed = true),
+                )
+            }
+        }
+
+        compose.waitUntil(timeoutMillis = 5000) {
+            compose.onAllNodesWithTag(CalendarTestTags.EVENT_PRIMARY_ACTION)
+                .fetchSemanticsNodes().isNotEmpty()
+        }
+
+        compose.onNodeWithTag(CalendarTestTags.EVENT_PRIMARY_ACTION).performScrollTo().performClick()
+        compose.waitForIdle()
+
+        verify { onPickCourseEdition("E3101Q123") }
+        verify(exactly = 0) { onOpenCourse(any()) }
     }
 }

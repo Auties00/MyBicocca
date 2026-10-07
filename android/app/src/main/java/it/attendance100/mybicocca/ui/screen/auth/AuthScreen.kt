@@ -119,13 +119,12 @@ fun AuthScreen(
 }
 
 /**
- * In-sheet variant of the sign-in form, rendered as the "login mode" scene of
- * AccountSwitcherSheet's AnimatedContent. Back is not intercepted here so the sheet's
- * outer PredictiveBackHandler receives the event first; the wordmark stays static (no
- * shared-element morph) and the snackbar host is drawn inside the sheet, where a system
- * snackbar would otherwise sit behind the modal. [cancelPaddingProvider] and
- * [cancelOpacityProvider] let the host animate the cancel button in sync with the sheet's
- * scene transition.
+ * In-sheet variant of the sign-in form: the sign-in page of the account switcher's
+ * [SheetPager][it.attendance100.mybicocca.ui.component.modal.SheetPager]. Back is not
+ * intercepted here, so the pager's predictive back handler receives it; the wordmark stays
+ * static (no shared-element morph) and the snackbar host is drawn inside the sheet, where a
+ * system snackbar would otherwise sit behind the modal. [cancelPaddingProvider] and
+ * [cancelOpacityProvider] let the host animate the cancel button in sync with the page change.
  */
 @Composable
 fun AuthScreenSheetContent(

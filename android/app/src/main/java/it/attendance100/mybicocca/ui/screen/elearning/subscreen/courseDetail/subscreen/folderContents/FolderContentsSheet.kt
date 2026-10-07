@@ -4,6 +4,7 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -24,6 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -32,12 +34,14 @@ import androidx.compose.ui.unit.sp
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.elearning.course.ModuleContent
 import it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet
+import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
+import it.attendance100.mybicocca.ui.component.modal.SheetPage
 import java.util.Locale
 
 /**
  * Modal bottom sheet picking one file out of a folder module (or the rare multi-file resource)
- * before handing off to the file viewer: the module name as header, then a lazy list of file
- * rows with a type icon, name and formatted size. Tapping a row opens it and dismisses the
+ * before handing off to the file viewer: the module name and file count as the pinned header,
+ * then a lazy list of file rows with a type icon, name and formatted size. Tapping a row opens it and dismisses the
  * sheet; a long-press re-shows the in-app/external chooser for that file even when a choice
  * was already remembered (forceChooser), mirroring the long-press on a single-file module row.
  */
@@ -49,21 +53,17 @@ fun FolderContentsSheet(
     onOpenContent: (content: ModuleContent, forceChooser: Boolean) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    PredictiveModalBottomSheet(onDismiss = onDismiss) { _, _ ->
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 16.dp)
+    PredictiveModalBottomSheet(onDismiss = onDismiss) {
+        SheetPage(
+            header = SheetHeaderSpec(
+                title = title,
+                subtitle = pluralStringResource(R.plurals.elearning_folder_file_count, contents.size, contents.size),
+            ),
         ) {
-            Text(
-                text = title,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 18.sp,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.padding(start = 24.dp, end = 24.dp, top = 8.dp, bottom = 8.dp),
-            )
-            LazyColumn {
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth(),
+                contentPadding = PaddingValues(bottom = 16.dp),
+            ) {
                 itemsIndexed(contents) { _, content ->
                     FileRow(
                         content = content,

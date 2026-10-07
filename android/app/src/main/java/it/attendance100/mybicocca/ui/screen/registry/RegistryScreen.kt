@@ -23,9 +23,7 @@ import androidx.compose.material.icons.outlined.WorkspacePremium
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
@@ -36,15 +34,17 @@ import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
+import it.attendance100.mybicocca.ui.navigation.LocalAppNavigator
+import it.attendance100.mybicocca.ui.navigation.route.SheetRoute
 import it.attendance100.mybicocca.ui.screen.registry.component.RegistryServiceSection
 import it.attendance100.mybicocca.ui.screen.registry.component.ScadenzeHeader
+import it.attendance100.mybicocca.ui.screen.registry.state.RegistryDeadline
 import it.attendance100.mybicocca.ui.screen.registry.state.RegistryService
 import it.attendance100.mybicocca.ui.screen.registry.state.RegistryServiceGroup
 import it.attendance100.mybicocca.ui.screen.registry.state.buildRegistryDeadlines
 import it.attendance100.mybicocca.ui.screen.registry.state.isUrgent
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.BookedExamsViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.BookableExamsViewModel
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.deadlines.DeadlinesSheet
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.deadlines.nextDeadlineLabel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.examResults.ExamResultsViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlan.StudyPlanViewModel
@@ -56,7 +56,7 @@ import java.time.LocalDate
  * Landing of the Registry (Segreterie) tab: a pinned "Scadenze" banner over a scrollable
  * directory of Esse3 services grouped into connected segmented cards, one icon-chip accent
  * hue per group (see [serviceAccents]). Tapping the banner opens the scadenzario timeline
- * sheet; tapping a row routes to the owning service sheet.
+ * sheet; tapping a row opens the owning service sheet, both through [LocalAppNavigator].
  *
  * The banner summary and the deadline spine derive from the in-memory streams of four
  * feature ViewModels (bookings, exam calls, invoices, exam results). The spine counts as
@@ -73,70 +73,28 @@ fun RegistryScreen(
     taxesViewModel: TaxesViewModel,
     examResultsViewModel: ExamResultsViewModel,
     studyPlanViewModel: StudyPlanViewModel,
-    onOpenAppelli: () -> Unit,
-    onOpenTaxes: () -> Unit,
-    onOpenIsee: () -> Unit,
-    onOpenRefunds: () -> Unit,
-    onOpenExamResults: () -> Unit,
-    onOpenStudyPlan: () -> Unit,
-    onOpenQuestionnaires: () -> Unit,
-    onOpenAppointments: () -> Unit,
-    onOpenLibrary: () -> Unit,
-    onOpenAttendance: () -> Unit,
-    onOpenEnrollments: () -> Unit,
-    onOpenTitles: () -> Unit,
-    onOpenCertificates: () -> Unit,
     modifier: Modifier = Modifier,
     isActive: Boolean = true,
     onProvideFilterToggle: ((() -> Unit)?) -> Unit = {},
 ) {
     LaunchedEffect(isActive) { if (isActive) onProvideFilterToggle(null) }
 
-    val bookings by bookedExamsViewModel.bookings.collectAsStateWithLifecycle()
-    val examCalls by bookableExamsViewModel.examCalls.collectAsStateWithLifecycle()
-    val invoices by taxesViewModel.invoices.collectAsStateWithLifecycle()
-    val examResults by examResultsViewModel.results.collectAsStateWithLifecycle()
-    val bookingsSync by bookedExamsViewModel.syncStatus.collectAsStateWithLifecycle()
-    val examCallsSync by bookableExamsViewModel.syncStatus.collectAsStateWithLifecycle()
-    val invoicesSync by taxesViewModel.syncStatus.collectAsStateWithLifecycle()
-    val examResultsSync by examResultsViewModel.syncStatus.collectAsStateWithLifecycle()
+    val navigator = LocalAppNavigator.current
+    fun open(route: SheetRoute): () -> Unit = { navigator?.navigate(route) }
 
-    val bookingList = bookings.valueOrNull().orEmpty()
-    val examCallList = examCalls.valueOrNull().orEmpty()
-    val invoiceList = invoices.valueOrNull().orEmpty()
-    val resultList = examResults.valueOrNull().orEmpty()
-
-    // In-plan activity codes for the deadline spine's study-plan filter. The plan is
-    // fetched once per career by the shell-scoped StudyPlanViewModel; null (not loaded,
-    // failed, or codeless plan) disables the filter rather than hiding entries.
-    val studyPlan by studyPlanViewModel.plan.collectAsStateWithLifecycle()
-    val studyPlanCodes = remember(studyPlan) {
-        studyPlan.valueOrNull()?.courses
-            ?.mapNotNull { it.code?.trim()?.uppercase() }
-            ?.takeIf { it.isNotEmpty() }
-            ?.toSet()
-    }
-
-    val deadlinesLoading = listOf(bookings, examCalls, invoices, examResults)
-        .any { it is Loadable.NotYetLoaded }
-    val deadlinesFailure = listOf(bookingsSync, examCallsSync, invoicesSync, examResultsSync)
-        .firstNotNullOfOrNull { (it as? SyncStatus.Failed)?.cause }
-
-    val today = remember { LocalDate.now() }
-
-    val deadlines = remember(resultList, invoiceList, bookingList, examCallList, studyPlanCodes) {
-        buildRegistryDeadlines(
-            today = today,
-            examResults = resultList,
-            invoices = invoiceList,
-            bookings = bookingList,
-            examCalls = examCallList,
-            onOpenExamResults = onOpenExamResults,
-            onOpenTaxes = onOpenTaxes,
-            onOpenBookedExams = onOpenAppelli,
-            studyPlanCodes = studyPlanCodes,
-        )
-    }
+    val deadlineState = rememberRegistryDeadlines(
+        bookedExamsViewModel = bookedExamsViewModel,
+        bookableExamsViewModel = bookableExamsViewModel,
+        taxesViewModel = taxesViewModel,
+        examResultsViewModel = examResultsViewModel,
+        studyPlanViewModel = studyPlanViewModel,
+        onOpenExamResults = open(SheetRoute.ExamResults),
+        onOpenTaxes = open(SheetRoute.Taxes),
+        onOpenBookedExams = open(SheetRoute.Appelli),
+    )
+    val deadlines = deadlineState.deadlines
+    val deadlinesLoading = deadlineState.loading
+    val deadlinesFailure = deadlineState.failure
     val urgentCount = deadlines.count { it.isUrgent() }
     val headerSummary = when {
         deadlinesLoading && deadlinesFailure != null -> stringResource(R.string.registry_sync_failed)
@@ -166,28 +124,28 @@ fun RegistryScreen(
                     stringResource(R.string.registry_study_plan),
                     stringResource(R.string.registry_study_plan_desc),
                     Icons.Outlined.AccountTree,
-                    onClick = onOpenStudyPlan
+                    onClick = open(SheetRoute.StudyPlan),
                 ),
                 RegistryService(
                     "attendance",
                     stringResource(R.string.registry_attendance),
                     stringResource(R.string.registry_attendance_desc),
                     Icons.Outlined.CoPresent,
-                    onClick = onOpenAttendance
+                    onClick = open(SheetRoute.Attendance),
                 ),
                 RegistryService(
                     "exam_results",
                     stringResource(R.string.registry_exam_results),
                     stringResource(R.string.registry_exam_results_desc),
                     Icons.AutoMirrored.Outlined.Grading,
-                    onClick = onOpenExamResults
+                    onClick = open(SheetRoute.ExamResults),
                 ),
                 RegistryService(
                     "questionnaires",
                     stringResource(R.string.registry_questionnaires),
                     stringResource(R.string.registry_questionnaires_desc),
                     Icons.AutoMirrored.Outlined.FactCheck,
-                    onClick = onOpenQuestionnaires
+                    onClick = open(SheetRoute.Questionnaires),
                 ),
             ),
         ),
@@ -200,21 +158,21 @@ fun RegistryScreen(
                     stringResource(R.string.appelli_title),
                     stringResource(R.string.appelli_desc),
                     Icons.Outlined.EventAvailable,
-                    onClick = onOpenAppelli
+                    onClick = open(SheetRoute.Appelli),
                 ),
                 RegistryService(
                     "appointments",
                     stringResource(R.string.appointments_title),
                     stringResource(R.string.appointments_desc),
                     Icons.Outlined.SupportAgent,
-                    onClick = onOpenAppointments
+                    onClick = open(SheetRoute.Appointments),
                 ),
                 RegistryService(
                     "library",
                     stringResource(R.string.registry_library),
                     stringResource(R.string.registry_library_desc),
                     Icons.Outlined.LocalLibrary,
-                    onClick = onOpenLibrary
+                    onClick = open(SheetRoute.Library),
                 ),
             ),
         ),
@@ -227,21 +185,21 @@ fun RegistryScreen(
                     stringResource(R.string.registry_enrollments),
                     stringResource(R.string.registry_enrollments_desc),
                     Icons.Outlined.School,
-                    onClick = onOpenEnrollments
+                    onClick = open(SheetRoute.Enrollments),
                 ),
                 RegistryService(
                     "titles",
                     stringResource(R.string.registry_titles),
                     stringResource(R.string.registry_titles_desc),
                     Icons.Outlined.WorkspacePremium,
-                    onClick = onOpenTitles
+                    onClick = open(SheetRoute.Titles),
                 ),
                 RegistryService(
                     "certificates",
                     stringResource(R.string.registry_certificates),
                     stringResource(R.string.registry_certificates_desc),
                     Icons.Outlined.Description,
-                    onClick = onOpenCertificates
+                    onClick = open(SheetRoute.Certificates),
                 ),
             ),
         ),
@@ -254,34 +212,32 @@ fun RegistryScreen(
                     stringResource(R.string.registry_fees),
                     stringResource(R.string.registry_fees_desc),
                     Icons.Outlined.Payments,
-                    onClick = onOpenTaxes
+                    onClick = open(SheetRoute.Taxes),
                 ),
                 RegistryService(
                     "isee",
                     stringResource(R.string.registry_isee),
                     stringResource(R.string.registry_isee_desc),
                     Icons.Outlined.Savings,
-                    onClick = onOpenIsee
+                    onClick = open(SheetRoute.Isee),
                 ),
                 RegistryService(
                     "refunds",
                     stringResource(R.string.registry_refunds),
                     stringResource(R.string.registry_refunds_desc),
                     Icons.Outlined.CurrencyExchange,
-                    onClick = onOpenRefunds
+                    onClick = open(SheetRoute.Refunds),
                 ),
             ),
         ),
     )
-
-    var showDeadlines by remember { mutableStateOf(false) }
 
     Column(modifier = modifier
         .fillMaxSize()
         .testTag(RegistryTestTags.ROOT)) {
         ScadenzeHeader(
             summary = headerSummary,
-            onClick = { showDeadlines = true },
+            onClick = open(SheetRoute.Deadlines),
             modifier = Modifier
                 .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 12.dp)
                 .testTag(RegistryTestTags.SCADENZE_HEADER),
@@ -306,19 +262,86 @@ fun RegistryScreen(
             }
         }
     }
+}
 
-    if (showDeadlines) {
-        DeadlinesSheet(
-            deadlines = deadlines,
-            loading = deadlinesLoading,
-            failure = deadlinesFailure,
-            onRetry = {
-                if (bookingsSync is SyncStatus.Failed) bookedExamsViewModel.refresh()
-                if (examCallsSync is SyncStatus.Failed) bookableExamsViewModel.refresh()
-                if (invoicesSync is SyncStatus.Failed) taxesViewModel.refresh()
-                if (examResultsSync is SyncStatus.Failed) examResultsViewModel.refresh()
-            },
-            onDismiss = { showDeadlines = false },
+/** The merged deadline spine with its loading/failure state, see [rememberRegistryDeadlines]. */
+internal class RegistryDeadlines(
+    val deadlines: List<RegistryDeadline>,
+    val loading: Boolean,
+    val failure: Throwable?,
+    val retry: () -> Unit,
+)
+
+/**
+ * Collapses the bookings, exam calls, invoices and exam results streams into the deadline
+ * spine shared by the Scadenze banner and the scadenzario sheet. [RegistryDeadlines.loading]
+ * holds until every stream has delivered; [RegistryDeadlines.failure] is the first failed
+ * sync's cause and [RegistryDeadlines.retry] re-syncs only the failed streams. The callbacks
+ * route each entry to its owning sub-screen.
+ */
+@Composable
+internal fun rememberRegistryDeadlines(
+    bookedExamsViewModel: BookedExamsViewModel,
+    bookableExamsViewModel: BookableExamsViewModel,
+    taxesViewModel: TaxesViewModel,
+    examResultsViewModel: ExamResultsViewModel,
+    studyPlanViewModel: StudyPlanViewModel,
+    onOpenExamResults: () -> Unit,
+    onOpenTaxes: () -> Unit,
+    onOpenBookedExams: () -> Unit,
+): RegistryDeadlines {
+    val bookings by bookedExamsViewModel.bookings.collectAsStateWithLifecycle()
+    val examCalls by bookableExamsViewModel.examCalls.collectAsStateWithLifecycle()
+    val invoices by taxesViewModel.invoices.collectAsStateWithLifecycle()
+    val examResults by examResultsViewModel.results.collectAsStateWithLifecycle()
+    val bookingsSync by bookedExamsViewModel.syncStatus.collectAsStateWithLifecycle()
+    val examCallsSync by bookableExamsViewModel.syncStatus.collectAsStateWithLifecycle()
+    val invoicesSync by taxesViewModel.syncStatus.collectAsStateWithLifecycle()
+    val examResultsSync by examResultsViewModel.syncStatus.collectAsStateWithLifecycle()
+
+    val bookingList = bookings.valueOrNull().orEmpty()
+    val examCallList = examCalls.valueOrNull().orEmpty()
+    val invoiceList = invoices.valueOrNull().orEmpty()
+    val resultList = examResults.valueOrNull().orEmpty()
+
+    // In-plan activity codes for the deadline spine's study-plan filter. The plan is
+    // fetched once per career by the shell-scoped StudyPlanViewModel; null (not loaded,
+    // failed, or codeless plan) disables the filter rather than hiding entries.
+    val studyPlan by studyPlanViewModel.plan.collectAsStateWithLifecycle()
+    val studyPlanCodes = remember(studyPlan) {
+        studyPlan.valueOrNull()?.courses
+            ?.mapNotNull { it.code?.trim()?.uppercase() }
+            ?.takeIf { it.isNotEmpty() }
+            ?.toSet()
+    }
+
+    val today = remember { LocalDate.now() }
+
+    val deadlines = remember(resultList, invoiceList, bookingList, examCallList, studyPlanCodes) {
+        buildRegistryDeadlines(
+            today = today,
+            examResults = resultList,
+            invoices = invoiceList,
+            bookings = bookingList,
+            examCalls = examCallList,
+            onOpenExamResults = onOpenExamResults,
+            onOpenTaxes = onOpenTaxes,
+            onOpenBookedExams = onOpenBookedExams,
+            studyPlanCodes = studyPlanCodes,
         )
     }
+
+    return RegistryDeadlines(
+        deadlines = deadlines,
+        loading = listOf(bookings, examCalls, invoices, examResults)
+            .any { it is Loadable.NotYetLoaded },
+        failure = listOf(bookingsSync, examCallsSync, invoicesSync, examResultsSync)
+            .firstNotNullOfOrNull { (it as? SyncStatus.Failed)?.cause },
+        retry = {
+            if (bookingsSync is SyncStatus.Failed) bookedExamsViewModel.refresh()
+            if (examCallsSync is SyncStatus.Failed) bookableExamsViewModel.refresh()
+            if (invoicesSync is SyncStatus.Failed) taxesViewModel.refresh()
+            if (examResultsSync is SyncStatus.Failed) examResultsViewModel.refresh()
+        },
+    )
 }

@@ -38,8 +38,7 @@ import kotlin.math.roundToInt
  * zone but back-dragged below the threshold snaps the card home and re-seals.
  *
  * `pendingRemoval` is a one-way signal from the parent — when it flips back to false (the
- * user pressed Undo) the card slides back home, mirroring the old `SwipeToDismissBoxState
- * .reset()` path.
+ * user pressed Undo) the card slides back home.
  */
 @Composable
 fun SwipeToRemoveBox(

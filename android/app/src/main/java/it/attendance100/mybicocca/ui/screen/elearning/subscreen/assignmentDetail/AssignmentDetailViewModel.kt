@@ -27,7 +27,7 @@ import it.attendance100.mybicocca.domain.usecase.elearning.assignment.RefreshSub
 import it.attendance100.mybicocca.domain.usecase.elearning.assignment.RemoveSubmissionUseCase
 import it.attendance100.mybicocca.domain.usecase.elearning.assignment.SaveSubmissionUseCase
 import it.attendance100.mybicocca.domain.usecase.elearning.assignment.SubmitAssignmentForGradingUseCase
-import it.attendance100.mybicocca.ui.navigation.route.AppRoute
+import it.attendance100.mybicocca.ui.navigation.route.SheetRoute
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.assignmentDetail.state.AssignmentDetailOneShotEvent
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.assignmentDetail.state.AssignmentPage
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.assignmentDetail.state.PickedFile
@@ -70,7 +70,7 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel(assistedFactory = AssignmentDetailViewModel.Factory::class)
 class AssignmentDetailViewModel @AssistedInject constructor(
-    @Assisted private val key: AppRoute.AssignmentDetail,
+    @Assisted private val key: SheetRoute.AssignmentDetail,
     savedState: SavedStateHandle,
     observeActiveAccount: ObserveActiveAccountUseCase,
     private val observeAssignment: ObserveAssignmentUseCase,
@@ -86,7 +86,7 @@ class AssignmentDetailViewModel @AssistedInject constructor(
 
     @AssistedFactory
     interface Factory {
-        fun create(key: AppRoute.AssignmentDetail): AssignmentDetailViewModel
+        fun create(key: SheetRoute.AssignmentDetail): AssignmentDetailViewModel
     }
 
     private val assignmentId: AssignmentId = AssignmentId(key.assignId)

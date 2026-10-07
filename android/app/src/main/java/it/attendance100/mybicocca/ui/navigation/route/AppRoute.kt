@@ -1,6 +1,5 @@
 package it.attendance100.mybicocca.ui.navigation.route
 
-import androidx.navigation3.runtime.NavKey
 import kotlinx.serialization.Serializable
 
 /**
@@ -21,7 +20,8 @@ val AppRoute.isSubPage: Boolean
  * pushed over it. Auth and career pick are handled upstream of the shell via [RootPhase], so
  * splash and login routes are intentionally absent.
  */
-sealed interface AppRoute : NavKey {
+@Serializable
+sealed interface AppRoute : Route {
 
     val appTitle: AppTitle
 
@@ -57,9 +57,6 @@ sealed interface AppRoute : NavKey {
     @Serializable data class CourseDetail(val courseId: Int) : AppRoute {
         override val appTitle get() = AppTitle.SubPage("")
         override val extendsBehindTopBar get() = true
-    }
-    @Serializable data class AssignmentDetail(val assignId: Int, val courseId: Int) : AppRoute {
-        override val appTitle get() = AppTitle.SubPage("Compito") // TODO localize
     }
     /**
      * In-app viewer for course files. Carries either a remote pluginfile URL (the common case,

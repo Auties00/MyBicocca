@@ -61,7 +61,8 @@ import it.attendance100.mybicocca.ui.screen.map.component.BuildingPin
 import it.attendance100.mybicocca.ui.screen.map.ext.splitLegacyAlias
 import it.attendance100.mybicocca.ui.screen.map.subscreen.buildingDetail.BuildingDetailSheet
 import it.attendance100.mybicocca.ui.screen.map.subscreen.buildingsList.BuildingsListSheet
-import it.attendance100.mybicocca.ui.screen.map.subscreen.mapFilter.MapFilterSheet
+import it.attendance100.mybicocca.ui.navigation.LocalAppNavigator
+import it.attendance100.mybicocca.ui.navigation.route.SheetRoute
 import it.attendance100.mybicocca.ui.screen.map.theme.MapPalette
 import it.attendance100.mybicocca.ui.screen.map.theme.applyBicoccaPalette
 import it.attendance100.mybicocca.ui.screen.map.theme.hidePois
@@ -301,12 +302,13 @@ fun MapScreen(
     val roomDetail by viewModel.roomDetail.collectAsStateWithLifecycle()
     val daySchedule by viewModel.daySchedule.collectAsStateWithLifecycle()
     val syncStatus by viewModel.syncStatus.collectAsStateWithLifecycle()
-    val categoryFilter by viewModel.categoryFilter.collectAsStateWithLifecycle()
 
     val haptic = rememberHapticManager()
-    var showFilterSheet by remember { mutableStateOf(false) }
+    val navigator = LocalAppNavigator.current
     var showBuildingsList by remember { mutableStateOf(false) }
-    LaunchedEffect(isActive) { if (isActive) onProvideFilterToggle { showFilterSheet = true } }
+    LaunchedEffect(isActive) {
+        if (isActive) onProvideFilterToggle { navigator?.navigate(SheetRoute.MapFilter) }
+    }
 
     val appTheme = LocalAppTheme.current
     val scheme = MaterialTheme.colorScheme
@@ -528,7 +530,7 @@ fun MapScreen(
             scrimColor = Color.Transparent,
             dragHandle = null,
             contentWindowInsets = { WindowInsets(0) },
-        ) { _, _ ->
+        ) {
             val navBottomPx = WindowInsets.navigationBars.getBottom(density)
             key(detailModalBuilding.code) {
                 Column(
@@ -575,14 +577,6 @@ fun MapScreen(
         )
     }
 
-    if (showFilterSheet) {
-        MapFilterSheet(
-            selected = categoryFilter,
-            onToggle = viewModel::toggleCategory,
-            onClear = viewModel::clearCategories,
-            onDismiss = { showFilterSheet = false },
-        )
-    }
 }
 
 /**

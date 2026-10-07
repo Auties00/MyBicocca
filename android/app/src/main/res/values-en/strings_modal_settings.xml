@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Settings: file opening -->
+    <string name="settings_file_association_current">Current: %1$s</string>
+
+    <!-- Settings: what's new -->
+    <plurals name="whats_new_subtitle_merged">
+        <item quantity="one">1 new version since v%2$s</item>
+        <item quantity="other">%1$d new versions since v%2$s</item>
+    </plurals>
+    <plurals name="whats_new_subtitle_versions">
+        <item quantity="one">1 version</item>
+        <item quantity="other">%1$d versions</item>
+    </plurals>
+    <string name="whats_new_subtitle_installed">Installed: v%1$s</string>
+</resources>

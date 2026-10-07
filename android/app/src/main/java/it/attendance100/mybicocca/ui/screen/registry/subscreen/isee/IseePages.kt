@@ -61,6 +61,7 @@ import it.attendance100.mybicocca.domain.model.tax.IseeDeclaration
 import it.attendance100.mybicocca.ui.component.button.RetryButton
 import it.attendance100.mybicocca.ui.component.feedback.EmptyState
 import it.attendance100.mybicocca.ui.component.feedback.rememberMinDurationLoading
+import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
 import it.attendance100.mybicocca.ui.component.modal.SheetLoadingIndicator
 import it.attendance100.mybicocca.ui.component.modal.SheetMessage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.TaxesViewModel
@@ -85,8 +86,8 @@ private const val ISEE_GUIDE_URL =
 /**
  * Root page of the ISEE sheet: the list of academic years carrying a declaration, newest
  * first, with a "Dichiara ISEE" footer when the current year can still be filed. The sheet
- * container, the pinned morphing header and the list -> detail transition are owned by
- * BottomSheetSceneStrategy; the year detail is a separate back-stack entry
+ * container, the pinned morphing header ([iseeHeader]) and the list -> detail transition are
+ * owned by ModalSceneStrategy; the year detail is a separate back-stack entry
  * (SheetRoute.IseeDetail rendering [IseeDetailPage]).
  *
  * Reads the hoisted TaxesViewModel — the same in-memory fetch as the Tasse page — so
@@ -136,12 +137,22 @@ fun IseeDeclarationsPage(
     )
 }
 
-/** "3 anni accademici": how many years carry a declaration, in place of a sub-page title. */
-fun iseeHeaderSubtitle(declarations: List<IseeDeclaration>): String? {
-    val count = declarations.size
-    if (count == 0) return null
-    return if (count == 1) "1 anno accademico" else "$count anni accademici"
-}
+/**
+ * The ISEE sheet's pinned header: the title over how many years carry a declaration ("3 anni
+ * accademici", or "Nessuna dichiarazione ISEE" when none); the subtitle is null only while
+ * [declarations] (already filtered to the listed ones) are still loading.
+ */
+@Composable
+fun iseeHeader(declarations: List<IseeDeclaration>?): SheetHeaderSpec = SheetHeaderSpec(
+    title = stringResource(R.string.registry_isee),
+    subtitle = declarations?.size?.let { count ->
+        when (count) {
+            0 -> stringResource(R.string.isee_no_declarations)
+            1 -> stringResource(R.string.registry_enrollments_one_year)
+            else -> stringResource(R.string.registry_enrollments_many_years, count)
+        }
+    },
+)
 
 /**
  * Declarations list body. [declareYear] is non-null while the current academic year has no
@@ -494,15 +505,20 @@ private fun IseeDeclaration.academicYearLabel(): String =
 /** aaIscrId 2025 -> "2025/26", for titles. */
 private fun academicYearLabel(year: Long): String = "$year/${"%02d".format((year + 1) % 100)}"
 
-/** Detail header title, exposed for the sheet entry's pinned header in MainShell. */
+/**
+ * A declaration's detail page header: its academic year over its course; [declaration] is null
+ * only while it loads (or as it is evicted).
+ */
 @Composable
-fun iseeDetailTitle(declaration: IseeDeclaration): String =
-    stringResource(R.string.registry_isee_detail_title, declaration.academicYearLabel())
-
-/** Detail header subtitle, exposed for the sheet entry's pinned header in MainShell. */
-@Composable
-fun iseeDetailSubtitle(declaration: IseeDeclaration): String =
-    declaration.courseDescription ?: stringResource(R.string.registry_isee_default_subtitle)
+fun iseeDetailHeader(declaration: IseeDeclaration?): SheetHeaderSpec =
+    if (declaration == null) {
+        SheetHeaderSpec(title = stringResource(R.string.registry_isee), subtitle = null)
+    } else {
+        SheetHeaderSpec(
+            title = stringResource(R.string.registry_isee_detail_title, declaration.academicYearLabel()),
+            subtitle = declaration.courseDescription ?: stringResource(R.string.registry_isee_default_subtitle),
+        )
+    }
 
 private fun Context.openUrl(url: String) {
     runCatching {

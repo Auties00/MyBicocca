@@ -31,8 +31,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -57,19 +55,18 @@ import it.attendance100.mybicocca.domain.model.elearning.course.courseCode
 import it.attendance100.mybicocca.domain.model.elearning.deadline.Deadline
 import it.attendance100.mybicocca.domain.model.elearning.quiz.QuizId
 import it.attendance100.mybicocca.ui.component.feedback.EmptyState
-import it.attendance100.mybicocca.ui.component.feedback.LocalAppSnackbarController
+import it.attendance100.mybicocca.ui.navigation.LocalAppNavigator
+import it.attendance100.mybicocca.ui.navigation.route.SheetRoute
 import it.attendance100.mybicocca.ui.screen.elearning.component.CardEdition
 import it.attendance100.mybicocca.ui.screen.elearning.component.HomeFilterBar
 import it.attendance100.mybicocca.ui.screen.elearning.component.NotebookCard
 import it.attendance100.mybicocca.ui.screen.elearning.state.ElearningOneShotEvent
 import it.attendance100.mybicocca.ui.screen.elearning.state.InitialFetchState
-import it.attendance100.mybicocca.ui.screen.elearning.subscreen.addCourse.AddCourseSheet
 import it.attendance100.mybicocca.ui.screen.elearning.theme.LocalCourseAccentPalette
 import it.attendance100.mybicocca.ui.screen.elearning.theme.ProvideCourseAccentPalette
 import it.attendance100.mybicocca.ui.screen.elearning.theme.accentFor
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import java.io.IOException
 import java.net.ConnectException
@@ -84,8 +81,8 @@ import java.time.temporal.ChronoUnit
  *
  * Renders one [NotebookCard] per course group in a vertical list under a [HomeFilterBar]
  * (all / favourites / per study year), all wrapped in the screen-scoped course-accent palette,
- * with an extended FAB that opens the [AddCourseSheet] catalog browser. The tab registers no
- * shell filter toggle — filtering is inline.
+ * with an extended FAB that opens the add-course catalog sheet ([SheetRoute.AddCourse]). The
+ * tab registers no shell filter toggle — filtering is inline.
  *
  * Until the local cache is first populated the whole tab is a full-screen loading or error view
  * and the filter bar stays hidden; once settled, cached data keeps rendering while refreshes run
@@ -93,13 +90,12 @@ import java.time.temporal.ChronoUnit
  * current filter". Loading/empty/error views remain pull-refreshable, so the pull gesture
  * doubles as the retry affordance.
  *
- * Enrol outcomes from the sheet surface as snackbars. After a successful enrolment the
- * ViewModel drops any hiding filter and emits the course id; the screen waits for its group to
+ * Enrol outcomes from the sheet surface as snackbars (see [elearningSheetEntries]). After a
+ * successful enrolment the ViewModel drops any hiding filter and emits the course id; the screen waits for its group to
  * materialise in the (possibly just re-filtered) list, then animate-scrolls to it. [isActive]
  * is true only while this is the visible tab — see CalendarScreen for the pager-cache
  * rationale.
  */
-@Suppress("AssignedValueIsNeverRead")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ElearningScreen(
@@ -124,35 +120,7 @@ fun ElearningScreen(
     val studyYears by viewModel.availableStudyYears.collectAsStateWithLifecycle()
     val initialFetch by viewModel.initialFetch.collectAsStateWithLifecycle()
 
-    val strElearningEnrolledSuccess = stringResource(R.string.elearning_enrolled_success)
-    val strEnrolFailedWithReason = stringResource(R.string.elearning_enrol_failed_with_reason)
-
-    val strElearningErrorNetworkDetailed = stringResource(R.string.elearning_error_network_detailed)
-    val strElearningEnrolFailed = stringResource(R.string.elearning_enrol_failed)
-    val strElearningErrorNetworkUnavailableDetailed =
-        stringResource(R.string.elearning_error_network_unavailable_detailed)
-    val strElearningErrorNetworkUnavailable =
-        stringResource(R.string.elearning_error_network_unavailable)
-    val strElearningErrorNetworkTimeoutDetailed =
-        stringResource(R.string.elearning_error_network_timeout_detailed)
-    val strElearningErrorUnexpected = stringResource(R.string.elearning_error_unexpected)
-    val strElearningErrorNetworkTimeout = stringResource(R.string.elearning_error_network_timeout)
-    val strElearningErrorNetwork = stringResource(R.string.elearning_error_network)
-
-    val resolveError: (Throwable) -> String = { cause ->
-        val reason = when (cause) {
-            is UnknownHostException, is ConnectException -> strElearningErrorNetworkUnavailable
-            is SocketTimeoutException -> strElearningErrorNetworkTimeout
-            is IOException -> strElearningErrorNetwork
-            else -> cause.message?.takeIf { it.isNotBlank() }
-        }
-        if (reason != null) strEnrolFailedWithReason.format(reason) else strElearningEnrolFailed
-    }
-
-    
-    val snackbar = LocalAppSnackbarController.current
-    val coroutineScope = rememberCoroutineScope()
-    var addSheetVisible by rememberSaveable { mutableStateOf(false) }
+    val navigator = LocalAppNavigator.current
 
     LaunchedEffect(isActive) { if (isActive) onProvideFilterToggle(null) }
 
@@ -166,7 +134,7 @@ fun ElearningScreen(
                 )
                 is ElearningOneShotEvent.OpenQuiz -> onOpenQuiz(event.courseId, event.quizId)
                 ElearningOneShotEvent.RequireSignIn -> onRequireSignIn()
-                ElearningOneShotEvent.OpenAddCourse -> addSheetVisible = true
+                ElearningOneShotEvent.OpenAddCourse -> navigator?.navigate(SheetRoute.AddCourse)
             }
         }
     }
@@ -261,7 +229,7 @@ fun ElearningScreen(
             AddCourseFab(
                 onClick = {
                     haptic.tap()
-                    addSheetVisible = true
+                    navigator?.navigate(SheetRoute.AddCourse)
                 },
                 modifier = Modifier
                     .testTag(ElearningTestTags.ADD_COURSE_FAB)
@@ -269,27 +237,6 @@ fun ElearningScreen(
                     .padding(16.dp),
             )
         }
-    }
-
-    if (addSheetVisible) {
-        AddCourseSheet(
-            onDismiss = { addSheetVisible = false },
-            onEnrolFailed = { cause ->
-                coroutineScope.launch {
-                    snackbar.showError(resolveError(cause))
-                }
-            },
-            onEnrolSucceeded = { courseId, name ->
-                coroutineScope.launch {
-                    snackbar.showInfo(strElearningEnrolledSuccess.format(name))
-                }
-                viewModel.revealEnrolledCourse(courseId)
-            },
-            onRequireSignIn = {
-                addSheetVisible = false
-                onRequireSignIn()
-            },
-        )
     }
 }
 

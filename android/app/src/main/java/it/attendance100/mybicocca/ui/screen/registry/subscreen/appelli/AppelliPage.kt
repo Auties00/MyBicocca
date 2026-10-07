@@ -1,6 +1,5 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -30,14 +29,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.IntSize
@@ -57,11 +57,11 @@ import it.attendance100.mybicocca.ui.component.feedback.rememberMinDurationLoadi
 import it.attendance100.mybicocca.ui.component.modal.SheetLoadingIndicator
 import it.attendance100.mybicocca.ui.component.modal.SheetMessage
 import it.attendance100.mybicocca.ui.component.modal.SheetOutcome
-import it.attendance100.mybicocca.ui.component.modal.SheetPagerHeader
+import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
+import it.attendance100.mybicocca.ui.component.modal.SheetPager
 import it.attendance100.mybicocca.ui.component.modal.SheetResultPage
-import it.attendance100.mybicocca.ui.component.modal.sheetBodyGestureBarrier
-import it.attendance100.mybicocca.ui.component.modal.sheetPageTransform
-import it.attendance100.mybicocca.ui.navigation.scene.LocalSheetDismissControl
+import it.attendance100.mybicocca.ui.component.modal.LockSheetWhile
+import it.attendance100.mybicocca.ui.component.modal.rememberLastNonNull
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.component.BookedExamCard
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.ext.displayTitle
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.state.BookedEvent
@@ -92,13 +92,12 @@ import java.time.LocalDate
  * flow into one sheet. The root lists only the active prenotazioni, with a Prenota footer
  * that pushes the booking sub-flow — bookable calendar -> appello -> conferma — as deeper
  * pages of the same sheet; the booking detail, the cancel confirmation and the outcome
- * result page are further pages of the same pager, all beneath one pinned morphing header.
- * Body swipes scroll page content rather than the sheet: the header and the drag handle are
- * the only swipe-to-dismiss surfaces, and system back walks the pager up one level before
- * dismissing.
+ * result page are further pages of the same [SheetPager], all beneath one pinned morphing
+ * header. System back walks the pager up one level (predictively, header and body in
+ * lockstep) before dismissing.
  *
- * BottomSheetSceneStrategy owns the sheet container; this composable owns the multi-level
- * page state machine. Three shell-scoped ViewModels feed it: [viewModel] for the booked
+ * ModalSceneStrategy owns the sheet container; this composable owns the multi-level page
+ * state machine. Three shell-scoped ViewModels feed it: [viewModel] for the booked
  * list (cancel, slip download), [bookableViewModel] for the bookable calendar — hit only
  * once the user actually enters the booking flow — and [sheetViewModel] for the booking
  * action. Because the booked VM outlives the sheet, a re-open renders the cached snapshot
@@ -108,7 +107,7 @@ import java.time.LocalDate
  * cancel drops the pager back to the list rather than rendering a stale snapshot. A pending
  * deep-link focus (from a libretto course) opens straight into the booking calendar.
  *
- * While a booking call is in flight the sheet locks via LocalSheetDismissControl — swipe,
+ * While a booking call is in flight the sheet locks via [LockSheetWhile] — swipe,
  * scrim tap and back go inert so it can't be torn down mid-submit (the result page needs a
  * living sheet). A confirmed booking refreshes both lists and lands back on the root with a
  * success result page; a failed booking returns to the calendar with the error carried by
@@ -162,10 +161,11 @@ fun AppelliPage(
         remember(snapshot) { snapshot.value.groupByCourse() }
     }
 
-    var detailKey by remember { mutableStateOf<String?>(null) }
-    var confirmingCancel by remember { mutableStateOf(false) }
-    var booking by remember { mutableStateOf(false) }
+    var detailKey by rememberSaveable { mutableStateOf<String?>(null) }
+    var confirmingCancel by rememberSaveable { mutableStateOf(false) }
+    var booking by rememberSaveable { mutableStateOf(false) }
     var outcome by remember { mutableStateOf<SheetOutcome?>(null) }
+    var outcomeKind by remember { mutableStateOf(AppelliOutcomeKind.Booking) }
     val detailBooking = detailKey?.let { key -> bookings.firstOrNull { it.identityKey() == key } }
 
     LaunchedEffect(pendingFocus) { if (pendingFocus != null) booking = true }
@@ -175,8 +175,8 @@ fun AppelliPage(
     val callTotals by viewModel.callTotals.collectAsStateWithLifecycle()
     LaunchedEffect(detailBooking?.key) { detailBooking?.let(viewModel::loadTotalBookings) }
 
-    val page = when {
-        outcome != null -> AppelliPage.Result
+    // The page under the result overlay: where dismissing the result lands.
+    val flowPage = when {
         detailBooking != null && confirmingCancel -> AppelliPage.ConfirmCancel
         detailBooking != null -> AppelliPage.Detail
         target != null && step == BookingSheetStep.Confirm -> AppelliPage.BookingConfirm
@@ -184,12 +184,9 @@ fun AppelliPage(
         booking -> AppelliPage.BookingCalendar
         else -> AppelliPage.Root
     }
+    val page = if (outcome != null) AppelliPage.Result else flowPage
 
-    val control = LocalSheetDismissControl.current
-    SideEffect {
-        control?.gesturesEnabled = !submitting
-        control?.confirmDismiss = { !submitting }
-    }
+    LockSheetWhile(submitting)
 
     run {
         val context = LocalContext.current
@@ -198,29 +195,35 @@ fun AppelliPage(
             viewModel.events.collectLatest { event ->
                 when (event) {
                     BookedEvent.CancellationSucceeded -> {
+                        outcomeKind = AppelliOutcomeKind.Cancellation
                         confirmingCancel = false
                         detailKey = null
                         outcome =
                             SheetOutcome.Success(strAppelliBookingCancelled)
                     }
 
-                    is BookedEvent.CancellationFailed ->
+                    is BookedEvent.CancellationFailed -> {
+                        outcomeKind = AppelliOutcomeKind.Cancellation
                         outcome = SheetOutcome.Error(
                             strAppelliCancellationFailed,
                             event.cause
                         )
+                    }
 
                     is BookedEvent.OpenPdf ->
                         runCatching { openPdfDocument(context, event.bytes, event.fileName) }
                             .onFailure {
+                                outcomeKind = AppelliOutcomeKind.Document
                                 outcome = SheetOutcome.Error(
                                     strAppelliPdfOpenFailed,
                                     it
                                 )
                             }
 
-                    is BookedEvent.ShowMessage -> outcome =
-                        SheetOutcome.Info(event.message.asString(context))
+                    is BookedEvent.ShowMessage -> {
+                        outcomeKind = AppelliOutcomeKind.Document
+                        outcome = SheetOutcome.Info(event.message.asString(context))
+                    }
                 }
             }
         }
@@ -229,6 +232,7 @@ fun AppelliPage(
             sheetViewModel.events.collectLatest { event ->
                 when (event) {
                     BookingSheetEvent.BookedSuccessfully -> {
+                        outcomeKind = AppelliOutcomeKind.Booking
                         sheetViewModel.close()
                         booking = false
                         viewModel.refresh()
@@ -238,6 +242,7 @@ fun AppelliPage(
                     }
 
                     is BookingSheetEvent.BookingFailed -> {
+                        outcomeKind = AppelliOutcomeKind.Booking
                         sheetViewModel.close()
                         outcome = SheetOutcome.Error(
                             strAppelliBookingFailed,
@@ -248,34 +253,23 @@ fun AppelliPage(
             }
         }
 
-        val seekableState =
-            remember { androidx.compose.animation.core.SeekableTransitionState(page) }
-        val transition = androidx.compose.animation.core.rememberTransition(
-            seekableState,
-            label = "appelli_pages"
-        )
+        // While the detail or call slides out its state is already cleared; keep its page readable.
+        val shownDetail = rememberLastNonNull(detailBooking)
+        val shownTarget = rememberLastNonNull(target)
 
-        LaunchedEffect(page) {
-            if (seekableState.targetState != page) {
-                seekableState.animateTo(page)
-            }
-        }
-
-        androidx.activity.compose.PredictiveBackHandler(enabled = page != AppelliPage.Root) { progress ->
-            try {
-                val fallback = when (page) {
-                    AppelliPage.Result -> if (detailBooking != null && confirmingCancel) AppelliPage.ConfirmCancel else if (detailBooking != null) AppelliPage.Detail else if (target != null && step == BookingSheetStep.Confirm) AppelliPage.BookingConfirm else if (target != null) AppelliPage.BookingCall else if (booking) AppelliPage.BookingCalendar else AppelliPage.Root
-                    AppelliPage.ConfirmCancel -> AppelliPage.Detail
-                    AppelliPage.Detail -> AppelliPage.Root
-                    AppelliPage.BookingConfirm -> if (!submitting) AppelliPage.BookingCall else page
-                    AppelliPage.BookingCall -> AppelliPage.BookingCalendar
-                    AppelliPage.BookingCalendar -> AppelliPage.Root
-                    AppelliPage.Root -> page
-                }
-                progress.collect { event ->
-                    seekableState.seekTo(event.progress, targetState = fallback)
-                }
-                seekableState.animateTo(fallback)
+        SheetPager(
+            page = page,
+            depth = { it.depth },
+            backTo = when (page) {
+                AppelliPage.Result -> flowPage
+                AppelliPage.ConfirmCancel -> AppelliPage.Detail
+                AppelliPage.Detail -> AppelliPage.Root
+                AppelliPage.BookingConfirm -> if (!submitting) AppelliPage.BookingCall else null
+                AppelliPage.BookingCall -> AppelliPage.BookingCalendar
+                AppelliPage.BookingCalendar -> AppelliPage.Root
+                AppelliPage.Root -> null
+            },
+            onBack = {
                 when (page) {
                     AppelliPage.Result -> outcome = null
                     AppelliPage.ConfirmCancel -> confirmingCancel = false
@@ -285,112 +279,107 @@ fun AppelliPage(
                     AppelliPage.BookingCalendar -> booking = false
                     AppelliPage.Root -> Unit
                 }
-            } catch (_: kotlinx.coroutines.CancellationException) {
-                seekableState.animateTo(page)
-            }
-        }
-
-        Column {
-            SheetPagerHeader(
-                depth = page.depth,
-                title = when (page) {
-                    AppelliPage.Root -> stringResource(R.string.appelli_title)
-                    AppelliPage.Detail -> detailBooking?.displayTitle() ?: ""
-                    AppelliPage.ConfirmCancel -> stringResource(R.string.appelli_cancel_confirmation_title)
-                    AppelliPage.BookingCalendar -> stringResource(R.string.appelli_book_exam)
-                    AppelliPage.BookingCall -> target?.call?.title() ?: ""
-                    AppelliPage.BookingConfirm -> stringResource(R.string.appelli_confirm_booking)
-                    AppelliPage.Result -> ""
-                },
-                subtitle = when (page) {
-                    AppelliPage.Root -> if (loaded) activeSummary(active.size) else null
-                    AppelliPage.Detail -> stringResource(R.string.appelli_booking_details)
-                    AppelliPage.ConfirmCancel -> detailBooking?.displayTitle()
-                    AppelliPage.BookingCalendar -> callGroups?.let { rootSubtitle(it) }
-                    AppelliPage.BookingCall -> target?.call?.headerSubtitle()
-                    AppelliPage.BookingConfirm -> target?.call?.title()
-                    AppelliPage.Result -> null
-                },
-                onBack = when (page) {
-                    AppelliPage.Root -> null
-                    AppelliPage.Detail -> ({ detailKey = null })
-                    AppelliPage.ConfirmCancel -> ({ confirmingCancel = false })
-                    AppelliPage.BookingCalendar -> ({ booking = false })
-                    AppelliPage.BookingCall -> ({ sheetViewModel.close() })
-                    AppelliPage.BookingConfirm -> if (submitting) null else ({ sheetViewModel.goBackToInfo() })
-                    AppelliPage.Result -> null
-                },
-            )
-            transition.AnimatedContent(
-                modifier = Modifier.sheetBodyGestureBarrier(),
-                transitionSpec = {
-                    sheetPageTransform(forward = targetState.depth >= initialState.depth)
-                },
-                contentKey = { it.key },
-            ) { current ->
-                when (current) {
-                    AppelliPage.Root -> ActiveBody(
-                        loaded = loaded,
-                        active = active,
-                        syncStatus = syncStatus,
-                        onRetry = viewModel::refresh,
-                        onOpenDetail = { detailKey = it.identityKey() },
-                        onPrenota = { booking = true },
-                    )
-
-                    AppelliPage.Detail -> detailBooking?.let { booked ->
-                        val downloading = (docDownload as? DocDownloadState.InProgress)
-                            ?.takeIf { it.bookingKey == booked.identityKey() }
-                            ?.document
-                        BookedExamDetailPage(
-                            booking = booked,
-                            today = today,
-                            // Fresh lazy fetch wins over the total persisted on the row.
-                            totalBookings = callTotals[booked.key] ?: booked.totalBookings,
-                            isCancelling = (cancelAction as? CancelActionState.InProgress)
-                                ?.key == booked.identityKey(),
-                            downloadingDocument = downloading,
-                            onRequestCancel = { confirmingCancel = true },
-                            onDownloadSlip = viewModel::downloadBookingSlip,
-                        )
-                    }
-
-                    AppelliPage.ConfirmCancel -> detailBooking?.let { booked ->
-                        CancelConfirmPage(
-                            bookingTitle = booked.displayTitle(),
-                            onKeep = { confirmingCancel = false },
-                            onConfirm = {
-                                confirmingCancel = false
-                                viewModel.cancel(booked)
+            },
+            key = { it.key },
+            header = { shownPage ->
+                SheetHeaderSpec(
+                    title = when (shownPage) {
+                        AppelliPage.Root -> stringResource(R.string.appelli_title)
+                        AppelliPage.Detail -> shownDetail?.displayTitle() ?: stringResource(R.string.appelli_exam)
+                        AppelliPage.ConfirmCancel -> stringResource(R.string.appelli_cancel_confirmation_title)
+                        AppelliPage.BookingCalendar -> stringResource(R.string.appelli_book_exam)
+                        AppelliPage.BookingCall -> shownTarget?.call?.title() ?: stringResource(R.string.appelli_exam)
+                        AppelliPage.BookingConfirm -> stringResource(R.string.appelli_confirm_booking)
+                        AppelliPage.Result -> stringResource(
+                            when (outcomeKind) {
+                                AppelliOutcomeKind.Booking -> R.string.appelli_result_booking_title
+                                AppelliOutcomeKind.Cancellation -> R.string.appelli_result_cancellation_title
+                                AppelliOutcomeKind.Document -> R.string.appelli_result_document_title
                             },
                         )
-                    }
+                    },
+                    subtitle = when (shownPage) {
+                        AppelliPage.Root -> if (loaded) activeSummary(active.size) else null
+                        AppelliPage.Detail -> stringResource(R.string.appelli_booking_details)
+                        AppelliPage.ConfirmCancel -> shownDetail?.displayTitle()
+                        AppelliPage.BookingCalendar -> callGroups?.let { rootSubtitle(it) }
+                        AppelliPage.BookingCall -> shownTarget?.call?.headerSubtitle()
+                        AppelliPage.BookingConfirm -> shownTarget?.call?.title()
+                        AppelliPage.Result -> when (outcomeKind) {
+                            AppelliOutcomeKind.Booking -> shownTarget?.call?.title()
+                            AppelliOutcomeKind.Cancellation, AppelliOutcomeKind.Document -> shownDetail?.displayTitle()
+                        } ?: stringResource(R.string.appelli_title)
+                    },
+                    showBack = when (shownPage) {
+                        AppelliPage.Result -> false
+                        AppelliPage.BookingConfirm -> !submitting
+                        else -> true
+                    },
+                )
+            },
+        ) { current ->
+            when (current) {
+                AppelliPage.Root -> ActiveBody(
+                    loaded = loaded,
+                    active = active,
+                    syncStatus = syncStatus,
+                    onRetry = viewModel::refresh,
+                    onOpenDetail = { detailKey = it.identityKey() },
+                    onPrenota = { booking = true },
+                )
 
-                    AppelliPage.BookingCalendar -> ExamCalendarPage(
-                        loaded = callsLoaded,
-                        groups = callGroups,
-                        syncStatus = callsSync,
-                        pendingFocus = pendingFocus,
-                        onConsumeFocus = bookableViewModel::consumeFocus,
-                        onRetry = bookableViewModel::refresh,
-                        onOpenCall = sheetViewModel::open,
+                AppelliPage.Detail -> shownDetail?.let { booked ->
+                    val downloading = (docDownload as? DocDownloadState.InProgress)
+                        ?.takeIf { it.bookingKey == booked.identityKey() }
+                        ?.document
+                    BookedExamDetailPage(
+                        booking = booked,
+                        today = today,
+                        // Fresh lazy fetch wins over the total persisted on the row.
+                        totalBookings = callTotals[booked.key] ?: booked.totalBookings,
+                        isCancelling = (cancelAction as? CancelActionState.InProgress)
+                            ?.key == booked.identityKey(),
+                        downloadingDocument = downloading,
+                        onRequestCancel = { confirmingCancel = true },
+                        onDownloadSlip = viewModel::downloadBookingSlip,
                     )
+                }
 
-                    AppelliPage.BookingCall -> target?.let {
-                        CallPage(
-                            target = it,
-                            onBook = sheetViewModel::goToConfirm
-                        )
-                    }
-
-                    AppelliPage.BookingConfirm -> ConfirmPage(
-                        submitting = submitting,
-                        onConfirm = sheetViewModel::confirmBooking,
+                AppelliPage.ConfirmCancel -> shownDetail?.let { booked ->
+                    CancelConfirmPage(
+                        bookingTitle = booked.displayTitle(),
+                        onKeep = { confirmingCancel = false },
+                        onConfirm = {
+                            confirmingCancel = false
+                            viewModel.cancel(booked)
+                        },
                     )
+                }
 
-                    AppelliPage.Result -> outcome?.let { current ->
-                        SheetResultPage(outcome = current, onDismiss = { outcome = null })
-                    }
+                AppelliPage.BookingCalendar -> ExamCalendarPage(
+                    loaded = callsLoaded,
+                    groups = callGroups,
+                    syncStatus = callsSync,
+                    pendingFocus = pendingFocus,
+                    onConsumeFocus = bookableViewModel::consumeFocus,
+                    onRetry = bookableViewModel::refresh,
+                    onOpenCall = sheetViewModel::open,
+                )
+
+                AppelliPage.BookingCall -> shownTarget?.let {
+                    CallPage(
+                        target = it,
+                        onBook = sheetViewModel::goToConfirm
+                    )
+                }
+
+                AppelliPage.BookingConfirm -> ConfirmPage(
+                    submitting = submitting,
+                    onConfirm = sheetViewModel::confirmBooking,
+                )
+
+                AppelliPage.Result -> outcome?.let { current ->
+                    SheetResultPage(outcome = current, onDismiss = { outcome = null })
                 }
             }
         }
@@ -407,6 +396,9 @@ private enum class AppelliPage(val depth: Int, val key: String) {
     BookingCall(2, "booking_call"),
     BookingConfirm(3, "booking_confirm"),
 }
+
+/** The operation a result page reports on, naming its header. */
+private enum class AppelliOutcomeKind { Booking, Cancellation, Document }
 
 /**
  * Root page: the active prenotazioni list with the Prenota footer pinned at the bottom. The
@@ -590,8 +582,7 @@ private fun CancelConfirmPage(
     }
 }
 
-private fun activeSummary(count: Int): String = when (count) {
-    0 -> "Nessun esame in programma"
-    1 -> "1 esame in programma"
-    else -> "$count esami in programma"
-}
+@Composable
+private fun activeSummary(count: Int): String =
+    if (count == 0) stringResource(R.string.appelli_no_exams)
+    else pluralStringResource(R.plurals.appelli_active_summary, count, count)

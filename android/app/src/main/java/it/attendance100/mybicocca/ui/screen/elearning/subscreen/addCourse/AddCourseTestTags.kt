@@ -1,7 +1,7 @@
 package it.attendance100.mybicocca.ui.screen.elearning.subscreen.addCourse
 
 /**
- * Stable `testTag` identifiers for the [AddCourseSheet] catalog browser, referenced by both the
+ * Stable `testTag` identifiers for the [AddCoursePage] catalog browser, referenced by both the
  * sheet and its UI tests so a user-visible copy change never breaks a test and a tag rename is a
  * compile error rather than a silently missed node.
  *
