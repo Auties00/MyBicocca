@@ -16,9 +16,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # JetBrains, not Temurin: gradle/gradle-daemon-jvm.properties pins the Gradle daemon to a
+      # JetBrains JDK 21, and the download links pinned there no longer resolve.
       - uses: actions/setup-java@v4
         with:
-          distribution: temurin
+          distribution: jetbrains
           java-version: 21
           cache: gradle
 
