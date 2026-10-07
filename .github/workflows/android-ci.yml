@@ -30,7 +30,10 @@ jobs:
           java-version: '17'
 
       - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
+        with:
+          # Explicit: v3's default also asked for `tools`, which sdkmanager no longer serves.
+          packages: platform-tools
 
       - name: Install the compileSdk platform
         run: |
@@ -96,7 +99,10 @@ jobs:
           java-version: '17'
 
       - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
+        with:
+          # Explicit: v3's default also asked for `tools`, which sdkmanager no longer serves.
+          packages: platform-tools
 
       - name: Install the compileSdk platform
         run: |
