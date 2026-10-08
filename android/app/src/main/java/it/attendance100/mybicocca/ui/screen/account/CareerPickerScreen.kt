@@ -22,22 +22,22 @@ import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.account.Account
 import it.attendance100.mybicocca.domain.model.career.Career
 import it.attendance100.mybicocca.domain.model.career.CareerId
-import it.attendance100.mybicocca.domain.model.career.isSelectable
+import it.attendance100.mybicocca.domain.model.career.isOpen
 
 /**
  * Full-screen career chooser, shown right after sign-in when the account carries multiple
  * careers and needs a default. A greeting header tops a scrolling list split into an
- * "Attive" section of tappable cards (selectable careers) and a "Concluse" section of
- * disabled cards (ended ones); picking a card reports the [CareerId] so navigation can
- * advance to the main shell.
+ * "Attive" section (open careers) and a "Concluse" section of muted cards (ended ones);
+ * picking a card from either reports the [CareerId] so navigation can advance to the main
+ * shell.
  */
 @Composable
 fun CareerPickerScreen(
     account: Account,
     onPicked: (CareerId) -> Unit,
 ) {
-    val selectable = account.academic.careers.filter { it.status.isSelectable }
-    val history = account.academic.careers.filterNot { it.status.isSelectable }
+    val open = account.academic.careers.filter { it.status.isOpen }
+    val history = account.academic.careers.filterNot { it.status.isOpen }
 
     Surface(modifier = Modifier.fillMaxSize()) {
         LazyColumn(
@@ -58,11 +58,11 @@ fun CareerPickerScreen(
                 Spacer(Modifier.height(16.dp))
             }
 
-            if (selectable.isNotEmpty()) {
+            if (open.isNotEmpty()) {
                 item {
                     SectionLabel(stringResource(R.string.career_picker_active))
                 }
-                items(selectable, key = { it.id.value }) { career ->
+                items(open, key = { it.id.value }) { career ->
                     CareerCard(career = career, onClick = { onPicked(career.id) })
                     Spacer(Modifier.height(8.dp))
                 }
@@ -74,7 +74,7 @@ fun CareerPickerScreen(
                     SectionLabel(stringResource(R.string.career_picker_ended))
                 }
                 items(history, key = { it.id.value }) { career ->
-                    CareerCard(career = career, onClick = null)
+                    CareerCard(career = career, ended = true, onClick = { onPicked(career.id) })
                     Spacer(Modifier.height(8.dp))
                 }
             }
@@ -95,27 +95,27 @@ private fun SectionLabel(text: String) {
 
 /**
  * Career summary card: description, matricola, academic year and status on three lines.
- * A null [onClick] renders it disabled on the muted variant surface — the treatment for
- * ended careers — while [selected] swaps the fill to the primary container.
+ * [ended] puts it on the muted variant surface, still tappable, while [selected] swaps the
+ * fill to the primary container.
  */
 @Composable
 internal fun CareerCard(
     career: Career,
-    onClick: (() -> Unit)?,
+    onClick: () -> Unit,
+    ended: Boolean = false,
     selected: Boolean = false,
 ) {
     val haptic = rememberHapticManager()
     val container = when {
         selected -> MaterialTheme.colorScheme.primaryContainer
-        onClick == null -> MaterialTheme.colorScheme.surfaceVariant
+        ended -> MaterialTheme.colorScheme.surfaceVariant
         else -> MaterialTheme.colorScheme.surface
     }
     Card(
         onClick = {
             haptic.tap()
-            onClick?.invoke()
+            onClick()
         },
-        enabled = onClick != null,
         colors = CardDefaults.cardColors(containerColor = container),
         modifier = Modifier.fillMaxWidth(),
     ) {

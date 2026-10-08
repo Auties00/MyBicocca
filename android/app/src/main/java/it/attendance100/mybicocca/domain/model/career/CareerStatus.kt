@@ -14,9 +14,10 @@ enum class CareerStatus {
 }
 
 /**
- * Whether the student can still operate in this career (active or merely suspended). Drives
- * which careers the picker offers, the default selection, and the reconciliation events fired
- * when a selected career ends.
+ * Whether the student can still operate in this career (active or merely suspended). Ended
+ * careers stay pickable; this drives how the pickers group and style them, the default
+ * selection, whether sign-in asks for a pick, and the reconciliation events fired when a
+ * selected career ends.
  */
-val CareerStatus.isSelectable: Boolean
+val CareerStatus.isOpen: Boolean
     get() = this == CareerStatus.ACTIVE || this == CareerStatus.SUSPENDED

@@ -5,7 +5,7 @@ import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3UserSession
 import it.attendance100.mybicocca.domain.model.account.AcademicIdentity
 import it.attendance100.mybicocca.domain.model.career.Career
 import it.attendance100.mybicocca.domain.model.career.CareerId
-import it.attendance100.mybicocca.domain.model.career.isSelectable
+import it.attendance100.mybicocca.domain.model.career.isOpen
 
 internal fun buildAcademicIdentity(
     session: Esse3UserSession,
@@ -36,7 +36,7 @@ internal fun composeDisplayName(session: Esse3UserSession): String {
 }
 
 internal fun selectableCount(careers: List<Career>): Int =
-    careers.count { it.status.isSelectable }
+    careers.count { it.status.isOpen }
 
 private fun toDomainCareer(career: Esse3Career): Career = Career(
     id = CareerId(career.studentId ?: 0L),
@@ -57,7 +57,7 @@ private fun toDomainCareer(career: Esse3Career): Career = Career(
  * ended careers are considered only when no selectable one exists.
  */
 private fun chooseDefaultSelectedCareer(careers: List<Career>): CareerId {
-    val pool = careers.filter { it.status.isSelectable }
+    val pool = careers.filter { it.status.isOpen }
         .ifEmpty { careers }
     return pool.maxByOrNull { it.academicYear }?.id ?: careers.first().id
 }
