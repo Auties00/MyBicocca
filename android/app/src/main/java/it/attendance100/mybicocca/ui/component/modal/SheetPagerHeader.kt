@@ -5,6 +5,7 @@ import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.Transition
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.updateTransition
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
@@ -224,6 +225,25 @@ internal fun <P : Any> SheetPagerHeader(
             )
         }
     }
+}
+
+/**
+ * The standard sheet header of a single page, drawn inside that page's own content rather than
+ * pinned above the pager — for a page whose title must move with its body (the account switcher's
+ * roster slides away whole as the sign-in rises over it). Looks exactly like the pinned header.
+ */
+@Composable
+fun SheetHeader(spec: SheetHeaderSpec, modifier: Modifier = Modifier) {
+    val transition = updateTransition(Unit, label = "sheet_header")
+    SheetPagerHeader(
+        transition = transition,
+        specs = mapOf(Unit to spec),
+        keyOf = { it },
+        depthOf = { 0 },
+        progress = { 1f },
+        onBack = {},
+        modifier = modifier,
+    )
 }
 
 /** One page's measured header: its title/subtitle block and its trailing action, if any. */
