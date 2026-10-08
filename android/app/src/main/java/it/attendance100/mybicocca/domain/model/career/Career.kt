@@ -1,5 +1,7 @@
 package it.attendance100.mybicocca.domain.model.career
 
+import it.attendance100.mybicocca.domain.model.elearning.course.CourseLevel
+
 /**
  * One enrollment of a student in a study programme, as listed by Esse3 and cached in Room. A
  * student carries one career per programme attended; the account's selected career scopes most
@@ -21,6 +23,9 @@ package it.attendance100.mybicocca.domain.model.career
  * @property academicYear Academic year the career started (`aaImm1`, falling back to `aaId`);
  *   ranks careers when choosing the default selection. 0 when unknown.
  * @property status Lifecycle state mapped from the Esse3 status code.
+ * @property level Degree level of the programme (`tipoCorsoCod`); tells apart two careers in
+ *   programmes of the same name. Null for a code the app does not map, and for a career cached
+ *   before the level was stored.
  */
 data class Career(
     val id: CareerId,
@@ -32,4 +37,5 @@ data class Career(
     val description: String,
     val academicYear: Int,
     val status: CareerStatus,
+    val level: CourseLevel? = null,
 )

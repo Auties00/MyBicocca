@@ -1,5 +1,6 @@
 package it.attendance100.mybicocca.data.mapper.document
 
+import it.attendance100.mybicocca.core.observability.UnknownValues
 import it.attendance100.mybicocca.data.mapper.common.Esse3DateFormat
 import it.attendance100.mybicocca.data.mapper.common.parseEsse3Date
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3BadgeData
@@ -169,7 +170,10 @@ private fun String?.clean(): String? = this?.trim()?.takeIf { it.isNotEmpty() }
 private fun String?.toTitleStatus(): TitleStatus = when (this?.trim()?.uppercase()) {
     "C" -> TitleStatus.Awarded
     "I" -> TitleStatus.Hypothesised
-    else -> TitleStatus.Unknown
+    else -> {
+        UnknownValues.report("title_status", this)
+        TitleStatus.Unknown
+    }
 }
 
 private fun formatGrade(grade: Float?, base: Float?): String? {

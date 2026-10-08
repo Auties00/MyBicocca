@@ -1,5 +1,6 @@
 package it.attendance100.mybicocca.data.mapper.exam
 
+import it.attendance100.mybicocca.core.observability.UnknownValues
 import it.attendance100.mybicocca.data.mapper.common.parseEsse3Date
 import it.attendance100.mybicocca.data.mapper.common.parseEsse3DateTime
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3AcknowledgmentOfReceipt
@@ -131,7 +132,11 @@ private fun Esse3AcknowledgmentOfReceipt?.toAcknowledgmentStatus(): Acknowledgme
         Esse3AcknowledgmentOfReceipt.Viewed -> AcknowledgmentStatus.Viewed
         Esse3AcknowledgmentOfReceipt.Accepted -> AcknowledgmentStatus.Accepted
         Esse3AcknowledgmentOfReceipt.Rejected -> AcknowledgmentStatus.Rejected
-        is Esse3AcknowledgmentOfReceipt.Unknown, null -> AcknowledgmentStatus.Unknown
+        is Esse3AcknowledgmentOfReceipt.Unknown -> {
+            UnknownValues.report("exam_acknowledgment", value)
+            AcknowledgmentStatus.Unknown
+        }
+        null -> AcknowledgmentStatus.Unknown
     }
 
 /**
@@ -182,7 +187,10 @@ private fun String?.parseTime(): LocalTime? {
 private fun String?.toCallType(): ExamCallType = when (this?.trim()?.uppercase()) {
     "PF" -> ExamCallType.Final
     "PP" -> ExamCallType.Partial
-    else -> ExamCallType.Other
+    else -> {
+        UnknownValues.report("exam_call_type", this)
+        ExamCallType.Other
+    }
 }
 
 private fun String?.toExamType(): ExamType = when (this?.trim()?.uppercase()) {
@@ -190,7 +198,10 @@ private fun String?.toExamType(): ExamType = when (this?.trim()?.uppercase()) {
     "O" -> ExamType.Oral
     "SOC" -> ExamType.WrittenAndOralJoint
     "SOS" -> ExamType.WrittenAndOralSeparate
-    else -> ExamType.Unknown
+    else -> {
+        UnknownValues.report("exam_type", this)
+        ExamType.Unknown
+    }
 }
 
 private fun Esse3GraduationTypeCode?.toExamType(): ExamType = when (this) {
@@ -198,5 +209,9 @@ private fun Esse3GraduationTypeCode?.toExamType(): ExamType = when (this) {
     Esse3GraduationTypeCode.Oral -> ExamType.Oral
     Esse3GraduationTypeCode.WrittenOralConsecutive -> ExamType.WrittenAndOralJoint
     Esse3GraduationTypeCode.WrittenOralSimultaneous -> ExamType.WrittenAndOralSeparate
-    is Esse3GraduationTypeCode.Unknown, null -> ExamType.Unknown
+    is Esse3GraduationTypeCode.Unknown -> {
+        UnknownValues.report("exam_type", value)
+        ExamType.Unknown
+    }
+    null -> ExamType.Unknown
 }

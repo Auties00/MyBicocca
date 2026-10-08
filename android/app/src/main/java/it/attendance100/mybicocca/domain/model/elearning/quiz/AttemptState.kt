@@ -1,5 +1,7 @@
 package it.attendance100.mybicocca.domain.model.elearning.quiz
 
+import it.attendance100.mybicocca.core.observability.UnknownValues
+
 /**
  * Lifecycle state of a quiz attempt as reported by Moodle's mod_quiz web services. The quiz
  * detail sheet keys its primary action on this: an in-progress attempt becomes the resume CTA.
@@ -25,6 +27,7 @@ enum class AttemptState(val raw: String) {
     companion object {
         /** Resolves a wire value case-insensitively, falling back to [Unknown]. */
         fun fromRaw(raw: String?): AttemptState =
-            entries.firstOrNull { it.raw.equals(raw, ignoreCase = true) } ?: Unknown
+            entries.firstOrNull { it.raw.equals(raw, ignoreCase = true) }
+                ?: Unknown.also { UnknownValues.report("quiz_attempt_state", raw) }
     }
 }
