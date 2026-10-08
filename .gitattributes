@@ -1,0 +1,18 @@
+# Text is stored with LF in the repository and checked out with the platform's own line endings.
+* text=auto
+
+# Scripts that only run with one kind of line ending, whatever the platform.
+gradlew text eol=lf
+*.sh    text eol=lf
+*.bat   text eol=crlf
+
+*.png  binary
+*.jpg  binary
+*.webp binary
+*.psd  binary
+*.ai   binary
+*.pdf  binary
+*.ttf  binary
+*.jar  binary
+*.zip  binary
+*.apk  binary
