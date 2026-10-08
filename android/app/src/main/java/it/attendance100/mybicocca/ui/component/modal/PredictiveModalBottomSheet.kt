@@ -19,6 +19,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -28,6 +30,10 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.Velocity
 import it.attendance100.mybicocca.ui.component.feedback.SnackbarScope
+import kotlin.coroutines.cancellation.CancellationException
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 /**
@@ -46,14 +52,35 @@ class ModalSheetController {
     /** Set once a programmatic hide started, so only that hide is undone by [show]. */
     private var hiddenByController: Boolean = false
 
-    /** Animates the sheet out. Returns immediately if it is not mounted or already hidden. */
+    /**
+     * Animates the sheet out and returns once it is hidden. Returns immediately if it is not mounted
+     * or already hidden, and early if [show] brings the sheet back meanwhile.
+     *
+     * Another sheet animation can cancel the slide out halfway: a scrim tap or back press while
+     * the sheet is leaving starts Material's own hide, and a finger can grab the sheet. That
+     * cancellation must not reach the caller. The modal scene waits for this hide before it
+     * removes the sheet, and a sheet that is never removed leaves its invisible, full-screen window
+     * over the app, where it swallows every touch. Instead the interruption is waited out and
+     * the hide repeated until the sheet is really gone.
+     */
     suspend fun hide() {
         val sheet = state ?: return
         if (!sheet.isVisible) return
         hiddenByController = true
         closing = true
         try {
-            sheet.hide()
+            while (closing && sheet.isVisible) {
+                try {
+                    sheet.hide()
+                } catch (interrupted: CancellationException) {
+                    // Our own cancellation (the scene left composition) still propagates.
+                    currentCoroutineContext().ensureActive()
+                    snapshotFlow { sheet.isAnimationRunning }.first { !it }
+                    // A drag outranks animations and refuses a new one outright: retry at most
+                    // once a frame until the finger lets go.
+                    withFrameNanos {}
+                }
+            }
         } finally {
             closing = false
         }
@@ -61,12 +88,13 @@ class ModalSheetController {
 
     /**
      * Animates the sheet back in after a programmatic [hide] (the sheet came back on the stack while
-     * it was hiding). The first show is left to Material's own entry animation.
+     * it was hiding), ending that hide. The first show is left to Material's own entry animation.
      */
     suspend fun show() {
         val sheet = state ?: return
         if (!hiddenByController) return
         hiddenByController = false
+        closing = false
         sheet.show()
     }
 }

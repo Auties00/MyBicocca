@@ -1,5 +1,6 @@
 package it.attendance100.mybicocca.ui.navigation.scene
 
+import android.content.Context
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -9,14 +10,19 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.junit4.StateRestorationTester
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithContentDescription
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performClick
 import androidx.navigation3.runtime.entryProvider
 import androidx.navigation3.runtime.rememberDecoratedNavEntries
 import androidx.navigation3.runtime.rememberSaveableStateHolderNavEntryDecorator
 import androidx.navigation3.scene.SinglePaneSceneStrategy
 import androidx.navigation3.ui.NavDisplay
+import androidx.test.core.app.ApplicationProvider
 import com.google.common.truth.Truth.assertThat
 import it.attendance100.mybicocca.core.os.ProvideHapticManager
 import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
@@ -39,7 +45,9 @@ import org.robolectric.annotation.Config
  * End-to-end behaviour of the modal scene on a real NavDisplay, wired like MainShell: the
  * regressions behind issues #44 (a second copy of a sheet composed next to the first, crashing
  * with "Key … was used multiple times"), #14 (the sheet torn down and re-created on every page
- * change instead of morphing) and #22 (dismissals popping more than the sheet).
+ * change instead of morphing), #22 (dismissals popping more than the sheet) and the frozen app
+ * after spamming two different sheets (a sheet closed by navigation whose slide out was interrupted
+ * stayed mounted forever, its invisible window swallowing every touch).
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
@@ -224,6 +232,33 @@ class ModalSceneStrategyTest {
         rule.runOnIdle { navigator.popToRoot() }
         rule.waitForIdle()
         assertThat(popped["appelli"]).isEqualTo(1)
+    }
+
+    @Test
+    fun `a sheet closed by navigation is removed even when a tap interrupts its slide out`() {
+        // Material's scrim: full-screen and clickable even when invisible, so a sheet left
+        // mounted after closing blocks the whole app.
+        val scrim = ApplicationProvider.getApplicationContext<Context>()
+            .getString(androidx.compose.ui.R.string.close_sheet)
+        setShell()
+        rule.runOnIdle { navigator.navigate(SheetRoute.Appelli) }
+        rule.waitForIdle()
+        rule.onNodeWithText("appelli").assertExists()
+
+        // Navigation closes the sheet, so the scene starts sliding it out...
+        rule.mainClock.autoAdvance = false
+        rule.runOnIdle { navigator.popToRoot() }
+        repeat(3) { rule.mainClock.advanceTimeByFrame() }
+        // ...and a tap on the scrim lands mid-slide, starting Material's own hide, which cancels
+        // the scene's.
+        rule.onNodeWithContentDescription(scrim).performClick()
+        rule.mainClock.autoAdvance = true
+        rule.waitForIdle()
+
+        rule.onNodeWithText("appelli").assertDoesNotExist()
+        assertThat(live["appelli"] ?: 0).isEqualTo(0)
+        rule.onAllNodesWithContentDescription(scrim).assertCountEquals(0)
+        rule.onNodeWithText("tabs").assertExists()
     }
 
     @Test
