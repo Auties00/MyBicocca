@@ -16,9 +16,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
@@ -30,18 +32,26 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.os.rememberHapticManager
+import it.attendance100.mybicocca.domain.model.account.AcademicIdentity
 import it.attendance100.mybicocca.domain.model.account.Account
+import it.attendance100.mybicocca.domain.model.account.AccountId
+import it.attendance100.mybicocca.domain.model.account.LearningIdentity
 import it.attendance100.mybicocca.domain.model.career.Career
 import it.attendance100.mybicocca.domain.model.career.CareerId
 import it.attendance100.mybicocca.domain.model.career.CareerStatus
-import it.attendance100.mybicocca.domain.model.career.isSelectable
+import it.attendance100.mybicocca.domain.model.career.isOpen
+import it.attendance100.mybicocca.ui.theme.BicoccaTheme
+import it.attendance100.mybicocca.ui.theme.PreviewBgDark
 import java.io.File
+import java.time.Instant
 
 private val CardShape = RoundedCornerShape(28.dp)
 private val CareerShape = RoundedCornerShape(18.dp)
@@ -75,7 +85,7 @@ fun ProfileCard(
     val haptic = rememberHapticManager()
     val scheme = MaterialTheme.colorScheme
     val motion = MaterialTheme.motionScheme
-    val careers = account.academic.careers.sortedByDescending { it.status.isSelectable }
+    val careers = account.academic.careers.sortedByDescending { it.status.isOpen }
     val selectedCareerId = account.academic.selectedCareerId
 
     val containerColor by animateColorAsState(
@@ -189,7 +199,7 @@ private fun ProfileHeader(
 /**
  * One career under the active account: description, matricola and academic year, with a
  * status chip for noteworthy statuses. Selected = primary container plus a trailing check;
- * selectable = neutral container; ended careers sit muted and disabled.
+ * open = neutral container; ended careers sit muted but can still be picked.
  */
 @Composable
 private fun CareerSubCard(
@@ -199,22 +209,17 @@ private fun CareerSubCard(
 ) {
     val haptic = rememberHapticManager()
     val scheme = MaterialTheme.colorScheme
-    val selectable = career.status.isSelectable
-    val container = when {
-        selected -> scheme.primaryContainer
-        selectable -> scheme.surfaceContainer
-        else -> scheme.surfaceContainerLow
-    }
+    val ended = !career.status.isOpen
+    val container = if (selected) scheme.primaryContainer else scheme.surfaceContainerLow
     val titleColor = when {
         selected -> scheme.onPrimaryContainer
-        selectable -> scheme.onSurface
-        else -> scheme.onSurfaceVariant
+        ended -> scheme.onSurfaceVariant
+        else -> scheme.onSurface
     }
     val supportColor = if (selected) scheme.onPrimaryContainer else scheme.onSurfaceVariant
 
     Surface(
         onClick = { haptic.tap(); onClick() },
-        enabled = selectable,
         shape = CareerShape,
         color = container,
         modifier = Modifier
@@ -253,44 +258,199 @@ private fun CareerSubCard(
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f, fill = false),
                     )
-                    statusLabel(career.status)?.let { label ->
-                        StatusChip(label = label, active = selected)
+                    if (career.status != CareerStatus.ACTIVE && career.status != CareerStatus.OTHER) {
+                        StatusChip(
+                            active = selected,
+                            status = career.status,
+                        )
                     }
                 }
             }
-            if (selected) {
-                Icon(
-                    imageVector = Icons.Default.Check,
-                    contentDescription = stringResource(R.string.account_switcher_career_active),
-                    tint = scheme.onPrimaryContainer,
-                )
-            }
+
+            if (selected) Icon(
+                imageVector = Icons.Default.Check,
+                contentDescription = stringResource(R.string.account_switcher_career_active),
+                tint = scheme.onPrimaryContainer,
+            )
         }
     }
 }
 
 @Composable
-private fun StatusChip(label: String, active: Boolean) {
+private fun StatusChip(
+    active: Boolean,
+    status: CareerStatus,
+) {
     val scheme = MaterialTheme.colorScheme
+    val contentColor = if (active) scheme.onPrimaryContainer else scheme.onSurfaceVariant
     Surface(
         shape = RoundedCornerShape(50),
         color = if (active) scheme.onPrimaryContainer.copy(alpha = 0.16f) else scheme.surfaceContainerHighest,
     ) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = if (active) scheme.onPrimaryContainer else scheme.onSurfaceVariant,
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
+        Row(
+            modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            when (status) {
+                CareerStatus.SUSPENDED -> {
+                    Icon(
+                        imageVector = Icons.Default.Pause,
+                        contentDescription = stringResource(R.string.enrollment_status_suspended),
+                        tint = contentColor,
+                        modifier = Modifier.size(16.dp),
+                    )
+                }
+                CareerStatus.INTERRUPTED -> {
+                    Icon(
+                        painter = painterResource(R.drawable.arrow_cool_down_24px),
+                        contentDescription = stringResource(R.string.account_career_status_interrupted),
+                        tint = contentColor,
+                        modifier = Modifier.size(14.dp).padding(vertical = 0.5.dp),
+                    )
+                }
+                CareerStatus.GRADUATED -> {
+                    Icon(
+                        painter = painterResource(R.drawable.award_star_ribbon_24px),
+                        contentDescription = stringResource(R.string.account_career_status_graduated),
+                        tint = contentColor,
+                        modifier = Modifier.size(16.dp),
+                    )
+                }
+                CareerStatus.ACTIVE, CareerStatus.OTHER -> {}
+            }
+        }
+    }
+}
+
+
+private val SampleAccount = Account(
+    id = AccountId("1"),
+    username = "m.rossi@campus.unimib.it",
+    displayName = "MARIO ROSSI",
+    academic = AcademicIdentity(
+        recordUserId = "1",
+        personId = 1,
+        fiscalCode = "RSSMRA80A01H501U",
+        careers = listOf(
+            Career(
+                id = CareerId(1),
+                enrollmentTraitId = 1,
+                programId = 1,
+                easyStaffProgramCode = "P01",
+                academicYearEnrollmentId = 1,
+                studentNumber = "123456",
+                description = "Informatica",
+                academicYear = 2026,
+                status = CareerStatus.ACTIVE,
+            ),
+            Career(
+                id = CareerId(3),
+                enrollmentTraitId = 3,
+                programId = 3,
+                easyStaffProgramCode = "P03",
+                academicYearEnrollmentId = 3,
+                studentNumber = "789012",
+                description = "Data Science",
+                academicYear = 2025,
+                status = CareerStatus.ACTIVE,
+            ),
+            Career(
+                id = CareerId(4),
+                enrollmentTraitId = 4,
+                programId = 4,
+                easyStaffProgramCode = "P04",
+                academicYearEnrollmentId = 4,
+                studentNumber = "345678",
+                description = "Fisica",
+                academicYear = 2024,
+                status = CareerStatus.SUSPENDED,
+            ),
+            Career(
+                id = CareerId(2),
+                enrollmentTraitId = 2,
+                programId = 2,
+                easyStaffProgramCode = "P02",
+                academicYearEnrollmentId = 2,
+                studentNumber = "654321",
+                description = "Sistemi Informatici",
+                academicYear = 2023,
+                status = CareerStatus.GRADUATED,
+            ),
+            Career(
+                id = CareerId(5),
+                enrollmentTraitId = 5,
+                programId = 5,
+                easyStaffProgramCode = "P05",
+                academicYearEnrollmentId = 5,
+                studentNumber = "901234",
+                description = "Matematica",
+                academicYear = 2021,
+                status = CareerStatus.INTERRUPTED,
+            ),
+            Career(
+                id = CareerId(6),
+                enrollmentTraitId = 6,
+                programId = 6,
+                easyStaffProgramCode = "P06",
+                academicYearEnrollmentId = 6,
+                studentNumber = "567890",
+                description = "Biologia",
+                academicYear = 2020,
+                status = CareerStatus.OTHER,
+            ),
+        ),
+        selectedCareerId = CareerId(1),
+    ),
+    learning = LearningIdentity(
+        lmsUserId = 1,
+        lmsUsername = "m.rossi",
+        locale = "it",
+        isSiteAdmin = false,
+        maxUploadFileSizeBytes = 100,
+        storageQuotaBytes = 100,
+    ),
+    createdAt = Instant.now(),
+    lastUsedAt = Instant.now(),
+    lastSyncedAt = Instant.now(),
+)
+
+@Preview(
+    showBackground = true,
+    uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES,
+    backgroundColor = PreviewBgDark
+)
+@Composable
+private fun ProfileCardActivePreview() {
+    BicoccaTheme(dark = true) {
+        ProfileCard(
+            account = SampleAccount,
+            isActive = true,
+            photo = null,
+            onOpenDetails = {},
+            onSwitchAccount = {},
+            onSelectCareer = {},
+            modifier = Modifier.padding(16.dp),
         )
     }
 }
 
-/** Chip copy for statuses worth flagging; null (regular active or unknown) renders no chip. */
+@Preview(
+    showBackground = true,
+    uiMode = android.content.res.Configuration.UI_MODE_NIGHT_YES,
+    backgroundColor = PreviewBgDark,
+)
 @Composable
-private fun statusLabel(status: CareerStatus): String? = when (status) {
-    CareerStatus.ACTIVE -> null
-    CareerStatus.SUSPENDED -> stringResource(R.string.enrollment_status_suspended)
-    CareerStatus.GRADUATED -> stringResource(R.string.account_career_status_graduated)
-    CareerStatus.INTERRUPTED -> stringResource(R.string.account_career_status_interrupted)
-    CareerStatus.OTHER -> null
+private fun ProfileCardInactiveDarkPreview() {
+    BicoccaTheme(dark = true) {
+        ProfileCard(
+            account = SampleAccount,
+            isActive = false,
+            photo = null,
+            onOpenDetails = {},
+            onSwitchAccount = {},
+            onSelectCareer = {},
+            modifier = Modifier.padding(16.dp),
+        )
+    }
 }

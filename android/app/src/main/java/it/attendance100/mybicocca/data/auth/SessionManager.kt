@@ -26,7 +26,7 @@ import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.account.SignInFailure
 import it.attendance100.mybicocca.domain.model.account.SignInResult
 import it.attendance100.mybicocca.domain.model.career.CareerId
-import it.attendance100.mybicocca.domain.model.career.isSelectable
+import it.attendance100.mybicocca.domain.model.career.isOpen
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -228,7 +228,7 @@ class SessionManager @Inject constructor(
         }
         adoptElearningApi(accountId, freshElearningApi)
 
-        val requiresPick = academic.careers.count { it.status.isSelectable } > 1
+        val requiresPick = academic.careers.count { it.status.isOpen } > 1
         SignInResult.Success(account, requiresCareerPick = requiresPick)
     }
 

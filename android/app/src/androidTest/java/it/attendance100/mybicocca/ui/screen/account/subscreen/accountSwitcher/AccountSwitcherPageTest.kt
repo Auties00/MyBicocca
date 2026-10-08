@@ -4,6 +4,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -45,8 +46,13 @@ class AccountSwitcherPageTest {
     private val activeId = AccountId("acc-1")
     private val otherId = AccountId("acc-2")
     private val careerA = CareerId(101L)
+    private val endedCareer = CareerId(102L)
 
-    private fun career(id: CareerId, description: String) = Career(
+    private fun career(
+        id: CareerId,
+        description: String,
+        status: CareerStatus = CareerStatus.ACTIVE,
+    ) = Career(
         id = id,
         enrollmentTraitId = 1L,
         programId = 2L,
@@ -55,7 +61,7 @@ class AccountSwitcherPageTest {
         studentNumber = "900001",
         description = description,
         academicYear = 2024,
-        status = CareerStatus.ACTIVE,
+        status = status,
     )
 
     private fun account(id: AccountId, careers: List<Career>, selected: CareerId) = Account(
@@ -82,7 +88,14 @@ class AccountSwitcherPageTest {
         lastSyncedAt = Instant.EPOCH,
     )
 
-    private val active = account(activeId, listOf(career(careerA, "Informatica")), careerA)
+    private val active = account(
+        activeId,
+        listOf(
+            career(careerA, "Informatica"),
+            career(endedCareer, "Matematica", CareerStatus.GRADUATED),
+        ),
+        careerA,
+    )
     private val other = account(otherId, listOf(career(careerA, "Fisica")), careerA)
 
     private val onSwitchAccount: (AccountId) -> Unit = mockk(relaxed = true)
@@ -153,5 +166,15 @@ class AccountSwitcherPageTest {
         compose.waitForIdle()
 
         verify { onOpenSettings() }
+    }
+
+    @Test
+    fun tapping_an_ended_career_of_the_active_account_invokes_the_select_career_callback() {
+        setRoster()
+
+        compose.onNodeWithText("Matematica").performClick()
+        compose.waitForIdle()
+
+        verify { onSelectCareer(activeId, endedCareer) }
     }
 }
