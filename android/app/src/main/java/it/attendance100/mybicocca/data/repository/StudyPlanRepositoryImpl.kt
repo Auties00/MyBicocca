@@ -1,6 +1,7 @@
 package it.attendance100.mybicocca.data.repository
 
 import io.ktor.utils.io.jvm.javaio.toInputStream
+import it.attendance100.mybicocca.core.observability.UnknownValues
 import it.attendance100.mybicocca.data.auth.SessionManager
 import it.attendance100.mybicocca.data.mapper.calendar.normalizeSubjectName
 import it.attendance100.mybicocca.data.mapper.common.Esse3DateFormat
@@ -99,10 +100,14 @@ class StudyPlanRepositoryImpl @Inject constructor(
         return StudyPlan(
             planId = planId,
             studentId = careerId.value,
-            type = when (header.planType) {
+            type = when (val planType = header.planType) {
                 Esse3PlanType.Standard -> StudyPlanType.Standard
                 Esse3PlanType.Individual -> StudyPlanType.Individual
-                else -> StudyPlanType.Unknown
+                is Esse3PlanType.Unknown -> {
+                    UnknownValues.report("plan_type", planType.value)
+                    StudyPlanType.Unknown
+                }
+                null -> StudyPlanType.Unknown
             },
             statusDescription = header.stateDescription,
             lastUpdated = header.lastStateChangeDate.parseEsse3Date(),
@@ -302,7 +307,10 @@ class StudyPlanRepositoryImpl @Inject constructor(
                 0 -> PlanApprovalType.Automatic
                 1 -> PlanApprovalType.Manual
                 2 -> PlanApprovalType.AutomaticIfCompliant
-                else -> PlanApprovalType.Unknown
+                else -> {
+                    UnknownValues.report("plan_approval_type", approvalType?.toString())
+                    PlanApprovalType.Unknown
+                }
             },
             conditionNote = conditionDescription?.takeIf { it.isNotBlank() },
             languages = catalogEntry?.teachingLanguages.orEmpty().mapNotNull { lang ->
@@ -532,7 +540,10 @@ class StudyPlanRepositoryImpl @Inject constructor(
             it.id to when (it.code.uppercase()) {
                 "S1" -> Semester.First
                 "S2" -> Semester.Second
-                else -> Semester.Unknown
+                else -> {
+                    UnknownValues.report("teaching_period", it.code)
+                    Semester.Unknown
+                }
             }
         }
         return activities.mapNotNull { activity ->

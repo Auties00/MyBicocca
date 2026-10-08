@@ -2,9 +2,11 @@ package it.attendance100.mybicocca.ui.navigation
 
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
+import io.mockk.coEvery
 import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import it.attendance100.mybicocca.data.local.settings.CareerPickStore
 import it.attendance100.mybicocca.domain.model.account.AcademicIdentity
 import it.attendance100.mybicocca.domain.model.account.Account
 import it.attendance100.mybicocca.domain.model.account.AccountId
@@ -16,6 +18,7 @@ import it.attendance100.mybicocca.domain.usecase.connectivity.ObserveConnectivit
 import it.attendance100.mybicocca.testing.MainDispatcherRule
 import it.attendance100.mybicocca.ui.navigation.route.RootPhase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
@@ -65,13 +68,45 @@ class RootViewModelTest {
     private val pickCareerUseCase: PickCareerUseCase = mockk(relaxed = true)
     private val observeConnectivity: ObserveConnectivityUseCase = mockk()
 
+    private val persistedPending = MutableStateFlow<Set<String>>(emptySet())
+    private val careerPickStore: CareerPickStore = mockk {
+        every { pendingAccountIds } returns persistedPending
+        coEvery { setPending(any(), any()) } answers {
+            val id = firstArg<String>()
+            persistedPending.value =
+                if (secondArg<Boolean>()) persistedPending.value + id else persistedPending.value - id
+        }
+    }
+
     private fun viewModel(
         activeAccount: Account? = account,
         online: Boolean = true,
     ): RootViewModel {
         every { observeActiveAccount() } returns flowOf(activeAccount)
         every { observeConnectivity() } returns flowOf(online)
-        return RootViewModel(observeActiveAccount, pickCareerUseCase, observeConnectivity)
+        return RootViewModel(observeActiveAccount, pickCareerUseCase, observeConnectivity, careerPickStore)
+    }
+
+    @Test
+    fun `a pick left pending by an earlier run still holds the phase at NeedsCareerPick`() = runTest {
+        persistedPending.value = setOf(accountId.value)
+        val vm = viewModel()
+
+        vm.phase.test {
+            assertThat(awaitItem()).isEqualTo(RootPhase.NeedsCareerPick(account))
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `a pending pick is remembered on disk until the career is picked`() = runTest {
+        val vm = viewModel()
+
+        vm.onSignedIn(accountId, requiresPick = true)
+        assertThat(persistedPending.value).containsExactly(accountId.value)
+
+        vm.onCareerPicked(accountId, careerId)
+        assertThat(persistedPending.value).isEmpty()
     }
 
     @Test

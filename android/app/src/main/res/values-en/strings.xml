@@ -75,9 +75,7 @@
 
     <!-- Career picker -->
     <string name="career_picker_title">Choose a career</string>
-    <string name="career_picker_greeting">Hello %s. You have multiple careers: choose the one to use as your default.</string>
-    <string name="career_picker_active">Active</string>
-    <string name="career_picker_ended">Ended</string>
+    <string name="career_picker_instruction">Select the career you want to start with. You can switch at any time from your account.</string>
 
     <!-- Account switcher -->
     <string name="account_switcher_title">Accounts</string>
@@ -1415,6 +1413,7 @@
     <string name="account_career_fallback">Career #%1$s</string>
     <string name="account_career_status_graduated">Completed</string>
     <string name="account_career_status_interrupted">Interrupted</string>
+    <string name="account_career_status_provisional">Provisional</string>
 
     <!-- Top bar / search (added) -->
     <string name="topbar_search">Search</string>
@@ -1993,7 +1992,6 @@
     <string name="topbar_exam_detail">Exam Detail</string>
 
     <!-- Account / career -->
-    <string name="career_placeholder">Career no. %1$d</string>
 
     <!-- Auth -->
     <string name="auth_login_spid">Sign in with SPID</string>

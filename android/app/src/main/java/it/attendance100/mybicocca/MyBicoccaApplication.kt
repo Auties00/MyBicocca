@@ -7,6 +7,7 @@ import it.attendance100.mybicocca.core.os.applyAppLanguage
 import it.attendance100.mybicocca.core.os.currentProcessName
 import it.attendance100.mybicocca.core.os.systemAppLanguage
 import it.attendance100.mybicocca.data.observability.CrashReportingController
+import it.attendance100.mybicocca.data.observability.UnknownValueReporting
 import javax.inject.Inject
 
 import androidx.hilt.work.HiltWorkerFactory
@@ -20,6 +21,9 @@ class MyBicoccaApplication : Application(), Configuration.Provider {
 
     @Inject
     lateinit var crashReportingController: CrashReportingController
+
+    @Inject
+    lateinit var unknownValueReporting: UnknownValueReporting
 
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
@@ -35,6 +39,7 @@ class MyBicoccaApplication : Application(), Configuration.Provider {
         if (currentProcessName()?.endsWith(":crash") == true) return
 
         crashReportingController.start()
+        unknownValueReporting.start()
         GlobalExceptionHandler.initialize(this, CrashActivity::class.java)
 
         val prefs = getSharedPreferences("language_prefs", MODE_PRIVATE)

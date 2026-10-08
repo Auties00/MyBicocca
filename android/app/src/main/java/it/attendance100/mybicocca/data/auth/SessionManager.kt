@@ -154,7 +154,7 @@ class SessionManager @Inject constructor(
             runCatching {
                 val session = esse3.auth.login()
                 val careersDto = esse3.careers.getCareers()
-                session to careersDto
+                Triple(session, careersDto, courseTypeCodes(esse3))
             }
         }
         val freshElearningApi = elearningApiFactory.create()
@@ -184,11 +184,11 @@ class SessionManager @Inject constructor(
             )
         }
 
-        val (esse3Session, esse3Careers) = esse3Result.getOrThrow()
+        val (esse3Session, esse3Careers, esse3CourseTypes) = esse3Result.getOrThrow()
         val elearning = elearningResult.getOrThrow()
         val siteInfo = elearning.siteInfo
 
-        val academic = buildAcademicIdentity(esse3Session, esse3Careers)
+        val academic = buildAcademicIdentity(esse3Session, esse3Careers, esse3CourseTypes)
         val learning = siteInfo.toLearningIdentity()
         val now = Instant.now()
         val existing = accountDao.findByRecordUserId(academic.recordUserId)
@@ -294,7 +294,7 @@ class SessionManager @Inject constructor(
             val esse3 = esse3ForAccount(accountId)
             val careersDto = esse3.careers.getCareers()
             val session = esse3.auth.login()
-            val refreshed = buildAcademicIdentity(session, careersDto)
+            val refreshed = buildAcademicIdentity(session, careersDto, courseTypeCodes(esse3))
             val previous = current.toDomain().academic.careers
             val now = System.currentTimeMillis()
             accountDao.replaceCareers(
@@ -310,6 +310,24 @@ class SessionManager @Inject constructor(
             ).forEach { _events.trySend(it) }
         }
     }
+
+    /**
+     * Course-type code of each career, by career id. The careers endpoint does not return it, so
+     * it is read from the transcript's career segments, which list every career of the student.
+     * Esse3 leaves the code out unless the optional field is asked for by name.
+     *
+     * Best effort: a failure yields an empty map, which only costs the careers their degree-level
+     * badge and never fails a sign-in.
+     */
+    private suspend fun courseTypeCodes(esse3: Esse3Api): Map<Long, String> =
+        runCatching { esse3.transcript.getCareerSegments(optionalFields = COURSE_TYPE_FIELD) }
+            .getOrDefault(emptyList())
+            .mapNotNull { segment ->
+                val id = segment.studentId ?: return@mapNotNull null
+                val code = segment.courseTypeCode ?: return@mapNotNull null
+                id to code
+            }
+            .toMap()
 
     /** Esse3 REST client for the active account, built and cached on first use. */
     suspend fun esse3(): Esse3Api {
@@ -535,6 +553,7 @@ class SessionManager @Inject constructor(
     private companion object {
         const val STATE_KEEP_ALIVE_MS = 5_000L
         const val DEFAULT_USERNAME_DOMAIN = "campus.unimib.it"
+        const val COURSE_TYPE_FIELD = "tipoCorsoCod"
 
         /**
          * Appends the campus domain when the user typed only the short form (no `@`): students

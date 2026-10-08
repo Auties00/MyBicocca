@@ -150,11 +150,13 @@ import it.attendance100.mybicocca.data.local.transcript.TranscriptSyncStateEntit
         BadgeImageEntity::class,
         CertificateEntity::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = true,
     autoMigrations = [
         // v2: cached_booked_exam gains the nullable total_bookings column (numIscritti).
         AutoMigration(from = 1, to = 2),
+        // v3: careers gains the nullable level column (tipoCorsoCod).
+        AutoMigration(from = 2, to = 3),
     ],
 )
 abstract class MyBicoccaDatabase : RoomDatabase() {

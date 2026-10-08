@@ -9,6 +9,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -20,6 +21,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.HourglassEmpty
 import androidx.compose.material.icons.filled.Pause
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -34,6 +36,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -48,6 +55,7 @@ import it.attendance100.mybicocca.domain.model.career.Career
 import it.attendance100.mybicocca.domain.model.career.CareerId
 import it.attendance100.mybicocca.domain.model.career.CareerStatus
 import it.attendance100.mybicocca.domain.model.career.isOpen
+import it.attendance100.mybicocca.domain.model.elearning.course.CourseLevel
 import it.attendance100.mybicocca.ui.theme.BicoccaTheme
 import it.attendance100.mybicocca.ui.theme.PreviewBgDark
 import java.io.File
@@ -202,7 +210,7 @@ private fun ProfileHeader(
  * open = neutral container; ended careers sit muted but can still be picked.
  */
 @Composable
-private fun CareerSubCard(
+internal fun CareerSubCard(
     career: Career,
     selected: Boolean,
     onClick: () -> Unit,
@@ -219,18 +227,22 @@ private fun CareerSubCard(
     val supportColor = if (selected) scheme.onPrimaryContainer else scheme.onSurfaceVariant
 
     Surface(
+        selected = selected,
         onClick = { haptic.tap(); onClick() },
         shape = CareerShape,
         color = container,
         modifier = Modifier
             .fillMaxWidth()
-            .heightIn(min = 60.dp),
+            .heightIn(min = 60.dp)
+            .semantics { role = Role.RadioButton },
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            career.level?.let { LevelPip(level = it, active = selected) }
+
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = career.description.ifEmpty {
@@ -239,7 +251,7 @@ private fun CareerSubCard(
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Medium,
                     color = titleColor,
-                    maxLines = 1,
+                    maxLines = 3,
                     overflow = TextOverflow.Ellipsis,
                 )
                 Row(
@@ -276,6 +288,45 @@ private fun CareerSubCard(
     }
 }
 
+/**
+ * Leading degree-level badge of a career tile: the short code ("L", "LM", "D") in a fixed-size
+ * pip, so it sits in the same place whatever the title's length, read out as the full level name.
+ */
+@Composable
+private fun LevelPip(level: CourseLevel, active: Boolean) {
+    val scheme = MaterialTheme.colorScheme
+    val fullName = stringResource(
+        when (level) {
+            CourseLevel.Bachelor -> R.string.elearning_course_level_bachelor
+            CourseLevel.Master -> R.string.elearning_course_level_master
+            CourseLevel.Doctorate -> R.string.elearning_course_level_doctorate
+        }
+    )
+    Surface(
+        shape = RoundedCornerShape(10.dp),
+        color = if (active) scheme.onPrimaryContainer.copy(alpha = 0.16f) else scheme.surfaceContainerHighest,
+        modifier = Modifier
+            .size(36.dp)
+            .clearAndSetSemantics { contentDescription = fullName },
+    ) {
+        Box(contentAlignment = Alignment.Center) {
+            Text(
+                text = stringResource(
+                    when (level) {
+                        CourseLevel.Bachelor -> R.string.elearning_course_level_bachelor_short
+                        CourseLevel.Master -> R.string.elearning_course_level_master_short
+                        CourseLevel.Doctorate -> R.string.elearning_course_level_doctorate_short
+                    }
+                ),
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = if (active) scheme.onPrimaryContainer else scheme.onSurfaceVariant,
+                maxLines = 1,
+            )
+        }
+    }
+}
+
 @Composable
 private fun StatusChip(
     active: Boolean,
@@ -297,6 +348,14 @@ private fun StatusChip(
                     Icon(
                         imageVector = Icons.Default.Pause,
                         contentDescription = stringResource(R.string.enrollment_status_suspended),
+                        tint = contentColor,
+                        modifier = Modifier.size(16.dp),
+                    )
+                }
+                CareerStatus.PROVISIONAL -> {
+                    Icon(
+                        imageVector = Icons.Default.HourglassEmpty,
+                        contentDescription = stringResource(R.string.account_career_status_provisional),
                         tint = contentColor,
                         modifier = Modifier.size(16.dp),
                     )

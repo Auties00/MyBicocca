@@ -1,6 +1,7 @@
 package it.attendance100.mybicocca.ui.screen.account
 
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -20,8 +21,9 @@ import org.junit.runner.RunWith
 import java.time.Instant
 
 /**
- * Behaviour coverage for the post-sign-in [CareerPickerScreen]: a card from either section, open
- * or ended, reports its career through the pick callback.
+ * Behaviour coverage for the post-sign-in [CareerPickerScreen]: tapping a career, open or ended,
+ * only selects it, and the confirm button reports the selection (the account's default career
+ * when nothing was tapped) through the pick callback.
  */
 @RunWith(AndroidJUnit4::class)
 class CareerPickerScreenTest {
@@ -80,20 +82,31 @@ class CareerPickerScreenTest {
     }
 
     @Test
-    fun tapping_an_open_career_reports_it_as_picked() {
+    fun confirming_without_touching_the_list_picks_the_default_career() {
         setPicker()
 
-        compose.onNodeWithText("Informatica").performClick()
+        compose.onNodeWithTag(CareerPickerTestTags.CONFIRM).performClick()
         compose.waitForIdle()
 
         verify { onPicked(openCareer) }
     }
 
     @Test
-    fun tapping_an_ended_career_reports_it_as_picked() {
+    fun tapping_a_career_only_selects_it() {
         setPicker()
 
         compose.onNodeWithText("Matematica").performClick()
+        compose.waitForIdle()
+
+        verify(exactly = 0) { onPicked(any()) }
+    }
+
+    @Test
+    fun selecting_an_ended_career_then_confirming_picks_it() {
+        setPicker()
+
+        compose.onNodeWithText("Matematica").performClick()
+        compose.onNodeWithTag(CareerPickerTestTags.CONFIRM).performClick()
         compose.waitForIdle()
 
         verify { onPicked(endedCareer) }

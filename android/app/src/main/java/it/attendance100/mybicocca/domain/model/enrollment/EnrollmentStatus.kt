@@ -1,5 +1,7 @@
 package it.attendance100.mybicocca.domain.model.enrollment
 
+import it.attendance100.mybicocca.core.observability.UnknownValues
+
 /**
  * Administrative state of an annual enrollment, from Esse3 `staIscrCod`:
  * "A" = ATTIVA, "X" = ANNULLATA, "S" = SOSPESA. [Unknown] covers any code the server may
@@ -16,7 +18,10 @@ enum class EnrollmentStatus {
             "A" -> Active
             "X" -> Canceled
             "S" -> Suspended
-            else -> Unknown
+            else -> {
+                UnknownValues.report("enrollment_status", code)
+                Unknown
+            }
         }
     }
 }

@@ -1,5 +1,6 @@
 package it.attendance100.mybicocca.data.mapper.tax
 
+import it.attendance100.mybicocca.core.observability.UnknownValues
 import it.attendance100.mybicocca.data.mapper.common.parseEsse3DateOrIso
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3EnrollmentForTuition
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3Invoices
@@ -39,7 +40,10 @@ internal fun Esse3TrafficLight.toSummary(): TaxSummary = TaxSummary(
         "VERDE" -> TaxLight.GREEN
         "GIALLO" -> TaxLight.YELLOW
         "ROSSO" -> TaxLight.RED
-        else -> TaxLight.UNKNOWN
+        else -> {
+            UnknownValues.report("tax_light", trafficLight)
+            TaxLight.UNKNOWN
+        }
     },
     dueAmount = dueAmount ?: 0.0,
     expiredCount = expiredTaxes.size,

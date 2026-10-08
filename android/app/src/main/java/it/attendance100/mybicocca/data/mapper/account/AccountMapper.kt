@@ -10,6 +10,7 @@ import it.attendance100.mybicocca.domain.model.career.Career
 import it.attendance100.mybicocca.domain.model.career.CareerId
 import it.attendance100.mybicocca.domain.model.career.CareerStatus
 import it.attendance100.mybicocca.domain.model.account.LearningIdentity
+import it.attendance100.mybicocca.domain.model.elearning.course.CourseLevel
 import java.time.Instant
 
 internal fun AccountWithCareers.toDomain(): Account {
@@ -50,6 +51,7 @@ internal fun CareerEntity.toDomain(): Career = Career(
     description = description,
     academicYear = academicYear,
     status = parseCareerStatus(status),
+    level = level?.let { runCatching { CourseLevel.valueOf(it) }.getOrNull() },
 )
 
 internal fun Account.toEntity(): AccountEntity = AccountEntity(
@@ -82,6 +84,7 @@ internal fun Career.toEntity(accountId: AccountId): CareerEntity = CareerEntity(
     description = description,
     academicYear = academicYear,
     status = status.name,
+    level = level?.name,
 )
 
 private fun parseCareerStatus(name: String): CareerStatus =

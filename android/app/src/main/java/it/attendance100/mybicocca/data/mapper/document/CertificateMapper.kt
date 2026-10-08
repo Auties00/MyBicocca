@@ -1,5 +1,6 @@
 package it.attendance100.mybicocca.data.mapper.document
 
+import it.attendance100.mybicocca.core.observability.UnknownValues
 import it.attendance100.mybicocca.data.remote.esse3.scraper.dto.Esse3SelfCertification
 import it.attendance100.mybicocca.data.remote.esse3.scraper.dto.Esse3SelfCertificationType
 import it.attendance100.mybicocca.domain.model.document.Certificate
@@ -23,5 +24,8 @@ private fun Esse3SelfCertificationType.toDomain(): CertificateType = when (this)
     Esse3SelfCertificationType.Enrolment -> CertificateType.Enrolment
     Esse3SelfCertificationType.DegreeAward -> CertificateType.DegreeAward
     Esse3SelfCertificationType.TuitionFees -> CertificateType.TuitionFees
-    is Esse3SelfCertificationType.Other -> CertificateType.Other
+    is Esse3SelfCertificationType.Other -> {
+        UnknownValues.report("certificate_type", code)
+        CertificateType.Other
+    }
 }
