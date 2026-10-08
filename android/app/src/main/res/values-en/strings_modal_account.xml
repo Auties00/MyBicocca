@@ -5,6 +5,4 @@
         <item quantity="one">1 account</item>
         <item quantity="other">%1$d accounts</item>
     </plurals>
-    <string name="account_switcher_add_title">Add account</string>
-    <string name="account_switcher_add_subtitle">Your saved accounts stay available</string>
 </resources>

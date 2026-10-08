@@ -1,13 +1,20 @@
 package it.attendance100.mybicocca.ui.screen.account.subscreen.accountSwitcher
 
 import android.annotation.SuppressLint
+import androidx.activity.compose.PredictiveBackHandler
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.Transition
+import androidx.compose.animation.core.SeekableTransitionState
 import androidx.compose.animation.core.animateDp
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.rememberTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -40,6 +47,7 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -68,8 +76,8 @@ import it.attendance100.mybicocca.domain.model.career.CareerId
 import it.attendance100.mybicocca.domain.model.career.CareerStatus
 import it.attendance100.mybicocca.ui.component.modal.LocalSheetDismissControl
 import it.attendance100.mybicocca.ui.component.modal.SheetContainerStyle
+import it.attendance100.mybicocca.ui.component.modal.SheetHeader
 import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
-import it.attendance100.mybicocca.ui.component.modal.SheetPageSlide
 import it.attendance100.mybicocca.ui.component.modal.SheetPager
 import it.attendance100.mybicocca.ui.navigation.route.SheetRoute
 import it.attendance100.mybicocca.ui.screen.account.AccountViewModel
@@ -84,6 +92,8 @@ import it.attendance100.mybicocca.ui.theme.BicoccaTheme
 import it.attendance100.mybicocca.ui.theme.PreviewBgLowest
 import java.io.File
 import java.time.Instant
+import kotlin.coroutines.cancellation.CancellationException
+import kotlinx.coroutines.launch
 
 private val CardShape = RoundedCornerShape(28.dp)
 private val PageShape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp)
@@ -102,41 +112,33 @@ val AccountSwitcherSheetStyle = SheetContainerStyle(
 
 private val AccountSwitcherHandleHeight = 16.dp
 
-/** The two levels of the account switcher: the roster, and the sign-in rising over it. */
-private enum class AccountSwitcherLevel { Roster, Adding }
-
 /**
- * Pinned header of the account switcher: "Account" over the stored-account count on the roster,
- * with the settings shortcut at its trailing edge, and "Aggiungi account" over a short
- * reassurance while signing in (no back arrow: the sign-in page has its own cancel button).
+ * Header of the roster: "Account" over the stored-account count, with the settings shortcut at
+ * its trailing edge. The sign-in page has none: it takes the whole sheet.
  */
 @Composable
-internal fun accountSwitcherHeader(adding: Boolean, accountCount: Int, onOpenSettings: () -> Unit): SheetHeaderSpec =
-    if (adding) {
-        SheetHeaderSpec(
-            title = stringResource(R.string.account_switcher_add_title),
-            subtitle = stringResource(R.string.account_switcher_add_subtitle),
-            showBack = false,
-        )
-    } else {
-        SheetHeaderSpec(
-            title = stringResource(R.string.account_switcher_title),
-            subtitle = pluralStringResource(R.plurals.account_switcher_count, accountCount, accountCount),
-            trailing = { AccountSwitcherSettingsShortcut(onClick = onOpenSettings) },
-        )
-    }
+internal fun accountSwitcherHeader(accountCount: Int, onOpenSettings: () -> Unit): SheetHeaderSpec =
+    SheetHeaderSpec(
+        title = stringResource(R.string.account_switcher_title),
+        subtitle = pluralStringResource(R.plurals.account_switcher_count, accountCount, accountCount),
+        trailing = { AccountSwitcherSettingsShortcut(onClick = onOpenSettings) },
+    )
 
 /**
- * The account switcher sheet page: a two-level [SheetPager] with the roster of stored accounts
- * and the add-account sign-in, which rises over it ([SheetPageSlide.Vertical]) and grows the sheet
- * to the full screen height. The page draws its own pinned header ([accountSwitcherHeader]), so
- * its route declares `sheetHeaderInPage()`.
+ * The account switcher sheet page: the roster of stored accounts, and the add-account sign-in
+ * that rises over it and grows the sheet to the full screen height.
  *
- * Back is predictive on both levels: on the sign-in page the pager seeks back to the roster (and
- * rewinds when cancelled); on the roster it falls through to the sheet's native predictive
- * dismiss. While signing in the sheet cannot be swiped away — a swipe, scrim tap or back press
- * returns to the roster instead, so a half-typed sign-in is never dropped silently; while the
- * sign-in request is in flight none of them has any effect.
+ * This sheet keeps its own motion instead of the shared [SheetPager]: the whole roster, header
+ * included, slides up and out while the sign-in rises from below over a full page height, and the
+ * sheet height morphs with it. A pinned header would stay behind and swap its texts instead, and
+ * the sign-in has no header at all. Its route therefore declares `sheetHeaderInPage()`, and the
+ * roster draws the standard [SheetHeader] itself, so it still looks like every other sheet.
+ *
+ * Back is predictive on both levels: on the sign-in page the gesture seeks the same transition
+ * back to the roster (and rewinds when cancelled); on the roster it falls through to the sheet's
+ * native predictive dismiss. While signing in the sheet cannot be swiped away — a swipe, scrim
+ * tap or back press returns to the roster instead, so a half-typed sign-in is never dropped
+ * silently; while the sign-in request is in flight none of them has any effect.
  */
 @SuppressLint("ConfigurationScreenWidthHeight")
 @OptIn(ExperimentalAnimationApi::class)
@@ -176,6 +178,29 @@ fun AccountSwitcherPage(
         }
     }
 
+    // One seekable transition drives the roster ⇄ sign-in morph, so the back gesture can scrub it.
+    val levelState = remember { SeekableTransitionState(isAddingAccount) }
+    val levelTransition = rememberTransition(levelState, label = "addAccountTransition")
+    LaunchedEffect(isAddingAccount) {
+        if (levelState.targetState != isAddingAccount) {
+            levelState.animateTo(isAddingAccount, tween(durationMillis = 800, easing = FastOutLinearInEasing))
+        }
+    }
+
+    // A cancelled gesture cancels the handler's own job, and a second back press cancels a running
+    // finish: both the rewind and the finish run in a scope of their own.
+    val settleScope = rememberCoroutineScope()
+    PredictiveBackHandler(enabled = isAddingAccount && !inflight) { progress ->
+        try {
+            progress.collect { event -> levelState.seekTo(event.progress, targetState = false) }
+        } catch (cancelled: CancellationException) {
+            settleScope.launch { levelState.animateTo(true) }
+            throw cancelled
+        }
+        isAddingAccount = false
+        settleScope.launch { levelState.animateTo(false) }
+    }
+
     val activeId = active?.id
     val ordered = remember(accounts, activeId) {
         accounts.sortedByDescending { it.id == activeId }
@@ -186,88 +211,100 @@ fun AccountSwitcherPage(
     val maxListHeight = LocalConfiguration.current.screenHeightDp.dp * 0.68f
     val statusBarHeightPx = WindowInsets.safeDrawing.getTop(LocalDensity.current)
 
-    val level = if (isAddingAccount) AccountSwitcherLevel.Adding else AccountSwitcherLevel.Roster
-    SheetPager(
-        page = level,
-        depth = { it.ordinal },
-        backTo = if (isAddingAccount && !inflight) AccountSwitcherLevel.Roster else null,
-        onBack = { isAddingAccount = false },
-        slide = SheetPageSlide.Vertical,
-        header = { page ->
-            accountSwitcherHeader(
-                adding = page == AccountSwitcherLevel.Adding,
-                accountCount = accounts.size,
-                onOpenSettings = { control?.dismiss(); onOpenSettings() },
-            )
-        },
-    ) { page ->
-        val pageModifier = Modifier
-            .padding(horizontal = 16.dp)
-            .clip(PageShape)
-        when (page) {
-            AccountSwitcherLevel.Adding -> {
-                val pageVisibility: Transition<EnterExitState> = this.transition
-                val animatedCancelPadding by pageVisibility.animateDp(
-                    transitionSpec = {
-                        tween(
-                            durationMillis = 200,
-                            easing = FastOutSlowInEasing
-                        )
-                    },
-                    label = "cancelPadding"
-                ) { state ->
-                    if (state == EnterExitState.Visible) 32.dp else 0.dp
-                }
-                val animatedCancelOpacity by pageVisibility.animateFloat(
-                    transitionSpec = { tween(durationMillis = 500) },
-                    label = "cancelOpacity"
-                ) { state ->
-                    if (state == EnterExitState.Visible) 0f else 1f
-                }
-                DisposableEffect(Unit) {
-                    onDispose { authViewModel.reset() }
-                }
-                AuthScreenSheetContent(
-                    modifier = pageModifier
-                        .fillMaxWidth()
-                        .fillHeightBelowStatusBar(statusBarHeightPx),
-                    onSignedIn = { _, requiresCareerPick ->
-                        if (!requiresCareerPick) isAddingAccount = false
-                    },
-                    onCancel = { isAddingAccount = false },
-                    cancelPaddingProvider = { animatedCancelPadding },
-                    cancelOpacityProvider = { animatedCancelOpacity },
-                    viewModel = authViewModel,
-                )
+    val pageModifier = Modifier
+        .padding(horizontal = 16.dp)
+        .clip(PageShape)
+    levelTransition.AnimatedContent(
+        modifier = Modifier.fillMaxWidth(),
+        transitionSpec = { addAccountTransform(forward = targetState) },
+        contentKey = { it },
+    ) { adding ->
+        if (adding) {
+            val animatedCancelPadding by transition.animateDp(
+                transitionSpec = {
+                    tween(
+                        durationMillis = 200,
+                        easing = FastOutSlowInEasing
+                    )
+                },
+                label = "cancelPadding"
+            ) { state ->
+                if (state == EnterExitState.Visible) 32.dp else 0.dp
             }
-
-            AccountSwitcherLevel.Roster -> AccountsScene(
+            val animatedCancelOpacity by transition.animateFloat(
+                transitionSpec = { tween(durationMillis = 500) },
+                label = "cancelOpacity"
+            ) { state ->
+                if (state == EnterExitState.Visible) 0f else 1f
+            }
+            DisposableEffect(Unit) {
+                onDispose { authViewModel.reset() }
+            }
+            AuthScreenSheetContent(
                 modifier = pageModifier
                     .fillMaxWidth()
-                    .wrapContentHeight(),
-                ordered = ordered,
-                activeId = activeId,
-                photos = photos,
-                pending = pending,
-                lastRemovedName = lastRemovedName,
-                maxListHeight = maxListHeight,
-                motion = motion,
-                onOpenDetails = { control?.dismiss(); onOpenProfile() },
-                onSwitchAccount = { viewModel.switchAccount(it) },
-                onSelectCareer = { id, careerId ->
-                    viewModel.selectAccountCareer(id, careerId)
+                    .fillHeightBelowStatusBar(statusBarHeightPx),
+                onSignedIn = { _, requiresCareerPick ->
+                    if (!requiresCareerPick) isAddingAccount = false
                 },
-                onRequestRemove = { viewModel.requestRemove(it) },
-                onUndoRemove = { viewModel.undoRemove() },
-                onAddAccount = { isAddingAccount = true },
+                onCancel = { isAddingAccount = false },
+                cancelPaddingProvider = { animatedCancelPadding },
+                cancelOpacityProvider = { animatedCancelOpacity },
+                viewModel = authViewModel,
             )
+        } else {
+            Column(Modifier.fillMaxWidth()) {
+                SheetHeader(
+                    accountSwitcherHeader(
+                        accountCount = accounts.size,
+                        onOpenSettings = { control?.dismiss(); onOpenSettings() },
+                    ),
+                )
+                AccountsScene(
+                    modifier = pageModifier
+                        .fillMaxWidth()
+                        .wrapContentHeight(),
+                    ordered = ordered,
+                    activeId = activeId,
+                    photos = photos,
+                    pending = pending,
+                    lastRemovedName = lastRemovedName,
+                    maxListHeight = maxListHeight,
+                    motion = motion,
+                    onOpenDetails = { control?.dismiss(); onOpenProfile() },
+                    onSwitchAccount = { viewModel.switchAccount(it) },
+                    onSelectCareer = { id, careerId ->
+                        viewModel.selectAccountCareer(id, careerId)
+                    },
+                    onRequestRemove = { viewModel.requestRemove(it) },
+                    onUndoRemove = { viewModel.undoRemove() },
+                    onAddAccount = { isAddingAccount = true },
+                )
+            }
         }
     }
 }
 
 /**
- * Fills the height left in the sheet below the pinned header, short of [statusBarHeightPx]: the
- * sheet spans the whole window, and this keeps its top edge just under the status bar.
+ * The roster ⇄ sign-in morph: the incoming level slides a full page height in (the sign-in from
+ * below, the roster back from above) while the outgoing one leaves the other way, both dimming
+ * rather than vanishing, and the sheet's height follows.
+ */
+private fun AnimatedContentTransitionScope<Boolean>.addAccountTransform(forward: Boolean): ContentTransform {
+    val enter = slideInVertically(tween(durationMillis = 400)) { height -> if (forward) height else -height } +
+        fadeIn(tween(durationMillis = 400), initialAlpha = 0.2f)
+    val exit = slideOutVertically(tween(durationMillis = 600)) { height -> if (forward) -height else height } +
+        fadeOut(tween(durationMillis = 400), targetAlpha = 0.2f)
+    return ContentTransform(
+        targetContentEnter = enter,
+        initialContentExit = exit,
+        sizeTransform = SizeTransform(clip = true) { _, _ -> tween(durationMillis = 500) },
+    )
+}
+
+/**
+ * Fills the height left in the sheet, short of [statusBarHeightPx]: the sheet spans the whole
+ * window, and this keeps its top edge just under the status bar.
  */
 private fun Modifier.fillHeightBelowStatusBar(statusBarHeightPx: Int): Modifier =
     layout { measurable, constraints ->
