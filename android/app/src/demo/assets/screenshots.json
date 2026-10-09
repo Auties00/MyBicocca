@@ -1,0 +1,65 @@
+{
+  "shots": [
+    { "name": "Screenshot_Calendar1", "tab": "Calendar" },
+    { "name": "Screenshot_CalendarEvent", "tab": "Calendar", "routes": [{ "type": "SheetRoute.CalendarEvent", "eventId": "lesson_E3101Q107-2026-06-18-09:30" }] },
+
+    { "name": "Screenshot_Elearning", "tab": "Elearning" },
+    { "name": "Screenshot_ElearningAddCourse", "tab": "Elearning", "routes": [{ "type": "SheetRoute.AddCourse" }] },
+    { "name": "Screenshot_ElearningCourse", "tab": "Elearning", "routes": [{ "type": "AppRoute.CourseDetail", "courseId": 5101 }] },
+    { "name": "Screenshot_ElearningCourseContent", "tab": "Elearning", "routes": [{ "type": "AppRoute.CourseDetail", "courseId": 5101 }], "tap": ["elearning_course_tab_content"] },
+    { "name": "Screenshot_ElearningCourseQuiz", "tab": "Elearning", "routes": [{ "type": "AppRoute.CourseDetail", "courseId": 5101 }, { "type": "SheetRoute.QuizDetail", "quizId": 6201, "courseId": 5101 }] },
+    { "name": "Screenshot_ElearningCourseAssignment", "tab": "Elearning", "routes": [{ "type": "AppRoute.CourseDetail", "courseId": 5103 }, { "type": "SheetRoute.AssignmentDetail", "assignId": 51030, "courseId": 5103 }] },
+    { "name": "Screenshot_ElearningCourseForum", "tab": "Elearning", "routes": [{ "type": "AppRoute.CourseDetail", "courseId": 5101 }, { "type": "SheetRoute.Forum", "forumId": 7101, "courseId": 5101 }] },
+    { "name": "Screenshot_ElearningFile", "tab": "Elearning", "routes": [{ "type": "AppRoute.CourseDetail", "courseId": 5101 }, { "type": "AppRoute.FileViewer", "fileName": "slide_1.pdf", "fileUrl": "https://demo.invalid/files/asd/slide_1.pdf", "mimeType": "application/pdf" }] },
+
+    { "name": "Screenshot_Map", "tab": "Map" },
+    { "name": "Screenshot_MapFilter", "tab": "Map", "routes": [{ "type": "SheetRoute.MapFilter" }] },
+
+    { "name": "Screenshot_Services", "tab": "Registry" },
+    { "name": "Screenshot_ServicesScadenze", "tab": "Registry", "routes": [{ "type": "SheetRoute.Deadlines" }] },
+    { "name": "Screenshot_Career", "tab": "Registry", "routes": [{ "type": "SheetRoute.StudyPlan" }] },
+    { "name": "Screenshot_Attendance", "tab": "Registry", "routes": [{ "type": "SheetRoute.Attendance" }] },
+    { "name": "Screenshot_ExamResults", "tab": "Registry", "routes": [{ "type": "SheetRoute.ExamResults" }] },
+    { "name": "Screenshot_Questionnaires", "tab": "Registry", "routes": [{ "type": "SheetRoute.Questionnaires" }] },
+    { "name": "Screenshot_BookedExams", "tab": "Registry", "routes": [{ "type": "SheetRoute.Appelli" }] },
+    { "name": "Screenshot_BookAppointment", "tab": "Registry", "routes": [{ "type": "SheetRoute.Appointments" }] },
+    { "name": "Screenshot_Library", "tab": "Registry", "routes": [{ "type": "SheetRoute.Library" }] },
+    { "name": "Screenshot_Enrollments", "tab": "Registry", "routes": [{ "type": "SheetRoute.Enrollments" }] },
+    { "name": "Screenshot_EnrollmentDetail", "tab": "Registry", "routes": [{ "type": "SheetRoute.Enrollments" }, { "type": "SheetRoute.EnrollmentDetail", "enrollmentId": 720002 }] },
+    { "name": "Screenshot_Titles", "tab": "Registry", "routes": [{ "type": "SheetRoute.Titles" }] },
+    { "name": "Screenshot_TitleDetail", "tab": "Registry", "routes": [{ "type": "SheetRoute.Titles" }, { "type": "SheetRoute.TitleDetail", "titleId": "TSS-1" }] },
+    { "name": "Screenshot_Documents", "tab": "Registry", "routes": [{ "type": "SheetRoute.Certificates" }] },
+    { "name": "Screenshot_Fees", "tab": "Registry", "routes": [{ "type": "SheetRoute.Taxes" }] },
+    { "name": "Screenshot_Isee", "tab": "Registry", "routes": [{ "type": "SheetRoute.Isee" }] },
+    { "name": "Screenshot_IseeDetail", "tab": "Registry", "routes": [{ "type": "SheetRoute.Isee" }, { "type": "SheetRoute.IseeDetail", "year": 2025 }] },
+    { "name": "Screenshot_Refunds", "tab": "Registry", "routes": [{ "type": "SheetRoute.Refunds" }] },
+    { "name": "Screenshot_RefundDetail", "tab": "Registry", "routes": [{ "type": "SheetRoute.Refunds" }, { "type": "SheetRoute.RefundDetail", "refundKey": 5003 }] },
+
+    { "name": "Screenshot_AccountSwitcher", "tab": "Calendar", "routes": [{ "type": "SheetRoute.AccountSwitcher" }] },
+    { "name": "Screenshot_Profile", "tab": "Calendar", "routes": [{ "type": "AppRoute.Profile" }] },
+    { "name": "Screenshot_Average", "tab": "Calendar", "routes": [{ "type": "AppRoute.Profile" }, { "type": "SheetRoute.HypotheticalGrade", "weighted": true }] },
+    { "name": "Screenshot_ExamsTaken", "tab": "Calendar", "routes": [{ "type": "AppRoute.Profile" }, { "type": "SheetRoute.ExamsByYear", "mode": "Grade" }] },
+    { "name": "Screenshot_Credits", "tab": "Calendar", "routes": [{ "type": "AppRoute.Profile" }, { "type": "SheetRoute.ExamsByYear", "mode": "Credits" }] },
+
+    { "name": "Screenshot_Settings", "tab": "Calendar", "routes": [{ "type": "AppRoute.Settings" }] },
+    { "name": "Screenshot_SettingsAppearance", "tab": "Calendar", "routes": [{ "type": "AppRoute.Settings" }, { "type": "SheetRoute.SettingsAppearance" }] },
+    { "name": "Screenshot_SettingsLanguage", "tab": "Calendar", "routes": [{ "type": "AppRoute.Settings" }, { "type": "SheetRoute.SettingsLanguage" }] },
+    { "name": "Screenshot_SettingsHaptic", "tab": "Calendar", "routes": [{ "type": "AppRoute.Settings" }, { "type": "SheetRoute.SettingsHaptic" }] },
+    { "name": "Screenshot_SettingsSecurity", "tab": "Calendar", "routes": [{ "type": "AppRoute.Settings" }, { "type": "SheetRoute.SettingsSecurity" }] },
+    { "name": "Screenshot_SettingsFileAssociation", "tab": "Calendar", "routes": [{ "type": "AppRoute.Settings" }, { "type": "SheetRoute.FileAssociations" }] },
+    { "name": "Screenshot_SettingsAppInfo", "tab": "Calendar", "routes": [{ "type": "AppRoute.Settings" }, { "type": "SheetRoute.AppInfo" }] },
+
+    { "name": "Screenshot_Calendar2", "tab": "Calendar", "tap": ["calendar_view_week"] },
+    { "name": "Screenshot_Calendar3", "tab": "Calendar", "tap": ["calendar_view_month"] }
+  ],
+  "exempt": [
+    { "type": "AppRoute.TabRoot", "reason": "The root under every tab; the four tab shots cover it." },
+    { "type": "AppRoute.VideoPlayback", "reason": "The demo build ships no lecture recordings." },
+    { "type": "AppRoute.TeacherDetail", "reason": "Loads the teacher from the public EasyStaff directory, not from demo data." },
+    { "type": "SheetRoute.FileOpenChooser", "reason": "Transient chooser shown while opening a file." },
+    { "type": "SheetRoute.OfficeOpen", "reason": "Transient prompt shown while opening an Office file." },
+    { "type": "SheetRoute.CourseEditionPicker", "reason": "Only appears for courses with several editions; the demo has none." },
+    { "type": "SheetRoute.FileAssociationChooser", "reason": "Second page of the file associations sheet, reached by tapping a row." },
+    { "type": "SheetRoute.NotificationDebug", "reason": "Developer tool, not shown in screenshots." }
+  ]
+}

@@ -627,6 +627,15 @@ fun MainShell(
         }
     }
 
+    LaunchedEffect(navigator, pagerState, scope) {
+        ShellCommands.flow.collect { command ->
+            navigator.popToRoot()
+            // Launched apart, as tab taps do: a scroll interrupted by another one must not end this collector.
+            scope.launch { pagerState.scrollToPage(command.tab.ordinal) }
+            command.routes.forEach(navigator::navigate)
+        }
+    }
+
     // Where a notification tap ends up. The activity captures the route and parks it; the shell
     // is what actually owns the modal and the install, so it acts on it and clears it.
     LaunchedEffect(updateEventsViewModel) {
