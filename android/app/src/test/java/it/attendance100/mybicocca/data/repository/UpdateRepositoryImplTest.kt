@@ -17,6 +17,7 @@ import it.attendance100.mybicocca.data.update.InstallSourceProvider
 import it.attendance100.mybicocca.domain.model.update.DistributionSource
 import it.attendance100.mybicocca.domain.model.update.UpdateCheckResult
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
@@ -53,8 +54,21 @@ class UpdateRepositoryImplTest {
         every { store.nightlyEnabled } returns nightlyEnabledFlow
         every { store.nightlyState } returns nightlyStateFlow
         every { store.state } returns stateFlow
+        // Read on discovery to decide whether an "update available" notification is worth posting;
+        // a relaxed mock hands back an empty flow, which first() treats as a missing value.
+        every { store.stableAutoDownload } returns MutableStateFlow(false)
+        every { store.nightlyAutoDownload } returns MutableStateFlow(false)
 
-        repository = UpdateRepositoryImpl(api, store, provider)
+        // The repository only forwards download calls; these tests are about the check flow.
+        repository = UpdateRepositoryImpl(
+            context = mockk(relaxed = true),
+            scope = TestScope(),
+            githubApi = api,
+            store = store,
+            installSourceProvider = provider,
+            apkDownloader = mockk(relaxed = true),
+            notifier = mockk(relaxed = true),
+        )
     }
 
     @Test

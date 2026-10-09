@@ -63,10 +63,12 @@ import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.currentLocale
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.version.isNightlyBuild
-import it.attendance100.mybicocca.data.update.DownloadState
-import it.attendance100.mybicocca.data.update.isReadyToInstall
+import it.attendance100.mybicocca.domain.model.update.DownloadState
+import it.attendance100.mybicocca.domain.model.update.isActive
+import it.attendance100.mybicocca.domain.model.update.isReadyToInstall
 import it.attendance100.mybicocca.domain.model.update.AppRelease
 import it.attendance100.mybicocca.domain.model.update.UpdateCheckResult
+import it.attendance100.mybicocca.domain.model.update.UpdateModalKind
 import it.attendance100.mybicocca.domain.model.update.UpdateStatus
 import it.attendance100.mybicocca.ui.component.brand.MyBicoccaWordmark
 import it.attendance100.mybicocca.ui.component.directory.SegmentedIconChip
@@ -75,7 +77,9 @@ import it.attendance100.mybicocca.ui.component.directory.segmentedShape
 import it.attendance100.mybicocca.ui.component.feedback.LocalAppSnackbarController
 import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
 import it.attendance100.mybicocca.ui.component.modal.SheetPager
+import it.attendance100.mybicocca.ui.component.modal.UpdateModalRequest
 import it.attendance100.mybicocca.ui.component.modal.UpdateModalSheet
+import it.attendance100.mybicocca.ui.component.modal.channelSwitch
 import it.attendance100.mybicocca.ui.navigation.route.SheetRoute
 import kotlinx.coroutines.launch
 import java.time.Year
@@ -157,24 +161,63 @@ fun AppInfoPage(
     val nightlyStatus by viewModel.nightlyStatus.collectAsStateWithLifecycle()
     val nightlyEnabled by viewModel.nightlyEnabled.collectAsStateWithLifecycle()
     val checking by viewModel.checking.collectAsStateWithLifecycle()
+    val channelChanging by viewModel.channelChanging.collectAsStateWithLifecycle()
     var showRestoreStableDialog by remember { mutableStateOf(false) }
     var page by rememberSaveable { mutableStateOf(AppInfoSubPage.About) }
-    var showUpdateModal by remember { mutableStateOf<AppRelease?>(null) }
+    var showUpdateModal by remember { mutableStateOf<UpdateModalRequest?>(null) }
 
-    showUpdateModal?.let { release ->
+    // Opening is remembered across process death, so a download the user was watching isn't lost
+    // behind a cold start; the shell reads the slot back and reopens the sheet there.
+    fun openUpdateModal(release: AppRelease, kind: UpdateModalKind = UpdateModalKind.Standard) {
+        showUpdateModal = UpdateModalRequest(release, kind)
+        viewModel.rememberOpenModal(release, kind)
+    }
+
+    fun closeUpdateModal() {
+        showUpdateModal = null
+        viewModel.forgetOpenModal()
+    }
+
+    showUpdateModal?.let { request ->
+        val release = request.release
         UpdateModalSheet(
             release = release,
             downloadStateFlow = viewModel.downloadState,
             onDownload = { viewModel.startDownload(release) },
             onInstall = { file ->
                 viewModel.installDownload(file)
-                showUpdateModal = null
+                closeUpdateModal()
             },
             onDismiss = {
                 viewModel.dismissDownloadError()
-                showUpdateModal = null
+                closeUpdateModal()
+            },
+            channelSwitch = request.kind.channelSwitch { nightlyEnabled ->
+                // Backing out of a channel change puts the switch back and stops the download it
+                // started. Left running, it would finish and go on offering itself through the
+                // install snackbar and the "ready to install" notification.
+                viewModel.setNightlyEnabled(nightlyEnabled)
+                viewModel.cancelDownload()
+                closeUpdateModal()
             },
         )
+    }
+
+    val downloadBusyMsg = stringResource(R.string.settings_download_already_running)
+
+    /**
+     * Starts a channel change and shows it, in that order.
+     *
+     * The order is the point: the sheet renders the one process-wide download state, so opening it
+     * for a release that was refused would show another download's progress and then offer to
+     * install *its* APK under this release's name.
+     */
+    fun startChannelChange(release: AppRelease, kind: UpdateModalKind) {
+        if (viewModel.startDownload(release)) {
+            openUpdateModal(release, kind)
+        } else {
+            scope.launch { snackbar.showInfo(downloadBusyMsg) }
+        }
     }
 
     val noUpdatesMsg = stringResource(R.string.settings_no_updates_found)
@@ -227,7 +270,7 @@ fun AppInfoPage(
                 onOpenWhatsNew = { page = AppInfoSubPage.WhatsNew },
                 onOpenUpdateSettings = { page = AppInfoSubPage.UpdateSettings },
                 onCheckResult = onCheckResult,
-                onShowUpdateModal = { showUpdateModal = it }
+                onShowUpdateModal = { openUpdateModal(it) }
             )
 
             AppInfoSubPage.WhatsNew -> WhatsNewScene(
@@ -243,7 +286,18 @@ fun AppInfoPage(
                 modifier = pageModifier,
                 viewModel = viewModel,
                 nightlyEnabled = nightlyEnabled,
-                setShowRestoreStableDialog = { showRestoreStableDialog = it }
+                channelChanging = channelChanging,
+                setShowRestoreStableDialog = { showRestoreStableDialog = it },
+                onSwitchToNightly = {
+                    // Symmetrical with restoring to stable: flip the switch, then offer the build
+                    // switching is for, on a sheet that can put it back. Nothing to offer means
+                    // the switch is all there was.
+                    viewModel.enableNightlyAndOffer { release ->
+                        if (release != null) {
+                            startChannelChange(release, UpdateModalKind.SwitchToNightly)
+                        }
+                    }
+                },
             )
         }
     }
@@ -263,8 +317,10 @@ fun AppInfoPage(
                         if (result is UpdateCheckResult.UpdateAvailable) {
                             // Download starts immediately, ignoring stableAutoDownload — this is
                             // already a deliberate, attended action. Install still waits for a tap.
-                            showUpdateModal = result.release
-                            viewModel.startDownload(result.release)
+                            startChannelChange(
+                                result.release,
+                                UpdateModalKind.RestoreStable,
+                            )
                         } else {
                             onCheckResult(result)
                         }
@@ -542,14 +598,16 @@ private fun UpdateAvailableTile(
 ) {
     val downloadState by downloadStateFlow.collectAsStateWithLifecycle()
     val isDownloading = downloadState is DownloadState.Downloading
+    // A queued download reads as downloading here — it has been asked for, and the tile has no
+    // room to explain the difference. Only the bar waits for a real percentage.
+    val isActive = downloadState.isActive
     val isDownloaded = downloadState.isReadyToInstall()
     val progress = (downloadState as? DownloadState.Downloading)?.progress ?: 0
-    val subtitle =
-        if (isDownloading) stringResource(R.string.update_modal_downloading, progress)
-        else stringResource(
-            R.string.settings_update_available_subtitle,
-            release.versionName
-        )
+    val subtitle = when {
+        downloadState is DownloadState.Enqueued -> stringResource(R.string.update_modal_queued)
+        isDownloading -> stringResource(R.string.update_modal_downloading, progress)
+        else -> stringResource(R.string.settings_update_available_subtitle, release.versionName)
+    }
     val haptic = rememberHapticManager()
     val scheme = MaterialTheme.colorScheme
 
@@ -558,14 +616,14 @@ private fun UpdateAvailableTile(
         isLast = isLast,
         title = stringResource(
             when {
-                isDownloading -> R.string.settings_update_downloading_title
+                isActive -> R.string.settings_update_downloading_title
                 isDownloaded -> R.string.settings_update_downloaded_title
                 else -> R.string.settings_update_available_title
             }
         ),
         subtitle = subtitle,
         progress = if (isDownloading) progress / 100f else null,
-        onClick = if (isDownloading) null else {
+        onClick = if (isActive) null else {
             {
                 haptic.tap()
                 onShowUpdateModal(release)
@@ -592,6 +650,7 @@ private fun NightlyUpdateTile(
 ) {
     val downloadState by downloadStateFlow.collectAsStateWithLifecycle()
     val isDownloading = downloadState is DownloadState.Downloading
+    val isActive = downloadState.isActive
     val isDownloaded = downloadState.isReadyToInstall()
     val progress = (downloadState as? DownloadState.Downloading)?.progress ?: 0
     val scheme = MaterialTheme.colorScheme
@@ -599,14 +658,17 @@ private fun NightlyUpdateTile(
     val base = release.versionName
     val sha = release.commitSha
     val downloadingStr = stringResource(R.string.update_modal_downloading, progress)
+    val queuedStr = stringResource(R.string.update_modal_queued)
     val fromStr = stringResource(R.string.settings_nightly_from, base)
     val commitStr = sha?.let { stringResource(R.string.settings_nightly_commit, it) }
 
-    val subtitleAnnotated = if (isDownloading) {
-        androidx.compose.ui.text.AnnotatedString(downloadingStr)
-    } else {
-        androidx.compose.ui.text.AnnotatedString(fromStr)
-    }
+    val subtitleAnnotated = androidx.compose.ui.text.AnnotatedString(
+        when {
+            downloadState is DownloadState.Enqueued -> queuedStr
+            isDownloading -> downloadingStr
+            else -> fromStr
+        }
+    )
     val haptic = rememberHapticManager()
 
     SegmentedTile(
@@ -614,14 +676,14 @@ private fun NightlyUpdateTile(
         isLast = isLast,
         title = stringResource(
             when {
-                isDownloading -> R.string.settings_nightly_downloading_title
+                isActive -> R.string.settings_nightly_downloading_title
                 isDownloaded -> R.string.settings_nightly_downloaded_title
                 else -> R.string.settings_nightly_available_title
             }
         ),
         subtitleAnnotated = subtitleAnnotated,
         progress = if (isDownloading) progress / 100f else null,
-        onClick = if (isDownloading) null else {
+        onClick = if (isActive) null else {
             {
                 haptic.tap()
                 onShowUpdateModal(release)
@@ -643,7 +705,9 @@ private fun UpdateSettingsScene(
     modifier: Modifier,
     viewModel: AppInfoViewModel,
     nightlyEnabled: Boolean,
+    channelChanging: Boolean,
     setShowRestoreStableDialog: (Boolean) -> Unit,
+    onSwitchToNightly: () -> Unit,
 ) {
     val haptic = rememberHapticManager()
     val scheme = MaterialTheme.colorScheme
@@ -707,20 +771,23 @@ private fun UpdateSettingsScene(
                 role = Role.Switch,
                 title = stringResource(R.string.settings_beta_updates_title),
                 subtitle = stringResource(R.string.settings_beta_updates_subtitle),
-                onClick = {
-                    haptic.tap()
-                    if (nightlyEnabled) {
-                        viewModel.checkAndOfferStable {
-                            setShowRestoreStableDialog(true)
+                onClick = if (channelChanging) null else {
+                    {
+                        haptic.tap()
+                        if (nightlyEnabled) {
+                            viewModel.checkAndOfferStable {
+                                setShowRestoreStableDialog(true)
+                            }
+                        } else {
+                            onSwitchToNightly()
                         }
-                    } else {
-                        viewModel.setNightlyEnabled(true)
                     }
                 },
                 trailing = {
                     Switch(
                         checked = nightlyEnabled,
                         onCheckedChange = null,
+                        enabled = !channelChanging,
                         modifier = Modifier.padding(end = 6.dp)
                     )
                 }

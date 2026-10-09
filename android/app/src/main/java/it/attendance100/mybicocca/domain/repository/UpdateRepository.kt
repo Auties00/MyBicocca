@@ -1,9 +1,14 @@
 package it.attendance100.mybicocca.domain.repository
 
 import it.attendance100.mybicocca.domain.model.update.AppRelease
+import it.attendance100.mybicocca.domain.model.update.DownloadState
+import it.attendance100.mybicocca.domain.model.update.PendingUpdateModal
+import it.attendance100.mybicocca.domain.model.update.UpdateModalKind
 import it.attendance100.mybicocca.domain.model.update.UpdateCheckResult
 import it.attendance100.mybicocca.domain.model.update.UpdateStatus
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
+import java.io.File
 
 /**
  * App self-update contract. Hides which backend serves release metadata (GitHub today, the Play
@@ -43,6 +48,59 @@ interface UpdateRepository {
     /** All published releases, newest first, for the "What's New" page. */
     suspend fun releases(): List<AppRelease>
 
+    /**
+     * The release currently worth offering, stable first then nightly, or null if there is none.
+     *
+     * Reads the persisted state rather than the network, for a caller acting on something the
+     * user has already been told about — a notification tap, which can arrive long after the
+     * check that produced it and even in a later process.
+     */
+    suspend fun availableRelease(): AppRelease?
+
+    /**
+     * The in-flight update download, so a screen can reflect it without depending on whatever
+     * performs the download.
+     */
+    val downloadState: StateFlow<DownloadState>
+
+    /**
+     * Requests [release] be downloaded in the background, if nothing is downloading already.
+     *
+     * Returns immediately, having only *asked*: the download runs inside a foreground service that
+     * the system starts when it can, so [downloadState] goes to `Enqueued` first and reaches
+     * `Downloading` when it actually begins.
+     *
+     * False means the request was refused because a download is already in flight. A caller that
+     * shows the download must act on it: [downloadState] is process-wide, so a screen opened for a
+     * release that was never requested renders the *other* download's progress and then offers to
+     * install its APK under this release's name.
+     */
+    fun startDownload(release: AppRelease): Boolean
+
+    /** Opens the system installer for a downloaded APK. The user always confirms. */
+    fun installApk(file: File)
+
+    /**
+     * Opens the system installer for the update this app downloaded, and reports whether there
+     * was one. For a caller that only knows an install was asked for, not which file.
+     */
+    suspend fun installDownloadedApk(): Boolean
+
+    /** Forgets a finished or failed download, including the persisted record of the APK. */
+    fun resetDownload()
+
+    /**
+     * Stops a download that is still running, and forgets it.
+     *
+     * Distinct from [resetDownload], which only forgets: since the download lives in a worker,
+     * clearing the state without cancelling the work leaves it running and re-reporting itself
+     * seconds later.
+     */
+    fun cancelDownload()
+
+    /** Clears an error state without touching anything else. */
+    fun dismissDownloadError()
+
     /** The store-aware destination for [release]: its GitHub page now, the Play listing later. */
     fun updatePageUrl(release: AppRelease): String
 
@@ -51,6 +109,22 @@ interface UpdateRepository {
 
     /** Enables or disables the nightly update channel. Disabling clears any pending nightly update immediately. */
     suspend fun setNightlyEnabled(enabled: Boolean)
+
+    /**
+     * The nightly worth offering, or null — including null when it is the build already running.
+     *
+     * Separate from [availableRelease], which answers stable-first: turning the beta switch on is
+     * a request for the nightly specifically, and stable's answer would be the wrong one.
+     */
+    suspend fun availableNightlyRelease(): AppRelease?
+
+    /**
+     * The update sheet that was open when the process last died, so it can be restored. Set when
+     * a sheet opens and cleared when it closes; reading does not consume it.
+     */
+    suspend fun pendingUpdateModal(): PendingUpdateModal?
+    suspend fun setPendingUpdateModal(release: AppRelease, kind: UpdateModalKind)
+    suspend fun clearPendingUpdateModal()
 
     /** The last nightly check's persisted outcome. */
     fun observeNightlyStatus(): Flow<UpdateStatus>

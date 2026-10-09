@@ -161,11 +161,9 @@ android {
         }
         create("nightly") {
             initWith(getByName("release"))
-            // initWith(release) also carries over isDebuggable = false, which is why a nightly
-            // build doesn't show up as an attachable process for Android Studio's debugger/App
-            // Inspection at all (a non-debuggable process is invisible to adb jdwp, not just
-            // access-restricted) -- debug itself doesn't need this, AGP already defaults it true.
-            isDebuggable = true
+            // Not debuggable, like release: nightlies are published for users, and a debuggable
+            // APK exposes its private data to anyone with adb. The cost is that Android Studio's
+            // debugger and App Inspection can't attach to one.
             versionNameSuffix = "-nightly"
             matchingFallbacks += listOf("release")
             signingConfig = signingConfigs.getByName("release").takeIf { it.storeFile != null }
@@ -312,7 +310,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-process:2.10.0")
 
     // WorkManager
-    implementation("androidx.work:work-runtime-ktx:2.9.1")
+    implementation("androidx.work:work-runtime-ktx:2.10.1")
     implementation("androidx.hilt:hilt-work:1.2.0")
     ksp("androidx.hilt:hilt-compiler:1.2.0")
 

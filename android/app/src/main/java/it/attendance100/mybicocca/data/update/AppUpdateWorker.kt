@@ -6,11 +6,7 @@ import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
-import it.attendance100.mybicocca.core.version.isRunningBuild
-import it.attendance100.mybicocca.data.local.settings.PersistedNightlyState
-import it.attendance100.mybicocca.data.local.settings.PersistedUpdateState
 import it.attendance100.mybicocca.data.local.settings.UpdateStateStore
-import it.attendance100.mybicocca.domain.model.update.AppRelease
 import it.attendance100.mybicocca.domain.repository.UpdateRepository
 import kotlinx.coroutines.flow.first
 
@@ -19,50 +15,59 @@ class AppUpdateWorker @AssistedInject constructor(
     @Assisted private val context: Context,
     @Assisted params: WorkerParameters,
     private val repository: UpdateRepository,
+    private val updateStateStore: UpdateStateStore,
     private val apkDownloader: ApkDownloader,
-    private val updateStateStore: UpdateStateStore
 ) : CoroutineWorker(context, params) {
 
     // The worker never installs: it only gets an update as far as "downloaded and ready", and the
     // user starts the install themselves from the foreground.
-    // TODO(update-notifications): see /UPDATE_NOTIFICATIONS_PLAN.md — the downloads below have no
-    // setForeground()/progress notification, so the OS can kill them mid-download while
-    // backgrounded, and a finished download here still isn't reflected to MainShell, which may
-    // redundantly redownload once the app reopens and drains the buffered event. Until that lands,
-    // a background check surfaces nothing on its own; the next foreground open raises the snackbar.
+    //
+    // Downloading is handed to ApkDownloadWorker rather than done here, so it runs inside a
+    // foreground service and survives being backgrounded. Result.success() therefore means "the
+    // check ran and a download was scheduled", not "an update was downloaded" — nothing reads it
+    // but WorkManager's retry logic, which is the right meaning for it anyway.
     override suspend fun doWork(): Result {
         try {
             repository.checkForUpdates(force = true, announce = true)
 
-            val stable = updateStateStore.state.first().availableRelease()
-            if (stable != null && updateStateStore.stableAutoDownload.first()) {
-                apkDownloader.startDownload(stable)
-                apkDownloader.downloadState.first { it is DownloadState.Success || it is DownloadState.Error }
-            }
-
-            if (updateStateStore.nightlyEnabled.first()) {
-                val nightly = updateStateStore.nightlyState.first().availableRelease()
-                if (nightly != null && updateStateStore.nightlyAutoDownload.first()) {
-                    apkDownloader.startDownload(nightly)
-                    apkDownloader.downloadState.first { it is DownloadState.Success || it is DownloadState.Error }
-                }
-            }
+            autoDownloadSource()?.let { ApkDownloadWorker.enqueue(context, it) }
 
             return Result.success()
         } catch (e: Exception) {
             return Result.failure()
         }
     }
+
+    /**
+     * Which channel, if any, should be downloaded now — at most one.
+     *
+     * Both channels can have an update waiting at once, but there is a single downloaded-APK slot
+     * app-wide, so downloading both would leave only the second one recorded and the first's file
+     * orphaned. Enqueueing both is worse still: ApkDownloadWorker is unique work under KEEP, so
+     * the second request is dropped outright rather than queued.
+     *
+     * Stable wins, matching the precedence `UpdateRepository.availableRelease()` already offers
+     * updates in. The loser isn't starved: installing the winner clears its slot, and the next
+     * check offers the other one.
+     *
+     * None when the winner is already downloaded. An update the user hasn't installed yet stays
+     * "available" at every check, and running the download again each time would start a
+     * foreground service and re-post "ready to install" every few hours, for as long as they
+     * leave it.
+     */
+    private suspend fun autoDownloadSource(): String? {
+        val stable = updateStateStore.state.first().availableRelease()
+        if (stable != null && updateStateStore.stableAutoDownload.first()) {
+            return ApkDownloadWorker.SOURCE_STABLE.takeUnless { apkDownloader.hasDownloaded(stable) }
+        }
+
+        if (!updateStateStore.nightlyEnabled.first()) return null
+
+        val nightly = updateStateStore.nightlyState.first().availableRelease()
+        if (nightly != null && updateStateStore.nightlyAutoDownload.first()) {
+            return ApkDownloadWorker.SOURCE_NIGHTLY.takeUnless { apkDownloader.hasDownloaded(nightly) }
+        }
+
+        return null
+    }
 }
-
-/**
- * The release worth downloading, or null. Installing an update never clears the stored "available"
- * flag, so it stays set for the build that is now running — acting on it alone re-downloads and
- * re-offers the update the user just installed. This is the same reconciliation
- * `observeNightlyStatus` already applies before reporting a status to the UI.
- */
-private fun PersistedUpdateState.availableRelease(): AppRelease? =
-    release?.takeIf { available && !it.isRunningBuild() }
-
-private fun PersistedNightlyState.availableRelease(): AppRelease? =
-    release?.takeIf { available && !it.isRunningBuild() }

@@ -7,15 +7,19 @@
   <uses-permission android:name="android.permission.USE_BIOMETRIC" />
   <uses-permission android:name="android.permission.VIBRATE" />
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+  <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+  <!-- Live Updates (Android 16+): without it the download notification is never promoted
+       to the status-bar chip, silently — it just stays an ordinary progress notification. -->
+  <uses-permission android:name="android.permission.POST_PROMOTED_NOTIFICATIONS" />
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
   <uses-permission android:name="android.permission.RECORD_AUDIO" />
   <!-- Scanning the lesson QR code when registering presence. -->
   <uses-permission android:name="android.permission.CAMERA" />
   <!-- EasyBadge presence certification attaches the device's coordinates. -->
   <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
   <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
-    <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />
+  <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
   <uses-permission
           android:name="android.permission.WRITE_EXTERNAL_STORAGE"
           android:maxSdkVersion="29" />
@@ -104,6 +108,29 @@
         <action android:name="androidx.media3.session.MediaSessionService" />
       </intent-filter>
     </service>
+
+    <!-- work-runtime ships and registers SystemForegroundService itself; this only declares the
+         FGS type it runs under, which Android 14+ requires. Any worker calling setForeground()
+         runs inside it and is exempt from being frozen for the duration. -->
+    <service
+        android:name="androidx.work.impl.foreground.SystemForegroundService"
+        android:foregroundServiceType="dataSync"
+        tools:node="merge" />
+
+    <!-- The Cancel action on the download notification. A receiver is allowed here where it would
+         not be for a tap: it stops work, it never starts an Activity.
+
+         The filter is what makes it reachable at all: NotificationRouter sends the action as an
+         implicit intent scoped to this package, and a manifest receiver declaring no filter can
+         only be reached by component, so without this the Cancel tap resolves to nothing and
+         silently does nothing. UpdateNotificationsTest holds the action and the filter together. -->
+    <receiver
+        android:name=".data.update.CancelDownloadReceiver"
+        android:exported="false">
+      <intent-filter>
+        <action android:name="it.attendance100.mybicocca.action.CANCEL_DOWNLOAD" />
+      </intent-filter>
+    </receiver>
 
     <provider
         android:name="androidx.core.content.FileProvider"

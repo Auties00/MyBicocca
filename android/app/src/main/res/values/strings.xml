@@ -849,6 +849,7 @@
     <string name="whats_new_retry">Riprova</string>
     <string name="whats_new_all_versions">Tutte le versioni</string>
     <string name="whats_new_merged_subtitle">Anteprima combinata di tutte le modifiche dalla v%1$s</string>
+    <string name="settings_download_already_running">Un altro download è già in corso</string>
     <string name="settings_no_updates_found">Sei già all\'ultima versione</string>
     <string name="settings_no_other_versions">Non ci sono ancora altre versioni!</string>
     <string name="settings_whats_new_title">Novità</string>
@@ -1666,7 +1667,20 @@
     <string name="update_modal_install_cancelled">Installazione annullata. L\'aggiornamento è già scaricato, puoi installarlo quando vuoi.</string>
     <string name="update_modal_installing">Installazione in corso...</string>
     <string name="update_modal_not_now">Non ora</string>
+
+    <!-- Restoring to stable off the nightly channel: the one update flow that goes backwards. -->
+    <string name="update_modal_downgrade_title">Ritorno alla release stabile!</string>
+    <string name="update_modal_downgrade_download">Scarica la %1$s</string>
+    <string name="update_modal_downgrade_install">Clicca per tornare alla %1$s</string>
+    <string name="update_modal_remain_on_nightly">Rimani sulla nightly</string>
+
+    <!-- Passing from stable to the nightly channel. -->
+    <string name="update_modal_switch_nightly_title">Passaggio alla nightly!</string>
+    <string name="update_modal_switch_nightly_download">Scarica la nightly %1$s</string>
+    <string name="update_modal_switch_nightly_install">Clicca per passare alla Nightly</string>
+    <string name="update_modal_remain_on_stable">Rimani sulla stabile</string>
     <string name="update_modal_downloading">Download... %1$d%%</string>
+    <string name="update_modal_queued">In coda...</string>
     <string name="settings_update_settings_title">Impostazioni aggiornamenti</string>
     <string name="settings_update_settings_subtitle">Gestisci download automatici e versioni beta</string>
     <string name="settings_update_check_frequency_header">Frequenza di controllo</string>
@@ -2071,4 +2085,35 @@
     <!-- Nightly update strings -->
     <string name="settings_nightly_from">Nightly del %1$s</string>
     <string name="settings_nightly_commit"> [commit %1$s]</string>
+
+    <!-- Notifications: channels as they appear in Android's system settings -->
+    <string name="notification_group_updates">Aggiornamenti</string>
+    <string name="notification_channel_update_progress_name">Download in corso</string>
+    <string name="notification_channel_update_progress_desc">Avanzamento del download di un aggiornamento. [Silenziosa]</string>
+    <string name="notification_channel_update_actionable_name">Aggiornamenti disponibili</string>
+    <string name="notification_channel_update_actionable_desc">Un nuovo aggiornamento è disponibile o pronto da installare.</string>
+    <string name="notification_group_media">Contenuti multimediali</string>
+    <string name="notification_channel_media_playback_name">Riproduzione video</string>
+    <string name="notification_channel_media_playback_desc">Controlli di riproduzione delle videolezioni. [Silenziosa]</string>
+
+    <!-- Notifications: permission request -->
+    <string name="notification_permission_title">Attiva le notifiche</string>
+    <string name="notification_permission_message">Senza notifiche l\'app può avvisarti solo mentre è aperta. Servono per l\'avanzamento dei download e per dirti quando un aggiornamento è pronto da installare.</string>
+    <string name="notification_permission_confirm">Attiva</string>
+    <string name="notification_permission_dismiss">Non ora</string>
+
+    <!-- Notifications: the update flow -->
+    <string name="notification_update_available_title">Nuova versione disponibile</string>
+    <string name="notification_nightly_available_title">Nuova nightly disponibile</string>
+    <string name="notification_update_available_text">Tocca per vedere la %1$s</string>
+    <string name="notification_update_ready_title">Aggiornamento pronto</string>
+    <string name="notification_update_ready_text">Tocca per installare la %1$s</string>
+
+    <!-- Notifications: update download -->
+    <string name="notification_update_downloading_title">Download aggiornamento</string>
+    <string name="notification_update_downloading_text">%1$d%%</string>
+    <string name="notification_update_preparing">Avvio del download…</string>
+    <string name="notification_update_percent">%1$d%%</string>
+    <string name="notification_update_cancel">Annulla</string>
+    <string name="shell_update_no_longer_available">Quell\'aggiornamento non è più disponibile</string>
 </resources>

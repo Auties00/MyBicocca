@@ -3,15 +3,17 @@ package it.attendance100.mybicocca.ui.screen.settings.subscreen.appInfo
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import it.attendance100.mybicocca.data.local.settings.DEFAULT_UPDATE_CHECK_INTERVAL_MINUTES
-import it.attendance100.mybicocca.data.update.ApkDownloader
-import it.attendance100.mybicocca.data.update.DownloadState
+import it.attendance100.mybicocca.domain.model.update.DEFAULT_UPDATE_CHECK_INTERVAL_MINUTES
+import it.attendance100.mybicocca.domain.model.update.DownloadState
 import it.attendance100.mybicocca.domain.model.update.AppRelease
+import it.attendance100.mybicocca.domain.model.update.UpdateModalKind
 import it.attendance100.mybicocca.domain.model.update.UpdateCheckResult
 import it.attendance100.mybicocca.domain.model.update.UpdateStatus
 import it.attendance100.mybicocca.domain.usecase.update.CheckForUpdatesUseCase
 import it.attendance100.mybicocca.domain.usecase.update.GetUpdatePageUrlUseCase
 import it.attendance100.mybicocca.domain.usecase.update.ObserveUpdateStatusUseCase
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -41,7 +43,6 @@ class AppInfoViewModel @Inject constructor(
     private val setNightlyEnabledUseCase: SetNightlyEnabledUseCase,
     private val checkForUpdates: CheckForUpdatesUseCase,
     private val getUpdatePageUrl: GetUpdatePageUrlUseCase,
-    private val downloader: ApkDownloader,
     private val updateRepository: UpdateRepository,
 ) : ViewModel() {
 
@@ -52,16 +53,16 @@ class AppInfoViewModel @Inject constructor(
     val checking: StateFlow<Boolean> = _checking.asStateFlow()
 
     /** The in-flight update download, surfaced to the UI without exposing the downloader itself. */
-    val downloadState: StateFlow<DownloadState> = downloader.downloadState
+    val downloadState: StateFlow<DownloadState> = updateRepository.downloadState
 
-    fun startDownload(release: AppRelease) = downloader.startDownload(release)
+    fun startDownload(release: AppRelease): Boolean = updateRepository.startDownload(release)
 
     /** Launches the installer for a finished download; call only from the foreground. */
-    fun installDownload(file: File) = downloader.installApk(file)
+    fun installDownload(file: File) = updateRepository.installApk(file)
 
-    fun clearDownload() = downloader.resetState()
+    fun clearDownload() = updateRepository.resetDownload()
 
-    fun dismissDownloadError() = downloader.dismissError()
+    fun dismissDownloadError() = updateRepository.dismissDownloadError()
 
     /** Forces a check; ignores re-taps while one is in flight. Delivers the outcome to [onResult]. */
     fun check(onResult: (UpdateCheckResult) -> Unit) {
@@ -79,7 +80,36 @@ class AppInfoViewModel @Inject constructor(
      * [UpdateRepository.getLatestStableRelease].
      */
     fun restoreToStable(onResult: (UpdateCheckResult) -> Unit) {
-        viewModelScope.launch { onResult(updateRepository.getLatestStableRelease()) }
+        changeChannel { onResult(updateRepository.getLatestStableRelease()) }
+    }
+
+    private val _channelChanging = MutableStateFlow(false)
+
+    /**
+     * True while a flip of the beta switch is being carried out, so the switch can refuse taps.
+     * Both directions wait on GitHub before they have a release to show, and a second tap in that
+     * gap would start the opposite change on top of the first.
+     */
+    val channelChanging: StateFlow<Boolean> = _channelChanging.asStateFlow()
+
+    /**
+     * Runs [change] with [channelChanging] raised, for at least [MIN_CHANNEL_CHANGE_MS] so a
+     * change that answers instantly still can't be spammed. [change] is not held back by that
+     * floor, only the release of the switch is.
+     */
+    private fun changeChannel(change: suspend () -> Unit) {
+        if (_channelChanging.value) return
+        _channelChanging.value = true
+        viewModelScope.launch {
+            try {
+                coroutineScope {
+                    launch { delay(MIN_CHANNEL_CHANGE_MS) }
+                    change()
+                }
+            } finally {
+                _channelChanging.value = false
+            }
+        }
     }
 
     fun updatePageUrl(release: AppRelease): String = getUpdatePageUrl(release)
@@ -94,6 +124,29 @@ class AppInfoViewModel @Inject constructor(
         viewModelScope.launch {
             setNightlyEnabledUseCase(enabled)
         }
+    }
+
+    /**
+     * Turns the beta channel on and reports the nightly to offer, or null when there is nothing to
+     * offer - already running it, or the forced check found nothing. Enabling runs that check
+     * itself, so the answer is ready by the time this returns.
+     */
+    fun enableNightlyAndOffer(onResult: (AppRelease?) -> Unit) {
+        changeChannel {
+            setNightlyEnabledUseCase(true)
+            onResult(updateRepository.availableNightlyRelease())
+        }
+    }
+
+    /** Backing out of a channel change: stop the download it started, not merely forget it. */
+    fun cancelDownload() = updateRepository.cancelDownload()
+
+    fun rememberOpenModal(release: AppRelease, kind: UpdateModalKind) {
+        viewModelScope.launch { updateRepository.setPendingUpdateModal(release, kind) }
+    }
+
+    fun forgetOpenModal() {
+        viewModelScope.launch { updateRepository.clearPendingUpdateModal() }
     }
     
     fun checkAndOfferStable(onOfferStable: () -> Unit) {
@@ -120,5 +173,9 @@ class AppInfoViewModel @Inject constructor(
 
     fun setCheckIntervalMinutes(minutes: Int) {
         viewModelScope.launch { updateRepository.setCheckIntervalMinutes(minutes) }
+    }
+
+    private companion object {
+        const val MIN_CHANNEL_CHANGE_MS = 1_000L
     }
 }

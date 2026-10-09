@@ -197,4 +197,8 @@ sealed interface SheetRoute : Route {
     /** App information, release notes and update channel settings. */
     @Serializable
     data object AppInfo : SheetRoute
+
+    /** Debug builds only: fires one of every notification spec. */
+    @Serializable
+    data object NotificationDebug : SheetRoute
 }

@@ -11,18 +11,31 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
 import io.mockk.verify
+import it.attendance100.mybicocca.domain.model.update.AppRelease
+import it.attendance100.mybicocca.domain.model.update.DownloadState
+import it.attendance100.mybicocca.domain.model.update.AppReleaseAsset
+import kotlinx.coroutines.async
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import org.junit.rules.TemporaryFolder
 import org.robolectric.annotation.Config
 import java.io.File
 
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [33])
 class ApkDownloaderTest {
+
+    // Deletes everything it hands out when the test finishes, so a download test doesn't leave
+    // an APK-sized directory behind on every run.
+    @get:Rule
+    val tempFolder = TemporaryFolder()
 
     private lateinit var context: Context
     private lateinit var downloader: ApkDownloader
@@ -32,9 +45,11 @@ class ApkDownloaderTest {
     @Before
     fun setup() {
         context = mockk<Context>(relaxed = true)
+        every { context.filesDir } returns tempFolder.newFolder("files")
+        every { context.cacheDir } returns tempFolder.newFolder("cache")
         store = mockk<UpdateStateStore>(relaxed = true)
         testScope = TestScope()
-        downloader = ApkDownloader(context, testScope, store)
+        downloader = ApkDownloader(context, testScope, store, mockk(relaxed = true))
     }
 
     /**
@@ -113,7 +128,7 @@ class ApkDownloaderTest {
         file.delete()
     }
 
-    /** The cache is evictable, so a record outliving its file has to be dropped, not restored. */
+    /** A record outliving its file (cleared app storage, say) has to be dropped, not restored. */
     @Test
     fun restorePendingDownload_dropsTheRecordWhenTheFileIsGone() = testScope.runTest {
         every { store.downloadedApk } returns kotlinx.coroutines.flow.flowOf(
@@ -140,6 +155,241 @@ class ApkDownloaderTest {
         io.mockk.coVerify(exactly = 1) { store.clearDownloadedApk() }
         file.delete()
     }
+
+    /**
+     * The refactor's whole point: download() runs where it is called, so the caller owns the
+     * download's lifetime. A caller that cancels must actually stop it, which is what makes a
+     * foreground service wrapped around the call protect the work it is covering.
+     */
+    @Test
+    fun download_isCancelledWithTheCallerRatherThanOutlivingIt() = testScope.runTest {
+        val release = cachedRelease()
+
+        val job = async { downloader.download(release) }
+        advanceTimeBy(150)
+        job.cancel()
+        advanceUntilIdle()
+
+        // Had it been launched onto the application scope, it would have run to Success regardless.
+        assertThat(downloader.downloadState.value).isEqualTo(DownloadState.Idle)
+    }
+
+    /** Single-flight: a second caller is told nothing started, not queued behind the first. */
+    @Test
+    fun download_returnsNullWhileAnotherDownloadIsInFlight() = testScope.runTest {
+        val release = cachedRelease()
+
+        val first = async { downloader.download(release) }
+        advanceTimeBy(150)
+        val second = downloader.download(release)
+
+        assertThat(second).isNull()
+        advanceUntilIdle()
+        assertThat(first.await()).isInstanceOf(DownloadState.Success::class.java)
+    }
+
+    @Test
+    fun download_returnsTheTerminalStateToItsCaller() = testScope.runTest {
+        val result = downloader.download(cachedRelease())
+
+        assertThat(result).isInstanceOf(DownloadState.Success::class.java)
+        assertThat(downloader.downloadState.value).isEqualTo(result)
+    }
+
+    /** The callback exists so a caller driving a progress notification needn't collect the flow. */
+    @Test
+    fun download_reportsProgressToTheCallback() = testScope.runTest {
+        val seen = mutableListOf<Int>()
+
+        downloader.download(cachedRelease()) { seen += it }
+
+        assertThat(seen).isNotEmpty()
+        assertThat(seen.first()).isEqualTo(0)
+        assertThat(seen.last()).isEqualTo(100)
+        assertThat(seen).isInOrder()
+    }
+
+    /**
+     * The gap this state exists for: WorkManager decides when the download starts, so between the
+     * tap and the first byte there is nothing else to show the request happened.
+     */
+    @Test
+    fun markEnqueued_recordsARequestThatHasNotStarted() = testScope.runTest {
+        downloader.markEnqueued()
+
+        assertThat(downloader.downloadState.value).isEqualTo(DownloadState.Enqueued)
+    }
+
+    /**
+     * A second request is dropped by WorkManager's unique work, so the state has to agree: showing
+     * "queued" would blank out the progress the running download is still reporting, and nothing
+     * would ever come along to correct it.
+     */
+    @Test
+    fun markEnqueued_leavesARunningDownloadAlone() = testScope.runTest {
+        val first = async { downloader.download(cachedRelease()) }
+        advanceTimeBy(150)
+
+        downloader.markEnqueued()
+
+        assertThat(downloader.downloadState.value).isInstanceOf(DownloadState.Downloading::class.java)
+        advanceUntilIdle()
+        first.await()
+    }
+
+    /** A request the worker finds nothing to download for must not leave the UI queued forever. */
+    @Test
+    fun clearEnqueued_takesBackARequestThatNeverStarted() = testScope.runTest {
+        downloader.markEnqueued()
+
+        downloader.clearEnqueued()
+
+        assertThat(downloader.downloadState.value).isEqualTo(DownloadState.Idle)
+    }
+
+    @Test
+    fun clearEnqueued_leavesAnythingElseAlone() = testScope.runTest {
+        val result = downloader.download(cachedRelease())
+
+        downloader.clearEnqueued()
+
+        assertThat(downloader.downloadState.value).isEqualTo(result)
+    }
+
+    @Test
+    fun download_replacesTheEnqueuedMarkerOnceItStarts() = testScope.runTest {
+        downloader.markEnqueued()
+
+        val result = downloader.download(cachedRelease())
+
+        assertThat(result).isInstanceOf(DownloadState.Success::class.java)
+    }
+
+    @Test
+    fun download_withNoApkAsset_failsWithoutTouchingTheNetwork() = testScope.runTest {
+        val release = releaseWith(
+            AppReleaseAsset(name = "notes.txt", downloadUrl = "https://example.test/notes.txt", size = 4)
+        )
+
+        val result = downloader.download(release)
+
+        assertThat(result).isInstanceOf(DownloadState.Error::class.java)
+    }
+
+    /** A plaintext URL must be refused before anything is fetched, never handed to the installer. */
+    @Test
+    fun download_overPlainHttp_isRefused() = testScope.runTest {
+        val release = releaseWith(
+            AppReleaseAsset(name = "app-universal.apk", downloadUrl = "http://example.test/app.apk", size = 4)
+        )
+
+        val result = downloader.download(release)
+
+        assertThat(result).isInstanceOf(DownloadState.Error::class.java)
+    }
+
+    /** Nothing else frees an APK once it is out of the cache, so installing it has to. */
+    @Test
+    fun restorePendingDownload_deletesTheApkOfTheRunningBuild() = testScope.runTest {
+        val apk = updatesDir().resolve("app-universal.apk").apply { writeText("payload") }
+        every { store.downloadedApk } returns kotlinx.coroutines.flow.flowOf(
+            DownloadedApk(apk.absolutePath, apk.length(), "0.0.6", BuildConfig.COMMIT_SHA)
+        )
+
+        downloader.restorePendingDownload()
+
+        assertThat(apk.exists()).isFalse()
+    }
+
+    @Test
+    fun download_deletesTheApksItSupersedes() = testScope.runTest {
+        val release = cachedRelease()
+        val older = updatesDir().resolve("app-older.apk").apply { writeText("stale") }
+        val legacy = File(context.cacheDir, "updates").apply { mkdirs() }
+            .resolve("app-legacy.apk").apply { writeText("stale") }
+
+        downloader.download(release)
+
+        assertThat(older.exists()).isFalse()
+        assertThat(legacy.exists()).isFalse()
+        assertThat(updatesDir().resolve("app-universal.apk").exists()).isTrue()
+    }
+
+    @Test
+    fun hasDownloaded_isTrueOnlyForTheRecordedReleaseWithItsFileIntact() = testScope.runTest {
+        val release = cachedRelease()
+        val apk = updatesDir().resolve("app-universal.apk")
+        every { store.downloadedApk } returns kotlinx.coroutines.flow.flowOf(
+            DownloadedApk(apk.absolutePath, apk.length(), release.versionName, release.commitSha)
+        )
+
+        assertThat(downloader.hasDownloaded(release)).isTrue()
+        assertThat(downloader.hasDownloaded(release.copy(commitSha = "0ther5ha"))).isFalse()
+
+        apk.delete()
+        assertThat(downloader.hasDownloaded(release)).isFalse()
+    }
+
+    /** GitHub doesn't allow slashes in an asset name, but nothing here should depend on that. */
+    @Test
+    fun download_keepsATraversingAssetNameInsideTheUpdatesDirectory() = testScope.runTest {
+        val payload = ByteArray(2048)
+        updatesDir().resolve("evil.apk").writeBytes(payload)
+        val release = releaseWith(
+            AppReleaseAsset(
+                name = "../../evil.apk",
+                downloadUrl = "https://example.test/evil.apk",
+                size = payload.size.toLong(),
+            )
+        )
+
+        val result = downloader.download(release)
+
+        assertThat(result).isEqualTo(DownloadState.Success(updatesDir().resolve("evil.apk")))
+    }
+
+    @Test
+    fun downloadedApk_isNullOnceTheRecordedFileIsGone() = testScope.runTest {
+        val apk = updatesDir().resolve("app-universal.apk").apply { writeText("payload") }
+        every { store.downloadedApk } returns kotlinx.coroutines.flow.flowOf(
+            DownloadedApk(apk.absolutePath, apk.length(), "0.0.6", NOT_THIS_BUILD_SHA)
+        )
+
+        assertThat(downloader.downloadedApk()).isEqualTo(apk)
+
+        apk.delete()
+        assertThat(downloader.downloadedApk()).isNull()
+    }
+
+    private fun updatesDir(): File = File(context.filesDir, "updates").apply { mkdirs() }
+
+    /**
+     * A release whose APK is already on disk and passes verification, so the download path
+     * completes without a network call.
+     */
+    private fun cachedRelease(): AppRelease {
+        val payload = ByteArray(2048)
+        val apk = updatesDir().resolve("app-universal.apk").apply { writeBytes(payload) }
+
+        return releaseWith(
+            AppReleaseAsset(
+                name = apk.name,
+                downloadUrl = "https://example.test/${apk.name}",
+                size = payload.size.toLong(),
+            )
+        )
+    }
+
+    private fun releaseWith(asset: AppReleaseAsset) = AppRelease(
+        versionName = "9.9.9",
+        title = "Test",
+        notes = "",
+        pageUrl = "https://example.test",
+        publishedAt = null,
+        isPreRelease = false,
+        assets = listOf(asset),
+        commitSha = NOT_THIS_BUILD_SHA,
+    )
 
     private fun stubInstallerLaunch(): File {
         val file = File.createTempFile("test", ".apk")

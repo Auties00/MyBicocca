@@ -6,6 +6,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
 import it.attendance100.mybicocca.ui.navigation.FileOpenPreferenceViewModel
 import it.attendance100.mybicocca.ui.navigation.PopWhenMissing
 import it.attendance100.mybicocca.ui.navigation.rememberPopSelf
@@ -19,6 +20,7 @@ import it.attendance100.mybicocca.ui.screen.settings.subscreen.fileAssociations.
 import it.attendance100.mybicocca.ui.screen.settings.subscreen.fileAssociations.FileAssociationsPage
 import it.attendance100.mybicocca.ui.screen.settings.subscreen.fileAssociations.fileAssociationKind
 import it.attendance100.mybicocca.ui.screen.settings.subscreen.language.LanguagePage
+import it.attendance100.mybicocca.ui.screen.settings.subscreen.notificationDebug.NotificationDebugPage
 import it.attendance100.mybicocca.ui.screen.settings.subscreen.settingsAppearance.SettingsAppearancePage
 import it.attendance100.mybicocca.ui.screen.settings.subscreen.settingsHaptic.SettingsHapticPage
 import it.attendance100.mybicocca.ui.screen.settings.subscreen.settingsSecurity.SettingsSecurityPage
@@ -92,4 +94,13 @@ fun EntryProviderScope<NavKey>.settingsSheetEntries(
         }
     }
     entry<SheetRoute.AppInfo>(metadata = sheetHeaderInPage()) { AppInfoPage() }
+    // Debug-only, so its copy is hardcoded rather than translated.
+    entry<SheetRoute.NotificationDebug>(
+        metadata = sheetHeader<SheetRoute.NotificationDebug> {
+            SheetHeaderSpec(
+                title = "Notifications debug",
+                subtitle = "Fire one of every notification spec",
+            )
+        },
+    ) { NotificationDebugPage() }
 }

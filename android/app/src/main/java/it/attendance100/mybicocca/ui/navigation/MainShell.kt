@@ -61,6 +61,11 @@ import coil.imageLoader
 import coil.request.ImageRequest
 import coil.size.Size
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.notification.NotificationRoute
+import it.attendance100.mybicocca.domain.model.update.AppRelease
+import it.attendance100.mybicocca.domain.model.update.UpdateModalKind
+import it.attendance100.mybicocca.ui.component.modal.UpdateModalRequest
+import it.attendance100.mybicocca.ui.component.modal.channelSwitch
 import it.attendance100.mybicocca.core.state.valueOrNull
 import it.attendance100.mybicocca.data.mapper.calendar.examCalendarEventId
 import it.attendance100.mybicocca.domain.model.calendar.CalendarEvent
@@ -136,6 +141,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.launch
+import java.io.File
 
 /**
  * The signed-in shell: a Scaffold whose global chrome (morphing top bar, bottom tab bar, snackbar
@@ -519,12 +525,38 @@ fun MainShell(
     }
 
     val snackbarController = rememberAppSnackbarController()
+
+    it.attendance100.mybicocca.ui.component.permission.NotificationPermissionPrompt()
+
     val updateEventsViewModel: UpdateEventsViewModel = hiltViewModel()
 
     val downloadState by updateEventsViewModel.downloadState.collectAsStateWithLifecycle()
-    var showUpdateModal by remember { mutableStateOf<it.attendance100.mybicocca.domain.model.update.AppRelease?>(null) }
+    var showUpdateModal by remember { mutableStateOf<UpdateModalRequest?>(null) }
 
-    showUpdateModal?.let { release ->
+    fun openUpdateModal(release: AppRelease, kind: UpdateModalKind = UpdateModalKind.Standard) {
+        showUpdateModal = UpdateModalRequest(release, kind)
+        updateEventsViewModel.rememberOpenModal(release, kind)
+    }
+
+    fun closeUpdateModal() {
+        showUpdateModal = null
+        updateEventsViewModel.forgetOpenModal()
+    }
+
+    // Puts back a sheet the user was watching when the process died — most likely mid-download,
+    // which is the longest they ever sit on it. Read once here rather than observed: the sheet's
+    // two hosts write that slot as they open, and a live collector would answer by opening a
+    // second copy on top of the one already up.
+    LaunchedEffect(updateEventsViewModel) {
+        updateEventsViewModel.pendingUpdateModal()?.let { pending ->
+            if (showUpdateModal == null) {
+                showUpdateModal = UpdateModalRequest(pending.release, pending.kind)
+            }
+        }
+    }
+
+    showUpdateModal?.let { request ->
+        val release = request.release
         it.attendance100.mybicocca.ui.component.modal.UpdateModalSheet(
             release = release,
             downloadStateFlow = updateEventsViewModel.downloadState,
@@ -532,19 +564,25 @@ fun MainShell(
                 updateEventsViewModel.startDownload(release)
             },
             onInstall = { file ->
-                // State deliberately left alone: the APK stays downloaded and ready, and the
-                // downloader needs its pending-install marker to notice a dismissed dialog.
+                // Download state deliberately left alone: the APK stays downloaded and ready, and
+                // the downloader needs its pending-install marker to notice a dismissed dialog.
                 updateEventsViewModel.installApk(file)
-                showUpdateModal = null
+                closeUpdateModal()
             },
             onDismiss = {
                 updateEventsViewModel.dismissDownloadError()
-                showUpdateModal = null
+                closeUpdateModal()
+            },
+            channelSwitch = request.kind.channelSwitch { nightlyEnabled ->
+                updateEventsViewModel.setNightlyEnabled(nightlyEnabled)
+                updateEventsViewModel.cancelDownload()
+                closeUpdateModal()
             },
         )
     }
 
     val strInstallUpdate = stringResource(R.string.update_modal_install)
+    val strShellUpdateGone = stringResource(R.string.shell_update_no_longer_available)
 
     // Both channels take the same path — announce, then either start the download straight away or
     // let the tap open the modal to download from. Only the event source differs.
@@ -555,7 +593,7 @@ fun MainShell(
                 updateEventsViewModel.startDownload(release)
             } else {
                 snackbarController.showInfo(strShellUpdateAvailable) {
-                    showUpdateModal = release
+                    openUpdateModal(release)
                 }
             }
         }
@@ -568,7 +606,7 @@ fun MainShell(
                 updateEventsViewModel.startDownload(release)
             } else {
                 snackbarController.showInfo(strShellUpdateAvailable) {
-                    showUpdateModal = release
+                    openUpdateModal(release)
                 }
             }
         }
@@ -578,14 +616,40 @@ fun MainShell(
     // Deliberately not gated on this shell having started the download — AppUpdateWorker starts
     // every auto-download, and gating on a shell-local flag silently swallowed the offer for it.
     LaunchedEffect(downloadState) {
-        if (downloadState is it.attendance100.mybicocca.data.update.DownloadState.Success) {
-            val file = (downloadState as it.attendance100.mybicocca.data.update.DownloadState.Success).file
+        if (downloadState is it.attendance100.mybicocca.domain.model.update.DownloadState.Success) {
+            val file = (downloadState as it.attendance100.mybicocca.domain.model.update.DownloadState.Success).file
 
             if (showUpdateModal == null) {
                 snackbarController.showInfo(strInstallUpdate) {
                     updateEventsViewModel.installApk(file)
                 }
             }
+        }
+    }
+
+    // Where a notification tap ends up. The activity captures the route and parks it; the shell
+    // is what actually owns the modal and the install, so it acts on it and clears it.
+    LaunchedEffect(updateEventsViewModel) {
+        updateEventsViewModel.notificationRoutes.collect { route ->
+            when (route) {
+                is NotificationRoute.UpdatePage -> {
+                    // A notification outlives the state that produced it: the release can be gone
+                    // by the time it is tapped (installed another way, or a later check cleared
+                    // it). Say so, rather than opening the app to nothing and looking broken.
+                    val release = updateEventsViewModel.availableRelease()
+                    if (release != null) {
+                        openUpdateModal(release)
+                    } else {
+                        snackbarController.showInfo(strShellUpdateGone)
+                    }
+                }
+
+                is NotificationRoute.InstallApk ->
+                    if (!updateEventsViewModel.installDownloadedApk()) {
+                        snackbarController.showInfo(strShellUpdateGone)
+                    }
+            }
+            updateEventsViewModel.onNotificationRouteHandled()
         }
     }
 
