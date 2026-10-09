@@ -101,6 +101,12 @@ class UpdateRepositoryImpl @Inject constructor(
 
     override fun installApk(file: File) = apkDownloader.installApk(file)
 
+    override suspend fun installDownloadedApk(): Boolean {
+        val file = apkDownloader.downloadedApk() ?: return false
+        apkDownloader.installApk(file)
+        return true
+    }
+
     override fun resetDownload() = apkDownloader.resetState()
 
     /**

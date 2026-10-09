@@ -330,6 +330,37 @@ class ApkDownloaderTest {
         assertThat(downloader.hasDownloaded(release)).isFalse()
     }
 
+    /** GitHub doesn't allow slashes in an asset name, but nothing here should depend on that. */
+    @Test
+    fun download_keepsATraversingAssetNameInsideTheUpdatesDirectory() = testScope.runTest {
+        val payload = ByteArray(2048)
+        updatesDir().resolve("evil.apk").writeBytes(payload)
+        val release = releaseWith(
+            AppReleaseAsset(
+                name = "../../evil.apk",
+                downloadUrl = "https://example.test/evil.apk",
+                size = payload.size.toLong(),
+            )
+        )
+
+        val result = downloader.download(release)
+
+        assertThat(result).isEqualTo(DownloadState.Success(updatesDir().resolve("evil.apk")))
+    }
+
+    @Test
+    fun downloadedApk_isNullOnceTheRecordedFileIsGone() = testScope.runTest {
+        val apk = updatesDir().resolve("app-universal.apk").apply { writeText("payload") }
+        every { store.downloadedApk } returns kotlinx.coroutines.flow.flowOf(
+            DownloadedApk(apk.absolutePath, apk.length(), "0.0.6", NOT_THIS_BUILD_SHA)
+        )
+
+        assertThat(downloader.downloadedApk()).isEqualTo(apk)
+
+        apk.delete()
+        assertThat(downloader.downloadedApk()).isNull()
+    }
+
     private fun updatesDir(): File = File(context.filesDir, "updates").apply { mkdirs() }
 
     /**

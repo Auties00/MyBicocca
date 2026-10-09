@@ -61,16 +61,15 @@ class NotificationDebugViewModel @Inject constructor(
         post("Indeterminate", UpdateNotifications.downloadProgress(context, percent = null))
 
     /**
-     * Fires the production spec against the real downloaded APK when there is one, so the install
-     * tap can be exercised end to end. With nothing downloaded it still posts — the tap then lands
-     * on a path that isn't there, which is itself worth seeing.
+     * Fires the production spec. The tap installs whatever APK is really downloaded, so the label
+     * says whether there is one: with none, the tap should end in "no longer available".
      */
     fun readyToInstall() {
         viewModelScope.launch {
-            val apkPath = updateStateStore.downloadedApk.first()?.path
+            val downloaded = updateStateStore.downloadedApk.first() != null
             post(
-                if (apkPath != null) "Ready to install (real APK)" else "Ready to install (no APK)",
-                UpdateNotifications.updateReady(context, DEBUG_VERSION, apkPath ?: "/no/such.apk"),
+                if (downloaded) "Ready to install (real APK)" else "Ready to install (no APK)",
+                UpdateNotifications.updateReady(context, DEBUG_VERSION),
             )
         }
     }

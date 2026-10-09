@@ -17,6 +17,7 @@ import it.attendance100.mybicocca.core.io.sha256Hex
 import it.attendance100.mybicocca.core.text.UiText
 import it.attendance100.mybicocca.core.version.isRunningBuild
 import it.attendance100.mybicocca.core.notification.NotificationId
+import it.attendance100.mybicocca.data.local.settings.DownloadedApk
 import it.attendance100.mybicocca.data.local.settings.UpdateStateStore
 import it.attendance100.mybicocca.data.notification.AppNotifier
 import it.attendance100.mybicocca.di.ApplicationScope
@@ -27,6 +28,8 @@ import it.attendance100.mybicocca.domain.model.update.AppReleaseAsset
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -164,6 +167,13 @@ class ApkDownloader @Inject constructor(
             _downloadState.value = DownloadState.Idle
             throw e
         } catch (e: Exception) {
+            // Cancelling mid-transfer can surface as the I/O error it caused rather than as a
+            // CancellationException. That is still a cancel, and must not turn into an error
+            // shown over the idle state whoever cancelled has already put up.
+            if (cancelled || !currentCoroutineContext().isActive) {
+                _downloadState.value = DownloadState.Idle
+                throw CancellationException("Download cancelled").apply { initCause(e) }
+            }
             e.printStackTrace()
             fail(
                 e.message?.let { UiText.DynamicString(it) }
@@ -177,7 +187,9 @@ class ApkDownloader @Inject constructor(
         onProgress: (Int) -> Unit,
     ): DownloadState {
         if (!updatesDir.exists()) updatesDir.mkdirs()
-        val apkFile = File(updatesDir, asset.name)
+        // The name comes from GitHub's API; keeping only its last segment means it can never
+        // steer the write outside this directory.
+        val apkFile = File(updatesDir, File(asset.name).name)
         // Nothing clears this directory for us, so every other APK in it is one this download
         // supersedes.
         deleteDownloads(except = apkFile)
@@ -231,9 +243,14 @@ class ApkDownloader @Inject constructor(
         val sameRelease =
             if (!release.commitSha.isNullOrBlank()) record.commitSha == release.commitSha
             else record.versionName == release.versionName
-        val file = File(record.path)
-        return sameRelease && file.isFile && file.length() == record.size
+        return sameRelease && record.intactFile() != null
     }
+
+    /** The APK this app recorded downloading, or null when there is none or its file is gone. */
+    suspend fun downloadedApk(): File? = store.downloadedApk.first()?.intactFile()
+
+    private fun DownloadedApk.intactFile(): File? =
+        File(path).takeIf { it.isFile && it.length() == size }
 
     private fun publish(state: DownloadState, onProgress: (Int) -> Unit) {
         if (cancelled) return

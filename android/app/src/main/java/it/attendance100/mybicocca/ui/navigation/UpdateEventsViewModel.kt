@@ -70,6 +70,8 @@ class UpdateEventsViewModel @Inject constructor(
 
     fun installApk(file: File) = updateRepository.installApk(file)
 
+    suspend fun installDownloadedApk(): Boolean = updateRepository.installDownloadedApk()
+
     fun clearDownload() = updateRepository.resetDownload()
 
     /** Backing out of a channel change: stop the download it started, not merely forget it. */

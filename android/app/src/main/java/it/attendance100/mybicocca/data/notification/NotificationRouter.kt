@@ -53,16 +53,12 @@ class NotificationRouter @Inject constructor(
     private fun Intent.putExtras(route: NotificationRoute) {
         when (route) {
             NotificationRoute.UpdatePage -> putExtra(EXTRA_ROUTE, ROUTE_UPDATE_PAGE)
-            is NotificationRoute.InstallApk -> {
-                putExtra(EXTRA_ROUTE, ROUTE_INSTALL_APK)
-                putExtra(EXTRA_ROUTE_ARG, route.apkPath)
-            }
+            NotificationRoute.InstallApk -> putExtra(EXTRA_ROUTE, ROUTE_INSTALL_APK)
         }
     }
 
     companion object {
         const val EXTRA_ROUTE = "it.attendance100.mybicocca.extra.NOTIFICATION_ROUTE"
-        const val EXTRA_ROUTE_ARG = "it.attendance100.mybicocca.extra.NOTIFICATION_ROUTE_ARG"
 
         const val ROUTE_UPDATE_PAGE = "update_page"
         const val ROUTE_INSTALL_APK = "install_apk"
@@ -76,9 +72,7 @@ class NotificationRouter @Inject constructor(
         /** Reads back what [putExtras] wrote, or null when [intent] carries no route. */
         fun routeOf(intent: Intent?): NotificationRoute? = when (intent?.getStringExtra(EXTRA_ROUTE)) {
             ROUTE_UPDATE_PAGE -> NotificationRoute.UpdatePage
-            ROUTE_INSTALL_APK ->
-                intent.getStringExtra(EXTRA_ROUTE_ARG)?.let(NotificationRoute::InstallApk)
-
+            ROUTE_INSTALL_APK -> NotificationRoute.InstallApk
             else -> null
         }
     }

@@ -85,9 +85,7 @@ class ApkDownloadWorker @AssistedInject constructor(
         // reliably tied to one channel's notification.
         notifier.cancel(NotificationId.UpdateAvailable)
         notifier.cancel(NotificationId.NightlyUpdateAvailable)
-        notifier.post(
-            UpdateNotifications.updateReady(context, release.versionName, outcome.file.absolutePath)
-        )
+        notifier.post(UpdateNotifications.updateReady(context, release.versionName))
         return Result.success()
     }
 

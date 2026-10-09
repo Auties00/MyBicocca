@@ -39,8 +39,14 @@ sealed interface NotificationRoute {
     /** The in-app update page, the same destination the Settings update tile opens. */
     data object UpdatePage : NotificationRoute
 
-    /** Hands [apkPath] to the system package installer, which asks the user to confirm. */
-    data class InstallApk(val apkPath: String) : NotificationRoute
+    /**
+     * Hands the downloaded update to the system package installer, which asks the user to confirm.
+     *
+     * Deliberately carries no path. The activity these routes arrive at is exported, so any app
+     * can send one; a path in the intent would let it point our installer prompt at a file of its
+     * choosing. The app installs the APK it recorded downloading, or nothing.
+     */
+    data object InstallApk : NotificationRoute
 }
 
 /** What an action button does when tapped. */

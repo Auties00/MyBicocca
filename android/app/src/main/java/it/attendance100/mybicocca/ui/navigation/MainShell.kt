@@ -645,7 +645,9 @@ fun MainShell(
                 }
 
                 is NotificationRoute.InstallApk ->
-                    updateEventsViewModel.installApk(File(route.apkPath))
+                    if (!updateEventsViewModel.installDownloadedApk()) {
+                        snackbarController.showInfo(strShellUpdateGone)
+                    }
             }
             updateEventsViewModel.onNotificationRouteHandled()
         }

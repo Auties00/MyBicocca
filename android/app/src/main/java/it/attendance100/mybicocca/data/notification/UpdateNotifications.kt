@@ -60,7 +60,7 @@ object UpdateNotifications {
      * good APK behind and the offer should still stand. [Alert.Once] is what stops the re-post
      * that follows a decline from buzzing again.
      */
-    fun updateReady(context: Context, versionName: String, apkPath: String): NotificationSpec =
+    fun updateReady(context: Context, versionName: String): NotificationSpec =
         NotificationSpec(
             channel = NotificationChannelId.UPDATE_ACTIONABLE,
             id = NotificationId.UpdateReady,
@@ -71,7 +71,7 @@ object UpdateNotifications {
             // Same reasoning as the discovery notifications: while the app is open the shell
             // offers the install itself.
             foregroundAlert = Alert.Never,
-            route = NotificationRoute.InstallApk(apkPath),
+            route = NotificationRoute.InstallApk,
         )
 
     /**

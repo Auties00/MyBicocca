@@ -55,7 +55,7 @@ class UpdateNotificationsTest {
         val specs = listOf(
             UpdateNotifications.updateAvailable(context, "9.9.9"),
             UpdateNotifications.nightlyUpdateAvailable(context, "nightly-1"),
-            UpdateNotifications.updateReady(context, "9.9.9", "/apk"),
+            UpdateNotifications.updateReady(context, "9.9.9"),
         )
 
         specs.forEach { spec ->
@@ -130,7 +130,7 @@ class UpdateNotificationsTest {
      */
     @Test
     fun `ready to install survives being tapped and does not re-alert`() {
-        val spec = UpdateNotifications.updateReady(context, "9.9.9", "/cache/updates/app.apk")
+        val spec = UpdateNotifications.updateReady(context, "9.9.9")
 
         assertThat(spec.autoCancel).isFalse()
         assertThat(spec.alert).isEqualTo(Alert.Once)
@@ -142,9 +142,9 @@ class UpdateNotificationsTest {
      */
     @Test
     fun `ready to install routes through the app rather than at the installer`() {
-        val spec = UpdateNotifications.updateReady(context, "9.9.9", "/cache/updates/app.apk")
+        val spec = UpdateNotifications.updateReady(context, "9.9.9")
 
-        assertThat(spec.route).isEqualTo(NotificationRoute.InstallApk("/cache/updates/app.apk"))
+        assertThat(spec.route).isEqualTo(NotificationRoute.InstallApk)
     }
 
     /** Nothing is downloaded yet, so the tap can only offer the page it would be downloaded from. */
@@ -167,7 +167,7 @@ class UpdateNotificationsTest {
             UpdateNotifications.updateAvailable(context, "9.9.9").id,
             UpdateNotifications.nightlyUpdateAvailable(context, "nightly-1").id,
             UpdateNotifications.downloadProgress(context, 10).id,
-            UpdateNotifications.updateReady(context, "9.9.9", "/apk").id,
+            UpdateNotifications.updateReady(context, "9.9.9").id,
         )
 
         assertThat(ids.map { it.value }).containsNoDuplicates()

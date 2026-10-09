@@ -80,6 +80,12 @@ interface UpdateRepository {
     /** Opens the system installer for a downloaded APK. The user always confirms. */
     fun installApk(file: File)
 
+    /**
+     * Opens the system installer for the update this app downloaded, and reports whether there
+     * was one. For a caller that only knows an install was asked for, not which file.
+     */
+    suspend fun installDownloadedApk(): Boolean
+
     /** Forgets a finished or failed download, including the persisted record of the APK. */
     fun resetDownload()
 

@@ -133,9 +133,14 @@ class MyBicoccaActivity : AppCompatActivity() {
 
         super.onCreate(savedInstanceState)
 
-        captureAttendanceDeepLink(intent)
-        captureLibraryDeepLink(intent)
-        captureNotificationRoute(intent)
+        // Only on a fresh start. A recreated activity is handed the intent that first launched
+        // it, so without this a language change or a restore after process death would replay
+        // it: the installer opening again unasked, or an attendance QR being marked twice.
+        if (savedInstanceState == null) {
+            captureAttendanceDeepLink(intent)
+            captureLibraryDeepLink(intent)
+            captureNotificationRoute(intent)
+        }
 
         updateChecker.start()
 
