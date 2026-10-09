@@ -1,5 +1,7 @@
 package it.attendance100.mybicocca.domain.model.elearning.forum
 
+import it.attendance100.mybicocca.core.observability.UnknownValues
+
 /**
  * Behavioural type of a Moodle forum, parsed from the `type` value carried by the
  * mod_forum_get_forums_by_courses web service. The course detail screen singles out the [News]
@@ -26,6 +28,7 @@ enum class ForumType(val raw: String) {
     companion object {
         /** Resolves a raw Moodle type value case-insensitively, falling back to [Other]. */
         fun fromRaw(raw: String?): ForumType =
-            entries.firstOrNull { it.raw.equals(raw, ignoreCase = true) } ?: Other
+            entries.firstOrNull { it.raw.equals(raw, ignoreCase = true) }
+                ?: Other.also { UnknownValues.report("forum_type", raw) }
     }
 }

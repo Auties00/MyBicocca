@@ -64,10 +64,10 @@ import it.attendance100.mybicocca.ui.component.feedback.rememberMinDurationLoadi
 import it.attendance100.mybicocca.ui.component.modal.SheetLoadingIndicator
 import it.attendance100.mybicocca.ui.component.modal.SheetMessage
 import it.attendance100.mybicocca.ui.component.modal.SheetOutcome
-import it.attendance100.mybicocca.ui.component.modal.SheetPagerHeader
+import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
+import it.attendance100.mybicocca.ui.component.modal.SheetPager
 import it.attendance100.mybicocca.ui.component.modal.SheetResultPage
-import it.attendance100.mybicocca.ui.component.modal.sheetBodyGestureBarrier
-import it.attendance100.mybicocca.ui.component.modal.sheetPageTransform
+import it.attendance100.mybicocca.ui.component.modal.rememberLastNonNull
 import kotlinx.coroutines.flow.collectLatest
 import java.io.File
 
@@ -76,8 +76,8 @@ import java.io.File
  * in-page download/open outcome. Tapping a row downloads the certificate PDF (or reuses
  * the disk cache) and hands it to an external viewer; download failures and a missing
  * PDF viewer surface as a dedicated in-sheet result page that the title morphs into. The
- * sheet container is owned by BottomSheetSceneStrategy, but this entry keeps its OWN
- * pinned header because of that in-place title morph (its metadata header is left null).
+ * sheet container is owned by ModalSceneStrategy, but this entry keeps its OWN [SheetPager]
+ * header because of that in-place title morph (its entry declares `sheetHeaderInPage()`).
  *
  * The ViewModel outlives the sheet (shell-scoped): re-opening shows the cached list
  * instantly while a background refresh is kicked.
@@ -97,6 +97,8 @@ fun CertificatesPage(
 
     val context = LocalContext.current
     var outcome by remember { mutableStateOf<SheetOutcome?>(null) }
+    // The certificate last tapped, named in the result page's header.
+    var requested by remember { mutableStateOf<Certificate?>(null) }
     LaunchedEffect(viewModel) {
         viewModel.events.collectLatest { event ->
             when (event) {
@@ -110,69 +112,63 @@ fun CertificatesPage(
         }
     }
 
-    val seekableState =
-        remember { androidx.compose.animation.core.SeekableTransitionState(outcome) }
-    val transition = androidx.compose.animation.core.rememberTransition(
-        seekableState,
-        label = "certificates_pages"
-    )
+    val page = if (outcome != null) CertificatesSheetPage.Result else CertificatesSheetPage.Certificates
+    // While the result page slides out its outcome is already cleared; keep it rendered.
+    val shownOutcome = rememberLastNonNull(outcome)
 
-    LaunchedEffect(outcome) {
-        if (seekableState.targetState != outcome) {
-            seekableState.animateTo(outcome)
-        }
-    }
-
-    androidx.activity.compose.PredictiveBackHandler(enabled = outcome != null) { progress ->
-        try {
-            progress.collect { event ->
-                seekableState.seekTo(event.progress, targetState = null)
-            }
-            seekableState.animateTo(null)
-            outcome = null
-        } catch (_: kotlinx.coroutines.CancellationException) {
-            seekableState.animateTo(outcome)
-        }
-    }
-
-    Column(modifier = Modifier.testTag(CertificatesTestTags.ROOT)) {
-        SheetPagerHeader(
-            depth = if (outcome != null) 1 else 0,
-            title = if (outcome != null) "" else stringResource(R.string.certs_title),
-            subtitle = if (outcome != null) null else stringResource(R.string.certs_subtitle)
-                .takeIf { certificatesLoadable is Loadable.Loaded },
-            onBack = null,
-        )
-        transition.AnimatedContent(
-            transitionSpec = { sheetPageTransform(forward = targetState != null) },
-            contentKey = { it != null },
-        ) { current ->
-            if (current != null) {
+    SheetPager(
+        page = page,
+        depth = { it.ordinal },
+        backTo = if (page == CertificatesSheetPage.Result) CertificatesSheetPage.Certificates else null,
+        onBack = { outcome = null },
+        modifier = Modifier.testTag(CertificatesTestTags.ROOT),
+        header = { target ->
+            SheetHeaderSpec(
+                title = when (target) {
+                    CertificatesSheetPage.Certificates -> stringResource(R.string.certs_title)
+                    CertificatesSheetPage.Result -> stringResource(R.string.certs_result_title)
+                },
+                subtitle = when (target) {
+                    CertificatesSheetPage.Certificates -> stringResource(R.string.certs_subtitle)
+                        .takeIf { certificatesLoadable is Loadable.Loaded }
+                    CertificatesSheetPage.Result -> requested?.description?.takeIf { it.isNotBlank() }
+                        ?: stringResource(R.string.certs_certificate)
+                },
+                showBack = false,
+            )
+        },
+    ) { target ->
+        when (target) {
+            CertificatesSheetPage.Result -> shownOutcome?.let { current ->
                 Box(modifier = Modifier.testTag(CertificatesTestTags.RESULT_PAGE)) {
                     SheetResultPage(outcome = current, onDismiss = { outcome = null })
                 }
-            } else {
-                SheetBody(
-                    loaded = certificatesLoadable is Loadable.Loaded,
-                    certificates = certificatesLoadable.valueOrNull(),
-                    syncStatus = syncStatus,
-                    downloading = downloading,
-                    downloaded = downloaded,
-                    onRetry = viewModel::refresh,
-                    onDownload = viewModel::download,
-                )
             }
+
+            CertificatesSheetPage.Certificates -> SheetBody(
+                loaded = certificatesLoadable is Loadable.Loaded,
+                certificates = certificatesLoadable.valueOrNull(),
+                syncStatus = syncStatus,
+                downloading = downloading,
+                downloaded = downloaded,
+                onRetry = viewModel::refresh,
+                onDownload = { certificate ->
+                    requested = certificate
+                    viewModel.download(certificate)
+                },
+            )
         }
     }
 }
+
+/** The list, then the download/open outcome pushed over it; the ordinal is the pager depth. */
+private enum class CertificatesSheetPage { Certificates, Result }
 
 /**
  * List body states: an error message with retry when the first load failed, a loading
  * indicator (held for a minimum beat so quick fetches don't flash it) until data lands,
  * an empty message when no certificates exist, and otherwise the certificate list.
- * Height changes are animated so the modal never snaps to a new size as content lands,
- * and swipes on the body scroll its content, never the sheet: the header (and drag
- * handle) is the only dismiss surface.
+ * Height changes are animated so the modal never snaps to a new size as content lands.
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -195,7 +191,6 @@ private fun SheetBody(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .sheetBodyGestureBarrier()
             .animateContentSize(animationSpec = sizeSpec),
     ) {
         when {

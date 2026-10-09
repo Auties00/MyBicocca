@@ -50,6 +50,10 @@ class NotificationDebugViewModel @Inject constructor(
     fun updateAvailable() =
         post("Update available", UpdateNotifications.updateAvailable(context, DEBUG_VERSION))
 
+    /** Its own slot, so firing it after [updateAvailable] should leave both in the tray. */
+    fun nightlyUpdateAvailable() =
+        post("Nightly available", UpdateNotifications.nightlyUpdateAvailable(context, DEBUG_VERSION))
+
     fun progress(percent: Int) =
         post("Progress $percent%", UpdateNotifications.downloadProgress(context, percent))
 

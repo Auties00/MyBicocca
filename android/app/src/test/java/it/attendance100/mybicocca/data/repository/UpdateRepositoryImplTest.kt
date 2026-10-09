@@ -3,8 +3,10 @@ package it.attendance100.mybicocca.data.repository
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
 import io.mockk.coEvery
+import io.mockk.coVerify
 import io.mockk.every
 import io.mockk.mockk
+import it.attendance100.mybicocca.BuildConfig
 import it.attendance100.mybicocca.data.local.settings.PersistedNightlyState
 import it.attendance100.mybicocca.data.local.settings.PersistedUpdateState
 import it.attendance100.mybicocca.data.local.settings.UpdateStateStore
@@ -13,6 +15,7 @@ import it.attendance100.mybicocca.data.update.GithubReleaseAssetDto
 import it.attendance100.mybicocca.data.update.GithubReleaseDto
 import it.attendance100.mybicocca.data.update.InstallSourceProvider
 import it.attendance100.mybicocca.domain.model.update.DistributionSource
+import it.attendance100.mybicocca.domain.model.update.UpdateCheckResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
@@ -95,5 +98,25 @@ class UpdateRepositoryImplTest {
             assertThat(event.commitSha).isEqualTo("abcdef0")
             cancelAndIgnoreRemainingEvents()
         }
+    }
+
+    @Test
+    fun checkForUpdates_whenForcedOnTheLatestRelease_reportsUpToDate() = runTest {
+        val running = BuildConfig.VERSION_NAME.substringBefore("-")
+        coEvery { api.getLatestRelease() } returns GithubReleaseDto(
+            tagName = "v$running",
+            name = "MyBicocca $running",
+            body = "",
+            htmlUrl = "url",
+            publishedAt = "2026-08-29T12:00:00Z",
+            draft = false,
+            prerelease = false,
+            assets = emptyList()
+        )
+
+        val result = repository.checkForUpdates(force = true, announce = false)
+
+        assertThat(result).isEqualTo(UpdateCheckResult.UpToDate)
+        coVerify(exactly = 0) { store.setUpdateAvailable(any(), any()) }
     }
 }

@@ -1,5 +1,7 @@
 package it.attendance100.mybicocca.domain.model.enrollment
 
+import it.attendance100.mybicocca.core.observability.UnknownValues
+
 /**
  * How the student is enrolled for the year, from Esse3 `tipoIscrCod`: "IC" = in corso,
  * "FC" = fuori corso, "RI" = ripetente. For [Unknown] codes the server-provided
@@ -16,7 +18,10 @@ enum class EnrollmentType {
             "IC" -> InProgress
             "FC" -> OutOfCourse
             "RI" -> Repeating
-            else -> Unknown
+            else -> {
+                UnknownValues.report("enrollment_type", code)
+                Unknown
+            }
         }
     }
 }

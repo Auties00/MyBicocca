@@ -26,7 +26,7 @@ import it.attendance100.mybicocca.domain.usecase.elearning.assignment.RemoveSubm
 import it.attendance100.mybicocca.domain.usecase.elearning.assignment.SaveSubmissionUseCase
 import it.attendance100.mybicocca.domain.usecase.elearning.assignment.SubmitAssignmentForGradingUseCase
 import it.attendance100.mybicocca.testing.MainDispatcherRule
-import it.attendance100.mybicocca.ui.navigation.route.AppRoute
+import it.attendance100.mybicocca.ui.navigation.route.SheetRoute
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.assignmentDetail.state.AssignmentDetailOneShotEvent
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.assignmentDetail.state.AssignmentPage
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -91,7 +91,7 @@ class AssignmentDetailViewModelTest {
         refreshStatus: RefreshSubmissionStatusUseCase = mockk(relaxed = true),
         refreshCourse: RefreshCourseAssignmentsUseCase = mockk(relaxed = true),
     ): AssignmentDetailViewModel = AssignmentDetailViewModel(
-        key = AppRoute.AssignmentDetail(assignId = assignmentId.value, courseId = courseId.value),
+        key = SheetRoute.AssignmentDetail(assignId = assignmentId.value, courseId = courseId.value),
         savedState = SavedStateHandle(),
         observeActiveAccount = mockk {
             every { this@mockk.invoke() } returns MutableStateFlow<Account?>(activeAccount)

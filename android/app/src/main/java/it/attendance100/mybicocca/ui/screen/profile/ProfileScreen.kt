@@ -21,9 +21,6 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
@@ -37,14 +34,14 @@ import it.attendance100.mybicocca.core.state.valueOrNull
 import it.attendance100.mybicocca.domain.model.transcript.TranscriptStats
 import it.attendance100.mybicocca.ui.component.feedback.ErrorBanner
 import it.attendance100.mybicocca.ui.component.text.SectionHeader
+import it.attendance100.mybicocca.ui.navigation.LocalAppNavigator
+import it.attendance100.mybicocca.ui.navigation.route.SheetRoute
 import it.attendance100.mybicocca.ui.screen.profile.component.GradeTrendChart
 import it.attendance100.mybicocca.ui.screen.profile.component.ProgressStatCard
 import it.attendance100.mybicocca.ui.screen.profile.component.SkeletonProfileContent
 import it.attendance100.mybicocca.ui.screen.profile.component.StatCard
 import it.attendance100.mybicocca.ui.screen.profile.component.StudentCard
 import it.attendance100.mybicocca.ui.screen.profile.subscreen.examsByYear.ExamValueMode
-import it.attendance100.mybicocca.ui.screen.profile.subscreen.examsByYear.ExamsByYearSheet
-import it.attendance100.mybicocca.ui.screen.profile.subscreen.hypotheticalGrade.HypotheticalGradeSheet
 import java.util.Locale
 
 /**
@@ -56,7 +53,6 @@ import java.util.Locale
 @Composable
 fun ProfileScreen(
     modifier: Modifier = Modifier,
-    onOpenAppelli: (courseKey: String) -> Unit = {},
     viewModel: ProfileViewModel = hiltViewModel(
         checkNotNull(
             LocalViewModelStoreOwner.current
@@ -75,7 +71,6 @@ fun ProfileScreen(
         ) {
             ProfileContent(
                 modifier = Modifier.fillMaxSize(),
-                onOpenAppelli = onOpenAppelli,
                 viewModel = viewModel,
             )
         }
@@ -83,15 +78,14 @@ fun ProfileScreen(
 }
 
 /**
- * Profile body shared by [ProfileScreen], which wraps it in pull-to-refresh, and
- * [ProfileSheetContent], which cannot host the refresh gesture because the drag belongs
- * to the sheet.
+ * Profile body of [ProfileScreen], which wraps it in pull-to-refresh; split out so tests can
+ * compose it without the refresh container.
  *
  * Renders a scrolling column: the flippable [StudentCard] (hidden until the account
  * loads), the "Statistiche" grid of average and progress tiles, and the "Andamento" grade
- * trend chart. The average tiles open [HypotheticalGradeSheet] in arithmetic or weighted
- * mode; the progress tiles open [ExamsByYearSheet] on the grades or credits view, whose
- * course detail can bubble an appelli deep-link up through [onOpenAppelli]. Guided search
+ * trend chart. The average tiles open the hypothetical-average calculator sheet
+ * ([SheetRoute.HypotheticalGrade]) in arithmetic or weighted mode; the progress tiles open
+ * the libretto sheet ([SheetRoute.ExamsByYear]) on the grades or credits view. Guided search
  * lands here via [ProfileViewModel.openCalculatorRequests], opening the calculator
  * directly in weighted mode.
  *
@@ -103,30 +97,27 @@ fun ProfileScreen(
 @Composable
 fun ProfileContent(
     modifier: Modifier = Modifier,
-    onOpenAppelli: (courseKey: String) -> Unit = {},
     viewModel: ProfileViewModel,
 ) {
     val statsLoadable by viewModel.stats.collectAsStateWithLifecycle()
-    val rollupLoadable by viewModel.gradeRollup.collectAsStateWithLifecycle()
     val rowsLoadable by viewModel.transcriptRows.collectAsStateWithLifecycle()
     val error by viewModel.errorMessage.collectAsStateWithLifecycle()
-    val prerequisiteStatuses by viewModel.prerequisiteStatuses.collectAsStateWithLifecycle()
     val account by viewModel.account.collectAsStateWithLifecycle()
     val activeCareer by viewModel.activeCareer.collectAsStateWithLifecycle()
     val photoFile by viewModel.photoFile.collectAsStateWithLifecycle()
     val badgeCardTheme by viewModel.badgeCardTheme.collectAsStateWithLifecycle()
 
     val stats = statsLoadable.valueOrNull()
-    val rollup = rollupLoadable.valueOrNull()
     val rows = rowsLoadable.valueOrNull().orEmpty()
 
     val showSkeleton = statsLoadable is Loadable.NotYetLoaded
 
-    var calculatorWeighted by remember { mutableStateOf<Boolean?>(null) }
-    var examsModal by remember { mutableStateOf<ExamValueMode?>(null) }
+    val navigator = LocalAppNavigator.current
 
-    LaunchedEffect(viewModel) {
-        viewModel.openCalculatorRequests.collect { calculatorWeighted = true }
+    LaunchedEffect(viewModel, navigator) {
+        viewModel.openCalculatorRequests.collect {
+            navigator?.navigate(SheetRoute.HypotheticalGrade(weighted = true))
+        }
     }
 
     Column(modifier.testTag(ProfileTestTags.ROOT)) {
@@ -173,10 +164,14 @@ fun ProfileContent(
                     )
                     StatisticsGrid(
                         stats = stats,
-                        onCalculateArithmetic = { calculatorWeighted = false },
-                        onCalculateWeighted = { calculatorWeighted = true },
-                        onShowExams = { examsModal = ExamValueMode.Grade },
-                        onShowCredits = { examsModal = ExamValueMode.Credits },
+                        onCalculateArithmetic = {
+                            navigator?.navigate(SheetRoute.HypotheticalGrade(weighted = false))
+                        },
+                        onCalculateWeighted = {
+                            navigator?.navigate(SheetRoute.HypotheticalGrade(weighted = true))
+                        },
+                        onShowExams = { navigator?.navigate(SheetRoute.ExamsByYear(ExamValueMode.Grade)) },
+                        onShowCredits = { navigator?.navigate(SheetRoute.ExamsByYear(ExamValueMode.Credits)) },
                     )
                 }
 
@@ -192,26 +187,6 @@ fun ProfileContent(
                 }
             }
         }
-    }
-
-    calculatorWeighted?.let { weighted ->
-        HypotheticalGradeSheet(
-            rollup = rollup,
-            currentArithmetic = stats?.arithmeticAverage,
-            currentWeighted = stats?.weightedAverage,
-            isWeighted = weighted,
-            onDismiss = { calculatorWeighted = null },
-        )
-    }
-
-    examsModal?.let { initialMode ->
-        ExamsByYearSheet(
-            rows = rows,
-            initialMode = initialMode,
-            prerequisiteStatuses = prerequisiteStatuses,
-            onOpenAppelli = onOpenAppelli,
-            onDismiss = { examsModal = null },
-        )
     }
 }
 

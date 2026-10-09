@@ -11,6 +11,7 @@ import it.attendance100.mybicocca.core.os.systemAppLanguage
 import it.attendance100.mybicocca.data.notification.AppForegroundState
 import it.attendance100.mybicocca.data.notification.NotificationChannelRegistrar
 import it.attendance100.mybicocca.data.observability.CrashReportingController
+import it.attendance100.mybicocca.data.observability.UnknownValueReporting
 import javax.inject.Inject
 
 @HiltAndroidApp
@@ -21,6 +22,9 @@ class MyBicoccaApplication : Application(), Configuration.Provider {
 
     @Inject
     lateinit var crashReportingController: CrashReportingController
+
+    @Inject
+    lateinit var unknownValueReporting: UnknownValueReporting
 
     @Inject
     lateinit var notificationChannelRegistrar: NotificationChannelRegistrar
@@ -42,6 +46,7 @@ class MyBicoccaApplication : Application(), Configuration.Provider {
         if (currentProcessName()?.endsWith(":crash") == true) return
 
         crashReportingController.start()
+        unknownValueReporting.start()
         GlobalExceptionHandler.initialize(this, CrashActivity::class.java)
 
         // Channels must exist before anything posts to them, and creating one the user has

@@ -236,15 +236,16 @@ class AddCourseViewModelTest {
     }
 
     @Test
-    fun `enrol without an account emits RequireSignIn`() = runTest {
+    fun `enrol without an account is dropped`() = runTest {
         val enrol = mockk<EnrolIntoCourseUseCase>(relaxed = true)
         val vm = build(activeAccount = observeActiveAccount(value = null), enrol = enrol)
         vm.oneShotEvents.test {
             vm.enrol(CourseId(5), "Algebra")
-            assertThat(awaitItem()).isEqualTo(AddCourseOneShotEvent.RequireSignIn)
+            expectNoEvents()
             cancelAndIgnoreRemainingEvents()
         }
         coVerify(exactly = 0) { enrol.invoke(any(), any(), any()) }
+        assertThat(terminalStatus(vm, CourseId(5))).isEqualTo(EnrolmentStatus.Idle)
     }
 
     @Test

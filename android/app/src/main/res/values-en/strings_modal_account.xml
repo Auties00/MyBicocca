@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Account switcher -->
+    <plurals name="account_switcher_count">
+        <item quantity="one">1 account</item>
+        <item quantity="other">%1$d accounts</item>
+    </plurals>
+    <string name="account_switcher_add_title">Add account</string>
+    <string name="account_switcher_add_subtitle">Your saved accounts stay available</string>
+</resources>

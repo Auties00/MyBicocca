@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Calendar event -->
+    <string name="event_detail_title_fallback">Event</string>
+    <string name="event_detail_cancelled">Event cancelled</string>
+</resources>

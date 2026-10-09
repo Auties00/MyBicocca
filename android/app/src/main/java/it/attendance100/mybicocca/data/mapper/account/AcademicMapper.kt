@@ -5,16 +5,22 @@ import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3UserSession
 import it.attendance100.mybicocca.domain.model.account.AcademicIdentity
 import it.attendance100.mybicocca.domain.model.career.Career
 import it.attendance100.mybicocca.domain.model.career.CareerId
-import it.attendance100.mybicocca.domain.model.career.isSelectable
+import it.attendance100.mybicocca.domain.model.career.isOpen
 
+/**
+ * [courseTypeCodes] maps a career id (`stuId`) to its Esse3 course-type code. It comes from a
+ * separate call because the careers endpoint does not return it; a career missing from the map
+ * simply gets no degree level.
+ */
 internal fun buildAcademicIdentity(
     session: Esse3UserSession,
     careers: List<Esse3Career>,
+    courseTypeCodes: Map<Long, String> = emptyMap(),
 ): AcademicIdentity {
     require(careers.isNotEmpty()) {
         "Cannot build AcademicIdentity: getCareers() returned no rows for user '${session.user.userId}'."
     }
-    val mappedCareers = careers.map(::toDomainCareer)
+    val mappedCareers = careers.map { toDomainCareer(it, courseTypeCodes[it.studentId]) }
     return AcademicIdentity(
         recordUserId = session.user.userId,
         personId = session.user.personId ?: 0L,
@@ -36,9 +42,9 @@ internal fun composeDisplayName(session: Esse3UserSession): String {
 }
 
 internal fun selectableCount(careers: List<Career>): Int =
-    careers.count { it.status.isSelectable }
+    careers.count { it.status.isOpen }
 
-private fun toDomainCareer(career: Esse3Career): Career = Career(
+private fun toDomainCareer(career: Esse3Career, courseTypeCode: String?): Career = Career(
     id = CareerId(career.studentId ?: 0L),
     enrollmentTraitId = career.matId ?: 0L,
     programId = career.courseOfStudyId ?: 0L,
@@ -49,7 +55,8 @@ private fun toDomainCareer(career: Esse3Career): Career = Career(
         ?: career.studentStatesDescription
         ?: "",
     academicYear = career.academicYearImm1 ?: career.academicYearId ?: 0,
-    status = mapCareerStatus(career.studentStatusCode),
+    status = mapCareerStatus(career.studentStatusCode, career.statusReasonCode),
+    level = mapCareerLevel(courseTypeCode),
 )
 
 /**
@@ -57,7 +64,7 @@ private fun toDomainCareer(career: Esse3Career): Career = Career(
  * ended careers are considered only when no selectable one exists.
  */
 private fun chooseDefaultSelectedCareer(careers: List<Career>): CareerId {
-    val pool = careers.filter { it.status.isSelectable }
+    val pool = careers.filter { it.status.isOpen }
         .ifEmpty { careers }
     return pool.maxByOrNull { it.academicYear }?.id ?: careers.first().id
 }

@@ -12,6 +12,8 @@ import it.attendance100.mybicocca.domain.model.update.UpdateStatus
 import it.attendance100.mybicocca.domain.usecase.update.CheckForUpdatesUseCase
 import it.attendance100.mybicocca.domain.usecase.update.GetUpdatePageUrlUseCase
 import it.attendance100.mybicocca.domain.usecase.update.ObserveUpdateStatusUseCase
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -78,7 +80,36 @@ class AppInfoViewModel @Inject constructor(
      * [UpdateRepository.getLatestStableRelease].
      */
     fun restoreToStable(onResult: (UpdateCheckResult) -> Unit) {
-        viewModelScope.launch { onResult(updateRepository.getLatestStableRelease()) }
+        changeChannel { onResult(updateRepository.getLatestStableRelease()) }
+    }
+
+    private val _channelChanging = MutableStateFlow(false)
+
+    /**
+     * True while a flip of the beta switch is being carried out, so the switch can refuse taps.
+     * Both directions wait on GitHub before they have a release to show, and a second tap in that
+     * gap would start the opposite change on top of the first.
+     */
+    val channelChanging: StateFlow<Boolean> = _channelChanging.asStateFlow()
+
+    /**
+     * Runs [change] with [channelChanging] raised, for at least [MIN_CHANNEL_CHANGE_MS] so a
+     * change that answers instantly still can't be spammed. [change] is not held back by that
+     * floor, only the release of the switch is.
+     */
+    private fun changeChannel(change: suspend () -> Unit) {
+        if (_channelChanging.value) return
+        _channelChanging.value = true
+        viewModelScope.launch {
+            try {
+                coroutineScope {
+                    launch { delay(MIN_CHANNEL_CHANGE_MS) }
+                    change()
+                }
+            } finally {
+                _channelChanging.value = false
+            }
+        }
     }
 
     fun updatePageUrl(release: AppRelease): String = getUpdatePageUrl(release)
@@ -101,7 +132,7 @@ class AppInfoViewModel @Inject constructor(
      * itself, so the answer is ready by the time this returns.
      */
     fun enableNightlyAndOffer(onResult: (AppRelease?) -> Unit) {
-        viewModelScope.launch {
+        changeChannel {
             setNightlyEnabledUseCase(true)
             onResult(updateRepository.availableNightlyRelease())
         }
@@ -142,5 +173,9 @@ class AppInfoViewModel @Inject constructor(
 
     fun setCheckIntervalMinutes(minutes: Int) {
         viewModelScope.launch { updateRepository.setCheckIntervalMinutes(minutes) }
+    }
+
+    private companion object {
+        const val MIN_CHANNEL_CHANGE_MS = 1_000L
     }
 }

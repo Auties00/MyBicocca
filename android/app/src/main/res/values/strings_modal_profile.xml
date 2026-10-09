@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Profilo: media ipotetica -->
+    <string name="hyp_subtitle_weighted">Media ponderata su %1$s CFU</string>
+    <plurals name="hyp_subtitle_arithmetic">
+        <item quantity="one">Media aritmetica su 1 esame</item>
+        <item quantity="other">Media aritmetica su %1$d esami</item>
+    </plurals>
+
+    <!-- Profilo: libretto -->
+    <string name="profile_exams_passed_of">%1$d su %2$d superati</string>
+    <string name="profile_cfu_acquired_of">%1$d su %2$d CFU</string>
+</resources>

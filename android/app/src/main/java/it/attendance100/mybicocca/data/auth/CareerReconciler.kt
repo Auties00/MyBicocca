@@ -4,7 +4,7 @@ import it.attendance100.mybicocca.domain.model.account.AccountEvent
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.career.Career
 import it.attendance100.mybicocca.domain.model.career.CareerId
-import it.attendance100.mybicocca.domain.model.career.isSelectable
+import it.attendance100.mybicocca.domain.model.career.isOpen
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -26,7 +26,7 @@ class CareerReconciler @Inject constructor() {
         val previousIds = previous.mapTo(mutableSetOf()) { it.id }
 
         for (career in current) {
-            if (career.id !in previousIds && career.status.isSelectable) {
+            if (career.id !in previousIds && career.status.isOpen) {
                 events += AccountEvent.NewCareerAvailable(accountId, career)
             }
         }
@@ -34,7 +34,7 @@ class CareerReconciler @Inject constructor() {
         val selected = current.firstOrNull { it.id == currentSelectedId }
         when {
             selected == null -> events += AccountEvent.SelectedCareerMissing(accountId)
-            !selected.status.isSelectable -> events += AccountEvent.SelectedCareerEnded(accountId, selected)
+            !selected.status.isOpen -> events += AccountEvent.SelectedCareerEnded(accountId, selected)
         }
 
         return events

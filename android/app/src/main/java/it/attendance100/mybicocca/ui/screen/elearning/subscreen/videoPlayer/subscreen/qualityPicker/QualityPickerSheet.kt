@@ -21,11 +21,15 @@ import androidx.compose.ui.unit.sp
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.elearning.video.VideoVariant
+import it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet
+import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
+import it.attendance100.mybicocca.ui.component.modal.SheetPage
 
 /**
- * Bottom sheet for picking the video stream quality: an "Automatica" row for adaptive selection
- * followed by the stream's variants from highest to lowest resolution, each labelled with its
- * height (or flavor id) plus bitrate/format details and a check mark on the selected row.
+ * Bottom sheet for picking the video stream quality, headed by the quality in use: an
+ * "Automatica" row for adaptive selection followed by the stream's variants from highest to
+ * lowest resolution, each labelled with its height (or flavor id) plus bitrate/format details
+ * and a check mark on the selected row.
  * Choosing a row applies the quality constraint and closes the sheet.
  */
 @Composable
@@ -36,38 +40,46 @@ fun QualityPickerSheet(
     onDismiss: () -> Unit,
 ) {
     val haptic = rememberHapticManager()
-    it.attendance100.mybicocca.ui.component.modal.PredictiveModalBottomSheet(onDismiss = onDismiss) { _, _ ->
-        Column(modifier = Modifier
-            .fillMaxWidth()
-            .padding(bottom = 16.dp)) {
-            Text(
-                text = stringResource(R.string.elearning_video_quality),
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 18.sp,
-                modifier = Modifier.padding(start = 24.dp, top = 8.dp, bottom = 8.dp),
-            )
-            QualityRow(
-                label = stringResource(R.string.elearning_video_quality_auto),
-                detail = stringResource(R.string.elearning_video_quality_auto_detail),
-                isSelected = selected == null,
-                onClick = { haptic.tap(); onSelect(null); onDismiss() },
-            )
-            variants.asReversed().forEach { variant ->
-                val label = variant.heightPx?.let { "${it}p" } ?: variant.flavorId
-                val detail = listOfNotNull(
-                    variant.bitrateKbps?.let { "${it} kbps" },
-                    variant.fileExtension?.uppercase(),
-                ).joinToString(" · ").takeIf { it.isNotBlank() }
+    val autoLabel = stringResource(R.string.elearning_video_quality_auto)
+    PredictiveModalBottomSheet(onDismiss = onDismiss) {
+        SheetPage(
+            header = SheetHeaderSpec(
+                title = stringResource(R.string.elearning_video_quality),
+                subtitle = stringResource(
+                    R.string.elearning_video_quality_current,
+                    selected?.let(::variantLabel) ?: autoLabel,
+                ),
+            ),
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp),
+            ) {
                 QualityRow(
-                    label = label,
-                    detail = detail,
-                    isSelected = selected?.flavorId == variant.flavorId,
-                    onClick = { haptic.tap(); onSelect(variant); onDismiss() },
+                    label = autoLabel,
+                    detail = stringResource(R.string.elearning_video_quality_auto_detail),
+                    isSelected = selected == null,
+                    onClick = { haptic.tap(); onSelect(null); onDismiss() },
                 )
+                variants.asReversed().forEach { variant ->
+                    val detail = listOfNotNull(
+                        variant.bitrateKbps?.let { "${it} kbps" },
+                        variant.fileExtension?.uppercase(),
+                    ).joinToString(" · ").takeIf { it.isNotBlank() }
+                    QualityRow(
+                        label = variantLabel(variant),
+                        detail = detail,
+                        isSelected = selected?.flavorId == variant.flavorId,
+                        onClick = { haptic.tap(); onSelect(variant); onDismiss() },
+                    )
+                }
             }
         }
     }
 }
+
+private fun variantLabel(variant: VideoVariant): String = variant.heightPx?.let { "${it}p" } ?: variant.flavorId
 
 @Composable
 private fun QualityRow(

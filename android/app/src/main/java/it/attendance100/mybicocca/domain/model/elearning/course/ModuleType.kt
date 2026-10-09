@@ -1,5 +1,7 @@
 package it.attendance100.mybicocca.domain.model.elearning.course
 
+import it.attendance100.mybicocca.core.observability.UnknownValues
+
 /**
  * The Moodle activity/resource plugin a course module is an instance of, including the
  * Bicocca-specific plugins observed on the site. Distinct values keep each module kind's
@@ -53,6 +55,7 @@ enum class ModuleType(val raw: String) {
 
     companion object {
         fun fromRaw(raw: String?): ModuleType =
-            entries.firstOrNull { it.raw.equals(raw, ignoreCase = true) } ?: Other
+            entries.firstOrNull { it.raw.equals(raw, ignoreCase = true) }
+                ?: Other.also { UnknownValues.report("module_type", raw) }
     }
 }

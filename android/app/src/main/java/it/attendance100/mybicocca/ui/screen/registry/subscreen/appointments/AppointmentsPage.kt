@@ -1,9 +1,6 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments
 
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -19,9 +16,12 @@ import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentReservation
 import it.attendance100.mybicocca.ui.component.modal.SheetConfirmPage
 import it.attendance100.mybicocca.ui.component.modal.SheetOutcome
-import it.attendance100.mybicocca.ui.component.modal.SheetPagerHeader
+import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
+import it.attendance100.mybicocca.ui.component.modal.SheetPager
 import it.attendance100.mybicocca.ui.component.modal.SheetResultPage
-import it.attendance100.mybicocca.ui.component.modal.sheetPageTransform
+import it.attendance100.mybicocca.ui.component.modal.LockSheetWhile
+import it.attendance100.mybicocca.ui.component.modal.rememberLastNonNull
+import it.attendance100.mybicocca.ui.navigation.DisposableEffectOnPop
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.component.DonePage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.component.FormPage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.component.ReservationDetailPage
@@ -44,30 +44,30 @@ private val TimeFormat = DateTimeFormatter.ofPattern("HH:mm")
 
 /**
  * Body of the Appuntamenti modal: the whole student-services appointment experience as a
- * single sheet entry whose container is owned by the navigation-level BottomSheetSceneStrategy.
+ * single sheet entry whose container is owned by the navigation-level ModalSceneStrategy.
  *
- * A pinned [SheetPagerHeader] morphs — it never swaps — over a ViewModel-driven in-sheet pager
+ * A [SheetPager] (pinned morphing header over the body) renders a ViewModel-driven page stack
  * (mirroring the maps Edifici sheet): the root lists this device's reservations, a row pushes
  * the reservation detail, and "Prenota" walks the booking wizard (sections -> types -> slots ->
  * form -> done). Cancel confirmations and cancel/booking/download outcomes render as view-side
  * pages layered over the pager; system back dismisses those first, then walks the pager up one
- * level. A reservation cancelled elsewhere pops its detail page once the live list drops it.
- * Downloaded reservation PDFs are written to the cache directory and handed to [onOpenPdf].
- * When the sheet leaves composition the pager rewinds to the root and the booking session is
- * forgotten, so a re-open starts clean.
+ * level. While a booking is being submitted, back and sheet dismissal are blocked. A reservation
+ * cancelled elsewhere pops its detail page once the live list drops it. Downloaded reservation
+ * PDFs are written to the cache directory and handed to [onOpenPdf]; the sheet keeps its flow
+ * under the viewer. When the sheet is closed (its entry leaves the back stack) the pager rewinds
+ * to the root and the booking session is forgotten, so a re-open starts clean.
  */
 @Composable
 fun AppointmentsPage(
     viewModel: AppointmentsViewModel,
     onOpenPdf: (localPath: String, fileName: String) -> Unit,
 ) {
-    DisposableEffect(Unit) {
-        onDispose { viewModel.resetNavigation() }
-    }
+    DisposableEffectOnPop { viewModel.resetNavigation() }
 
     run {
         val context = androidx.compose.ui.platform.LocalContext.current
         var outcome by remember { mutableStateOf<SheetOutcome?>(null) }
+        var outcomeKind by remember { mutableStateOf(AppointmentsOutcomeKind.Cancellation) }
         var pendingCancel by remember { mutableStateOf<AppointmentReservation?>(null) }
 
         val backStack by viewModel.backStack.collectAsStateWithLifecycle()
@@ -92,14 +92,18 @@ fun AppointmentsPage(
         LaunchedEffect(Unit) {
             viewModel.events.collect { event ->
                 when (event) {
-                    AppointmentsEvent.ReservationCancelled ->
+                    AppointmentsEvent.ReservationCancelled -> {
+                        outcomeKind = AppointmentsOutcomeKind.Cancellation
                         outcome = SheetOutcome.Success(strAppointmentsCancelled)
+                    }
 
-                    is AppointmentsEvent.CancelFailed ->
+                    is AppointmentsEvent.CancelFailed -> {
+                        outcomeKind = AppointmentsOutcomeKind.Cancellation
                         outcome = SheetOutcome.Error(
                             strAppointmentsCancelFailed,
                             event.cause
                         )
+                    }
 
                     is AppointmentsEvent.PdfReady -> {
                         val path = withContext(Dispatchers.IO) {
@@ -109,17 +113,21 @@ fun AppointmentsPage(
                         onOpenPdf(path, event.fileName)
                     }
 
-                    is AppointmentsEvent.PdfFailed ->
+                    is AppointmentsEvent.PdfFailed -> {
+                        outcomeKind = AppointmentsOutcomeKind.Document
                         outcome = SheetOutcome.Error(
                             strAppointmentsPdfFailed,
                             event.cause
                         )
+                    }
 
-                    is AppointmentsEvent.BookingFailed ->
+                    is AppointmentsEvent.BookingFailed -> {
+                        outcomeKind = AppointmentsOutcomeKind.Booking
                         outcome = SheetOutcome.Error(
                             strAppointmentsBookingFailed,
                             event.cause
                         )
+                    }
                 }
             }
         }
@@ -138,164 +146,160 @@ fun AppointmentsPage(
             else -> AppointmentsDisplay.Page(current)
         }
 
-        val seekableState =
-            remember { androidx.compose.animation.core.SeekableTransitionState(display) }
-        val transition = androidx.compose.animation.core.rememberTransition(
-            seekableState,
-            label = "appointments_sheet_pages"
-        )
+        // A booking in flight cannot be abandoned half-way: lock swipe/scrim/back dismissal.
+        LockSheetWhile(submitting)
 
-        LaunchedEffect(display) {
-            if (seekableState.targetState != display) {
-                seekableState.animateTo(display)
-            }
+        // System back dismisses the overlays first, then walks the pager up one level; it is
+        // blocked while a booking is being submitted.
+        val backTo: AppointmentsDisplay? = when (display) {
+            AppointmentsDisplay.Outcome ->
+                if (pendingCancel != null) AppointmentsDisplay.ConfirmCancel else AppointmentsDisplay.Page(current)
+
+            AppointmentsDisplay.ConfirmCancel -> AppointmentsDisplay.Page(current)
+            is AppointmentsDisplay.Page ->
+                if (depth > 0 && !submitting) AppointmentsDisplay.Page(backStack[depth - 1]) else null
         }
 
-        androidx.activity.compose.PredictiveBackHandler(enabled = outcome != null || pendingCancel != null || (depth > 0 && !submitting)) { progress ->
-            try {
-                val fallback = when (display) {
-                    AppointmentsDisplay.Outcome -> if (pendingCancel != null) AppointmentsDisplay.ConfirmCancel else AppointmentsDisplay.Page(
-                        current
-                    )
-
-                    AppointmentsDisplay.ConfirmCancel -> AppointmentsDisplay.Page(current)
-                    is AppointmentsDisplay.Page -> if (depth > 0) AppointmentsDisplay.Page(backStack[depth - 1]) else display
-                }
-                progress.collect { event ->
-                    seekableState.seekTo(event.progress, targetState = fallback)
-                }
-                seekableState.animateTo(fallback)
-                when {
-                    outcome != null -> outcome = null
-                    pendingCancel != null -> pendingCancel = null
-                    else -> viewModel.back()
-                }
-            } catch (_: kotlinx.coroutines.CancellationException) {
-                seekableState.animateTo(display)
-            }
-        }
+        // While the confirmation slides out its reservation is already cleared; keep its header readable.
+        val shownCancel = rememberLastNonNull(pendingCancel)
 
         val sections = (services as? Loadable.Loaded)?.value?.toDirectorySections().orEmpty()
         val serviceName = bookingService?.displayName.orEmpty()
         val slotRecap = listOfNotNull(
             selectedDate?.format(DetailDateFormat)?.replaceFirstChar { it.titlecase(Locale.ITALIAN) },
-            selectedSlot?.start?.format(TimeFormat)?.let { "ore $it" },
+            selectedSlot?.start?.format(TimeFormat)?.let { stringResource(R.string.registry_time_at, it) },
         ).joinToString(" · ").ifBlank { null }
 
-        Column(modifier = Modifier.testTag(AppointmentsTestTags.ROOT)) {
-            SheetPagerHeader(
-                depth = displayDepth(display),
-                title = when (display) {
-                    AppointmentsDisplay.Outcome -> ""
-                    AppointmentsDisplay.ConfirmCancel -> stringResource(R.string.appointments_cancel_title)
-                    is AppointmentsDisplay.Page -> when (val page = display.page) {
-                        AppointmentsPage.Reservations -> stringResource(R.string.appointments_title)
-                        is AppointmentsPage.ReservationDetail -> detailReservation?.serviceName
-                            ?: stringResource(R.string.appointments_single)
-
-                        AppointmentsPage.Sections -> stringResource(R.string.appointments_book)
-                        is AppointmentsPage.Types -> page.sectionName
-                        AppointmentsPage.Slots -> serviceName.ifBlank { stringResource(R.string.appointments_book) }
-                        AppointmentsPage.Form -> serviceName.ifBlank { stringResource(R.string.appointments_confirm) }
-                        AppointmentsPage.Done -> stringResource(R.string.appointments_confirmed)
-                    }
-                },
-                subtitle = when (display) {
-                    AppointmentsDisplay.Outcome -> null
-                    AppointmentsDisplay.ConfirmCancel -> pendingCancel?.serviceName
-                    is AppointmentsDisplay.Page -> when (val page = display.page) {
-                        AppointmentsPage.Reservations ->
-                            if (reservations !is Loadable.Loaded) null
-                            else if (reservationList.isEmpty()) stringResource(R.string.appointments_no_reservations)
-                            else pluralStringResource(
-                                R.plurals.appointments_reservation_count,
-                                reservationList.size,
-                                reservationList.size
-                            )
-                        is AppointmentsPage.ReservationDetail -> stringResource(R.string.appointments_details)
-                        AppointmentsPage.Sections -> stringResource(R.string.appointments_choose_service)
-                        is AppointmentsPage.Types -> sections.firstOrNull { it.name == page.sectionName }?.caption
-                        AppointmentsPage.Slots -> stringResource(R.string.appointments_choose_date_time)
-                        AppointmentsPage.Form -> slotRecap
-                        AppointmentsPage.Done -> serviceName.ifBlank { null }
-                    }
-                },
-                onBack = when (display) {
-                    AppointmentsDisplay.Outcome -> null
-                    AppointmentsDisplay.ConfirmCancel -> ({ pendingCancel = null })
-                    is AppointmentsDisplay.Page -> if (depth > 0 && !submitting) viewModel::back else null
-                },
-            )
-
-            transition.AnimatedContent(
-                transitionSpec = {
-                    sheetPageTransform(
-                        forward = displayDepth(targetState) >= displayDepth(
-                            initialState
-                        )
-                    )
-                },
-                contentKey = { displayKey(it) },
-            ) { shown ->
-                when (shown) {
-                    AppointmentsDisplay.Outcome -> outcome?.let { current ->
-                        SheetResultPage(outcome = current, onDismiss = { outcome = null })
-                    }
-
-                    AppointmentsDisplay.ConfirmCancel -> pendingCancel?.let { reservation ->
-                        SheetConfirmPage(
-                            body = stringResource(
-                                R.string.appointments_cancel_body,
-                                reservation.serviceName
-                            ),
-                            onConfirm = {
-                                pendingCancel = null
-                                viewModel.cancel(reservation)
+        SheetPager(
+            page = display,
+            depth = { displayDepth(it) },
+            backTo = backTo,
+            onBack = {
+                when {
+                    outcome != null -> outcome = null
+                    pendingCancel != null -> pendingCancel = null
+                    else -> viewModel.back()
+                }
+            },
+            modifier = Modifier.testTag(AppointmentsTestTags.ROOT),
+            key = { displayKey(it) },
+            header = { target ->
+                SheetHeaderSpec(
+                    title = when (target) {
+                        AppointmentsDisplay.Outcome -> stringResource(
+                            when (outcomeKind) {
+                                AppointmentsOutcomeKind.Cancellation -> R.string.appointments_result_cancellation_title
+                                AppointmentsOutcomeKind.Document -> R.string.appointments_result_document_title
+                                AppointmentsOutcomeKind.Booking -> R.string.appointments_result_booking_title
                             },
-                            onKeep = { pendingCancel = null },
                         )
-                    }
+                        AppointmentsDisplay.ConfirmCancel -> stringResource(R.string.appointments_cancel_title)
+                        is AppointmentsDisplay.Page -> when (val page = target.page) {
+                            AppointmentsPage.Reservations -> stringResource(R.string.appointments_title)
+                            is AppointmentsPage.ReservationDetail ->
+                                reservationList.firstOrNull { it.code == page.code }?.serviceName
+                                    ?: stringResource(R.string.appointments_single)
 
-                    is AppointmentsDisplay.Page -> when (val page = shown.page) {
-                        AppointmentsPage.Reservations -> ReservationsPage(
-                            reservations = reservations,
-                            onOpenReservation = viewModel::openReservation,
-                            onPrenota = viewModel::openSections,
-                        )
-
-                        is AppointmentsPage.ReservationDetail -> {
-                            val reservation = reservationList.firstOrNull { it.code == page.code }
-                            if (reservation != null) {
-                                ReservationDetailPage(
-                                    reservation = reservation,
-                                    isCancelling = cancellingCode == reservation.code,
-                                    onCancel = { pendingCancel = it },
-                                )
-                            }
+                            AppointmentsPage.Sections -> stringResource(R.string.appointments_book)
+                            is AppointmentsPage.Types -> page.sectionName
+                            AppointmentsPage.Slots -> serviceName.ifBlank { stringResource(R.string.appointments_book) }
+                            AppointmentsPage.Form -> serviceName.ifBlank { stringResource(R.string.appointments_confirm) }
+                            AppointmentsPage.Done -> stringResource(R.string.appointments_confirmed)
                         }
+                    },
+                    subtitle = when (target) {
+                        AppointmentsDisplay.Outcome -> when (outcomeKind) {
+                            AppointmentsOutcomeKind.Cancellation -> shownCancel?.serviceName
+                            AppointmentsOutcomeKind.Document -> detailReservation?.serviceName
+                            AppointmentsOutcomeKind.Booking -> serviceName.ifBlank { null }
+                        } ?: stringResource(R.string.appointments_title)
+                        AppointmentsDisplay.ConfirmCancel -> shownCancel?.serviceName
+                            ?: stringResource(R.string.appointments_single)
+                        is AppointmentsDisplay.Page -> when (val page = target.page) {
+                            AppointmentsPage.Reservations ->
+                                if (reservations !is Loadable.Loaded) null
+                                else if (reservationList.isEmpty()) stringResource(R.string.appointments_no_reservations)
+                                else pluralStringResource(
+                                    R.plurals.appointments_reservation_count,
+                                    reservationList.size,
+                                    reservationList.size
+                                )
+                            is AppointmentsPage.ReservationDetail -> stringResource(R.string.appointments_details)
+                            AppointmentsPage.Sections -> stringResource(R.string.appointments_choose_service)
+                            is AppointmentsPage.Types -> sections.firstOrNull { it.name == page.sectionName }?.caption
+                                ?: stringResource(R.string.appointments_choose_service)
+                            AppointmentsPage.Slots -> stringResource(R.string.appointments_choose_date_time)
+                            AppointmentsPage.Form -> slotRecap ?: stringResource(R.string.appointments_details)
+                            AppointmentsPage.Done -> serviceName.ifBlank { null }
+                                ?: stringResource(R.string.appointments_single)
+                        }
+                    },
+                    showBack = when (target) {
+                        AppointmentsDisplay.Outcome -> false
+                        AppointmentsDisplay.ConfirmCancel -> true
+                        is AppointmentsDisplay.Page -> !submitting
+                    },
+                )
+            },
+        ) { shown ->
+            when (shown) {
+                AppointmentsDisplay.Outcome -> outcome?.let { current ->
+                    SheetResultPage(outcome = current, onDismiss = { outcome = null })
+                }
 
-                        AppointmentsPage.Sections -> SectionsPage(
-                            services = services,
-                            syncStatus = syncStatus,
-                            onRetry = viewModel::refresh,
-                            onOpenSection = { viewModel.openSection(it.name) },
-                        )
+                AppointmentsDisplay.ConfirmCancel -> pendingCancel?.let { reservation ->
+                    SheetConfirmPage(
+                        body = stringResource(
+                            R.string.appointments_cancel_body,
+                            reservation.serviceName
+                        ),
+                        onConfirm = {
+                            pendingCancel = null
+                            viewModel.cancel(reservation)
+                        },
+                        onKeep = { pendingCancel = null },
+                    )
+                }
 
-                        is AppointmentsPage.Types -> TypesPage(
-                            services = sections.firstOrNull { it.name == page.sectionName }?.services.orEmpty(),
-                            onStartBooking = viewModel::startBooking,
-                        )
+                is AppointmentsDisplay.Page -> when (val page = shown.page) {
+                    AppointmentsPage.Reservations -> ReservationsPage(
+                        reservations = reservations,
+                        onOpenReservation = viewModel::openReservation,
+                        onPrenota = viewModel::openSections,
+                    )
 
-                        AppointmentsPage.Slots -> SlotsPage(viewModel = viewModel)
-
-                        AppointmentsPage.Form -> FormPage(viewModel = viewModel)
-
-                        AppointmentsPage.Done -> DonePage(
-                            serviceName = serviceName,
-                            reservation = bookedReservation,
-                            onDone = viewModel::finishBooking,
-                        )
+                    is AppointmentsPage.ReservationDetail -> {
+                        val reservation = reservationList.firstOrNull { it.code == page.code }
+                        if (reservation != null) {
+                            ReservationDetailPage(
+                                reservation = reservation,
+                                isCancelling = cancellingCode == reservation.code,
+                                onCancel = { pendingCancel = it },
+                            )
+                        }
                     }
+
+                    AppointmentsPage.Sections -> SectionsPage(
+                        services = services,
+                        syncStatus = syncStatus,
+                        onRetry = viewModel::refresh,
+                        onOpenSection = { viewModel.openSection(it.name) },
+                    )
+
+                    is AppointmentsPage.Types -> TypesPage(
+                        services = sections.firstOrNull { it.name == page.sectionName }?.services.orEmpty(),
+                        onStartBooking = viewModel::startBooking,
+                    )
+
+                    AppointmentsPage.Slots -> SlotsPage(viewModel = viewModel)
+
+                    AppointmentsPage.Form -> FormPage(viewModel = viewModel)
+
+                    AppointmentsPage.Done -> DonePage(
+                        serviceName = serviceName,
+                        reservation = bookedReservation,
+                        onDone = viewModel::finishBooking,
+                    )
                 }
             }
         }
@@ -311,6 +315,9 @@ private sealed interface AppointmentsDisplay {
     data object ConfirmCancel : AppointmentsDisplay
     data object Outcome : AppointmentsDisplay
 }
+
+/** The operation an outcome page reports on, naming its header. */
+private enum class AppointmentsOutcomeKind { Cancellation, Document, Booking }
 
 private fun displayDepth(display: AppointmentsDisplay): Int = when (display) {
     is AppointmentsDisplay.Page -> pageDepth(display.page)

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Map filter -->
+    <string name="map_filter_none">Nessun filtro attivo</string>
+    <plurals name="map_filter_selected_count">
+        <item quantity="one">1 categoria selezionata</item>
+        <item quantity="other">%1$d categorie selezionate</item>
+    </plurals>
+</resources>

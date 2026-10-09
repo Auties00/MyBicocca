@@ -1,6 +1,5 @@
 package it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
@@ -47,6 +46,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -64,7 +64,6 @@ import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.state.valueOrNull
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.domain.model.elearning.quiz.AttemptId
-import it.attendance100.mybicocca.domain.model.elearning.quiz.AttemptReview
 import it.attendance100.mybicocca.domain.model.elearning.quiz.AttemptState
 import it.attendance100.mybicocca.domain.model.elearning.quiz.BestGrade
 import it.attendance100.mybicocca.domain.model.elearning.quiz.Quiz
@@ -73,12 +72,12 @@ import it.attendance100.mybicocca.ui.component.feedback.LocalAppSnackbarControll
 import it.attendance100.mybicocca.ui.component.feedback.rememberMinDurationLoading
 import it.attendance100.mybicocca.ui.component.modal.SheetConfirmPage
 import it.attendance100.mybicocca.ui.component.modal.SheetLoadingIndicator
-import it.attendance100.mybicocca.ui.component.modal.SheetPagerHeader
-import it.attendance100.mybicocca.ui.component.modal.sheetBodyGestureBarrier
-import it.attendance100.mybicocca.ui.component.modal.sheetPageTransform
+import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
+import it.attendance100.mybicocca.ui.component.modal.SheetPager
+import it.attendance100.mybicocca.ui.component.modal.rememberLastNonNull
 import it.attendance100.mybicocca.ui.component.text.HtmlBody
 import it.attendance100.mybicocca.ui.navigation.route.SheetRoute
-import it.attendance100.mybicocca.ui.navigation.scene.LocalSheetDismissControl
+import it.attendance100.mybicocca.ui.component.modal.LocalSheetDismissControl
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail.component.AttemptReviewContent
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail.component.AttemptWizard
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail.component.formatGradeValue
@@ -93,8 +92,8 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 /**
- * The whole quiz lives in a single sheet entry: BottomSheetSceneStrategy owns the container,
- * this drives an internal state machine over one morphing [SheetPagerHeader]. Level 0 is the
+ * The whole quiz lives in a single sheet entry: ModalSceneStrategy owns the container, this
+ * drives an internal state machine on a [SheetPager] (one morphing header). Level 0 is the
  * overview (facts + start/resume); "Storico" pushes the attempt list; starting/resuming/
  * reviewing an attempt morphs the SAME sheet onto the question wizard or the read-only review,
  * with the header subtitle reading "Pagina X di Y" while a question page is up.
@@ -103,7 +102,7 @@ import java.util.Locale
  * the encouraged choice in the emphasized brand slot (the confirm page's keep slot): "Consegna"
  * on the submit confirm, "Continua" on the close confirm, whose exit leaves the attempt in
  * progress server-side. Mid-attempt the sheet locks and turns a stray dismissal (scrim tap,
- * swipe) into the "chiudere il quiz?" confirm via the scene's [LocalSheetDismissControl], and
+ * swipe) into the "chiudere il quiz?" confirm via [LocalSheetDismissControl], and
  * refuses dismissal outright while loading or submitting. System back walks the in-sheet pages
  * up one level; on the attempt page the wizard's own deeper handlers (step back / close
  * confirm) win.
@@ -145,16 +144,14 @@ fun QuizDetailPage(
         val attempts = attemptsLoadable.valueOrNull().orEmpty().filterNot { it.previewMode }
         val bestGrade = bestGradeLoadable.valueOrNull()
 
-        var showHistory by remember { mutableStateOf(false) }
-        var confirmSubmit by remember { mutableStateOf(false) }
-        var confirmClose by remember { mutableStateOf(false) }
+        var showHistory by rememberSaveable { mutableStateOf(false) }
+        var confirmSubmit by rememberSaveable { mutableStateOf(false) }
+        var confirmClose by rememberSaveable { mutableStateOf(false) }
 
         val inProgress = attemptUi as? AttemptUiState.InProgress
         val reviewing = attemptUi as? AttemptUiState.Reviewing
-        var lastInProgress by remember { mutableStateOf<AttemptUiState.InProgress?>(null) }
-        if (inProgress != null) lastInProgress = inProgress
-        var lastReview by remember { mutableStateOf<AttemptReview?>(null) }
-        if (reviewing != null) lastReview = reviewing.review
+        val lastInProgress = rememberLastNonNull(inProgress)
+        val lastReview = rememberLastNonNull(reviewing?.review)
 
         val showAttemptLoading = rememberMinDurationLoading(attemptUi == AttemptUiState.Loading)
 
@@ -176,13 +173,17 @@ fun QuizDetailPage(
             }
         }
 
-        val currentAttempt = remember(attempts, inProgress) {
-            attempts.firstOrNull { it.id == inProgress?.attemptId }
+        val currentAttempt = remember(attempts, lastInProgress) {
+            attempts.firstOrNull { it.id == lastInProgress?.attemptId }
+        }
+        val reviewedAttempt = remember(attempts, lastReview) {
+            attempts.firstOrNull { it.id == lastReview?.attemptId }
         }
         val totalPages = remember(currentAttempt?.layout) {
             currentAttempt?.layout?.split(',')?.count { it.trim() == "0" }?.takeIf { it > 0 }
         }
-        val attemptSubtitle = inProgress?.let {
+        // Read from the retained attempt so the outgoing attempt header keeps its page count.
+        val attemptSubtitle = lastInProgress?.let {
             if (totalPages != null) {
                 stringResource(R.string.elearning_quiz_page_of, it.page.pageIndex + 1, totalPages)
             } else {
@@ -213,37 +214,16 @@ fun QuizDetailPage(
             control?.confirmDismiss = onConfirmDismiss
         }
 
-        val seekableState =
-            remember { androidx.compose.animation.core.SeekableTransitionState(page) }
-        val transition = androidx.compose.animation.core.rememberTransition(
-            seekableState,
-            label = "quiz_sheet_pages"
-        )
-
-        LaunchedEffect(page) {
-            if (seekableState.targetState != page) {
-                seekableState.animateTo(page)
-            }
-        }
-
-        androidx.activity.compose.PredictiveBackHandler(
-            enabled = page == QuizSheetPage.History ||
-                    page == QuizSheetPage.Review ||
-                    page == QuizSheetPage.ConfirmSubmit ||
-                    page == QuizSheetPage.ConfirmClose,
-        ) { progress ->
-            try {
-                val fallback = when (page) {
-                    QuizSheetPage.ConfirmSubmit -> QuizSheetPage.Attempt
-                    QuizSheetPage.ConfirmClose -> QuizSheetPage.Attempt
-                    QuizSheetPage.Review -> if (showHistory) QuizSheetPage.History else QuizSheetPage.Overview
-                    QuizSheetPage.History -> QuizSheetPage.Overview
-                    else -> page
-                }
-                progress.collect { event ->
-                    seekableState.seekTo(event.progress, targetState = fallback)
-                }
-                seekableState.animateTo(fallback)
+        SheetPager(
+            page = page,
+            depth = { it.depth },
+            backTo = when (page) {
+                QuizSheetPage.ConfirmSubmit, QuizSheetPage.ConfirmClose -> QuizSheetPage.Attempt
+                QuizSheetPage.Review -> if (showHistory) QuizSheetPage.History else QuizSheetPage.Overview
+                QuizSheetPage.History -> QuizSheetPage.Overview
+                else -> null
+            },
+            onBack = {
                 when (page) {
                     QuizSheetPage.ConfirmSubmit -> confirmSubmit = false
                     QuizSheetPage.ConfirmClose -> confirmClose = false
@@ -251,118 +231,116 @@ fun QuizDetailPage(
                     QuizSheetPage.History -> showHistory = false
                     else -> Unit
                 }
-            } catch (_: kotlinx.coroutines.CancellationException) {
-                seekableState.animateTo(page)
-            }
-        }
+            },
+            modifier = Modifier.testTag(QuizDetailTestTags.ROOT),
+            key = { it.key },
+            header = { target ->
+                val quizName = quiz?.name ?: stringResource(R.string.elearning_quiz_title)
+                SheetHeaderSpec(
+                    title = when (target) {
+                        QuizSheetPage.Overview,
+                        QuizSheetPage.AttemptLoading,
+                        QuizSheetPage.Attempt,
+                        QuizSheetPage.Submitting,
+                        QuizSheetPage.Review -> quizName
 
-        Column(modifier = Modifier.testTag(QuizDetailTestTags.ROOT)) {
-            SheetPagerHeader(
-                depth = page.depth,
-                title = when (page) {
-                    QuizSheetPage.Overview,
-                    QuizSheetPage.AttemptLoading,
-                    QuizSheetPage.Attempt,
-                    QuizSheetPage.Submitting,
-                    QuizSheetPage.Review -> quiz?.name ?: stringResource(R.string.elearning_quiz_title)
-
-                    QuizSheetPage.History -> stringResource(R.string.elearning_quiz_history)
-                    QuizSheetPage.ConfirmSubmit -> stringResource(R.string.elearning_quiz_confirm_submit_title)
-                    QuizSheetPage.ConfirmClose -> stringResource(R.string.elearning_quiz_confirm_close_title)
-                },
-                subtitle = when (page) {
-                    QuizSheetPage.History -> attemptsCountLabel(attempts.size)
-                    QuizSheetPage.Attempt -> attemptSubtitle
-                    QuizSheetPage.Submitting -> stringResource(R.string.elearning_quiz_submitting)
-                    else -> null
-                },
-                onBack = when (page) {
-                    QuizSheetPage.History -> ({ showHistory = false })
-                    QuizSheetPage.Review -> viewModel::closeAttempt
-                    QuizSheetPage.ConfirmSubmit -> ({ confirmSubmit = false })
-                    QuizSheetPage.ConfirmClose -> ({ confirmClose = false })
-                    else -> null
-                },
-            )
-            transition.AnimatedContent(
-                modifier = Modifier.sheetBodyGestureBarrier(),
-                transitionSpec = {
-                    sheetPageTransform(forward = targetState.depth >= initialState.depth)
-                },
-                contentKey = { it.key },
-            ) { target ->
-                when (target) {
-                    QuizSheetPage.Overview ->
-                        if (quiz == null) {
-                            SheetLoadingIndicator(
-                                label = stringResource(R.string.elearning_quiz_loading),
-                                modifier = Modifier.testTag(QuizDetailTestTags.STATE_LOADING),
-                            )
-                        } else {
-                            QuizOverviewPage(
-                                quiz = quiz,
-                                attempts = attempts,
-                                bestGrade = bestGrade,
-                                onStartAttempt = viewModel::onStartAttempt,
-                                onResumeAttempt = { viewModel.resumeAttempt(AttemptId(it)) },
-                                onShowHistory = { showHistory = true },
-                                modifier = Modifier.testTag(QuizDetailTestTags.OVERVIEW),
-                            )
+                        QuizSheetPage.History -> stringResource(R.string.elearning_quiz_history)
+                        QuizSheetPage.ConfirmSubmit -> stringResource(R.string.elearning_quiz_confirm_submit_title)
+                        QuizSheetPage.ConfirmClose -> stringResource(R.string.elearning_quiz_confirm_close_title)
+                    },
+                    subtitle = when (target) {
+                        QuizSheetPage.Overview -> quiz?.let {
+                            stringResource(R.string.elearning_quiz_header_overview, attemptsCountLabel(attempts.size))
                         }
-
-                    QuizSheetPage.History -> QuizHistoryPage(
-                        attempts = attempts,
-                        onResumeAttempt = { viewModel.resumeAttempt(AttemptId(it)) },
-                        onReviewAttempt = { viewModel.viewReview(AttemptId(it)) },
-                    )
-
-                    QuizSheetPage.AttemptLoading ->
-                        SheetLoadingIndicator(label = stringResource(R.string.elearning_quiz_loading_attempt))
-
-                    QuizSheetPage.Attempt -> lastInProgress?.let { state ->
-                        AttemptWizard(
-                            state = state,
+                        QuizSheetPage.History -> attemptsCountLabel(attempts.size)
+                        QuizSheetPage.AttemptLoading -> stringResource(R.string.elearning_quiz_loading_attempt)
+                        QuizSheetPage.Attempt -> attemptSubtitle
+                        QuizSheetPage.Submitting -> stringResource(R.string.elearning_quiz_submitting)
+                        QuizSheetPage.Review -> reviewedAttempt
+                            ?.let { stringResource(R.string.elearning_quiz_header_review_attempt, it.attemptNumber) }
+                            ?: stringResource(R.string.elearning_quiz_header_review)
+                        QuizSheetPage.ConfirmSubmit,
+                        QuizSheetPage.ConfirmClose -> currentAttempt
+                            ?.let { stringResource(R.string.elearning_quiz_header_attempt_of, it.attemptNumber, quizName) }
+                            ?: quizName
+                    },
+                    showBack = target != QuizSheetPage.AttemptLoading &&
+                        target != QuizSheetPage.Attempt &&
+                        target != QuizSheetPage.Submitting,
+                )
+            },
+        ) { target ->
+            when (target) {
+                QuizSheetPage.Overview ->
+                    if (quiz == null) {
+                        SheetLoadingIndicator(
+                            label = stringResource(R.string.elearning_quiz_loading),
+                            modifier = Modifier.testTag(QuizDetailTestTags.STATE_LOADING),
+                        )
+                    } else {
+                        QuizOverviewPage(
                             quiz = quiz,
-                            attempt = attempts.firstOrNull { it.id == state.attemptId },
-                            viewModel = viewModel,
-                            onRequestSubmit = { confirmSubmit = true },
-                            onRequestClose = { confirmClose = true },
+                            attempts = attempts,
+                            bestGrade = bestGrade,
+                            onStartAttempt = viewModel::onStartAttempt,
+                            onResumeAttempt = { viewModel.resumeAttempt(AttemptId(it)) },
+                            onShowHistory = { showHistory = true },
+                            modifier = Modifier.testTag(QuizDetailTestTags.OVERVIEW),
                         )
                     }
 
-                    QuizSheetPage.Submitting ->
-                        SheetLoadingIndicator(label = stringResource(R.string.elearning_quiz_submitting))
+                QuizSheetPage.History -> QuizHistoryPage(
+                    attempts = attempts,
+                    onResumeAttempt = { viewModel.resumeAttempt(AttemptId(it)) },
+                    onReviewAttempt = { viewModel.viewReview(AttemptId(it)) },
+                )
 
-                    QuizSheetPage.Review -> lastReview?.let { review ->
-                        AttemptReviewContent(
-                            review = review,
-                            onClose = viewModel::closeAttempt,
-                        )
-                    }
+                QuizSheetPage.AttemptLoading ->
+                    SheetLoadingIndicator(label = stringResource(R.string.elearning_quiz_loading_attempt))
 
-                    QuizSheetPage.ConfirmSubmit -> SheetConfirmPage(
-                        body = stringResource(R.string.elearning_quiz_confirm_submit_body),
-                        onConfirm = { confirmSubmit = false },
-                        onKeep = {
-                            confirmSubmit = false
-                            viewModel.onSubmit()
-                        },
-                        confirmLabel = stringResource(R.string.common_cancel),
-                        keepLabel = stringResource(R.string.elearning_quiz_submit_attempt),
-                    )
-
-                    QuizSheetPage.ConfirmClose -> SheetConfirmPage(
-                        body = stringResource(R.string.elearning_quiz_confirm_close_body),
-                        onConfirm = {
-                            confirmClose = false
-                            viewModel.onSaveDraft()
-                            viewModel.closeAttempt()
-                        },
-                        onKeep = { confirmClose = false },
-                        confirmLabel = stringResource(R.string.common_exit),
-                        keepLabel = stringResource(R.string.common_continue),
+                QuizSheetPage.Attempt -> lastInProgress?.let { state ->
+                    AttemptWizard(
+                        state = state,
+                        quiz = quiz,
+                        attempt = attempts.firstOrNull { it.id == state.attemptId },
+                        viewModel = viewModel,
+                        onRequestSubmit = { confirmSubmit = true },
+                        onRequestClose = { confirmClose = true },
                     )
                 }
+
+                QuizSheetPage.Submitting ->
+                    SheetLoadingIndicator(label = stringResource(R.string.elearning_quiz_submitting))
+
+                QuizSheetPage.Review -> lastReview?.let { review ->
+                    AttemptReviewContent(
+                        review = review,
+                        onClose = viewModel::closeAttempt,
+                    )
+                }
+
+                QuizSheetPage.ConfirmSubmit -> SheetConfirmPage(
+                    body = stringResource(R.string.elearning_quiz_confirm_submit_body),
+                    onConfirm = { confirmSubmit = false },
+                    onKeep = {
+                        confirmSubmit = false
+                        viewModel.onSubmit()
+                    },
+                    confirmLabel = stringResource(R.string.common_cancel),
+                    keepLabel = stringResource(R.string.elearning_quiz_submit_attempt),
+                )
+
+                QuizSheetPage.ConfirmClose -> SheetConfirmPage(
+                    body = stringResource(R.string.elearning_quiz_confirm_close_body),
+                    onConfirm = {
+                        confirmClose = false
+                        viewModel.onSaveDraft()
+                        viewModel.closeAttempt()
+                    },
+                    onKeep = { confirmClose = false },
+                    confirmLabel = stringResource(R.string.common_exit),
+                    keepLabel = stringResource(R.string.common_continue),
+                )
             }
         }
     }

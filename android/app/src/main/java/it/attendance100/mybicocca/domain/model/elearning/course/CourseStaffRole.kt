@@ -1,5 +1,7 @@
 package it.attendance100.mybicocca.domain.model.elearning.course
 
+import it.attendance100.mybicocca.core.observability.UnknownValues
+
 /**
  * Role group a staff member is listed under on a Moodle course's public page. The site
  * labels these groups in Italian; unrecognized labels collapse to [Other].
@@ -18,7 +20,10 @@ enum class CourseStaffRole(val raw: String) {
             "docente" -> Docente
             "tutor" -> Tutor
             "esercitatore" -> Esercitatore
-            else -> Other
+            else -> {
+                UnknownValues.report("course_staff_role", raw)
+                Other
+            }
         }
     }
 }

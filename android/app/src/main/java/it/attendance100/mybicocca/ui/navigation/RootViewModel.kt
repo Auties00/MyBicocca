@@ -3,6 +3,7 @@ package it.attendance100.mybicocca.ui.navigation
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import it.attendance100.mybicocca.data.local.settings.CareerPickStore
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.career.CareerId
 import it.attendance100.mybicocca.domain.usecase.account.ObserveActiveAccountUseCase
@@ -27,8 +28,14 @@ class RootViewModel @Inject constructor(
     observeActiveAccount: ObserveActiveAccountUseCase,
     private val pickCareerUseCase: PickCareerUseCase,
     observeConnectivity: ObserveConnectivityUseCase,
+    private val careerPickStore: CareerPickStore,
 ) : ViewModel() {
 
+    /**
+     * The in-memory half of the pending pick. [CareerPickStore] is what survives a restart, but
+     * its write lands a moment after sign-in; this flips synchronously, so the main shell never
+     * shows through before the picker.
+     */
     private val _pendingPickFor = MutableStateFlow<AccountId?>(null)
 
     /** Drives the app-wide connectivity band in [AppRoot] and the LocalIsOnline gate for action buttons. */
@@ -43,26 +50,32 @@ class RootViewModel @Inject constructor(
     val phase: StateFlow<RootPhase> = combine(
         observeActiveAccount(),
         _pendingPickFor,
-    ) { active, pendingPick ->
+        careerPickStore.pendingAccountIds,
+    ) { active, pendingPick, persistedPending ->
         when {
             active == null -> RootPhase.Authenticating
-            pendingPick == active.id -> RootPhase.NeedsCareerPick(active)
+            pendingPick == active.id || active.id.value in persistedPending ->
+                RootPhase.NeedsCareerPick(active)
+
             else -> RootPhase.SignedIn(active)
         }
     }.stateIn(viewModelScope, SharingStarted.Eagerly, RootPhase.Loading)
 
     /**
      * Records a completed sign-in; with [requiresPick] the phase holds at
-     * [RootPhase.NeedsCareerPick] for that account until [onCareerPicked] releases it.
+     * [RootPhase.NeedsCareerPick] for that account, across restarts too, until [onCareerPicked]
+     * releases it.
      */
     fun onSignedIn(accountId: AccountId, requiresPick: Boolean) {
         _pendingPickFor.value = if (requiresPick) accountId else null
+        viewModelScope.launch { careerPickStore.setPending(accountId.value, requiresPick) }
     }
 
     /** Persists the chosen career and lifts the pending career-pick gate. */
     fun onCareerPicked(accountId: AccountId, careerId: CareerId) {
         viewModelScope.launch {
             pickCareerUseCase(accountId, careerId)
+            careerPickStore.setPending(accountId.value, false)
             if (_pendingPickFor.value == accountId) _pendingPickFor.value = null
         }
     }

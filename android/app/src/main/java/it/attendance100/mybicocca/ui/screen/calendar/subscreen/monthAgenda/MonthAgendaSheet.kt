@@ -118,6 +118,7 @@ fun MonthAgendaSheet(
     onEventClick: (CalendarEvent) -> Unit,
     elearningCoursesFor: (CalendarEvent) -> List<EnrolledCourse>,
     onOpenCourse: (CourseId) -> Unit,
+    onPickCourseEdition: (activityCode: String) -> Unit,
     onOpenAssignment: (assignmentId: Int, courseId: Int) -> Unit,
     onOpenReservation: (CalendarEvent) -> Unit,
     /** Live seat totals per exam event id, joined from the bookable-calls list by the shell. */
@@ -199,6 +200,7 @@ fun MonthAgendaSheet(
             onEventClick = onEventClick,
             elearningCoursesFor = elearningCoursesFor,
             onOpenCourse = onOpenCourse,
+            onPickCourseEdition = onPickCourseEdition,
             onOpenAssignment = onOpenAssignment,
             onOpenReservation = onOpenReservation,
             examBookingTotals = examBookingTotals,
@@ -252,6 +254,7 @@ private fun AgendaSheetSurface(
     onEventClick: (CalendarEvent) -> Unit,
     elearningCoursesFor: (CalendarEvent) -> List<EnrolledCourse>,
     onOpenCourse: (CourseId) -> Unit,
+    onPickCourseEdition: (activityCode: String) -> Unit,
     onOpenAssignment: (assignmentId: Int, courseId: Int) -> Unit,
     onOpenReservation: (CalendarEvent) -> Unit,
     examBookingTotals: Map<CalendarEventId, Int>,
@@ -323,6 +326,7 @@ private fun AgendaSheetSurface(
                             examTotalBookings = (e as? CalendarEvent.Exam)
                                 ?.let { examBookingTotals[it.id] },
                             onOpenCourse = onOpenCourse,
+                            onPickCourseEdition = onPickCourseEdition,
                             onOpenAssignment = onOpenAssignment,
                             onOpenReservation = onOpenReservation,
                             onClick = {
@@ -425,6 +429,7 @@ private fun AgendaRow(
     elearningCourses: List<EnrolledCourse>,
     examTotalBookings: Int?,
     onOpenCourse: (CourseId) -> Unit,
+    onPickCourseEdition: (activityCode: String) -> Unit,
     onOpenAssignment: (assignmentId: Int, courseId: Int) -> Unit,
     onOpenReservation: (CalendarEvent) -> Unit,
     onClick: () -> Unit,
@@ -522,6 +527,7 @@ private fun AgendaRow(
                         event = event,
                         elearningCourses = elearningCourses,
                         onOpenCourse = onOpenCourse,
+                        onPickCourseEdition = onPickCourseEdition,
                         onOpenAssignment = onOpenAssignment,
                         onOpenReservation = onOpenReservation,
                         modifier = Modifier.padding(start = 13.dp, end = 16.dp, bottom = 16.dp),

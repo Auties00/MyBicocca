@@ -1,14 +1,17 @@
 package it.attendance100.mybicocca.data.mapper.account
 
 import com.google.common.truth.Truth.assertThat
+import it.attendance100.mybicocca.core.observability.UnknownValueSink
+import it.attendance100.mybicocca.core.observability.UnknownValues
 import it.attendance100.mybicocca.domain.model.career.CareerStatus
+import it.attendance100.mybicocca.domain.model.career.isOpen
+import it.attendance100.mybicocca.domain.model.elearning.course.CourseLevel
 import org.junit.Test
 
 /**
- * Covers [mapCareerStatus]: the single-letter and mnemonic Esse3 status codes, the collapsed
- * interruption family, case folding, the null/empty sentinel, and the logged unknown-code
- * fallback. The unknown-code branch calls `android.util.Log.w`, which the module's
- * `isReturnDefaultValues` unit-test config stubs to a no-op on the JVM.
+ * Covers [mapCareerStatus]: the single-letter and mnemonic Esse3 status codes, the provisional
+ * "Ipotesi" code, the collapsed interruption family, case folding, the null/empty sentinel, and
+ * the reported unknown-code fallback.
  */
 class CareerEnumMappersTest {
 
@@ -35,8 +38,40 @@ class CareerEnumMappersTest {
     }
 
     @Test
+    fun `the Ipotesi code maps to PROVISIONAL and counts as open`() {
+        assertThat(mapCareerStatus("I")).isEqualTo(CareerStatus.PROVISIONAL)
+        assertThat(CareerStatus.PROVISIONAL.isOpen).isTrue()
+    }
+
+    @Test
+    fun `an unknown status reports its code and its reason`() {
+        val reported = mutableListOf<Pair<String, String>>()
+        UnknownValues.resetForTest()
+        UnknownValues.sink = UnknownValueSink { field, value -> reported += field to value }
+        try {
+            mapCareerStatus("X", reasonCode = "TIT")
+        } finally {
+            UnknownValues.sink = null
+            UnknownValues.resetForTest()
+        }
+
+        assertThat(reported).containsExactly(
+            "career_status" to "X",
+            "career_status_reason" to "TIT",
+        )
+    }
+
+    @Test
+    fun `course type codes map to the degree level`() {
+        assertThat(mapCareerLevel("L2")).isEqualTo(CourseLevel.Bachelor)
+        assertThat(mapCareerLevel("lm")).isEqualTo(CourseLevel.Master)
+        assertThat(mapCareerLevel("LM5")).isEqualTo(CourseLevel.Master)
+        assertThat(mapCareerLevel("ZZ")).isNull()
+        assertThat(mapCareerLevel(null)).isNull()
+    }
+
+    @Test
     fun `the interruption family collapses interrupted transferred and withdrawn`() {
-        assertThat(mapCareerStatus("I")).isEqualTo(CareerStatus.INTERRUPTED)
         assertThat(mapCareerStatus("INT")).isEqualTo(CareerStatus.INTERRUPTED)
         assertThat(mapCareerStatus("T")).isEqualTo(CareerStatus.INTERRUPTED)
         assertThat(mapCareerStatus("TRA")).isEqualTo(CareerStatus.INTERRUPTED)

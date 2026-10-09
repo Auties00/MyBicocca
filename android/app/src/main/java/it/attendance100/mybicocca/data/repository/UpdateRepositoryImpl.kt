@@ -6,7 +6,6 @@ import it.attendance100.mybicocca.di.ApplicationScope
 import kotlinx.coroutines.CoroutineScope
 import it.attendance100.mybicocca.BuildConfig
 import it.attendance100.mybicocca.core.version.SemVer
-import it.attendance100.mybicocca.core.version.isNightlyBuild
 import it.attendance100.mybicocca.core.version.isRunningBuild
 import it.attendance100.mybicocca.data.local.settings.PersistedUpdateState
 import it.attendance100.mybicocca.data.local.settings.UpdateStateStore
@@ -213,11 +212,7 @@ class UpdateRepositoryImpl @Inject constructor(
             }
 
             val currentVersion = BuildConfig.VERSION_NAME.substringBefore("-")
-            val isNewer = SemVer.isNewer(latest.versionName, currentVersion)
-            // A nightly is newer than its stable base, so matching base versions isn't "same".
-            val isSameAndForced = force && latest.versionName == currentVersion && !isNightlyBuild
-
-            if (!isNewer && !isSameAndForced) {
+            if (!SemVer.isNewer(latest.versionName, currentVersion)) {
                 store.setUpToDate(now)
                 // Whatever we last offered is gone — installed, or withdrawn upstream. A tray
                 // notification outlives the state that produced it, so it has to be taken back

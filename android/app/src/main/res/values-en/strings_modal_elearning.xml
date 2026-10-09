@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- E-learning sheets: pinned header titles and subtitles -->
+
+    <!-- Shared outcome page -->
+    <string name="elearning_sheet_result_title">Outcome</string>
+
+    <!-- Quiz -->
+    <string name="elearning_quiz_header_overview">Quiz · %1$s</string>
+    <string name="elearning_quiz_header_review">Review</string>
+    <string name="elearning_quiz_header_review_attempt">Review · attempt %1$d</string>
+    <string name="elearning_quiz_header_attempt_of">Attempt %1$d · %2$s</string>
+
+    <!-- Folder contents -->
+    <plurals name="elearning_folder_file_count">
+        <item quantity="one">1 file</item>
+        <item quantity="other">%1$d files</item>
+    </plurals>
+
+    <!-- Link -->
+    <string name="elearning_link_external">External link</string>
+
+    <!-- Video quality -->
+    <string name="elearning_video_quality_current">Current: %1$s</string>
+</resources>

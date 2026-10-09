@@ -1,6 +1,5 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.examResults
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
@@ -90,10 +89,10 @@ import it.attendance100.mybicocca.ui.component.input.SegmentedSwitch
 import it.attendance100.mybicocca.ui.component.modal.SheetLoadingIndicator
 import it.attendance100.mybicocca.ui.component.modal.SheetMessage
 import it.attendance100.mybicocca.ui.component.modal.SheetOutcome
-import it.attendance100.mybicocca.ui.component.modal.SheetPagerHeader
 import it.attendance100.mybicocca.ui.component.modal.SheetResultPage
-import it.attendance100.mybicocca.ui.component.modal.sheetBodyGestureBarrier
-import it.attendance100.mybicocca.ui.component.modal.sheetPageTransform
+import it.attendance100.mybicocca.ui.component.modal.SheetPager
+import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
+import it.attendance100.mybicocca.ui.component.modal.rememberLastNonNull
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.examResults.state.ExamResultActionState
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.examResults.state.ExamResultEvent
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.examResults.state.ExamResultFilter
@@ -110,12 +109,11 @@ import java.time.temporal.ChronoUnit
  * confirmation / result). The feed splits into the outcomes still waiting for the
  * student's accept/reject decision and the already-settled register, two pager tabs behind
  * a segmented switch; the grade leads everywhere, in an expressive polygon whose shape
- * encodes the outcome. Body swipes scroll page content rather than the sheet — the header
- * and drag handle are the only swipe-to-dismiss surfaces — and system back walks the pager
- * up one level before dismissing.
+ * encodes the outcome. System back walks the pager up one level (predictively, header and
+ * body in lockstep) before dismissing.
  *
- * The sheet container is owned by BottomSheetSceneStrategy, but this keeps its own page
- * state machine and morphing header, since the confirm and result pages are ephemeral, not
+ * The sheet container is owned by ModalSceneStrategy, but this keeps its own page state
+ * machine on a [SheetPager], since the confirm and result pages are ephemeral, not
  * real destinations. The ViewModel is shell-scoped and outlives the sheet: a re-open
  * renders the cached snapshot instantly while a background refresh runs. The detail page
  * re-derives its esito from the live list by identity, so a refresh updates it in place
@@ -186,136 +184,118 @@ fun ExamResultsPage(
             }
         }
 
-        val seekableState =
-            remember { androidx.compose.animation.core.SeekableTransitionState(page) }
-        val transition = androidx.compose.animation.core.rememberTransition(
-            seekableState,
-            label = "esiti_sheet_pages"
-        )
+        // While the detail slides out its id is already cleared; keep its header readable.
+        val shownDetail = rememberLastNonNull(detailResult)
 
-        LaunchedEffect(page) {
-            if (seekableState.targetState != page) {
-                seekableState.animateTo(page)
-            }
-        }
-
-        androidx.activity.compose.PredictiveBackHandler(enabled = page != EsitiSheetPage.Root) { progress ->
-            try {
-                val fallback = when (page) {
-                    EsitiSheetPage.Result -> if (detailResult == null) EsitiSheetPage.Root else if (confirmingReject) EsitiSheetPage.ConfirmReject else EsitiSheetPage.Detail
-                    EsitiSheetPage.ConfirmReject -> EsitiSheetPage.Detail
-                    EsitiSheetPage.Detail -> EsitiSheetPage.Root
-                    EsitiSheetPage.Root -> EsitiSheetPage.Root
+        SheetPager(
+            page = page,
+            depth = { it.depth },
+            backTo = when (page) {
+                EsitiSheetPage.Result -> when {
+                    detailResult == null -> EsitiSheetPage.Root
+                    confirmingReject -> EsitiSheetPage.ConfirmReject
+                    else -> EsitiSheetPage.Detail
                 }
-                progress.collect { event ->
-                    seekableState.seekTo(event.progress, targetState = fallback)
-                }
-                seekableState.animateTo(fallback)
+                EsitiSheetPage.ConfirmReject -> EsitiSheetPage.Detail
+                EsitiSheetPage.Detail -> EsitiSheetPage.Root
+                EsitiSheetPage.Root -> null
+            },
+            onBack = {
                 when {
                     outcome != null -> outcome = null
                     confirmingReject -> confirmingReject = false
                     else -> detailId = null
                 }
-            } catch (_: kotlinx.coroutines.CancellationException) {
-                seekableState.animateTo(page)
-            }
-        }
-
-        Column {
-            SheetPagerHeader(
-                depth = page.depth,
-                title = when (page) {
-                    EsitiSheetPage.Root -> stringResource(R.string.exam_results_title)
-                    EsitiSheetPage.Detail -> detailResult?.displayTitle() ?: ""
-                    EsitiSheetPage.ConfirmReject -> stringResource(R.string.exam_results_confirm_reject_title)
-                    EsitiSheetPage.Result -> ""
-                },
-                subtitle = when (page) {
-                    EsitiSheetPage.Result -> null
-                    EsitiSheetPage.Root -> if (loaded) sectionSummary(section, grouped) else null
-                    EsitiSheetPage.Detail -> detailResult?.let { result ->
-                        result.acknowledgmentDeadline
-                            ?.takeIf { result.requiresStudentDecision(today) }
-                            ?.let {
-                                stringResource(
-                                    R.string.exam_results_decide_by_date,
-                                    it.format(ShortDateFormat)
-                                )
-                            }
-                            ?: result.examDateTime?.let {
-                                stringResource(
-                                    R.string.exam_results_taken_on_date,
-                                    it.toLocalDate().format(ShortDateFormat),
-                                )
-                            }
-                            ?: result.grade.spelledOut()
-                    }
-
-                    EsitiSheetPage.ConfirmReject -> detailResult?.displayTitle()
-                },
-                onBack = when (page) {
-                    EsitiSheetPage.Root -> null
-                    EsitiSheetPage.Detail -> ({ detailId = null })
-                    EsitiSheetPage.ConfirmReject -> ({ confirmingReject = false })
-                    EsitiSheetPage.Result -> null
-                },
-            )
-            transition.AnimatedContent(
-                modifier = Modifier.sheetBodyGestureBarrier(),
-                transitionSpec = {
-                    sheetPageTransform(forward = targetState.depth >= initialState.depth)
-                },
-                contentKey = { target ->
-                    when (target) {
-                        EsitiSheetPage.Root -> "root"
-                        EsitiSheetPage.Detail -> "detail"
-                        EsitiSheetPage.ConfirmReject -> "confirm_reject"
-                        EsitiSheetPage.Result -> "result"
-                    }
-                },
-            ) { target ->
+            },
+            key = { target ->
                 when (target) {
-                    EsitiSheetPage.Root -> SheetBody(
-                        loaded = loaded,
-                        grouped = grouped,
-                        today = today,
-                        syncStatus = syncStatus,
-                        onRetry = viewModel::refresh,
-                        onSectionChange = { section = it },
-                        onOpenDetail = { detailId = it.identity() },
+                    EsitiSheetPage.Root -> "root"
+                    EsitiSheetPage.Detail -> "detail"
+                    EsitiSheetPage.ConfirmReject -> "confirm_reject"
+                    EsitiSheetPage.Result -> "result"
+                }
+            },
+            header = { target ->
+                SheetHeaderSpec(
+                    title = when (target) {
+                        EsitiSheetPage.Root -> stringResource(R.string.exam_results_title)
+                        EsitiSheetPage.Detail -> shownDetail?.displayTitle()
+                            ?: stringResource(R.string.exam_results_title)
+                        EsitiSheetPage.ConfirmReject -> stringResource(R.string.exam_results_confirm_reject_title)
+                        EsitiSheetPage.Result -> stringResource(
+                            if (acceptInFlight) R.string.exam_results_result_accept_title
+                            else R.string.exam_results_result_reject_title,
+                        )
+                    },
+                    subtitle = when (target) {
+                        EsitiSheetPage.Result -> shownDetail?.displayTitle()
+                            ?: stringResource(R.string.exam_results_title)
+                        EsitiSheetPage.Root -> if (loaded) sectionSummary(section, grouped) else null
+                        EsitiSheetPage.Detail -> shownDetail?.let { result ->
+                            result.acknowledgmentDeadline
+                                ?.takeIf { result.requiresStudentDecision(today) }
+                                ?.let {
+                                    stringResource(
+                                        R.string.exam_results_decide_by_date,
+                                        it.format(ShortDateFormat)
+                                    )
+                                }
+                                ?: result.examDateTime?.let {
+                                    stringResource(
+                                        R.string.exam_results_taken_on_date,
+                                        it.toLocalDate().format(ShortDateFormat),
+                                    )
+                                }
+                                ?: result.grade.spelledOut()
+                        }
+
+                        EsitiSheetPage.ConfirmReject -> shownDetail?.displayTitle()
+                    },
+                    showBack = target != EsitiSheetPage.Result,
+                )
+            },
+        ) { target ->
+            when (target) {
+                EsitiSheetPage.Root -> SheetBody(
+                    loaded = loaded,
+                    grouped = grouped,
+                    today = today,
+                    syncStatus = syncStatus,
+                    onRetry = viewModel::refresh,
+                    onSectionChange = { section = it },
+                    onOpenDetail = { detailId = it.identity() },
+                )
+
+                EsitiSheetPage.Detail -> shownDetail?.let { result ->
+                    EsitoDetailPage(
+                        result = result,
+                        decisionPending = result.requiresStudentDecision(today),
+                        inProgress = (actionState as? ExamResultActionState.InProgress)
+                            ?.applicationListId == result.applicationListId,
+                        acceptInFlight = acceptInFlight,
+                        actionEnabled = actionState is ExamResultActionState.Idle,
+                        onAccept = {
+                            acceptInFlight = true
+                            viewModel.accept(result)
+                        },
+                        onRequestReject = { confirmingReject = true },
                     )
+                }
 
-                    EsitiSheetPage.Detail -> detailResult?.let { result ->
-                        EsitoDetailPage(
-                            result = result,
-                            decisionPending = result.requiresStudentDecision(today),
-                            inProgress = (actionState as? ExamResultActionState.InProgress)
-                                ?.applicationListId == result.applicationListId,
-                            acceptInFlight = acceptInFlight,
-                            actionEnabled = actionState is ExamResultActionState.Idle,
-                            onAccept = {
-                                acceptInFlight = true
-                                viewModel.accept(result)
-                            },
-                            onRequestReject = { confirmingReject = true },
-                        )
-                    }
+                EsitiSheetPage.ConfirmReject -> shownDetail?.let { result ->
+                    RejectConfirmPage(
+                        result = result,
+                        onKeep = { confirmingReject = false },
+                        onConfirm = {
+                            confirmingReject = false
+                            acceptInFlight = false
+                            viewModel.reject(result)
+                        },
+                    )
+                }
 
-                    EsitiSheetPage.ConfirmReject -> detailResult?.let { result ->
-                        RejectConfirmPage(
-                            result = result,
-                            onKeep = { confirmingReject = false },
-                            onConfirm = {
-                                confirmingReject = false
-                                acceptInFlight = false
-                                viewModel.reject(result)
-                            },
-                        )
-                    }
-
-                    EsitiSheetPage.Result -> outcome?.let { current ->
-                        SheetResultPage(outcome = current, onDismiss = { outcome = null })
-                    }
+                EsitiSheetPage.Result -> outcome?.let { current ->
+                    SheetResultPage(outcome = current, onDismiss = { outcome = null })
                 }
             }
         }

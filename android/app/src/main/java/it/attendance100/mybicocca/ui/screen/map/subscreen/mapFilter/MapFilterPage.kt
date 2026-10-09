@@ -1,0 +1,75 @@
+package it.attendance100.mybicocca.ui.screen.map.subscreen.mapFilter
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.core.os.rememberHapticManager
+import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.domain.model.map.BuildingCategory
+import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
+import it.attendance100.mybicocca.ui.screen.map.component.icon
+import it.attendance100.mybicocca.ui.screen.map.component.labelRes
+
+/**
+ * Pinned header of the map filter sheet ([SheetRoute.MapFilter]): "Filtra per categoria" over how
+ * many categories are selected, or that no filter is active.
+ */
+@Composable
+fun mapFilterHeader(selectedCount: Int): SheetHeaderSpec = SheetHeaderSpec(
+    title = stringResource(R.string.map_filter_title),
+    subtitle = if (selectedCount == 0) {
+        stringResource(R.string.map_filter_none)
+    } else {
+        pluralStringResource(R.plurals.map_filter_selected_count, selectedCount, selectedCount)
+    },
+)
+
+/**
+ * Multi-select category filter for the map pins ([SheetRoute.MapFilter]), opened from the shell
+ * app bar's filter affordance and titled by [mapFilterHeader]: one toggleable chip per
+ * [BuildingCategory], plus an "Azzera filtri" action that appears only while at least one
+ * category is selected. An empty selection means no filtering.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun MapFilterPage(
+    selected: Set<BuildingCategory>,
+    onToggle: (BuildingCategory) -> Unit,
+    onClear: () -> Unit,
+) {
+    val haptic = rememberHapticManager()
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp)
+            .padding(bottom = 24.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            BuildingCategory.entries.forEach { category ->
+                FilterChip(
+                    selected = category in selected,
+                    onClick = { haptic.tap(); onToggle(category) },
+                    label = { Text(stringResource(category.labelRes)) },
+                    leadingIcon = { Icon(category.icon, contentDescription = null) },
+                )
+            }
+        }
+        if (selected.isNotEmpty()) {
+            TextButton(onClick = { haptic.tap(); onClear() }) { Text(stringResource(R.string.map_filter_clear)) }
+        }
+    }
+}

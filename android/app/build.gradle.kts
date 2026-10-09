@@ -335,6 +335,9 @@ dependencies {
     testImplementation("androidx.test.ext:junit-ktx:1.2.1")
     testImplementation("androidx.room:room-testing:2.8.4")
     testImplementation("com.google.dagger:hilt-android-testing:2.59.2")
+    // Compose UI tests on Robolectric (navigation/modal behaviour: scene identity, restore, back)
+    testImplementation(platform("androidx.compose:compose-bom:2026.03.01"))
+    testImplementation("androidx.compose.ui:ui-test-junit4")
     kspTest("com.google.dagger:hilt-android-compiler:2.59.2")
 
     // Android Test dependencies (instrumented — device/emulator: the Robolectric-deferred UI interactions)
@@ -351,8 +354,8 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.7.0")
 
     // Navigation 3
-    implementation("androidx.navigation3:navigation3-runtime:1.1.0")
-    implementation("androidx.navigation3:navigation3-ui:1.1.0")
+    implementation("androidx.navigation3:navigation3-runtime:1.2.0")
+    implementation("androidx.navigation3:navigation3-ui:1.2.0")
     implementation("androidx.lifecycle:lifecycle-viewmodel-navigation3:2.10.0")
     implementation("com.google.android.gms:play-services-oss-licenses:17.3.0")
     implementation("androidx.biometric:biometric:1.1.0")

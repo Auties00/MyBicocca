@@ -12,7 +12,8 @@ import androidx.room.PrimaryKey
  * The primary key is the Esse3 career id (`stuId`). Rows reference their account through a
  * cascading foreign key, so deleting an account removes its careers too. `status` stores the
  * domain CareerStatus enum name and is parsed leniently on read, letting unknown values degrade
- * instead of crashing.
+ * instead of crashing. `level` stores the domain CourseLevel enum name the same way, and is null
+ * for rows written before the column existed.
  */
 @Entity(
     tableName = "careers",
@@ -38,4 +39,5 @@ data class CareerEntity(
     val description: String,
     @ColumnInfo(name = "academic_year") val academicYear: Int,
     val status: String,
+    val level: String? = null,
 )

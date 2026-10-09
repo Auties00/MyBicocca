@@ -44,10 +44,29 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.enrollment.AnnualEnrollment
+import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.enrollments.component.EnrollmentBadgeChip
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.enrollments.ext.academicYearLabel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.enrollments.ext.badges
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.enrollments.ext.courseYearLabel
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.enrollments.ext.statusLabel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.enrollments.ext.toEnrollmentDateLabel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.enrollments.ext.typeLabel
+
+/**
+ * One year's detail page header: the academic year over its course year and status; [enrollment]
+ * is null only while it loads (or as it is evicted).
+ */
+@Composable
+fun enrollmentDetailHeader(enrollment: AnnualEnrollment?): SheetHeaderSpec =
+    if (enrollment == null) {
+        SheetHeaderSpec(title = stringResource(R.string.registry_enrollments), subtitle = null)
+    } else {
+        SheetHeaderSpec(
+            title = stringResource(R.string.enrollments_detail_title, enrollment.academicYearLabel()),
+            subtitle = "${enrollment.courseYearLabel()} · ${enrollment.statusLabel()}",
+        )
+    }
 
 /**
  * Full breakdown for one academic year, as a headerless page inside the iscrizioni sheet

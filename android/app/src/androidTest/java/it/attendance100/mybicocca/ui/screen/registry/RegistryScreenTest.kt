@@ -1,5 +1,6 @@
 package it.attendance100.mybicocca.ui.screen.registry
 
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
@@ -10,7 +11,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.verify
 import it.attendance100.mybicocca.domain.model.account.AcademicIdentity
 import it.attendance100.mybicocca.domain.model.account.Account
 import it.attendance100.mybicocca.domain.model.account.AccountId
@@ -34,11 +34,16 @@ import it.attendance100.mybicocca.domain.usecase.tax.GetPaymentStatusUseCase
 import it.attendance100.mybicocca.domain.usecase.tax.GetTaxInvoicesUseCase
 import it.attendance100.mybicocca.domain.usecase.tax.StartPagoPaPaymentUseCase
 import it.attendance100.mybicocca.testing.setBicoccaContent
+import it.attendance100.mybicocca.ui.navigation.AppNavigator
+import it.attendance100.mybicocca.ui.navigation.LocalAppNavigator
+import it.attendance100.mybicocca.ui.navigation.rememberAppNavigator
+import it.attendance100.mybicocca.ui.navigation.route.SheetRoute
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.BookedExamsViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.BookableExamsViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.examResults.ExamResultsViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.TaxesViewModel
 import kotlinx.coroutines.flow.flowOf
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -51,7 +56,8 @@ import java.time.Instant
  * [BookedExamsViewModel] / [BookableExamsViewModel] / [TaxesViewModel] / [ExamResultsViewModel]
  * instances built over MockK-faked use cases that resolve to empty lists, so the directory renders
  * without driving any sub-sheet that would mount a `hiltViewModel` child. Behaviour tests tap a
- * tagged directory tile and verify the matching `onOpen*` callback spy fires. Anchored on
+ * tagged directory tile and check the matching [SheetRoute] lands on top of a bare [AppNavigator]
+ * provided through [LocalAppNavigator] (nothing renders it, so no sheet opens). Anchored on
  * [RegistryTestTags] and rendered via [setBicoccaContent], which installs the app-wide
  * CompositionLocals (haptics, snackbar controller, device type) the directory tiles assume.
  */
@@ -79,19 +85,7 @@ class RegistryScreenTest {
     private val rejectExamResult: RejectExamResultUseCase = mockk(relaxed = true)
     private val observeActiveAccount: ObserveActiveAccountUseCase = mockk()
 
-    private val onOpenAppelli: () -> Unit = mockk(relaxed = true)
-    private val onOpenTaxes: () -> Unit = mockk(relaxed = true)
-    private val onOpenIsee: () -> Unit = mockk(relaxed = true)
-    private val onOpenRefunds: () -> Unit = mockk(relaxed = true)
-    private val onOpenExamResults: () -> Unit = mockk(relaxed = true)
-    private val onOpenStudyPlan: () -> Unit = mockk(relaxed = true)
-    private val onOpenQuestionnaires: () -> Unit = mockk(relaxed = true)
-    private val onOpenAppointments: () -> Unit = mockk(relaxed = true)
-    private val onOpenLibrary: () -> Unit = mockk(relaxed = true)
-    private val onOpenAttendance: () -> Unit = mockk(relaxed = true)
-    private val onOpenEnrollments: () -> Unit = mockk(relaxed = true)
-    private val onOpenTitles: () -> Unit = mockk(relaxed = true)
-    private val onOpenCertificates: () -> Unit = mockk(relaxed = true)
+    private lateinit var navigator: AppNavigator
 
     private fun setRegistryScreen() {
         every { observeActiveAccount() } returns flowOf(account())
@@ -126,26 +120,16 @@ class RegistryScreenTest {
             )
 
         compose.setBicoccaContent {
-            RegistryScreen(
-                bookedExamsViewModel = bookedExamsViewModel,
-                bookableExamsViewModel = bookableExamsViewModel,
-                taxesViewModel = taxesViewModel,
-                examResultsViewModel = examResultsViewModel,
-                studyPlanViewModel = studyPlanViewModel,
-                onOpenAppelli = onOpenAppelli,
-                onOpenTaxes = onOpenTaxes,
-                onOpenIsee = onOpenIsee,
-                onOpenRefunds = onOpenRefunds,
-                onOpenExamResults = onOpenExamResults,
-                onOpenStudyPlan = onOpenStudyPlan,
-                onOpenQuestionnaires = onOpenQuestionnaires,
-                onOpenAppointments = onOpenAppointments,
-                onOpenLibrary = onOpenLibrary,
-                onOpenAttendance = onOpenAttendance,
-                onOpenEnrollments = onOpenEnrollments,
-                onOpenTitles = onOpenTitles,
-                onOpenCertificates = onOpenCertificates,
-            )
+            navigator = rememberAppNavigator()
+            CompositionLocalProvider(LocalAppNavigator provides navigator) {
+                RegistryScreen(
+                    bookedExamsViewModel = bookedExamsViewModel,
+                    bookableExamsViewModel = bookableExamsViewModel,
+                    taxesViewModel = taxesViewModel,
+                    examResultsViewModel = examResultsViewModel,
+                    studyPlanViewModel = studyPlanViewModel,
+                )
+            }
         }
     }
 
@@ -169,37 +153,37 @@ class RegistryScreenTest {
     }
 
     @Test
-    fun tapping_the_appelli_tile_invokes_onOpenAppelli() {
+    fun tapping_the_appelli_tile_opens_its_sheet() {
         setRegistryScreen()
 
         compose.onNodeWithTag(RegistryTestTags.service("appelli")).performScrollTo().performClick()
         compose.waitForIdle()
 
-        verify { onOpenAppelli() }
+        compose.runOnIdle { assertEquals(SheetRoute.Appelli, navigator.top.route) }
     }
 
     @Test
-    fun tapping_the_taxes_tile_invokes_onOpenTaxes() {
+    fun tapping_the_taxes_tile_opens_its_sheet() {
         setRegistryScreen()
 
         compose.onNodeWithTag(RegistryTestTags.service("taxes")).performScrollTo().performClick()
         compose.waitForIdle()
 
-        verify { onOpenTaxes() }
+        compose.runOnIdle { assertEquals(SheetRoute.Taxes, navigator.top.route) }
     }
 
     @Test
-    fun tapping_the_study_plan_tile_invokes_onOpenStudyPlan() {
+    fun tapping_the_study_plan_tile_opens_its_sheet() {
         setRegistryScreen()
 
         compose.onNodeWithTag(RegistryTestTags.service("study_plan")).performScrollTo().performClick()
         compose.waitForIdle()
 
-        verify { onOpenStudyPlan() }
+        compose.runOnIdle { assertEquals(SheetRoute.StudyPlan, navigator.top.route) }
     }
 
     @Test
-    fun tapping_the_certificates_tile_invokes_onOpenCertificates() {
+    fun tapping_the_certificates_tile_opens_its_sheet() {
         setRegistryScreen()
 
         compose.waitUntil(timeoutMillis = 5000) {
@@ -210,7 +194,7 @@ class RegistryScreenTest {
         compose.onNodeWithTag(RegistryTestTags.service("certificates")).performScrollTo().performClick()
         compose.waitForIdle()
 
-        verify { onOpenCertificates() }
+        compose.runOnIdle { assertEquals(SheetRoute.Certificates, navigator.top.route) }
     }
 
     private fun account(): Account = Account(

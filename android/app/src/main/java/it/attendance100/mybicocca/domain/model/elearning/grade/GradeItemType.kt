@@ -1,5 +1,7 @@
 package it.attendance100.mybicocca.domain.model.elearning.grade
 
+import it.attendance100.mybicocca.core.observability.UnknownValues
+
 /**
  * What a Moodle gradebook row grades: a single activity, a category aggregate, the
  * course total, or a manually-entered item. Unrecognized kinds collapse to [Other].
@@ -15,6 +17,7 @@ enum class GradeItemType(val raw: String) {
 
     companion object {
         fun fromRaw(raw: String?): GradeItemType =
-            entries.firstOrNull { it.raw.equals(raw, ignoreCase = true) } ?: Other
+            entries.firstOrNull { it.raw.equals(raw, ignoreCase = true) }
+                ?: Other.also { UnknownValues.report("grade_item_type", raw) }
     }
 }
