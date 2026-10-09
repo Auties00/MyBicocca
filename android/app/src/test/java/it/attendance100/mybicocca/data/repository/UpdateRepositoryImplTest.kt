@@ -102,7 +102,7 @@ class UpdateRepositoryImplTest {
 
     @Test
     fun checkForUpdates_whenForcedOnTheLatestRelease_reportsUpToDate() = runTest {
-        val running = BuildConfig.VERSION_NAME.substringBefore("-")
+        val running = BuildConfig.VERSION_NAME
         coEvery { api.getLatestRelease() } returns GithubReleaseDto(
             tagName = "v$running",
             name = "MyBicocca $running",
