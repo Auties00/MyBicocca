@@ -47,6 +47,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.rememberHapticManager
+import it.attendance100.mybicocca.core.time.AppClock
 import it.attendance100.mybicocca.domain.model.account.AcademicIdentity
 import it.attendance100.mybicocca.domain.model.account.Account
 import it.attendance100.mybicocca.domain.model.account.AccountId
@@ -469,9 +470,9 @@ private val SampleAccount = Account(
         maxUploadFileSizeBytes = 100,
         storageQuotaBytes = 100,
     ),
-    createdAt = Instant.now(),
-    lastUsedAt = Instant.now(),
-    lastSyncedAt = Instant.now(),
+    createdAt = Instant.now(AppClock.clock),
+    lastUsedAt = Instant.now(AppClock.clock),
+    lastSyncedAt = Instant.now(AppClock.clock),
 )
 
 @Preview(

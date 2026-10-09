@@ -7,6 +7,7 @@ import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.map
 import it.attendance100.mybicocca.core.state.valueOrNull
+import it.attendance100.mybicocca.core.time.AppClock
 import it.attendance100.mybicocca.domain.model.map.BuildingCategory
 import it.attendance100.mybicocca.domain.model.map.BuildingCode
 import it.attendance100.mybicocca.domain.model.map.MapBuilding
@@ -103,7 +104,7 @@ class MapViewModel @Inject constructor(
             } else {
                 flow {
                     emit(Loadable.NotYetLoaded)
-                    val entries = runCatching { loadBuildingSchedule(code, LocalDate.now()) }.getOrNull()
+                    val entries = runCatching { loadBuildingSchedule(code, LocalDate.now(AppClock.clock)) }.getOrNull()
                     emit(Loadable.Loaded(entries?.groupBy { it.roomCode.value }))
                 }
             }

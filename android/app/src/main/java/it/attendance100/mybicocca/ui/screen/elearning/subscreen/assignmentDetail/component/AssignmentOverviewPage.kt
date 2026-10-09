@@ -40,6 +40,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.time.AppClock
 import it.attendance100.mybicocca.domain.model.elearning.assignment.Assignment
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.assignmentDetail.AssignmentDetailTestTags
 import it.attendance100.mybicocca.domain.model.elearning.assignment.SubmissionStatus
@@ -66,7 +67,7 @@ internal fun AssignmentOverviewPage(
     modifier: Modifier = Modifier,
 ) {
     val scheme = MaterialTheme.colorScheme
-    val now = remember(assignment) { Instant.now() }
+    val now = remember(assignment) { Instant.now(AppClock.clock) }
     val status = assignment.submissionStatus
 
     Column(

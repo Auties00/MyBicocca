@@ -49,6 +49,7 @@ import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.state.SyncStatus
+import it.attendance100.mybicocca.core.time.AppClock
 import it.attendance100.mybicocca.domain.model.calendar.CalendarEvent
 import it.attendance100.mybicocca.domain.model.calendar.CalendarEventId
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
@@ -338,7 +339,7 @@ fun CalendarScreen(
                         selectedMonth = selectedMonth,
                         agendaProgress = agendaProgress.value,
                         bottomNavBarPadding = bottomNavBarPadding,
-                        onJumpToToday = { viewModel.selectDay(java.time.LocalDate.now()) },
+                        onJumpToToday = { viewModel.selectDay(java.time.LocalDate.now(AppClock.clock)) },
                     )
                 }
             }

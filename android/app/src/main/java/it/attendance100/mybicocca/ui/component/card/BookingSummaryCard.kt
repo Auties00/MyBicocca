@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.rememberHapticManager
+import it.attendance100.mybicocca.core.time.AppClock
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -40,7 +41,7 @@ import java.time.format.DateTimeFormatter
 /** "Oggi" / "Domani" for the next two days, otherwise the capitalized Italian weekday ("Gio"). */
 @Composable
 fun relativeDayLabel(date: LocalDate): String {
-    val today = LocalDate.now()
+    val today = LocalDate.now(AppClock.clock)
     val dayOfWeekFormat = DateTimeFormatter.ofPattern("EEE", LocalLocale.current.platformLocale)
 
     return when (date) {

@@ -1,5 +1,6 @@
 package it.attendance100.mybicocca.data.repository
 
+import it.attendance100.mybicocca.core.time.AppClock
 import it.attendance100.mybicocca.data.auth.SessionManager
 import it.attendance100.mybicocca.data.local.enrollment.EnrollmentCacheDao
 import it.attendance100.mybicocca.data.mapper.enrollment.toDomain
@@ -90,7 +91,7 @@ class EnrollmentRepositoryImpl @Inject constructor(
      * the "current" academic year to renew into is the calendar year itself.
      */
     private fun currentAcademicYear(): Int {
-        val today = LocalDate.now()
+        val today = LocalDate.now(AppClock.clock)
         return if (today.monthValue >= ACADEMIC_YEAR_ROLLOVER_MONTH) today.year else today.year - 1
     }
 

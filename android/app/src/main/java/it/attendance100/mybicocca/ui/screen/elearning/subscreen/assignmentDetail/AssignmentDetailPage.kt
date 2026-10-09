@@ -42,6 +42,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.currentLocale
 import it.attendance100.mybicocca.core.state.Loadable
+import it.attendance100.mybicocca.core.time.AppClock
 import it.attendance100.mybicocca.domain.model.elearning.assignment.Assignment
 import it.attendance100.mybicocca.domain.model.elearning.assignment.SubmissionForm
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
@@ -397,7 +398,7 @@ private fun deadlineSubtitle(assignment: Assignment): String {
         DateTimeFormatter.ofPattern("EEE d MMM, HH:mm", locale).withZone(ZoneId.systemDefault())
     }
     val due = assignment.dueDate ?: return stringResource(R.string.elearning_assign_no_deadline)
-    return if (due.isBefore(Instant.now())) {
+    return if (due.isBefore(Instant.now(AppClock.clock))) {
         stringResource(R.string.elearning_assign_expired_date, formatter.format(due))
     } else {
         stringResource(R.string.elearning_assign_expires_date, formatter.format(due))

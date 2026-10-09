@@ -62,6 +62,7 @@ import it.attendance100.mybicocca.BuildConfig
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.currentLocale
 import it.attendance100.mybicocca.core.os.rememberHapticManager
+import it.attendance100.mybicocca.core.time.AppClock
 import it.attendance100.mybicocca.core.version.isNightlyBuild
 import it.attendance100.mybicocca.domain.model.update.DownloadState
 import it.attendance100.mybicocca.domain.model.update.isActive
@@ -101,7 +102,7 @@ private val versionText: String = buildString {
 
 private val copyrightText: String
     get() {
-        val current = Year.now().value
+        val current = Year.now(AppClock.clock).value
         val span =
             if (current > COPYRIGHT_START_YEAR) "$COPYRIGHT_START_YEAR–$current" else "$COPYRIGHT_START_YEAR"
         return "© $span 100% Attendance"

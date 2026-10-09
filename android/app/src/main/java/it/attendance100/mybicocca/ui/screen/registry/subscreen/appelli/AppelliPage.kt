@@ -50,6 +50,7 @@ import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
+import it.attendance100.mybicocca.core.time.AppClock
 import it.attendance100.mybicocca.domain.model.exam.BookedExam
 import it.attendance100.mybicocca.ui.component.button.RetryButton
 import it.attendance100.mybicocca.ui.component.feedback.friendlyMessage
@@ -151,7 +152,7 @@ fun AppelliPage(
 
     val loaded = bookingsData is Loadable.Loaded
     val bookings = bookingsData.valueOrNull().orEmpty()
-    val today = remember { LocalDate.now() }
+    val today = remember { LocalDate.now(AppClock.clock) }
     val active = remember(bookings, today) {
         bookings.groupByFilter(today)[BookedFilter.Active].orEmpty()
     }

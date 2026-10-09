@@ -2,6 +2,7 @@ package it.attendance100.mybicocca.ui.component.time
 
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.text.UiText
+import it.attendance100.mybicocca.core.time.AppClock
 import java.time.Duration
 import java.time.Instant
 import java.time.ZoneId
@@ -16,7 +17,7 @@ import java.util.Locale
  */
 fun relativeTimeLabel(
     instant: Instant,
-    now: Instant = Instant.now(),
+    now: Instant = Instant.now(AppClock.clock),
     locale: Locale = Locale.getDefault(),
 ): UiText {
     val zone = ZoneId.systemDefault()

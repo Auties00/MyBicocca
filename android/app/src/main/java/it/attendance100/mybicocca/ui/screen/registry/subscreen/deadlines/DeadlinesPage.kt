@@ -42,6 +42,7 @@ import androidx.compose.ui.unit.sp
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.currentLocale
 import it.attendance100.mybicocca.core.os.rememberHapticManager
+import it.attendance100.mybicocca.core.time.AppClock
 import it.attendance100.mybicocca.ui.component.button.RetryButton
 import it.attendance100.mybicocca.ui.component.feedback.friendlyMessage
 import it.attendance100.mybicocca.ui.component.feedback.rememberMinDurationLoading
@@ -112,7 +113,7 @@ fun DeadlinesPage(
 ) {
     val dismissControl = LocalSheetDismissControl.current
     val scheme = MaterialTheme.colorScheme
-    val today = remember { LocalDate.now() }
+    val today = remember { LocalDate.now(AppClock.clock) }
 
     val showLoading = rememberMinDurationLoading(loading = loading)
     val settled = !loading && !showLoading

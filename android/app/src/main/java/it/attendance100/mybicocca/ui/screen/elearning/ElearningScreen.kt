@@ -47,6 +47,7 @@ import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
+import it.attendance100.mybicocca.core.time.AppClock
 import it.attendance100.mybicocca.domain.model.elearning.assignment.AssignmentId
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseFilter
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
@@ -314,7 +315,7 @@ private fun CourseList(
                 }
 
                 val validDeadlines =
-                    active.deadlines.filter { it.dueAt > Instant.now().minus(14, ChronoUnit.DAYS) }
+                    active.deadlines.filter { it.dueAt > Instant.now(AppClock.clock).minus(14, ChronoUnit.DAYS) }
 
                 NotebookCard(
                     title = active.fullName,

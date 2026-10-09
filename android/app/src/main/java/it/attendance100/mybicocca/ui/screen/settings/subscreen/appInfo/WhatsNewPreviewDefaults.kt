@@ -4,6 +4,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import it.attendance100.mybicocca.core.release.MergedReleaseSource
 import it.attendance100.mybicocca.core.release.mergeReleaseNotes
 import it.attendance100.mybicocca.core.release.parseReleaseNotes
+import it.attendance100.mybicocca.core.time.AppClock
 import it.attendance100.mybicocca.domain.model.update.AppRelease
 import java.time.Instant
 
@@ -130,7 +131,7 @@ private fun mockReleaseItems(): List<ReleaseItem> = MOCK_RELEASES.map { mock ->
             title = mock.version,
             notes = mock.body,
             pageUrl = "https://github.com/Auties00/MyBicocca/releases/tag/${mock.version}",
-            publishedAt = Instant.now().minusSeconds(mock.daysAgo * 86_400L),
+            publishedAt = Instant.now(AppClock.clock).minusSeconds(mock.daysAgo * 86_400L),
             isPreRelease = false,
         ),
         notes = parseReleaseNotes(mock.body),

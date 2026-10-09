@@ -159,6 +159,13 @@ android {
             )
             signingConfig = signingConfigs.getByName("release").takeIf { it.storeFile != null }
         }
+        // Fake signed-in student backed by src/demo: screenshots and UI work without credentials.
+        // Keeps the debug applicationId because google-services.json only knows that one.
+        create("demo") {
+            initWith(getByName("debug"))
+            versionNameSuffix = "-demo"
+            matchingFallbacks += listOf("debug")
+        }
         create("nightly") {
             initWith(getByName("release"))
             // Not debuggable, like release: nightlies are published for users, and a debuggable
@@ -168,6 +175,16 @@ android {
             matchingFallbacks += listOf("release")
             signingConfig = signingConfigs.getByName("release").takeIf { it.storeFile != null }
                 ?: signingConfigs.getByName("debug")
+        }
+    }
+
+    // src/live holds the bindings to the real backends, src/demo (the demo build type's own
+    // source set) their fake counterparts, so no demo code is compiled into a shipped build.
+    sourceSets {
+        listOf("debug", "release", "nightly").forEach {
+            // Both: KSP reads the java directories, the built-in Kotlin compiler only the kotlin ones.
+            getByName(it).java.srcDir("src/live/java")
+            getByName(it).kotlin.srcDir("src/live/java")
         }
     }
 

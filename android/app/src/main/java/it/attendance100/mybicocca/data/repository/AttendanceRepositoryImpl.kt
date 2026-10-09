@@ -3,6 +3,7 @@ package it.attendance100.mybicocca.data.repository
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.text.UiText
+import it.attendance100.mybicocca.core.time.AppClock
 import it.attendance100.mybicocca.data.auth.SessionManager
 import it.attendance100.mybicocca.data.local.settings.DeviceIdentityStore
 import it.attendance100.mybicocca.data.location.DeviceLocationProvider
@@ -86,7 +87,7 @@ class AttendanceRepositoryImpl @Inject constructor(
         val planned = plannedDeferred.await()
         val transcriptRows = transcriptDeferred.await()
 
-        val today = LocalDate.now()
+        val today = LocalDate.now(AppClock.clock)
         val academicYear = academicYearOf(today)
         val currentSemester = semesterOf(today)
         val currentYear = currentYearOfStudy(transcriptRows, academicYear, plan)

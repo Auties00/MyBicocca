@@ -6,6 +6,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
+import it.attendance100.mybicocca.core.time.AppClock
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentForm
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentFormField
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentMonthAvailability
@@ -125,7 +126,7 @@ class AppointmentsViewModel @Inject constructor(
 
     private val _selectedAreaId = MutableStateFlow<Int?>(null)
 
-    private val _month = MutableStateFlow(YearMonth.now())
+    private val _month = MutableStateFlow(YearMonth.now(AppClock.clock))
     val month: StateFlow<YearMonth> = _month.asStateFlow()
 
     private val _monthAvailability =
@@ -179,11 +180,11 @@ class AppointmentsViewModel @Inject constructor(
         get() = _offerings.value.valueOrNull()
             ?.let { list -> list.firstOrNull { it.area.id == _selectedAreaId.value } ?: list.firstOrNull() }
 
-    private val minMonth: YearMonth = YearMonth.now()
+    private val minMonth: YearMonth = YearMonth.now(AppClock.clock)
     private val maxMonth: YearMonth
         get() {
             val horizon = selectedOffering?.horizonDays ?: DefaultHorizonDays
-            return YearMonth.from(LocalDate.now().plusDays(horizon.toLong()))
+            return YearMonth.from(LocalDate.now(AppClock.clock).plusDays(horizon.toLong()))
         }
 
     val canGoToPreviousMonth: Boolean get() = _month.value > minMonth

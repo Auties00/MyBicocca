@@ -21,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.core.time.AppClock
 import it.attendance100.mybicocca.domain.model.calendar.CalendarEvent
 import it.attendance100.mybicocca.ui.screen.calendar.ext.weekStartFor
 import it.attendance100.mybicocca.ui.screen.calendar.state.timelineWindowFor
@@ -73,7 +74,7 @@ fun WeekView(
     LaunchedEffect(pagerState.settledPage) {
         val pageWeekStart = anchorWeekStart.plusWeeks((pagerState.settledPage - PAGER_ANCHOR).toLong())
         if (pageWeekStart != weekStart) {
-            val today = LocalDate.now()
+            val today = LocalDate.now(AppClock.clock)
             val target = if (weekStartFor(today) == pageWeekStart) today else pageWeekStart
             onSelectDay(target)
         }

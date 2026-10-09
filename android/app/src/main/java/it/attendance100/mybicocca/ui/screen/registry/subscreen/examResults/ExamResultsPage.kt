@@ -74,6 +74,7 @@ import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
+import it.attendance100.mybicocca.core.time.AppClock
 import it.attendance100.mybicocca.domain.model.exam.AcknowledgmentStatus
 import it.attendance100.mybicocca.domain.model.exam.ExamGrade
 import it.attendance100.mybicocca.domain.model.exam.ExamResult
@@ -139,7 +140,7 @@ fun ExamResultsPage(
 
     val loaded = resultsData is Loadable.Loaded
     val results = resultsData.valueOrNull().orEmpty()
-    val today = remember { LocalDate.now() }
+    val today = remember { LocalDate.now(AppClock.clock) }
 
     val grouped = remember(results, today) { results.groupByFilter(today) }
 

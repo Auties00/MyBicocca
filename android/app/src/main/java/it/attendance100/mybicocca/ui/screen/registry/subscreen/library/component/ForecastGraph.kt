@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import it.attendance100.mybicocca.core.time.AppClock
 import it.attendance100.mybicocca.domain.model.library.LibraryForecastPoint
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.ext.occupancyColor
 import java.time.LocalTime
@@ -33,7 +34,7 @@ private val HourFormat = DateTimeFormatter.ofPattern("HH")
 fun ForecastGraph(
     points: List<LibraryForecastPoint>,
     modifier: Modifier = Modifier,
-    now: LocalTime = LocalTime.now(),
+    now: LocalTime = LocalTime.now(AppClock.clock),
 ) {
     if (points.isEmpty()) return
     val scheme = MaterialTheme.colorScheme

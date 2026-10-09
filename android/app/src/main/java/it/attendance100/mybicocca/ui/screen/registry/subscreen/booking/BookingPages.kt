@@ -59,6 +59,7 @@ import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.currentLocale
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.state.SyncStatus
+import it.attendance100.mybicocca.core.time.AppClock
 import it.attendance100.mybicocca.domain.model.exam.ExamCall
 import it.attendance100.mybicocca.domain.model.exam.ExamType
 import it.attendance100.mybicocca.ui.component.button.RetryButton
@@ -149,7 +150,7 @@ private fun ExamCalendarList(
     onOpenCall: (ExamCall) -> Unit,
 ) {
     val listState = rememberLazyListState()
-    val today = remember { LocalDate.now() }
+    val today = remember { LocalDate.now(AppClock.clock) }
 
     LaunchedEffect(pendingFocus, groups) {
         val key = pendingFocus ?: return@LaunchedEffect

@@ -6,6 +6,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
+import it.attendance100.mybicocca.core.time.AppClock
 import it.attendance100.mybicocca.domain.model.library.Library
 import it.attendance100.mybicocca.domain.model.library.LibraryActionKind
 import it.attendance100.mybicocca.domain.model.library.LibraryAgreement
@@ -129,7 +130,7 @@ class LibraryViewModel @Inject constructor(
     val reservations: StateFlow<Loadable<List<LibraryReservation>>> =
         observeReservations()
             .map<List<LibraryReservation>, Loadable<List<LibraryReservation>>> { list ->
-                val now = LocalDateTime.now()
+                val now = LocalDateTime.now(AppClock.clock)
                 Loadable.Loaded(list.filter { it.end.isAfter(now) })
             }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), Loadable.NotYetLoaded)
@@ -491,7 +492,7 @@ class LibraryViewModel @Inject constructor(
         val library = _bookingLibrary.value ?: return
         viewModelScope.launch {
             _constraintsStatus.value = SyncStatus.Refreshing
-            runCatching { getConstraints(library.id, zone.resourceTypeId, LocalDate.now()) }.fold(
+            runCatching { getConstraints(library.id, zone.resourceTypeId, LocalDate.now(AppClock.clock)) }.fold(
                 onSuccess = { constraints ->
                     _constraints.value = Loadable.Loaded(constraints)
                     _constraintsStatus.value = SyncStatus.Idle

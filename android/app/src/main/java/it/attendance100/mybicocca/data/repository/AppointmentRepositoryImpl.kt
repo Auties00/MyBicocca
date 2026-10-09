@@ -1,6 +1,7 @@
 package it.attendance100.mybicocca.data.repository
 
 import it.attendance100.mybicocca.core.text.StringResolver
+import it.attendance100.mybicocca.core.time.AppClock
 import it.attendance100.mybicocca.data.local.appointment.AppointmentReservationDao
 import it.attendance100.mybicocca.data.mapper.appointment.CampusZone
 import it.attendance100.mybicocca.data.mapper.appointment.toAppointmentForm
@@ -148,7 +149,7 @@ class AppointmentRepositoryImpl @Inject constructor(
      * never finalized. Any other failure (network, server hiccup) keeps the local copy.
      */
     override suspend fun refreshReservations() {
-        val now = LocalDateTime.now(CampusZone)
+        val now = LocalDateTime.now(AppClock.clock.withZone(CampusZone))
         for (entity in reservationDao.getAll()) {
             val reservation = entity.toDomain()
             if (reservation.end.isBefore(now.minusDays(1))) {

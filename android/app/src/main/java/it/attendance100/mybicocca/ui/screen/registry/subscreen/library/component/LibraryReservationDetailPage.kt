@@ -39,6 +39,7 @@ import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.currentLocale
 import it.attendance100.mybicocca.core.os.rememberHapticManager
+import it.attendance100.mybicocca.core.time.AppClock
 import it.attendance100.mybicocca.domain.model.library.LibraryReservation
 import it.attendance100.mybicocca.ui.component.card.DetailFactCard
 import it.attendance100.mybicocca.ui.theme.LocalIsOnline
@@ -73,7 +74,7 @@ internal fun LibraryReservationDetailPage(
     val scheme = MaterialTheme.colorScheme
     val canCancel = reservation.cancellationToken != null
 
-    val now = remember(reservation) { LocalDateTime.now() }
+    val now = remember(reservation) { LocalDateTime.now(AppClock.clock) }
     val windowStart = reservation.start.minusMinutes(presenceWindowMinutes.toLong())
     val tooEarly = now.isBefore(windowStart)
     val past = now.isAfter(reservation.end)

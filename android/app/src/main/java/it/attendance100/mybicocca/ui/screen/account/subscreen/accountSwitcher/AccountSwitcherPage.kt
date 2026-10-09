@@ -59,6 +59,7 @@ import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.ProvideHapticManager
 import it.attendance100.mybicocca.core.os.rememberHapticManager
+import it.attendance100.mybicocca.core.time.AppClock
 import it.attendance100.mybicocca.domain.model.account.AcademicIdentity
 import it.attendance100.mybicocca.domain.model.account.Account
 import it.attendance100.mybicocca.domain.model.account.AccountId
@@ -426,7 +427,7 @@ private fun AccountsScenePreviewContent() {
                     academicYearEnrollmentId = 1,
                     studentNumber = "123456",
                     description = "Informatica",
-//                    academicYear = Instant.now().get(ChronoField.YEAR),
+//                    academicYear = Instant.now(AppClock.clock).get(ChronoField.YEAR),
                     academicYear = 2026,
                     status = CareerStatus.ACTIVE
                 )
@@ -441,9 +442,9 @@ private fun AccountsScenePreviewContent() {
             maxUploadFileSizeBytes = 100,
             storageQuotaBytes = 100
         ),
-        createdAt = Instant.now(),
-        lastUsedAt = Instant.now(),
-        lastSyncedAt = Instant.now()
+        createdAt = Instant.now(AppClock.clock),
+        lastUsedAt = Instant.now(AppClock.clock),
+        lastSyncedAt = Instant.now(AppClock.clock)
     )
 
     ProvideHapticManager(enabled = true) {
