@@ -6,6 +6,7 @@ import it.attendance100.mybicocca.di.ApplicationScope
 import kotlinx.coroutines.CoroutineScope
 import it.attendance100.mybicocca.BuildConfig
 import it.attendance100.mybicocca.core.version.SemVer
+import it.attendance100.mybicocca.core.version.isNewerThanRunningBuild
 import it.attendance100.mybicocca.core.version.isRunningBuild
 import it.attendance100.mybicocca.data.local.settings.PersistedUpdateState
 import it.attendance100.mybicocca.data.local.settings.UpdateStateStore
@@ -181,10 +182,7 @@ class UpdateRepositoryImpl @Inject constructor(
                     // installed the update, the release is no longer newer than us, so the tile
                     // clears immediately instead of waiting for the next daily check to rewrite it.
                     persisted.available && persisted.release != null &&
-                            SemVer.isNewer(
-                                persisted.release.versionName,
-                                BuildConfig.VERSION_NAME.substringBefore("-")
-                            ) ->
+                            isNewerThanRunningBuild(persisted.release.versionName) ->
                         UpdateStatus.UpdateAvailable(persisted.release)
 
                     else -> UpdateStatus.UpToDate
@@ -217,8 +215,7 @@ class UpdateRepositoryImpl @Inject constructor(
                 return@withLock UpdateCheckResult.UpToDate
             }
 
-            val currentVersion = BuildConfig.VERSION_NAME.substringBefore("-")
-            if (!SemVer.isNewer(latest.versionName, currentVersion)) {
+            if (!isNewerThanRunningBuild(latest.versionName)) {
                 store.setUpToDate(now)
                 // Whatever we last offered is gone — installed, or withdrawn upstream. A tray
                 // notification outlives the state that produced it, so it has to be taken back
@@ -397,11 +394,7 @@ class UpdateRepositoryImpl @Inject constructor(
     }
 
     private fun PersistedUpdateState.toCheckResult(): UpdateCheckResult =
-        if (available && release != null && SemVer.isNewer(
-                release.versionName,
-                BuildConfig.VERSION_NAME.substringBefore("-")
-            )
-        )
+        if (available && release != null && isNewerThanRunningBuild(release.versionName))
             UpdateCheckResult.UpdateAvailable(release)
         else UpdateCheckResult.UpToDate
 
