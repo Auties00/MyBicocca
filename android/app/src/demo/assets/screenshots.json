@@ -22,6 +22,8 @@
     { "name": "Screenshot_ExamResults", "tab": "Registry", "routes": [{ "type": "SheetRoute.ExamResults" }] },
     { "name": "Screenshot_Questionnaires", "tab": "Registry", "routes": [{ "type": "SheetRoute.Questionnaires" }] },
     { "name": "Screenshot_BookedExams", "tab": "Registry", "routes": [{ "type": "SheetRoute.Appelli" }] },
+    { "name": "Screenshot_BookableExams", "tab": "Registry", "routes": [{ "type": "SheetRoute.Appelli" }], "tap": ["appelli_book"] },
+    { "name": "Screenshot_AttendanceOpt", "tab": "Registry", "routes": [{ "type": "SheetRoute.Attendance" }], "tap": ["attendance_mark_presence"] },
     { "name": "Screenshot_BookAppointment", "tab": "Registry", "routes": [{ "type": "SheetRoute.Appointments" }] },
     { "name": "Screenshot_Library", "tab": "Registry", "routes": [{ "type": "SheetRoute.Library" }] },
     { "name": "Screenshot_Enrollments", "tab": "Registry", "routes": [{ "type": "SheetRoute.Enrollments" }] },
