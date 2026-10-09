@@ -173,6 +173,8 @@ fun CreditCard(
 
                 val pitch = orientation[1]
                 val roll = orientation[2]
+                // Emulators and uncalibrated sensors report NaN, which the card gradient cannot draw.
+                if (!pitch.isFinite() || !roll.isFinite()) return
 
                 tiltY = -(pitch / 2.5f).coerceIn(-1f, 1f)
                 tiltX = (roll / 2.5f).coerceIn(-1f, 1f)
