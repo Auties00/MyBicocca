@@ -284,9 +284,10 @@ fun UpdateModalSheet(
                                             release.versionName,
                                         )
 
+                                        // A nightly's version name is its publish date, which
+                                        // reads as nonsense after "switch to".
                                         isSwitchToNightly -> stringResource(
                                             R.string.update_modal_switch_nightly_install,
-                                            release.versionName,
                                         )
 
                                         else -> stringResource(R.string.update_modal_install)

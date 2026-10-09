@@ -40,7 +40,7 @@ object UpdateNotifications {
     fun nightlyUpdateAvailable(context: Context, versionName: String): NotificationSpec = NotificationSpec(
         channel = NotificationChannelId.UPDATE_ACTIONABLE,
         id = NotificationId.NightlyUpdateAvailable,
-        title = context.getString(R.string.notification_update_available_title),
+        title = context.getString(R.string.notification_nightly_available_title),
         text = context.getString(R.string.notification_update_available_text, versionName),
         // The shell raises its own snackbar for this discovery, so a buzz on top is the same
         // news twice. The tray entry still goes up: a snackbar is gone in seconds.

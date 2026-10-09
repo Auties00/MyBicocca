@@ -17,6 +17,7 @@ enum class NotificationChannelGroupId(
     @StringRes val nameRes: Int,
 ) {
     UPDATES("updates", R.string.notification_group_updates),
+    MEDIA("media", R.string.notification_group_media),
 }
 
 /**
@@ -53,6 +54,18 @@ enum class NotificationChannelId(
         nameRes = R.string.notification_channel_update_actionable_name,
         descriptionRes = R.string.notification_channel_update_actionable_desc,
     ),
+
+    /**
+     * The course video player's transport controls. media3 builds and posts that notification
+     * itself; only the channel is ours, so it is named, grouped and listed like the rest.
+     */
+    MEDIA_PLAYBACK(
+        id = "media_playback_v1",
+        group = NotificationChannelGroupId.MEDIA,
+        importance = NotificationImportance.LOW,
+        nameRes = R.string.notification_channel_media_playback_name,
+        descriptionRes = R.string.notification_channel_media_playback_desc,
+    ),
 }
 
 /**
@@ -60,6 +73,10 @@ enum class NotificationChannelId(
  * doesn't sit in system settings forever on an upgraded install.
  *
  * Only ever list an id this app created: deleting a channel a library owns breaks that library's
- * notification.
+ * notification. [MEDIA3_DEFAULT_CHANNEL_ID] is the one exception, and only because
+ * [NotificationChannelId.MEDIA_PLAYBACK] replaced it: media3 no longer posts there.
  */
-val RETIRED_CHANNEL_IDS = emptyList<String>()
+val RETIRED_CHANNEL_IDS = listOf(MEDIA3_DEFAULT_CHANNEL_ID)
+
+/** `DefaultMediaNotificationProvider.DEFAULT_CHANNEL_ID`, spelled out to keep this file free of media3. */
+private const val MEDIA3_DEFAULT_CHANNEL_ID = "default_channel_id"

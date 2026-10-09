@@ -1677,7 +1677,7 @@
     <!-- Passing from stable to the nightly channel. -->
     <string name="update_modal_switch_nightly_title">Passaggio alla nightly!</string>
     <string name="update_modal_switch_nightly_download">Scarica la nightly %1$s</string>
-    <string name="update_modal_switch_nightly_install">Clicca per passare alla %1$s</string>
+    <string name="update_modal_switch_nightly_install">Clicca per passare alla Nightly</string>
     <string name="update_modal_remain_on_stable">Rimani sulla stabile</string>
     <string name="update_modal_downloading">Download... %1$d%%</string>
     <string name="update_modal_queued">In coda...</string>
@@ -2089,9 +2089,12 @@
     <!-- Notifications: channels as they appear in Android's system settings -->
     <string name="notification_group_updates">Aggiornamenti</string>
     <string name="notification_channel_update_progress_name">Download in corso</string>
-    <string name="notification_channel_update_progress_desc">Avanzamento del download di un aggiornamento. Silenziosa.</string>
+    <string name="notification_channel_update_progress_desc">Avanzamento del download di un aggiornamento. [Silenziosa]</string>
     <string name="notification_channel_update_actionable_name">Aggiornamenti disponibili</string>
     <string name="notification_channel_update_actionable_desc">Un nuovo aggiornamento è disponibile o pronto da installare.</string>
+    <string name="notification_group_media">Contenuti multimediali</string>
+    <string name="notification_channel_media_playback_name">Riproduzione video</string>
+    <string name="notification_channel_media_playback_desc">Controlli di riproduzione delle videolezioni. [Silenziosa]</string>
 
     <!-- Notifications: permission request -->
     <string name="notification_permission_title">Attiva le notifiche</string>
@@ -2101,6 +2104,7 @@
 
     <!-- Notifications: the update flow -->
     <string name="notification_update_available_title">Nuova versione disponibile</string>
+    <string name="notification_nightly_available_title">Nuova nightly disponibile</string>
     <string name="notification_update_available_text">Tocca per vedere la %1$s</string>
     <string name="notification_update_ready_title">Aggiornamento pronto</string>
     <string name="notification_update_ready_text">Tocca per installare la %1$s</string>

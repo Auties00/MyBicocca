@@ -1,13 +1,17 @@
 package it.attendance100.mybicocca.ui.screen.elearning.subscreen.videoPlayer.player
 
+import android.app.PendingIntent
 import androidx.annotation.OptIn
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.util.ExperimentalApi
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.session.DefaultMediaNotificationProvider
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
+import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.notification.NotificationChannelId
 
 /**
  * Foreground media-session service that owns the ExoPlayer for course videos. Hosting the player
@@ -29,6 +33,15 @@ class VideoPlaybackService : MediaSessionService() {
     override fun onCreate() {
         super.onCreate()
 
+        // media3 still builds the notification and binds its controls to the session; this only
+        // moves it off the library's own "Now playing" channel onto the one in our registry.
+        setMediaNotificationProvider(
+            DefaultMediaNotificationProvider.Builder(this)
+                .setChannelId(NotificationChannelId.MEDIA_PLAYBACK.id)
+                .setChannelName(R.string.notification_channel_media_playback_name)
+                .build()
+        )
+
         val player = ExoPlayer.Builder(this)
             .setAudioAttributes(
                 AudioAttributes.Builder()
@@ -41,7 +54,20 @@ class VideoPlaybackService : MediaSessionService() {
             .experimentalSetDynamicSchedulingEnabled(true)
             .build()
 
-        mediaSession = MediaSession.Builder(this, player).build()
+        val session = MediaSession.Builder(this, player)
+        // What a tap on the media notification opens. Without it the tap does nothing, which is
+        // most noticeable in picture-in-picture: relaunching the activity is what expands it.
+        packageManager.getLaunchIntentForPackage(packageName)?.let { launch ->
+            session.setSessionActivity(
+                PendingIntent.getActivity(
+                    this,
+                    0,
+                    launch,
+                    PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+                )
+            )
+        }
+        mediaSession = session.build()
     }
 
     override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? =

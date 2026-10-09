@@ -173,6 +173,13 @@ class UpdateNotificationsTest {
         assertThat(ids.map { it.value }).containsNoDuplicates()
     }
 
+    /** Both can sit in the tray at once, so they have to be tellable apart at a glance. */
+    @Test
+    fun `the nightly notification is titled differently from the stable one`() {
+        assertThat(UpdateNotifications.nightlyUpdateAvailable(context, "nightly-1").title)
+            .isNotEqualTo(UpdateNotifications.updateAvailable(context, "9.9.9").title)
+    }
+
     /** Indeterminate and determinate must share a slot, or the bar would appear twice. */
     @Test
     fun `every progress spec targets the same slot`() {

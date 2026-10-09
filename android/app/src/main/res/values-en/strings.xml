@@ -1675,7 +1675,7 @@
     <!-- Passing from stable to the nightly channel. -->
     <string name="update_modal_switch_nightly_title">Switching to nightly!</string>
     <string name="update_modal_switch_nightly_download">Download nightly %1$s</string>
-    <string name="update_modal_switch_nightly_install">Click to switch to %1$s</string>
+    <string name="update_modal_switch_nightly_install">Click to switch to Nightly</string>
     <string name="update_modal_remain_on_stable">Remain on stable</string>
     <string name="update_modal_downloading">Downloading… %1$d%%</string>
     <string name="update_modal_queued">Queued…</string>
@@ -2082,9 +2082,12 @@
     <!-- Notifications: channels as they appear in Android's system settings -->
     <string name="notification_group_updates">Updates</string>
     <string name="notification_channel_update_progress_name">Download in progress</string>
-    <string name="notification_channel_update_progress_desc">Progress of an update download. Silent.</string>
+    <string name="notification_channel_update_progress_desc">Progress of an update download. [Silent]</string>
     <string name="notification_channel_update_actionable_name">Available updates</string>
     <string name="notification_channel_update_actionable_desc">A new update is available or ready to install.</string>
+    <string name="notification_group_media">Media</string>
+    <string name="notification_channel_media_playback_name">Video playback</string>
+    <string name="notification_channel_media_playback_desc">Playback controls for lecture videos. [Silent]</string>
 
     <!-- Notifications: permission request -->
     <string name="notification_permission_title">Turn on notifications</string>
@@ -2094,6 +2097,7 @@
 
     <!-- Notifications: the update flow -->
     <string name="notification_update_available_title">New version available</string>
+    <string name="notification_nightly_available_title">New nightly available</string>
     <string name="notification_update_available_text">Tap to see %1$s</string>
     <string name="notification_update_ready_title">Update ready</string>
     <string name="notification_update_ready_text">Tap to install %1$s</string>

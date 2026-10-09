@@ -1,6 +1,7 @@
 package it.attendance100.mybicocca.data.notification
 
 import android.app.Application
+import android.app.NotificationChannel
 import android.app.NotificationManager
 import androidx.test.core.app.ApplicationProvider
 import com.google.common.truth.Truth.assertThat
@@ -61,6 +62,18 @@ class NotificationChannelRegistrarTest {
 
         assertThat(manager.getNotificationChannel(NotificationChannelId.UPDATE_ACTIONABLE.id).importance)
             .isEqualTo(NotificationManager.IMPORTANCE_NONE)
+    }
+
+    @Test
+    fun `the channel media3 created on older installs is removed`() {
+        manager.createNotificationChannel(
+            NotificationChannel("default_channel_id", "Now playing", NotificationManager.IMPORTANCE_LOW)
+        )
+
+        NotificationChannelRegistrar(app).register()
+
+        assertThat(manager.getNotificationChannel("default_channel_id")).isNull()
+        assertThat(manager.getNotificationChannel(NotificationChannelId.MEDIA_PLAYBACK.id)).isNotNull()
     }
 
     @Test
