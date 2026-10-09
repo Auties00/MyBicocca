@@ -15,7 +15,8 @@ class AppUpdateWorker @AssistedInject constructor(
     @Assisted private val context: Context,
     @Assisted params: WorkerParameters,
     private val repository: UpdateRepository,
-    private val updateStateStore: UpdateStateStore
+    private val updateStateStore: UpdateStateStore,
+    private val apkDownloader: ApkDownloader,
 ) : CoroutineWorker(context, params) {
 
     // The worker never installs: it only gets an update as far as "downloaded and ready", and the
@@ -48,18 +49,23 @@ class AppUpdateWorker @AssistedInject constructor(
      * Stable wins, matching the precedence `UpdateRepository.availableRelease()` already offers
      * updates in. The loser isn't starved: installing the winner clears its slot, and the next
      * check offers the other one.
+     *
+     * None when the winner is already downloaded. An update the user hasn't installed yet stays
+     * "available" at every check, and running the download again each time would start a
+     * foreground service and re-post "ready to install" every few hours, for as long as they
+     * leave it.
      */
     private suspend fun autoDownloadSource(): String? {
         val stable = updateStateStore.state.first().availableRelease()
         if (stable != null && updateStateStore.stableAutoDownload.first()) {
-            return ApkDownloadWorker.SOURCE_STABLE
+            return ApkDownloadWorker.SOURCE_STABLE.takeUnless { apkDownloader.hasDownloaded(stable) }
         }
 
         if (!updateStateStore.nightlyEnabled.first()) return null
 
         val nightly = updateStateStore.nightlyState.first().availableRelease()
         if (nightly != null && updateStateStore.nightlyAutoDownload.first()) {
-            return ApkDownloadWorker.SOURCE_NIGHTLY
+            return ApkDownloadWorker.SOURCE_NIGHTLY.takeUnless { apkDownloader.hasDownloaded(nightly) }
         }
 
         return null

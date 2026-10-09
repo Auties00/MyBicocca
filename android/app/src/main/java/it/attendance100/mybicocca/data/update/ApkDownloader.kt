@@ -176,9 +176,11 @@ class ApkDownloader @Inject constructor(
         release: AppRelease,
         onProgress: (Int) -> Unit,
     ): DownloadState {
-        val updatesDir = File(context.cacheDir, "updates")
         if (!updatesDir.exists()) updatesDir.mkdirs()
         val apkFile = File(updatesDir, asset.name)
+        // Nothing clears this directory for us, so every other APK in it is one this download
+        // supersedes.
+        deleteDownloads(except = apkFile)
 
         if (apkFile.exists() && apkFile.passesIntegrityCheck(asset)) {
             // Already downloaded and verified; play the progress animation for UX
@@ -199,6 +201,38 @@ class ApkDownloader @Inject constructor(
 
         publish(DownloadState.Downloading(100), onProgress)
         return markDownloaded(apkFile, release)
+    }
+
+    /**
+     * Where APKs are kept. Not the cache: the system empties that whenever storage runs short,
+     * and an update fetched on the user's data would then be fetched again, unasked, at the next
+     * background check. The price is that nothing cleans up here but [deleteDownloads].
+     */
+    private val updatesDir: File
+        get() = File(context.filesDir, "updates")
+
+    /** Where they were kept before, still read so a download from an older build isn't lost. */
+    private val legacyUpdatesDir: File
+        get() = File(context.cacheDir, "updates")
+
+    private fun deleteDownloads(except: File? = null) {
+        listOf(updatesDir, legacyUpdatesDir)
+            .flatMap { it.listFiles().orEmpty().toList() }
+            .filter { it != except }
+            .forEach { it.delete() }
+    }
+
+    /**
+     * Whether [release]'s APK is already on disk and recorded, so a caller with nobody watching
+     * can leave it alone instead of running a download that would only re-announce it.
+     */
+    suspend fun hasDownloaded(release: AppRelease): Boolean {
+        val record = store.downloadedApk.first() ?: return false
+        val sameRelease =
+            if (!release.commitSha.isNullOrBlank()) record.commitSha == release.commitSha
+            else record.versionName == release.versionName
+        val file = File(record.path)
+        return sameRelease && file.isFile && file.length() == record.size
     }
 
     private fun publish(state: DownloadState, onProgress: (Int) -> Unit) {
@@ -287,8 +321,9 @@ class ApkDownloader @Inject constructor(
             store.clearDownloadedApk()
             // Installing replaces the process, so nothing gets to clean up on the way out: this
             // start is the first chance to take down a "ready to install" notification still
-            // offering the build that is now running.
+            // offering the build that is now running, and to delete the APK it was installed from.
             notifier.cancel(NotificationId.UpdateReady)
+            withContext(Dispatchers.IO) { deleteDownloads() }
             return
         }
 

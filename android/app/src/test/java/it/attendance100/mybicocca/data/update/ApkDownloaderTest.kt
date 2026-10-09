@@ -45,6 +45,8 @@ class ApkDownloaderTest {
     @Before
     fun setup() {
         context = mockk<Context>(relaxed = true)
+        every { context.filesDir } returns tempFolder.newFolder("files")
+        every { context.cacheDir } returns tempFolder.newFolder("cache")
         store = mockk<UpdateStateStore>(relaxed = true)
         testScope = TestScope()
         downloader = ApkDownloader(context, testScope, store, mockk(relaxed = true))
@@ -126,7 +128,7 @@ class ApkDownloaderTest {
         file.delete()
     }
 
-    /** The cache is evictable, so a record outliving its file has to be dropped, not restored. */
+    /** A record outliving its file (cleared app storage, say) has to be dropped, not restored. */
     @Test
     fun restorePendingDownload_dropsTheRecordWhenTheFileIsGone() = testScope.runTest {
         every { store.downloadedApk } returns kotlinx.coroutines.flow.flowOf(
@@ -286,17 +288,57 @@ class ApkDownloaderTest {
         assertThat(result).isInstanceOf(DownloadState.Error::class.java)
     }
 
+    /** Nothing else frees an APK once it is out of the cache, so installing it has to. */
+    @Test
+    fun restorePendingDownload_deletesTheApkOfTheRunningBuild() = testScope.runTest {
+        val apk = updatesDir().resolve("app-universal.apk").apply { writeText("payload") }
+        every { store.downloadedApk } returns kotlinx.coroutines.flow.flowOf(
+            DownloadedApk(apk.absolutePath, apk.length(), "0.0.6", BuildConfig.COMMIT_SHA)
+        )
+
+        downloader.restorePendingDownload()
+
+        assertThat(apk.exists()).isFalse()
+    }
+
+    @Test
+    fun download_deletesTheApksItSupersedes() = testScope.runTest {
+        val release = cachedRelease()
+        val older = updatesDir().resolve("app-older.apk").apply { writeText("stale") }
+        val legacy = File(context.cacheDir, "updates").apply { mkdirs() }
+            .resolve("app-legacy.apk").apply { writeText("stale") }
+
+        downloader.download(release)
+
+        assertThat(older.exists()).isFalse()
+        assertThat(legacy.exists()).isFalse()
+        assertThat(updatesDir().resolve("app-universal.apk").exists()).isTrue()
+    }
+
+    @Test
+    fun hasDownloaded_isTrueOnlyForTheRecordedReleaseWithItsFileIntact() = testScope.runTest {
+        val release = cachedRelease()
+        val apk = updatesDir().resolve("app-universal.apk")
+        every { store.downloadedApk } returns kotlinx.coroutines.flow.flowOf(
+            DownloadedApk(apk.absolutePath, apk.length(), release.versionName, release.commitSha)
+        )
+
+        assertThat(downloader.hasDownloaded(release)).isTrue()
+        assertThat(downloader.hasDownloaded(release.copy(commitSha = "0ther5ha"))).isFalse()
+
+        apk.delete()
+        assertThat(downloader.hasDownloaded(release)).isFalse()
+    }
+
+    private fun updatesDir(): File = File(context.filesDir, "updates").apply { mkdirs() }
+
     /**
-     * A release whose APK is already in the cache and passes verification, so the download path
+     * A release whose APK is already on disk and passes verification, so the download path
      * completes without a network call.
      */
     private fun cachedRelease(): AppRelease {
-        val cacheDir = tempFolder.newFolder("cache")
-        every { context.cacheDir } returns cacheDir
-
         val payload = ByteArray(2048)
-        val apk = File(cacheDir, "updates").apply { mkdirs() }
-            .resolve("app-universal.apk").apply { writeBytes(payload) }
+        val apk = updatesDir().resolve("app-universal.apk").apply { writeBytes(payload) }
 
         return releaseWith(
             AppReleaseAsset(

@@ -6,7 +6,11 @@
     <cache-path name="elearning_files" path="elearning_files/" />
     <!-- Downloaded certificate PDFs, cached per-certificate so they open without re-downloading. -->
     <cache-path name="certificati" path="certificati/" />
-    <!-- Downloaded APKs for in-app updates. -->
+    <!-- Downloaded APKs for in-app updates. Kept out of the cache so the system can't evict them. -->
+    <files-path
+            name="update_apks"
+            path="updates/" />
+    <!-- Where they were kept before; still served so an APK downloaded by an older build installs. -->
     <cache-path
             name="updates"
             path="updates/" />
