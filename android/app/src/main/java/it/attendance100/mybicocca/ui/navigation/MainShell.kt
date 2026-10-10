@@ -62,6 +62,7 @@ import coil.request.ImageRequest
 import coil.size.Size
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.notification.NotificationRoute
+import it.attendance100.mybicocca.domain.model.map.BuildingCode
 import it.attendance100.mybicocca.domain.model.update.AppRelease
 import it.attendance100.mybicocca.domain.model.update.UpdateModalKind
 import it.attendance100.mybicocca.ui.component.modal.UpdateModalRequest
@@ -627,12 +628,15 @@ fun MainShell(
         }
     }
 
-    LaunchedEffect(navigator, pagerState, scope) {
+    LaunchedEffect(navigator, pagerState, scope, mapViewModel) {
         ShellCommands.flow.collect { command ->
             navigator.popToRoot()
             // Launched apart, as tab taps do: a scroll interrupted by another one must not end this collector.
             scope.launch { pagerState.scrollToPage(command.tab.ordinal) }
             command.routes.forEach(navigator::navigate)
+            mapViewModel.hideBuildingsList()
+            if (command.buildingsList) mapViewModel.showBuildingsList()
+            command.building?.let { mapViewModel.selectBuilding(BuildingCode(it)) }
         }
     }
 

@@ -51,7 +51,7 @@ class DemoCaptureReceiver : BroadcastReceiver() {
         intent.getStringExtra(EXTRA_SHOT)?.let { name ->
             val catalog = ScreenshotCatalog.parse(context.assets.open(ScreenshotCatalog.ASSET).reader().use { it.readText() })
             val shot = catalog.shot(name)
-            if (shot == null) Log.w(TAG, "Unknown shot $name") else ShellCommands.send(ShellCommand(shot.tab, shot.routes))
+            if (shot == null) Log.w(TAG, "Unknown shot $name") else ShellCommands.send(ShellCommand(shot.tab, shot.routes, shot.buildingsList, shot.building))
         }
     }
 

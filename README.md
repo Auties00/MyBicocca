@@ -202,12 +202,22 @@ Tappable pins for every building, rendered from a bundled vector tileset. No Goo
 </td>
 </tr>
 <tr>
-<td><picture><source media="(prefers-color-scheme: dark)" srcset="screenshots/demo/en/dark/Screenshot_MapFilter.png" /><img src="screenshots/demo/en/light/Screenshot_MapFilter.png" width="230" /></picture></td>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="screenshots/demo/en/dark/Screenshot_MapBuildings.png" /><img src="screenshots/demo/en/light/Screenshot_MapBuildings.png" width="230" /></picture></td>
 <td>
 
 #### Building directory
 
 Search the whole campus, filter by category, and get one‑tap directions to anywhere.
+
+</td>
+</tr>
+<tr>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="screenshots/demo/en/dark/Screenshot_MapBuildingU1.png" /><img src="screenshots/demo/en/light/Screenshot_MapBuildingU1.png" width="230" /></picture></td>
+<td>
+
+#### Inside a building
+
+Drill into rooms and their details, with live EasyBadge occupancy schedules. The map recolours itself to match your theme.
 
 </td>
 </tr>

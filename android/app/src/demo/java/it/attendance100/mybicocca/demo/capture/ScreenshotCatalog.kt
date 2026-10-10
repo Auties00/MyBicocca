@@ -14,7 +14,8 @@ import kotlinx.serialization.json.jsonPrimitive
 /**
  * One screenshot: the tab to show and the routes to stack on it. [tap] lists string resource names
  * whose text the capture script taps afterwards, in whatever language it is capturing, for states
- * a route alone cannot reach.
+ * a route alone cannot reach. [buildingsList] and [building] open the map's own sheets, which are
+ * not routes.
  */
 @Serializable
 data class Shot(
@@ -22,6 +23,8 @@ data class Shot(
     val tab: ShellTab,
     val routes: List<Route> = emptyList(),
     val tap: List<String> = emptyList(),
+    val buildingsList: Boolean = false,
+    val building: String? = null,
 )
 
 /** A route deliberately left without a screenshot, and why. */

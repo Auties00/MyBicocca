@@ -64,13 +64,14 @@ app that the demo build happened to expose, or a known gap in the demo itself.
 
 ## Screenshot catalogue gaps
 
-- **Not captured:** Login (demo is always signed in), the QR scanner camera view, global search,
-  and the map's building list and building detail.
-- **Map buttons are invisible to the capture script.** Nothing on the Map tab is exposed to
-  accessibility ("View buildings" included), so the script cannot tap it. Besides blocking those
-  two shots, this means screen readers cannot reach the map controls either.
-- **README lost its "Inside a building" row**, since there is no building-detail shot to show, and
-  the "Building directory" row now shows the map filter sheet.
+- **Not captured:** Login (demo is always signed in), the QR scanner camera view and global
+  search.
+- **Map controls are missing from the accessibility tree.** A UI dump of the Map tab lists only the
+  top and bottom bars, not the "View buildings" button, so the capture script could not tap it
+  (the building list and detail are opened through the view model instead). Worth checking with
+  TalkBack: screen-reader users may not be able to reach the map controls either.
+- **Building detail shows "Availability unknown" for every room**, since the frozen demo date has
+  no real EasyStaff schedule behind it.
 - **Camera placeholder:** the scanner camera view is not generated, so there is nothing yet to
   drop a placeholder image into. `Screenshot_AttendanceOpt` shows the check-in chooser before it.
 - **Language settings shot** shows the captured language selected, not "System", because the

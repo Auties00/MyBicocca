@@ -80,6 +80,11 @@ class MapViewModel @Inject constructor(
             loadable.map { list -> list.filter { it.matches(categories) } }
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STATE_KEEP_ALIVE_MS), Loadable.NotYetLoaded)
 
+    private val _buildingsListVisible = MutableStateFlow(false)
+
+    /** Whether the building directory sheet is open; held here so it can be opened from outside the screen. */
+    val buildingsListVisible: StateFlow<Boolean> = _buildingsListVisible.asStateFlow()
+
     private val _selectedBuildingCode = MutableStateFlow<BuildingCode?>(null)
 
     val selectedBuilding: StateFlow<MapBuilding?> =
@@ -142,6 +147,15 @@ class MapViewModel @Inject constructor(
 
     fun clearCategories() {
         _categoryFilter.value = emptySet()
+    }
+
+    fun showBuildingsList() {
+        _buildingsListVisible.value = true
+    }
+
+    fun hideBuildingsList() {
+        _buildingsListVisible.value = false
+        clearSelection()
     }
 
     fun selectBuilding(code: BuildingCode) {

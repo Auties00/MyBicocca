@@ -6,8 +6,16 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 
-/** Puts the shell on [tab] with exactly [routes] stacked on top of the tab root, in order. */
-data class ShellCommand(val tab: ShellTab, val routes: List<Route>)
+/**
+ * Puts the shell on [tab] with exactly [routes] stacked on top of the tab root, in order. The map
+ * keeps its sheets outside the back stack, so [buildingsList] and [building] open those instead.
+ */
+data class ShellCommand(
+    val tab: ShellTab,
+    val routes: List<Route>,
+    val buildingsList: Boolean = false,
+    val building: String? = null,
+)
 
 /**
  * A way to drive the shell from outside the composition. Nothing in a shipped build sends
