@@ -29,6 +29,10 @@ object ShellCommands {
 
     val flow: SharedFlow<ShellCommand> = commands
 
+    /** The routes currently on the shell's back stack, bottom first, so a sender can check where it landed. */
+    @Volatile
+    var stack: List<Route> = emptyList()
+
     fun send(command: ShellCommand) {
         commands.tryEmit(command)
     }

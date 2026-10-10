@@ -76,6 +76,6 @@ app that the demo build happened to expose, or a known gap in the demo itself.
   drop a placeholder image into. `Screenshot_AttendanceOpt` shows the check-in chooser before it.
 - **Language settings shot** shows the captured language selected, not "System", because the
   script pins the language to switch it.
-- **A wrong-screen capture is not detected.** The script notices crashes, not a shot that landed
-  on the wrong page.
-- **Only the default palette and a handful of dark-mode shots have been looked at.**
+- **Taps are not verified.** The script checks the route stack before each capture, but a tap
+  step that hits the wrong control would still be captured.
+- **Only the default palette has been captured.** Oceano, Bosco and Material You are untested.

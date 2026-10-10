@@ -628,12 +628,20 @@ fun MainShell(
         }
     }
 
+    LaunchedEffect(navigator) {
+        snapshotFlow { navigator.entries.map { it.route } }.collect { ShellCommands.stack = it }
+    }
+
     LaunchedEffect(navigator, pagerState, scope, mapViewModel) {
         ShellCommands.flow.collect { command ->
             navigator.popToRoot()
             // Launched apart, as tab taps do: a scroll interrupted by another one must not end this collector.
             scope.launch { pagerState.scrollToPage(command.tab.ordinal) }
-            command.routes.forEach(navigator::navigate)
+            command.routes.forEach { route ->
+                navigator.navigate(route)
+                // A sheet pushed in the same frame as the page beneath it can be dropped while that page settles.
+                delay(ROUTE_PUSH_GAP_MS)
+            }
             mapViewModel.hideBuildingsList()
             if (command.buildingsList) mapViewModel.showBuildingsList()
             command.building?.let { mapViewModel.selectBuilding(BuildingCode(it)) }
@@ -1114,6 +1122,7 @@ fun MainShell(
  * landing, page slide, sheet rise) to read as its own beat, short enough to stay snappy.
  */
 private const val SEARCH_NAV_STEP_DELAY_MS = 550L
+private const val ROUTE_PUSH_GAP_MS = 400L
 
 /**
  * Sub-page container: an opaque surface that covers the tab pager, inset below the global top bar

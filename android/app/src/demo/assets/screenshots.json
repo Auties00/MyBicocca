@@ -13,9 +13,9 @@
     { "name": "Screenshot_ElearningFile", "tab": "Elearning", "routes": [{ "type": "AppRoute.CourseDetail", "courseId": 5101 }, { "type": "AppRoute.FileViewer", "fileName": "slide_1.pdf", "fileUrl": "https://demo.invalid/files/asd/slide_1.pdf", "mimeType": "application/pdf" }] },
 
     { "name": "Screenshot_Map", "tab": "Map" },
+    { "name": "Screenshot_MapFilter", "tab": "Map", "routes": [{ "type": "SheetRoute.MapFilter" }] },
     { "name": "Screenshot_MapBuildings", "tab": "Map", "buildingsList": true },
     { "name": "Screenshot_MapBuildingU1", "tab": "Map", "building": "U01" },
-    { "name": "Screenshot_MapFilter", "tab": "Map", "routes": [{ "type": "SheetRoute.MapFilter" }] },
 
     { "name": "Screenshot_Services", "tab": "Registry" },
     { "name": "Screenshot_ServicesScadenze", "tab": "Registry", "routes": [{ "type": "SheetRoute.Deadlines" }] },

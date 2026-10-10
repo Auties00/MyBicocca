@@ -71,9 +71,14 @@ class Device:
     def crashed(self):
         return "CrashActivity" in self.shell("dumpsys activity activities | grep topResumedActivity", check=False)
 
-    def screenshot(self, path):
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_bytes(self.adb("exec-out", "screencap", "-p", binary=True))
+    def stack(self):
+        """The routes on the app's back stack, bottom first; empty until its shell is up."""
+        answer = self.shell(f"am broadcast -n {RECEIVER} --ez stack true", check=False)
+        match = re.search(r'data="([^"]*)"', answer)
+        return [route for route in match.group(1).split(",") if route] if match else []
+
+    def frame(self):
+        return self.adb("exec-out", "screencap", "-p", binary=True)
 
 
 def pick_emulator(requested):
@@ -136,14 +141,43 @@ def pin_status_bar(device):
 
 
 def launch(device, wait):
+    """Starts the app fresh and waits until its shell is on screen, however long the splash takes."""
     device.shell(f"am force-stop {PACKAGE}")
     device.shell(f"monkey -p {PACKAGE} -c android.intent.category.LAUNCHER 1")
-    time.sleep(wait)
+    deadline = time.time() + wait
+    while time.time() < deadline and not device.stack():
+        time.sleep(1)
+    if not device.stack():
+        sys.exit(f"The app did not reach its main screen within {wait:.0f} seconds.")
+    time.sleep(2)
+
+
+def expected_stack(shot):
+    return ["AppRoute.TabRoot"] + [route["type"] for route in shot.get("routes", [])]
+
+
+def steady_frame(device, attempts=8, gap=0.7):
+    """A frame that matches the one before it: transitions and loading have finished."""
+    previous = device.frame()
+    for _ in range(attempts):
+        time.sleep(gap)
+        current = device.frame()
+        if current == previous:
+            return current
+        previous = current
+    return previous
 
 
 def capture(device, shot, folder, where, strings, args, problems):
-    device.send("shot", shot["name"])
-    time.sleep(args.settle)
+    for attempt in range(2):
+        device.send("shot", shot["name"])
+        time.sleep(args.settle)
+        if device.stack() == expected_stack(shot):
+            break
+    else:
+        problems.append(f"{where}: landed on {device.stack()}, expected {expected_stack(shot)}; shot skipped")
+        print(f"  {shot['name']} (wrong screen)")
+        return
     for key in shot.get("tap", []):
         if key not in strings:
             problems.append(f"{where}: no string resource named {key}")
@@ -155,7 +189,9 @@ def capture(device, shot, folder, where, strings, args, problems):
         print(f"  {shot['name']} (crashed)")
         launch(device, args.launch_wait)
         return
-    device.screenshot(folder / f"{shot['name']}.png")
+    path = folder / f"{shot['name']}.png"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(steady_frame(device))
     print(f"  {shot['name']}")
 
 
@@ -169,8 +205,8 @@ def main():
     parser.add_argument("--only", nargs="+", help="capture just these shot names")
     parser.add_argument("--skip-build", action="store_true", help="install the APK already built")
     parser.add_argument("--skip-install", action="store_true", help="use the build already on the emulator")
-    parser.add_argument("--launch-wait", type=float, default=12, help="seconds to wait after starting the app")
-    parser.add_argument("--settle", type=float, default=3, help="seconds to wait before each capture")
+    parser.add_argument("--launch-wait", type=float, default=60, help="longest to wait for the app to start, in seconds")
+    parser.add_argument("--settle", type=float, default=2, help="seconds to wait after each navigation or tap")
     args = parser.parse_args()
 
     shots = json.loads(CATALOG.read_text(encoding="utf-8"))["shots"]

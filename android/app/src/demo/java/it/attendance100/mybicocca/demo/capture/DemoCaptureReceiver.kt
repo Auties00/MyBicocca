@@ -23,7 +23,8 @@ import javax.inject.Inject
  *
  * `shot` jumps to a catalogue entry; `palette` picks the colour palette and leaves light or dark
  * to the system, which the script switches itself; `language` pins the app language, taking
- * effect when the app is next started.
+ * effect when the app is next started. `--ez stack true` answers with the routes now on the back
+ * stack, so the script can tell a shot that landed on the wrong screen.
  */
 @AndroidEntryPoint
 class DemoCaptureReceiver : BroadcastReceiver() {
@@ -48,6 +49,9 @@ class DemoCaptureReceiver : BroadcastReceiver() {
             context.getSharedPreferences("language_prefs", Context.MODE_PRIVATE).edit().putBoolean("is_system", false).apply()
             applyAppLanguage(context, tag)
         }
+        if (intent.hasExtra(EXTRA_STACK)) {
+            resultData = ShellCommands.stack.joinToString(",") { it::class.java.name.removePrefix(ScreenshotCatalog.ROUTE_PACKAGE).replace('$', '.') }
+        }
         intent.getStringExtra(EXTRA_SHOT)?.let { name ->
             val catalog = ScreenshotCatalog.parse(context.assets.open(ScreenshotCatalog.ASSET).reader().use { it.readText() })
             val shot = catalog.shot(name)
@@ -60,5 +64,6 @@ class DemoCaptureReceiver : BroadcastReceiver() {
         const val EXTRA_SHOT = "shot"
         const val EXTRA_PALETTE = "palette"
         const val EXTRA_LANGUAGE = "language"
+        const val EXTRA_STACK = "stack"
     }
 }
