@@ -719,7 +719,7 @@ fun MainShell(
                             navigator.popToRoot()
                             scope.launch { pagerState.scrollToPage(selected.ordinal) }
                         },
-                        translationY = maxOf(navProgress.floatValue, searchProgress.value) * 300f,
+                        hideProgress = maxOf(navProgress.floatValue, searchProgress.value),
                     )
                 },
                 snackbarHost = { AppSnackbarHost(controller = snackbarController) },

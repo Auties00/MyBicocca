@@ -17,8 +17,8 @@ import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
  * onPrimary (white) iconography; in dark theme it switches to the primary-container role pair,
  * sidestepping the black-on-red pairing dark schemes give onPrimary.
  *
- * [translationY] is applied in the graphics layer so the shell can slide the whole bar
- * off-screen without triggering relayout of the content around it.
+ * [hideProgress] (0 shown, 1 hidden) slides the bar down by its own measured height in the
+ * graphics layer, so it clears the screen at any density without relayout of the content around it.
  */
 @Composable
 fun <T> MyBicoccaBottomBar(
@@ -26,7 +26,7 @@ fun <T> MyBicoccaBottomBar(
     selected: T,
     onSelect: (T) -> Unit,
     modifier: Modifier = Modifier,
-    translationY: Float = 0f,
+    hideProgress: Float = 0f,
 ) {
     val scheme = MaterialTheme.colorScheme
     val dark = LocalDarkTheme.current
@@ -39,7 +39,7 @@ fun <T> MyBicoccaBottomBar(
     )
     val haptic = rememberHapticManager()
     NavigationBar(
-        modifier = modifier.graphicsLayer { this.translationY = translationY },
+        modifier = modifier.graphicsLayer { translationY = hideProgress * size.height },
         containerColor = scheme.surfaceContainer,
     ) {
         items.forEach { item ->
