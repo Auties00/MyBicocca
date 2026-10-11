@@ -1,7 +1,6 @@
 package it.attendance100.mybicocca.ui.screen.calendar.component
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -46,6 +45,7 @@ import androidx.compose.ui.unit.sp
 import it.attendance100.mybicocca.domain.model.calendar.CalendarEvent
 import it.attendance100.mybicocca.ui.screen.calendar.ext.weekStartFor
 import it.attendance100.mybicocca.ui.screen.calendar.state.timelineWindowFor
+import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
@@ -205,7 +205,7 @@ private fun DayStripCarousel(
     }
 
     val scheme = MaterialTheme.colorScheme
-    val dark = isSystemInDarkTheme()
+    val dark = LocalDarkTheme.current
     val highlightColor = if (dark) scheme.primaryContainer else scheme.primary
 
     BoxWithConstraints(

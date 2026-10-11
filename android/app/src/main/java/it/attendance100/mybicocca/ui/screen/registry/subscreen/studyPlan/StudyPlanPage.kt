@@ -3,7 +3,6 @@ package it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlan
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -85,6 +84,7 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlanEdit.Stu
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlanEdit.editWizardHeader
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlanEdit.state.StudyPlanEditRequest
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.openPdfDocument
+import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlin.time.Duration.Companion.milliseconds
@@ -406,7 +406,7 @@ private fun DiscardChangesPage(
     onExit: () -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
-    val dark = isSystemInDarkTheme()
+    val dark = LocalDarkTheme.current
     val brandBg = if (dark) scheme.primaryContainer else scheme.primary
     val brandFg = if (dark) scheme.onPrimaryContainer else scheme.onPrimary
     val haptic = rememberHapticManager()
@@ -548,7 +548,7 @@ private fun PlanActionFooter(
     modifier: Modifier = Modifier,
 ) {
     val scheme = MaterialTheme.colorScheme
-    val dark = isSystemInDarkTheme()
+    val dark = LocalDarkTheme.current
     val brandBg = if (dark) scheme.primaryContainer else scheme.primary
     val brandFg = if (dark) scheme.onPrimaryContainer else scheme.onPrimary
     val paired = editAvailable && printAvailable

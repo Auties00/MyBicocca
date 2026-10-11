@@ -2,7 +2,6 @@ package it.attendance100.mybicocca.ui.screen.elearning.subscreen.forum.component
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -51,6 +50,7 @@ import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.elearning.forum.ForumGroup
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.forum.state.ComposerTarget
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.forum.state.PendingAttachment
+import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
 import it.attendance100.mybicocca.ui.theme.LocalIsOnline
 
 /**
@@ -80,7 +80,7 @@ fun ForumComposer(
     modifier: Modifier = Modifier,
 ) {
     val scheme = MaterialTheme.colorScheme
-    val dark = isSystemInDarkTheme()
+    val dark = LocalDarkTheme.current
     val brandBg = if (dark) scheme.primaryContainer else scheme.primary
     val brandFg = if (dark) scheme.onPrimaryContainer else Color.White
 

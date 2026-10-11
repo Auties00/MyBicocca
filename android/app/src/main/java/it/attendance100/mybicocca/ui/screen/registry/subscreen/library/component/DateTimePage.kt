@@ -3,7 +3,6 @@ package it.attendance100.mybicocca.ui.screen.registry.subscreen.library.componen
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -61,6 +60,7 @@ import it.attendance100.mybicocca.ui.component.button.RetryButton
 import it.attendance100.mybicocca.ui.component.modal.SheetLoadingIndicator
 import it.attendance100.mybicocca.ui.component.modal.SheetMessage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.ext.durationLabel
+import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.YearMonth
@@ -102,7 +102,7 @@ internal fun DateTimePage(
     modifier: Modifier = Modifier,
 ) {
     val scheme = MaterialTheme.colorScheme
-    val dark = isSystemInDarkTheme()
+    val dark = LocalDarkTheme.current
     val haptic = rememberHapticManager()
 
     Column(

@@ -3,6 +3,7 @@ package it.attendance100.mybicocca.ui.theme
 import androidx.compose.material3.MaterialExpressiveTheme
 import androidx.compose.material3.MotionScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import it.attendance100.mybicocca.domain.model.settings.AppTheme
 
 /**
@@ -18,9 +19,12 @@ fun BicoccaTheme(
     appTheme: AppTheme = AppTheme.Default,
     content: @Composable () -> Unit,
 ) {
-    MaterialExpressiveTheme(
-        colorScheme = appTheme.colorScheme(dark),
-        motionScheme = MotionScheme.standard(),
-        content = content,
-    )
+    // Provided here, not only by the activity, so everything drawn inside the theme reads the same flag.
+    CompositionLocalProvider(LocalDarkTheme provides dark) {
+        MaterialExpressiveTheme(
+            colorScheme = appTheme.colorScheme(dark),
+            motionScheme = MotionScheme.standard(),
+            content = content,
+        )
+    }
 }

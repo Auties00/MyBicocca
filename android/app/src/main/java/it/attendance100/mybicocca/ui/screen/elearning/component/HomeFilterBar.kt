@@ -1,7 +1,6 @@
 package it.attendance100.mybicocca.ui.screen.elearning.component
 
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -36,6 +35,7 @@ import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseFilter
 import it.attendance100.mybicocca.domain.model.studyplan.StudyYear
 import it.attendance100.mybicocca.ui.screen.elearning.ElearningTestTags
+import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
 
 private val ButtonHeight = 44.dp
 private val SegmentSpacing = 2.dp
@@ -70,7 +70,7 @@ fun HomeFilterBar(
     }
 
     val scheme = MaterialTheme.colorScheme
-    val dark = isSystemInDarkTheme()
+    val dark = LocalDarkTheme.current
     val colors = ToggleButtonDefaults.toggleButtonColors(
         containerColor = scheme.surfaceContainerHigh,
         contentColor = scheme.onSurface,

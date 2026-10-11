@@ -8,7 +8,6 @@ import android.os.Build
 import android.os.ParcelFileDescriptor
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
@@ -55,6 +54,7 @@ import androidx.core.graphics.createBitmap
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.settings.PdfPagerOrientation
 import it.attendance100.mybicocca.domain.model.settings.PdfThemeMode
+import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -159,9 +159,9 @@ fun PdfViewerContent(
     ) {
         val widthPx = with(density) { (maxWidth.toPx() * 1.5f).toInt() }.coerceIn(1, 2400)
 
-        val systemDark = isSystemInDarkTheme()
+        val appDark = LocalDarkTheme.current
         val isDarkTheme = when (themeMode) {
-            PdfThemeMode.System -> systemDark
+            PdfThemeMode.System -> appDark
             PdfThemeMode.Light -> false
             PdfThemeMode.Dark -> true
         }

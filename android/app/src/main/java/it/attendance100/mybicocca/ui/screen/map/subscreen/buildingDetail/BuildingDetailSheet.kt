@@ -3,7 +3,6 @@ package it.attendance100.mybicocca.ui.screen.map.subscreen.buildingDetail
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -70,6 +69,7 @@ import it.attendance100.mybicocca.ui.screen.map.ext.buildingDisplayName
 import it.attendance100.mybicocca.ui.screen.map.ext.openBuildingInMaps
 import it.attendance100.mybicocca.ui.screen.map.subscreen.buildingDetail.state.RoomStatus
 import it.attendance100.mybicocca.ui.screen.map.subscreen.buildingDetail.state.roomStatus
+import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -287,7 +287,7 @@ private fun DirectionsButton(
 ) {
     val haptic = rememberHapticManager()
     val scheme = MaterialTheme.colorScheme
-    val dark = isSystemInDarkTheme()
+    val dark = LocalDarkTheme.current
     Button(
         onClick = { haptic.tap(); onClick() },
         modifier = modifier.height(48.dp),
