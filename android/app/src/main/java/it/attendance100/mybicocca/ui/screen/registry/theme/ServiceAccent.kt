@@ -1,9 +1,9 @@
 package it.attendance100.mybicocca.ui.screen.registry.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
+import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
 
 /**
  * Per-section icon-chip accent for the Registry "servizi" directory: a tinted chip container
@@ -34,4 +34,4 @@ private val DarkServiceAccents = listOf(
 /** Index-aligned with the directory's sections; callers cycle with `% size` to stay in range. */
 @Composable
 fun serviceAccents(): List<ServiceAccent> =
-    if (isSystemInDarkTheme()) DarkServiceAccents else LightServiceAccents
+    if (LocalDarkTheme.current) DarkServiceAccents else LightServiceAccents

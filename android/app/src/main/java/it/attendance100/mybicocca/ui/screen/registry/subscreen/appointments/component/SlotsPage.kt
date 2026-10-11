@@ -1,6 +1,5 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.component
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,6 +28,7 @@ import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.ui.component.feedback.EmptyState
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.AppointmentsViewModel
+import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
 
 /**
  * Booking wizard step 1: pick a day and time from the live availability via [SlotPicker],
@@ -138,7 +138,7 @@ internal fun SlotsPage(
 @Composable
 private fun ContinuaButton(enabled: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val scheme = MaterialTheme.colorScheme
-    val dark = isSystemInDarkTheme()
+    val dark = LocalDarkTheme.current
     Button(
         onClick = onClick,
         enabled = enabled,

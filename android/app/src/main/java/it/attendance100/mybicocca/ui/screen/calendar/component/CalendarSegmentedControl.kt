@@ -5,7 +5,6 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -40,6 +39,7 @@ import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.ui.screen.calendar.CalendarTestTags
 import it.attendance100.mybicocca.ui.screen.calendar.state.CalendarViewMode
+import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.TextStyle
@@ -68,7 +68,7 @@ fun CalendarSegmentedControl(
 ) {
     val haptic = rememberHapticManager()
     val scheme = MaterialTheme.colorScheme
-    val dark = isSystemInDarkTheme()
+    val dark = LocalDarkTheme.current
     val containerColor = if (dark) scheme.surfaceContainerHigh else scheme.surfaceContainer
     val indicatorColor = if (dark) scheme.primaryContainer else scheme.primary
     val activeContentColor = if (dark) scheme.onPrimaryContainer else scheme.onPrimary

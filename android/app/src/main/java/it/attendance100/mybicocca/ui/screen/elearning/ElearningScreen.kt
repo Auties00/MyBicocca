@@ -74,6 +74,7 @@ import java.net.SocketTimeoutException
 import java.net.UnknownHostException
 import java.time.Instant
 import java.time.temporal.ChronoUnit
+import kotlin.time.Duration.Companion.milliseconds
 
 
 /**
@@ -145,7 +146,7 @@ fun ElearningScreen(
 
     LaunchedEffect(listState) {
         viewModel.revealCourse.collect { courseId ->
-            val index = withTimeoutOrNull(4_000) {
+            val index = withTimeoutOrNull(4_000.milliseconds) {
                 snapshotFlow {
                     (visibleCourses as? Loadable.Loaded)?.value
                         ?.indexOfFirst { group -> group.editions.any { it.id == courseId } }

@@ -1,6 +1,5 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.library.component
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -45,6 +44,7 @@ import it.attendance100.mybicocca.ui.component.modal.SheetLoadingIndicator
 import it.attendance100.mybicocca.ui.component.modal.SheetMessage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.ext.occupancyColor
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.ext.occupancyLabel
+import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
 import java.time.format.DateTimeFormatter
 
 private val WeekdayFormat: DateTimeFormatter
@@ -70,7 +70,7 @@ internal fun LibraryDetailPage(
     modifier: Modifier = Modifier,
 ) {
     val scheme = MaterialTheme.colorScheme
-    val dark = isSystemInDarkTheme()
+    val dark = LocalDarkTheme.current
 
     Column(
         modifier = modifier

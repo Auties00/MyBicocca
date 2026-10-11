@@ -1,6 +1,5 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.library.component
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,6 +37,7 @@ import it.attendance100.mybicocca.domain.model.library.LibraryReservation
 import it.attendance100.mybicocca.ui.component.feedback.EmptyState
 import it.attendance100.mybicocca.ui.component.modal.SheetLoadingIndicator
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.LibraryTestTags
+import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
 
 /**
  * Landing page of the Biblioteca sheet: the server-synced bookings over a pinned footer button.
@@ -133,7 +133,7 @@ private fun EmptyBox(modifier: Modifier = Modifier, content: @Composable () -> U
 @Composable
 private fun FooterButton(label: String, icon: ImageVector, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val scheme = MaterialTheme.colorScheme
-    val dark = isSystemInDarkTheme()
+    val dark = LocalDarkTheme.current
     val haptic = rememberHapticManager()
     Button(
         onClick = { haptic.tap(); onClick() },

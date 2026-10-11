@@ -1,7 +1,6 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.library.component
 
 import androidx.browser.customtabs.CustomTabsIntent
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -51,6 +50,7 @@ import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.library.LibraryAgreement
 import it.attendance100.mybicocca.domain.model.library.LibrarySeat
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.ext.durationLabel
+import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
 import it.attendance100.mybicocca.ui.theme.LocalIsOnline
 import java.time.LocalDate
 import java.time.LocalTime
@@ -87,7 +87,7 @@ internal fun ConfirmPage(
     modifier: Modifier = Modifier,
 ) {
     val scheme = MaterialTheme.colorScheme
-    val dark = isSystemInDarkTheme()
+    val dark = LocalDarkTheme.current
     val end = startTime.plusMinutes(durationMinutes.toLong())
 
     val noteOk = !seat.noteRequired || note.isNotBlank()
