@@ -6,7 +6,6 @@ import androidx.compose.animation.core.animateDp
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -72,6 +71,7 @@ import it.attendance100.mybicocca.ui.screen.map.ext.openBuildingInMaps
 import it.attendance100.mybicocca.ui.screen.map.ext.splitLegacyAlias
 import it.attendance100.mybicocca.ui.screen.map.subscreen.buildingDetail.BuildingPageBody
 import it.attendance100.mybicocca.ui.screen.map.subscreen.buildingDetail.RoomDetailPage
+import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
 
 
 /**
@@ -366,7 +366,7 @@ private fun ActionRow(
     val haptic = rememberHapticManager()
     val scheme = MaterialTheme.colorScheme
     val context = LocalContext.current
-    val dark = isSystemInDarkTheme()
+    val dark = LocalDarkTheme.current
     val infoBg = if (dark) scheme.primaryContainer else scheme.primary
     val infoFg = if (dark) scheme.onPrimaryContainer else scheme.onPrimary
 

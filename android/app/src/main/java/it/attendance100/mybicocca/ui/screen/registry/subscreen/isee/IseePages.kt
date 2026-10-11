@@ -5,7 +5,6 @@ import android.content.Intent
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -68,6 +67,7 @@ import it.attendance100.mybicocca.ui.component.modal.SheetMessage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.TaxesViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.formatEuro
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.taxFriendlyMessage
+import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
 import java.time.LocalDate
 
 /**
@@ -264,7 +264,7 @@ private fun DeclareFooter(
     modifier: Modifier = Modifier,
 ) {
     val scheme = MaterialTheme.colorScheme
-    val dark = isSystemInDarkTheme()
+    val dark = LocalDarkTheme.current
     val brandBg = if (dark) scheme.primaryContainer else scheme.primary
     val brandFg = if (dark) scheme.onPrimaryContainer else scheme.onPrimary
 

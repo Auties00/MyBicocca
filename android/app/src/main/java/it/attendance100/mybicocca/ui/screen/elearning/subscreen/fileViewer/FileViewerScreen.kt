@@ -6,7 +6,6 @@ import android.os.Build
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -55,6 +54,7 @@ import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.compo
 import it.attendance100.mybicocca.ui.component.file.FileKind
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.component.ZipViewerContent
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.fileViewer.state.FileViewerOneShotEvent
+import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import java.util.Locale
@@ -298,7 +298,7 @@ private fun FileContent(
         }
 
         FileKind.Text -> {
-            val darkTheme = isSystemInDarkTheme()
+            val darkTheme = LocalDarkTheme.current
             LocalFileGate(localPath, downloadStatus, viewModel.sizeBytes, viewModel::retry) { path ->
                 CodeViewerContent(
                     localPath = path,

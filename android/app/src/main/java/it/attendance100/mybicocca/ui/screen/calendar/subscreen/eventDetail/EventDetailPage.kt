@@ -2,7 +2,6 @@ package it.attendance100.mybicocca.ui.screen.calendar.subscreen.eventDetail
 
 import android.content.Intent
 import android.net.Uri
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -72,6 +71,7 @@ import it.attendance100.mybicocca.ui.screen.calendar.ext.locationLine
 import it.attendance100.mybicocca.ui.screen.calendar.ext.peopleLine
 import it.attendance100.mybicocca.ui.navigation.LocalAppNavigator
 import it.attendance100.mybicocca.ui.navigation.route.SheetRoute
+import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
@@ -388,7 +388,7 @@ private data class EventAction(
 private fun ActionRow(primary: EventAction, secondary: EventAction?) {
     val haptic = rememberHapticManager()
     val scheme = MaterialTheme.colorScheme
-    val dark = isSystemInDarkTheme()
+    val dark = LocalDarkTheme.current
     val primaryBg = if (dark) scheme.primaryContainer else scheme.primary
     val primaryFg = if (dark) scheme.onPrimaryContainer else scheme.onPrimary
 

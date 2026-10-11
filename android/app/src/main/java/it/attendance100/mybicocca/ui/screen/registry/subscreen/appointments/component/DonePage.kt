@@ -2,7 +2,6 @@ package it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.com
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -39,6 +38,7 @@ import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentReservation
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.ext.decodeQrDataUrl
+import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -60,7 +60,7 @@ internal fun DonePage(
     modifier: Modifier = Modifier,
 ) {
     val scheme = MaterialTheme.colorScheme
-    val dark = isSystemInDarkTheme()
+    val dark = LocalDarkTheme.current
     val haptic = rememberHapticManager()
     Column(
         modifier = modifier

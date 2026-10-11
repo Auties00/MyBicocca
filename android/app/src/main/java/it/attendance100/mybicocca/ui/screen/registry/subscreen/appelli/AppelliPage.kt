@@ -1,7 +1,6 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli
 
 import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -84,6 +83,7 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.state.Boo
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.state.groupByCourse
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.title
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.openPdfDocument
+import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
 import it.attendance100.mybicocca.ui.theme.LocalIsOnline
 import kotlinx.coroutines.flow.collectLatest
 import java.time.LocalDate
@@ -490,7 +490,7 @@ private fun ActiveBody(
 @Composable
 private fun PrenotaFooterButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
     val scheme = MaterialTheme.colorScheme
-    val dark = isSystemInDarkTheme()
+    val dark = LocalDarkTheme.current
     Button(
         onClick = onClick,
         shapes = ButtonDefaults.shapes(),
@@ -532,7 +532,7 @@ private fun CancelConfirmPage(
     onConfirm: () -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
-    val dark = isSystemInDarkTheme()
+    val dark = LocalDarkTheme.current
     val brandBg = if (dark) scheme.primaryContainer else scheme.primary
     val brandFg = if (dark) scheme.onPrimaryContainer else scheme.onPrimary
     val haptic = rememberHapticManager()

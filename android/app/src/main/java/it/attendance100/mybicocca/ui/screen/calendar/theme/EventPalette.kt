@@ -1,11 +1,11 @@
 package it.attendance100.mybicocca.ui.screen.calendar.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
+import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
 
 /**
  * One event swatch: [accent] paints the leading stripe and indicator marks, [container]
@@ -99,7 +99,7 @@ val LocalEventPalette = staticCompositionLocalOf { LightEventPalette }
  */
 @Composable
 fun ProvideEventPalette(
-    dark: Boolean = isSystemInDarkTheme(),
+    dark: Boolean = LocalDarkTheme.current,
     content: @Composable () -> Unit,
 ) {
     val palette = if (dark) DarkEventPalette else LightEventPalette

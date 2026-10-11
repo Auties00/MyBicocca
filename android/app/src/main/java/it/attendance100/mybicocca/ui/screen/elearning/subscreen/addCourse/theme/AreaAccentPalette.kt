@@ -1,11 +1,11 @@
 package it.attendance100.mybicocca.ui.screen.elearning.subscreen.addCourse.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
+import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
 import kotlin.math.abs
 
 /**
@@ -52,7 +52,7 @@ fun AreaAccentPalette.accentFor(key: String): Color {
 /** Installs the light or dark area-accent palette for the sheet's subtree. */
 @Composable
 fun ProvideAreaAccentPalette(
-    dark: Boolean = isSystemInDarkTheme(),
+    dark: Boolean = LocalDarkTheme.current,
     content: @Composable () -> Unit,
 ) {
     val palette = if (dark) DarkAreaAccentPalette else LightAreaAccentPalette

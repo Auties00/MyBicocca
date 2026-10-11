@@ -1,6 +1,5 @@
 package it.attendance100.mybicocca.ui.screen.elearning.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialExpressiveTheme
 import androidx.compose.material3.MaterialTheme
@@ -12,6 +11,7 @@ import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.luminance
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.ui.component.shape.OrganicShapes
+import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
 
 /**
  * Material theme override for a course's navigation subtree: the primary/secondary/tertiary
@@ -22,7 +22,7 @@ import it.attendance100.mybicocca.ui.component.shape.OrganicShapes
 @Composable
 fun CourseDetailTheme(
     courseId: CourseId,
-    dark: Boolean = isSystemInDarkTheme(),
+    dark: Boolean = LocalDarkTheme.current,
     content: @Composable () -> Unit,
 ) {
     val base = MaterialTheme.colorScheme

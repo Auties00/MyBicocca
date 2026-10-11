@@ -1,6 +1,5 @@
 package it.attendance100.mybicocca.ui.component.bar
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -11,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import it.attendance100.mybicocca.core.os.rememberHapticManager
+import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
 
 /**
  * The app's main tab bar. In light theme the selection indicator is the brand primary with
@@ -29,7 +29,7 @@ fun <T> MyBicoccaBottomBar(
     hideProgress: Float = 0f,
 ) {
     val scheme = MaterialTheme.colorScheme
-    val dark = isSystemInDarkTheme()
+    val dark = LocalDarkTheme.current
     val itemColors = NavigationBarItemDefaults.colors(
         indicatorColor = if (dark) scheme.primaryContainer else scheme.primary,
         selectedIconColor = if (dark) scheme.onPrimaryContainer else scheme.onPrimary,

@@ -2,7 +2,6 @@ package it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.component
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,6 +37,7 @@ import it.attendance100.mybicocca.ui.component.shape.DynamicCard
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.state.InvoiceData
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.state.InvoiceItem
 import it.attendance100.mybicocca.ui.theme.BicoccaWordmarkAccent
+import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
 import java.text.NumberFormat
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -165,7 +165,7 @@ fun Invoice(
 
 @Composable
 private fun TicketHeader(invoice: InvoiceData) {
-    val isDarkMode = isSystemInDarkTheme()
+    val isDarkMode = LocalDarkTheme.current
 
     Row(
         modifier = Modifier
