@@ -31,6 +31,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -50,6 +51,7 @@ import it.attendance100.mybicocca.ui.component.shape.ShapeDecorations
 import it.attendance100.mybicocca.ui.screen.elearning.theme.LocalCourseAccentPalette
 import it.attendance100.mybicocca.ui.screen.elearning.theme.ProvideCourseAccentPalette
 import it.attendance100.mybicocca.ui.screen.elearning.theme.heroShapesFor
+import it.attendance100.mybicocca.ui.screen.elearning.theme.onAccentFor
 import it.attendance100.mybicocca.ui.theme.BicoccaTheme
 import it.attendance100.mybicocca.ui.theme.PreviewBgDark
 import java.time.LocalDate
@@ -139,7 +141,6 @@ fun NotebookCard(
                 haptic.tap()
                 onSelectEdition(it)
             },
-            foreground = palette.onAccent,
             modifier = Modifier.padding(start = 18.dp),
         )
 
@@ -300,7 +301,6 @@ private fun YearTabStrip(
     editions: List<CardEdition>,
     activeEditionId: CourseId,
     onSelectEdition: (CourseId) -> Unit,
-    foreground: Color,
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -313,7 +313,6 @@ private fun YearTabStrip(
             YearTab(
                 label = edition.yearLabel,
                 background = edition.accent,
-                foreground = foreground,
                 active = active,
                 onClick = { onSelectEdition(edition.id) },
             )
@@ -329,13 +328,15 @@ private fun YearTabStrip(
 private fun YearTab(
     label: String,
     background: Color,
-    foreground: Color,
     active: Boolean,
     onClick: () -> Unit,
 ) {
     val verticalPad = if (active) 5.dp else 3.dp
     val bottomPad = if (active) 3.dp else 1.dp
     val alpha = if (active) 1f else 0.55f
+    // Judged against what is actually drawn: a dimmed tab lets the page behind it show through.
+    val drawn = background.copy(alpha = alpha).compositeOver(MaterialTheme.colorScheme.background)
+    val foreground = LocalCourseAccentPalette.current.onAccentFor(drawn)
     Box(
         modifier = Modifier
             .clip(RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
@@ -360,9 +361,8 @@ private fun FavouriteStar(
     onRemoveFavorite: @Composable () -> String = { stringResource(R.string.elearning_remove_favorite) },
     onAddFavorite: @Composable () -> String = { stringResource(R.string.elearning_add_favorite) },
 ) {
-    val scheme = MaterialTheme.colorScheme
     val palette = LocalCourseAccentPalette.current
-    val tint = if (filled) palette.favouriteStar else scheme.onSurfaceVariant
+    val tint = if (filled) palette.favouriteStar else palette.idleStar
     val haptic = rememberHapticManager()
     IconButton(
         onClick = {
@@ -452,7 +452,14 @@ private fun DeadlineRow(
     backgroundColor = PreviewBgDark
 )
 @Composable
-fun PreviewNotebookCard_Pos0() = NotebookCardPosPreview(0)
+fun PreviewNotebookCard_Pos0() = NotebookCardPosPreview(0, dark = true)
+
+@Preview(
+    showBackground = true,
+    widthDp = 380
+)
+@Composable
+fun PreviewNotebookCard_Pos0_Light() = NotebookCardPosPreview(0, dark = false)
 
 
 @Preview(
@@ -461,7 +468,14 @@ fun PreviewNotebookCard_Pos0() = NotebookCardPosPreview(0)
     backgroundColor = PreviewBgDark
 )
 @Composable
-fun PreviewNotebookCard_Pos1() = NotebookCardPosPreview(1)
+fun PreviewNotebookCard_Pos1() = NotebookCardPosPreview(1, dark = true)
+
+@Preview(
+    showBackground = true,
+    widthDp = 380
+)
+@Composable
+fun PreviewNotebookCard_Pos1_Light() = NotebookCardPosPreview(1, dark = false)
 
 
 @Preview(
@@ -470,7 +484,14 @@ fun PreviewNotebookCard_Pos1() = NotebookCardPosPreview(1)
     backgroundColor = PreviewBgDark
 )
 @Composable
-fun PreviewNotebookCard_Pos2() = NotebookCardPosPreview(2)
+fun PreviewNotebookCard_Pos2() = NotebookCardPosPreview(2, dark = true)
+
+@Preview(
+    showBackground = true,
+    widthDp = 380
+)
+@Composable
+fun PreviewNotebookCard_Pos2_Light() = NotebookCardPosPreview(2, dark = false)
 
 
 @Preview(
@@ -479,7 +500,14 @@ fun PreviewNotebookCard_Pos2() = NotebookCardPosPreview(2)
     backgroundColor = PreviewBgDark
 )
 @Composable
-fun PreviewNotebookCard_Pos3() = NotebookCardPosPreview(3)
+fun PreviewNotebookCard_Pos3() = NotebookCardPosPreview(3, dark = true)
+
+@Preview(
+    showBackground = true,
+    widthDp = 380
+)
+@Composable
+fun PreviewNotebookCard_Pos3_Light() = NotebookCardPosPreview(3, dark = false)
 
 
 @Preview(
@@ -488,7 +516,14 @@ fun PreviewNotebookCard_Pos3() = NotebookCardPosPreview(3)
     backgroundColor = PreviewBgDark
 )
 @Composable
-fun PreviewNotebookCard_Pos4() = NotebookCardPosPreview(4)
+fun PreviewNotebookCard_Pos4() = NotebookCardPosPreview(4, dark = true)
+
+@Preview(
+    showBackground = true,
+    widthDp = 380
+)
+@Composable
+fun PreviewNotebookCard_Pos4_Light() = NotebookCardPosPreview(4, dark = false)
 
 
 @Preview(
@@ -497,10 +532,17 @@ fun PreviewNotebookCard_Pos4() = NotebookCardPosPreview(4)
     backgroundColor = PreviewBgDark
 )
 @Composable
-fun PreviewNotebookCard_Pos5() = NotebookCardPosPreview(5)
+fun PreviewNotebookCard_Pos5() = NotebookCardPosPreview(5, dark = true)
+
+@Preview(
+    showBackground = true,
+    widthDp = 380
+)
+@Composable
+fun PreviewNotebookCard_Pos5_Light() = NotebookCardPosPreview(5, dark = false)
 
 @Composable
-private fun NotebookCardPosPreview(posIndex: Int) {
+private fun NotebookCardPosPreview(posIndex: Int, dark: Boolean = true) {
     val placements = ShapeDecorations.previewLayout(layoutIndex = posIndex, count = 3)
 
     fun randomColor(alpha: Int = 255) = Color(
@@ -511,8 +553,8 @@ private fun NotebookCardPosPreview(posIndex: Int) {
     )
 
 
-    BicoccaTheme(dark = true) {
-        ProvideCourseAccentPalette(dark = true) {
+    BicoccaTheme(dark = dark) {
+        ProvideCourseAccentPalette(dark = dark) {
             NotebookCard(
                 title = "Programmazione Mobile",
                 code = "INF01-$posIndex",
