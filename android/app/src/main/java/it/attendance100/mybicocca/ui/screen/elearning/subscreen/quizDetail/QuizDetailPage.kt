@@ -1,7 +1,6 @@
 package it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -84,6 +83,7 @@ import it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail.compo
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail.state.AttemptUiState
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail.state.QuizDetailOneShotEvent
 import it.attendance100.mybicocca.ui.screen.elearning.theme.CourseDetailTheme
+import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
 import it.attendance100.mybicocca.ui.theme.LocalIsOnline
 import kotlinx.coroutines.flow.collectLatest
 import java.time.Instant
@@ -622,7 +622,7 @@ private fun QuizActionRow(
 ) {
     val isOnline = LocalIsOnline.current
     val scheme = MaterialTheme.colorScheme
-    val dark = isSystemInDarkTheme()
+    val dark = LocalDarkTheme.current
     val brandBg = if (dark) scheme.primaryContainer else scheme.primary
     val brandFg = if (dark) scheme.onPrimaryContainer else scheme.onPrimary
     val haptic = rememberHapticManager()

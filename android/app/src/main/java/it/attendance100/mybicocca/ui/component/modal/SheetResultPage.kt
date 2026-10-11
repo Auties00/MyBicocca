@@ -1,6 +1,5 @@
 package it.attendance100.mybicocca.ui.component.modal
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -31,6 +30,7 @@ import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.ui.component.button.PrimaryActionButton
 import it.attendance100.mybicocca.ui.component.feedback.friendlyMessage
+import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
 
 /**
  * Terminal result page for an in-sheet action: the same cookie-icon empty-state visual as
@@ -57,7 +57,7 @@ fun SheetResultPage(
 ) {
     val haptic = rememberHapticManager()
     val scheme = MaterialTheme.colorScheme
-    val dark = isSystemInDarkTheme()
+    val dark = LocalDarkTheme.current
     val brandBg = if (dark) scheme.primaryContainer else scheme.primary
     val brandFg = if (dark) scheme.onPrimaryContainer else Color.White
 

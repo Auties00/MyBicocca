@@ -1,6 +1,5 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.subscreen.bookedExamDetail
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -49,6 +48,7 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.ext.count
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.ext.displayLabel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.ext.locationLabel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.state.ExamDocument
+import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
 import it.attendance100.mybicocca.ui.theme.LocalIsOnline
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -196,7 +196,7 @@ private fun ActionRow(
     onCancel: () -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
-    val dark = isSystemInDarkTheme()
+    val dark = LocalDarkTheme.current
     val slipBg = if (dark) scheme.primaryContainer else scheme.primary
     val slipFg = if (dark) scheme.onPrimaryContainer else scheme.onPrimary
     val isOnline = LocalIsOnline.current

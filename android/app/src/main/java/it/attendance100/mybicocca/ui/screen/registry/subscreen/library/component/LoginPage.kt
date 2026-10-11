@@ -11,7 +11,6 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -59,6 +58,7 @@ import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.state.LibraryLoginFeedback
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.state.LibraryLoginPhase
+import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
 import kotlinx.coroutines.delay
 
 /**
@@ -110,7 +110,7 @@ private fun LoginForm(
     onVerify: () -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
-    val dark = isSystemInDarkTheme()
+    val dark = LocalDarkTheme.current
     val awaiting = phase == LibraryLoginPhase.AwaitingClick || phase == LibraryLoginPhase.Verifying
     val busy = phase == LibraryLoginPhase.Sending || phase == LibraryLoginPhase.Verifying
 

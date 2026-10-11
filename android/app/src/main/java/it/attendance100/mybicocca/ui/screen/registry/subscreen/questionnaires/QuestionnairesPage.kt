@@ -3,7 +3,6 @@ package it.attendance100.mybicocca.ui.screen.registry.subscreen.questionnaires
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -88,6 +87,7 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.questionnaires.su
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.questionnaires.subscreen.compilation.state.QuestionnaireCompilationEvent
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.questionnaires.subscreen.compilation.state.QuestionnaireCompilationRequest
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.questionnaires.subscreen.units.QuestionnaireUnitsPage
+import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
 import kotlinx.coroutines.flow.collectLatest
 
 /**
@@ -387,7 +387,7 @@ private fun ConfirmPage(
     onConfirm: () -> Unit,
 ) {
     val scheme = MaterialTheme.colorScheme
-    val dark = isSystemInDarkTheme()
+    val dark = LocalDarkTheme.current
     val brandBg = if (dark) scheme.primaryContainer else scheme.primary
     val brandFg = if (dark) scheme.onPrimaryContainer else scheme.onPrimary
     val haptic = rememberHapticManager()

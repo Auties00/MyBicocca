@@ -16,7 +16,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.wrapContentSize
@@ -53,6 +52,7 @@ import dev.chrisbanes.haze.hazeSource
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.ui.theme.BadgeCardColorDark
 import it.attendance100.mybicocca.ui.theme.BadgeCardColorLight
+import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.cos
@@ -372,7 +372,7 @@ private fun CardFace(
 ) {
     val primaryColor = when {
         whiteBadge -> Color.White
-        isSystemInDarkTheme() -> BadgeCardColorDark
+        LocalDarkTheme.current -> BadgeCardColorDark
         else -> BadgeCardColorLight
     }
 

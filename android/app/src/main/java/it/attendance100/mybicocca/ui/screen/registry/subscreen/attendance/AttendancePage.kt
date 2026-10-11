@@ -1,7 +1,6 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance
 
 import androidx.compose.animation.animateContentSize
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -64,6 +63,7 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.subscr
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.subscreen.rilevaPresenza.component.PresenceMarkingProgress
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.subscreen.rilevaPresenza.component.PresenceResultContent
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.subscreen.rilevaPresenza.component.QrScannerScreen
+import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
@@ -372,7 +372,7 @@ private fun RilevaFooterButton(
 ) {
     val haptic = rememberHapticManager()
     val scheme = MaterialTheme.colorScheme
-    val dark = isSystemInDarkTheme()
+    val dark = LocalDarkTheme.current
     Button(
         onClick = { haptic.tap(); onClick() },
         modifier = modifier.height(56.dp),

@@ -1,8 +1,8 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.taxes.theme
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
+import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
 
 /**
  * pagoPA brand blue, scoped to the taxes feature: it anchors the pagoPA-branded surfaces
@@ -16,4 +16,4 @@ private val PagoPaBackgroundLight = Color(0xFFB4D7FF)
 /** Theme-aware wash behind the pagoPA receipt card. */
 @Composable
 fun pagoPaBackgroundColor(): Color =
-    if (isSystemInDarkTheme()) PagoPaBackgroundDark else PagoPaBackgroundLight
+    if (LocalDarkTheme.current) PagoPaBackgroundDark else PagoPaBackgroundLight

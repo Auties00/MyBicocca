@@ -1,6 +1,5 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.component
 
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,6 +33,7 @@ import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentReservation
 import it.attendance100.mybicocca.ui.component.feedback.EmptyState
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.AppointmentsTestTags
+import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
 
 /**
  * Root page of the Appuntamenti sheet: this device's bookings, one [ReservationCard] each in
@@ -102,7 +102,7 @@ internal fun ReservationsPage(
 @Composable
 private fun PrenotaButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
     val scheme = MaterialTheme.colorScheme
-    val dark = isSystemInDarkTheme()
+    val dark = LocalDarkTheme.current
     Button(
         onClick = onClick,
         shapes = ButtonDefaults.shapes(),

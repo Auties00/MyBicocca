@@ -4,7 +4,6 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -83,6 +82,7 @@ import it.attendance100.mybicocca.ui.screen.elearning.subscreen.forum.state.Pend
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.forum.state.ThreadNode
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.forum.state.visibleThread
 import it.attendance100.mybicocca.ui.screen.elearning.theme.CourseDetailTheme
+import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
 import it.attendance100.mybicocca.ui.theme.LocalIsOnline
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
@@ -535,7 +535,7 @@ private fun ThreadBody(
 @Composable
 private fun ThreadFooter(canReply: Boolean, onReply: () -> Unit, onSubscribe: () -> Unit) {
     val scheme = MaterialTheme.colorScheme
-    val dark = isSystemInDarkTheme()
+    val dark = LocalDarkTheme.current
     val brandBg = if (dark) scheme.primaryContainer else scheme.primary
     val brandFg = if (dark) scheme.onPrimaryContainer else Color.White
     val isOnline = LocalIsOnline.current
@@ -599,7 +599,7 @@ private fun ThreadFooter(canReply: Boolean, onReply: () -> Unit, onSubscribe: ()
 @Composable
 private fun NewDiscussionButton(onClick: () -> Unit, modifier: Modifier = Modifier) {
     val scheme = MaterialTheme.colorScheme
-    val dark = isSystemInDarkTheme()
+    val dark = LocalDarkTheme.current
     val brandBg = if (dark) scheme.primaryContainer else scheme.primary
     val brandFg = if (dark) scheme.onPrimaryContainer else Color.White
     Button(

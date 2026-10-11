@@ -3,7 +3,6 @@ package it.attendance100.mybicocca.ui.screen.calendar.component
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -42,6 +41,7 @@ import it.attendance100.mybicocca.domain.model.calendar.EventSource
 import it.attendance100.mybicocca.ui.screen.calendar.ext.durationMinutes
 import it.attendance100.mybicocca.ui.screen.calendar.ext.monthGridCells
 import it.attendance100.mybicocca.ui.screen.calendar.ext.rememberCurrentTime
+import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.YearMonth
@@ -205,7 +205,7 @@ private fun busyLevelOf(events: List<CalendarEvent>): BusyLevel {
 @Composable
 private fun busyAccent(): Color {
     val scheme = MaterialTheme.colorScheme
-    return if (isSystemInDarkTheme()) scheme.primaryContainer else scheme.primary
+    return if (LocalDarkTheme.current) scheme.primaryContainer else scheme.primary
 }
 
 @Composable
@@ -225,7 +225,7 @@ private fun busyBackground(level: BusyLevel): Color {
 @Composable
 private fun busyForeground(level: BusyLevel): Color {
     val scheme = MaterialTheme.colorScheme
-    val onAccent = if (isSystemInDarkTheme()) scheme.onPrimaryContainer else scheme.onPrimary
+    val onAccent = if (LocalDarkTheme.current) scheme.onPrimaryContainer else scheme.onPrimary
     return when (level) {
         BusyLevel.HEAVY, BusyLevel.FULL -> onAccent
         else -> scheme.onSurface

@@ -6,7 +6,6 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,10 +24,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -48,6 +45,7 @@ import androidx.compose.ui.unit.sp
 import com.valentinilk.shimmer.shimmer
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
@@ -86,10 +84,9 @@ fun ProgressStatCard(
     onClick: (() -> Unit)? = null,
 ) {
     val haptic = rememberHapticManager()
-    var primaryColor by remember { mutableStateOf(primaryColor) }
-    if (primaryColor == null) {
-        primaryColor = if (isSystemInDarkTheme()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.inversePrimary
-    }
+    // Resolved on every composition, so a theme switch or a new caller colour is picked up.
+    val primaryColor = primaryColor
+        ?: if (LocalDarkTheme.current) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.inversePrimary
 
     val targetProgress = if (total > 0) (current.toFloat() / total.toFloat()).coerceIn(0f, 1f) else 0f
     val progress by animateFloatAsState(
@@ -143,7 +140,7 @@ fun ProgressStatCard(
                                 .fillMaxHeight()
                                 .fillMaxWidth(progress)
                                 .clip(RoundedCornerShape(topEnd = 4.dp, bottomEnd = 4.dp))
-                                .background(primaryColor!!),
+                                .background(primaryColor),
                         ) {}
                     }
                 }
@@ -219,7 +216,7 @@ fun ProgressStatCard(
                                         .fillMaxWidth(progress)
                                         .fillMaxHeight()
                                         .clip(RoundedCornerShape(4.dp))
-                                        .background(primaryColor!!),
+                                        .background(primaryColor),
                                 )
                             }
                         }

@@ -1,7 +1,6 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.library.component
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -42,6 +41,7 @@ import it.attendance100.mybicocca.domain.model.library.LibrarySeat
 import it.attendance100.mybicocca.domain.model.library.LibraryZoneColor
 import it.attendance100.mybicocca.ui.component.modal.SheetMessage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.theme.zoneSwatch
+import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
 import it.attendance100.mybicocca.ui.theme.LocalIsOnline
 
 /**
@@ -91,7 +91,7 @@ internal fun SeatsPage(
             Spacer(Modifier.size(4.dp))
         }
 
-        val dark = isSystemInDarkTheme()
+        val dark = LocalDarkTheme.current
         Button(
             onClick = { haptic.tap(); onAutoSelect() },
             enabled = LocalIsOnline.current,
