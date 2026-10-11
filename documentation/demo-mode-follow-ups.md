@@ -5,7 +5,7 @@ app that the demo build happened to expose, or a known gap in the demo itself.
 
 ## App bugs
 
-### Fixed on `fix/bottom-bar-hide-and-card-tilt`, waiting to be merged
+### Fixed, in pull request #61 (`fix/bottom-bar-hide-and-card-tilt`)
 
 - **Bottom bar strip on sub-pages.** The shell hid the bar by sliding it a fixed 300 px. At 560 dpi
   the bar is about 364 px tall, so a strip stayed visible. It now slides by its measured height.
@@ -15,13 +15,17 @@ app that the demo build happened to expose, or a known gap in the demo itself.
   The cause is inferred from the stack trace; the crash stopped once the guard was in.
   (`ui/screen/profile/component/CreditCard.kt`)
 
+### Fixed and merged in pull request #60
+
+- **In-app theme ignored by most components.** Some 50 UI files asked the system whether it was in
+  dark mode instead of reading `LocalDarkTheme`, so with the app and the phone on different themes
+  they picked the wrong colours. They now follow the app's setting, and `BicoccaTheme` provides
+  the flag itself.
+- **Course card year tabs unreadable on bright accents**, and the unfilled favourite star too dark.
+- **Services list's rounded top scrolled away** with the content.
+
 ### Not fixed
 
-- **In-app theme ignored by most components.** 57 places in 52 UI files call
-  `isSystemInDarkTheme()` instead of reading `LocalDarkTheme`. With the app set to Dark and the
-  phone in light mode (or the reverse) they pick the wrong colours, for example light service
-  tiles on a dark background. Until this is fixed, the capture script switches the system mode
-  and leaves the app on "System".
 - **Italian text in the English UI.**
   - Sub-page titles "Impostazioni", "Profilo" and "Docente", hard-coded in
     `ui/navigation/route/AppRoute.kt` and already marked `TODO localize`.
