@@ -5,7 +5,7 @@ app that the demo build happened to expose, or a known gap in the demo itself.
 
 ## App bugs
 
-### Fixed, in pull request #61 (`fix/bottom-bar-hide-and-card-tilt`)
+### Fixed and merged in pull request #61
 
 - **Bottom bar strip on sub-pages.** The shell hid the bar by sliding it a fixed 300 px. At 560 dpi
   the bar is about 364 px tall, so a strip stayed visible. It now slides by its measured height.
@@ -48,6 +48,7 @@ app that the demo build happened to expose, or a known gap in the demo itself.
 - **Eight shared Compose tests fail under the demo variant** (`SheetPagerMotionTest`,
   `ModalSceneStrategyTest`), most likely for lack of the debug-only test manifest.
   `testDemoUnitTest` is filtered to the demo package, so they only run under debug, where they pass.
+- **The instrumented UI tests now run on pull requests** (#62); they used to run only after a merge.
 - **Nothing in GitHub Actions builds the demo variant.** By choice: the check is local,
   `./gradlew :app:demoCheck`.
 
