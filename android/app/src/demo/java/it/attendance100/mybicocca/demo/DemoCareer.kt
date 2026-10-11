@@ -1,10 +1,6 @@
 package it.attendance100.mybicocca.demo
 
-import android.graphics.Paint
-import android.graphics.Typeface
-import android.graphics.pdf.PdfDocument
 import it.attendance100.mybicocca.domain.model.exam.ExamCallKey
-import java.io.ByteArrayOutputStream
 import java.time.LocalDate
 
 /** One activity of the demo student's degree, as Esse3 would list it in the transcript. */
@@ -67,21 +63,4 @@ object DemoCareer {
 
     fun callKey(activity: DemoActivity, call: Int) =
         ExamCallKey(courseOfStudyId = COURSE_OF_STUDY_ID, activityId = activity.id, callId = call)
-
-    /** A single-page PDF standing in for the documents the university would generate. */
-    fun pdf(title: String, lines: List<String>): ByteArray {
-        val document = PdfDocument()
-        val page = document.startPage(PdfDocument.PageInfo.Builder(595, 842, 1).create())
-        val heading = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            textSize = 20f
-            typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-        }
-        val body = Paint(Paint.ANTI_ALIAS_FLAG).apply { textSize = 12f }
-        page.canvas.drawText("Università degli Studi di Milano-Bicocca", 48f, 64f, body)
-        page.canvas.drawText(title, 48f, 104f, heading)
-        (listOf("${DemoStudent.FULL_NAME} · matricola ${DemoStudent.STUDENT_NUMBER}", "") + lines + listOf("", "Documento dimostrativo, privo di valore."))
-            .forEachIndexed { index, line -> page.canvas.drawText(line, 48f, 144f + index * 20f, body) }
-        document.finishPage(page)
-        return ByteArrayOutputStream().also { document.writeTo(it); document.close() }.toByteArray()
-    }
 }

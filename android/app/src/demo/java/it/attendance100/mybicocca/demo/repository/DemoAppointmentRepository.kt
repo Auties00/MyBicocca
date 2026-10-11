@@ -1,7 +1,7 @@
 package it.attendance100.mybicocca.demo.repository
 
-import it.attendance100.mybicocca.demo.DemoCareer
 import it.attendance100.mybicocca.demo.DemoClock
+import it.attendance100.mybicocca.demo.DemoPdf
 import it.attendance100.mybicocca.demo.DemoStudent
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentArea
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentForm
@@ -148,7 +148,7 @@ class DemoAppointmentRepository @Inject constructor() : AppointmentRepository {
 
     override suspend fun getReservationPdf(entryId: Int): ByteArray {
         val reservation = reservations.value.firstOrNull { it.entryId == entryId }
-        return DemoCareer.pdf(
+        return DemoPdf.certificate(
             "Promemoria appuntamento",
             listOfNotNull(reservation?.serviceName, reservation?.let { "${it.start.toLocalDate()} alle ${it.start.toLocalTime()}" }, reservation?.areaName),
         )

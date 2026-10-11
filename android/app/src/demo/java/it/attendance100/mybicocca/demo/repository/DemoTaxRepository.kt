@@ -2,6 +2,7 @@ package it.attendance100.mybicocca.demo.repository
 
 import it.attendance100.mybicocca.demo.DemoCareer
 import it.attendance100.mybicocca.demo.DemoClock
+import it.attendance100.mybicocca.demo.DemoPdf
 import it.attendance100.mybicocca.demo.DemoStudent
 import it.attendance100.mybicocca.domain.model.career.CareerId
 import it.attendance100.mybicocca.domain.model.tax.InvoiceId
@@ -93,7 +94,7 @@ class DemoTaxRepository @Inject constructor() : TaxRepository {
 
     private fun document(title: String, invoiceId: InvoiceId): ByteArray {
         val invoice = invoices.first { it.id == invoiceId }
-        return DemoCareer.pdf(title, listOf(invoice.title, "Importo: %.2f €".format(invoice.amount), "Scadenza: ${invoice.expiration}"))
+        return DemoPdf.certificate(title, listOf(invoice.title, "Importo: %.2f €".format(invoice.amount), "Scadenza: ${invoice.expiration}"))
     }
 
     private fun invoice(

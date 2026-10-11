@@ -1,6 +1,7 @@
 package it.attendance100.mybicocca.demo.repository
 
 import it.attendance100.mybicocca.demo.DemoCareer
+import it.attendance100.mybicocca.demo.DemoPdf
 import it.attendance100.mybicocca.domain.model.document.Certificate
 import it.attendance100.mybicocca.domain.model.document.CertificateId
 import it.attendance100.mybicocca.domain.model.document.CertificateType
@@ -22,7 +23,7 @@ class DemoCertificateRepository @Inject constructor() : CertificateRepository {
 
     override suspend fun downloadCertificate(id: CertificateId): ByteArray {
         val certificate = certificates.first { it.id == id }
-        return DemoCareer.pdf(
+        return DemoPdf.certificate(
             certificate.description,
             listOf("Corso di laurea in ${DemoCareer.DEGREE}", "Anno accademico 2025/2026, secondo anno di corso."),
         )

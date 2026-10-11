@@ -4,6 +4,7 @@ import it.attendance100.mybicocca.data.mapper.calendar.normalizeSubjectName
 import it.attendance100.mybicocca.demo.DemoCareer
 import it.attendance100.mybicocca.demo.DemoClock
 import it.attendance100.mybicocca.demo.DemoCourses
+import it.attendance100.mybicocca.demo.DemoPdf
 import it.attendance100.mybicocca.domain.model.career.CareerId
 import it.attendance100.mybicocca.domain.model.studyplan.EditableRule
 import it.attendance100.mybicocca.domain.model.studyplan.PlanApprovalType
@@ -80,7 +81,7 @@ class DemoStudyPlanRepository @Inject constructor() : StudyPlanRepository {
         choiceAvailable = false,
     )
 
-    override suspend fun getStudyPlanPrint(careerId: CareerId, planId: Long): ByteArray = DemoCareer.pdf(
+    override suspend fun getStudyPlanPrint(careerId: CareerId, planId: Long): ByteArray = DemoPdf.certificate(
         "Piano di studio",
         DemoCareer.activities.map { "${it.year}° anno · ${it.name} · ${it.credits.toInt()} CFU" },
     )

@@ -7,6 +7,7 @@ import dagger.hilt.android.HiltAndroidApp
 import it.attendance100.mybicocca.core.crash.GlobalExceptionHandler
 import it.attendance100.mybicocca.core.os.applyAppLanguage
 import it.attendance100.mybicocca.core.os.currentProcessName
+import it.attendance100.mybicocca.core.os.followsSystemLanguage
 import it.attendance100.mybicocca.core.os.systemAppLanguage
 import it.attendance100.mybicocca.core.time.AppClock
 import it.attendance100.mybicocca.data.notification.AppForegroundState
@@ -64,9 +65,6 @@ class MyBicoccaApplication : Application(), Configuration.Provider {
         // *not* on screen is the one that never creates an activity at all.
         appForegroundState.start()
 
-        val prefs = getSharedPreferences("language_prefs", MODE_PRIVATE)
-        if (prefs.getBoolean("is_system", true)) {
-            applyAppLanguage(this, systemAppLanguage(this))
-        }
+        if (followsSystemLanguage(this)) applyAppLanguage(this, systemAppLanguage(this))
     }
 }

@@ -28,13 +28,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.core.content.edit
 import it.attendance100.mybicocca.R
-import it.attendance100.mybicocca.core.os.applyAppLanguage
 import it.attendance100.mybicocca.core.os.currentLocale
+import it.attendance100.mybicocca.core.os.followsSystemLanguage
 import it.attendance100.mybicocca.core.os.isAppLanguageSupported
 import it.attendance100.mybicocca.core.os.rememberHapticManager
-import it.attendance100.mybicocca.core.os.systemAppLanguage
+import it.attendance100.mybicocca.core.os.selectAppLanguage
 import it.attendance100.mybicocca.core.os.systemPrimaryLocale
 import it.attendance100.mybicocca.ui.component.button.MorphKnob
 import it.attendance100.mybicocca.ui.component.directory.SegmentedTile
@@ -201,10 +200,7 @@ private fun LanguageFlag(
 }
 
 private fun currentAppLanguage(context: Context): String {
-    val prefs = context.getSharedPreferences("language_prefs", Context.MODE_PRIVATE)
-    if (prefs.getBoolean("is_system", true)) {
-        return LOCALE_SYSTEM
-    }
+    if (followsSystemLanguage(context)) return LOCALE_SYSTEM
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         val locales = context.getSystemService(LocaleManager::class.java).applicationLocales
@@ -215,14 +211,5 @@ private fun currentAppLanguage(context: Context): String {
     }
 }
 
-private fun setAppLanguage(context: Context, code: String) {
-    val prefs = context.getSharedPreferences("language_prefs", Context.MODE_PRIVATE)
-
-    if (code == LOCALE_SYSTEM) {
-        prefs.edit { putBoolean("is_system", true) }
-        applyAppLanguage(context, systemAppLanguage(context))
-    } else {
-        prefs.edit { putBoolean("is_system", false) }
-        applyAppLanguage(context, code)
-    }
-}
+private fun setAppLanguage(context: Context, code: String) =
+    selectAppLanguage(context, code.takeUnless { it == LOCALE_SYSTEM })

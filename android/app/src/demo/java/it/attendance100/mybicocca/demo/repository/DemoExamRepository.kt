@@ -5,6 +5,7 @@ import it.attendance100.mybicocca.demo.DemoCareer
 import it.attendance100.mybicocca.demo.DemoClock
 import it.attendance100.mybicocca.demo.DemoCourse
 import it.attendance100.mybicocca.demo.DemoCourses
+import it.attendance100.mybicocca.demo.DemoPdf
 import it.attendance100.mybicocca.demo.DemoStudent
 import it.attendance100.mybicocca.domain.model.career.CareerId
 import it.attendance100.mybicocca.domain.model.exam.AcknowledgmentStatus
@@ -143,7 +144,7 @@ class DemoExamRepository @Inject constructor() : ExamRepository {
 
     private fun document(title: String, key: ExamCallKey): ByteArray {
         val booking = bookings.firstOrNull { it.key == key }
-        return DemoCareer.pdf(
+        return DemoPdf.certificate(
             title,
             listOfNotNull(
                 booking?.activityDescription?.let { "Insegnamento: $it" },
