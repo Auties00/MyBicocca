@@ -157,6 +157,55 @@ class UpdateRepositoryImpl @Inject constructor(
     override fun observeNightlyAutoDownload(): Flow<Boolean> = store.nightlyAutoDownload
     override suspend fun setNightlyAutoDownload(enabled: Boolean) = store.setNightlyAutoDownload(enabled)
 
+    override fun observeAutoDownloadOnMobileData(): Flow<Boolean> = store.autoDownloadOnMobileData
+
+    override suspend fun setAutoDownloadOnMobileData(enabled: Boolean) {
+        store.setAutoDownloadOnMobileData(enabled)
+        // A download already waiting was queued under the old answer; re-asking replaces it.
+        scheduleAutoDownload()
+    }
+
+    /**
+     * Which channel, if any, should be downloaded now — at most one — and on which networks.
+     *
+     * Both channels can have an update waiting at once, but there is a single downloaded-APK slot
+     * app-wide, so downloading both would leave only the second one recorded and the first's file
+     * orphaned; the download worker is single-slot for the same reason.
+     *
+     * Stable wins, matching the precedence [availableRelease] already offers updates in. The loser
+     * isn't starved: installing the winner clears its slot, and the next check offers the other
+     * one.
+     *
+     * None when the winner is already downloaded. An update the user hasn't installed yet stays
+     * "available" at every check, and running the download again each time would start a
+     * foreground service and re-post "ready to install" every few hours, for as long as they
+     * leave it.
+     */
+    override suspend fun scheduleAutoDownload() {
+        val source = autoDownloadSource() ?: return
+        ApkDownloadWorker.enqueue(
+            context,
+            source,
+            allowMobileData = store.autoDownloadOnMobileData.first(),
+        )
+    }
+
+    private suspend fun autoDownloadSource(): String? {
+        val stable = store.state.first().availableRelease()
+        if (stable != null && store.stableAutoDownload.first()) {
+            return ApkDownloadWorker.SOURCE_STABLE.takeUnless { apkDownloader.hasDownloaded(stable) }
+        }
+
+        if (!store.nightlyEnabled.first()) return null
+
+        val nightly = store.nightlyState.first().availableRelease()
+        if (nightly != null && store.nightlyAutoDownload.first()) {
+            return ApkDownloadWorker.SOURCE_NIGHTLY.takeUnless { apkDownloader.hasDownloaded(nightly) }
+        }
+
+        return null
+    }
+
 
     override fun observeCheckIntervalMinutes(): Flow<Int> = store.checkIntervalMinutes
     override suspend fun setCheckIntervalMinutes(minutes: Int) = store.setCheckIntervalMinutes(minutes)

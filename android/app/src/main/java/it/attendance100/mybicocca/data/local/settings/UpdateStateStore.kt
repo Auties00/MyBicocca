@@ -323,6 +323,8 @@ class UpdateStateStore @Inject constructor(
 
         val STABLE_AUTO_DOWNLOAD_KEY = booleanPreferencesKey("update_stable_auto_download")
         val NIGHTLY_AUTO_DOWNLOAD_KEY = booleanPreferencesKey("update_nightly_auto_download")
+        val AUTO_DOWNLOAD_ON_MOBILE_DATA_KEY =
+            booleanPreferencesKey("update_auto_download_on_mobile_data")
 
         val DOWNLOADED_APK_PATH_KEY = stringPreferencesKey("update_downloaded_apk_path")
         val DOWNLOADED_APK_SIZE_KEY = longPreferencesKey("update_downloaded_apk_size")
@@ -363,6 +365,15 @@ class UpdateStateStore @Inject constructor(
 
     suspend fun setNightlyAutoDownload(enabled: Boolean) {
         dataStore.edit { it[NIGHTLY_AUTO_DOWNLOAD_KEY] = enabled }
+    }
+
+    // Off by default: an automatic download is one nobody asked for at that moment, so it waits for
+    // an unmetered network unless the user says otherwise. A tap on Download ignores this.
+    val autoDownloadOnMobileData: Flow<Boolean> =
+        dataStore.data.map { it[AUTO_DOWNLOAD_ON_MOBILE_DATA_KEY] ?: false }
+
+    suspend fun setAutoDownloadOnMobileData(enabled: Boolean) {
+        dataStore.edit { it[AUTO_DOWNLOAD_ON_MOBILE_DATA_KEY] = enabled }
     }
 
     /** A finished download waiting to be installed, remembered across process death. */

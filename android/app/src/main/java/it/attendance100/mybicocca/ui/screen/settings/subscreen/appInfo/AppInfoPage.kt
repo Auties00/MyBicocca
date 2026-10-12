@@ -715,6 +715,7 @@ private fun UpdateSettingsScene(
 
     val stableAutoDownload by viewModel.stableAutoDownload.collectAsStateWithLifecycle()
     val nightlyAutoDownload by viewModel.nightlyAutoDownload.collectAsStateWithLifecycle()
+    val autoDownloadOnMobileData by viewModel.autoDownloadOnMobileData.collectAsStateWithLifecycle()
     val checkIntervalMinutes by viewModel.checkIntervalMinutes.collectAsStateWithLifecycle()
 
     Column(modifier = modifier) {
@@ -818,6 +819,35 @@ private fun UpdateSettingsScene(
                     )
                 },
                 modifier = Modifier.alpha(alpha)
+            )
+
+            Spacer(Modifier.height(24.dp))
+
+            Text(
+                text = stringResource(R.string.settings_update_network_header),
+                style = MaterialTheme.typography.labelLarge,
+                color = scheme.primary,
+                modifier = Modifier.padding(start = 16.dp, bottom = 8.dp)
+            )
+
+            // Covers both channels' automatic downloads; a tap on Download always uses any network.
+            SegmentedTile(
+                isFirst = true,
+                isLast = true,
+                role = Role.Switch,
+                title = stringResource(R.string.settings_update_mobile_data_title),
+                subtitle = stringResource(R.string.settings_update_mobile_data_subtitle),
+                onClick = {
+                    haptic.tap()
+                    viewModel.setAutoDownloadOnMobileData(!autoDownloadOnMobileData)
+                },
+                trailing = {
+                    Switch(
+                        checked = autoDownloadOnMobileData,
+                        onCheckedChange = null,
+                        modifier = Modifier.padding(end = 6.dp)
+                    )
+                }
             )
         }
     }

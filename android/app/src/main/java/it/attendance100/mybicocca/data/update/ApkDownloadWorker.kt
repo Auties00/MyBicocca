@@ -12,6 +12,7 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.ForegroundInfo
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import androidx.work.workDataOf
@@ -148,47 +149,69 @@ class ApkDownloadWorker @AssistedInject constructor(
         const val SOURCE_NIGHTLY = "nightly"
         const val SOURCE_EXPLICIT = "explicit"
 
-        fun enqueue(context: Context, source: String) {
-            WorkManager.getInstance(context).enqueueUniqueWork(
+        /**
+         * Requests a download for [source]. [allowMobileData] only applies to the automatic
+         * sources: a tap ([SOURCE_EXPLICIT]) is the user choosing to download right now, so it
+         * always runs on any connection.
+         */
+        suspend fun enqueue(context: Context, source: String, allowMobileData: Boolean = true) {
+            val workManager = WorkManager.getInstance(context)
+            val existing = workManager.getWorkInfosForUniqueWorkFlow(UNIQUE_WORK_NAME).first()
+                .firstOrNull { !it.state.isFinished }
+
+            workManager.enqueueUniqueWork(
                 UNIQUE_WORK_NAME,
-                policyFor(source),
+                policyFor(source, existing?.state, existing?.tags?.let(::sourceOf)),
                 OneTimeWorkRequestBuilder<ApkDownloadWorker>()
                     .setInputData(inputFor(source))
+                    .addTag(SOURCE_TAG_PREFIX + source)
                     // Without this the worker runs offline, fails immediately and is done: a
                     // failed download is terminal, so the request would be spent rather than
                     // waiting for the connection it needs.
                     .setConstraints(
                         Constraints.Builder()
-                            .setRequiredNetworkType(networkTypeFor(source))
+                            .setRequiredNetworkType(networkTypeFor(source, allowMobileData))
                             .build()
                     )
                     .build(),
             )
         }
 
-        /**
-         * Nightlies ship on every push to main and nightly auto-download is on by default, so an
-         * unattended nightly download waits for an unmetered network rather than spending the
-         * user's mobile data on each one. A tap on Download is the user choosing to spend it, and
-         * stable auto-download is opt-in, so both keep running on any connection.
-         */
-        internal fun networkTypeFor(source: String): NetworkType =
-            if (source == SOURCE_NIGHTLY) NetworkType.UNMETERED else NetworkType.CONNECTED
+        /** Unmetered for an automatic download unless the user allowed mobile data for them. */
+        internal fun networkTypeFor(source: String, allowMobileData: Boolean): NetworkType =
+            if (source == SOURCE_EXPLICIT || allowMobileData) NetworkType.CONNECTED
+            else NetworkType.UNMETERED
 
         /**
-         * KEEP for background requests: a download already running is the one the user is
-         * watching, and replacing it would restart from zero for no gain.
+         * What a new request does to the one already in the single download slot, if any.
          *
-         * REPLACE for a tap, because the work it would collide with is a background nightly still
-         * waiting for Wi-Fi — the downloader reports nothing for that, so the tap isn't refused
-         * upstream, and KEEP would silently drop it, leaving the sheet on "queued" until Wi-Fi
-         * turns up. A background download that has actually started isn't replaced: it reports
-         * itself as active, and `startDownload` refuses the tap before it gets here. Only the
-         * half-second between it starting and reporting is exposed, and losing that costs a
-         * restart, not data.
+         * A download that is running is never replaced: it's the one the user is watching, and
+         * replacing it restarts from zero. (A tap can't reach that case — the downloader reports
+         * a running download as active, and `startDownload` refuses the tap first.)
+         *
+         * A tap replaces anything still waiting, because that is an automatic download waiting for
+         * Wi-Fi, and keeping it would leave the tap stuck behind it.
+         *
+         * An automatic request replaces an automatic one still waiting — the newer request is the
+         * current answer to "what should download, on which networks", a stable release overtaking
+         * a nightly or the mobile-data setting changed — but never a tap still waiting for any
+         * connection: that is a release the user asked for by name.
          */
-        internal fun policyFor(source: String): ExistingWorkPolicy =
-            if (source == SOURCE_EXPLICIT) ExistingWorkPolicy.REPLACE else ExistingWorkPolicy.KEEP
+        internal fun policyFor(
+            source: String,
+            existingState: WorkInfo.State?,
+            existingSource: String?,
+        ): ExistingWorkPolicy = when {
+            existingState == null || existingState == WorkInfo.State.RUNNING -> ExistingWorkPolicy.KEEP
+            source == SOURCE_EXPLICIT -> ExistingWorkPolicy.REPLACE
+            existingSource == SOURCE_EXPLICIT -> ExistingWorkPolicy.KEEP
+            else -> ExistingWorkPolicy.REPLACE
+        }
+
+        private const val SOURCE_TAG_PREFIX = "update-download-source:"
+
+        private fun sourceOf(tags: Set<String>): String? =
+            tags.firstOrNull { it.startsWith(SOURCE_TAG_PREFIX) }?.removePrefix(SOURCE_TAG_PREFIX)
 
         private fun inputFor(source: String): Data = workDataOf(KEY_SOURCE to source)
     }
