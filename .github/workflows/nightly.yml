@@ -132,10 +132,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Deletes the nightlies a stable release has overtaken (0.0.6-nightly.* once 0.0.6 ships):
-      # nobody is offered them any more, and GitHub has no way to archive a release short of
-      # deleting it. Of the rest, keeps the newest ten by version — the order the app picks from.
-      - name: Prune old nightlies
+      # Keeps the Releases page down to one nightly. The newest stays published; the next nine,
+      # by version (the order the app picks from), are turned into drafts: hidden from the public
+      # page and from the app, which only sees published releases, but still there for anyone with
+      # write access to roll back to. Older ones, and every nightly a stable release has overtaken
+      # (0.0.6-nightly.* once 0.0.6 ships), are deleted along with their tags.
+      - name: Tidy old nightlies
         if: steps.version.outputs.skip != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -153,22 +155,29 @@ jobs:
             [ -n "$LATEST_STABLE" ] && [ "$(printf '%s\n%s\n' "$core" "$LATEST_STABLE" | sort -V | tail -n 1)" = "$LATEST_STABLE" ]
           }
 
-          gh release list --limit 200 --json tagName,isPrerelease \
-              --jq '.[] | select(.isPrerelease) | .tagName' \
-            | { grep -E -- '-nightly\.[0-9]+$' || true; } \
+          gh release list --limit 200 --json tagName,isPrerelease,isDraft \
+              --jq '.[] | select(.isPrerelease) | "\(.tagName) \(.isDraft)"' \
+            | { grep -E -- '-nightly\.[0-9]+ (true|false)$' || true; } \
             | sort -V -r \
             | {
-                kept=0
-                while read -r tag; do
+                position=0
+                while read -r tag is_draft; do
                   if superseded "$tag"; then
-                    reason="overtaken by $LATEST_STABLE"
-                  elif [ "$kept" -lt "$KEEP" ]; then
-                    kept=$((kept + 1))
+                    echo "Deleting $tag (overtaken by $LATEST_STABLE)"
+                    gh release delete "$tag" --cleanup-tag --yes
                     continue
-                  else
-                    reason="older than the newest $KEEP"
                   fi
-                  echo "Deleting $tag ($reason)"
-                  gh release delete "$tag" --cleanup-tag --yes
+                  position=$((position + 1))
+                  if [ "$position" -eq 1 ]; then
+                    continue
+                  elif [ "$position" -le "$KEEP" ]; then
+                    if [ "$is_draft" = "false" ]; then
+                      echo "Hiding $tag (now a draft)"
+                      gh release edit "$tag" --draft=true
+                    fi
+                  else
+                    echo "Deleting $tag (older than the newest $KEEP)"
+                    gh release delete "$tag" --cleanup-tag --yes
+                  fi
                 done
               }
