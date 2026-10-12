@@ -168,6 +168,13 @@ class AppInfoViewModel @Inject constructor(
         viewModelScope.launch { updateRepository.setNightlyAutoDownload(enabled) }
     }
 
+    val autoDownloadOnMobileData: StateFlow<Boolean> = updateRepository.observeAutoDownloadOnMobileData()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    fun setAutoDownloadOnMobileData(enabled: Boolean) {
+        viewModelScope.launch { updateRepository.setAutoDownloadOnMobileData(enabled) }
+    }
+
     val checkIntervalMinutes: StateFlow<Int> = updateRepository.observeCheckIntervalMinutes()
         .stateIn(viewModelScope, SharingStarted.Eagerly, DEFAULT_UPDATE_CHECK_INTERVAL_MINUTES)
 

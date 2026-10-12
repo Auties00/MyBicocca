@@ -32,10 +32,9 @@ class UpdateRepositoryImplTest {
     private val nightlyEnabledFlow = MutableStateFlow(false)
     private val nightlyStateFlow = MutableStateFlow(PersistedNightlyState(
         lastCheckedAtMs = null,
-        lastSeenPublishedAtMs = null,
-        lastSeenDigest = null,
         available = false,
-        release = null
+        release = null,
+        lastNotifiedVersion = null,
     ))
     private val stateFlow = MutableStateFlow(PersistedUpdateState(
         lastCheckedAtMs = null,
@@ -71,33 +70,116 @@ class UpdateRepositoryImplTest {
         )
     }
 
+    private fun release(tag: String, prerelease: Boolean = true) = GithubReleaseDto(
+        tagName = tag,
+        name = "Nightly $tag",
+        body = "commit: abcdef0",
+        htmlUrl = "https://github.com/Auties00/MyBicocca/releases/tag/$tag",
+        publishedAt = "2026-08-29T12:00:00Z",
+        draft = false,
+        prerelease = prerelease,
+        assets = emptyList()
+    )
+
     @Test
-    fun checkForUpdates_whenNightlyEnabled_checksNightly() = kotlinx.coroutines.runBlocking {
+    fun checkForUpdates_whenNightlyEnabled_offersTheHighestNightly() = kotlinx.coroutines.runBlocking {
         nightlyEnabledFlow.value = true
-        
-        val dto = GithubReleaseDto(
-            tagName = "nightly",
-            name = "Nightly",
-            body = "commit: abcdef0",
-            htmlUrl = "url",
-            publishedAt = "2026-08-29T12:00:00Z",
-            draft = false,
-            prerelease = true,
-            assets = emptyList()
+        coEvery { api.getReleases() } returns listOf(
+            release("999.0.0-nightly.3"),
+            release("999.0.0-nightly.12"),
+            release("999.0.0-nightly.9"),
+            // The rolling tag from before per-build nightlies, and a stable release: never picked.
+            release("nightly"),
+            release("0.0.1", prerelease = false),
         )
-        
-        coEvery { api.getReleaseByTag("nightly") } returns dto
         coEvery { api.getLatestRelease() } returns null
 
-        repository.checkForUpdates(force = false)
+        val result = repository.checkForUpdates(force = false)
 
-        // It should have found the nightly and updated the store
+        assertThat((result as UpdateCheckResult.UpdateAvailable).release.versionName)
+            .isEqualTo("999.0.0-nightly.12")
         repository.newNightlyUpdateEvents.test {
             val event = awaitItem()
-            assertThat(event.title).isEqualTo("Nightly Build")
+            assertThat(event.versionName).isEqualTo("999.0.0-nightly.12")
+            assertThat(event.title).isEqualTo("Nightly 999.0.0-nightly.12")
             assertThat(event.commitSha).isEqualTo("abcdef0")
             cancelAndIgnoreRemainingEvents()
         }
+        coVerify { store.setNightlyUpdateAvailable(match { it.versionName == "999.0.0-nightly.12" }, any()) }
+        coVerify { store.setNightlyLastNotifiedVersion("999.0.0-nightly.12") }
+    }
+
+    @Test
+    fun checkForUpdates_whenTheNewestNightlyIsNotNewer_reportsNightlyUpToDate() = runTest {
+        nightlyEnabledFlow.value = true
+        coEvery { api.getReleases() } returns listOf(release("0.0.0-nightly.1"))
+        coEvery { api.getLatestRelease() } returns null
+
+        val result = repository.checkForUpdates(force = true, announce = false)
+
+        assertThat(result).isEqualTo(UpdateCheckResult.UpToDate)
+        coVerify { store.setNightlyUpToDate(any()) }
+        coVerify(exactly = 0) { store.setNightlyUpdateAvailable(any(), any()) }
+    }
+
+    /** Still on offer at every check until installed, but only announced the first time. */
+    @Test
+    fun checkForUpdates_whenTheNightlyWasAlreadyNotified_doesNotAnnounceItAgain() = runTest {
+        nightlyEnabledFlow.value = true
+        nightlyStateFlow.value = nightlyStateFlow.value.copy(lastNotifiedVersion = "999.0.0-nightly.12")
+        coEvery { api.getReleases() } returns listOf(release("999.0.0-nightly.12"))
+        coEvery { api.getLatestRelease() } returns null
+
+        val result = repository.checkForUpdates(force = true)
+
+        assertThat(result).isInstanceOf(UpdateCheckResult.UpdateAvailable::class.java)
+        coVerify { store.setNightlyUpdateAvailable(any(), any()) }
+        coVerify(exactly = 0) { store.setNightlyLastNotifiedVersion(any()) }
+    }
+
+    @Test
+    fun checkForUpdates_whenNightlyDisabled_neverLooksForOne() = runTest {
+        coEvery { api.getLatestRelease() } returns null
+
+        repository.checkForUpdates(force = true, announce = false)
+
+        coVerify(exactly = 0) { api.getReleases() }
+    }
+
+    @Test
+    fun releases_listsStableReleasesAndOnlyTheNewestNightly() = runTest {
+        nightlyEnabledFlow.value = true
+        coEvery { api.getReleases() } returns listOf(
+            release("999.0.0-nightly.12").copy(publishedAt = "2026-08-30T12:00:00Z"),
+            release("999.0.0-nightly.11").copy(publishedAt = "2026-08-29T12:00:00Z"),
+            release("0.0.2", prerelease = false).copy(publishedAt = "2026-08-01T12:00:00Z"),
+            release("0.0.1", prerelease = false).copy(publishedAt = "2026-07-01T12:00:00Z"),
+        )
+
+        val versions = repository.releases().map { it.versionName }
+
+        assertThat(versions).containsExactly("999.0.0-nightly.12", "0.0.2", "0.0.1").inOrder()
+    }
+
+    @Test
+    fun releases_leavesOutANightlyAStableReleaseHasOvertaken() = runTest {
+        nightlyEnabledFlow.value = true
+        coEvery { api.getReleases() } returns listOf(
+            release("0.0.2", prerelease = false),
+            release("0.0.2-nightly.40"),
+        )
+
+        assertThat(repository.releases().map { it.versionName }).containsExactly("0.0.2")
+    }
+
+    @Test
+    fun releases_leavesOutNightliesOffTheChannel() = runTest {
+        coEvery { api.getReleases() } returns listOf(
+            release("999.0.0-nightly.12"),
+            release("0.0.2", prerelease = false),
+        )
+
+        assertThat(repository.releases().map { it.versionName }).containsExactly("0.0.2")
     }
 
     @Test
