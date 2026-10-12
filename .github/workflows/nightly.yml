@@ -2,7 +2,9 @@ name: Nightly Build
 
 on:
   push:
-    branches: [main, feature/nightly-updates]
+    # Main only: N counts commits along whichever branch is built, so a second branch would hand
+    # out numbers that collide with main's or outrank them.
+    branches: [main]
   workflow_dispatch:
 
 # One nightly at a time. Queued rather than cancelled: a run cut off mid-upload would leave a
@@ -62,6 +64,9 @@ jobs:
       - name: Resolve nightly version
         id: version
         run: |
+          # The default shell has no pipefail, and without it a failing Gradle would read as an
+          # empty version and skip quietly as though no tag existed.
+          set -o pipefail
           VERSION=$(./gradlew -q printNightlyVersion | tail -n 1)
           echo "Nightly version: $VERSION"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
@@ -127,7 +132,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # Keeps the newest ten by version, the same order the app picks the newest from.
+      # Deletes the nightlies a stable release has overtaken (0.0.6-nightly.* once 0.0.6 ships):
+      # nobody is offered them any more, and GitHub has no way to archive a release short of
+      # deleting it. Of the rest, keeps the newest ten by version — the order the app picks from.
       - name: Prune old nightlies
         if: steps.version.outputs.skip != 'true'
         env:
@@ -135,12 +142,33 @@ jobs:
           GH_REPO: ${{ github.repository }}
           KEEP: 10
         run: |
+          set -o pipefail
+          LATEST_STABLE=$(git tag --sort=-v:refname | { grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+$' || true; } | head -n 1)
+          LATEST_STABLE=${LATEST_STABLE#v}
+
+          # True when the nightly's version core is at or below the latest stable release.
+          superseded() {
+            local core="${1#v}"
+            core="${core%%-*}"
+            [ -n "$LATEST_STABLE" ] && [ "$(printf '%s\n%s\n' "$core" "$LATEST_STABLE" | sort -V | tail -n 1)" = "$LATEST_STABLE" ]
+          }
+
           gh release list --limit 200 --json tagName,isPrerelease \
               --jq '.[] | select(.isPrerelease) | .tagName' \
             | { grep -E -- '-nightly\.[0-9]+$' || true; } \
             | sort -V -r \
-            | tail -n +$((KEEP + 1)) \
-            | while read -r tag; do
-                echo "Deleting $tag"
-                gh release delete "$tag" --cleanup-tag --yes
-              done
+            | {
+                kept=0
+                while read -r tag; do
+                  if superseded "$tag"; then
+                    reason="overtaken by $LATEST_STABLE"
+                  elif [ "$kept" -lt "$KEEP" ]; then
+                    kept=$((kept + 1))
+                    continue
+                  else
+                    reason="older than the newest $KEEP"
+                  fi
+                  echo "Deleting $tag ($reason)"
+                  gh release delete "$tag" --cleanup-tag --yes
+                done
+              }

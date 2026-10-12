@@ -88,7 +88,7 @@ fun git(vararg args: String): String? = runCatching {
 // `0.0.6-nightly`, and CI declines to publish it rather than guess.
 val nightlyNumber: Int? =
     git("rev-parse", "--verify", "--quiet", "refs/tags/$appBaseVersionName")
-        ?.let { git("rev-list", "--count", "$appBaseVersionName..HEAD")?.toIntOrNull() }
+        ?.let { git("rev-list", "--count", "refs/tags/$appBaseVersionName..HEAD")?.toIntOrNull() }
 
 val nightlyVersionName: String =
     "$nightlyBaseVersionName-nightly" + (nightlyNumber?.let { ".$it" } ?: "")
