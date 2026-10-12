@@ -147,6 +147,42 @@ class UpdateRepositoryImplTest {
     }
 
     @Test
+    fun releases_listsStableReleasesAndOnlyTheNewestNightly() = runTest {
+        nightlyEnabledFlow.value = true
+        coEvery { api.getReleases() } returns listOf(
+            release("999.0.0-nightly.12").copy(publishedAt = "2026-08-30T12:00:00Z"),
+            release("999.0.0-nightly.11").copy(publishedAt = "2026-08-29T12:00:00Z"),
+            release("0.0.2", prerelease = false).copy(publishedAt = "2026-08-01T12:00:00Z"),
+            release("0.0.1", prerelease = false).copy(publishedAt = "2026-07-01T12:00:00Z"),
+        )
+
+        val versions = repository.releases().map { it.versionName }
+
+        assertThat(versions).containsExactly("999.0.0-nightly.12", "0.0.2", "0.0.1").inOrder()
+    }
+
+    @Test
+    fun releases_leavesOutANightlyAStableReleaseHasOvertaken() = runTest {
+        nightlyEnabledFlow.value = true
+        coEvery { api.getReleases() } returns listOf(
+            release("0.0.2", prerelease = false),
+            release("0.0.2-nightly.40"),
+        )
+
+        assertThat(repository.releases().map { it.versionName }).containsExactly("0.0.2")
+    }
+
+    @Test
+    fun releases_leavesOutNightliesOffTheChannel() = runTest {
+        coEvery { api.getReleases() } returns listOf(
+            release("999.0.0-nightly.12"),
+            release("0.0.2", prerelease = false),
+        )
+
+        assertThat(repository.releases().map { it.versionName }).containsExactly("0.0.2")
+    }
+
+    @Test
     fun checkForUpdates_whenForcedOnTheLatestRelease_reportsUpToDate() = runTest {
         val running = BuildConfig.VERSION_NAME
         coEvery { api.getLatestRelease() } returns GithubReleaseDto(

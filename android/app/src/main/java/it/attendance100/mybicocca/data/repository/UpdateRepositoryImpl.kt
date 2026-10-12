@@ -406,26 +406,30 @@ class UpdateRepositoryImpl @Inject constructor(
         UpdateCheckResult.UpdateAvailable(latest)
     }
 
+    /**
+     * Every stable release, plus the newest nightly for someone on the nightly channel, newest
+     * first — the GitHub releases page, minus the nightlies nobody needs any more.
+     *
+     * The nightly comes from the same response rather than the stored offer, so it's listed
+     * whether or not it's the build already running; the offer is cleared once it's installed.
+     * Older nightlies are left out — CI keeps the last ten for rollback, but in this list they'd
+     * only bury the releases — and so is a nightly a stable release has since overtaken.
+     */
     override suspend fun releases(): List<AppRelease> = withContext(Dispatchers.IO) {
-        // Nightlies are real GitHub pre-releases, so they come back in this list too — but they
-        // have no business showing at all to someone who never opted into the channel, and even
-        // for someone who did, only the one on offer matters. It's added from the persisted
-        // nightly state below instead.
-        val stableReleases = githubApi.getReleases()
+        val all = githubApi.getReleases()
+        val stableReleases = all
             .filterNot { it.prerelease }
             .mapNotNull { it.toAppReleaseOrNull() }
 
         val nightly = if (store.nightlyEnabled.first()) {
-            store.nightlyState.first().takeIf { it.available }?.release
+            all.latestNightlyOrNull()?.toNightlyAppReleaseOrNull()?.takeIf { nightly ->
+                stableReleases.all { SemVer.isNewer(nightly.versionName, it.versionName) }
+            }
         } else {
             null
         }
 
-        // Keyed on the release page rather than the version, so the nightly can never appear twice
-        // whatever its two copies are called. Nightly goes first so it survives as the richer copy.
-        (listOfNotNull(nightly) + stableReleases)
-            .distinctBy { it.pageUrl }
-            .sortedByDescending { it.publishedAt }
+        (listOfNotNull(nightly) + stableReleases).sortedByDescending { it.publishedAt }
     }
 
     override fun updatePageUrl(release: AppRelease): String = when (distributionSource) {
