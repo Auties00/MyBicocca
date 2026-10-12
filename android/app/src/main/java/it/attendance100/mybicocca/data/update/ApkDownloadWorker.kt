@@ -151,9 +151,7 @@ class ApkDownloadWorker @AssistedInject constructor(
         fun enqueue(context: Context, source: String) {
             WorkManager.getInstance(context).enqueueUniqueWork(
                 UNIQUE_WORK_NAME,
-                // KEEP: a download already running is the one the user is watching. Replacing it
-                // would restart from zero for no gain.
-                ExistingWorkPolicy.KEEP,
+                policyFor(source),
                 OneTimeWorkRequestBuilder<ApkDownloadWorker>()
                     .setInputData(inputFor(source))
                     // Without this the worker runs offline, fails immediately and is done: a
@@ -161,12 +159,36 @@ class ApkDownloadWorker @AssistedInject constructor(
                     // waiting for the connection it needs.
                     .setConstraints(
                         Constraints.Builder()
-                            .setRequiredNetworkType(NetworkType.CONNECTED)
+                            .setRequiredNetworkType(networkTypeFor(source))
                             .build()
                     )
                     .build(),
             )
         }
+
+        /**
+         * Nightlies ship on every push to main and nightly auto-download is on by default, so an
+         * unattended nightly download waits for an unmetered network rather than spending the
+         * user's mobile data on each one. A tap on Download is the user choosing to spend it, and
+         * stable auto-download is opt-in, so both keep running on any connection.
+         */
+        internal fun networkTypeFor(source: String): NetworkType =
+            if (source == SOURCE_NIGHTLY) NetworkType.UNMETERED else NetworkType.CONNECTED
+
+        /**
+         * KEEP for background requests: a download already running is the one the user is
+         * watching, and replacing it would restart from zero for no gain.
+         *
+         * REPLACE for a tap, because the work it would collide with is a background nightly still
+         * waiting for Wi-Fi — the downloader reports nothing for that, so the tap isn't refused
+         * upstream, and KEEP would silently drop it, leaving the sheet on "queued" until Wi-Fi
+         * turns up. A background download that has actually started isn't replaced: it reports
+         * itself as active, and `startDownload` refuses the tap before it gets here. Only the
+         * half-second between it starting and reporting is exposed, and losing that costs a
+         * restart, not data.
+         */
+        internal fun policyFor(source: String): ExistingWorkPolicy =
+            if (source == SOURCE_EXPLICIT) ExistingWorkPolicy.REPLACE else ExistingWorkPolicy.KEEP
 
         private fun inputFor(source: String): Data = workDataOf(KEY_SOURCE to source)
     }

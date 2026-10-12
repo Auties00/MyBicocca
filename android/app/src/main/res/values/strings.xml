@@ -1690,7 +1690,7 @@
     <string name="settings_update_stable_auto_download_title">Download automatico</string>
     <string name="settings_update_stable_auto_download_subtitle">Scarica i nuovi aggiornamenti stabili in background</string>
     <string name="settings_update_beta_auto_download_title">Download automatico beta</string>
-    <string name="settings_update_beta_auto_download_subtitle">Scarica le nuove versioni beta in background</string>
+    <string name="settings_update_beta_auto_download_subtitle">Scarica le nuove versioni beta in background, solo su Wi-Fi</string>
 
     <!-- Settings: Language -->
     <string name="settings_language_help_translate">Aiutaci a tradurre l\'app in %1$s!</string>

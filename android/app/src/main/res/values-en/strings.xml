@@ -1688,7 +1688,7 @@
     <string name="settings_update_stable_auto_download_title">Auto download updates</string>
     <string name="settings_update_stable_auto_download_subtitle">Download new stable releases in the background</string>
     <string name="settings_update_beta_auto_download_title">Auto download beta updates</string>
-    <string name="settings_update_beta_auto_download_subtitle">Download new beta releases in the background</string>
+    <string name="settings_update_beta_auto_download_subtitle">Download new beta releases in the background, on Wi-Fi only</string>
 
     <!-- Settings: Language -->
     <string name="settings_language_help_translate">Help us translate the app in %1$s!</string>
