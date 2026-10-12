@@ -65,11 +65,33 @@ val appVersionCode: Int = VERSION_CODE_FLOOR + appBaseVersionName.split(".")
 // Nightlies advertise the version they're heading towards, not the last-shipped one — bumping
 // baseVersion itself is what actually cuts a new release, so this is purely a display/filename
 // label until that happens.
-val nightlyVersionName: String = appBaseVersionName.split(".")
+val nightlyBaseVersionName: String = appBaseVersionName.split(".")
     .map { it.toIntOrNull() ?: 0 }
     .toMutableList()
     .apply { if (isNotEmpty()) this[lastIndex] += 1 }
     .joinToString(".")
+
+fun git(vararg args: String): String? = runCatching {
+    val process = ProcessBuilder("git", *args)
+        .directory(rootDir)
+        .redirectErrorStream(true)
+        .start()
+    val output = process.inputStream.bufferedReader().use { it.readText() }.trim()
+    output.takeIf { process.waitFor() == 0 && it.isNotEmpty() }
+}.getOrNull()
+
+// Each nightly is its own release, `0.0.6-nightly.N`, where N counts the commits since the stable
+// tag named after baseVersion. It's what orders nightlies on the same base, so it has to come out
+// the same wherever the build runs: CI and a local build of one commit agree, and it can only
+// grow along main. Null when that tag isn't there to count from (a shallow clone, or the window
+// between bumping baseVersion and tagging the release) — the build is then a plain
+// `0.0.6-nightly`, and CI declines to publish it rather than guess.
+val nightlyNumber: Int? =
+    git("rev-parse", "--verify", "--quiet", "refs/tags/$appBaseVersionName")
+        ?.let { git("rev-list", "--count", "$appBaseVersionName..HEAD")?.toIntOrNull() }
+
+val nightlyVersionName: String =
+    "$nightlyBaseVersionName-nightly" + (nightlyNumber?.let { ".$it" } ?: "")
 
 val buildNumber: Int = run {
     val current = versionProps.getProperty("buildNumber")?.trim()?.toIntOrNull() ?: 0
@@ -121,14 +143,7 @@ android {
         // compares. GITHUB_SHA is only set on CI, so fall back to git locally rather than leaving
         // every local build with the same empty SHA and no way to tell them apart.
         val commitSha: String = System.getenv("GITHUB_SHA")?.take(7)
-            ?: runCatching {
-                val process = ProcessBuilder("git", "rev-parse", "--short=7", "HEAD")
-                    .directory(rootDir)
-                    .redirectErrorStream(true)
-                    .start()
-                val output = process.inputStream.bufferedReader().use { it.readText() }.trim()
-                output.takeIf { process.waitFor() == 0 && it.isNotEmpty() }
-            }.getOrNull() ?: ""
+            ?: git("rev-parse", "--short=7", "HEAD") ?: ""
         buildConfigField("String", "NIGHTLY_IDENTIFIER", "\"$nightlyIdentifier\"")
         buildConfigField("String", "COMMIT_SHA", "\"$commitSha\"")
 
@@ -227,6 +242,13 @@ tasks.withType<Test> {
     forkEvery = 10
 }
 
+// Read by the nightly workflow to name the release it publishes, so the tag and the version inside
+// the APK come from one place. Not a "build" word, so it leaves buildNumber alone.
+tasks.register("printNightlyVersion") {
+    val version = nightlyVersionName
+    doLast { println(version) }
+}
+
 androidComponents {
     onVariants { variant ->
         val isNightly = variant.buildType == "nightly"
@@ -234,17 +256,16 @@ androidComponents {
         // so the "advertise the next version" bump has to happen here instead, same as versionCode
         // used to before it moved to defaultConfig.
         val fileVersion = if (isNightly) nightlyVersionName else appBaseVersionName
-        val suffix = if (isNightly) "-nightly" else ""
 
         variant.outputs.forEach { variantOutput ->
             val output = variantOutput as com.android.build.api.variant.impl.VariantOutputImpl
-            if (isNightly) output.versionName.set(fileVersion + suffix)
+            if (isNightly) output.versionName.set(fileVersion)
 
             val abi = output.filters.find { it.filterType.toString() == "ABI" }?.identifier
             val newName = if (abi != null) {
-                "mybicocca-$abi-v$fileVersion$suffix.apk"
+                "mybicocca-$abi-v$fileVersion.apk"
             } else {
-                "mybicocca-universal-v$fileVersion$suffix.apk"
+                "mybicocca-universal-v$fileVersion.apk"
             }
             output.outputFileName = newName
         }

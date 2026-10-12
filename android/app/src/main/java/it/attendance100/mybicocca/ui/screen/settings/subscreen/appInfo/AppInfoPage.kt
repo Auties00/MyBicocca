@@ -62,6 +62,7 @@ import it.attendance100.mybicocca.BuildConfig
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.currentLocale
 import it.attendance100.mybicocca.core.os.rememberHapticManager
+import it.attendance100.mybicocca.core.release.nightlyDateLabel
 import it.attendance100.mybicocca.core.version.isNightlyBuild
 import it.attendance100.mybicocca.domain.model.update.DownloadState
 import it.attendance100.mybicocca.domain.model.update.isActive
@@ -655,7 +656,7 @@ private fun NightlyUpdateTile(
     val progress = (downloadState as? DownloadState.Downloading)?.progress ?: 0
     val scheme = MaterialTheme.colorScheme
 
-    val base = release.versionName
+    val base = release.nightlyDateLabel()
     val sha = release.commitSha
     val downloadingStr = stringResource(R.string.update_modal_downloading, progress)
     val queuedStr = stringResource(R.string.update_modal_queued)

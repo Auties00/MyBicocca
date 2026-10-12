@@ -1,5 +1,6 @@
 package it.attendance100.mybicocca.data.update
 
+import it.attendance100.mybicocca.core.version.isNewerThanRunningBuild
 import it.attendance100.mybicocca.core.version.isRunningBuild
 import it.attendance100.mybicocca.data.local.settings.PersistedNightlyState
 import it.attendance100.mybicocca.data.local.settings.PersistedUpdateState
@@ -16,5 +17,11 @@ import it.attendance100.mybicocca.domain.model.update.AppRelease
 internal fun PersistedUpdateState.availableRelease(): AppRelease? =
     release?.takeIf { available && !it.isRunningBuild() }
 
+/**
+ * The nightly counterpart, judged by version rather than identity: nightlies are ordered by
+ * [isNewerThanRunningBuild] (`0.0.6-nightly.12` < `…13`), which also rules out the running one. A
+ * release stored by a build from before per-build nightlies carries a date where its version
+ * should be, doesn't parse, and so is never offered — the next check replaces it.
+ */
 internal fun PersistedNightlyState.availableRelease(): AppRelease? =
-    release?.takeIf { available && !it.isRunningBuild() }
+    release?.takeIf { available && isNewerThanRunningBuild(it.versionName) }

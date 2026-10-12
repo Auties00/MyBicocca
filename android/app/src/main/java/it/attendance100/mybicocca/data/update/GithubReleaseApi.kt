@@ -61,20 +61,9 @@ class GithubReleaseApi(
     }
 
     /**
-     * Fetches the release for a specific [tag] (e.g. "nightly"), or null on 404
-     * (tag doesn't exist yet — normal before the first CI run).
+     * Up to [PAGE_SIZE] published releases, newest first: the "What's New" list, and the pool the
+     * newest nightly is picked from (CI keeps only the last ten, so it is always on this page).
      */
-    suspend fun getReleaseByTag(tag: String): GithubReleaseDto? {
-        val response: HttpResponse =
-            client.get("$API_BASE/repos/$owner/$repo/releases/tags/$tag")
-        return when {
-            response.status == HttpStatusCode.NotFound -> null
-            response.status.isSuccess() -> response.body()
-            else -> error("GitHub release-by-tag request failed: ${response.status}")
-        }
-    }
-
-    /** Up to [PAGE_SIZE] published releases, newest first, for the "What's New" list. */
     suspend fun getReleases(): List<GithubReleaseDto> {
         val response: HttpResponse =
             client.get("$API_BASE/repos/$owner/$repo/releases?per_page=$PAGE_SIZE")

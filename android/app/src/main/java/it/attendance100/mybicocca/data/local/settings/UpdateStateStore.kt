@@ -331,8 +331,7 @@ class UpdateStateStore @Inject constructor(
 
         val NIGHTLY_ENABLED_KEY = booleanPreferencesKey("update_nightly_enabled")
         val NIGHTLY_LAST_CHECKED_MS_KEY = longPreferencesKey("update_nightly_last_checked_ms")
-        val NIGHTLY_LAST_PUBLISHED_MS_KEY = longPreferencesKey("update_nightly_last_published_ms")
-        val NIGHTLY_LAST_DIGEST_KEY = stringPreferencesKey("update_nightly_last_digest")
+        val NIGHTLY_LAST_NOTIFIED_VERSION_KEY = stringPreferencesKey("update_nightly_last_notified_version")
         val NIGHTLY_AVAILABLE_KEY = booleanPreferencesKey("update_nightly_available")
         val NIGHTLY_REL_VERSION_NAME_KEY = stringPreferencesKey("update_nightly_rel_version_name")
         val NIGHTLY_REL_TITLE_KEY = stringPreferencesKey("update_nightly_rel_title")
@@ -424,17 +423,15 @@ class UpdateStateStore @Inject constructor(
         } else null
         PersistedNightlyState(
             lastCheckedAtMs = prefs[NIGHTLY_LAST_CHECKED_MS_KEY],
-            lastSeenPublishedAtMs = prefs[NIGHTLY_LAST_PUBLISHED_MS_KEY],
-            lastSeenDigest = prefs[NIGHTLY_LAST_DIGEST_KEY],
             available = available,
             release = release,
+            lastNotifiedVersion = prefs[NIGHTLY_LAST_NOTIFIED_VERSION_KEY],
         )
     }
 
-    suspend fun updateNightlyCheckedAt(checkedAtMs: Long) {
-        dataStore.edit { prefs ->
-            prefs[NIGHTLY_LAST_CHECKED_MS_KEY] = checkedAtMs
-        }
+    /** Marks a nightly version as already surfaced, so it isn't announced twice. */
+    suspend fun setNightlyLastNotifiedVersion(version: String) {
+        dataStore.edit { prefs -> prefs[NIGHTLY_LAST_NOTIFIED_VERSION_KEY] = version }
     }
 
     suspend fun setNightlyUpToDate(checkedAtMs: Long) {
@@ -454,17 +451,9 @@ class UpdateStateStore @Inject constructor(
         }
     }
 
-    suspend fun setNightlyUpdateAvailable(
-        release: AppRelease,
-        publishedAtMs: Long,
-        digest: String?,
-        checkedAtMs: Long,
-    ) {
+    suspend fun setNightlyUpdateAvailable(release: AppRelease, checkedAtMs: Long) {
         dataStore.edit { prefs ->
             prefs[NIGHTLY_LAST_CHECKED_MS_KEY] = checkedAtMs
-            prefs[NIGHTLY_LAST_PUBLISHED_MS_KEY] = publishedAtMs
-            digest?.let { prefs[NIGHTLY_LAST_DIGEST_KEY] = it }
-                ?: prefs.remove(NIGHTLY_LAST_DIGEST_KEY)
             prefs[NIGHTLY_AVAILABLE_KEY] = true
             prefs.saveRelease(
                 release = release,
@@ -484,8 +473,7 @@ class UpdateStateStore @Inject constructor(
         dataStore.edit { prefs ->
             prefs[NIGHTLY_AVAILABLE_KEY] = false
             prefs.remove(NIGHTLY_LAST_CHECKED_MS_KEY)
-            prefs.remove(NIGHTLY_LAST_PUBLISHED_MS_KEY)
-            prefs.remove(NIGHTLY_LAST_DIGEST_KEY)
+            prefs.remove(NIGHTLY_LAST_NOTIFIED_VERSION_KEY)
             prefs.clearRelease(
                 versionKey = NIGHTLY_REL_VERSION_NAME_KEY,
                 titleKey = NIGHTLY_REL_TITLE_KEY,
@@ -515,12 +503,16 @@ data class PersistedUpdateState(
     val lastNotifiedVersion: String?,
 )
 
+/**
+ * Snapshot of the persisted nightly-channel state; the nightly counterpart of [PersistedUpdateState].
+ *
+ * @property lastNotifiedVersion The nightly version (e.g. "0.0.6-nightly.12") last announced, or null.
+ */
 data class PersistedNightlyState(
     val lastCheckedAtMs: Long?,
-    val lastSeenPublishedAtMs: Long?,
-    val lastSeenDigest: String?,
     val available: Boolean,
     val release: AppRelease?,
+    val lastNotifiedVersion: String? = null,
 )
 
 /**
@@ -529,9 +521,8 @@ data class PersistedNightlyState(
  * @property path Absolute path of the file in the app's cache.
  * @property size Its size when it passed verification, re-checked before the record is trusted.
  * @property versionName The release's version, used to recognise an already-installed stable build.
- * @property commitSha The release's commit, or null when the source didn't give one. This is what
- *   identifies a nightly: two nightlies share a versionCode *and* a versionName, so the commit is
- *   the only thing that distinguishes the one on disk from the one already running.
+ * @property commitSha The release's commit, or null when the source didn't give one. Preferred
+ *   over [versionName] for a nightly, as the exact identity — see `isRunningBuild`.
  */
 data class DownloadedApk(
     val path: String,

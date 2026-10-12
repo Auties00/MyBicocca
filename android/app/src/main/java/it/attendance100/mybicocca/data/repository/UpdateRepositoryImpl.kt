@@ -10,6 +10,7 @@ import it.attendance100.mybicocca.core.version.isNewerThanRunningBuild
 import it.attendance100.mybicocca.core.version.isRunningBuild
 import it.attendance100.mybicocca.data.local.settings.PersistedUpdateState
 import it.attendance100.mybicocca.data.local.settings.UpdateStateStore
+import it.attendance100.mybicocca.data.mapper.update.latestNightlyOrNull
 import it.attendance100.mybicocca.data.mapper.update.toAppReleaseOrNull
 import it.attendance100.mybicocca.data.mapper.update.toNightlyAppReleaseOrNull
 import it.attendance100.mybicocca.core.notification.NotificationId
@@ -165,10 +166,9 @@ class UpdateRepositoryImpl @Inject constructor(
             .map { persisted ->
                 when {
                     persisted.lastCheckedAtMs == null -> UpdateStatus.Unknown
-                    persisted.available && persisted.release != null && 
-                            persisted.release.commitSha != BuildConfig.COMMIT_SHA ->
-                        UpdateStatus.UpdateAvailable(persisted.release)
-                    else -> UpdateStatus.UpToDate
+                    else -> persisted.availableRelease()
+                        ?.let { UpdateStatus.UpdateAvailable(it) }
+                        ?: UpdateStatus.UpToDate
                 }
             }
             .distinctUntilChanged()
@@ -259,9 +259,8 @@ class UpdateRepositoryImpl @Inject constructor(
      * be two notifications for one event, the first of them immediately stale.
      *
      * Never posted for the build already running — the same reconciliation `availableRelease()`
-     * applies to the stored flag. The nightly channel needs it: its freshness check compares
-     * against what the *store* last saw, so on a fresh install with an empty store the running
-     * nightly reads as newly discovered.
+     * applies to the stored flag. Both checks already rule it out by version before getting here;
+     * this is the backstop for a build whose version can't be compared.
      */
     private fun notifyAvailable(release: AppRelease, autoDownloading: Boolean) {
         if (autoDownloading || release.isRunningBuild()) return
@@ -307,68 +306,62 @@ class UpdateRepositoryImpl @Inject constructor(
         }
     }
 
+    /**
+     * The nightly counterpart of the stable check in [checkForUpdates], and shaped like it: every
+     * nightly is its own pre-release with a version of its own (`0.0.6-nightly.12`), so "is there
+     * a newer one" is a [SemVer] comparison against the running build rather than a guess from
+     * what was last seen upstream.
+     *
+     * Throttled to one look per half-hour slot when not forced, and nothing is reported back for
+     * a skipped or failed look: it's a beta channel, and the stable result is what the caller
+     * falls back to.
+     */
     private suspend fun checkForNightlyUpdate(force: Boolean, announce: Boolean): UpdateCheckResult? = nightlyMutex.withLock {
         val current = store.nightlyState.first()
         val now = System.currentTimeMillis()
 
         if (!force && current.lastCheckedAtMs != null) {
-            val currentSlot = now / (30L * 60 * 1000)
-            val lastSlot = current.lastCheckedAtMs / (30L * 60 * 1000)
+            val currentSlot = now / NIGHTLY_SLOT_MS
+            val lastSlot = current.lastCheckedAtMs / NIGHTLY_SLOT_MS
             if (currentSlot == lastSlot) return@withLock null
         }
 
-        val remoteDto = try {
-            withContext(Dispatchers.IO) { githubApi.getReleaseByTag("nightly") }
+        val latest = try {
+            withContext(Dispatchers.IO) {
+                githubApi.getReleases().latestNightlyOrNull()?.toNightlyAppReleaseOrNull()
+            }
         } catch (cause: Throwable) {
             // Nightly checks silently swallow errors since it's an internal beta feature
             return@withLock null
         }
 
-        if (remoteDto == null) {
+        if (latest == null || !isNewerThanRunningBuild(latest.versionName)) {
             store.setNightlyUpToDate(now)
-            return@withLock null
+            // Whatever was last offered has been installed or overtaken; its notification goes
+            // with it, as on the stable channel.
+            notifier.cancel(NotificationId.NightlyUpdateAvailable)
+            return@withLock UpdateCheckResult.UpToDate
         }
 
-        val remotePublishedMs = runCatching { java.time.Instant.parse(remoteDto.publishedAt).toEpochMilli() }.getOrNull()
-        if (remotePublishedMs == null) {
-            store.setNightlyUpToDate(now)
-            return@withLock null
-        }
+        store.setNightlyUpdateAvailable(latest, now)
 
-        val remoteDigest = remoteDto.assets.firstOrNull()?.digest
-
-        // Freshness check: if both timestamp and digest match what we last saw, it's not new.
-        // If digest is null (missing on GitHub), we rely solely on timestamp.
-        val isNew = current.lastSeenPublishedAtMs != remotePublishedMs ||
-                (remoteDigest != null && current.lastSeenDigest != remoteDigest)
-
-        if (!isNew) {
-            store.updateNightlyCheckedAt(now)
-            // "Not new" only means nothing changed upstream since the last look — the offer itself
-            // usually still stands, so cancelling unconditionally would take the notification away
-            // within half an hour of posting it. Pull it only when the stored state has nothing
-            // left to offer, which after an install is the running build filtering itself out.
-            if (current.availableRelease() == null) {
-                notifier.cancel(NotificationId.NightlyUpdateAvailable)
+        // First time this nightly surfaces, mark it notified regardless of whether it's announced.
+        if (latest.versionName != current.lastNotifiedVersion) {
+            store.setNightlyLastNotifiedVersion(latest.versionName)
+            if (announce) {
+                _nightlyEvents.trySend(latest)
+                notifyNightlyAvailable(latest, autoDownloading = store.nightlyAutoDownload.first())
             }
-            return@withLock null
         }
 
-        val release = remoteDto.toNightlyAppReleaseOrNull(remotePublishedMs) ?: return@withLock null
-        store.setNightlyUpdateAvailable(release, remotePublishedMs, remoteDigest, now)
-        if (announce) {
-            _nightlyEvents.trySend(release)
-            notifyNightlyAvailable(release, autoDownloading = store.nightlyAutoDownload.first())
-        }
-
-        UpdateCheckResult.UpdateAvailable(release)
+        UpdateCheckResult.UpdateAvailable(latest)
     }
 
     override suspend fun releases(): List<AppRelease> = withContext(Dispatchers.IO) {
-        // The nightly is a real GitHub release (rolling, tag "nightly"), so it comes back in this
-        // list too — but the generic mapper renders it off its raw tag, and it has no business
-        // showing at all to someone who never opted into the channel. It's added from the persisted
-        // nightly state below instead, which maps it properly.
+        // Nightlies are real GitHub pre-releases, so they come back in this list too — but they
+        // have no business showing at all to someone who never opted into the channel, and even
+        // for someone who did, only the one on offer matters. It's added from the persisted
+        // nightly state below instead.
         val stableReleases = githubApi.getReleases()
             .filterNot { it.prerelease }
             .mapNotNull { it.toAppReleaseOrNull() }
@@ -379,9 +372,8 @@ class UpdateRepositoryImpl @Inject constructor(
             null
         }
 
-        // Keyed on the release page rather than the version: the two mappings of a nightly don't
-        // agree on a version name (one uses the "nightly" tag, the other a formatted publish date),
-        // but both carry the same GitHub URL. Nightly goes first so it survives as the richer copy.
+        // Keyed on the release page rather than the version, so the nightly can never appear twice
+        // whatever its two copies are called. Nightly goes first so it survives as the richer copy.
         (listOfNotNull(nightly) + stableReleases)
             .distinctBy { it.pageUrl }
             .sortedByDescending { it.publishedAt }
@@ -400,6 +392,6 @@ class UpdateRepositoryImpl @Inject constructor(
 
     private companion object {
         const val DAILY_TTL_MS = 24L * 60 * 60 * 1000
-        const val NIGHTLY_TTL_MS = 12L * 60 * 60 * 1000
+        const val NIGHTLY_SLOT_MS = 30L * 60 * 1000
     }
 }
