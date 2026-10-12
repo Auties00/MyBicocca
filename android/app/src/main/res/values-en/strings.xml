@@ -1685,6 +1685,9 @@
     <string name="settings_update_check_interval_title">Check for updates every</string>
     <string name="settings_update_stable_header">Stable Updates</string>
     <string name="settings_update_beta_header">Beta Updates</string>
+    <string name="settings_update_network_header">Network</string>
+    <string name="settings_update_mobile_data_title">Use mobile data</string>
+    <string name="settings_update_mobile_data_subtitle">Allow automatic downloads without Wi-Fi</string>
     <string name="settings_update_stable_auto_download_title">Auto download updates</string>
     <string name="settings_update_stable_auto_download_subtitle">Download new stable releases in the background</string>
     <string name="settings_update_beta_auto_download_title">Auto download beta updates</string>

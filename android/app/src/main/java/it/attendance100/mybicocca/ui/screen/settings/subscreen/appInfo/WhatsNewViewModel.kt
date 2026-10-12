@@ -61,12 +61,15 @@ class WhatsNewViewModel @Inject constructor(
      */
     private fun buildLoaded(releases: List<AppRelease>): WhatsNewUiState {
         val items = releases.map { ReleaseItem(it, parseReleaseNotes(it.notes)) }
-        val latest =
-            items.firstOrNull() ?: return WhatsNewUiState.Loaded(merged = null, releases = items)
 
-        val newer =
-            items.filter { SemVer.isNewer(it.release.versionName, BuildConfig.VERSION_NAME) }
-        val merged = if (newer.size >= MERGE_THRESHOLD) {
+        // Stable releases only: a nightly's notes are a raw commit list, not something to merge
+        // into the sectioned changelog, and it's in the list below anyway. The card's header is
+        // the newest of the releases it merges, so it never names a nightly over stable notes.
+        val newer = items.filter {
+            !it.release.isPreRelease && SemVer.isNewer(it.release.versionName, BuildConfig.VERSION_NAME)
+        }
+        val latest = newer.firstOrNull()
+        val merged = if (latest != null && newer.size >= MERGE_THRESHOLD) {
             MergedSummary(
                 latestVersion = latest.release.versionName,
                 sinceVersion = BuildConfig.VERSION_NAME,

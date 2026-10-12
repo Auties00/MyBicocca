@@ -8,18 +8,21 @@ package it.attendance100.mybicocca.core.version
  * unparseable yields null so the caller can fall back to "treat as not-newer" rather than
  * crash on a malformed tag.
  *
- * Precedence follows SemVer 2.0.0 for the numeric core (major, minor, patch compared in order)
- * with one deliberate simplification: a pre-release suffix (`-beta.1`) lowers a version below
- * the same core without one, but two different pre-releases on the same core compare equal —
- * the app never needs to rank `1.0.0-beta.1` against `1.0.0-beta.2`, only to know the suffixed
- * build is older than the final `1.0.0`. Build metadata after `+` is ignored, per spec.
+ * Precedence follows SemVer 2.0.0: the numeric core (major, minor, patch) compared in order, then
+ * a pre-release ranks below the same core without one, and two pre-releases on the same core are
+ * ranked by their dot-separated identifiers — numeric ones numerically, the rest by ASCII, a numeric
+ * one below a non-numeric one, and a shorter list below a longer one it prefixes. That last part is
+ * what orders nightlies: `0.0.6-nightly.9` < `0.0.6-nightly.12` < `0.0.6`. Build metadata after `+`
+ * is ignored, per spec.
  */
 data class SemVer(
     val major: Int,
     val minor: Int,
     val patch: Int,
-    val isPreRelease: Boolean,
+    val preRelease: List<String> = emptyList(),
 ) : Comparable<SemVer> {
+
+    val isPreRelease: Boolean get() = preRelease.isNotEmpty()
 
     override fun compareTo(other: SemVer): Int {
         major.compareTo(other.major).let { if (it != 0) return it }
@@ -27,18 +30,20 @@ data class SemVer(
         patch.compareTo(other.patch).let { if (it != 0) return it }
 
         // Same numeric core: a pre-release ranks below the final release.
-        return when {
-            isPreRelease == other.isPreRelease -> 0
-            isPreRelease -> -1
-            else -> 1
+        if (isPreRelease != other.isPreRelease) return if (isPreRelease) -1 else 1
+
+        for ((mine, theirs) in preRelease.zip(other.preRelease)) {
+            comparePreReleaseIdentifier(mine, theirs).let { if (it != 0) return it }
         }
+        return preRelease.size.compareTo(other.preRelease.size)
     }
 
     companion object {
         /**
          * Parses a version string into a [SemVer], or null when no numeric core can be read.
          * Strips an optional leading `v`/`V`, drops `+build` metadata, splits a `-prerelease`
-         * suffix, and reads up to three dot-separated integers (missing parts default to 0).
+         * suffix into its dot-separated identifiers, and reads up to three dot-separated integers
+         * (missing parts default to 0).
          */
         fun parse(raw: String?): SemVer? {
             if (raw.isNullOrBlank()) return null
@@ -47,12 +52,12 @@ data class SemVer(
             if (text.startsWith("v") || text.startsWith("V")) text = text.substring(1)
             text = text.substringBefore('+')
             val core = text.substringBefore('-')
-            val isPreRelease = '-' in text
+            val preRelease = if ('-' in text) text.substringAfter('-').split('.') else emptyList()
             val parts = core.split('.')
             val major = parts.getOrNull(0)?.toIntOrNull() ?: return null
             val minor = parts.getOrNull(1)?.toIntOrNull() ?: 0
             val patch = parts.getOrNull(2)?.toIntOrNull() ?: 0
-            return SemVer(major, minor, patch, isPreRelease)
+            return SemVer(major, minor, patch, preRelease)
         }
 
         /**
@@ -64,6 +69,17 @@ data class SemVer(
             val latestVer = parse(latest) ?: return false
             val installedVer = parse(installed) ?: return false
             return latestVer > installedVer
+        }
+
+        private fun comparePreReleaseIdentifier(a: String, b: String): Int {
+            val aNum = a.toLongOrNull()
+            val bNum = b.toLongOrNull()
+            return when {
+                aNum != null && bNum != null -> aNum.compareTo(bNum)
+                aNum != null -> -1
+                bNum != null -> 1
+                else -> a.compareTo(b)
+            }
         }
     }
 }

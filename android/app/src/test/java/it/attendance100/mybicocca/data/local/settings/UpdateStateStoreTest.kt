@@ -61,7 +61,7 @@ class UpdateStateStoreTest {
     @Test
     fun nightlyState_updatesCorrectly() = testScope.runTest {
         val release = AppRelease(
-            versionName = "Nightly",
+            versionName = "0.0.6-nightly.12",
             title = "Test",
             notes = "",
             pageUrl = "url",
@@ -75,14 +75,21 @@ class UpdateStateStoreTest {
             val initial = awaitItem()
             assertThat(initial.available).isFalse()
 
-            store.setNightlyUpdateAvailable(release, 1000L, "digest1", 2000L)
-            
+            store.setNightlyUpdateAvailable(release, 2000L)
+
             val updated = awaitItem()
             assertThat(updated.available).isTrue()
             assertThat(updated.release?.commitSha).isEqualTo("abc")
-            assertThat(updated.lastSeenPublishedAtMs).isEqualTo(1000L)
-            assertThat(updated.lastSeenDigest).isEqualTo("digest1")
             assertThat(updated.lastCheckedAtMs).isEqualTo(2000L)
+            assertThat(updated.lastNotifiedVersion).isNull()
+
+            store.setNightlyLastNotifiedVersion("0.0.6-nightly.12")
+            assertThat(awaitItem().lastNotifiedVersion).isEqualTo("0.0.6-nightly.12")
+
+            store.clearNightlyState()
+            val cleared = awaitItem()
+            assertThat(cleared.available).isFalse()
+            assertThat(cleared.lastNotifiedVersion).isNull()
         }
     }
 }
