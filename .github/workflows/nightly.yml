@@ -5,6 +5,13 @@ on:
     branches: [main, feature/nightly-updates]
   workflow_dispatch:
 
+# One nightly at a time. Queued rather than cancelled: a run cut off mid-upload would leave a
+# release with only some of its APKs, while a queued one just publishes after it — and GitHub keeps
+# only the newest pending run, so a burst of pushes still ends on the latest commit.
+concurrency:
+  group: nightly
+  cancel-in-progress: false
+
 jobs:
   nightly:
     runs-on: ubuntu-latest
