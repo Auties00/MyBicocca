@@ -24,10 +24,10 @@ import javax.inject.Singleton
  * The real repository with every question about newer versions answered "up to date", so no
  * update banner, modal or notification ever shows. Settings and the release list still work.
  *
- * Answering is not enough to stop a download. The background workers read the saved update
- * state themselves, and a demo build shares its application id with debug, so it can inherit an
- * offer, or a download already queued, from the build it was installed over. That state is
- * wiped at startup and again at every check, which is the first thing the periodic worker does.
+ * Answering is not enough to stop a download. A demo build shares its application id with debug,
+ * so it can inherit a saved offer, or a download already queued, from the build it was installed
+ * over. Scheduling a download therefore does nothing here, the queued one is cancelled at
+ * startup, and saved offers are wiped at startup and at every check.
  */
 @Singleton
 class DemoUpdateRepository @Inject constructor(
@@ -64,6 +64,11 @@ class DemoUpdateRepository @Inject constructor(
     override suspend fun pendingUpdateModal(): PendingUpdateModal? = null
 
     override fun startDownload(release: AppRelease): Boolean = false
+
+    override suspend fun scheduleAutoDownload() = Unit
+
+    // The real one re-schedules the download under the new answer.
+    override suspend fun setAutoDownloadOnMobileData(enabled: Boolean) = store.setAutoDownloadOnMobileData(enabled)
 
     // The real one follows the switch with a forced check against GitHub, which would save an offer.
     override suspend fun setNightlyEnabled(enabled: Boolean) {
