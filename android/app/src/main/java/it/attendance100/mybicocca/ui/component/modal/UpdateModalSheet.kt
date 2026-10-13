@@ -51,6 +51,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.release.nightlyDateLabel
 import it.attendance100.mybicocca.core.release.parseReleaseNotes
 import it.attendance100.mybicocca.domain.model.update.DownloadState
 import it.attendance100.mybicocca.domain.model.update.UpdateModalKind
@@ -172,7 +173,7 @@ fun UpdateModalSheet(
                         style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold)
                     )
                     Text(
-                        text = if (release.isPreRelease) release.versionName else stringResource(R.string.update_modal_version, release.versionName),
+                        text = stringResource(R.string.update_modal_version, release.versionName),
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -284,8 +285,8 @@ fun UpdateModalSheet(
                                             release.versionName,
                                         )
 
-                                        // A nightly's version name is its publish date, which
-                                        // reads as nonsense after "switch to".
+                                        // "Switch to 0.0.6-nightly.12" says the suffix twice;
+                                        // the plain wording reads better.
                                         isSwitchToNightly -> stringResource(
                                             R.string.update_modal_switch_nightly_install,
                                         )
@@ -312,7 +313,7 @@ fun UpdateModalSheet(
 
                                         isSwitchToNightly -> stringResource(
                                             R.string.update_modal_switch_nightly_download,
-                                            release.versionName,
+                                            release.nightlyDateLabel(),
                                         )
 
                                         else -> stringResource(R.string.update_modal_download)

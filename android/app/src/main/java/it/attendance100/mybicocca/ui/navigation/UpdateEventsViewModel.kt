@@ -26,7 +26,6 @@ import it.attendance100.mybicocca.domain.usecase.notification.ObservePendingNoti
 import kotlinx.coroutines.flow.filterNotNull
 import it.attendance100.mybicocca.domain.usecase.update.ObserveNightlyEventsUseCase
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.first
 import java.io.File
 
 @HiltViewModel
@@ -58,13 +57,10 @@ class UpdateEventsViewModel @Inject constructor(
     val downloadState: StateFlow<DownloadState> = updateRepository.downloadState
 
     /**
-     * Read at decision time rather than kept as a cached snapshot: a snapshot has to be seeded
-     * with a placeholder default until DataStore's first read lands, and a one-shot "should this
-     * download now" branch that reads the placeholder gets the wrong answer with nothing to
-     * signal it went wrong. A suspend read always waits for the real value.
+     * Starts the automatic download the settings call for, if any; see
+     * [it.attendance100.mybicocca.domain.repository.UpdateRepository.scheduleAutoDownload].
      */
-    suspend fun stableAutoDownload(): Boolean = updateRepository.observeStableAutoDownload().first()
-    suspend fun nightlyAutoDownload(): Boolean = updateRepository.observeNightlyAutoDownload().first()
+    suspend fun scheduleAutoDownload() = updateRepository.scheduleAutoDownload()
 
     fun startDownload(release: AppRelease): Boolean = updateRepository.startDownload(release)
 

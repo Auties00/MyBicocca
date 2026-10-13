@@ -138,6 +138,21 @@ interface UpdateRepository {
     fun observeNightlyAutoDownload(): Flow<Boolean>
     suspend fun setNightlyAutoDownload(enabled: Boolean)
 
+    /**
+     * Whether automatic downloads may use mobile data; off, they wait for an unmetered network.
+     * Never applies to [startDownload], which is a tap.
+     */
+    fun observeAutoDownloadOnMobileData(): Flow<Boolean>
+    suspend fun setAutoDownloadOnMobileData(enabled: Boolean)
+
+    /**
+     * Starts the automatic download the settings call for, if any: the available update of a
+     * channel with auto-download on, stable first, unless it's already downloaded. It runs in the
+     * background on the networks [observeAutoDownloadOnMobileData] allows, so it may wait for Wi-Fi
+     * — unlike [startDownload], the UI isn't told it's queued, and a tap can still overtake it.
+     */
+    suspend fun scheduleAutoDownload()
+
     /** How often (in minutes) the periodic background update check fires. */
     fun observeCheckIntervalMinutes(): Flow<Int>
     suspend fun setCheckIntervalMinutes(minutes: Int)

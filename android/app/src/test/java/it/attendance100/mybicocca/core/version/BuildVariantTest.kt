@@ -55,6 +55,31 @@ class BuildVariantTest {
         assertThat(SemVer.isNewer("0.9.9", "1.0.1-nightly")).isFalse()
     }
 
+    /** How the nightly channel finds the next nightly: by its number, compared as a number. */
+    @Test
+    fun `a later nightly on the same base is newer`() {
+        assertThat(SemVer.isNewer("0.0.6-nightly.12", "0.0.6-nightly.9")).isTrue()
+        assertThat(SemVer.isNewer("0.0.6-nightly.9", "0.0.6-nightly.12")).isFalse()
+        assertThat(SemVer.isNewer("0.0.6-nightly.12", "0.0.6-nightly.12")).isFalse()
+    }
+
+    @Test
+    fun `the first nightly after a release is newer than every nightly before it`() {
+        assertThat(SemVer.isNewer("0.0.7-nightly.0", "0.0.6-nightly.40")).isTrue()
+        assertThat(SemVer.isNewer("0.0.7-nightly.0", "0.0.6")).isTrue()
+    }
+
+    @Test
+    fun `a numbered nightly is newer than an unnumbered one on the same base`() {
+        assertThat(SemVer.isNewer("0.0.6-nightly.1", "0.0.6-nightly")).isTrue()
+    }
+
+    /** What a build from before per-build nightlies stored as a nightly's version: never offered. */
+    @Test
+    fun `a nightly named after its publish date is never newer`() {
+        assertThat(SemVer.isNewer("29 ago 2026, 14:00", "0.0.5")).isFalse()
+    }
+
     private companion object {
         const val RUNNING_SHA = "abc1234"
     }

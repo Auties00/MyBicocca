@@ -141,6 +141,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -585,30 +586,16 @@ fun MainShell(
     val strInstallUpdate = stringResource(R.string.update_modal_install)
     val strShellUpdateGone = stringResource(R.string.shell_update_no_longer_available)
 
-    // Both channels take the same path — announce, then either start the download straight away or
-    // let the tap open the modal to download from. Only the event source differs.
+    // Both channels take the same path: hand the update to the automatic download — which decides
+    // whether the channel's auto-download is on, and which networks it may use — then announce it
+    // with a way into the modal. The action stays even when the download starts on its own, because
+    // it may be waiting for Wi-Fi, and the modal is where a tap downloads it right away. Scheduled
+    // before the snackbar because showing one suspends until it is dismissed.
     LaunchedEffect(updateEventsViewModel, snackbarController) {
-        updateEventsViewModel.events.collect { release ->
-            if (updateEventsViewModel.stableAutoDownload()) {
-                snackbarController.showInfo(strShellUpdateAvailable)
-                updateEventsViewModel.startDownload(release)
-            } else {
-                snackbarController.showInfo(strShellUpdateAvailable) {
-                    openUpdateModal(release)
-                }
-            }
-        }
-    }
-
-    LaunchedEffect(updateEventsViewModel, snackbarController) {
-        updateEventsViewModel.nightlyEvents.collect { release ->
-            if (updateEventsViewModel.nightlyAutoDownload()) {
-                snackbarController.showInfo(strShellUpdateAvailable)
-                updateEventsViewModel.startDownload(release)
-            } else {
-                snackbarController.showInfo(strShellUpdateAvailable) {
-                    openUpdateModal(release)
-                }
+        merge(updateEventsViewModel.events, updateEventsViewModel.nightlyEvents).collect { release ->
+            updateEventsViewModel.scheduleAutoDownload()
+            snackbarController.showInfo(strShellUpdateAvailable) {
+                openUpdateModal(release)
             }
         }
     }
