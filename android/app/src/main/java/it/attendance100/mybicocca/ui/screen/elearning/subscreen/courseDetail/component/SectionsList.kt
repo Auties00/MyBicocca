@@ -70,6 +70,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.currentLocale
+import it.attendance100.mybicocca.core.time.AppClock
 import it.attendance100.mybicocca.domain.model.elearning.course.CompletionState
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseModule
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseSection
@@ -675,7 +676,7 @@ private fun withDeadline(base: String, deadline: Instant?): String {
     val formatter = rememberDeadlineFormatter()
     if (deadline == null) return base
     val label = formatter.format(deadline.atZone(ZoneId.systemDefault()))
-    val glue = if (deadline.isBefore(Instant.now())) {
+    val glue = if (deadline.isBefore(Instant.now(AppClock.clock))) {
         stringResource(R.string.elearning_module_deadline_closed, label)
     } else {
         stringResource(R.string.elearning_module_deadline_due, label)
@@ -690,7 +691,7 @@ private fun withDeadlineOrOpen(base: String, module: CourseModule): String {
     module.dueAt?.let { return withDeadline(base, it) }
     val opens = module.opensAt ?: return base
     val label = formatter.format(opens.atZone(ZoneId.systemDefault()))
-    return if (opens.isAfter(Instant.now())) {
+    return if (opens.isAfter(Instant.now(AppClock.clock))) {
         "$base · ${stringResource(R.string.elearning_module_deadline_from, label)}"
     } else {
         base

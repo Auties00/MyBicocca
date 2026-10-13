@@ -5,6 +5,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import it.attendance100.mybicocca.core.time.AppClock
 import kotlinx.coroutines.delay
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -19,10 +20,10 @@ import java.time.temporal.TemporalAdjusters
  */
 @Composable
 fun rememberCurrentTime(refreshIntervalMs: Long = 60_000L): State<LocalDateTime> {
-    val state = remember { mutableStateOf(LocalDateTime.now()) }
+    val state = remember { mutableStateOf(LocalDateTime.now(AppClock.clock)) }
     LaunchedEffect(refreshIntervalMs) {
         while (true) {
-            state.value = LocalDateTime.now()
+            state.value = LocalDateTime.now(AppClock.clock)
             delay(refreshIntervalMs)
         }
     }

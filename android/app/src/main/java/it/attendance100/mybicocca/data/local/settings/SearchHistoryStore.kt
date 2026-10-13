@@ -4,6 +4,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import it.attendance100.mybicocca.core.time.AppClock
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.search.SearchHistoryEntry
 import kotlinx.coroutines.flow.Flow
@@ -44,7 +45,7 @@ class SearchHistoryStore @Inject constructor(
                 .firstOrNull { it.query.equals(trimmed, ignoreCase = true) }
                 ?.pickedKey
             val updated = buildList {
-                add(SearchHistoryEntry(trimmed, Instant.now(), pickedKey ?: previousPick))
+                add(SearchHistoryEntry(trimmed, Instant.now(AppClock.clock), pickedKey ?: previousPick))
                 addAll(current.filterNot { it.query.equals(trimmed, ignoreCase = true) })
             }.take(MAX_ENTRIES)
             prefs[key] = serialize(updated)

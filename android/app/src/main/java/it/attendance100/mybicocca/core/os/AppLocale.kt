@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalLocale
+import androidx.core.content.edit
 import androidx.core.os.LocaleListCompat
 import it.attendance100.mybicocca.R
 import org.xmlpull.v1.XmlPullParser
@@ -66,6 +67,23 @@ fun systemAppLanguage(context: Context): String {
         ?: supported.tags.firstOrNull()
         ?: Locale.getDefault().language
 }
+
+/**
+ * Records and applies the user's language choice: a language tag pins the app to it, null goes
+ * back to following the system. The flag is what tells startup whether to re-apply the system
+ * language, so the two are always written together.
+ */
+fun selectAppLanguage(context: Context, languageTag: String?) {
+    context.getSharedPreferences(LANGUAGE_PREFS, Context.MODE_PRIVATE).edit { putBoolean(KEY_FOLLOWS_SYSTEM, languageTag == null) }
+    applyAppLanguage(context, languageTag ?: systemAppLanguage(context))
+}
+
+/** Whether the app follows the system language rather than one the user picked. */
+fun followsSystemLanguage(context: Context): Boolean =
+    context.getSharedPreferences(LANGUAGE_PREFS, Context.MODE_PRIVATE).getBoolean(KEY_FOLLOWS_SYSTEM, true)
+
+private const val LANGUAGE_PREFS = "language_prefs"
+private const val KEY_FOLLOWS_SYSTEM = "is_system"
 
 /** Applies [languageTags] as the app's locale. */
 fun applyAppLanguage(context: Context, languageTags: String) {

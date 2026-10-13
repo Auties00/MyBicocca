@@ -44,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.rememberHapticManager
+import it.attendance100.mybicocca.core.time.AppClock
 import it.attendance100.mybicocca.domain.model.elearning.course.AcademicYear
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.domain.model.elearning.deadline.Deadline
@@ -209,7 +210,7 @@ fun NotebookCard(
 
         if (hasDeadlines) {
             Spacer(Modifier.height(2.dp))
-            val today = remember { LocalDate.now() }
+            val today = remember { LocalDate.now(AppClock.clock) }
             val bodyShape = RoundedCornerShape(bottomStart = 16.dp, bottomEnd = 16.dp)
 
             Box(

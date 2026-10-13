@@ -40,6 +40,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.time.AppClock
 import it.attendance100.mybicocca.domain.model.elearning.assignment.SubmissionStatus
 import it.attendance100.mybicocca.domain.model.elearning.forum.Forum
 import it.attendance100.mybicocca.domain.model.elearning.forum.ForumType
@@ -246,7 +247,7 @@ fun QuizRow(
     completed: Boolean = false,
 ) {
     val scheme = MaterialTheme.colorScheme
-    val now = Instant.now()
+    val now = Instant.now(AppClock.clock)
     val closed = quiz.timeClose != null && now.isAfter(quiz.timeClose)
     val notYetOpen = quiz.timeOpen != null && now.isBefore(quiz.timeOpen)
     val locked = closed || notYetOpen

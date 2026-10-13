@@ -305,7 +305,7 @@ fun MapScreen(
 
     val haptic = rememberHapticManager()
     val navigator = LocalAppNavigator.current
-    var showBuildingsList by remember { mutableStateOf(false) }
+    val showBuildingsList by viewModel.buildingsListVisible.collectAsStateWithLifecycle()
     LaunchedEffect(isActive) {
         if (isActive) onProvideFilterToggle { navigator?.navigate(SheetRoute.MapFilter) }
     }
@@ -515,7 +515,7 @@ fun MapScreen(
         )
 
         ExtendedFloatingActionButton(
-            onClick = { haptic.tap(); showBuildingsList = true },
+            onClick = { haptic.tap(); viewModel.showBuildingsList() },
             icon = { Icon(Icons.Outlined.Apartment, contentDescription = null) },
             text = { Text(stringResource(R.string.map_view_buildings)) },
             modifier = Modifier
@@ -569,10 +569,7 @@ fun MapScreen(
             onRoomClick = viewModel::selectRoom,
             onCloseRoom = viewModel::clearRoomSelection,
             onBack = viewModel::clearSelection,
-            onDismiss = {
-                showBuildingsList = false
-                viewModel.clearSelection()
-            },
+            onDismiss = viewModel::hideBuildingsList,
             onRetryRooms = viewModel::retryRooms,
         )
     }

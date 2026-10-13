@@ -7,11 +7,14 @@ import dagger.hilt.android.HiltAndroidApp
 import it.attendance100.mybicocca.core.crash.GlobalExceptionHandler
 import it.attendance100.mybicocca.core.os.applyAppLanguage
 import it.attendance100.mybicocca.core.os.currentProcessName
+import it.attendance100.mybicocca.core.os.followsSystemLanguage
 import it.attendance100.mybicocca.core.os.systemAppLanguage
+import it.attendance100.mybicocca.core.time.AppClock
 import it.attendance100.mybicocca.data.notification.AppForegroundState
 import it.attendance100.mybicocca.data.notification.NotificationChannelRegistrar
 import it.attendance100.mybicocca.data.observability.CrashReportingController
 import it.attendance100.mybicocca.data.observability.UnknownValueReporting
+import java.time.Clock
 import javax.inject.Inject
 
 @HiltAndroidApp
@@ -32,6 +35,9 @@ class MyBicoccaApplication : Application(), Configuration.Provider {
     @Inject
     lateinit var appForegroundState: AppForegroundState
 
+    @Inject
+    lateinit var clock: Clock
+
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
             .setWorkerFactory(workerFactory)
@@ -39,6 +45,8 @@ class MyBicoccaApplication : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
+
+        AppClock.clock = clock
 
         // The :crash process exists only to host CrashActivity: skip the main-process boot
         // work, and crucially never install GlobalExceptionHandler there — a crash inside the
@@ -57,9 +65,6 @@ class MyBicoccaApplication : Application(), Configuration.Provider {
         // *not* on screen is the one that never creates an activity at all.
         appForegroundState.start()
 
-        val prefs = getSharedPreferences("language_prefs", MODE_PRIVATE)
-        if (prefs.getBoolean("is_system", true)) {
-            applyAppLanguage(this, systemAppLanguage(this))
-        }
+        if (followsSystemLanguage(this)) applyAppLanguage(this, systemAppLanguage(this))
     }
 }

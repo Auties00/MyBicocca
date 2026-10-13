@@ -5,6 +5,7 @@ import it.attendance100.mybicocca.core.search.SearchMatcher
 import it.attendance100.mybicocca.core.search.normalizeForSearch
 import it.attendance100.mybicocca.core.search.parseDateQuery
 import it.attendance100.mybicocca.core.state.valueOrNull
+import it.attendance100.mybicocca.core.time.AppClock
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.calendar.CalendarEvent
 import it.attendance100.mybicocca.domain.model.career.CareerId
@@ -73,7 +74,7 @@ class GlobalSearchUseCase @Inject constructor(
     ): Flow<List<SearchResult>> {
         val cachedContent = combine(
             courseRepository.observeEnrolledCourses(accountId),
-            calendarRepository.observeUpcoming(careerId, LocalDate.now(), UPCOMING_WINDOW),
+            calendarRepository.observeUpcoming(careerId, LocalDate.now(AppClock.clock), UPCOMING_WINDOW),
             mapRepository.observeBuildings(),
             transcriptRepository.observeRows(careerId),
             historyRepository.observeHistory(accountId),
@@ -146,7 +147,7 @@ class GlobalSearchUseCase @Inject constructor(
 
     /** "domani", "lunedì", "22/06" — a result that jumps straight to that calendar day. */
     private fun dateResults(query: String): List<SearchResult> {
-        val match = parseDateQuery(query, LocalDate.now(), Locale.getDefault())
+        val match = parseDateQuery(query, LocalDate.now(AppClock.clock), Locale.getDefault())
             ?: return emptyList()
         return listOf(
             SearchResult.CalendarDay(

@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
+import it.attendance100.mybicocca.core.time.AppClock
 import it.attendance100.mybicocca.domain.model.map.MapRoom
 import it.attendance100.mybicocca.domain.model.map.MapRoomDetail
 import it.attendance100.mybicocca.domain.model.map.RoomScheduleEntry
@@ -266,7 +267,7 @@ private fun TodaySchedule(entries: List<RoomScheduleEntry>?) {
             )
             return@Column
         }
-        val now = remember(entries) { LocalDateTime.now() }
+        val now = remember(entries) { LocalDateTime.now(AppClock.clock) }
         entries.sortedBy { it.start }.forEach { entry ->
             val inProgress = !now.isBefore(entry.start) && now.isBefore(entry.end)
             Surface(

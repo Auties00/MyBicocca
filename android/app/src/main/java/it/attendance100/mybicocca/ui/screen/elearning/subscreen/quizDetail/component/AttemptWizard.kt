@@ -62,6 +62,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.rememberHapticManager
+import it.attendance100.mybicocca.core.time.AppClock
 import it.attendance100.mybicocca.domain.model.elearning.quiz.Quiz
 import it.attendance100.mybicocca.domain.model.elearning.quiz.QuizAttempt
 import it.attendance100.mybicocca.ui.screen.elearning.subscreen.quizDetail.QuizDetailViewModel
@@ -218,11 +219,11 @@ internal fun AttemptWizard(
 @Composable
 private fun RemainingTimePill(start: Instant, limitSeconds: Long) {
     val scheme = MaterialTheme.colorScheme
-    var now by remember { mutableStateOf(Instant.now()) }
+    var now by remember { mutableStateOf(Instant.now(AppClock.clock)) }
     LaunchedEffect(start) {
         while (true) {
             delay(1_000)
-            now = Instant.now()
+            now = Instant.now(AppClock.clock)
         }
     }
     val remaining = Duration.between(now, start.plusSeconds(limitSeconds))

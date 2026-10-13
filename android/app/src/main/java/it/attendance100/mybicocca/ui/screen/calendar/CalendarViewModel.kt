@@ -7,6 +7,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.valueOrNull
 import it.attendance100.mybicocca.core.state.SyncStatus
+import it.attendance100.mybicocca.core.time.AppClock
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.calendar.CalendarEvent
 import it.attendance100.mybicocca.domain.model.calendar.CalendarEventId
@@ -86,19 +87,19 @@ class CalendarViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.Eagerly, CalendarViewMode.DAY)
 
     val selectedMonth: StateFlow<YearMonth> = savedState
-        .getStateFlow(KEY_MONTH, YearMonth.now().toString())
-        .map { runCatching { YearMonth.parse(it) }.getOrDefault(YearMonth.now()) }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, YearMonth.now())
+        .getStateFlow(KEY_MONTH, YearMonth.now(AppClock.clock).toString())
+        .map { runCatching { YearMonth.parse(it) }.getOrDefault(YearMonth.now(AppClock.clock)) }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, YearMonth.now(AppClock.clock))
 
     val selectedDay: StateFlow<LocalDate> = savedState
-        .getStateFlow(KEY_DAY, LocalDate.now().toString())
-        .map { runCatching { LocalDate.parse(it) }.getOrDefault(LocalDate.now()) }
-        .stateIn(viewModelScope, SharingStarted.Eagerly, LocalDate.now())
+        .getStateFlow(KEY_DAY, LocalDate.now(AppClock.clock).toString())
+        .map { runCatching { LocalDate.parse(it) }.getOrDefault(LocalDate.now(AppClock.clock)) }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, LocalDate.now(AppClock.clock))
 
     val weekStart: StateFlow<LocalDate> = selectedDay
         .map { weekStartFor(it) }
         .distinctUntilChanged()
-        .stateIn(viewModelScope, SharingStarted.Eagerly, weekStartFor(LocalDate.now()))
+        .stateIn(viewModelScope, SharingStarted.Eagerly, weekStartFor(LocalDate.now(AppClock.clock)))
 
     val selectedEventId: StateFlow<CalendarEventId?> = savedState
         .getStateFlow<String?>(KEY_SELECTED_EVENT, null)

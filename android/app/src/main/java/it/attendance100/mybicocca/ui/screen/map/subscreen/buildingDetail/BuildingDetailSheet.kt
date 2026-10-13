@@ -52,6 +52,7 @@ import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
+import it.attendance100.mybicocca.core.time.AppClock
 import it.attendance100.mybicocca.domain.model.map.MapBuilding
 import it.attendance100.mybicocca.domain.model.map.MapRoom
 import it.attendance100.mybicocca.domain.model.map.MapRoomDetail
@@ -176,7 +177,7 @@ internal fun BuildingPageBody(
     onDirections: (() -> Unit)? = null,
     onRetry: (() -> Unit)? = null,
 ) {
-    val now = remember(daySchedule) { LocalDateTime.now() }
+    val now = remember(daySchedule) { LocalDateTime.now(AppClock.clock) }
     val scheduleMap = (daySchedule as? Loadable.Loaded)?.value
     val roomList = (rooms as? Loadable.Loaded)?.value
     val failure = syncStatus as? SyncStatus.Failed

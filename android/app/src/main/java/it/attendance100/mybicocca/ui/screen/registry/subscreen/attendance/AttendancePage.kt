@@ -42,6 +42,7 @@ import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
+import it.attendance100.mybicocca.core.time.AppClock
 import it.attendance100.mybicocca.domain.model.attendance.CourseAttendance
 import it.attendance100.mybicocca.domain.model.attendance.PresenceMarkOutcome
 import it.attendance100.mybicocca.ui.component.button.RetryButton
@@ -104,7 +105,7 @@ fun AttendancePage(
     LaunchedEffect(markState) {
         (markState as? MarkUiState.Done)?.let {
             lastOutcome = it.outcome
-            lastOutcomeAt = LocalTime.now()
+            lastOutcomeAt = LocalTime.now(AppClock.clock)
         }
     }
     LaunchedEffect(viewModel) {

@@ -55,6 +55,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.state.Loadable
+import it.attendance100.mybicocca.core.time.AppClock
 import it.attendance100.mybicocca.domain.model.tax.TaxInvoice
 import it.attendance100.mybicocca.domain.model.tax.TaxStatus
 import it.attendance100.mybicocca.ui.component.modal.SheetOutcome
@@ -383,7 +384,7 @@ private fun TaxInvoice.toInvoiceData(): InvoiceData = InvoiceData(
     id = id.value.toString(),
     invoiceNumber = id.value.toString(),
     description = title,
-    expiryDate = expiration ?: LocalDate.now(),
+    expiryDate = expiration ?: LocalDate.now(AppClock.clock),
     amount = amount,
     modalita = "Pagamento tramite pagoPA",
     bulletinCode = noticeCode,

@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
+import it.attendance100.mybicocca.core.time.AppClock
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentMonthAvailability
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentSlot
 import it.attendance100.mybicocca.core.os.rememberHapticManager
@@ -232,7 +233,7 @@ private fun CalendarGrid(
     onSelectDate: (LocalDate) -> Unit,
 ) {
     val availableSet = remember(availableDays) { availableDays.toHashSet() }
-    val today = LocalDate.now()
+    val today = LocalDate.now(AppClock.clock)
     val weeks = remember(month) { monthWeeks(month) }
 
     Column(

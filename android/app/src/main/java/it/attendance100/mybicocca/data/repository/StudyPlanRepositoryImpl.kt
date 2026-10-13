@@ -2,6 +2,7 @@ package it.attendance100.mybicocca.data.repository
 
 import io.ktor.utils.io.jvm.javaio.toInputStream
 import it.attendance100.mybicocca.core.observability.UnknownValues
+import it.attendance100.mybicocca.core.time.AppClock
 import it.attendance100.mybicocca.data.auth.SessionManager
 import it.attendance100.mybicocca.data.mapper.calendar.normalizeSubjectName
 import it.attendance100.mybicocca.data.mapper.common.Esse3DateFormat
@@ -195,7 +196,7 @@ class StudyPlanRepositoryImpl @Inject constructor(
             description = header?.aptDescription ?: currentSchema?.aptDescription,
         )
 
-        val today = LocalDate.now()
+        val today = LocalDate.now(AppClock.clock)
         val currentTuple = currentSchema?.let(::pathTuple)
         val options = schemas
             .filter { (it.webViewFlag != 0 && it.isValidOn(today)) || pathTuple(it) == currentTuple }
@@ -238,7 +239,7 @@ class StudyPlanRepositoryImpl @Inject constructor(
     private suspend fun isPlanEditingOpen(choiceRegulationId: Long): Boolean {
         val windows = sessionManager.esse3().choiceRules.getChoiceRegulationWindows(choiceRegulationId)
         if (windows.isEmpty()) return false
-        val today = LocalDate.now()
+        val today = LocalDate.now(AppClock.clock)
         return windows.any { window ->
             val start = window.startDate.parseEsse3Date()
             val end = window.endDate.parseEsse3Date()
@@ -601,7 +602,7 @@ private fun String?.parseEsse3Date(): LocalDate? = this?.take(10)?.let {
 }
 
 private fun currentAcademicYear(): EasyStaffAcademicYear {
-    val today = LocalDate.now()
+    val today = LocalDate.now(AppClock.clock)
     val startYear = if (today.monthValue >= 9) today.year else today.year - 1
     return EasyStaffAcademicYear(startYear = startYear)
 }

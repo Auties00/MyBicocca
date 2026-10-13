@@ -82,6 +82,7 @@ import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
+import it.attendance100.mybicocca.core.time.AppClock
 import it.attendance100.mybicocca.domain.model.elearning.assignment.Assignment
 import it.attendance100.mybicocca.domain.model.elearning.assignment.AssignmentId
 import it.attendance100.mybicocca.domain.model.elearning.course.CompletionState
@@ -892,7 +893,7 @@ private fun AssignmentsPage(
                 )
                 return
             }
-            val now = Instant.now()
+            val now = Instant.now(AppClock.clock)
             val sorted = values.sortedWith(compareBy(nullsLast()) { it.dueDate })
             LazyColumn(
                 state = listState,

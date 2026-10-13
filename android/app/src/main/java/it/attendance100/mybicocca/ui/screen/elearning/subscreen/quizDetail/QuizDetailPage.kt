@@ -61,6 +61,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.state.valueOrNull
+import it.attendance100.mybicocca.core.time.AppClock
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.domain.model.elearning.quiz.AttemptId
 import it.attendance100.mybicocca.domain.model.elearning.quiz.AttemptState
@@ -377,7 +378,7 @@ private fun QuizOverviewPage(
     modifier: Modifier = Modifier,
 ) {
     val scheme = MaterialTheme.colorScheme
-    val now = remember(quiz, attempts) { Instant.now() }
+    val now = remember(quiz, attempts) { Instant.now(AppClock.clock) }
 
     val resumable = attempts.firstOrNull { it.state == AttemptState.InProgress }
     val closed = quiz.timeClose != null && now.isAfter(quiz.timeClose)

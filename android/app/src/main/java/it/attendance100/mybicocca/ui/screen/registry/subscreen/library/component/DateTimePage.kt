@@ -54,6 +54,7 @@ import it.attendance100.mybicocca.core.os.currentLocale
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
+import it.attendance100.mybicocca.core.time.AppClock
 import it.attendance100.mybicocca.domain.model.library.LibraryBookingConstraints
 import it.attendance100.mybicocca.domain.model.library.LibrarySeat
 import it.attendance100.mybicocca.ui.component.button.RetryButton
@@ -368,7 +369,7 @@ private fun CalendarSection(
                             date = day,
                             available = day in availableSet,
                             selected = day == selectedDate,
-                            isToday = day == LocalDate.now(),
+                            isToday = day == LocalDate.now(AppClock.clock),
                             enabled = enabled,
                             onSelectDate = onSelectDate,
                             modifier = Modifier.weight(1f),

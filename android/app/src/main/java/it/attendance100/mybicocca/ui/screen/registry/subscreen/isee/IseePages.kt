@@ -56,6 +56,7 @@ import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
+import it.attendance100.mybicocca.core.time.AppClock
 import it.attendance100.mybicocca.domain.model.tax.IseeDeclaration
 import it.attendance100.mybicocca.ui.component.button.RetryButton
 import it.attendance100.mybicocca.ui.component.feedback.EmptyState
@@ -122,7 +123,7 @@ fun IseeDeclarationsPage(
         ?.sortedByDescending { it.academicYearEnrollmentId ?: 0L }
 
     val latestYear = allDeclarations?.mapNotNull { it.academicYearEnrollmentId }?.maxOrNull()
-    val currentYear = remember { LocalDate.now().year.toLong() }
+    val currentYear = remember { LocalDate.now(AppClock.clock).year.toLong() }
     val declareAvailable = latestYear == currentYear &&
         declarations?.none { it.academicYearEnrollmentId == latestYear } == true
 

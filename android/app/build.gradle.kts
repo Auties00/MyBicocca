@@ -174,6 +174,13 @@ android {
             )
             signingConfig = signingConfigs.getByName("release").takeIf { it.storeFile != null }
         }
+        // Fake signed-in student backed by src/demo: screenshots and UI work without credentials.
+        // Keeps the debug applicationId because google-services.json only knows that one.
+        create("demo") {
+            initWith(getByName("debug"))
+            versionNameSuffix = "-demo"
+            matchingFallbacks += listOf("debug")
+        }
         create("nightly") {
             initWith(getByName("release"))
             // Not debuggable, like release: nightlies are published for users, and a debuggable
@@ -183,6 +190,16 @@ android {
             matchingFallbacks += listOf("release")
             signingConfig = signingConfigs.getByName("release").takeIf { it.storeFile != null }
                 ?: signingConfigs.getByName("debug")
+        }
+    }
+
+    // src/live holds the bindings to the real backends, src/demo (the demo build type's own
+    // source set) their fake counterparts, so no demo code is compiled into a shipped build.
+    sourceSets {
+        listOf("debug", "release", "nightly").forEach {
+            // Both: KSP reads the java directories, the built-in Kotlin compiler only the kotlin ones.
+            getByName(it).java.srcDir("src/live/java")
+            getByName(it).kotlin.srcDir("src/live/java")
         }
     }
 
@@ -250,6 +267,11 @@ tasks.register("printNightlyVersion") {
 }
 
 androidComponents {
+    // Unit tests are only generated for the debug build type by default. The demo variant needs
+    // its own so the screenshot catalogue can be checked against the routes it is built with.
+    beforeVariants(selector().withBuildType("demo")) { builder ->
+        builder.hostTests[com.android.build.api.variant.HostTestBuilder.UNIT_TEST_TYPE]?.enable = true
+    }
     onVariants { variant ->
         val isNightly = variant.buildType == "nightly"
         // versionName isn't settable per build type via the classic DSL (unlike versionNameSuffix),
@@ -459,4 +481,18 @@ dependencies {
     implementation("androidx.camera:camera-lifecycle:$cameraX")
     implementation("androidx.camera:camera-view:$cameraX")
     implementation("com.google.mlkit:barcode-scanning:17.3.0")
+}
+
+// The shared suite already runs against debug; under demo only the demo-specific tests are useful,
+// and the Compose ones would fail there for lack of the debug-only test manifest.
+tasks.withType<Test>().matching { it.name == "testDemoUnitTest" }.configureEach {
+    filter.includeTestsMatching("it.attendance100.mybicocca.demo.*")
+}
+
+// The local check for the demo build: it still assembles (a changed repository interface or a new
+// binding without a fake fails here) and screenshots.json still covers every route.
+tasks.register("demoCheck") {
+    group = "verification"
+    description = "Assembles the demo build and checks the screenshot catalogue against the app's routes."
+    dependsOn("assembleDemo", "testDemoUnitTest")
 }

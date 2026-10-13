@@ -62,6 +62,7 @@ import coil.request.ImageRequest
 import coil.size.Size
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.notification.NotificationRoute
+import it.attendance100.mybicocca.domain.model.map.BuildingCode
 import it.attendance100.mybicocca.domain.model.update.AppRelease
 import it.attendance100.mybicocca.domain.model.update.UpdateModalKind
 import it.attendance100.mybicocca.ui.component.modal.UpdateModalRequest
@@ -614,6 +615,26 @@ fun MainShell(
         }
     }
 
+    LaunchedEffect(navigator) {
+        snapshotFlow { navigator.entries.map { it.route } }.collect { ShellCommands.stack = it }
+    }
+
+    LaunchedEffect(navigator, pagerState, scope, mapViewModel) {
+        ShellCommands.flow.collect { command ->
+            navigator.popToRoot()
+            // Launched apart, as tab taps do: a scroll interrupted by another one must not end this collector.
+            scope.launch { pagerState.scrollToPage(command.tab.ordinal) }
+            command.routes.forEach { route ->
+                navigator.navigate(route)
+                // A sheet pushed in the same frame as the page beneath it can be dropped while that page settles.
+                delay(ROUTE_PUSH_GAP_MS)
+            }
+            mapViewModel.hideBuildingsList()
+            if (command.buildingsList) mapViewModel.showBuildingsList()
+            command.building?.let { mapViewModel.selectBuilding(BuildingCode(it)) }
+        }
+    }
+
     // Where a notification tap ends up. The activity captures the route and parks it; the shell
     // is what actually owns the modal and the install, so it acts on it and clears it.
     LaunchedEffect(updateEventsViewModel) {
@@ -1088,6 +1109,7 @@ fun MainShell(
  * landing, page slide, sheet rise) to read as its own beat, short enough to stay snappy.
  */
 private const val SEARCH_NAV_STEP_DELAY_MS = 550L
+private const val ROUTE_PUSH_GAP_MS = 400L
 
 /**
  * Sub-page container: an opaque surface that covers the tab pager, inset below the global top bar

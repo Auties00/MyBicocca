@@ -36,6 +36,7 @@ import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
+import it.attendance100.mybicocca.core.time.AppClock
 import it.attendance100.mybicocca.ui.navigation.LocalAppNavigator
 import it.attendance100.mybicocca.ui.navigation.route.SheetRoute
 import it.attendance100.mybicocca.ui.screen.registry.component.RegistryServiceSection
@@ -319,7 +320,7 @@ internal fun rememberRegistryDeadlines(
             ?.toSet()
     }
 
-    val today = remember { LocalDate.now() }
+    val today = remember { LocalDate.now(AppClock.clock) }
 
     val deadlines = remember(resultList, invoiceList, bookingList, examCallList, studyPlanCodes) {
         buildRegistryDeadlines(

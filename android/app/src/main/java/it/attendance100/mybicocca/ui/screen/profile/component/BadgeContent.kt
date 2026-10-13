@@ -53,6 +53,7 @@ import dev.chrisbanes.haze.hazeEffect
 import dev.chrisbanes.haze.materials.ExperimentalHazeMaterialsApi
 import dev.chrisbanes.haze.materials.HazeMaterials
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.core.time.AppClock
 import it.attendance100.mybicocca.domain.model.account.AcademicIdentity
 import it.attendance100.mybicocca.domain.model.account.Account
 import it.attendance100.mybicocca.domain.model.account.AccountId
@@ -519,9 +520,9 @@ private fun BadgeFrontDarkModePreview() {
             maxUploadFileSizeBytes = 1024L,
             storageQuotaBytes = 1024L
         ),
-        createdAt = Instant.now(),
-        lastUsedAt = Instant.now(),
-        lastSyncedAt = Instant.now()
+        createdAt = Instant.now(AppClock.clock),
+        lastUsedAt = Instant.now(AppClock.clock),
+        lastSyncedAt = Instant.now(AppClock.clock)
     )
     val career = Career(
         id = careerId,
@@ -574,9 +575,9 @@ private fun BadgeBackDarkModePreview() {
             maxUploadFileSizeBytes = 1024L,
             storageQuotaBytes = 1024L
         ),
-        createdAt = Instant.now(),
-        lastUsedAt = Instant.now(),
-        lastSyncedAt = Instant.now()
+        createdAt = Instant.now(AppClock.clock),
+        lastUsedAt = Instant.now(AppClock.clock),
+        lastSyncedAt = Instant.now(AppClock.clock)
     )
     BicoccaTheme(dark = true) {
         Box(
