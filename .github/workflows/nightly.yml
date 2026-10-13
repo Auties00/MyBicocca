@@ -24,7 +24,7 @@ jobs:
         working-directory: android
     steps:
       # Full history and tags: the nightly's number counts commits since the last stable tag, and
-      # its changelog runs from the previous nightly's tag.
+      # its changelog lists every change since that release.
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
@@ -92,14 +92,11 @@ jobs:
 
       - name: Generate changelog
         if: steps.version.outputs.skip != 'true'
-        env:
-          VERSION: ${{ steps.version.outputs.version }}
         run: |
-          # The previous nightly on this branch, else the last stable release.
-          PREVIOUS=$(git tag --merged HEAD --list '*-nightly.*' --sort=-v:refname | grep -vxF "$VERSION" | head -n 1 || true)
-          if [ -z "$PREVIOUS" ]; then
-            PREVIOUS=$(git tag --merged HEAD --sort=-v:refname | grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1 || true)
-          fi
+          # Everything since the last stable release, not just since the previous nightly: only
+          # the newest nightly stays published, so its notes are the only ones anyone reads, and
+          # they have to cover all that a nightly user is getting ahead of stable.
+          PREVIOUS=$(git tag --merged HEAD --sort=-v:refname | grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1 || true)
 
           # "commit:" is read back by the app to identify the build exactly.
           {
