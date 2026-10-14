@@ -2,7 +2,7 @@ package it.attendance100.mybicocca.domain.model.update
 
 /**
  * Default periodic-check interval, in minutes, until the user picks one via the settings slider.
- * Currently kept low (WorkManager's own 15-minute floor) while the update-notifications work is
- * being tested; expected to move up to something like 6-12 hours once that settles.
+ * One of the slider's steps. Kept well clear of GitHub's unauthenticated limit of 60 requests an
+ * hour per IP, which students behind the campus NAT share.
  */
-const val DEFAULT_UPDATE_CHECK_INTERVAL_MINUTES = 15
+const val DEFAULT_UPDATE_CHECK_INTERVAL_MINUTES = 360
