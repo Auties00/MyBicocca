@@ -8,6 +8,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -251,12 +252,14 @@ private fun HeaderTexts(spec: SheetHeaderSpec, modifier: Modifier) {
             },
             label = "sheet_header_title",
         ) { title ->
+            // A title too long for the header scrolls instead of being cut off: for some pages
+            // (an event, a link, a file) the header is the only place it appears.
             Text(
                 text = title,
                 style = MaterialTheme.typography.titleLargeEmphasized,
                 fontWeight = FontWeight.SemiBold,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
+                modifier = Modifier.basicMarquee(iterations = Int.MAX_VALUE),
             )
         }
         val subtitle: AnnotatedString? = when (val sub = spec.subtitle) {
