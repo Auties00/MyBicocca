@@ -59,6 +59,8 @@ import it.attendance100.mybicocca.domain.model.update.readyToInstall
 import it.attendance100.mybicocca.domain.model.update.AppRelease
 import it.attendance100.mybicocca.ui.screen.settings.subscreen.appInfo.component.ReleaseNotesView
 import java.io.File
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 
 /**
  * A channel change in progress: the switch is already flipped, and this sheet is where it is
@@ -115,12 +117,14 @@ sealed interface ChannelSwitch {
 fun UpdateModalSheet(
     release: AppRelease,
     downloadStateFlow: kotlinx.coroutines.flow.StateFlow<DownloadState>,
-    onDownload: () -> Unit,
+    onDownload: () -> Boolean,
     onInstall: (File) -> Unit,
     onDismiss: () -> Unit,
     channelSwitch: ChannelSwitch? = null,
 ) {
     val downloadState by downloadStateFlow.collectAsStateWithLifecycle()
+    // Set when a tap was refused because another release is downloading; cleared once anything moves.
+    var downloadRefused by remember(downloadState) { mutableStateOf(false) }
     val uriHandler = LocalUriHandler.current
     val isDowngrade = channelSwitch is ChannelSwitch.ToStable
     val isSwitchToNightly = channelSwitch is ChannelSwitch.ToNightly
@@ -297,7 +301,7 @@ fun UpdateModalSheet(
                             }
                         } else {
                             Button(
-                                onClick = onDownload,
+                                onClick = { downloadRefused = !onDownload() },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(48.dp)
@@ -328,6 +332,14 @@ fun UpdateModalSheet(
                             text = (downloadState as DownloadState.Error).message.asString(),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.fillMaxWidth(),
+                            textAlign = TextAlign.Center,
+                        )
+                    } else if (downloadRefused) {
+                        Text(
+                            text = stringResource(R.string.settings_download_already_running),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.fillMaxWidth(),
                             textAlign = TextAlign.Center,
                         )

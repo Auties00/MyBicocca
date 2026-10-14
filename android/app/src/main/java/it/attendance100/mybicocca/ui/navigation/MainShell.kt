@@ -561,10 +561,8 @@ fun MainShell(
         val release = request.release
         it.attendance100.mybicocca.ui.component.modal.UpdateModalSheet(
             release = release,
-            downloadStateFlow = updateEventsViewModel.downloadState,
-            onDownload = {
-                updateEventsViewModel.startDownload(release)
-            },
+            downloadStateFlow = remember(release) { updateEventsViewModel.downloadStateFor(release) },
+            onDownload = { updateEventsViewModel.startDownload(release) },
             onInstall = { file ->
                 // Download state deliberately left alone: the APK stays downloaded and ready, and
                 // the downloader needs its pending-install marker to notice a dismissed dialog.

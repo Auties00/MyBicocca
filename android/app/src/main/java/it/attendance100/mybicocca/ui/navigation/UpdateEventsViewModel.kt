@@ -56,6 +56,10 @@ class UpdateEventsViewModel @Inject constructor(
 
     val downloadState: StateFlow<DownloadState> = updateRepository.downloadState
 
+    /** [downloadState] as it concerns [release]; remember the result per release. */
+    fun downloadStateFor(release: AppRelease): StateFlow<DownloadState> =
+        updateRepository.downloadStateFor(release, viewModelScope)
+
     /**
      * Starts the automatic download the settings call for, if any; see
      * [it.attendance100.mybicocca.domain.repository.UpdateRepository.scheduleAutoDownload].

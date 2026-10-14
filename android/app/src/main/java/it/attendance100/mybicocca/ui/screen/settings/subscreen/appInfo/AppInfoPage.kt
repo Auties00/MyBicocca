@@ -184,7 +184,7 @@ fun AppInfoPage(
         val release = request.release
         UpdateModalSheet(
             release = release,
-            downloadStateFlow = viewModel.downloadState,
+            downloadStateFlow = remember(release) { viewModel.downloadStateFor(release) },
             onDownload = { viewModel.startDownload(release) },
             onInstall = { file ->
                 viewModel.installDownload(file)
@@ -398,7 +398,9 @@ private fun AboutScene(
             if (nightlyAvailable != null) {
                 NightlyUpdateTile(
                     release = nightlyAvailable.release,
-                    downloadStateFlow = viewModel.downloadState,
+                    downloadStateFlow = remember(nightlyAvailable.release) {
+                        viewModel.downloadStateFor(nightlyAvailable.release)
+                    },
                     onShowUpdateModal = onShowUpdateModal,
                     isFirst = true,
                     isLast = false
@@ -406,7 +408,9 @@ private fun AboutScene(
             } else if (stableAvailable != null) {
                 UpdateAvailableTile(
                     release = stableAvailable.release,
-                    downloadStateFlow = viewModel.downloadState,
+                    downloadStateFlow = remember(stableAvailable.release) {
+                        viewModel.downloadStateFor(stableAvailable.release)
+                    },
                     onShowUpdateModal = onShowUpdateModal,
                     isFirst = true,
                     isLast = false

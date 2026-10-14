@@ -9,6 +9,12 @@ import it.attendance100.mybicocca.domain.model.update.UpdateStatus
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import java.io.File
+import it.attendance100.mybicocca.domain.model.update.scopedTo
+import it.attendance100.mybicocca.domain.model.update.DownloadTarget
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.CoroutineScope
 
 /**
  * App self-update contract. Hides which backend serves release metadata (GitHub today, the Play
@@ -63,6 +69,18 @@ interface UpdateRepository {
      */
     val downloadState: StateFlow<DownloadState>
 
+    /** The release [downloadState] describes, or null while it describes none. */
+    val downloadTarget: StateFlow<DownloadTarget?>
+
+    /**
+     * [downloadState] as seen by a screen about [release], kept in [scope]: another release's
+     * download, error or downloaded APK reads as idle, so the screen never shows that progress or
+     * offers to install that APK under [release]'s name.
+     */
+    fun downloadStateFor(release: AppRelease, scope: CoroutineScope): StateFlow<DownloadState> =
+        combine(downloadState, downloadTarget) { state, target -> state.scopedTo(target, release) }
+            .stateIn(scope, SharingStarted.WhileSubscribed(5_000), downloadState.value.scopedTo(downloadTarget.value, release))
+
     /**
      * Requests [release] be downloaded in the background, if nothing is downloading already.
      *
@@ -70,10 +88,9 @@ interface UpdateRepository {
      * the system starts when it can, so [downloadState] goes to `Enqueued` first and reaches
      * `Downloading` when it actually begins.
      *
-     * False means the request was refused because a download is already in flight. A caller that
-     * shows the download must act on it: [downloadState] is process-wide, so a screen opened for a
-     * release that was never requested renders the *other* download's progress and then offers to
-     * install its APK under this release's name.
+     * False means the request was refused because a download is already in flight, which the
+     * caller should tell the user. A screen about one release reads [downloadStateFor], so it
+     * never shows another release's download as its own.
      */
     fun startDownload(release: AppRelease): Boolean
 
