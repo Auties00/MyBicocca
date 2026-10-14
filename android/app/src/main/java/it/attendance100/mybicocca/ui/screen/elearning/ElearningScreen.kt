@@ -119,7 +119,7 @@ fun ElearningScreen(
     val visibleCourses by viewModel.visibleCourses.collectAsStateWithLifecycle()
     val syncStatus by viewModel.syncStatus.collectAsStateWithLifecycle()
     val filter by viewModel.filter.collectAsStateWithLifecycle()
-    val studyYears by viewModel.availableStudyYears.collectAsStateWithLifecycle()
+    val filterOptions by viewModel.filterOptions.collectAsStateWithLifecycle()
     val initialFetch by viewModel.initialFetch.collectAsStateWithLifecycle()
 
     val navigator = LocalAppNavigator.current
@@ -166,7 +166,8 @@ fun ElearningScreen(
                 if (initialFetch is InitialFetchState.Settled) {
                     HomeFilterBar(
                         selected = filter,
-                        studyYears = studyYears,
+                        studyYears = filterOptions.years,
+                        otherCareers = filterOptions.otherCareers,
                         onSelect = {
                             haptic.tap()
                             viewModel.setFilter(it)

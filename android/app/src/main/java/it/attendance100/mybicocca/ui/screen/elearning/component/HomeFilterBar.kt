@@ -27,12 +27,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import it.attendance100.mybicocca.core.os.rememberHapticManager
+import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.domain.model.career.Career
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseFilter
+import it.attendance100.mybicocca.domain.model.elearning.course.CourseLevel
 import it.attendance100.mybicocca.domain.model.studyplan.StudyYear
 import it.attendance100.mybicocca.ui.screen.elearning.ElearningTestTags
 import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
@@ -44,7 +48,8 @@ private val InnerCornerRadius = 6.dp
 
 /**
  * Course-home filter bar: a horizontally scrollable connected toggle group with "Tutti",
- * "Preferiti", and one segment per available study year. Segments share an outer pill
+ * "Preferiti", one segment per study year of the selected career, and one per other career
+ * that has courses ("Triennale", "Magistrale", …). Segments share an outer pill
  * silhouette — large corners on the group's ends, tight corners between neighbours — and
  * exactly one is always checked; the checked segment fills with the brand colour (its container
  * in dark mode) and gains a leading check glyph.
@@ -56,15 +61,20 @@ fun HomeFilterBar(
     studyYears: List<StudyYear>,
     onSelect: (CourseFilter) -> Unit,
     modifier: Modifier = Modifier,
+    otherCareers: List<Career> = emptyList(),
 ) {
+    val careerLabels = careerChipLabels(otherCareers)
     // Note: filter labels are built dynamically and contain non-translatable year values
     // Only the base "Tutti" and "Preferiti" are translatable
-    val options = remember(studyYears) {
+    val options = remember(studyYears, otherCareers, careerLabels) {
         buildList {
             add(FilterOption(CourseFilter.All, "Tutti"))
             add(FilterOption(CourseFilter.Favourites, "Preferiti"))
             studyYears.forEach { y ->
                 add(FilterOption(CourseFilter.ByYear(y), "${y.value}° anno"))
+            }
+            otherCareers.zip(careerLabels).forEach { (career, label) ->
+                add(FilterOption(CourseFilter.ByCareer(career.id), label))
             }
         }
     }
@@ -105,11 +115,35 @@ fun HomeFilterBar(
     }
 }
 
-/** Stable per-option key for the filter toggle's testTag (e.g. "all", "favourites", "year:1"). */
+/**
+ * A career chip names the career's degree level ("Triennale"), else its programme; two careers
+ * with the same label are told apart by the year they started.
+ */
+@Composable
+private fun careerChipLabels(careers: List<Career>): List<String> {
+    val labels = careers.map { career ->
+        when (career.level) {
+            CourseLevel.Bachelor -> stringResource(R.string.elearning_course_level_bachelor)
+            CourseLevel.Master -> stringResource(R.string.elearning_course_level_master)
+            CourseLevel.Doctorate -> stringResource(R.string.elearning_course_level_doctorate)
+            null -> career.description
+        }
+    }
+    return labels.mapIndexed { index, label ->
+        val year = careers[index].academicYear
+        if (labels.count { it == label } > 1 && year > 0) "$label $year" else label
+    }
+}
+
+/**
+ * Stable per-option key for the filter toggle's testTag (e.g. "all", "favourites", "year:1",
+ * "career:42").
+ */
 private fun CourseFilter.tagKey(): String = when (this) {
     CourseFilter.All -> "all"
     CourseFilter.Favourites -> "favourites"
     is CourseFilter.ByYear -> "year:${year.value}"
+    is CourseFilter.ByCareer -> "career:${careerId.value}"
 }
 
 private data class FilterOption(val value: CourseFilter, val label: String)

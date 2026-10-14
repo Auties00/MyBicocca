@@ -4,6 +4,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import it.attendance100.mybicocca.domain.model.career.CareerId
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseFilter
 import it.attendance100.mybicocca.domain.model.studyplan.StudyYear
 import kotlinx.coroutines.flow.Flow
@@ -14,7 +15,7 @@ import javax.inject.Singleton
 /**
  * DataStore-backed persistence of the e-learning course-list filter, shared across
  * accounts. The filter is stored as a compact string token ("all", "favourites",
- * "year:&lt;n&gt;"); unknown or malformed tokens fall back to the unfiltered default so a
+ * "year:&lt;n&gt;", "career:&lt;id&gt;"); unknown or malformed tokens fall back to the unfiltered default so a
  * schema change can never wedge the list.
  */
 @Singleton
@@ -36,6 +37,7 @@ class ElearningFilterStore @Inject constructor(
         CourseFilter.All -> TOKEN_ALL
         CourseFilter.Favourites -> TOKEN_FAVOURITES
         is CourseFilter.ByYear -> "$TOKEN_YEAR_PREFIX${filter.year.value}"
+        is CourseFilter.ByCareer -> "$TOKEN_CAREER_PREFIX${filter.careerId.value}"
     }
 
     private fun deserialize(token: String): CourseFilter? = when {
@@ -45,6 +47,9 @@ class ElearningFilterStore @Inject constructor(
             token.removePrefix(TOKEN_YEAR_PREFIX).toIntOrNull()
                 ?.takeIf { it >= 0 }
                 ?.let { CourseFilter.ByYear(StudyYear(it)) }
+        token.startsWith(TOKEN_CAREER_PREFIX) ->
+            token.removePrefix(TOKEN_CAREER_PREFIX).toLongOrNull()
+                ?.let { CourseFilter.ByCareer(CareerId(it)) }
         else -> null
     }
 
@@ -53,5 +58,6 @@ class ElearningFilterStore @Inject constructor(
         const val TOKEN_ALL = "all"
         const val TOKEN_FAVOURITES = "favourites"
         const val TOKEN_YEAR_PREFIX = "year:"
+        const val TOKEN_CAREER_PREFIX = "career:"
     }
 }

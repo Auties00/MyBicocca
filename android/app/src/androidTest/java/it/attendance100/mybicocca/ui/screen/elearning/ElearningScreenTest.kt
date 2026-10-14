@@ -18,7 +18,7 @@ import it.attendance100.mybicocca.domain.model.elearning.course.EnrolledCourse
 import it.attendance100.mybicocca.domain.model.elearning.course.EnrolledCourseGroup
 import it.attendance100.mybicocca.domain.model.studyplan.StudyYear
 import it.attendance100.mybicocca.domain.usecase.account.ObserveActiveAccountUseCase
-import it.attendance100.mybicocca.domain.usecase.elearning.course.ObserveAvailableStudyYearsUseCase
+import it.attendance100.mybicocca.domain.usecase.elearning.course.ObserveCourseFilterOptionsUseCase
 import it.attendance100.mybicocca.domain.usecase.elearning.course.ObserveCourseFilterUseCase
 import it.attendance100.mybicocca.domain.usecase.elearning.course.ObserveEnrolledCoursesUseCase
 import it.attendance100.mybicocca.domain.usecase.elearning.course.ObserveFilteredCoursesUseCase
@@ -34,6 +34,9 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.IOException
+import it.attendance100.mybicocca.domain.model.elearning.course.CourseFilterOptions
+import it.attendance100.mybicocca.domain.model.career.CareerId
+import it.attendance100.mybicocca.domain.model.account.AcademicIdentity
 
 /**
  * State and behaviour coverage for the e-learning tab home. The screen is driven by a real
@@ -57,6 +60,13 @@ class ElearningScreenTest {
 
     private val account: Account = mockk(relaxed = true) {
         every { id } returns accountId
+        every { academic } returns AcademicIdentity(
+            recordUserId = "u",
+            personId = 1L,
+            fiscalCode = null,
+            careers = emptyList(),
+            selectedCareerId = CareerId(1L),
+        )
     }
 
     private fun course(
@@ -101,10 +111,10 @@ class ElearningScreenTest {
     ): ObserveFilteredCoursesUseCase =
         mockk { every { this@mockk.invoke(any()) } returns MutableStateFlow(loadable) }
 
-    private fun observeAvailableStudyYears(
+    private fun observeCourseFilterOptions(
         years: List<StudyYear> = emptyList(),
-    ): ObserveAvailableStudyYearsUseCase =
-        mockk { every { this@mockk.invoke(any()) } returns MutableStateFlow(years) }
+    ): ObserveCourseFilterOptionsUseCase =
+        mockk { every { this@mockk.invoke(any()) } returns MutableStateFlow(CourseFilterOptions(years, emptyList())) }
 
     private val setFilter = mockk<SetCourseFilterUseCase>(relaxed = true)
 
@@ -113,14 +123,14 @@ class ElearningScreenTest {
         courseFilter: ObserveCourseFilterUseCase = observeCourseFilter(),
         enrolled: ObserveEnrolledCoursesUseCase = observeEnrolledCourses(),
         filtered: ObserveFilteredCoursesUseCase = observeFilteredCourses(),
-        studyYears: ObserveAvailableStudyYearsUseCase = observeAvailableStudyYears(),
+        filterOptions: ObserveCourseFilterOptionsUseCase = observeCourseFilterOptions(),
         refresh: RefreshEnrolledCoursesUseCase = mockk(relaxed = true),
     ): ElearningViewModel = ElearningViewModel(
         observeActiveAccount = activeAccount,
         observeCourseFilter = courseFilter,
         observeEnrolledCourses = enrolled,
         observeFilteredCourses = filtered,
-        observeAvailableStudyYears = studyYears,
+        observeCourseFilterOptions = filterOptions,
         refreshEnrolledCourses = refresh,
         setCourseFilter = setFilter,
         toggleCourseFavourite = mockk(relaxed = true),
