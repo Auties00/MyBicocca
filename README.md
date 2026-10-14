@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="design/splash/MyBicoccaSplash.png" width="400" alt="MyBicocca logo" />
+<img src="screenshots/MyBicoccaSplash.png" width="400" alt="MyBicocca logo" />
 
 # MyBicocca
 
