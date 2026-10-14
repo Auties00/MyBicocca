@@ -47,7 +47,7 @@ import kotlin.coroutines.cancellation.CancellationException
  *
  * The back handler is registered inside the sheet's window, after Material's own sheet handler, so
  * on deeper pages it takes precedence over the sheet's predictive dismiss; on the first page
- * ([backTo] null) it steps aside and the gesture scales and dismisses the sheet natively.
+ * ([backTo] null) it steps aside and the gesture slides the sheet down and dismisses it.
  *
  * @param page the page to show. Changing it animates to it; equal pages (by [key]) update in place.
  * @param backTo where a back step from [page] lands, or null when back is not handled by the pager
@@ -55,7 +55,8 @@ import kotlin.coroutines.cancellation.CancellationException
  * @param onBack commits a back step: the caller moves its state (pops the back stack, clears the
  * selection, …) so that [page] becomes [backTo]. Called after a completed gesture or an arrow tap.
  * @param slide how the body moves between pages; the header always cross-slides.
- * @param header resolves the pinned header (title and subtitle) of every page.
+ * @param header resolves the pinned header (title and subtitle) of every page; null for a page
+ * that shows no header (it takes no room, and the header grows in or out on the page change).
  * @param content a page's body; its [AnimatedContentScope] lets it animate parts of itself with
  * the page change.
  */
@@ -68,7 +69,7 @@ fun <P : Any> SheetPager(
     modifier: Modifier = Modifier,
     key: (P) -> Any = { it },
     slide: SheetPageSlide = SheetPageSlide.Horizontal,
-    header: @Composable (P) -> SheetHeaderSpec,
+    header: @Composable (P) -> SheetHeaderSpec?,
     content: @Composable AnimatedContentScope.(P) -> Unit,
 ) {
     SheetPagerImpl(page, depth, backTo, onBack, modifier, key, slide, header, content)
@@ -104,10 +105,7 @@ fun SheetPage(
     ) { content() }
 }
 
-/**
- * [SheetPager] for the modal scene, whose pages may draw their own header through a nested pager
- * (a null spec: no room in this header).
- */
+/** [SheetPager], also used by the modal scene for pages that draw their own header (a null spec). */
 @Composable
 internal fun <P : Any> SheetPagerImpl(
     page: P,

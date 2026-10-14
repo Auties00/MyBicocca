@@ -42,8 +42,7 @@ import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 
 /**
- * What a sheet page shows in the pinned [SheetPager] header. Every modal page has one, with a
- * title and a subtitle. Resolved in composition, so the title/subtitle can read live ViewModel
+ * What a sheet page shows in the pinned [SheetPager] header: a title and a subtitle. Resolved in composition, so the title/subtitle can read live ViewModel
  * state (e.g. a "3 prenotazioni" counter) and update in place on the same page; [subtitle] is
  * null only while the data it summarises is still loading.
  *
