@@ -45,10 +45,9 @@ import kotlinx.serialization.json.Json
  * ## Browser session prerequisite
  *
  * `mod/kalvidres/view.php` is a Moodle web page (not a WS endpoint) and requires a live
- * `MoodleSession` browser cookie. The cookie is established as a side effect of
- * [ElearningAuthApi.login] (the SAML flow walks through Moodle's web layer before
- * issuing the WS token) and can be re-installed on cold process starts via
- * [ElearningApi.resume]. When the cookie is missing or has been expired by Moodle's
+ * `MoodleSession` browser cookie. The cookie is established as a side effect of the
+ * caller's SSO login (the SAML flow walks through Moodle's web layer before issuing the
+ * WS token) and is installed through the [ElearningApi] constructor. When the cookie is missing or has been expired by Moodle's
  * server-side `sessiontimeout`, `view.php` is rendered as a login redirect and the
  * iframe regex fails to match — the resolvers below surface this as
  * [ElearningKalturaVideoStreamResponse.RequiresReauth] /

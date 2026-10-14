@@ -8,10 +8,6 @@ import org.junit.jupiter.api.extension.ExtendWith
 @ExtendWith(ElearningGlobalApiData::class)
 @Tag("live")
 abstract class ElearningTestApiBase {
-    protected val username: String = ElearningGlobalApiData.username
-
-    protected val password: String = ElearningGlobalApiData.password
-
     protected val session: ElearningAuthSession
         get() = ElearningGlobalApiData.session
             ?: throw IllegalStateException("Session not initialized. Ensure ElearningGlobalApiData#beforeAll has run.")
