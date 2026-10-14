@@ -167,7 +167,7 @@ fun UpdateModalSheet(
                         text = when {
                             isDowngrade -> stringResource(R.string.update_modal_downgrade_title)
                             isSwitchToNightly -> stringResource(R.string.update_modal_switch_nightly_title)
-                            release.isPreRelease -> "New Nightly available!"
+                            release.isPreRelease -> stringResource(R.string.update_modal_nightly_title)
                             else -> stringResource(R.string.update_modal_title)
                         },
                         style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold)

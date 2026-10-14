@@ -1658,6 +1658,7 @@
 
     <!-- Update Modal -->
     <string name="update_modal_title">New version available!</string>
+    <string name="update_modal_nightly_title">New nightly available!</string>
     <string name="update_modal_version">v%1$s</string>
     <string name="update_modal_github">Open on GitHub</string>
     <string name="update_modal_download">Download update</string>
@@ -2074,6 +2075,7 @@
     <string name="registry_refund_details_subtitle">Refund details</string>
     <string name="registry_taxes_due_subtitle">%1$s due</string>
     <string name="registry_taxes_one_invoice">1 invoice</string>
+    <string name="registry_taxes_many_invoices">%1$d invoices</string>
 
     <!-- Profile -->
     <string name="profile_no_active_badge">No active badge</string>
