@@ -8,29 +8,24 @@ This module provides a type-safe Kotlin client for interacting with the universi
 
 ## Authentication
 
-The API requires a 32-character web service token obtained through SSO authentication:
+Every call takes a 32-character web service token. This module does not log in: the university SSO
+login (a SAML/Shibboleth flow that ends on a `moodlemobile://token=BASE64_DATA` redirect) lives in the
+app, which passes the resulting token to each call and the `MoodleSession` cookie to the constructor:
 
 ```kotlin
-val api = ElearningApi()
+val api = ElearningApi(moodleSessionCookie = moodleSession)
 
-// 1. Get the SSO authentication URL
-val authUrl = api.site.getAuthUrl()
-
-// 2. Open authUrl in a browser - user logs in via university SSO
-// 3. After login, browser redirects to: moodlemobile://token=BASE64_DATA
-// 4. Decode BASE64_DATA to get: SITE_URL:::TOKEN:::OTHER_DATA
-// 5. Extract the 32-character TOKEN
-
-val wsToken = "..." // extracted token
 val siteInfo = api.site.getSiteInfo(wsToken)
 val userId = siteInfo.userId
 ```
+
+The cookie is only needed by the web-page endpoints (Kaltura video resolution).
 
 ## API Coverage
 
 | Sub-API      | Description                                |
 |--------------|--------------------------------------------|
-| `site`       | SSO authentication, site info              |
+| `site`       | Site info                                  |
 | `users`      | User profiles and preferences              |
 | `courses`    | Enrolled courses, contents, enrollment     |
 | `quizzes`    | Quiz attempts, questions, results          |
