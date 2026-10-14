@@ -5,16 +5,18 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
+import it.attendance100.mybicocca.domain.model.account.Account
 import it.attendance100.mybicocca.domain.model.account.AccountId
+import it.attendance100.mybicocca.domain.model.elearning.course.CourseCareers
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseFilter
+import it.attendance100.mybicocca.domain.model.elearning.course.CourseFilterOptions
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.domain.model.elearning.course.EnrolledCourse
 import it.attendance100.mybicocca.domain.model.elearning.course.EnrolledCourseGroup
 import it.attendance100.mybicocca.domain.model.elearning.course.courseCode
 import it.attendance100.mybicocca.domain.model.elearning.deadline.Deadline
-import it.attendance100.mybicocca.domain.model.studyplan.StudyYear
 import it.attendance100.mybicocca.domain.usecase.account.ObserveActiveAccountUseCase
-import it.attendance100.mybicocca.domain.usecase.elearning.course.ObserveAvailableStudyYearsUseCase
+import it.attendance100.mybicocca.domain.usecase.elearning.course.ObserveCourseFilterOptionsUseCase
 import it.attendance100.mybicocca.domain.usecase.elearning.course.ObserveCourseFilterUseCase
 import it.attendance100.mybicocca.domain.usecase.elearning.course.ObserveEnrolledCoursesUseCase
 import it.attendance100.mybicocca.domain.usecase.elearning.course.ObserveFilteredCoursesUseCase
@@ -64,28 +66,34 @@ class ElearningViewModel @Inject constructor(
     observeCourseFilter: ObserveCourseFilterUseCase,
     observeEnrolledCourses: ObserveEnrolledCoursesUseCase,
     private val observeFilteredCourses: ObserveFilteredCoursesUseCase,
-    private val observeAvailableStudyYears: ObserveAvailableStudyYearsUseCase,
+    private val observeCourseFilterOptions: ObserveCourseFilterOptionsUseCase,
     private val refreshEnrolledCourses: RefreshEnrolledCoursesUseCase,
     private val setCourseFilter: SetCourseFilterUseCase,
     private val toggleCourseFavourite: ToggleCourseFavouriteUseCase,
     private val setCourseHidden: SetCourseHiddenUseCase,
 ) : ViewModel() {
 
-    val filter: StateFlow<CourseFilter> = observeCourseFilter()
-        .stateIn(viewModelScope, SharingStarted.Eagerly, CourseFilter.All)
-
     /**
-     * Moodle enrolment is account-scoped, not career-scoped, and the course year derives from
-     * each course's idNumber — so nothing in this ViewModel depends on the selected career.
+     * Moodle enrolment is account-scoped, so the courses follow the active account; their year
+     * chips and career chips follow its selected career ([CourseCareers]).
      */
-    private val activeAccountId: Flow<AccountId?> = observeActiveAccount()
+    private val activeAccount: StateFlow<Account?> = observeActiveAccount()
+        .distinctUntilChanged { old, new -> old?.id == new?.id && old?.academic == new?.academic }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    private val activeAccountId: Flow<AccountId?> = activeAccount
         .map { it?.id }
         .distinctUntilChanged()
 
-    val availableStudyYears: StateFlow<List<StudyYear>> =
-        activeAccountId
-            .flatMapLatest { accountId -> observeAvailableStudyYears(accountId) }
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    val filterOptions: StateFlow<CourseFilterOptions> =
+        activeAccount
+            .flatMapLatest { account -> observeCourseFilterOptions(account) }
+            .stateIn(viewModelScope, SharingStarted.Eagerly, CourseFilterOptions.Empty)
+
+    /** The persisted filter, or "Tutti" once its chip is gone (see [CourseFilterOptions.resolve]). */
+    val filter: StateFlow<CourseFilter> = combine(observeCourseFilter(), filterOptions) { filter, options ->
+        options.resolve(filter)
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, CourseFilter.All)
 
     /**
      * Shared eagerly so Room is subscribed at ViewModel construction. Combined with the
@@ -94,10 +102,10 @@ class ElearningViewModel @Inject constructor(
      * transform is pure Room, so this never waits on the network.
      */
     val visibleCourses: StateFlow<Loadable<List<EnrolledCourseGroup>>> =
-        activeAccountId
-            .flatMapLatest { accountId ->
-                if (accountId == null) flowOf(Loadable.NotYetLoaded)
-                else observeFilteredCourses(accountId)
+        activeAccount
+            .flatMapLatest { account ->
+                if (account == null) flowOf(Loadable.NotYetLoaded)
+                else observeFilteredCourses(account)
             }
             .stateIn(viewModelScope, SharingStarted.Eagerly, Loadable.NotYetLoaded)
 
@@ -220,12 +228,16 @@ class ElearningViewModel @Inject constructor(
         }
     }
 
-    private fun EnrolledCourse.isVisibleUnder(filter: CourseFilter): Boolean =
-        !hidden && when (filter) {
+    private fun EnrolledCourse.isVisibleUnder(filter: CourseFilter): Boolean {
+        val careers = activeAccount.value?.academic?.let(::CourseCareers)
+        return !hidden && when (filter) {
             CourseFilter.All -> true
             CourseFilter.Favourites -> isFavourite
-            is CourseFilter.ByYear -> courseCode().courseYear == filter.year
+            is CourseFilter.ByYear ->
+                courseCode().courseYear == filter.year && careers?.let { it.ownerOf(this) == it.selected } != false
+            is CourseFilter.ByCareer -> careers?.ownerOf(this) == filter.careerId
         }
+    }
 
     private suspend fun runRefresh(accountId: AccountId, force: Boolean) {
         _syncStatus.value = SyncStatus.Refreshing

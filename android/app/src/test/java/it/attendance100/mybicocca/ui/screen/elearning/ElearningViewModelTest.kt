@@ -19,7 +19,7 @@ import it.attendance100.mybicocca.domain.model.elearning.deadline.Deadline
 import it.attendance100.mybicocca.domain.model.elearning.quiz.QuizId
 import it.attendance100.mybicocca.domain.model.studyplan.StudyYear
 import it.attendance100.mybicocca.domain.usecase.account.ObserveActiveAccountUseCase
-import it.attendance100.mybicocca.domain.usecase.elearning.course.ObserveAvailableStudyYearsUseCase
+import it.attendance100.mybicocca.domain.usecase.elearning.course.ObserveCourseFilterOptionsUseCase
 import it.attendance100.mybicocca.domain.usecase.elearning.course.ObserveCourseFilterUseCase
 import it.attendance100.mybicocca.domain.usecase.elearning.course.ObserveEnrolledCoursesUseCase
 import it.attendance100.mybicocca.domain.usecase.elearning.course.ObserveFilteredCoursesUseCase
@@ -37,6 +37,9 @@ import org.junit.Rule
 import org.junit.Test
 import java.io.IOException
 import java.time.Instant
+import it.attendance100.mybicocca.domain.model.elearning.course.CourseFilterOptions
+import it.attendance100.mybicocca.domain.model.career.CareerId
+import it.attendance100.mybicocca.domain.model.account.AcademicIdentity
 
 /**
  * Covers the e-learning tab ViewModel: Loadable/SyncStatus/InitialFetch derivation, the auto and
@@ -51,6 +54,13 @@ class ElearningViewModelTest {
 
     private val account: Account = mockk(relaxed = true) {
         every { id } returns accountId
+        every { academic } returns AcademicIdentity(
+            recordUserId = "u",
+            personId = 1L,
+            fiscalCode = null,
+            careers = emptyList(),
+            selectedCareerId = CareerId(1L),
+        )
     }
 
     private fun course(
@@ -95,17 +105,17 @@ class ElearningViewModelTest {
     ): ObserveFilteredCoursesUseCase =
         mockk { every { this@mockk.invoke(any()) } returns MutableStateFlow(loadable) }
 
-    private fun observeAvailableStudyYears(
+    private fun observeCourseFilterOptions(
         years: List<StudyYear> = emptyList(),
-    ): ObserveAvailableStudyYearsUseCase =
-        mockk { every { this@mockk.invoke(any()) } returns MutableStateFlow(years) }
+    ): ObserveCourseFilterOptionsUseCase =
+        mockk { every { this@mockk.invoke(any()) } returns MutableStateFlow(CourseFilterOptions(years, emptyList())) }
 
     private fun build(
         activeAccount: ObserveActiveAccountUseCase = observeActiveAccount(),
         courseFilter: ObserveCourseFilterUseCase = observeCourseFilter(),
         enrolled: ObserveEnrolledCoursesUseCase = observeEnrolledCourses(),
         filtered: ObserveFilteredCoursesUseCase = observeFilteredCourses(),
-        studyYears: ObserveAvailableStudyYearsUseCase = observeAvailableStudyYears(),
+        filterOptions: ObserveCourseFilterOptionsUseCase = observeCourseFilterOptions(),
         refresh: RefreshEnrolledCoursesUseCase = mockk(relaxed = true),
         setFilter: SetCourseFilterUseCase = mockk(relaxed = true),
         toggleFavourite: ToggleCourseFavouriteUseCase = mockk(relaxed = true),
@@ -115,7 +125,7 @@ class ElearningViewModelTest {
         observeCourseFilter = courseFilter,
         observeEnrolledCourses = enrolled,
         observeFilteredCourses = filtered,
-        observeAvailableStudyYears = studyYears,
+        observeCourseFilterOptions = filterOptions,
         refreshEnrolledCourses = refresh,
         setCourseFilter = setFilter,
         toggleCourseFavourite = toggleFavourite,
@@ -304,6 +314,7 @@ class ElearningViewModelTest {
         val target = course(42, idNumber = "2526-2-E9999")
         val vm = build(
             courseFilter = observeCourseFilter(CourseFilter.ByYear(StudyYear(1))),
+            filterOptions = observeCourseFilterOptions(listOf(StudyYear(1), StudyYear(2))),
             enrolled = observeEnrolledCourses(Loadable.Loaded(listOf(target))),
             setFilter = setFilter,
         )
@@ -321,6 +332,7 @@ class ElearningViewModelTest {
         val target = course(42, idNumber = "2526-1-E1111")
         val vm = build(
             courseFilter = observeCourseFilter(CourseFilter.ByYear(StudyYear(1))),
+            filterOptions = observeCourseFilterOptions(listOf(StudyYear(1), StudyYear(2))),
             enrolled = observeEnrolledCourses(Loadable.Loaded(listOf(target))),
             setFilter = setFilter,
         )
@@ -333,11 +345,11 @@ class ElearningViewModelTest {
     }
 
     @Test
-    fun `availableStudyYears reflects the use case stream`() = runTest {
+    fun `filterOptions reflects the use case stream`() = runTest {
         val years = listOf(StudyYear(1), StudyYear(2))
-        val vm = build(studyYears = observeAvailableStudyYears(years))
-        vm.availableStudyYears.test {
-            assertThat(awaitItem()).containsExactly(StudyYear(1), StudyYear(2)).inOrder()
+        val vm = build(filterOptions = observeCourseFilterOptions(years))
+        vm.filterOptions.test {
+            assertThat(awaitItem().years).containsExactly(StudyYear(1), StudyYear(2)).inOrder()
             cancelAndIgnoreRemainingEvents()
         }
     }

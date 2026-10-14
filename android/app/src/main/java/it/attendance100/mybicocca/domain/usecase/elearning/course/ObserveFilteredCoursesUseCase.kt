@@ -2,7 +2,9 @@ package it.attendance100.mybicocca.domain.usecase.elearning.course
 
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.map
-import it.attendance100.mybicocca.domain.model.account.AccountId
+import it.attendance100.mybicocca.domain.model.account.Account
+import it.attendance100.mybicocca.domain.model.career.CareerId
+import it.attendance100.mybicocca.domain.model.elearning.course.CourseCareers
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseFilter
 import it.attendance100.mybicocca.domain.model.elearning.course.EnrolledCourse
 import it.attendance100.mybicocca.domain.model.elearning.course.EnrolledCourseGroup
@@ -15,45 +17,64 @@ import javax.inject.Inject
 /**
  * Streams the e-learning tab's course list: hidden-filtered, user-filtered,
  * edition-grouped courses, derived purely from the local cache plus the persisted
- * filter. The course year used for grouping and the year filter is parsed from each
- * course's idNumber, so this never touches the network — the list renders the instant
- * the local cache emits.
+ * filter. The year of study and the career each course belongs to ([CourseCareers]) are
+ * parsed from its idNumber, so this never touches the network — the list renders the
+ * instant the local cache emits.
  */
 class ObserveFilteredCoursesUseCase @Inject constructor(
     private val courseRepository: ElearningCourseRepository,
 ) {
-    operator fun invoke(accountId: AccountId): Flow<Loadable<List<EnrolledCourseGroup>>> = combine(
-        courseRepository.observeEnrolledCourses(accountId),
-        courseRepository.observeFilter(),
-    ) { coursesLoadable, filter ->
-        coursesLoadable.map { courses -> apply(courses, filter) }
+    operator fun invoke(account: Account): Flow<Loadable<List<EnrolledCourseGroup>>> {
+        val careers = CourseCareers(account.academic)
+        return combine(
+            courseRepository.observeEnrolledCourses(account.id),
+            courseRepository.observeFilter(),
+        ) { coursesLoadable, filter ->
+            coursesLoadable.map { courses -> apply(courses, filter, careers) }
+        }
     }
 
     /**
-     * Filters and groups the cached courses. The unfiltered list sorts groups by the
-     * representative course year ascending with unmatched groups last; the stable sort
-     * preserves Moodle order within ties.
+     * Filters and groups the cached courses. A year chip keeps the selected career's courses
+     * of that year, a career chip that career's courses; a filter whose chip is gone falls back
+     * to all. The unfiltered list puts the selected career first, then the other careers most
+     * recent first, then courses of no career; within each, groups go by year of study. The
+     * stable sort preserves Moodle order within ties.
      */
     private fun apply(
         courses: List<EnrolledCourse>,
-        filter: CourseFilter,
+        persisted: CourseFilter,
+        careers: CourseCareers,
     ): List<EnrolledCourseGroup> {
+        val options = careers.filterOptions(courses)
+        val filter = options.resolve(persisted)
         val visible = courses.asSequence()
             .filter { !it.hidden }
             .filter {
                 when (filter) {
                     CourseFilter.All -> true
                     CourseFilter.Favourites -> it.isFavourite
-                    is CourseFilter.ByYear -> it.courseCode().courseYear == filter.year
+                    is CourseFilter.ByYear ->
+                        it.courseCode().courseYear == filter.year && careers.ownerOf(it) == careers.selected
+                    is CourseFilter.ByCareer -> careers.ownerOf(it) == filter.careerId
                 }
             }
             .toList()
 
         val groups = groupEditions(visible)
+        val careerRank: Map<CareerId, Int> = (listOf(careers.selected) + options.otherCareers.map { it.id })
+            .withIndex()
+            .associate { (index, id) -> id to index }
+        val byYear = compareBy<EnrolledCourseGroup> { group ->
+            group.latest.courseCode().courseYear?.value ?: Int.MAX_VALUE
+        }
         return when (filter) {
-            CourseFilter.All -> groups.sortedBy { group ->
-                group.latest.courseCode().courseYear?.value ?: Int.MAX_VALUE
-            }
+            CourseFilter.All -> groups.sortedWith(
+                compareBy<EnrolledCourseGroup> { group ->
+                    careers.ownerOf(group.latest)?.let(careerRank::get) ?: Int.MAX_VALUE
+                }.then(byYear)
+            )
+            is CourseFilter.ByCareer -> groups.sortedWith(byYear)
             else -> groups
         }
     }
