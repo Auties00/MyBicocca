@@ -70,29 +70,26 @@ class AdminMessageRepositoryImpl @Inject constructor(
     override suspend fun fetch() {
         try {
             Firebase.remoteConfig.fetchAndActivate().await()
-            parseAndUpdate()
         } catch (e: Exception) {
-            // Ignore fetch errors
+            // Ignore fetch errors: the last activated config still applies.
         }
+        parseAndUpdate()
     }
 
+    /**
+     * Shows the announcement only when it is complete and marked `show`; anything else (blank,
+     * `{}`, `show: false`, a malformed payload) clears it. Never throws: it also runs from the
+     * Remote Config listener, where an exception would crash the app.
+     */
     private fun parseAndUpdate() {
-        val jsonString = Firebase.remoteConfig.getString("admin_announcement")
-
-        if (jsonString.isNotBlank() && !jsonString.contains("{}")) { // Ignore empty messages
-            val element = runCatching { Json.parseToJsonElement(jsonString).jsonObject }.getOrNull() ?: return
-            val id = element["id"]?.jsonPrimitive?.content ?: return
-            val title = element["title"]?.jsonPrimitive?.content ?: return
-            val message = element["message"]?.jsonPrimitive?.content ?: return
+        remoteMessage.value = runCatching {
+            val element = Json.parseToJsonElement(Firebase.remoteConfig.getString("admin_announcement")).jsonObject
             val show = element["show"]?.jsonPrimitive?.content?.toBoolean() ?: false
-            
-            if (show) {
-                remoteMessage.value = AdminMessage(id, title, message)
-            } else {
-                remoteMessage.value = null
-            }
-        } else {
-            remoteMessage.value = null
-        }
+            if (!show) return@runCatching null
+            val id = element["id"]?.jsonPrimitive?.content ?: return@runCatching null
+            val title = element["title"]?.jsonPrimitive?.content ?: return@runCatching null
+            val message = element["message"]?.jsonPrimitive?.content ?: return@runCatching null
+            AdminMessage(id, title, message)
+        }.getOrNull()
     }
 }
