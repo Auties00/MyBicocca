@@ -23,6 +23,7 @@ import it.attendance100.mybicocca.data.notification.AppNotifier
 import it.attendance100.mybicocca.di.ApplicationScope
 import it.attendance100.mybicocca.domain.model.update.AppRelease
 import it.attendance100.mybicocca.domain.model.update.DownloadState
+import it.attendance100.mybicocca.domain.model.update.DownloadTarget
 import it.attendance100.mybicocca.domain.model.update.isActive
 import it.attendance100.mybicocca.domain.model.update.AppReleaseAsset
 import kotlinx.coroutines.CancellationException
@@ -56,6 +57,12 @@ class ApkDownloader @Inject constructor(
 
     private val _downloadState = MutableStateFlow<DownloadState>(DownloadState.Idle)
     val downloadState: StateFlow<DownloadState> = _downloadState.asStateFlow()
+
+    // Which release [downloadState] describes. Moving to another release's state always publishes
+    // the state first and the target second: a screen matching on the target may briefly see the
+    // new state under the old target, but never the old release's APK under the new one.
+    private val _downloadTarget = MutableStateFlow<DownloadTarget?>(null)
+    val downloadTarget: StateFlow<DownloadTarget?> = _downloadTarget.asStateFlow()
 
     // One updates directory and one downloadState, so one download at a time. tryLock rather than
     // lock: a second caller is told "already running" instead of queueing behind the first and
@@ -114,6 +121,7 @@ class ApkDownloader @Inject constructor(
             cancelled = false
             clearPendingInstall()
             publish(DownloadState.Downloading(0), onProgress)
+            _downloadTarget.value = DownloadTarget.of(release)
             runDownload(release, onProgress)
         } finally {
             downloadLock.unlock()
@@ -127,14 +135,18 @@ class ApkDownloader @Inject constructor(
      * first is still reporting: WorkManager drops the duplicate, and the state has to agree with
      * that rather than describe a download nobody is going to run.
      */
-    fun markEnqueued() {
+    fun markEnqueued(release: AppRelease) {
         if (_downloadState.value.isActive) return
         _downloadState.value = DownloadState.Enqueued
+        _downloadTarget.value = DownloadTarget.of(release)
     }
 
     /** Undoes [markEnqueued] for a request that never became a download. */
     fun clearEnqueued() {
-        if (_downloadState.value is DownloadState.Enqueued) _downloadState.value = DownloadState.Idle
+        if (_downloadState.value is DownloadState.Enqueued) {
+            _downloadState.value = DownloadState.Idle
+            _downloadTarget.value = null
+        }
     }
 
     private suspend fun runDownload(release: AppRelease, onProgress: (Int) -> Unit): DownloadState =
@@ -296,6 +308,7 @@ class ApkDownloader @Inject constructor(
     fun dismissError() {
         if (_downloadState.value is DownloadState.Error) {
             _downloadState.value = DownloadState.Idle
+            _downloadTarget.value = null
         }
     }
 
@@ -303,6 +316,7 @@ class ApkDownloader @Inject constructor(
         cancelled = true
         clearPendingInstall()
         _downloadState.value = DownloadState.Idle
+        _downloadTarget.value = null
         // The APK is being forgotten, so the notification offering it has to go too — otherwise
         // the tray keeps pointing at a download the app no longer knows about.
         notifier.cancel(NotificationId.UpdateReady)
@@ -344,6 +358,7 @@ class ApkDownloader @Inject constructor(
             return
         }
 
+        _downloadTarget.value = DownloadTarget(record.versionName, record.commitSha)
         _downloadState.value = DownloadState.Success(file)
     }
 

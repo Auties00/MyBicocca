@@ -55,6 +55,10 @@ class AppInfoViewModel @Inject constructor(
     /** The in-flight update download, surfaced to the UI without exposing the downloader itself. */
     val downloadState: StateFlow<DownloadState> = updateRepository.downloadState
 
+    /** [downloadState] as it concerns [release]; remember the result per release. */
+    fun downloadStateFor(release: AppRelease): StateFlow<DownloadState> =
+        updateRepository.downloadStateFor(release, viewModelScope)
+
     fun startDownload(release: AppRelease): Boolean = updateRepository.startDownload(release)
 
     /** Launches the installer for a finished download; call only from the foreground. */

@@ -25,6 +25,7 @@ import it.attendance100.mybicocca.data.update.availableRelease
 import it.attendance100.mybicocca.domain.model.update.AppRelease
 import it.attendance100.mybicocca.domain.model.update.DistributionSource
 import it.attendance100.mybicocca.domain.model.update.DownloadState
+import it.attendance100.mybicocca.domain.model.update.DownloadTarget
 import it.attendance100.mybicocca.domain.model.update.isActive
 import it.attendance100.mybicocca.domain.model.update.PendingUpdateModal
 import it.attendance100.mybicocca.domain.model.update.UpdateModalKind
@@ -75,6 +76,8 @@ class UpdateRepositoryImpl @Inject constructor(
 
     override val downloadState: StateFlow<DownloadState> = apkDownloader.downloadState
 
+    override val downloadTarget: StateFlow<DownloadTarget?> = apkDownloader.downloadTarget
+
     /**
      * Every download goes through [ApkDownloadWorker], so it runs inside a foreground service and
      * survives the app being backgrounded — which a download started on a plain coroutine does
@@ -93,7 +96,7 @@ class UpdateRepositoryImpl @Inject constructor(
         // believing its release is the one downloading. Refusing here says so out loud instead.
         if (downloadState.value.isActive) return false
 
-        apkDownloader.markEnqueued()
+        apkDownloader.markEnqueued(release)
         scope.launch {
             store.setPendingDownloadRelease(release)
             ApkDownloadWorker.enqueue(context, ApkDownloadWorker.SOURCE_EXPLICIT)

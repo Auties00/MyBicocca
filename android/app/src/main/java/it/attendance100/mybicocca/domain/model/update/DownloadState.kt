@@ -42,6 +42,27 @@ val DownloadState.readyToInstall: File?
 
 fun DownloadState.isReadyToInstall(): Boolean = readyToInstall != null
 
+/**
+ * The release a [DownloadState] describes. The download state is process-wide, so a screen about
+ * one release has to check it is looking at that release's download before showing its progress
+ * or offering its APK.
+ */
+data class DownloadTarget(val versionName: String, val commitSha: String?) {
+
+    /** Same rule as the downloaded-APK record: the commit when the release names one, else the version. */
+    fun matches(release: AppRelease): Boolean =
+        if (!release.commitSha.isNullOrBlank()) commitSha == release.commitSha
+        else versionName == release.versionName
+
+    companion object {
+        fun of(release: AppRelease): DownloadTarget = DownloadTarget(release.versionName, release.commitSha)
+    }
+}
+
+/** This state as seen from [release]: another release's download, error or APK reads as [DownloadState.Idle]. */
+fun DownloadState.scopedTo(target: DownloadTarget?, release: AppRelease): DownloadState =
+    if (this is DownloadState.Idle || target?.matches(release) == true) this else DownloadState.Idle
+
 /** Asked for and not yet finished, queued included — the window in which a new request is ignored. */
 val DownloadState.isActive: Boolean
     get() = this is DownloadState.Enqueued || this is DownloadState.Downloading
