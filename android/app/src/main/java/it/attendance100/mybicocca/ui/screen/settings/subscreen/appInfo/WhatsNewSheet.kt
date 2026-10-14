@@ -342,8 +342,10 @@ private fun ReleaseCard(
             )
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
+                val appName = stringResource(R.string.app_name)
                 Text(
-                    text = stringResource(R.string.app_name) + " " + release.title,
+                    // Release names carry the app name ("MyBicocca v0.0.6"); older ones do not.
+                    text = if (release.title.startsWith(appName)) release.title else "$appName ${release.title}",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.weight(1f),
