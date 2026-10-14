@@ -34,6 +34,7 @@ import it.attendance100.mybicocca.domain.usecase.update.ObserveNightlyEnabledUse
 import it.attendance100.mybicocca.domain.usecase.update.ObserveNightlyStatusUseCase
 import it.attendance100.mybicocca.domain.usecase.update.SetNightlyEnabledUseCase
 import it.attendance100.mybicocca.domain.repository.UpdateRepository
+import it.attendance100.mybicocca.core.version.isNightlyBuild
 
 @HiltViewModel
 class AppInfoViewModel @Inject constructor(
@@ -153,9 +154,14 @@ class AppInfoViewModel @Inject constructor(
         viewModelScope.launch { updateRepository.clearPendingUpdateModal() }
     }
     
+    /**
+     * Turns the beta channel off. A nightly build first asks whether to go back to stable or keep
+     * the build ([onOfferStable]); a stable build has nothing to go back to, so the channel just
+     * turns off.
+     */
     fun checkAndOfferStable(onOfferStable: () -> Unit) {
         if (!nightlyEnabled.value) return
-        onOfferStable()
+        if (isNightlyBuild) onOfferStable() else setNightlyEnabled(false)
     }
 
     val stableAutoDownload: StateFlow<Boolean> = updateRepository.observeStableAutoDownload()

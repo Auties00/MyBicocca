@@ -335,8 +335,13 @@ fun AppInfoPage(
                     Text(stringResource(R.string.settings_beta_restore_stable_confirm))
                 }
             },
+            // Keeping the nightly still turns the channel off: no more nightlies, the installed
+            // build stays. Dismissing the dialog is what leaves everything as it was.
             dismissButton = {
-                TextButton(onClick = { showRestoreStableDialog = false }) {
+                TextButton(onClick = {
+                    showRestoreStableDialog = false
+                    viewModel.setNightlyEnabled(false)
+                }) {
                     Text(stringResource(R.string.settings_beta_restore_stable_dismiss))
                 }
             }
