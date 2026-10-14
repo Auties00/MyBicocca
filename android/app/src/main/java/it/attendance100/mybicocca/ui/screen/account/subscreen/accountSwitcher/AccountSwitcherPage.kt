@@ -131,6 +131,7 @@ private val AccountSwitcherHandleHeight = 16.dp
 fun AccountSwitcherPage(
     onOpenProfile: () -> Unit,
     onOpenSettings: () -> Unit,
+    onCareerPickRequired: (Account) -> Unit,
     viewModel: AccountViewModel = hiltViewModel(),
     authViewModel: AuthViewModel = hiltViewModel(
         checkNotNull(
@@ -148,6 +149,8 @@ fun AccountSwitcherPage(
 
     val motion = MaterialTheme.motionScheme
     val control = LocalSheetDismissControl.current
+
+    LaunchedEffect(viewModel) { viewModel.loadMissingPhotos() }
 
     var isAddingAccount by rememberSaveable { mutableStateOf(false) }
 
@@ -229,8 +232,10 @@ fun AccountSwitcherPage(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(screenHeight - topWindowInset - AccountSwitcherHandleHeight),
-                    onSignedIn = { _, requiresCareerPick ->
-                        if (!requiresCareerPick) isAddingAccount = false
+                    onSignedIn = { account, requiresCareerPick ->
+                        isAddingAccount = false
+                        // The app's career picker takes over the whole screen, as after a first sign-in.
+                        if (requiresCareerPick) onCareerPickRequired(account)
                     },
                     onCancel = { isAddingAccount = false },
                     cancelPaddingProvider = { animatedCancelPadding },

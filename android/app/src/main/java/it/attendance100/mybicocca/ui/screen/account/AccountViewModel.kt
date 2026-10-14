@@ -41,6 +41,7 @@ import java.io.File
 import javax.inject.Inject
 import kotlin.time.Duration.Companion.milliseconds
 import it.attendance100.mybicocca.domain.model.account.AccountEvent as DomainAccountEvent
+import kotlinx.coroutines.flow.combine
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
@@ -85,28 +86,37 @@ class AccountViewModel @Inject constructor(
 
     // Avatars for every stored account, not just the active one, so each profile card can
     // render its photo. Fetches are disk-cached per account and hit a per-account Esse3
-    // client, so loading another account's photo never disturbs the active session. Misses
-    // (e.g. no cached session) silently fall back to the placeholder icon in the UI.
+    // client, so loading another account's photo never disturbs the active session. A miss
+    // (e.g. a session still being restored at startup) shows the placeholder and is retried by
+    // [loadMissingPhotos]; the active account's photo is the one [userPhoto] already loaded.
     private val photoCache = mutableMapOf<AccountId, File?>()
     private val _photos = MutableStateFlow<Map<AccountId, File?>>(emptyMap())
-    val photos: StateFlow<Map<AccountId, File?>> = _photos.asStateFlow()
+    val photos: StateFlow<Map<AccountId, File?>> =
+        combine(_photos, activeAccount.map { it?.id }.distinctUntilChanged(), userPhoto) { photos, activeId, active ->
+            if (activeId == null || active == null) photos else photos + (activeId to active)
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(KEEP_ALIVE_MS), emptyMap())
 
     init {
         viewModelScope.launch {
-            accounts.collect { list ->
-                list.forEach { account ->
-                    if (account.id !in photoCache) {
-                        photoCache[account.id] = null
-                        launch {
-                            runCatching { getUserPhotoUseCase(account.id) }
-                                .getOrNull()
-                                ?.let { path ->
-                                    photoCache[account.id] = File(path)
-                                    _photos.value = photoCache.toMap()
-                                }
-                        }
-                    }
-                }
+            accounts.collect { list -> list.forEach { loadPhoto(it.id) } }
+        }
+    }
+
+    /** Fetches every stored account's photo that has not loaded yet; called when the switcher opens. */
+    fun loadMissingPhotos() {
+        accounts.value.forEach { loadPhoto(it.id) }
+    }
+
+    private fun loadPhoto(id: AccountId) {
+        if (id in photoCache) return
+        photoCache[id] = null
+        viewModelScope.launch {
+            val path = runCatching { getUserPhotoUseCase(id) }.getOrNull()
+            if (path == null) {
+                photoCache.remove(id)
+            } else {
+                photoCache[id] = File(path)
+                _photos.value = photoCache.filterValues { it != null }
             }
         }
     }
