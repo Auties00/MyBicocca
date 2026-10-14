@@ -120,7 +120,6 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.BookedExa
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.AppointmentsViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.AttendanceViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.BookableExamsViewModel
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.certificates.CertificatesViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.enrollments.EnrollmentsViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.examResults.ExamResultsViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.LibraryViewModel
@@ -335,7 +334,6 @@ fun MainShell(
      */
     val enrollmentsViewModel: EnrollmentsViewModel = hiltViewModel()
     val titlesViewModel: TitlesViewModel = hiltViewModel()
-    val certificatesViewModel: CertificatesViewModel = hiltViewModel()
     val refundsViewModel: RefundsViewModel = hiltViewModel()
     val attendanceViewModel: AttendanceViewModel = hiltViewModel()
     val studyPlanViewModel: StudyPlanViewModel = hiltViewModel()
@@ -999,7 +997,6 @@ fun MainShell(
                                     studyPlanViewModel = studyPlanViewModel,
                                     enrollmentsViewModel = enrollmentsViewModel,
                                     titlesViewModel = titlesViewModel,
-                                    certificatesViewModel = certificatesViewModel,
                                     refundsViewModel = refundsViewModel,
                                     attendanceViewModel = attendanceViewModel,
                                     questionnairesViewModel = questionnairesViewModel,

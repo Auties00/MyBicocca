@@ -5,7 +5,7 @@ Kotlin code generation module for the Esse3 OpenAPI specifications.
 ### Background
 
 When we decided to integrate [Esse3](https://s3w.si.unimib.it/Root.do) into our app, we tried to look for a REST API, but couldn't find one.
-As a result, we started developing the original [Esse3 Data Module](./../../esse3-scraper) using web scraping.
+As a result, we started developing the original Esse3 data module using web scraping (since removed).
 Some time later, though, we randomly discovered that [Esse3 exposes a SwaggerUI on a non-indexed page](https://s3w.si.unimib.it/e3rest/api/swagger-service-v1/swagger/apis).
 From there, we were able to develop a bash script that extracts the OpenAPI specs that the SwaggerUI shows: these are available in the [openapi](./openapi) directory.
 

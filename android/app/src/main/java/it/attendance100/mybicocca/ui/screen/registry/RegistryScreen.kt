@@ -13,7 +13,6 @@ import androidx.compose.material.icons.automirrored.outlined.Grading
 import androidx.compose.material.icons.outlined.AccountTree
 import androidx.compose.material.icons.outlined.CoPresent
 import androidx.compose.material.icons.outlined.CurrencyExchange
-import androidx.compose.material.icons.outlined.Description
 import androidx.compose.material.icons.outlined.EventAvailable
 import androidx.compose.material.icons.outlined.LocalLibrary
 import androidx.compose.material.icons.outlined.Payments
@@ -196,13 +195,6 @@ fun RegistryScreen(
                     stringResource(R.string.registry_titles_desc),
                     Icons.Outlined.WorkspacePremium,
                     onClick = open(SheetRoute.Titles),
-                ),
-                RegistryService(
-                    "certificates",
-                    stringResource(R.string.registry_certificates),
-                    stringResource(R.string.registry_certificates_desc),
-                    Icons.Outlined.Description,
-                    onClick = open(SheetRoute.Certificates),
                 ),
             ),
         ),

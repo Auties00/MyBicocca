@@ -372,13 +372,11 @@
     <string name="registry_library">Library</string>
     <string name="registry_library_desc">Book a library seat</string>
     <string name="registry_documents">Documents</string>
-    <string name="registry_documents_caption">Enrolments, degrees and certificates</string>
+    <string name="registry_documents_caption">Enrolments and degrees</string>
     <string name="registry_enrollments">Enrolments</string>
     <string name="registry_enrollments_desc">Enrolment history and renewal</string>
     <string name="registry_titles">Degrees</string>
     <string name="registry_titles_desc">Awarded degrees</string>
-    <string name="registry_certificates">Certificates</string>
-    <string name="registry_certificates_desc">Self-certifications in PDF</string>
     <string name="registry_taxes">Fees &amp; benefits</string>
     <string name="registry_taxes_caption">Your administrative position</string>
     <string name="registry_fees">Fees</string>
@@ -540,19 +538,6 @@
     <string name="booking_confirm_message">By confirming, you will be registered for this exam call. You can cancel your booking until the registration close date.</string>
     <string name="booking_call_notes">Call notes</string>
     <string name="booking_load_failed">Load failed</string>
-
-    <!-- Registry: certificates -->
-    <string name="certs_title">Certificates</string>
-    <string name="certs_subtitle">Self-certifications in PDF</string>
-    <string name="certs_no_pdf_app">No app available to open PDFs.</string>
-    <string name="certs_load_failed">Load failed</string>
-    <string name="certs_load_failed_body">Unable to load certificates.</string>
-    <string name="certs_loading">Loading certificates…</string>
-    <string name="certs_none">No certificates</string>
-    <string name="certs_none_body">No certificates are available.</string>
-    <string name="certs_certificate">Certificate</string>
-    <string name="certs_downloaded">Downloaded</string>
-    <string name="certs_download">Download</string>
 
     <!-- Registry: deadlines -->
     <string name="deadlines_title">Deadlines</string>
@@ -1697,7 +1682,6 @@
     <!-- Settings: Language -->
     <string name="settings_language_help_translate">Help us translate the app in %1$s!</string>
 
-    <string name="certificates_download_error">Cannot download certificate</string>
     <string name="taxes_operation_unavailable">Operation unavailable.</string>
     <string name="profile_refresh_error">Cannot update data</string>
     <string name="profile_exams_passed">Passed Exams</string>
@@ -1940,11 +1924,6 @@
     <string name="search_dest_titles_alias_1">qualifications</string>
     <string name="search_dest_titles_alias_2">high school diploma</string>
     <string name="search_dest_titles_alias_3">diploma</string>
-    <string name="search_dest_certificates_title">Certificates</string>
-    <string name="search_dest_certificates_subtitle">Services</string>
-    <string name="search_dest_certificates_alias_1">certificate</string>
-    <string name="search_dest_certificates_alias_2">self-declarations</string>
-    <string name="search_dest_certificates_alias_3">self-certification</string>
     <string name="search_dest_library_title">Library</string>
     <string name="search_dest_library_subtitle">Services</string>
     <string name="search_dest_library_alias_1">libraries</string>

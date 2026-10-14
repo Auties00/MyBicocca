@@ -19,8 +19,6 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.Appo
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.AttendancePage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.attendance.AttendanceViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.booking.BookableExamsViewModel
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.certificates.CertificatesPage
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.certificates.CertificatesViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.deadlines.DeadlinesPage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.deadlines.deadlinesHeader
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.enrollments.EnrollmentsTimelinePage
@@ -71,7 +69,6 @@ fun EntryProviderScope<NavKey>.registrySheetEntries(
     studyPlanViewModel: StudyPlanViewModel,
     enrollmentsViewModel: EnrollmentsViewModel,
     titlesViewModel: TitlesViewModel,
-    certificatesViewModel: CertificatesViewModel,
     refundsViewModel: RefundsViewModel,
     attendanceViewModel: AttendanceViewModel,
     questionnairesViewModel: QuestionnairesViewModel,
@@ -183,9 +180,6 @@ fun EntryProviderScope<NavKey>.registrySheetEntries(
         },
     ) { TaxesPage(viewModel = taxesViewModel) }
 
-    entry<SheetRoute.Certificates>(metadata = sheetHeaderInPage()) {
-        CertificatesPage(viewModel = certificatesViewModel)
-    }
     entry<SheetRoute.ExamResults>(metadata = sheetHeaderInPage()) {
         ExamResultsPage(viewModel = examResultsViewModel)
     }

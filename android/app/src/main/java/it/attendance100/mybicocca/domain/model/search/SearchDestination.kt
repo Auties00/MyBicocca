@@ -22,7 +22,6 @@ enum class SearchDestination {
     Appointments,
     Enrollments,
     Titles,
-    Certificates,
     Library,
     Refunds,
     Isee,

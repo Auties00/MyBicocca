@@ -10,7 +10,6 @@ import dagger.hilt.components.SingletonComponent
 import it.attendance100.mybicocca.data.local.account.AccountDao
 import it.attendance100.mybicocca.data.local.account.MyBicoccaDatabase
 import it.attendance100.mybicocca.data.local.appointment.AppointmentReservationDao
-import it.attendance100.mybicocca.data.local.certificate.CertificateCacheDao
 import it.attendance100.mybicocca.data.local.document.DocumentCacheDao
 import it.attendance100.mybicocca.data.local.enrollment.EnrollmentCacheDao
 import it.attendance100.mybicocca.data.local.exam.ExamCacheDao
@@ -128,10 +127,6 @@ object DatabaseModule {
 
     @Provides
     fun provideDocumentCacheDao(db: MyBicoccaDatabase): DocumentCacheDao = db.documentCacheDao()
-
-    @Provides
-    fun provideCertificateCacheDao(db: MyBicoccaDatabase): CertificateCacheDao =
-        db.certificateCacheDao()
 
     private const val DATABASE_NAME = "mybicocca.db"
 }

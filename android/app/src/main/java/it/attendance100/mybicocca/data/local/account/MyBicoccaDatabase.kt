@@ -2,15 +2,15 @@ package it.attendance100.mybicocca.data.local.account
 
 import androidx.room.AutoMigration
 import androidx.room.Database
+import androidx.room.DeleteTable
 import androidx.room.RoomDatabase
+import androidx.room.migration.AutoMigrationSpec
 import it.attendance100.mybicocca.data.local.appointment.AppointmentReservationDao
 import it.attendance100.mybicocca.data.local.appointment.AppointmentReservationEntity
 import it.attendance100.mybicocca.data.local.calendar.CalendarDao
 import it.attendance100.mybicocca.data.local.calendar.CalendarEventEntity
 import it.attendance100.mybicocca.data.local.calendar.CalendarSyncStateDao
 import it.attendance100.mybicocca.data.local.calendar.CalendarSyncStateEntity
-import it.attendance100.mybicocca.data.local.certificate.CertificateCacheDao
-import it.attendance100.mybicocca.data.local.certificate.CertificateEntity
 import it.attendance100.mybicocca.data.local.document.AcademicTitleEntity
 import it.attendance100.mybicocca.data.local.document.BadgeImageEntity
 import it.attendance100.mybicocca.data.local.document.DocumentCacheDao
@@ -90,7 +90,7 @@ import it.attendance100.mybicocca.data.local.transcript.TranscriptSyncStateEntit
  * - reservations: appointment (Portale Planning) and library-seat (Affluences) bookings, stored
  *   device-locally rather than per account
  * - offline mirrors of the live-first registry features (exam booking, taxes, enrollment
- *   history, questionnaires, badge/titles, certificates): the last successful read of each,
+ *   history, questionnaires, badge/titles): the last successful read of each,
  *   served only when the device has no network
  *
  * Most tables are scoped by account id and/or career id. Schema export is enabled (the JSON
@@ -148,15 +148,16 @@ import it.attendance100.mybicocca.data.local.transcript.TranscriptSyncStateEntit
         AcademicTitleEntity::class,
         TitleAttributeEntity::class,
         BadgeImageEntity::class,
-        CertificateEntity::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = true,
     autoMigrations = [
         // v2: cached_booked_exam gains the nullable total_bookings column (numIscritti).
         AutoMigration(from = 1, to = 2),
         // v3: careers gains the nullable level column (tipoCorsoCod).
         AutoMigration(from = 2, to = 3),
+        // v4: the self-certifications mirror is dropped along with the Certificates feature.
+        AutoMigration(from = 3, to = 4, spec = MyBicoccaDatabase.DropCertificates::class),
     ],
 )
 abstract class MyBicoccaDatabase : RoomDatabase() {
@@ -189,5 +190,7 @@ abstract class MyBicoccaDatabase : RoomDatabase() {
     abstract fun enrollmentCacheDao(): EnrollmentCacheDao
     abstract fun questionnaireCacheDao(): QuestionnaireCacheDao
     abstract fun documentCacheDao(): DocumentCacheDao
-    abstract fun certificateCacheDao(): CertificateCacheDao
+
+    @DeleteTable(tableName = "cached_certificate")
+    class DropCertificates : AutoMigrationSpec
 }

@@ -202,16 +202,6 @@ class SearchDestinationsUseCase @Inject constructor(
                 ),
             ),
             Entry(
-                SearchDestination.Certificates,
-                R.string.search_dest_certificates_title,
-                R.string.search_dest_certificates_subtitle,
-                listOf(
-                    R.string.search_dest_certificates_alias_1,
-                    R.string.search_dest_certificates_alias_2,
-                    R.string.search_dest_certificates_alias_3,
-                ),
-            ),
-            Entry(
                 SearchDestination.Library,
                 R.string.search_dest_library_title, R.string.search_dest_library_subtitle,
                 listOf(

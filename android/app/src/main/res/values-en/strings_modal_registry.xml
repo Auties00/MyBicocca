@@ -2,9 +2,6 @@
 <resources>
     <!-- Registry sheets: pinned header titles and subtitles -->
 
-    <!-- Certificates -->
-    <string name="certs_result_title">Opening certificate</string>
-
     <!-- Exam results -->
     <string name="exam_results_result_accept_title">Accept result</string>
     <string name="exam_results_result_reject_title">Reject result</string>

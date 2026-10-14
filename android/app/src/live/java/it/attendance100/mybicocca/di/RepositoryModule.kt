@@ -10,7 +10,6 @@ import it.attendance100.mybicocca.data.repository.AppearanceSettingsRepositoryIm
 import it.attendance100.mybicocca.data.repository.AppointmentRepositoryImpl
 import it.attendance100.mybicocca.data.repository.AttendanceRepositoryImpl
 import it.attendance100.mybicocca.data.repository.CalendarRepositoryImpl
-import it.attendance100.mybicocca.data.repository.CertificateRepositoryImpl
 import it.attendance100.mybicocca.data.repository.ConnectivityRepositoryImpl
 import it.attendance100.mybicocca.data.repository.DeepLinkRepositoryImpl
 import it.attendance100.mybicocca.data.repository.DocumentRepositoryImpl
@@ -44,7 +43,6 @@ import it.attendance100.mybicocca.domain.repository.AppearanceSettingsRepository
 import it.attendance100.mybicocca.domain.repository.AppointmentRepository
 import it.attendance100.mybicocca.domain.repository.AttendanceRepository
 import it.attendance100.mybicocca.domain.repository.CalendarRepository
-import it.attendance100.mybicocca.domain.repository.CertificateRepository
 import it.attendance100.mybicocca.domain.repository.ConnectivityRepository
 import it.attendance100.mybicocca.domain.repository.DeepLinkRepository
 import it.attendance100.mybicocca.domain.repository.DocumentRepository
@@ -210,10 +208,6 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindDeepLinkRepository(impl: DeepLinkRepositoryImpl): DeepLinkRepository
-
-    @Binds
-    @Singleton
-    abstract fun bindCertificateRepository(impl: CertificateRepositoryImpl): CertificateRepository
 
     @Binds
     @Singleton

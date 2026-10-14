@@ -2,9 +2,6 @@
 <resources>
     <!-- Registry sheets: pinned header titles and subtitles -->
 
-    <!-- Certificates -->
-    <string name="certs_result_title">Apertura certificato</string>
-
     <!-- Exam results -->
     <string name="exam_results_result_accept_title">Accettazione esito</string>
     <string name="exam_results_result_reject_title">Rifiuto esito</string>
