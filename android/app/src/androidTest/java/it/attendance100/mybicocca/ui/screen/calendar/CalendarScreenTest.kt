@@ -225,15 +225,41 @@ class CalendarScreenTest {
     }
 
     @Test
-    fun a_failed_sync_replaces_the_calendar_with_the_error_state() {
+    fun a_failed_sync_of_a_month_never_loaded_replaces_the_calendar_with_the_error_state() {
+        val vm = failingViewModel(hydrated = false)
+
+        setScreen(vm)
+        compose.waitForIdle()
+
+        compose.onNodeWithTag(CalendarTestTags.STATE_ERROR).assertIsDisplayed()
+        assertThat(
+            compose.onAllNodesWithTag(CalendarTestTags.STATE_CONTENT).fetchSemanticsNodes(),
+        ).isEmpty()
+    }
+
+    /** A month that synced before keeps its cached events; the failure goes to a snackbar. */
+    @Test
+    fun a_failed_sync_of_a_loaded_month_keeps_the_calendar() {
+        val vm = failingViewModel(hydrated = true)
+
+        setScreen(vm)
+        compose.waitForIdle()
+
+        compose.onNodeWithTag(CalendarTestTags.STATE_CONTENT).assertIsDisplayed()
+        assertThat(
+            compose.onAllNodesWithTag(CalendarTestTags.STATE_ERROR).fetchSemanticsNodes(),
+        ).isEmpty()
+    }
+
+    private fun failingViewModel(hydrated: Boolean): CalendarViewModel {
         every { observeActiveAccount() } returns flowOf(account)
         every { observeMonthEvents(any(), any()) } returns flowOf(Loadable.Loaded(emptyList()))
         every { observeDayEvents(any(), any()) } returns flowOf(Loadable.Loaded(emptyList()))
-        every { observeMonthHydrated(any(), any()) } returns flowOf(true)
+        every { observeMonthHydrated(any(), any()) } returns flowOf(hydrated)
         every { observeCoursesByActivityCode(any()) } returns flowOf(emptyMap())
         coEvery { isMonthFresh(any(), any()) } returns false
         coEvery { refreshMonth(any(), any(), any()) } throws IOException("offline")
-        val vm = CalendarViewModel(
+        return CalendarViewModel(
             savedState = SavedStateHandle(),
             observeActiveAccount = observeActiveAccount,
             observeMonthEvents = observeMonthEvents,
@@ -244,14 +270,6 @@ class CalendarScreenTest {
             prefetchAdjacent = prefetchAdjacent,
             observeCoursesByActivityCode = observeCoursesByActivityCode,
         )
-
-        setScreen(vm)
-        compose.waitForIdle()
-
-        compose.onNodeWithTag(CalendarTestTags.STATE_ERROR).assertIsDisplayed()
-        assertThat(
-            compose.onAllNodesWithTag(CalendarTestTags.STATE_CONTENT).fetchSemanticsNodes(),
-        ).isEmpty()
     }
 
     @Test
