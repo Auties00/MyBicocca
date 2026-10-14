@@ -18,7 +18,10 @@ import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncStateDa
 import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncStateEntity
 import it.attendance100.mybicocca.data.local.settings.ElearningFilterStore
 import it.attendance100.mybicocca.data.remote.elearning.api.ElearningApi
+import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningCalendarEvent
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningEnrollIntoCourseResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningGetActionEventsByTimesortResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningGetUserCoursesResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningResponseWarning
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseFilter
@@ -132,6 +135,36 @@ class ElearningCourseRepositoryImplTest {
 
         coVerify(exactly = 0) { elearningApi.courses.getUserCourses(any(), any()) }
         coVerify(exactly = 0) { courseDao.replaceEnrolled(any(), any()) }
+        scope.coroutineContext[Job]?.cancel()
+    }
+
+    /**
+     * Moodle ignores `aftereventid` when it cannot load that event and answers with the first page
+     * again. Following the cursor alone looped forever and kept the calendar's refresh spinning.
+     */
+    @Test
+    fun `refreshEnrolledCourses stops paging deadlines when Moodle repeats a page`() = runTest {
+        val scope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher(testScheduler))
+        val repository = newRepository(scope)
+        coEvery { elearningApi.courses.getUserCourses(token, lmsUserId) } returns
+            ElearningGetUserCoursesResponse(items = emptyList())
+        val samePage = ElearningGetActionEventsByTimesortResponse(
+            events = (1..50).map { id ->
+                ElearningCalendarEvent(id = id, name = "Consegna $id", timeStart = 1_700_000_000L + id, timeSort = 1_700_000_000L)
+            },
+            firstId = 1,
+            lastId = 50,
+        )
+        coEvery {
+            elearningApi.calendar.getActionEventsByTimesort(token, any(), any(), any(), any(), any())
+        } returns samePage
+
+        repository.refreshEnrolledCourses(accountId, force = true)
+
+        coVerify(exactly = 2) {
+            elearningApi.calendar.getActionEventsByTimesort(token, any(), any(), any(), any(), any())
+        }
+        coVerify { deadlineDao.replaceForAccount(accountId.value, any()) }
         scope.coroutineContext[Job]?.cancel()
     }
 
