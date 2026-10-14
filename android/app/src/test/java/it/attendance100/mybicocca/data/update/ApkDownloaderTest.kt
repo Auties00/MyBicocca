@@ -13,6 +13,7 @@ import io.mockk.slot
 import io.mockk.verify
 import it.attendance100.mybicocca.domain.model.update.AppRelease
 import it.attendance100.mybicocca.domain.model.update.DownloadState
+import it.attendance100.mybicocca.domain.model.update.DownloadTarget
 import it.attendance100.mybicocca.domain.model.update.AppReleaseAsset
 import kotlinx.coroutines.async
 import kotlinx.coroutines.test.TestScope
@@ -215,7 +216,7 @@ class ApkDownloaderTest {
      */
     @Test
     fun markEnqueued_recordsARequestThatHasNotStarted() = testScope.runTest {
-        downloader.markEnqueued()
+        downloader.markEnqueued(cachedRelease())
 
         assertThat(downloader.downloadState.value).isEqualTo(DownloadState.Enqueued)
     }
@@ -230,7 +231,7 @@ class ApkDownloaderTest {
         val first = async { downloader.download(cachedRelease()) }
         advanceTimeBy(150)
 
-        downloader.markEnqueued()
+        downloader.markEnqueued(cachedRelease())
 
         assertThat(downloader.downloadState.value).isInstanceOf(DownloadState.Downloading::class.java)
         advanceUntilIdle()
@@ -240,7 +241,7 @@ class ApkDownloaderTest {
     /** A request the worker finds nothing to download for must not leave the UI queued forever. */
     @Test
     fun clearEnqueued_takesBackARequestThatNeverStarted() = testScope.runTest {
-        downloader.markEnqueued()
+        downloader.markEnqueued(cachedRelease())
 
         downloader.clearEnqueued()
 
@@ -256,9 +257,31 @@ class ApkDownloaderTest {
         assertThat(downloader.downloadState.value).isEqualTo(result)
     }
 
+    /**
+     * The state is process-wide, so a screen about one release tells its own download apart by
+     * the target: a finished download must name the release it fetched.
+     */
+    @Test
+    fun download_recordsWhichReleaseTheStateDescribes() = testScope.runTest {
+        val release = cachedRelease()
+
+        downloader.download(release)
+
+        assertThat(downloader.downloadTarget.value).isEqualTo(DownloadTarget.of(release))
+    }
+
+    @Test
+    fun resetState_forgetsTheTarget() = testScope.runTest {
+        downloader.download(cachedRelease())
+
+        downloader.resetState()
+
+        assertThat(downloader.downloadTarget.value).isNull()
+    }
+
     @Test
     fun download_replacesTheEnqueuedMarkerOnceItStarts() = testScope.runTest {
-        downloader.markEnqueued()
+        downloader.markEnqueued(cachedRelease())
 
         val result = downloader.download(cachedRelease())
 

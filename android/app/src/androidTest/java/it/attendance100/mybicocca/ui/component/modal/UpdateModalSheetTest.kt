@@ -72,7 +72,7 @@ class UpdateModalSheetTest {
             UpdateModalSheet(
                 release = release,
                 downloadStateFlow = downloadState,
-                onDownload = { downloadsRequested++ },
+                onDownload = { downloadsRequested++; true },
                 onInstall = { installed = it },
                 onDismiss = { dismissed++ },
                 channelSwitch = kind.channelSwitch { nightlyEnabled ->
