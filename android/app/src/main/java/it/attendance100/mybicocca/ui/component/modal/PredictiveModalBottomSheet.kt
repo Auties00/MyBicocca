@@ -1,6 +1,9 @@
 package it.attendance100.mybicocca.ui.component.modal
 
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.PredictiveBackHandler
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.material3.BottomSheetDefaults
@@ -21,14 +24,18 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.unit.Velocity
 import it.attendance100.mybicocca.ui.component.feedback.SnackbarScope
 import kotlinx.coroutines.launch
+import kotlin.coroutines.cancellation.CancellationException
+import kotlin.math.roundToInt
 
 /**
  * Handle on a mounted [PredictiveModalBottomSheet] for whoever owns its lifetime — the modal scene
@@ -45,6 +52,12 @@ class ModalSheetController {
 
     /** Set once a programmatic hide started, so only that hide is undone by [show]. */
     private var hiddenByController: Boolean = false
+
+    /** How far a back gesture on the sheet's first page has slid it down, 0 to 1. */
+    internal val backProgress = Animatable(0f)
+
+    /** True once a back gesture committed: the sheet is sliding out and further back is ignored. */
+    internal var dismissingByBack: Boolean = false
 
     /** Animates the sheet out. Returns immediately if it is not mounted or already hidden. */
     suspend fun hide() {
@@ -67,6 +80,8 @@ class ModalSheetController {
         val sheet = state ?: return
         if (!hiddenByController) return
         hiddenByController = false
+        dismissingByBack = false
+        backProgress.snapTo(0f)
         sheet.show()
     }
 }
@@ -77,15 +92,16 @@ class ModalSheetController {
  * conventions on top. Every modal — navigation sheets and the few local ones — goes through it so
  * they all behave the same.
  *
- * Back is fully native: on the sheet's first page the system back gesture runs Material's own
- * predictive-back animation (the sheet scales with the finger, springs back on cancel, slides out
- * on commit); deeper pages are handled by the [SheetPager] inside, whose handler is registered
- * later and therefore wins while it is enabled.
+ * Back is predictive: on the sheet's first page the system back gesture slides the sheet down
+ * with the finger (its content collapses from the bottom and fades), springs it back on cancel and
+ * slides it out on commit. This replaces Material's own predictive scale, which shrinks the sheet
+ * in place. Deeper pages are handled by the [SheetPager] inside, whose handler is registered later
+ * and therefore wins while it is enabled.
  *
  * Dismissal can be vetoed via [confirmDismiss]. The veto runs before the hide settles: a refused
  * swipe or scrim dismissal springs the sheet straight back (and the content can morph into a
  * confirm page) rather than fully hiding and visibly re-opening. While [gesturesEnabled] is false
- * back is routed through the veto as well, without Material's predictive scale. A programmatic
+ * back is routed through the veto as well, without the slide. A programmatic
  * close through [controller] bypasses the veto — by then navigation already decided.
  *
  * The sheet is its own window, so the app-root snackbar host can never draw over it; content is
@@ -149,12 +165,57 @@ fun PredictiveModalBottomSheet(
         BackHandler(enabled = !gesturesEnabled) {
             if (latestConfirmDismiss()) latestOnDismiss()
         }
+        // Takes the gesture from Material's handler (registered earlier), and is itself overridden
+        // by in-sheet pagers (registered later).
+        PredictiveBackHandler(enabled = gesturesEnabled) { events ->
+            val progress = sheetController.backProgress
+            if (sheetController.dismissingByBack) {
+                events.collect { }
+                return@PredictiveBackHandler
+            }
+            try {
+                events.collect { event -> progress.snapTo(event.progress) }
+            } catch (cancelled: CancellationException) {
+                // A cancelled gesture cancels this handler's own job, so the rewind runs elsewhere.
+                scope.launch { progress.animateTo(0f) }
+                throw cancelled
+            }
+            if (!latestConfirmDismiss()) {
+                scope.launch { progress.animateTo(0f) }
+                return@PredictiveBackHandler
+            }
+            // Finish the slide outside this job, so a second back press cannot cut the dismissal.
+            sheetController.dismissingByBack = true
+            scope.launch {
+                sheetController.hide()
+                latestOnDismiss()
+            }
+        }
         val bodyScroll = remember { SheetBodyScrollConnection() }
-        Box(Modifier.nestedScroll(bodyScroll)) {
+        Box(
+            Modifier
+                .nestedScroll(bodyScroll)
+                .backSlide { sheetController.backProgress.value },
+        ) {
             SnackbarScope { content() }
         }
     }
 }
+
+/**
+ * Collapses the sheet's content from the bottom and fades it as [progress] goes from 0 to 1. The
+ * sheet wraps its content, so its top edge follows: the sheet reads as sliding down.
+ */
+private fun Modifier.backSlide(progress: () -> Float): Modifier =
+    clipToBounds().layout { measurable, constraints ->
+        val placeable = measurable.measure(constraints)
+        val eased = FastOutSlowInEasing.transform(progress().coerceIn(0f, 1f))
+        val height = (placeable.height * (1f - eased)).roundToInt()
+            .coerceIn(constraints.minHeight, constraints.maxHeight)
+        layout(placeable.width, height) {
+            placeable.placeWithLayer(0, 0) { alpha = 1f - eased }
+        }
+    }
 
 /** The standard drag handle, muted (but kept) while the sheet's gestures are locked. */
 @OptIn(ExperimentalMaterial3Api::class)
