@@ -33,8 +33,7 @@ import java.time.Instant
  * "Aggiungi un altro account" tile closes the list. Verifies the roster, the active and inactive
  * account rows and the add-account tile render, that tapping an inactive row invokes the
  * switch-account callback, that tapping the add-account tile invokes the add-account callback, and
- * that the settings shortcut (drawn at the trailing edge of the sheet's pinned header, outside the
- * roster) invokes its callback. Anchored on [AccountSwitcherTestTags], wrapped in the production [BicoccaTheme] with a
+ * that the settings shortcut at the end of the roster's title row invokes its callback. Anchored on [AccountSwitcherTestTags], wrapped in the production [BicoccaTheme] with a
  * [ProvideHapticManager] the swipe-to-remove rows require, and driven by relaxed-mock callbacks.
  */
 @RunWith(AndroidJUnit4::class)
@@ -117,6 +116,7 @@ class AccountSwitcherPageTest {
                 maxListHeight = 600.dp,
                 motion = androidx.compose.material3.MaterialTheme.motionScheme,
                 onOpenDetails = onOpenDetails,
+                onOpenSettings = onOpenSettings,
                 onSwitchAccount = onSwitchAccount,
                 onSelectCareer = onSelectCareer,
                 onRequestRemove = onRemove,
@@ -158,9 +158,7 @@ class AccountSwitcherPageTest {
 
     @Test
     fun tapping_the_settings_shortcut_invokes_the_open_settings_callback() {
-        compose.setBicoccaContent {
-            AccountSwitcherSettingsShortcut(onClick = onOpenSettings)
-        }
+        setRoster()
 
         compose.onNodeWithTag(AccountSwitcherTestTags.SETTINGS_SHORTCUT).performClick()
         compose.waitForIdle()

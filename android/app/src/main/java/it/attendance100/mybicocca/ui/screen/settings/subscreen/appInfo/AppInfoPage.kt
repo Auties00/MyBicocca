@@ -143,9 +143,9 @@ private enum class AppInfoSubPage(val depth: Int) {
  * with [SheetPager]: About, What's New (the merged changelog), All versions (the per-release list,
  * below What's New) and Update Settings (below About). Every page fills the sheet's height so all
  * of them share one stable frame, under the pager's pinned header (each page's title and
- * subtitle, plus the back arrow below About). Tiles, the "All versions" button and the header's
+ * subtitle, plus the back arrow, below About; About itself has none). Tiles, the "All versions" button and the header's
  * back arrow walk the pages; the back gesture is predictive and steps to the page's parent, and on
- * About it dismisses the sheet natively.
+ * About it dismisses the sheet.
  *
  * About keeps the update-aware "Check for Updates" tile (forced check + sheet snackbar while up
  * to date; an "Update available" tile that opens the store-aware dialog once a newer release is
@@ -241,13 +241,15 @@ fun AppInfoPage(
         depth = { it.depth },
         backTo = page.parent,
         onBack = { page.parent?.let { page = it } },
-        modifier = Modifier.fillMaxWidth(),
+        // Pinned to the full height: About has no header, and the header collapsing while the body
+        // grows would otherwise briefly drop the sheet.
+        modifier = Modifier
+            .fillMaxWidth()
+            .fillMaxHeight(),
         header = { target ->
             when (target) {
-                AppInfoSubPage.About -> SheetHeaderSpec(
-                    title = stringResource(R.string.settings_about_title),
-                    subtitle = stringResource(R.string.settings_about_subtitle),
-                )
+                // The logo and wordmark already name the page.
+                AppInfoSubPage.About -> null
 
                 AppInfoSubPage.WhatsNew -> whatsNewHeader()
                 AppInfoSubPage.AllVersions -> whatsNewAllVersionsHeader()
