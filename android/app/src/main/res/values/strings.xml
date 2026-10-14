@@ -1660,6 +1660,7 @@
     </plurals>
     <!-- Update Modal -->
     <string name="update_modal_title">Nuova versione disponibile!</string>
+    <string name="update_modal_nightly_title">Nuova nightly disponibile!</string>
     <string name="update_modal_version">v%1$s</string>
     <string name="update_modal_github">Apri su GitHub</string>
     <string name="update_modal_download">Scarica aggiornamento</string>
