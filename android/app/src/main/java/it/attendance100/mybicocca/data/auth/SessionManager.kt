@@ -13,7 +13,6 @@ import it.attendance100.mybicocca.data.mapper.account.toEntity
 import it.attendance100.mybicocca.data.mapper.account.toLearningIdentity
 import it.attendance100.mybicocca.data.remote.elearning.api.ElearningApi
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningGetSiteInfoResponse
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningLoginResponse
 import it.attendance100.mybicocca.data.remote.esse3.api.Esse3Api
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3CacheInfo
 import it.attendance100.mybicocca.data.remote.esse3.scraper.api.Esse3Api as Esse3LegacyApi
@@ -71,6 +70,7 @@ class SessionManager @Inject constructor(
     private val esse3Factory: Esse3ApiFactory,
     private val esse3LegacyApiFactory: Esse3LegacyApiFactory,
     private val elearningApiFactory: ElearningApiFactory,
+    private val elearningAuthenticator: ElearningAuthenticator,
     private val authMutexes: AccountKeyedMutexes,
     private val careerReconciler: CareerReconciler,
     private val accountWiper: AccountWiper,
@@ -137,8 +137,8 @@ class SessionManager @Inject constructor(
      * The Esse3 client is built before an account id exists, so its retry callbacks await the
      * id through a deferred completed only after the account is persisted: a 401 during
      * sign-in is bad credentials, not an expired session, and must never enter the silent
-     * refresh path. The Moodle client is likewise created up front and adopted as the cached
-     * instance once the account id is known.
+     * refresh path. The Moodle client is built from the login's session cookie and adopted as
+     * the cached instance once the account id is known.
      */
     suspend fun signIn(username: String, password: String): SignInResult = coroutineScope {
         if (username.isBlank() || password.isBlank()) {
@@ -157,16 +157,17 @@ class SessionManager @Inject constructor(
                 Triple(session, careersDto, courseTypeCodes(esse3))
             }
         }
-        val freshElearningApi = elearningApiFactory.create()
         val elearningDeferred = async {
             runCatching {
-                when (val response = freshElearningApi.auth.login(normalizedUsername, password)) {
-                    is ElearningLoginResponse.Success -> {
-                        val siteInfo = freshElearningApi.site.getSiteInfo(response.wsToken)
-                        ElearningLoginOutcome(response.wsToken, response.moodleSessionCookie, siteInfo)
-                    }
-                    is ElearningLoginResponse.Error -> error(response.message)
+                val login = elearningAuthenticator.login(normalizedUsername, password)
+                val api = elearningApiFactory.create(login.moodleSessionCookie)
+                val siteInfo = try {
+                    api.site.getSiteInfo(login.wsToken)
+                } catch (t: Throwable) {
+                    api.close()
+                    throw t
                 }
+                ElearningLoginOutcome(api, login.wsToken, login.moodleSessionCookie, siteInfo)
             }
         }
 
@@ -175,7 +176,7 @@ class SessionManager @Inject constructor(
 
         if (esse3Result.isFailure || elearningResult.isFailure) {
             esse3.close()
-            freshElearningApi.close()
+            elearningResult.getOrNull()?.api?.close()
             return@coroutineScope SignInResult.Failure(
                 classifySignInFailure(
                     esse3Result.exceptionOrNull(),
@@ -226,7 +227,7 @@ class SessionManager @Inject constructor(
             esse3Apis.remove(accountId)?.close()
             esse3Apis[accountId] = esse3
         }
-        adoptElearningApi(accountId, freshElearningApi)
+        adoptElearningApi(accountId, elearning.api)
 
         val requiresPick = academic.careers.count { it.status.isOpen } > 1
         SignInResult.Success(account, requiresCareerPick = requiresPick)
@@ -481,25 +482,12 @@ class SessionManager @Inject constructor(
             }
             val creds = credentialsStore.read(accountId)
                 ?: error("No stored credentials for ${accountId.value}.")
-            val freshApi = elearningApiFactory.create()
-            val response = try {
-                freshApi.auth.login(creds.username, creds.password)
-            } catch (t: Throwable) {
-                freshApi.close()
-                throw t
-            }
-            val (wsToken, cookie) = when (response) {
-                is ElearningLoginResponse.Success -> response.wsToken to response.moodleSessionCookie
-                is ElearningLoginResponse.Error -> {
-                    freshApi.close()
-                    error("Elearning re-auth failed: ${response.message}")
-                }
-            }
+            val login = elearningAuthenticator.login(creds.username, creds.password)
             sessionCache.update(accountId) {
-                copy(wsToken = wsToken, moodleSessionCookie = cookie)
+                copy(wsToken = login.wsToken, moodleSessionCookie = login.moodleSessionCookie)
             }
-            adoptElearningApi(accountId, freshApi)
-            ElearningTokens(wsToken, cookie)
+            adoptElearningApi(accountId, elearningApiFactory.create(login.moodleSessionCookie))
+            ElearningTokens(login.wsToken, login.moodleSessionCookie)
         }
 
     private suspend fun warmupElearningSilently(accountId: AccountId) {
@@ -540,6 +528,7 @@ class SessionManager @Inject constructor(
     }
 
     private data class ElearningLoginOutcome(
+        val api: ElearningApi,
         val wsToken: String,
         val moodleSessionCookie: String?,
         val siteInfo: ElearningGetSiteInfoResponse,
@@ -571,10 +560,9 @@ class SessionManager @Inject constructor(
          * Collapses raw backend throwables into a UI-friendly [SignInFailure].
          *
          * The data-api `ApiRequestException`/`Esse3Exception` types live in a module
-         * that isn't on `:app`'s compile classpath, so we sniff stable text in the
-         * generated messages instead of type-checking. Both probes are anchored to
-         * strings emitted by code in this repository (`Esse3Exception.buildMessage`
-         * and the SAML "missing form at step three" branch in `ElearningAuthApi`).
+         * that isn't on `:app`'s compile classpath, so Esse3 failures are recognized by
+         * stable text in their messages (from `Esse3Exception.buildMessage`). The Moodle
+         * login runs in the app and reports bad credentials through [ElearningLoginException].
          */
         fun classifySignInFailure(esse3: Throwable?, elearning: Throwable?): SignInFailure {
             if (looksLikeBadCredentials(esse3) || looksLikeBadCredentials(elearning)) {
@@ -587,20 +575,19 @@ class SessionManager @Inject constructor(
         }
 
         /**
-         * Walks the cause chain for the three stable bad-credential signatures: the
-         * "Status code: 401" line of an `Esse3Exception` multi-line message, the verbatim
-         * Esse3 `retErrMsg` mentioning "credenziali" when the login is refused, and the
-         * "missing form at step three" failure the Elearning SAML flow raises when the IdP
-         * rejects bad credentials by re-rendering the login page without the auto-submit form.
+         * Walks the cause chain for the bad-credential signatures: the "Status code: 401" line
+         * of an `Esse3Exception` multi-line message, the verbatim Esse3 `retErrMsg` mentioning
+         * "credenziali" when the login is refused, and an [ElearningLoginException] flagged as
+         * bad credentials.
          */
         private fun looksLikeBadCredentials(t: Throwable?): Boolean {
             var cur: Throwable? = t
             while (cur != null) {
+                if (cur is ElearningLoginException && cur.badCredentials) return true
                 val msg = cur.message
                 if (msg != null) {
                     if ("Status code: 401" in msg) return true
                     if ("credenziali" in msg.lowercase()) return true
-                    if ("missing form at step three" in msg) return true
                 }
                 cur = cur.cause
             }

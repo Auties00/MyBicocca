@@ -281,10 +281,9 @@ sealed interface ElearningKalturaVideoStreamResponse {
      * The current browser session was missing or has been invalidated by Moodle and
      * `mod/kalvidres/view.php` returned a login redirect instead of the Kaltura iframe.
      *
-     * The caller should re-run [it.attendance100.mybicocca.data.remote.elearning.api.ElearningAuthApi.login],
-     * persist the fresh `moodleSessionCookie`, install it via
-     * [it.attendance100.mybicocca.data.remote.elearning.api.ElearningApi.resume], and retry
-     * the resolution. If the retry still returns [RequiresReauth] something else is
+     * The caller should re-run the SSO login, persist the fresh `MoodleSession` cookie,
+     * build a new [it.attendance100.mybicocca.data.remote.elearning.api.ElearningApi] with
+     * it, and retry the resolution. If the retry still returns [RequiresReauth] something else is
      * wrong (most commonly the user is not enrolled in the source course).
      */
     object RequiresReauth : ElearningKalturaVideoStreamResponse
