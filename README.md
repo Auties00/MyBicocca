@@ -294,7 +294,7 @@ A banner counts what's urgent and expands into a full chronological timeline of 
 </tr>
 </table>
 
-And the rest of the registry too: tuition and MAV/PagoPA payments, ISEE, refunds, certificates,
+And the rest of the registry too: tuition and MAV/PagoPA payments, ISEE, refunds,
 academic titles, enrolment records, study‑plan editing, questionnaires and segreteria appointments.
 
 ---

@@ -3,13 +3,12 @@
 Kotlin API client for [Segreterie OnLine](https://s3w.si.unimib.it/) (Esse3), powered by [CINECA](https://www.cineca.it/).
 
 > **IMPORTANT**: This module was created after discovering an undocumented ("secret") Esse3 REST API.
-> Because of that discovery, we no longer needed HTML scraping for core features.
-> The legacy scraping implementation is kept in `../esse3-scraper`.
+> Because of that discovery, we no longer needed HTML scraping.
 
 ## Overview
 
 This module provides a typed Kotlin client for the Esse3 REST platform under `https://s3w.si.unimib.it/e3rest/api`.
-Unlike `esse3-scraper`, it works with structured JSON endpoints instead of parsing server-rendered HTML pages.
+It works with structured JSON endpoints instead of parsing server-rendered HTML pages.
 
 ## Authentication
 

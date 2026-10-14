@@ -44,7 +44,8 @@ class SessionCache @Inject constructor(
                 writeString(wsTokenKey(accountId), updated.wsToken)
                 writeString(moodleSessionCookieKey(accountId), updated.moodleSessionCookie)
                 writeString(jwtKey(accountId), updated.jwt)
-                writeString(esse3LegacyCookiesKey(accountId), updated.esse3LegacyCookies)
+                // The legacy Esse3 scrape session is gone; drop any cookies an older build left behind.
+                remove(esse3LegacyCookiesKey(accountId))
             }
         }
         updated
@@ -70,7 +71,6 @@ class SessionCache @Inject constructor(
                 wsToken = store.getString(wsTokenKey(accountId), null),
                 moodleSessionCookie = store.getString(moodleSessionCookieKey(accountId), null),
                 jwt = store.getString(jwtKey(accountId), null),
-                esse3LegacyCookies = store.getString(esse3LegacyCookiesKey(accountId), null),
             )
         }
         tokens[accountId] = loaded

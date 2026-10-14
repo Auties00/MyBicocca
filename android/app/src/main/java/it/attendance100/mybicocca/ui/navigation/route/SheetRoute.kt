@@ -43,10 +43,6 @@ sealed interface SheetRoute : Route {
     @Serializable
     data class TitleDetail(val titleId: String) : InSheetPage
 
-    /** Certificati: a single list page, with an in-page download outcome. */
-    @Serializable
-    data object Certificates : SheetRoute
-
     /** Rimborsi: the refunds list page. */
     @Serializable
     data object Refunds : SheetRoute

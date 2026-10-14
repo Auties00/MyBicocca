@@ -373,13 +373,11 @@
     <string name="registry_library">Biblioteca</string>
     <string name="registry_library_desc">Prenota un posto in biblioteca</string>
     <string name="registry_documents">Documenti</string>
-    <string name="registry_documents_caption">Iscrizioni, titoli e certificati</string>
+    <string name="registry_documents_caption">Iscrizioni e titoli</string>
     <string name="registry_enrollments">Iscrizioni</string>
     <string name="registry_enrollments_desc">Storico iscrizioni e rinnovo</string>
     <string name="registry_titles">Titoli</string>
     <string name="registry_titles_desc">Titoli di studio conseguiti</string>
-    <string name="registry_certificates">Certificati</string>
-    <string name="registry_certificates_desc">Autocertificazioni in PDF</string>
     <string name="registry_taxes">Tasse &amp; agevolazioni</string>
     <string name="registry_taxes_caption">La tua posizione amministrativa</string>
     <string name="registry_fees">Tasse</string>
@@ -541,19 +539,6 @@
     <string name="booking_confirm_message">Confermando, sarai iscritto a questo appello. Potrai annullare la prenotazione fino alla data di chiusura iscrizioni.</string>
     <string name="booking_call_notes">Note dell\'appello</string>
     <string name="booking_load_failed">Caricamento non riuscito</string>
-
-    <!-- Registry: certificates -->
-    <string name="certs_title">Certificati</string>
-    <string name="certs_subtitle">Autocertificazioni in PDF</string>
-    <string name="certs_no_pdf_app">Nessuna app per aprire i PDF.</string>
-    <string name="certs_load_failed">Caricamento non riuscito</string>
-    <string name="certs_load_failed_body">Impossibile caricare i certificati.</string>
-    <string name="certs_loading">Caricamento certificati…</string>
-    <string name="certs_none">Nessun certificato</string>
-    <string name="certs_none_body">Non risultano certificati disponibili.</string>
-    <string name="certs_certificate">Certificato</string>
-    <string name="certs_downloaded">Scaricato</string>
-    <string name="certs_download">Scarica</string>
 
     <!-- Registry: deadlines -->
     <string name="deadlines_title">Scadenzario</string>
@@ -1699,7 +1684,6 @@
     <!-- Settings: Language -->
     <string name="settings_language_help_translate">Aiutaci a tradurre l\'app in %1$s!</string>
 
-    <string name="certificates_download_error">Impossibile scaricare il certificato</string>
     <string name="taxes_operation_unavailable">Operazione non disponibile.</string>
     <string name="profile_refresh_error">Impossibile aggiornare i dati</string>
 
@@ -1946,11 +1930,6 @@
     <string name="search_dest_titles_alias_1">titoli di studio</string>
     <string name="search_dest_titles_alias_2">maturità</string>
     <string name="search_dest_titles_alias_3">diploma</string>
-    <string name="search_dest_certificates_title">Certificati</string>
-    <string name="search_dest_certificates_subtitle">Servizi</string>
-    <string name="search_dest_certificates_alias_1">certificato</string>
-    <string name="search_dest_certificates_alias_2">autodichiarazioni</string>
-    <string name="search_dest_certificates_alias_3">autocertificazione</string>
     <string name="search_dest_library_title">Biblioteca</string>
     <string name="search_dest_library_subtitle">Servizi</string>
     <string name="search_dest_library_alias_1">biblioteche</string>

@@ -182,21 +182,6 @@ class RegistryScreenTest {
         compose.runOnIdle { assertEquals(SheetRoute.StudyPlan, navigator.top.route) }
     }
 
-    @Test
-    fun tapping_the_certificates_tile_opens_its_sheet() {
-        setRegistryScreen()
-
-        compose.waitUntil(timeoutMillis = 5000) {
-            compose.onAllNodesWithTag(RegistryTestTags.service("certificates"))
-                .fetchSemanticsNodes().isNotEmpty()
-        }
-
-        compose.onNodeWithTag(RegistryTestTags.service("certificates")).performScrollTo().performClick()
-        compose.waitForIdle()
-
-        compose.runOnIdle { assertEquals(SheetRoute.Certificates, navigator.top.route) }
-    }
-
     private fun account(): Account = Account(
         id = AccountId("acc-1"),
         username = "mario.rossi@campus.unimib.it",

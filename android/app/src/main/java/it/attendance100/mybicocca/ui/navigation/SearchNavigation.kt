@@ -112,7 +112,6 @@ fun SearchDestination.toNavPlan(): List<SearchNavStep> = when (this) {
     SearchDestination.Appointments -> registrySheet(SheetRoute.Appointments)
     SearchDestination.Enrollments -> registrySheet(SheetRoute.Enrollments)
     SearchDestination.Titles -> registrySheet(SheetRoute.Titles)
-    SearchDestination.Certificates -> registrySheet(SheetRoute.Certificates)
     SearchDestination.Library -> registrySheet(SheetRoute.Library)
     SearchDestination.Refunds -> registrySheet(SheetRoute.Refunds)
     SearchDestination.Isee -> registrySheet(SheetRoute.Isee)

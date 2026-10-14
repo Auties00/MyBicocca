@@ -16,9 +16,6 @@ import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningGetSiteInfo
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningLoginResponse
 import it.attendance100.mybicocca.data.remote.esse3.api.Esse3Api
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3CacheInfo
-import it.attendance100.mybicocca.data.remote.esse3.scraper.api.Esse3Api as Esse3LegacyApi
-import io.ktor.http.Cookie
-import io.ktor.http.CookieEncoding
 import it.attendance100.mybicocca.di.ApplicationScope
 import it.attendance100.mybicocca.domain.model.account.Account
 import it.attendance100.mybicocca.domain.model.account.AccountEvent
@@ -57,8 +54,8 @@ import javax.inject.Singleton
 /**
  * Owns every authenticated session. Persists accounts and careers at sign-in, exposes the
  * active-account and account-list streams, and builds, caches, and re-authenticates the
- * per-platform API clients: Esse3 REST (HTTP Basic plus JWT), Moodle (wstoken plus
- * `MoodleSession` cookie), and the legacy Esse3 web-SSO scrape session. Per-account auth work
+ * per-platform API clients: Esse3 REST (HTTP Basic plus JWT) and Moodle (wstoken plus
+ * `MoodleSession` cookie). Per-account auth work
  * is serialized through [AccountKeyedMutexes]; each client cache is guarded by its own mutex.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -69,7 +66,6 @@ class SessionManager @Inject constructor(
     private val credentialsStore: CredentialsStore,
     private val sessionCache: SessionCache,
     private val esse3Factory: Esse3ApiFactory,
-    private val esse3LegacyApiFactory: Esse3LegacyApiFactory,
     private val elearningApiFactory: ElearningApiFactory,
     private val authMutexes: AccountKeyedMutexes,
     private val careerReconciler: CareerReconciler,
@@ -89,16 +85,6 @@ class SessionManager @Inject constructor(
 
     private val esse3Apis = mutableMapOf<AccountId, Esse3Api>()
     private val esse3Mutex = Mutex()
-
-    /**
-     * Legacy Esse3 web-SSO (scrape) sessions, keyed per account. Each is established lazily on
-     * the first access of a feature that needs the scrape surface and kept entirely independent
-     * of the REST [esse3] / [elearning] paths, so a SAML failure here can never break sign-in.
-     * Cookies are minted once via SAML and cached both in memory and in [SessionCache]; the api
-     * re-logs in on expiry.
-     */
-    private val esse3LegacyApis = mutableMapOf<AccountId, Esse3LegacyApi>()
-    private val esse3LegacyMutex = Mutex()
 
     /**
      * Account lifecycle events for the single UI consumer. A buffered [Channel] rather than a
@@ -243,9 +229,6 @@ class SessionManager @Inject constructor(
             esse3Mutex.withLock {
                 esse3Apis.remove(accountId)?.close()
             }
-            esse3LegacyMutex.withLock {
-                esse3LegacyApis.remove(accountId)?.close()
-            }
             credentialsStore.delete(accountId)
             sessionCache.delete(accountId)
             accountWiper.wipe(accountId)
@@ -266,11 +249,6 @@ class SessionManager @Inject constructor(
             val toClose = esse3Apis.filterKeys { it != accountId }
             toClose.values.forEach { it.close() }
             esse3Apis.keys.removeAll(toClose.keys)
-        }
-        esse3LegacyMutex.withLock {
-            val toClose = esse3LegacyApis.filterKeys { it != accountId }
-            toClose.values.forEach { it.close() }
-            esse3LegacyApis.keys.removeAll(toClose.keys)
         }
         activeAccountStore.set(accountId)
         accountDao.updateLastUsed(accountId.value, System.currentTimeMillis())
@@ -335,30 +313,6 @@ class SessionManager @Inject constructor(
         return esse3ForAccount(active.id)
     }
 
-    /**
-     * Legacy Esse3 web-SSO scrape session for the active account, established lazily: the
-     * first use reseeds from cached cookies when present and otherwise runs the SAML login and
-     * caches the resulting cookies. Independent of [esse3] and [elearning].
-     */
-    suspend fun esse3Legacy(): Esse3LegacyApi {
-        val active = activeAccount.value ?: error("No active account.")
-        return esse3LegacyForAccount(active.id)
-    }
-
-    /**
-     * Forces a fresh SAML login for the active account's legacy session, discarding the cached
-     * cookies and scrape client. Intended for when the scrape layer raises its
-     * AuthenticationException — the session cookie died and Esse3 bounced to the IdP.
-     */
-    suspend fun reauthEsse3Legacy(): Esse3LegacyApi {
-        val active = activeAccount.value ?: error("No active account.")
-        esse3LegacyMutex.withLock {
-            esse3LegacyApis.remove(active.id)?.close()
-        }
-        sessionCache.update(active.id) { copy(esse3LegacyCookies = null) }
-        return esse3LegacyForAccount(active.id)
-    }
-
     suspend fun streamPersonPhoto(accountId: AccountId): ByteReadChannel {
         val row = accountDao.getById(accountId.value)
             ?: error("Account ${accountId.value} not found.")
@@ -396,32 +350,6 @@ class SessionManager @Inject constructor(
         val api = ensureElearningApiForAccount(active.id, tokens.moodleSessionCookie)
         return ElearningSession(api, tokens.wsToken)
     }
-
-    /**
-     * Single-flighted per account under the auth mutexes, so concurrent callers share one SAML
-     * round-trip instead of each kicking off their own.
-     */
-    private suspend fun esse3LegacyForAccount(accountId: AccountId): Esse3LegacyApi =
-        authMutexes.withLock(accountId) {
-            esse3LegacyMutex.withLock { esse3LegacyApis[accountId] }?.let { return@withLock it }
-
-            val cached = sessionCache.read(accountId)
-            val cookies = deserializeCookies(cached.esse3LegacyCookies)
-                ?: run {
-                    val creds = credentialsStore.read(accountId)
-                        ?: error("No stored credentials for ${accountId.value}.")
-                    val fresh = esse3LegacyApiFactory.login(creds.username, creds.password)
-                    sessionCache.update(accountId) { copy(esse3LegacyCookies = serializeCookies(fresh)) }
-                    fresh
-                }
-
-            val api = esse3LegacyApiFactory.create(cookies)
-            esse3LegacyMutex.withLock {
-                esse3LegacyApis.remove(accountId)?.close()
-                esse3LegacyApis[accountId] = api
-            }
-            api
-        }
 
     /**
      * Builds and caches the REST client on first use; Esse3 server-side caching is enabled in
@@ -614,40 +542,6 @@ class SessionManager @Inject constructor(
                 cur = cur.cause
             }
             return false
-        }
-
-        private const val COOKIE_FIELD_SEP = "\t"
-        private const val COOKIE_RECORD_SEP = "\n"
-
-        /**
-         * Serializes the Esse3 web-SSO cookies one per line as
-         * `name\tvalue\tdomain\tpath` — only the fields needed to re-seed the scrape client's
-         * cookie jar. The persisted form is best-effort (a stale entry just triggers a fresh
-         * SAML login), and the cookie names and values involved (`JSESSIONID`,
-         * `_shibsession_*`) never contain tabs or newlines.
-         */
-        fun serializeCookies(cookies: List<Cookie>): String? {
-            if (cookies.isEmpty()) return null
-            return cookies.joinToString(COOKIE_RECORD_SEP) { c ->
-                listOf(c.name, c.value, c.domain.orEmpty(), c.path.orEmpty())
-                    .joinToString(COOKIE_FIELD_SEP)
-            }
-        }
-
-        fun deserializeCookies(raw: String?): List<Cookie>? {
-            if (raw.isNullOrBlank()) return null
-            val cookies = raw.split(COOKIE_RECORD_SEP).mapNotNull { line ->
-                val parts = line.split(COOKIE_FIELD_SEP)
-                if (parts.size < 4) return@mapNotNull null
-                Cookie(
-                    name = parts[0],
-                    value = parts[1],
-                    encoding = CookieEncoding.RAW,
-                    domain = parts[2].ifBlank { null },
-                    path = parts[3].ifBlank { null },
-                )
-            }
-            return cookies.ifEmpty { null }
         }
     }
 }
