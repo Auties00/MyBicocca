@@ -1,5 +1,6 @@
 package it.attendance100.mybicocca.data.repository
 
+import android.util.Log
 import io.ktor.utils.io.jvm.javaio.toInputStream
 import it.attendance100.mybicocca.core.observability.UnknownValues
 import it.attendance100.mybicocca.core.time.AppClock
@@ -50,6 +51,7 @@ import java.time.LocalDate
 import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.CancellationException
 
 /**
  * Live implementation of the study-plan contract over Esse3's plans, choice-rules and
@@ -76,13 +78,15 @@ class StudyPlanRepositoryImpl @Inject constructor(
         return mutex.withLock {
             plannedCache[careerId]?.takeIf { it.isFresh() }?.let { return@withLock it.courses }
             val career = activeCareer(careerId) ?: return@withLock emptyList()
-            val result = coroutineScope {
+            val (activities, program) = coroutineScope {
                 val activitiesDeferred = async { loadActivitiesUnlocked(careerId) }
                 val programDeferred = async { loadProgramUnlocked(careerId, career) }
-                val activities = activitiesDeferred.await()
-                val program = programDeferred.await() ?: return@coroutineScope emptyList()
-                if (activities.isEmpty()) emptyList() else intersect(activities, program)
+                activitiesDeferred.await() to programDeferred.await()
             }
+            // Not cached: a source that failed (or a program missing from this year's catalog) is
+            // asked again next time instead of pinning "no courses" for the cache's lifetime.
+            if (activities == null || program == null) return@withLock emptyList()
+            val result = if (activities.isEmpty()) currentYearSubjects(program, career) else intersect(activities, program)
             plannedCache[careerId] = CachedPlanned(courses = result, cachedAtMs = nowMs())
             result
         }
@@ -486,42 +490,95 @@ class StudyPlanRepositoryImpl @Inject constructor(
         )
     }
 
-    private suspend fun loadActivitiesUnlocked(careerId: CareerId): List<Esse3StudyPlanActivity> {
+    /** The plan's activities: empty when the student has no plan yet, null when it could not be loaded. */
+    private suspend fun loadActivitiesUnlocked(careerId: CareerId): List<Esse3StudyPlanActivity>? {
         activitiesCache[careerId]?.takeIf { it.isFresh() }?.let { return it.activities }
-        val esse3 = sessionManager.esse3()
-        val plan = runCatching { fetchEsse3Plan(esse3.plans, careerId) }.getOrNull() ?: return emptyList()
-        val activities = plan.activity
+        val plan = try {
+            fetchEsse3Plan(sessionManager.esse3().plans, careerId)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.w(TAG, "Study plan could not be loaded", e)
+            return null
+        }
+        val activities = plan?.activity.orEmpty()
         activitiesCache[careerId] = CachedActivities(activities = activities, cachedAtMs = nowMs())
         return activities
     }
 
     private suspend fun loadProgramUnlocked(careerId: CareerId, career: Career): EasyStaffStudyProgram? {
         programCache[careerId]?.takeIf { it.isFresh() }?.let { return it.program }
-        val program = runCatching { fetchEasyStaffProgram(career) }.getOrNull() ?: return null
+        val program = try {
+            fetchEasyStaffProgram(career)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.w(TAG, "EasyStaff programs could not be loaded", e)
+            null
+        } ?: return null
         programCache[careerId] = CachedProgram(program = program, cachedAtMs = nowMs())
         return program
     }
 
+    /** The plan to read courses from, or null when the student has none (yet). Throws when Esse3 fails. */
     private suspend fun fetchEsse3Plan(
         plansApi: Esse3PlansApi,
         careerId: CareerId,
     ): Esse3StudyPlan? {
-        val headers = runCatching {
-            plansApi.getStudentPlanHeaders(studentId = careerId.value)
-        }.getOrDefault(emptyList())
-        val header = headers.pickBest() ?: return null
+        val header = plansApi.getStudentPlanHeaders(studentId = careerId.value).pickBest() ?: return null
         val planId = header.planId?.toLong() ?: return null
-        return runCatching { plansApi.getStudentPlan(careerId.value, planId) }.getOrNull()
+        return plansApi.getStudentPlan(careerId.value, planId)
     }
 
     private suspend fun fetchEasyStaffProgram(career: Career): EasyStaffStudyProgram? {
         val code = career.easyStaffProgramCode ?: return null
-        val academicYear = currentAcademicYear()
-        val programs = runCatching {
-            easyStaffApi.core.getStudyPrograms(academicYear)
-        }.getOrDefault(emptyList())
-        return programs.firstOrNull { it.code == code }
+        val program = easyStaffApi.core.getStudyPrograms(currentAcademicYear()).firstOrNull { it.code == code }
+        if (program == null) Log.w(TAG, "Program $code is not in this year's EasyStaff catalog")
+        return program
     }
+
+    /**
+     * Every course the program offers in the career's current year, across its tracks: the
+     * timetable of a student who has no study plan yet, typically in their first months, before
+     * the plan is submitted.
+     */
+    private fun currentYearSubjects(program: EasyStaffStudyProgram, career: Career): List<PlannedCourse> {
+        if (program.years.isEmpty()) return emptyList()
+        val elapsed = if (career.academicYear > 0) currentAcademicYear().startYear - career.academicYear + 1 else 1
+        val year = elapsed.coerceIn(program.years.minOf { it.year }, program.years.maxOf { it.year })
+        val semesters = semestersByPeriodId(program)
+        return program.years
+            .filter { it.year == year }
+            .flatMap { it.subjects }
+            .map { subject ->
+                PlannedCourse(
+                    easyStaffSubjectId = subject.id,
+                    easyStaffSubjectCode = subject.code,
+                    activityCode = null,
+                    name = subject.name,
+                    normalizedName = normalizeSubjectName(subject.name),
+                    teacherName = subject.teacherName,
+                    periodId = subject.periodId,
+                    semester = semesters[subject.periodId] ?: Semester.Unknown,
+                    studyYear = StudyYear(year),
+                    cfu = null,
+                )
+            }
+            .distinctBy { it.easyStaffSubjectCode }
+    }
+
+    /** The program's "S1"/"S2" teaching periods, keyed by their opaque period id. */
+    private fun semestersByPeriodId(program: EasyStaffStudyProgram): Map<String, Semester> =
+        program.teachingPeriods.associate {
+            it.id to when (it.code.uppercase()) {
+                "S1" -> Semester.First
+                "S2" -> Semester.Second
+                else -> {
+                    UnknownValues.report("teaching_period", it.code)
+                    Semester.Unknown
+                }
+            }
+        }
 
     /**
      * Intersects the Esse3 plan activities with the EasyStaff program's subjects,
@@ -537,16 +594,7 @@ class StudyPlanRepositoryImpl @Inject constructor(
         val byCode: Map<String, EasyStaffStudyProgramSubject> = subjects.associateBy { it.code }
         val byName: Map<String, EasyStaffStudyProgramSubject> =
             subjects.associateBy { normalizeSubjectName(it.name) }
-        val semesterByPeriodId: Map<String, Semester> = program.teachingPeriods.associate {
-            it.id to when (it.code.uppercase()) {
-                "S1" -> Semester.First
-                "S2" -> Semester.Second
-                else -> {
-                    UnknownValues.report("teaching_period", it.code)
-                    Semester.Unknown
-                }
-            }
-        }
+        val semesterByPeriodId = semestersByPeriodId(program)
         return activities.mapNotNull { activity ->
             val activityName = activity.activityTranscriptDescription ?: return@mapNotNull null
             val activityCode = activity.activityTranscriptCode
@@ -584,6 +632,7 @@ class StudyPlanRepositoryImpl @Inject constructor(
 
     private companion object {
         const val CACHE_TTL_MS = 30L * 60_000L
+        const val TAG = "StudyPlan"
     }
 }
 
