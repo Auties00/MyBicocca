@@ -1,5 +1,6 @@
 package it.attendance100.mybicocca.ui.screen.calendar
 
+import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -164,20 +165,24 @@ class CalendarViewModel @Inject constructor(
     val syncStatus: StateFlow<SyncStatus> = _syncStatus.asStateFlow()
 
     /**
+     * Whether the visible month has completed a sync before, so it has cached events to show.
+     * Read from the persisted sync stamp — a cache snapshot, not a timing heuristic.
+     */
+    val monthHydrated: StateFlow<Boolean> =
+        combine(activeCareerId, selectedMonth) { c, ym -> c to ym }
+            .flatMapLatest { (c, ym) ->
+                if (c == null) flowOf(true)
+                else observeMonthHydrated(c, ym)
+            }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(STATE_KEEP_ALIVE_MS), true)
+
+    /**
      * True until the visible month completes its first-ever sync: the screen keeps the
-     * pull-to-refresh indicator pinned over the still-empty calendar. Gated on the
-     * persisted sync stamp — a cache snapshot, not a timing heuristic — so an
-     * already-synced month renders instantly even while a background refresh is in flight.
+     * pull-to-refresh indicator pinned over the still-empty calendar. An already-synced month
+     * renders instantly even while a background refresh is in flight.
      */
     val initialLoading: StateFlow<Boolean> =
-        combine(
-            combine(activeCareerId, selectedMonth) { c, ym -> c to ym }
-                .flatMapLatest { (c, ym) ->
-                    if (c == null) flowOf(true)
-                    else observeMonthHydrated(c, ym)
-                },
-            _syncStatus,
-        ) { hydrated, status ->
+        combine(monthHydrated, _syncStatus) { hydrated, status ->
             !hydrated && status !is SyncStatus.Failed
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(STATE_KEEP_ALIVE_MS), false)
 
@@ -245,6 +250,7 @@ class CalendarViewModel @Inject constructor(
         runCatching { refreshMonth(careerId, yearMonth, force) }
             .onSuccess { _syncStatus.value = SyncStatus.Idle }
             .onFailure {
+                Log.w(TAG, "Calendar refresh of $yearMonth failed", it)
                 _syncStatus.value = SyncStatus.Failed(it)
                 oneShotChannel.trySend(CalendarOneShotEvent.RefreshFailed(it))
             }
@@ -256,6 +262,7 @@ class CalendarViewModel @Inject constructor(
         const val KEY_DAY = "calendar_selected_day"
         const val KEY_SELECTED_EVENT = "calendar_selected_event_id"
         const val STATE_KEEP_ALIVE_MS = 5_000L
+        const val TAG = "Calendar"
     }
 }
 

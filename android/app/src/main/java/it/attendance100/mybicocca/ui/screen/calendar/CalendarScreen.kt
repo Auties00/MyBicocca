@@ -70,6 +70,7 @@ import it.attendance100.mybicocca.ui.screen.calendar.subscreen.monthAgenda.Month
 import it.attendance100.mybicocca.ui.screen.calendar.theme.ProvideEventPalette
 import java.time.Instant
 import java.time.ZoneId
+import it.attendance100.mybicocca.ui.component.feedback.LocalAppSnackbarController
 
 /**
  * The calendar tab: the student's unified schedule — lessons, booked exams, assignment
@@ -83,9 +84,10 @@ import java.time.ZoneId
  *
  * A month's first-ever load renders the empty calendar with the refresh indicator pinned
  * for the entire initial fetch (the same language as the e-learning tab), driven by
- * [CalendarViewModel.initialLoading] on top of the plain refreshing status. A failed sync
- * replaces the calendar with a centered error state and a retry button; refresh failures
- * raise no transient snackbar.
+ * [CalendarViewModel.initialLoading] on top of the plain refreshing status. A failed sync of a
+ * month that has nothing cached replaces the calendar with a centered error state and a retry
+ * button; a month that synced before keeps its cached events and reports the failure in a
+ * snackbar instead.
  *
  * The agenda sheet and the FAB draw in their own popup windows, which no in-content cover
  * can clip — they would bleed over anything composed above the tab — so the screen hides
@@ -133,6 +135,9 @@ fun CalendarScreen(
     val weekStart by viewModel.weekStart.collectAsStateWithLifecycle()
     val syncStatus by viewModel.syncStatus.collectAsStateWithLifecycle()
     val initialLoading by viewModel.initialLoading.collectAsStateWithLifecycle()
+    val monthHydrated by viewModel.monthHydrated.collectAsStateWithLifecycle()
+    val snackbar = LocalAppSnackbarController.current
+    val syncFailedMsg = stringResource(R.string.calendar_sync_failed)
     val eventsByDay by viewModel.eventsByDay.collectAsStateWithLifecycle()
     // The event sheet resolves its event from these lists: keep them subscribed while the tab is
     // shown, so a tapped event opens with its data instead of an empty first frame.
@@ -146,7 +151,8 @@ fun CalendarScreen(
     LaunchedEffect(Unit) {
         viewModel.oneShotEvents.collect { event ->
             when (event) {
-                is CalendarOneShotEvent.RefreshFailed -> Unit
+                is CalendarOneShotEvent.RefreshFailed ->
+                    if (viewModel.monthHydrated.value) snackbar.showError(syncFailedMsg, event.cause)
                 CalendarOneShotEvent.RequireSignIn -> Unit
             }
         }
@@ -215,7 +221,7 @@ fun CalendarScreen(
                 state = pullState,
                 modifier = Modifier.fillMaxSize(),
             ) {
-                val failure = syncStatus as? SyncStatus.Failed
+                val failure = (syncStatus as? SyncStatus.Failed)?.takeUnless { monthHydrated }
                 if (failure != null) {
                     EmptyState(
                         icon = Icons.Outlined.CloudOff,
@@ -305,7 +311,7 @@ fun CalendarScreen(
                 .calculateBottomPadding() > 0.dp
 
             val chromeVisible = isActive && (coverProgress?.value ?: 0f) < 0.01f &&
-                    syncStatus !is SyncStatus.Failed
+                    (syncStatus !is SyncStatus.Failed || monthHydrated)
 
             if (chromeVisible && agendaPresence > 0.01f && !keyboardOpen) {
                 MonthAgendaSheet(
