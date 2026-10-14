@@ -242,10 +242,12 @@ fun AppInfoPage(
         backTo = page.parent,
         onBack = { page.parent?.let { page = it } },
         // Pinned to the full height: About has no header, and the header collapsing while the body
-        // grows would otherwise briefly drop the sheet.
+        // grows would otherwise briefly drop the sheet. Every page fills it, so there is no height
+        // to morph either.
         modifier = Modifier
             .fillMaxWidth()
             .fillMaxHeight(),
+        morphHeight = false,
         header = { target ->
             when (target) {
                 // The logo and wordmark already name the page.
