@@ -8,6 +8,7 @@ import androidx.compose.animation.ContentTransform
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.SeekableTransitionState
 import androidx.compose.animation.core.rememberTransition
+import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -57,6 +58,9 @@ import kotlin.coroutines.cancellation.CancellationException
  * @param slide how the body moves between pages; the header always cross-slides.
  * @param header resolves the pinned header (title and subtitle) of every page; null for a page
  * that shows no header (it takes no room, and the header grows in or out on the page change).
+ * @param morphHeight whether the sheet's height animates between pages of different heights.
+ * Off for a pager whose pages all fill the sheet: their height follows the header's, and
+ * animating it chased that header frame by frame and stretched the page change to seconds.
  * @param content a page's body; its [AnimatedContentScope] lets it animate parts of itself with
  * the page change.
  */
@@ -70,9 +74,10 @@ fun <P : Any> SheetPager(
     key: (P) -> Any = { it },
     slide: SheetPageSlide = SheetPageSlide.Horizontal,
     header: @Composable (P) -> SheetHeaderSpec?,
+    morphHeight: Boolean = true,
     content: @Composable AnimatedContentScope.(P) -> Unit,
 ) {
-    SheetPagerImpl(page, depth, backTo, onBack, modifier, key, slide, header, content)
+    SheetPagerImpl(page, depth, backTo, onBack, modifier, key, slide, header, morphHeight, content)
 }
 
 /** How a [SheetPager]'s body moves to a deeper page (and back). */
@@ -116,6 +121,7 @@ internal fun <P : Any> SheetPagerImpl(
     key: (P) -> Any,
     slide: SheetPageSlide,
     header: @Composable (P) -> SheetHeaderSpec?,
+    morphHeight: Boolean = true,
     content: @Composable AnimatedContentScope.(P) -> Unit,
 ) {
     val state = remember { SeekableTransitionState(page) }
@@ -178,7 +184,9 @@ internal fun <P : Any> SheetPagerImpl(
             onBack = onBack,
         )
         transition.AnimatedContent(
-            transitionSpec = { sheetPageTransform(slide, forward = depth(targetState) >= depth(initialState)) },
+            transitionSpec = {
+                sheetPageTransform(slide, forward = depth(targetState) >= depth(initialState), morphHeight)
+            },
             contentKey = key,
         ) { shown -> content(fresh(shown)) }
     }
@@ -188,7 +196,11 @@ internal fun <P : Any> SheetPagerImpl(
  * Forward/back page transition for in-sheet navigation: a soft push with a synchronized
  * sheet-height morph.
  */
-private fun AnimatedContentTransitionScope<*>.sheetPageTransform(slide: SheetPageSlide, forward: Boolean): ContentTransform {
+private fun AnimatedContentTransitionScope<*>.sheetPageTransform(
+    slide: SheetPageSlide,
+    forward: Boolean,
+    morphHeight: Boolean,
+): ContentTransform {
     val sign = if (forward) 1 else -1
     val enter = when (slide) {
         SheetPageSlide.Horizontal -> slideInHorizontally(tween(SheetMotion.PAGE_MS)) { sign * it / 8 }
@@ -200,7 +212,7 @@ private fun AnimatedContentTransitionScope<*>.sheetPageTransform(slide: SheetPag
     }
     return (fadeIn(tween(SheetMotion.IN_FADE_MS, delayMillis = SheetMotion.IN_FADE_DELAY_MS)) + enter)
         .togetherWith(fadeOut(tween(SheetMotion.OUT_FADE_MS)) + exit)
-        .using(SizeTransform(clip = true) { _, _ -> tween(SheetMotion.PAGE_MS) })
+        .using(SizeTransform(clip = true) { _, _ -> if (morphHeight) tween(SheetMotion.PAGE_MS) else snap() })
 }
 
 /**
