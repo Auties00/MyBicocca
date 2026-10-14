@@ -59,6 +59,9 @@ class ModalSheetController {
     /** True once a back gesture committed: the sheet is sliding out and further back is ignored. */
     internal var dismissingByBack: Boolean = false
 
+    /** The content's height before the back gesture started; see [backSlide]. */
+    internal var restingHeight: Int = -1
+
     /** Animates the sheet out. Returns immediately if it is not mounted or already hidden. */
     suspend fun hide() {
         val sheet = state ?: return
@@ -195,7 +198,7 @@ fun PredictiveModalBottomSheet(
         Box(
             Modifier
                 .nestedScroll(bodyScroll)
-                .backSlide { sheetController.backProgress.value },
+                .backSlide(sheetController) { sheetController.backProgress.value },
         ) {
             SnackbarScope { content() }
         }
@@ -205,11 +208,20 @@ fun PredictiveModalBottomSheet(
 /**
  * Collapses the sheet's content from the bottom and fades it as [progress] goes from 0 to 1. The
  * sheet wraps its content, so its top edge follows: the sheet reads as sliding down.
+ *
+ * During the gesture the content keeps the height it had at rest ([ModalSheetController.restingHeight]).
+ * The sheet gives a shorter sheet less room, and content that fills the sheet (About) would shrink
+ * with it and feed back into the next frame, the sheet jumping between two heights.
  */
-private fun Modifier.backSlide(progress: () -> Float): Modifier =
+private fun Modifier.backSlide(controller: ModalSheetController, progress: () -> Float): Modifier =
     clipToBounds().layout { measurable, constraints ->
-        val placeable = measurable.measure(constraints)
         val eased = FastOutSlowInEasing.transform(progress().coerceIn(0f, 1f))
+        val resting = controller.restingHeight
+        val placeable = if (eased > 0f && resting > 0) {
+            measurable.measure(constraints.copy(minHeight = resting, maxHeight = resting))
+        } else {
+            measurable.measure(constraints).also { controller.restingHeight = it.height }
+        }
         val height = (placeable.height * (1f - eased)).roundToInt()
             .coerceIn(constraints.minHeight, constraints.maxHeight)
         layout(placeable.width, height) {
