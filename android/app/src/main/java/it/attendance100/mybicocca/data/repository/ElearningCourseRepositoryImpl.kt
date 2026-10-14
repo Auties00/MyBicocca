@@ -147,24 +147,33 @@ class ElearningCourseRepositoryImpl @Inject constructor(
         stamp(accountId, ElearningSyncScope.ENROLLED_COURSES, 0)
     }
 
+    /**
+     * Pages through the action events. Moodle silently ignores `aftereventid` when it cannot load
+     * that event, and then answers every page with the first one again, so the cursor cannot be
+     * trusted alone: each page also starts from the previous page's last time, events already
+     * seen are skipped, and paging stops at a page that brings nothing new (or after
+     * [MAX_DEADLINE_PAGES]).
+     */
     private suspend fun fetchAndStoreDeadlines(accountId: AccountId) {
         val (api, token) = sessionManager.elearning()
-        val from = 0L
+        var from = 0L
         val rows = mutableListOf<DeadlineEntity>()
+        val seen = HashSet<Int>()
         var afterEventId: Int? = null
-        while (true) {
+        for (page in 0 until MAX_DEADLINE_PAGES) {
             val response = api.calendar.getActionEventsByTimesort(
                 wsToken = token,
                 timesortFrom = from,
                 afterEventId = afterEventId,
                 limitNum = DEADLINE_PAGE_SIZE,
             )
-            if (response.events.isEmpty()) break
-            response.events.forEach { event ->
+            val fresh = response.events.filter { seen.add(it.id) }
+            fresh.forEach { event ->
                 event.toDeadlineEntity(accountId)?.let(rows::add)
             }
-            if (response.events.size < DEADLINE_PAGE_SIZE) break
-            afterEventId = response.lastId ?: break
+            if (fresh.isEmpty() || response.events.size < DEADLINE_PAGE_SIZE) break
+            afterEventId = response.lastId
+            from = response.events.mapNotNull { it.timeSort }.maxOrNull() ?: break
         }
         deadlineDao.replaceForAccount(accountId.value, resolveDeadlineInstanceIds(rows))
     }
@@ -323,5 +332,6 @@ class ElearningCourseRepositoryImpl @Inject constructor(
 
     private companion object {
         const val DEADLINE_PAGE_SIZE = 50
+        const val MAX_DEADLINE_PAGES = 40
     }
 }
