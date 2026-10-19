@@ -4,7 +4,7 @@ Kotlin API client for the [E-Learning](https://elearning.unimib.it/) platform (M
 
 ## Overview
 
-This module provides a type-safe Kotlin client for interacting with the university's Moodle e-learning platform. It uses the official [Moodle Web Services API](https://docs.moodle.org/dev/Web_service_API_functions) with additional HTML scraping for course catalog browsing.
+This module provides a type-safe Kotlin client for interacting with the university's Moodle e-learning platform. It uses the official [Moodle Web Services API](https://docs.moodle.org/dev/Web_service_API_functions), plus HTML scraping of the public course info page.
 
 ## Authentication
 
@@ -91,8 +91,6 @@ Request parameters are sent as form data with the web service token.
 
 ### HTML Scraping
 
-Three operations use HTML scraping for course catalog browsing (no authentication required):
+One operation uses HTML scraping (no authentication required):
 
-- `courses.getCoursesAreas()` - Scrapes course categories from the homepage
-- `courses.getCourseCategoryContents()` - Scrapes courses within a category
 - `courses.getCoursePublicInfo(courseId)` - Scrapes the public info page for a course (syllabus, staff, "Scheda del corso" metadata, enrolment methods); works for courses the user is not enrolled in

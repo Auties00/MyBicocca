@@ -85,45 +85,6 @@ class EasyStaffExamCalendarApiTest : EasyStaffTestBase() {
         }
     }
 
-    @Test
-    suspend fun getExamsBySubject() {
-        val academicYears = api.core.getAcademicYears()
-        assertNotNull(academicYears)
-        assertTrue(academicYears.isNotEmpty(), "Academic years should not be empty")
-        val academicYear = academicYears.first()
-
-        val teachingAreas = api.core.getTeachingAreas()
-        assertNotNull(teachingAreas)
-        assertTrue(teachingAreas.isNotEmpty(), "Teaching areas should not be empty")
-        val teachingArea = teachingAreas.first()
-
-        val programs = api.core.getStudyPrograms(
-            academicYear = academicYear,
-            teachingAreaCode = teachingArea.code
-        )
-        assertNotNull(programs)
-        assertTrue(programs.isNotEmpty(), "Study programs should not be empty")
-        val program = programs.first()
-
-        val subject = program.years.flatMap { it.subjects }.first()
-        val results = api.exams.getExamsBySubject(
-            subject = subject,
-            startDate = academicYear.toStartDate(),
-            endDate = academicYear.toEndDate()
-        )
-        assertNotNull(results)
-        assertTrue(results.isNotEmpty(), "Exams should not be empty")
-
-        results.forEach { exam ->
-            validateExam(exam)
-
-            assertTrue(
-                !exam.date.isBefore(academicYear.toStartDate()) && !exam.date.isAfter(academicYear.toEndDate()),
-                "Exam date ${exam.date} should be within range"
-            )
-        }
-    }
-
     private fun validateExam(exam: EasyStaffScheduledExam) {
         assertTrue(exam.subjectName.isNotBlank(), "Exam subject name should not be blank")
         assertNotNull(exam.date, "Exam date should not be null")

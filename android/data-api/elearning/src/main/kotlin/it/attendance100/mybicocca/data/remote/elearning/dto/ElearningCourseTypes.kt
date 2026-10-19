@@ -434,62 +434,6 @@ data class ElearningModuleDate(
 )
 
 /**
- * Represents a top-level area grouping course categories (e.g., faculties, departments).
- *
- * @property name The name of the course area.
- * @property categories List of course categories within this area.
- */
-@Serializable
-data class ElearningCourseArea(
-    val name: String,
-    val categories: List<ElearningCourseCategory>
-)
-
-/**
- * Represents a category of courses.
- *
- * @property name The name of the category.
- * @property url The URL to view the category contents.
- */
-@Serializable
-data class ElearningCourseCategory(
-    val name: String,
-    val url: String
-)
-
-/**
- * Represents the contents of a course category including subcategories and courses.
- *
- * @property name The name of the category.
- * @property subcategories List of subcategories within this category.
- * @property courses List of courses directly under this category.
- */
-@Serializable
-data class ElearningCourseCategoryContents(
-    val name: String,
-    val subcategories: List<ElearningCourseCategory>,
-    val courses: List<ElearningCourse>
-)
-
-/**
- * Represents a basic course entry from category listings.
- *
- * @property name The display name of the course.
- * @property code The short code identifying the course.
- * @property url The URL to access the course.
- * @property id The unique identifier of the course.
- * @property hasPassword Whether the course requires a password to enrol.
- */
-@Serializable
-data class ElearningCourse(
-    val name: String,
-    val code: String,
-    val url: String,
-    val id: Int,
-    val hasPassword: Boolean
-)
-
-/**
  * Public, no-authentication information scraped from `/course/info.php?id={id}`.
  *
  * @property id The unique identifier of the course (matches `data-courseid`).

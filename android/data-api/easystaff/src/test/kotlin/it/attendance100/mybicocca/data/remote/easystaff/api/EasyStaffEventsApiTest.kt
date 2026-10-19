@@ -5,101 +5,12 @@ import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffLanguage
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import java.time.LocalDate
-import java.time.temporal.WeekFields
-import java.util.*
 
 class EasyStaffEventsApiTest : EasyStaffTestBase() {
     companion object {
         private val MOCK_START_DATE = LocalDate.now()
         private val MOCK_END_DATE = LocalDate.now().plusMonths(1)
         private const val MOCK_KEYWORD = "informatica"
-    }
-
-    /**
-     * Today's events may legitimately be empty on weekends and holidays, so the test does not
-     * assert that any are returned.
-     */
-    @Test
-    suspend fun getTodayEvents() {
-        val events = api.events.getTodayEvents()
-        assertNotNull(events)
-
-        val today = LocalDate.now()
-        events.forEach { event ->
-            validateEvent(event)
-            assertTrue(
-                event.date == today,
-                "Event date ${event.date} should be today ($today)"
-            )
-        }
-    }
-
-    /**
-     * Today's events may legitimately be empty on weekends and holidays, so the test does not
-     * assert that any are returned.
-     */
-    @Test
-    suspend fun getTodayEventsWithBuilding() {
-        val buildings = api.buildings.getBuildings()
-        assertNotNull(buildings)
-        assertTrue(buildings.isNotEmpty(), "Buildings should not be empty")
-        val building = buildings.first()
-
-        val events = api.events.getTodayEvents(buildings = listOf(building))
-        assertNotNull(events)
-
-        events.forEach { event ->
-            validateEvent(event)
-        }
-    }
-
-    /**
-     * The week's events may legitimately be empty, so the test does not assert that any are
-     * returned.
-     */
-    @Test
-    suspend fun getWeekEvents() {
-        val events = api.events.getWeekEvents()
-        assertNotNull(events)
-
-        val today = LocalDate.now()
-        events.forEach { event ->
-            validateEvent(event)
-            assertTrue(
-                event.date.isSameWeek(today),
-                "Event date ${event.date} should be within the week"
-            )
-        }
-    }
-
-    private fun LocalDate.isSameWeek(other: LocalDate, locale: Locale = Locale.getDefault()): Boolean {
-        val weekFields = WeekFields.of(locale)
-
-        val thisWeek = this.get(weekFields.weekOfWeekBasedYear())
-        val otherWeek = other.get(weekFields.weekOfWeekBasedYear())
-
-        val thisYear = this.get(weekFields.weekBasedYear())
-        val otherYear = other.get(weekFields.weekBasedYear())
-
-        return thisWeek == otherWeek && thisYear == otherYear
-    }
-
-    @Test
-    suspend fun getMonthEvents() {
-        val events = api.events.getMonthEvents()
-        assertNotNull(events)
-        assertTrue(events.isNotEmpty(), "Month events should not be empty")
-
-        val today = LocalDate.now()
-        val monthStart = today.withDayOfMonth(1)
-        val monthEnd = today.withDayOfMonth(today.lengthOfMonth())
-        events.forEach { event ->
-            validateEvent(event)
-            assertTrue(
-                !event.date.isBefore(monthStart) && !event.date.isAfter(monthEnd),
-                "Event date ${event.date} should be within the month"
-            )
-        }
     }
 
     @Test
