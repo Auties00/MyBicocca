@@ -12,6 +12,7 @@ import io.ktor.client.statement.bodyAsChannel
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.content.TextContent
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
@@ -38,6 +39,12 @@ import java.time.format.DateTimeFormatter
  * `X-CLIENTE` header. Error responses carry a `{"message": "<key>", "data": [...]}` envelope
  * whose key (e.g. `reservation_not_found`) becomes the [ApiRequestException] message;
  * unparsable error bodies fall back to the default message.
+ *
+ * Some endpoints, the booking form and the availability schedules among them, also require
+ * the `jwt_public` guest cookie. The backend hands it out on the service and area listings and
+ * lets it expire after twenty minutes, so a request rejected with `unauthorized.invalid_token`
+ * fetches the service listing for a fresh token and is sent once more. This relies on the
+ * client keeping cookies.
  *
  * @param client The shared [HttpClient] instance for making HTTP requests
  * @param json The shared [Json] instance for decoding responses
@@ -66,6 +73,11 @@ abstract class EasyStaffPlanningAbstractApi(
          * Locale sent with every request.
          */
         private const val LOCALE = "it"
+
+        /**
+         * Error key the backend returns when the guest token is missing or expired.
+         */
+        private const val INVALID_TOKEN_ERROR = "unauthorized.invalid_token"
 
         /**
          * Month format used in schedule paths (yyyy-MM).
@@ -112,9 +124,11 @@ abstract class EasyStaffPlanningAbstractApi(
         queryParams: Map<String, Any> = emptyMap(),
         headers: Map<String, String> = emptyMap()
     ): T {
-        val response = client.get(buildUrl(PLANNING_BASE_URL, path, queryParams)) {
-            planningHeaders(portal)
-            headers.forEach { (name, value) -> header(name, value) }
+        val response = sendWithGuestToken(portal) {
+            client.get(buildUrl(PLANNING_BASE_URL, path, queryParams)) {
+                planningHeaders(portal)
+                headers.forEach { (name, value) -> header(name, value) }
+            }
         }
         return decodeOrThrow(response)
     }
@@ -140,19 +154,21 @@ abstract class EasyStaffPlanningAbstractApi(
         body: Any,
         queryParams: Map<String, Any> = emptyMap()
     ): T {
-        val response = client.post(buildUrl(PLANNING_BASE_URL, path, queryParams)) {
-            planningHeaders(portal)
-            when (body) {
-                is JsonElement -> setBody(
-                    TextContent(
-                        json.encodeToString(JsonElement.serializer(), body),
-                        ContentType.Application.Json
+        val response = sendWithGuestToken(portal) {
+            client.post(buildUrl(PLANNING_BASE_URL, path, queryParams)) {
+                planningHeaders(portal)
+                when (body) {
+                    is JsonElement -> setBody(
+                        TextContent(
+                            json.encodeToString(JsonElement.serializer(), body),
+                            ContentType.Application.Json
+                        )
                     )
-                )
 
-                else -> {
-                    contentType(ContentType.Application.Json)
-                    setBody(body)
+                    else -> {
+                        contentType(ContentType.Application.Json)
+                        setBody(body)
+                    }
                 }
             }
         }
@@ -174,13 +190,44 @@ abstract class EasyStaffPlanningAbstractApi(
         path: String,
         queryParams: Map<String, Any> = emptyMap()
     ): ByteArray {
-        val response = client.get(buildUrl(PLANNING_BASE_URL, path, queryParams)) {
-            planningHeaders(portal)
+        val response = sendWithGuestToken(portal) {
+            client.get(buildUrl(PLANNING_BASE_URL, path, queryParams)) {
+                planningHeaders(portal)
+            }
         }
         if (!response.status.isSuccess()) {
             throwApiError(response)
         }
         return response.bodyAsBytes()
+    }
+
+    /**
+     * Sends a request, renewing the guest token and sending it again if the backend rejected
+     * the token.
+     *
+     * Portal-independent requests are sent as they are: the guest token is issued per portal.
+     *
+     * @param portal The portal the request targets, or null for portal-independent endpoints
+     * @param request Sends the request; called a second time after a token renewal
+     * @return The response to the last attempt
+     * @throws ApiRequestException When the request is unauthorized for any other reason
+     */
+    protected suspend fun sendWithGuestToken(
+        portal: EasyStaffPlanningPortal?,
+        request: suspend () -> HttpResponse
+    ): HttpResponse {
+        val response = request()
+        if (portal == null || response.status != HttpStatusCode.Unauthorized) {
+            return response
+        }
+        val errorKey = readErrorKey(response)
+        if (errorKey != INVALID_TOKEN_ERROR) {
+            throwApiError(response.status.value, errorKey)
+        }
+        client.get(buildUrl(PLANNING_BASE_URL, "/servizi/${portal.id}")) {
+            planningHeaders(portal)
+        }
+        return request()
     }
 
     /**
@@ -221,13 +268,25 @@ abstract class EasyStaffPlanningAbstractApi(
      * @param response The failed HTTP response
      * @throws ApiRequestException Always
      */
-    protected suspend fun throwApiError(response: HttpResponse): Nothing {
+    protected suspend fun throwApiError(response: HttpResponse): Nothing =
+        throwApiError(response.status.value, readErrorKey(response))
+
+    private fun throwApiError(statusCode: Int, errorKey: String?): Nothing {
+        if (!errorKey.isNullOrBlank()) {
+            throw ApiRequestException(statusCode, errorKey)
+        }
+        throw ApiRequestException(statusCode)
+    }
+
+    /**
+     * Reads the error key of a `{"message": "<key>", ...}` error body.
+     *
+     * @param response The failed HTTP response
+     * @return The error key, or null if the body doesn't match the envelope
+     */
+    private suspend fun readErrorKey(response: HttpResponse): String? {
         val errorObject = runCatching { json.parseToJsonElement(response.bodyAsText()) }
             .getOrNull() as? JsonObject
-        val errorKey = (errorObject?.get("message") as? JsonPrimitive)?.contentOrNull
-        if (!errorKey.isNullOrBlank()) {
-            throw ApiRequestException(response.status.value, errorKey)
-        }
-        throw ApiRequestException(response.status.value)
+        return (errorObject?.get("message") as? JsonPrimitive)?.contentOrNull
     }
 }
