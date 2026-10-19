@@ -88,6 +88,11 @@ class ElearningAttendanceApi(
     /**
      * Gets the current user's attendance summary for an attendance module.
      *
+     * Like the Moodle app opening the activity, this records the student's presence in every
+     * session open right now that auto-assigns a status and has no password: the plugin's
+     * mobile view does so whenever it renders. Call it only when the user opens attendance,
+     * never from background work.
+     *
      * @param wsToken The web service token (32 characters)
      * @param courseId The course the module belongs to
      * @param moduleId The course module ID (cmid) of the attendance module
@@ -155,7 +160,8 @@ class ElearningAttendanceApi(
             allSessionsPercentage = values["percentageallsessions"]?.parsePercentage(),
             pointsTakenLabel = values["pointssessionscompleted"]?.takeIf { it.isNotBlank() },
             maxPossiblePointsLabel = values["maxpossiblepoints"]?.takeIf { it.isNotBlank() },
-            maxPossiblePercentage = values["maxpossiblepercentage"]?.parsePercentage()
+            maxPossiblePercentage = values["maxpossiblepercentage"]?.parsePercentage(),
+            pointsAllSessionsPercentage = values["pointsallsessions"]?.parsePercentage()
         )
     }
 
@@ -168,6 +174,9 @@ class ElearningAttendanceApi(
      * form to learn whether a student password / QR pass is required and which
      * statuses are selectable. An empty result means no session is open for marking
      * at the moment, which is the normal state outside lesson hours.
+     *
+     * The mobile view auto-records sessions that need no password, as described in
+     * [getAttendanceSummary], so the same caveat applies.
      *
      * @param wsToken The web service token (32 characters)
      * @param courseId The course the module belongs to
@@ -194,7 +203,10 @@ class ElearningAttendanceApi(
                     mapOf(
                         "cmid" to moduleId.toString(),
                         "courseid" to courseId.toString(),
-                        "sessid" to sessionId
+                        "sessid" to sessionId,
+                        // Below 44000 the plugin serves its "ionic5" form, which puts each
+                        // status label beside its ion-radio instead of inside it.
+                        "appversioncode" to APP_VERSION_CODE
                     )
                 )
             }.getOrNull() ?: return@mapNotNull null
@@ -217,8 +229,10 @@ class ElearningAttendanceApi(
      * `mobile_view_activity` call the Moodle app makes when a student taps "submit
      * attendance". No browser session or web scraping is involved.
      *
-     * This covers both ways a student marks: scanning the session QR (whose pass
-     * is passed as [studentPass]) and typing the session password. Sessions that
+     * This covers typing the session password and scanning a static session QR, whose
+     * pass is that same password; both go in [studentPass]. Rotating QR codes are not
+     * supported: the plugin's mobile handler only compares against the session's fixed
+     * password, not the rotating ones. Sessions that
      * auto-assign a status accept any non-empty [statusId]; otherwise pass one of
      * the ids from [getMarkableSessions].
      *

@@ -132,6 +132,7 @@ data class ElearningMobileContentOtherData(
  * @property totalSessions The total number of sessions of the module.
  * @property allSessionsPercentage The attendance percentage over all sessions.
  * @property pointsTakenLabel The "earned / available" points over the recorded sessions (e.g. "10 / 10").
+ * @property pointsAllSessionsPercentage The points earned as a percentage of the points available over every session.
  * @property maxPossiblePointsLabel The "earned / maximum" points achievable over every session (e.g. "82 / 82").
  * @property maxPossiblePercentage The best attendance percentage still reachable if every remaining session is attended.
  */
@@ -156,7 +157,10 @@ data class ElearningAttendanceSummary(
     val maxPossiblePointsLabel: String? = null,
 
     @SerialName("maxPossiblePercentage")
-    val maxPossiblePercentage: Double? = null
+    val maxPossiblePercentage: Double? = null,
+
+    @SerialName("pointsAllSessionsPercentage")
+    val pointsAllSessionsPercentage: Double? = null
 )
 
 /**
