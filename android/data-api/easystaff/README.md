@@ -136,4 +136,4 @@ The API was reverse engineered by analyzing the underlying JSON endpoints used b
 
 The `combo.php` endpoint returns data embedded in JavaScript variable assignments (e.g., `var elenco_corsi = [...];`), which the client extracts and parses as JSON.
 
-Only one operation uses HTML scraping: `buildings.getRoomDetails()` parses the Vetrina Aule HTML page for detailed room information (capacity, equipment, accessibility).
+`buildings.getRoomDetails()` reads the Vetrina Aule page the same way: the page assigns every requested room, with its capacity, floor, equipment and accessibility details, to `window.data_to_show`, which the client extracts and parses as JSON. No operation scrapes HTML markup.
