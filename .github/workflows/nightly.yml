@@ -5,6 +5,12 @@ on:
     # Main only: N counts commits along whichever branch is built, so a second branch would hand
     # out numbers that collide with main's or outrank them.
     branches: [main]
+    # Only pushes that can change the APK. Docs, screenshots, CI config and the iOS/web/codegen
+    # trees don't ship in it, so they wait for the next app change (whose changelog still lists
+    # them, since it covers everything since the last stable release).
+    paths:
+      - 'android/**'
+      - '!android/**/*.md'
   workflow_dispatch:
 
 # One nightly at a time. Queued rather than cancelled: a run cut off mid-upload would leave a
@@ -15,7 +21,50 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Opt-out for app changes that still shouldn't publish a nightly: a "no-nightly" label on the
+  # merged PR, or "[no nightly]" in the pushed commit's message. Manual runs always build.
+  gate:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      skip: ${{ steps.check.outputs.skip }}
+    steps:
+      - id: check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          MESSAGE: ${{ github.event.head_commit.message }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" != "push" ]; then
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [[ "$MESSAGE" == *"[no nightly]"* ]]; then
+            echo "The commit message asks for no nightly."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # The PR whose merge (merge commit, squash or rebase) produced this commit, if any. A
+          # failed lookup builds anyway: skipping by mistake is worse than an extra nightly.
+          if ! LABELS=$(gh api "repos/$GH_REPO/commits/$GITHUB_SHA/pulls" \
+              --jq ".[] | select(.merge_commit_sha == \"$GITHUB_SHA\") | .labels[].name"); then
+            echo "::warning::Couldn't look up the PR of $GITHUB_SHA, building the nightly anyway."
+            LABELS=""
+          fi
+          if grep -qx 'no-nightly' <<< "$LABELS"; then
+            echo "The merged PR is labelled no-nightly."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
   nightly:
+    needs: gate
+    if: needs.gate.outputs.skip != 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: write
