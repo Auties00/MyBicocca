@@ -4,7 +4,7 @@ import { brackets } from "@mybicocca/data-api-runtime";
 import { MoodleClient } from "../client.js";
 import { MoodleTokenAuth } from "./MoodleAuthTypes.js";
 import { MoodleMobileContent, decodeMoodleMobileContent } from "./MoodleMobileTypes.js";
-import { MoodlePreflightData, encodeMoodlePreflightData } from "./MoodleQuizTypes.js";
+import { MoodleNamedValue, encodeMoodleNamedValue } from "./MoodleQuizTypes.js";
 
 export class MoodleMobileApi {
   constructor(private readonly client: MoodleClient) {}
@@ -22,7 +22,7 @@ export class MoodleMobileApi {
     method: string,
     auth: MoodleTokenAuth,
     options: {
-      args?: MoodlePreflightData[] | null;
+      args?: MoodleNamedValue[] | null;
     } = {},
   ): Promise<MoodleMobileContent> {
     return this.client.json(
@@ -33,7 +33,7 @@ export class MoodleMobileApi {
         form: [
           ["component", component],
           ["method", method],
-          ...(options.args == null ? [] : brackets("args", options.args.map((item) => encodeMoodlePreflightData(item)))),
+          ...(options.args == null ? [] : brackets("args", options.args.map((item) => encodeMoodleNamedValue(item)))),
         ],
         auth: auth,
       },

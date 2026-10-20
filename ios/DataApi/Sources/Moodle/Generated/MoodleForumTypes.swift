@@ -2066,7 +2066,7 @@ public struct MoodlePrepareDraftAreaResponse: Codable, Hashable, Sendable {
     /// Draft area files.
     public var files: [MoodleFile]
     /// Draft file area options.
-    public var areaOptions: [MoodlePreference]
+    public var areaOptions: [MoodleKeyValue]
     /// Message text with URLs rewritten.
     public var messageText: String
     /// list of warnings
@@ -2075,7 +2075,7 @@ public struct MoodlePrepareDraftAreaResponse: Codable, Hashable, Sendable {
     public init(
         draftItemId: Int = 0,
         files: [MoodleFile] = [],
-        areaOptions: [MoodlePreference] = [],
+        areaOptions: [MoodleKeyValue] = [],
         messageText: String = "",
         warnings: [MoodleWarning] = []
     ) {
@@ -2098,7 +2098,7 @@ public struct MoodlePrepareDraftAreaResponse: Codable, Hashable, Sendable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.draftItemId = container.decodeLenient(Int.self, forKey: .draftItemId) ?? 0
         self.files = container.decodeLenient([MoodleFile].self, forKey: .files) ?? []
-        self.areaOptions = container.decodeLenient([MoodlePreference].self, forKey: .areaOptions) ?? []
+        self.areaOptions = container.decodeLenient([MoodleKeyValue].self, forKey: .areaOptions) ?? []
         self.messageText = container.decodeLenient(String.self, forKey: .messageText) ?? ""
         self.warnings = container.decodeLenient([MoodleWarning].self, forKey: .warnings) ?? []
     }

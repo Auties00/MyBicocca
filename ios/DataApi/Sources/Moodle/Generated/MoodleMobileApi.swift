@@ -20,7 +20,7 @@ public struct MoodleMobileApi: Sendable {
     public func getContent(
         component: String,
         method: String,
-        args: [MoodlePreflightData]? = nil,
+        args: [MoodleNamedValue]? = nil,
         auth: MoodleTokenAuth
     ) async throws -> MoodleMobileContent {
         try await client.json(

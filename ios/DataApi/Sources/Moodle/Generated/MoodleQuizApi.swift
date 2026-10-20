@@ -20,7 +20,7 @@ public struct MoodleQuizApi: Sendable {
     public func getAttemptData(
         attemptId: Int,
         page: Int,
-        preflightData: [MoodlePreflightData]? = nil,
+        preflightData: [MoodleNamedValue]? = nil,
         auth: MoodleTokenAuth
     ) async throws -> MoodleAttemptDataResponse {
         try await client.json(
@@ -64,7 +64,7 @@ public struct MoodleQuizApi: Sendable {
     ///   - auth: The credentials: ``MoodleTokenAuth``.
     public func getAttemptSummary(
         attemptId: Int,
-        preflightData: [MoodlePreflightData]? = nil,
+        preflightData: [MoodleNamedValue]? = nil,
         auth: MoodleTokenAuth
     ) async throws -> MoodleAttemptSummaryResponse {
         try await client.json(
@@ -181,10 +181,10 @@ public struct MoodleQuizApi: Sendable {
     ///   - auth: The credentials: ``MoodleTokenAuth``.
     public func processAttempt(
         attemptId: Int,
-        data: [MoodlePreference]? = nil,
+        data: [MoodleKeyValue]? = nil,
         finishAttempt: Bool? = nil,
         timeUp: Bool? = nil,
-        preflightData: [MoodlePreflightData]? = nil,
+        preflightData: [MoodleNamedValue]? = nil,
         auth: MoodleTokenAuth
     ) async throws -> MoodleProcessAttemptResponse {
         try await client.json(
@@ -207,8 +207,8 @@ public struct MoodleQuizApi: Sendable {
     ///   - auth: The credentials: ``MoodleTokenAuth``.
     public func saveAttempt(
         attemptId: Int,
-        data: [MoodlePreference],
-        preflightData: [MoodlePreflightData]? = nil,
+        data: [MoodleKeyValue],
+        preflightData: [MoodleNamedValue]? = nil,
         auth: MoodleTokenAuth
     ) async throws -> MoodleStatusResponse {
         try await client.json(
@@ -231,7 +231,7 @@ public struct MoodleQuizApi: Sendable {
     ///   - auth: The credentials: ``MoodleTokenAuth``.
     public func startAttempt(
         quizId: Int,
-        preflightData: [MoodlePreflightData]? = nil,
+        preflightData: [MoodleNamedValue]? = nil,
         forceNew: Bool? = nil,
         auth: MoodleTokenAuth
     ) async throws -> MoodleStartAttemptResponse {

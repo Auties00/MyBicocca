@@ -91,7 +91,7 @@ export interface MoodleCourseUserProfile {
   /** User custom fields (also known as user profile fields) */
   customFields: MoodleUserCustomField[];
   /** Users preferences */
-  preferences: MoodlePreference[];
+  preferences: MoodleKeyValue[];
   /** user groups */
   groups: MoodleUserGroup[];
   /** user roles */
@@ -136,7 +136,7 @@ export function decodeMoodleCourseUserProfile(json: unknown): MoodleCourseUserPr
     profileImageUrlSmall: decodeString(object["profileimageurlsmall"]) ?? "",
     profileImageUrl: decodeString(object["profileimageurl"]) ?? "",
     customFields: decodeList(object["customfields"], decodeMoodleUserCustomField) ?? [],
-    preferences: decodeList(object["preferences"], decodeMoodlePreference) ?? [],
+    preferences: decodeList(object["preferences"], decodeMoodleKeyValue) ?? [],
     groups: decodeList(object["groups"], decodeMoodleUserGroup) ?? [],
     roles: decodeList(object["roles"], decodeMoodleUserRole) ?? [],
     enrolledCourses: decodeList(object["enrolledcourses"], decodeMoodleUserEnrolledCourse) ?? [],
@@ -176,7 +176,7 @@ export function encodeMoodleCourseUserProfile(value: MoodleCourseUserProfile): J
     "profileimageurlsmall": value.profileImageUrlSmall,
     "profileimageurl": value.profileImageUrl,
     "customfields": value.customFields.map((item) => encodeMoodleUserCustomField(item)),
-    "preferences": value.preferences.map((item) => encodeMoodlePreference(item)),
+    "preferences": value.preferences.map((item) => encodeMoodleKeyValue(item)),
     "groups": value.groups.map((item) => encodeMoodleUserGroup(item)),
     "roles": value.roles.map((item) => encodeMoodleUserRole(item)),
     "enrolledcourses": value.enrolledCourses.map((item) => encodeMoodleUserEnrolledCourse(item)),
@@ -219,15 +219,15 @@ export function encodeMoodleUserCustomField(value: MoodleUserCustomField): JsonO
   };
 }
 
-export interface MoodlePreference {
+export interface MoodleKeyValue {
   /** The name of the preferences */
   name: string;
   /** The value of the preference */
   value: string;
 }
 
-/** Decodes a {@link MoodlePreference}; `undefined` when `json` isn't an object. */
-export function decodeMoodlePreference(json: unknown): MoodlePreference | undefined {
+/** Decodes a {@link MoodleKeyValue}; `undefined` when `json` isn't an object. */
+export function decodeMoodleKeyValue(json: unknown): MoodleKeyValue | undefined {
   const object = asJsonObject(json);
   if (object === undefined) return undefined;
   return {
@@ -236,7 +236,7 @@ export function decodeMoodlePreference(json: unknown): MoodlePreference | undefi
   };
 }
 
-export function encodeMoodlePreference(value: MoodlePreference): JsonObject {
+export function encodeMoodleKeyValue(value: MoodleKeyValue): JsonObject {
   return {
     "name": value.name,
     "value": value.value,
@@ -373,7 +373,7 @@ export function encodeMoodlePrivateFilesInfo(value: MoodlePrivateFilesInfo): Jso
 
 export interface MoodleUserPreferencesResponse {
   /** User custom fields (also known as user profile fields) */
-  preferences: MoodlePreference[];
+  preferences: MoodleKeyValue[];
   /** list of warnings */
   warnings: MoodleWarning[];
 }
@@ -383,14 +383,14 @@ export function decodeMoodleUserPreferencesResponse(json: unknown): MoodleUserPr
   const object = asJsonObject(json);
   if (object === undefined) return undefined;
   return {
-    preferences: decodeList(object["preferences"], decodeMoodlePreference) ?? [],
+    preferences: decodeList(object["preferences"], decodeMoodleKeyValue) ?? [],
     warnings: decodeList(object["warnings"], decodeMoodleWarning) ?? [],
   };
 }
 
 export function encodeMoodleUserPreferencesResponse(value: MoodleUserPreferencesResponse): JsonObject {
   return {
-    "preferences": value.preferences.map((item) => encodeMoodlePreference(item)),
+    "preferences": value.preferences.map((item) => encodeMoodleKeyValue(item)),
     "warnings": value.warnings.map((item) => encodeMoodleWarning(item)),
   };
 }
@@ -459,7 +459,7 @@ export interface MoodleUser {
   /** User custom fields (also known as user profile fields) */
   customFields: MoodleUserCustomField[];
   /** Users preferences */
-  preferences: MoodlePreference[];
+  preferences: MoodleKeyValue[];
 }
 
 /** Decodes a {@link MoodleUser}; `undefined` when `json` isn't an object. */
@@ -498,7 +498,7 @@ export function decodeMoodleUser(json: unknown): MoodleUser | undefined {
     profileImageUrlSmall: decodeString(object["profileimageurlsmall"]) ?? "",
     profileImageUrl: decodeString(object["profileimageurl"]) ?? "",
     customFields: decodeList(object["customfields"], decodeMoodleUserCustomField) ?? [],
-    preferences: decodeList(object["preferences"], decodeMoodlePreference) ?? [],
+    preferences: decodeList(object["preferences"], decodeMoodleKeyValue) ?? [],
   };
 }
 
@@ -535,7 +535,7 @@ export function encodeMoodleUser(value: MoodleUser): JsonObject {
     "profileimageurlsmall": value.profileImageUrlSmall,
     "profileimageurl": value.profileImageUrl,
     "customfields": value.customFields.map((item) => encodeMoodleUserCustomField(item)),
-    "preferences": value.preferences.map((item) => encodeMoodlePreference(item)),
+    "preferences": value.preferences.map((item) => encodeMoodleKeyValue(item)),
   };
 }
 

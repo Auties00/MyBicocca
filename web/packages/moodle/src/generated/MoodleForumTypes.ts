@@ -3,7 +3,7 @@
 import { JsonObject, asJsonObject, decodeBoolean, decodeFolded, decodeInteger, decodeList, decodeNumber, decodeString, required } from "@mybicocca/data-api-runtime";
 import { MoodleWarning, decodeMoodleWarning, encodeMoodleWarning } from "./MoodleBadgeTypes.js";
 import { MoodleFile, decodeMoodleFile, encodeMoodleFile } from "./MoodleCourseTypes.js";
-import { MoodlePreference, decodeMoodlePreference, encodeMoodlePreference } from "./MoodleUserTypes.js";
+import { MoodleKeyValue, decodeMoodleKeyValue, encodeMoodleKeyValue } from "./MoodleUserTypes.js";
 
 export interface MoodleAddDiscussionResponse {
   /** New Discussion ID */
@@ -1343,7 +1343,7 @@ export interface MoodlePrepareDraftAreaResponse {
   /** Draft area files. */
   files: MoodleFile[];
   /** Draft file area options. */
-  areaOptions: MoodlePreference[];
+  areaOptions: MoodleKeyValue[];
   /** Message text with URLs rewritten. */
   messageText: string;
   /** list of warnings */
@@ -1357,7 +1357,7 @@ export function decodeMoodlePrepareDraftAreaResponse(json: unknown): MoodlePrepa
   return {
     draftItemId: decodeInteger(object["draftitemid"]) ?? 0,
     files: decodeList(object["files"], decodeMoodleFile) ?? [],
-    areaOptions: decodeList(object["areaoptions"], decodeMoodlePreference) ?? [],
+    areaOptions: decodeList(object["areaoptions"], decodeMoodleKeyValue) ?? [],
     messageText: decodeString(object["messagetext"]) ?? "",
     warnings: decodeList(object["warnings"], decodeMoodleWarning) ?? [],
   };
@@ -1367,7 +1367,7 @@ export function encodeMoodlePrepareDraftAreaResponse(value: MoodlePrepareDraftAr
   return {
     "draftitemid": value.draftItemId,
     "files": value.files.map((item) => encodeMoodleFile(item)),
-    "areaoptions": value.areaOptions.map((item) => encodeMoodlePreference(item)),
+    "areaoptions": value.areaOptions.map((item) => encodeMoodleKeyValue(item)),
     "messagetext": value.messageText,
     "warnings": value.warnings.map((item) => encodeMoodleWarning(item)),
   };

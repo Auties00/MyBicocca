@@ -1033,7 +1033,7 @@ data class MoodlePrepareDraftAreaResponse(
 
     /** Draft file area options. */
     @SerialName("areaoptions")
-    val areaOptions: List<MoodlePreference> = emptyList(),
+    val areaOptions: List<MoodleKeyValue> = emptyList(),
 
     /** Message text with URLs rewritten. */
     @SerialName("messagetext")

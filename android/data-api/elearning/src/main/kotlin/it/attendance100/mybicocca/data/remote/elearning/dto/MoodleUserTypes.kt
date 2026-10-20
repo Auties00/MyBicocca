@@ -145,7 +145,7 @@ data class MoodleCourseUserProfile(
 
     /** Users preferences */
     @SerialName("preferences")
-    val preferences: List<MoodlePreference> = emptyList(),
+    val preferences: List<MoodleKeyValue> = emptyList(),
 
     /** user groups */
     @SerialName("groups")
@@ -184,7 +184,7 @@ data class MoodleUserCustomField(
 )
 
 @Serializable
-data class MoodlePreference(
+data class MoodleKeyValue(
     /** The name of the preferences */
     @SerialName("name")
     val name: String = "",
@@ -274,7 +274,7 @@ data class MoodlePrivateFilesInfo(
 data class MoodleUserPreferencesResponse(
     /** User custom fields (also known as user profile fields) */
     @SerialName("preferences")
-    val preferences: List<MoodlePreference> = emptyList(),
+    val preferences: List<MoodleKeyValue> = emptyList(),
 
     /** list of warnings */
     @SerialName("warnings")
@@ -411,7 +411,7 @@ data class MoodleUser(
 
     /** Users preferences */
     @SerialName("preferences")
-    val preferences: List<MoodlePreference> = emptyList()
+    val preferences: List<MoodleKeyValue> = emptyList()
 )
 
 @Serializable
