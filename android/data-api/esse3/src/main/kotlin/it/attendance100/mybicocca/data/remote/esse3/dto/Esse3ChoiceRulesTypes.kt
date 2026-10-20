@@ -1398,18 +1398,22 @@ data class Esse3PrerequisitesRegulation(
 @Serializable
 data class Esse3PlansCountsFilters(
     /** Visualizzazione nella response del conteggio schemi */
+    @Serializable(with = Esse3BooleanSerializer::class)
     @SerialName("conteggiSchemi")
     val schemaCounts: Boolean? = null,
 
     /** Visualizzazione nella response del conteggio regole */
+    @Serializable(with = Esse3BooleanSerializer::class)
     @SerialName("conteggiRegole")
     val ruleCounts: Boolean? = null,
 
     /** Visualizzazione nella response del conteggio attività */
+    @Serializable(with = Esse3BooleanSerializer::class)
     @SerialName("conteggiAttivita")
     val activityCounts: Boolean? = null,
 
     /** Visualizzazione nella response del conteggio finestre */
+    @Serializable(with = Esse3BooleanSerializer::class)
     @SerialName("conteggiFinestre")
     val windowCounts: Boolean? = null,
 

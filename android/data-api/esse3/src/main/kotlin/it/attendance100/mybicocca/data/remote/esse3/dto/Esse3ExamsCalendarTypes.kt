@@ -372,6 +372,7 @@ data class Esse3ExamSessionModificationCompensatoryMeasuresParameters(
     val freeMeasureDescription: String? = null,
 
     /** consente di cancellare la misura compensativa indicata. Il controllo della misura avviene tramite il codcie de descrizione se Libera */
+    @Serializable(with = Esse3BooleanSerializer::class)
     @SerialName("deleteFlg")
     val deleteFlag: Boolean? = null
 )

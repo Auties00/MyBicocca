@@ -13,6 +13,17 @@ export function decodeDemoKind(json: unknown): DemoKind | undefined {
   return decodeWireEnum(json, Object.values(DemoKind), { open: true, acceptsWrappedValue: false });
 }
 
+export type DemoLevel = "1" | "2" | (string & {});
+
+export const DemoLevel = {
+  Basic: "1",
+  Expert: "2",
+} as const;
+
+export function decodeDemoLevel(json: unknown): DemoLevel | undefined {
+  return decodeWireEnum(json, Object.values(DemoLevel), { open: true, acceptsWrappedValue: false });
+}
+
 export type DemoPriority = "low" | "high";
 
 export const DemoPriority = {

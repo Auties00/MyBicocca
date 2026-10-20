@@ -31,6 +31,10 @@ internal class SwiftEnumEmitter(private val layout: SwiftLayout) {
                 line()
                 line("public static let acceptsWrappedValue = true")
             }
+            if (enum.integer) {
+                line()
+                line("public static let isInteger = true")
+            }
             line()
             block(if (enum.open) "public init(wireValue: String) {" else "public init?(wireValue: String) {") {
                 // Swift aligns `case` labels with their `switch`.

@@ -8,6 +8,8 @@ The iOS app. It consumes the Swift SDKs generated from the specs in [`../common`
 
 - `DataApiRuntime` — the hand-written runtime every SDK uses (dates, lenient decoding, requests)
 - `Affluences` — generated sources in `Generated/` plus the hand-written `AffluencesClient`
+- `EasyStaffPlanning` — generated sources in `Generated/` plus the hand-written
+  `EasyStaffPlanningClient`, for appointments at the student information desks
 - `Esse3` — generated sources in `Generated/` plus the hand-written `Esse3Client`
 
 ```swift

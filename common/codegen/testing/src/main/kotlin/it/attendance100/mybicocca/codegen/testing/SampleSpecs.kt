@@ -13,8 +13,10 @@ import it.attendance100.mybicocca.codegen.model.Field
 import it.attendance100.mybicocca.codegen.model.HttpMethod
 import it.attendance100.mybicocca.codegen.model.Operation
 import it.attendance100.mybicocca.codegen.model.Parameter
+import it.attendance100.mybicocca.codegen.model.ParameterEncoding
 import it.attendance100.mybicocca.codegen.model.ParameterLocation
 import it.attendance100.mybicocca.codegen.model.PrimitiveKind
+import it.attendance100.mybicocca.codegen.model.RecordEncoding
 import it.attendance100.mybicocca.codegen.model.RecordType
 import it.attendance100.mybicocca.codegen.model.RequestBody
 import it.attendance100.mybicocca.codegen.model.ResponseBody
@@ -32,6 +34,7 @@ object SampleSpecs {
     private val BOOLEAN = TypeRef.Primitive(PrimitiveKind.BOOLEAN)
     private val LOCAL_DATE = TypeRef.Primitive(PrimitiveKind.LOCAL_DATE)
     private val LOCAL_DATE_TIME = TypeRef.Primitive(PrimitiveKind.LOCAL_DATE_TIME)
+    private val LOCAL_TIME = TypeRef.Primitive(PrimitiveKind.LOCAL_TIME)
 
     val status = EnumType(
         name = "DemoStatus",
@@ -54,6 +57,13 @@ object SampleSpecs {
         name = "DemoPriority",
         values = listOf(EnumValue("Low", "low"), EnumValue("High", "high")),
         open = false,
+    )
+
+    val level = EnumType(
+        name = "DemoLevel",
+        values = listOf(EnumValue("Basic", "1"), EnumValue("Expert", "2")),
+        open = true,
+        integer = true,
     )
 
     val owner = RecordType(
@@ -90,6 +100,40 @@ object SampleSpecs {
     )
 
     val empty = RecordType(name = "DemoEmpty", fields = emptyList())
+
+    val slot = RecordType(
+        name = "DemoSlot",
+        description = "A time range, written as `09:00-09:30`.",
+        encoding = RecordEncoding.Delimited("-"),
+        fields = listOf(
+            Field("start", "start", LOCAL_TIME, nullable = false, default = null, codec = Codec.Temporal("HH:mm", blankAsNull = false)),
+            Field("end", "end", LOCAL_TIME, nullable = false, default = null, codec = Codec.Temporal("HH:mm", blankAsNull = false)),
+        ),
+    )
+
+    val settings = RecordType(
+        name = "DemoSettings",
+        fields = listOf(
+            Field("enabled", "abilitato", BOOLEAN, nullable = false, default = DefaultValue.Zero),
+            Field("limit", "limite", INT32, nullable = false, default = DefaultValue.Zero),
+        ),
+    )
+
+    val calendar = RecordType(
+        name = "DemoCalendar",
+        fields = listOf(
+            Field("days", "giorni", TypeRef.MapOf(LOCAL_DATE, TypeRef.ListOf(TypeRef.Named(slot.name))), nullable = false, default = DefaultValue.EmptyMap),
+            Field(
+                "seats", "posti", TypeRef.MapOf(LOCAL_DATE, TypeRef.MapOf(TypeRef.Named(slot.name), INT32)),
+                nullable = false, default = DefaultValue.EmptyMap,
+            ),
+            Field("labels", "etichette", TypeRef.MapOf(STRING, STRING), nullable = false, default = DefaultValue.EmptyMap),
+            Field("level", "livello", TypeRef.Named(level.name), nullable = true, default = DefaultValue.Null),
+            Field("note", "nota", STRING, nullable = true, default = DefaultValue.Null, codec = Codec.BlankAsNull(listOf("0"))),
+            Field("settings", "impostazioni", TypeRef.Named(settings.name), nullable = true, default = DefaultValue.Null, codec = Codec.FoldedObject),
+            Field("policy", "regole", TypeRef.Named(settings.name), nullable = true, default = DefaultValue.Null, codec = Codec.EmbeddedJson),
+        ),
+    )
 
     private val items = ApiModule(
         name = "Items",
@@ -193,6 +237,40 @@ object SampleSpecs {
         ),
     )
 
+    private val calendarModule = ApiModule(
+        name = "Calendar",
+        basePath = "",
+        records = listOf(calendar, slot, settings),
+        operations = listOf(
+            Operation(
+                name = "getCalendar",
+                method = HttpMethod.GET,
+                path = "/regions/{region}/calendar/{day}",
+                parameters = listOf(
+                    Parameter("day", "day", ParameterLocation.PATH, LOCAL_DATE, required = true),
+                    Parameter(
+                        "filters", "filters", ParameterLocation.COOKIE, TypeRef.Named(settings.name), required = false,
+                        default = DefaultValue.Literal("{}"), encoding = ParameterEncoding.JSON, description = "Sticky filters.",
+                    ),
+                    Parameter("level", "level", ParameterLocation.QUERY, TypeRef.Named(level.name), required = false),
+                ),
+                body = null,
+                response = ResponseBody.Json(TypeRef.Named(calendar.name)),
+                server = "Main",
+                headers = mapOf("x-region" to "region-{region}"),
+            ),
+            Operation(
+                name = "saveLabels",
+                method = HttpMethod.POST,
+                path = "/labels",
+                parameters = emptyList(),
+                body = RequestBody.Json(TypeRef.MapOf(STRING, STRING)),
+                response = ResponseBody.Json(TypeRef.MapOf(STRING, TypeRef.Named(level.name))),
+                server = "Main",
+            ),
+        ),
+    )
+
     private val typesOnly = ApiModule(
         name = "Shared",
         basePath = "/",
@@ -212,8 +290,8 @@ object SampleSpecs {
     val demo = ApiSpec(
         id = "demo",
         prefix = "Demo",
-        modules = listOf(items, search, typesOnly),
-        enums = listOf(kind, priority, status),
+        modules = listOf(items, search, calendarModule, typesOnly),
+        enums = listOf(kind, level, priority, status),
         servers = listOf(Server("Main", "https://api.example.com/v1"), Server("Search", "https://search.example.com")),
         authSchemes = listOf(
             AuthScheme("Token", listOf(AuthParameter("token")), mapOf("Authorization" to "Bearer {token}"), "A user's bearer token."),
@@ -222,6 +300,10 @@ object SampleSpecs {
                 listOf(AuthParameter("apiKey"), AuthParameter("secret")),
                 mapOf("x-api-key" to "{apiKey}", "x-signature" to "{apiKey}:{secret}"),
             ),
+        ),
+        parameters = listOf(
+            Parameter("tenant", "X-TENANT", ParameterLocation.HEADER, STRING, required = true, description = "Tenant every call acts for."),
+            Parameter("region", "region", ParameterLocation.PATH, STRING, required = true),
         ),
     )
 }

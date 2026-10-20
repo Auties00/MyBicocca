@@ -26,6 +26,11 @@ public enum JSONValue: Hashable, Sendable, Codable {
         }
     }
 
+    /// Decodes this value as `T`.
+    public func decode<T: Decodable>(as type: T.Type) throws -> T {
+        try JSONDecoder().decode(T.self, from: JSONEncoder().encode(self))
+    }
+
     public func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
         switch self {
@@ -94,8 +99,8 @@ extension Bool: LenientScalar {
     public init?(lenient value: JSONValue) {
         switch value {
         case .bool(let bool): self = bool
-        case .string("true"), .number(1): self = true
-        case .string("false"), .number(0): self = false
+        case .string("true"), .string("1"), .number(1): self = true
+        case .string("false"), .string("0"), .number(0): self = false
         default: return nil
         }
     }
@@ -113,6 +118,44 @@ extension KeyedDecodingContainer {
             return nil
         }
         return scalar.init(lenient: raw) as? T
+    }
+
+    /// A string where blank strings, and any of `alsoNull`, mean no value.
+    public func decodeBlankAsNull(forKey key: Key, alsoNull: Set<String> = []) -> String? {
+        guard let text = decodeLenient(String.self, forKey: key) else { return nil }
+        return text.trimmingCharacters(in: .whitespaces).isEmpty || alsoNull.contains(text) ? nil : text
+    }
+
+    /// Like ``decodeLenient(_:forKey:)``, also reading the value from an array of single-key
+    /// objects, merged into one object.
+    public func decodeFolded<T: Decodable>(_ type: T.Type, forKey key: Key) -> T? {
+        if let value = decodeLenient(T.self, forKey: key) {
+            return value
+        }
+        guard case .array(let items)? = try? decode(JSONValue.self, forKey: key) else { return nil }
+        var merged: [String: JSONValue] = [:]
+        for case .object(let object) in items {
+            merged.merge(object) { _, last in last }
+        }
+        return try? JSONValue.object(merged).decode(as: T.self)
+    }
+
+    /// Like ``decodeLenient(_:forKey:)``, also reading the value from a JSON document inside a
+    /// string; a blank string means no value.
+    public func decodeEmbedded<T: Decodable>(_ type: T.Type, forKey key: Key) -> T? {
+        if let value = decodeLenient(T.self, forKey: key) {
+            return value
+        }
+        guard let text = try? decode(String.self, forKey: key), !text.trimmingCharacters(in: .whitespaces).isEmpty else { return nil }
+        return try? JSONDecoder().decode(T.self, from: Data(text.utf8))
+    }
+
+    /// `value`, or an error naming `key` when there is none.
+    public func required<T>(_ value: T?, forKey key: Key) throws -> T {
+        guard let value else {
+            throw DecodingError.valueNotFound(T.self, DecodingError.Context(codingPath: codingPath + [key], debugDescription: "No usable value for '\(key.stringValue)'"))
+        }
+        return value
     }
 
     /// Like ``decodeLenient(_:forKey:)``, but throws when there is no usable value.
@@ -154,30 +197,45 @@ extension KeyedEncodingContainer {
     }
 }
 
-/// An enumeration of string values. Conforming types get `Codable` from the wire value.
+/// An enumeration of string or integer values. Conforming types get `Codable` from the wire
+/// value, which an integer enum keeps as its decimal text.
 ///
 /// A generated enum is open when its `init(wireValue:)` never fails: unknown values then land
 /// in an `unknown(String)` case instead of failing to decode.
-public protocol WireEnum: Codable, Hashable, Sendable, QueryValueConvertible {
+public protocol WireEnum: Codable, Hashable, Sendable, QueryValueConvertible, WireMapKey {
     init?(wireValue: String)
     var wireValue: String { get }
 
     /// Whether a value may also arrive wrapped as `{"value": "…"}`.
     static var acceptsWrappedValue: Bool { get }
+
+    /// Whether values are written as JSON integers rather than strings.
+    static var isInteger: Bool { get }
 }
 
 extension WireEnum {
     public static var acceptsWrappedValue: Bool { false }
 
+    public static var isInteger: Bool { false }
+
     public var queryValue: String { wireValue }
 
+    public init?(wireKey: String) {
+        self.init(wireValue: wireKey)
+    }
+
+    public var wireKey: String { wireValue }
+
+    /// Reads a string, or a number as its text.
     public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         let raw: String
         if Self.acceptsWrappedValue, let wrapped = try? container.decode(WrappedValue.self) {
             raw = wrapped.value
+        } else if let text = String(lenient: try container.decode(JSONValue.self)) {
+            raw = text
         } else {
-            raw = try container.decode(String.self)
+            throw DecodingError.dataCorruptedError(in: container, debugDescription: "Expected a \(Self.self) value")
         }
         guard let value = Self(wireValue: raw) else {
             throw DecodingError.dataCorruptedError(in: container, debugDescription: "Unknown \(Self.self) value '\(raw)'")
@@ -187,7 +245,11 @@ extension WireEnum {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
-        try container.encode(wireValue)
+        if Self.isInteger, let number = Int64(wireValue) {
+            try container.encode(number)
+        } else {
+            try container.encode(wireValue)
+        }
     }
 }
 

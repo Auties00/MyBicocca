@@ -5,9 +5,11 @@ import Foundation
 
 public struct DemoSearchApi: Sendable {
     private let client: DemoClient
+    private let tenant: String
 
-    public init(client: DemoClient) {
+    public init(client: DemoClient, tenant: String) {
         self.client = client
+        self.tenant = tenant
     }
 
     /// - Parameters:
@@ -24,7 +26,11 @@ public struct DemoSearchApi: Sendable {
                 method: .get,
                 path: "/search",
                 query: [("q", query), ("page", page)],
-                headers: [("x-client", "sdk"), ("X-TIMEZONE", timeZone)],
+                headers: [
+                    ("x-client", "sdk"),
+                    ("X-TENANT", tenant),
+                    ("X-TIMEZONE", timeZone)
+                ],
                 auth: auth,
                 server: DemoServer.search.rawValue,
                 envelope: ["data", "items"]
@@ -40,6 +46,7 @@ public struct DemoSearchApi: Sendable {
             RestRequest(
                 method: .post,
                 path: "/touch",
+                headers: [("X-TENANT", tenant)],
                 body: EmptyObject(),
                 auth: auth,
                 server: DemoServer.main.rawValue

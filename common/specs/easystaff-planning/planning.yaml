@@ -1,0 +1,765 @@
+# The Portale Planning API of EasyStaff, behind the university's booking portals: the student
+# information desks ("Sportelli Informativi") and the legacy study rooms portal. EasyStaff
+# publishes no spec, so this one is written by hand from the traffic of the official web
+# front-end. See common/codegen/readers/openapi for the x-mb-* extensions.
+#
+# The backend is Laravel: settings arrive as arrays of single-key objects, empty maps as `[]`,
+# booleans as 0/1 or "0"/"1", and the booking suspension policy as JSON inside a string.
+openapi: 3.0.3
+info:
+  title: EasyStaff Portale Planning
+  version: "1"
+x-mb-id: easystaff-planning
+x-mb-prefix: EasyStaffPlanning
+# Every request names the portal it targets.
+x-mb-parameters:
+  - $ref: "#/components/parameters/PortalId"
+  - $ref: "#/components/parameters/PortalCode"
+x-mb-headers:
+  X-CLIENTE: "{portalId}"
+
+servers:
+  - url: https://gestioneorari.didattica.unimib.it/portaleplanningAPI/api
+    x-mb-name: Main
+
+tags:
+  - name: Portals
+    description: Portal configurations and booking forms.
+  - name: Catalog
+    description: Bookable services and the areas offering them.
+  - name: Availability
+    description: Availability of a service at an area.
+  - name: Reservations
+    description: The anonymous reservation lifecycle, keyed by the primary form value (the email address).
+
+components:
+  parameters:
+    PortalId:
+      name: portalId
+      in: path
+      required: true
+      description: Numeric identifier of the portal (`2` for the information desks).
+      schema: { type: integer }
+    PortalCode:
+      name: portalCode
+      in: path
+      required: true
+      description: Code of the portal (`unimib-segreteria` for the information desks).
+      schema: { type: string }
+    ServiceId:
+      name: serviceId
+      in: path
+      required: true
+      description: Numeric identifier of the service.
+      schema: { type: integer }
+    AreaId:
+      name: areaId
+      in: path
+      required: true
+      description: Numeric identifier of the area.
+      schema: { type: integer }
+    DurationSeconds:
+      name: durationSeconds
+      in: path
+      required: true
+      description: The appointment duration, in seconds (usually the service's `durationSeconds`).
+      schema: { type: integer }
+    ReservationCode:
+      name: reservationCode
+      in: path
+      required: true
+      description: The code of the reservation.
+      schema: { type: string }
+    PrimaryValue:
+      name: chiave
+      in: query
+      required: true
+      x-mb-name: primaryValue
+      description: The primary value (email address) the reservation is keyed by.
+      schema: { type: string }
+    EntryFilters:
+      name: entry-filters
+      in: cookie
+      x-mb-name: filters
+      description: >-
+        Filters of the listing. The backend reads them from a cookie the web front-end
+        persists, so they are always sent, as `{}` when there are none.
+      content:
+        application/json:
+          schema: { allOf: [{ $ref: "#/components/schemas/EasyStaffPlanningEntryFilters" }], default: {} }
+
+  schemas:
+    EasyStaffPlanningPortalSummary:
+      type: object
+      description: A publicly listed booking portal.
+      required: [id, Nome, Codice]
+      properties:
+        id: { type: integer }
+        Nome: { type: string, x-mb-name: name }
+        Codice: { type: string, x-mb-name: code }
+
+    EasyStaffPlanningPortalConfig:
+      type: object
+      description: The full configuration of a portal.
+      required: [id, Nome, Codice]
+      properties:
+        id: { type: integer }
+        Nome: { type: string, x-mb-name: name }
+        Codice: { type: string, x-mb-name: code }
+        Logo: { type: string, x-mb-name: logoPath, description: "Path of the logo, relative to the portal's storage." }
+        config: { allOf: [{ $ref: "#/components/schemas/EasyStaffPlanningPortalSettings" }], x-mb-name: settings }
+        colors: { $ref: "#/components/schemas/EasyStaffPlanningPortalColors" }
+
+    EasyStaffPlanningPortalColors:
+      type: object
+      properties:
+        scritte: { type: string, x-mb-name: textColor }
+
+    EasyStaffPlanningPortalSettings:
+      type: object
+      description: The settings of a portal, by group.
+      properties:
+        general: { allOf: [{ $ref: "#/components/schemas/EasyStaffPlanningGeneralSettings" }], x-mb-folded: true }
+        campi_tipologia_servizi:
+          allOf: [{ $ref: "#/components/schemas/EasyStaffPlanningServiceCategorySettings" }]
+          x-mb-folded: true
+          x-mb-name: serviceCategories
+        login_pubblico:
+          allOf: [{ $ref: "#/components/schemas/EasyStaffPlanningLoginSettings" }]
+          x-mb-folded: true
+          x-mb-name: publicLogin
+          description: Whether and how users log in. Portals whose login is mandatory list nothing to anonymous users.
+        griglia: { allOf: [{ $ref: "#/components/schemas/EasyStaffPlanningGridSettings" }], x-mb-folded: true, x-mb-name: grid }
+        campi_portale: { allOf: [{ $ref: "#/components/schemas/EasyStaffPlanningPortalFieldsSettings" }], x-mb-folded: true, x-mb-name: portalFields }
+        portale_pubblico: { allOf: [{ $ref: "#/components/schemas/EasyStaffPlanningPublicPortalSettings" }], x-mb-folded: true, x-mb-name: publicPortal }
+
+    EasyStaffPlanningGeneralSettings:
+      type: object
+      properties:
+        captcha_control: { type: boolean, default: false, x-mb-name: captchaRequired }
+        prenotazioni_contemporanee: { type: boolean, default: false, x-mb-name: concurrentBookingsAllowed }
+        prenotazione_in_corso: { type: boolean, default: false, x-mb-name: bookingInProgressCheck }
+        public_position: { type: boolean, default: false }
+        servizi_brevi: { type: boolean, default: false, x-mb-name: shortServicesEnabled }
+
+    EasyStaffPlanningServiceCategorySettings:
+      type: object
+      properties:
+        scelta_pubblica: { type: boolean, default: false, x-mb-name: publicChoice }
+
+    EasyStaffPlanningLoginSettings:
+      type: object
+      properties:
+        stato: { allOf: [{ $ref: "#/components/schemas/EasyStaffPlanningLoginState" }], default: facoltativo, x-mb-name: state }
+        metodo: { type: string, x-mb-name: method }
+        url: { type: string, nullable: true, x-mb-blank-as-null: true, x-mb-also-null: ["0"], description: "The login page, if any." }
+        auth_blocked: { type: boolean, default: false }
+
+    EasyStaffPlanningGridSettings:
+      type: object
+      properties:
+        mostra_ora_fine: { type: boolean, default: false, x-mb-name: showEndTime }
+
+    EasyStaffPlanningPortalFieldsSettings:
+      type: object
+      description: How the booking page asks for each choice.
+      properties:
+        raggruppamento_servizi: { type: integer, default: 0, x-mb-name: serviceGroup }
+        servizi: { type: integer, default: 0, x-mb-name: service }
+        raggruppamento_aree: { type: integer, default: 0, x-mb-name: areaGroup }
+        aree: { type: integer, default: 0, x-mb-name: area }
+        raggruppamento_servizi_obbligatorio: { type: boolean, default: false, x-mb-name: serviceGroupRequired }
+        raggruppamento_aree_obbligatorio: { type: boolean, default: false, x-mb-name: areaGroupRequired }
+
+    EasyStaffPlanningPublicPortalSettings:
+      type: object
+      properties:
+        nascondi_tasto_modifica: { type: boolean, default: false, x-mb-name: hideEditButton }
+        scansiona_qr: { type: boolean, default: false, x-mb-name: qrScanEnabled }
+        feedback: { type: boolean, default: false, x-mb-name: feedbackEnabled }
+        mostra_numero_risorse_libere: { type: boolean, default: false, x-mb-name: showFreeResourceCount }
+        layout_home: { x-mb-name: homeLayout, description: The layout of the web front-end's home page. }
+
+    EasyStaffPlanningLoginState:
+      type: string
+      enum: [facoltativo, obbligatorio]
+      x-enum-varnames: [Optional, Mandatory]
+
+    EasyStaffPlanningReservationType:
+      type: string
+      enum: [CONFERMATA]
+      x-enum-varnames: [Confirmed]
+
+    EasyStaffPlanningService:
+      type: object
+      description: A bookable service, as listed by the catalog.
+      required: [id, type, durata]
+      properties:
+        id: { type: integer }
+        type: { type: string, x-mb-name: name }
+        durata: { type: integer, x-mb-name: durationSeconds, description: "The appointment duration, in seconds." }
+        description: { type: string, nullable: true, x-mb-blank-as-null: true, description: An HTML description. }
+        risoluzione_griglia_pubblica: { type: integer, default: 0, x-mb-name: publicGridResolution }
+        durate_select: { type: array, items: { type: integer }, x-mb-name: durationOptionsSeconds }
+        booking_public_method: { type: integer, default: 0 }
+        resource_grid: { type: boolean, default: false }
+        raggruppamento: { type: string, nullable: true, x-mb-blank-as-null: true, x-mb-name: group, description: The service group. }
+        servizio_breve: { type: boolean, default: false, x-mb-name: shortService }
+        reservation_type: { allOf: [{ $ref: "#/components/schemas/EasyStaffPlanningReservationType" }], default: CONFERMATA }
+        numero_risorse: { type: integer, default: 1, x-mb-name: resourceCount }
+        multi_prenotazione: { type: boolean, default: false, x-mb-name: multiBooking }
+
+    EasyStaffPlanningDetailedService:
+      type: object
+      description: A service as offered at an area, with its booking constraints.
+      required: [id, cliente, type, durata]
+      properties:
+        id: { type: integer }
+        cliente: { type: integer, x-mb-name: portalId }
+        type: { type: string, x-mb-name: name }
+        durata: { type: integer, x-mb-name: durationSeconds, description: "The appointment duration, in seconds." }
+        description: { type: string, nullable: true, x-mb-blank-as-null: true, description: An HTML description. }
+        add_prior: { type: integer, default: 0, x-mb-name: addDaysAhead, description: Minimum days of notice to book. }
+        edit_prior: { type: integer, default: 0, x-mb-name: editDaysAhead, description: Minimum days of notice to change a booking. }
+        add_prior_limit_hour: { type: string, format: time, x-mb-name: addDeadline, description: Time of day by which the notice day must book. }
+        edit_prior_limit_hour: { type: string, format: time, x-mb-name: editDeadline }
+        max_range: { type: integer, x-mb-name: maxRangeDays, description: How many days ahead can be booked. }
+        booking_limit_number: { type: integer, x-mb-name: bookingLimitCount, description: Bookings allowed per interval. }
+        booking_limit_interval: { type: integer, x-mb-name: bookingLimitIntervalDays }
+        booking_limit_only_future: { type: boolean, default: false }
+        booking_public_method: { type: integer, default: 0 }
+        virtuale: { type: boolean, default: false, x-mb-name: virtual, description: Whether the appointment is held online. }
+        risoluzione_griglia_pubblica: { type: integer, default: 0, x-mb-name: publicGridResolution }
+        followup_link: { type: string, x-mb-name: followUpLink }
+        durate_select: { type: array, items: { type: integer }, x-mb-name: durationOptionsSeconds }
+        raggruppamento: { type: string, nullable: true, x-mb-blank-as-null: true, x-mb-name: group }
+        min_libera_posto: { type: integer, x-mb-name: minimumSeatReleaseSeconds }
+        libera_posto: { type: boolean, default: false, x-mb-name: seatReleaseEnabled, description: Whether a booked seat can be released early. }
+        daspo:
+          allOf: [{ $ref: "#/components/schemas/EasyStaffPlanningSuspensionPolicy" }]
+          nullable: true
+          x-mb-embedded: true
+          x-mb-name: suspensionPolicy
+        limit_week: { type: integer, x-mb-name: weeklyLimit }
+        servizio_breve: { type: boolean, default: false, x-mb-name: shortService }
+        resource_grid: { type: boolean, default: false }
+        reservation_type: { allOf: [{ $ref: "#/components/schemas/EasyStaffPlanningReservationType" }], default: CONFERMATA }
+        multi_prenotazione: { type: boolean, default: false, x-mb-name: multiBooking }
+
+    EasyStaffPlanningSuspensionPolicy:
+      type: object
+      description: When users who miss their bookings are suspended from booking.
+      properties:
+        giorni_intervallo: { type: integer, default: 0, x-mb-name: intervalDays }
+        prenotazioni_non_evase: { type: integer, default: 0, x-mb-name: unattendedBookingsThreshold }
+        giorni_blocco: { type: integer, default: 0, x-mb-name: suspensionDays }
+        tipo_blocco: { type: string, x-mb-name: suspensionScope }
+
+    EasyStaffPlanningNamedGroup:
+      type: object
+      required: [nome]
+      properties:
+        nome: { type: string, x-mb-name: name }
+
+    EasyStaffPlanningIdReference:
+      type: object
+      required: [id]
+      properties:
+        id: { type: integer }
+
+    EasyStaffPlanningEntryFilters:
+      type: object
+      description: Filters of the service and area listings.
+      properties:
+        raggruppamento_servizi:
+          allOf: [{ $ref: "#/components/schemas/EasyStaffPlanningNamedGroup" }]
+          x-mb-name: serviceGroup
+        servizio:
+          allOf: [{ $ref: "#/components/schemas/EasyStaffPlanningIdReference" }]
+          x-mb-name: service
+
+    EasyStaffPlanningAreaGroup:
+      type: object
+      required: [ID, Nome]
+      properties:
+        ID: { type: integer, x-mb-name: id }
+        Nome: { type: string, x-mb-name: name }
+        Mappa: { type: string, x-mb-name: mapUrl }
+        Capienza: { type: integer, default: 0, x-mb-name: capacity }
+        Ordine: { type: integer, default: 0, x-mb-name: order }
+        pivot: { allOf: [{ $ref: "#/components/schemas/EasyStaffPlanningAreaGroupLink" }], x-mb-name: link }
+
+    EasyStaffPlanningAreaGroupLink:
+      type: object
+      required: [Sede, Raggruppamento]
+      properties:
+        Sede: { type: integer, x-mb-name: areaId }
+        Raggruppamento: { type: integer, x-mb-name: groupId }
+
+    EasyStaffPlanningArea:
+      type: object
+      description: A place offering services, such as an office.
+      required: [id, cliente, area_code, area_name]
+      properties:
+        id: { type: integer }
+        cliente: { type: integer, x-mb-name: portalId }
+        area_code: { type: string, x-mb-name: code }
+        area_name: { type: string, x-mb-name: name }
+        address: { type: string, nullable: true, x-mb-blank-as-null: true }
+        google_map_link: { type: string, nullable: true, x-mb-blank-as-null: true, x-mb-name: googleMapsLink }
+        public_hidden: { type: boolean, default: false }
+        daspo:
+          allOf: [{ $ref: "#/components/schemas/EasyStaffPlanningSuspensionPolicy" }]
+          nullable: true
+          x-mb-embedded: true
+          x-mb-name: suspensionPolicy
+        referente: { type: string, nullable: true, x-mb-blank-as-null: true, x-mb-name: contact }
+        servizi:
+          type: array
+          items: { $ref: "#/components/schemas/EasyStaffPlanningDetailedService" }
+          x-mb-name: services
+          description: The services bookable here, only when the listing is filtered by service.
+
+    EasyStaffPlanningFieldType:
+      type: string
+      enum: [email, text, textarea, tel, checkbox, select]
+      x-enum-varnames: [Email, Text, TextArea, Phone, Checkbox, Select]
+
+    EasyStaffPlanningFieldPosition:
+      type: string
+      description: The section of the booking form a field belongs to, sent as a number or as `backoffice`. The web front-end doesn't submit the fields of other positions.
+      enum: ["1", "2", "100", backoffice]
+      x-enum-varnames: [User, Service, Gdpr, Backoffice]
+
+    EasyStaffPlanningFormField:
+      type: object
+      description: A field of a booking form.
+      required: [id, label, codice, tipo, cliente]
+      properties:
+        id: { type: integer }
+        label: { type: string }
+        codice: { type: string, x-mb-name: code, description: The key of the field's value in a reservation request. }
+        tipo: { allOf: [{ $ref: "#/components/schemas/EasyStaffPlanningFieldType" }], x-mb-name: type }
+        valori:
+          x-mb-name: values
+          description: >-
+            The field's options: an object of labels by value (a select), a list of values, or
+            a single value (the privacy policy URL of the GDPR checkbox).
+        predefinito: { type: string, x-mb-name: defaultValue }
+        placeholder: { type: string }
+        primaria: { type: boolean, default: false, x-mb-name: primary, description: Whether the value keys the reservation (the email address). }
+        obbligatorio: { type: boolean, default: false, x-mb-name: required }
+        servizio: { type: integer, x-mb-name: serviceId }
+        cliente: { type: integer, x-mb-name: portalId }
+        software: { type: integer, default: 0, x-mb-name: softwareId }
+        valore_auth: { type: boolean, default: false, x-mb-name: authPrefilled }
+        identificativo: { type: boolean, default: false, x-mb-name: identifying }
+        blocked: { type: boolean, default: false, description: Whether the value comes read-only from a logged-in profile. }
+        posizione: { allOf: [{ $ref: "#/components/schemas/EasyStaffPlanningFieldPosition" }], default: 1, x-mb-name: position }
+
+    EasyStaffPlanningTimeRange:
+      type: object
+      description: A range of times of day, written as `09:00-09:30`.
+      x-mb-delimited: "-"
+      required: [start, end]
+      properties:
+        start: { type: string, format: time, x-mb-pattern: "HH:mm" }
+        end: { type: string, format: time, x-mb-pattern: "HH:mm" }
+
+    EasyStaffPlanningMonthSchedule:
+      type: object
+      description: The availability of a service at an area over a month.
+      properties:
+        prima_disp:
+          type: string
+          format: date-time
+          nullable: true
+          x-mb-pattern: "yyyy-MM-dd HH:mm"
+          x-mb-blank-as-null: true
+          x-mb-name: firstAvailable
+          description: The first available slot, possibly in a later month.
+        schedule:
+          type: object
+          x-mb-key: date
+          additionalProperties: { type: array, items: { $ref: "#/components/schemas/EasyStaffPlanningTimeRange" } }
+          x-mb-name: days
+          description: The open windows of each day; days without availability have none.
+
+    EasyStaffPlanningSlotAvailability:
+      type: object
+      properties:
+        disponibili: { type: integer, default: 0, x-mb-name: availableCount }
+        su: { type: integer, default: 0, x-mb-name: totalCount }
+        reserved: { type: boolean, default: false }
+
+    EasyStaffPlanningDaySchedule:
+      type: object
+      description: The slot-by-slot availability of a service at an area on a day.
+      properties:
+        schedule:
+          type: object
+          x-mb-key: date
+          additionalProperties:
+            type: object
+            x-mb-key: EasyStaffPlanningTimeRange
+            additionalProperties: { $ref: "#/components/schemas/EasyStaffPlanningSlotAvailability" }
+          x-mb-name: days
+          description: The slots of the requested day, under its date.
+
+    EasyStaffPlanningResource:
+      type: object
+      description: A resource serving a service, such as a desk.
+      required: [id, area_id, resource_code, resource_name]
+      properties:
+        id: { type: integer }
+        area_id: { type: integer }
+        resource_code: { type: string, x-mb-name: code }
+        resource_name: { type: string, x-mb-name: name }
+        description: { type: string, nullable: true, x-mb-blank-as-null: true }
+        type: { type: integer, default: 0 }
+        order_number: { type: integer }
+        visible: { type: boolean, default: true }
+        disabled: { type: boolean, default: false }
+        virtuale: { type: boolean, default: false, x-mb-name: virtual }
+
+    EasyStaffPlanningResourceAvailability:
+      type: object
+      required: [risorsa]
+      properties:
+        risorsa: { allOf: [{ $ref: "#/components/schemas/EasyStaffPlanningResource" }], x-mb-name: resource }
+        schedule:
+          type: object
+          x-mb-key: date
+          additionalProperties: { type: array, items: { $ref: "#/components/schemas/EasyStaffPlanningTimeRange" } }
+          x-mb-name: openWindows
+        exceptions:
+          type: object
+          x-mb-key: date
+          additionalProperties: { type: array, items: { $ref: "#/components/schemas/EasyStaffPlanningTimeRange" } }
+        periods:
+          type: object
+          x-mb-key: date
+          additionalProperties: { type: array, items: { $ref: "#/components/schemas/EasyStaffPlanningTimeRange" } }
+          x-mb-name: occupiedSlots
+
+    EasyStaffPlanningReservationRequest:
+      type: object
+      description: A reservation to create. The user, service and backoffice fields are the form values of each section, by field code; the GDPR consent isn't sent.
+      required: [reservation_number, cliente, start_time, end_time, durata, entry_type, area, public_primary, utente, servizio, backoffice, risorsa, recaptchaToken, timezone]
+      properties:
+        reservation_number: { type: integer, description: "0 for a new reservation." }
+        cliente: { type: string, x-mb-name: portalCode }
+        start_time: { type: integer, format: int64, x-mb-name: startTimeEpochSeconds }
+        end_time: { type: integer, format: int64, x-mb-name: endTimeEpochSeconds }
+        durata: { type: integer, x-mb-name: durationSeconds }
+        entry_type: { type: integer, x-mb-name: serviceId }
+        area: { type: integer, x-mb-name: areaId }
+        public_primary: { type: string, x-mb-name: primaryValue, description: The value of the primary field. }
+        utente: { type: object, additionalProperties: { type: string }, x-mb-name: userFields }
+        servizio: { type: object, additionalProperties: { type: string }, x-mb-name: serviceFields }
+        backoffice: { type: object, additionalProperties: { type: string }, x-mb-name: backofficeFields, description: "The staff fields, always sent, as the web front-end does, even when empty." }
+        risorsa: { type: integer, nullable: true, x-mb-name: resourceId, description: "The resource to book, or null to let the backend choose." }
+        recaptchaToken: { type: string, nullable: true }
+        timezone: { type: string, x-mb-name: timeZone, description: The IANA time zone of the times. }
+
+    EasyStaffPlanningReservationResult:
+      type: object
+      description: A created, still provisional, reservation.
+      properties:
+        codice_prenotazione: { type: string, x-mb-name: reservationCode }
+        user_primary: { type: string, x-mb-name: primaryValue }
+        entry: { description: "The entry of the reservation: its numeric identifier, or the entry object." }
+        user_identifier: { type: string }
+        start_time: { type: integer, format: int64, x-mb-name: startTimeEpochSeconds }
+        end_time: { type: integer, format: int64, x-mb-name: endTimeEpochSeconds }
+        risorsa: { allOf: [{ $ref: "#/components/schemas/EasyStaffPlanningResource" }], x-mb-name: resource }
+        repeat_id: { type: integer, description: "The repetition identifier, for the calendar file." }
+        public_fields: { type: object, additionalProperties: { type: string }, x-mb-name: fieldLabels, description: "The labels of the form fields, by code." }
+        web_conference_url: { type: string }
+        qr_code: { type: string, description: "The QR code, as a data URL." }
+
+    EasyStaffPlanningManagedReservation:
+      type: object
+      description: A reservation, as its management page shows it.
+      properties:
+        success: { type: boolean, default: true }
+        codice: { type: string, x-mb-name: reservationCode }
+        primaria: { type: string, x-mb-name: primaryValue }
+        public_fields: { type: object, additionalProperties: true, x-mb-name: publicFields, description: "The editable form values, by code." }
+        area: { $ref: "#/components/schemas/EasyStaffPlanningReservationArea" }
+        entry: { $ref: "#/components/schemas/EasyStaffPlanningReservationEntry" }
+        servizio: { allOf: [{ $ref: "#/components/schemas/EasyStaffPlanningReservationService" }], x-mb-name: service }
+        libera_posto: { type: boolean, default: false, x-mb-name: seatReleaseEnabled }
+        risorsa: { type: string, x-mb-name: resourceName }
+        confermata: { type: boolean, default: false, x-mb-name: confirmed }
+        stato: { type: string, x-mb-name: status }
+        qr_code: { type: string }
+
+    EasyStaffPlanningReservationArea:
+      type: object
+      properties:
+        name: { type: string }
+        address: { type: string }
+
+    EasyStaffPlanningReservationEntry:
+      type: object
+      required: [id]
+      properties:
+        id: { type: integer }
+        start_time: { type: integer, format: int64, x-mb-name: startTimeEpochSeconds }
+        end_time: { type: integer, format: int64, x-mb-name: endTimeEpochSeconds }
+        day_time: { type: string, format: date, x-mb-name: date }
+
+    EasyStaffPlanningReservationService:
+      type: object
+      properties:
+        type: { type: string, x-mb-name: name }
+        servizio_breve: { type: boolean, default: false, x-mb-name: shortService }
+
+    EasyStaffPlanningReservationUpdateType:
+      type: string
+      enum: [libera_posto, conferma_presenza]
+      x-enum-varnames: [SeatRelease, PresenceConfirmation]
+
+    EasyStaffPlanningReservationUpdate:
+      type: object
+      description: >-
+        A change to a reservation: new form values, or with a type, releasing the seat early
+        (only for services with `seatReleaseEnabled`) or confirming the user's presence at a
+        station.
+      properties:
+        type: { $ref: "#/components/schemas/EasyStaffPlanningReservationUpdateType" }
+        postazione: { type: string, x-mb-name: station, description: "The station the user is at, to confirm their presence." }
+        public_fields: { type: object, additionalProperties: { type: string }, x-mb-name: publicFields, description: New form values by code; primary and identifying fields can't change. }
+
+    EasyStaffPlanningReservationDeletion:
+      type: object
+      properties:
+        force: { type: boolean, nullable: true, description: True to discard a provisional reservation that was never confirmed. }
+
+    EasyStaffPlanningResult:
+      type: object
+      description: The acknowledgement of a request.
+      properties:
+        success: { type: boolean, default: true }
+
+paths:
+  /cliente/index:
+    get:
+      tags: [Portals]
+      operationId: getPortals
+      summary: Lists the publicly listed portals. The information desks portal isn't listed, but its configuration can be read.
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/EasyStaffPlanningPortalSummary" } } } } }
+  /cliente/show/{portalCode}:
+    get:
+      tags: [Portals]
+      operationId: getPortal
+      summary: Gets the configuration of the portal.
+      parameters: [{ $ref: "#/components/parameters/PortalCode" }]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/EasyStaffPlanningPortalConfig" } } } }
+  /cliente/{portalId}/primaria:
+    get:
+      tags: [Portals]
+      operationId: getPrimaryField
+      summary: Gets the primary form field of the portal, whose value (the email address) keys every reservation.
+      parameters: [{ $ref: "#/components/parameters/PortalId" }]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/EasyStaffPlanningFormField" } } } }
+  /cliente/{portalCode}/formData/{serviceId}:
+    get:
+      tags: [Portals]
+      operationId: getServiceForm
+      summary: Gets the booking form of a service.
+      parameters: [{ $ref: "#/components/parameters/PortalCode" }, { $ref: "#/components/parameters/ServiceId" }]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/EasyStaffPlanningFormField" } } } } }
+
+  /servizi/raggruppamenti_servizi/{portalId}:
+    get:
+      tags: [Catalog]
+      operationId: getServiceGroups
+      summary: Lists the service groups of the portal.
+      parameters: [{ $ref: "#/components/parameters/PortalId" }]
+      x-mb-envelope: [raggruppamenti_servizi]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/EasyStaffPlanningNamedGroup" } } } } }
+  /servizi/{portalId}:
+    get:
+      tags: [Catalog]
+      operationId: getServices
+      summary: Lists the bookable services of the portal.
+      parameters: [{ $ref: "#/components/parameters/PortalId" }, { $ref: "#/components/parameters/EntryFilters" }]
+      x-mb-envelope: [servizi]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/EasyStaffPlanningService" } } } } }
+  /servizi/raggruppamenti_area/{portalId}:
+    get:
+      tags: [Catalog]
+      operationId: getAreaGroups
+      summary: Lists the area groups of the portal.
+      parameters: [{ $ref: "#/components/parameters/PortalId" }]
+      x-mb-envelope: [raggruppamenti_area]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/EasyStaffPlanningAreaGroup" } } } } }
+  /aree/{portalId}:
+    get:
+      tags: [Catalog]
+      operationId: getAreas
+      summary: >-
+        Lists the areas of the portal. Filtered by service, only the areas offering it are
+        listed, each with the services bookable there and their booking constraints.
+      parameters: [{ $ref: "#/components/parameters/PortalId" }, { $ref: "#/components/parameters/EntryFilters" }]
+      x-mb-envelope: [aree]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/EasyStaffPlanningArea" } } } } }
+
+  /entry/{serviceId}/schedule/{month}/{areaId}/{durationSeconds}:
+    get:
+      tags: [Availability]
+      operationId: getMonthSchedule
+      summary: Gets the availability of a service at an area over a month.
+      parameters:
+        - $ref: "#/components/parameters/ServiceId"
+        - name: month
+          in: path
+          required: true
+          description: "The month, as `yyyy-MM`."
+          schema: { type: string }
+        - $ref: "#/components/parameters/AreaId"
+        - $ref: "#/components/parameters/DurationSeconds"
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/EasyStaffPlanningMonthSchedule" } } } }
+  /entry/{serviceId}/day/{date}/{areaId}/{durationSeconds}:
+    get:
+      tags: [Availability]
+      operationId: getDaySchedule
+      summary: Gets the slot-by-slot availability of a service at an area on a day.
+      x-mb-path: /entry/{serviceId}/schedule/{date}/{areaId}/{durationSeconds}
+      parameters:
+        - $ref: "#/components/parameters/ServiceId"
+        - name: date
+          in: path
+          required: true
+          schema: { type: string, format: date }
+        - $ref: "#/components/parameters/AreaId"
+        - $ref: "#/components/parameters/DurationSeconds"
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/EasyStaffPlanningDaySchedule" } } } }
+  /prima_disponibilita/{serviceId}/{areaId}:
+    get:
+      tags: [Availability]
+      operationId: getFirstAvailability
+      summary: Checks whether a service has any availability at an area; the month schedule says when.
+      parameters: [{ $ref: "#/components/parameters/ServiceId" }, { $ref: "#/components/parameters/AreaId" }]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/EasyStaffPlanningResult" } } } }
+  /risorsa/{serviceId}/{areaId}/{date}/{durationSeconds}:
+    get:
+      tags: [Availability]
+      operationId: getResourceAvailability
+      summary: Gets the availability of each resource serving a service at an area on a day.
+      parameters:
+        - $ref: "#/components/parameters/ServiceId"
+        - $ref: "#/components/parameters/AreaId"
+        - name: date
+          in: path
+          required: true
+          schema: { type: string, format: date }
+        - $ref: "#/components/parameters/DurationSeconds"
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/EasyStaffPlanningResourceAvailability" } } } } }
+
+  /entry/store:
+    post:
+      tags: [Reservations]
+      operationId: createReservation
+      summary: >-
+        Creates a provisional reservation, which holds the slot until confirmed within the
+        booking session (30 minutes on the web front-end), or discarded with a forced deletion.
+      requestBody:
+        content: { application/json: { schema: { $ref: "#/components/schemas/EasyStaffPlanningReservationRequest" } } }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/EasyStaffPlanningReservationResult" } } } }
+  /entry/confirm/{entryId}:
+    post:
+      tags: [Reservations]
+      operationId: confirmReservation
+      summary: Confirms a provisional reservation.
+      parameters:
+        - name: entryId
+          in: path
+          required: true
+          description: The entry identifier of the reservation.
+          schema: { type: integer }
+      x-mb-empty-body: true
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/EasyStaffPlanningResult" } } } }
+  /entry/manage/{reservationCode}:
+    get:
+      tags: [Reservations]
+      operationId: getReservation
+      summary: Gets a reservation; a missing one is an error with key `not_found`.
+      parameters: [{ $ref: "#/components/parameters/ReservationCode" }, { $ref: "#/components/parameters/PrimaryValue" }]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/EasyStaffPlanningManagedReservation" } } } }
+  /entry/{reservationCode}/info:
+    get:
+      tags: [Reservations]
+      operationId: getReservationServiceId
+      summary: Gets the service a reservation was booked for; a missing reservation is an error with key `reservation_not_found`.
+      parameters: [{ $ref: "#/components/parameters/ReservationCode" }, { $ref: "#/components/parameters/PrimaryValue" }]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: integer } } } }
+  /entry/update/{reservationCode}:
+    post:
+      tags: [Reservations]
+      operationId: updateReservation
+      summary: Changes a reservation.
+      parameters: [{ $ref: "#/components/parameters/ReservationCode" }, { $ref: "#/components/parameters/PrimaryValue" }]
+      requestBody:
+        content: { application/json: { schema: { $ref: "#/components/schemas/EasyStaffPlanningReservationUpdate" } } }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/EasyStaffPlanningResult" } } } }
+  /entry/delete/{reservationCode}:
+    post:
+      tags: [Reservations]
+      operationId: deleteReservation
+      summary: Deletes a reservation.
+      parameters: [{ $ref: "#/components/parameters/ReservationCode" }, { $ref: "#/components/parameters/PrimaryValue" }]
+      requestBody:
+        content: { application/json: { schema: { $ref: "#/components/schemas/EasyStaffPlanningReservationDeletion" } } }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/EasyStaffPlanningResult" } } } }
+  /entry/pdf/{entryId}:
+    get:
+      tags: [Reservations]
+      operationId: getReservationPdf
+      summary: Downloads the PDF summary of a reservation.
+      parameters:
+        - name: entryId
+          in: path
+          required: true
+          description: The entry identifier of the reservation.
+          schema: { type: integer }
+      responses:
+        "200": { description: OK, content: { application/pdf: { schema: { type: string, format: binary } } } }
+  /ics/{repeatId}:
+    get:
+      tags: [Reservations]
+      operationId: getReservationIcs
+      summary: Downloads the calendar file of a reservation.
+      parameters:
+        - name: repeatId
+          in: path
+          required: true
+          description: The repetition identifier of the reservation.
+          schema: { type: integer }
+        - name: timezone
+          in: query
+          x-mb-name: timeZone
+          description: The IANA time zone the event times are written in.
+          schema: { type: string, default: Europe/Rome }
+      responses:
+        "200": { description: OK, content: { text/calendar: { schema: { type: string, format: binary } } } }

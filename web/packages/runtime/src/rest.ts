@@ -30,6 +30,11 @@ export interface RestRequest {
   form?: ReadonlyArray<readonly [string, QueryValue]>;
   /** Headers; those with no value are left out. */
   headers?: ReadonlyArray<readonly [string, QueryValue]>;
+  /**
+   * Cookies, percent-encoded into a `Cookie` header; those with no value are left out.
+   * Browsers forbid that header, so cookie parameters only reach the server outside one.
+   */
+  cookies?: ReadonlyArray<readonly [string, QueryValue]>;
   /** A value sent as JSON. */
   body?: JsonValue;
   /** Credentials whose headers are added. */
@@ -65,6 +70,10 @@ export function sendRequest(configuration: RestConfiguration, request: RestReque
   for (const [name, value] of request.headers ?? []) {
     if (value !== null && value !== undefined) headers.set(name, formatQueryValue(value));
   }
+  const cookies = (request.cookies ?? []).flatMap(([name, value]) =>
+    value === null || value === undefined ? [] : [`${name}=${encodeURIComponent(formatQueryValue(value))}`],
+  );
+  if (cookies.length > 0) headers.set("Cookie", cookies.join("; "));
   let body: string | URLSearchParams | undefined;
   if (request.form !== undefined) {
     body = new URLSearchParams();

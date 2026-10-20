@@ -1,6 +1,7 @@
 package it.attendance100.mybicocca.codegen.target.web
 
 import it.attendance100.mybicocca.codegen.model.Codec
+import it.attendance100.mybicocca.codegen.model.EnumType
 import it.attendance100.mybicocca.codegen.model.PrimitiveKind
 import it.attendance100.mybicocca.codegen.model.TypeRef
 
@@ -19,6 +20,7 @@ internal class TsCodecs(private val layout: TsLayout) {
             layout.importRuntime(file, "decodeList")
             "(json: unknown) => decodeList(json, ${decoder(type.element, file)})"
         }
+        is TypeRef.MapOf -> "(json: unknown) => ${decodeMap("json", type, file)}"
         is TypeRef.Primitive -> runtime(
             file,
             when (type.kind) {
@@ -40,18 +42,33 @@ internal class TsCodecs(private val layout: TsLayout) {
     fun decode(json: String, type: TypeRef, codec: Codec?, file: TsFile): String = when (codec) {
         is Codec.Temporal -> {
             val kind = (type as TypeRef.Primitive).kind
-            val temporal = when (kind) {
-                PrimitiveKind.LOCAL_DATE -> "LocalDate"
-                PrimitiveKind.LOCAL_TIME -> "LocalTime"
-                else -> "LocalDateTime"
-            }
-            "${runtime(file, "decodeTemporal")}($json, ${runtime(file, temporal)}, ${TsSyntax.string(codec.pattern)}, ${codec.blankAsNull})"
+            "${runtime(file, "decodeTemporal")}($json, ${runtime(file, temporalClass(kind))}, ${TsSyntax.string(codec.pattern)}, ${codec.blankAsNull})"
         }
+        is Codec.BlankAsNull -> {
+            val also = if (codec.alsoNull.isEmpty()) "" else ", ${codec.alsoNull.joinToString(", ", "[", "]") { TsSyntax.string(it) }}"
+            "${runtime(file, "decodeBlankAsNull")}($json$also)"
+        }
+        Codec.FoldedObject -> "${runtime(file, "decodeFolded")}($json, ${decoder(type, file)})"
+        Codec.EmbeddedJson -> "${runtime(file, "decodeEmbedded")}($json, ${decoder(type, file)})"
         null -> when (type) {
             is TypeRef.ListOf -> "${runtime(file, "decodeList")}($json, ${decoder(type.element, file)})"
+            is TypeRef.MapOf -> decodeMap(json, type, file)
             else -> "${decoder(type, file)}($json)"
         }
     }
+
+    /** String-keyed maps are plain records; others are `WireMap`s, keyed by their string form. */
+    private fun decodeMap(json: String, type: TypeRef.MapOf, file: TsFile): String {
+        if (type.key == TypeRef.STRING) return "${runtime(file, "decodeRecordMap")}($json, ${decoder(type.value, file)})"
+        return "${runtime(file, "decodeWireMap")}($json, ${decoder(type.key, file)}, ${keyText(type.key, file)}, ${decoder(type.value, file)})"
+    }
+
+    /**
+     * The function writing a map key of [type] as its string form: a delimited record's
+     * encoder, or `String` for numbers, dates and enums.
+     */
+    fun keyText(type: TypeRef, file: TsFile): String =
+        if (type is TypeRef.Named && layout.isRecord(type)) encoder(type, file) else "String"
 
     /**
      * An expression encoding [value] (of [type], possibly null when [nullable]) to its JSON
@@ -65,19 +82,36 @@ internal class TsCodecs(private val layout: TsLayout) {
 
     /** An expression encoding the non-null [value], or null when it already is its JSON form. */
     private fun encodeNonNull(value: String, type: TypeRef, file: TsFile): String? = when (type) {
-        is TypeRef.Named -> if (layout.isRecord(type)) {
-            "${layout.encoderName(type.name).also { layout.importDeclaration(file, type.name, it) }}($value)"
-        } else {
-            null
+        is TypeRef.Named -> when {
+            layout.isRecord(type) -> "${encoder(type, file)}($value)"
+            (layout.declaration(type) as EnumType).integer -> "Number($value)"
+            else -> null
         }
         is TypeRef.ListOf -> encodeNonNull("item", type.element, file)?.let { "$value.map((item) => $it)" }
+        is TypeRef.MapOf -> {
+            val item = encodeNonNull("item", type.value, file)
+            when {
+                type.key != TypeRef.STRING -> "${runtime(file, "encodeWireMap")}($value, (item) => ${item ?: "item"})"
+                item != null -> "Object.fromEntries(Object.entries($value).map(([key, item]) => [key, $item]))"
+                else -> null
+            }
+        }
         is TypeRef.Primitive -> when (type.kind) {
             PrimitiveKind.LOCAL_DATE, PrimitiveKind.LOCAL_DATE_TIME, PrimitiveKind.LOCAL_TIME -> "${runtime(file, "encodeIsoTemporal")}($value)"
             else -> null
         }
     }
 
-    private fun runtime(file: TsFile, name: String): String {
+    private fun encoder(type: TypeRef.Named, file: TsFile): String =
+        layout.encoderName(type.name).also { layout.importDeclaration(file, type.name, it) }
+
+    fun temporalClass(kind: PrimitiveKind): String = when (kind) {
+        PrimitiveKind.LOCAL_DATE -> "LocalDate"
+        PrimitiveKind.LOCAL_TIME -> "LocalTime"
+        else -> "LocalDateTime"
+    }
+
+    fun runtime(file: TsFile, name: String): String {
         layout.importRuntime(file, name)
         return name
     }

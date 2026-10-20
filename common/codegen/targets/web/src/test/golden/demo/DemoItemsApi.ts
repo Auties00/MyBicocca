@@ -4,9 +4,10 @@ import { pathSegment } from "@mybicocca/data-api-runtime";
 import { DemoClient } from "../client.js";
 import { DemoPriority, DemoStatus } from "./DemoEnumTypes.js";
 import { DemoItem, decodeDemoItem, encodeDemoItem } from "./DemoItemsTypes.js";
+import { DemoParameters } from "./DemoParameters.js";
 
 export class DemoItemsApi {
-  constructor(private readonly client: DemoClient) {}
+  constructor(private readonly client: DemoClient, private readonly parameters: DemoParameters) {}
 
   /**
    * Lists the items of an owner.
@@ -33,6 +34,7 @@ export class DemoItemsApi {
           ["ids", options.ids],
           ["limit", limit],
         ],
+        headers: [["X-TENANT", this.parameters.tenant]],
       },
       ["STUDENT", "TECHNICAL_USER"],
       decodeDemoItem,
@@ -53,6 +55,7 @@ export class DemoItemsApi {
         method: "POST",
         path: "/items-service-v1/items",
         query: [["notifica", options.notify]],
+        headers: [["X-TENANT", this.parameters.tenant]],
         body: encodeDemoItem(body),
       },
       [],
@@ -77,6 +80,7 @@ export class DemoItemsApi {
           ["num", options.count],
           ["stato", options.status],
         ],
+        headers: [["X-TENANT", this.parameters.tenant]],
       },
       [],
     );
@@ -87,6 +91,7 @@ export class DemoItemsApi {
       {
         method: "DELETE",
         path: `/items-service-v1/items/${pathSegment(itemId)}`,
+        headers: [["X-TENANT", this.parameters.tenant]],
       },
       [],
     );
@@ -98,6 +103,7 @@ export class DemoItemsApi {
         method: "GET",
         path: `/items-service-v1/items/${pathSegment(itemId)}/pdf`,
         query: [["priority", priority]],
+        headers: [["X-TENANT", this.parameters.tenant]],
       },
       [],
     );

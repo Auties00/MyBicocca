@@ -14,7 +14,8 @@ package it.attendance100.mybicocca.codegen.model
  * @property roles Names of the access roles allowed to call the operation, as defined by the
  *   API's runtime. Empty when the API doesn't say.
  * @property server Name of the [Server] the operation targets; null for the API's only one.
- * @property headers Headers sent with every call, by name.
+ * @property headers Headers sent with every call, by name. A value's `{name}` placeholders are
+ *   replaced by the API parameter of that name (see [ApiSpec.parameters]).
  * @property auth The credentials the operation accepts, if any.
  */
 data class Operation(
@@ -34,6 +35,7 @@ data class Operation(
     val queryParameters: List<Parameter> get() = parameters.filter { it.location == ParameterLocation.QUERY }
     val formParameters: List<Parameter> get() = parameters.filter { it.location == ParameterLocation.FORM }
     val headerParameters: List<Parameter> get() = parameters.filter { it.location == ParameterLocation.HEADER }
+    val cookieParameters: List<Parameter> get() = parameters.filter { it.location == ParameterLocation.COOKIE }
 }
 
 /**
@@ -47,14 +49,16 @@ data class AuthRequirement(val schemes: List<String>, val required: Boolean)
 enum class HttpMethod { GET, POST, PUT, PATCH, DELETE }
 
 /**
- * A path, query, form or header parameter. A list value is sent as one comma-separated value,
- * the Swagger/OpenAPI default for query parameters.
+ * A path, query, form, header or cookie parameter. A list value is sent as one
+ * comma-separated value, the Swagger/OpenAPI default for query parameters.
  *
  * @property name camelCase name of the parameter.
  * @property wireName Name of the parameter on the wire.
  * @property valueDescriptions Descriptions of the accepted values, by wire value, when
  *   [type] is an enum.
- * @property default The value used when the caller gives none; such a parameter is always sent.
+ * @property default The value used when the caller gives none; such a parameter is always
+ *   sent. For a [ParameterEncoding.JSON] parameter it is the JSON text to send.
+ * @property encoding How the value is written.
  */
 data class Parameter(
     val name: String,
@@ -65,12 +69,22 @@ data class Parameter(
     val description: String? = null,
     val valueDescriptions: Map<String, String> = emptyMap(),
     val default: DefaultValue.Literal? = null,
+    val encoding: ParameterEncoding = ParameterEncoding.PLAIN,
 ) {
     /** Whether the caller may leave the parameter out, in which case it isn't sent. */
     val isOmittable: Boolean get() = !required && default == null
 }
 
-enum class ParameterLocation { PATH, QUERY, FORM, HEADER }
+/** Where a parameter is sent. Cookie values are percent-encoded. */
+enum class ParameterLocation { PATH, QUERY, FORM, HEADER, COOKIE }
+
+enum class ParameterEncoding {
+    /** Scalars in their text form; enums as their wire value; lists comma-separated. */
+    PLAIN,
+
+    /** The value encoded as JSON text, as a record or map parameter needs. */
+    JSON,
+}
 
 /** The body an operation sends. */
 sealed interface RequestBody {

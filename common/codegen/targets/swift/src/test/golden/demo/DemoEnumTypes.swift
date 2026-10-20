@@ -23,6 +23,31 @@ public enum DemoKind: WireEnum {
     }
 }
 
+public enum DemoLevel: WireEnum {
+    case basic
+    case expert
+    /// A value this SDK doesn't know yet.
+    case unknown(String)
+
+    public static let isInteger = true
+
+    public init(wireValue: String) {
+        switch wireValue {
+        case "1": self = .basic
+        case "2": self = .expert
+        default: self = .unknown(wireValue)
+        }
+    }
+
+    public var wireValue: String {
+        switch self {
+        case .basic: return "1"
+        case .expert: return "2"
+        case .unknown(let value): return value
+        }
+    }
+}
+
 public enum DemoPriority: WireEnum {
     case low
     case high

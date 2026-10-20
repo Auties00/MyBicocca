@@ -6,6 +6,7 @@ import it.attendance100.mybicocca.codegen.target.kotlin.KotlinSyntax.doc
 /**
  * Emits enums as sealed interfaces with a `data object` per value, rather than enum classes,
  * so that an open enum can also hold values the server added later (`Unknown(value)`).
+ * Integer enums keep their values as decimal text, and read and write JSON numbers.
  */
 internal object EnumEmitter {
     private const val UNKNOWN = "Unknown"
@@ -39,7 +40,8 @@ internal object EnumEmitter {
                 }
                 line()
                 block("object Serializer : KSerializer<$name> {") {
-                    line("override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor(${KotlinSyntax.string(name)}, PrimitiveKind.STRING)")
+                    val kind = if (enum.integer) "LONG" else "STRING"
+                    line("override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor(${KotlinSyntax.string(name)}, PrimitiveKind.$kind)")
                     line()
                     block("override fun deserialize(decoder: Decoder): $name {") {
                         writeRawValue(enum, file)
@@ -61,7 +63,11 @@ internal object EnumEmitter {
                     }
                     line()
                     block("override fun serialize(encoder: Encoder, value: $name) {") {
-                        line("encoder.encodeString(value.value)")
+                        if (enum.integer) {
+                            line("value.value.toLongOrNull()?.let(encoder::encodeLong) ?: encoder.encodeString(value.value)")
+                        } else {
+                            line("encoder.encodeString(value.value)")
+                        }
                     }
                 }
             }
@@ -69,6 +75,13 @@ internal object EnumEmitter {
     }
 
     private fun writeRawValue(enum: EnumType, file: KotlinFile) {
+        if (enum.integer && !enum.acceptsWrappedValue) {
+            // A number or a string: either way, its content.
+            file.import("kotlinx.serialization.json.JsonDecoder")
+            file.import("kotlinx.serialization.json.jsonPrimitive")
+            file.body.line("val raw = (decoder as JsonDecoder).decodeJsonElement().jsonPrimitive.content")
+            return
+        }
         if (!enum.acceptsWrappedValue) {
             file.body.line("val raw = decoder.decodeString()")
             return

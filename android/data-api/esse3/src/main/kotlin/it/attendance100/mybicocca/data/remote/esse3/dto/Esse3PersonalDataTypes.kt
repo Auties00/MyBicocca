@@ -5665,6 +5665,7 @@ data class Esse3ForeignTitleAttachmentMetadata(
 
 @Serializable
 data class Esse3BulkDownloadEnabled(
+    @Serializable(with = Esse3BooleanSerializer::class)
     @SerialName("enabled")
     val enabled: Boolean? = null
 )
@@ -9383,6 +9384,7 @@ data class Esse3TeachersContacts(
     val addressTypeCode: String? = null,
 
     /** flag domicilio come residenza */
+    @Serializable(with = Esse3BooleanSerializer::class)
     @SerialName("domComeResFlg")
     val domicileSameAsResidenceFlag: Boolean? = null,
 

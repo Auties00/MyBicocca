@@ -7,11 +7,15 @@ import Foundation
 public struct DemoApi: Sendable {
     public let items: DemoItemsApi
     public let search: DemoSearchApi
+    public let calendar: DemoCalendarApi
     public let shared: DemoSharedApi
 
-    public init(client: DemoClient) {
-        self.items = DemoItemsApi(client: client)
-        self.search = DemoSearchApi(client: client)
-        self.shared = DemoSharedApi(client: client)
+    /// - Parameters:
+    ///   - tenant: Tenant every call acts for.
+    public init(client: DemoClient, tenant: String, region: String) {
+        self.items = DemoItemsApi(client: client, tenant: tenant)
+        self.search = DemoSearchApi(client: client, tenant: tenant)
+        self.calendar = DemoCalendarApi(client: client, tenant: tenant, region: region)
+        self.shared = DemoSharedApi(client: client, tenant: tenant)
     }
 }
