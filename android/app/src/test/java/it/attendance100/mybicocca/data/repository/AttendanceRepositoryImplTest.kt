@@ -13,6 +13,9 @@ import it.attendance100.mybicocca.data.local.settings.DeviceIdentityStore
 import it.attendance100.mybicocca.data.location.DeviceLocationProvider
 import it.attendance100.mybicocca.data.remote.easystaff.api.EasyStaffApi
 import it.attendance100.mybicocca.data.remote.elearning.api.ElearningApi
+import it.attendance100.mybicocca.data.remote.elearning.api.ElearningAttendanceApi
+import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceMarkableSession
+import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceViewResponse
 import it.attendance100.mybicocca.domain.model.attendance.AttendanceModuleRef
 import it.attendance100.mybicocca.domain.model.attendance.PresenceMarkOutcome
 import it.attendance100.mybicocca.domain.model.attendance.PresenceScan
@@ -27,7 +30,8 @@ import org.junit.Test
 /**
  * Network-only attendance marking branches that don't depend on the full pending-course
  * fan-out: the scan-kind dispatch (unrecognized payloads and lesson codes without a matricola
- * fail gracefully), the empty-modules short-circuit, and the catch-all that turns an elearning
+ * fail gracefully), the empty-modules short-circuit, open sessions read from the module page
+ * (renewing an expired browser session once), and the catch-all that turns an elearning
  * failure into a [PresenceMarkOutcome.Failed].
  */
 class AttendanceRepositoryImplTest {
@@ -39,7 +43,10 @@ class AttendanceRepositoryImplTest {
     private val elearningCourseRepository: ElearningCourseRepository = mockk(relaxed = true)
     private val deviceIdentityStore: DeviceIdentityStore = mockk(relaxed = true)
     private val locationProvider: DeviceLocationProvider = mockk(relaxed = true)
-    private val elearningApi: ElearningApi = mockk(relaxed = true)
+    private val attendanceApi: ElearningAttendanceApi = mockk(relaxed = true)
+    private val elearningApi: ElearningApi = mockk(relaxed = true) {
+        every { attendance } returns attendanceApi
+    }
 
     private val careerId = RepositoryTestFixtures.careerId
 
@@ -91,10 +98,40 @@ class AttendanceRepositoryImplTest {
     }
 
     @Test
+    fun `getOpenSessions describes only the sessions the module page offers`() = runTest {
+        coEvery { sessionManager.elearning() } returns ElearningSession(elearningApi, "ws-token")
+        coEvery { attendanceApi.getAttendanceSummary(20) } returns
+            ElearningAttendanceViewResponse.Success(summary = null, submittableSessionIds = listOf("77"))
+        coEvery { attendanceApi.getMarkableSessions("ws-token", 10, 20, listOf("77")) } returns
+            listOf(ElearningAttendanceMarkableSession(sessionId = "77", requiresPassword = false, statuses = emptyList()))
+
+        val sessions = repository.getOpenSessions(listOf(module()))
+
+        assertThat(sessions.map { it.sessionId }).containsExactly("77")
+        coVerify(exactly = 0) { sessionManager.reauthElearning() }
+    }
+
+    @Test
+    fun `getOpenSessions renews an expired browser session once`() = runTest {
+        coEvery { sessionManager.elearning() } returns ElearningSession(elearningApi, "ws-token")
+        coEvery { sessionManager.reauthElearning() } returns ElearningSession(elearningApi, "ws-token")
+        coEvery { attendanceApi.getAttendanceSummary(20) } returnsMany listOf(
+            ElearningAttendanceViewResponse.RequiresReauth,
+            ElearningAttendanceViewResponse.Success(summary = null, submittableSessionIds = emptyList()),
+        )
+
+        val sessions = repository.getOpenSessions(listOf(module()))
+
+        assertThat(sessions).isEmpty()
+        coVerify(exactly = 1) { sessionManager.reauthElearning() }
+        coVerify(exactly = 0) { attendanceApi.getMarkableSessions(any(), any(), any(), any()) }
+    }
+
+    @Test
     fun `markSession maps an elearning failure to a Failed outcome`() = runTest {
         coEvery { sessionManager.elearning() } returns ElearningSession(elearningApi, "ws-token")
         coEvery {
-            elearningApi.attendance.markSession(any(), any(), any(), any(), any(), any())
+            attendanceApi.markSession(any(), any(), any(), any(), any(), any())
         } throws RuntimeException("boom")
 
         val outcome = repository.markSession(module(), sessionId = "s1", statusId = null, password = null)
