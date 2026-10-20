@@ -72,3 +72,9 @@ app.*.symbols
 
 # Build
 **/build/**
+# Web
+**/node_modules/
+
+# Swift Package Manager
+**/.build/
+**/.swiftpm/

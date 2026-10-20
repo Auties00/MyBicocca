@@ -1,0 +1,35 @@
+{
+  "reader": {
+    "type": "esse3"
+  },
+  "targets": {
+    "kotlin": {
+      "outputDir": "../../../android/data-api/esse3/src/main/kotlin",
+      "options": {
+        "packageName": "it.attendance100.mybicocca.data.remote.esse3",
+        "temporalSerializers": [
+          {
+            "kind": "LOCAL_DATE",
+            "pattern": "dd/MM/yyyy",
+            "blankAsNull": true,
+            "nullable": true,
+            "serializer": "Esse3NullableLocalDateSerializer"
+          },
+          {
+            "kind": "LOCAL_DATE_TIME",
+            "pattern": "dd/MM/yyyy HH:mm:ss",
+            "blankAsNull": true,
+            "nullable": true,
+            "serializer": "Esse3NullableLocalDateTimeSerializer"
+          }
+        ]
+      }
+    },
+    "swift": {
+      "outputDir": "../../../ios/DataApi/Sources/Esse3/Generated"
+    },
+    "web": {
+      "outputDir": "../../../web/packages/esse3/src/generated"
+    }
+  }
+}
