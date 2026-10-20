@@ -18,11 +18,12 @@ import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncStateDa
 import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncStateEntity
 import it.attendance100.mybicocca.data.remote.elearning.api.ElearningApi
 import it.attendance100.mybicocca.data.auth.ElearningSession
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningCourseGrade
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningGetCourseGradesResponse
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningGetGradeItemsResponse
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningGradeItem
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningUserGrades
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseGrade
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseGradesResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleGradeItemsResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleGradeItem
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleUserGrades
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.domain.model.elearning.grade.GradeItemType
@@ -59,6 +60,7 @@ class ElearningGradeRepositoryImplTest {
     private val syncStateDao = mockk<ElearningSyncStateDao>(relaxed = true)
     private val elearningApi = mockk<ElearningApi>(relaxed = true)
     private val token = "x".repeat(32)
+    private val auth = MoodleTokenAuth(token)
     private val stalePolicy = StalePolicy(defaultTtlMs = 60_000L)
 
     private fun newRepository(scope: CoroutineScope): ElearningGradeRepositoryImpl {
@@ -128,19 +130,19 @@ class ElearningGradeRepositoryImplTest {
     fun `refreshCourseGradeItems writes the active user's items through and stamps`() = runTest {
         val scope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher(testScheduler))
         val repository = newRepository(scope)
-        coEvery { elearningApi.grades.getGradeItems(token, courseId.value, lmsUserId, null) } returns
-            ElearningGetGradeItemsResponse(
+        coEvery { elearningApi.moodle.grade.getGradeItems(courseId.value, userId = lmsUserId, auth = auth) } returns
+            MoodleGradeItemsResponse(
                 userGrades = listOf(
-                    ElearningUserGrades(
+                    MoodleUserGrades(
                         courseId = courseId.value,
                         userId = 999,
-                        gradeItems = listOf(ElearningGradeItem(id = 1, itemName = "Other user")),
+                        gradeItems = listOf(MoodleGradeItem(id = 1, itemName = "Other user")),
                     ),
-                    ElearningUserGrades(
+                    MoodleUserGrades(
                         courseId = courseId.value,
                         userId = lmsUserId,
                         gradeItems = listOf(
-                            ElearningGradeItem(id = 50, itemName = "Voto finale", itemType = "course", gradeRaw = 30.0),
+                            MoodleGradeItem(id = 50, itemName = "Voto finale", itemType = "course", gradeRaw = 30.0),
                         ),
                     ),
                 ),
@@ -174,7 +176,7 @@ class ElearningGradeRepositoryImplTest {
 
         repository.refreshCourseGradeItems(accountId, courseId, force = false)
 
-        coVerify(exactly = 0) { elearningApi.grades.getGradeItems(any(), any(), any(), any()) }
+        coVerify(exactly = 0) { elearningApi.moodle.grade.getGradeItems(any(), any(), any(), any()) }
         coVerify(exactly = 0) { gradeDao.replaceCourseGradeItems(any(), any(), any()) }
         scope.coroutineContext[kotlinx.coroutines.Job]?.cancel()
     }
@@ -191,12 +193,12 @@ class ElearningGradeRepositoryImplTest {
             scopeId = courseId.value.toLong(),
             lastRefreshedAtMs = System.currentTimeMillis(),
         )
-        coEvery { elearningApi.grades.getGradeItems(token, courseId.value, lmsUserId, null) } returns
-            ElearningGetGradeItemsResponse(userGrades = emptyList())
+        coEvery { elearningApi.moodle.grade.getGradeItems(courseId.value, userId = lmsUserId, auth = auth) } returns
+            MoodleGradeItemsResponse(userGrades = emptyList())
 
         repository.refreshCourseGradeItems(accountId, courseId, force = true)
 
-        coVerify { elearningApi.grades.getGradeItems(token, courseId.value, lmsUserId, null) }
+        coVerify { elearningApi.moodle.grade.getGradeItems(courseId.value, userId = lmsUserId, auth = auth) }
         scope.coroutineContext[kotlinx.coroutines.Job]?.cancel()
     }
 
@@ -204,9 +206,9 @@ class ElearningGradeRepositoryImplTest {
     fun `refreshAllCourseGrades stores overview rows with no course name and stamps`() = runTest {
         val scope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher(testScheduler))
         val repository = newRepository(scope)
-        coEvery { elearningApi.grades.getCourseGrades(token, lmsUserId) } returns
-            ElearningGetCourseGradesResponse(
-                grades = listOf(ElearningCourseGrade(courseId = 11, grade = "27,00", rawGrade = "27.0")),
+        coEvery { elearningApi.moodle.grade.getCourseGrades(userId = lmsUserId, auth = auth) } returns
+            MoodleCourseGradesResponse(
+                grades = listOf(MoodleCourseGrade(courseId = 11, grade = "27,00", rawGrade = "27.0")),
             )
 
         repository.refreshAllCourseGrades(accountId, force = false)
@@ -227,9 +229,9 @@ class ElearningGradeRepositoryImplTest {
         val scope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher(testScheduler))
         val repository = newRepository(scope)
         val gate = CompletableDeferred<Unit>()
-        coEvery { elearningApi.grades.getGradeItems(token, courseId.value, lmsUserId, null) } coAnswers {
+        coEvery { elearningApi.moodle.grade.getGradeItems(courseId.value, userId = lmsUserId, auth = auth) } coAnswers {
             gate.await()
-            ElearningGetGradeItemsResponse(userGrades = emptyList())
+            MoodleGradeItemsResponse(userGrades = emptyList())
         }
 
         val first = launch { repository.refreshCourseGradeItems(accountId, courseId, force = false) }
@@ -240,7 +242,7 @@ class ElearningGradeRepositoryImplTest {
         gate.complete(Unit)
         joinAll(first, second)
 
-        coVerify(exactly = 1) { elearningApi.grades.getGradeItems(token, courseId.value, lmsUserId, null) }
+        coVerify(exactly = 1) { elearningApi.moodle.grade.getGradeItems(courseId.value, userId = lmsUserId, auth = auth) }
         scope.coroutineContext[kotlinx.coroutines.Job]?.cancel()
     }
 

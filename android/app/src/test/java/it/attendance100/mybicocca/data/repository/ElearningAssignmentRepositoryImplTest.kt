@@ -18,12 +18,16 @@ import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncStateDa
 import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncStateEntity
 import it.attendance100.mybicocca.data.local.file.ContentUriReader
 import it.attendance100.mybicocca.data.remote.elearning.api.ElearningApi
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAssignment
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningCourseAssignments
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningGetAssignmentsResponse
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningGetSubmissionStatusResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAssignment
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseAssignments
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAssignmentsResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleOnlineTextEditor
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleStatusResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleSubmissionPluginData
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleSubmissionStatus
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningUpload
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningUploadedFile
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.elearning.assignment.Assignment
 import it.attendance100.mybicocca.domain.model.elearning.assignment.AssignmentId
@@ -55,6 +59,7 @@ class ElearningAssignmentRepositoryImplTest {
     private val lmsUserId = 7
     private val account = elearningRepoTestAccount(accountId, lmsUserId)
     private val token = "x".repeat(32)
+    private val auth = MoodleTokenAuth(token)
 
     private val sessionManager = mockk<SessionManager>(relaxed = true)
     private val assignmentDao = mockk<AssignmentDao>(relaxed = true)
@@ -67,6 +72,9 @@ class ElearningAssignmentRepositoryImplTest {
         every { sessionManager.activeAccount } returns MutableStateFlow(account)
         coEvery { sessionManager.elearning() } returns ElearningSession(elearningApi, token)
         coEvery { syncStateDao.getState(any(), any(), any()) } returns null
+        coEvery { elearningApi.moodle.assign.saveSubmission(any(), any(), any()) } returns emptyList()
+        coEvery { elearningApi.moodle.assign.submitForGrading(any(), any(), any()) } returns emptyList()
+        coEvery { elearningApi.moodle.assign.removeSubmission(any(), any(), any()) } returns MoodleStatusResponse()
         return ElearningAssignmentRepositoryImpl(
             sessionManager, assignmentDao, syncStateDao, stalePolicy, contentUriReader, scope,
         )
@@ -124,19 +132,19 @@ class ElearningAssignmentRepositoryImplTest {
     fun `refreshForCourse writes assignments through and stamps`() = runTest {
         val scope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher(testScheduler))
         val repository = newRepository(scope)
-        coEvery { elearningApi.assignments.getAssignmentsForCourse(token, courseId.value) } returns
-            ElearningGetAssignmentsResponse(
+        coEvery { elearningApi.moodle.assign.getAssignments(courseIds = listOf(courseId.value), auth = auth) } returns
+            MoodleAssignmentsResponse(
                 courses = listOf(
-                    ElearningCourseAssignments(
+                    MoodleCourseAssignments(
                         id = courseId.value,
                         assignments = listOf(
-                            ElearningAssignment(id = 500, courseId = courseId.value, name = "Compito A"),
+                            MoodleAssignment(id = 500, course = courseId.value, name = "Compito A"),
                         ),
                     ),
                 ),
             )
-        coEvery { elearningApi.assignments.getSubmissionStatus(token, 500, null, null) } returns
-            ElearningGetSubmissionStatusResponse()
+        coEvery { elearningApi.moodle.assign.getSubmissionStatus(500, auth = auth) } returns
+            MoodleSubmissionStatus()
 
         repository.refreshForCourse(accountId, courseId, force = false)
 
@@ -151,18 +159,18 @@ class ElearningAssignmentRepositoryImplTest {
     fun `refreshForCourse degrades a failed status fetch to not-submitted without failing`() = runTest {
         val scope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher(testScheduler))
         val repository = newRepository(scope)
-        coEvery { elearningApi.assignments.getAssignmentsForCourse(token, courseId.value) } returns
-            ElearningGetAssignmentsResponse(
+        coEvery { elearningApi.moodle.assign.getAssignments(courseIds = listOf(courseId.value), auth = auth) } returns
+            MoodleAssignmentsResponse(
                 courses = listOf(
-                    ElearningCourseAssignments(
+                    MoodleCourseAssignments(
                         id = courseId.value,
                         assignments = listOf(
-                            ElearningAssignment(id = 500, courseId = courseId.value, name = "Compito A"),
+                            MoodleAssignment(id = 500, course = courseId.value, name = "Compito A"),
                         ),
                     ),
                 ),
             )
-        coEvery { elearningApi.assignments.getSubmissionStatus(token, 500, null, null) } throws RuntimeException("boom")
+        coEvery { elearningApi.moodle.assign.getSubmissionStatus(500, auth = auth) } throws RuntimeException("boom")
 
         repository.refreshForCourse(accountId, courseId, force = false)
 
@@ -185,7 +193,7 @@ class ElearningAssignmentRepositoryImplTest {
 
         repository.refreshForCourse(accountId, courseId, force = false)
 
-        coVerify(exactly = 0) { elearningApi.assignments.getAssignmentsForCourse(any(), any()) }
+        coVerify(exactly = 0) { elearningApi.moodle.assign.getAssignments(any(), any(), any(), any()) }
         scope.coroutineContext[Job]?.cancel()
     }
 
@@ -196,8 +204,8 @@ class ElearningAssignmentRepositoryImplTest {
         every { assignmentDao.observe(accountId.value, assignmentId.value) } returns flowOf(assignmentEntity(500))
         coEvery { elearningApi.files.downloadFileBytes(token, "https://kept/file.pdf") } returns byteArrayOf(1, 2)
         coEvery { elearningApi.files.uploadToDraftArea(token, any()) } returns listOf(ElearningUploadedFile(itemId = 808))
-        coEvery { elearningApi.assignments.getSubmissionStatus(token, assignmentId.value, null, null) } returns
-            ElearningGetSubmissionStatusResponse()
+        coEvery { elearningApi.moodle.assign.getSubmissionStatus(assignmentId.value, auth = auth) } returns
+            MoodleSubmissionStatus()
 
         repository.saveSubmission(
             accountId = accountId,
@@ -213,11 +221,13 @@ class ElearningAssignmentRepositoryImplTest {
         coVerify { elearningApi.files.uploadToDraftArea(token, capture(uploads)) }
         assertThat(uploads.captured.map { it.fileName }).containsExactly("file.pdf", "new.pdf").inOrder()
         coVerify {
-            elearningApi.assignments.saveSubmission(
-                wsToken = token,
+            elearningApi.moodle.assign.saveSubmission(
                 assignmentId = assignmentId.value,
-                onlineText = "ciao",
-                filesDraftItemId = 808,
+                pluginData = MoodleSubmissionPluginData(
+                    filesFilemanager = 808,
+                    onlinetextEditor = MoodleOnlineTextEditor(text = "ciao", format = 1, itemId = 0),
+                ),
+                auth = auth,
             )
         }
         scope.coroutineContext[Job]?.cancel()
@@ -228,8 +238,8 @@ class ElearningAssignmentRepositoryImplTest {
         val scope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher(testScheduler))
         val repository = newRepository(scope)
         every { assignmentDao.observe(accountId.value, assignmentId.value) } returns flowOf(assignmentEntity(500))
-        coEvery { elearningApi.assignments.getSubmissionStatus(token, assignmentId.value, null, null) } returns
-            ElearningGetSubmissionStatusResponse()
+        coEvery { elearningApi.moodle.assign.getSubmissionStatus(assignmentId.value, auth = auth) } returns
+            MoodleSubmissionStatus()
 
         repository.saveSubmission(
             accountId = accountId,
@@ -241,11 +251,13 @@ class ElearningAssignmentRepositoryImplTest {
 
         coVerify(exactly = 0) { elearningApi.files.uploadToDraftArea(any(), any()) }
         coVerify {
-            elearningApi.assignments.saveSubmission(
-                wsToken = token,
+            elearningApi.moodle.assign.saveSubmission(
                 assignmentId = assignmentId.value,
-                onlineText = "solo testo",
-                filesDraftItemId = null,
+                pluginData = MoodleSubmissionPluginData(
+                    filesFilemanager = null,
+                    onlinetextEditor = MoodleOnlineTextEditor(text = "solo testo", format = 1, itemId = 0),
+                ),
+                auth = auth,
             )
         }
         scope.coroutineContext[Job]?.cancel()
@@ -256,12 +268,12 @@ class ElearningAssignmentRepositoryImplTest {
         val scope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher(testScheduler))
         val repository = newRepository(scope)
         every { assignmentDao.observe(accountId.value, assignmentId.value) } returns flowOf(assignmentEntity(500))
-        coEvery { elearningApi.assignments.getSubmissionStatus(token, assignmentId.value, null, null) } returns
-            ElearningGetSubmissionStatusResponse()
+        coEvery { elearningApi.moodle.assign.getSubmissionStatus(assignmentId.value, auth = auth) } returns
+            MoodleSubmissionStatus()
 
         repository.removeSubmission(accountId, assignmentId)
 
-        coVerify { elearningApi.assignments.removeSubmission(token, assignmentId.value, lmsUserId) }
+        coVerify { elearningApi.moodle.assign.removeSubmission(lmsUserId, assignmentId.value, auth = auth) }
         scope.coroutineContext[Job]?.cancel()
     }
 
@@ -270,12 +282,12 @@ class ElearningAssignmentRepositoryImplTest {
         val scope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher(testScheduler))
         val repository = newRepository(scope)
         every { assignmentDao.observe(accountId.value, assignmentId.value) } returns flowOf(assignmentEntity(500))
-        coEvery { elearningApi.assignments.getSubmissionStatus(token, assignmentId.value, null, null) } returns
-            ElearningGetSubmissionStatusResponse()
+        coEvery { elearningApi.moodle.assign.getSubmissionStatus(assignmentId.value, auth = auth) } returns
+            MoodleSubmissionStatus()
 
         repository.submitForGrading(accountId, assignmentId, acceptStatement = true)
 
-        coVerify { elearningApi.assignments.submitForGrading(token, assignmentId.value, true) }
+        coVerify { elearningApi.moodle.assign.submitForGrading(assignmentId.value, true, auth = auth) }
         coVerify { assignmentDao.upsert(any()) }
         scope.coroutineContext[Job]?.cancel()
     }

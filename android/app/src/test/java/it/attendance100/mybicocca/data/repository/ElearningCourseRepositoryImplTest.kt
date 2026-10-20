@@ -18,11 +18,12 @@ import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncStateDa
 import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncStateEntity
 import it.attendance100.mybicocca.data.local.settings.ElearningFilterStore
 import it.attendance100.mybicocca.data.remote.elearning.api.ElearningApi
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningCalendarEvent
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningEnrollIntoCourseResponse
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningGetActionEventsByTimesortResponse
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningGetUserCoursesResponse
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningResponseWarning
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCalendarEvent
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleEventIcon
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleStatusResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCalendarEventsResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleWarning
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseFilter
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
@@ -51,6 +52,7 @@ class ElearningCourseRepositoryImplTest {
     private val lmsUserId = 7
     private val account = elearningRepoTestAccount(accountId, lmsUserId)
     private val token = "x".repeat(32)
+    private val auth = MoodleTokenAuth(token)
 
     private val stringResolver = mockk<StringResolver>(relaxed = true)
     private val sessionManager = mockk<SessionManager>(relaxed = true)
@@ -133,7 +135,7 @@ class ElearningCourseRepositoryImplTest {
 
         repository.refreshEnrolledCourses(accountId, force = false)
 
-        coVerify(exactly = 0) { elearningApi.courses.getUserCourses(any(), any()) }
+        coVerify(exactly = 0) { elearningApi.moodle.course.getUsersCourses(any(), any(), any()) }
         coVerify(exactly = 0) { courseDao.replaceEnrolled(any(), any()) }
         scope.coroutineContext[Job]?.cancel()
     }
@@ -146,23 +148,30 @@ class ElearningCourseRepositoryImplTest {
     fun `refreshEnrolledCourses stops paging deadlines when Moodle repeats a page`() = runTest {
         val scope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher(testScheduler))
         val repository = newRepository(scope)
-        coEvery { elearningApi.courses.getUserCourses(token, lmsUserId) } returns
-            ElearningGetUserCoursesResponse(items = emptyList())
-        val samePage = ElearningGetActionEventsByTimesortResponse(
+        coEvery { elearningApi.moodle.course.getUsersCourses(lmsUserId, auth = auth) } returns emptyList()
+        // Verified on the calendar itself, so the chained `moodle` getter is not counted too.
+        val calendar = elearningApi.moodle.calendar
+        val samePage = MoodleCalendarEventsResponse(
             events = (1..50).map { id ->
-                ElearningCalendarEvent(id = id, name = "Consegna $id", timeStart = 1_700_000_000L + id, timeSort = 1_700_000_000L)
+                MoodleCalendarEvent(
+                    id = id,
+                    name = "Consegna $id",
+                    timeStart = 1_700_000_000L + id,
+                    timeSort = 1_700_000_000L,
+                    icon = MoodleEventIcon(),
+                )
             },
             firstId = 1,
             lastId = 50,
         )
         coEvery {
-            elearningApi.calendar.getActionEventsByTimesort(token, any(), any(), any(), any(), any())
+            calendar.getActionEventsByTimesort(any(), any(), any(), any(), any(), any(), any(), auth)
         } returns samePage
 
         repository.refreshEnrolledCourses(accountId, force = true)
 
         coVerify(exactly = 2) {
-            elearningApi.calendar.getActionEventsByTimesort(token, any(), any(), any(), any(), any())
+            calendar.getActionEventsByTimesort(any(), any(), any(), any(), any(), any(), any(), auth)
         }
         coVerify { deadlineDao.replaceForAccount(accountId.value, any()) }
         scope.coroutineContext[Job]?.cancel()
@@ -195,12 +204,12 @@ class ElearningCourseRepositoryImplTest {
     fun `setActivityCompleted updates the platform then mirrors the fresh status into Room`() = runTest {
         val scope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher(testScheduler))
         val repository = newRepository(scope)
-        coEvery { elearningApi.completion.getActivitiesCompletionStatus(token, courseId.value, null) } returns
+        coEvery { elearningApi.moodle.completion.getActivitiesCompletionStatus(courseId.value, lmsUserId, auth) } returns
             mockk(relaxed = true)
 
         repository.setActivityCompleted(accountId, courseId, cmId = 1001, completed = true)
 
-        coVerify { elearningApi.completion.updateActivityCompletion(token, 1001, true) }
+        coVerify { elearningApi.moodle.completion.updateActivityCompletionStatusManually(1001, true, auth) }
         scope.coroutineContext[Job]?.cancel()
     }
 
@@ -208,12 +217,12 @@ class ElearningCourseRepositoryImplTest {
     fun `setActivityCompleted survives a failed status re-fetch`() = runTest {
         val scope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher(testScheduler))
         val repository = newRepository(scope)
-        coEvery { elearningApi.completion.getActivitiesCompletionStatus(token, courseId.value, null) } throws
+        coEvery { elearningApi.moodle.completion.getActivitiesCompletionStatus(courseId.value, lmsUserId, auth) } throws
             RuntimeException("boom")
 
         repository.setActivityCompleted(accountId, courseId, cmId = 1001, completed = true)
 
-        coVerify { elearningApi.completion.updateActivityCompletion(token, 1001, true) }
+        coVerify { elearningApi.moodle.completion.updateActivityCompletionStatusManually(1001, true, auth) }
         scope.coroutineContext[Job]?.cancel()
     }
 
@@ -221,10 +230,10 @@ class ElearningCourseRepositoryImplTest {
     fun `enrolIntoCourse raises the server warning message when status is false`() = runTest {
         val scope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher(testScheduler))
         val repository = newRepository(scope)
-        coEvery { elearningApi.courses.enrollIntoCourse(token, courseId.value, null) } returns
-            ElearningEnrollIntoCourseResponse(
+        coEvery { elearningApi.moodle.course.enrolUser(courseId.value, null, auth = auth) } returns
+            MoodleStatusResponse(
                 status = false,
-                warnings = listOf(ElearningResponseWarning(message = "Chiave di iscrizione errata")),
+                warnings = listOf(MoodleWarning(message = "Chiave di iscrizione errata")),
             )
 
         val thrown = repository.runCatching {
@@ -240,12 +249,12 @@ class ElearningCourseRepositoryImplTest {
     fun `enrolIntoCourse succeeds silently when status is true`() = runTest {
         val scope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher(testScheduler))
         val repository = newRepository(scope)
-        coEvery { elearningApi.courses.enrollIntoCourse(token, courseId.value, "secret") } returns
-            ElearningEnrollIntoCourseResponse(status = true)
+        coEvery { elearningApi.moodle.course.enrolUser(courseId.value, "secret", auth = auth) } returns
+            MoodleStatusResponse(status = true)
 
         repository.enrolIntoCourse(accountId, courseId, password = "secret")
 
-        coVerify { elearningApi.courses.enrollIntoCourse(token, courseId.value, "secret") }
+        coVerify { elearningApi.moodle.course.enrolUser(courseId.value, "secret", auth = auth) }
         scope.coroutineContext[Job]?.cancel()
     }
 

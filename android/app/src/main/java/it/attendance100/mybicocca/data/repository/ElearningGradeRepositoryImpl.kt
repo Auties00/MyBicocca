@@ -9,12 +9,16 @@ import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncStateDa
 import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncStateEntity
 import it.attendance100.mybicocca.data.mapper.elearning.toDomain
 import it.attendance100.mybicocca.data.mapper.elearning.toEntity
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
 import it.attendance100.mybicocca.di.ApplicationScope
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.domain.model.elearning.grade.CourseGradeOverview
 import it.attendance100.mybicocca.domain.model.elearning.grade.GradeItem
 import it.attendance100.mybicocca.domain.repository.ElearningGradeRepository
+import java.util.concurrent.ConcurrentHashMap
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
@@ -23,9 +27,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import java.util.concurrent.ConcurrentHashMap
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Grade repository backed by the Moodle gradereport web services and the Room grade
@@ -73,7 +74,7 @@ class ElearningGradeRepositoryImpl @Inject constructor(
         if (!force && !isStale(accountId, ElearningSyncScope.COURSE_GRADES, courseId.value.toLong())) return
         val account = sessionManager.activeAccount.value ?: error("No active account.")
         val (api, token) = sessionManager.elearning()
-        val response = api.grades.getGradeItems(token, courseId.value, account.learning.lmsUserId, null)
+        val response = api.moodle.grade.getGradeItems(courseId.value, userId = account.learning.lmsUserId, auth = MoodleTokenAuth(token))
         val items = response.userGrades
             .firstOrNull { it.userId == account.learning.lmsUserId }
             ?.gradeItems
@@ -101,7 +102,7 @@ class ElearningGradeRepositoryImpl @Inject constructor(
         if (!force && !isStale(accountId, ElearningSyncScope.ALL_COURSE_GRADES, 0)) return
         val account = sessionManager.activeAccount.value ?: error("No active account.")
         val (api, token) = sessionManager.elearning()
-        val response = api.grades.getCourseGrades(token, account.learning.lmsUserId)
+        val response = api.moodle.grade.getCourseGrades(userId = account.learning.lmsUserId, auth = MoodleTokenAuth(token))
         val rows = response.grades.map { it.toEntity(accountId, courseName = null) }
         gradeDao.replaceAllCourseGrades(accountId.value, rows)
         stamp(accountId, ElearningSyncScope.ALL_COURSE_GRADES, 0)

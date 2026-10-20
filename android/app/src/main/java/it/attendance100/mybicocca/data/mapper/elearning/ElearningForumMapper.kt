@@ -4,9 +4,9 @@ import it.attendance100.mybicocca.data.local.elearning.forum.DiscussionEntity
 import it.attendance100.mybicocca.data.local.elearning.forum.ForumEntity
 import it.attendance100.mybicocca.data.local.elearning.forum.PostEntity
 import it.attendance100.mybicocca.data.local.elearning.sync.ElearningJson
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningForum
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningForumDiscussion
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningForumPost
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleForum
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleForumDiscussion
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleForumPost
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.domain.model.elearning.forum.Discussion
@@ -27,20 +27,20 @@ import java.time.Instant
  * subscription is force-disabled (forcesubscribe 3) and attaching is possible when the
  * forum allows at least one attachment.
  */
-internal fun ElearningForum.toEntity(accountId: AccountId): ForumEntity =
+internal fun MoodleForum.toEntity(accountId: AccountId): ForumEntity =
     ForumEntity(
         accountId = accountId.value,
         forumId = id,
-        courseId = courseId,
-        cmId = courseModuleId,
+        courseId = course,
+        cmId = cmId,
         name = name,
-        intro = introduction,
-        typeRaw = type ?: ForumType.Other.raw,
-        discussionCount = numberOfDiscussions ?: 0,
+        intro = intro,
+        typeRaw = type.ifEmpty { ForumType.Other.raw },
+        discussionCount = numDiscussions ?: 0,
         postCount = 0,
         canCreateDiscussions = canCreateDiscussions == true,
         canSubscribe = forceSubscribe != 3,
-        canAttachFiles = (maxAttachments ?: 0) > 0,
+        canAttachFiles = maxAttachments > 0,
     )
 
 /** Maps a cached forum row to the domain model, resolving the forum type from its raw value. */
@@ -65,28 +65,28 @@ internal fun ForumEntity.toDomain(): Forum =
  * ids fall back accordingly; the opening post's HTML is reduced to a single-line plain
  * preview at write time; epoch-second timestamps are normalized to milliseconds.
  */
-internal fun ElearningForumDiscussion.toEntity(accountId: AccountId, forumId: Int): DiscussionEntity =
+internal fun MoodleForumDiscussion.toEntity(accountId: AccountId, forumId: Int): DiscussionEntity =
     DiscussionEntity(
         accountId = accountId.value,
-        discussionId = discussionId ?: id,
+        discussionId = discussion.takeIf { it != 0 } ?: id,
         forumId = forumId,
-        firstPostId = parentPostId ?: id,
-        subject = subject ?: name,
-        authorUserId = authorUserId,
-        authorName = authorFullName ?: "—",
-        authorAvatarUrl = authorPictureUrl,
-        createdAtMs = createdTimestamp.toMillisOrNullSec(),
-        timeModifiedMs = (modifiedAtTimestamp ?: modifiedTimestamp).toMillisOrNullSec(),
-        isPinned = pinned == true,
-        isLocked = locked == true,
-        unreadCount = numberOfUnread ?: 0,
-        replyCount = numberOfReplies ?: 0,
-        lastPostAuthorName = modifierFullName ?: authorFullName,
-        messagePreview = message?.toPlainPreview(),
-        hasAttachments = hasAttachment == true,
-        canReply = canReply == true,
-        isFavourite = starred == true,
-        canFavourite = canFavourite == true,
+        firstPostId = parent.takeIf { it != 0 } ?: id,
+        subject = subject.ifEmpty { name },
+        authorUserId = userId,
+        authorName = userFullName.ifEmpty { "—" },
+        authorAvatarUrl = userPictureUrl.ifEmpty { null },
+        createdAtMs = created.toMillisOrNullSec(),
+        timeModifiedMs = (modified.takeIf { it > 0 } ?: timeModified).toMillisOrNullSec(),
+        isPinned = pinned,
+        isLocked = locked,
+        unreadCount = numUnread,
+        replyCount = numReplies,
+        lastPostAuthorName = userModifiedFullName.ifEmpty { userFullName },
+        messagePreview = message.toPlainPreview(),
+        hasAttachments = attachment.isNotEmpty() && attachment != "0",
+        canReply = canReply,
+        isFavourite = starred,
+        canFavourite = canFavourite,
     )
 
 /** Maps a cached discussion row to the domain model. */
@@ -119,33 +119,33 @@ internal fun DiscussionEntity.toDomain(): Discussion =
  * (reply/edit/delete) into columns. Epoch-second timestamps are normalized to
  * milliseconds.
  */
-internal fun ElearningForumPost.toEntity(accountId: AccountId, discussionIdFallback: Int): PostEntity {
-    val attachmentRefs = attachments.orEmpty().map { file ->
+internal fun MoodleForumPost.toEntity(accountId: AccountId, discussionIdFallback: Int): PostEntity {
+    val attachmentRefs = attachments.map { file ->
         AttachmentRefJson(
-            fileName = file.fileName ?: "file",
-            fileUrl = file.fileUrl,
-            mimeType = file.mimeType,
+            fileName = file.fileName.ifEmpty { "file" },
+            fileUrl = file.url,
+            mimeType = null,
             sizeBytes = file.fileSize,
         )
     }
     return PostEntity(
         accountId = accountId.value,
         postId = id,
-        discussionId = discussionId ?: discussionIdFallback,
+        discussionId = discussionId.takeIf { it != 0 } ?: discussionIdFallback,
         parentId = parentId,
-        authorUserId = author?.id,
-        authorName = author?.fullName ?: "—",
-        authorAvatarUrl = author?.urls?.profileImage,
-        subject = subject ?: "",
-        message = message ?: "",
-        createdAtMs = createdTimestamp.toMillisOrNullSec(),
-        modifiedAtMs = modifiedTimestamp.toMillisOrNullSec(),
+        authorUserId = author.id,
+        authorName = author.fullName ?: "—",
+        authorAvatarUrl = author.urls.profileImage,
+        subject = subject,
+        message = message,
+        createdAtMs = timeCreated.toMillisOrNullSec(),
+        modifiedAtMs = timeModified.toMillisOrNullSec(),
         attachmentsJson = if (attachmentRefs.isEmpty()) null
         else ElearningJson.encodeToString(attachmentRefs),
-        canReply = capabilities?.reply == true,
-        canEdit = capabilities?.edit == true,
-        canDelete = capabilities?.delete == true,
-        isDeleted = isDeleted == true,
+        canReply = capabilities.reply,
+        canEdit = capabilities.edit,
+        canDelete = capabilities.delete,
+        isDeleted = isDeleted,
     )
 }
 

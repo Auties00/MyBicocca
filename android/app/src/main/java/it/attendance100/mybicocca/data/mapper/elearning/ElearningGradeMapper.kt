@@ -2,8 +2,8 @@ package it.attendance100.mybicocca.data.mapper.elearning
 
 import it.attendance100.mybicocca.data.local.elearning.grade.CourseGradeOverviewEntity
 import it.attendance100.mybicocca.data.local.elearning.grade.GradeItemEntity
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningCourseGrade
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningGradeItem
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseGrade
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleGradeItem
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.domain.model.elearning.grade.CourseGradeOverview
@@ -18,7 +18,7 @@ import java.time.Instant
  * (commas tolerated as decimal separators), and epoch-second timestamps are normalized
  * to milliseconds.
  */
-internal fun ElearningGradeItem.toEntity(
+internal fun MoodleGradeItem.toEntity(
     accountId: AccountId,
     courseId: Int,
     sortOrder: Int,
@@ -27,9 +27,9 @@ internal fun ElearningGradeItem.toEntity(
         accountId = accountId.value,
         courseId = courseId,
         itemId = id.toLong(),
-        name = itemName?.takeIf { it.isNotBlank() } ?: itemModule.orEmpty(),
-        typeRaw = itemType ?: "other",
-        activityType = itemModule,
+        name = itemName.ifBlank { itemModule },
+        typeRaw = itemType.ifEmpty { "other" },
+        activityType = itemModule.ifEmpty { null },
         grade = gradeRaw,
         maxGrade = gradeMax,
         percentage = percentageFormatted?.parsePercent(),
@@ -60,7 +60,7 @@ internal fun GradeItemEntity.toDomain(): GradeItem =
  * name, so the name is supplied by the caller (or stored empty) and the raw value is
  * parsed to a number when possible.
  */
-internal fun ElearningCourseGrade.toEntity(
+internal fun MoodleCourseGrade.toEntity(
     accountId: AccountId,
     courseName: String?,
 ): CourseGradeOverviewEntity =
@@ -68,9 +68,9 @@ internal fun ElearningCourseGrade.toEntity(
         accountId = accountId.value,
         courseId = courseId,
         courseName = courseName.orEmpty(),
-        grade = rawGrade?.toDoubleOrNull(),
+        grade = rawGrade.toDoubleOrNull(),
         maxGrade = null,
-        gradeFormatted = grade,
+        gradeFormatted = grade.ifEmpty { null },
     )
 
 /** Maps a cached course-grade overview row to the domain model. */
