@@ -315,11 +315,11 @@ export function encodeMoodleUnreadConversationCounts(value: MoodleUnreadConversa
 
 export interface MoodleUnreadCountsByType {
   /** Total number of unread individual conversations */
-  individual: number;
+  individualConversations: number;
   /** Total number of unread group conversations */
-  group: number;
+  groupConversations: number;
   /** Total number of unread self conversations */
-  self: number;
+  selfConversations: number;
 }
 
 /** Decodes a {@link MoodleUnreadCountsByType}; `undefined` when `json` isn't an object. */
@@ -327,17 +327,17 @@ export function decodeMoodleUnreadCountsByType(json: unknown): MoodleUnreadCount
   const object = asJsonObject(json);
   if (object === undefined) return undefined;
   return {
-    individual: decodeInteger(object["1"]) ?? 0,
-    group: decodeInteger(object["2"]) ?? 0,
-    self: decodeInteger(object["3"]) ?? 0,
+    individualConversations: decodeInteger(object["1"]) ?? 0,
+    groupConversations: decodeInteger(object["2"]) ?? 0,
+    selfConversations: decodeInteger(object["3"]) ?? 0,
   };
 }
 
 export function encodeMoodleUnreadCountsByType(value: MoodleUnreadCountsByType): JsonObject {
   return {
-    "1": value.individual,
-    "2": value.group,
-    "3": value.self,
+    "1": value.individualConversations,
+    "2": value.groupConversations,
+    "3": value.selfConversations,
   };
 }
 

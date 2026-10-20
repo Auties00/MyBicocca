@@ -21,6 +21,8 @@ import it.attendance100.mybicocca.codegen.target.swift.SwiftSyntax.doc
 internal class SwiftRecordEmitter(private val layout: SwiftLayout) {
 
     fun emit(record: RecordType, out: CodeWriter) {
+        // Initializers assign `self.name = name`, which a member named `self` would shadow.
+        require(record.fields.none { it.name == "self" }) { "Record '${record.name}': Swift members can't be named 'self'" }
         out.doc(record.description)
         when (val encoding = record.encoding) {
             RecordEncoding.Object -> objectRecord(record, out)

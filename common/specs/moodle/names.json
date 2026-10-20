@@ -1,7 +1,7 @@
 {
-    "1": "individual",
-    "2": "group",
-    "3": "self",
+    "1": "individualConversations",
+    "2": "groupConversations",
+    "3": "selfConversations",
     "acceptsubmissionstatement": "acceptSubmissionStatement",
     "accessrules": "accessRules",
     "action": "",

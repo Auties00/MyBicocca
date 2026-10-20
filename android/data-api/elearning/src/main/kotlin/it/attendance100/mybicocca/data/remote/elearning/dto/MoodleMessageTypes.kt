@@ -229,15 +229,15 @@ data class MoodleUnreadConversationCounts(
 data class MoodleUnreadCountsByType(
     /** Total number of unread individual conversations */
     @SerialName("1")
-    val individual: Int = 0,
+    val individualConversations: Int = 0,
 
     /** Total number of unread group conversations */
     @SerialName("2")
-    val group: Int = 0,
+    val groupConversations: Int = 0,
 
     /** Total number of unread self conversations */
     @SerialName("3")
-    val self: Int = 0
+    val selfConversations: Int = 0
 )
 
 @Serializable
