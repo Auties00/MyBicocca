@@ -264,7 +264,8 @@ internal class MoodleModelBuilder(
         /** Component words that say nothing about the component (`core_course`, `mod_forum`). */
         val GENERIC_COMPONENT_WORDS = setOf("core", "mod", "tool")
 
-        val LONG_INTEGER = Regex("time|date|size|bytes|access|login")
+        /** Integers named like times, dates and sizes, or one of the bare timestamp names. */
+        val LONG_INTEGER = Regex("time|date|size|bytes|access|login|^(created|modified|start|end|locked)$")
 
         /** `Discussions` → `Discussion`, `Replies` → `Reply`, `Statuses` → `Status`. */
         fun singular(name: String): String = when {

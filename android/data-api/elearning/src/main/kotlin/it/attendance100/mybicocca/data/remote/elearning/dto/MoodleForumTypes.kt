@@ -763,11 +763,11 @@ data class MoodleForumDiscussion(
 
     /** Creation time */
     @SerialName("created")
-    val created: Int = 0,
+    val created: Long = 0L,
 
     /** Time modified */
     @SerialName("modified")
-    val modified: Int = 0,
+    val modified: Long = 0L,
 
     /** Mailed? */
     @SerialName("mailed")
@@ -1128,19 +1128,19 @@ data class MoodleDiscussionGroupUrls(
 data class MoodleDiscussionTimes(
     /** modified */
     @SerialName("modified")
-    val modified: Int,
+    val modified: Long,
 
     /** start */
     @SerialName("start")
-    val start: Int,
+    val start: Long,
 
     /** end */
     @SerialName("end")
-    val end: Int,
+    val end: Long,
 
     /** locked */
     @SerialName("locked")
-    val locked: Int
+    val locked: Long
 )
 
 @Serializable
