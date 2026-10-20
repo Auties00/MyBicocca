@@ -473,40 +473,40 @@ public struct MoodleUnreadConversationCounts: Codable, Hashable, Sendable {
 
 public struct MoodleUnreadCountsByType: Codable, Hashable, Sendable {
     /// Total number of unread individual conversations
-    public var individual: Int
+    public var individualConversations: Int
     /// Total number of unread group conversations
-    public var group: Int
+    public var groupConversations: Int
     /// Total number of unread self conversations
-    public var `self`: Int
+    public var selfConversations: Int
 
     public init(
-        individual: Int = 0,
-        group: Int = 0,
-        `self`: Int = 0
+        individualConversations: Int = 0,
+        groupConversations: Int = 0,
+        selfConversations: Int = 0
     ) {
-        self.individual = individual
-        self.group = group
-        self.`self` = `self`
+        self.individualConversations = individualConversations
+        self.groupConversations = groupConversations
+        self.selfConversations = selfConversations
     }
 
     private enum CodingKeys: String, CodingKey {
-        case individual = "1"
-        case group = "2"
-        case `self` = "3"
+        case individualConversations = "1"
+        case groupConversations = "2"
+        case selfConversations = "3"
     }
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.individual = container.decodeLenient(Int.self, forKey: .individual) ?? 0
-        self.group = container.decodeLenient(Int.self, forKey: .group) ?? 0
-        self.`self` = container.decodeLenient(Int.self, forKey: .`self`) ?? 0
+        self.individualConversations = container.decodeLenient(Int.self, forKey: .individualConversations) ?? 0
+        self.groupConversations = container.decodeLenient(Int.self, forKey: .groupConversations) ?? 0
+        self.selfConversations = container.decodeLenient(Int.self, forKey: .selfConversations) ?? 0
     }
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(individual, forKey: .individual)
-        try container.encode(group, forKey: .group)
-        try container.encode(`self`, forKey: .`self`)
+        try container.encode(individualConversations, forKey: .individualConversations)
+        try container.encode(groupConversations, forKey: .groupConversations)
+        try container.encode(selfConversations, forKey: .selfConversations)
     }
 }
 
