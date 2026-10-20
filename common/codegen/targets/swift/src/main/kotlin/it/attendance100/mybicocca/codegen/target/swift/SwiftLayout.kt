@@ -3,6 +3,8 @@ package it.attendance100.mybicocca.codegen.target.swift
 import it.attendance100.mybicocca.codegen.core.Text
 import it.attendance100.mybicocca.codegen.model.ApiModule
 import it.attendance100.mybicocca.codegen.model.ApiSpec
+import it.attendance100.mybicocca.codegen.model.AuthRequirement
+import it.attendance100.mybicocca.codegen.model.DefaultValue
 import it.attendance100.mybicocca.codegen.model.EnumType
 import it.attendance100.mybicocca.codegen.model.PrimitiveKind
 import it.attendance100.mybicocca.codegen.model.TypeRef
@@ -17,6 +19,8 @@ import it.attendance100.mybicocca.codegen.model.TypeRef
  * | Every enum                     | `Esse3EnumTypes.swift`       |
  * | Operations of module `Careers` | `Esse3CareersApi.swift`      |
  * | Facade                         | `Esse3Api.swift`             |
+ * | Servers, if any                | `Esse3Server.swift` (enum)   |
+ * | Auth schemes, if any           | `Esse3AuthTypes.swift`       |
  *
  * The hand-written runtime:
  * - The shared runtime module ([runtimeModule]): `LocalDate`, `LocalDateTime`, `JSONObject`,
@@ -30,6 +34,31 @@ internal class SwiftLayout(private val spec: ApiSpec, val runtimeModule: String)
     val enumsFileName = "${spec.prefix}EnumTypes.swift"
     val facadeName = "${spec.prefix}Api"
     val client = "${spec.prefix}Client"
+    val server = "${spec.prefix}Server"
+    val authFileName = "${spec.prefix}AuthTypes.swift"
+    val authBase = "${spec.prefix}Auth"
+
+    fun authClass(name: String): String = "${spec.prefix}${name}Auth"
+
+    fun serverCase(name: String): String = SwiftSyntax.identifier(Text.lowerCamel(name))
+
+    /** The parameter type of [auth]: the scheme's struct when there is one, else any scheme. */
+    fun authType(auth: AuthRequirement): String = auth.schemes.singleOrNull()?.let(::authClass) ?: "any $authBase"
+
+    fun authDescription(auth: AuthRequirement): String {
+        val schemes = auth.schemes.joinToString(" or ") { "``${authClass(it)}``" }
+        return if (auth.required) "The credentials: $schemes." else "The credentials, if any: $schemes."
+    }
+
+    /** A Swift literal for [literal] as a value of [type]. */
+    fun literal(type: TypeRef, literal: DefaultValue.Literal): String = when (type) {
+        is TypeRef.Named -> {
+            val enum = spec.resolve(type) as EnumType
+            ".${SwiftSyntax.identifier(caseNames(enum).getValue(enum.values.first { it.wireValue == literal.value }.name))}"
+        }
+        is TypeRef.Primitive -> if (type.kind == PrimitiveKind.STRING) SwiftSyntax.string(literal.value) else literal.value
+        is TypeRef.ListOf -> error("Lists can't have a literal default")
+    }
 
     fun recordsFileName(module: ApiModule): String = "${spec.prefix}${module.name}Types.swift"
 
@@ -49,7 +78,9 @@ internal class SwiftLayout(private val spec: ApiSpec, val runtimeModule: String)
             PrimitiveKind.BOOLEAN -> "Bool"
             PrimitiveKind.LOCAL_DATE -> "LocalDate"
             PrimitiveKind.LOCAL_DATE_TIME -> "LocalDateTime"
+            PrimitiveKind.LOCAL_TIME -> "LocalTime"
             PrimitiveKind.JSON_OBJECT -> "JSONObject"
+            PrimitiveKind.JSON_VALUE -> "JSONValue"
             PrimitiveKind.BINARY -> "Data"
         }
     }

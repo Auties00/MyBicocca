@@ -1,8 +1,10 @@
 package it.attendance100.mybicocca.data.remote.affluences.api
 
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesValidateReservationRequest
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesTrustDeviceRequest
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesReservationRequest
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesResourceTypeFilters
 import it.attendance100.mybicocca.data.remote.affluences.exception.AffluencesException
-import it.attendance100.mybicocca.data.remote.common.exception.ApiRequestException
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assumptions.assumeTrue
@@ -145,10 +147,12 @@ class AffluencesReservationApiTest : AffluencesTestBase() {
         val error = runCatching {
             api.reservations.createReservation(
                 resourceId = filters.resources.first().resourceId,
-                email = "not-an-email",
-                date = LocalDate.parse(filters.openDays.first()),
-                startTime = startTime,
-                endTime = startTime.plusMinutes(filters.durations.firstOrNull()?.toLong() ?: 60L)
+                body = AffluencesReservationRequest(
+                    email = "not-an-email",
+                    date = LocalDate.parse(filters.openDays.first()),
+                    startTime = startTime,
+                    endTime = startTime.plusMinutes(filters.durations.firstOrNull()?.toLong() ?: 60L),
+                ),
             )
         }.exceptionOrNull()
         val affluencesError = assertInstanceOf<AffluencesException>(error, "Invalid emails should be reported as AffluencesException")
@@ -159,7 +163,7 @@ class AffluencesReservationApiTest : AffluencesTestBase() {
     @Test
     suspend fun validateReservationWithBogusCodeThrows() {
         val error = runCatching {
-            api.reservations.validateReservation(validationCode = "000000", email = "test@example.com")
+            api.reservations.validateReservation(AffluencesValidateReservationRequest(validationCode = "000000", email = "test@example.com"))
         }.exceptionOrNull()
         val affluencesError = assertInstanceOf<AffluencesException>(error, "Bogus codes should be reported as AffluencesException")
         assertEquals("invalid_validation_code", affluencesError.errorCode, "Error code should identify the invalid code")
@@ -174,23 +178,23 @@ class AffluencesReservationApiTest : AffluencesTestBase() {
         assertTrue(affluencesError.errorMessage.isNotBlank(), "Error message should not be blank")
     }
 
-    /** The backend rejects unknown tokens without a structured error body. */
+    /** The backend rejects unknown tokens without a structured error body, so only the status is set. */
     @Test
     suspend fun getReservationToCancelWithBogusTokenThrows() {
         val error = runCatching {
             api.reservations.getReservationToCancel("bogus-token")
         }.exceptionOrNull()
-        val requestError = assertInstanceOf<ApiRequestException>(error, "Bogus tokens should be reported as ApiRequestException")
+        val requestError = assertInstanceOf<AffluencesException>(error, "Bogus tokens should be reported as AffluencesException")
         assertTrue(requestError.statusCode >= 400, "Status code should be an error")
     }
 
-    /** The backend rejects unknown tokens without a structured error body. */
+    /** The backend rejects unknown tokens without a structured error body, so only the status is set. */
     @Test
     suspend fun cancelReservationWithBogusTokenThrows() {
         val error = runCatching {
             api.reservations.cancelReservation("bogus-token")
         }.exceptionOrNull()
-        val requestError = assertInstanceOf<ApiRequestException>(error, "Bogus tokens should be reported as ApiRequestException")
+        val requestError = assertInstanceOf<AffluencesException>(error, "Bogus tokens should be reported as AffluencesException")
         assertTrue(requestError.statusCode >= 400, "Status code should be an error")
     }
 
@@ -204,7 +208,7 @@ class AffluencesReservationApiTest : AffluencesTestBase() {
     @Test
     suspend fun trustDeviceWithBogusTokenThrows() {
         val error = runCatching {
-            api.reservations.trustDevice(email = "test@example.com", token = "bogus-token")
+            api.reservations.trustDevice(AffluencesTrustDeviceRequest(email = "test@example.com", token = "bogus-token"))
         }.exceptionOrNull()
         val affluencesError = assertInstanceOf<AffluencesException>(error, "Bogus tokens should be reported as AffluencesException")
         assertTrue(affluencesError.errorMessage.isNotBlank(), "Error message should not be blank")

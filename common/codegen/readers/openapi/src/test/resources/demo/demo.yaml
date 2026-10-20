@@ -1,0 +1,73 @@
+openapi: 3.0.3
+info:
+  title: Demo
+  version: "1"
+x-mb-id: demo
+x-mb-prefix: Demo
+servers:
+  - url: https://api.example.com/v1
+    x-mb-name: Main
+  - url: https://files.example.com
+    x-mb-name: Files
+components:
+  x-mb-auth-schemes:
+    Token:
+      description: A bearer token.
+      parameters:
+        - name: token
+      headers:
+        Authorization: "Bearer {token}"
+  parameters:
+    itemId:
+      name: item_id
+      in: path
+      required: true
+      schema: { type: integer, format: int64 }
+  schemas:
+    DemoStatus:
+      type: string
+      enum: [IN_USE, retired]
+      x-enum-varnames: [InUse, Retired]
+      x-mb-wrapped: true
+    DemoItem:
+      type: object
+      required: [item_id, nome]
+      properties:
+        item_id: { type: integer, format: int64 }
+        nome: { type: string, x-mb-name: name }
+        stato: { $ref: "#/components/schemas/DemoStatus" }
+        tags: { type: array, items: { type: string } }
+        rating: { type: number, default: 2.5 }
+        opens_at: { type: string, format: time, x-mb-pattern: "HH:mm" }
+        payload: {}
+        owner: { $ref: "#/components/schemas/DemoOwner" }
+    DemoOwner:
+      type: object
+      properties:
+        id: { type: string }
+paths:
+  /items/{item_id}:
+    get:
+      tags: [items]
+      operationId: getItem
+      summary: Gets an item.
+      parameters:
+        - $ref: "#/components/parameters/itemId"
+        - name: X-Zone
+          in: header
+          x-mb-name: zone
+          schema: { type: string, default: Europe/Rome }
+      x-mb-envelope: [data]
+      x-mb-headers: { x-client: sdk }
+      x-mb-auth: { schemes: [Token], required: false }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/DemoItem" } } } }
+  /files/{item_id}:
+    servers: [{ url: https://files.example.com }]
+    post:
+      tags: [files]
+      operationId: touchFile
+      parameters: [{ $ref: "#/components/parameters/itemId" }]
+      x-mb-empty-body: true
+      responses:
+        "204": { description: Done }

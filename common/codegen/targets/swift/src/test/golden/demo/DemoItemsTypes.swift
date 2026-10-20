@@ -16,6 +16,10 @@ public struct DemoItem: Codable, Hashable, Sendable {
     public var owner: DemoOwner
     public var previousOwners: [DemoOwner]
     public var extra: JSONObject?
+    public var opensAt: LocalTime?
+    public var payload: JSONValue?
+    public var kind: DemoKind
+    public var rating: Double
     /// A field named like a keyword.
     public var `default`: String?
 
@@ -30,6 +34,10 @@ public struct DemoItem: Codable, Hashable, Sendable {
         owner: DemoOwner,
         previousOwners: [DemoOwner] = [],
         extra: JSONObject? = nil,
+        opensAt: LocalTime? = nil,
+        payload: JSONValue? = nil,
+        kind: DemoKind = .book,
+        rating: Double = 2.5,
         `default`: String? = nil
     ) {
         self.name = name
@@ -42,6 +50,10 @@ public struct DemoItem: Codable, Hashable, Sendable {
         self.owner = owner
         self.previousOwners = previousOwners
         self.extra = extra
+        self.opensAt = opensAt
+        self.payload = payload
+        self.kind = kind
+        self.rating = rating
         self.`default` = `default`
     }
 
@@ -56,6 +68,10 @@ public struct DemoItem: Codable, Hashable, Sendable {
         case owner = "proprietario"
         case previousOwners = "storico"
         case extra = "extra"
+        case opensAt = "apertura"
+        case payload = "payload"
+        case kind = "tipo"
+        case rating = "voto"
         case `default` = "default"
     }
 
@@ -71,6 +87,10 @@ public struct DemoItem: Codable, Hashable, Sendable {
         self.owner = try container.decodeRequired(DemoOwner.self, forKey: .owner)
         self.previousOwners = container.decodeLenient([DemoOwner].self, forKey: .previousOwners) ?? []
         self.extra = container.decodeLenient(JSONObject.self, forKey: .extra)
+        self.opensAt = try container.decodeTemporal(LocalTime.self, forKey: .opensAt, pattern: "HH:mm", blankAsNull: false)
+        self.payload = container.decodeLenient(JSONValue.self, forKey: .payload)
+        self.kind = container.decodeLenient(DemoKind.self, forKey: .kind) ?? .book
+        self.rating = container.decodeLenient(Double.self, forKey: .rating) ?? 2.5
         self.`default` = container.decodeLenient(String.self, forKey: .`default`)
     }
 
@@ -86,6 +106,10 @@ public struct DemoItem: Codable, Hashable, Sendable {
         try container.encode(owner, forKey: .owner)
         try container.encode(previousOwners, forKey: .previousOwners)
         try container.encode(extra, forKey: .extra)
+        try container.encodeTemporal(opensAt, forKey: .opensAt, pattern: "HH:mm")
+        try container.encode(payload, forKey: .payload)
+        try container.encode(kind, forKey: .kind)
+        try container.encode(rating, forKey: .rating)
         try container.encode(`default`, forKey: .`default`)
     }
 }

@@ -15,7 +15,7 @@ public final class Esse3Client: Sendable {
 
     public func json<T: Decodable>(_ request: RestRequest, roles: Set<Esse3PermissionLevel>) async throws -> T {
         let response = try await execute(request, roles: roles)
-        return try JSONDecoder().decode(T.self, from: response.body)
+        return try response.decode(T.self, envelope: request.envelope)
     }
 
     /// Like ``json(_:roles:)`` for list responses; Esse3 answers HTTP 404 for an empty list.
@@ -25,7 +25,7 @@ public final class Esse3Client: Sendable {
             return []
         }
         try ensureSuccess(response, roles: roles)
-        return try JSONDecoder().decode([T].self, from: response.body)
+        return try response.decode([T].self, envelope: request.envelope)
     }
 
     public func data(_ request: RestRequest, roles: Set<Esse3PermissionLevel>) async throws -> Data {

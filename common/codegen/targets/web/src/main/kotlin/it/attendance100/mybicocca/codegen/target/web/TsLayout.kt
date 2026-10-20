@@ -2,6 +2,8 @@ package it.attendance100.mybicocca.codegen.target.web
 
 import it.attendance100.mybicocca.codegen.model.ApiModule
 import it.attendance100.mybicocca.codegen.model.ApiSpec
+import it.attendance100.mybicocca.codegen.model.AuthRequirement
+import it.attendance100.mybicocca.codegen.model.DefaultValue
 import it.attendance100.mybicocca.codegen.model.EnumType
 import it.attendance100.mybicocca.codegen.model.PrimitiveKind
 import it.attendance100.mybicocca.codegen.model.RecordType
@@ -17,6 +19,8 @@ import it.attendance100.mybicocca.codegen.model.TypeRef
  * | Every enum                     | `Esse3EnumTypes.ts`      |
  * | Operations of module `Careers` | `Esse3CareersApi.ts`     |
  * | Facade                         | `Esse3Api.ts`            |
+ * | Servers, if any                | `Esse3Server.ts`         |
+ * | Auth schemes, if any           | `Esse3AuthTypes.ts`      |
  * | Re-exports of all of the above | `index.ts`               |
  *
  * A record `X` is an interface with `decodeX(json)` and `encodeX(value)` functions; an enum
@@ -33,6 +37,31 @@ internal class TsLayout(private val spec: ApiSpec, val runtimeModule: String, va
     val facadeName = "${spec.prefix}Api"
     val client = "${spec.prefix}Client"
     val roles = "${spec.prefix}PermissionLevel"
+    val server = "${spec.prefix}Server"
+    val serverFile = "${spec.prefix}Server.ts"
+    val authFile = "${spec.prefix}AuthTypes.ts"
+    val authBase = "${spec.prefix}Auth"
+
+    fun authClass(name: String): String = "${spec.prefix}${name}Auth"
+
+    /** The parameter type of [auth]: the scheme's class when there is one, else the union of all. */
+    fun authType(auth: AuthRequirement, file: TsFile): String {
+        val type = auth.schemes.singleOrNull()?.let(::authClass) ?: authBase
+        file.import(type, moduleOf(authFile))
+        return type
+    }
+
+    fun authDescription(auth: AuthRequirement): String {
+        val schemes = auth.schemes.joinToString(" or ") { "{@link ${authClass(it)}}" }
+        return if (auth.required) "The credentials: $schemes." else "The credentials, if any: $schemes."
+    }
+
+    /** A TypeScript literal for [literal] as a value of [type]; enum values are their wire strings. */
+    fun literal(type: TypeRef, literal: DefaultValue.Literal): String = when (type) {
+        is TypeRef.Named -> TsSyntax.string(literal.value)
+        is TypeRef.Primitive -> if (type.kind == PrimitiveKind.STRING) TsSyntax.string(literal.value) else literal.value
+        is TypeRef.ListOf -> error("Lists can't have a literal default")
+    }
 
     private val fileByDeclaration: Map<String, String> =
         spec.modules.flatMap { module -> module.records.map { it.name to recordsFile(module) } }.toMap() +
@@ -76,7 +105,9 @@ internal class TsLayout(private val spec: ApiSpec, val runtimeModule: String, va
             PrimitiveKind.BOOLEAN -> "boolean"
             PrimitiveKind.LOCAL_DATE -> runtimeType("LocalDate", file)
             PrimitiveKind.LOCAL_DATE_TIME -> runtimeType("LocalDateTime", file)
+            PrimitiveKind.LOCAL_TIME -> runtimeType("LocalTime", file)
             PrimitiveKind.JSON_OBJECT -> runtimeType("JsonObject", file)
+            PrimitiveKind.JSON_VALUE -> runtimeType("JsonValue", file)
             PrimitiveKind.BINARY -> "Uint8Array"
         }
     }

@@ -1,9 +1,9 @@
 import type { JsonValue } from "./coding.js";
-import type { LocalDate, LocalDateTime } from "./temporal.js";
+import type { LocalDate, LocalDateTime, LocalTime } from "./temporal.js";
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
 
-type QueryScalar = string | number | boolean | LocalDate | LocalDateTime;
+type QueryScalar = string | number | boolean | LocalDate | LocalDateTime | LocalTime;
 
 /**
  * A value sent as a query, form or path parameter; `null` and `undefined` are left out and
@@ -15,6 +15,11 @@ function formatQueryValue(value: NonNullable<QueryValue>): string {
   return Array.isArray(value) ? value.map(String).join(",") : String(value);
 }
 
+/** Credentials that authenticate a request through headers. */
+export interface RequestAuth {
+  readonly headers: Readonly<Record<string, string>>;
+}
+
 /** An HTTP request, relative to an API's base URL. */
 export interface RestRequest {
   method: HttpMethod;
@@ -23,8 +28,16 @@ export interface RestRequest {
   query?: ReadonlyArray<readonly [string, QueryValue]>;
   /** Fields sent as `application/x-www-form-urlencoded`. */
   form?: ReadonlyArray<readonly [string, QueryValue]>;
+  /** Headers; those with no value are left out. */
+  headers?: ReadonlyArray<readonly [string, QueryValue]>;
   /** A value sent as JSON. */
   body?: JsonValue;
+  /** Credentials whose headers are added. */
+  auth?: RequestAuth | null;
+  /** The base URL to send the request to, for APIs with several; the client's own by default. */
+  server?: string;
+  /** Keys of the objects the response value is nested in, outermost first. */
+  envelope?: readonly string[];
 }
 
 /** Percent-encodes a value for use as one path segment. */
@@ -43,12 +56,15 @@ export interface RestConfiguration {
 
 /** Sends `request` and returns the response whatever its status. */
 export function sendRequest(configuration: RestConfiguration, request: RestRequest): Promise<Response> {
-  const url = new URL(configuration.baseUrl.replace(/\/$/, "") + request.path);
+  const url = new URL((request.server ?? configuration.baseUrl).replace(/\/$/, "") + request.path);
   for (const [name, value] of request.query ?? []) {
     if (value !== null && value !== undefined) url.searchParams.append(name, formatQueryValue(value));
   }
 
-  const headers = new Headers({ Accept: "application/json", ...configuration.headers });
+  const headers = new Headers({ Accept: "application/json", ...configuration.headers, ...request.auth?.headers });
+  for (const [name, value] of request.headers ?? []) {
+    if (value !== null && value !== undefined) headers.set(name, formatQueryValue(value));
+  }
   let body: string | URLSearchParams | undefined;
   if (request.form !== undefined) {
     body = new URLSearchParams();

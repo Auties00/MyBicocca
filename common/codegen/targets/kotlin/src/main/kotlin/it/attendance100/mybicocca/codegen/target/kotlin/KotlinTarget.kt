@@ -27,7 +27,7 @@ class KotlinTarget : CodeTarget {
     override fun generate(spec: ApiSpec, context: TargetContext): List<GeneratedFile> {
         val options = context.options.decodeOptions<Options>()
         val layout = KotlinLayout(spec, options.packageName)
-        val records = RecordEmitter(layout, TemporalSerializers(options.temporalSerializers))
+        val records = RecordEmitter(spec, layout, TemporalSerializers(options.temporalSerializers))
         val services = ServiceEmitter(spec, layout)
 
         return buildList {
@@ -41,6 +41,12 @@ class KotlinTarget : CodeTarget {
             }
             if (spec.enums.isNotEmpty()) {
                 add(file(layout.dtoPackage, layout.enumsFileName) { file -> file.body.separated(spec.enums) { EnumEmitter.emit(it, file) } })
+            }
+            if (spec.authSchemes.isNotEmpty()) {
+                add(file(layout.dtoPackage, layout.authFileName) { AuthEmitter(spec, layout).emit(it) })
+            }
+            if (spec.servers.isNotEmpty()) {
+                add(file(layout.apiPackage, "${layout.server.substringAfterLast('.')}.kt") { ServerEmitter(spec, layout).emit(it) })
             }
             add(file(layout.apiPackage, "${layout.facadeName}.kt") { FacadeEmitter(spec, layout).emit(it) })
         }

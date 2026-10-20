@@ -61,6 +61,7 @@ jobs:
         run: |
           npx --yes -p typescript@5.8.3 tsc -p packages/runtime
           npx --yes -p typescript@5.8.3 tsc -p packages/esse3
+          npx --yes -p typescript@5.8.3 tsc -p packages/affluences
 
   swift:
     name: Swift SDKs

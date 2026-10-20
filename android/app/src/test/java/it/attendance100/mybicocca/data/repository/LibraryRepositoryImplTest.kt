@@ -10,6 +10,12 @@ import io.mockk.slot
 import it.attendance100.mybicocca.data.local.credentials.LibraryAccountStore
 import it.attendance100.mybicocca.data.local.library.LibraryReservationDao
 import it.attendance100.mybicocca.data.local.library.LibraryReservationEntity
+import it.attendance100.mybicocca.data.remote.affluences.exception.AffluencesException
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesValidateReservationRequest
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesEmailTokenRequest
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesDeviceAuth
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesCheckinRequest
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesAccountAuth
 import it.attendance100.mybicocca.data.remote.affluences.api.AffluencesApi
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesBookingInfo
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesCheckin
@@ -93,10 +99,10 @@ class LibraryRepositoryImplTest {
     fun `requestEmailValidation mints an api key via check-in when none is stored`() = runTest {
         coEvery { accountStore.apiKey() } returns null
         coEvery { accountStore.deviceId() } returns "device-1"
-        coEvery { api.account.checkIn(deviceId = "device-1", deviceLang = "it") } returns
+        coEvery { api.account.checkIn(AffluencesCheckinRequest(deviceId = "device-1", deviceLang = "it")) } returns
             AffluencesCheckin(apiKey = "minted-key")
         coEvery { accountStore.setApiKey("minted-key") } just Runs
-        coEvery { api.account.requestEmailValidation("minted-key", "mario@campus.unimib.it") } returns
+        coEvery { api.account.requestEmailValidation(AffluencesEmailTokenRequest("mario@campus.unimib.it"), AffluencesDeviceAuth("minted-key")) } returns
             AffluencesEmailLinkRequest(requestUuid = "req-uuid")
 
         val uuid = repository.requestEmailValidation("mario@campus.unimib.it")
@@ -108,7 +114,7 @@ class LibraryRepositoryImplTest {
     @Test
     fun `confirmEmailValidation returns false while still pending`() = runTest {
         coEvery { accountStore.apiKey() } returns "key"
-        coEvery { api.account.pollEmailValidation("key", "req") } throws RuntimeException("does_not_exist")
+        coEvery { api.account.pollEmailValidation("req", AffluencesDeviceAuth("key")) } throws AffluencesException(404, AffluencesException.NOT_VALIDATED_YET, "Not validated yet")
 
         val confirmed = repository.confirmEmailValidation("mario@campus.unimib.it", "req")
 
@@ -119,7 +125,7 @@ class LibraryRepositoryImplTest {
     @Test
     fun `confirmEmailValidation rethrows a non-pending failure`() = runTest {
         coEvery { accountStore.apiKey() } returns "key"
-        coEvery { api.account.pollEmailValidation("key", "req") } throws RuntimeException("500 server error")
+        coEvery { api.account.pollEmailValidation("req", AffluencesDeviceAuth("key")) } throws RuntimeException("500 server error")
 
         assertThrows(RuntimeException::class.java) {
             runBlocking { repository.confirmEmailValidation("m@x.it", "req") }
@@ -129,7 +135,7 @@ class LibraryRepositoryImplTest {
     @Test
     fun `confirmEmailValidation returns false when the token is blank`() = runTest {
         coEvery { accountStore.apiKey() } returns "key"
-        coEvery { api.account.pollEmailValidation("key", "req") } returns AffluencesEmailValidation(authToken = "")
+        coEvery { api.account.pollEmailValidation("req", AffluencesDeviceAuth("key")) } returns AffluencesEmailValidation(authToken = "")
 
         assertThat(repository.confirmEmailValidation("m@x.it", "req")).isFalse()
     }
@@ -137,10 +143,10 @@ class LibraryRepositoryImplTest {
     @Test
     fun `confirmEmailValidation stores the session and syncs on success`() = runTest {
         coEvery { accountStore.apiKey() } returns "key"
-        coEvery { api.account.pollEmailValidation("key", "req") } returns AffluencesEmailValidation(authToken = "auth")
+        coEvery { api.account.pollEmailValidation("req", AffluencesDeviceAuth("key")) } returns AffluencesEmailValidation(authToken = "auth")
         coEvery { accountStore.setSession("m@x.it", "auth") } just Runs
         coEvery { accountStore.authToken() } returns "auth"
-        coEvery { api.account.getMyReservations("key", "auth") } returns AffluencesMyReservations(results = emptyList())
+        coEvery { api.account.getMyReservations(AffluencesAccountAuth("key", "auth")) } returns AffluencesMyReservations(results = emptyList())
         coEvery { reservationDao.replaceAll(any()) } just Runs
 
         val confirmed = repository.confirmEmailValidation("m@x.it", "req")
@@ -163,9 +169,9 @@ class LibraryRepositoryImplTest {
     fun `refreshReservations caches the server list dropping cancelled bookings`() = runTest {
         coEvery { accountStore.apiKey() } returns "key"
         coEvery { accountStore.authToken() } returns "auth"
-        val upcoming = myReservation(1, AffluencesReservationState.UPCOMING)
-        val cancelled = myReservation(2, AffluencesReservationState.CANCELLED)
-        coEvery { api.account.getMyReservations("key", "auth") } returns
+        val upcoming = myReservation(1, AffluencesReservationState.Upcoming)
+        val cancelled = myReservation(2, AffluencesReservationState.Cancelled)
+        coEvery { api.account.getMyReservations(AffluencesAccountAuth("key", "auth")) } returns
             AffluencesMyReservations(results = listOf(upcoming, cancelled))
         val written = slot<List<LibraryReservationEntity>>()
         coEvery { reservationDao.replaceAll(capture(written)) } just Runs
@@ -180,7 +186,7 @@ class LibraryRepositoryImplTest {
     fun `refreshReservations logs out and throws on an expired token`() = runTest {
         coEvery { accountStore.apiKey() } returns "key"
         coEvery { accountStore.authToken() } returns "auth"
-        coEvery { api.account.getMyReservations("key", "auth") } throws RuntimeException("missing_auth_token")
+        coEvery { api.account.getMyReservations(AffluencesAccountAuth("key", "auth")) } throws AffluencesException(401, "missing_auth_token", "Unauthorized")
         coEvery { accountStore.clearSession() } just Runs
         coEvery { reservationDao.clear() } just Runs
 
@@ -214,7 +220,7 @@ class LibraryRepositoryImplTest {
 
     @Test
     fun `cancelReservation tolerates a reservation already gone server-side`() = runTest {
-        coEvery { api.reservations.cancelReservation("ct") } throws RuntimeException("not found")
+        coEvery { api.reservations.cancelReservation("ct") } throws AffluencesException(404, null, "Not found")
         coEvery { accountStore.apiKey() } returns null
 
         repository.cancelReservation(reservation(cancellationToken = "ct"))
@@ -243,8 +249,8 @@ class LibraryRepositoryImplTest {
     @Test
     fun `verifyPresence maps an invalid code to false`() = runTest {
         coEvery { accountStore.email() } returns "m@x.it"
-        coEvery { api.reservations.validateReservation("code", "m@x.it") } throws
-            RuntimeException("invalid_validation_code")
+        coEvery { api.reservations.validateReservation(AffluencesValidateReservationRequest("code", "m@x.it")) } throws
+            AffluencesException(400, AffluencesException.INVALID_VALIDATION_CODE, "Invalid code")
 
         assertThat(repository.verifyPresence("code")).isFalse()
     }
@@ -252,7 +258,7 @@ class LibraryRepositoryImplTest {
     @Test
     fun `verifyPresence returns true on a successful validation`() = runTest {
         coEvery { accountStore.email() } returns "m@x.it"
-        coEvery { api.reservations.validateReservation("code", "m@x.it") } returns
+        coEvery { api.reservations.validateReservation(AffluencesValidateReservationRequest("code", "m@x.it")) } returns
             AffluencesReservationValidation()
         coEvery { accountStore.apiKey() } returns null
 
@@ -262,7 +268,7 @@ class LibraryRepositoryImplTest {
     @Test
     fun `verifyPresence rethrows an unrelated failure`() = runTest {
         coEvery { accountStore.email() } returns "m@x.it"
-        coEvery { api.reservations.validateReservation("code", "m@x.it") } throws
+        coEvery { api.reservations.validateReservation(AffluencesValidateReservationRequest("code", "m@x.it")) } throws
             RuntimeException("503 unavailable")
 
         assertThrows(RuntimeException::class.java) {
@@ -272,7 +278,7 @@ class LibraryRepositoryImplTest {
 
     @Test
     fun `cancelByToken tolerates a reservation already gone server-side`() = runTest {
-        coEvery { api.reservations.cancelReservation("tok") } throws RuntimeException("not_found")
+        coEvery { api.reservations.cancelReservation("tok") } throws AffluencesException(404, "not_found", "Not found")
         coEvery { accountStore.apiKey() } returns null
 
         repository.cancelByToken("tok")

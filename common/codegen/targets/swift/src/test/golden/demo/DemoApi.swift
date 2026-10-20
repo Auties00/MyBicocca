@@ -6,10 +6,12 @@ import Foundation
 /// Entry point of the Demo API: one property per module, all sharing one client.
 public struct DemoApi: Sendable {
     public let items: DemoItemsApi
+    public let search: DemoSearchApi
     public let shared: DemoSharedApi
 
     public init(client: DemoClient) {
         self.items = DemoItemsApi(client: client)
+        self.search = DemoSearchApi(client: client)
         self.shared = DemoSharedApi(client: client)
     }
 }

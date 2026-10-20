@@ -4,8 +4,10 @@ package com.example.demo.dto
 import com.example.runtime.IsoDateTimeSerializer
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 
 /** An item of the catalog. */
@@ -43,6 +45,19 @@ data class DemoItem(
 
     @SerialName("extra")
     val extra: JsonObject? = null,
+
+    @Serializable(with = DemoTimeSerializer::class)
+    @SerialName("apertura")
+    val opensAt: LocalTime? = null,
+
+    @SerialName("payload")
+    val payload: JsonElement? = null,
+
+    @SerialName("tipo")
+    val kind: DemoKind = DemoKind.Book,
+
+    @SerialName("voto")
+    val rating: Double = 2.5,
 
     /** A field named like a keyword. */
     @SerialName("default")
