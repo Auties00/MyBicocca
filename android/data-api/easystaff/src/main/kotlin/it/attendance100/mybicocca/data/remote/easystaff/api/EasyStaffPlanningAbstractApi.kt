@@ -20,6 +20,7 @@ import io.ktor.utils.io.jvm.javaio.toInputStream
 import it.attendance100.mybicocca.data.remote.common.exception.ApiRequestException
 import it.attendance100.mybicocca.data.remote.common.util.buildUrl
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningPortal
+import kotlinx.coroutines.delay
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
@@ -30,6 +31,7 @@ import kotlinx.serialization.json.decodeFromStream
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Abstract base class for the Portale Planning API implementations.
@@ -70,6 +72,13 @@ abstract class EasyStaffPlanningAbstractApi(
         private const val LOCALE_HEADER = "X-APP-LOCALE"
 
         /**
+         * Origin of the official web front-end. Booking writes (`/entry/store`) are refused
+         * with "Unauthorized origin" unless the request carries it as `Origin` (or a
+         * `Referer` on the same host).
+         */
+        private const val PORTAL_ORIGIN = "https://gestioneorari.didattica.unimib.it"
+
+        /**
          * Locale sent with every request.
          */
         private const val LOCALE = "it"
@@ -78,6 +87,18 @@ abstract class EasyStaffPlanningAbstractApi(
          * Error key the backend returns when the guest token is missing or expired.
          */
         private const val INVALID_TOKEN_ERROR = "unauthorized.invalid_token"
+
+        /**
+         * Error key the backend returns when a booking is stored with a guest token younger
+         * than about ten seconds, which it takes for automation.
+         */
+        private const val TOO_FAST_ERROR = "unauthorized.too_fast"
+
+        /**
+         * How long to wait before sending a request rejected as [TOO_FAST_ERROR] again. Measured
+         * against the live backend: a token 9 seconds old is refused, one 12 seconds old is not.
+         */
+        private val GUEST_TOKEN_MIN_AGE = 12.seconds
 
         /**
          * Month format used in schedule paths (yyyy-MM).
@@ -205,6 +226,9 @@ abstract class EasyStaffPlanningAbstractApi(
      * Sends a request, renewing the guest token and sending it again if the backend rejected
      * the token.
      *
+     * Bookings stored with a fresh token are refused as [TOO_FAST_ERROR], which always happens
+     * right after a renewal; the request is then sent once more after [GUEST_TOKEN_MIN_AGE].
+     *
      * Portal-independent requests are sent as they are: the guest token is issued per portal.
      *
      * @param portal The portal the request targets, or null for portal-independent endpoints
@@ -216,17 +240,25 @@ abstract class EasyStaffPlanningAbstractApi(
         portal: EasyStaffPlanningPortal?,
         request: suspend () -> HttpResponse
     ): HttpResponse {
-        val response = request()
+        var response = request()
         if (portal == null || response.status != HttpStatusCode.Unauthorized) {
             return response
         }
-        val errorKey = readErrorKey(response)
-        if (errorKey != INVALID_TOKEN_ERROR) {
+        var errorKey = readErrorKey(response)
+        if (errorKey == INVALID_TOKEN_ERROR) {
+            client.get(buildUrl(PLANNING_BASE_URL, "/servizi/${portal.id}")) {
+                planningHeaders(portal)
+            }
+            response = request()
+            if (response.status != HttpStatusCode.Unauthorized) {
+                return response
+            }
+            errorKey = readErrorKey(response)
+        }
+        if (errorKey != TOO_FAST_ERROR) {
             throwApiError(response.status.value, errorKey)
         }
-        client.get(buildUrl(PLANNING_BASE_URL, "/servizi/${portal.id}")) {
-            planningHeaders(portal)
-        }
+        delay(GUEST_TOKEN_MIN_AGE)
         return request()
     }
 
@@ -241,6 +273,7 @@ abstract class EasyStaffPlanningAbstractApi(
         }
         header(LOCALE_HEADER, LOCALE)
         header(HttpHeaders.Accept, ContentType.Application.Json)
+        header(HttpHeaders.Origin, PORTAL_ORIGIN)
     }
 
     /**
