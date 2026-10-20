@@ -1530,9 +1530,9 @@ public struct MoodleForumDiscussion: Codable, Hashable, Sendable {
     /// User who started the discussion id
     public var userId: Int
     /// Creation time
-    public var created: Int
+    public var created: Int64
     /// Time modified
-    public var modified: Int
+    public var modified: Int64
     /// Mailed?
     public var mailed: Int
     /// The post subject
@@ -1589,8 +1589,8 @@ public struct MoodleForumDiscussion: Codable, Hashable, Sendable {
         discussion: Int = 0,
         parent: Int = 0,
         userId: Int = 0,
-        created: Int = 0,
-        modified: Int = 0,
+        created: Int64 = 0,
+        modified: Int64 = 0,
         mailed: Int = 0,
         subject: String = "",
         message: String = "",
@@ -1699,8 +1699,8 @@ public struct MoodleForumDiscussion: Codable, Hashable, Sendable {
         self.discussion = container.decodeLenient(Int.self, forKey: .discussion) ?? 0
         self.parent = container.decodeLenient(Int.self, forKey: .parent) ?? 0
         self.userId = container.decodeLenient(Int.self, forKey: .userId) ?? 0
-        self.created = container.decodeLenient(Int.self, forKey: .created) ?? 0
-        self.modified = container.decodeLenient(Int.self, forKey: .modified) ?? 0
+        self.created = container.decodeLenient(Int64.self, forKey: .created) ?? 0
+        self.modified = container.decodeLenient(Int64.self, forKey: .modified) ?? 0
         self.mailed = container.decodeLenient(Int.self, forKey: .mailed) ?? 0
         self.subject = container.decodeLenient(String.self, forKey: .subject) ?? ""
         self.message = container.decodeLenient(String.self, forKey: .message) ?? ""
@@ -2281,19 +2281,19 @@ public struct MoodleDiscussionGroupUrls: Codable, Hashable, Sendable {
 
 public struct MoodleDiscussionTimes: Codable, Hashable, Sendable {
     /// modified
-    public var modified: Int
+    public var modified: Int64
     /// start
-    public var start: Int
+    public var start: Int64
     /// end
-    public var end: Int
+    public var end: Int64
     /// locked
-    public var locked: Int
+    public var locked: Int64
 
     public init(
-        modified: Int,
-        start: Int,
-        end: Int,
-        locked: Int
+        modified: Int64,
+        start: Int64,
+        end: Int64,
+        locked: Int64
     ) {
         self.modified = modified
         self.start = start
@@ -2310,10 +2310,10 @@ public struct MoodleDiscussionTimes: Codable, Hashable, Sendable {
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.modified = try container.decodeRequired(Int.self, forKey: .modified)
-        self.start = try container.decodeRequired(Int.self, forKey: .start)
-        self.end = try container.decodeRequired(Int.self, forKey: .end)
-        self.locked = try container.decodeRequired(Int.self, forKey: .locked)
+        self.modified = try container.decodeRequired(Int64.self, forKey: .modified)
+        self.start = try container.decodeRequired(Int64.self, forKey: .start)
+        self.end = try container.decodeRequired(Int64.self, forKey: .end)
+        self.locked = try container.decodeRequired(Int64.self, forKey: .locked)
     }
 
     public func encode(to encoder: Encoder) throws {
