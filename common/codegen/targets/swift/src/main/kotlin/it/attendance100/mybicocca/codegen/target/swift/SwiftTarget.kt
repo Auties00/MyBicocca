@@ -44,7 +44,51 @@ class SwiftTarget : CodeTarget {
             if (spec.enums.isNotEmpty()) {
                 add(file(layout.enumsFileName) { out -> out.separated(spec.enums) { enums.emit(it, out) } })
             }
+            if (spec.authSchemes.isNotEmpty()) {
+                add(file(layout.authFileName) { authTypes(spec, layout, it) })
+            }
+            if (spec.servers.isNotEmpty()) {
+                add(file("${layout.server}.swift") { servers(spec, layout, it) })
+            }
             add(file("${layout.facadeName}.swift") { facade(spec, layout, it) })
+        }
+    }
+
+    /**
+     * A protocol every scheme's credentials conform to, so operations accepting several
+     * schemes take one set of credentials, and a struct per scheme building its headers.
+     */
+    private fun authTypes(spec: ApiSpec, layout: SwiftLayout, out: CodeWriter) {
+        out.line("/// Credentials accepted by ${spec.prefix} operations.")
+        out.line("public protocol ${layout.authBase}: RequestAuth {}")
+        for (scheme in spec.authSchemes) {
+            out.line()
+            scheme.description?.let { out.line("/// ${SwiftSyntax.docText(it)}") }
+            out.block("public struct ${layout.authClass(scheme.name)}: ${layout.authBase} {") {
+                for (parameter in scheme.parameters) line("public var ${SwiftSyntax.identifier(parameter.name)}: String")
+                line()
+                val parameters = scheme.parameters.map { "${SwiftSyntax.identifier(it.name)}: String" }
+                commaListOrLine("public init(", parameters, ") {", MAX_LINE_LENGTH)
+                indent {
+                    for (parameter in scheme.parameters) line("self.${SwiftSyntax.identifier(parameter.name)} = ${SwiftSyntax.identifier(parameter.name)}")
+                }
+                line("}")
+                line()
+                block("public var headers: [String: String] {") {
+                    commaList("[", scheme.headers.map { (name, template) -> "${SwiftSyntax.string(name)}: ${headerTemplate(template)}" }, "]")
+                }
+            }
+        }
+    }
+
+    /** A header value template (`Bearer {token}`) as a Swift string with interpolations. */
+    private fun headerTemplate(template: String): String =
+        PLACEHOLDER.replace(SwiftSyntax.string(template)) { "\\(${SwiftSyntax.identifier(it.groupValues[1])})" }
+
+    private fun servers(spec: ApiSpec, layout: SwiftLayout, out: CodeWriter) {
+        out.line("/// Base URLs of the ${spec.prefix} API.")
+        out.block("public enum ${layout.server}: String, Sendable, CaseIterable {") {
+            for (server in spec.servers) line("case ${layout.serverCase(server.name)} = ${SwiftSyntax.string(server.url)}")
         }
     }
 
@@ -62,5 +106,10 @@ class SwiftTarget : CodeTarget {
                 }
             }
         }
+    }
+
+    private companion object {
+        const val MAX_LINE_LENGTH = 100
+        val PLACEHOLDER = Regex("""\{([^}]+)}""")
     }
 }

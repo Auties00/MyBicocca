@@ -95,9 +95,10 @@ internal class SwiftRecordEmitter(private val layout: SwiftLayout) {
         null -> "try container.encode(${name(field)}, forKey: ${key(field)})"
     }
 
-    private fun defaultLiteral(field: Field): String? = when (field.default) {
+    private fun defaultLiteral(field: Field): String? = when (val default = field.default) {
         null -> null
         DefaultValue.Null -> NIL
+        is DefaultValue.Literal -> layout.literal(field.type, default)
         DefaultValue.EmptyList -> "[]"
         DefaultValue.Zero -> when ((field.type as TypeRef.Primitive).kind) {
             PrimitiveKind.STRING -> "\"\""

@@ -2,6 +2,9 @@
 
 export * from "./DemoItemsTypes.js";
 export * from "./DemoItemsApi.js";
+export * from "./DemoSearchApi.js";
 export * from "./DemoSharedApi.js";
 export * from "./DemoEnumTypes.js";
+export * from "./DemoAuthTypes.js";
+export * from "./DemoServer.js";
 export * from "./DemoApi.js";

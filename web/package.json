@@ -6,7 +6,7 @@
     "packages/*"
   ],
   "scripts": {
-    "typecheck": "tsc -p packages/runtime && tsc -p packages/esse3"
+    "typecheck": "tsc -p packages/runtime && tsc -p packages/esse3 && tsc -p packages/affluences"
   },
   "devDependencies": {
     "typescript": "^5.8.3"

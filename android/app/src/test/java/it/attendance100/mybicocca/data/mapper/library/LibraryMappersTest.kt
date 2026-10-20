@@ -27,21 +27,21 @@ class LibraryMappersTest {
 
     @Test
     fun `reservation maps every wire state to its domain counterpart`() {
-        assertThat(reservation(AffluencesReservationState.UPCOMING).toEntity().state)
+        assertThat(reservation(AffluencesReservationState.Upcoming).toEntity().state)
             .isEqualTo(LibraryReservationState.Upcoming.name)
-        assertThat(reservation(AffluencesReservationState.AWAITING_CONFIRMATION).toEntity().state)
+        assertThat(reservation(AffluencesReservationState.AwaitingConfirmation).toEntity().state)
             .isEqualTo(LibraryReservationState.AwaitingConfirmation.name)
-        assertThat(reservation(AffluencesReservationState.ONGOING).toEntity().state)
+        assertThat(reservation(AffluencesReservationState.Ongoing).toEntity().state)
             .isEqualTo(LibraryReservationState.Ongoing.name)
-        assertThat(reservation(AffluencesReservationState.PAST).toEntity().state)
+        assertThat(reservation(AffluencesReservationState.Past).toEntity().state)
             .isEqualTo(LibraryReservationState.Past.name)
-        assertThat(reservation(AffluencesReservationState.UNKNOWN).toEntity().state)
+        assertThat(reservation(AffluencesReservationState.Unknown("RESCHEDULED")).toEntity().state)
             .isEqualTo(LibraryReservationState.Other.name)
     }
 
     @Test
     fun `cancelled reservation is mapped to its own state not dropped`() {
-        val entity = reservation(AffluencesReservationState.CANCELLED).toEntity()
+        val entity = reservation(AffluencesReservationState.Cancelled).toEntity()
         assertThat(entity.state).isEqualTo(LibraryReservationState.Cancelled.name)
         assertThat(entity.toDomain().state).isEqualTo(LibraryReservationState.Cancelled)
     }
@@ -49,7 +49,7 @@ class LibraryMappersTest {
     @Test
     fun `reservation entity carries the human code and cancellation token apart`() {
         val entity = reservation(
-            AffluencesReservationState.UPCOMING,
+            AffluencesReservationState.Upcoming,
             reservationToken = "ABCD",
             cancellationToken = "cancel-uuid",
         ).toEntity()
@@ -60,7 +60,7 @@ class LibraryMappersTest {
     @Test
     fun `reservation entity blanks an empty reservation token and library secondary name`() {
         val entity = reservation(
-            AffluencesReservationState.UPCOMING,
+            AffluencesReservationState.Upcoming,
             reservationToken = "   ",
             siteSecondaryName = "  ",
         ).toEntity()
@@ -71,7 +71,7 @@ class LibraryMappersTest {
     @Test
     fun `reservation entity degrades unparseable instants to epoch zero`() {
         val entity = reservation(
-            AffluencesReservationState.UPCOMING,
+            AffluencesReservationState.Upcoming,
             startDateTime = "not-a-date",
             endDateTime = null,
         ).toEntity()
@@ -83,7 +83,7 @@ class LibraryMappersTest {
     fun `reservation entity parses ISO UTC instants to epoch seconds`() {
         val expected = Instant.parse("2024-06-15T08:00:00Z").epochSecond
         val entity = reservation(
-            AffluencesReservationState.UPCOMING,
+            AffluencesReservationState.Upcoming,
             startDateTime = "2024-06-15T08:00:00Z",
         ).toEntity()
         assertThat(entity.startEpochSeconds).isEqualTo(expected)

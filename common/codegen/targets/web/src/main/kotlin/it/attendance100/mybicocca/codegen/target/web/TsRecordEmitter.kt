@@ -65,6 +65,7 @@ internal class TsRecordEmitter(private val layout: TsLayout, private val codecs:
 
     private fun literal(default: DefaultValue, field: Field): String = when (default) {
         DefaultValue.Null -> "null"
+        is DefaultValue.Literal -> layout.literal(field.type, default)
         DefaultValue.EmptyList -> "[]"
         DefaultValue.Zero -> when ((field.type as TypeRef.Primitive).kind) {
             PrimitiveKind.STRING -> "\"\""

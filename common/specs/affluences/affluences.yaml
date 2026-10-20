@@ -1,0 +1,1105 @@
+# The Affluences APIs the app uses: the app API (v3 and v4), behind the Affluences mobile app,
+# and the reservation API. Affluences publishes no spec, so this one is written by hand from
+# the traffic of the official app and website. See common/codegen/readers/openapi for the
+# x-mb-* extensions.
+openapi: 3.0.3
+info:
+  title: Affluences
+  version: "1"
+x-mb-id: affluences
+x-mb-prefix: Affluences
+
+servers:
+  - url: https://api.affluences.com/app/v4
+    x-mb-name: AppV4
+  - url: https://api.affluences.com/app/v3
+    x-mb-name: AppV3
+  - url: https://reservation.affluences.com/api
+    x-mb-name: Reservation
+
+tags:
+  - name: Sites
+    description: Site pages, live occupancy and opening hours.
+  - name: Search
+    description: Site search, filters and suggestions.
+  - name: Reservations
+    description: Bookable resources and anonymous reservations.
+  - name: Account
+    description: The email-link account of the mobile app and its reservations.
+
+components:
+  # The mobile app identifies itself with the x-app-version, x-device-type and
+  # x-service-name headers; requests made on behalf of a device or account carry them too.
+  x-mb-auth-schemes:
+    Sso:
+      description: A token from the university's identity provider (SAML or OIDC), sent as is.
+      parameters:
+        - name: token
+      headers:
+        Authorization: "{token}"
+    Device:
+      description: The API key a device gets from checking in, before the account is validated.
+      parameters:
+        - name: apiKey
+      headers:
+        x-app-version: "202605190"
+        x-device-type: android
+        x-service-name: mobile_app
+        user-identifier: "{apiKey}"
+    Account:
+      description: A validated account, whose reservations are confirmed without an email step.
+      parameters:
+        - name: apiKey
+        - name: authToken
+      headers:
+        x-app-version: "202605190"
+        x-device-type: android
+        x-service-name: mobile_app
+        user-identifier: "{apiKey}"
+        Authorization: "Bearer {authToken}"
+
+  parameters:
+    siteIdentifier:
+      name: siteIdentifier
+      in: path
+      required: true
+      description: The site's UUID or slug.
+      schema:
+        type: string
+    resourceId:
+      name: resourceId
+      in: path
+      required: true
+      schema:
+        type: integer
+    timeZone:
+      name: X-TIMEZONE
+      in: header
+      x-mb-name: timeZone
+      description: The time zone the suggestions are computed for.
+      schema:
+        type: string
+        default: Europe/Rome
+
+  schemas:
+    AffluencesCrowdLevel:
+      description: How crowded a site is.
+      type: string
+      enum: [FLUID, MODERATE, DENSE]
+    AffluencesEvolution:
+      description: Direction in which a measure is changing.
+      type: string
+      enum: [INCREASE, DECREASE]
+    AffluencesReservationState:
+      description: Where a reservation of the account is in its lifecycle.
+      type: string
+      enum: [UPCOMING, AWAITING_CONFIRMATION, ONGOING, PAST, CANCELLED]
+
+    AffluencesCoordinates:
+      type: object
+      required: [latitude, longitude]
+      properties:
+        latitude: { type: number }
+        longitude: { type: number }
+
+    # --- Sites (v4, camelCase) ---
+    AffluencesSite:
+      description: A site page.
+      type: object
+      required: [id, slug, primaryName]
+      properties:
+        id: { type: string }
+        slug: { type: string }
+        primaryName: { type: string }
+        secondaryName: { type: string }
+        lang: { type: string, x-mb-name: language }
+        timeZone: { type: string }
+        email: { type: string }
+        phone: { type: string }
+        websiteUrl: { type: string }
+        booking: { $ref: "#/components/schemas/AffluencesBookingInfo" }
+        publicationStatus: { type: string }
+        address: { type: string }
+        latitude: { type: number }
+        longitude: { type: number }
+        categories: { type: array, items: { $ref: "#/components/schemas/AffluencesSiteCategory" } }
+        pictures: { type: array, items: { type: string } }
+        pageLayout: { $ref: "#/components/schemas/AffluencesPageLayout" }
+        parent: { $ref: "#/components/schemas/AffluencesSiteCard" }
+    AffluencesBookingInfo:
+      type: object
+      properties:
+        hasBooking: { type: boolean, default: false }
+        bookingUrl: { type: string }
+        ticketUrl: { type: string }
+    AffluencesSiteCategory:
+      type: object
+      required: [id, name]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        namePlural: { type: string }
+    AffluencesPageLayout:
+      type: object
+      properties:
+        timetables: { type: boolean }
+        events: { type: boolean }
+    AffluencesSiteCard:
+      description: A site in a list, such as a site's children.
+      type: object
+      required: [id, slug, primaryName]
+      properties:
+        id: { type: string }
+        slug: { type: string }
+        primaryName: { type: string }
+        secondaryName: { type: string }
+        pictures: { type: array, items: { type: string } }
+        status: { $ref: "#/components/schemas/AffluencesSiteCardStatus" }
+        liveAttendance: { $ref: "#/components/schemas/AffluencesLiveAttendance" }
+        booking: { $ref: "#/components/schemas/AffluencesBookingInfo" }
+    AffluencesSiteCardStatus:
+      type: object
+      required: [isOpen]
+      properties:
+        isOpen: { type: boolean }
+        openingText: { type: string }
+        isOpeningSoon: { type: boolean }
+        closingText: { type: string }
+        isClosingSoon: { type: boolean }
+    AffluencesEvent:
+      type: object
+      required: [id]
+      properties:
+        id: { type: integer }
+        title: { type: string }
+        descriptionHtml: { type: string }
+        imageUrl: { type: string }
+        url: { type: string }
+    AffluencesPopInMessage:
+      type: object
+      properties:
+        contentHtml: { type: string }
+        url: { type: string }
+    AffluencesLiveData:
+      description: A site's live occupancy and forecasts.
+      type: object
+      required: [status]
+      properties:
+        status: { $ref: "#/components/schemas/AffluencesSiteStatus" }
+        notices: { type: array, items: { $ref: "#/components/schemas/AffluencesNotice" } }
+        liveAttendance: { $ref: "#/components/schemas/AffluencesLiveAttendance" }
+        todayForecasts: { type: array, items: { $ref: "#/components/schemas/AffluencesForecastSlot" } }
+        forecasts: { type: array, items: { $ref: "#/components/schemas/AffluencesDayForecasts" } }
+    AffluencesSiteStatus:
+      type: object
+      required: [isOpen]
+      properties:
+        isOpen: { type: boolean }
+        openingText: { type: string }
+        openingAt: { type: string, description: "yyyy-MM-dd HH:mm:ss in the site's time zone." }
+        closingText: { type: string }
+        closingAt: { type: string, description: "yyyy-MM-dd HH:mm:ss in the site's time zone." }
+        isOpeningSoon: { type: boolean }
+        isClosingSoon: { type: boolean }
+    AffluencesNotice:
+      type: object
+      properties:
+        contentHtml: { type: string }
+        url: { type: string }
+    AffluencesLiveAttendance:
+      type: object
+      properties:
+        flow: { $ref: "#/components/schemas/AffluencesCrowdLevel" }
+        occupancy: { type: integer, x-mb-name: occupancyPercentage }
+        waitingTime: { type: integer, x-mb-name: waitingTimeMinutes }
+    AffluencesForecastSlot:
+      type: object
+      properties:
+        hourRange: { type: array, items: { type: string }, description: "Start and end, as yyyy-MM-dd HH:mm:ss." }
+        flow: { $ref: "#/components/schemas/AffluencesCrowdLevel" }
+        flowEvolution: { $ref: "#/components/schemas/AffluencesEvolution" }
+        occupancy: { type: integer, x-mb-name: occupancyPercentage }
+        occupancyEvolution: { $ref: "#/components/schemas/AffluencesEvolution" }
+        waitingTime: { type: integer, x-mb-name: waitingTimeMinutes }
+        waitingTimeEvolution: { $ref: "#/components/schemas/AffluencesEvolution" }
+    AffluencesDayForecasts:
+      type: object
+      required: [day]
+      properties:
+        day: { type: string }
+        todayOffset: { type: integer, default: 0 }
+        forecasts: { type: array, items: { $ref: "#/components/schemas/AffluencesForecastSlot" } }
+    AffluencesWeekTimetable:
+      type: object
+      required: [startDate, endDate]
+      properties:
+        startDate: { type: string }
+        endDate: { type: string }
+        entries: { type: array, items: { $ref: "#/components/schemas/AffluencesDayTimetable" } }
+        information: { type: string }
+    AffluencesDayTimetable:
+      type: object
+      required: [day]
+      properties:
+        day: { type: string, description: "yyyy-MM-dd." }
+        isToday: { type: boolean, default: false }
+        openingHours: { type: array, items: { $ref: "#/components/schemas/AffluencesOpeningHours" } }
+    AffluencesOpeningHours:
+      type: object
+      required: [openingHour, closingHour]
+      properties:
+        openingHour: { type: string, description: "yyyy-MM-dd HH:mm:ss." }
+        closingHour: { type: string, description: "yyyy-MM-dd HH:mm:ss." }
+    AffluencesSiteDetails:
+      type: object
+      properties:
+        services: { type: array, items: { $ref: "#/components/schemas/AffluencesSiteService" } }
+        infos: { type: array, items: { $ref: "#/components/schemas/AffluencesSiteInfoSection" } }
+    AffluencesSiteService:
+      type: object
+      required: [type, name]
+      properties:
+        type: { type: string }
+        name: { type: string }
+    AffluencesSiteInfoSection:
+      type: object
+      properties:
+        type: { type: string }
+        title: { type: string }
+        contentHtml: { type: string }
+
+    # --- Search (v3, snake_case) ---
+    AffluencesSiteOverview:
+      type: object
+      required: [id, slug, primary_name]
+      properties:
+        id: { type: string }
+        slug: { type: string }
+        parent: { type: string, x-mb-name: parentSlug }
+        primary_name: { type: string }
+        secondary_name: { type: string }
+        concat_name: { type: string }
+        categories: { type: array, items: { $ref: "#/components/schemas/AffluencesOverviewCategory" } }
+        affluence_precision_level: { type: string, x-mb-name: precisionLevel }
+        time_zone: { type: string }
+        lang: { type: string, x-mb-name: language }
+        location: { $ref: "#/components/schemas/AffluencesLocation" }
+        phone_number: { type: string }
+        email: { type: string }
+        url: { type: string, x-mb-name: websiteUrl }
+        notices: { type: array, items: { $ref: "#/components/schemas/AffluencesOverviewNotice" } }
+        estimated_distance: { type: number, x-mb-name: estimatedDistanceMeters }
+        current_forecast: { $ref: "#/components/schemas/AffluencesForecast" }
+        today_forecasts: { type: array, items: { $ref: "#/components/schemas/AffluencesHourlyForecast" } }
+        children: { type: array, items: { $ref: "#/components/schemas/AffluencesSiteOverview" } }
+        poster_image: { type: string }
+        images: { type: array, items: { type: string } }
+    AffluencesOverviewCategory:
+      type: object
+      required: [id, name]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        name_plural: { type: string }
+    AffluencesLocation:
+      type: object
+      properties:
+        coordinates: { $ref: "#/components/schemas/AffluencesCoordinates" }
+        address: { $ref: "#/components/schemas/AffluencesAddress" }
+    AffluencesAddress:
+      type: object
+      properties:
+        route: { type: string }
+        city: { type: string }
+        zip_code: { type: string }
+        region: { type: string }
+        country_code: { type: string }
+    AffluencesOverviewNotice:
+      type: object
+      properties:
+        message: { type: string }
+        message_html: { type: string }
+        url: { type: string }
+    AffluencesForecast:
+      type: object
+      properties:
+        opened: { type: boolean, default: false }
+        occupancy: { type: integer, x-mb-name: occupancyPercentage }
+        waiting_time: { type: integer, x-mb-name: waitingTimeMinutes }
+        waiting_time_overflow: { type: boolean, default: false }
+        flow: { $ref: "#/components/schemas/AffluencesCrowdLevel" }
+    AffluencesHourlyForecast:
+      type: object
+      required: [hour]
+      properties:
+        hour: { type: string }
+        forecast: { $ref: "#/components/schemas/AffluencesForecast" }
+    AffluencesSearchResults:
+      type: object
+      properties:
+        categories: { type: array, items: { $ref: "#/components/schemas/AffluencesOverviewCategory" } }
+        sites: { type: array, items: { $ref: "#/components/schemas/AffluencesSearchSite" } }
+        playlists: { type: array, items: { $ref: "#/components/schemas/AffluencesPlaylist" } }
+        unreferenced_sites: { type: array, items: { $ref: "#/components/schemas/AffluencesSearchSite" } }
+    AffluencesSearchSite:
+      type: object
+      required: [id, slug]
+      properties:
+        id: { type: string }
+        slug: { type: string }
+        name: { type: string }
+        primary_name: { type: string }
+        secondary_name: { type: string }
+        description: { type: string }
+        image_url: { type: string }
+        images: { type: array, items: { type: string } }
+    AffluencesPlaylist:
+      type: object
+      required: [id]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        description: { type: string }
+        image_url: { type: string }
+        icon: { type: string }
+    AffluencesSiteSearchRequest:
+      description: Filters of a site search; every filter is optional.
+      type: object
+      properties:
+        search_query: { type: string }
+        page: { type: integer }
+        subset: { type: array, items: { type: string } }
+        selected_categories: { type: array, items: { type: integer } }
+        selected_services: { type: array, items: { type: integer } }
+        playlist_id: { type: integer }
+        latitude: { type: number }
+        longitude: { type: number }
+        openDate: { type: string }
+        openTime: { type: string }
+    AffluencesSiteSearchPage:
+      type: object
+      properties:
+        page: { type: integer, default: 1, x-mb-name: nextPage }
+        max_size: { type: integer, default: 0 }
+        results: { type: array, items: { $ref: "#/components/schemas/AffluencesSiteOverview" } }
+    AffluencesMapSearchResults:
+      type: object
+      properties:
+        center: { $ref: "#/components/schemas/AffluencesCoordinates" }
+        results: { type: array, items: { $ref: "#/components/schemas/AffluencesSiteOverview" } }
+    AffluencesSiteFilters:
+      type: object
+      properties:
+        categories: { type: array, items: { $ref: "#/components/schemas/AffluencesOverviewCategory" } }
+        services: { type: array, items: { $ref: "#/components/schemas/AffluencesServiceFilter" } }
+    AffluencesServiceFilter:
+      type: object
+      required: [id, name]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+    AffluencesSuggestedCategory:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string }
+        imageUrl: { type: string }
+        categoriesIds: { type: array, items: { type: integer }, x-mb-name: categoryIds }
+    AffluencesSuggestedSite:
+      type: object
+      properties:
+        id: { type: string }
+        slug: { type: string }
+        name: { type: string }
+        image_url: { type: string }
+
+    # --- Reservations (snake_case) ---
+    AffluencesReservationSiteInfo:
+      type: object
+      properties:
+        types: { type: array, items: { $ref: "#/components/schemas/AffluencesResourceTypeInfo" } }
+        contact_email: { type: string }
+    AffluencesResourceTypeInfo:
+      type: object
+      required: [resource_type]
+      properties:
+        resource_type: { type: integer, x-mb-name: resourceTypeId }
+        image: { type: string, x-mb-name: imageUrl }
+        localized_description: { type: string, x-mb-name: description }
+        localized_subdescription: { type: string, x-mb-name: subdescription }
+        rank: { type: integer }
+        map: { type: string, x-mb-name: mapUrl }
+        time_limit: { type: string }
+    AffluencesAvailableResource:
+      type: object
+      required: [resource_id]
+      properties:
+        resource_id: { type: integer }
+        resource_name: { type: string }
+        resource_type: { type: integer, x-mb-name: resourceTypeId }
+        granularity: { type: integer, x-mb-name: granularityMinutes }
+        time_slot_count: { type: integer }
+        static_time_slot: { type: boolean, default: false }
+        note_available: { type: boolean, default: false }
+        note_required: { type: boolean, default: false }
+        note_description: { type: string }
+        description: { type: string }
+        description_html: { type: string }
+        capacity: { type: integer, default: 0 }
+        site_timezone: { type: string, x-mb-name: siteTimeZone }
+        user_name_required: { type: boolean, default: false }
+        user_phone_required: { type: boolean, default: false }
+        user_name_available: { type: boolean, default: false }
+        user_phone_available: { type: boolean, default: false }
+        time_before_reservations_closed: { type: integer }
+        min_places_per_reservation: { type: integer }
+        max_places_per_reservation: { type: integer }
+        image_url: { type: string }
+        slots_state: { type: string }
+        hours: { type: array, items: { $ref: "#/components/schemas/AffluencesTimeSlot" } }
+    AffluencesTimeSlot:
+      type: object
+      required: [hour]
+      properties:
+        hour: { type: string, description: "HH:mm." }
+        state: { type: string }
+        granularity: { type: integer, x-mb-name: granularityMinutes }
+        person_count: { type: integer, default: 0 }
+        places_available: { type: integer, default: 0 }
+        places_bookable: { type: integer, default: 0 }
+    AffluencesResourceTypeFilters:
+      type: object
+      required: [resource_type_id]
+      properties:
+        resource_type_id: { type: integer }
+        open_days: { type: array, items: { type: string } }
+        open_hours: { type: array, items: { type: string } }
+        durations: { type: array, items: { type: integer } }
+        capacities: { type: array, items: { type: integer } }
+        resources: { type: array, items: { $ref: "#/components/schemas/AffluencesResourceSummary" } }
+    AffluencesResourceSummary:
+      type: object
+      required: [resource_id]
+      properties:
+        resource_id: { type: integer }
+        resource_name: { type: string }
+    AffluencesAgreement:
+      type: object
+      required: [agreements_id]
+      properties:
+        agreements_id: { type: integer, x-mb-name: agreementId }
+        agreements_details_id: { type: integer, x-mb-name: agreementDetailsId }
+        latest_change: { type: string }
+        name: { type: string }
+        url: { type: string }
+        mandatory_consent: { type: boolean, default: false }
+    AffluencesResourceEmailPolicy:
+      type: object
+      properties:
+        filter_error_message: { type: string }
+        filter_error_message_html: { type: string }
+        filters: { type: array, items: { type: string } }
+    AffluencesResourceForms:
+      type: object
+      properties:
+        customForm: {}
+    AffluencesIdentityProvider:
+      type: object
+      properties:
+        type: { type: string }
+        discoveryUrl: { type: string }
+        clientId: { type: string }
+        scopes: { type: array, items: { type: string } }
+    AffluencesResourceStatus:
+      type: object
+      properties:
+        reservation_mail: { type: string, x-mb-name: reservationEmail }
+        hours: { type: array, items: { $ref: "#/components/schemas/AffluencesTimeSlot" } }
+        current_state: { type: string }
+        resource: { $ref: "#/components/schemas/AffluencesResourceDetail" }
+    AffluencesResourceDetail:
+      type: object
+      required: [resource_id]
+      properties:
+        resource_id: { type: integer }
+        resource_name: { type: string }
+        description: { type: string }
+        description_html: { type: string }
+        capacity: { type: integer, default: 0 }
+        resource_type: { type: integer, x-mb-name: resourceTypeId }
+        granularity: { type: integer, x-mb-name: granularityMinutes }
+        time_slot_count: { type: integer }
+        reservation_mandatory: { type: boolean, default: false }
+        time_limit: { type: integer }
+        site_settings_message: { type: string }
+        site_settings_message_html: { type: string }
+        site_settings_url: { type: string }
+        site_settings_contact_email: { type: string }
+        extra_infos_message: { type: string }
+        extra_infos_message_html: { type: string }
+        extra_infos_url: { type: string }
+        site_name: { type: string }
+        secondary_name: { type: string, x-mb-name: siteSecondaryName }
+        site_uuid: { type: string }
+    AffluencesReservationRequest:
+      description: A reservation of a resource for a time span of one day.
+      type: object
+      required: [email, date, start_time, end_time]
+      properties:
+        email: { type: string }
+        date: { type: string, format: date }
+        start_time: { type: string, format: time, x-mb-pattern: "HH:mm" }
+        end_time: { type: string, format: time, x-mb-pattern: "HH:mm" }
+        person_count: { type: integer, default: 1 }
+        auth_type: { type: string }
+        note: { type: string }
+        user_firstname: { type: string, x-mb-name: userFirstName }
+        user_lastname: { type: string, x-mb-name: userLastName }
+        user_phone: { type: string }
+        user_device_token: { type: string }
+    AffluencesReservationResult:
+      type: object
+      properties:
+        reservation_id: { type: integer }
+        auth_token: { type: string }
+        user_validation: { type: boolean }
+        ticket_payload: {}
+        person_count: { type: integer }
+        email: { type: string }
+        success: { type: string }
+        successMessage: { type: string }
+        cancellation_token: { type: string }
+    AffluencesValidateReservationRequest:
+      type: object
+      required: [validationCode, email]
+      properties:
+        validationCode: { type: string }
+        email: { type: string }
+    AffluencesReservationValidation:
+      type: object
+      properties:
+        validateReservationWithCode: { x-mb-name: validatedReservations }
+    AffluencesReservationCancellation:
+      type: object
+      properties:
+        successMessage: { type: string }
+    AffluencesReservationToCancel:
+      type: object
+      properties:
+        reservation_day: { type: string, description: "dd/MM/yyyy." }
+        start_time: { type: string, description: "HH'h'mm." }
+        end_time: { type: string, description: "HH'h'mm." }
+        duration: { type: string, description: "HH'h'mm." }
+        site_name: { type: string }
+        resource_name: { type: string }
+        state: { type: string }
+        cancellable: { type: boolean, default: false }
+        static_time_slot: { type: boolean, default: false }
+    AffluencesEmailConfirmation:
+      type: object
+      properties:
+        redirect: { type: boolean, default: false }
+        confirmFailed: { type: boolean, default: false }
+        not_found: { type: boolean, default: false }
+        already_confirmed: { type: boolean, default: false }
+    AffluencesTrustDeviceRequest:
+      type: object
+      required: [email, token]
+      properties:
+        email: { type: string }
+        token: { type: string }
+
+    # --- Account ---
+    AffluencesCheckinRequest:
+      type: object
+      required: [deviceId, deviceLang]
+      properties:
+        deviceId: { type: string }
+        deviceLang: { type: string }
+        lastCheckin: { type: string }
+        lastCheckinAdvertPopup: { type: string }
+        firebaseToken: { type: string }
+    AffluencesCheckin:
+      type: object
+      properties:
+        apiKey: { type: string }
+        latestVersion: { type: string }
+        buildExpired: { type: boolean, default: false }
+    AffluencesEmailTokenRequest:
+      type: object
+      required: [email]
+      properties:
+        email: { type: string }
+    AffluencesEmailLinkRequest:
+      type: object
+      properties:
+        message: { type: string }
+        request_uuid: { type: string }
+    AffluencesEmailValidation:
+      type: object
+      properties:
+        auth_token: { type: string }
+        message: { type: string }
+    AffluencesMyReservations:
+      type: object
+      properties:
+        email: { type: string }
+        results: { type: array, items: { $ref: "#/components/schemas/AffluencesMyReservation" } }
+    AffluencesMyReservation:
+      type: object
+      required: [reservation_id]
+      properties:
+        reservation_id: { type: integer }
+        resource_id: { type: integer }
+        resource_name: { type: string }
+        site_name: { type: string }
+        site_secondary_name: { type: string }
+        site_timezone: { type: string, x-mb-name: siteTimeZone }
+        reservation_token: { type: string }
+        cancellation_token: { type: string }
+        person_count: { type: integer, default: 1 }
+        note: { type: string }
+        reservation_start_datetime: { type: string, x-mb-name: startDateTime, description: "ISO 8601, UTC." }
+        reservation_end_datetime: { type: string, x-mb-name: endDateTime, description: "ISO 8601, UTC." }
+        request_datetime: { type: string, x-mb-name: requestDateTime, description: "ISO 8601, UTC." }
+        state: { $ref: "#/components/schemas/AffluencesReservationState" }
+        validated: { type: boolean, default: false }
+        confirmation_mandatory: { type: boolean, default: false }
+        user_validation: { type: boolean, default: false }
+        ticket_payload: {}
+
+paths:
+  # --- Sites ---
+  /sites/{siteIdentifier}:
+    get:
+      tags: [Sites]
+      operationId: getSite
+      summary: Gets a site page.
+      parameters: [{ $ref: "#/components/parameters/siteIdentifier" }]
+      x-mb-envelope: [data]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/AffluencesSite" } } } }
+  /sites/{siteIdentifier}/live-data:
+    get:
+      tags: [Sites]
+      operationId: getLiveData
+      summary: Gets a site's live occupancy and forecasts.
+      parameters: [{ $ref: "#/components/parameters/siteIdentifier" }]
+      x-mb-envelope: [data]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/AffluencesLiveData" } } } }
+  /sites/{siteIdentifier}/timetables:
+    get:
+      tags: [Sites]
+      operationId: getWeekTimetable
+      summary: Gets a site's opening hours for a week.
+      parameters:
+        - $ref: "#/components/parameters/siteIdentifier"
+        - name: weekOffset
+          in: query
+          description: Weeks after the current one (0 for this week).
+          schema: { type: integer, default: 0 }
+      x-mb-envelope: [data]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/AffluencesWeekTimetable" } } } }
+  /sites/{siteIdentifier}/details:
+    get:
+      tags: [Sites]
+      operationId: getDetails
+      summary: Gets a site's services and practical information.
+      parameters: [{ $ref: "#/components/parameters/siteIdentifier" }]
+      x-mb-envelope: [data]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/AffluencesSiteDetails" } } } }
+  /sites/{siteIdentifier}/children:
+    get:
+      tags: [Sites]
+      operationId: getChildren
+      summary: Lists the sites inside a site.
+      parameters: [{ $ref: "#/components/parameters/siteIdentifier" }]
+      x-mb-envelope: [data]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/AffluencesSiteCard" } } } } }
+  /sites/{siteIdentifier}/similar:
+    get:
+      tags: [Sites]
+      operationId: getSimilarSites
+      summary: Lists sites similar to a site.
+      parameters: [{ $ref: "#/components/parameters/siteIdentifier" }]
+      x-mb-envelope: [data]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/AffluencesSiteCard" } } } } }
+  /sites/{siteIdentifier}/events:
+    get:
+      tags: [Sites]
+      operationId: getEvents
+      summary: Lists a site's events.
+      parameters: [{ $ref: "#/components/parameters/siteIdentifier" }]
+      x-mb-envelope: [data]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/AffluencesEvent" } } } } }
+  /sites/{siteIdentifier}/messages:
+    get:
+      tags: [Sites]
+      operationId: getMessages
+      summary: Lists a site's pop-in messages.
+      parameters:
+        - $ref: "#/components/parameters/siteIdentifier"
+        - name: lastCheckin
+          in: query
+          description: When the device last checked in, to skip messages it has seen.
+          schema: { type: string }
+      x-mb-envelope: [data]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/AffluencesPopInMessage" } } } } }
+
+  # --- Search ---
+  /sites/search:
+    servers: [{ url: https://api.affluences.com/app/v3 }]
+    get:
+      tags: [Search]
+      operationId: searchSites
+      summary: Searches sites, playlists and categories by text.
+      parameters:
+        - name: q
+          in: query
+          required: true
+          x-mb-name: query
+          schema: { type: string }
+      x-mb-envelope: [data]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/AffluencesSearchResults" } } } }
+  /sites:
+    servers: [{ url: https://api.affluences.com/app/v3 }]
+    post:
+      tags: [Search]
+      operationId: searchSitesFiltered
+      summary: Searches sites with filters, a page at a time.
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/AffluencesSiteSearchRequest" } } }
+      x-mb-envelope: [data]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/AffluencesSiteSearchPage" } } } }
+  /sites/map:
+    servers: [{ url: https://api.affluences.com/app/v3 }]
+    post:
+      tags: [Search]
+      operationId: searchSitesOnMap
+      summary: Searches sites with filters, for a map (the page is ignored).
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/AffluencesSiteSearchRequest" } } }
+      x-mb-envelope: [data]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/AffluencesMapSearchResults" } } } }
+  /sites/filters:
+    servers: [{ url: https://api.affluences.com/app/v3 }]
+    post:
+      tags: [Search]
+      operationId: getSiteFilters
+      summary: Lists the categories and services sites can be filtered by.
+      x-mb-empty-body: true
+      x-mb-envelope: [data]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/AffluencesSiteFilters" } } } }
+  /sites/playlists/{playlistId}:
+    servers: [{ url: https://api.affluences.com/app/v3 }]
+    get:
+      tags: [Search]
+      operationId: getPlaylist
+      summary: Gets a playlist.
+      parameters:
+        - name: playlistId
+          in: path
+          required: true
+          schema: { type: integer }
+      x-mb-envelope: [data]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/AffluencesPlaylist" } } } }
+  /suggestions/categories:
+    servers: [{ url: https://api.affluences.com/app/v3 }]
+    get:
+      tags: [Search]
+      operationId: getSuggestedCategories
+      summary: Lists suggested categories.
+      parameters: [{ $ref: "#/components/parameters/timeZone" }]
+      x-mb-envelope: [data, categories]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/AffluencesSuggestedCategory" } } } } }
+  /suggestions/playlists:
+    servers: [{ url: https://api.affluences.com/app/v3 }]
+    get:
+      tags: [Search]
+      operationId: getSuggestedPlaylists
+      summary: Lists suggested playlists.
+      parameters:
+        - name: highlighted
+          in: query
+          required: true
+          description: Whether to list only highlighted playlists.
+          schema: { type: boolean }
+        - $ref: "#/components/parameters/timeZone"
+      x-mb-envelope: [data, playlists]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/AffluencesPlaylist" } } } } }
+  /suggestions/sites:
+    servers: [{ url: https://api.affluences.com/app/v3 }]
+    get:
+      tags: [Search]
+      operationId: getSuggestedSites
+      summary: Lists suggested sites.
+      parameters: [{ $ref: "#/components/parameters/timeZone" }]
+      x-mb-envelope: [data, sites]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/AffluencesSuggestedSite" } } } } }
+
+  # --- Reservations ---
+  /sites/{siteIdentifier}/infos:
+    servers: [{ url: https://reservation.affluences.com/api }]
+    get:
+      tags: [Reservations]
+      operationId: getReservationInfo
+      summary: Gets the bookable resource types of a site.
+      parameters: [{ $ref: "#/components/parameters/siteIdentifier" }]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/AffluencesReservationSiteInfo" } } } }
+  /resources/{siteIdentifier}/available:
+    servers: [{ url: https://reservation.affluences.com/api }]
+    get:
+      tags: [Reservations]
+      operationId: getAvailableResources
+      summary: Lists the resources of a type with their availability on a day.
+      parameters:
+        - $ref: "#/components/parameters/siteIdentifier"
+        - name: date
+          in: query
+          required: true
+          schema: { type: string, format: date }
+        - name: type
+          in: query
+          required: true
+          x-mb-name: resourceTypeId
+          schema: { type: integer }
+        - name: duration
+          in: query
+          x-mb-name: durationMinutes
+          schema: { type: integer }
+        - name: resource_id
+          in: query
+          schema: { type: integer }
+        - name: capacity
+          in: query
+          schema: { type: integer }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/AffluencesAvailableResource" } } } } }
+  /sites/{siteIdentifier}/types/{resourceTypeId}/filters:
+    servers: [{ url: https://reservation.affluences.com/api }]
+    get:
+      tags: [Reservations]
+      operationId: getResourceTypeFilters
+      summary: Gets the days, hours and durations a resource type can be booked for.
+      parameters:
+        - $ref: "#/components/parameters/siteIdentifier"
+        - name: resourceTypeId
+          in: path
+          required: true
+          schema: { type: integer }
+        - name: date
+          in: query
+          required: true
+          schema: { type: string, format: date }
+        - name: resource_id
+          in: query
+          schema: { type: integer }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/AffluencesResourceTypeFilters" } } } }
+  /sites/{siteIdentifier}/agreements:
+    servers: [{ url: https://reservation.affluences.com/api }]
+    get:
+      tags: [Reservations]
+      operationId: getAgreements
+      summary: Lists the agreements a booking at a site needs.
+      parameters: [{ $ref: "#/components/parameters/siteIdentifier" }]
+      x-mb-envelope: [agreements]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/AffluencesAgreement" } } } } }
+  /resource/{resourceId}:
+    servers: [{ url: https://reservation.affluences.com/api }]
+    get:
+      tags: [Reservations]
+      operationId: getResourceEmailPolicy
+      summary: Gets the email addresses a resource accepts bookings from.
+      parameters: [{ $ref: "#/components/parameters/resourceId" }]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/AffluencesResourceEmailPolicy" } } } }
+  /resource/{resourceId}/forms:
+    servers: [{ url: https://reservation.affluences.com/api }]
+    get:
+      tags: [Reservations]
+      operationId: getResourceForms
+      summary: Gets the custom form of a resource's bookings.
+      parameters: [{ $ref: "#/components/parameters/resourceId" }]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/AffluencesResourceForms" } } } }
+  /resource/{resourceId}/identity-providers:
+    servers: [{ url: https://reservation.affluences.com/api }]
+    get:
+      tags: [Reservations]
+      operationId: getResourceIdentityProviders
+      summary: Lists the identity providers a resource's bookings can authenticate with.
+      parameters: [{ $ref: "#/components/parameters/resourceId" }]
+      x-mb-envelope: [identityProviders]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: array, items: { $ref: "#/components/schemas/AffluencesIdentityProvider" } } } } }
+  /status/{resourceId}:
+    servers: [{ url: https://reservation.affluences.com/api }]
+    get:
+      tags: [Reservations]
+      operationId: getResourceStatus
+      summary: Gets a resource's details and today's slots.
+      parameters: [{ $ref: "#/components/parameters/resourceId" }]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/AffluencesResourceStatus" } } } }
+  /reserve/{resourceId}:
+    servers: [{ url: https://reservation.affluences.com/api }]
+    post:
+      tags: [Reservations]
+      operationId: createReservation
+      summary: >-
+        Books a resource. Anonymous and SSO bookings must then be validated with the code
+        emailed to the user; account bookings are confirmed immediately.
+      parameters: [{ $ref: "#/components/parameters/resourceId" }]
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/AffluencesReservationRequest" } } }
+      x-mb-auth: { schemes: [Sso, Account], required: false }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/AffluencesReservationResult" } } } }
+  /validateReservation:
+    servers: [{ url: https://reservation.affluences.com/api }]
+    post:
+      tags: [Reservations]
+      operationId: validateReservation
+      summary: Validates a reservation with the code emailed to the user.
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/AffluencesValidateReservationRequest" } } }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/AffluencesReservationValidation" } } } }
+  /reservations/{reservationToken}/confirmation:
+    servers: [{ url: https://reservation.affluences.com/api }]
+    post:
+      tags: [Reservations]
+      operationId: confirmReservation
+      summary: Confirms a reservation that requires confirmation.
+      parameters:
+        - name: reservationToken
+          in: path
+          required: true
+          schema: { type: string }
+      x-mb-empty-body: true
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/AffluencesReservationResult" } } } }
+  /cancelReservation/{emailToken}:
+    servers: [{ url: https://reservation.affluences.com/api }]
+    get:
+      tags: [Reservations]
+      operationId: getReservationToCancel
+      summary: Gets the reservation a cancellation link refers to.
+      parameters:
+        - name: emailToken
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/AffluencesReservationToCancel" } } } }
+  /cancelReservation/:
+    servers: [{ url: https://reservation.affluences.com/api }]
+    delete:
+      tags: [Reservations]
+      operationId: cancelReservation
+      summary: Cancels a reservation, given the token of its cancellation link.
+      parameters:
+        - name: email_token
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/AffluencesReservationCancellation" } } } }
+  /myreservations/email_confirmation/{token}:
+    servers: [{ url: https://reservation.affluences.com/api }]
+    get:
+      tags: [Reservations]
+      operationId: confirmEmail
+      summary: Confirms an email address, given the token of its confirmation link.
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/AffluencesEmailConfirmation" } } } }
+  /trust-device:
+    servers: [{ url: https://reservation.affluences.com/api }]
+    post:
+      tags: [Reservations]
+      operationId: trustDevice
+      summary: Trusts the device for an email address, given the token of the trust link.
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/AffluencesTrustDeviceRequest" } } }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { type: object } } } }
+
+  # --- Account ---
+  /apps/checkin:
+    post:
+      tags: [Account]
+      operationId: checkIn
+      summary: Registers the device and gets its API key.
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/AffluencesCheckinRequest" } } }
+      x-mb-headers:
+        x-app-version: "202605190"
+        x-device-type: android
+        x-service-name: mobile_app
+      x-mb-envelope: [data]
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/AffluencesCheckin" } } } }
+  /myreservations/token:
+    servers: [{ url: https://reservation.affluences.com/api }]
+    post:
+      tags: [Account]
+      operationId: requestEmailValidation
+      summary: Emails the user a link that validates the device's account.
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: "#/components/schemas/AffluencesEmailTokenRequest" } } }
+      x-mb-auth: { schemes: [Device], required: true }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/AffluencesEmailLinkRequest" } } } }
+    get:
+      tags: [Account]
+      operationId: pollEmailValidation
+      summary: >-
+        Checks whether the user opened the validation link. Until then the server answers
+        HTTP 404 with the error code does_not_exist.
+      parameters:
+        - name: request_uuid
+          in: query
+          required: true
+          schema: { type: string }
+      x-mb-auth: { schemes: [Device], required: true }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/AffluencesEmailValidation" } } } }
+  /myreservations:
+    servers: [{ url: https://reservation.affluences.com/api }]
+    get:
+      tags: [Account]
+      operationId: getMyReservations
+      summary: Lists the reservations of the account.
+      x-mb-auth: { schemes: [Account], required: true }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/AffluencesMyReservations" } } } }

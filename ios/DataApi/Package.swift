@@ -7,10 +7,12 @@ let package = Package(
     name: "DataApi",
     platforms: [.iOS(.v15), .macOS(.v12)],
     products: [
+        .library(name: "Affluences", targets: ["Affluences"]),
         .library(name: "Esse3", targets: ["Esse3"]),
     ],
     targets: [
         .target(name: "DataApiRuntime"),
+        .target(name: "Affluences", dependencies: ["DataApiRuntime"]),
         .target(name: "Esse3", dependencies: ["DataApiRuntime"]),
         .testTarget(name: "DataApiRuntimeTests", dependencies: ["DataApiRuntime"]),
     ]

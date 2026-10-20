@@ -54,6 +54,22 @@ export function decodeJsonObject(json: unknown): JsonObject | undefined {
   return asJsonObject(json) as JsonObject | undefined;
 }
 
+/** Any JSON value; `undefined` only when it is missing. */
+export function decodeJsonValue(json: unknown): JsonValue | undefined {
+  return json === undefined ? undefined : (json as JsonValue);
+}
+
+/** The value nested in the objects named by `envelope`, outermost first. */
+export function unwrapEnvelope(json: unknown, envelope: readonly string[]): unknown {
+  let value = json;
+  for (const key of envelope) {
+    const object = asJsonObject(value);
+    if (object === undefined) throw new DecodeError(`Expected an object containing "${key}"`);
+    value = object[key];
+  }
+  return value;
+}
+
 /** A list whose every item decodes; `undefined` when `json` isn't a list or an item fails. */
 export function decodeList<T>(json: unknown, decodeItem: (json: unknown) => T | undefined): T[] | undefined {
   if (!Array.isArray(json)) return undefined;

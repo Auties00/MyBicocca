@@ -5,8 +5,8 @@ specs in [`../common`](../common):
 
 - `packages/runtime` (`@mybicocca/data-api-runtime`) — the hand-written runtime every SDK uses
   (dates, lenient decoding, requests over `fetch`)
-- `packages/esse3` (`@mybicocca/esse3`) — generated sources in `src/generated` plus the
-  hand-written `client.ts`
+- `packages/affluences` (`@mybicocca/affluences`) and `packages/esse3` (`@mybicocca/esse3`) —
+  generated sources in `src/generated` plus a hand-written `client.ts` each
 
 ```ts
 import { createEsse3Api } from "@mybicocca/esse3";

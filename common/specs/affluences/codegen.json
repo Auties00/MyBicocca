@@ -1,0 +1,38 @@
+{
+  "reader": {
+    "type": "openapi",
+    "options": {
+      "spec": "affluences.yaml"
+    }
+  },
+  "targets": {
+    "kotlin": {
+      "outputDir": "../../../android/data-api/affluences/src/main/kotlin",
+      "options": {
+        "packageName": "it.attendance100.mybicocca.data.remote.affluences",
+        "temporalSerializers": [
+          {
+            "kind": "LOCAL_DATE",
+            "pattern": "yyyy-MM-dd",
+            "blankAsNull": false,
+            "nullable": false,
+            "serializer": "AffluencesLocalDateSerializer"
+          },
+          {
+            "kind": "LOCAL_TIME",
+            "pattern": "HH:mm",
+            "blankAsNull": false,
+            "nullable": false,
+            "serializer": "AffluencesLocalTimeSerializer"
+          }
+        ]
+      }
+    },
+    "swift": {
+      "outputDir": "../../../ios/DataApi/Sources/Affluences/Generated"
+    },
+    "web": {
+      "outputDir": "../../../web/packages/affluences/src/generated"
+    }
+  }
+}

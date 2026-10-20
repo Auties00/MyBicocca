@@ -42,6 +42,26 @@ public struct LocalDateTime: Hashable, Comparable, Sendable, CustomStringConvert
     public var description: String { format(pattern: .isoDateTime) }
 }
 
+/// A time of day without a time zone, such as an opening hour.
+public struct LocalTime: Hashable, Comparable, Sendable, CustomStringConvertible {
+    public var hour: Int
+    public var minute: Int
+    public var second: Int
+
+    public init(hour: Int, minute: Int, second: Int = 0) {
+        self.hour = hour
+        self.minute = minute
+        self.second = second
+    }
+
+    public static func < (lhs: LocalTime, rhs: LocalTime) -> Bool {
+        (lhs.hour, lhs.minute, lhs.second) < (rhs.hour, rhs.minute, rhs.second)
+    }
+
+    /// The ISO 8601 form, `HH:mm:ss`.
+    public var description: String { format(pattern: .isoTime) }
+}
+
 /// A date or time value that a ``TemporalPattern`` can parse and format.
 public protocol TemporalValue: Sendable {
     init?(fields: TemporalFields)
@@ -79,6 +99,17 @@ extension LocalDate: TemporalValue {
     }
 }
 
+extension LocalTime: TemporalValue {
+    public init?(fields: TemporalFields) {
+        guard (0...23).contains(fields.hour), (0...59).contains(fields.minute), (0...59).contains(fields.second) else { return nil }
+        self.init(hour: fields.hour, minute: fields.minute, second: fields.second)
+    }
+
+    public var fields: TemporalFields {
+        TemporalFields(hour: hour, minute: minute, second: second)
+    }
+}
+
 extension LocalDateTime: TemporalValue {
     public init?(fields: TemporalFields) {
         guard let date = LocalDate(fields: fields),
@@ -106,6 +137,7 @@ public struct TemporalPattern: Sendable, Hashable {
 
     public static let isoDate = TemporalPattern("yyyy-MM-dd")
     public static let isoDateTime = TemporalPattern("yyyy-MM-dd'T'HH:mm:ss")
+    public static let isoTime = TemporalPattern("HH:mm:ss")
 
     let tokens: [Token]
 
@@ -196,6 +228,22 @@ extension LocalDate: Codable {
         let text = try container.decode(String.self)
         guard let value = LocalDate.parse(text, pattern: .isoDate) else {
             throw DecodingError.dataCorruptedError(in: container, debugDescription: "'\(text)' isn't an ISO date")
+        }
+        self = value
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(description)
+    }
+}
+
+extension LocalTime: Codable {
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        let text = try container.decode(String.self)
+        guard let value = LocalTime.parse(text, pattern: .isoTime) else {
+            throw DecodingError.dataCorruptedError(in: container, debugDescription: "'\(text)' isn't an ISO time")
         }
         self = value
     }
