@@ -1,0 +1,19 @@
+{
+  "reader": {
+    "type": "moodle"
+  },
+  "targets": {
+    "kotlin": {
+      "outputDir": "../../../android/data-api/elearning/src/main/kotlin",
+      "options": {
+        "packageName": "it.attendance100.mybicocca.data.remote.elearning"
+      }
+    },
+    "swift": {
+      "outputDir": "../../../ios/DataApi/Sources/Moodle/Generated"
+    },
+    "web": {
+      "outputDir": "../../../web/packages/moodle/src/generated"
+    }
+  }
+}

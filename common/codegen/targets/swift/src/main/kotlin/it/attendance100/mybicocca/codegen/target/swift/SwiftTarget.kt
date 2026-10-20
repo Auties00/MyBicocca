@@ -75,7 +75,14 @@ class SwiftTarget : CodeTarget {
                 line("}")
                 line()
                 block("public var headers: [String: String] {") {
-                    commaList("[", scheme.headers.map { (name, template) -> "${SwiftSyntax.string(name)}: ${headerTemplate(template)}" }, "]")
+                    if (scheme.headers.isEmpty()) line("[:]")
+                    else commaList("[", scheme.headers.map { (name, template) -> "${SwiftSyntax.string(name)}: ${headerTemplate(template)}" }, "]")
+                }
+                if (scheme.form.isNotEmpty()) {
+                    line()
+                    block("public var form: [String: String] {") {
+                        commaList("[", scheme.form.map { (name, template) -> "${SwiftSyntax.string(name)}: ${headerTemplate(template)}" }, "]")
+                    }
                 }
             }
         }

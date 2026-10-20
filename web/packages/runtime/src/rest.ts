@@ -15,9 +15,22 @@ function formatQueryValue(value: NonNullable<QueryValue>): string {
   return Array.isArray(value) ? value.map(String).join(",") : String(value);
 }
 
-/** Credentials that authenticate a request through headers. */
+/** Credentials that authenticate a request through headers or form fields. */
 export interface RequestAuth {
   readonly headers: Readonly<Record<string, string>>;
+  readonly form?: Readonly<Record<string, string>>;
+}
+
+/**
+ * `value` as PHP-style bracketed fields named after `name` (`name[0][key]=value`), as PHP
+ * servers read lists and records. Booleans are written `1` and `0`; nulls are left out.
+ */
+export function brackets(name: string, value: JsonValue | undefined): Array<[string, QueryValue]> {
+  if (value === undefined || value === null) return [];
+  if (typeof value === "boolean") return [[name, value ? "1" : "0"]];
+  if (typeof value !== "object") return [[name, value]];
+  const entries = Array.isArray(value) ? value.map((item, index) => [String(index), item] as const) : Object.entries(value);
+  return entries.flatMap(([key, item]) => brackets(`${name}[${key}]`, item));
 }
 
 /** An HTTP request, relative to an API's base URL. */
@@ -75,9 +88,10 @@ export function sendRequest(configuration: RestConfiguration, request: RestReque
   );
   if (cookies.length > 0) headers.set("Cookie", cookies.join("; "));
   let body: string | URLSearchParams | undefined;
-  if (request.form !== undefined) {
+  const authForm = Object.entries(request.auth?.form ?? {});
+  if (request.form !== undefined || authForm.length > 0) {
     body = new URLSearchParams();
-    for (const [name, value] of request.form) {
+    for (const [name, value] of [...(request.form ?? []), ...authForm]) {
       if (value !== null && value !== undefined) body.append(name, formatQueryValue(value));
     }
   } else if (request.body !== undefined) {

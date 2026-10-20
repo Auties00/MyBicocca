@@ -1,0 +1,83 @@
+{
+  "moodle": "4.5.12",
+  "functions": [
+    {
+      "name": "core_course_get_contents",
+      "component": "core_course",
+      "type": "read",
+      "loginrequired": true,
+      "description": "Get course contents",
+      "parameters": {
+        "kind": "object",
+        "keys": {
+          "courseid": { "kind": "value", "type": "int", "presence": "required", "nullable": true, "description": "course id" },
+          "options": {
+            "kind": "list",
+            "content": {
+              "kind": "object",
+              "keys": {
+                "name": { "kind": "value", "type": "alphanum", "presence": "required", "nullable": true, "description": "" },
+                "value": { "kind": "value", "type": "raw", "presence": "required", "nullable": true, "description": "" }
+              },
+              "presence": "required", "nullable": false, "description": ""
+            },
+            "presence": "default", "nullable": false, "description": "Options", "default": []
+          },
+          "includestealth": { "kind": "value", "type": "bool", "presence": "default", "nullable": true, "description": "", "default": false }
+        },
+        "presence": "required", "nullable": false, "description": ""
+      },
+      "returns": {
+        "kind": "list",
+        "content": {
+          "kind": "object",
+          "keys": {
+            "id": { "kind": "value", "type": "int", "presence": "required", "nullable": true, "description": "Section ID" },
+            "timemodified": { "kind": "value", "type": "int", "presence": "optional", "nullable": true, "description": "" },
+            "visible": { "kind": "value", "type": "bool", "presence": "default", "nullable": true, "description": "", "default": 1 },
+            "badge": {
+              "kind": "object",
+              "keys": { "badgecontent": { "kind": "value", "type": "text", "presence": "optional", "nullable": true, "description": "" } },
+              "presence": "optional", "nullable": false, "description": ""
+            },
+            "warnings": {
+              "kind": "list",
+              "content": {
+                "kind": "object",
+                "keys": { "warningcode": { "kind": "value", "type": "alphanum", "presence": "required", "nullable": true, "description": "" } },
+                "presence": "required", "nullable": false, "description": ""
+              },
+              "presence": "optional", "nullable": false, "description": ""
+            }
+          },
+          "presence": "required", "nullable": false, "description": ""
+        },
+        "presence": "required", "nullable": false, "description": ""
+      }
+    },
+    {
+      "name": "mod_forum_view_forum",
+      "component": "mod_forum",
+      "type": "write",
+      "loginrequired": true,
+      "description": "",
+      "parameters": { "kind": "object", "keys": {}, "presence": "required", "nullable": false, "description": "" },
+      "returns": {
+        "kind": "object",
+        "keys": {
+          "status": { "kind": "value", "type": "bool", "presence": "required", "nullable": true, "description": "" },
+          "warnings": {
+            "kind": "list",
+            "content": {
+              "kind": "object",
+              "keys": { "warningcode": { "kind": "value", "type": "alphanum", "presence": "required", "nullable": true, "description": "" } },
+              "presence": "required", "nullable": false, "description": ""
+            },
+            "presence": "optional", "nullable": false, "description": ""
+          }
+        },
+        "presence": "required", "nullable": false, "description": ""
+      }
+    }
+  ]
+}

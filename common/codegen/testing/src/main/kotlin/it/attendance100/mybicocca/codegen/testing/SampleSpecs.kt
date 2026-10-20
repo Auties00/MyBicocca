@@ -260,6 +260,24 @@ object SampleSpecs {
                 headers = mapOf("x-region" to "region-{region}"),
             ),
             Operation(
+                name = "runQuery",
+                method = HttpMethod.POST,
+                path = "/rpc",
+                parameters = listOf(
+                    Parameter("ids", "ids", ParameterLocation.FORM, TypeRef.ListOf(INT64), required = true, encoding = ParameterEncoding.BRACKETS),
+                    Parameter(
+                        "settings", "settings", ParameterLocation.FORM, TypeRef.Named(settings.name), required = false,
+                        encoding = ParameterEncoding.BRACKETS,
+                    ),
+                    Parameter("tags", "tags", ParameterLocation.QUERY, TypeRef.ListOf(STRING), required = false, encoding = ParameterEncoding.BRACKETS),
+                ),
+                body = null,
+                response = ResponseBody.Json(TypeRef.ListOf(TypeRef.Named(slot.name))),
+                server = "Main",
+                query = mapOf("function" to "demo_run_query", "format" to "json"),
+                auth = AuthRequirement(listOf("Session"), required = true),
+            ),
+            Operation(
                 name = "saveLabels",
                 method = HttpMethod.POST,
                 path = "/labels",
@@ -300,6 +318,7 @@ object SampleSpecs {
                 listOf(AuthParameter("apiKey"), AuthParameter("secret")),
                 mapOf("x-api-key" to "{apiKey}", "x-signature" to "{apiKey}:{secret}"),
             ),
+            AuthScheme("Session", listOf(AuthParameter("token")), headers = emptyMap(), description = "A session token, sent as a form field.", form = mapOf("wstoken" to "{token}")),
         ),
         parameters = listOf(
             Parameter("tenant", "X-TENANT", ParameterLocation.HEADER, STRING, required = true, description = "Tenant every call acts for."),

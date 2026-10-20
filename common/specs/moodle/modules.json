@@ -1,0 +1,18 @@
+{
+    "core_badges": "Badge",
+    "core_calendar": "Calendar",
+    "core_completion": "Completion",
+    "core_course": "Course",
+    "core_enrol": "Course",
+    "core_group": "Course",
+    "core_message": "Message",
+    "core_user": "User",
+    "core_webservice": "Site",
+    "enrol_self": "Course",
+    "gradereport_overview": "Grade",
+    "gradereport_user": "Grade",
+    "mod_assign": "Assign",
+    "mod_forum": "Forum",
+    "mod_quiz": "Quiz",
+    "tool_mobile": "Mobile"
+}

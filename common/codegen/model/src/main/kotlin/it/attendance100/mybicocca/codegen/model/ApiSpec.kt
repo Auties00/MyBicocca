@@ -80,18 +80,21 @@ data class ApiSpec(
 data class Server(val name: String, val url: String)
 
 /**
- * A way to authenticate: credentials the caller supplies, sent as headers.
+ * A way to authenticate: credentials the caller supplies, sent as headers or form fields.
  *
  * @property name PascalCase name of the scheme (e.g. `Account`).
  * @property parameters The credentials, in order.
  * @property headers Header values by header name. `{parameter}` placeholders are replaced by
  *   the credential of that name.
+ * @property form Form field values by field name, with the same placeholders. Operations
+ *   accepting the scheme send a form body, so they can't send a JSON one.
  */
 data class AuthScheme(
     val name: String,
     val parameters: List<AuthParameter>,
     val headers: Map<String, String>,
     val description: String? = null,
+    val form: Map<String, String> = emptyMap(),
 )
 
 /** @property name camelCase name of a credential of an [AuthScheme]. */

@@ -37,3 +37,22 @@ public struct DemoKeyAuth: DemoAuth {
         ]
     }
 }
+
+/// A session token, sent as a form field.
+public struct DemoSessionAuth: DemoAuth {
+    public var token: String
+
+    public init(token: String) {
+        self.token = token
+    }
+
+    public var headers: [String: String] {
+        [:]
+    }
+
+    public var form: [String: String] {
+        [
+            "wstoken": "\(token)"
+        ]
+    }
+}
