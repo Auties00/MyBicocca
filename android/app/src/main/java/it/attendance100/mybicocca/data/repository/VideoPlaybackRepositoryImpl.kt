@@ -1,6 +1,8 @@
 package it.attendance100.mybicocca.data.repository
 
 import it.attendance100.mybicocca.data.auth.SessionManager
+import it.attendance100.mybicocca.data.local.elearning.video.KalturaEntryDao
+import it.attendance100.mybicocca.data.local.elearning.video.KalturaEntryEntity
 import it.attendance100.mybicocca.data.local.elearning.video.VideoProgressDao
 import it.attendance100.mybicocca.data.local.elearning.video.VideoProgressEntity
 import it.attendance100.mybicocca.data.mapper.elearning.toDomain
@@ -14,12 +16,11 @@ import it.attendance100.mybicocca.domain.model.elearning.video.VideoProgress
 import it.attendance100.mybicocca.domain.model.elearning.video.VideoStream
 import it.attendance100.mybicocca.domain.repository.ElearningCourseRepository
 import it.attendance100.mybicocca.domain.repository.VideoPlaybackRepository
+import it.attendance100.mybicocca.domain.repository.VideoUnavailableException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -27,57 +28,53 @@ import javax.inject.Singleton
  * Video playback repository on top of the e-learning platform's Kaltura (kalvidres)
  * integration, with watch progress persisted in Room per account.
  *
- * Stream and entry-id resolution call the kalvidres module endpoints with one automatic
- * re-authentication retry, since the Kaltura session can expire independently of the
- * web-service token; streams are never cached because their URLs are session-scoped. Resolved
- * entry ids are kept in a mutex-guarded in-memory map for the repository's lifetime so
- * thumbnail lookups don't re-resolve the same module. When saved progress passes the
- * completion threshold the row is flagged completed and the activity completion is mirrored to
- * the platform best-effort — a mirror failure never breaks local playback state.
+ * A module's Kaltura entry id is read once from `mod/kalvidres/view.php`, with one session
+ * renewal and retry when the `MoodleSession` cookie has expired, and then persisted in Room:
+ * every load of that page logs a "viewed" event in Moodle. Streams are looked up with Kaltura
+ * on every resolution, since an entry can be withdrawn at any time. When saved progress passes
+ * the completion threshold the row is flagged completed and the activity completion is
+ * mirrored to the platform best-effort — a mirror failure never breaks local playback state.
  */
 @Singleton
 class VideoPlaybackRepositoryImpl @Inject constructor(
     private val sessionManager: SessionManager,
     private val videoProgressDao: VideoProgressDao,
+    private val kalturaEntryDao: KalturaEntryDao,
     private val elearningCourseRepository: ElearningCourseRepository,
 ) : VideoPlaybackRepository {
 
     override suspend fun resolveStream(cmId: Int): VideoStream {
-        val (api, _) = sessionManager.elearning()
-        when (val result = api.kaltura.resolveVideoStreamForModule(cmId)) {
-            is ElearningKalturaVideoStreamResponse.Success -> return result.toDomain(cmId)
-            ElearningKalturaVideoStreamResponse.RequiresReauth -> Unit
-        }
-
-        sessionManager.reauthElearning()
-        return when (val retry = sessionManager.elearning().api.kaltura.resolveVideoStreamForModule(cmId)) {
-            is ElearningKalturaVideoStreamResponse.Success -> retry.toDomain(cmId)
-            ElearningKalturaVideoStreamResponse.RequiresReauth -> throw ElearningException(
+        val entryId = resolveEntryId(cmId)
+            ?: throw ElearningException(
                 errorCode = null,
-                errorMessage = "Could not resolve video stream for cmId=$cmId after reauth",
+                errorMessage = "Could not resolve the Kaltura entry of cmId=$cmId after reauth",
             )
+        return when (val stream = sessionManager.elearning().api.kaltura.getVideoStream(entryId)) {
+            is ElearningKalturaVideoStreamResponse.Success -> stream.toDomain(cmId)
+            ElearningKalturaVideoStreamResponse.Unavailable -> throw VideoUnavailableException(cmId)
         }
     }
 
-    private val entryIdCacheMutex = Mutex()
-    private val entryIdByCmId = mutableMapOf<Int, String>()
+    override suspend fun thumbnailUrl(cmId: Int): String? =
+        resolveEntryId(cmId)?.let { ElearningKalturaApi.thumbnailUrl(it, widthPx = THUMBNAIL_WIDTH_PX) }
 
-    override suspend fun thumbnailUrl(cmId: Int): String? {
-        val cached = entryIdCacheMutex.withLock { entryIdByCmId[cmId] }
-        if (cached != null) return ElearningKalturaApi.thumbnailUrl(cached, widthPx = THUMBNAIL_WIDTH_PX)
-        val (api, _) = sessionManager.elearning()
-        val entryId = when (val response = api.kaltura.resolveKalturaEntryIdForModule(cmId)) {
+    /**
+     * Returns the persisted entry id of [cmId], or reads it from `view.php`, renewing the
+     * Moodle session once if the page came back without it. Null when even the retry fails.
+     */
+    private suspend fun resolveEntryId(cmId: Int): String? {
+        kalturaEntryDao.getEntryId(cmId)?.let { return it }
+        val entryId = when (val response = sessionManager.elearning().api.kaltura.resolveKalturaEntryIdForModule(cmId)) {
             is ElearningKalturaEntryIdResponse.Success -> response.kalturaEntryId
             ElearningKalturaEntryIdResponse.RequiresReauth -> {
-                sessionManager.reauthElearning()
-                when (val retry = sessionManager.elearning().api.kaltura.resolveKalturaEntryIdForModule(cmId)) {
+                when (val retry = sessionManager.reauthElearning().api.kaltura.resolveKalturaEntryIdForModule(cmId)) {
                     is ElearningKalturaEntryIdResponse.Success -> retry.kalturaEntryId
                     ElearningKalturaEntryIdResponse.RequiresReauth -> return null
                 }
             }
         }
-        entryIdCacheMutex.withLock { entryIdByCmId[cmId] = entryId }
-        return ElearningKalturaApi.thumbnailUrl(entryId, widthPx = THUMBNAIL_WIDTH_PX)
+        kalturaEntryDao.upsert(KalturaEntryEntity(cmId, entryId, System.currentTimeMillis()))
+        return entryId
     }
 
     override fun observeProgress(accountId: AccountId, cmId: Int): Flow<VideoProgress?> =

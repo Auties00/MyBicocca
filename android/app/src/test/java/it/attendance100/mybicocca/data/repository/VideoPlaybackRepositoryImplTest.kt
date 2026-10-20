@@ -8,23 +8,27 @@ import io.mockk.mockk
 import io.mockk.slot
 import it.attendance100.mybicocca.data.auth.ElearningSession
 import it.attendance100.mybicocca.data.auth.SessionManager
+import it.attendance100.mybicocca.data.local.elearning.video.KalturaEntryDao
+import it.attendance100.mybicocca.data.local.elearning.video.KalturaEntryEntity
 import it.attendance100.mybicocca.data.local.elearning.video.VideoProgressDao
 import it.attendance100.mybicocca.data.local.elearning.video.VideoProgressEntity
 import it.attendance100.mybicocca.data.remote.elearning.api.ElearningApi
+import it.attendance100.mybicocca.data.remote.elearning.api.ElearningKalturaApi
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningKalturaEntryIdResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningKalturaVideoStreamResponse
 import it.attendance100.mybicocca.data.remote.elearning.exception.ElearningException
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.domain.repository.ElearningCourseRepository
+import it.attendance100.mybicocca.domain.repository.VideoUnavailableException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 
 /**
  * Behaviour coverage for the video playback repository: the one-shot completion semantics and
- * duration-fallback of saveProgress, the idempotent markCompleted, the single reauth-retry of
- * stream and entry-id resolution, and the in-memory entry-id cache backing thumbnailUrl.
+ * duration-fallback of saveProgress, the idempotent markCompleted, entry-id resolution with its
+ * single reauth-retry and Room cache, and the mapping of withdrawn Kaltura entries.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class VideoPlaybackRepositoryImplTest {
@@ -36,56 +40,78 @@ class VideoPlaybackRepositoryImplTest {
 
     private val sessionManager = mockk<SessionManager>(relaxed = true)
     private val videoProgressDao = mockk<VideoProgressDao>(relaxed = true)
+    private val kalturaEntryDao = mockk<KalturaEntryDao>(relaxed = true)
     private val courseRepository = mockk<ElearningCourseRepository>(relaxed = true)
-    private val elearningApi = mockk<ElearningApi>(relaxed = true)
+    private val kalturaApi = mockk<ElearningKalturaApi>(relaxed = true)
+    private val elearningApi = mockk<ElearningApi>(relaxed = true) {
+        every { kaltura } returns kalturaApi
+    }
 
-    private fun newRepository(): VideoPlaybackRepositoryImpl {
+    private fun newRepository(cachedEntryId: String? = null): VideoPlaybackRepositoryImpl {
         coEvery { sessionManager.elearning() } returns ElearningSession(elearningApi, token)
-        return VideoPlaybackRepositoryImpl(sessionManager, videoProgressDao, courseRepository)
+        coEvery { sessionManager.reauthElearning() } returns ElearningSession(elearningApi, token)
+        coEvery { kalturaEntryDao.getEntryId(cmId) } returns cachedEntryId
+        return VideoPlaybackRepositoryImpl(sessionManager, videoProgressDao, kalturaEntryDao, courseRepository)
     }
 
     private fun streamSuccess() = ElearningKalturaVideoStreamResponse.Success(
         kalturaEntryId = "1_entry",
         partnerId = 2351962,
-        kalturaSessionToken = "djJ8ks",
         hlsStreamUrl = "https://cdn/hls.m3u8",
-        dashStreamUrl = null,
+        dashStreamUrl = "https://cdn/manifest.mpd",
         availableVideoVariants = emptyList(),
     )
 
     @Test
-    fun `resolveStream returns the domain stream on first success`() = runTest {
-        val repository = newRepository()
-        coEvery { elearningApi.kaltura.resolveVideoStreamForModule(cmId) } returns streamSuccess()
+    fun `resolveStream uses the cached entry id without loading view php`() = runTest {
+        val repository = newRepository(cachedEntryId = "1_entry")
+        coEvery { kalturaApi.getVideoStream("1_entry", any()) } returns streamSuccess()
 
         val stream = repository.resolveStream(cmId)
 
         assertThat(stream.cmId).isEqualTo(cmId)
         assertThat(stream.kalturaEntryId).isEqualTo("1_entry")
         assertThat(stream.hlsUrl).isEqualTo("https://cdn/hls.m3u8")
+        coVerify(exactly = 0) { kalturaApi.resolveKalturaEntryIdForModule(any()) }
+    }
+
+    @Test
+    fun `resolveStream resolves and persists a missing entry id`() = runTest {
+        val repository = newRepository()
+        coEvery { kalturaApi.resolveKalturaEntryIdForModule(cmId) } returns
+            ElearningKalturaEntryIdResponse.Success("1_entry")
+        coEvery { kalturaApi.getVideoStream("1_entry", any()) } returns streamSuccess()
+
+        repository.resolveStream(cmId)
+
+        val row = slot<KalturaEntryEntity>()
+        coVerify { kalturaEntryDao.upsert(capture(row)) }
+        assertThat(row.captured.cmId).isEqualTo(cmId)
+        assertThat(row.captured.entryId).isEqualTo("1_entry")
         coVerify(exactly = 0) { sessionManager.reauthElearning() }
     }
 
     @Test
     fun `resolveStream reauths once then retries on RequiresReauth`() = runTest {
         val repository = newRepository()
-        coEvery { elearningApi.kaltura.resolveVideoStreamForModule(cmId) } returnsMany listOf(
-            ElearningKalturaVideoStreamResponse.RequiresReauth,
-            streamSuccess(),
+        coEvery { kalturaApi.resolveKalturaEntryIdForModule(cmId) } returnsMany listOf(
+            ElearningKalturaEntryIdResponse.RequiresReauth,
+            ElearningKalturaEntryIdResponse.Success("1_entry"),
         )
+        coEvery { kalturaApi.getVideoStream("1_entry", any()) } returns streamSuccess()
 
         val stream = repository.resolveStream(cmId)
 
         assertThat(stream.cmId).isEqualTo(cmId)
         coVerify(exactly = 1) { sessionManager.reauthElearning() }
-        coVerify(exactly = 2) { elearningApi.kaltura.resolveVideoStreamForModule(cmId) }
+        coVerify(exactly = 2) { kalturaApi.resolveKalturaEntryIdForModule(cmId) }
     }
 
     @Test
     fun `resolveStream throws when the retry still requires reauth`() = runTest {
         val repository = newRepository()
-        coEvery { elearningApi.kaltura.resolveVideoStreamForModule(cmId) } returns
-            ElearningKalturaVideoStreamResponse.RequiresReauth
+        coEvery { kalturaApi.resolveKalturaEntryIdForModule(cmId) } returns
+            ElearningKalturaEntryIdResponse.RequiresReauth
 
         val thrown = repository.runCatching { resolveStream(cmId) }.exceptionOrNull()
 
@@ -94,24 +120,31 @@ class VideoPlaybackRepositoryImplTest {
     }
 
     @Test
-    fun `thumbnailUrl resolves the entry id then serves from the in-memory cache`() = runTest {
-        val repository = newRepository()
-        coEvery { elearningApi.kaltura.resolveKalturaEntryIdForModule(cmId) } returns
-            ElearningKalturaEntryIdResponse.Success("1_thumb")
+    fun `resolveStream throws VideoUnavailableException for a withdrawn entry`() = runTest {
+        val repository = newRepository(cachedEntryId = "1_gone")
+        coEvery { kalturaApi.getVideoStream("1_gone", any()) } returns
+            ElearningKalturaVideoStreamResponse.Unavailable
 
-        val first = repository.thumbnailUrl(cmId)
-        val second = repository.thumbnailUrl(cmId)
+        val thrown = repository.runCatching { resolveStream(cmId) }.exceptionOrNull()
 
-        assertThat(first).contains("1_thumb")
-        assertThat(first).contains("/width/1280")
-        assertThat(second).isEqualTo(first)
-        coVerify(exactly = 1) { elearningApi.kaltura.resolveKalturaEntryIdForModule(cmId) }
+        assertThat(thrown).isInstanceOf(VideoUnavailableException::class.java)
+    }
+
+    @Test
+    fun `thumbnailUrl builds the CDN url from the cached entry id`() = runTest {
+        val repository = newRepository(cachedEntryId = "1_thumb")
+
+        val url = repository.thumbnailUrl(cmId)
+
+        assertThat(url).contains("1_thumb")
+        assertThat(url).contains("/width/1280")
+        coVerify(exactly = 0) { kalturaApi.resolveKalturaEntryIdForModule(any()) }
     }
 
     @Test
     fun `thumbnailUrl returns null when reauth retry still fails`() = runTest {
         val repository = newRepository()
-        coEvery { elearningApi.kaltura.resolveKalturaEntryIdForModule(cmId) } returns
+        coEvery { kalturaApi.resolveKalturaEntryIdForModule(cmId) } returns
             ElearningKalturaEntryIdResponse.RequiresReauth
 
         val url = repository.thumbnailUrl(cmId)

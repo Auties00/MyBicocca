@@ -7,6 +7,7 @@ import io.ktor.client.plugins.cookies.AcceptAllCookiesStorage
 import io.ktor.client.plugins.cookies.HttpCookies
 import io.ktor.client.request.forms.FormDataContent
 import io.ktor.client.request.get
+import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
@@ -49,6 +50,9 @@ import kotlin.random.Random
  *
  * The final redirect is never followed: Ktor refuses to follow the `moodlemobile://` scheme,
  * which is what leaves its `Location` header readable.
+ *
+ * Once the browser session expires, [renewSession] mints a new one from the tokens alone, the
+ * way the Moodle app opens web pages: no credentials and no IdP round-trip.
  */
 @Singleton
 class ElearningAuthenticator @Inject constructor() {
@@ -57,14 +61,70 @@ class ElearningAuthenticator @Inject constructor() {
         val cookies = AcceptAllCookiesStorage()
         return buildClient(cookies).use { client ->
             val token = runLogin(client, username, password)
-            val moodleSession = cookies.get(Url(MOODLE_URL))
-                .firstOrNull { it.name == ElearningApi.MOODLE_SESSION_COOKIE_NAME }
-                ?.value
-            ElearningLogin(wsToken = token, moodleSessionCookie = moodleSession)
+            ElearningLogin(
+                wsToken = token.wsToken,
+                privateToken = token.privateToken,
+                moodleSessionCookie = cookies.moodleSession(),
+            )
         }
     }
 
-    private suspend fun runLogin(client: HttpClient, username: String, password: String): String {
+    /**
+     * Mints a new `MoodleSession` browser cookie through Moodle's mobile autologin: the web
+     * service hands out a one-time key for the private token, and `autologin.php` trades the key
+     * for a logged-in session.
+     *
+     * Moodle issues at most one key per user every six minutes, each valid for one minute and
+     * only from the same IP address; any of these limits failing the renewal leaves the caller
+     * to fall back to [login].
+     *
+     * @param wsToken The web service token.
+     * @param privateToken The private token returned alongside it at login.
+     * @param userId The Moodle user id the tokens belong to.
+     * @return The new `MoodleSession` cookie value.
+     * @throws ElearningLoginException If Moodle refuses the key or the autologin doesn't end in
+     *   a logged-in page.
+     */
+    suspend fun renewSession(wsToken: String, privateToken: String, userId: Int): String {
+        val cookies = AcceptAllCookiesStorage()
+        return buildClient(cookies).use { client ->
+            val keyResponse = client.post(WS_REST_URL) {
+                header(HttpHeaders.UserAgent, MOODLE_MOBILE_USER_AGENT)
+                // The private token must travel in the body: Moodle rejects it as a GET parameter.
+                setBody(FormDataContent(Parameters.build {
+                    append("wstoken", wsToken)
+                    append("wsfunction", "tool_mobile_get_autologin_key")
+                    append("moodlewsrestformat", "json")
+                    append("privatetoken", privateToken)
+                }))
+            }
+            val result = Json.parseToJsonElement(keyResponse.bodyAsText()) as? JsonObject
+                ?: throw ElearningLoginException("Cannot renew session: empty autologin key response")
+            val key = result["key"]?.jsonPrimitive?.contentOrNull
+                ?: throw ElearningLoginException("Cannot renew session: ${result["errorcode"]?.jsonPrimitive?.contentOrNull ?: "no autologin key"}")
+            val autologinUrl = result["autologinurl"]?.jsonPrimitive?.contentOrNull
+                ?: throw ElearningLoginException("Cannot renew session: no autologin url")
+
+            val landing = client.get(URLBuilder(autologinUrl).apply {
+                parameters.append("userid", userId.toString())
+                parameters.append("key", key)
+                parameters.append("urltogo", AUTOLOGIN_LANDING_URL)
+            }.buildString())
+            // A refused key ends on the login page instead, still with a (guest) MoodleSession.
+            if (landing.request.url.encodedPath != Url(AUTOLOGIN_LANDING_URL).encodedPath) {
+                throw ElearningLoginException("Cannot renew session: autologin ended at ${landing.request.url.encodedPath}")
+            }
+            cookies.moodleSession()
+                ?: throw ElearningLoginException("Cannot renew session: Moodle set no session cookie")
+        }
+    }
+
+    private suspend fun AcceptAllCookiesStorage.moodleSession(): String? =
+        get(Url(MOODLE_URL))
+            .firstOrNull { it.name == ElearningApi.MOODLE_SESSION_COOKIE_NAME }
+            ?.value
+
+    private suspend fun runLogin(client: HttpClient, username: String, password: String): MobileToken {
         val launchResponse = client.get(launchUrl(client))
         return when (launchResponse.status) {
             // Moodle still has a session for this client and issues the token straight away.
@@ -174,14 +234,18 @@ class ElearningAuthenticator @Inject constructor() {
     }
 
     /**
-     * Extracts the web service token from `moodlemobile://token=BASE64`, whose payload decodes
-     * to `SIGNATURE:::TOKEN[:::PRIVATE_TOKEN]`.
+     * Extracts the tokens from `moodlemobile://token=BASE64`, whose payload decodes to
+     * `SIGNATURE:::TOKEN[:::PRIVATE_TOKEN]`. Moodle only includes the private token right after
+     * a fresh login, not when it reuses an existing browser session.
      */
-    private fun parseToken(url: String): String {
-        val decoded = Base64.decode(url.substringAfter("token=")).decodeToString()
-        return decoded.split(":::").getOrNull(1)
+    private fun parseToken(url: String): MobileToken {
+        val parts = Base64.decode(url.substringAfter("token=")).decodeToString().split(":::")
+        val wsToken = parts.getOrNull(1)
             ?: throw ElearningLoginException("Cannot log in: malformed mobile launch payload")
+        return MobileToken(wsToken, parts.getOrNull(2)?.takeIf { it.isNotBlank() })
     }
+
+    private data class MobileToken(val wsToken: String, val privateToken: String?)
 
     private suspend fun HttpResponse.toHtml(): Document =
         Jsoup.parse(bodyAsChannel().toInputStream(), null, request.url.toString())
@@ -203,6 +267,11 @@ class ElearningAuthenticator @Inject constructor() {
         const val TIMEOUT_MS = 30_000L
         const val MOODLE_URL = "https://elearning.unimib.it/"
         const val AJAX_URL = "https://elearning.unimib.it/lib/ajax/service.php"
+        const val WS_REST_URL = "https://elearning.unimib.it/webservice/rest/server.php"
+        const val AUTOLOGIN_LANDING_URL = "https://elearning.unimib.it/user/profile.php"
+
+        /** Moodle only hands out autologin keys to clients that identify as its mobile app. */
+        const val MOODLE_MOBILE_USER_AGENT = "MoodleMobile 4.5.0"
         const val PUBLIC_CONFIG_REQUEST = """[{"index":0,"methodname":"tool_mobile_get_public_config","args":{}}]"""
         const val IDP_STEP_1_URL = "https://idp-idm.unimib.it/idp/profile/SAML2/Redirect/SSO?execution=e1s1"
         const val IDP_STEP_2_URL = "https://idp-idm.unimib.it/idp/profile/SAML2/Redirect/SSO?execution=e1s2"
@@ -214,11 +283,14 @@ class ElearningAuthenticator @Inject constructor() {
  * The material a Moodle login yields.
  *
  * @property wsToken Web service token carried by every Moodle web service call.
+ * @property privateToken Private token that lets [ElearningAuthenticator.renewSession] mint a
+ *   new browser session; null if Moodle didn't issue one.
  * @property moodleSessionCookie The `MoodleSession` browser cookie, needed by the web-page
  *   endpoints such as Kaltura video resolution; null if Moodle didn't set one.
  */
 data class ElearningLogin(
     val wsToken: String,
+    val privateToken: String?,
     val moodleSessionCookie: String?,
 )
 
