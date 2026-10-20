@@ -8,6 +8,7 @@ import it.attendance100.mybicocca.data.local.elearning.course.CourseSyllabusEnti
 import it.attendance100.mybicocca.data.local.elearning.course.EnrolledCourseEntity
 import it.attendance100.mybicocca.data.local.elearning.sync.ElearningJson
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningActivityCompletionStatus
+import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningCourseMetadata
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningCourseModule
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningCoursePublicInfo
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningCourseSection
@@ -344,15 +345,16 @@ internal fun CourseModuleEntity.toDomain(): CourseModule {
 }
 
 /**
- * Maps the course sheet of the public course page into its cache row, or null when
- * the page exposes no sheet. Sheet tabs are one-per-language ("it", "en"); the tab
- * matching the app language is preferred, falling back to English, then to whatever
- * the page lists first. The chosen tab's fields and the structured info extracted from
+ * Maps the course sheet of the public course page, together with the course's metadata
+ * when it could be fetched, into its cache row, or null when the page exposes no sheet.
+ * Sheet tabs are one-per-language ("it", "en"); the tab matching the app language is
+ * preferred, falling back to English, then to whatever the page lists first. The chosen tab's fields and the structured info extracted from
  * them are packed into the JSON blob column.
  */
 internal fun ElearningCoursePublicInfo.toSyllabusEntity(
     accountId: AccountId,
     courseId: Int,
+    metadata: ElearningCourseMetadata?,
 ): CourseSyllabusEntity? {
     val appLanguage = Locale.getDefault().language.lowercase()
     val primary = syllabus.firstOrNull { it.language.equals(appLanguage, ignoreCase = true) }
@@ -428,16 +430,16 @@ private fun SyllabusInfoJson.toDomain(): SyllabusInfo = SyllabusInfo(
 )
 
 /**
- * Pulls structured info out of (a) the Moodle metadata sidebar and (b) Jsoup-parsed
+ * Pulls structured info out of (a) the course's custom-field metadata and (b) Jsoup-parsed
  * HTML of each syllabus field. Field titles are server-localized Italian/English, so
  * the dispatch matches on lowercase substrings covering the localizations the Moodle
- * site uses. The metadata sidebar "Periodo" and the "Periodo di erogazione
- * dell'insegnamento" field each can carry detail the other lacks, so the semester is
+ * site uses; they also stand in for the metadata when it is missing. The metadata
+ * "Periodo" and the "Periodo di erogazione dell'insegnamento" field each can carry detail the other lacks, so the semester is
  * matched on both combined.
  */
 private fun buildSyllabusInfo(
     fields: List<it.attendance100.mybicocca.data.remote.elearning.dto.ElearningCourseSyllabusField>,
-    metadata: it.attendance100.mybicocca.data.remote.elearning.dto.ElearningCoursePublicMetadata,
+    metadata: ElearningCourseMetadata?,
 ): SyllabusInfoJson {
     val byKey = fields.associate { field ->
         field.title.trim().lowercase() to Jsoup.parseBodyFragment(field.htmlContent).body()
@@ -459,19 +461,19 @@ private fun buildSyllabusInfo(
         .orEmpty()
 
     return SyllabusInfoJson(
-        type = metadata.activityType?.takeIf { it.isNotBlank() }
+        type = metadata?.activityType?.takeIf { it.isNotBlank() }
             ?: pickText("tipologia di attività", "tipo di insegnamento")?.let { firstWord(it) },
-        credits = metadata.cfu,
-        hours = metadata.hours,
-        language = metadata.language?.takeIf { it.isNotBlank() }
+        credits = metadata?.cfu,
+        hours = metadata?.hours,
+        language = metadata?.language?.takeIf { it.isNotBlank() }
             ?: pickText("lingua", "language"),
-        level = matchCourseLevel(metadata.degreeType ?: pickText("livello", "tipologia di corso"))?.name,
+        level = matchCourseLevel(metadata?.degreeType ?: pickText("livello", "tipologia di corso"))?.name,
         semester = matchSemester(
-            listOfNotNull(metadata.period, pickText("periodo", "semestre", "ciclo", "semester"))
+            listOfNotNull(metadata?.period, pickText("periodo", "semestre", "ciclo", "semester"))
                 .joinToString(" ")
                 .takeIf { it.isNotBlank() },
         )?.name,
-        disciplinarySector = metadata.disciplinarySector,
+        disciplinarySector = metadata?.disciplinarySector,
         objectives = pickText("obiettivi", "aims"),
         summary = pickText("contenuti sintetici", "contents", "syllabus"),
         extendedProgramme = programme,
