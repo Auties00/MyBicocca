@@ -121,8 +121,8 @@ export function decodeMoodleCalendarEvent(json: unknown): MoodleCalendarEvent | 
   const object = asJsonObject(json);
   if (object === undefined) return undefined;
   return {
-    id: required(decodeInteger(object["id"]), "MoodleCalendarEvent.id"),
-    name: required(decodeString(object["name"]), "MoodleCalendarEvent.name"),
+    id: decodeInteger(object["id"]) ?? 0,
+    name: decodeString(object["name"]) ?? "",
     description: decodeString(object["description"]) ?? null,
     descriptionFormat: decodeInteger(object["descriptionformat"]) ?? 1,
     location: decodeString(object["location"]) ?? null,
@@ -136,35 +136,35 @@ export function decodeMoodleCalendarEvent(json: unknown): MoodleCalendarEvent | 
     activityName: decodeString(object["activityname"]) ?? null,
     activityStr: decodeString(object["activitystr"]) ?? null,
     instance: decodeInteger(object["instance"]) ?? null,
-    eventType: required(decodeString(object["eventtype"]), "MoodleCalendarEvent.eventType"),
-    timeStart: required(decodeInteger(object["timestart"]), "MoodleCalendarEvent.timeStart"),
-    timeDuration: required(decodeInteger(object["timeduration"]), "MoodleCalendarEvent.timeDuration"),
-    timeSort: required(decodeInteger(object["timesort"]), "MoodleCalendarEvent.timeSort"),
-    timeUserMidnight: required(decodeInteger(object["timeusermidnight"]), "MoodleCalendarEvent.timeUserMidnight"),
-    visible: required(decodeInteger(object["visible"]), "MoodleCalendarEvent.visible"),
-    timeModified: required(decodeInteger(object["timemodified"]), "MoodleCalendarEvent.timeModified"),
+    eventType: decodeString(object["eventtype"]) ?? "",
+    timeStart: decodeInteger(object["timestart"]) ?? 0,
+    timeDuration: decodeInteger(object["timeduration"]) ?? 0,
+    timeSort: decodeInteger(object["timesort"]) ?? 0,
+    timeUserMidnight: decodeInteger(object["timeusermidnight"]) ?? 0,
+    visible: decodeInteger(object["visible"]) ?? 0,
+    timeModified: decodeInteger(object["timemodified"]) ?? 0,
     overdue: decodeBoolean(object["overdue"]) ?? null,
     icon: required(decodeFolded(object["icon"], decodeMoodleEventIcon), "MoodleCalendarEvent.icon"),
     category: decodeFolded(object["category"], decodeMoodleEventCategory) ?? null,
     course: decodeFolded(object["course"], decodeMoodleEventCourse) ?? null,
     subscription: decodeFolded(object["subscription"], decodeMoodleEventSubscription) ?? null,
-    canEdit: required(decodeBoolean(object["canedit"]), "MoodleCalendarEvent.canEdit"),
-    canDelete: required(decodeBoolean(object["candelete"]), "MoodleCalendarEvent.canDelete"),
-    deleteUrl: required(decodeString(object["deleteurl"]), "MoodleCalendarEvent.deleteUrl"),
-    editUrl: required(decodeString(object["editurl"]), "MoodleCalendarEvent.editUrl"),
-    viewUrl: required(decodeString(object["viewurl"]), "MoodleCalendarEvent.viewUrl"),
-    formattedTime: required(decodeString(object["formattedtime"]), "MoodleCalendarEvent.formattedTime"),
-    formattedLocation: required(decodeString(object["formattedlocation"]), "MoodleCalendarEvent.formattedLocation"),
-    isActionEvent: required(decodeBoolean(object["isactionevent"]), "MoodleCalendarEvent.isActionEvent"),
-    isCourseEvent: required(decodeBoolean(object["iscourseevent"]), "MoodleCalendarEvent.isCourseEvent"),
-    isCategoryEvent: required(decodeBoolean(object["iscategoryevent"]), "MoodleCalendarEvent.isCategoryEvent"),
+    canEdit: decodeBoolean(object["canedit"]) ?? false,
+    canDelete: decodeBoolean(object["candelete"]) ?? false,
+    deleteUrl: decodeString(object["deleteurl"]) ?? "",
+    editUrl: decodeString(object["editurl"]) ?? "",
+    viewUrl: decodeString(object["viewurl"]) ?? "",
+    formattedTime: decodeString(object["formattedtime"]) ?? "",
+    formattedLocation: decodeString(object["formattedlocation"]) ?? "",
+    isActionEvent: decodeBoolean(object["isactionevent"]) ?? false,
+    isCourseEvent: decodeBoolean(object["iscourseevent"]) ?? false,
+    isCategoryEvent: decodeBoolean(object["iscategoryevent"]) ?? false,
     groupName: decodeString(object["groupname"]) ?? null,
-    normalisedEventType: required(decodeString(object["normalisedeventtype"]), "MoodleCalendarEvent.normalisedEventType"),
-    normalisedEventTypeText: required(decodeString(object["normalisedeventtypetext"]), "MoodleCalendarEvent.normalisedEventTypeText"),
+    normalisedEventType: decodeString(object["normalisedeventtype"]) ?? "",
+    normalisedEventTypeText: decodeString(object["normalisedeventtypetext"]) ?? "",
     action: decodeFolded(object["action"], decodeMoodleEventAction) ?? null,
-    purpose: required(decodeString(object["purpose"]), "MoodleCalendarEvent.purpose"),
+    purpose: decodeString(object["purpose"]) ?? "",
     branded: decodeBoolean(object["branded"]) ?? null,
-    url: required(decodeString(object["url"]), "MoodleCalendarEvent.url"),
+    url: decodeString(object["url"]) ?? "",
   };
 }
 
@@ -235,11 +235,11 @@ export function decodeMoodleEventIcon(json: unknown): MoodleEventIcon | undefine
   const object = asJsonObject(json);
   if (object === undefined) return undefined;
   return {
-    key: required(decodeString(object["key"]), "MoodleEventIcon.key"),
-    component: required(decodeString(object["component"]), "MoodleEventIcon.component"),
-    altText: required(decodeString(object["alttext"]), "MoodleEventIcon.altText"),
-    iconUrl: required(decodeString(object["iconurl"]), "MoodleEventIcon.iconUrl"),
-    iconClass: required(decodeString(object["iconclass"]), "MoodleEventIcon.iconClass"),
+    key: decodeString(object["key"]) ?? "",
+    component: decodeString(object["component"]) ?? "",
+    altText: decodeString(object["alttext"]) ?? "",
+    iconUrl: decodeString(object["iconurl"]) ?? "",
+    iconClass: decodeString(object["iconclass"]) ?? "",
   };
 }
 
@@ -283,17 +283,17 @@ export function decodeMoodleEventCategory(json: unknown): MoodleEventCategory | 
   const object = asJsonObject(json);
   if (object === undefined) return undefined;
   return {
-    id: required(decodeInteger(object["id"]), "MoodleEventCategory.id"),
-    name: required(decodeString(object["name"]), "MoodleEventCategory.name"),
+    id: decodeInteger(object["id"]) ?? 0,
+    name: decodeString(object["name"]) ?? "",
     idNumber: decodeString(object["idnumber"]) ?? "",
     description: decodeString(object["description"]) ?? null,
-    parent: required(decodeInteger(object["parent"]), "MoodleEventCategory.parent"),
-    courseCount: required(decodeInteger(object["coursecount"]), "MoodleEventCategory.courseCount"),
-    visible: required(decodeInteger(object["visible"]), "MoodleEventCategory.visible"),
-    timeModified: required(decodeInteger(object["timemodified"]), "MoodleEventCategory.timeModified"),
-    depth: required(decodeInteger(object["depth"]), "MoodleEventCategory.depth"),
-    nestedName: required(decodeString(object["nestedname"]), "MoodleEventCategory.nestedName"),
-    url: required(decodeString(object["url"]), "MoodleEventCategory.url"),
+    parent: decodeInteger(object["parent"]) ?? 0,
+    courseCount: decodeInteger(object["coursecount"]) ?? 0,
+    visible: decodeInteger(object["visible"]) ?? 0,
+    timeModified: decodeInteger(object["timemodified"]) ?? 0,
+    depth: decodeInteger(object["depth"]) ?? 0,
+    nestedName: decodeString(object["nestedname"]) ?? "",
+    url: decodeString(object["url"]) ?? "",
   };
 }
 
@@ -365,28 +365,28 @@ export function decodeMoodleEventCourse(json: unknown): MoodleEventCourse | unde
   const object = asJsonObject(json);
   if (object === undefined) return undefined;
   return {
-    id: required(decodeInteger(object["id"]), "MoodleEventCourse.id"),
-    fullName: required(decodeString(object["fullname"]), "MoodleEventCourse.fullName"),
-    shortName: required(decodeString(object["shortname"]), "MoodleEventCourse.shortName"),
-    idNumber: required(decodeString(object["idnumber"]), "MoodleEventCourse.idNumber"),
+    id: decodeInteger(object["id"]) ?? 0,
+    fullName: decodeString(object["fullname"]) ?? "",
+    shortName: decodeString(object["shortname"]) ?? "",
+    idNumber: decodeString(object["idnumber"]) ?? "",
     summary: decodeString(object["summary"]) ?? "",
     summaryFormat: decodeInteger(object["summaryformat"]) ?? 0,
-    startDate: required(decodeInteger(object["startdate"]), "MoodleEventCourse.startDate"),
-    endDate: required(decodeInteger(object["enddate"]), "MoodleEventCourse.endDate"),
-    visible: required(decodeBoolean(object["visible"]), "MoodleEventCourse.visible"),
+    startDate: decodeInteger(object["startdate"]) ?? 0,
+    endDate: decodeInteger(object["enddate"]) ?? 0,
+    visible: decodeBoolean(object["visible"]) ?? false,
     showActivityDates: decodeBoolean(object["showactivitydates"]) ?? false,
     showCompletionConditions: decodeBoolean(object["showcompletionconditions"]) ?? false,
     pdfExportFont: decodeString(object["pdfexportfont"]) ?? "",
-    fullNameDisplay: required(decodeString(object["fullnamedisplay"]), "MoodleEventCourse.fullNameDisplay"),
-    viewUrl: required(decodeString(object["viewurl"]), "MoodleEventCourse.viewUrl"),
-    courseImage: required(decodeString(object["courseimage"]), "MoodleEventCourse.courseImage"),
+    fullNameDisplay: decodeString(object["fullnamedisplay"]) ?? "",
+    viewUrl: decodeString(object["viewurl"]) ?? "",
+    courseImage: decodeString(object["courseimage"]) ?? "",
     progress: decodeInteger(object["progress"]) ?? null,
-    hasProgress: required(decodeBoolean(object["hasprogress"]), "MoodleEventCourse.hasProgress"),
-    isFavourite: required(decodeBoolean(object["isfavourite"]), "MoodleEventCourse.isFavourite"),
-    hidden: required(decodeBoolean(object["hidden"]), "MoodleEventCourse.hidden"),
+    hasProgress: decodeBoolean(object["hasprogress"]) ?? false,
+    isFavourite: decodeBoolean(object["isfavourite"]) ?? false,
+    hidden: decodeBoolean(object["hidden"]) ?? false,
     timeAccess: decodeInteger(object["timeaccess"]) ?? null,
-    showShortName: required(decodeBoolean(object["showshortname"]), "MoodleEventCourse.showShortName"),
-    courseCategory: required(decodeString(object["coursecategory"]), "MoodleEventCourse.courseCategory"),
+    showShortName: decodeBoolean(object["showshortname"]) ?? false,
+    courseCategory: decodeString(object["coursecategory"]) ?? "",
   };
 }
 
@@ -431,7 +431,7 @@ export function decodeMoodleEventSubscription(json: unknown): MoodleEventSubscri
   const object = asJsonObject(json);
   if (object === undefined) return undefined;
   return {
-    displayEventSource: required(decodeBoolean(object["displayeventsource"]), "MoodleEventSubscription.displayEventSource"),
+    displayEventSource: decodeBoolean(object["displayeventsource"]) ?? false,
     subscriptionName: decodeString(object["subscriptionname"]) ?? null,
     subscriptionUrl: decodeString(object["subscriptionurl"]) ?? null,
   };
@@ -463,11 +463,11 @@ export function decodeMoodleEventAction(json: unknown): MoodleEventAction | unde
   const object = asJsonObject(json);
   if (object === undefined) return undefined;
   return {
-    name: required(decodeString(object["name"]), "MoodleEventAction.name"),
-    url: required(decodeString(object["url"]), "MoodleEventAction.url"),
-    itemCount: required(decodeInteger(object["itemcount"]), "MoodleEventAction.itemCount"),
-    actionable: required(decodeBoolean(object["actionable"]), "MoodleEventAction.actionable"),
-    showItemCount: required(decodeBoolean(object["showitemcount"]), "MoodleEventAction.showItemCount"),
+    name: decodeString(object["name"]) ?? "",
+    url: decodeString(object["url"]) ?? "",
+    itemCount: decodeInteger(object["itemcount"]) ?? 0,
+    actionable: decodeBoolean(object["actionable"]) ?? false,
+    showItemCount: decodeBoolean(object["showitemcount"]) ?? false,
   };
 }
 
@@ -534,30 +534,30 @@ export function decodeMoodleCalendarMonth(json: unknown): MoodleCalendarMonth | 
   const object = asJsonObject(json);
   if (object === undefined) return undefined;
   return {
-    url: required(decodeString(object["url"]), "MoodleCalendarMonth.url"),
-    courseId: required(decodeInteger(object["courseid"]), "MoodleCalendarMonth.courseId"),
+    url: decodeString(object["url"]) ?? "",
+    courseId: decodeInteger(object["courseid"]) ?? 0,
     categoryId: decodeInteger(object["categoryid"]) ?? null,
     filterSelector: decodeString(object["filter_selector"]) ?? null,
     weeks: decodeList(object["weeks"], decodeMoodleCalendarWeek) ?? [],
     dayNames: decodeList(object["daynames"], decodeMoodleCalendarDayName) ?? [],
-    view: required(decodeString(object["view"]), "MoodleCalendarMonth.view"),
+    view: decodeString(object["view"]) ?? "",
     date: required(decodeFolded(object["date"], decodeMoodleCalendarDate), "MoodleCalendarMonth.date"),
-    periodName: required(decodeString(object["periodname"]), "MoodleCalendarMonth.periodName"),
-    includeNavigation: required(decodeBoolean(object["includenavigation"]), "MoodleCalendarMonth.includeNavigation"),
-    initialEventsLoaded: required(decodeBoolean(object["initialeventsloaded"]), "MoodleCalendarMonth.initialEventsLoaded"),
+    periodName: decodeString(object["periodname"]) ?? "",
+    includeNavigation: decodeBoolean(object["includenavigation"]) ?? false,
+    initialEventsLoaded: decodeBoolean(object["initialeventsloaded"]) ?? false,
     previousPeriod: required(decodeFolded(object["previousperiod"], decodeMoodleCalendarDate), "MoodleCalendarMonth.previousPeriod"),
-    previousPeriodLink: required(decodeString(object["previousperiodlink"]), "MoodleCalendarMonth.previousPeriodLink"),
-    previousPeriodName: required(decodeString(object["previousperiodname"]), "MoodleCalendarMonth.previousPeriodName"),
+    previousPeriodLink: decodeString(object["previousperiodlink"]) ?? "",
+    previousPeriodName: decodeString(object["previousperiodname"]) ?? "",
     nextPeriod: required(decodeFolded(object["nextperiod"], decodeMoodleCalendarDate), "MoodleCalendarMonth.nextPeriod"),
-    nextPeriodName: required(decodeString(object["nextperiodname"]), "MoodleCalendarMonth.nextPeriodName"),
-    nextPeriodLink: required(decodeString(object["nextperiodlink"]), "MoodleCalendarMonth.nextPeriodLink"),
-    leftArrow: required(decodeString(object["larrow"]), "MoodleCalendarMonth.leftArrow"),
-    rightArrow: required(decodeString(object["rarrow"]), "MoodleCalendarMonth.rightArrow"),
-    defaultEventContext: required(decodeInteger(object["defaulteventcontext"]), "MoodleCalendarMonth.defaultEventContext"),
-    calendarInstanceId: required(decodeInteger(object["calendarinstanceid"]), "MoodleCalendarMonth.calendarInstanceId"),
-    viewingMonth: required(decodeBoolean(object["viewingmonth"]), "MoodleCalendarMonth.viewingMonth"),
-    showViewSelector: required(decodeBoolean(object["showviewselector"]), "MoodleCalendarMonth.showViewSelector"),
-    viewingInBlock: required(decodeBoolean(object["viewinginblock"]), "MoodleCalendarMonth.viewingInBlock"),
+    nextPeriodName: decodeString(object["nextperiodname"]) ?? "",
+    nextPeriodLink: decodeString(object["nextperiodlink"]) ?? "",
+    leftArrow: decodeString(object["larrow"]) ?? "",
+    rightArrow: decodeString(object["rarrow"]) ?? "",
+    defaultEventContext: decodeInteger(object["defaulteventcontext"]) ?? 0,
+    calendarInstanceId: decodeInteger(object["calendarinstanceid"]) ?? 0,
+    viewingMonth: decodeBoolean(object["viewingmonth"]) ?? false,
+    showViewSelector: decodeBoolean(object["showviewselector"]) ?? false,
+    viewingInBlock: decodeBoolean(object["viewinginblock"]) ?? false,
   };
 }
 
@@ -668,27 +668,27 @@ export function decodeMoodleCalendarDay(json: unknown): MoodleCalendarDay | unde
   const object = asJsonObject(json);
   if (object === undefined) return undefined;
   return {
-    seconds: required(decodeInteger(object["seconds"]), "MoodleCalendarDay.seconds"),
-    minutes: required(decodeInteger(object["minutes"]), "MoodleCalendarDay.minutes"),
-    hours: required(decodeInteger(object["hours"]), "MoodleCalendarDay.hours"),
-    dayOfMonth: required(decodeInteger(object["mday"]), "MoodleCalendarDay.dayOfMonth"),
-    dayOfWeek: required(decodeInteger(object["wday"]), "MoodleCalendarDay.dayOfWeek"),
-    year: required(decodeInteger(object["year"]), "MoodleCalendarDay.year"),
-    dayOfYear: required(decodeInteger(object["yday"]), "MoodleCalendarDay.dayOfYear"),
-    isToday: required(decodeBoolean(object["istoday"]), "MoodleCalendarDay.isToday"),
-    isWeekend: required(decodeBoolean(object["isweekend"]), "MoodleCalendarDay.isWeekend"),
-    timestamp: required(decodeInteger(object["timestamp"]), "MoodleCalendarDay.timestamp"),
-    newEventTimestamp: required(decodeInteger(object["neweventtimestamp"]), "MoodleCalendarDay.newEventTimestamp"),
+    seconds: decodeInteger(object["seconds"]) ?? 0,
+    minutes: decodeInteger(object["minutes"]) ?? 0,
+    hours: decodeInteger(object["hours"]) ?? 0,
+    dayOfMonth: decodeInteger(object["mday"]) ?? 0,
+    dayOfWeek: decodeInteger(object["wday"]) ?? 0,
+    year: decodeInteger(object["year"]) ?? 0,
+    dayOfYear: decodeInteger(object["yday"]) ?? 0,
+    isToday: decodeBoolean(object["istoday"]) ?? false,
+    isWeekend: decodeBoolean(object["isweekend"]) ?? false,
+    timestamp: decodeInteger(object["timestamp"]) ?? 0,
+    newEventTimestamp: decodeInteger(object["neweventtimestamp"]) ?? 0,
     viewDayLink: decodeString(object["viewdaylink"]) ?? null,
     viewDayLinkTitle: decodeString(object["viewdaylinktitle"]) ?? null,
     events: decodeList(object["events"], decodeMoodleCalendarDayEvent) ?? [],
-    hasEvents: required(decodeBoolean(object["hasevents"]), "MoodleCalendarDay.hasEvents"),
+    hasEvents: decodeBoolean(object["hasevents"]) ?? false,
     calendarEventTypes: decodeList(object["calendareventtypes"], decodeString) ?? [],
-    previousPeriod: required(decodeInteger(object["previousperiod"]), "MoodleCalendarDay.previousPeriod"),
-    nextPeriod: required(decodeInteger(object["nextperiod"]), "MoodleCalendarDay.nextPeriod"),
-    hasLastDayOfEvent: required(decodeBoolean(object["haslastdayofevent"]), "MoodleCalendarDay.hasLastDayOfEvent"),
-    popoverTitle: required(decodeString(object["popovertitle"]), "MoodleCalendarDay.popoverTitle"),
-    dayTitle: required(decodeString(object["daytitle"]), "MoodleCalendarDay.dayTitle"),
+    previousPeriod: decodeInteger(object["previousperiod"]) ?? 0,
+    nextPeriod: decodeInteger(object["nextperiod"]) ?? 0,
+    hasLastDayOfEvent: decodeBoolean(object["haslastdayofevent"]) ?? false,
+    popoverTitle: decodeString(object["popovertitle"]) ?? "",
+    dayTitle: decodeString(object["daytitle"]) ?? "",
   };
 }
 
@@ -823,8 +823,8 @@ export function decodeMoodleCalendarDayEvent(json: unknown): MoodleCalendarDayEv
   const object = asJsonObject(json);
   if (object === undefined) return undefined;
   return {
-    id: required(decodeInteger(object["id"]), "MoodleCalendarDayEvent.id"),
-    name: required(decodeString(object["name"]), "MoodleCalendarDayEvent.name"),
+    id: decodeInteger(object["id"]) ?? 0,
+    name: decodeString(object["name"]) ?? "",
     description: decodeString(object["description"]) ?? null,
     descriptionFormat: decodeInteger(object["descriptionformat"]) ?? 1,
     location: decodeString(object["location"]) ?? null,
@@ -838,42 +838,42 @@ export function decodeMoodleCalendarDayEvent(json: unknown): MoodleCalendarDayEv
     activityName: decodeString(object["activityname"]) ?? null,
     activityStr: decodeString(object["activitystr"]) ?? null,
     instance: decodeInteger(object["instance"]) ?? null,
-    eventType: required(decodeString(object["eventtype"]), "MoodleCalendarDayEvent.eventType"),
-    timeStart: required(decodeInteger(object["timestart"]), "MoodleCalendarDayEvent.timeStart"),
-    timeDuration: required(decodeInteger(object["timeduration"]), "MoodleCalendarDayEvent.timeDuration"),
-    timeSort: required(decodeInteger(object["timesort"]), "MoodleCalendarDayEvent.timeSort"),
-    timeUserMidnight: required(decodeInteger(object["timeusermidnight"]), "MoodleCalendarDayEvent.timeUserMidnight"),
-    visible: required(decodeInteger(object["visible"]), "MoodleCalendarDayEvent.visible"),
-    timeModified: required(decodeInteger(object["timemodified"]), "MoodleCalendarDayEvent.timeModified"),
+    eventType: decodeString(object["eventtype"]) ?? "",
+    timeStart: decodeInteger(object["timestart"]) ?? 0,
+    timeDuration: decodeInteger(object["timeduration"]) ?? 0,
+    timeSort: decodeInteger(object["timesort"]) ?? 0,
+    timeUserMidnight: decodeInteger(object["timeusermidnight"]) ?? 0,
+    visible: decodeInteger(object["visible"]) ?? 0,
+    timeModified: decodeInteger(object["timemodified"]) ?? 0,
     overdue: decodeBoolean(object["overdue"]) ?? null,
     icon: required(decodeFolded(object["icon"], decodeMoodleEventIcon), "MoodleCalendarDayEvent.icon"),
     category: decodeFolded(object["category"], decodeMoodleEventCategory) ?? null,
     course: decodeFolded(object["course"], decodeMoodleEventCourse) ?? null,
     subscription: decodeFolded(object["subscription"], decodeMoodleEventSubscription) ?? null,
-    canEdit: required(decodeBoolean(object["canedit"]), "MoodleCalendarDayEvent.canEdit"),
-    canDelete: required(decodeBoolean(object["candelete"]), "MoodleCalendarDayEvent.canDelete"),
-    deleteUrl: required(decodeString(object["deleteurl"]), "MoodleCalendarDayEvent.deleteUrl"),
-    editUrl: required(decodeString(object["editurl"]), "MoodleCalendarDayEvent.editUrl"),
-    viewUrl: required(decodeString(object["viewurl"]), "MoodleCalendarDayEvent.viewUrl"),
-    formattedTime: required(decodeString(object["formattedtime"]), "MoodleCalendarDayEvent.formattedTime"),
-    formattedLocation: required(decodeString(object["formattedlocation"]), "MoodleCalendarDayEvent.formattedLocation"),
-    isActionEvent: required(decodeBoolean(object["isactionevent"]), "MoodleCalendarDayEvent.isActionEvent"),
-    isCourseEvent: required(decodeBoolean(object["iscourseevent"]), "MoodleCalendarDayEvent.isCourseEvent"),
-    isCategoryEvent: required(decodeBoolean(object["iscategoryevent"]), "MoodleCalendarDayEvent.isCategoryEvent"),
+    canEdit: decodeBoolean(object["canedit"]) ?? false,
+    canDelete: decodeBoolean(object["candelete"]) ?? false,
+    deleteUrl: decodeString(object["deleteurl"]) ?? "",
+    editUrl: decodeString(object["editurl"]) ?? "",
+    viewUrl: decodeString(object["viewurl"]) ?? "",
+    formattedTime: decodeString(object["formattedtime"]) ?? "",
+    formattedLocation: decodeString(object["formattedlocation"]) ?? "",
+    isActionEvent: decodeBoolean(object["isactionevent"]) ?? false,
+    isCourseEvent: decodeBoolean(object["iscourseevent"]) ?? false,
+    isCategoryEvent: decodeBoolean(object["iscategoryevent"]) ?? false,
     groupName: decodeString(object["groupname"]) ?? null,
-    normalisedEventType: required(decodeString(object["normalisedeventtype"]), "MoodleCalendarDayEvent.normalisedEventType"),
-    normalisedEventTypeText: required(decodeString(object["normalisedeventtypetext"]), "MoodleCalendarDayEvent.normalisedEventTypeText"),
+    normalisedEventType: decodeString(object["normalisedeventtype"]) ?? "",
+    normalisedEventTypeText: decodeString(object["normalisedeventtypetext"]) ?? "",
     action: decodeFolded(object["action"], decodeMoodleEventAction) ?? null,
-    purpose: required(decodeString(object["purpose"]), "MoodleCalendarDayEvent.purpose"),
+    purpose: decodeString(object["purpose"]) ?? "",
     branded: decodeBoolean(object["branded"]) ?? null,
-    url: required(decodeString(object["url"]), "MoodleCalendarDayEvent.url"),
-    isLastDay: required(decodeBoolean(object["islastday"]), "MoodleCalendarDayEvent.isLastDay"),
-    popupName: required(decodeString(object["popupname"]), "MoodleCalendarDayEvent.popupName"),
+    url: decodeString(object["url"]) ?? "",
+    isLastDay: decodeBoolean(object["islastday"]) ?? false,
+    popupName: decodeString(object["popupname"]) ?? "",
     minDayTimestamp: decodeInteger(object["mindaytimestamp"]) ?? null,
     minDayError: decodeString(object["mindayerror"]) ?? null,
     maxDayTimestamp: decodeInteger(object["maxdaytimestamp"]) ?? null,
     maxDayError: decodeString(object["maxdayerror"]) ?? null,
-    draggable: required(decodeBoolean(object["draggable"]), "MoodleCalendarDayEvent.draggable"),
+    draggable: decodeBoolean(object["draggable"]) ?? false,
   };
 }
 
@@ -947,9 +947,9 @@ export function decodeMoodleCalendarDayName(json: unknown): MoodleCalendarDayNam
   const object = asJsonObject(json);
   if (object === undefined) return undefined;
   return {
-    dayNo: required(decodeInteger(object["dayno"]), "MoodleCalendarDayName.dayNo"),
-    shortName: required(decodeString(object["shortname"]), "MoodleCalendarDayName.shortName"),
-    fullName: required(decodeString(object["fullname"]), "MoodleCalendarDayName.fullName"),
+    dayNo: decodeInteger(object["dayno"]) ?? 0,
+    shortName: decodeString(object["shortname"]) ?? "",
+    fullName: decodeString(object["fullname"]) ?? "",
   };
 }
 
@@ -991,17 +991,17 @@ export function decodeMoodleCalendarDate(json: unknown): MoodleCalendarDate | un
   const object = asJsonObject(json);
   if (object === undefined) return undefined;
   return {
-    seconds: required(decodeInteger(object["seconds"]), "MoodleCalendarDate.seconds"),
-    minutes: required(decodeInteger(object["minutes"]), "MoodleCalendarDate.minutes"),
-    hours: required(decodeInteger(object["hours"]), "MoodleCalendarDate.hours"),
-    dayOfMonth: required(decodeInteger(object["mday"]), "MoodleCalendarDate.dayOfMonth"),
-    dayOfWeek: required(decodeInteger(object["wday"]), "MoodleCalendarDate.dayOfWeek"),
-    monthNumber: required(decodeInteger(object["mon"]), "MoodleCalendarDate.monthNumber"),
-    year: required(decodeInteger(object["year"]), "MoodleCalendarDate.year"),
-    dayOfYear: required(decodeInteger(object["yday"]), "MoodleCalendarDate.dayOfYear"),
-    weekday: required(decodeString(object["weekday"]), "MoodleCalendarDate.weekday"),
-    month: required(decodeString(object["month"]), "MoodleCalendarDate.month"),
-    timestamp: required(decodeInteger(object["timestamp"]), "MoodleCalendarDate.timestamp"),
+    seconds: decodeInteger(object["seconds"]) ?? 0,
+    minutes: decodeInteger(object["minutes"]) ?? 0,
+    hours: decodeInteger(object["hours"]) ?? 0,
+    dayOfMonth: decodeInteger(object["mday"]) ?? 0,
+    dayOfWeek: decodeInteger(object["wday"]) ?? 0,
+    monthNumber: decodeInteger(object["mon"]) ?? 0,
+    year: decodeInteger(object["year"]) ?? 0,
+    dayOfYear: decodeInteger(object["yday"]) ?? 0,
+    weekday: decodeString(object["weekday"]) ?? "",
+    month: decodeString(object["month"]) ?? "",
+    timestamp: decodeInteger(object["timestamp"]) ?? 0,
   };
 }
 
@@ -1043,11 +1043,11 @@ export function decodeMoodleCalendarUpcomingView(json: unknown): MoodleCalendarU
   if (object === undefined) return undefined;
   return {
     events: decodeList(object["events"], decodeMoodleCalendarDayEvent) ?? [],
-    defaultEventContext: required(decodeInteger(object["defaulteventcontext"]), "MoodleCalendarUpcomingView.defaultEventContext"),
-    filterSelector: required(decodeString(object["filter_selector"]), "MoodleCalendarUpcomingView.filterSelector"),
-    courseId: required(decodeInteger(object["courseid"]), "MoodleCalendarUpcomingView.courseId"),
+    defaultEventContext: decodeInteger(object["defaulteventcontext"]) ?? 0,
+    filterSelector: decodeString(object["filter_selector"]) ?? "",
+    courseId: decodeInteger(object["courseid"]) ?? 0,
     categoryId: decodeInteger(object["categoryid"]) ?? null,
-    isLoggedIn: required(decodeBoolean(object["isloggedin"]), "MoodleCalendarUpcomingView.isLoggedIn"),
+    isLoggedIn: decodeBoolean(object["isloggedin"]) ?? false,
     date: required(decodeFolded(object["date"], decodeMoodleCalendarDate), "MoodleCalendarUpcomingView.date"),
   };
 }

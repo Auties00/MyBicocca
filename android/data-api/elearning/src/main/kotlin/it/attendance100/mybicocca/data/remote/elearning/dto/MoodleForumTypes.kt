@@ -38,19 +38,19 @@ data class MoodleAddDiscussionPostResponse(
 data class MoodleForumPost(
     /** id */
     @SerialName("id")
-    val id: Int,
+    val id: Int = 0,
 
     /** subject */
     @SerialName("subject")
-    val subject: String,
+    val subject: String = "",
 
     /** replysubject */
     @SerialName("replysubject")
-    val replySubject: String,
+    val replySubject: String = "",
 
     /** message */
     @SerialName("message")
-    val message: String,
+    val message: String = "",
 
     /** message format (1 = HTML, 0 = MOODLE, 2 = PLAIN, or 4 = MARKDOWN) */
     @SerialName("messageformat")
@@ -62,12 +62,12 @@ data class MoodleForumPost(
 
     /** discussionid */
     @SerialName("discussionid")
-    val discussionId: Int,
+    val discussionId: Int = 0,
 
     /** hasparent */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("hasparent")
-    val hasParent: Boolean,
+    val hasParent: Boolean = false,
 
     /** parentid */
     @SerialName("parentid")
@@ -89,17 +89,17 @@ data class MoodleForumPost(
     /** isdeleted */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("isdeleted")
-    val isDeleted: Boolean,
+    val isDeleted: Boolean = false,
 
     /** isprivatereply */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("isprivatereply")
-    val isPrivateReply: Boolean,
+    val isPrivateReply: Boolean = false,
 
     /** haswordcount */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("haswordcount")
-    val hasWordCount: Boolean,
+    val hasWordCount: Boolean = false,
 
     /** wordcount */
     @SerialName("wordcount")
@@ -162,11 +162,11 @@ data class MoodlePostAuthor(
 data class MoodlePostAuthorGroup(
     /** id */
     @SerialName("id")
-    val id: Int,
+    val id: Int = 0,
 
     /** name */
     @SerialName("name")
-    val name: String,
+    val name: String = "",
 
     @Serializable(with = MoodlePostAuthorGroupUrlsFoldedSerializer::class)
     @SerialName("urls")
@@ -290,81 +290,81 @@ data class MoodlePostUrls(
 data class MoodlePostAttachment(
     /** contextid */
     @SerialName("contextid")
-    val contextId: Int,
+    val contextId: Int = 0,
 
     /** component */
     @SerialName("component")
-    val component: String,
+    val component: String = "",
 
     /** filearea */
     @SerialName("filearea")
-    val fileArea: String,
+    val fileArea: String = "",
 
     /** itemid */
     @SerialName("itemid")
-    val itemId: Int,
+    val itemId: Int = 0,
 
     /** filepath */
     @SerialName("filepath")
-    val filePath: String,
+    val filePath: String = "",
 
     /** filename */
     @SerialName("filename")
-    val fileName: String,
+    val fileName: String = "",
 
     /** isdir */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("isdir")
-    val isDirectory: Boolean,
+    val isDirectory: Boolean = false,
 
     /** isimage */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("isimage")
-    val isImage: Boolean,
+    val isImage: Boolean = false,
 
     /** timemodified */
     @SerialName("timemodified")
-    val timeModified: Long,
+    val timeModified: Long = 0L,
 
     /** timecreated */
     @SerialName("timecreated")
-    val timeCreated: Long,
+    val timeCreated: Long = 0L,
 
     /** filesize */
     @SerialName("filesize")
-    val fileSize: Long,
+    val fileSize: Long = 0L,
 
     /** author */
     @SerialName("author")
-    val author: String,
+    val author: String = "",
 
     /** license */
     @SerialName("license")
-    val license: String,
+    val license: String = "",
 
     /** filenameshort */
     @SerialName("filenameshort")
-    val fileNameShort: String,
+    val fileNameShort: String = "",
 
     /** filesizeformatted */
     @SerialName("filesizeformatted")
-    val fileSizeFormatted: String,
+    val fileSizeFormatted: String = "",
 
     /** icon */
     @SerialName("icon")
-    val icon: String,
+    val icon: String = "",
 
     /** timecreatedformatted */
     @SerialName("timecreatedformatted")
-    val timeCreatedFormatted: String,
+    val timeCreatedFormatted: String = "",
 
     /** timemodifiedformatted */
     @SerialName("timemodifiedformatted")
-    val timeModifiedFormatted: String,
+    val timeModifiedFormatted: String = "",
 
     /** url */
     @SerialName("url")
-    val url: String,
+    val url: String = "",
 
     @Serializable(with = MoodlePostAttachmentUrlsFoldedSerializer::class)
     @SerialName("urls")
@@ -393,106 +393,106 @@ data class MoodlePostAttachmentHtml(
 data class MoodlePostInlineFile(
     /** contextid */
     @SerialName("contextid")
-    val contextId: Int,
+    val contextId: Int = 0,
 
     /** component */
     @SerialName("component")
-    val component: String,
+    val component: String = "",
 
     /** filearea */
     @SerialName("filearea")
-    val fileArea: String,
+    val fileArea: String = "",
 
     /** itemid */
     @SerialName("itemid")
-    val itemId: Int,
+    val itemId: Int = 0,
 
     /** filepath */
     @SerialName("filepath")
-    val filePath: String,
+    val filePath: String = "",
 
     /** filename */
     @SerialName("filename")
-    val fileName: String,
+    val fileName: String = "",
 
     /** isdir */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("isdir")
-    val isDirectory: Boolean,
+    val isDirectory: Boolean = false,
 
     /** isimage */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("isimage")
-    val isImage: Boolean,
+    val isImage: Boolean = false,
 
     /** timemodified */
     @SerialName("timemodified")
-    val timeModified: Long,
+    val timeModified: Long = 0L,
 
     /** timecreated */
     @SerialName("timecreated")
-    val timeCreated: Long,
+    val timeCreated: Long = 0L,
 
     /** filesize */
     @SerialName("filesize")
-    val fileSize: Long,
+    val fileSize: Long = 0L,
 
     /** author */
     @SerialName("author")
-    val author: String,
+    val author: String = "",
 
     /** license */
     @SerialName("license")
-    val license: String,
+    val license: String = "",
 
     /** filenameshort */
     @SerialName("filenameshort")
-    val fileNameShort: String,
+    val fileNameShort: String = "",
 
     /** filesizeformatted */
     @SerialName("filesizeformatted")
-    val fileSizeFormatted: String,
+    val fileSizeFormatted: String = "",
 
     /** icon */
     @SerialName("icon")
-    val icon: String,
+    val icon: String = "",
 
     /** timecreatedformatted */
     @SerialName("timecreatedformatted")
-    val timeCreatedFormatted: String,
+    val timeCreatedFormatted: String = "",
 
     /** timemodifiedformatted */
     @SerialName("timemodifiedformatted")
-    val timeModifiedFormatted: String,
+    val timeModifiedFormatted: String = "",
 
     /** url */
     @SerialName("url")
-    val url: String
+    val url: String = ""
 )
 
 @Serializable
 data class MoodlePostTag(
     /** The ID of the Tag */
     @SerialName("id")
-    val id: Int,
+    val id: Int = 0,
 
     /** The tagid */
     @SerialName("tagid")
-    val tagId: Int,
+    val tagId: Int = 0,
 
     /** Whether this is a standard tag */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("isstandard")
-    val isStandard: Boolean,
+    val isStandard: Boolean = false,
 
     /** The display name of the tag */
     @SerialName("displayname")
-    val displayName: String,
+    val displayName: String = "",
 
     /** Wehther this tag is flagged */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("flag")
-    val flag: Boolean,
+    val flag: Boolean = false,
 
     @Serializable(with = MoodlePostTagUrlsFoldedSerializer::class)
     @SerialName("urls")
@@ -503,7 +503,7 @@ data class MoodlePostTag(
 data class MoodlePostTagUrls(
     /** The URL to view the tag */
     @SerialName("view")
-    val view: String
+    val view: String = ""
 )
 
 @Serializable
@@ -1048,34 +1048,34 @@ data class MoodlePrepareDraftAreaResponse(
 data class MoodleDiscussionSummary(
     /** id */
     @SerialName("id")
-    val id: Int,
+    val id: Int = 0,
 
     /** forumid */
     @SerialName("forumid")
-    val forumId: Int,
+    val forumId: Int = 0,
 
     /** pinned */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("pinned")
-    val pinned: Boolean,
+    val pinned: Boolean = false,
 
     /** locked */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("locked")
-    val locked: Boolean,
+    val locked: Boolean = false,
 
     /** istimelocked */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("istimelocked")
-    val isTimeLocked: Boolean,
+    val isTimeLocked: Boolean = false,
 
     /** name */
     @SerialName("name")
-    val name: String,
+    val name: String = "",
 
     /** firstpostid */
     @SerialName("firstpostid")
-    val firstPostId: Int,
+    val firstPostId: Int = 0,
 
     @Serializable(with = MoodleDiscussionGroupFoldedSerializer::class)
     @SerialName("group")
@@ -1106,7 +1106,7 @@ data class MoodleDiscussionSummary(
 data class MoodleDiscussionGroup(
     /** name */
     @SerialName("name")
-    val name: String,
+    val name: String = "",
 
     @Serializable(with = MoodleDiscussionGroupUrlsFoldedSerializer::class)
     @SerialName("urls")
@@ -1128,19 +1128,19 @@ data class MoodleDiscussionGroupUrls(
 data class MoodleDiscussionTimes(
     /** modified */
     @SerialName("modified")
-    val modified: Long,
+    val modified: Long = 0L,
 
     /** start */
     @SerialName("start")
-    val start: Long,
+    val start: Long = 0L,
 
     /** end */
     @SerialName("end")
-    val end: Long,
+    val end: Long = 0L,
 
     /** locked */
     @SerialName("locked")
-    val locked: Long
+    val locked: Long = 0L
 )
 
 @Serializable
@@ -1148,12 +1148,12 @@ data class MoodleDiscussionUserState(
     /** subscribed */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("subscribed")
-    val subscribed: Boolean,
+    val subscribed: Boolean = false,
 
     /** favourited */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("favourited")
-    val favourited: Boolean
+    val favourited: Boolean = false
 )
 
 @Serializable
@@ -1161,39 +1161,39 @@ data class MoodleDiscussionCapabilities(
     /** subscribe */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("subscribe")
-    val subscribe: Boolean,
+    val subscribe: Boolean = false,
 
     /** move */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("move")
-    val move: Boolean,
+    val move: Boolean = false,
 
     /** pin */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("pin")
-    val pin: Boolean,
+    val pin: Boolean = false,
 
     /** post */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("post")
-    val post: Boolean,
+    val post: Boolean = false,
 
     /** manage */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("manage")
-    val manage: Boolean,
+    val manage: Boolean = false,
 
     /** favourite */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("favourite")
-    val favourite: Boolean
+    val favourite: Boolean = false
 )
 
 @Serializable
 data class MoodleDiscussionUrls(
     /** view */
     @SerialName("view")
-    val view: String,
+    val view: String = "",
 
     /** viewlatest */
     @SerialName("viewlatest")
@@ -1205,11 +1205,11 @@ data class MoodleDiscussionUrls(
 
     /** markasread */
     @SerialName("markasread")
-    val markAsRead: String,
+    val markAsRead: String = "",
 
     /** subscribe */
     @SerialName("subscribe")
-    val subscribe: String,
+    val subscribe: String = "",
 
     /** pin */
     @SerialName("pin")

@@ -113,14 +113,14 @@ public struct MoodleUserBadge: Codable, Hashable, Sendable {
 
     public init(
         id: Int? = nil,
-        name: String,
+        name: String = "",
         description: String = "",
         timeCreated: Int64? = nil,
         timeModified: Int64? = nil,
         userCreated: Int? = nil,
         userModified: Int? = nil,
-        issuerName: String,
-        issuerUrl: String,
+        issuerName: String = "",
+        issuerUrl: String = "",
         issuerContact: String = "",
         expireDate: Int64? = nil,
         expirePeriod: Int? = nil,
@@ -133,12 +133,12 @@ public struct MoodleUserBadge: Codable, Hashable, Sendable {
         nextCron: Int? = nil,
         status: Int? = nil,
         issuedId: Int? = nil,
-        uniqueHash: String,
-        dateIssued: Int64,
+        uniqueHash: String = "",
+        dateIssued: Int64 = 0,
         dateExpire: Int64 = 0,
         visible: Int? = nil,
-        recipientId: Int,
-        recipientFullName: String,
+        recipientId: Int = 0,
+        recipientFullName: String = "",
         email: String? = nil,
         version: String? = nil,
         language: String? = nil,
@@ -146,7 +146,7 @@ public struct MoodleUserBadge: Codable, Hashable, Sendable {
         imageAuthorEmail: String? = nil,
         imageAuthorUrl: String? = nil,
         imageCaption: String? = nil,
-        badgeUrl: String,
+        badgeUrl: String = "",
         endorsement: MoodleBadgeEndorsement? = nil,
         alignment: [MoodleBadgeAlignment] = [],
         relatedBadges: [MoodleRelatedBadge] = []
@@ -235,14 +235,14 @@ public struct MoodleUserBadge: Codable, Hashable, Sendable {
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.id = container.decodeLenient(Int.self, forKey: .id)
-        self.name = try container.decodeRequired(String.self, forKey: .name)
+        self.name = container.decodeLenient(String.self, forKey: .name) ?? ""
         self.description = container.decodeLenient(String.self, forKey: .description) ?? ""
         self.timeCreated = container.decodeLenient(Int64.self, forKey: .timeCreated)
         self.timeModified = container.decodeLenient(Int64.self, forKey: .timeModified)
         self.userCreated = container.decodeLenient(Int.self, forKey: .userCreated)
         self.userModified = container.decodeLenient(Int.self, forKey: .userModified)
-        self.issuerName = try container.decodeRequired(String.self, forKey: .issuerName)
-        self.issuerUrl = try container.decodeRequired(String.self, forKey: .issuerUrl)
+        self.issuerName = container.decodeLenient(String.self, forKey: .issuerName) ?? ""
+        self.issuerUrl = container.decodeLenient(String.self, forKey: .issuerUrl) ?? ""
         self.issuerContact = container.decodeLenient(String.self, forKey: .issuerContact) ?? ""
         self.expireDate = container.decodeLenient(Int64.self, forKey: .expireDate)
         self.expirePeriod = container.decodeLenient(Int.self, forKey: .expirePeriod)
@@ -255,12 +255,12 @@ public struct MoodleUserBadge: Codable, Hashable, Sendable {
         self.nextCron = container.decodeLenient(Int.self, forKey: .nextCron)
         self.status = container.decodeLenient(Int.self, forKey: .status)
         self.issuedId = container.decodeLenient(Int.self, forKey: .issuedId)
-        self.uniqueHash = try container.decodeRequired(String.self, forKey: .uniqueHash)
-        self.dateIssued = try container.decodeRequired(Int64.self, forKey: .dateIssued)
+        self.uniqueHash = container.decodeLenient(String.self, forKey: .uniqueHash) ?? ""
+        self.dateIssued = container.decodeLenient(Int64.self, forKey: .dateIssued) ?? 0
         self.dateExpire = container.decodeLenient(Int64.self, forKey: .dateExpire) ?? 0
         self.visible = container.decodeLenient(Int.self, forKey: .visible)
-        self.recipientId = try container.decodeRequired(Int.self, forKey: .recipientId)
-        self.recipientFullName = try container.decodeRequired(String.self, forKey: .recipientFullName)
+        self.recipientId = container.decodeLenient(Int.self, forKey: .recipientId) ?? 0
+        self.recipientFullName = container.decodeLenient(String.self, forKey: .recipientFullName) ?? ""
         self.email = container.decodeLenient(String.self, forKey: .email)
         self.version = container.decodeLenient(String.self, forKey: .version)
         self.language = container.decodeLenient(String.self, forKey: .language)
@@ -268,7 +268,7 @@ public struct MoodleUserBadge: Codable, Hashable, Sendable {
         self.imageAuthorEmail = container.decodeLenient(String.self, forKey: .imageAuthorEmail)
         self.imageAuthorUrl = container.decodeLenient(String.self, forKey: .imageAuthorUrl)
         self.imageCaption = container.decodeLenient(String.self, forKey: .imageCaption)
-        self.badgeUrl = try container.decodeRequired(String.self, forKey: .badgeUrl)
+        self.badgeUrl = container.decodeLenient(String.self, forKey: .badgeUrl) ?? ""
         self.endorsement = container.decodeFolded(MoodleBadgeEndorsement.self, forKey: .endorsement)
         self.alignment = container.decodeLenient([MoodleBadgeAlignment].self, forKey: .alignment) ?? []
         self.relatedBadges = container.decodeLenient([MoodleRelatedBadge].self, forKey: .relatedBadges) ?? []
@@ -336,14 +336,14 @@ public struct MoodleBadgeEndorsement: Codable, Hashable, Sendable {
     public var dateIssued: Int64
 
     public init(
-        id: Int,
-        badgeId: Int,
-        issuerName: String,
-        issuerUrl: String,
-        issuerEmail: String,
+        id: Int = 0,
+        badgeId: Int = 0,
+        issuerName: String = "",
+        issuerUrl: String = "",
+        issuerEmail: String = "",
         claimId: String = "",
         claimComment: String = "",
-        dateIssued: Int64
+        dateIssued: Int64 = 0
     ) {
         self.id = id
         self.badgeId = badgeId
@@ -368,14 +368,14 @@ public struct MoodleBadgeEndorsement: Codable, Hashable, Sendable {
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.id = try container.decodeRequired(Int.self, forKey: .id)
-        self.badgeId = try container.decodeRequired(Int.self, forKey: .badgeId)
-        self.issuerName = try container.decodeRequired(String.self, forKey: .issuerName)
-        self.issuerUrl = try container.decodeRequired(String.self, forKey: .issuerUrl)
-        self.issuerEmail = try container.decodeRequired(String.self, forKey: .issuerEmail)
+        self.id = container.decodeLenient(Int.self, forKey: .id) ?? 0
+        self.badgeId = container.decodeLenient(Int.self, forKey: .badgeId) ?? 0
+        self.issuerName = container.decodeLenient(String.self, forKey: .issuerName) ?? ""
+        self.issuerUrl = container.decodeLenient(String.self, forKey: .issuerUrl) ?? ""
+        self.issuerEmail = container.decodeLenient(String.self, forKey: .issuerEmail) ?? ""
         self.claimId = container.decodeLenient(String.self, forKey: .claimId) ?? ""
         self.claimComment = container.decodeLenient(String.self, forKey: .claimComment) ?? ""
-        self.dateIssued = try container.decodeRequired(Int64.self, forKey: .dateIssued)
+        self.dateIssued = container.decodeLenient(Int64.self, forKey: .dateIssued) ?? 0
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -471,8 +471,8 @@ public struct MoodleRelatedBadge: Codable, Hashable, Sendable {
     public var type: Int?
 
     public init(
-        id: Int,
-        name: String,
+        id: Int = 0,
+        name: String = "",
         version: String? = nil,
         language: String? = nil,
         type: Int? = nil
@@ -494,8 +494,8 @@ public struct MoodleRelatedBadge: Codable, Hashable, Sendable {
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.id = try container.decodeRequired(Int.self, forKey: .id)
-        self.name = try container.decodeRequired(String.self, forKey: .name)
+        self.id = container.decodeLenient(Int.self, forKey: .id) ?? 0
+        self.name = container.decodeLenient(String.self, forKey: .name) ?? ""
         self.version = container.decodeLenient(String.self, forKey: .version)
         self.language = container.decodeLenient(String.self, forKey: .language)
         self.type = container.decodeLenient(Int.self, forKey: .type)

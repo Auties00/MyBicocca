@@ -128,8 +128,8 @@ public struct MoodleCalendarEvent: Codable, Hashable, Sendable {
     public var url: String
 
     public init(
-        id: Int,
-        name: String,
+        id: Int = 0,
+        name: String = "",
         description: String? = nil,
         descriptionFormat: Int = 1,
         location: String? = nil,
@@ -143,35 +143,35 @@ public struct MoodleCalendarEvent: Codable, Hashable, Sendable {
         activityName: String? = nil,
         activityStr: String? = nil,
         instance: Int? = nil,
-        eventType: String,
-        timeStart: Int64,
-        timeDuration: Int64,
-        timeSort: Int64,
-        timeUserMidnight: Int64,
-        visible: Int,
-        timeModified: Int64,
+        eventType: String = "",
+        timeStart: Int64 = 0,
+        timeDuration: Int64 = 0,
+        timeSort: Int64 = 0,
+        timeUserMidnight: Int64 = 0,
+        visible: Int = 0,
+        timeModified: Int64 = 0,
         overdue: Bool? = nil,
         icon: MoodleEventIcon,
         category: MoodleEventCategory? = nil,
         course: MoodleEventCourse? = nil,
         subscription: MoodleEventSubscription? = nil,
-        canEdit: Bool,
-        canDelete: Bool,
-        deleteUrl: String,
-        editUrl: String,
-        viewUrl: String,
-        formattedTime: String,
-        formattedLocation: String,
-        isActionEvent: Bool,
-        isCourseEvent: Bool,
-        isCategoryEvent: Bool,
+        canEdit: Bool = false,
+        canDelete: Bool = false,
+        deleteUrl: String = "",
+        editUrl: String = "",
+        viewUrl: String = "",
+        formattedTime: String = "",
+        formattedLocation: String = "",
+        isActionEvent: Bool = false,
+        isCourseEvent: Bool = false,
+        isCategoryEvent: Bool = false,
         groupName: String? = nil,
-        normalisedEventType: String,
-        normalisedEventTypeText: String,
+        normalisedEventType: String = "",
+        normalisedEventTypeText: String = "",
         action: MoodleEventAction? = nil,
-        purpose: String,
+        purpose: String = "",
         branded: Bool? = nil,
-        url: String
+        url: String = ""
     ) {
         self.id = id
         self.name = name
@@ -268,8 +268,8 @@ public struct MoodleCalendarEvent: Codable, Hashable, Sendable {
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.id = try container.decodeRequired(Int.self, forKey: .id)
-        self.name = try container.decodeRequired(String.self, forKey: .name)
+        self.id = container.decodeLenient(Int.self, forKey: .id) ?? 0
+        self.name = container.decodeLenient(String.self, forKey: .name) ?? ""
         self.description = container.decodeLenient(String.self, forKey: .description)
         self.descriptionFormat = container.decodeLenient(Int.self, forKey: .descriptionFormat) ?? 1
         self.location = container.decodeLenient(String.self, forKey: .location)
@@ -283,35 +283,35 @@ public struct MoodleCalendarEvent: Codable, Hashable, Sendable {
         self.activityName = container.decodeLenient(String.self, forKey: .activityName)
         self.activityStr = container.decodeLenient(String.self, forKey: .activityStr)
         self.instance = container.decodeLenient(Int.self, forKey: .instance)
-        self.eventType = try container.decodeRequired(String.self, forKey: .eventType)
-        self.timeStart = try container.decodeRequired(Int64.self, forKey: .timeStart)
-        self.timeDuration = try container.decodeRequired(Int64.self, forKey: .timeDuration)
-        self.timeSort = try container.decodeRequired(Int64.self, forKey: .timeSort)
-        self.timeUserMidnight = try container.decodeRequired(Int64.self, forKey: .timeUserMidnight)
-        self.visible = try container.decodeRequired(Int.self, forKey: .visible)
-        self.timeModified = try container.decodeRequired(Int64.self, forKey: .timeModified)
+        self.eventType = container.decodeLenient(String.self, forKey: .eventType) ?? ""
+        self.timeStart = container.decodeLenient(Int64.self, forKey: .timeStart) ?? 0
+        self.timeDuration = container.decodeLenient(Int64.self, forKey: .timeDuration) ?? 0
+        self.timeSort = container.decodeLenient(Int64.self, forKey: .timeSort) ?? 0
+        self.timeUserMidnight = container.decodeLenient(Int64.self, forKey: .timeUserMidnight) ?? 0
+        self.visible = container.decodeLenient(Int.self, forKey: .visible) ?? 0
+        self.timeModified = container.decodeLenient(Int64.self, forKey: .timeModified) ?? 0
         self.overdue = container.decodeLenient(Bool.self, forKey: .overdue)
         self.icon = try container.required(container.decodeFolded(MoodleEventIcon.self, forKey: .icon), forKey: .icon)
         self.category = container.decodeFolded(MoodleEventCategory.self, forKey: .category)
         self.course = container.decodeFolded(MoodleEventCourse.self, forKey: .course)
         self.subscription = container.decodeFolded(MoodleEventSubscription.self, forKey: .subscription)
-        self.canEdit = try container.decodeRequired(Bool.self, forKey: .canEdit)
-        self.canDelete = try container.decodeRequired(Bool.self, forKey: .canDelete)
-        self.deleteUrl = try container.decodeRequired(String.self, forKey: .deleteUrl)
-        self.editUrl = try container.decodeRequired(String.self, forKey: .editUrl)
-        self.viewUrl = try container.decodeRequired(String.self, forKey: .viewUrl)
-        self.formattedTime = try container.decodeRequired(String.self, forKey: .formattedTime)
-        self.formattedLocation = try container.decodeRequired(String.self, forKey: .formattedLocation)
-        self.isActionEvent = try container.decodeRequired(Bool.self, forKey: .isActionEvent)
-        self.isCourseEvent = try container.decodeRequired(Bool.self, forKey: .isCourseEvent)
-        self.isCategoryEvent = try container.decodeRequired(Bool.self, forKey: .isCategoryEvent)
+        self.canEdit = container.decodeLenient(Bool.self, forKey: .canEdit) ?? false
+        self.canDelete = container.decodeLenient(Bool.self, forKey: .canDelete) ?? false
+        self.deleteUrl = container.decodeLenient(String.self, forKey: .deleteUrl) ?? ""
+        self.editUrl = container.decodeLenient(String.self, forKey: .editUrl) ?? ""
+        self.viewUrl = container.decodeLenient(String.self, forKey: .viewUrl) ?? ""
+        self.formattedTime = container.decodeLenient(String.self, forKey: .formattedTime) ?? ""
+        self.formattedLocation = container.decodeLenient(String.self, forKey: .formattedLocation) ?? ""
+        self.isActionEvent = container.decodeLenient(Bool.self, forKey: .isActionEvent) ?? false
+        self.isCourseEvent = container.decodeLenient(Bool.self, forKey: .isCourseEvent) ?? false
+        self.isCategoryEvent = container.decodeLenient(Bool.self, forKey: .isCategoryEvent) ?? false
         self.groupName = container.decodeLenient(String.self, forKey: .groupName)
-        self.normalisedEventType = try container.decodeRequired(String.self, forKey: .normalisedEventType)
-        self.normalisedEventTypeText = try container.decodeRequired(String.self, forKey: .normalisedEventTypeText)
+        self.normalisedEventType = container.decodeLenient(String.self, forKey: .normalisedEventType) ?? ""
+        self.normalisedEventTypeText = container.decodeLenient(String.self, forKey: .normalisedEventTypeText) ?? ""
         self.action = container.decodeFolded(MoodleEventAction.self, forKey: .action)
-        self.purpose = try container.decodeRequired(String.self, forKey: .purpose)
+        self.purpose = container.decodeLenient(String.self, forKey: .purpose) ?? ""
         self.branded = container.decodeLenient(Bool.self, forKey: .branded)
-        self.url = try container.decodeRequired(String.self, forKey: .url)
+        self.url = container.decodeLenient(String.self, forKey: .url) ?? ""
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -376,11 +376,11 @@ public struct MoodleEventIcon: Codable, Hashable, Sendable {
     public var iconClass: String
 
     public init(
-        key: String,
-        component: String,
-        altText: String,
-        iconUrl: String,
-        iconClass: String
+        key: String = "",
+        component: String = "",
+        altText: String = "",
+        iconUrl: String = "",
+        iconClass: String = ""
     ) {
         self.key = key
         self.component = component
@@ -399,11 +399,11 @@ public struct MoodleEventIcon: Codable, Hashable, Sendable {
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.key = try container.decodeRequired(String.self, forKey: .key)
-        self.component = try container.decodeRequired(String.self, forKey: .component)
-        self.altText = try container.decodeRequired(String.self, forKey: .altText)
-        self.iconUrl = try container.decodeRequired(String.self, forKey: .iconUrl)
-        self.iconClass = try container.decodeRequired(String.self, forKey: .iconClass)
+        self.key = container.decodeLenient(String.self, forKey: .key) ?? ""
+        self.component = container.decodeLenient(String.self, forKey: .component) ?? ""
+        self.altText = container.decodeLenient(String.self, forKey: .altText) ?? ""
+        self.iconUrl = container.decodeLenient(String.self, forKey: .iconUrl) ?? ""
+        self.iconClass = container.decodeLenient(String.self, forKey: .iconClass) ?? ""
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -441,17 +441,17 @@ public struct MoodleEventCategory: Codable, Hashable, Sendable {
     public var url: String
 
     public init(
-        id: Int,
-        name: String,
+        id: Int = 0,
+        name: String = "",
         idNumber: String = "",
         description: String? = nil,
-        parent: Int,
-        courseCount: Int,
-        visible: Int,
-        timeModified: Int64,
-        depth: Int,
-        nestedName: String,
-        url: String
+        parent: Int = 0,
+        courseCount: Int = 0,
+        visible: Int = 0,
+        timeModified: Int64 = 0,
+        depth: Int = 0,
+        nestedName: String = "",
+        url: String = ""
     ) {
         self.id = id
         self.name = name
@@ -482,17 +482,17 @@ public struct MoodleEventCategory: Codable, Hashable, Sendable {
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.id = try container.decodeRequired(Int.self, forKey: .id)
-        self.name = try container.decodeRequired(String.self, forKey: .name)
+        self.id = container.decodeLenient(Int.self, forKey: .id) ?? 0
+        self.name = container.decodeLenient(String.self, forKey: .name) ?? ""
         self.idNumber = container.decodeLenient(String.self, forKey: .idNumber) ?? ""
         self.description = container.decodeLenient(String.self, forKey: .description)
-        self.parent = try container.decodeRequired(Int.self, forKey: .parent)
-        self.courseCount = try container.decodeRequired(Int.self, forKey: .courseCount)
-        self.visible = try container.decodeRequired(Int.self, forKey: .visible)
-        self.timeModified = try container.decodeRequired(Int64.self, forKey: .timeModified)
-        self.depth = try container.decodeRequired(Int.self, forKey: .depth)
-        self.nestedName = try container.decodeRequired(String.self, forKey: .nestedName)
-        self.url = try container.decodeRequired(String.self, forKey: .url)
+        self.parent = container.decodeLenient(Int.self, forKey: .parent) ?? 0
+        self.courseCount = container.decodeLenient(Int.self, forKey: .courseCount) ?? 0
+        self.visible = container.decodeLenient(Int.self, forKey: .visible) ?? 0
+        self.timeModified = container.decodeLenient(Int64.self, forKey: .timeModified) ?? 0
+        self.depth = container.decodeLenient(Int.self, forKey: .depth) ?? 0
+        self.nestedName = container.decodeLenient(String.self, forKey: .nestedName) ?? ""
+        self.url = container.decodeLenient(String.self, forKey: .url) ?? ""
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -558,28 +558,28 @@ public struct MoodleEventCourse: Codable, Hashable, Sendable {
     public var courseCategory: String
 
     public init(
-        id: Int,
-        fullName: String,
-        shortName: String,
-        idNumber: String,
+        id: Int = 0,
+        fullName: String = "",
+        shortName: String = "",
+        idNumber: String = "",
         summary: String = "",
         summaryFormat: Int = 0,
-        startDate: Int64,
-        endDate: Int64,
-        visible: Bool,
+        startDate: Int64 = 0,
+        endDate: Int64 = 0,
+        visible: Bool = false,
         showActivityDates: Bool = false,
         showCompletionConditions: Bool = false,
         pdfExportFont: String = "",
-        fullNameDisplay: String,
-        viewUrl: String,
-        courseImage: String,
+        fullNameDisplay: String = "",
+        viewUrl: String = "",
+        courseImage: String = "",
         progress: Int? = nil,
-        hasProgress: Bool,
-        isFavourite: Bool,
-        hidden: Bool,
+        hasProgress: Bool = false,
+        isFavourite: Bool = false,
+        hidden: Bool = false,
         timeAccess: Int64? = nil,
-        showShortName: Bool,
-        courseCategory: String
+        showShortName: Bool = false,
+        courseCategory: String = ""
     ) {
         self.id = id
         self.fullName = fullName
@@ -632,28 +632,28 @@ public struct MoodleEventCourse: Codable, Hashable, Sendable {
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.id = try container.decodeRequired(Int.self, forKey: .id)
-        self.fullName = try container.decodeRequired(String.self, forKey: .fullName)
-        self.shortName = try container.decodeRequired(String.self, forKey: .shortName)
-        self.idNumber = try container.decodeRequired(String.self, forKey: .idNumber)
+        self.id = container.decodeLenient(Int.self, forKey: .id) ?? 0
+        self.fullName = container.decodeLenient(String.self, forKey: .fullName) ?? ""
+        self.shortName = container.decodeLenient(String.self, forKey: .shortName) ?? ""
+        self.idNumber = container.decodeLenient(String.self, forKey: .idNumber) ?? ""
         self.summary = container.decodeLenient(String.self, forKey: .summary) ?? ""
         self.summaryFormat = container.decodeLenient(Int.self, forKey: .summaryFormat) ?? 0
-        self.startDate = try container.decodeRequired(Int64.self, forKey: .startDate)
-        self.endDate = try container.decodeRequired(Int64.self, forKey: .endDate)
-        self.visible = try container.decodeRequired(Bool.self, forKey: .visible)
+        self.startDate = container.decodeLenient(Int64.self, forKey: .startDate) ?? 0
+        self.endDate = container.decodeLenient(Int64.self, forKey: .endDate) ?? 0
+        self.visible = container.decodeLenient(Bool.self, forKey: .visible) ?? false
         self.showActivityDates = container.decodeLenient(Bool.self, forKey: .showActivityDates) ?? false
         self.showCompletionConditions = container.decodeLenient(Bool.self, forKey: .showCompletionConditions) ?? false
         self.pdfExportFont = container.decodeLenient(String.self, forKey: .pdfExportFont) ?? ""
-        self.fullNameDisplay = try container.decodeRequired(String.self, forKey: .fullNameDisplay)
-        self.viewUrl = try container.decodeRequired(String.self, forKey: .viewUrl)
-        self.courseImage = try container.decodeRequired(String.self, forKey: .courseImage)
+        self.fullNameDisplay = container.decodeLenient(String.self, forKey: .fullNameDisplay) ?? ""
+        self.viewUrl = container.decodeLenient(String.self, forKey: .viewUrl) ?? ""
+        self.courseImage = container.decodeLenient(String.self, forKey: .courseImage) ?? ""
         self.progress = container.decodeLenient(Int.self, forKey: .progress)
-        self.hasProgress = try container.decodeRequired(Bool.self, forKey: .hasProgress)
-        self.isFavourite = try container.decodeRequired(Bool.self, forKey: .isFavourite)
-        self.hidden = try container.decodeRequired(Bool.self, forKey: .hidden)
+        self.hasProgress = container.decodeLenient(Bool.self, forKey: .hasProgress) ?? false
+        self.isFavourite = container.decodeLenient(Bool.self, forKey: .isFavourite) ?? false
+        self.hidden = container.decodeLenient(Bool.self, forKey: .hidden) ?? false
         self.timeAccess = container.decodeLenient(Int64.self, forKey: .timeAccess)
-        self.showShortName = try container.decodeRequired(Bool.self, forKey: .showShortName)
-        self.courseCategory = try container.decodeRequired(String.self, forKey: .courseCategory)
+        self.showShortName = container.decodeLenient(Bool.self, forKey: .showShortName) ?? false
+        self.courseCategory = container.decodeLenient(String.self, forKey: .courseCategory) ?? ""
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -692,7 +692,7 @@ public struct MoodleEventSubscription: Codable, Hashable, Sendable {
     public var subscriptionUrl: String?
 
     public init(
-        displayEventSource: Bool,
+        displayEventSource: Bool = false,
         subscriptionName: String? = nil,
         subscriptionUrl: String? = nil
     ) {
@@ -709,7 +709,7 @@ public struct MoodleEventSubscription: Codable, Hashable, Sendable {
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.displayEventSource = try container.decodeRequired(Bool.self, forKey: .displayEventSource)
+        self.displayEventSource = container.decodeLenient(Bool.self, forKey: .displayEventSource) ?? false
         self.subscriptionName = container.decodeLenient(String.self, forKey: .subscriptionName)
         self.subscriptionUrl = container.decodeLenient(String.self, forKey: .subscriptionUrl)
     }
@@ -735,11 +735,11 @@ public struct MoodleEventAction: Codable, Hashable, Sendable {
     public var showItemCount: Bool
 
     public init(
-        name: String,
-        url: String,
-        itemCount: Int,
-        actionable: Bool,
-        showItemCount: Bool
+        name: String = "",
+        url: String = "",
+        itemCount: Int = 0,
+        actionable: Bool = false,
+        showItemCount: Bool = false
     ) {
         self.name = name
         self.url = url
@@ -758,11 +758,11 @@ public struct MoodleEventAction: Codable, Hashable, Sendable {
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.name = try container.decodeRequired(String.self, forKey: .name)
-        self.url = try container.decodeRequired(String.self, forKey: .url)
-        self.itemCount = try container.decodeRequired(Int.self, forKey: .itemCount)
-        self.actionable = try container.decodeRequired(Bool.self, forKey: .actionable)
-        self.showItemCount = try container.decodeRequired(Bool.self, forKey: .showItemCount)
+        self.name = container.decodeLenient(String.self, forKey: .name) ?? ""
+        self.url = container.decodeLenient(String.self, forKey: .url) ?? ""
+        self.itemCount = container.decodeLenient(Int.self, forKey: .itemCount) ?? 0
+        self.actionable = container.decodeLenient(Bool.self, forKey: .actionable) ?? false
+        self.showItemCount = container.decodeLenient(Bool.self, forKey: .showItemCount) ?? false
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -823,30 +823,30 @@ public struct MoodleCalendarMonth: Codable, Hashable, Sendable {
     public var viewingInBlock: Bool
 
     public init(
-        url: String,
-        courseId: Int,
+        url: String = "",
+        courseId: Int = 0,
         categoryId: Int? = nil,
         filterSelector: String? = nil,
         weeks: [MoodleCalendarWeek] = [],
         dayNames: [MoodleCalendarDayName] = [],
-        view: String,
+        view: String = "",
         date: MoodleCalendarDate,
-        periodName: String,
-        includeNavigation: Bool,
-        initialEventsLoaded: Bool,
+        periodName: String = "",
+        includeNavigation: Bool = false,
+        initialEventsLoaded: Bool = false,
         previousPeriod: MoodleCalendarDate,
-        previousPeriodLink: String,
-        previousPeriodName: String,
+        previousPeriodLink: String = "",
+        previousPeriodName: String = "",
         nextPeriod: MoodleCalendarDate,
-        nextPeriodName: String,
-        nextPeriodLink: String,
-        leftArrow: String,
-        rightArrow: String,
-        defaultEventContext: Int,
-        calendarInstanceId: Int,
-        viewingMonth: Bool,
-        showViewSelector: Bool,
-        viewingInBlock: Bool
+        nextPeriodName: String = "",
+        nextPeriodLink: String = "",
+        leftArrow: String = "",
+        rightArrow: String = "",
+        defaultEventContext: Int = 0,
+        calendarInstanceId: Int = 0,
+        viewingMonth: Bool = false,
+        showViewSelector: Bool = false,
+        viewingInBlock: Bool = false
     ) {
         self.url = url
         self.courseId = courseId
@@ -903,30 +903,30 @@ public struct MoodleCalendarMonth: Codable, Hashable, Sendable {
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.url = try container.decodeRequired(String.self, forKey: .url)
-        self.courseId = try container.decodeRequired(Int.self, forKey: .courseId)
+        self.url = container.decodeLenient(String.self, forKey: .url) ?? ""
+        self.courseId = container.decodeLenient(Int.self, forKey: .courseId) ?? 0
         self.categoryId = container.decodeLenient(Int.self, forKey: .categoryId)
         self.filterSelector = container.decodeLenient(String.self, forKey: .filterSelector)
         self.weeks = container.decodeLenient([MoodleCalendarWeek].self, forKey: .weeks) ?? []
         self.dayNames = container.decodeLenient([MoodleCalendarDayName].self, forKey: .dayNames) ?? []
-        self.view = try container.decodeRequired(String.self, forKey: .view)
+        self.view = container.decodeLenient(String.self, forKey: .view) ?? ""
         self.date = try container.required(container.decodeFolded(MoodleCalendarDate.self, forKey: .date), forKey: .date)
-        self.periodName = try container.decodeRequired(String.self, forKey: .periodName)
-        self.includeNavigation = try container.decodeRequired(Bool.self, forKey: .includeNavigation)
-        self.initialEventsLoaded = try container.decodeRequired(Bool.self, forKey: .initialEventsLoaded)
+        self.periodName = container.decodeLenient(String.self, forKey: .periodName) ?? ""
+        self.includeNavigation = container.decodeLenient(Bool.self, forKey: .includeNavigation) ?? false
+        self.initialEventsLoaded = container.decodeLenient(Bool.self, forKey: .initialEventsLoaded) ?? false
         self.previousPeriod = try container.required(container.decodeFolded(MoodleCalendarDate.self, forKey: .previousPeriod), forKey: .previousPeriod)
-        self.previousPeriodLink = try container.decodeRequired(String.self, forKey: .previousPeriodLink)
-        self.previousPeriodName = try container.decodeRequired(String.self, forKey: .previousPeriodName)
+        self.previousPeriodLink = container.decodeLenient(String.self, forKey: .previousPeriodLink) ?? ""
+        self.previousPeriodName = container.decodeLenient(String.self, forKey: .previousPeriodName) ?? ""
         self.nextPeriod = try container.required(container.decodeFolded(MoodleCalendarDate.self, forKey: .nextPeriod), forKey: .nextPeriod)
-        self.nextPeriodName = try container.decodeRequired(String.self, forKey: .nextPeriodName)
-        self.nextPeriodLink = try container.decodeRequired(String.self, forKey: .nextPeriodLink)
-        self.leftArrow = try container.decodeRequired(String.self, forKey: .leftArrow)
-        self.rightArrow = try container.decodeRequired(String.self, forKey: .rightArrow)
-        self.defaultEventContext = try container.decodeRequired(Int.self, forKey: .defaultEventContext)
-        self.calendarInstanceId = try container.decodeRequired(Int.self, forKey: .calendarInstanceId)
-        self.viewingMonth = try container.decodeRequired(Bool.self, forKey: .viewingMonth)
-        self.showViewSelector = try container.decodeRequired(Bool.self, forKey: .showViewSelector)
-        self.viewingInBlock = try container.decodeRequired(Bool.self, forKey: .viewingInBlock)
+        self.nextPeriodName = container.decodeLenient(String.self, forKey: .nextPeriodName) ?? ""
+        self.nextPeriodLink = container.decodeLenient(String.self, forKey: .nextPeriodLink) ?? ""
+        self.leftArrow = container.decodeLenient(String.self, forKey: .leftArrow) ?? ""
+        self.rightArrow = container.decodeLenient(String.self, forKey: .rightArrow) ?? ""
+        self.defaultEventContext = container.decodeLenient(Int.self, forKey: .defaultEventContext) ?? 0
+        self.calendarInstanceId = container.decodeLenient(Int.self, forKey: .calendarInstanceId) ?? 0
+        self.viewingMonth = container.decodeLenient(Bool.self, forKey: .viewingMonth) ?? false
+        self.showViewSelector = container.decodeLenient(Bool.self, forKey: .showViewSelector) ?? false
+        self.viewingInBlock = container.decodeLenient(Bool.self, forKey: .viewingInBlock) ?? false
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -1042,27 +1042,27 @@ public struct MoodleCalendarDay: Codable, Hashable, Sendable {
     public var dayTitle: String
 
     public init(
-        seconds: Int,
-        minutes: Int,
-        hours: Int,
-        dayOfMonth: Int,
-        dayOfWeek: Int,
-        year: Int,
-        dayOfYear: Int,
-        isToday: Bool,
-        isWeekend: Bool,
-        timestamp: Int64,
-        newEventTimestamp: Int64,
+        seconds: Int = 0,
+        minutes: Int = 0,
+        hours: Int = 0,
+        dayOfMonth: Int = 0,
+        dayOfWeek: Int = 0,
+        year: Int = 0,
+        dayOfYear: Int = 0,
+        isToday: Bool = false,
+        isWeekend: Bool = false,
+        timestamp: Int64 = 0,
+        newEventTimestamp: Int64 = 0,
         viewDayLink: String? = nil,
         viewDayLinkTitle: String? = nil,
         events: [MoodleCalendarDayEvent] = [],
-        hasEvents: Bool,
+        hasEvents: Bool = false,
         calendarEventTypes: [String] = [],
-        previousPeriod: Int,
-        nextPeriod: Int,
-        hasLastDayOfEvent: Bool,
-        popoverTitle: String,
-        dayTitle: String
+        previousPeriod: Int = 0,
+        nextPeriod: Int = 0,
+        hasLastDayOfEvent: Bool = false,
+        popoverTitle: String = "",
+        dayTitle: String = ""
     ) {
         self.seconds = seconds
         self.minutes = minutes
@@ -1113,27 +1113,27 @@ public struct MoodleCalendarDay: Codable, Hashable, Sendable {
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.seconds = try container.decodeRequired(Int.self, forKey: .seconds)
-        self.minutes = try container.decodeRequired(Int.self, forKey: .minutes)
-        self.hours = try container.decodeRequired(Int.self, forKey: .hours)
-        self.dayOfMonth = try container.decodeRequired(Int.self, forKey: .dayOfMonth)
-        self.dayOfWeek = try container.decodeRequired(Int.self, forKey: .dayOfWeek)
-        self.year = try container.decodeRequired(Int.self, forKey: .year)
-        self.dayOfYear = try container.decodeRequired(Int.self, forKey: .dayOfYear)
-        self.isToday = try container.decodeRequired(Bool.self, forKey: .isToday)
-        self.isWeekend = try container.decodeRequired(Bool.self, forKey: .isWeekend)
-        self.timestamp = try container.decodeRequired(Int64.self, forKey: .timestamp)
-        self.newEventTimestamp = try container.decodeRequired(Int64.self, forKey: .newEventTimestamp)
+        self.seconds = container.decodeLenient(Int.self, forKey: .seconds) ?? 0
+        self.minutes = container.decodeLenient(Int.self, forKey: .minutes) ?? 0
+        self.hours = container.decodeLenient(Int.self, forKey: .hours) ?? 0
+        self.dayOfMonth = container.decodeLenient(Int.self, forKey: .dayOfMonth) ?? 0
+        self.dayOfWeek = container.decodeLenient(Int.self, forKey: .dayOfWeek) ?? 0
+        self.year = container.decodeLenient(Int.self, forKey: .year) ?? 0
+        self.dayOfYear = container.decodeLenient(Int.self, forKey: .dayOfYear) ?? 0
+        self.isToday = container.decodeLenient(Bool.self, forKey: .isToday) ?? false
+        self.isWeekend = container.decodeLenient(Bool.self, forKey: .isWeekend) ?? false
+        self.timestamp = container.decodeLenient(Int64.self, forKey: .timestamp) ?? 0
+        self.newEventTimestamp = container.decodeLenient(Int64.self, forKey: .newEventTimestamp) ?? 0
         self.viewDayLink = container.decodeLenient(String.self, forKey: .viewDayLink)
         self.viewDayLinkTitle = container.decodeLenient(String.self, forKey: .viewDayLinkTitle)
         self.events = container.decodeLenient([MoodleCalendarDayEvent].self, forKey: .events) ?? []
-        self.hasEvents = try container.decodeRequired(Bool.self, forKey: .hasEvents)
+        self.hasEvents = container.decodeLenient(Bool.self, forKey: .hasEvents) ?? false
         self.calendarEventTypes = container.decodeLenient([String].self, forKey: .calendarEventTypes) ?? []
-        self.previousPeriod = try container.decodeRequired(Int.self, forKey: .previousPeriod)
-        self.nextPeriod = try container.decodeRequired(Int.self, forKey: .nextPeriod)
-        self.hasLastDayOfEvent = try container.decodeRequired(Bool.self, forKey: .hasLastDayOfEvent)
-        self.popoverTitle = try container.decodeRequired(String.self, forKey: .popoverTitle)
-        self.dayTitle = try container.decodeRequired(String.self, forKey: .dayTitle)
+        self.previousPeriod = container.decodeLenient(Int.self, forKey: .previousPeriod) ?? 0
+        self.nextPeriod = container.decodeLenient(Int.self, forKey: .nextPeriod) ?? 0
+        self.hasLastDayOfEvent = container.decodeLenient(Bool.self, forKey: .hasLastDayOfEvent) ?? false
+        self.popoverTitle = container.decodeLenient(String.self, forKey: .popoverTitle) ?? ""
+        self.dayTitle = container.decodeLenient(String.self, forKey: .dayTitle) ?? ""
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -1262,8 +1262,8 @@ public struct MoodleCalendarDayEvent: Codable, Hashable, Sendable {
     public var draggable: Bool
 
     public init(
-        id: Int,
-        name: String,
+        id: Int = 0,
+        name: String = "",
         description: String? = nil,
         descriptionFormat: Int = 1,
         location: String? = nil,
@@ -1277,42 +1277,42 @@ public struct MoodleCalendarDayEvent: Codable, Hashable, Sendable {
         activityName: String? = nil,
         activityStr: String? = nil,
         instance: Int? = nil,
-        eventType: String,
-        timeStart: Int64,
-        timeDuration: Int64,
-        timeSort: Int64,
-        timeUserMidnight: Int64,
-        visible: Int,
-        timeModified: Int64,
+        eventType: String = "",
+        timeStart: Int64 = 0,
+        timeDuration: Int64 = 0,
+        timeSort: Int64 = 0,
+        timeUserMidnight: Int64 = 0,
+        visible: Int = 0,
+        timeModified: Int64 = 0,
         overdue: Bool? = nil,
         icon: MoodleEventIcon,
         category: MoodleEventCategory? = nil,
         course: MoodleEventCourse? = nil,
         subscription: MoodleEventSubscription? = nil,
-        canEdit: Bool,
-        canDelete: Bool,
-        deleteUrl: String,
-        editUrl: String,
-        viewUrl: String,
-        formattedTime: String,
-        formattedLocation: String,
-        isActionEvent: Bool,
-        isCourseEvent: Bool,
-        isCategoryEvent: Bool,
+        canEdit: Bool = false,
+        canDelete: Bool = false,
+        deleteUrl: String = "",
+        editUrl: String = "",
+        viewUrl: String = "",
+        formattedTime: String = "",
+        formattedLocation: String = "",
+        isActionEvent: Bool = false,
+        isCourseEvent: Bool = false,
+        isCategoryEvent: Bool = false,
         groupName: String? = nil,
-        normalisedEventType: String,
-        normalisedEventTypeText: String,
+        normalisedEventType: String = "",
+        normalisedEventTypeText: String = "",
         action: MoodleEventAction? = nil,
-        purpose: String,
+        purpose: String = "",
         branded: Bool? = nil,
-        url: String,
-        isLastDay: Bool,
-        popupName: String,
+        url: String = "",
+        isLastDay: Bool = false,
+        popupName: String = "",
         minDayTimestamp: Int64? = nil,
         minDayError: String? = nil,
         maxDayTimestamp: Int64? = nil,
         maxDayError: String? = nil,
-        draggable: Bool
+        draggable: Bool = false
     ) {
         self.id = id
         self.name = name
@@ -1423,8 +1423,8 @@ public struct MoodleCalendarDayEvent: Codable, Hashable, Sendable {
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.id = try container.decodeRequired(Int.self, forKey: .id)
-        self.name = try container.decodeRequired(String.self, forKey: .name)
+        self.id = container.decodeLenient(Int.self, forKey: .id) ?? 0
+        self.name = container.decodeLenient(String.self, forKey: .name) ?? ""
         self.description = container.decodeLenient(String.self, forKey: .description)
         self.descriptionFormat = container.decodeLenient(Int.self, forKey: .descriptionFormat) ?? 1
         self.location = container.decodeLenient(String.self, forKey: .location)
@@ -1438,42 +1438,42 @@ public struct MoodleCalendarDayEvent: Codable, Hashable, Sendable {
         self.activityName = container.decodeLenient(String.self, forKey: .activityName)
         self.activityStr = container.decodeLenient(String.self, forKey: .activityStr)
         self.instance = container.decodeLenient(Int.self, forKey: .instance)
-        self.eventType = try container.decodeRequired(String.self, forKey: .eventType)
-        self.timeStart = try container.decodeRequired(Int64.self, forKey: .timeStart)
-        self.timeDuration = try container.decodeRequired(Int64.self, forKey: .timeDuration)
-        self.timeSort = try container.decodeRequired(Int64.self, forKey: .timeSort)
-        self.timeUserMidnight = try container.decodeRequired(Int64.self, forKey: .timeUserMidnight)
-        self.visible = try container.decodeRequired(Int.self, forKey: .visible)
-        self.timeModified = try container.decodeRequired(Int64.self, forKey: .timeModified)
+        self.eventType = container.decodeLenient(String.self, forKey: .eventType) ?? ""
+        self.timeStart = container.decodeLenient(Int64.self, forKey: .timeStart) ?? 0
+        self.timeDuration = container.decodeLenient(Int64.self, forKey: .timeDuration) ?? 0
+        self.timeSort = container.decodeLenient(Int64.self, forKey: .timeSort) ?? 0
+        self.timeUserMidnight = container.decodeLenient(Int64.self, forKey: .timeUserMidnight) ?? 0
+        self.visible = container.decodeLenient(Int.self, forKey: .visible) ?? 0
+        self.timeModified = container.decodeLenient(Int64.self, forKey: .timeModified) ?? 0
         self.overdue = container.decodeLenient(Bool.self, forKey: .overdue)
         self.icon = try container.required(container.decodeFolded(MoodleEventIcon.self, forKey: .icon), forKey: .icon)
         self.category = container.decodeFolded(MoodleEventCategory.self, forKey: .category)
         self.course = container.decodeFolded(MoodleEventCourse.self, forKey: .course)
         self.subscription = container.decodeFolded(MoodleEventSubscription.self, forKey: .subscription)
-        self.canEdit = try container.decodeRequired(Bool.self, forKey: .canEdit)
-        self.canDelete = try container.decodeRequired(Bool.self, forKey: .canDelete)
-        self.deleteUrl = try container.decodeRequired(String.self, forKey: .deleteUrl)
-        self.editUrl = try container.decodeRequired(String.self, forKey: .editUrl)
-        self.viewUrl = try container.decodeRequired(String.self, forKey: .viewUrl)
-        self.formattedTime = try container.decodeRequired(String.self, forKey: .formattedTime)
-        self.formattedLocation = try container.decodeRequired(String.self, forKey: .formattedLocation)
-        self.isActionEvent = try container.decodeRequired(Bool.self, forKey: .isActionEvent)
-        self.isCourseEvent = try container.decodeRequired(Bool.self, forKey: .isCourseEvent)
-        self.isCategoryEvent = try container.decodeRequired(Bool.self, forKey: .isCategoryEvent)
+        self.canEdit = container.decodeLenient(Bool.self, forKey: .canEdit) ?? false
+        self.canDelete = container.decodeLenient(Bool.self, forKey: .canDelete) ?? false
+        self.deleteUrl = container.decodeLenient(String.self, forKey: .deleteUrl) ?? ""
+        self.editUrl = container.decodeLenient(String.self, forKey: .editUrl) ?? ""
+        self.viewUrl = container.decodeLenient(String.self, forKey: .viewUrl) ?? ""
+        self.formattedTime = container.decodeLenient(String.self, forKey: .formattedTime) ?? ""
+        self.formattedLocation = container.decodeLenient(String.self, forKey: .formattedLocation) ?? ""
+        self.isActionEvent = container.decodeLenient(Bool.self, forKey: .isActionEvent) ?? false
+        self.isCourseEvent = container.decodeLenient(Bool.self, forKey: .isCourseEvent) ?? false
+        self.isCategoryEvent = container.decodeLenient(Bool.self, forKey: .isCategoryEvent) ?? false
         self.groupName = container.decodeLenient(String.self, forKey: .groupName)
-        self.normalisedEventType = try container.decodeRequired(String.self, forKey: .normalisedEventType)
-        self.normalisedEventTypeText = try container.decodeRequired(String.self, forKey: .normalisedEventTypeText)
+        self.normalisedEventType = container.decodeLenient(String.self, forKey: .normalisedEventType) ?? ""
+        self.normalisedEventTypeText = container.decodeLenient(String.self, forKey: .normalisedEventTypeText) ?? ""
         self.action = container.decodeFolded(MoodleEventAction.self, forKey: .action)
-        self.purpose = try container.decodeRequired(String.self, forKey: .purpose)
+        self.purpose = container.decodeLenient(String.self, forKey: .purpose) ?? ""
         self.branded = container.decodeLenient(Bool.self, forKey: .branded)
-        self.url = try container.decodeRequired(String.self, forKey: .url)
-        self.isLastDay = try container.decodeRequired(Bool.self, forKey: .isLastDay)
-        self.popupName = try container.decodeRequired(String.self, forKey: .popupName)
+        self.url = container.decodeLenient(String.self, forKey: .url) ?? ""
+        self.isLastDay = container.decodeLenient(Bool.self, forKey: .isLastDay) ?? false
+        self.popupName = container.decodeLenient(String.self, forKey: .popupName) ?? ""
         self.minDayTimestamp = container.decodeLenient(Int64.self, forKey: .minDayTimestamp)
         self.minDayError = container.decodeLenient(String.self, forKey: .minDayError)
         self.maxDayTimestamp = container.decodeLenient(Int64.self, forKey: .maxDayTimestamp)
         self.maxDayError = container.decodeLenient(String.self, forKey: .maxDayError)
-        self.draggable = try container.decodeRequired(Bool.self, forKey: .draggable)
+        self.draggable = container.decodeLenient(Bool.self, forKey: .draggable) ?? false
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -1541,9 +1541,9 @@ public struct MoodleCalendarDayName: Codable, Hashable, Sendable {
     public var fullName: String
 
     public init(
-        dayNo: Int,
-        shortName: String,
-        fullName: String
+        dayNo: Int = 0,
+        shortName: String = "",
+        fullName: String = ""
     ) {
         self.dayNo = dayNo
         self.shortName = shortName
@@ -1558,9 +1558,9 @@ public struct MoodleCalendarDayName: Codable, Hashable, Sendable {
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.dayNo = try container.decodeRequired(Int.self, forKey: .dayNo)
-        self.shortName = try container.decodeRequired(String.self, forKey: .shortName)
-        self.fullName = try container.decodeRequired(String.self, forKey: .fullName)
+        self.dayNo = container.decodeLenient(Int.self, forKey: .dayNo) ?? 0
+        self.shortName = container.decodeLenient(String.self, forKey: .shortName) ?? ""
+        self.fullName = container.decodeLenient(String.self, forKey: .fullName) ?? ""
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -1596,17 +1596,17 @@ public struct MoodleCalendarDate: Codable, Hashable, Sendable {
     public var timestamp: Int64
 
     public init(
-        seconds: Int,
-        minutes: Int,
-        hours: Int,
-        dayOfMonth: Int,
-        dayOfWeek: Int,
-        monthNumber: Int,
-        year: Int,
-        dayOfYear: Int,
-        weekday: String,
-        month: String,
-        timestamp: Int64
+        seconds: Int = 0,
+        minutes: Int = 0,
+        hours: Int = 0,
+        dayOfMonth: Int = 0,
+        dayOfWeek: Int = 0,
+        monthNumber: Int = 0,
+        year: Int = 0,
+        dayOfYear: Int = 0,
+        weekday: String = "",
+        month: String = "",
+        timestamp: Int64 = 0
     ) {
         self.seconds = seconds
         self.minutes = minutes
@@ -1637,17 +1637,17 @@ public struct MoodleCalendarDate: Codable, Hashable, Sendable {
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.seconds = try container.decodeRequired(Int.self, forKey: .seconds)
-        self.minutes = try container.decodeRequired(Int.self, forKey: .minutes)
-        self.hours = try container.decodeRequired(Int.self, forKey: .hours)
-        self.dayOfMonth = try container.decodeRequired(Int.self, forKey: .dayOfMonth)
-        self.dayOfWeek = try container.decodeRequired(Int.self, forKey: .dayOfWeek)
-        self.monthNumber = try container.decodeRequired(Int.self, forKey: .monthNumber)
-        self.year = try container.decodeRequired(Int.self, forKey: .year)
-        self.dayOfYear = try container.decodeRequired(Int.self, forKey: .dayOfYear)
-        self.weekday = try container.decodeRequired(String.self, forKey: .weekday)
-        self.month = try container.decodeRequired(String.self, forKey: .month)
-        self.timestamp = try container.decodeRequired(Int64.self, forKey: .timestamp)
+        self.seconds = container.decodeLenient(Int.self, forKey: .seconds) ?? 0
+        self.minutes = container.decodeLenient(Int.self, forKey: .minutes) ?? 0
+        self.hours = container.decodeLenient(Int.self, forKey: .hours) ?? 0
+        self.dayOfMonth = container.decodeLenient(Int.self, forKey: .dayOfMonth) ?? 0
+        self.dayOfWeek = container.decodeLenient(Int.self, forKey: .dayOfWeek) ?? 0
+        self.monthNumber = container.decodeLenient(Int.self, forKey: .monthNumber) ?? 0
+        self.year = container.decodeLenient(Int.self, forKey: .year) ?? 0
+        self.dayOfYear = container.decodeLenient(Int.self, forKey: .dayOfYear) ?? 0
+        self.weekday = container.decodeLenient(String.self, forKey: .weekday) ?? ""
+        self.month = container.decodeLenient(String.self, forKey: .month) ?? ""
+        self.timestamp = container.decodeLenient(Int64.self, forKey: .timestamp) ?? 0
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -1683,11 +1683,11 @@ public struct MoodleCalendarUpcomingView: Codable, Hashable, Sendable {
 
     public init(
         events: [MoodleCalendarDayEvent] = [],
-        defaultEventContext: Int,
-        filterSelector: String,
-        courseId: Int,
+        defaultEventContext: Int = 0,
+        filterSelector: String = "",
+        courseId: Int = 0,
         categoryId: Int? = nil,
-        isLoggedIn: Bool,
+        isLoggedIn: Bool = false,
         date: MoodleCalendarDate
     ) {
         self.events = events
@@ -1712,11 +1712,11 @@ public struct MoodleCalendarUpcomingView: Codable, Hashable, Sendable {
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.events = container.decodeLenient([MoodleCalendarDayEvent].self, forKey: .events) ?? []
-        self.defaultEventContext = try container.decodeRequired(Int.self, forKey: .defaultEventContext)
-        self.filterSelector = try container.decodeRequired(String.self, forKey: .filterSelector)
-        self.courseId = try container.decodeRequired(Int.self, forKey: .courseId)
+        self.defaultEventContext = container.decodeLenient(Int.self, forKey: .defaultEventContext) ?? 0
+        self.filterSelector = container.decodeLenient(String.self, forKey: .filterSelector) ?? ""
+        self.courseId = container.decodeLenient(Int.self, forKey: .courseId) ?? 0
         self.categoryId = container.decodeLenient(Int.self, forKey: .categoryId)
-        self.isLoggedIn = try container.decodeRequired(Bool.self, forKey: .isLoggedIn)
+        self.isLoggedIn = container.decodeLenient(Bool.self, forKey: .isLoggedIn) ?? false
         self.date = try container.required(container.decodeFolded(MoodleCalendarDate.self, forKey: .date), forKey: .date)
     }
 

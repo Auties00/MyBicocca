@@ -23,11 +23,11 @@ data class MoodleCalendarEventsResponse(
 data class MoodleCalendarEvent(
     /** id */
     @SerialName("id")
-    val id: Int,
+    val id: Int = 0,
 
     /** name */
     @SerialName("name")
-    val name: String,
+    val name: String = "",
 
     /** description */
     @SerialName("description")
@@ -83,31 +83,31 @@ data class MoodleCalendarEvent(
 
     /** eventtype */
     @SerialName("eventtype")
-    val eventType: String,
+    val eventType: String = "",
 
     /** timestart */
     @SerialName("timestart")
-    val timeStart: Long,
+    val timeStart: Long = 0L,
 
     /** timeduration */
     @SerialName("timeduration")
-    val timeDuration: Long,
+    val timeDuration: Long = 0L,
 
     /** timesort */
     @SerialName("timesort")
-    val timeSort: Long,
+    val timeSort: Long = 0L,
 
     /** timeusermidnight */
     @SerialName("timeusermidnight")
-    val timeUserMidnight: Long,
+    val timeUserMidnight: Long = 0L,
 
     /** visible */
     @SerialName("visible")
-    val visible: Int,
+    val visible: Int = 0,
 
     /** timemodified */
     @SerialName("timemodified")
-    val timeModified: Long,
+    val timeModified: Long = 0L,
 
     /** overdue */
     @Serializable(with = MoodleBooleanSerializer::class)
@@ -133,47 +133,47 @@ data class MoodleCalendarEvent(
     /** canedit */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("canedit")
-    val canEdit: Boolean,
+    val canEdit: Boolean = false,
 
     /** candelete */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("candelete")
-    val canDelete: Boolean,
+    val canDelete: Boolean = false,
 
     /** deleteurl */
     @SerialName("deleteurl")
-    val deleteUrl: String,
+    val deleteUrl: String = "",
 
     /** editurl */
     @SerialName("editurl")
-    val editUrl: String,
+    val editUrl: String = "",
 
     /** viewurl */
     @SerialName("viewurl")
-    val viewUrl: String,
+    val viewUrl: String = "",
 
     /** formattedtime */
     @SerialName("formattedtime")
-    val formattedTime: String,
+    val formattedTime: String = "",
 
     /** formattedlocation */
     @SerialName("formattedlocation")
-    val formattedLocation: String,
+    val formattedLocation: String = "",
 
     /** isactionevent */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("isactionevent")
-    val isActionEvent: Boolean,
+    val isActionEvent: Boolean = false,
 
     /** iscourseevent */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("iscourseevent")
-    val isCourseEvent: Boolean,
+    val isCourseEvent: Boolean = false,
 
     /** iscategoryevent */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("iscategoryevent")
-    val isCategoryEvent: Boolean,
+    val isCategoryEvent: Boolean = false,
 
     /** groupname */
     @SerialName("groupname")
@@ -181,11 +181,11 @@ data class MoodleCalendarEvent(
 
     /** normalisedeventtype */
     @SerialName("normalisedeventtype")
-    val normalisedEventType: String,
+    val normalisedEventType: String = "",
 
     /** normalisedeventtypetext */
     @SerialName("normalisedeventtypetext")
-    val normalisedEventTypeText: String,
+    val normalisedEventTypeText: String = "",
 
     @Serializable(with = MoodleEventActionFoldedSerializer::class)
     @SerialName("action")
@@ -193,7 +193,7 @@ data class MoodleCalendarEvent(
 
     /** purpose */
     @SerialName("purpose")
-    val purpose: String,
+    val purpose: String = "",
 
     /** branded */
     @Serializable(with = MoodleBooleanSerializer::class)
@@ -202,41 +202,41 @@ data class MoodleCalendarEvent(
 
     /** url */
     @SerialName("url")
-    val url: String
+    val url: String = ""
 )
 
 @Serializable
 data class MoodleEventIcon(
     /** key */
     @SerialName("key")
-    val key: String,
+    val key: String = "",
 
     /** component */
     @SerialName("component")
-    val component: String,
+    val component: String = "",
 
     /** alttext */
     @SerialName("alttext")
-    val altText: String,
+    val altText: String = "",
 
     /** iconurl */
     @SerialName("iconurl")
-    val iconUrl: String,
+    val iconUrl: String = "",
 
     /** iconclass */
     @SerialName("iconclass")
-    val iconClass: String
+    val iconClass: String = ""
 )
 
 @Serializable
 data class MoodleEventCategory(
     /** id */
     @SerialName("id")
-    val id: Int,
+    val id: Int = 0,
 
     /** name */
     @SerialName("name")
-    val name: String,
+    val name: String = "",
 
     /** idnumber */
     @SerialName("idnumber")
@@ -248,50 +248,50 @@ data class MoodleEventCategory(
 
     /** parent */
     @SerialName("parent")
-    val parent: Int,
+    val parent: Int = 0,
 
     /** coursecount */
     @SerialName("coursecount")
-    val courseCount: Int,
+    val courseCount: Int = 0,
 
     /** visible */
     @SerialName("visible")
-    val visible: Int,
+    val visible: Int = 0,
 
     /** timemodified */
     @SerialName("timemodified")
-    val timeModified: Long,
+    val timeModified: Long = 0L,
 
     /** depth */
     @SerialName("depth")
-    val depth: Int,
+    val depth: Int = 0,
 
     /** nestedname */
     @SerialName("nestedname")
-    val nestedName: String,
+    val nestedName: String = "",
 
     /** url */
     @SerialName("url")
-    val url: String
+    val url: String = ""
 )
 
 @Serializable
 data class MoodleEventCourse(
     /** id */
     @SerialName("id")
-    val id: Int,
+    val id: Int = 0,
 
     /** fullname */
     @SerialName("fullname")
-    val fullName: String,
+    val fullName: String = "",
 
     /** shortname */
     @SerialName("shortname")
-    val shortName: String,
+    val shortName: String = "",
 
     /** idnumber */
     @SerialName("idnumber")
-    val idNumber: String,
+    val idNumber: String = "",
 
     /** summary */
     @SerialName("summary")
@@ -303,16 +303,16 @@ data class MoodleEventCourse(
 
     /** startdate */
     @SerialName("startdate")
-    val startDate: Long,
+    val startDate: Long = 0L,
 
     /** enddate */
     @SerialName("enddate")
-    val endDate: Long,
+    val endDate: Long = 0L,
 
     /** visible */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("visible")
-    val visible: Boolean,
+    val visible: Boolean = false,
 
     /** showactivitydates */
     @Serializable(with = MoodleBooleanSerializer::class)
@@ -330,15 +330,15 @@ data class MoodleEventCourse(
 
     /** fullnamedisplay */
     @SerialName("fullnamedisplay")
-    val fullNameDisplay: String,
+    val fullNameDisplay: String = "",
 
     /** viewurl */
     @SerialName("viewurl")
-    val viewUrl: String,
+    val viewUrl: String = "",
 
     /** courseimage */
     @SerialName("courseimage")
-    val courseImage: String,
+    val courseImage: String = "",
 
     /** progress */
     @SerialName("progress")
@@ -347,17 +347,17 @@ data class MoodleEventCourse(
     /** hasprogress */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("hasprogress")
-    val hasProgress: Boolean,
+    val hasProgress: Boolean = false,
 
     /** isfavourite */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("isfavourite")
-    val isFavourite: Boolean,
+    val isFavourite: Boolean = false,
 
     /** hidden */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("hidden")
-    val hidden: Boolean,
+    val hidden: Boolean = false,
 
     /** timeaccess */
     @SerialName("timeaccess")
@@ -366,11 +366,11 @@ data class MoodleEventCourse(
     /** showshortname */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("showshortname")
-    val showShortName: Boolean,
+    val showShortName: Boolean = false,
 
     /** coursecategory */
     @SerialName("coursecategory")
-    val courseCategory: String
+    val courseCategory: String = ""
 )
 
 @Serializable
@@ -378,7 +378,7 @@ data class MoodleEventSubscription(
     /** displayeventsource */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("displayeventsource")
-    val displayEventSource: Boolean,
+    val displayEventSource: Boolean = false,
 
     /** subscriptionname */
     @SerialName("subscriptionname")
@@ -393,36 +393,36 @@ data class MoodleEventSubscription(
 data class MoodleEventAction(
     /** name */
     @SerialName("name")
-    val name: String,
+    val name: String = "",
 
     /** url */
     @SerialName("url")
-    val url: String,
+    val url: String = "",
 
     /** itemcount */
     @SerialName("itemcount")
-    val itemCount: Int,
+    val itemCount: Int = 0,
 
     /** actionable */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("actionable")
-    val actionable: Boolean,
+    val actionable: Boolean = false,
 
     /** showitemcount */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("showitemcount")
-    val showItemCount: Boolean
+    val showItemCount: Boolean = false
 )
 
 @Serializable
 data class MoodleCalendarMonth(
     /** url */
     @SerialName("url")
-    val url: String,
+    val url: String = "",
 
     /** courseid */
     @SerialName("courseid")
-    val courseId: Int,
+    val courseId: Int = 0,
 
     /** categoryid */
     @SerialName("categoryid")
@@ -442,7 +442,7 @@ data class MoodleCalendarMonth(
 
     /** view */
     @SerialName("view")
-    val view: String,
+    val view: String = "",
 
     @Serializable(with = MoodleCalendarDateFoldedSerializer::class)
     @SerialName("date")
@@ -450,17 +450,17 @@ data class MoodleCalendarMonth(
 
     /** periodname */
     @SerialName("periodname")
-    val periodName: String,
+    val periodName: String = "",
 
     /** includenavigation */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("includenavigation")
-    val includeNavigation: Boolean,
+    val includeNavigation: Boolean = false,
 
     /** initialeventsloaded */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("initialeventsloaded")
-    val initialEventsLoaded: Boolean,
+    val initialEventsLoaded: Boolean = false,
 
     @Serializable(with = MoodleCalendarDateFoldedSerializer::class)
     @SerialName("previousperiod")
@@ -468,11 +468,11 @@ data class MoodleCalendarMonth(
 
     /** previousperiodlink */
     @SerialName("previousperiodlink")
-    val previousPeriodLink: String,
+    val previousPeriodLink: String = "",
 
     /** previousperiodname */
     @SerialName("previousperiodname")
-    val previousPeriodName: String,
+    val previousPeriodName: String = "",
 
     @Serializable(with = MoodleCalendarDateFoldedSerializer::class)
     @SerialName("nextperiod")
@@ -480,42 +480,42 @@ data class MoodleCalendarMonth(
 
     /** nextperiodname */
     @SerialName("nextperiodname")
-    val nextPeriodName: String,
+    val nextPeriodName: String = "",
 
     /** nextperiodlink */
     @SerialName("nextperiodlink")
-    val nextPeriodLink: String,
+    val nextPeriodLink: String = "",
 
     /** larrow */
     @SerialName("larrow")
-    val leftArrow: String,
+    val leftArrow: String = "",
 
     /** rarrow */
     @SerialName("rarrow")
-    val rightArrow: String,
+    val rightArrow: String = "",
 
     /** defaulteventcontext */
     @SerialName("defaulteventcontext")
-    val defaultEventContext: Int,
+    val defaultEventContext: Int = 0,
 
     /** calendarinstanceid */
     @SerialName("calendarinstanceid")
-    val calendarInstanceId: Int,
+    val calendarInstanceId: Int = 0,
 
     /** viewingmonth */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("viewingmonth")
-    val viewingMonth: Boolean,
+    val viewingMonth: Boolean = false,
 
     /** showviewselector */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("showviewselector")
-    val showViewSelector: Boolean,
+    val showViewSelector: Boolean = false,
 
     /** viewinginblock */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("viewinginblock")
-    val viewingInBlock: Boolean
+    val viewingInBlock: Boolean = false
 )
 
 @Serializable
@@ -537,49 +537,49 @@ data class MoodleCalendarWeek(
 data class MoodleCalendarDay(
     /** seconds */
     @SerialName("seconds")
-    val seconds: Int,
+    val seconds: Int = 0,
 
     /** minutes */
     @SerialName("minutes")
-    val minutes: Int,
+    val minutes: Int = 0,
 
     /** hours */
     @SerialName("hours")
-    val hours: Int,
+    val hours: Int = 0,
 
     /** mday */
     @SerialName("mday")
-    val dayOfMonth: Int,
+    val dayOfMonth: Int = 0,
 
     /** wday */
     @SerialName("wday")
-    val dayOfWeek: Int,
+    val dayOfWeek: Int = 0,
 
     /** year */
     @SerialName("year")
-    val year: Int,
+    val year: Int = 0,
 
     /** yday */
     @SerialName("yday")
-    val dayOfYear: Int,
+    val dayOfYear: Int = 0,
 
     /** istoday */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("istoday")
-    val isToday: Boolean,
+    val isToday: Boolean = false,
 
     /** isweekend */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("isweekend")
-    val isWeekend: Boolean,
+    val isWeekend: Boolean = false,
 
     /** timestamp */
     @SerialName("timestamp")
-    val timestamp: Long,
+    val timestamp: Long = 0L,
 
     /** neweventtimestamp */
     @SerialName("neweventtimestamp")
-    val newEventTimestamp: Long,
+    val newEventTimestamp: Long = 0L,
 
     /** viewdaylink */
     @SerialName("viewdaylink")
@@ -596,7 +596,7 @@ data class MoodleCalendarDay(
     /** hasevents */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("hasevents")
-    val hasEvents: Boolean,
+    val hasEvents: Boolean = false,
 
     /** calendareventtypes */
     @SerialName("calendareventtypes")
@@ -604,35 +604,35 @@ data class MoodleCalendarDay(
 
     /** previousperiod */
     @SerialName("previousperiod")
-    val previousPeriod: Int,
+    val previousPeriod: Int = 0,
 
     /** nextperiod */
     @SerialName("nextperiod")
-    val nextPeriod: Int,
+    val nextPeriod: Int = 0,
 
     /** haslastdayofevent */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("haslastdayofevent")
-    val hasLastDayOfEvent: Boolean,
+    val hasLastDayOfEvent: Boolean = false,
 
     /** popovertitle */
     @SerialName("popovertitle")
-    val popoverTitle: String,
+    val popoverTitle: String = "",
 
     /** daytitle */
     @SerialName("daytitle")
-    val dayTitle: String
+    val dayTitle: String = ""
 )
 
 @Serializable
 data class MoodleCalendarDayEvent(
     /** id */
     @SerialName("id")
-    val id: Int,
+    val id: Int = 0,
 
     /** name */
     @SerialName("name")
-    val name: String,
+    val name: String = "",
 
     /** description */
     @SerialName("description")
@@ -688,31 +688,31 @@ data class MoodleCalendarDayEvent(
 
     /** eventtype */
     @SerialName("eventtype")
-    val eventType: String,
+    val eventType: String = "",
 
     /** timestart */
     @SerialName("timestart")
-    val timeStart: Long,
+    val timeStart: Long = 0L,
 
     /** timeduration */
     @SerialName("timeduration")
-    val timeDuration: Long,
+    val timeDuration: Long = 0L,
 
     /** timesort */
     @SerialName("timesort")
-    val timeSort: Long,
+    val timeSort: Long = 0L,
 
     /** timeusermidnight */
     @SerialName("timeusermidnight")
-    val timeUserMidnight: Long,
+    val timeUserMidnight: Long = 0L,
 
     /** visible */
     @SerialName("visible")
-    val visible: Int,
+    val visible: Int = 0,
 
     /** timemodified */
     @SerialName("timemodified")
-    val timeModified: Long,
+    val timeModified: Long = 0L,
 
     /** overdue */
     @Serializable(with = MoodleBooleanSerializer::class)
@@ -738,47 +738,47 @@ data class MoodleCalendarDayEvent(
     /** canedit */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("canedit")
-    val canEdit: Boolean,
+    val canEdit: Boolean = false,
 
     /** candelete */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("candelete")
-    val canDelete: Boolean,
+    val canDelete: Boolean = false,
 
     /** deleteurl */
     @SerialName("deleteurl")
-    val deleteUrl: String,
+    val deleteUrl: String = "",
 
     /** editurl */
     @SerialName("editurl")
-    val editUrl: String,
+    val editUrl: String = "",
 
     /** viewurl */
     @SerialName("viewurl")
-    val viewUrl: String,
+    val viewUrl: String = "",
 
     /** formattedtime */
     @SerialName("formattedtime")
-    val formattedTime: String,
+    val formattedTime: String = "",
 
     /** formattedlocation */
     @SerialName("formattedlocation")
-    val formattedLocation: String,
+    val formattedLocation: String = "",
 
     /** isactionevent */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("isactionevent")
-    val isActionEvent: Boolean,
+    val isActionEvent: Boolean = false,
 
     /** iscourseevent */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("iscourseevent")
-    val isCourseEvent: Boolean,
+    val isCourseEvent: Boolean = false,
 
     /** iscategoryevent */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("iscategoryevent")
-    val isCategoryEvent: Boolean,
+    val isCategoryEvent: Boolean = false,
 
     /** groupname */
     @SerialName("groupname")
@@ -786,11 +786,11 @@ data class MoodleCalendarDayEvent(
 
     /** normalisedeventtype */
     @SerialName("normalisedeventtype")
-    val normalisedEventType: String,
+    val normalisedEventType: String = "",
 
     /** normalisedeventtypetext */
     @SerialName("normalisedeventtypetext")
-    val normalisedEventTypeText: String,
+    val normalisedEventTypeText: String = "",
 
     @Serializable(with = MoodleEventActionFoldedSerializer::class)
     @SerialName("action")
@@ -798,7 +798,7 @@ data class MoodleCalendarDayEvent(
 
     /** purpose */
     @SerialName("purpose")
-    val purpose: String,
+    val purpose: String = "",
 
     /** branded */
     @Serializable(with = MoodleBooleanSerializer::class)
@@ -807,16 +807,16 @@ data class MoodleCalendarDayEvent(
 
     /** url */
     @SerialName("url")
-    val url: String,
+    val url: String = "",
 
     /** islastday */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("islastday")
-    val isLastDay: Boolean,
+    val isLastDay: Boolean = false,
 
     /** popupname */
     @SerialName("popupname")
-    val popupName: String,
+    val popupName: String = "",
 
     /** mindaytimestamp */
     @SerialName("mindaytimestamp")
@@ -837,69 +837,69 @@ data class MoodleCalendarDayEvent(
     /** draggable */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("draggable")
-    val draggable: Boolean
+    val draggable: Boolean = false
 )
 
 @Serializable
 data class MoodleCalendarDayName(
     /** dayno */
     @SerialName("dayno")
-    val dayNo: Int,
+    val dayNo: Int = 0,
 
     /** shortname */
     @SerialName("shortname")
-    val shortName: String,
+    val shortName: String = "",
 
     /** fullname */
     @SerialName("fullname")
-    val fullName: String
+    val fullName: String = ""
 )
 
 @Serializable
 data class MoodleCalendarDate(
     /** seconds */
     @SerialName("seconds")
-    val seconds: Int,
+    val seconds: Int = 0,
 
     /** minutes */
     @SerialName("minutes")
-    val minutes: Int,
+    val minutes: Int = 0,
 
     /** hours */
     @SerialName("hours")
-    val hours: Int,
+    val hours: Int = 0,
 
     /** mday */
     @SerialName("mday")
-    val dayOfMonth: Int,
+    val dayOfMonth: Int = 0,
 
     /** wday */
     @SerialName("wday")
-    val dayOfWeek: Int,
+    val dayOfWeek: Int = 0,
 
     /** mon */
     @SerialName("mon")
-    val monthNumber: Int,
+    val monthNumber: Int = 0,
 
     /** year */
     @SerialName("year")
-    val year: Int,
+    val year: Int = 0,
 
     /** yday */
     @SerialName("yday")
-    val dayOfYear: Int,
+    val dayOfYear: Int = 0,
 
     /** weekday */
     @SerialName("weekday")
-    val weekday: String,
+    val weekday: String = "",
 
     /** month */
     @SerialName("month")
-    val month: String,
+    val month: String = "",
 
     /** timestamp */
     @SerialName("timestamp")
-    val timestamp: Long
+    val timestamp: Long = 0L
 )
 
 @Serializable
@@ -910,15 +910,15 @@ data class MoodleCalendarUpcomingView(
 
     /** defaulteventcontext */
     @SerialName("defaulteventcontext")
-    val defaultEventContext: Int,
+    val defaultEventContext: Int = 0,
 
     /** filter_selector */
     @SerialName("filter_selector")
-    val filterSelector: String,
+    val filterSelector: String = "",
 
     /** courseid */
     @SerialName("courseid")
-    val courseId: Int,
+    val courseId: Int = 0,
 
     /** categoryid */
     @SerialName("categoryid")
@@ -927,7 +927,7 @@ data class MoodleCalendarUpcomingView(
     /** isloggedin */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("isloggedin")
-    val isLoggedIn: Boolean,
+    val isLoggedIn: Boolean = false,
 
     @Serializable(with = MoodleCalendarDateFoldedSerializer::class)
     @SerialName("date")

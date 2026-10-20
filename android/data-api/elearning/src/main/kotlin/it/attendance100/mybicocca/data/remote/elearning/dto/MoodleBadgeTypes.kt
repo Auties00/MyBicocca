@@ -22,7 +22,7 @@ data class MoodleUserBadge(
 
     /** Badge name */
     @SerialName("name")
-    val name: String,
+    val name: String = "",
 
     /** Badge description */
     @SerialName("description")
@@ -46,11 +46,11 @@ data class MoodleUserBadge(
 
     /** Issuer name */
     @SerialName("issuername")
-    val issuerName: String,
+    val issuerName: String = "",
 
     /** Issuer URL */
     @SerialName("issuerurl")
-    val issuerUrl: String,
+    val issuerUrl: String = "",
 
     /** Issuer contact */
     @SerialName("issuercontact")
@@ -102,11 +102,11 @@ data class MoodleUserBadge(
 
     /** Unique hash */
     @SerialName("uniquehash")
-    val uniqueHash: String,
+    val uniqueHash: String = "",
 
     /** Date issued */
     @SerialName("dateissued")
-    val dateIssued: Long,
+    val dateIssued: Long = 0L,
 
     /** Date expire */
     @SerialName("dateexpire")
@@ -118,11 +118,11 @@ data class MoodleUserBadge(
 
     /** Id of the awarded user */
     @SerialName("recipientid")
-    val recipientId: Int,
+    val recipientId: Int = 0,
 
     /** Full name of the awarded user */
     @SerialName("recipientfullname")
-    val recipientFullName: String,
+    val recipientFullName: String = "",
 
     /** User email */
     @SerialName("email")
@@ -154,7 +154,7 @@ data class MoodleUserBadge(
 
     /** Badge URL */
     @SerialName("badgeurl")
-    val badgeUrl: String,
+    val badgeUrl: String = "",
 
     @Serializable(with = MoodleBadgeEndorsementFoldedSerializer::class)
     @SerialName("endorsement")
@@ -173,23 +173,23 @@ data class MoodleUserBadge(
 data class MoodleBadgeEndorsement(
     /** Endorsement id */
     @SerialName("id")
-    val id: Int,
+    val id: Int = 0,
 
     /** Badge id */
     @SerialName("badgeid")
-    val badgeId: Int,
+    val badgeId: Int = 0,
 
     /** Endorsement issuer name */
     @SerialName("issuername")
-    val issuerName: String,
+    val issuerName: String = "",
 
     /** Endorsement issuer URL */
     @SerialName("issuerurl")
-    val issuerUrl: String,
+    val issuerUrl: String = "",
 
     /** Endorsement issuer email */
     @SerialName("issueremail")
-    val issuerEmail: String,
+    val issuerEmail: String = "",
 
     /** Claim URL */
     @SerialName("claimid")
@@ -201,7 +201,7 @@ data class MoodleBadgeEndorsement(
 
     /** Date issued */
     @SerialName("dateissued")
-    val dateIssued: Long
+    val dateIssued: Long = 0L
 )
 
 @Serializable
@@ -239,11 +239,11 @@ data class MoodleBadgeAlignment(
 data class MoodleRelatedBadge(
     /** Badge id */
     @SerialName("id")
-    val id: Int,
+    val id: Int = 0,
 
     /** Badge name */
     @SerialName("name")
-    val name: String,
+    val name: String = "",
 
     /** Version */
     @SerialName("version")
