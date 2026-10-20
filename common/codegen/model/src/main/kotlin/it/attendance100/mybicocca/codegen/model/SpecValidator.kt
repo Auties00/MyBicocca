@@ -33,9 +33,11 @@ object SpecValidator {
         checkUnique(spec.authSchemes.map { it.name }) { "Auth scheme '$it' is declared more than once" }
         for (scheme in spec.authSchemes) {
             val parameters = scheme.parameters.map { it.name }.toSet()
-            for ((header, template) in scheme.headers) {
-                for (placeholder in PLACEHOLDER.findAll(template).map { it.groupValues[1] }) {
-                    if (placeholder !in parameters) add("Auth scheme '${scheme.name}' header '$header' uses unknown credential '{$placeholder}'")
+            for ((what, templates) in listOf("header" to scheme.headers, "form field" to scheme.form)) {
+                for ((name, template) in templates) {
+                    for (placeholder in PLACEHOLDER.findAll(template).map { it.groupValues[1] }) {
+                        if (placeholder !in parameters) add("Auth scheme '${scheme.name}' $what '$name' uses unknown credential '{$placeholder}'")
+                    }
                 }
             }
         }
@@ -145,6 +147,12 @@ object SpecValidator {
                         if (!isPlain(spec, parameter.type)) add("$what can't be written as plain text; encode it as JSON")
                     }
                     ParameterEncoding.JSON -> if (parameter.location == ParameterLocation.PATH) add("$what is a JSON-encoded path parameter")
+                    ParameterEncoding.BRACKETS -> {
+                        if (parameter.location != ParameterLocation.QUERY && parameter.location != ParameterLocation.FORM) {
+                            add("$what is bracket-encoded but isn't a query or form parameter")
+                        }
+                        if (parameter.default != null) add("$what is bracket-encoded and has a default")
+                    }
                 }
                 if (parameter.location == ParameterLocation.PATH && !parameter.required) add("$what isn't required")
             }
@@ -161,6 +169,8 @@ object SpecValidator {
                 for (scheme in auth.schemes) {
                     if (spec.authSchemes.none { it.name == scheme }) add("$where accepts unknown auth scheme '$scheme'")
                 }
+                val sendsForm = spec.authSchemes.any { it.name in auth.schemes && it.form.isNotEmpty() }
+                if (sendsForm && operation.body != null) add("$where sends a body but accepts credentials sent as form fields")
             }
             when (val body = operation.body) {
                 is RequestBody.Json -> {

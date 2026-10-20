@@ -24,5 +24,21 @@ export class DemoKeyAuth implements RequestAuth {
   }
 }
 
+/** A session token, sent as a form field. */
+export class DemoSessionAuth implements RequestAuth {
+  constructor(readonly token: string) {}
+
+  get headers(): Readonly<Record<string, string>> {
+    return {
+    };
+  }
+
+  get form(): Readonly<Record<string, string>> {
+    return {
+      "wstoken": `${this.token}`,
+    };
+  }
+}
+
 /** Credentials accepted by Demo operations. */
-export type DemoAuth = DemoTokenAuth | DemoKeyAuth;
+export type DemoAuth = DemoTokenAuth | DemoKeyAuth | DemoSessionAuth;

@@ -63,6 +63,7 @@ jobs:
           npx --yes -p typescript@5.8.3 tsc -p packages/esse3
           npx --yes -p typescript@5.8.3 tsc -p packages/affluences
           npx --yes -p typescript@5.8.3 tsc -p packages/easystaff-planning
+          npx --yes -p typescript@5.8.3 tsc -p packages/moodle
 
   swift:
     name: Swift SDKs

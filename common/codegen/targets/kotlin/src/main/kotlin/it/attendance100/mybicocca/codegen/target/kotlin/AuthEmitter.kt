@@ -7,8 +7,8 @@ import it.attendance100.mybicocca.codegen.target.kotlin.KotlinSyntax.doc
 
 /**
  * Emits the auth schemes: a sealed interface whose implementations hold each scheme's
- * credentials and turn them into the headers to send. Operations accepting several schemes
- * take the interface, so callers can only pass one set of credentials.
+ * credentials and turn them into the headers (and form fields) to send. Operations accepting
+ * several schemes take the interface, so callers can only pass one set of credentials.
  */
 internal class AuthEmitter(private val spec: ApiSpec, private val layout: KotlinLayout) {
 
@@ -18,6 +18,11 @@ internal class AuthEmitter(private val spec: ApiSpec, private val layout: Kotlin
             block("sealed interface ${layout.authBase} {") {
                 line("/** The headers that authenticate a request. */")
                 line("val headers: Map<String, String>")
+                if (spec.authSchemes.any { it.form.isNotEmpty() }) {
+                    line()
+                    line("/** The form fields that authenticate a request. */")
+                    line("val form: Map<String, String> get() = emptyMap()")
+                }
             }
             for (scheme in spec.authSchemes) {
                 line()
@@ -35,6 +40,11 @@ internal class AuthEmitter(private val spec: ApiSpec, private val layout: Kotlin
             commaList("override val headers: Map<String, String> get() = mapOf(", scheme.headers.map { (header, template) ->
                 "${KotlinSyntax.string(header)} to ${template(template)}"
             }, ")")
+            if (scheme.form.isNotEmpty()) {
+                commaList("override val form: Map<String, String> get() = mapOf(", scheme.form.map { (field, template) ->
+                    "${KotlinSyntax.string(field)} to ${template(template)}"
+                }, ")")
+            }
         }
         line("}")
     }

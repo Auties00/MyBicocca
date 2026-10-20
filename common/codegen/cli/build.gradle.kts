@@ -7,6 +7,7 @@ dependencies {
 
     // Readers and targets are discovered at runtime through ServiceLoader.
     runtimeOnly(project(":readers:esse3"))
+    runtimeOnly(project(":readers:moodle"))
     runtimeOnly(project(":readers:openapi"))
     runtimeOnly(project(":targets:kotlin"))
     runtimeOnly(project(":targets:swift"))

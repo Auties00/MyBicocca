@@ -89,7 +89,9 @@ internal class SwiftServiceEmitter(private val spec: ApiSpec, private val layout
         val apiParameters = spec.parameters.groupBy { it.location }
         add("method: .${operation.method.name.lowercase()}")
         add("path: ${path(module, operation)}")
-        (apiParameters[ParameterLocation.QUERY].orEmpty() + operation.queryParameters).takeIf { it.isNotEmpty() }?.let { add("query: ${items(it)}") }
+        val fixedQuery = operation.query.map { (name, value) -> "(${SwiftSyntax.string(name)}, ${SwiftSyntax.string(value)})" }
+        val query = apiParameters[ParameterLocation.QUERY].orEmpty() + operation.queryParameters
+        if (fixedQuery.isNotEmpty() || query.isNotEmpty()) add("query: ${items(query, fixedQuery)}")
         operation.formParameters.takeIf { it.isNotEmpty() }?.let { add("form: ${items(it)}") }
         val headers = operation.headers.map { (name, value) -> "(${SwiftSyntax.string(name)}, ${template(value)})" } +
             (apiParameters[ParameterLocation.HEADER].orEmpty() + operation.headerParameters).map(::pair)
@@ -119,7 +121,13 @@ internal class SwiftServiceEmitter(private val spec: ApiSpec, private val layout
         PLACEHOLDER.replace(SwiftSyntax.string(value)) { "\\(${SwiftSyntax.identifier(it.groupValues[1])})" }
 
     /** Name/value pairs as an array literal, wrapped one per line when there are several. */
-    private fun CodeWriter.items(parameters: List<Parameter>): String = array(parameters.map(::pair))
+    private fun CodeWriter.items(parameters: List<Parameter>, fixed: List<String> = emptyList()): String {
+        val (bracketed, plain) = parameters.partition { it.encoding == ParameterEncoding.BRACKETS }
+        val items = array(fixed + plain.map(::pair))
+        if (bracketed.isEmpty()) return items
+        val fields = bracketed.map { "RestRequest.brackets(${SwiftSyntax.string(it.wireName)}, ${SwiftSyntax.identifier(it.name)})" }
+        return (listOf(items).filter { fixed.isNotEmpty() || plain.isNotEmpty() } + fields).joinToString(" + ")
+    }
 
     /** A parameter's name and value; a JSON-encoded value is written as JSON text, or its default's. */
     private fun pair(parameter: Parameter): String {
@@ -127,6 +135,7 @@ internal class SwiftServiceEmitter(private val spec: ApiSpec, private val layout
         val value = when (parameter.encoding) {
             ParameterEncoding.PLAIN -> name
             ParameterEncoding.JSON -> "RestRequest.json($name)" + (parameter.default?.let { " ?? ${SwiftSyntax.string(it.value)}" } ?: "")
+            ParameterEncoding.BRACKETS -> error("Parameter '${parameter.name}' is bracket-encoded")
         }
         return "(${SwiftSyntax.string(parameter.wireName)}, $value)"
     }

@@ -4,6 +4,7 @@ import it.attendance100.mybicocca.codegen.core.CodeWriter
 import it.attendance100.mybicocca.codegen.model.ApiSpec
 import it.attendance100.mybicocca.codegen.model.Codec
 import it.attendance100.mybicocca.codegen.model.Field
+import it.attendance100.mybicocca.codegen.model.ParameterEncoding
 import it.attendance100.mybicocca.codegen.model.PrimitiveKind
 import it.attendance100.mybicocca.codegen.model.RecordType
 import it.attendance100.mybicocca.codegen.model.TypeRef
@@ -17,6 +18,8 @@ import it.attendance100.mybicocca.codegen.model.TypeRef
  * - maps use `<Prefix>MapSerializer`, which also reads PHP's `[]` and arrays of objects;
  * - [Codec.BlankAsNull], [Codec.FoldedObject] and [Codec.EmbeddedJson] fields use a
  *   serializer per codec and type.
+ *
+ * The file also holds `appendBrackets`, which writes [ParameterEncoding.BRACKETS] parameters.
  *
  * A field names its serializer with `@Serializable(with = …)`; values nested in lists and maps
  * name theirs with the same annotation on the type argument.
@@ -37,9 +40,13 @@ internal class KotlinSerializers(
 
     val fileName = "${prefix}Serializers.kt"
 
-    /** Whether the API needs any of the serializers this class emits. */
+    private val usesBrackets: Boolean =
+        spec.modules.any { module -> module.operations.any { operation -> operation.parameters.any { it.encoding == ParameterEncoding.BRACKETS } } }
+
+    /** Whether the API needs any of the declarations this class emits. */
     val isNeeded: Boolean
-        get() = fields.any { field -> field.codec.let { it != null && it !is Codec.Temporal } || field.type.contains { isBoolean(it) || it is TypeRef.MapOf } }
+        get() = usesBrackets ||
+            fields.any { field -> field.codec.let { it != null && it !is Codec.Temporal } || field.type.contains { isBoolean(it) || it is TypeRef.MapOf } }
 
     /**
      * The serializer of a field, or null when the type's own one does. [file] imports it.
@@ -125,6 +132,7 @@ internal class KotlinSerializers(
             for (record in recordsWith(Codec.FoldedObject)) add { foldedSerializer(record, file) }
             for (record in recordsWith(Codec.EmbeddedJson)) add { embeddedSerializer(record, file) }
             if (folding) add { foldObjects(file) }
+            if (usesBrackets) add { appendBrackets(file) }
         }
         out.separated(sections) { it(this) }
     }
@@ -231,6 +239,25 @@ internal class KotlinSerializers(
         block("private fun foldObjects(element: JsonElement): JsonElement = when (element) {") {
             line("is JsonArray -> JsonObject(element.filterIsInstance<JsonObject>().flatMap { it.entries }.associate { it.key to it.value })")
             line("else -> element")
+        }
+    }
+
+    private fun CodeWriter.appendBrackets(file: KotlinFile) {
+        importAll(
+            file, "io.ktor.http.ParametersBuilder", JSON_ELEMENT, JSON_PRIMITIVE, "kotlinx.serialization.json.JsonArray",
+            "kotlinx.serialization.json.JsonNull", "kotlinx.serialization.json.JsonObject", "kotlinx.serialization.json.booleanOrNull",
+        )
+        line("/**")
+        line(" * Appends [value] as PHP-style bracketed fields named after [name] (`name[0][key]=value`), as")
+        line(" * PHP servers read lists and records. Booleans are written `1` and `0`; nulls are left out.")
+        line(" */")
+        block("internal fun ParametersBuilder.appendBrackets(name: String, value: JsonElement) {") {
+            block("when (value) {") {
+                line("is JsonObject -> value.forEach { (key, item) -> appendBrackets(\"\$name[\$key]\", item) }")
+                line("is JsonArray -> value.forEachIndexed { index, item -> appendBrackets(\"\$name[\$index]\", item) }")
+                line("JsonNull -> Unit")
+                line("is JsonPrimitive -> append(name, value.takeUnless { it.isString }?.booleanOrNull?.let { if (it) \"1\" else \"0\" } ?: value.content)")
+            }
         }
     }
 
