@@ -69,11 +69,42 @@ class ElearningCourseApi(
     }
 
     /**
+     * Gets the "Scheda del corso" metadata of a course from its custom fields, for any course
+     * the token's user can see, including ones they are not enrolled in.
+     *
+     * Categorical values come back localized in the client's language
+     * (see [ElearningApi.language]).
+     *
+     * @param wsToken The web service token (32 characters)
+     * @param courseId The course ID to fetch.
+     * @return The course's [ElearningCourseMetadata], or null if no visible course has that id.
+     * @throws IllegalArgumentException If the token is invalid
+     * @throws ElearningException If the request fails
+     */
+    suspend fun getCourseMetadata(wsToken: String, courseId: Int): ElearningCourseMetadata? {
+        val response = executeAuthenticatedRequest(wsToken, ElearningGetCoursesByFieldRequest("id", courseId.toString()))
+        val values = response.courses.firstOrNull()?.customFields
+            ?.associate { it.shortName to it.value?.trim()?.takeIf(String::isNotEmpty) }
+            ?: return null
+        return ElearningCourseMetadata(
+            disciplinarySector = values["settore"],
+            cfu = values["cfu"]?.toIntOrNull(),
+            period = values["periodo"],
+            activityType = values["tipo"],
+            hours = values["ore"]?.toIntOrNull()?.takeIf { it > 0 },
+            degreeType = values["tipologiacds"],
+            deliveryMode = values["erogazione"],
+            language = values["lingua"]
+        )
+    }
+
+    /**
      * Scrapes the public course info page (`/course/info.php?id={id}`) for a course.
      *
      * This endpoint is publicly accessible — it requires no token and no SSO login —
-     * and returns the syllabus, staff, and "Scheda del corso" metadata for any course,
-     * including ones the user is not enrolled in.
+     * and returns the syllabus and staff for any course, including ones the user is not
+     * enrolled in. The "Scheda del corso" metadata on the same page comes from
+     * [getCourseMetadata] instead.
      *
      * @param courseId The course ID to fetch.
      * @return The parsed [ElearningCoursePublicInfo].
@@ -99,7 +130,6 @@ class ElearningCourseApi(
             name = name,
             code = code,
             viewUrl = viewUrl,
-            metadata = parseCoursePublicMetadata(mainBox),
             syllabus = parseCourseSyllabus(mainBox),
             staff = parseCourseStaff(mainBox),
             enrolmentMethods = parseCourseEnrolmentMethods(mainBox),
@@ -109,25 +139,6 @@ class ElearningCourseApi(
                 ?.attr("abs:href")?.takeIf { it.isNotBlank() }
         )
     }
-}
-
-private fun parseCoursePublicMetadata(mainBox: Element): ElearningCoursePublicMetadata {
-    val rows = mainBox.select(".course-metadata .metadata-data .row.no-gutters")
-    val values = rows.mapNotNull { row ->
-        val cols = row.select(".col-6")
-        if (cols.size < 2) return@mapNotNull null
-        cols[0].text().trim() to cols[1].text().trim()
-    }.toMap()
-
-    return ElearningCoursePublicMetadata(
-        disciplinarySector = values["Settore disciplinare"],
-        cfu = values["CFU"]?.toIntOrNull(),
-        period = values["Periodo"],
-        activityType = values["Tipo di attività"],
-        hours = values["Ore"]?.toIntOrNull(),
-        degreeType = values["Tipologia CdS"],
-        language = values["Lingua"]
-    )
 }
 
 private fun parseCourseSyllabus(mainBox: Element): List<ElearningCourseSyllabus> {
