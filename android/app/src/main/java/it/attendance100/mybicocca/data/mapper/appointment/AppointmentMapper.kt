@@ -14,7 +14,6 @@ import it.attendance100.mybicocca.domain.model.appointment.AppointmentArea
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentForm
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentFormField
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentFormOption
-import it.attendance100.mybicocca.domain.model.appointment.AppointmentFormSection
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentMonthAvailability
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentOffering
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentReservation
@@ -93,10 +92,6 @@ fun List<EasyStaffPlanningFormField>.toAppointmentForm() = AppointmentForm(
  * relative); unknown input types degrade to plain text, which the backend accepts as a string.
  */
 private fun EasyStaffPlanningFormField.toAppointmentFormField(): AppointmentFormField {
-    val section = when (position) {
-        EasyStaffPlanningFieldPosition.Service -> AppointmentFormSection.Service
-        else -> AppointmentFormSection.User
-    }
     val placeholder = placeholder?.takeIf { it.isNotBlank() }
     return when {
         position == EasyStaffPlanningFieldPosition.Gdpr || type == EasyStaffPlanningFieldType.Checkbox ->
@@ -114,7 +109,6 @@ private fun EasyStaffPlanningFormField.toAppointmentFormField(): AppointmentForm
             label = label,
             required = required,
             placeholder = placeholder,
-            section = section,
             primary = primary,
         )
 
@@ -123,7 +117,6 @@ private fun EasyStaffPlanningFormField.toAppointmentFormField(): AppointmentForm
             label = label,
             required = required,
             placeholder = placeholder,
-            section = section,
         )
 
         type == EasyStaffPlanningFieldType.Phone -> AppointmentFormField.Phone(
@@ -131,7 +124,6 @@ private fun EasyStaffPlanningFormField.toAppointmentFormField(): AppointmentForm
             label = label,
             required = required,
             placeholder = placeholder,
-            section = section,
         )
 
         type == EasyStaffPlanningFieldType.Select -> AppointmentFormField.Select(
@@ -139,7 +131,6 @@ private fun EasyStaffPlanningFormField.toAppointmentFormField(): AppointmentForm
             label = label,
             required = required,
             placeholder = placeholder,
-            section = section,
             options = values.orEmpty().map { AppointmentFormOption(value = it.value, label = it.label) },
         )
 
@@ -148,7 +139,6 @@ private fun EasyStaffPlanningFormField.toAppointmentFormField(): AppointmentForm
             label = label,
             required = required,
             placeholder = placeholder,
-            section = section,
         )
     }
 }

@@ -155,9 +155,10 @@ class EasyStaffPlanningBookingApi(
     /**
      * Builds a reservation request from the dynamic booking form of a service.
      *
-     * Values are split into the user and appointment sections of the request based on the
-     * position of each form field; the GDPR consent field is excluded, matching the web
-     * front-end. The value of the primary field becomes the reservation key.
+     * Values are split into the user, appointment and staff sections of the request based on
+     * the position of each form field, matching the web front-end: GDPR consent fields and
+     * fields with an unknown position are left out, and so are blank values. The value of the
+     * primary field becomes the reservation key.
      *
      * @param serviceId The numeric identifier of the service
      * @param areaId The numeric identifier of the area
@@ -197,6 +198,7 @@ class EasyStaffPlanningBookingApi(
             primaryValue = primaryValue,
             userFields = fieldValues(formFields, values, EasyStaffPlanningFieldPosition.User),
             serviceFields = fieldValues(formFields, values, EasyStaffPlanningFieldPosition.Service),
+            backofficeFields = fieldValues(formFields, values, EasyStaffPlanningFieldPosition.Backoffice),
             resourceId = resourceId,
             recaptchaToken = null,
             timeZone = CAMPUS_TIME_ZONE.id
@@ -409,14 +411,15 @@ class EasyStaffPlanningBookingApi(
             path = "/ics/$repeatId",
             queryParams = mapOf("timezone" to timeZone.id)
         )
-
-    private fun fieldValues(
-        formFields: List<EasyStaffPlanningFormField>,
-        values: Map<String, String>,
-        position: EasyStaffPlanningFieldPosition
-    ): Map<String, String> =
-        formFields.asSequence()
-            .filter { it.position == position }
-            .mapNotNull { field -> values[field.code]?.let { field.code to it } }
-            .toMap()
 }
+
+/** Collects the non-blank form values of the fields at [position], keyed by field code. */
+private fun fieldValues(
+    formFields: List<EasyStaffPlanningFormField>,
+    values: Map<String, String>,
+    position: EasyStaffPlanningFieldPosition
+): Map<String, String> =
+    formFields.asSequence()
+        .filter { it.position == position }
+        .mapNotNull { field -> values[field.code]?.takeIf { it.isNotBlank() }?.let { field.code to it } }
+        .toMap()
