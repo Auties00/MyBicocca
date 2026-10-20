@@ -110,21 +110,21 @@ export function decodeMoodleForumPost(json: unknown): MoodleForumPost | undefine
   const object = asJsonObject(json);
   if (object === undefined) return undefined;
   return {
-    id: required(decodeInteger(object["id"]), "MoodleForumPost.id"),
-    subject: required(decodeString(object["subject"]), "MoodleForumPost.subject"),
-    replySubject: required(decodeString(object["replysubject"]), "MoodleForumPost.replySubject"),
-    message: required(decodeString(object["message"]), "MoodleForumPost.message"),
+    id: decodeInteger(object["id"]) ?? 0,
+    subject: decodeString(object["subject"]) ?? "",
+    replySubject: decodeString(object["replysubject"]) ?? "",
+    message: decodeString(object["message"]) ?? "",
     messageFormat: decodeInteger(object["messageformat"]) ?? 0,
     author: required(decodeFolded(object["author"], decodeMoodlePostAuthor), "MoodleForumPost.author"),
-    discussionId: required(decodeInteger(object["discussionid"]), "MoodleForumPost.discussionId"),
-    hasParent: required(decodeBoolean(object["hasparent"]), "MoodleForumPost.hasParent"),
+    discussionId: decodeInteger(object["discussionid"]) ?? 0,
+    hasParent: decodeBoolean(object["hasparent"]) ?? false,
     parentId: decodeInteger(object["parentid"]) ?? null,
     timeCreated: decodeInteger(object["timecreated"]) ?? 0,
     timeModified: decodeInteger(object["timemodified"]) ?? 0,
     unread: decodeBoolean(object["unread"]) ?? null,
-    isDeleted: required(decodeBoolean(object["isdeleted"]), "MoodleForumPost.isDeleted"),
-    isPrivateReply: required(decodeBoolean(object["isprivatereply"]), "MoodleForumPost.isPrivateReply"),
-    hasWordCount: required(decodeBoolean(object["haswordcount"]), "MoodleForumPost.hasWordCount"),
+    isDeleted: decodeBoolean(object["isdeleted"]) ?? false,
+    isPrivateReply: decodeBoolean(object["isprivatereply"]) ?? false,
+    hasWordCount: decodeBoolean(object["haswordcount"]) ?? false,
     wordCount: decodeInteger(object["wordcount"]) ?? null,
     charCount: decodeInteger(object["charcount"]) ?? null,
     capabilities: required(decodeFolded(object["capabilities"], decodeMoodlePostCapabilities), "MoodleForumPost.capabilities"),
@@ -212,8 +212,8 @@ export function decodeMoodlePostAuthorGroup(json: unknown): MoodlePostAuthorGrou
   const object = asJsonObject(json);
   if (object === undefined) return undefined;
   return {
-    id: required(decodeInteger(object["id"]), "MoodlePostAuthorGroup.id"),
-    name: required(decodeString(object["name"]), "MoodlePostAuthorGroup.name"),
+    id: decodeInteger(object["id"]) ?? 0,
+    name: decodeString(object["name"]) ?? "",
     urls: required(decodeFolded(object["urls"], decodeMoodlePostAuthorGroupUrls), "MoodlePostAuthorGroup.urls"),
   };
 }
@@ -430,25 +430,25 @@ export function decodeMoodlePostAttachment(json: unknown): MoodlePostAttachment 
   const object = asJsonObject(json);
   if (object === undefined) return undefined;
   return {
-    contextId: required(decodeInteger(object["contextid"]), "MoodlePostAttachment.contextId"),
-    component: required(decodeString(object["component"]), "MoodlePostAttachment.component"),
-    fileArea: required(decodeString(object["filearea"]), "MoodlePostAttachment.fileArea"),
-    itemId: required(decodeInteger(object["itemid"]), "MoodlePostAttachment.itemId"),
-    filePath: required(decodeString(object["filepath"]), "MoodlePostAttachment.filePath"),
-    fileName: required(decodeString(object["filename"]), "MoodlePostAttachment.fileName"),
-    isDirectory: required(decodeBoolean(object["isdir"]), "MoodlePostAttachment.isDirectory"),
-    isImage: required(decodeBoolean(object["isimage"]), "MoodlePostAttachment.isImage"),
-    timeModified: required(decodeInteger(object["timemodified"]), "MoodlePostAttachment.timeModified"),
-    timeCreated: required(decodeInteger(object["timecreated"]), "MoodlePostAttachment.timeCreated"),
-    fileSize: required(decodeInteger(object["filesize"]), "MoodlePostAttachment.fileSize"),
-    author: required(decodeString(object["author"]), "MoodlePostAttachment.author"),
-    license: required(decodeString(object["license"]), "MoodlePostAttachment.license"),
-    fileNameShort: required(decodeString(object["filenameshort"]), "MoodlePostAttachment.fileNameShort"),
-    fileSizeFormatted: required(decodeString(object["filesizeformatted"]), "MoodlePostAttachment.fileSizeFormatted"),
-    icon: required(decodeString(object["icon"]), "MoodlePostAttachment.icon"),
-    timeCreatedFormatted: required(decodeString(object["timecreatedformatted"]), "MoodlePostAttachment.timeCreatedFormatted"),
-    timeModifiedFormatted: required(decodeString(object["timemodifiedformatted"]), "MoodlePostAttachment.timeModifiedFormatted"),
-    url: required(decodeString(object["url"]), "MoodlePostAttachment.url"),
+    contextId: decodeInteger(object["contextid"]) ?? 0,
+    component: decodeString(object["component"]) ?? "",
+    fileArea: decodeString(object["filearea"]) ?? "",
+    itemId: decodeInteger(object["itemid"]) ?? 0,
+    filePath: decodeString(object["filepath"]) ?? "",
+    fileName: decodeString(object["filename"]) ?? "",
+    isDirectory: decodeBoolean(object["isdir"]) ?? false,
+    isImage: decodeBoolean(object["isimage"]) ?? false,
+    timeModified: decodeInteger(object["timemodified"]) ?? 0,
+    timeCreated: decodeInteger(object["timecreated"]) ?? 0,
+    fileSize: decodeInteger(object["filesize"]) ?? 0,
+    author: decodeString(object["author"]) ?? "",
+    license: decodeString(object["license"]) ?? "",
+    fileNameShort: decodeString(object["filenameshort"]) ?? "",
+    fileSizeFormatted: decodeString(object["filesizeformatted"]) ?? "",
+    icon: decodeString(object["icon"]) ?? "",
+    timeCreatedFormatted: decodeString(object["timecreatedformatted"]) ?? "",
+    timeModifiedFormatted: decodeString(object["timemodifiedformatted"]) ?? "",
+    url: decodeString(object["url"]) ?? "",
     urls: required(decodeFolded(object["urls"], decodeMoodlePostAttachmentUrls), "MoodlePostAttachment.urls"),
     html: required(decodeFolded(object["html"], decodeMoodlePostAttachmentHtml), "MoodlePostAttachment.html"),
   };
@@ -566,25 +566,25 @@ export function decodeMoodlePostInlineFile(json: unknown): MoodlePostInlineFile 
   const object = asJsonObject(json);
   if (object === undefined) return undefined;
   return {
-    contextId: required(decodeInteger(object["contextid"]), "MoodlePostInlineFile.contextId"),
-    component: required(decodeString(object["component"]), "MoodlePostInlineFile.component"),
-    fileArea: required(decodeString(object["filearea"]), "MoodlePostInlineFile.fileArea"),
-    itemId: required(decodeInteger(object["itemid"]), "MoodlePostInlineFile.itemId"),
-    filePath: required(decodeString(object["filepath"]), "MoodlePostInlineFile.filePath"),
-    fileName: required(decodeString(object["filename"]), "MoodlePostInlineFile.fileName"),
-    isDirectory: required(decodeBoolean(object["isdir"]), "MoodlePostInlineFile.isDirectory"),
-    isImage: required(decodeBoolean(object["isimage"]), "MoodlePostInlineFile.isImage"),
-    timeModified: required(decodeInteger(object["timemodified"]), "MoodlePostInlineFile.timeModified"),
-    timeCreated: required(decodeInteger(object["timecreated"]), "MoodlePostInlineFile.timeCreated"),
-    fileSize: required(decodeInteger(object["filesize"]), "MoodlePostInlineFile.fileSize"),
-    author: required(decodeString(object["author"]), "MoodlePostInlineFile.author"),
-    license: required(decodeString(object["license"]), "MoodlePostInlineFile.license"),
-    fileNameShort: required(decodeString(object["filenameshort"]), "MoodlePostInlineFile.fileNameShort"),
-    fileSizeFormatted: required(decodeString(object["filesizeformatted"]), "MoodlePostInlineFile.fileSizeFormatted"),
-    icon: required(decodeString(object["icon"]), "MoodlePostInlineFile.icon"),
-    timeCreatedFormatted: required(decodeString(object["timecreatedformatted"]), "MoodlePostInlineFile.timeCreatedFormatted"),
-    timeModifiedFormatted: required(decodeString(object["timemodifiedformatted"]), "MoodlePostInlineFile.timeModifiedFormatted"),
-    url: required(decodeString(object["url"]), "MoodlePostInlineFile.url"),
+    contextId: decodeInteger(object["contextid"]) ?? 0,
+    component: decodeString(object["component"]) ?? "",
+    fileArea: decodeString(object["filearea"]) ?? "",
+    itemId: decodeInteger(object["itemid"]) ?? 0,
+    filePath: decodeString(object["filepath"]) ?? "",
+    fileName: decodeString(object["filename"]) ?? "",
+    isDirectory: decodeBoolean(object["isdir"]) ?? false,
+    isImage: decodeBoolean(object["isimage"]) ?? false,
+    timeModified: decodeInteger(object["timemodified"]) ?? 0,
+    timeCreated: decodeInteger(object["timecreated"]) ?? 0,
+    fileSize: decodeInteger(object["filesize"]) ?? 0,
+    author: decodeString(object["author"]) ?? "",
+    license: decodeString(object["license"]) ?? "",
+    fileNameShort: decodeString(object["filenameshort"]) ?? "",
+    fileSizeFormatted: decodeString(object["filesizeformatted"]) ?? "",
+    icon: decodeString(object["icon"]) ?? "",
+    timeCreatedFormatted: decodeString(object["timecreatedformatted"]) ?? "",
+    timeModifiedFormatted: decodeString(object["timemodifiedformatted"]) ?? "",
+    url: decodeString(object["url"]) ?? "",
   };
 }
 
@@ -631,11 +631,11 @@ export function decodeMoodlePostTag(json: unknown): MoodlePostTag | undefined {
   const object = asJsonObject(json);
   if (object === undefined) return undefined;
   return {
-    id: required(decodeInteger(object["id"]), "MoodlePostTag.id"),
-    tagId: required(decodeInteger(object["tagid"]), "MoodlePostTag.tagId"),
-    isStandard: required(decodeBoolean(object["isstandard"]), "MoodlePostTag.isStandard"),
-    displayName: required(decodeString(object["displayname"]), "MoodlePostTag.displayName"),
-    flag: required(decodeBoolean(object["flag"]), "MoodlePostTag.flag"),
+    id: decodeInteger(object["id"]) ?? 0,
+    tagId: decodeInteger(object["tagid"]) ?? 0,
+    isStandard: decodeBoolean(object["isstandard"]) ?? false,
+    displayName: decodeString(object["displayname"]) ?? "",
+    flag: decodeBoolean(object["flag"]) ?? false,
     urls: required(decodeFolded(object["urls"], decodeMoodlePostTagUrls), "MoodlePostTag.urls"),
   };
 }
@@ -661,7 +661,7 @@ export function decodeMoodlePostTagUrls(json: unknown): MoodlePostTagUrls | unde
   const object = asJsonObject(json);
   if (object === undefined) return undefined;
   return {
-    view: required(decodeString(object["view"]), "MoodlePostTagUrls.view"),
+    view: decodeString(object["view"]) ?? "",
   };
 }
 
@@ -1401,13 +1401,13 @@ export function decodeMoodleDiscussionSummary(json: unknown): MoodleDiscussionSu
   const object = asJsonObject(json);
   if (object === undefined) return undefined;
   return {
-    id: required(decodeInteger(object["id"]), "MoodleDiscussionSummary.id"),
-    forumId: required(decodeInteger(object["forumid"]), "MoodleDiscussionSummary.forumId"),
-    pinned: required(decodeBoolean(object["pinned"]), "MoodleDiscussionSummary.pinned"),
-    locked: required(decodeBoolean(object["locked"]), "MoodleDiscussionSummary.locked"),
-    isTimeLocked: required(decodeBoolean(object["istimelocked"]), "MoodleDiscussionSummary.isTimeLocked"),
-    name: required(decodeString(object["name"]), "MoodleDiscussionSummary.name"),
-    firstPostId: required(decodeInteger(object["firstpostid"]), "MoodleDiscussionSummary.firstPostId"),
+    id: decodeInteger(object["id"]) ?? 0,
+    forumId: decodeInteger(object["forumid"]) ?? 0,
+    pinned: decodeBoolean(object["pinned"]) ?? false,
+    locked: decodeBoolean(object["locked"]) ?? false,
+    isTimeLocked: decodeBoolean(object["istimelocked"]) ?? false,
+    name: decodeString(object["name"]) ?? "",
+    firstPostId: decodeInteger(object["firstpostid"]) ?? 0,
     group: decodeFolded(object["group"], decodeMoodleDiscussionGroup) ?? null,
     times: required(decodeFolded(object["times"], decodeMoodleDiscussionTimes), "MoodleDiscussionSummary.times"),
     userState: required(decodeFolded(object["userstate"], decodeMoodleDiscussionUserState), "MoodleDiscussionSummary.userState"),
@@ -1446,7 +1446,7 @@ export function decodeMoodleDiscussionGroup(json: unknown): MoodleDiscussionGrou
   const object = asJsonObject(json);
   if (object === undefined) return undefined;
   return {
-    name: required(decodeString(object["name"]), "MoodleDiscussionGroup.name"),
+    name: decodeString(object["name"]) ?? "",
     urls: required(decodeFolded(object["urls"], decodeMoodleDiscussionGroupUrls), "MoodleDiscussionGroup.urls"),
   };
 }
@@ -1498,10 +1498,10 @@ export function decodeMoodleDiscussionTimes(json: unknown): MoodleDiscussionTime
   const object = asJsonObject(json);
   if (object === undefined) return undefined;
   return {
-    modified: required(decodeInteger(object["modified"]), "MoodleDiscussionTimes.modified"),
-    start: required(decodeInteger(object["start"]), "MoodleDiscussionTimes.start"),
-    end: required(decodeInteger(object["end"]), "MoodleDiscussionTimes.end"),
-    locked: required(decodeInteger(object["locked"]), "MoodleDiscussionTimes.locked"),
+    modified: decodeInteger(object["modified"]) ?? 0,
+    start: decodeInteger(object["start"]) ?? 0,
+    end: decodeInteger(object["end"]) ?? 0,
+    locked: decodeInteger(object["locked"]) ?? 0,
   };
 }
 
@@ -1526,8 +1526,8 @@ export function decodeMoodleDiscussionUserState(json: unknown): MoodleDiscussion
   const object = asJsonObject(json);
   if (object === undefined) return undefined;
   return {
-    subscribed: required(decodeBoolean(object["subscribed"]), "MoodleDiscussionUserState.subscribed"),
-    favourited: required(decodeBoolean(object["favourited"]), "MoodleDiscussionUserState.favourited"),
+    subscribed: decodeBoolean(object["subscribed"]) ?? false,
+    favourited: decodeBoolean(object["favourited"]) ?? false,
   };
 }
 
@@ -1558,12 +1558,12 @@ export function decodeMoodleDiscussionCapabilities(json: unknown): MoodleDiscuss
   const object = asJsonObject(json);
   if (object === undefined) return undefined;
   return {
-    subscribe: required(decodeBoolean(object["subscribe"]), "MoodleDiscussionCapabilities.subscribe"),
-    move: required(decodeBoolean(object["move"]), "MoodleDiscussionCapabilities.move"),
-    pin: required(decodeBoolean(object["pin"]), "MoodleDiscussionCapabilities.pin"),
-    post: required(decodeBoolean(object["post"]), "MoodleDiscussionCapabilities.post"),
-    manage: required(decodeBoolean(object["manage"]), "MoodleDiscussionCapabilities.manage"),
-    favourite: required(decodeBoolean(object["favourite"]), "MoodleDiscussionCapabilities.favourite"),
+    subscribe: decodeBoolean(object["subscribe"]) ?? false,
+    move: decodeBoolean(object["move"]) ?? false,
+    pin: decodeBoolean(object["pin"]) ?? false,
+    post: decodeBoolean(object["post"]) ?? false,
+    manage: decodeBoolean(object["manage"]) ?? false,
+    favourite: decodeBoolean(object["favourite"]) ?? false,
   };
 }
 
@@ -1598,11 +1598,11 @@ export function decodeMoodleDiscussionUrls(json: unknown): MoodleDiscussionUrls 
   const object = asJsonObject(json);
   if (object === undefined) return undefined;
   return {
-    view: required(decodeString(object["view"]), "MoodleDiscussionUrls.view"),
+    view: decodeString(object["view"]) ?? "",
     viewLatest: decodeString(object["viewlatest"]) ?? null,
     viewFirstUnread: decodeString(object["viewfirstunread"]) ?? null,
-    markAsRead: required(decodeString(object["markasread"]), "MoodleDiscussionUrls.markAsRead"),
-    subscribe: required(decodeString(object["subscribe"]), "MoodleDiscussionUrls.subscribe"),
+    markAsRead: decodeString(object["markasread"]) ?? "",
+    subscribe: decodeString(object["subscribe"]) ?? "",
     pin: decodeString(object["pin"]) ?? null,
   };
 }

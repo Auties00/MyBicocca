@@ -231,11 +231,11 @@ data class MoodleActivityBadgeAttribute(
 data class MoodleModuleCompletion(
     /** overall completion state of this course module. */
     @SerialName("state")
-    val state: Int,
+    val state: Int = 0,
 
     /** course completion timestamp. */
     @SerialName("timecompleted")
-    val timeCompleted: Long,
+    val timeCompleted: Long = 0L,
 
     /** user ID that has overridden the completion state of this activity for the user. */
     @SerialName("overrideby")
@@ -244,27 +244,27 @@ data class MoodleModuleCompletion(
     /** True if module is used in a condition, false otherwise. */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("valueused")
-    val valueUsed: Boolean,
+    val valueUsed: Boolean = false,
 
     /** Whether this activity module has completion enabled. */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("hascompletion")
-    val hasCompletion: Boolean,
+    val hasCompletion: Boolean = false,
 
     /** Whether this activity module instance tracks completion automatically. */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("isautomatic")
-    val isAutomatic: Boolean,
+    val isAutomatic: Boolean = false,
 
     /** Checks whether completion is being tracked for this user. */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("istrackeduser")
-    val isTrackedUser: Boolean,
+    val isTrackedUser: Boolean = false,
 
     /** Whether this activity is visible to user. */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("uservisible")
-    val userVisible: Boolean,
+    val userVisible: Boolean = false,
 
     /** An array of completion details containing the description and status. */
     @SerialName("details")
@@ -280,7 +280,7 @@ data class MoodleModuleCompletion(
 data class MoodleModuleCompletionRule(
     /** rulename */
     @SerialName("rulename")
-    val ruleName: String,
+    val ruleName: String = "",
 
     @Serializable(with = MoodleModuleCompletionRuleValueFoldedSerializer::class)
     @SerialName("rulevalue")
@@ -291,11 +291,11 @@ data class MoodleModuleCompletionRule(
 data class MoodleModuleCompletionRuleValue(
     /** status */
     @SerialName("status")
-    val status: Int,
+    val status: Int = 0,
 
     /** description */
     @SerialName("description")
-    val description: String
+    val description: String = ""
 )
 
 @Serializable
@@ -389,40 +389,40 @@ data class MoodleModuleContent(
 data class MoodleContentTag(
     /** Tag id. */
     @SerialName("id")
-    val id: Int,
+    val id: Int = 0,
 
     /** Tag name. */
     @SerialName("name")
-    val name: String,
+    val name: String = "",
 
     /** The raw, unnormalised name for the tag as entered by users. */
     @SerialName("rawname")
-    val rawName: String,
+    val rawName: String = "",
 
     /** Whether this tag is standard. */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("isstandard")
-    val isStandard: Boolean,
+    val isStandard: Boolean = false,
 
     /** Tag collection id. */
     @SerialName("tagcollid")
-    val tagCollId: Int,
+    val tagCollId: Int = 0,
 
     /** Tag instance id. */
     @SerialName("taginstanceid")
-    val tagInstanceId: Int,
+    val tagInstanceId: Int = 0,
 
     /** Context the tag instance belongs to. */
     @SerialName("taginstancecontextid")
-    val tagInstanceContextId: Int,
+    val tagInstanceContextId: Int = 0,
 
     /** Id of the record tagged. */
     @SerialName("itemid")
-    val itemId: Int,
+    val itemId: Int = 0,
 
     /** Tag ordering. */
     @SerialName("ordering")
-    val ordering: Int,
+    val ordering: Int = 0,
 
     /** Whether the tag is flagged as inappropriate. */
     @SerialName("flag")

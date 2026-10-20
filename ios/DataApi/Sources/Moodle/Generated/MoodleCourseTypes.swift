@@ -467,14 +467,14 @@ public struct MoodleModuleCompletion: Codable, Hashable, Sendable {
     public var isOverallComplete: Bool?
 
     public init(
-        state: Int,
-        timeCompleted: Int64,
+        state: Int = 0,
+        timeCompleted: Int64 = 0,
         overrideBy: Int = 0,
-        valueUsed: Bool,
-        hasCompletion: Bool,
-        isAutomatic: Bool,
-        isTrackedUser: Bool,
-        userVisible: Bool,
+        valueUsed: Bool = false,
+        hasCompletion: Bool = false,
+        isAutomatic: Bool = false,
+        isTrackedUser: Bool = false,
+        userVisible: Bool = false,
         details: [MoodleModuleCompletionRule] = [],
         isOverallComplete: Bool? = nil
     ) {
@@ -505,14 +505,14 @@ public struct MoodleModuleCompletion: Codable, Hashable, Sendable {
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.state = try container.decodeRequired(Int.self, forKey: .state)
-        self.timeCompleted = try container.decodeRequired(Int64.self, forKey: .timeCompleted)
+        self.state = container.decodeLenient(Int.self, forKey: .state) ?? 0
+        self.timeCompleted = container.decodeLenient(Int64.self, forKey: .timeCompleted) ?? 0
         self.overrideBy = container.decodeLenient(Int.self, forKey: .overrideBy) ?? 0
-        self.valueUsed = try container.decodeRequired(Bool.self, forKey: .valueUsed)
-        self.hasCompletion = try container.decodeRequired(Bool.self, forKey: .hasCompletion)
-        self.isAutomatic = try container.decodeRequired(Bool.self, forKey: .isAutomatic)
-        self.isTrackedUser = try container.decodeRequired(Bool.self, forKey: .isTrackedUser)
-        self.userVisible = try container.decodeRequired(Bool.self, forKey: .userVisible)
+        self.valueUsed = container.decodeLenient(Bool.self, forKey: .valueUsed) ?? false
+        self.hasCompletion = container.decodeLenient(Bool.self, forKey: .hasCompletion) ?? false
+        self.isAutomatic = container.decodeLenient(Bool.self, forKey: .isAutomatic) ?? false
+        self.isTrackedUser = container.decodeLenient(Bool.self, forKey: .isTrackedUser) ?? false
+        self.userVisible = container.decodeLenient(Bool.self, forKey: .userVisible) ?? false
         self.details = container.decodeLenient([MoodleModuleCompletionRule].self, forKey: .details) ?? []
         self.isOverallComplete = container.decodeLenient(Bool.self, forKey: .isOverallComplete)
     }
@@ -538,7 +538,7 @@ public struct MoodleModuleCompletionRule: Codable, Hashable, Sendable {
     public var ruleValue: MoodleModuleCompletionRuleValue
 
     public init(
-        ruleName: String,
+        ruleName: String = "",
         ruleValue: MoodleModuleCompletionRuleValue
     ) {
         self.ruleName = ruleName
@@ -552,7 +552,7 @@ public struct MoodleModuleCompletionRule: Codable, Hashable, Sendable {
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.ruleName = try container.decodeRequired(String.self, forKey: .ruleName)
+        self.ruleName = container.decodeLenient(String.self, forKey: .ruleName) ?? ""
         self.ruleValue = try container.required(container.decodeFolded(MoodleModuleCompletionRuleValue.self, forKey: .ruleValue), forKey: .ruleValue)
     }
 
@@ -570,8 +570,8 @@ public struct MoodleModuleCompletionRuleValue: Codable, Hashable, Sendable {
     public var description: String
 
     public init(
-        status: Int,
-        description: String
+        status: Int = 0,
+        description: String = ""
     ) {
         self.status = status
         self.description = description
@@ -584,8 +584,8 @@ public struct MoodleModuleCompletionRuleValue: Codable, Hashable, Sendable {
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.status = try container.decodeRequired(Int.self, forKey: .status)
-        self.description = try container.decodeRequired(String.self, forKey: .description)
+        self.status = container.decodeLenient(Int.self, forKey: .status) ?? 0
+        self.description = container.decodeLenient(String.self, forKey: .description) ?? ""
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -796,15 +796,15 @@ public struct MoodleContentTag: Codable, Hashable, Sendable {
     public var viewUrl: String?
 
     public init(
-        id: Int,
-        name: String,
-        rawName: String,
-        isStandard: Bool,
-        tagCollId: Int,
-        tagInstanceId: Int,
-        tagInstanceContextId: Int,
-        itemId: Int,
-        ordering: Int,
+        id: Int = 0,
+        name: String = "",
+        rawName: String = "",
+        isStandard: Bool = false,
+        tagCollId: Int = 0,
+        tagInstanceId: Int = 0,
+        tagInstanceContextId: Int = 0,
+        itemId: Int = 0,
+        ordering: Int = 0,
         flag: Int = 0,
         viewUrl: String? = nil
     ) {
@@ -837,15 +837,15 @@ public struct MoodleContentTag: Codable, Hashable, Sendable {
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.id = try container.decodeRequired(Int.self, forKey: .id)
-        self.name = try container.decodeRequired(String.self, forKey: .name)
-        self.rawName = try container.decodeRequired(String.self, forKey: .rawName)
-        self.isStandard = try container.decodeRequired(Bool.self, forKey: .isStandard)
-        self.tagCollId = try container.decodeRequired(Int.self, forKey: .tagCollId)
-        self.tagInstanceId = try container.decodeRequired(Int.self, forKey: .tagInstanceId)
-        self.tagInstanceContextId = try container.decodeRequired(Int.self, forKey: .tagInstanceContextId)
-        self.itemId = try container.decodeRequired(Int.self, forKey: .itemId)
-        self.ordering = try container.decodeRequired(Int.self, forKey: .ordering)
+        self.id = container.decodeLenient(Int.self, forKey: .id) ?? 0
+        self.name = container.decodeLenient(String.self, forKey: .name) ?? ""
+        self.rawName = container.decodeLenient(String.self, forKey: .rawName) ?? ""
+        self.isStandard = container.decodeLenient(Bool.self, forKey: .isStandard) ?? false
+        self.tagCollId = container.decodeLenient(Int.self, forKey: .tagCollId) ?? 0
+        self.tagInstanceId = container.decodeLenient(Int.self, forKey: .tagInstanceId) ?? 0
+        self.tagInstanceContextId = container.decodeLenient(Int.self, forKey: .tagInstanceContextId) ?? 0
+        self.itemId = container.decodeLenient(Int.self, forKey: .itemId) ?? 0
+        self.ordering = container.decodeLenient(Int.self, forKey: .ordering) ?? 0
         self.flag = container.decodeLenient(Int.self, forKey: .flag) ?? 0
         self.viewUrl = container.decodeLenient(String.self, forKey: .viewUrl)
     }

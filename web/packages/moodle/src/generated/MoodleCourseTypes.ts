@@ -312,14 +312,14 @@ export function decodeMoodleModuleCompletion(json: unknown): MoodleModuleComplet
   const object = asJsonObject(json);
   if (object === undefined) return undefined;
   return {
-    state: required(decodeInteger(object["state"]), "MoodleModuleCompletion.state"),
-    timeCompleted: required(decodeInteger(object["timecompleted"]), "MoodleModuleCompletion.timeCompleted"),
+    state: decodeInteger(object["state"]) ?? 0,
+    timeCompleted: decodeInteger(object["timecompleted"]) ?? 0,
     overrideBy: decodeInteger(object["overrideby"]) ?? 0,
-    valueUsed: required(decodeBoolean(object["valueused"]), "MoodleModuleCompletion.valueUsed"),
-    hasCompletion: required(decodeBoolean(object["hascompletion"]), "MoodleModuleCompletion.hasCompletion"),
-    isAutomatic: required(decodeBoolean(object["isautomatic"]), "MoodleModuleCompletion.isAutomatic"),
-    isTrackedUser: required(decodeBoolean(object["istrackeduser"]), "MoodleModuleCompletion.isTrackedUser"),
-    userVisible: required(decodeBoolean(object["uservisible"]), "MoodleModuleCompletion.userVisible"),
+    valueUsed: decodeBoolean(object["valueused"]) ?? false,
+    hasCompletion: decodeBoolean(object["hascompletion"]) ?? false,
+    isAutomatic: decodeBoolean(object["isautomatic"]) ?? false,
+    isTrackedUser: decodeBoolean(object["istrackeduser"]) ?? false,
+    userVisible: decodeBoolean(object["uservisible"]) ?? false,
     details: decodeList(object["details"], decodeMoodleModuleCompletionRule) ?? [],
     isOverallComplete: decodeBoolean(object["isoverallcomplete"]) ?? null,
   };
@@ -351,7 +351,7 @@ export function decodeMoodleModuleCompletionRule(json: unknown): MoodleModuleCom
   const object = asJsonObject(json);
   if (object === undefined) return undefined;
   return {
-    ruleName: required(decodeString(object["rulename"]), "MoodleModuleCompletionRule.ruleName"),
+    ruleName: decodeString(object["rulename"]) ?? "",
     ruleValue: required(decodeFolded(object["rulevalue"], decodeMoodleModuleCompletionRuleValue), "MoodleModuleCompletionRule.ruleValue"),
   };
 }
@@ -375,8 +375,8 @@ export function decodeMoodleModuleCompletionRuleValue(json: unknown): MoodleModu
   const object = asJsonObject(json);
   if (object === undefined) return undefined;
   return {
-    status: required(decodeInteger(object["status"]), "MoodleModuleCompletionRuleValue.status"),
-    description: required(decodeString(object["description"]), "MoodleModuleCompletionRuleValue.description"),
+    status: decodeInteger(object["status"]) ?? 0,
+    description: decodeString(object["description"]) ?? "",
   };
 }
 
@@ -529,15 +529,15 @@ export function decodeMoodleContentTag(json: unknown): MoodleContentTag | undefi
   const object = asJsonObject(json);
   if (object === undefined) return undefined;
   return {
-    id: required(decodeInteger(object["id"]), "MoodleContentTag.id"),
-    name: required(decodeString(object["name"]), "MoodleContentTag.name"),
-    rawName: required(decodeString(object["rawname"]), "MoodleContentTag.rawName"),
-    isStandard: required(decodeBoolean(object["isstandard"]), "MoodleContentTag.isStandard"),
-    tagCollId: required(decodeInteger(object["tagcollid"]), "MoodleContentTag.tagCollId"),
-    tagInstanceId: required(decodeInteger(object["taginstanceid"]), "MoodleContentTag.tagInstanceId"),
-    tagInstanceContextId: required(decodeInteger(object["taginstancecontextid"]), "MoodleContentTag.tagInstanceContextId"),
-    itemId: required(decodeInteger(object["itemid"]), "MoodleContentTag.itemId"),
-    ordering: required(decodeInteger(object["ordering"]), "MoodleContentTag.ordering"),
+    id: decodeInteger(object["id"]) ?? 0,
+    name: decodeString(object["name"]) ?? "",
+    rawName: decodeString(object["rawname"]) ?? "",
+    isStandard: decodeBoolean(object["isstandard"]) ?? false,
+    tagCollId: decodeInteger(object["tagcollid"]) ?? 0,
+    tagInstanceId: decodeInteger(object["taginstanceid"]) ?? 0,
+    tagInstanceContextId: decodeInteger(object["taginstancecontextid"]) ?? 0,
+    itemId: decodeInteger(object["itemid"]) ?? 0,
+    ordering: decodeInteger(object["ordering"]) ?? 0,
     flag: decodeInteger(object["flag"]) ?? 0,
     viewUrl: decodeString(object["viewurl"]) ?? null,
   };

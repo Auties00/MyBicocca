@@ -125,21 +125,21 @@ public struct MoodleForumPost: Codable, Hashable, Sendable {
     public var html: MoodlePostHtml?
 
     public init(
-        id: Int,
-        subject: String,
-        replySubject: String,
-        message: String,
+        id: Int = 0,
+        subject: String = "",
+        replySubject: String = "",
+        message: String = "",
         messageFormat: Int = 0,
         author: MoodlePostAuthor,
-        discussionId: Int,
-        hasParent: Bool,
+        discussionId: Int = 0,
+        hasParent: Bool = false,
         parentId: Int? = nil,
         timeCreated: Int64 = 0,
         timeModified: Int64 = 0,
         unread: Bool? = nil,
-        isDeleted: Bool,
-        isPrivateReply: Bool,
-        hasWordCount: Bool,
+        isDeleted: Bool = false,
+        isPrivateReply: Bool = false,
+        hasWordCount: Bool = false,
         wordCount: Int? = nil,
         charCount: Int? = nil,
         capabilities: MoodlePostCapabilities,
@@ -202,21 +202,21 @@ public struct MoodleForumPost: Codable, Hashable, Sendable {
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.id = try container.decodeRequired(Int.self, forKey: .id)
-        self.subject = try container.decodeRequired(String.self, forKey: .subject)
-        self.replySubject = try container.decodeRequired(String.self, forKey: .replySubject)
-        self.message = try container.decodeRequired(String.self, forKey: .message)
+        self.id = container.decodeLenient(Int.self, forKey: .id) ?? 0
+        self.subject = container.decodeLenient(String.self, forKey: .subject) ?? ""
+        self.replySubject = container.decodeLenient(String.self, forKey: .replySubject) ?? ""
+        self.message = container.decodeLenient(String.self, forKey: .message) ?? ""
         self.messageFormat = container.decodeLenient(Int.self, forKey: .messageFormat) ?? 0
         self.author = try container.required(container.decodeFolded(MoodlePostAuthor.self, forKey: .author), forKey: .author)
-        self.discussionId = try container.decodeRequired(Int.self, forKey: .discussionId)
-        self.hasParent = try container.decodeRequired(Bool.self, forKey: .hasParent)
+        self.discussionId = container.decodeLenient(Int.self, forKey: .discussionId) ?? 0
+        self.hasParent = container.decodeLenient(Bool.self, forKey: .hasParent) ?? false
         self.parentId = container.decodeLenient(Int.self, forKey: .parentId)
         self.timeCreated = container.decodeLenient(Int64.self, forKey: .timeCreated) ?? 0
         self.timeModified = container.decodeLenient(Int64.self, forKey: .timeModified) ?? 0
         self.unread = container.decodeLenient(Bool.self, forKey: .unread)
-        self.isDeleted = try container.decodeRequired(Bool.self, forKey: .isDeleted)
-        self.isPrivateReply = try container.decodeRequired(Bool.self, forKey: .isPrivateReply)
-        self.hasWordCount = try container.decodeRequired(Bool.self, forKey: .hasWordCount)
+        self.isDeleted = container.decodeLenient(Bool.self, forKey: .isDeleted) ?? false
+        self.isPrivateReply = container.decodeLenient(Bool.self, forKey: .isPrivateReply) ?? false
+        self.hasWordCount = container.decodeLenient(Bool.self, forKey: .hasWordCount) ?? false
         self.wordCount = container.decodeLenient(Int.self, forKey: .wordCount)
         self.charCount = container.decodeLenient(Int.self, forKey: .charCount)
         self.capabilities = try container.required(container.decodeFolded(MoodlePostCapabilities.self, forKey: .capabilities), forKey: .capabilities)
@@ -315,8 +315,8 @@ public struct MoodlePostAuthorGroup: Codable, Hashable, Sendable {
     public var urls: MoodlePostAuthorGroupUrls
 
     public init(
-        id: Int,
-        name: String,
+        id: Int = 0,
+        name: String = "",
         urls: MoodlePostAuthorGroupUrls
     ) {
         self.id = id
@@ -332,8 +332,8 @@ public struct MoodlePostAuthorGroup: Codable, Hashable, Sendable {
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.id = try container.decodeRequired(Int.self, forKey: .id)
-        self.name = try container.decodeRequired(String.self, forKey: .name)
+        self.id = container.decodeLenient(Int.self, forKey: .id) ?? 0
+        self.name = container.decodeLenient(String.self, forKey: .name) ?? ""
         self.urls = try container.required(container.decodeFolded(MoodlePostAuthorGroupUrls.self, forKey: .urls), forKey: .urls)
     }
 
@@ -621,25 +621,25 @@ public struct MoodlePostAttachment: Codable, Hashable, Sendable {
     public var html: MoodlePostAttachmentHtml
 
     public init(
-        contextId: Int,
-        component: String,
-        fileArea: String,
-        itemId: Int,
-        filePath: String,
-        fileName: String,
-        isDirectory: Bool,
-        isImage: Bool,
-        timeModified: Int64,
-        timeCreated: Int64,
-        fileSize: Int64,
-        author: String,
-        license: String,
-        fileNameShort: String,
-        fileSizeFormatted: String,
-        icon: String,
-        timeCreatedFormatted: String,
-        timeModifiedFormatted: String,
-        url: String,
+        contextId: Int = 0,
+        component: String = "",
+        fileArea: String = "",
+        itemId: Int = 0,
+        filePath: String = "",
+        fileName: String = "",
+        isDirectory: Bool = false,
+        isImage: Bool = false,
+        timeModified: Int64 = 0,
+        timeCreated: Int64 = 0,
+        fileSize: Int64 = 0,
+        author: String = "",
+        license: String = "",
+        fileNameShort: String = "",
+        fileSizeFormatted: String = "",
+        icon: String = "",
+        timeCreatedFormatted: String = "",
+        timeModifiedFormatted: String = "",
+        url: String = "",
         urls: MoodlePostAttachmentUrls,
         html: MoodlePostAttachmentHtml
     ) {
@@ -692,25 +692,25 @@ public struct MoodlePostAttachment: Codable, Hashable, Sendable {
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.contextId = try container.decodeRequired(Int.self, forKey: .contextId)
-        self.component = try container.decodeRequired(String.self, forKey: .component)
-        self.fileArea = try container.decodeRequired(String.self, forKey: .fileArea)
-        self.itemId = try container.decodeRequired(Int.self, forKey: .itemId)
-        self.filePath = try container.decodeRequired(String.self, forKey: .filePath)
-        self.fileName = try container.decodeRequired(String.self, forKey: .fileName)
-        self.isDirectory = try container.decodeRequired(Bool.self, forKey: .isDirectory)
-        self.isImage = try container.decodeRequired(Bool.self, forKey: .isImage)
-        self.timeModified = try container.decodeRequired(Int64.self, forKey: .timeModified)
-        self.timeCreated = try container.decodeRequired(Int64.self, forKey: .timeCreated)
-        self.fileSize = try container.decodeRequired(Int64.self, forKey: .fileSize)
-        self.author = try container.decodeRequired(String.self, forKey: .author)
-        self.license = try container.decodeRequired(String.self, forKey: .license)
-        self.fileNameShort = try container.decodeRequired(String.self, forKey: .fileNameShort)
-        self.fileSizeFormatted = try container.decodeRequired(String.self, forKey: .fileSizeFormatted)
-        self.icon = try container.decodeRequired(String.self, forKey: .icon)
-        self.timeCreatedFormatted = try container.decodeRequired(String.self, forKey: .timeCreatedFormatted)
-        self.timeModifiedFormatted = try container.decodeRequired(String.self, forKey: .timeModifiedFormatted)
-        self.url = try container.decodeRequired(String.self, forKey: .url)
+        self.contextId = container.decodeLenient(Int.self, forKey: .contextId) ?? 0
+        self.component = container.decodeLenient(String.self, forKey: .component) ?? ""
+        self.fileArea = container.decodeLenient(String.self, forKey: .fileArea) ?? ""
+        self.itemId = container.decodeLenient(Int.self, forKey: .itemId) ?? 0
+        self.filePath = container.decodeLenient(String.self, forKey: .filePath) ?? ""
+        self.fileName = container.decodeLenient(String.self, forKey: .fileName) ?? ""
+        self.isDirectory = container.decodeLenient(Bool.self, forKey: .isDirectory) ?? false
+        self.isImage = container.decodeLenient(Bool.self, forKey: .isImage) ?? false
+        self.timeModified = container.decodeLenient(Int64.self, forKey: .timeModified) ?? 0
+        self.timeCreated = container.decodeLenient(Int64.self, forKey: .timeCreated) ?? 0
+        self.fileSize = container.decodeLenient(Int64.self, forKey: .fileSize) ?? 0
+        self.author = container.decodeLenient(String.self, forKey: .author) ?? ""
+        self.license = container.decodeLenient(String.self, forKey: .license) ?? ""
+        self.fileNameShort = container.decodeLenient(String.self, forKey: .fileNameShort) ?? ""
+        self.fileSizeFormatted = container.decodeLenient(String.self, forKey: .fileSizeFormatted) ?? ""
+        self.icon = container.decodeLenient(String.self, forKey: .icon) ?? ""
+        self.timeCreatedFormatted = container.decodeLenient(String.self, forKey: .timeCreatedFormatted) ?? ""
+        self.timeModifiedFormatted = container.decodeLenient(String.self, forKey: .timeModifiedFormatted) ?? ""
+        self.url = container.decodeLenient(String.self, forKey: .url) ?? ""
         self.urls = try container.required(container.decodeFolded(MoodlePostAttachmentUrls.self, forKey: .urls), forKey: .urls)
         self.html = try container.required(container.decodeFolded(MoodlePostAttachmentHtml.self, forKey: .html), forKey: .html)
     }
@@ -832,25 +832,25 @@ public struct MoodlePostInlineFile: Codable, Hashable, Sendable {
     public var url: String
 
     public init(
-        contextId: Int,
-        component: String,
-        fileArea: String,
-        itemId: Int,
-        filePath: String,
-        fileName: String,
-        isDirectory: Bool,
-        isImage: Bool,
-        timeModified: Int64,
-        timeCreated: Int64,
-        fileSize: Int64,
-        author: String,
-        license: String,
-        fileNameShort: String,
-        fileSizeFormatted: String,
-        icon: String,
-        timeCreatedFormatted: String,
-        timeModifiedFormatted: String,
-        url: String
+        contextId: Int = 0,
+        component: String = "",
+        fileArea: String = "",
+        itemId: Int = 0,
+        filePath: String = "",
+        fileName: String = "",
+        isDirectory: Bool = false,
+        isImage: Bool = false,
+        timeModified: Int64 = 0,
+        timeCreated: Int64 = 0,
+        fileSize: Int64 = 0,
+        author: String = "",
+        license: String = "",
+        fileNameShort: String = "",
+        fileSizeFormatted: String = "",
+        icon: String = "",
+        timeCreatedFormatted: String = "",
+        timeModifiedFormatted: String = "",
+        url: String = ""
     ) {
         self.contextId = contextId
         self.component = component
@@ -897,25 +897,25 @@ public struct MoodlePostInlineFile: Codable, Hashable, Sendable {
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.contextId = try container.decodeRequired(Int.self, forKey: .contextId)
-        self.component = try container.decodeRequired(String.self, forKey: .component)
-        self.fileArea = try container.decodeRequired(String.self, forKey: .fileArea)
-        self.itemId = try container.decodeRequired(Int.self, forKey: .itemId)
-        self.filePath = try container.decodeRequired(String.self, forKey: .filePath)
-        self.fileName = try container.decodeRequired(String.self, forKey: .fileName)
-        self.isDirectory = try container.decodeRequired(Bool.self, forKey: .isDirectory)
-        self.isImage = try container.decodeRequired(Bool.self, forKey: .isImage)
-        self.timeModified = try container.decodeRequired(Int64.self, forKey: .timeModified)
-        self.timeCreated = try container.decodeRequired(Int64.self, forKey: .timeCreated)
-        self.fileSize = try container.decodeRequired(Int64.self, forKey: .fileSize)
-        self.author = try container.decodeRequired(String.self, forKey: .author)
-        self.license = try container.decodeRequired(String.self, forKey: .license)
-        self.fileNameShort = try container.decodeRequired(String.self, forKey: .fileNameShort)
-        self.fileSizeFormatted = try container.decodeRequired(String.self, forKey: .fileSizeFormatted)
-        self.icon = try container.decodeRequired(String.self, forKey: .icon)
-        self.timeCreatedFormatted = try container.decodeRequired(String.self, forKey: .timeCreatedFormatted)
-        self.timeModifiedFormatted = try container.decodeRequired(String.self, forKey: .timeModifiedFormatted)
-        self.url = try container.decodeRequired(String.self, forKey: .url)
+        self.contextId = container.decodeLenient(Int.self, forKey: .contextId) ?? 0
+        self.component = container.decodeLenient(String.self, forKey: .component) ?? ""
+        self.fileArea = container.decodeLenient(String.self, forKey: .fileArea) ?? ""
+        self.itemId = container.decodeLenient(Int.self, forKey: .itemId) ?? 0
+        self.filePath = container.decodeLenient(String.self, forKey: .filePath) ?? ""
+        self.fileName = container.decodeLenient(String.self, forKey: .fileName) ?? ""
+        self.isDirectory = container.decodeLenient(Bool.self, forKey: .isDirectory) ?? false
+        self.isImage = container.decodeLenient(Bool.self, forKey: .isImage) ?? false
+        self.timeModified = container.decodeLenient(Int64.self, forKey: .timeModified) ?? 0
+        self.timeCreated = container.decodeLenient(Int64.self, forKey: .timeCreated) ?? 0
+        self.fileSize = container.decodeLenient(Int64.self, forKey: .fileSize) ?? 0
+        self.author = container.decodeLenient(String.self, forKey: .author) ?? ""
+        self.license = container.decodeLenient(String.self, forKey: .license) ?? ""
+        self.fileNameShort = container.decodeLenient(String.self, forKey: .fileNameShort) ?? ""
+        self.fileSizeFormatted = container.decodeLenient(String.self, forKey: .fileSizeFormatted) ?? ""
+        self.icon = container.decodeLenient(String.self, forKey: .icon) ?? ""
+        self.timeCreatedFormatted = container.decodeLenient(String.self, forKey: .timeCreatedFormatted) ?? ""
+        self.timeModifiedFormatted = container.decodeLenient(String.self, forKey: .timeModifiedFormatted) ?? ""
+        self.url = container.decodeLenient(String.self, forKey: .url) ?? ""
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -956,11 +956,11 @@ public struct MoodlePostTag: Codable, Hashable, Sendable {
     public var urls: MoodlePostTagUrls
 
     public init(
-        id: Int,
-        tagId: Int,
-        isStandard: Bool,
-        displayName: String,
-        flag: Bool,
+        id: Int = 0,
+        tagId: Int = 0,
+        isStandard: Bool = false,
+        displayName: String = "",
+        flag: Bool = false,
         urls: MoodlePostTagUrls
     ) {
         self.id = id
@@ -982,11 +982,11 @@ public struct MoodlePostTag: Codable, Hashable, Sendable {
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.id = try container.decodeRequired(Int.self, forKey: .id)
-        self.tagId = try container.decodeRequired(Int.self, forKey: .tagId)
-        self.isStandard = try container.decodeRequired(Bool.self, forKey: .isStandard)
-        self.displayName = try container.decodeRequired(String.self, forKey: .displayName)
-        self.flag = try container.decodeRequired(Bool.self, forKey: .flag)
+        self.id = container.decodeLenient(Int.self, forKey: .id) ?? 0
+        self.tagId = container.decodeLenient(Int.self, forKey: .tagId) ?? 0
+        self.isStandard = container.decodeLenient(Bool.self, forKey: .isStandard) ?? false
+        self.displayName = container.decodeLenient(String.self, forKey: .displayName) ?? ""
+        self.flag = container.decodeLenient(Bool.self, forKey: .flag) ?? false
         self.urls = try container.required(container.decodeFolded(MoodlePostTagUrls.self, forKey: .urls), forKey: .urls)
     }
 
@@ -1006,7 +1006,7 @@ public struct MoodlePostTagUrls: Codable, Hashable, Sendable {
     public var view: String
 
     public init(
-        view: String
+        view: String = ""
     ) {
         self.view = view
     }
@@ -1017,7 +1017,7 @@ public struct MoodlePostTagUrls: Codable, Hashable, Sendable {
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.view = try container.decodeRequired(String.self, forKey: .view)
+        self.view = container.decodeLenient(String.self, forKey: .view) ?? ""
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -2136,13 +2136,13 @@ public struct MoodleDiscussionSummary: Codable, Hashable, Sendable {
     public var timed: MoodleDiscussionTiming
 
     public init(
-        id: Int,
-        forumId: Int,
-        pinned: Bool,
-        locked: Bool,
-        isTimeLocked: Bool,
-        name: String,
-        firstPostId: Int,
+        id: Int = 0,
+        forumId: Int = 0,
+        pinned: Bool = false,
+        locked: Bool = false,
+        isTimeLocked: Bool = false,
+        name: String = "",
+        firstPostId: Int = 0,
         group: MoodleDiscussionGroup? = nil,
         times: MoodleDiscussionTimes,
         userState: MoodleDiscussionUserState,
@@ -2183,13 +2183,13 @@ public struct MoodleDiscussionSummary: Codable, Hashable, Sendable {
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.id = try container.decodeRequired(Int.self, forKey: .id)
-        self.forumId = try container.decodeRequired(Int.self, forKey: .forumId)
-        self.pinned = try container.decodeRequired(Bool.self, forKey: .pinned)
-        self.locked = try container.decodeRequired(Bool.self, forKey: .locked)
-        self.isTimeLocked = try container.decodeRequired(Bool.self, forKey: .isTimeLocked)
-        self.name = try container.decodeRequired(String.self, forKey: .name)
-        self.firstPostId = try container.decodeRequired(Int.self, forKey: .firstPostId)
+        self.id = container.decodeLenient(Int.self, forKey: .id) ?? 0
+        self.forumId = container.decodeLenient(Int.self, forKey: .forumId) ?? 0
+        self.pinned = container.decodeLenient(Bool.self, forKey: .pinned) ?? false
+        self.locked = container.decodeLenient(Bool.self, forKey: .locked) ?? false
+        self.isTimeLocked = container.decodeLenient(Bool.self, forKey: .isTimeLocked) ?? false
+        self.name = container.decodeLenient(String.self, forKey: .name) ?? ""
+        self.firstPostId = container.decodeLenient(Int.self, forKey: .firstPostId) ?? 0
         self.group = container.decodeFolded(MoodleDiscussionGroup.self, forKey: .group)
         self.times = try container.required(container.decodeFolded(MoodleDiscussionTimes.self, forKey: .times), forKey: .times)
         self.userState = try container.required(container.decodeFolded(MoodleDiscussionUserState.self, forKey: .userState), forKey: .userState)
@@ -2222,7 +2222,7 @@ public struct MoodleDiscussionGroup: Codable, Hashable, Sendable {
     public var urls: MoodleDiscussionGroupUrls
 
     public init(
-        name: String,
+        name: String = "",
         urls: MoodleDiscussionGroupUrls
     ) {
         self.name = name
@@ -2236,7 +2236,7 @@ public struct MoodleDiscussionGroup: Codable, Hashable, Sendable {
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.name = try container.decodeRequired(String.self, forKey: .name)
+        self.name = container.decodeLenient(String.self, forKey: .name) ?? ""
         self.urls = try container.required(container.decodeFolded(MoodleDiscussionGroupUrls.self, forKey: .urls), forKey: .urls)
     }
 
@@ -2290,10 +2290,10 @@ public struct MoodleDiscussionTimes: Codable, Hashable, Sendable {
     public var locked: Int64
 
     public init(
-        modified: Int64,
-        start: Int64,
-        end: Int64,
-        locked: Int64
+        modified: Int64 = 0,
+        start: Int64 = 0,
+        end: Int64 = 0,
+        locked: Int64 = 0
     ) {
         self.modified = modified
         self.start = start
@@ -2310,10 +2310,10 @@ public struct MoodleDiscussionTimes: Codable, Hashable, Sendable {
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.modified = try container.decodeRequired(Int64.self, forKey: .modified)
-        self.start = try container.decodeRequired(Int64.self, forKey: .start)
-        self.end = try container.decodeRequired(Int64.self, forKey: .end)
-        self.locked = try container.decodeRequired(Int64.self, forKey: .locked)
+        self.modified = container.decodeLenient(Int64.self, forKey: .modified) ?? 0
+        self.start = container.decodeLenient(Int64.self, forKey: .start) ?? 0
+        self.end = container.decodeLenient(Int64.self, forKey: .end) ?? 0
+        self.locked = container.decodeLenient(Int64.self, forKey: .locked) ?? 0
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -2332,8 +2332,8 @@ public struct MoodleDiscussionUserState: Codable, Hashable, Sendable {
     public var favourited: Bool
 
     public init(
-        subscribed: Bool,
-        favourited: Bool
+        subscribed: Bool = false,
+        favourited: Bool = false
     ) {
         self.subscribed = subscribed
         self.favourited = favourited
@@ -2346,8 +2346,8 @@ public struct MoodleDiscussionUserState: Codable, Hashable, Sendable {
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.subscribed = try container.decodeRequired(Bool.self, forKey: .subscribed)
-        self.favourited = try container.decodeRequired(Bool.self, forKey: .favourited)
+        self.subscribed = container.decodeLenient(Bool.self, forKey: .subscribed) ?? false
+        self.favourited = container.decodeLenient(Bool.self, forKey: .favourited) ?? false
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -2372,12 +2372,12 @@ public struct MoodleDiscussionCapabilities: Codable, Hashable, Sendable {
     public var favourite: Bool
 
     public init(
-        subscribe: Bool,
-        move: Bool,
-        pin: Bool,
-        post: Bool,
-        manage: Bool,
-        favourite: Bool
+        subscribe: Bool = false,
+        move: Bool = false,
+        pin: Bool = false,
+        post: Bool = false,
+        manage: Bool = false,
+        favourite: Bool = false
     ) {
         self.subscribe = subscribe
         self.move = move
@@ -2398,12 +2398,12 @@ public struct MoodleDiscussionCapabilities: Codable, Hashable, Sendable {
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.subscribe = try container.decodeRequired(Bool.self, forKey: .subscribe)
-        self.move = try container.decodeRequired(Bool.self, forKey: .move)
-        self.pin = try container.decodeRequired(Bool.self, forKey: .pin)
-        self.post = try container.decodeRequired(Bool.self, forKey: .post)
-        self.manage = try container.decodeRequired(Bool.self, forKey: .manage)
-        self.favourite = try container.decodeRequired(Bool.self, forKey: .favourite)
+        self.subscribe = container.decodeLenient(Bool.self, forKey: .subscribe) ?? false
+        self.move = container.decodeLenient(Bool.self, forKey: .move) ?? false
+        self.pin = container.decodeLenient(Bool.self, forKey: .pin) ?? false
+        self.post = container.decodeLenient(Bool.self, forKey: .post) ?? false
+        self.manage = container.decodeLenient(Bool.self, forKey: .manage) ?? false
+        self.favourite = container.decodeLenient(Bool.self, forKey: .favourite) ?? false
     }
 
     public func encode(to encoder: Encoder) throws {
@@ -2432,11 +2432,11 @@ public struct MoodleDiscussionUrls: Codable, Hashable, Sendable {
     public var pin: String?
 
     public init(
-        view: String,
+        view: String = "",
         viewLatest: String? = nil,
         viewFirstUnread: String? = nil,
-        markAsRead: String,
-        subscribe: String,
+        markAsRead: String = "",
+        subscribe: String = "",
         pin: String? = nil
     ) {
         self.view = view
@@ -2458,11 +2458,11 @@ public struct MoodleDiscussionUrls: Codable, Hashable, Sendable {
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.view = try container.decodeRequired(String.self, forKey: .view)
+        self.view = container.decodeLenient(String.self, forKey: .view) ?? ""
         self.viewLatest = container.decodeLenient(String.self, forKey: .viewLatest)
         self.viewFirstUnread = container.decodeLenient(String.self, forKey: .viewFirstUnread)
-        self.markAsRead = try container.decodeRequired(String.self, forKey: .markAsRead)
-        self.subscribe = try container.decodeRequired(String.self, forKey: .subscribe)
+        self.markAsRead = container.decodeLenient(String.self, forKey: .markAsRead) ?? ""
+        self.subscribe = container.decodeLenient(String.self, forKey: .subscribe) ?? ""
         self.pin = container.decodeLenient(String.self, forKey: .pin)
     }
 

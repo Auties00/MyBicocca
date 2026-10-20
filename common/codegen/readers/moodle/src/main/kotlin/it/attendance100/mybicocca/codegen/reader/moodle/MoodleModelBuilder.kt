@@ -35,9 +35,9 @@ import kotlinx.serialization.json.JsonPrimitive
  *   Moodle repeats across functions, are one record, named by `types.json` or after the key
  *   holding it (`discussions` holds `Discussion`s).
  * - Moodle cleans responses against these descriptions, so required values are present and
- *   optional ones may be missing, and optional values are nullable. Values allow null unless
- *   they say otherwise, which nearly none do, so a required value allowing null is not
- *   nullable but defaults to its zero (`0`, `""`, `false`), as Moodle means by "not set".
+ *   optional ones may be missing, and optional values are nullable. A required value isn't
+ *   nullable but defaults to its zero (`0`, `""`, `false`), which Moodle means by "not set":
+ *   values allow null unless they say otherwise, and nearly none do.
  * - PHP writes an empty object as `[]`, so object fields accept arrays of objects too
  *   ([Codec.FoldedObject]).
  */
@@ -178,7 +178,7 @@ internal class MoodleModelBuilder(
             is Description.Object ->
                 if (description.presence == Presence.REQUIRED && !description.nullable) false to null else true to DefaultValue.Null
             is Description.Value -> when (description.presence) {
-                Presence.REQUIRED -> if (description.nullable) false to DefaultValue.Zero else false to null
+                Presence.REQUIRED -> false to DefaultValue.Zero
                 Presence.OPTIONAL -> true to DefaultValue.Null
                 Presence.DEFAULT -> literal((type as TypeRef.Primitive).kind, description)?.let { false to it } ?: (true to DefaultValue.Null)
             }
