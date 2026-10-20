@@ -473,6 +473,7 @@ data class Esse3InvoiceInsert(
     val studentId: Long = 0L,
 
     /** Indica se escludere lo studente dal ricalcolo tasse. */
+    @Serializable(with = Esse3BooleanSerializer::class)
     @SerialName("escludiDaRicalcolo")
     val excludeFromRecalculation: Boolean? = null,
 
@@ -1138,6 +1139,7 @@ data class Esse3CartItem(
     val paymentChannelId: String? = null,
 
     /** Indica se l'item ha cambiato stato con rispetto alla ultima chiamata fatta. */
+    @Serializable(with = Esse3BooleanSerializer::class)
     @SerialName("statusChanged")
     val statusChanged: Boolean? = null
 )

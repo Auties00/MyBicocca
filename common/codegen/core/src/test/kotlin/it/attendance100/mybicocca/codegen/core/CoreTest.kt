@@ -1,12 +1,14 @@
 package it.attendance100.mybicocca.codegen.core
 
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Path
 import kotlin.io.path.createDirectories
 import kotlin.io.path.exists
 import kotlin.io.path.readText
 import kotlin.io.path.writeText
+import kotlin.test.assertContains
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
@@ -55,5 +57,12 @@ class OutputSyncTest {
         assertFalse(dir.resolve("pkg/Stale.kt").exists())
         assertTrue(dir.resolve("pkg/HandWritten.kt").exists())
         assertTrue(OutputSync.plan(dir, files).isUpToDate)
+    }
+
+    @Test
+    fun `refuses to replace a hand-written file`(@TempDir dir: Path) {
+        dir.resolve("Api.kt").writeText("class Api\n")
+        val error = assertThrows<IllegalArgumentException> { OutputSync.plan(dir, listOf(generated("Api.kt", "class Api"))) }
+        assertContains(error.message.orEmpty(), "hand-written")
     }
 }

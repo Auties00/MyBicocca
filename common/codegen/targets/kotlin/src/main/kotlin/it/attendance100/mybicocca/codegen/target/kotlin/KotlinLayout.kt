@@ -18,6 +18,7 @@ import it.attendance100.mybicocca.codegen.model.TypeRef
  * | Facade                          | `…esse3.api.Esse3Api`                  |
  * | Servers, if any                 | `…esse3.api.Esse3Server` (enum)        |
  * | Auth schemes, if any            | `…esse3.dto.Esse3AuthTypes.kt`         |
+ * | Serializers, if any             | `…esse3.dto.Esse3Serializers.kt`       |
  *
  * The runtime the API provides by hand:
  * - `…api.Esse3AbstractApi`: base class of every module, with the `execute*` request helpers.
@@ -69,6 +70,7 @@ internal class KotlinLayout(private val spec: ApiSpec, packageName: String) {
             type.name
         }
         is TypeRef.ListOf -> "List<${render(type.element, file)}>"
+        is TypeRef.MapOf -> "Map<${render(type.key, file)}, ${render(type.value, file)}>"
         is TypeRef.Primitive -> when (type.kind) {
             PrimitiveKind.STRING -> "String"
             PrimitiveKind.INT32 -> "Int"

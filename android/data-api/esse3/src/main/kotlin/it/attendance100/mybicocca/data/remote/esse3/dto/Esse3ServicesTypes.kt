@@ -295,6 +295,7 @@ data class Esse3UserGroup(
     val groupId: Int? = null,
 
     /** flag che indica se il gruppo rappresenta degli utenti tecnici */
+    @Serializable(with = Esse3BooleanSerializer::class)
     @SerialName("utenteTecnicoFlg")
     val technicalUserFlag: Boolean? = null,
 

@@ -27,7 +27,8 @@ class KotlinTarget : CodeTarget {
     override fun generate(spec: ApiSpec, context: TargetContext): List<GeneratedFile> {
         val options = context.options.decodeOptions<Options>()
         val layout = KotlinLayout(spec, options.packageName)
-        val records = RecordEmitter(spec, layout, TemporalSerializers(options.temporalSerializers))
+        val serializers = KotlinSerializers(spec, layout, TemporalSerializers(options.temporalSerializers))
+        val records = RecordEmitter(spec, layout, serializers)
         val services = ServiceEmitter(spec, layout)
 
         return buildList {
@@ -44,6 +45,9 @@ class KotlinTarget : CodeTarget {
             }
             if (spec.authSchemes.isNotEmpty()) {
                 add(file(layout.dtoPackage, layout.authFileName) { AuthEmitter(spec, layout).emit(it) })
+            }
+            if (serializers.isNeeded) {
+                add(file(layout.dtoPackage, serializers.fileName) { serializers.emit(it) })
             }
             if (spec.servers.isNotEmpty()) {
                 add(file(layout.apiPackage, "${layout.server.substringAfterLast('.')}.kt") { ServerEmitter(spec, layout).emit(it) })

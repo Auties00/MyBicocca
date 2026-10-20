@@ -16,7 +16,8 @@ import kotlinx.serialization.json.JsonObject
 
 class DemoSearchApi(
     client: HttpClient,
-    json: Json
+    json: Json,
+    private val tenant: String
 ) : DemoAbstractApi(client, json, "") {
 
     /**
@@ -33,6 +34,7 @@ class DemoSearchApi(
             parameter("q", query)
             parameter("page", page)
             header("x-client", "sdk")
+            header("X-TENANT", tenant)
             header("X-TIMEZONE", timeZone)
             auth?.headers?.forEach { (name, value) -> header(name, value) }
         }
@@ -47,6 +49,7 @@ class DemoSearchApi(
         return executeJsonPost<JsonElement>("/touch", emptySet(), server = DemoServer.Main) {
             contentType(ContentType.Application.Json)
             setBody(JsonObject(emptyMap()))
+            header("X-TENANT", tenant)
             auth.headers.forEach { (name, value) -> header(name, value) }
         }
     }

@@ -8,6 +8,7 @@ import it.attendance100.mybicocca.codegen.model.DefaultValue
 import it.attendance100.mybicocca.codegen.model.EnumType
 import it.attendance100.mybicocca.codegen.model.Operation
 import it.attendance100.mybicocca.codegen.model.Parameter
+import it.attendance100.mybicocca.codegen.model.ParameterEncoding
 import it.attendance100.mybicocca.codegen.model.ParameterLocation
 import it.attendance100.mybicocca.codegen.model.PrimitiveKind
 import it.attendance100.mybicocca.codegen.model.RequestBody
@@ -28,7 +29,10 @@ import it.attendance100.mybicocca.codegen.model.TypeRef
  * `roles` is passed only by APIs whose operations declare roles. When the spec uses them, the
  * helpers also take the named arguments `server` (a value of the API's `Server` enum) and
  * `envelope` (the keys the response value is nested in). The trailing block configures the
- * Ktor request: parameters, headers and body.
+ * Ktor request: parameters, headers, cookies and body. JSON-encoded parameters are written
+ * with the module's `json`.
+ *
+ * The API parameters a module uses are constructor parameters, passed by the facade.
  */
 internal class ServiceEmitter(private val spec: ApiSpec, private val layout: KotlinLayout) {
 
@@ -36,11 +40,12 @@ internal class ServiceEmitter(private val spec: ApiSpec, private val layout: Kot
         file.import("io.ktor.client.HttpClient")
         file.import("kotlinx.serialization.json.Json")
         file.import(layout.abstractApi)
+        val constructor = listOf("client: HttpClient", "json: Json") +
+            spec.parametersOf(module).map { "private val ${KotlinSyntax.identifier(it.name)}: ${layout.render(it.type, file)}" }
         file.body.apply {
             line("class ${layout.serviceName(module)}(")
             indent {
-                line("client: HttpClient,")
-                line("json: Json")
+                constructor.forEachIndexed { index, parameter -> line(parameter + if (index < constructor.lastIndex) "," else "") }
             }
             line(") : ${layout.abstractApi.substringAfterLast('.')}(client, json, ${KotlinSyntax.string(module.basePath)}) {")
             line()
@@ -52,6 +57,8 @@ internal class ServiceEmitter(private val spec: ApiSpec, private val layout: Kot
     }
 
     private fun CodeWriter.function(operation: Operation, file: KotlinFile) {
+        requireReifiable((operation.body as? RequestBody.Json)?.type, "${operation.name} body")
+        requireReifiable((operation.response as? ResponseBody.Json)?.type, "${operation.name} response")
         doc(operation)
         val parameters = signatureParameters(operation, file)
         val returnType = returnType(operation.response, file)
@@ -82,7 +89,7 @@ internal class ServiceEmitter(private val spec: ApiSpec, private val layout: Kot
             add(
                 when {
                     parameter.required -> "$name: $type"
-                    default != null -> "$name: $type = ${literal(parameter.type, default, file)}"
+                    default != null && parameter.encoding == ParameterEncoding.PLAIN -> "$name: $type = ${literal(parameter.type, default, file)}"
                     else -> "$name: $type? = null"
                 }
             )
@@ -91,6 +98,23 @@ internal class ServiceEmitter(private val spec: ApiSpec, private val layout: Kot
             val type = layout.authType(auth, file)
             add(if (auth.required) "$AUTH: $type" else "$AUTH: $type? = null")
         }
+    }
+
+    /**
+     * Bodies and responses are converted by their reified type, which can't name the
+     * serializer a date needs, so a date may only appear inside a record there.
+     */
+    private fun requireReifiable(type: TypeRef?, where: String) {
+        val hasDate = when (type) {
+            is TypeRef.Primitive -> type.kind.isTemporal
+            is TypeRef.ListOf -> return requireReifiable(type.element, where)
+            is TypeRef.MapOf -> {
+                requireReifiable(type.key, where)
+                return requireReifiable(type.value, where)
+            }
+            is TypeRef.Named, null -> false
+        }
+        require(!hasDate) { "'$where': the kotlin target can't convert a date or time outside a record" }
     }
 
     private fun returnType(response: ResponseBody, file: KotlinFile): String? = when (response) {
@@ -105,6 +129,7 @@ internal class ServiceEmitter(private val spec: ApiSpec, private val layout: Kot
         val target = listOfNotNull(endpoint(operation), roles) + targetArguments(operation, file)
         val hasBlock = operation.body != null ||
             operation.parameters.any { it.location != ParameterLocation.PATH } ||
+            spec.parameters.any { it.location != ParameterLocation.PATH } ||
             operation.headers.isNotEmpty() ||
             operation.auth != null
 
@@ -155,24 +180,30 @@ internal class ServiceEmitter(private val spec: ApiSpec, private val layout: Kot
             file.import("io.ktor.client.request.forms.FormDataContent")
             file.import("io.ktor.http.parameters")
             block("setBody(FormDataContent(parameters {", "}))") {
-                for (parameter in form) send(parameter, "append") { formValue(parameter, it) }
+                for (parameter in form) send(parameter, "append", file) { formValue(parameter, it) }
             }
         }
 
-        for (parameter in operation.queryParameters) {
+        val apiParameters = spec.parameters.groupBy { it.location }
+        val query = apiParameters[ParameterLocation.QUERY].orEmpty() + operation.queryParameters
+        val headers = apiParameters[ParameterLocation.HEADER].orEmpty() + operation.headerParameters
+        val cookies = apiParameters[ParameterLocation.COOKIE].orEmpty() + operation.cookieParameters
+
+        for (parameter in query) {
             file.import("io.ktor.client.request.parameter")
-            send(parameter, "parameter") { queryValue(parameter, it) }
+            send(parameter, "parameter", file) { queryValue(parameter, it) }
         }
 
-        if (operation.headers.isNotEmpty() || operation.headerParameters.isNotEmpty() || operation.auth != null) {
+        if (operation.headers.isNotEmpty() || headers.isNotEmpty() || operation.auth != null) {
             file.import("io.ktor.client.request.header")
         }
         for ((name, value) in operation.headers) {
-            line("header(${KotlinSyntax.string(name)}, ${KotlinSyntax.string(value)})")
+            line("header(${KotlinSyntax.string(name)}, ${template(value)})")
         }
-        for (parameter in operation.headerParameters) {
-            send(parameter, "header") { queryValue(parameter, it) }
+        for (parameter in headers) {
+            send(parameter, "header", file) { queryValue(parameter, it) }
         }
+        if (cookies.isNotEmpty()) cookieHeader(cookies, file)
         operation.auth?.let { auth ->
             val send = "forEach { (name, value) -> header(name, value) }"
             line(if (auth.required) "$AUTH.headers.$send" else "$AUTH?.headers?.$send")
@@ -186,14 +217,61 @@ internal class ServiceEmitter(private val spec: ApiSpec, private val layout: Kot
         line("contentType(ContentType.Application.Json)")
     }
 
-    /** Sends [parameter] with [function] (`parameter`, `append` or `header`), skipping it when omitted. */
-    private fun CodeWriter.send(parameter: Parameter, function: String, value: (String) -> String) {
+    /**
+     * Sends [parameter] with [function] (`parameter`, `append` or `header`), skipping it when
+     * omitted. [value] writes a plain value; a JSON-encoded one is written by the module's
+     * `json`, falling back to its default's JSON text.
+     */
+    private fun CodeWriter.send(parameter: Parameter, function: String, file: KotlinFile, value: (String) -> String) {
         val name = KotlinSyntax.identifier(parameter.name)
         val wireName = KotlinSyntax.string(parameter.wireName)
+        if (parameter.encoding == ParameterEncoding.JSON) {
+            file.import("kotlinx.serialization.encodeToString")
+            val default = parameter.default
+            when {
+                parameter.required -> line("$function($wireName, json.encodeToString($name))")
+                default != null -> line("$function($wireName, $name?.let { json.encodeToString(it) } ?: ${KotlinSyntax.string(default.value)})")
+                else -> line("$name?.let { $function($wireName, json.encodeToString(it)) }")
+            }
+            return
+        }
         if (parameter.isOmittable) {
             line("$name?.let { $function($wireName, ${value("it")}) }")
         } else {
             line("$function($wireName, ${value(name)})")
+        }
+    }
+
+    /**
+     * Sends [cookies] as one `Cookie` header, percent-encoding their values: Ktor's own cookie
+     * encoding writes spaces as `+`, which servers read literally.
+     */
+    private fun CodeWriter.cookieHeader(cookies: List<Parameter>, file: KotlinFile) {
+        file.import("io.ktor.client.request.header")
+        file.import("io.ktor.http.HttpHeaders")
+        file.import("io.ktor.http.encodeURLParameter")
+        val pairs = cookies.map { parameter ->
+            val name = KotlinSyntax.identifier(parameter.name)
+            val prefix = KotlinSyntax.string("${parameter.wireName}=")
+            val default = parameter.default
+            when (parameter.encoding) {
+                ParameterEncoding.JSON -> {
+                    file.import("kotlinx.serialization.encodeToString")
+                    when {
+                        parameter.required -> "$prefix + json.encodeToString($name).encodeURLParameter()"
+                        default != null -> "$prefix + ($name?.let { json.encodeToString(it) } ?: ${KotlinSyntax.string(default.value)}).encodeURLParameter()"
+                        else -> "$name?.let { $prefix + json.encodeToString(it).encodeURLParameter() }"
+                    }
+                }
+                ParameterEncoding.PLAIN ->
+                    if (parameter.isOmittable) "$name?.let { $prefix + ${formValue(parameter, "it")}.encodeURLParameter() }"
+                    else "$prefix + ${formValue(parameter, name)}.encodeURLParameter()"
+            }
+        }
+        if (pairs.size == 1 && !cookies.single().isOmittable) {
+            line("header(HttpHeaders.Cookie, ${pairs.single()})")
+        } else {
+            line("header(HttpHeaders.Cookie, listOfNotNull(${pairs.joinToString(", ")}).joinToString(\"; \"))")
         }
     }
 
@@ -227,12 +305,20 @@ internal class ServiceEmitter(private val spec: ApiSpec, private val layout: Kot
             PrimitiveKind.FLOAT32 -> "${literal.value}f"
             else -> literal.value
         }
-        is TypeRef.ListOf -> error("Lists can't have a literal default")
+        is TypeRef.ListOf, is TypeRef.MapOf -> error("Collections can't have a literal default")
+    }
+
+    /** A header value as a string template over the API parameters it names. */
+    private fun template(value: String): String {
+        val literals = PLACEHOLDER.split(value).map(KotlinSyntax::stringContent)
+        val placeholders = PLACEHOLDER.findAll(value).map { "\${${KotlinSyntax.identifier(it.groupValues[1])}}" }.toList()
+        return "\"" + literals.zip(placeholders + "").joinToString("") { (literal, placeholder) -> literal + placeholder } + "\""
     }
 
     /** The path as a string template, relative to the module's base path. */
     private fun endpoint(operation: Operation): String {
-        val names = operation.pathParameters.associate { it.wireName to KotlinSyntax.identifier(it.name) }
+        val names = (spec.parameters.filter { it.location == ParameterLocation.PATH } + operation.pathParameters)
+            .associate { it.wireName to KotlinSyntax.identifier(it.name) }
         val template = PLACEHOLDER.split(operation.path).map(KotlinSyntax::stringContent)
             .zip(PLACEHOLDER.findAll(operation.path).map { "\${${names.getValue(it.groupValues[1])}}" }.toList() + "")
             .joinToString("") { (literal, placeholder) -> literal + placeholder }

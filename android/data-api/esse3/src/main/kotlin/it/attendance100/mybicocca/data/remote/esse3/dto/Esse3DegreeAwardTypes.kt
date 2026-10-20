@@ -97,6 +97,7 @@ data class Esse3TeachingDomainCancellation(
     val studentId: Long = 0L,
 
     /** boolean che gestisce il controllo delle scadenze. True il controllo è stato effettuato altrimenti false. */
+    @Serializable(with = Esse3BooleanSerializer::class)
     @SerialName("checkScadenze")
     val deadlinesCheck: Boolean = false,
 

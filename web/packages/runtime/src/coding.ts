@@ -42,12 +42,46 @@ export function decodeNumber(json: unknown): number | undefined {
   return undefined;
 }
 
-/** Booleans, also when sent as `"true"`/`"false"` or `1`/`0`. */
+/** Booleans, also when sent as `"true"`/`"false"`, `1`/`0` or `"1"`/`"0"`. */
 export function decodeBoolean(json: unknown): boolean | undefined {
   if (typeof json === "boolean") return json;
-  if (json === "true" || json === 1) return true;
-  if (json === "false" || json === 0) return false;
+  if (json === "true" || json === 1 || json === "1") return true;
+  if (json === "false" || json === 0 || json === "0") return false;
   return undefined;
+}
+
+/** Strings where blank ones, and any of `alsoNull`, mean no value (`null`). */
+export function decodeBlankAsNull(json: unknown, alsoNull: readonly string[] = []): string | null | undefined {
+  const text = decodeString(json);
+  if (text === undefined) return undefined;
+  return text.trim() === "" || alsoNull.includes(text) ? null : text;
+}
+
+/**
+ * `json` as an object to read fields from, also merging an array of single-key objects into
+ * one, as some servers send objects and maps; `undefined` for anything else.
+ */
+export function foldObjects(json: unknown): Readonly<Record<string, unknown>> | undefined {
+  if (!Array.isArray(json)) return asJsonObject(json);
+  const merged: Record<string, unknown> = {};
+  for (const item of json) Object.assign(merged, asJsonObject(item));
+  return merged;
+}
+
+/** A value decoded by `decode`, also from an array of single-key objects, merged. */
+export function decodeFolded<T>(json: unknown, decode: (json: unknown) => T | undefined): T | undefined {
+  return decode(foldObjects(json));
+}
+
+/** A value decoded by `decode`, also from a JSON document inside a string; blank strings are no value. */
+export function decodeEmbedded<T>(json: unknown, decode: (json: unknown) => T | undefined): T | null | undefined {
+  if (typeof json !== "string") return decode(json);
+  if (json.trim() === "") return null;
+  try {
+    return decode(JSON.parse(json));
+  } catch {
+    return undefined;
+  }
 }
 
 export function decodeJsonObject(json: unknown): JsonObject | undefined {
@@ -80,6 +114,97 @@ export function decodeList<T>(json: unknown, decodeItem: (json: unknown) => T | 
     items.push(decoded);
   }
   return items;
+}
+
+/**
+ * A map with string keys, whose every value decodes; `undefined` otherwise. Also reads PHP's
+ * `[]` for an empty map and an array of single-key objects, merged.
+ */
+export function decodeRecordMap<V>(json: unknown, decodeValue: (json: unknown) => V | undefined): Record<string, V> | undefined {
+  const object = foldObjects(json);
+  if (object === undefined) return undefined;
+  const map: Record<string, V> = {};
+  for (const [key, item] of Object.entries(object)) {
+    const value = decodeValue(item);
+    if (value === undefined) return undefined;
+    map[key] = value;
+  }
+  return map;
+}
+
+/**
+ * A map whose keys aren't strings, such as dates. Keys are compared by their string form, so
+ * `get` finds a key equal to the one stored rather than the same object.
+ */
+export class WireMap<K, V> implements Iterable<[K, V]> {
+  private readonly byText = new Map<string, [K, V]>();
+
+  /** @param keyText The string form of a key, as written on the wire. */
+  constructor(
+    readonly keyText: (key: K) => string,
+    entries: Iterable<readonly [K, V]> = [],
+  ) {
+    for (const [key, value] of entries) this.set(key, value);
+  }
+
+  get size(): number {
+    return this.byText.size;
+  }
+
+  get(key: K): V | undefined {
+    return this.byText.get(this.keyText(key))?.[1];
+  }
+
+  has(key: K): boolean {
+    return this.byText.has(this.keyText(key));
+  }
+
+  set(key: K, value: V): this {
+    this.byText.set(this.keyText(key), [key, value]);
+    return this;
+  }
+
+  keys(): IterableIterator<K> {
+    return Array.from(this.byText.values(), ([key]) => key)[Symbol.iterator]();
+  }
+
+  values(): IterableIterator<V> {
+    return Array.from(this.byText.values(), ([, value]) => value)[Symbol.iterator]();
+  }
+
+  entries(): IterableIterator<[K, V]> {
+    return this.byText.values();
+  }
+
+  [Symbol.iterator](): IterableIterator<[K, V]> {
+    return this.entries();
+  }
+}
+
+/** Like {@link decodeRecordMap}, for keys that `decodeKey` reads from their string form. */
+export function decodeWireMap<K, V>(
+  json: unknown,
+  decodeKey: (json: unknown) => K | undefined,
+  keyText: (key: K) => string,
+  decodeValue: (json: unknown) => V | undefined,
+): WireMap<K, V> | undefined {
+  const object = foldObjects(json);
+  if (object === undefined) return undefined;
+  const map = new WireMap<K, V>(keyText);
+  for (const [text, item] of Object.entries(object)) {
+    const key = decodeKey(text);
+    const value = decodeValue(item);
+    if (key === undefined || value === undefined) return undefined;
+    map.set(key, value);
+  }
+  return map;
+}
+
+/** A {@link WireMap} as a JSON object, its values written by `encodeValue`. */
+export function encodeWireMap<K, V>(map: WireMap<K, V>, encodeValue: (value: V) => JsonValue): JsonObject {
+  const object: JsonObject = {};
+  for (const [key, value] of map) object[map.keyText(key)] = encodeValue(value);
+  return object;
 }
 
 /** `value`, or a {@link DecodeError} naming `path` when it is missing. */

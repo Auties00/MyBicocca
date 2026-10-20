@@ -8,8 +8,13 @@ import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningFie
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningFieldType
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningFormField
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningMonthSchedule
+import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningPortal
+import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningReservationRequest
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningReservationResult
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningService
+import it.attendance100.mybicocca.data.remote.easystaff.dto.entryId
+import it.attendance100.mybicocca.data.remote.easystaff.dto.options
+import it.attendance100.mybicocca.data.remote.easystaff.dto.slots
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentArea
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentForm
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentFormField
@@ -99,7 +104,7 @@ private fun EasyStaffPlanningFormField.toAppointmentFormField(): AppointmentForm
                 code = code,
                 label = label,
                 required = required,
-                policyUrl = values?.firstOrNull()?.value?.let { url ->
+                policyUrl = options?.firstOrNull()?.value?.let { url ->
                     if (url.startsWith("http")) url else PolicyStorageBase + url
                 },
             )
@@ -131,7 +136,7 @@ private fun EasyStaffPlanningFormField.toAppointmentFormField(): AppointmentForm
             label = label,
             required = required,
             placeholder = placeholder,
-            options = values.orEmpty().map { AppointmentFormOption(value = it.value, label = it.label) },
+            options = options.orEmpty().map { AppointmentFormOption(value = it.value, label = it.label) },
         )
 
         else -> AppointmentFormField.Text(
@@ -142,6 +147,52 @@ private fun EasyStaffPlanningFormField.toAppointmentFormField(): AppointmentForm
         )
     }
 }
+
+/**
+ * Builds the reservation of a slot from the service's booking form and the values entered,
+ * keyed by field code. Like the web front-end, values go in the user, appointment or staff
+ * section of the request by the position of their field; consent fields, fields with an
+ * unknown position and blank values are left out. The primary field's value keys the
+ * reservation.
+ */
+fun List<EasyStaffPlanningFormField>.toReservationRequest(
+    portal: EasyStaffPlanningPortal,
+    serviceId: Int,
+    areaId: Int,
+    slotStart: LocalDateTime,
+    durationSeconds: Int,
+    values: Map<String, String>,
+): EasyStaffPlanningReservationRequest {
+    val primaryField = firstOrNull { it.primary }
+    val primaryValue = primaryField?.code?.let { values[it] }
+    require(!primaryValue.isNullOrBlank()) { "A value for the primary field (${primaryField?.code}) is required" }
+    val slotEnd = slotStart.plusSeconds(durationSeconds.toLong())
+    return EasyStaffPlanningReservationRequest(
+        reservationNumber = 0,
+        portalCode = portal.code,
+        startTimeEpochSeconds = slotStart.atZone(CampusZone).toEpochSecond(),
+        endTimeEpochSeconds = slotEnd.atZone(CampusZone).toEpochSecond(),
+        durationSeconds = durationSeconds,
+        serviceId = serviceId,
+        areaId = areaId,
+        primaryValue = primaryValue,
+        userFields = valuesAt(EasyStaffPlanningFieldPosition.User, values),
+        serviceFields = valuesAt(EasyStaffPlanningFieldPosition.Service, values),
+        backofficeFields = valuesAt(EasyStaffPlanningFieldPosition.Backoffice, values),
+        resourceId = null,
+        recaptchaToken = null,
+        timeZone = CampusZone.id,
+    )
+}
+
+/** The non-blank values of the fields at [position], keyed by field code. */
+private fun List<EasyStaffPlanningFormField>.valuesAt(
+    position: EasyStaffPlanningFieldPosition,
+    values: Map<String, String>,
+): Map<String, String> =
+    filter { it.position == position }
+        .mapNotNull { field -> values[field.code]?.takeIf { it.isNotBlank() }?.let { field.code to it } }
+        .toMap()
 
 /**
  * Builds the domain reservation from the booking response, denormalizing the service and

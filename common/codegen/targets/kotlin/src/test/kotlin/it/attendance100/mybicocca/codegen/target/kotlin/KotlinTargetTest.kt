@@ -17,6 +17,7 @@ class KotlinTargetTest {
           "packageName": "com.example.demo",
           "temporalSerializers": [
             { "kind": "LOCAL_DATE", "pattern": "dd/MM/yyyy", "blankAsNull": true, "nullable": true, "serializer": "DemoDateSerializer" },
+            { "kind": "LOCAL_DATE", "pattern": "yyyy-MM-dd", "blankAsNull": false, "nullable": false, "serializer": "DemoIsoDateSerializer" },
             { "kind": "LOCAL_DATE_TIME", "pattern": "yyyy-MM-dd'T'HH:mm:ss", "blankAsNull": false, "nullable": true, "serializer": "com.example.runtime.IsoDateTimeSerializer" },
             { "kind": "LOCAL_TIME", "pattern": "HH:mm", "blankAsNull": false, "nullable": true, "serializer": "DemoTimeSerializer" }
           ]

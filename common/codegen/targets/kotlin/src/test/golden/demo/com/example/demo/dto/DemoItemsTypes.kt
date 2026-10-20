@@ -20,6 +20,7 @@ data class DemoItem(
     @SerialName("num")
     val count: Int? = null,
 
+    @Serializable(with = DemoBooleanSerializer::class)
     @SerialName("attivo")
     val active: Boolean = false,
 

@@ -1,52 +1,131 @@
 package it.attendance100.mybicocca.codegen.target.kotlin
 
+import it.attendance100.mybicocca.codegen.core.CodeWriter
 import it.attendance100.mybicocca.codegen.model.ApiSpec
 import it.attendance100.mybicocca.codegen.model.Codec
 import it.attendance100.mybicocca.codegen.model.DefaultValue
 import it.attendance100.mybicocca.codegen.model.EnumType
 import it.attendance100.mybicocca.codegen.model.Field
 import it.attendance100.mybicocca.codegen.model.PrimitiveKind
+import it.attendance100.mybicocca.codegen.model.RecordEncoding
 import it.attendance100.mybicocca.codegen.model.RecordType
 import it.attendance100.mybicocca.codegen.model.TypeRef
 import it.attendance100.mybicocca.codegen.target.kotlin.KotlinSyntax.doc
 
-/** Emits records as `@Serializable` data classes. */
+/**
+ * Emits records as `@Serializable` data classes. A delimited record gets a nested `Serializer`
+ * reading and writing its string form.
+ */
 internal class RecordEmitter(
     private val spec: ApiSpec,
     private val layout: KotlinLayout,
-    private val serializers: TemporalSerializers,
+    private val serializers: KotlinSerializers,
 ) {
     fun emit(record: RecordType, file: KotlinFile) {
         file.import("kotlinx.serialization.Serializable")
         val body = file.body
         body.doc(record.description)
-        body.line("@Serializable")
+        val encoding = record.encoding
+        body.line(if (encoding is RecordEncoding.Delimited) "@Serializable(with = ${record.name}.Serializer::class)" else "@Serializable")
         if (record.fields.isEmpty()) {
             body.line("class ${record.name}")
             return
         }
-        file.import("kotlinx.serialization.SerialName")
+        if (encoding is RecordEncoding.Object) file.import("kotlinx.serialization.SerialName")
         body.line("data class ${record.name}(")
         body.indent {
             record.fields.forEachIndexed { index, field ->
-                if (index > 0) line()
+                if (index > 0 && encoding is RecordEncoding.Object) line()
                 doc(field.description)
-                serializerFor(field, file)?.let { line("@Serializable(with = $it::class)") }
-                line("@SerialName(${KotlinSyntax.string(field.wireName)})")
+                if (encoding is RecordEncoding.Object) {
+                    serializers.of(field, file)?.let { line("@Serializable(with = $it::class)") }
+                    line("@SerialName(${KotlinSyntax.string(field.wireName)})")
+                }
                 val separator = if (index < record.fields.lastIndex) "," else ""
                 line("val ${KotlinSyntax.identifier(field.name)}: ${type(field, file)}${default(field)}$separator")
             }
         }
-        body.line(")")
+        when (encoding) {
+            RecordEncoding.Object -> body.line(")")
+            is RecordEncoding.Delimited -> {
+                body.line(") {")
+                body.indent { delimitedSerializer(record, encoding, file) }
+                body.line("}")
+            }
+        }
+    }
+
+    /** The `Serializer` of a delimited record, which splits and joins its fields' text forms. */
+    private fun CodeWriter.delimitedSerializer(record: RecordType, encoding: RecordEncoding.Delimited, file: KotlinFile) {
+        listOf(
+            "kotlinx.serialization.KSerializer",
+            "kotlinx.serialization.SerializationException",
+            "kotlinx.serialization.descriptors.PrimitiveKind",
+            "kotlinx.serialization.descriptors.PrimitiveSerialDescriptor",
+            "kotlinx.serialization.descriptors.SerialDescriptor",
+            "kotlinx.serialization.encoding.Decoder",
+            "kotlinx.serialization.encoding.Encoder",
+        ).forEach(file::import)
+        val separator = KotlinSyntax.string(encoding.separator)
+        val fields = record.fields
+        line("/** Reads and writes the form `${fields.joinToString(KotlinSyntax.docText(encoding.separator)) { it.name }}`. */")
+        block("object Serializer : KSerializer<${record.name}> {") {
+            val temporal = fields.filter { (it.type as TypeRef.Primitive).kind.isTemporal }
+            if (temporal.isNotEmpty()) {
+                file.import("java.time.format.DateTimeFormatter")
+                for (field in temporal) line("private val ${formatter(field)} = DateTimeFormatter.ofPattern(${KotlinSyntax.string(pattern(field))})")
+                line()
+            }
+            line("override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor(${KotlinSyntax.string(record.name)}, PrimitiveKind.STRING)")
+            line()
+            block("override fun deserialize(decoder: Decoder): ${record.name} {") {
+                line("val text = decoder.decodeString()")
+                line("val parts = text.split($separator, limit = ${fields.size})")
+                line("if (parts.size != ${fields.size}) throw SerializationException(\"Invalid ${record.name}: \$text\")")
+                block("return ${record.name}(", ")") {
+                    fields.forEachIndexed { index, field ->
+                        val comma = if (index < fields.lastIndex) "," else ""
+                        line("${KotlinSyntax.identifier(field.name)} = ${parse(field, "parts[$index]", file)}$comma")
+                    }
+                }
+            }
+            line()
+            block("override fun serialize(encoder: Encoder, value: ${record.name}) {") {
+                val parts = fields.joinToString(", ") { format(it, "value.${KotlinSyntax.identifier(it.name)}") }
+                line("encoder.encodeString(listOf($parts).joinToString($separator))")
+            }
+        }
+    }
+
+    private fun formatter(field: Field): String = "${field.name}Format"
+
+    private fun pattern(field: Field): String =
+        (field.codec as? Codec.Temporal ?: Codec.Temporal.iso((field.type as TypeRef.Primitive).kind)).pattern
+
+    private fun parse(field: Field, text: String, file: KotlinFile): String = when ((field.type as TypeRef.Primitive).kind) {
+        PrimitiveKind.STRING -> text
+        PrimitiveKind.INT32 -> "$text.trim().toInt()"
+        PrimitiveKind.INT64 -> "$text.trim().toLong()"
+        PrimitiveKind.FLOAT32 -> "$text.trim().toFloat()"
+        PrimitiveKind.FLOAT64 -> "$text.trim().toDouble()"
+        PrimitiveKind.BOOLEAN -> "$text.trim().toBooleanStrict()"
+        else -> "${layout.render(field.type, file)}.parse($text.trim(), ${formatter(field)})"
+    }
+
+    private fun format(field: Field, value: String): String = when ((field.type as TypeRef.Primitive).kind) {
+        PrimitiveKind.STRING -> value
+        PrimitiveKind.LOCAL_DATE, PrimitiveKind.LOCAL_DATE_TIME, PrimitiveKind.LOCAL_TIME -> "$value.format(${formatter(field)})"
+        else -> "$value.toString()"
     }
 
     private fun type(field: Field, file: KotlinFile): String =
-        layout.render(field.type, file) + if (field.nullable) "?" else ""
+        serializers.render(field.type, file, field.name) + if (field.nullable) "?" else ""
 
     private fun default(field: Field): String = when (val default = field.default) {
         null -> ""
         DefaultValue.Null -> " = null"
         DefaultValue.EmptyList -> " = emptyList()"
+        DefaultValue.EmptyMap -> " = emptyMap()"
         is DefaultValue.Literal -> " = " + literal(field.type, default)
         DefaultValue.Zero -> " = " + when ((field.type as TypeRef.Primitive).kind) {
             PrimitiveKind.STRING -> "\"\""
@@ -67,26 +146,6 @@ internal class RecordEmitter(
             PrimitiveKind.FLOAT32 -> "${literal.value}f"
             else -> literal.value
         }
-        is TypeRef.ListOf -> error("Lists can't have a literal default")
-    }
-
-    /**
-     * kotlinx.serialization has no serializer for `java.time` types, so every date or time
-     * field names one of the runtime's, ISO 8601 ones included.
-     */
-    private fun serializerFor(field: Field, file: KotlinFile): String? {
-        val type = field.type
-        if (type is TypeRef.ListOf && (type.element as? TypeRef.Primitive)?.kind?.isTemporal == true) {
-            error("Field '${field.name}': the kotlin target doesn't support lists of dates or times")
-        }
-        val kind = (type as? TypeRef.Primitive)?.kind?.takeIf { it.isTemporal } ?: return null
-        val codec = when (val codec = field.codec) {
-            is Codec.Temporal -> codec
-            null -> Codec.Temporal.iso(kind)
-        }
-        val serializer = serializers.find(kind, codec, field.nullable)
-        if ('.' !in serializer) return serializer
-        file.import(serializer)
-        return serializer.substringAfterLast('.')
+        is TypeRef.ListOf, is TypeRef.MapOf -> error("Collections can't have a literal default")
     }
 }

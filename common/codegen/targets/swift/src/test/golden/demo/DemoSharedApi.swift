@@ -5,16 +5,19 @@ import Foundation
 
 public struct DemoSharedApi: Sendable {
     private let client: DemoClient
+    private let tenant: String
 
-    public init(client: DemoClient) {
+    public init(client: DemoClient, tenant: String) {
         self.client = client
+        self.tenant = tenant
     }
 
     public func ping() async throws -> String {
         try await client.json(
             RestRequest(
                 method: .get,
-                path: "/ping"
+                path: "/ping",
+                headers: [("X-TENANT", tenant)]
             ),
             roles: []
         )

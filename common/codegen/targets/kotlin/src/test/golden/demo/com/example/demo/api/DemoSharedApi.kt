@@ -2,14 +2,18 @@
 package com.example.demo.api
 
 import io.ktor.client.HttpClient
+import io.ktor.client.request.header
 import kotlinx.serialization.json.Json
 
 class DemoSharedApi(
     client: HttpClient,
-    json: Json
+    json: Json,
+    private val tenant: String
 ) : DemoAbstractApi(client, json, "/") {
 
     suspend fun ping(): String {
-        return executeJsonGet<String>("/ping", emptySet())
+        return executeJsonGet<String>("/ping", emptySet()) {
+            header("X-TENANT", tenant)
+        }
     }
 }

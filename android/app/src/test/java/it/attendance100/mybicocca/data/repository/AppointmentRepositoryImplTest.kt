@@ -13,16 +13,21 @@ import it.attendance100.mybicocca.data.local.appointment.AppointmentReservationD
 import it.attendance100.mybicocca.data.local.appointment.AppointmentReservationEntity
 import it.attendance100.mybicocca.data.mapper.appointment.toDomain
 import it.attendance100.mybicocca.data.remote.easystaff.api.EasyStaffApi
-import it.attendance100.mybicocca.data.remote.easystaff.api.EasyStaffPlanningBookingApi
+import it.attendance100.mybicocca.data.remote.easystaff.api.EasyStaffPlanningCatalogApi
+import it.attendance100.mybicocca.data.remote.easystaff.api.EasyStaffPlanningPortalsApi
+import it.attendance100.mybicocca.data.remote.easystaff.api.EasyStaffPlanningReservationsApi
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningArea
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningDetailedService
+import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningEntryFilters
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningFieldPosition
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningFieldType
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningFormField
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningGeneralSettings
+import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningIdReference
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningPortal
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningPortalConfig
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningPortalSettings
+import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningReservationDeletion
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningReservationRequest
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningReservationResult
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningResult
@@ -33,6 +38,7 @@ import it.attendance100.mybicocca.domain.model.appointment.AppointmentFormField
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentOffering
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentService
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertThrows
 import org.junit.Before
@@ -51,18 +57,20 @@ class AppointmentRepositoryImplTest {
 
     private val stringResolver: StringResolver = mockk(relaxed = true)
     private val easyStaffApi: EasyStaffApi = mockk(relaxed = true)
-    private val desks: EasyStaffPlanningBookingApi = mockk(relaxed = true)
+    private val catalog: EasyStaffPlanningCatalogApi = mockk(relaxed = true)
+    private val portals: EasyStaffPlanningPortalsApi = mockk(relaxed = true)
+    private val reservations: EasyStaffPlanningReservationsApi = mockk(relaxed = true)
     private val reservationDao: AppointmentReservationDao = mockk(relaxed = true)
 
     private lateinit var repository: AppointmentRepositoryImpl
 
     @Before
     fun setUp() {
-        every { easyStaffApi.planning.informationDesks } returns desks
-        every { desks.portal } returns EasyStaffPlanningPortal.INFORMATION_DESKS
-        every { desks.buildReservationRequest(any(), any(), any(), any(), any(), any(), any()) } answers { callOriginal() }
-        coEvery { desks.getServiceForm(7) } returns wireForm()
-        coEvery { desks.getPortal() } returns portalConfig(captchaRequired = false)
+        every { easyStaffApi.planning.catalog } returns catalog
+        every { easyStaffApi.planning.portals } returns portals
+        every { easyStaffApi.planning.reservations } returns reservations
+        coEvery { portals.getServiceForm(7) } returns wireForm()
+        coEvery { portals.getPortal() } returns portalConfig(captchaRequired = false)
         repository = AppointmentRepositoryImpl(stringResolver, easyStaffApi, reservationDao)
     }
 
@@ -116,7 +124,6 @@ class AppointmentRepositoryImplTest {
         ),
     )
 
-    /** The wire form [form] was mapped from, as the portal serves it. */
     private fun wireForm() = listOf(
         wireField("email", EasyStaffPlanningFieldType.Email, EasyStaffPlanningFieldPosition.User, primary = true),
         wireField("nome", EasyStaffPlanningFieldType.Text, EasyStaffPlanningFieldPosition.User),
@@ -153,14 +160,14 @@ class AppointmentRepositoryImplTest {
         entryId: Int? = 555,
     ) = EasyStaffPlanningReservationResult(
         reservationCode = reservationCode,
-        entryId = entryId,
+        entry = entryId?.let(::JsonPrimitive),
         startTimeEpochSeconds = null,
         endTimeEpochSeconds = null,
     )
 
     @Test
     fun `getServices maps every wire service`() = runTest {
-        coEvery { desks.getServices() } returns listOf(
+        coEvery { catalog.getServices() } returns listOf(
             EasyStaffPlanningService(id = 1, name = "  Ritiro Badge  ", durationSeconds = 600),
             EasyStaffPlanningService(id = 2, name = "Consegna", durationSeconds = 300),
         )
@@ -199,7 +206,7 @@ class AppointmentRepositoryImplTest {
             publicHidden = false,
             services = emptyList(),
         )
-        coEvery { desks.getAreas(7) } returns listOf(visibleArea, hiddenArea, areaWithoutService)
+        coEvery { catalog.getAreas(EasyStaffPlanningEntryFilters(service = EasyStaffPlanningIdReference(7))) } returns listOf(visibleArea, hiddenArea, areaWithoutService)
 
         val offerings = repository.getOfferings(7)
 
@@ -227,8 +234,8 @@ class AppointmentRepositoryImplTest {
     @Test
     fun `bookAppointment confirms the hold and persists the reservation`() = runTest {
         val request = slot<EasyStaffPlanningReservationRequest>()
-        coEvery { desks.createReservation(capture(request)) } returns createResult()
-        coEvery { desks.confirmReservation(555) } returns EasyStaffPlanningResult()
+        coEvery { reservations.createReservation(capture(request)) } returns createResult()
+        coEvery { reservations.confirmReservation(555) } returns EasyStaffPlanningResult()
         val entity = slot<AppointmentReservationEntity>()
         coEvery { reservationDao.upsert(capture(entity)) } just Runs
 
@@ -246,7 +253,7 @@ class AppointmentRepositoryImplTest {
             values = values,
         )
 
-        coVerify(exactly = 1) { desks.confirmReservation(555) }
+        coVerify(exactly = 1) { reservations.confirmReservation(555) }
         coVerify(exactly = 1) { reservationDao.upsert(any()) }
         assertThat(reservation.code).isEqualTo("ABC123")
         assertThat(reservation.email).isEqualTo("mario@campus.unimib.it")
@@ -256,8 +263,8 @@ class AppointmentRepositoryImplTest {
     @Test
     fun `bookAppointment builds the request from the current form and leaves out the consent`() = runTest {
         val request = slot<EasyStaffPlanningReservationRequest>()
-        coEvery { desks.createReservation(capture(request)) } returns createResult()
-        coEvery { desks.confirmReservation(any()) } returns EasyStaffPlanningResult()
+        coEvery { reservations.createReservation(capture(request)) } returns createResult()
+        coEvery { reservations.confirmReservation(any()) } returns EasyStaffPlanningResult()
 
         repository.bookAppointment(
             service = service(),
@@ -283,7 +290,7 @@ class AppointmentRepositoryImplTest {
 
     @Test
     fun `bookAppointment refuses portals that require a captcha without creating a hold`() = runTest {
-        coEvery { desks.getPortal() } returns portalConfig(captchaRequired = true)
+        coEvery { portals.getPortal() } returns portalConfig(captchaRequired = true)
 
         assertThrows(IllegalStateException::class.java) {
             runBlocking {
@@ -297,14 +304,16 @@ class AppointmentRepositoryImplTest {
             }
         }
 
-        coVerify(exactly = 0) { desks.createReservation(any()) }
+        coVerify(exactly = 0) { reservations.createReservation(any()) }
     }
 
     @Test
     fun `bookAppointment force-deletes the hold and rethrows when confirm fails`() = runTest {
-        coEvery { desks.createReservation(any()) } returns createResult(entryId = 555)
-        coEvery { desks.confirmReservation(555) } throws IOException("boom")
-        coEvery { desks.deleteReservation("ABC123", any(), force = true) } returns EasyStaffPlanningResult()
+        coEvery { reservations.createReservation(any()) } returns createResult(entryId = 555)
+        coEvery { reservations.confirmReservation(555) } throws IOException("boom")
+        coEvery {
+            reservations.deleteReservation("ABC123", EasyStaffPlanningReservationDeletion(force = true), any())
+        } returns EasyStaffPlanningResult()
 
         assertThrows(IOException::class.java) {
             runBlocking {
@@ -318,7 +327,9 @@ class AppointmentRepositoryImplTest {
             }
         }
 
-        coVerify(exactly = 1) { desks.deleteReservation("ABC123", "mario@campus.unimib.it", force = true) }
+        coVerify(exactly = 1) {
+            reservations.deleteReservation("ABC123", EasyStaffPlanningReservationDeletion(force = true), "mario@campus.unimib.it")
+        }
         coVerify(exactly = 0) { reservationDao.upsert(any()) }
     }
 
@@ -346,14 +357,14 @@ class AppointmentRepositoryImplTest {
         repository.refreshReservations()
 
         coVerify(exactly = 1) { reservationDao.delete("OLD") }
-        coVerify(exactly = 0) { desks.getReservation(any(), any()) }
+        coVerify(exactly = 0) { reservations.getReservation(any(), any()) }
     }
 
     @Test
     fun `refreshReservations forgets a reservation reported gone by the portal`() = runTest {
         val future = futureEntity("GONE")
         coEvery { reservationDao.getAll() } returns listOf(future)
-        coEvery { desks.getReservation("GONE", any()) } throws RuntimeException("not_found")
+        coEvery { reservations.getReservation("GONE", any()) } throws RuntimeException("not_found")
 
         repository.refreshReservations()
 
@@ -364,7 +375,7 @@ class AppointmentRepositoryImplTest {
     fun `refreshReservations keeps the local copy on an unrelated failure`() = runTest {
         val future = futureEntity("KEEP")
         coEvery { reservationDao.getAll() } returns listOf(future)
-        coEvery { desks.getReservation("KEEP", any()) } throws RuntimeException("server error 500")
+        coEvery { reservations.getReservation("KEEP", any()) } throws RuntimeException("server error 500")
 
         assertThrows(RuntimeException::class.java) {
             runBlocking { repository.refreshReservations() }
@@ -376,7 +387,7 @@ class AppointmentRepositoryImplTest {
     @Test
     fun `cancelReservation deletes locally even when the portal reports it gone`() = runTest {
         coEvery {
-            desks.deleteReservation("CODE", "mario@campus.unimib.it", false)
+            reservations.deleteReservation("CODE", EasyStaffPlanningReservationDeletion(), "mario@campus.unimib.it")
         } throws RuntimeException("not_found")
 
         val reservation = futureEntity("CODE").toDomainReservation()
@@ -387,7 +398,7 @@ class AppointmentRepositoryImplTest {
 
     @Test
     fun `cancelReservation rethrows an unrelated portal failure and skips the local delete`() = runTest {
-        coEvery { desks.deleteReservation("CODE", any(), any()) } throws RuntimeException("503 unavailable")
+        coEvery { reservations.deleteReservation("CODE", any(), any()) } throws RuntimeException("503 unavailable")
 
         assertThrows(RuntimeException::class.java) {
             runBlocking {
