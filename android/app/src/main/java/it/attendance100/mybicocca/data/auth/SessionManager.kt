@@ -167,7 +167,7 @@ class SessionManager @Inject constructor(
                     api.close()
                     throw t
                 }
-                ElearningLoginOutcome(api, login.wsToken, login.moodleSessionCookie, siteInfo)
+                ElearningLoginOutcome(api, login.wsToken, login.privateToken, login.moodleSessionCookie, siteInfo)
             }
         }
 
@@ -216,6 +216,7 @@ class SessionManager @Inject constructor(
         sessionCache.update(accountId) {
             copy(
                 wsToken = elearning.wsToken,
+                elearningPrivateToken = elearning.privateToken,
                 moodleSessionCookie = elearning.moodleSessionCookie,
                 jwt = esse3Session.jwt,
             )
@@ -383,15 +384,18 @@ class SessionManager @Inject constructor(
     }
 
     /**
-     * Forces a fresh Elearning login for the active account, updating both the cached
-     * `wsToken` and the `MoodleSession` cookie. Use after an
-     * [it.attendance100.mybicocca.data.remote.elearning.dto.ElearningKalturaVideoStreamResponse.RequiresReauth]
-     * (or equivalent) signal — Moodle has expired the browser session and only a full
-     * SAML round-trip can mint a new one.
+     * Replaces the active account's expired `MoodleSession` cookie. Use after an
+     * [it.attendance100.mybicocca.data.remote.elearning.dto.ElearningKalturaEntryIdResponse.RequiresReauth]
+     * (or equivalent) signal.
+     *
+     * The cookie is first renewed through Moodle's mobile autologin, which keeps the web service
+     * token and needs no credentials. Only if that fails (no private token cached, or Moodle
+     * refusing the key) does a full SAML login mint new tokens and a new cookie.
      */
     suspend fun reauthElearning(): ElearningSession {
         val active = activeAccount.value ?: error("No active account.")
-        sessionCache.update(active.id) { copy(wsToken = null, moodleSessionCookie = null) }
+        renewElearningSession(active)?.let { return it }
+        sessionCache.update(active.id) { copy(wsToken = null, elearningPrivateToken = null, moodleSessionCookie = null) }
         discardElearningApi()
         val tokens = refreshElearningTokens(active.id)
         val api = ensureElearningApiForAccount(active.id, tokens.moodleSessionCookie)
@@ -484,10 +488,32 @@ class SessionManager @Inject constructor(
                 ?: error("No stored credentials for ${accountId.value}.")
             val login = elearningAuthenticator.login(creds.username, creds.password)
             sessionCache.update(accountId) {
-                copy(wsToken = login.wsToken, moodleSessionCookie = login.moodleSessionCookie)
+                copy(
+                    wsToken = login.wsToken,
+                    elearningPrivateToken = login.privateToken,
+                    moodleSessionCookie = login.moodleSessionCookie,
+                )
             }
             adoptElearningApi(accountId, elearningApiFactory.create(login.moodleSessionCookie))
             ElearningTokens(login.wsToken, login.moodleSessionCookie)
+        }
+
+    /**
+     * Swaps in a `MoodleSession` cookie minted through autologin from the cached tokens, or
+     * returns null when there is no private token or Moodle refuses the renewal.
+     */
+    private suspend fun renewElearningSession(account: Account): ElearningSession? =
+        authMutexes.withLock(account.id) {
+            val cached = sessionCache.read(account.id)
+            val wsToken = cached.wsToken ?: return@withLock null
+            val privateToken = cached.elearningPrivateToken ?: return@withLock null
+            val cookie = runCatching {
+                elearningAuthenticator.renewSession(wsToken, privateToken, account.learning.lmsUserId)
+            }.getOrNull() ?: return@withLock null
+            sessionCache.update(account.id) { copy(moodleSessionCookie = cookie) }
+            val api = elearningApiFactory.create(cookie)
+            adoptElearningApi(account.id, api)
+            ElearningSession(api, wsToken)
         }
 
     private suspend fun warmupElearningSilently(accountId: AccountId) {
@@ -530,6 +556,7 @@ class SessionManager @Inject constructor(
     private data class ElearningLoginOutcome(
         val api: ElearningApi,
         val wsToken: String,
+        val privateToken: String?,
         val moodleSessionCookie: String?,
         val siteInfo: ElearningGetSiteInfoResponse,
     )

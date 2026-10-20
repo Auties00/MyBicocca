@@ -48,6 +48,7 @@ import androidx.media3.ui.compose.state.rememberPresentationState
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.os.LocalHapticManager
+import it.attendance100.mybicocca.domain.repository.VideoUnavailableException
 import it.attendance100.mybicocca.core.os.LocalPipController
 import it.attendance100.mybicocca.core.os.PipState
 import it.attendance100.mybicocca.core.state.Loadable
@@ -291,13 +292,18 @@ private fun VideoSurface(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
+                    val unavailable = syncStatus.cause is VideoUnavailableException
                     Text(
-                        text = stringResource(R.string.elearning_video_load_failed),
+                        text = stringResource(
+                            if (unavailable) R.string.elearning_video_unavailable else R.string.elearning_video_load_failed
+                        ),
                         color = Color.White,
                         style = MaterialTheme.typography.titleMedium,
                     )
-                    val haptic = rememberHapticManager()
-                    RetryButton(onClick = { haptic.tap(); onRetry() })
+                    if (!unavailable) {
+                        val haptic = rememberHapticManager()
+                        RetryButton(onClick = { haptic.tap(); onRetry() })
+                    }
                 }
             }
 

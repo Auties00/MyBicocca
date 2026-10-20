@@ -43,6 +43,8 @@ import it.attendance100.mybicocca.data.local.elearning.quiz.QuizDao
 import it.attendance100.mybicocca.data.local.elearning.quiz.QuizEntity
 import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncStateDao
 import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncStateEntity
+import it.attendance100.mybicocca.data.local.elearning.video.KalturaEntryDao
+import it.attendance100.mybicocca.data.local.elearning.video.KalturaEntryEntity
 import it.attendance100.mybicocca.data.local.elearning.video.VideoProgressDao
 import it.attendance100.mybicocca.data.local.elearning.video.VideoProgressEntity
 import it.attendance100.mybicocca.data.local.enrollment.AnnualEnrollmentEntity
@@ -124,6 +126,7 @@ import it.attendance100.mybicocca.data.local.transcript.TranscriptSyncStateEntit
         BadgeEntity::class,
         ElearningSyncStateEntity::class,
         VideoProgressEntity::class,
+        KalturaEntryEntity::class,
         TranscriptRowEntity::class,
         TranscriptStatsEntity::class,
         TranscriptSyncStateEntity::class,
@@ -150,13 +153,15 @@ import it.attendance100.mybicocca.data.local.transcript.TranscriptSyncStateEntit
         BadgeImageEntity::class,
         CertificateEntity::class,
     ],
-    version = 3,
+    version = 4,
     exportSchema = true,
     autoMigrations = [
         // v2: cached_booked_exam gains the nullable total_bookings column (numIscritti).
         AutoMigration(from = 1, to = 2),
         // v3: careers gains the nullable level column (tipoCorsoCod).
         AutoMigration(from = 2, to = 3),
+        // v4: elearning_kaltura_entry persists the cmId → Kaltura entry id bindings.
+        AutoMigration(from = 3, to = 4),
     ],
 )
 abstract class MyBicoccaDatabase : RoomDatabase() {
@@ -175,6 +180,7 @@ abstract class MyBicoccaDatabase : RoomDatabase() {
     abstract fun elearningBadgeDao(): BadgeDao
     abstract fun elearningSyncStateDao(): ElearningSyncStateDao
     abstract fun elearningVideoProgressDao(): VideoProgressDao
+    abstract fun elearningKalturaEntryDao(): KalturaEntryDao
 
     abstract fun mapBuildingDao(): MapBuildingDao
     abstract fun mapRoomDao(): MapRoomDao

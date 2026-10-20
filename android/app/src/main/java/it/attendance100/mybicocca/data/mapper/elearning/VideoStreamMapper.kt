@@ -28,13 +28,11 @@ internal fun ElearningKalturaVideoStreamResponse.Success.toDomain(cmId: Int): Vi
 /** Maps one Kaltura quality variant (flavor) to the domain model. */
 internal fun ElearningKalturaVideoVariant.toDomain(): VideoVariant =
     VideoVariant(
-        flavorId = flavorId,
+        flavorId = flavorId ?: "${pixelWidth}x$pixelHeight@$bitrateKbps",
         widthPx = pixelWidth,
         heightPx = pixelHeight,
         bitrateKbps = bitrateKbps,
         frameRateFps = frameRateFps,
-        sizeBytes = sizeBytes,
-        fileExtension = fileExtension,
     )
 
 /** Maps a cached playback-progress row to the domain model. */
