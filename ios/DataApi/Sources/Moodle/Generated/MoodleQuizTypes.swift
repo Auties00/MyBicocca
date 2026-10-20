@@ -3,7 +3,7 @@
 import DataApiRuntime
 import Foundation
 
-public struct MoodlePreflightData: Codable, Hashable, Sendable {
+public struct MoodleNamedValue: Codable, Hashable, Sendable {
     /// data name
     public var name: String
     /// data value

@@ -10,8 +10,8 @@ import io.ktor.http.parameters
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAttemptDataResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAttemptReviewResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAttemptSummaryResponse
-import it.attendance100.mybicocca.data.remote.elearning.dto.MoodlePreference
-import it.attendance100.mybicocca.data.remote.elearning.dto.MoodlePreflightData
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleKeyValue
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleNamedValue
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleProcessAttemptResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleQuizAccessInformation
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleQuizzesResponse
@@ -40,7 +40,7 @@ class MoodleQuizApi(
     suspend fun getAttemptData(
         attemptId: Int,
         page: Int,
-        preflightData: List<MoodlePreflightData>? = null,
+        preflightData: List<MoodleNamedValue>? = null,
         auth: MoodleTokenAuth
     ): MoodleAttemptDataResponse {
         return executeJsonPost<MoodleAttemptDataResponse>("/webservice/rest/server.php") {
@@ -89,7 +89,7 @@ class MoodleQuizApi(
      */
     suspend fun getAttemptSummary(
         attemptId: Int,
-        preflightData: List<MoodlePreflightData>? = null,
+        preflightData: List<MoodleNamedValue>? = null,
         auth: MoodleTokenAuth
     ): MoodleAttemptSummaryResponse {
         return executeJsonPost<MoodleAttemptSummaryResponse>("/webservice/rest/server.php") {
@@ -212,10 +212,10 @@ class MoodleQuizApi(
      */
     suspend fun processAttempt(
         attemptId: Int,
-        data: List<MoodlePreference>? = null,
+        data: List<MoodleKeyValue>? = null,
         finishAttempt: Boolean? = null,
         timeUp: Boolean? = null,
-        preflightData: List<MoodlePreflightData>? = null,
+        preflightData: List<MoodleNamedValue>? = null,
         auth: MoodleTokenAuth
     ): MoodleProcessAttemptResponse {
         return executeJsonPost<MoodleProcessAttemptResponse>("/webservice/rest/server.php") {
@@ -243,8 +243,8 @@ class MoodleQuizApi(
      */
     suspend fun saveAttempt(
         attemptId: Int,
-        data: List<MoodlePreference>,
-        preflightData: List<MoodlePreflightData>? = null,
+        data: List<MoodleKeyValue>,
+        preflightData: List<MoodleNamedValue>? = null,
         auth: MoodleTokenAuth
     ): MoodleStatusResponse {
         return executeJsonPost<MoodleStatusResponse>("/webservice/rest/server.php") {
@@ -270,7 +270,7 @@ class MoodleQuizApi(
      */
     suspend fun startAttempt(
         quizId: Int,
-        preflightData: List<MoodlePreflightData>? = null,
+        preflightData: List<MoodleNamedValue>? = null,
         forceNew: Boolean? = null,
         auth: MoodleTokenAuth
     ): MoodleStartAttemptResponse {

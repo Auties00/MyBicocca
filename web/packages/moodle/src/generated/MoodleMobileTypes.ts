@@ -2,7 +2,7 @@
 
 import { JsonObject, asJsonObject, decodeBoolean, decodeFolded, decodeInteger, decodeList, decodeString, required } from "@mybicocca/data-api-runtime";
 import { MoodleFile, decodeMoodleFile, encodeMoodleFile } from "./MoodleCourseTypes.js";
-import { MoodlePreference, decodeMoodlePreference, encodeMoodlePreference } from "./MoodleUserTypes.js";
+import { MoodleKeyValue, decodeMoodleKeyValue, encodeMoodleKeyValue } from "./MoodleUserTypes.js";
 
 export interface MoodleMobileContent {
   /** Templates required by the generated content. */
@@ -10,7 +10,7 @@ export interface MoodleMobileContent {
   /** JavaScript code. */
   javascript: string;
   /** Other data that can be used or manipulated by the template via 2-way data-binding. */
-  otherData: MoodlePreference[];
+  otherData: MoodleKeyValue[];
   /** Files in the content. */
   files: MoodleFile[];
   /** Restrict this content to certain users or courses. */
@@ -26,7 +26,7 @@ export function decodeMoodleMobileContent(json: unknown): MoodleMobileContent | 
   return {
     templates: decodeList(object["templates"], decodeMoodleMobileTemplate) ?? [],
     javascript: decodeString(object["javascript"]) ?? "",
-    otherData: decodeList(object["otherdata"], decodeMoodlePreference) ?? [],
+    otherData: decodeList(object["otherdata"], decodeMoodleKeyValue) ?? [],
     files: decodeList(object["files"], decodeMoodleFile) ?? [],
     restrict: required(decodeFolded(object["restrict"], decodeMoodleMobileContentRestriction), "MoodleMobileContent.restrict"),
     disabled: decodeBoolean(object["disabled"]) ?? null,
@@ -37,7 +37,7 @@ export function encodeMoodleMobileContent(value: MoodleMobileContent): JsonObjec
   return {
     "templates": value.templates.map((item) => encodeMoodleMobileTemplate(item)),
     "javascript": value.javascript,
-    "otherdata": value.otherData.map((item) => encodeMoodlePreference(item)),
+    "otherdata": value.otherData.map((item) => encodeMoodleKeyValue(item)),
     "files": value.files.map((item) => encodeMoodleFile(item)),
     "restrict": encodeMoodleMobileContentRestriction(value.restrict),
     "disabled": value.disabled,

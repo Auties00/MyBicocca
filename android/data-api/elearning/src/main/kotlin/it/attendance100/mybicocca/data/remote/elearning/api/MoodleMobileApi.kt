@@ -8,7 +8,7 @@ import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
 import io.ktor.http.parameters
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleMobileContent
-import it.attendance100.mybicocca.data.remote.elearning.dto.MoodlePreflightData
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleNamedValue
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
 import it.attendance100.mybicocca.data.remote.elearning.dto.appendBrackets
 import kotlinx.serialization.json.Json
@@ -30,7 +30,7 @@ class MoodleMobileApi(
     suspend fun getContent(
         component: String,
         method: String,
-        args: List<MoodlePreflightData>? = null,
+        args: List<MoodleNamedValue>? = null,
         auth: MoodleTokenAuth
     ): MoodleMobileContent {
         return executeJsonPost<MoodleMobileContent>("/webservice/rest/server.php") {

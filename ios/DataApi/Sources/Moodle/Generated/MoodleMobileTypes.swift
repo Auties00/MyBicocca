@@ -9,7 +9,7 @@ public struct MoodleMobileContent: Codable, Hashable, Sendable {
     /// JavaScript code.
     public var javascript: String
     /// Other data that can be used or manipulated by the template via 2-way data-binding.
-    public var otherData: [MoodlePreference]
+    public var otherData: [MoodleKeyValue]
     /// Files in the content.
     public var files: [MoodleFile]
     /// Restrict this content to certain users or courses.
@@ -20,7 +20,7 @@ public struct MoodleMobileContent: Codable, Hashable, Sendable {
     public init(
         templates: [MoodleMobileTemplate] = [],
         javascript: String = "",
-        otherData: [MoodlePreference] = [],
+        otherData: [MoodleKeyValue] = [],
         files: [MoodleFile] = [],
         restrict: MoodleMobileContentRestriction,
         disabled: Bool? = nil
@@ -46,7 +46,7 @@ public struct MoodleMobileContent: Codable, Hashable, Sendable {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.templates = container.decodeLenient([MoodleMobileTemplate].self, forKey: .templates) ?? []
         self.javascript = container.decodeLenient(String.self, forKey: .javascript) ?? ""
-        self.otherData = container.decodeLenient([MoodlePreference].self, forKey: .otherData) ?? []
+        self.otherData = container.decodeLenient([MoodleKeyValue].self, forKey: .otherData) ?? []
         self.files = container.decodeLenient([MoodleFile].self, forKey: .files) ?? []
         self.restrict = try container.required(container.decodeFolded(MoodleMobileContentRestriction.self, forKey: .restrict), forKey: .restrict)
         self.disabled = container.decodeLenient(Bool.self, forKey: .disabled)

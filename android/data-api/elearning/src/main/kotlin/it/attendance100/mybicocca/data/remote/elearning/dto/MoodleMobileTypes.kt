@@ -16,7 +16,7 @@ data class MoodleMobileContent(
 
     /** Other data that can be used or manipulated by the template via 2-way data-binding. */
     @SerialName("otherdata")
-    val otherData: List<MoodlePreference> = emptyList(),
+    val otherData: List<MoodleKeyValue> = emptyList(),
 
     /** Files in the content. */
     @SerialName("files")

@@ -4,8 +4,8 @@ import { brackets } from "@mybicocca/data-api-runtime";
 import { MoodleClient } from "../client.js";
 import { MoodleTokenAuth } from "./MoodleAuthTypes.js";
 import { MoodleStatusResponse, decodeMoodleStatusResponse } from "./MoodleCompletionTypes.js";
-import { MoodleAttemptDataResponse, MoodleAttemptReviewResponse, MoodleAttemptSummaryResponse, MoodlePreflightData, MoodleProcessAttemptResponse, MoodleQuizAccessInformation, MoodleQuizzesResponse, MoodleStartAttemptResponse, MoodleUserAttemptsResponse, MoodleUserBestGradeResponse, decodeMoodleAttemptDataResponse, decodeMoodleAttemptReviewResponse, decodeMoodleAttemptSummaryResponse, decodeMoodleProcessAttemptResponse, decodeMoodleQuizAccessInformation, decodeMoodleQuizzesResponse, decodeMoodleStartAttemptResponse, decodeMoodleUserAttemptsResponse, decodeMoodleUserBestGradeResponse, encodeMoodlePreflightData } from "./MoodleQuizTypes.js";
-import { MoodlePreference, encodeMoodlePreference } from "./MoodleUserTypes.js";
+import { MoodleAttemptDataResponse, MoodleAttemptReviewResponse, MoodleAttemptSummaryResponse, MoodleNamedValue, MoodleProcessAttemptResponse, MoodleQuizAccessInformation, MoodleQuizzesResponse, MoodleStartAttemptResponse, MoodleUserAttemptsResponse, MoodleUserBestGradeResponse, decodeMoodleAttemptDataResponse, decodeMoodleAttemptReviewResponse, decodeMoodleAttemptSummaryResponse, decodeMoodleProcessAttemptResponse, decodeMoodleQuizAccessInformation, decodeMoodleQuizzesResponse, decodeMoodleStartAttemptResponse, decodeMoodleUserAttemptsResponse, decodeMoodleUserBestGradeResponse, encodeMoodleNamedValue } from "./MoodleQuizTypes.js";
+import { MoodleKeyValue, encodeMoodleKeyValue } from "./MoodleUserTypes.js";
 
 export class MoodleQuizApi {
   constructor(private readonly client: MoodleClient) {}
@@ -23,7 +23,7 @@ export class MoodleQuizApi {
     page: number,
     auth: MoodleTokenAuth,
     options: {
-      preflightData?: MoodlePreflightData[] | null;
+      preflightData?: MoodleNamedValue[] | null;
     } = {},
   ): Promise<MoodleAttemptDataResponse> {
     return this.client.json(
@@ -34,7 +34,7 @@ export class MoodleQuizApi {
         form: [
           ["attemptid", attemptId],
           ["page", page],
-          ...(options.preflightData == null ? [] : brackets("preflightdata", options.preflightData.map((item) => encodeMoodlePreflightData(item)))),
+          ...(options.preflightData == null ? [] : brackets("preflightdata", options.preflightData.map((item) => encodeMoodleNamedValue(item)))),
         ],
         auth: auth,
       },
@@ -79,7 +79,7 @@ export class MoodleQuizApi {
     attemptId: number,
     auth: MoodleTokenAuth,
     options: {
-      preflightData?: MoodlePreflightData[] | null;
+      preflightData?: MoodleNamedValue[] | null;
     } = {},
   ): Promise<MoodleAttemptSummaryResponse> {
     return this.client.json(
@@ -87,7 +87,7 @@ export class MoodleQuizApi {
         method: "POST",
         path: "/webservice/rest/server.php",
         query: [["wsfunction", "mod_quiz_get_attempt_summary"], ["moodlewsrestformat", "json"]],
-        form: [["attemptid", attemptId], ...(options.preflightData == null ? [] : brackets("preflightdata", options.preflightData.map((item) => encodeMoodlePreflightData(item))))],
+        form: [["attemptid", attemptId], ...(options.preflightData == null ? [] : brackets("preflightdata", options.preflightData.map((item) => encodeMoodleNamedValue(item))))],
         auth: auth,
       },
       decodeMoodleAttemptSummaryResponse,
@@ -215,10 +215,10 @@ export class MoodleQuizApi {
     attemptId: number,
     auth: MoodleTokenAuth,
     options: {
-      data?: MoodlePreference[] | null;
+      data?: MoodleKeyValue[] | null;
       finishAttempt?: boolean | null;
       timeUp?: boolean | null;
-      preflightData?: MoodlePreflightData[] | null;
+      preflightData?: MoodleNamedValue[] | null;
     } = {},
   ): Promise<MoodleProcessAttemptResponse> {
     return this.client.json(
@@ -228,10 +228,10 @@ export class MoodleQuizApi {
         query: [["wsfunction", "mod_quiz_process_attempt"], ["moodlewsrestformat", "json"]],
         form: [
           ["attemptid", attemptId],
-          ...(options.data == null ? [] : brackets("data", options.data.map((item) => encodeMoodlePreference(item)))),
+          ...(options.data == null ? [] : brackets("data", options.data.map((item) => encodeMoodleKeyValue(item)))),
           ...(options.finishAttempt == null ? [] : brackets("finishattempt", options.finishAttempt)),
           ...(options.timeUp == null ? [] : brackets("timeup", options.timeUp)),
-          ...(options.preflightData == null ? [] : brackets("preflightdata", options.preflightData.map((item) => encodeMoodlePreflightData(item)))),
+          ...(options.preflightData == null ? [] : brackets("preflightdata", options.preflightData.map((item) => encodeMoodleNamedValue(item)))),
         ],
         auth: auth,
       },
@@ -249,10 +249,10 @@ export class MoodleQuizApi {
    */
   async saveAttempt(
     attemptId: number,
-    data: MoodlePreference[],
+    data: MoodleKeyValue[],
     auth: MoodleTokenAuth,
     options: {
-      preflightData?: MoodlePreflightData[] | null;
+      preflightData?: MoodleNamedValue[] | null;
     } = {},
   ): Promise<MoodleStatusResponse> {
     return this.client.json(
@@ -262,8 +262,8 @@ export class MoodleQuizApi {
         query: [["wsfunction", "mod_quiz_save_attempt"], ["moodlewsrestformat", "json"]],
         form: [
           ["attemptid", attemptId],
-          ...brackets("data", data.map((item) => encodeMoodlePreference(item))),
-          ...(options.preflightData == null ? [] : brackets("preflightdata", options.preflightData.map((item) => encodeMoodlePreflightData(item)))),
+          ...brackets("data", data.map((item) => encodeMoodleKeyValue(item))),
+          ...(options.preflightData == null ? [] : brackets("preflightdata", options.preflightData.map((item) => encodeMoodleNamedValue(item)))),
         ],
         auth: auth,
       },
@@ -283,7 +283,7 @@ export class MoodleQuizApi {
     quizId: number,
     auth: MoodleTokenAuth,
     options: {
-      preflightData?: MoodlePreflightData[] | null;
+      preflightData?: MoodleNamedValue[] | null;
       forceNew?: boolean | null;
     } = {},
   ): Promise<MoodleStartAttemptResponse> {
@@ -294,7 +294,7 @@ export class MoodleQuizApi {
         query: [["wsfunction", "mod_quiz_start_attempt"], ["moodlewsrestformat", "json"]],
         form: [
           ["quizid", quizId],
-          ...(options.preflightData == null ? [] : brackets("preflightdata", options.preflightData.map((item) => encodeMoodlePreflightData(item)))),
+          ...(options.preflightData == null ? [] : brackets("preflightdata", options.preflightData.map((item) => encodeMoodleNamedValue(item)))),
           ...(options.forceNew == null ? [] : brackets("forcenew", options.forceNew)),
         ],
         auth: auth,

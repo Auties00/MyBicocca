@@ -4,15 +4,15 @@ import { JsonObject, asJsonObject, decodeBoolean, decodeFolded, decodeInteger, d
 import { MoodleWarning, decodeMoodleWarning, encodeMoodleWarning } from "./MoodleBadgeTypes.js";
 import { MoodleFile, decodeMoodleFile, encodeMoodleFile } from "./MoodleCourseTypes.js";
 
-export interface MoodlePreflightData {
+export interface MoodleNamedValue {
   /** data name */
   name: string;
   /** data value */
   value: string;
 }
 
-/** Decodes a {@link MoodlePreflightData}; `undefined` when `json` isn't an object. */
-export function decodeMoodlePreflightData(json: unknown): MoodlePreflightData | undefined {
+/** Decodes a {@link MoodleNamedValue}; `undefined` when `json` isn't an object. */
+export function decodeMoodleNamedValue(json: unknown): MoodleNamedValue | undefined {
   const object = asJsonObject(json);
   if (object === undefined) return undefined;
   return {
@@ -21,7 +21,7 @@ export function decodeMoodlePreflightData(json: unknown): MoodlePreflightData | 
   };
 }
 
-export function encodeMoodlePreflightData(value: MoodlePreflightData): JsonObject {
+export function encodeMoodleNamedValue(value: MoodleNamedValue): JsonObject {
   return {
     "name": value.name,
     "value": value.value,

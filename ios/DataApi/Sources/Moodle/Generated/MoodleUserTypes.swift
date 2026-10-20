@@ -99,7 +99,7 @@ public struct MoodleCourseUserProfile: Codable, Hashable, Sendable {
     /// User custom fields (also known as user profile fields)
     public var customFields: [MoodleUserCustomField]
     /// Users preferences
-    public var preferences: [MoodlePreference]
+    public var preferences: [MoodleKeyValue]
     /// user groups
     public var groups: [MoodleUserGroup]
     /// user roles
@@ -139,7 +139,7 @@ public struct MoodleCourseUserProfile: Codable, Hashable, Sendable {
         profileImageUrlSmall: String = "",
         profileImageUrl: String = "",
         customFields: [MoodleUserCustomField] = [],
-        preferences: [MoodlePreference] = [],
+        preferences: [MoodleKeyValue] = [],
         groups: [MoodleUserGroup] = [],
         roles: [MoodleUserRole] = [],
         enrolledCourses: [MoodleUserEnrolledCourse] = []
@@ -252,7 +252,7 @@ public struct MoodleCourseUserProfile: Codable, Hashable, Sendable {
         self.profileImageUrlSmall = container.decodeLenient(String.self, forKey: .profileImageUrlSmall) ?? ""
         self.profileImageUrl = container.decodeLenient(String.self, forKey: .profileImageUrl) ?? ""
         self.customFields = container.decodeLenient([MoodleUserCustomField].self, forKey: .customFields) ?? []
-        self.preferences = container.decodeLenient([MoodlePreference].self, forKey: .preferences) ?? []
+        self.preferences = container.decodeLenient([MoodleKeyValue].self, forKey: .preferences) ?? []
         self.groups = container.decodeLenient([MoodleUserGroup].self, forKey: .groups) ?? []
         self.roles = container.decodeLenient([MoodleUserRole].self, forKey: .roles) ?? []
         self.enrolledCourses = container.decodeLenient([MoodleUserEnrolledCourse].self, forKey: .enrolledCourses) ?? []
@@ -351,7 +351,7 @@ public struct MoodleUserCustomField: Codable, Hashable, Sendable {
     }
 }
 
-public struct MoodlePreference: Codable, Hashable, Sendable {
+public struct MoodleKeyValue: Codable, Hashable, Sendable {
     /// The name of the preferences
     public var name: String
     /// The value of the preference
@@ -569,12 +569,12 @@ public struct MoodlePrivateFilesInfo: Codable, Hashable, Sendable {
 
 public struct MoodleUserPreferencesResponse: Codable, Hashable, Sendable {
     /// User custom fields (also known as user profile fields)
-    public var preferences: [MoodlePreference]
+    public var preferences: [MoodleKeyValue]
     /// list of warnings
     public var warnings: [MoodleWarning]
 
     public init(
-        preferences: [MoodlePreference] = [],
+        preferences: [MoodleKeyValue] = [],
         warnings: [MoodleWarning] = []
     ) {
         self.preferences = preferences
@@ -588,7 +588,7 @@ public struct MoodleUserPreferencesResponse: Codable, Hashable, Sendable {
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.preferences = container.decodeLenient([MoodlePreference].self, forKey: .preferences) ?? []
+        self.preferences = container.decodeLenient([MoodleKeyValue].self, forKey: .preferences) ?? []
         self.warnings = container.decodeLenient([MoodleWarning].self, forKey: .warnings) ?? []
     }
 
@@ -663,7 +663,7 @@ public struct MoodleUser: Codable, Hashable, Sendable {
     /// User custom fields (also known as user profile fields)
     public var customFields: [MoodleUserCustomField]
     /// Users preferences
-    public var preferences: [MoodlePreference]
+    public var preferences: [MoodleKeyValue]
 
     public init(
         id: Int = 0,
@@ -697,7 +697,7 @@ public struct MoodleUser: Codable, Hashable, Sendable {
         profileImageUrlSmall: String = "",
         profileImageUrl: String = "",
         customFields: [MoodleUserCustomField] = [],
-        preferences: [MoodlePreference] = []
+        preferences: [MoodleKeyValue] = []
     ) {
         self.id = id
         self.username = username
@@ -801,7 +801,7 @@ public struct MoodleUser: Codable, Hashable, Sendable {
         self.profileImageUrlSmall = container.decodeLenient(String.self, forKey: .profileImageUrlSmall) ?? ""
         self.profileImageUrl = container.decodeLenient(String.self, forKey: .profileImageUrl) ?? ""
         self.customFields = container.decodeLenient([MoodleUserCustomField].self, forKey: .customFields) ?? []
-        self.preferences = container.decodeLenient([MoodlePreference].self, forKey: .preferences) ?? []
+        self.preferences = container.decodeLenient([MoodleKeyValue].self, forKey: .preferences) ?? []
     }
 
     public func encode(to encoder: Encoder) throws {

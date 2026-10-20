@@ -5,7 +5,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class MoodlePreflightData(
+data class MoodleNamedValue(
     /** data name */
     @SerialName("name")
     val name: String = "",
