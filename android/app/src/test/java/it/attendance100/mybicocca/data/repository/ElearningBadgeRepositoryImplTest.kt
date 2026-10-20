@@ -17,8 +17,9 @@ import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncScope
 import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncStateDao
 import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncStateEntity
 import it.attendance100.mybicocca.data.remote.elearning.api.ElearningApi
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningGetUserBadgesResponse
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningUserBadge
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleUserBadgesResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleUserBadge
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -45,6 +46,7 @@ class ElearningBadgeRepositoryImplTest {
     private val syncStateDao = mockk<ElearningSyncStateDao>(relaxed = true)
     private val elearningApi = mockk<ElearningApi>(relaxed = true)
     private val token = "x".repeat(32)
+    private val auth = MoodleTokenAuth(token)
     private val stalePolicy = StalePolicy(defaultTtlMs = 60_000L)
 
     private fun newRepository(): ElearningBadgeRepositoryImpl {
@@ -94,9 +96,9 @@ class ElearningBadgeRepositoryImplTest {
     fun `refreshBadges account-wide replaces the null scope and stamps scope id zero`() = runTest {
         val repository = newRepository()
         coEvery {
-            elearningApi.badges.getUserBadges(token, lmsUserId, null, 0, 0, null, false)
-        } returns ElearningGetUserBadgesResponse(
-            badges = listOf(ElearningUserBadge(id = 9, name = "Pioniere")),
+            elearningApi.moodle.badge.getUserBadges(userId = lmsUserId, courseId = null, page = 0, perPage = 0, onlyPublic = false, auth = auth)
+        } returns MoodleUserBadgesResponse(
+            badges = listOf(MoodleUserBadge(id = 9, name = "Pioniere")),
         )
 
         repository.refreshBadges(accountId, courseId = null, force = false)
@@ -113,8 +115,8 @@ class ElearningBadgeRepositoryImplTest {
     fun `refreshBadges per-course passes the course id and stamps it as the scope id`() = runTest {
         val repository = newRepository()
         coEvery {
-            elearningApi.badges.getUserBadges(token, lmsUserId, courseId.value, 0, 0, null, false)
-        } returns ElearningGetUserBadgesResponse(badges = emptyList())
+            elearningApi.moodle.badge.getUserBadges(userId = lmsUserId, courseId = courseId.value, page = 0, perPage = 0, onlyPublic = false, auth = auth)
+        } returns MoodleUserBadgesResponse(badges = emptyList())
 
         repository.refreshBadges(accountId, courseId, force = false)
 
@@ -138,7 +140,7 @@ class ElearningBadgeRepositoryImplTest {
 
         repository.refreshBadges(accountId, courseId = null, force = false)
 
-        coVerify(exactly = 0) { elearningApi.badges.getUserBadges(any(), any(), any(), any(), any(), any(), any()) }
+        coVerify(exactly = 0) { elearningApi.moodle.badge.getUserBadges(any(), any(), any(), any(), any(), any(), any()) }
         coVerify(exactly = 0) { badgeDao.replaceForCourse(any(), any(), any()) }
     }
 
@@ -154,12 +156,12 @@ class ElearningBadgeRepositoryImplTest {
             lastRefreshedAtMs = System.currentTimeMillis(),
         )
         coEvery {
-            elearningApi.badges.getUserBadges(token, lmsUserId, null, 0, 0, null, false)
-        } returns ElearningGetUserBadgesResponse(badges = emptyList())
+            elearningApi.moodle.badge.getUserBadges(userId = lmsUserId, courseId = null, page = 0, perPage = 0, onlyPublic = false, auth = auth)
+        } returns MoodleUserBadgesResponse(badges = emptyList())
 
         repository.refreshBadges(accountId, courseId = null, force = true)
 
-        coVerify { elearningApi.badges.getUserBadges(token, lmsUserId, null, 0, 0, null, false) }
+        coVerify { elearningApi.moodle.badge.getUserBadges(userId = lmsUserId, courseId = null, page = 0, perPage = 0, onlyPublic = false, auth = auth) }
     }
 
     @Test

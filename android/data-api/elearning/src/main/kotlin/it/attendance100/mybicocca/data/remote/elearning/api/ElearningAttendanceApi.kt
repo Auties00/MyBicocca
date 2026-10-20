@@ -10,11 +10,11 @@ import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceM
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceStatusOption
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceSummary
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceViewResponse
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningCourseModule
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningGetFilteredCourseModulesRequest
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningGetMobileContentRequest
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningGetMobileContentResponse
 import it.attendance100.mybicocca.data.remote.elearning.exception.ElearningException
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseModule
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleNamedValue
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleOption
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
 import kotlinx.serialization.json.Json
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
@@ -31,10 +31,12 @@ import org.jsoup.nodes.Document
  *
  * @param client The shared [HttpClient] instance
  * @param json The shared [Json] instance
+ * @param moodle The web service functions the plugin's views are reached through
  */
 class ElearningAttendanceApi(
     client: HttpClient,
-    json: Json
+    json: Json,
+    private val moodle: MoodleApi,
 ) : ElearningAbstractApi(client, json) {
 
     companion object {
@@ -87,14 +89,16 @@ class ElearningAttendanceApi(
     suspend fun getAttendanceModules(
         wsToken: String,
         courseId: Int
-    ): List<ElearningCourseModule> {
-        val response = executeAuthenticatedRequest(
-            wsToken,
-            ElearningGetFilteredCourseModulesRequest(courseId, ATTENDANCE_MODULE_NAME)
+    ): List<MoodleCourseModule> {
+        // Only attendance modules, and without their file listings, to keep the response small.
+        val sections = moodle.course.getContents(
+            courseId = courseId,
+            options = listOf(MoodleOption("modname", ATTENDANCE_MODULE_NAME), MoodleOption("excludecontents", "1")),
+            auth = MoodleTokenAuth(wsToken),
         )
-        return response.sections
+        return sections
             .flatMap { it.modules }
-            .filter { it.moduleName == ATTENDANCE_MODULE_NAME }
+            .filter { it.modName == ATTENDANCE_MODULE_NAME }
     }
 
     /**
@@ -290,15 +294,13 @@ class ElearningAttendanceApi(
         method: String,
         args: Map<String, String>
     ): String? {
-        val response: ElearningGetMobileContentResponse = executeAuthenticatedRequest(
-            wsToken,
-            ElearningGetMobileContentRequest(
-                component = MOBILE_COMPONENT,
-                method = method,
-                args = args
-            )
+        val content = moodle.mobile.getContent(
+            component = MOBILE_COMPONENT,
+            method = method,
+            args = args.map { (name, value) -> MoodleNamedValue(name, value) },
+            auth = MoodleTokenAuth(wsToken),
         )
-        return response.templates.firstOrNull()?.html
+        return content.templates.firstOrNull()?.html
     }
 
     /**

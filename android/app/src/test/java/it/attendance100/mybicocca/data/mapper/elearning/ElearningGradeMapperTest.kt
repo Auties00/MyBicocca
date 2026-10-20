@@ -3,8 +3,8 @@ package it.attendance100.mybicocca.data.mapper.elearning
 import com.google.common.truth.Truth.assertThat
 import it.attendance100.mybicocca.data.local.elearning.grade.CourseGradeOverviewEntity
 import it.attendance100.mybicocca.data.local.elearning.grade.GradeItemEntity
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningCourseGrade
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningGradeItem
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseGrade
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleGradeItem
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.domain.model.elearning.grade.GradeItemType
@@ -23,16 +23,16 @@ class ElearningGradeMapperTest {
 
     private fun gradeItem(
         id: Int = 100,
-        itemName: String? = "Midterm",
-        itemType: String? = "mod",
-        itemModule: String? = "assign",
+        itemName: String = "Midterm",
+        itemType: String = "mod",
+        itemModule: String = "assign",
         gradeRaw: Double? = 27.0,
         gradeMax: Double? = 30.0,
         percentageFormatted: String? = "90,00 %",
         gradeFormatted: String? = "27,00",
         feedback: String? = "well done",
         gradeDateGraded: Long? = 1_500L,
-    ) = ElearningGradeItem(
+    ) = MoodleGradeItem(
         id = id,
         itemName = itemName,
         itemType = itemType,
@@ -57,20 +57,20 @@ class ElearningGradeMapperTest {
     }
 
     @Test
-    fun `toEntity falls back to the activity module when name is null`() {
-        assertThat(gradeItem(itemName = null, itemModule = "assign").toEntity(account, 5, 0).name)
+    fun `toEntity falls back to the activity module when name is empty`() {
+        assertThat(gradeItem(itemName = "", itemModule = "assign").toEntity(account, 5, 0).name)
             .isEqualTo("assign")
     }
 
     @Test
     fun `toEntity uses empty name when both name and module are absent`() {
-        assertThat(gradeItem(itemName = null, itemModule = null).toEntity(account, 5, 0).name)
+        assertThat(gradeItem(itemName = "", itemModule = "").toEntity(account, 5, 0).name)
             .isEqualTo("")
     }
 
     @Test
-    fun `toEntity defaults a null itemtype to other`() {
-        assertThat(gradeItem(itemType = null).toEntity(account, 5, 0).typeRaw).isEqualTo("other")
+    fun `toEntity defaults an empty itemtype to other`() {
+        assertThat(gradeItem(itemType = "").toEntity(account, 5, 0).typeRaw).isEqualTo("other")
     }
 
     @Test
@@ -164,7 +164,7 @@ class ElearningGradeMapperTest {
 
     @Test
     fun `course grade toEntity parses the raw value and stores caller name`() {
-        val dto = ElearningCourseGrade(courseId = 5, grade = "27,5", rawGrade = "27.5", rank = 3)
+        val dto = MoodleCourseGrade(courseId = 5, grade = "27,5", rawGrade = "27.5", rank = 3)
         val entity = dto.toEntity(account, courseName = "Analisi")
         assertThat(entity.courseId).isEqualTo(5)
         assertThat(entity.courseName).isEqualTo("Analisi")
@@ -175,7 +175,7 @@ class ElearningGradeMapperTest {
 
     @Test
     fun `course grade toEntity stores an empty name when none supplied`() {
-        val dto = ElearningCourseGrade(courseId = 5, grade = "-", rawGrade = null)
+        val dto = MoodleCourseGrade(courseId = 5, grade = "-", rawGrade = "")
         val entity = dto.toEntity(account, courseName = null)
         assertThat(entity.courseName).isEqualTo("")
         assertThat(entity.grade).isNull()
@@ -183,7 +183,7 @@ class ElearningGradeMapperTest {
 
     @Test
     fun `course grade toEntity yields null grade for an unparseable raw value`() {
-        val dto = ElearningCourseGrade(courseId = 5, grade = "-", rawGrade = "n/a")
+        val dto = MoodleCourseGrade(courseId = 5, grade = "-", rawGrade = "n/a")
         assertThat(dto.toEntity(account, courseName = "X").grade).isNull()
     }
 

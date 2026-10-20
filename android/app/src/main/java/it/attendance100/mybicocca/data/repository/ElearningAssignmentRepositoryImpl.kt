@@ -17,6 +17,10 @@ import it.attendance100.mybicocca.data.mapper.elearning.toSubmissionConfigJson
 import it.attendance100.mybicocca.data.mapper.elearning.toSubmissionForm
 import it.attendance100.mybicocca.data.mapper.elearning.toSubmissionStatusJson
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningUpload
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleOnlineTextEditor
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleSubmissionPluginData
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
+import it.attendance100.mybicocca.data.remote.elearning.dto.throwIfPresent
 import it.attendance100.mybicocca.di.ApplicationScope
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.elearning.assignment.Assignment
@@ -26,6 +30,9 @@ import it.attendance100.mybicocca.domain.model.elearning.assignment.SubmissionFi
 import it.attendance100.mybicocca.domain.model.elearning.assignment.SubmissionForm
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.domain.repository.ElearningAssignmentRepository
+import java.util.concurrent.ConcurrentHashMap
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
@@ -36,9 +43,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import java.util.concurrent.ConcurrentHashMap
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Room-backed assignment repository on top of Moodle's mod_assign web services.
@@ -103,13 +107,14 @@ class ElearningAssignmentRepositoryImpl @Inject constructor(
     private suspend fun doRefreshForCourse(accountId: AccountId, courseId: CourseId, force: Boolean) {
         if (!force && !isStale(accountId, ElearningSyncScope.COURSE_ASSIGNMENTS, courseId.value.toLong())) return
         val (api, token) = sessionManager.elearning()
-        val response = api.assignments.getAssignmentsForCourse(token, courseId.value)
+        val auth = MoodleTokenAuth(token)
+        val response = api.moodle.assign.getAssignments(courseIds = listOf(courseId.value), auth = auth)
         val assignments = response.courses.flatMap { it.assignments }
         val rows = coroutineScope {
             assignments.map { dto ->
                 async {
                     val status = runCatching {
-                        api.assignments.getSubmissionStatus(token, dto.id, null, null).toSubmissionStatusJson(token)
+                        api.moodle.assign.getSubmissionStatus(dto.id, auth = auth).toSubmissionStatusJson(token)
                     }.getOrDefault(SubmissionStatusJson.NotSubmitted)
                     dto.toEntity(accountId, status, token)
                 }
@@ -121,7 +126,7 @@ class ElearningAssignmentRepositoryImpl @Inject constructor(
 
     override suspend fun refreshSubmissionStatus(accountId: AccountId, assignmentId: AssignmentId) {
         val (api, token) = sessionManager.elearning()
-        val statusJson = api.assignments.getSubmissionStatus(token, assignmentId.value, null, null)
+        val statusJson = api.moodle.assign.getSubmissionStatus(assignmentId.value, auth = MoodleTokenAuth(token))
             .toSubmissionStatusJson(token)
         val row = assignmentDao.observe(accountId.value, assignmentId.value).firstOrNull()
             ?: return
@@ -143,13 +148,13 @@ class ElearningAssignmentRepositoryImpl @Inject constructor(
         val row = assignmentDao.observe(accountId.value, assignmentId.value).firstOrNull()
         val config = row?.submissionConfigJson
             ?.let { runCatching { ElearningJson.decodeFromString(SubmissionConfigJson.serializer(), it) }.getOrNull() }
-            ?: api.assignments.getAssignmentsForCourse(token, courseId.value)
+            ?: api.moodle.assign.getAssignments(courseIds = listOf(courseId.value), auth = MoodleTokenAuth(token))
                 .courses.flatMap { it.assignments }
                 .firstOrNull { it.id == assignmentId.value }
                 ?.toSubmissionConfigJson()
             ?: SubmissionConfigJson()
         val draftsEnabled = row?.allowDrafts ?: true
-        val status = api.assignments.getSubmissionStatus(token, assignmentId.value, null, null)
+        val status = api.moodle.assign.getSubmissionStatus(assignmentId.value, auth = MoodleTokenAuth(token))
         return status.toSubmissionForm(config, draftsEnabled, token)
     }
 
@@ -175,12 +180,15 @@ class ElearningAssignmentRepositoryImpl @Inject constructor(
             files.forEach { add(ElearningUpload(it.fileName, it.mimeType, it.bytes)) }
         }
         val filesItemId = if (uploads.isEmpty()) null else api.files.uploadToDraftArea(token, uploads).first().itemId
-        api.assignments.saveSubmission(
-            wsToken = token,
+        // Online text goes as HTML (format 1); its item id is 0, since the text embeds no files.
+        api.moodle.assign.saveSubmission(
             assignmentId = assignmentId.value,
-            onlineText = onlineText,
-            filesDraftItemId = filesItemId,
-        )
+            pluginData = MoodleSubmissionPluginData(
+                filesFilemanager = filesItemId,
+                onlinetextEditor = onlineText?.let { MoodleOnlineTextEditor(text = it, format = 1, itemId = 0) },
+            ),
+            auth = MoodleTokenAuth(token),
+        ).throwIfPresent()
         refreshSubmissionStatus(accountId, assignmentId)
     }
 
@@ -190,14 +198,15 @@ class ElearningAssignmentRepositoryImpl @Inject constructor(
         acceptStatement: Boolean,
     ) {
         val (api, token) = sessionManager.elearning()
-        api.assignments.submitForGrading(token, assignmentId.value, acceptStatement)
+        api.moodle.assign.submitForGrading(assignmentId.value, acceptStatement, auth = MoodleTokenAuth(token)).throwIfPresent()
         refreshSubmissionStatus(accountId, assignmentId)
     }
 
     override suspend fun removeSubmission(accountId: AccountId, assignmentId: AssignmentId) {
         val account = sessionManager.activeAccount.value ?: error("No active account.")
         val (api, token) = sessionManager.elearning()
-        api.assignments.removeSubmission(token, assignmentId.value, account.learning.lmsUserId)
+        api.moodle.assign.removeSubmission(account.learning.lmsUserId, assignmentId.value, auth = MoodleTokenAuth(token))
+            .warnings.throwIfPresent()
         refreshSubmissionStatus(accountId, assignmentId)
     }
 

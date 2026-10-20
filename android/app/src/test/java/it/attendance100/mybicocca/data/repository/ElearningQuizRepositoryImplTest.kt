@@ -18,9 +18,10 @@ import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncScope
 import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncStateDao
 import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncStateEntity
 import it.attendance100.mybicocca.data.remote.elearning.api.ElearningApi
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttemptDataItem
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningGetQuizzesResponse
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningQuiz
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleKeyValue
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleQuizzesResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleQuiz
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.domain.model.elearning.quiz.AttemptAnswer
@@ -56,6 +57,7 @@ class ElearningQuizRepositoryImplTest {
     private val lmsUserId = 7
     private val account = elearningRepoTestAccount(accountId, lmsUserId)
     private val token = "x".repeat(32)
+    private val auth = MoodleTokenAuth(token)
 
     private val sessionManager = mockk<SessionManager>(relaxed = true)
     private val quizDao = mockk<QuizDao>(relaxed = true)
@@ -103,10 +105,10 @@ class ElearningQuizRepositoryImplTest {
     fun `refreshForCourse writes quizzes through and stamps`() = runTest {
         val scope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher(testScheduler))
         val repository = newRepository(scope)
-        coEvery { elearningApi.quizzes.getQuizzesForCourse(token, courseId.value) } returns
-            ElearningGetQuizzesResponse(
+        coEvery { elearningApi.moodle.quiz.getQuizzesByCourses(courseIds = listOf(courseId.value), auth = auth) } returns
+            MoodleQuizzesResponse(
                 quizzes = listOf(
-                    ElearningQuiz(id = 100, courseId = courseId.value, courseModuleId = 9, name = "Quiz 1"),
+                    MoodleQuiz(id = 100, course = courseId.value, courseModule = 9, name = "Quiz 1"),
                 ),
             )
 
@@ -126,9 +128,9 @@ class ElearningQuizRepositoryImplTest {
         val scope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher(testScheduler))
         val repository = newRepository(scope)
         val gate = CompletableDeferred<Unit>()
-        coEvery { elearningApi.quizzes.getQuizzesForCourse(token, courseId.value) } coAnswers {
+        coEvery { elearningApi.moodle.quiz.getQuizzesByCourses(courseIds = listOf(courseId.value), auth = auth) } coAnswers {
             gate.await()
-            ElearningGetQuizzesResponse(quizzes = emptyList())
+            MoodleQuizzesResponse(quizzes = emptyList())
         }
 
         val first = launch { repository.refreshForCourse(accountId, courseId, force = false) }
@@ -139,7 +141,7 @@ class ElearningQuizRepositoryImplTest {
         gate.complete(Unit)
         joinAll(first, second)
 
-        coVerify(exactly = 1) { elearningApi.quizzes.getQuizzesForCourse(token, courseId.value) }
+        coVerify(exactly = 1) { elearningApi.moodle.quiz.getQuizzesByCourses(courseIds = listOf(courseId.value), auth = auth) }
         scope.coroutineContext[Job]?.cancel()
     }
 
@@ -158,7 +160,7 @@ class ElearningQuizRepositoryImplTest {
 
         repository.refreshForCourse(accountId, courseId, force = false)
 
-        coVerify(exactly = 0) { elearningApi.quizzes.getQuizzesForCourse(any(), any()) }
+        coVerify(exactly = 0) { elearningApi.moodle.quiz.getQuizzesByCourses(any(), any()) }
         scope.coroutineContext[Job]?.cancel()
     }
 
@@ -176,8 +178,8 @@ class ElearningQuizRepositoryImplTest {
         coVerify { quizDao.upsertAnswers(capture(rows)) }
         assertThat(rows.captured.first().attemptId).isEqualTo(attemptId.value)
         assertThat(rows.captured.first().slot).isEqualTo(1)
-        val items = slot<List<ElearningAttemptDataItem>>()
-        coVerify { elearningApi.quizzes.saveAttempt(token, attemptId.value, capture(items), emptyList()) }
+        val items = slot<List<MoodleKeyValue>>()
+        coVerify { elearningApi.moodle.quiz.saveAttempt(attemptId.value, capture(items), emptyList(), auth) }
         assertThat(items.captured.map { it.name }).containsExactly("q1:answer", "q1:sequencecheck")
         scope.coroutineContext[Job]?.cancel()
     }
@@ -193,9 +195,9 @@ class ElearningQuizRepositoryImplTest {
 
         repository.submitAttempt(accountId, attemptId, answers, timeUp = false)
 
-        val items = slot<List<ElearningAttemptDataItem>>()
+        val items = slot<List<MoodleKeyValue>>()
         coVerify {
-            elearningApi.quizzes.processAttempt(token, attemptId.value, capture(items), true, false, emptyList())
+            elearningApi.moodle.quiz.processAttempt(attemptId.value, capture(items), true, false, emptyList(), auth)
         }
         assertThat(items.captured).hasSize(2)
         coVerify { quizDao.deleteAnswers(accountId.value, attemptId.value) }

@@ -8,7 +8,7 @@ import it.attendance100.mybicocca.data.local.account.MyBicoccaDatabase
 import it.attendance100.mybicocca.data.local.elearning.sync.ElearningJson
 import it.attendance100.mybicocca.data.mapper.elearning.SubmissionStatusJson
 import it.attendance100.mybicocca.data.mapper.elearning.toEntity
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAssignment
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAssignment
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -162,14 +162,14 @@ class AssignmentDaoTest {
         dueDateMs: Long?,
         status: SubmissionStatusJson = SubmissionStatusJson.NotSubmitted,
     ): AssignmentEntity {
-        val dto = ElearningAssignment(
+        val dto = MoodleAssignment(
             id = assignmentId,
-            courseModuleId = assignmentId + 1000,
-            courseId = courseId,
+            cmId = assignmentId + 1000,
+            course = courseId,
             name = name,
-            introduction = "<p>intro</p>",
-            dueDateTimestamp = dueDateMs?.let { it / 1000L },
-            submissionDraftsEnabled = 1,
+            intro = "<p>intro</p>",
+            dueDate = dueDateMs?.let { it / 1000L } ?: 0L,
+            submissionDrafts = 1,
             requireSubmissionStatement = 0,
         )
         return dto.toEntity(AccountId(accountId), status, wsToken = "WSTOKEN")

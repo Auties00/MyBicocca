@@ -2,9 +2,9 @@ package it.attendance100.mybicocca.data.mapper.elearning
 
 import it.attendance100.mybicocca.data.local.elearning.assignment.AssignmentEntity
 import it.attendance100.mybicocca.data.local.elearning.sync.ElearningJson
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAssignment
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningFile
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningGetSubmissionStatusResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAssignment
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleFile
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleSubmissionStatus
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.elearning.assignment.Assignment
 import it.attendance100.mybicocca.domain.model.elearning.assignment.AssignmentId
@@ -78,9 +78,9 @@ internal data class SubmissionConfigJson(
  * Extracts the submission settings from an assignment's plugin config list, reading
  * the assignsubmission onlinetext/file entries teachers can enable per assignment.
  */
-internal fun ElearningAssignment.toSubmissionConfigJson(): SubmissionConfigJson {
+internal fun MoodleAssignment.toSubmissionConfigJson(): SubmissionConfigJson {
     fun config(plugin: String, name: String): String? = configs
-        ?.firstOrNull { it.subtype == "assignsubmission" && it.plugin == plugin && it.name == name }
+        .firstOrNull { it.subtype == "assignsubmission" && it.plugin == plugin && it.name == name }
         ?.value
     return SubmissionConfigJson(
         onlineTextEnabled = config("onlinetext", "enabled") == "1",
@@ -98,28 +98,28 @@ internal fun ElearningAssignment.toSubmissionConfigJson(): SubmissionConfigJson 
  * caller-resolved submission status, and the parsed submission config into the JSON
  * columns. Epoch-second timestamps are normalized to milliseconds.
  */
-internal fun ElearningAssignment.toEntity(
+internal fun MoodleAssignment.toEntity(
     accountId: AccountId,
     submissionStatus: SubmissionStatusJson,
     wsToken: String,
 ): AssignmentEntity {
-    val introFiles = (introductionFiles.orEmpty() + introductionAttachments.orEmpty())
+    val introFiles = (introFiles + introAttachments)
         .map { it.toAttachmentJson(wsToken) }
     return AssignmentEntity(
         accountId = accountId.value,
         assignmentId = id,
-        courseId = courseId,
-        cmId = courseModuleId,
+        courseId = course,
+        cmId = cmId.takeIf { it != 0 },
         name = name,
-        intro = introduction,
+        intro = intro,
         introFilesJson = if (introFiles.isEmpty()) null else ElearningJson.encodeToString(introFiles),
-        dueDateMs = dueDateTimestamp.toMillisOrNullSec(),
-        allowSubmissionsFromMs = allowSubmissionsFromTimestamp.toMillisOrNullSec(),
-        cutoffDateMs = cutOffDateTimestamp.toMillisOrNullSec(),
-        gradingDueDateMs = gradingDueDateTimestamp.toMillisOrNullSec(),
-        maxAttempts = maximumAttempts,
+        dueDateMs = dueDate.toMillisOrNullSec(),
+        allowSubmissionsFromMs = allowSubmissionsFromDate.toMillisOrNullSec(),
+        cutoffDateMs = cutoffDate.toMillisOrNullSec(),
+        gradingDueDateMs = gradingDueDate.toMillisOrNullSec(),
+        maxAttempts = maxAttempts,
         allowedExtensionsCsv = null,
-        allowDrafts = submissionDraftsEnabled == 1,
+        allowDrafts = submissionDrafts == 1,
         submissionStatusJson = ElearningJson.encodeToString(SubmissionStatusJson.serializer(), submissionStatus),
         submissionConfigJson = ElearningJson.encodeToString(
             SubmissionConfigJson.serializer(),
@@ -142,7 +142,7 @@ private const val DEFAULT_SUBMISSION_STATEMENT =
  * lastattempt.submission.plugins so an in-progress draft pre-fills the editor, and
  * file URLs get the ws token appended for direct download.
  */
-internal fun ElearningGetSubmissionStatusResponse.toSubmissionForm(
+internal fun MoodleSubmissionStatus.toSubmissionForm(
     config: SubmissionConfigJson,
     submissionDraftsEnabled: Boolean,
     wsToken: String,
@@ -183,13 +183,13 @@ internal fun ElearningGetSubmissionStatusResponse.toSubmissionForm(
  * beats submitted beats draft beats nothing. Submitted files get the ws token appended
  * to their URLs; the feedback text comes from the first feedback plugin's editor field.
  */
-internal fun ElearningGetSubmissionStatusResponse.toSubmissionStatusJson(wsToken: String): SubmissionStatusJson {
+internal fun MoodleSubmissionStatus.toSubmissionStatusJson(wsToken: String): SubmissionStatusJson {
     val attempt = lastAttempt?.submission ?: return SubmissionStatusJson.NotSubmitted
-    val submittedAtMs = (attempt.modifiedTimestamp ?: attempt.createdTimestamp).toMillisOrNullSec()
+    val submittedAtMs = (attempt.timeModified.takeIf { it > 0 } ?: attempt.timeCreated).toMillisOrNullSec()
     val isGraded = lastAttempt?.graded == true
     val grade = feedback?.grade?.grade?.toDoubleOrNull()
     val feedbackText = feedback?.plugins?.firstNotNullOfOrNull { plugin ->
-        plugin.editorFields?.firstOrNull()?.text
+        plugin.editorFields.firstOrNull()?.text
     }
     val files = attempt.plugins.orEmpty().flatMap { plugin ->
         plugin.fileAreas.orEmpty().flatMap { area -> area.files.orEmpty() }
@@ -205,12 +205,12 @@ internal fun ElearningGetSubmissionStatusResponse.toSubmissionStatusJson(wsToken
             maxGrade = null,
             feedback = feedbackText,
         )
-        attempt.isSubmitted -> SubmissionStatusJson.Submitted(
+        attempt.status == "submitted" -> SubmissionStatusJson.Submitted(
             submittedAtMs = submittedAtMs,
             files = files,
             onlineText = onlineText,
         )
-        attempt.isDraft -> SubmissionStatusJson.Draft(savedAtMs = submittedAtMs)
+        attempt.status == "draft" -> SubmissionStatusJson.Draft(savedAtMs = submittedAtMs)
         else -> SubmissionStatusJson.NotSubmitted
     }
 }
@@ -273,7 +273,7 @@ internal fun AssignmentEntity.toDomain(): Assignment {
  * leaf segment when the name is missing and appending the ws token to webservice
  * pluginfile URLs.
  */
-internal fun ElearningFile.toAttachmentJson(wsToken: String): AttachmentRefJson =
+internal fun MoodleFile.toAttachmentJson(wsToken: String): AttachmentRefJson =
     AttachmentRefJson(
         fileName = fileName ?: fileUrl?.substringAfterLast('/') ?: "file",
         fileUrl = fileUrl?.let { appendWsToken(it, wsToken) },

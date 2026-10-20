@@ -5,12 +5,12 @@ import it.attendance100.mybicocca.data.local.elearning.quiz.QuizAttemptAnswerEnt
 import it.attendance100.mybicocca.data.local.elearning.quiz.QuizAttemptEntity
 import it.attendance100.mybicocca.data.local.elearning.quiz.QuizBestGradeEntity
 import it.attendance100.mybicocca.data.local.elearning.quiz.QuizEntity
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningGetAttemptDataResponse
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningGetAttemptReviewResponse
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningGetUserBestGradeResponse
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningQuiz
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningQuizAttempt
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningQuizQuestion
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAttemptDataResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAttemptReviewResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleUserBestGradeResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleQuiz
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleQuizAttempt
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleQuizQuestion
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.domain.model.elearning.quiz.AttemptAnswer
@@ -34,25 +34,25 @@ class ElearningQuizMapperTest {
         id: Int = 10,
         courseId: Int = 5,
         courseModuleId: Int = 77,
-        timeLimitSeconds: Int? = 3600,
+        timeLimitSeconds: Long? = 3600,
         gracePeriodSeconds: Int? = 600,
         sumGrades: Double? = 10.0,
         maximumGrade: Double? = 30.0,
         openTimestamp: Long? = 1_000L,
         closeTimestamp: Long? = 2_000L,
-    ) = ElearningQuiz(
+    ) = MoodleQuiz(
         id = id,
-        courseId = courseId,
-        courseModuleId = courseModuleId,
+        course = courseId,
+        courseModule = courseModuleId,
         name = "Quiz 1",
-        introduction = "intro",
-        openTimestamp = openTimestamp,
-        closeTimestamp = closeTimestamp,
-        timeLimitSeconds = timeLimitSeconds,
-        gracePeriodSeconds = gracePeriodSeconds,
-        maximumAttempts = 3,
+        intro = "intro",
+        timeOpen = openTimestamp,
+        timeClose = closeTimestamp,
+        timeLimit = timeLimitSeconds,
+        gracePeriod = gracePeriodSeconds,
+        attempts = 3,
         sumGrades = sumGrades,
-        maximumGrade = maximumGrade,
+        grade = maximumGrade,
         preferredBehaviour = "deferredfeedback",
     )
 
@@ -127,15 +127,15 @@ class ElearningQuizMapperTest {
         layout: String? = "1,2,0,3,0",
         isPreview: Int? = 0,
         startTimestamp: Long? = 1_000L,
-    ) = ElearningQuizAttempt(
+    ) = MoodleQuizAttempt(
         id = id,
-        quizId = quizId,
+        quiz = quizId,
         userId = userId,
-        attemptNumber = attemptNumber,
+        attempt = attemptNumber,
         state = state,
         layout = layout,
-        isPreview = isPreview,
-        startTimestamp = startTimestamp,
+        preview = isPreview,
+        timeStart = startTimestamp,
         sumGrades = 8.0,
     )
 
@@ -206,7 +206,7 @@ class ElearningQuizMapperTest {
 
     @Test
     fun `best grade response toEntity injects the quiz max grade as the ceiling`() {
-        val response = ElearningGetUserBestGradeResponse(hasGrade = true, grade = 27.0, gradeToPass = 18.0)
+        val response = MoodleUserBestGradeResponse(hasGrade = true, grade = 27.0, gradeToPass = 18.0)
         val entity = response.toEntity(account, QuizId(10), quizMaxGrade = 30.0)
         assertThat(entity.quizId).isEqualTo(10)
         assertThat(entity.grade).isEqualTo(27.0)
@@ -222,21 +222,21 @@ class ElearningQuizMapperTest {
         assertThat(domain.maxGrade).isEqualTo(30.0)
     }
 
-    private fun question(slot: Int, page: Int?, type: String? = "multichoice") = ElearningQuizQuestion(
+    private fun question(slot: Int, page: Int, type: String = "multichoice") = MoodleQuizQuestion(
         slot = slot,
         type = type,
         page = page,
         html = "<div>Q$slot</div>",
         state = "todo",
         mark = "1.5",
-        maximumMark = 2.0,
+        maxMark = 2.0,
         flagged = false,
         sequenceCheck = 3,
     )
 
     @Test
     fun `attempt data toDomain reads the minus one next-page marker as the end`() {
-        val response = ElearningGetAttemptDataResponse(
+        val response = MoodleAttemptDataResponse(
             attempt = attempt(),
             nextPage = -1,
             questions = listOf(question(slot = 1, page = 0)),
@@ -250,7 +250,7 @@ class ElearningQuizMapperTest {
 
     @Test
     fun `attempt data toDomain keeps a non-negative next page`() {
-        val response = ElearningGetAttemptDataResponse(
+        val response = MoodleAttemptDataResponse(
             attempt = attempt(),
             nextPage = 2,
             questions = emptyList(),
@@ -260,10 +260,10 @@ class ElearningQuizMapperTest {
 
     @Test
     fun `question toDomain parses the mark, keeps sequence-check as string, defaults type`() {
-        val response = ElearningGetAttemptDataResponse(
+        val response = MoodleAttemptDataResponse(
             attempt = attempt(),
             nextPage = -1,
-            questions = listOf(question(slot = 4, page = 0, type = null)),
+            questions = listOf(question(slot = 4, page = 0, type = "")),
         )
         val q = response.toDomain(AttemptId(100), page = 0).questions.single()
         assertThat(q.slot).isEqualTo(4)
@@ -277,7 +277,7 @@ class ElearningQuizMapperTest {
 
     @Test
     fun `attempt review toDomain regroups the flat question list into ordered pages`() {
-        val response = ElearningGetAttemptReviewResponse(
+        val response = MoodleAttemptReviewResponse(
             grade = "27,00",
             attempt = attempt().copy(sumGrades = 9.0),
             questions = listOf(
@@ -298,11 +298,10 @@ class ElearningQuizMapperTest {
 
     @Test
     fun `attempt review toDomain takes overall feedback from the first additional-data block`() {
-        val response = ElearningGetAttemptReviewResponse(
-            grade = null,
+        val response = MoodleAttemptReviewResponse(
             attempt = attempt(),
             additionalData = listOf(
-                it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAdditionalData(
+                it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAttemptReviewData(
                     id = "feedback",
                     title = "Feedback",
                     content = "Ottimo lavoro",
@@ -311,17 +310,6 @@ class ElearningQuizMapperTest {
             questions = listOf(question(slot = 1, page = 0)),
         )
         assertThat(response.toDomain(AttemptId(100)).feedback).isEqualTo("Ottimo lavoro")
-    }
-
-    @Test
-    fun `attempt review toDomain defaults a null page index to zero`() {
-        val response = ElearningGetAttemptReviewResponse(
-            grade = null,
-            attempt = attempt(),
-            questions = listOf(question(slot = 1, page = null)),
-        )
-        val review = response.toDomain(AttemptId(100))
-        assertThat(review.pages.single().pageIndex).isEqualTo(0)
     }
 
     @Test
