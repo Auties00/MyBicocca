@@ -124,7 +124,11 @@ class ElearningApi(
     /**
      * The public course pages: the course catalog and each course's info page.
      */
-    val courses: ElearningCourseApi = ElearningCourseApi(client, json)
+    /** The public pages, read on a client of their own, without the session, as their anonymous view. */
+    private val publicPages = MoodleWebApi(httpClientConfig)
+
+    /** The public course catalog and course pages. */
+    val catalog: MoodleWebCatalogApi get() = publicPages.catalog
 
     /**
      * Attendance (mod_attendance), whose views are reached through the mobile app bridge.
@@ -134,7 +138,7 @@ class ElearningApi(
     /**
      * Kaltura video resource playback (mod/kalvidres).
      */
-    val kaltura: ElearningKalturaApi = ElearningKalturaApi(client, json)
+    val kaltura: ElearningKalturaApi = ElearningKalturaApi(client, json, MoodleWebMediaApi(client, json))
 
     /**
      * Downloads of files served by the web service file endpoint, and uploads to draft areas.
@@ -152,6 +156,7 @@ class ElearningApi(
     override fun close() {
         client.close()
         moodle.close()
+        publicPages.close()
     }
 
     companion object {

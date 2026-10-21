@@ -7,14 +7,13 @@ import io.ktor.client.statement.request
 import io.ktor.http.HttpStatusCode
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceMarkResult
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceMarkableSession
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceStatusOption
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceSummary
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceViewResponse
 import it.attendance100.mybicocca.data.remote.elearning.exception.ElearningException
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseModule
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleNamedValue
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleOption
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleWebScrapers
 import kotlinx.serialization.json.Json
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
@@ -60,10 +59,7 @@ class ElearningAttendanceApi(
          */
         private val TRANSLATE_KEY_REGEX = Regex("plugin\\.mod_attendance\\.(\\w+)")
 
-        /**
-         * Captures the `sessid` of an `attendance.php` link, or of a mobile view mark
-         * action (`sessid: 123`).
-         */
+        /** Captures the `sessid` of a mobile view mark action (`sessid: 123`). */
         private val SESSID_REGEX = Regex("sessid[=:]\\s*(\\d+)")
 
         /**
@@ -129,67 +125,12 @@ class ElearningAttendanceApi(
         if (response.request.url.encodedPath != VIEW_PAGE_PATH) {
             return ElearningAttendanceViewResponse.RequiresReauth
         }
-        val document = Jsoup.parse(response.bodyAsText())
+        val view = MoodleWebScrapers.attendanceView(Jsoup.parse(response.bodyAsText()))
         return ElearningAttendanceViewResponse.Success(
-            summary = parseSummaryTable(document),
-            submittableSessionIds = parseSubmittableSessionIds(document)
+            summary = view?.summary,
+            submittableSessionIds = view?.submittableSessions.orEmpty().map { it.id }.distinct()
         )
     }
-
-    /**
-     * Parses the `attlist` summary table. Its rows carry localized labels, but
-     * `construct_user_data_stat` always emits them in the same order when all sessions are
-     * shown, so the values are read by position:
-     *
-     * ```
-     * Sessioni frequentate:                        10
-     * Punteggio sulle sessione già registrate:     10 / 10
-     * Percentuale sulle sessioni già registrate:   100,0%
-     * Numero totale delle sessioni:                82
-     * Punteggio su tutte le sessioni:              10 / 82
-     * Percentuale su tutte le sessioni:            12,2%
-     * Punteggio massimo possibile:                 82 / 82
-     * Percentuale massima possibile:               100,0%
-     * ```
-     *
-     * @param document The `view.php` page
-     * @return The parsed summary, or null when the page has no summary table
-     */
-    private fun parseSummaryTable(document: Document): ElearningAttendanceSummary? {
-        val values = document.select("table.attlist tr")
-            .mapNotNull { row -> row.select("td").getOrNull(1)?.text()?.trim() }
-        if (values.isEmpty()) {
-            return null
-        }
-
-        return ElearningAttendanceSummary(
-            attendedSessions = values.getOrNull(0)?.toIntOrNull(),
-            pointsTakenLabel = values.getOrNull(1)?.takeIf { it.isNotBlank() },
-            takenSessionsPercentage = values.getOrNull(2)?.parsePercentage(),
-            totalSessions = values.getOrNull(3)?.toIntOrNull(),
-            pointsAllSessionsLabel = values.getOrNull(4)?.takeIf { it.isNotBlank() },
-            allSessionsPercentage = values.getOrNull(5)?.parsePercentage(),
-            maxPossiblePointsLabel = values.getOrNull(6)?.takeIf { it.isNotBlank() },
-            maxPossiblePercentage = values.getOrNull(7)?.parsePercentage()
-        )
-    }
-
-    /**
-     * Collects the sessions the session log offers to submit attendance for. Such a session's
-     * status, points and remarks cells are merged into one cell holding either a link to
-     * `attendance.php?sessid=…` or, for rotating QR sessions, a form with a `sessid` field.
-     * Sessions that already have a status are left out, even when their status can still be
-     * updated.
-     */
-    private fun parseSubmittableSessionIds(document: Document): List<String> =
-        document.select("table.generaltable td[colspan=3]")
-            .mapNotNull { cell ->
-                cell.selectFirst("a[href*=attendance.php]")
-                    ?.attr("href")
-                    ?.let { SESSID_REGEX.find(it)?.groupValues?.get(1) }
-                    ?: cell.selectFirst("input[name=sessid]")?.attr("value")?.takeIf { it.isNotBlank() }
-            }
-            .distinct()
 
     /**
      * Describes the sessions of a module the student may self-mark right now.
@@ -229,17 +170,13 @@ class ElearningAttendanceApi(
                 )
             }.getOrNull() ?: return@mapNotNull null
 
-            val form = Jsoup.parse(formHtml)
-            if (form.selectFirst("span.messages") != null) {
-                return@mapNotNull null
-            }
+            val form = MoodleWebScrapers.attendanceSessionForm(Jsoup.parse(formHtml))
+                ?.takeUnless { it.refused }
+                ?: return@mapNotNull null
             ElearningAttendanceMarkableSession(
                 sessionId = sessionId,
-                requiresPassword = form.selectFirst("[name=studentpass]") != null,
-                statuses = form.select("ion-radio").mapNotNull { radio ->
-                    val id = radio.attr("value").takeIf { it.isNotBlank() } ?: return@mapNotNull null
-                    ElearningAttendanceStatusOption(id = id, description = radio.text().trim())
-                }
+                requiresPassword = form.requiresPassword,
+                statuses = form.statuses,
             )
         }
 
@@ -344,15 +281,4 @@ class ElearningAttendanceApi(
             .lastOrNull { it.isNotBlank() }
         return ElearningAttendanceMarkResult.Marked(statusText)
     }
-
-    /**
-     * Parses a localized percentage label (e.g. "100,0%") into its numeric value.
-     *
-     * @return The percentage in the 0.0 to 100.0 range, or null if not parseable
-     */
-    private fun String.parsePercentage(): Double? = this
-        .removeSuffix("%")
-        .replace(',', '.')
-        .trim()
-        .toDoubleOrNull()
 }

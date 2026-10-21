@@ -32,6 +32,7 @@ import it.attendance100.mybicocca.codegen.model.ScrapeStep
  * | `null-if`                  | a text, or a list of them         |
  * | `query-parameter`          | the parameter name                |
  * | `replace`                  | `{text: replacement}`             |
+ * | `replace-all`              | `{part: replacement}`             |
  * | `equals`, `contains`       | a text                            |
  * | `first-of`                 | a list of pipelines               |
  */
@@ -86,6 +87,7 @@ internal object ScrapeSyntax {
             "null-if" -> ScrapeStep.NullIf(if (argument is List<*>) argument.map { it.toString() } else listOf(text(argument, step)))
             "query-parameter" -> ScrapeStep.QueryParameter(text(argument, step))
             "replace" -> ScrapeStep.Replace(Extensions.stringMap(argument, step))
+            "replace-all" -> ScrapeStep.ReplaceAll(Extensions.stringMap(argument, step))
             "equals" -> ScrapeStep.Equals(text(argument, step))
             "contains" -> ScrapeStep.Contains(text(argument, step))
             "first-of" -> ScrapeStep.FirstOf(

@@ -29,6 +29,7 @@ object DemoScrapers {
         kinds = selectAll(node, ".equipment span").filter { candidate4 -> text(next(candidate4), null, listOf("n/a"))?.contains("available", ignoreCase = true) == true }.mapNotNull { text(it, null, listOf("n/a"))?.let(::parseDemoKind) },
         website = node.let { input5 -> present(select(input5, "a.site")?.absUrl("href")) ?: attribute(select(follow(select(input5, ".map"), "href"), "iframe"), "src", listOf("n/a")) },
         siteId = queryParameter(present(select(node, "a.site")?.absUrl("href")), "id")?.toLongOrNull(),
+        occupancy = present(present(text(select(node, ".occupancy"), null, listOf("n/a"))?.removeSuffix("%"))?.replace(",", "."))?.toDoubleOrNull(),
         notes = lines(selectAll(node, ".label").filter { candidate6 -> text(candidate6, null, listOf("n/a"))?.equals("Notes", ignoreCase = true) == true }.firstOrNull(), listOf("n/a")),
         title = nullIf(text(select(node.ownerDocument(), "h1.page"), ".sr-only", listOf("n/a")), listOf("Untitled")),
         descriptionHtml = present((select(node, ".description") as? Element)?.html()) ?: "",

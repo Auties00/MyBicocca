@@ -21,7 +21,7 @@ class OpenApiPagesTest {
     private val spec: ApiSpec = OpenApiReader().read(
         ReaderContext(Path("src/test/resources/pages"), JsonObject(mapOf("spec" to JsonPrimitive("pages.yaml"))), mayUpdateSpecFiles = false) {}
     )
-    private val operations = spec.modules.single().operations.associateBy { it.name }
+    private val operations = spec.modules.first().operations.associateBy { it.name }
 
     @Test
     fun `reads a valid spec`() {
@@ -52,7 +52,7 @@ class OpenApiPagesTest {
 
     @Test
     fun `reads scraped records and their fields' pipelines`() {
-        val room = spec.modules.single().records.single { it.name == "PagesRoom" }
+        val room = spec.modules.first().records.single { it.name == "PagesRoom" }
         assertEquals(RecordScrape(missing = listOf("Dato mancante")), room.scrape)
         val scrapes = room.fields.associate { it.name to it.scrape }
         assertEquals(listOf(ScrapeStep.Select(".attendance-course-name"), ScrapeStep.OwnText), scrapes["name"])
@@ -82,7 +82,7 @@ class OpenApiPagesTest {
 
     @Test
     fun `reads the codecs of PHP backends`() {
-        val lesson = spec.modules.single().records.single { it.name == "PagesLesson" }
+        val lesson = spec.modules.first().records.single { it.name == "PagesLesson" }
         assertEquals(
             listOf(
                 Codec.EpochSeconds,
@@ -92,5 +92,12 @@ class OpenApiPagesTest {
             ),
             lesson.fields.map { it.codec },
         )
+    }
+
+    @Test
+    fun `creates the modules records name even without operations`() {
+        val templates = spec.modules.single { it.name == "Templates" }
+        assertTrue(templates.operations.isEmpty())
+        assertEquals(listOf("PagesTemplate"), templates.records.map { it.name })
     }
 }

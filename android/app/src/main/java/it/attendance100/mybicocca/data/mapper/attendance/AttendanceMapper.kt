@@ -8,7 +8,7 @@ import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffCertificati
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffCertifyAttendanceResult
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceMarkResult
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceMarkableSession
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceSummary
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleWebAttendanceSummary
 import it.attendance100.mybicocca.domain.model.attendance.AttendanceModuleRef
 import it.attendance100.mybicocca.domain.model.attendance.AttendanceStatusOption
 import it.attendance100.mybicocca.domain.model.attendance.ClassroomAttendance
@@ -34,7 +34,7 @@ fun EasyStaffAttendanceRecord.toDomain(): ClassroomAttendance = ClassroomAttenda
  * Maps a Moodle mod_attendance summary to a session register, labeled with the attendance
  * activity name it was read from.
  */
-fun ElearningAttendanceSummary.toDomain(label: String): SessionAttendance = SessionAttendance(
+fun MoodleWebAttendanceSummary.toDomain(label: String): SessionAttendance = SessionAttendance(
     label = label,
     attendedSessions = attendedSessions,
     recordedPercentage = takenSessionsPercentage,
