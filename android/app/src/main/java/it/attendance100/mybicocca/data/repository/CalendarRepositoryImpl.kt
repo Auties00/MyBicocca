@@ -11,11 +11,10 @@ import it.attendance100.mybicocca.data.local.elearning.deadline.DeadlineDao
 import it.attendance100.mybicocca.data.mapper.calendar.normalizeSubjectName
 import it.attendance100.mybicocca.data.mapper.calendar.toCalendarEvent
 import it.attendance100.mybicocca.data.mapper.calendar.toDomain
+import it.attendance100.mybicocca.data.mapper.calendar.toLesson
 import it.attendance100.mybicocca.data.mapper.calendar.toEntity
 import it.attendance100.mybicocca.data.remote.easystaff.api.EasyStaffApi
-import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffAcademicYear
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffScheduleCell
-import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffStudyProgramSubject
 import it.attendance100.mybicocca.di.ApplicationScope
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.calendar.CalendarEvent
@@ -291,20 +290,19 @@ class CalendarRepositoryImpl @Inject constructor(
             return
         }
         val academicYear = academicYearFor(yearMonth)
-        val subjects = plannedSubjects.map { it.toEasyStaffSubject() }
+        val subjects = plannedSubjects.map { it.easyStaffSubjectCode }
         val activityCodeBySubjectCode = plannedSubjects
             .mapNotNull { pc -> pc.activityCode?.let { pc.easyStaffSubjectCode to it } }
             .toMap()
         val events = coroutineScope {
             yearMonth.coveringMondays().map { monday ->
                 async {
-                    easyStaffApi.schedule.getScheduleBySubjects(academicYear, subjects, monday)
+                    easyStaffApi.schedule.getScheduleBySubjects(academicYear = academicYear, subjects = subjects, week = monday)
                 }
             }.awaitAll()
         }.asSequence()
             .flatten()
-            .filterIsInstance<EasyStaffScheduleCell.Lesson>()
-            .map { it.toDomain(career.id, activityCodeBySubjectCode[it.subjectCode]) }
+            .mapNotNull { it.toLesson(career.id, activityCodeBySubjectCode[it.subjectCode]) }
             .filter { it.date in yearMonth.startDate()..yearMonth.endDate() }
             .distinctBy { it.id }
             .toList()
@@ -410,17 +408,11 @@ private fun YearMonth.coveringMondays(): List<LocalDate> {
         .toList()
 }
 
-/** Italian academic years roll over in September: months before it belong to the prior start year. */
-private fun academicYearFor(yearMonth: YearMonth): EasyStaffAcademicYear {
+/**
+ * The academic year EasyStaff searches take, as its first calendar year. Italian academic years
+ * roll over in September: months before it belong to the prior start year.
+ */
+private fun academicYearFor(yearMonth: YearMonth): String {
     val startYear = if (yearMonth.monthValue >= 9) yearMonth.year else yearMonth.year - 1
-    return EasyStaffAcademicYear(startYear = startYear)
+    return startYear.toString()
 }
-
-private fun PlannedCourse.toEasyStaffSubject(): EasyStaffStudyProgramSubject =
-    EasyStaffStudyProgramSubject(
-        id = easyStaffSubjectId,
-        code = easyStaffSubjectCode,
-        name = name,
-        teacherName = teacherName,
-        periodId = periodId,
-    )

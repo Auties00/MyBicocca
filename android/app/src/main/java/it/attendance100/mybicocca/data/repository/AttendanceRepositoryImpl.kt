@@ -11,7 +11,9 @@ import it.attendance100.mybicocca.data.mapper.attendance.toDomain
 import it.attendance100.mybicocca.data.mapper.attendance.toOutcome
 import it.attendance100.mybicocca.data.mapper.calendar.normalizeSubjectName
 import it.attendance100.mybicocca.data.remote.easystaff.api.EasyStaffApi
+import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffAttendanceHistoryRequest
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffAttendanceRecord
+import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffCertifyAttendanceRequest
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceViewResponse
 import it.attendance100.mybicocca.domain.model.attendance.AttendanceModuleRef
 import it.attendance100.mybicocca.domain.model.attendance.ClassroomAttendance
@@ -205,7 +207,10 @@ class AttendanceRepositoryImpl @Inject constructor(
     private suspend fun loadBadgeRecords(careerId: CareerId): List<EasyStaffAttendanceRecord> {
         val studentNumber = activeCareer(careerId)?.studentNumber ?: return emptyList()
         return runCatching {
-            easyStaffApi.attendance.getAttendanceHistory(studentNumber).flatMap { it.records }
+            easyStaffApi.attendance.getAttendanceHistory(EasyStaffAttendanceHistoryRequest(studentId = studentNumber))[studentNumber]
+                .orEmpty()
+                .values
+                .flatten()
         }.getOrDefault(emptyList())
     }
 
@@ -354,11 +359,13 @@ class AttendanceRepositoryImpl @Inject constructor(
         val location = locationProvider.lastKnownLatLong()
         return runCatching {
             easyStaffApi.attendance.certifyAttendance(
-                studentId = studentNumber,
-                lessonCode = lessonCode,
-                deviceToken = deviceId,
-                longitude = location?.second ?: 0.0,
-                latitude = location?.first ?: 0.0,
+                EasyStaffCertifyAttendanceRequest(
+                    studentId = studentNumber,
+                    lessonCode = lessonCode,
+                    deviceToken = deviceId,
+                    latitude = location?.first ?: 0.0,
+                    longitude = location?.second ?: 0.0,
+                ),
             ).toOutcome()
         }.getOrElse { PresenceMarkOutcome.Failed() }
     }

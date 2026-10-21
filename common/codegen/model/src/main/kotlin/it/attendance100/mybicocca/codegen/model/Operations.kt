@@ -139,8 +139,9 @@ sealed interface ResponseBody {
     data object Binary : ResponseBody
 
     /**
-     * A JSON value of [type] assigned to the JavaScript [variable] by a script, as in
-     * `var elenco_sedi = [...];`. The script may assign other variables too.
+     * A JSON value of [type] assigned to the JavaScript [variable] by a script, on a line of its
+     * own: declared, as in `var elenco_sedi = [...];`, or not, as in `window.data_to_show = {...};`.
+     * The script may assign other variables too.
      */
     data class ScriptVariable(val variable: String, val type: TypeRef) : ResponseBody
 

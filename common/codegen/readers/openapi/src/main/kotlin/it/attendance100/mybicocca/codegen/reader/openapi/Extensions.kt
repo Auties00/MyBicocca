@@ -19,7 +19,7 @@ import it.attendance100.mybicocca.codegen.model.AuthScheme
  * | operation             | `x-mb-headers`       | Fixed headers, `{name: value}`; `{parameter}` in a value names an API parameter. |
  * | operation             | `x-mb-query`         | Fixed query parameters, `{name: value}`.                         |
  * | operation             | `x-mb-form`          | Fixed form fields, `{name: value}`; an empty value sends the field empty. |
- * | operation             | `x-mb-script-variable` | The response is a script; its value is the JSON this variable is assigned (`var name = …;`). |
+ * | operation             | `x-mb-script-variable` | The response is a script; its value is the JSON this variable is assigned (`var name = …;`, `window.name = …;`). |
  * | operation             | `x-mb-scrape`        | How a `text/html` response is read (see [ScrapeSyntax]); the document itself when absent. |
  * | operation             | `x-mb-envelope`      | Keys the response value is nested in, e.g. `[data]`.             |
  * | operation             | `x-mb-empty-body`    | `true` to send `{}` as the body.                                 |

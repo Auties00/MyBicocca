@@ -5,6 +5,7 @@ import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.text.UiText
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffAttendanceRecord
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffAttendanceStatus
+import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffCertificationResult
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffCertifyAttendanceResult
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceMarkResult
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceMarkableSession
@@ -25,17 +26,17 @@ class AttendanceMapperTest {
 
     @Test
     fun `easybadge record maps the three attendance statuses`() {
-        assertThat(record(EasyStaffAttendanceStatus.ATTENDING).toDomain().status)
+        assertThat(record(EasyStaffAttendanceStatus.Attending).toDomain().status)
             .isEqualTo(ClassroomAttendanceStatus.Attending)
-        assertThat(record(EasyStaffAttendanceStatus.IN_PROGRESS).toDomain().status)
+        assertThat(record(EasyStaffAttendanceStatus.InProgress).toDomain().status)
             .isEqualTo(ClassroomAttendanceStatus.InProgress)
-        assertThat(record(EasyStaffAttendanceStatus.NOT_ATTENDING).toDomain().status)
+        assertThat(record(EasyStaffAttendanceStatus.NotAttending).toDomain().status)
             .isEqualTo(ClassroomAttendanceStatus.NotAttending)
     }
 
     @Test
     fun `easybadge record carries the percentages and counts`() {
-        val attendance = record(EasyStaffAttendanceStatus.ATTENDING).toDomain()
+        val attendance = record(EasyStaffAttendanceStatus.Attending).toDomain()
         assertThat(attendance.attendancePercentage).isEqualTo(75.0)
         assertThat(attendance.lessonsAttended).isEqualTo(9)
         assertThat(attendance.hoursCompleted).isEqualTo(18)
@@ -140,28 +141,28 @@ class AttendanceMapperTest {
 
     @Test
     fun `certify success returns Recorded with the backend message`() {
-        val outcome = EasyStaffCertifyAttendanceResult(success = true, message = "Presenza confermata").toOutcome()
+        val outcome = EasyStaffCertifyAttendanceResult(result = EasyStaffCertificationResult.Ok, message = "Presenza confermata").toOutcome()
         assertThat(outcome).isInstanceOf(PresenceMarkOutcome.Recorded::class.java)
         assertThat(outcome.message).isEqualTo(UiText.DynamicString("Presenza confermata"))
     }
 
     @Test
     fun `certify success with a blank message falls back to default copy`() {
-        val outcome = EasyStaffCertifyAttendanceResult(success = true, message = "").toOutcome()
+        val outcome = EasyStaffCertifyAttendanceResult(result = EasyStaffCertificationResult.Ok, message = "").toOutcome()
         assertThat(outcome).isInstanceOf(PresenceMarkOutcome.Recorded::class.java)
         assertThat(outcome.message).isEqualTo(UiText.StringResource(R.string.attendance_msg_recorded))
     }
 
     @Test
     fun `certify failure mentioning codice classifies as wrong credential`() {
-        val outcome = EasyStaffCertifyAttendanceResult(success = false, message = "Codice lezione errato").toOutcome()
+        val outcome = EasyStaffCertifyAttendanceResult(result = EasyStaffCertificationResult.Failure, message = "Codice lezione errato").toOutcome()
         assertThat(outcome).isInstanceOf(PresenceMarkOutcome.WrongCredential::class.java)
         assertThat(outcome.message).isEqualTo(UiText.DynamicString("Codice lezione errato"))
     }
 
     @Test
     fun `certify other failure classifies as failed with fallback copy`() {
-        val outcome = EasyStaffCertifyAttendanceResult(success = false, message = "").toOutcome()
+        val outcome = EasyStaffCertifyAttendanceResult(result = EasyStaffCertificationResult.Failure, message = "").toOutcome()
         assertThat(outcome).isInstanceOf(PresenceMarkOutcome.Failed::class.java)
         assertThat(outcome.message).isEqualTo(UiText.StringResource(R.string.attendance_msg_failed))
     }
