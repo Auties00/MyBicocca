@@ -146,6 +146,8 @@ internal class RecordEmitter(
             PrimitiveKind.STRING -> KotlinSyntax.string(literal.value)
             PrimitiveKind.INT64 -> "${literal.value}L"
             PrimitiveKind.FLOAT32 -> "${literal.value}f"
+            // A whole number is an Int literal in Kotlin, which a Double can't take.
+            PrimitiveKind.FLOAT64 -> if (literal.value.any { it == '.' || it == 'e' || it == 'E' }) literal.value else "${literal.value}.0"
             else -> literal.value
         }
         is TypeRef.ListOf, is TypeRef.MapOf -> error("Collections can't have a literal default")

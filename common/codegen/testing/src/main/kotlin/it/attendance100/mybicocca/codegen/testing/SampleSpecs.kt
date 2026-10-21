@@ -364,6 +364,7 @@ object SampleSpecs {
         name = "DemoLesson",
         fields = listOf(
             Field("start", "timestamp", LOCAL_DATE_TIME, nullable = true, default = DefaultValue.Null, codec = Codec.EpochSeconds),
+            Field("attendance", "percentuale", TypeRef.Primitive(PrimitiveKind.FLOAT64), nullable = false, default = DefaultValue.Literal("0")),
             Field("teachers", "docente", TypeRef.ListOf(STRING), nullable = false, default = DefaultValue.EmptyList, codec = Codec.Joined(",")),
             Field("owners", "proprietari", TypeRef.ListOf(TypeRef.Named(owner.name)), nullable = false, default = DefaultValue.EmptyList, codec = Codec.ObjectValues),
             Field(

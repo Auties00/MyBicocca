@@ -78,6 +78,9 @@ data class DemoLesson(
     @SerialName("timestamp")
     val start: LocalDateTime? = null,
 
+    @SerialName("percentuale")
+    val attendance: Double = 0.0,
+
     @Serializable(with = DemoJoinedSerializer::class)
     @SerialName("docente")
     val teachers: List<String> = emptyList(),
