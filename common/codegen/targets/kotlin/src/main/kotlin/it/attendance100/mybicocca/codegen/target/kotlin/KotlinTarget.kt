@@ -30,7 +30,7 @@ class KotlinTarget : CodeTarget {
         val serializers = KotlinSerializers(spec, layout, TemporalSerializers(options.temporalSerializers))
         val records = RecordEmitter(spec, layout, serializers)
         val scrapers = ScrapeEmitter(spec, layout, records)
-        val services = ServiceEmitter(spec, layout, scrapers)
+        val services = ServiceEmitter(spec, layout, scrapers, serializers)
 
         fun file(packageName: String, fileName: String, emit: (KotlinFile) -> Unit): GeneratedFile =
             KotlinFile(packageName, fileName, spec.id).also(emit).toGeneratedFile()
