@@ -22,6 +22,8 @@ import it.attendance100.mybicocca.codegen.model.TypeRef
  * - `executeJson<Method><T>(endpoint, roles) { … }` decodes the body as `T`;
  * - `executeJson<Method>List<T>(…)` decodes a list (Esse3's runtime returns an empty one on
  *   HTTP 404);
+ * - for a response holding maps or booleans, the same helpers take a `deserializer` instead of
+ *   a reified type, so that they read PHP's `[]` for an empty map and booleans sent as `0`/`1`;
  * - `executeStream<Method>(…)` returns the body as a `ByteReadChannel`;
  * - `executeScript<Method><T>(…, variable = "name")` decodes as `T` the JSON a script assigns to
  *   a variable;
@@ -39,7 +41,12 @@ import it.attendance100.mybicocca.codegen.model.TypeRef
  *
  * The API parameters a module uses are constructor parameters, passed by the facade.
  */
-internal class ServiceEmitter(private val spec: ApiSpec, private val layout: KotlinLayout, private val scrapers: ScrapeEmitter) {
+internal class ServiceEmitter(
+    private val spec: ApiSpec,
+    private val layout: KotlinLayout,
+    private val scrapers: ScrapeEmitter,
+    private val serializers: KotlinSerializers,
+) {
 
     fun emit(module: ApiModule, file: KotlinFile) {
         file.import("io.ktor.client.HttpClient")
@@ -148,12 +155,24 @@ internal class ServiceEmitter(private val spec: ApiSpec, private val layout: Kot
             ResponseBody.None -> "val response = execute$method(${(listOf(endpoint(operation)) + targetArguments(operation, file)).joinToString(", ")})"
             ResponseBody.Binary -> "return executeStream$method(${target.joinToString(", ")})"
             is ResponseBody.Json -> when (val type = response.type) {
-                is TypeRef.ListOf -> "return executeJson${method}List<${layout.render(type.element, file)}>(${target.joinToString(", ")})"
-                else -> "return executeJson$method<${layout.render(type, file)}>(${target.joinToString(", ")})"
+                is TypeRef.ListOf -> if (serializers.isLenient(type.element)) {
+                    "return executeJson${method}List(${(target + "deserializer = ${serializers.expression(type.element, file)}").joinToString(", ")})"
+                } else {
+                    "return executeJson${method}List<${layout.render(type.element, file)}>(${target.joinToString(", ")})"
+                }
+                else -> if (serializers.isLenient(type)) {
+                    "return executeJson$method(${(target + "deserializer = ${serializers.expression(type, file)}").joinToString(", ")})"
+                } else {
+                    "return executeJson$method<${layout.render(type, file)}>(${target.joinToString(", ")})"
+                }
             }
             is ResponseBody.ScriptVariable -> {
-                val arguments = target + "variable = ${KotlinSyntax.string(response.variable)}"
-                "return executeScript$method<${layout.render(response.type, file)}>(${arguments.joinToString(", ")})"
+                val variable = "variable = ${KotlinSyntax.string(response.variable)}"
+                if (serializers.isLenient(response.type)) {
+                    "return executeScript$method(${(target + variable + "deserializer = ${serializers.expression(response.type, file)}").joinToString(", ")})"
+                } else {
+                    "return executeScript$method<${layout.render(response.type, file)}>(${(target + variable).joinToString(", ")})"
+                }
             }
             is ResponseBody.Html -> {
                 file.import("${layout.dtoPackage}.${scrapers.objectName}")

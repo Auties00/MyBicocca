@@ -3,6 +3,7 @@ package com.example.demo.api
 
 import com.example.demo.dto.DemoCalendar
 import com.example.demo.dto.DemoLevel
+import com.example.demo.dto.DemoMapSerializer
 import com.example.demo.dto.DemoSessionAuth
 import com.example.demo.dto.DemoSettings
 import com.example.demo.dto.DemoSlot
@@ -18,6 +19,7 @@ import io.ktor.http.contentType
 import io.ktor.http.encodeURLParameter
 import io.ktor.http.parameters
 import java.time.LocalDate
+import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToJsonElement
@@ -71,7 +73,7 @@ class DemoCalendarApi(
     suspend fun saveLabels(
         body: Map<String, String>
     ): Map<String, DemoLevel> {
-        return executeJsonPost<Map<String, DemoLevel>>("/labels", emptySet(), server = DemoServer.Main) {
+        return executeJsonPost("/labels", emptySet(), server = DemoServer.Main, deserializer = DemoMapSerializer(String.serializer(), DemoLevel.serializer())) {
             contentType(ContentType.Application.Json)
             setBody(body)
             header("X-TENANT", tenant)

@@ -7,6 +7,7 @@ import it.attendance100.mybicocca.codegen.model.Field
 import it.attendance100.mybicocca.codegen.model.ParameterEncoding
 import it.attendance100.mybicocca.codegen.model.PrimitiveKind
 import it.attendance100.mybicocca.codegen.model.RecordType
+import it.attendance100.mybicocca.codegen.model.ResponseBody
 import it.attendance100.mybicocca.codegen.model.TypeRef
 
 /**
@@ -22,6 +23,9 @@ import it.attendance100.mybicocca.codegen.model.TypeRef
  *   [ScrapeEmitter]).
  *
  * The file also holds `appendBrackets`, which writes [ParameterEncoding.BRACKETS] parameters.
+ *
+ * Responses holding maps or booleans name their deserializer too (see [isLenient] and
+ * [expression]), since a reified type can't carry the annotations.
  *
  * A field names its serializer with `@Serializable(with = …)`; values nested in lists and maps
  * name theirs with the same annotation on the type argument.
@@ -47,13 +51,26 @@ internal class KotlinSerializers(
 
     val fileName = "${prefix}Serializers.kt"
 
+    /** The types of the JSON responses, which are converted by type rather than by field. */
+    private val responseTypes: List<TypeRef> = spec.modules.flatMap { it.operations }.mapNotNull { operation ->
+        when (val response = operation.response) {
+            is ResponseBody.Json -> response.type
+            is ResponseBody.ScriptVariable -> response.type
+            else -> null
+        }
+    }
+
+    /** Every type a serializer may be needed for: the fields', and the responses' that [isLenient]. */
+    private val types: List<TypeRef> = fields.map { it.type } + responseTypes.filter(::isLenient)
+
     private val usesBrackets: Boolean =
         spec.modules.any { module -> module.operations.any { operation -> operation.parameters.any { it.encoding == ParameterEncoding.BRACKETS } } }
 
     /** Whether the API needs any of the declarations this class emits. */
     val isNeeded: Boolean
         get() = usesBrackets ||
-            fields.any { field -> field.codec.let { it != null && it !is Codec.Temporal && it !is Codec.EmbeddedHtml } || field.type.contains { isBoolean(it) || it is TypeRef.MapOf } }
+            fields.any { field -> field.codec.let { it != null && it !is Codec.Temporal && it !is Codec.EmbeddedHtml } } ||
+                types.any { type -> type.contains { isBoolean(it) || it is TypeRef.MapOf } }
 
     /**
      * The serializer of a field, or null when the type's own one does. [file] imports it.
@@ -130,6 +147,31 @@ internal class KotlinSerializers(
 
     private fun isBoolean(type: TypeRef): Boolean = type is TypeRef.Primitive && type.kind == PrimitiveKind.BOOLEAN
 
+    /**
+     * Whether a response of [type] needs the lenient map or boolean serializers, which a
+     * reified type can't name: the response then passes [expression] as its deserializer.
+     */
+    fun isLenient(type: TypeRef): Boolean = type.contains { isBoolean(it) || it is TypeRef.MapOf }
+
+    /** An expression of the serializer of [type], with the lenient serializers where needed. [file] imports what it uses. */
+    fun expression(type: TypeRef, file: KotlinFile): String = when (type) {
+        is TypeRef.Named -> "${layout.render(type, file)}.serializer()"
+        is TypeRef.ListOf -> {
+            file.import("kotlinx.serialization.builtins.ListSerializer")
+            "ListSerializer(${expression(type.element, file)})"
+        }
+        is TypeRef.MapOf -> "${qualified(map, file)}(${expression(type.key, file)}, ${expression(type.value, file)})"
+        is TypeRef.Primitive -> when (type.kind) {
+            PrimitiveKind.BOOLEAN -> qualified(boolean, file)
+            PrimitiveKind.JSON_OBJECT, PrimitiveKind.JSON_VALUE -> "${layout.render(type, file)}.serializer()"
+            PrimitiveKind.STRING, PrimitiveKind.INT32, PrimitiveKind.INT64, PrimitiveKind.FLOAT32, PrimitiveKind.FLOAT64 -> {
+                file.import("kotlinx.serialization.builtins.serializer")
+                "${layout.render(type, file)}.serializer()"
+            }
+            else -> error("A ${type.kind} has no serializer outside a record")
+        }
+    }
+
     private fun TypeRef.contains(predicate: (TypeRef) -> Boolean): Boolean = predicate(this) || when (this) {
         is TypeRef.ListOf -> element.contains(predicate)
         is TypeRef.MapOf -> key.contains(predicate) || value.contains(predicate)
@@ -140,9 +182,9 @@ internal class KotlinSerializers(
     fun emit(file: KotlinFile) {
         val out = file.body
         val sections = buildList<CodeWriter.() -> Unit> {
-            if (fields.any { field -> field.type.contains(::isBoolean) }) add { booleanSerializer(file) }
-            val folding = fields.any { field -> field.codec == Codec.FoldedObject || field.type.contains { it is TypeRef.MapOf } }
-            if (fields.any { field -> field.type.contains { it is TypeRef.MapOf } }) add { mapSerializer(file) }
+            if (types.any { type -> type.contains(::isBoolean) }) add { booleanSerializer(file) }
+            val folding = fields.any { field -> field.codec == Codec.FoldedObject } || types.any { type -> type.contains { it is TypeRef.MapOf } }
+            if (types.any { type -> type.contains { it is TypeRef.MapOf } }) add { mapSerializer(file) }
             for (codec in blankAsNullCodecs) add { blankAsNullSerializer(codec, file) }
             for (record in recordsWith(Codec.FoldedObject)) add { foldedSerializer(record, file) }
             for (record in recordsWith(Codec.EmbeddedJson)) add { embeddedSerializer(record, file) }
