@@ -169,8 +169,13 @@ final class ScrapeTests: XCTestCase {
     </body></html>
     """
 
+    /// Held for the whole test: SwiftSoup nodes reference their parents weakly, so a node of a
+    /// released document has no document to resolve links against.
+    private var document: ScrapeNode?
+
     private func room() throws -> ScrapeNode {
         let document = try Scrape.document(page, url: URL(string: "https://example.com/portal/index.php"))
+        self.document = document
         return try XCTUnwrap(Scrape.select(document, ".room"))
     }
 

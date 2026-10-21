@@ -3,6 +3,9 @@ import SwiftSoup
 
 /// A node of a parsed HTML page: an element, or text. Generated scrapers take and return these,
 /// so API modules don't depend on SwiftSoup themselves.
+///
+/// Nodes reference their parents weakly, so the document must outlive the nodes read from it:
+/// keep it while scraping, or steps reaching the document (`root`, `follow`) find none.
 public typealias ScrapeNode = SwiftSoup.Node
 
 /// The steps generated scrapers compile to. Every helper accepts and returns optionals, so a
