@@ -204,7 +204,7 @@ final class ScrapeTests: XCTestCase {
         let sections = Scrape.sections(Scrape.select(try room(), ".staff"), header: "h4")
         XCTAssertEqual(sections.map { Scrape.text(Scrape.select($0, "h4"), exclude: nil, missing: []) }, ["Teachers", "Tutors"])
         XCTAssertEqual(Scrape.selectAll(sections.first, "li").compactMap { Scrape.text($0, exclude: nil, missing: []) }, ["Ada", "Bob"])
-        XCTAssertEqual(Scrape.regex("https://kaf/entryid/1_abc/x", "entryid/([\w-]+)"), "1_abc")
+        XCTAssertEqual(Scrape.regex("https://kaf/entryid/1_abc/x", #"entryid/([\w-]+)"#), "1_abc")
         XCTAssertEqual(Scrape.replace("Terra", ["terra": "0"]), "0")
     }
 
