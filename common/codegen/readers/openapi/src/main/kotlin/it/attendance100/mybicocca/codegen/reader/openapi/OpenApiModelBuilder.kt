@@ -111,6 +111,7 @@ internal class OpenApiModelBuilder(private val api: OpenAPI) {
                 type = type,
                 required = wire in formSchema?.required.orEmpty(),
                 description = schema.description,
+                default = schema.default?.let { DefaultValue.Literal(literal(it)) },
                 encoding = if (schema.extensions?.get(Extensions.REPEATED) == true) ParameterEncoding.REPEATED else ParameterEncoding.PLAIN,
                 pattern = (codec as? Codec.Temporal)?.pattern,
             )
