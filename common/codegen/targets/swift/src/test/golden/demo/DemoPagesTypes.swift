@@ -156,6 +156,7 @@ public struct DemoStaffGroup: Codable, Hashable, Sendable {
 
 public struct DemoLesson: Codable, Hashable, Sendable {
     public var start: LocalDateTime?
+    public var attendance: Double
     public var teachers: [String]
     public var owners: [DemoOwner]
     public var mapsUrl: String?
@@ -164,6 +165,7 @@ public struct DemoLesson: Codable, Hashable, Sendable {
 
     public init(
         start: LocalDateTime? = nil,
+        attendance: Double = 0,
         teachers: [String] = [],
         owners: [DemoOwner] = [],
         mapsUrl: String? = nil,
@@ -171,6 +173,7 @@ public struct DemoLesson: Codable, Hashable, Sendable {
         rooms: [String] = []
     ) {
         self.start = start
+        self.attendance = attendance
         self.teachers = teachers
         self.owners = owners
         self.mapsUrl = mapsUrl
@@ -180,6 +183,7 @@ public struct DemoLesson: Codable, Hashable, Sendable {
 
     private enum CodingKeys: String, CodingKey {
         case start = "timestamp"
+        case attendance = "percentuale"
         case teachers = "docente"
         case owners = "proprietari"
         case mapsUrl = "maps"
@@ -190,6 +194,7 @@ public struct DemoLesson: Codable, Hashable, Sendable {
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.start = container.decodeEpochSeconds(forKey: .start)
+        self.attendance = container.decodeLenient(Double.self, forKey: .attendance) ?? 0
         self.teachers = container.decodeJoined(forKey: .teachers, separator: ",") ?? []
         self.owners = container.decodeObjectValues(DemoOwner.self, forKey: .owners) ?? []
         self.mapsUrl = container.decodeBlankAsNull(forKey: .mapsUrl).flatMap(DemoScrapers.lessonMapsUrl)
@@ -200,6 +205,7 @@ public struct DemoLesson: Codable, Hashable, Sendable {
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encodeEpochSeconds(start, forKey: .start)
+        try container.encode(attendance, forKey: .attendance)
         try container.encode(teachers.joined(separator: ","), forKey: .teachers)
         try container.encode(owners, forKey: .owners)
         try container.encode("", forKey: .mapsUrl)
