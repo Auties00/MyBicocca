@@ -75,6 +75,10 @@ they fill path placeholders, are sent by every operation, or appear in fixed hea
 Codecs are a closed sealed set, implemented once per language in the runtime, so adding one
 fails to compile in each target until that target handles it.
 
+PHP backends need a few more: dates and times sent as epoch seconds, lists sent as one joined
+string or as an object's values, and HTML fragments sent inside JSON strings, read with a
+scrape (see below).
+
 Responses that aren't JSON documents are described too: JSON a script assigns to a variable
 (`var elenco_sedi = [...];`), and HTML pages. Operations may also send fixed form fields and
 lists as one field per element (`sede[]=U6&sede[]=U7`), as PHP pages read them.

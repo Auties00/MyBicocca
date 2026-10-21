@@ -67,3 +67,15 @@ export function scrapePagesGetRoom(document: ScrapeNode): DemoRoom | undefined {
 export function scrapePagesGetVideoId(document: ScrapeNode): string | undefined {
   return scrape.regex(scrape.attribute(scrape.select(document, "iframe"), "src", []), "entryid/([\\w-]+)");
 }
+
+export function scrapeDemoLessonMapsUrl(html: string): string | undefined {
+  return scrape.attribute(scrape.select(scrape.fragment(html), "iframe"), "src", []);
+}
+
+export function scrapeDemoLessonStaff(html: string): DemoStaffGroup | undefined {
+  return scrapeDemoStaffGroup(scrape.fragment(html));
+}
+
+export function scrapeDemoLessonRooms(html: string): string[] {
+  return scrape.compact(scrape.selectAll(scrape.fragment(html), "li").map((item1) => scrape.text(item1, undefined, [])));
+}

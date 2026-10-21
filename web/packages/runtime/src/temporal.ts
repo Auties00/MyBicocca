@@ -253,3 +253,18 @@ export function decodeLocalDateTime(json: unknown): LocalDateTime | undefined {
 export function decodeLocalTime(json: unknown): LocalTime | undefined {
   return typeof json === "string" ? LocalTime.parse(json) : undefined;
 }
+
+/** A date and time sent as seconds since the Unix epoch, read in the device's time zone. */
+export function decodeEpochSeconds(json: unknown): LocalDateTime | undefined {
+  const seconds = typeof json === "number" ? json : typeof json === "string" && json.trim() !== "" ? Number(json) : NaN;
+  if (!Number.isInteger(seconds)) return undefined;
+  const date = new Date(seconds * 1000);
+  return new LocalDateTime(new LocalDate(date.getFullYear(), date.getMonth() + 1, date.getDate()), date.getHours(), date.getMinutes(), date.getSeconds());
+}
+
+/** Writes a date and time as seconds since the Unix epoch, reading it in the device's time zone. */
+export function encodeEpochSeconds(value: LocalDateTime | null): number | null {
+  if (value === null) return null;
+  const { date } = value;
+  return Math.floor(new Date(date.year, date.month - 1, date.day, value.hour, value.minute, value.second).getTime() / 1000);
+}

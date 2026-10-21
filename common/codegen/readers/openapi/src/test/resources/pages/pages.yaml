@@ -104,3 +104,25 @@ components:
             - select: .accessible
             - text
             - equals: sì
+    PagesLesson:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+          x-mb-epoch-seconds: true
+        docente:
+          type: array
+          x-mb-joined: ","
+          items:
+            type: string
+        esami:
+          type: array
+          x-mb-object-values: true
+          items:
+            $ref: "#/components/schemas/PagesBuilding"
+        maps:
+          type: string
+          x-mb-html:
+            - select: iframe
+            - attribute: src

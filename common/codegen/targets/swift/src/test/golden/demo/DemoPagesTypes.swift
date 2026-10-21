@@ -153,3 +153,57 @@ public struct DemoStaffGroup: Codable, Hashable, Sendable {
         try container.encode(members, forKey: .members)
     }
 }
+
+public struct DemoLesson: Codable, Hashable, Sendable {
+    public var start: LocalDateTime?
+    public var teachers: [String]
+    public var owners: [DemoOwner]
+    public var mapsUrl: String?
+    public var staff: DemoStaffGroup?
+    public var rooms: [String]
+
+    public init(
+        start: LocalDateTime? = nil,
+        teachers: [String] = [],
+        owners: [DemoOwner] = [],
+        mapsUrl: String? = nil,
+        staff: DemoStaffGroup? = nil,
+        rooms: [String] = []
+    ) {
+        self.start = start
+        self.teachers = teachers
+        self.owners = owners
+        self.mapsUrl = mapsUrl
+        self.staff = staff
+        self.rooms = rooms
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case start = "timestamp"
+        case teachers = "docente"
+        case owners = "proprietari"
+        case mapsUrl = "maps"
+        case staff = "staff"
+        case rooms = "aule"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.start = container.decodeEpochSeconds(forKey: .start)
+        self.teachers = container.decodeJoined(forKey: .teachers, separator: ",") ?? []
+        self.owners = container.decodeObjectValues(DemoOwner.self, forKey: .owners) ?? []
+        self.mapsUrl = container.decodeBlankAsNull(forKey: .mapsUrl).flatMap(DemoScrapers.lessonMapsUrl)
+        self.staff = container.decodeBlankAsNull(forKey: .staff).flatMap(DemoScrapers.lessonStaff)
+        self.rooms = container.decodeBlankAsNull(forKey: .rooms).map(DemoScrapers.lessonRooms) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encodeEpochSeconds(start, forKey: .start)
+        try container.encode(teachers.joined(separator: ","), forKey: .teachers)
+        try container.encode(owners, forKey: .owners)
+        try container.encode("", forKey: .mapsUrl)
+        try container.encode("", forKey: .staff)
+        try container.encode("", forKey: .rooms)
+    }
+}

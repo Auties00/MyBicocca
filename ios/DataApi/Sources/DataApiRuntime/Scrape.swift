@@ -13,6 +13,11 @@ public enum Scrape {
         try SwiftSoup.parse(html, url?.absoluteString ?? "")
     }
 
+    /// Parses `html`, a fragment of a page such as a field of a JSON response, as the body of a document.
+    public static func fragment(_ html: String) -> ScrapeNode? {
+        try? SwiftSoup.parseBodyFragment(html)
+    }
+
     /// The JSON a script assigns to `variable` (`var name = [...];`), or nil when it assigns none.
     public static func scriptVariable(_ script: String, _ variable: String) -> Data? {
         let prefix = "var \(variable) ="

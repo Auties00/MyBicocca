@@ -46,6 +46,11 @@ export const scrape = {
     return document;
   },
 
+  /** Parses `html`, a fragment of a page such as a field of a JSON response, as the body of a document. */
+  fragment(html: string): ScrapeNode {
+    return new DOMParser().parseFromString(html, "text/html");
+  },
+
   /** The JSON a script assigns to `variable` (`var name = [...];`), or `undefined` when it assigns none. */
   scriptVariable(script: string, variable: string): unknown {
     const prefix = `var ${variable} =`;
@@ -243,4 +248,9 @@ export async function scriptResponse<T>(response: Response, variable: string, de
   const value = decode(scrape.scriptVariable(await response.text(), variable));
   if (value === undefined) throw new ScrapeError(`Missing script variable ${variable} at ${response.url}`);
   return value;
+}
+
+/** A value read by `read` out of the HTML fragment `json` holds; blank fragments are no value. */
+export function decodeEmbeddedHtml<T>(json: unknown, read: (html: string) => T | undefined): T | undefined {
+  return typeof json === "string" && json.trim() !== "" ? read(json) : undefined;
 }

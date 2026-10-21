@@ -59,6 +59,20 @@ public struct DemoPagesApi: Sendable {
         )
     }
 
+    public func getLessons() async throws -> [DemoLesson] {
+        try await client.jsonList(
+            RestRequest(
+                method: .post,
+                path: "/portal/grid_call.php",
+                form: [("view", "easycourse")],
+                headers: [("X-TENANT", tenant)],
+                server: DemoServer.main.rawValue,
+                envelope: ["celle"]
+            ),
+            roles: []
+        )
+    }
+
     public func getOwners() async throws -> [DemoOwner] {
         try await client.script(
             RestRequest(

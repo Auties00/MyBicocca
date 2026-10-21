@@ -359,10 +359,26 @@ object SampleSpecs {
         ),
     )
 
+    /** A lesson of a PHP backend's JSON, whose values need the PHP-specific codecs. */
+    val lesson = RecordType(
+        name = "DemoLesson",
+        fields = listOf(
+            Field("start", "timestamp", LOCAL_DATE_TIME, nullable = true, default = DefaultValue.Null, codec = Codec.EpochSeconds),
+            Field("teachers", "docente", TypeRef.ListOf(STRING), nullable = false, default = DefaultValue.EmptyList, codec = Codec.Joined(",")),
+            Field("owners", "proprietari", TypeRef.ListOf(TypeRef.Named(owner.name)), nullable = false, default = DefaultValue.EmptyList, codec = Codec.ObjectValues),
+            Field(
+                "mapsUrl", "maps", STRING, nullable = true, default = DefaultValue.Null,
+                codec = Codec.EmbeddedHtml(listOf(ScrapeStep.Select("iframe"), ScrapeStep.Attribute("src"))),
+            ),
+            Field("staff", "staff", TypeRef.Named(staffGroup.name), nullable = true, default = DefaultValue.Null, codec = Codec.EmbeddedHtml(emptyList())),
+            Field("rooms", "aule", TypeRef.ListOf(STRING), nullable = false, default = DefaultValue.EmptyList, codec = Codec.EmbeddedHtml(listOf(ScrapeStep.SelectAll("li")))),
+        ),
+    )
+
     private val pages = ApiModule(
         name = "Pages",
         basePath = "/portal",
-        records = listOf(room, staffGroup),
+        records = listOf(room, staffGroup, lesson),
         operations = listOf(
             Operation(
                 name = "getRooms",
@@ -395,6 +411,16 @@ object SampleSpecs {
                 body = null,
                 response = ResponseBody.Html(STRING, listOf(ScrapeStep.Select("iframe"), ScrapeStep.Attribute("src"), ScrapeStep.Regex("""entryid/([\w-]+)"""))),
                 server = "Main",
+            ),
+            Operation(
+                name = "getLessons",
+                method = HttpMethod.POST,
+                path = "/grid_call.php",
+                parameters = emptyList(),
+                body = null,
+                response = ResponseBody.Json(TypeRef.ListOf(TypeRef.Named(lesson.name)), listOf("celle")),
+                server = "Main",
+                form = mapOf("view" to "easycourse"),
             ),
             Operation(
                 name = "getOwners",

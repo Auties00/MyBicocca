@@ -6,7 +6,9 @@ import it.attendance100.mybicocca.codegen.model.ApiSpec
 import it.attendance100.mybicocca.codegen.model.AuthRequirement
 import it.attendance100.mybicocca.codegen.model.DefaultValue
 import it.attendance100.mybicocca.codegen.model.EnumType
+import it.attendance100.mybicocca.codegen.model.Field
 import it.attendance100.mybicocca.codegen.model.PrimitiveKind
+import it.attendance100.mybicocca.codegen.model.RecordType
 import it.attendance100.mybicocca.codegen.model.TypeRef
 
 /**
@@ -64,6 +66,14 @@ internal class SwiftLayout(private val spec: ApiSpec, val runtimeModule: String)
     }
 
     fun recordsFileName(module: ApiModule): String = "${spec.prefix}${module.name}Types.swift"
+
+    /** The enum of the API's scrapers (see [SwiftScrapeEmitter]). */
+    val scrapers = "${spec.prefix}Scrapers"
+
+    /** The function of [scrapers] reading [field] of [record] out of the HTML fragment it is sent as. */
+    fun htmlFunction(record: RecordType, field: Field): String =
+        record.name.removePrefix(spec.prefix).ifEmpty { record.name }.replaceFirstChar(Char::lowercaseChar) +
+            field.name.replaceFirstChar(Char::uppercaseChar)
 
     fun serviceName(module: ApiModule): String = "${spec.prefix}${module.name}Api"
 

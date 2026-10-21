@@ -84,6 +84,19 @@ export function decodeEmbedded<T>(json: unknown, decode: (json: unknown) => T | 
   }
 }
 
+/** A list of strings sent as one string joining them with `separator`; elements are trimmed and blank ones left out. */
+export function decodeJoined(json: unknown, separator: string): string[] | undefined {
+  const text = decodeString(json);
+  if (text === undefined) return undefined;
+  return text.split(separator).map((item) => item.trim()).filter((item) => item !== "");
+}
+
+/** A list decoded by `decodeItem`, also from an object whose values are its elements. */
+export function decodeObjectValues<T>(json: unknown, decodeItem: (json: unknown) => T | undefined): T[] | undefined {
+  const object = asJsonObject(json);
+  return decodeList(object === undefined ? json : Object.values(object), decodeItem);
+}
+
 export function decodeJsonObject(json: unknown): JsonObject | undefined {
   return asJsonObject(json) as JsonObject | undefined;
 }

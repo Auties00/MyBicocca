@@ -3,6 +3,7 @@ package it.attendance100.mybicocca.codegen.target.swift
 import it.attendance100.mybicocca.codegen.core.CodeWriter
 import it.attendance100.mybicocca.codegen.model.ApiModule
 import it.attendance100.mybicocca.codegen.model.ApiSpec
+import it.attendance100.mybicocca.codegen.model.Codec
 import it.attendance100.mybicocca.codegen.model.DefaultValue
 import it.attendance100.mybicocca.codegen.model.EnumType
 import it.attendance100.mybicocca.codegen.model.Field
@@ -27,7 +28,7 @@ import it.attendance100.mybicocca.codegen.model.TypeRef
  * pipeline.
  */
 internal class SwiftScrapeEmitter(private val spec: ApiSpec, private val layout: SwiftLayout, private val records: SwiftRecordEmitter) {
-    val typeName = "${spec.prefix}Scrapers"
+    val typeName = layout.scrapers
     val fileName = "$typeName.swift"
 
     private val scrapedRecords = spec.modules.flatMap { it.records }.filter { it.scrape != null }
@@ -35,7 +36,11 @@ internal class SwiftScrapeEmitter(private val spec: ApiSpec, private val layout:
         module.operations.filter { it.response is ResponseBody.Html }.map { module to it }
     }
 
-    val isNeeded: Boolean get() = scrapedRecords.isNotEmpty() || htmlOperations.isNotEmpty()
+    private val htmlFields = spec.modules.flatMap { it.records }.flatMap { record ->
+        record.fields.filter { it.codec is Codec.EmbeddedHtml }.map { record to it }
+    }
+
+    val isNeeded: Boolean get() = scrapedRecords.isNotEmpty() || htmlOperations.isNotEmpty() || htmlFields.isNotEmpty()
 
     /** The function reading [operation]'s response. */
     fun responseFunction(module: ApiModule, operation: Operation): String =
@@ -44,9 +49,12 @@ internal class SwiftScrapeEmitter(private val spec: ApiSpec, private val layout:
     fun emit(out: CodeWriter) {
         out.line("/// Reads the ${spec.prefix} API's scraped records and pages out of parsed HTML.")
         out.block("public enum $typeName {") {
-            separated(scrapedRecords) { record(it) }
-            if (scrapedRecords.isNotEmpty() && htmlOperations.isNotEmpty()) line()
-            separated(htmlOperations) { (module, operation) -> response(module, operation) }
+            val sections = buildList<CodeWriter.() -> Unit> {
+                scrapedRecords.forEach { add { record(it) } }
+                htmlOperations.forEach { (module, operation) -> add { response(module, operation) } }
+                htmlFields.forEach { (record, field) -> add { htmlField(record, field) } }
+            }
+            separated(sections) { it(this) }
         }
     }
 
@@ -77,6 +85,17 @@ internal class SwiftScrapeEmitter(private val spec: ApiSpec, private val layout:
         val response = operation.response as ResponseBody.Html
         block("static func ${responseFunction(module, operation)}(_ document: ScrapeNode) -> ${layout.render(response.type)}? {") {
             line(Compiler("[]").value(response.type, response.scrape, "document").code)
+        }
+    }
+
+    /** Reads [field] of [record] out of the HTML fragment it is sent as, for the record's decoder. */
+    private fun CodeWriter.htmlField(record: RecordType, field: Field) {
+        val scrape = (field.codec as Codec.EmbeddedHtml).scrape
+        val type = layout.render(field.type) + if (field.type is TypeRef.ListOf) "" else "?"
+        block("static func ${layout.htmlFunction(record, field)}(_ html: String) -> $type {") {
+            val fallback = if (field.type is TypeRef.ListOf) "[]" else "nil"
+            line("guard let document = Scrape.fragment(html) else { return $fallback }")
+            line("return ${Compiler("[]").value(field.type, scrape, "document").code}")
         }
     }
 

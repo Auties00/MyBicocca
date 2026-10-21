@@ -215,3 +215,35 @@ final class ScrapeTests: XCTestCase {
         XCTAssertNil(Scrape.scriptVariable(script, "elenco_tipi"))
     }
 }
+
+final class PhpCodecTests: XCTestCase {
+    private struct Lesson: Decodable {
+        var start: LocalDateTime?
+        var teachers: [String]
+        var owners: [String]
+
+        private enum CodingKeys: String, CodingKey {
+            case start, teachers, owners
+        }
+
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            start = container.decodeEpochSeconds(forKey: .start)
+            teachers = container.decodeJoined(forKey: .teachers, separator: ",") ?? []
+            owners = container.decodeObjectValues(String.self, forKey: .owners) ?? []
+        }
+    }
+
+    func testReadsEpochSecondsJoinedListsAndObjectValues() throws {
+        let json = #"{"start": "1700000000", "teachers": "Ada, Bob ,", "owners": {"a": "x"}}"#
+        let lesson = try JSONDecoder().decode(Lesson.self, from: Data(json.utf8))
+        XCTAssertEqual(lesson.start?.epochSeconds, 1_700_000_000)
+        XCTAssertEqual(lesson.teachers, ["Ada", "Bob"])
+        XCTAssertEqual(lesson.owners, ["x"])
+    }
+
+    func testReadsValuesOutOfHtmlFragments() {
+        let fragment = #"<iframe src="https://maps.example/embed"></iframe>"#
+        XCTAssertEqual(Scrape.attribute(Scrape.select(Scrape.fragment(fragment), "iframe"), "src", missing: []), "https://maps.example/embed")
+    }
+}
