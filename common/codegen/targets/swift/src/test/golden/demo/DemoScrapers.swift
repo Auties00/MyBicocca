@@ -65,4 +65,19 @@ public enum DemoScrapers {
     static func pagesGetVideoId(_ document: ScrapeNode) -> String? {
         Scrape.regex(Scrape.attribute(Scrape.select(document, "iframe"), "src", missing: []), "entryid/([\\w-]+)")
     }
+
+    static func lessonMapsUrl(_ html: String) -> String? {
+        guard let document = Scrape.fragment(html) else { return nil }
+        return Scrape.attribute(Scrape.select(document, "iframe"), "src", missing: [])
+    }
+
+    static func lessonStaff(_ html: String) -> DemoStaffGroup? {
+        guard let document = Scrape.fragment(html) else { return nil }
+        return staffGroup(document)
+    }
+
+    static func lessonRooms(_ html: String) -> [String] {
+        guard let document = Scrape.fragment(html) else { return [] }
+        return Scrape.selectAll(document, "li").compactMap { Scrape.text($0, exclude: nil, missing: []) }
+    }
 }

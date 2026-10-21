@@ -2,6 +2,7 @@ package it.attendance100.mybicocca.codegen.reader.openapi
 
 import it.attendance100.mybicocca.codegen.core.ReaderContext
 import it.attendance100.mybicocca.codegen.model.ApiSpec
+import it.attendance100.mybicocca.codegen.model.Codec
 import it.attendance100.mybicocca.codegen.model.ParameterEncoding
 import it.attendance100.mybicocca.codegen.model.RecordScrape
 import it.attendance100.mybicocca.codegen.model.ResponseBody
@@ -75,6 +76,20 @@ class OpenApiPagesTest {
                 ),
             ),
             scrapes["code"],
+        )
+    }
+
+    @Test
+    fun `reads the codecs of PHP backends`() {
+        val lesson = spec.modules.single().records.single { it.name == "PagesLesson" }
+        assertEquals(
+            listOf(
+                Codec.EpochSeconds,
+                Codec.Joined(","),
+                Codec.ObjectValues,
+                Codec.EmbeddedHtml(listOf(ScrapeStep.Select("iframe"), ScrapeStep.Attribute("src"))),
+            ),
+            lesson.fields.map { it.codec },
         )
     }
 }

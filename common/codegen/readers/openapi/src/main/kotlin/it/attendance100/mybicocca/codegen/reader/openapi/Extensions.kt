@@ -39,6 +39,10 @@ import it.attendance100.mybicocca.codegen.model.AuthScheme
  * | string property       | `x-mb-also-null`     | Other strings meaning no value, e.g. `["0"]` (with `x-mb-blank-as-null`). |
  * | `allOf` property      | `x-mb-folded`        | `true` when the record may arrive as an array of single-key objects. |
  * | `allOf` property      | `x-mb-embedded`      | `true` when the record may arrive as JSON inside a string.        |
+ * | `date-time` property  | `x-mb-epoch-seconds` | `true` when sent as seconds since the Unix epoch.                 |
+ * | array property        | `x-mb-joined`        | Separator of a list of strings sent as one string (`"Ada, Bob"`). |
+ * | array property        | `x-mb-object-values` | `true` when the list may arrive as an object whose values are its elements. |
+ * | property              | `x-mb-html`          | The value is an HTML fragment sent as a string, read with this scrape (see [ScrapeSyntax]). |
  *
  * Keys next to a `$ref` are lost, so a property referencing a record with a codec, or a
  * parameter with a default, wraps the reference: `allOf: [$ref: …]`. Parameters `in: cookie` are cookies, and a
@@ -71,6 +75,10 @@ internal object Extensions {
     const val SCRIPT_VARIABLE = "x-mb-script-variable"
     const val SCRAPE = "x-mb-scrape"
     const val REPEATED = "x-mb-repeated"
+    const val EPOCH_SECONDS = "x-mb-epoch-seconds"
+    const val JOINED = "x-mb-joined"
+    const val OBJECT_VALUES = "x-mb-object-values"
+    const val HTML = "x-mb-html"
 
     fun authSchemes(raw: Any?): List<AuthScheme> {
         val schemes = raw as? Map<*, *> ?: return emptyList()

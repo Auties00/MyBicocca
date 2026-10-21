@@ -38,7 +38,7 @@ internal class RecordEmitter(
                 if (index > 0 && encoding is RecordEncoding.Object) line()
                 doc(field.description)
                 if (encoding is RecordEncoding.Object) {
-                    serializers.of(field, file)?.let { line("@Serializable(with = $it::class)") }
+                    serializers.of(record, field, file)?.let { line("@Serializable(with = $it::class)") }
                     line("@SerialName(${KotlinSyntax.string(field.wireName)})")
                 }
                 val separator = if (index < record.fields.lastIndex) "," else ""

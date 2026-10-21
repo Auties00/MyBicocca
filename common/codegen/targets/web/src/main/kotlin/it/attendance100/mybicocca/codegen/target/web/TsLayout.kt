@@ -5,6 +5,7 @@ import it.attendance100.mybicocca.codegen.model.ApiSpec
 import it.attendance100.mybicocca.codegen.model.AuthRequirement
 import it.attendance100.mybicocca.codegen.model.DefaultValue
 import it.attendance100.mybicocca.codegen.model.EnumType
+import it.attendance100.mybicocca.codegen.model.Field
 import it.attendance100.mybicocca.codegen.model.PrimitiveKind
 import it.attendance100.mybicocca.codegen.model.RecordType
 import it.attendance100.mybicocca.codegen.model.TypeRef
@@ -79,6 +80,13 @@ internal class TsLayout(private val spec: ApiSpec, val runtimeModule: String, va
     fun recordsFile(module: ApiModule): String = "${spec.prefix}${module.name}Types.ts"
 
     fun serviceName(module: ApiModule): String = "${spec.prefix}${module.name}Api"
+
+    /** The file of the API's scrapers (see [TsScrapeEmitter]). */
+    val scrapersFile = "${spec.prefix}Scrapers.ts"
+
+    /** The function reading [field] of [record] out of the HTML fragment it is sent as. */
+    fun htmlFunction(record: RecordType, field: Field): String =
+        "scrape${record.name}${field.name.replaceFirstChar(Char::uppercaseChar)}"
 
     /** The import specifier of a generated file, relative to another generated file. */
     fun moduleOf(fileName: String): String = "./${fileName.removeSuffix(".ts")}.js"

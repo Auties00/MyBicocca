@@ -4,7 +4,7 @@ import { decodeList, repeated } from "@mybicocca/data-api-runtime";
 import { DemoClient } from "../client.js";
 import { DemoPriority } from "./DemoEnumTypes.js";
 import { DemoOwner, decodeDemoOwner } from "./DemoItemsTypes.js";
-import { DemoRoom } from "./DemoPagesTypes.js";
+import { DemoLesson, DemoRoom, decodeDemoLesson } from "./DemoPagesTypes.js";
 import { DemoParameters } from "./DemoParameters.js";
 import { scrapePagesGetRoom, scrapePagesGetRooms, scrapePagesGetVideoId } from "./DemoScrapers.js";
 import { DemoServer } from "./DemoServer.js";
@@ -64,6 +64,21 @@ export class DemoPagesApi {
       },
       [],
       scrapePagesGetVideoId,
+    );
+  }
+
+  async getLessons(): Promise<DemoLesson[]> {
+    return this.client.jsonList(
+      {
+        method: "POST",
+        path: "/portal/grid_call.php",
+        form: [["view", "easycourse"]],
+        headers: [["X-TENANT", this.parameters.tenant]],
+        server: DemoServer.Main,
+        envelope: ["celle"],
+      },
+      [],
+      decodeDemoLesson,
     );
   }
 

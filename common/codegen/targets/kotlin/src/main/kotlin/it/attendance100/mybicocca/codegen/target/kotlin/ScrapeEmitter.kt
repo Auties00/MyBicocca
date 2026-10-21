@@ -3,6 +3,7 @@ package it.attendance100.mybicocca.codegen.target.kotlin
 import it.attendance100.mybicocca.codegen.core.CodeWriter
 import it.attendance100.mybicocca.codegen.model.ApiModule
 import it.attendance100.mybicocca.codegen.model.ApiSpec
+import it.attendance100.mybicocca.codegen.model.Codec
 import it.attendance100.mybicocca.codegen.model.DefaultValue
 import it.attendance100.mybicocca.codegen.model.EnumType
 import it.attendance100.mybicocca.codegen.model.Field
@@ -22,7 +23,9 @@ import it.attendance100.mybicocca.codegen.model.TypeRef
  * - `<record>(node)` reads a record, or returns null when a required value is missing; it is
  *   public, so hand-written code can read a page it fetched itself;
  * - `<module><Operation>(document)` reads an operation's response, for the runtime's
- *   `executeHtml*` helpers.
+ *   `executeHtml*` helpers;
+ * - a serializer per field sent as an HTML fragment ([Codec.EmbeddedHtml]), named by
+ *   [KotlinLayout.htmlSerializer].
  *
  * Each step of a pipeline becomes a call wrapping the previous step's expression; every helper
  * accepts and returns null, so a missing value travels to the end of the pipeline.
@@ -36,7 +39,11 @@ internal class ScrapeEmitter(private val spec: ApiSpec, private val layout: Kotl
         module.operations.filter { it.response is ResponseBody.Html }.map { module to it }
     }
 
-    val isNeeded: Boolean get() = scrapedRecords.isNotEmpty() || htmlOperations.isNotEmpty()
+    private val htmlFields = spec.modules.flatMap { it.records }.flatMap { record ->
+        record.fields.filter { it.codec is Codec.EmbeddedHtml }.map { record to it }
+    }
+
+    val isNeeded: Boolean get() = scrapedRecords.isNotEmpty() || htmlOperations.isNotEmpty() || htmlFields.isNotEmpty()
 
     /** The function reading [operation]'s response. */
     fun responseFunction(module: ApiModule, operation: Operation): String =
@@ -53,8 +60,13 @@ internal class ScrapeEmitter(private val spec: ApiSpec, private val layout: Kotl
                 separated(htmlOperations) { (module, operation) -> response(module, operation, compiler) }
             }
         }
+        val serializers = htmlFields.map { (record, field) -> file.body.nested { htmlSerializer(record, field, compiler) } }
         file.body.apply {
-            lines(scrapers)
+            if (scrapedRecords.isNotEmpty() || htmlOperations.isNotEmpty()) lines(scrapers)
+            for (serializer in serializers) {
+                if (scrapedRecords.isNotEmpty() || htmlOperations.isNotEmpty() || serializer != serializers.first()) line()
+                lines(serializer)
+            }
             for (enum in compiler.enums) {
                 line()
                 enumParser(enum, file)
@@ -96,6 +108,40 @@ internal class ScrapeEmitter(private val spec: ApiSpec, private val layout: Kotl
         indent { line(compiler.value(response.type, response.scrape, "document", "emptyList()").code) }
     }
 
+    /** The serializer reading [field] out of the HTML fragment it is sent as; it writes the value back as an empty string. */
+    private fun CodeWriter.htmlSerializer(record: RecordType, field: Field, compiler: Compiler) {
+        val file = compiler.file
+        listOf(
+            "kotlinx.serialization.KSerializer", "kotlinx.serialization.descriptors.PrimitiveKind", "kotlinx.serialization.descriptors.PrimitiveSerialDescriptor",
+            "kotlinx.serialization.encoding.Decoder", "kotlinx.serialization.encoding.Encoder", "kotlinx.serialization.json.JsonDecoder",
+            "kotlinx.serialization.json.JsonPrimitive", "kotlinx.serialization.json.contentOrNull", "org.jsoup.Jsoup",
+        ).forEach(file::import)
+        val name = layout.htmlSerializer(record, field)
+        val isList = field.type is TypeRef.ListOf
+        val type = layout.render(field.type, file) + if (isList) "" else "?"
+        val scrape = (field.codec as Codec.EmbeddedHtml).scrape
+        line("/** [${record.name}.${field.name}], read out of the HTML fragment it is sent as. It is written back as an empty string. */")
+        block("object $name : KSerializer<$type> {") {
+            val descriptor = "PrimitiveSerialDescriptor(${KotlinSyntax.string(name)}, PrimitiveKind.STRING)"
+            if (isList) {
+                line("override val descriptor = $descriptor")
+            } else {
+                file.import("kotlinx.serialization.descriptors.nullable")
+                line("override val descriptor = $descriptor.nullable")
+            }
+            line()
+            line("override fun serialize(encoder: Encoder, value: $type) = encoder.encodeString(\"\")")
+            line()
+            block("override fun deserialize(decoder: Decoder): $type {") {
+                line("val html = if (decoder is JsonDecoder) (decoder.decodeJsonElement() as? JsonPrimitive)?.contentOrNull else decoder.decodeString()")
+                line("if (html.isNullOrBlank()) return ${if (isList) "emptyList()" else "null"}")
+                compiler.qualifier = "$objectName."
+                line("return ${compiler.value(field.type, scrape, "Jsoup.parseBodyFragment(html)", "emptyList()").code}")
+                compiler.qualifier = ""
+            }
+        }
+    }
+
     /** What a field takes when its pipeline yields no value: its default, or no record at all. */
     private fun fallback(field: Field): String {
         return when (val default = field.default) {
@@ -133,6 +179,9 @@ internal class ScrapeEmitter(private val spec: ApiSpec, private val layout: Kotl
         /** Lambda parameters are numbered, so nested ones don't shadow each other. */
         private var lambdas = 0
 
+        /** What record functions are called through: nothing inside the scrapers' object, the object outside it. */
+        var qualifier = ""
+
         /**
          * The expression reading a value of [type] with [steps] from [input], a non-null node,
          * and whether it may be null: lists never are.
@@ -141,16 +190,16 @@ internal class ScrapeEmitter(private val spec: ApiSpec, private val layout: Kotl
             val scraped = pipeline(steps, Expression(input, nullable = false), ScrapeKind.ELEMENT, missing)
             return when (type) {
                 is TypeRef.ListOf -> if (Scrapes.isRecordList(type.element, spec)) {
-                    Expression("${scraped.code}.mapNotNull { ${functionName(record(type.element))}(it) }", nullable = false)
+                    Expression("${scraped.code}.mapNotNull { $qualifier${functionName(record(type.element))}(it) }", nullable = false)
                 } else {
                     val text = Expression("${use(Helper.TEXT)}(it, null, $missing)", nullable = true)
                     Expression("${scraped.code}.mapNotNull { ${convert(type.element, text).code} }", nullable = false)
                 }
                 else -> when (Scrapes.kindFor(type, spec)) {
                     ScrapeKind.ELEMENT -> if (scraped.nullable) {
-                        scraped.then("let { ${functionName(record(type))}(it) }", nullable = true)
+                        scraped.then("let { $qualifier${functionName(record(type))}(it) }", nullable = true)
                     } else {
-                        Expression("${functionName(record(type))}(${scraped.code})", nullable = true)
+                        Expression("$qualifier${functionName(record(type))}(${scraped.code})", nullable = true)
                     }
                     ScrapeKind.TEXT -> convert(type, scraped)
                     else -> scraped

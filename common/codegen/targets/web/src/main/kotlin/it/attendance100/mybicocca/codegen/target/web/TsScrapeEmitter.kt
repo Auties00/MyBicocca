@@ -3,6 +3,7 @@ package it.attendance100.mybicocca.codegen.target.web
 import it.attendance100.mybicocca.codegen.core.CodeWriter
 import it.attendance100.mybicocca.codegen.model.ApiModule
 import it.attendance100.mybicocca.codegen.model.ApiSpec
+import it.attendance100.mybicocca.codegen.model.Codec
 import it.attendance100.mybicocca.codegen.model.DefaultValue
 import it.attendance100.mybicocca.codegen.model.Field
 import it.attendance100.mybicocca.codegen.model.Operation
@@ -27,14 +28,18 @@ import it.attendance100.mybicocca.codegen.model.TypeRef
  * of a pipeline.
  */
 internal class TsScrapeEmitter(private val spec: ApiSpec, private val layout: TsLayout) {
-    val fileName = "${spec.prefix}Scrapers.ts"
+    val fileName = layout.scrapersFile
 
     private val scrapedRecords = spec.modules.flatMap { it.records }.filter { it.scrape != null }
     private val htmlOperations = spec.modules.flatMap { module ->
         module.operations.filter { it.response is ResponseBody.Html }.map { module to it }
     }
 
-    val isNeeded: Boolean get() = scrapedRecords.isNotEmpty() || htmlOperations.isNotEmpty()
+    private val htmlFields = spec.modules.flatMap { it.records }.flatMap { record ->
+        record.fields.filter { it.codec is Codec.EmbeddedHtml }.map { record to it }
+    }
+
+    val isNeeded: Boolean get() = scrapedRecords.isNotEmpty() || htmlOperations.isNotEmpty() || htmlFields.isNotEmpty()
 
     /** The function reading [operation]'s response. */
     fun responseFunction(module: ApiModule, operation: Operation): String =
@@ -43,11 +48,12 @@ internal class TsScrapeEmitter(private val spec: ApiSpec, private val layout: Ts
     fun emit(file: TsFile) {
         layout.importRuntime(file, "scrape")
         file.import("type ScrapeNode", layout.runtimeModule)
-        file.body.apply {
-            separated(scrapedRecords) { record(it, file) }
-            if (scrapedRecords.isNotEmpty() && htmlOperations.isNotEmpty()) line()
-            separated(htmlOperations) { (module, operation) -> response(module, operation, file) }
+        val sections = buildList<CodeWriter.() -> Unit> {
+            scrapedRecords.forEach { add { record(it, file) } }
+            htmlOperations.forEach { (module, operation) -> add { response(module, operation, file) } }
+            htmlFields.forEach { (record, field) -> add { htmlField(record, field, file) } }
         }
+        file.body.separated(sections) { it(this) }
     }
 
     /** Reads each field into a numbered constant, so a field's name never shadows the node. */
@@ -85,6 +91,15 @@ internal class TsScrapeEmitter(private val spec: ApiSpec, private val layout: Ts
         val response = operation.response as ResponseBody.Html
         block("export function ${responseFunction(module, operation)}(document: ScrapeNode): ${layout.render(response.type, file)} | undefined {") {
             line("return ${Compiler("[]", file).value(response.type, response.scrape, "document").code};")
+        }
+    }
+
+    /** Reads [field] of [record] out of the HTML fragment it is sent as, for the record's decoder. */
+    private fun CodeWriter.htmlField(record: RecordType, field: Field, file: TsFile) {
+        val scrape = (field.codec as Codec.EmbeddedHtml).scrape
+        val type = layout.render(field.type, file) + if (field.type is TypeRef.ListOf) "" else " | undefined"
+        block("export function ${layout.htmlFunction(record, field)}(html: string): $type {") {
+            line("return ${Compiler("[]", file).value(field.type, scrape, "scrape.fragment(html)").code};")
         }
     }
 

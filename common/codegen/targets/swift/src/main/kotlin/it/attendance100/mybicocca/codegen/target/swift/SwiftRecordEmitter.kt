@@ -49,7 +49,7 @@ internal class SwiftRecordEmitter(private val layout: SwiftLayout) {
             block("public init(from decoder: Decoder) throws {") {
                 line("let container = try decoder.container(keyedBy: CodingKeys.self)")
                 for (field in record.fields) {
-                    line("self.${name(field)} = ${decode(field)}")
+                    line("self.${name(field)} = ${decode(record, field)}")
                 }
             }
             line()
@@ -150,7 +150,7 @@ internal class SwiftRecordEmitter(private val layout: SwiftLayout) {
         else -> "String(${name(field)})"
     }
 
-    private fun decode(field: Field): String {
+    private fun decode(record: RecordType, field: Field): String {
         val type = layout.render(field.type)
         val lenient = when (val codec = field.codec) {
             is Codec.Temporal -> {
@@ -163,6 +163,18 @@ internal class SwiftRecordEmitter(private val layout: SwiftLayout) {
             }
             Codec.FoldedObject -> "container.decodeFolded($type.self, forKey: ${key(field)})"
             Codec.EmbeddedJson -> "container.decodeEmbedded($type.self, forKey: ${key(field)})"
+            Codec.EpochSeconds -> "container.decodeEpochSeconds(forKey: ${key(field)})"
+            is Codec.Joined -> "container.decodeJoined(forKey: ${key(field)}, separator: ${SwiftSyntax.string(codec.separator)})"
+            Codec.ObjectValues -> "container.decodeObjectValues(${layout.render((field.type as TypeRef.ListOf).element)}.self, forKey: ${key(field)})"
+            is Codec.EmbeddedHtml -> {
+                // Lists read as empty and other values as nil from a blank fragment, so neither needs a default.
+                val read = "${layout.scrapers}.${layout.htmlFunction(record, field)}"
+                return if (field.type is TypeRef.ListOf) {
+                    "container.decodeBlankAsNull(forKey: ${key(field)}).map($read) ?? []"
+                } else {
+                    "container.decodeBlankAsNull(forKey: ${key(field)}).flatMap($read)"
+                }
+            }
             null -> {
                 val default = defaultLiteral(field)
                 if (default == null && !field.nullable) return "try container.decodeRequired($type.self, forKey: ${key(field)})"
@@ -179,7 +191,11 @@ internal class SwiftRecordEmitter(private val layout: SwiftLayout) {
 
     private fun encode(field: Field): String = when (val codec = field.codec) {
         is Codec.Temporal -> "try container.encodeTemporal(${name(field)}, forKey: ${key(field)}, pattern: ${SwiftSyntax.string(codec.pattern)})"
-        is Codec.BlankAsNull, Codec.FoldedObject, Codec.EmbeddedJson, null -> "try container.encode(${name(field)}, forKey: ${key(field)})"
+        Codec.EpochSeconds -> "try container.encodeEpochSeconds(${name(field)}, forKey: ${key(field)})"
+        is Codec.Joined -> "try container.encode(${name(field)}.joined(separator: ${SwiftSyntax.string(codec.separator)}), forKey: ${key(field)})"
+        // A value read out of HTML can't be written back; an empty fragment reads as no value.
+        is Codec.EmbeddedHtml -> "try container.encode(\"\", forKey: ${key(field)})"
+        is Codec.BlankAsNull, Codec.FoldedObject, Codec.EmbeddedJson, Codec.ObjectValues, null -> "try container.encode(${name(field)}, forKey: ${key(field)})"
     }
 
     private fun defaultLiteral(field: Field): String? = field.default?.let { defaultLiteral(field.type, it) }

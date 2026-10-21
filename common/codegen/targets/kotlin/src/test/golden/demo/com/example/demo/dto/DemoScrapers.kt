@@ -2,6 +2,16 @@
 package com.example.demo.dto
 
 import io.ktor.http.Url
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.nullable
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.JsonDecoder
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
+import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import org.jsoup.nodes.Node
 import org.jsoup.nodes.TextNode
@@ -41,6 +51,45 @@ object DemoScrapers {
 
     internal fun pagesGetVideoId(document: Node): String? =
         regex(attribute(select(document, "iframe"), "src", emptyList()), PATTERN_0)
+}
+
+/** [DemoLesson.mapsUrl], read out of the HTML fragment it is sent as. It is written back as an empty string. */
+object DemoLessonMapsUrlHtmlSerializer : KSerializer<String?> {
+    override val descriptor = PrimitiveSerialDescriptor("DemoLessonMapsUrlHtmlSerializer", PrimitiveKind.STRING).nullable
+
+    override fun serialize(encoder: Encoder, value: String?) = encoder.encodeString("")
+
+    override fun deserialize(decoder: Decoder): String? {
+        val html = if (decoder is JsonDecoder) (decoder.decodeJsonElement() as? JsonPrimitive)?.contentOrNull else decoder.decodeString()
+        if (html.isNullOrBlank()) return null
+        return attribute(select(Jsoup.parseBodyFragment(html), "iframe"), "src", emptyList())
+    }
+}
+
+/** [DemoLesson.staff], read out of the HTML fragment it is sent as. It is written back as an empty string. */
+object DemoLessonStaffHtmlSerializer : KSerializer<DemoStaffGroup?> {
+    override val descriptor = PrimitiveSerialDescriptor("DemoLessonStaffHtmlSerializer", PrimitiveKind.STRING).nullable
+
+    override fun serialize(encoder: Encoder, value: DemoStaffGroup?) = encoder.encodeString("")
+
+    override fun deserialize(decoder: Decoder): DemoStaffGroup? {
+        val html = if (decoder is JsonDecoder) (decoder.decodeJsonElement() as? JsonPrimitive)?.contentOrNull else decoder.decodeString()
+        if (html.isNullOrBlank()) return null
+        return DemoScrapers.staffGroup(Jsoup.parseBodyFragment(html))
+    }
+}
+
+/** [DemoLesson.rooms], read out of the HTML fragment it is sent as. It is written back as an empty string. */
+object DemoLessonRoomsHtmlSerializer : KSerializer<List<String>> {
+    override val descriptor = PrimitiveSerialDescriptor("DemoLessonRoomsHtmlSerializer", PrimitiveKind.STRING)
+
+    override fun serialize(encoder: Encoder, value: List<String>) = encoder.encodeString("")
+
+    override fun deserialize(decoder: Decoder): List<String> {
+        val html = if (decoder is JsonDecoder) (decoder.decodeJsonElement() as? JsonPrimitive)?.contentOrNull else decoder.decodeString()
+        if (html.isNullOrBlank()) return emptyList()
+        return selectAll(Jsoup.parseBodyFragment(html), "li").mapNotNull { text(it, null, emptyList()) }
+    }
 }
 
 private fun parseDemoKind(value: String): DemoKind? = when (value) {

@@ -165,6 +165,18 @@ object SpecValidator {
                 if (!isObjectRecord(spec, field.type)) add("$where may arrive embedded but isn't an object record")
                 if (!field.nullable) add("$where may arrive as a blank string but isn't nullable")
             }
+            Codec.EpochSeconds -> if ((field.type as? TypeRef.Primitive)?.kind != PrimitiveKind.LOCAL_DATE_TIME) {
+                add("$where is sent as epoch seconds but isn't a date and time")
+            }
+            is Codec.Joined -> {
+                if (field.type != TypeRef.ListOf(TypeRef.STRING)) add("$where is sent joined but isn't a list of strings")
+                if (codec.separator.isEmpty()) add("$where is joined with an empty separator")
+            }
+            Codec.ObjectValues -> if (field.type !is TypeRef.ListOf) add("$where may arrive as an object's values but isn't a list")
+            is Codec.EmbeddedHtml -> {
+                if (field.type !is TypeRef.ListOf && !field.nullable) add("$where is read from embedded HTML but isn't nullable")
+                checkScrape(spec, field.type, codec.scrape, where)
+            }
             null -> Unit
         }
     }

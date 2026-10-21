@@ -209,4 +209,28 @@ sealed interface Codec {
      * no value.
      */
     data object EmbeddedJson : Codec
+
+    /**
+     * A date and time sent as the number of seconds since the Unix epoch, in the device's time
+     * zone. Numbers sent as strings are accepted.
+     */
+    data object EpochSeconds : Codec
+
+    /**
+     * A list of strings sent as one string joining them with [separator] (`"Ada, Bob"`). The
+     * elements are trimmed and blank ones are left out.
+     */
+    data class Joined(val separator: String) : Codec
+
+    /**
+     * A list that may also arrive as an object whose values are its elements. Their order is
+     * the object's where the target's JSON parser keeps it.
+     */
+    data object ObjectValues : Codec
+
+    /**
+     * A value read out of an HTML fragment sent as a string, by [scrape] from the fragment's
+     * document (see [ScrapeStep]). A blank string reads as no value.
+     */
+    data class EmbeddedHtml(val scrape: List<ScrapeStep>) : Codec
 }

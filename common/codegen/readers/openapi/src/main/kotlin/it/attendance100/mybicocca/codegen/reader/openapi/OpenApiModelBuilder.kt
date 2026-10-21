@@ -198,7 +198,8 @@ internal class OpenApiModelBuilder(private val api: OpenAPI) {
                 RecordScrape(missing = Extensions.stringList(options["missing"], "missing texts of $name"))
             },
             fields = schema.properties.orEmpty().map { (wire, property) ->
-                val (type, codec) = type(property, "$name.$wire")
+                val (type, typeCodec) = type(property, "$name.$wire")
+                val codec = property.extensions?.get(Extensions.HTML)?.let { Codec.EmbeddedHtml(ScrapeSyntax.pipeline(it, "$name.$wire")) } ?: typeCodec
                 val explicit = property.default
                 val (nullable, default) = when {
                     explicit is List<*> -> false to DefaultValue.EmptyList
@@ -245,7 +246,15 @@ internal class OpenApiModelBuilder(private val api: OpenAPI) {
         }
         require(schema.enum == null) { "$where declares an inline enum; declare it as a component schema" }
         val kind = when (schema.type) {
-            "array" -> return TypeRef.ListOf(type(schema.items ?: error("$where is an array without items"), "$where items").first) to null
+            "array" -> {
+                val list = TypeRef.ListOf(type(schema.items ?: error("$where is an array without items"), "$where items").first)
+                val codec = when {
+                    schema.extensions?.get(Extensions.JOINED) != null -> Codec.Joined(schema.extensions.getValue(Extensions.JOINED).toString())
+                    schema.extensions?.get(Extensions.OBJECT_VALUES) == true -> Codec.ObjectValues
+                    else -> null
+                }
+                return list to codec
+            }
             "object" -> schema.additionalProperties?.let { values -> return map(schema, values, where) to null } ?: PrimitiveKind.JSON_OBJECT
             "string" -> when (schema.format) {
                 "date" -> PrimitiveKind.LOCAL_DATE
@@ -264,6 +273,7 @@ internal class OpenApiModelBuilder(private val api: OpenAPI) {
         require(pattern == null || kind.isTemporal) { "$where has ${Extensions.PATTERN} but isn't a date or time" }
         val blankAsNull = schema.extensions?.get(Extensions.BLANK_AS_NULL) == true
         val codec = when {
+            schema.extensions?.get(Extensions.EPOCH_SECONDS) == true -> Codec.EpochSeconds
             pattern != null -> Codec.Temporal(pattern, blankAsNull)
             blankAsNull && kind == PrimitiveKind.STRING ->
                 Codec.BlankAsNull(Extensions.stringList(schema.extensions?.get(Extensions.ALSO_NULL), "${Extensions.ALSO_NULL} of $where"))
