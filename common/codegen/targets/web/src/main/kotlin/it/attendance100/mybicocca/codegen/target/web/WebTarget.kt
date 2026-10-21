@@ -35,7 +35,7 @@ class WebTarget : CodeTarget {
         val scrapers = TsScrapeEmitter(spec, layout)
         val services = TsServiceEmitter(spec, layout, codecs, scrapers)
 
-        fun file(name: String, emit: (TsFile) -> Unit) = TsFile(name).also(emit).toGeneratedFile()
+        fun file(name: String, emit: (TsFile) -> Unit) = TsFile(name, spec.id).also(emit).toGeneratedFile()
 
         val files = buildList {
             for (module in spec.modules) {

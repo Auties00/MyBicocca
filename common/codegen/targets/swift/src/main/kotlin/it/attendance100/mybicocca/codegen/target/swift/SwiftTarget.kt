@@ -31,7 +31,7 @@ class SwiftTarget : CodeTarget {
         val services = SwiftServiceEmitter(spec, layout, scrapers)
 
         fun file(name: String, emit: (CodeWriter) -> Unit) =
-            SwiftFile(name, layout.runtimeModule).also { emit(it.body) }.toGeneratedFile()
+            SwiftFile(name, layout.runtimeModule, spec.id).also { emit(it.body) }.toGeneratedFile()
 
         return buildList {
             for (module in spec.modules) {

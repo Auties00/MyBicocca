@@ -16,8 +16,9 @@ import kotlin.io.path.writeText
  *
  * @property writes Files that are missing or whose content differs. A file is never written over
  *   a hand-written one: planning fails instead.
- * @property deletions Previously generated files (recognised by [GENERATED_MARKER]) that the
- *   target no longer produces. Hand-written files in the same directory are never touched.
+ * @property deletions Files previously generated for the same API (recognised by its
+ *   [generatedMarker]) that the target no longer produces. Hand-written files, and files
+ *   generated for other APIs sharing the directory, are never touched.
  */
 data class SyncPlan(
     val outputDir: Path,
@@ -32,18 +33,20 @@ object OutputSync {
     /** How far into a file the generated marker is looked for. */
     private const val MARKER_SEARCH_CHARS = 512
 
-    fun plan(outputDir: Path, files: List<GeneratedFile>): SyncPlan {
+    /** Plans the changes for the files generated for the API [apiId]. */
+    fun plan(outputDir: Path, files: List<GeneratedFile>, apiId: String): SyncPlan {
         val duplicates = files.groupBy { it.path }.filterValues { it.size > 1 }.keys
         require(duplicates.isEmpty()) { "Generated more than one file at: $duplicates" }
+        val owner = "${generatedMarker(apiId)}."
         for (file in files) {
-            require(GENERATED_MARKER in file.content.take(MARKER_SEARCH_CHARS)) { "Generated file lacks the generated marker: ${file.path}" }
+            require(owner in file.content.take(MARKER_SEARCH_CHARS)) { "Generated file lacks the generated marker of '$apiId': ${file.path}" }
         }
 
         val writes = files.filter { file ->
             val target = outputDir.resolve(file.path)
             !target.exists() || target.readText().normalizeNewlines() != file.content
         }
-        val handWritten = writes.map { outputDir.resolve(it.path) }.filter { it.exists() && !it.isGenerated() }
+        val handWritten = writes.map { outputDir.resolve(it.path) }.filter { it.exists() && !it.head().contains(GENERATED_MARKER) }
         require(handWritten.isEmpty()) {
             "Generated files would replace hand-written ones; move or delete them first:\n" + handWritten.joinToString("\n") { "  - $it" }
         }
@@ -53,7 +56,7 @@ object OutputSync {
             Files.walk(outputDir).use { paths ->
                 paths.filter { it.isRegularFile() }
                     .filter { it.relativeTo(outputDir).invariantSeparatorsPathString !in produced }
-                    .filter { it.isGenerated() }
+                    .filter { owner in it.head() }
                     .sorted()
                     .toList()
             }
@@ -72,11 +75,12 @@ object OutputSync {
         plan.deletions.forEach { it.deleteExisting() }
     }
 
-    private fun Path.isGenerated(): Boolean =
+    /** The start of the file, where the generated marker is looked for. */
+    private fun Path.head(): String =
         Files.newBufferedReader(this).use { reader ->
             val head = CharArray(MARKER_SEARCH_CHARS)
             val read = reader.read(head)
-            read > 0 && GENERATED_MARKER in String(head, 0, read)
+            if (read > 0) String(head, 0, read) else ""
         }
 
     private fun String.normalizeNewlines(): String = replace("\r\n", "\n")

@@ -34,7 +34,7 @@ class Generator(
                 val target = registry.target(id)
                 val files = target.generate(spec, TargetContext(targetConfig.options, log))
                 val outputDir = specDir.resolve(targetConfig.outputDir).absolute().normalize()
-                val plan = OutputSync.plan(outputDir, files)
+                val plan = OutputSync.plan(outputDir, files, spec.id)
                 if (!check) OutputSync.apply(plan)
                 log("  $id: ${files.size} files, ${plan.writes.size} to write, ${plan.deletions.size} to delete ($outputDir)")
                 plan
