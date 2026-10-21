@@ -103,7 +103,7 @@ internal class OpenApiModelBuilder(private val api: OpenAPI) {
             .map { parameter(name, resolve(it)) }
         val formSchema = operation.requestBody?.content?.get(FORM)?.schema?.let(::resolve)
         val form = formSchema?.properties.orEmpty().map { (wire, schema) ->
-            val (type, _) = type(schema, "$name form field $wire")
+            val (type, codec) = type(schema, "$name form field $wire")
             Parameter(
                 name = nameOf(schema, wire),
                 wireName = wire,
@@ -112,6 +112,7 @@ internal class OpenApiModelBuilder(private val api: OpenAPI) {
                 required = wire in formSchema?.required.orEmpty(),
                 description = schema.description,
                 encoding = if (schema.extensions?.get(Extensions.REPEATED) == true) ParameterEncoding.REPEATED else ParameterEncoding.PLAIN,
+                pattern = (codec as? Codec.Temporal)?.pattern,
             )
         }
         val body = when {
@@ -144,7 +145,7 @@ internal class OpenApiModelBuilder(private val api: OpenAPI) {
             parameter.extensions?.get(Extensions.REPEATED) == true -> ParameterEncoding.REPEATED
             else -> ParameterEncoding.PLAIN
         }
-        val (type, _) = type(schema, "$operation parameter ${parameter.name}")
+        val (type, codec) = type(schema, "$operation parameter ${parameter.name}")
         return Parameter(
             name = nameOf(parameter.extensions, parameter.name),
             wireName = parameter.name,
@@ -160,6 +161,7 @@ internal class OpenApiModelBuilder(private val api: OpenAPI) {
             description = parameter.description,
             default = schema.default?.let { DefaultValue.Literal(if (encoding == ParameterEncoding.JSON) Json.mapper().writeValueAsString(it) else literal(it)) },
             encoding = encoding,
+            pattern = (codec as? Codec.Temporal)?.pattern,
         )
     }
 

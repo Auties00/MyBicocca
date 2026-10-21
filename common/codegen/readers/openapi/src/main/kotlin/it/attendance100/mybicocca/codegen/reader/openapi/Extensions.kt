@@ -34,7 +34,7 @@ import it.attendance100.mybicocca.codegen.model.AuthScheme
  * | property, parameter   | `x-mb-name`          | camelCase name, when not derivable from the wire name.           |
  * | property              | `x-mb-scrape`        | How a scraped record's property is read (see [ScrapeSyntax]).     |
  * | array parameter, form property | `x-mb-repeated` | `true` to send one field per element (`days[]=1&days[]=2`). |
- * | string property       | `x-mb-pattern`       | Date/time pattern of a `date`, `date-time` or `time` value.      |
+ * | string property, parameter | `x-mb-pattern`  | Date/time pattern of a `date`, `date-time` or `time` value.      |
  * | string property       | `x-mb-blank-as-null` | `true` when blank strings mean no value.                          |
  * | string property       | `x-mb-also-null`     | Other strings meaning no value, e.g. `["0"]` (with `x-mb-blank-as-null`). |
  * | `allOf` property      | `x-mb-folded`        | `true` when the record may arrive as an array of single-key objects. |

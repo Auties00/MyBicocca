@@ -281,10 +281,15 @@ internal class ServiceEmitter(private val spec: ApiSpec, private val layout: Kot
             }
             return
         }
+        val pattern = parameter.pattern
+        val write: (String) -> String = if (pattern == null) value else { variable ->
+            file.import("java.time.format.DateTimeFormatter")
+            "$variable.format(DateTimeFormatter.ofPattern(${KotlinSyntax.string(pattern)}))"
+        }
         if (parameter.isOmittable) {
-            line("$name?.let { $function($wireName, ${value("it")}) }")
+            line("$name?.let { $function($wireName, ${write("it")}) }")
         } else {
-            line("$function($wireName, ${value(name)})")
+            line("$function($wireName, ${write(name)})")
         }
     }
 

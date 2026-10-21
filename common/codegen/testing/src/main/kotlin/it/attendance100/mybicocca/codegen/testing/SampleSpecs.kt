@@ -386,6 +386,8 @@ object SampleSpecs {
                 path = "/rooms.php",
                 parameters = listOf(
                     Parameter("buildings", "sede[]", ParameterLocation.FORM, TypeRef.ListOf(STRING), required = true, encoding = ParameterEncoding.REPEATED),
+                    Parameter("day", "date", ParameterLocation.FORM, LOCAL_DATE, required = true, pattern = "dd-MM-yyyy"),
+                    Parameter("from", "start_time", ParameterLocation.QUERY, LOCAL_TIME, required = false, pattern = "HH:mm"),
                     Parameter("levels", "level[]", ParameterLocation.QUERY, TypeRef.ListOf(TypeRef.Named(priority.name)), required = false, encoding = ParameterEncoding.REPEATED),
                 ),
                 body = null,
