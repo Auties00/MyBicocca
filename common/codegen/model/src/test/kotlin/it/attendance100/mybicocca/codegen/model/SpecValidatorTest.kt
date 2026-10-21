@@ -62,13 +62,61 @@ class SpecValidatorTest {
     }
 
     @Test
-    fun `reports operations sending both a JSON body and form parameters`() {
+    fun `reports operations sending both a JSON body and form fields`() {
         val operation = Operation(
             "post", HttpMethod.POST, "/a",
             listOf(Parameter("flag", "flag", ParameterLocation.FORM, TypeRef.STRING, required = true)),
             body = RequestBody.Json(TypeRef.STRING), response = ResponseBody.None,
         )
-        assertEquals(listOf("Operation 'Items.post' sends both a JSON body and form parameters"), SpecValidator.validate(spec(operations = listOf(operation))))
+        assertEquals(listOf("Operation 'Items.post' sends both a JSON body and form fields"), SpecValidator.validate(spec(operations = listOf(operation))))
+    }
+
+    @Test
+    fun `reports scrapes yielding another kind than the field needs`() {
+        val scraped = RecordType(
+            "DemoPage",
+            listOf(
+                Field("title", "title", TypeRef.STRING, nullable = true, default = DefaultValue.Null, scrape = listOf(ScrapeStep.Select("h1"))),
+                Field("open", "open", TypeRef.Primitive(PrimitiveKind.BOOLEAN), nullable = false, default = null, scrape = listOf(ScrapeStep.Text())),
+                Field("note", "note", TypeRef.STRING, nullable = false, default = null),
+            ),
+            scrape = RecordScrape(),
+        )
+        assertEquals(
+            listOf(
+                "Field 'DemoPage.title': the scrape yields ELEMENT but the type needs TEXT",
+                "Field 'DemoPage.open': the scrape yields TEXT but the type needs FLAG",
+                "Field 'DemoPage.note' has neither a scrape nor a default",
+            ),
+            SpecValidator.validate(spec(listOf(record, scraped))),
+        )
+    }
+
+    @Test
+    fun `reports scrape steps reading the wrong kind and invalid patterns`() {
+        val scraped = RecordType(
+            "DemoPage",
+            listOf(
+                Field(
+                    "id", "id", TypeRef.STRING, nullable = true, default = DefaultValue.Null,
+                    scrape = listOf(ScrapeStep.SelectAll("a"), ScrapeStep.Text(), ScrapeStep.Regex("(")),
+                ),
+            ),
+            scrape = RecordScrape(),
+        )
+        assertEquals(
+            listOf("Field 'DemoPage.id': Text reads ELEMENT, not ELEMENTS", "Field 'DemoPage.id' has the invalid pattern '('"),
+            SpecValidator.validate(spec(listOf(record, scraped))),
+        )
+    }
+
+    @Test
+    fun `reports repeated parameters that are not lists`() {
+        val operation = operation("/a", Parameter("day", "day[]", ParameterLocation.QUERY, TypeRef.STRING, required = true, encoding = ParameterEncoding.REPEATED))
+        assertEquals(
+            listOf("Operation 'Items.get' parameter 'day' is repeated but isn't a list of plain values"),
+            SpecValidator.validate(spec(operations = listOf(operation))),
+        )
     }
 
     @Test

@@ -182,13 +182,15 @@ internal class SwiftRecordEmitter(private val layout: SwiftLayout) {
         is Codec.BlankAsNull, Codec.FoldedObject, Codec.EmbeddedJson, null -> "try container.encode(${name(field)}, forKey: ${key(field)})"
     }
 
-    private fun defaultLiteral(field: Field): String? = when (val default = field.default) {
-        null -> null
+    private fun defaultLiteral(field: Field): String? = field.default?.let { defaultLiteral(field.type, it) }
+
+    /** The Swift literal of [default] as a value of [type]. */
+    fun defaultLiteral(type: TypeRef, default: DefaultValue): String = when (default) {
         DefaultValue.Null -> NIL
-        is DefaultValue.Literal -> layout.literal(field.type, default)
+        is DefaultValue.Literal -> layout.literal(type, default)
         DefaultValue.EmptyList -> "[]"
         DefaultValue.EmptyMap -> "[:]"
-        DefaultValue.Zero -> when ((field.type as TypeRef.Primitive).kind) {
+        DefaultValue.Zero -> when ((type as TypeRef.Primitive).kind) {
             PrimitiveKind.STRING -> "\"\""
             PrimitiveKind.BOOLEAN -> "false"
             else -> "0"

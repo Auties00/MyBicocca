@@ -1,0 +1,106 @@
+openapi: 3.0.3
+info:
+  title: Pages
+  version: "1"
+x-mb-id: pages
+x-mb-prefix: Pages
+servers:
+  - url: https://pages.example.com
+    x-mb-name: Main
+paths:
+  /combo.php:
+    get:
+      tags: [Rooms]
+      operationId: getBuildings
+      x-mb-query:
+        sw: rooms_
+      x-mb-script-variable: elenco_sedi
+      responses:
+        "200":
+          description: The script declaring the buildings.
+          content:
+            text/javascript:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PagesBuilding"
+  /index.php:
+    post:
+      tags: [Rooms]
+      operationId: getRooms
+      x-mb-form:
+        view: vetrina_aule
+        list: ""
+      x-mb-scrape:
+        - select-all: .attendance-section
+      parameters:
+        - name: aula[]
+          in: query
+          x-mb-name: rooms
+          x-mb-repeated: true
+          schema:
+            type: array
+            items:
+              type: string
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: ["sede[]"]
+              properties:
+                sede[]:
+                  x-mb-name: buildings
+                  x-mb-repeated: true
+                  type: array
+                  items:
+                    type: string
+      responses:
+        "200":
+          description: The showcase page.
+          content:
+            text/html:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PagesRoom"
+components:
+  schemas:
+    PagesBuilding:
+      type: object
+      properties:
+        id:
+          type: string
+    PagesRoom:
+      type: object
+      x-mb-scrape:
+        missing: [Dato mancante]
+      required: [name]
+      properties:
+        name:
+          type: string
+          x-mb-scrape:
+            - select: .attendance-course-name
+            - own-text
+        capacity:
+          type: integer
+          x-mb-scrape:
+            - select-all: .custom-color-bold
+            - where: [text, { equals: Capacità }]
+            - first
+            - last-sibling
+            - text
+            - remove-suffix: " posti"
+        code:
+          type: string
+          x-mb-scrape:
+            - first-of:
+                - [{ select: .attendance-course-name span }, text, { unwrap: ["[", "]"] }]
+                - [{ attribute: data-code }]
+        accessible:
+          type: boolean
+          default: false
+          x-mb-scrape:
+            - select: .accessible
+            - text
+            - equals: sì

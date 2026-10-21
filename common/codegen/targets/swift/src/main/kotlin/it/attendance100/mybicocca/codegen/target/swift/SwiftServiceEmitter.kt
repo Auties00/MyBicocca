@@ -18,7 +18,7 @@ import it.attendance100.mybicocca.codegen.target.swift.SwiftSyntax.doc
  * handing it to the API's client (see [SwiftLayout] for the client's contract). The API
  * parameters the module uses are stored properties, set by the facade.
  */
-internal class SwiftServiceEmitter(private val spec: ApiSpec, private val layout: SwiftLayout) {
+internal class SwiftServiceEmitter(private val spec: ApiSpec, private val layout: SwiftLayout, private val scrapers: SwiftScrapeEmitter) {
 
     fun emit(module: ApiModule, out: CodeWriter) {
         val apiParameters = spec.parametersOf(module)
@@ -69,6 +69,8 @@ internal class SwiftServiceEmitter(private val spec: ApiSpec, private val layout
             ResponseBody.None -> ""
             ResponseBody.Binary -> " -> Data"
             is ResponseBody.Json -> " -> ${layout.render(response.type)}"
+            is ResponseBody.ScriptVariable -> " -> ${layout.render(response.type)}"
+            is ResponseBody.Html -> " -> ${layout.render(response.type)}"
         }
         val name = SwiftSyntax.identifier(operation.name)
         commaListOrLine("public func $name(", parameters, ") async throws$returns {", MAX_LINE_LENGTH)
@@ -77,9 +79,16 @@ internal class SwiftServiceEmitter(private val spec: ApiSpec, private val layout
                 ResponseBody.None -> "send"
                 ResponseBody.Binary -> "data"
                 is ResponseBody.Json -> if (response.type is TypeRef.ListOf) "jsonList" else "json"
+                is ResponseBody.ScriptVariable -> "script"
+                is ResponseBody.Html -> "html"
             }
             val request = nested { commaList("RestRequest(", requestArguments(module, operation), ")") }
-            val arguments = listOfNotNull(request, if (spec.usesRoles) "roles: ${roles(operation)}" else null)
+            val reading = when (val response = operation.response) {
+                is ResponseBody.ScriptVariable -> "variable: ${SwiftSyntax.string(response.variable)}"
+                is ResponseBody.Html -> "scrape: ${scrapers.typeName}.${scrapers.responseFunction(module, operation)}"
+                else -> null
+            }
+            val arguments = listOfNotNull(request, reading, if (spec.usesRoles) "roles: ${roles(operation)}" else null)
             commaList("try await client.$method(", arguments, ")")
         }
         line("}")
@@ -92,7 +101,8 @@ internal class SwiftServiceEmitter(private val spec: ApiSpec, private val layout
         val fixedQuery = operation.query.map { (name, value) -> "(${SwiftSyntax.string(name)}, ${SwiftSyntax.string(value)})" }
         val query = apiParameters[ParameterLocation.QUERY].orEmpty() + operation.queryParameters
         if (fixedQuery.isNotEmpty() || query.isNotEmpty()) add("query: ${items(query, fixedQuery)}")
-        operation.formParameters.takeIf { it.isNotEmpty() }?.let { add("form: ${items(it)}") }
+        val fixedForm = operation.form.map { (name, value) -> "(${SwiftSyntax.string(name)}, ${SwiftSyntax.string(value)})" }
+        if (fixedForm.isNotEmpty() || operation.formParameters.isNotEmpty()) add("form: ${items(operation.formParameters, fixedForm)}")
         val headers = operation.headers.map { (name, value) -> "(${SwiftSyntax.string(name)}, ${template(value)})" } +
             (apiParameters[ParameterLocation.HEADER].orEmpty() + operation.headerParameters).map(::pair)
         if (headers.isNotEmpty()) add("headers: ${array(headers)}")
@@ -122,10 +132,13 @@ internal class SwiftServiceEmitter(private val spec: ApiSpec, private val layout
 
     /** Name/value pairs as an array literal, wrapped one per line when there are several. */
     private fun CodeWriter.items(parameters: List<Parameter>, fixed: List<String> = emptyList()): String {
-        val (bracketed, plain) = parameters.partition { it.encoding == ParameterEncoding.BRACKETS }
+        val (expanded, plain) = parameters.partition { it.encoding == ParameterEncoding.BRACKETS || it.encoding == ParameterEncoding.REPEATED }
         val items = array(fixed + plain.map(::pair))
-        if (bracketed.isEmpty()) return items
-        val fields = bracketed.map { "RestRequest.brackets(${SwiftSyntax.string(it.wireName)}, ${SwiftSyntax.identifier(it.name)})" }
+        if (expanded.isEmpty()) return items
+        val fields = expanded.map { parameter ->
+            val function = if (parameter.encoding == ParameterEncoding.BRACKETS) "brackets" else "repeated"
+            "RestRequest.$function(${SwiftSyntax.string(parameter.wireName)}, ${SwiftSyntax.identifier(parameter.name)})"
+        }
         return (listOf(items).filter { fixed.isNotEmpty() || plain.isNotEmpty() } + fields).joinToString(" + ")
     }
 
@@ -135,7 +148,7 @@ internal class SwiftServiceEmitter(private val spec: ApiSpec, private val layout
         val value = when (parameter.encoding) {
             ParameterEncoding.PLAIN -> name
             ParameterEncoding.JSON -> "RestRequest.json($name)" + (parameter.default?.let { " ?? ${SwiftSyntax.string(it.value)}" } ?: "")
-            ParameterEncoding.BRACKETS -> error("Parameter '${parameter.name}' is bracket-encoded")
+            ParameterEncoding.BRACKETS, ParameterEncoding.REPEATED -> error("Parameter '${parameter.name}' is written as several fields")
         }
         return "(${SwiftSyntax.string(parameter.wireName)}, $value)"
     }

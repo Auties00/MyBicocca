@@ -22,6 +22,7 @@ import it.attendance100.mybicocca.codegen.model.TypeRef
  * | Servers, if any                | `Esse3Server.ts`         |
  * | Auth schemes, if any           | `Esse3AuthTypes.ts`      |
  * | API parameters, if any         | `Esse3Parameters.ts`     |
+ * | Scrapers, if any               | `Esse3Scrapers.ts`       |
  * | Re-exports of all of the above | `index.ts`               |
  *
  * A record `X` is an interface with `decodeX(json)` and `encodeX(value)` functions; an enum
@@ -33,7 +34,10 @@ import it.attendance100.mybicocca.codegen.model.TypeRef
  * - The shared runtime package ([runtimeModule]): `LocalDate`, `LocalDateTime`, the lenient
  *   `decode*` helpers, the temporal codec, `pathSegment` and the request types.
  * - The API's client module ([clientModule]): `Esse3Client` with `json`, `jsonList` (empty on
- *   HTTP 404), `bytes` and `send`, and the `Esse3PermissionLevel` union of role names.
+ *   HTTP 404), `bytes` and `send`, and the `Esse3PermissionLevel` union of role names. An API
+ *   with script or HTML responses also needs `script(request, variable, decode)`, decoding the
+ *   JSON a script assigns to a variable, and `html(request, scrape)`, reading the page with a
+ *   function of `Esse3Scrapers.ts` and failing when it returns `undefined`.
  */
 internal class TsLayout(private val spec: ApiSpec, val runtimeModule: String, val clientModule: String) {
     val enumsFile = "${spec.prefix}EnumTypes.ts"

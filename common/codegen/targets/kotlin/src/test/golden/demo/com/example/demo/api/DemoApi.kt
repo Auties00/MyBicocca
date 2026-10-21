@@ -20,6 +20,7 @@ class DemoApi(
     val items = DemoItemsApi(client, json, tenant)
     val search = DemoSearchApi(client, json, tenant)
     val calendar = DemoCalendarApi(client, json, tenant, region)
+    val pages = DemoPagesApi(client, json, tenant)
     val shared = DemoSharedApi(client, json, tenant)
 
     override fun close() {

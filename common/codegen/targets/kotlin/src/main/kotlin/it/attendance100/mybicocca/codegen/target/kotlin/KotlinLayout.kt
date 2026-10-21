@@ -19,6 +19,7 @@ import it.attendance100.mybicocca.codegen.model.TypeRef
  * | Servers, if any                 | `…esse3.api.Esse3Server` (enum)        |
  * | Auth schemes, if any            | `…esse3.dto.Esse3AuthTypes.kt`         |
  * | Serializers, if any             | `…esse3.dto.Esse3Serializers.kt`       |
+ * | Scrapers, if any                | `…esse3.dto.Esse3Scrapers.kt`          |
  *
  * The runtime the API provides by hand:
  * - `…api.Esse3AbstractApi`: base class of every module, with the `execute*` request helpers.

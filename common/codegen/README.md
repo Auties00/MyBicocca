@@ -75,18 +75,56 @@ they fill path placeholders, are sent by every operation, or appear in fixed hea
 Codecs are a closed sealed set, implemented once per language in the runtime, so adding one
 fails to compile in each target until that target handles it.
 
+Responses that aren't JSON documents are described too: JSON a script assigns to a variable
+(`var elenco_sedi = [...];`), and HTML pages. Operations may also send fixed form fields and
+lists as one field per element (`sede[]=U6&sede[]=U7`), as PHP pages read them.
+
+### Scraping
+
+A record can be read out of an HTML element instead of JSON: each field gives a *scrape*, a
+pipeline of small steps (`ScrapeStep` in the model) from the record's element to the field's
+value, and an HTML response gives the pipeline from the page to its value. Steps navigate
+(`select`, `select-all`, `next`, `last-sibling`, `follow`, `sections`, `where`, `first`), read
+(`text`, `own-text`, `html`, `attribute`, `url`, `lines`, `exists`), transform text (`regex`,
+`remove-prefix`, `unwrap`, `null-if`, `query-parameter`, `replace`) or test it (`equals`,
+`contains`, `not`); `first-of` takes the first alternative yielding a value. A missing value
+travels to the end of the pipeline, where the field's default applies; a record missing a
+required value is left out of its list. For example, a room's capacity on a page listing
+`<span class="custom-color-bold">Capacità</span>120 posti`:
+
+```yaml
+capacity:
+  type: integer
+  x-mb-scrape:
+    - select-all: .custom-color-bold
+    - where: [text, { equals: Capacità }]
+    - first
+    - last-sibling
+    - text
+    - remove-suffix: " posti"
+```
+
+Targets compile pipelines to native code over their HTML parser (Jsoup, SwiftSoup, the DOM), so
+the validator checks them at generation time: each step must get the kind of value it reads
+(an element, elements, text or a flag), and each pipeline must yield what its field needs.
+Selectors are limited to the CSS all three parsers support. The vocabulary is closed, like
+codecs; a step is added only when a page needs it.
+
 ### Runtimes
 
 Generated code calls a small hand-written runtime per language, and per API:
 
 - **Kotlin**: `<Prefix>AbstractApi` (request helpers), `<Prefix>Runtime` (JSON and HTTP client),
   `<Prefix>PermissionLevel` and the date serializers named in the target's options. The other
-  serializers the codecs and maps need are generated into `<Prefix>Serializers.kt`. See
-  `KotlinLayout` and `KotlinSerializers`.
+  serializers the codecs and maps need are generated into `<Prefix>Serializers.kt`, and the
+  scrapers with their helpers into `<Prefix>Scrapers.kt`. See `KotlinLayout`,
+  `KotlinSerializers` and `ScrapeEmitter`.
 - **Swift**: the `DataApiRuntime` module (`ios/DataApi/Sources/DataApiRuntime`), with
-  `WireMap` for maps, and `<Prefix>Client`. See `SwiftLayout`.
+  `WireMap` for maps and `Scrape` (over SwiftSoup) for scrapers, and `<Prefix>Client`. See
+  `SwiftLayout`.
 - **Web**: `@mybicocca/data-api-runtime` (`web/packages/runtime`), with `WireMap` for maps not
-  keyed by strings, and the API's `client.ts`. See `TsLayout`.
+  keyed by strings and `scrape` (over the DOM) for scrapers, and the API's `client.ts`. See
+  `TsLayout`.
 
 ## Extending
 

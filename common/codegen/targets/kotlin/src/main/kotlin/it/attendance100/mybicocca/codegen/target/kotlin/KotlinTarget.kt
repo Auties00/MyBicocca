@@ -29,7 +29,8 @@ class KotlinTarget : CodeTarget {
         val layout = KotlinLayout(spec, options.packageName)
         val serializers = KotlinSerializers(spec, layout, TemporalSerializers(options.temporalSerializers))
         val records = RecordEmitter(spec, layout, serializers)
-        val services = ServiceEmitter(spec, layout)
+        val scrapers = ScrapeEmitter(spec, layout, records)
+        val services = ServiceEmitter(spec, layout, scrapers)
 
         return buildList {
             for (module in spec.modules) {
@@ -48,6 +49,9 @@ class KotlinTarget : CodeTarget {
             }
             if (serializers.isNeeded) {
                 add(file(layout.dtoPackage, serializers.fileName) { serializers.emit(it) })
+            }
+            if (scrapers.isNeeded) {
+                add(file(layout.dtoPackage, scrapers.fileName) { scrapers.emit(it) })
             }
             if (spec.servers.isNotEmpty()) {
                 add(file(layout.apiPackage, "${layout.server.substringAfterLast('.')}.kt") { ServerEmitter(spec, layout).emit(it) })

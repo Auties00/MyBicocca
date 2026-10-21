@@ -153,3 +153,65 @@ final class CodecTests: XCTestCase {
         XCTAssertNil(sample.embedded)
     }
 }
+
+final class ScrapeTests: XCTestCase {
+    private let page = """
+    <html><body><h1 class="page">Rooms <span class="sr-only">(list)</span></h1>
+    <div class="room">
+      <h2>U6-22 con Podio<span>[U6-22]</span></h2>
+      <div><span class="label">Capacity</span>120 seats</div>
+      <div><span class="label">Notes</span>First line<br>Second<ul><li>Ramp</li></ul></div>
+      <a class="site" href="/rooms/view.php?id=42">site</a>
+      <a class="map" href="#map-1">map</a>
+      <ul class="staff"><h4>Teachers</h4><li>Ada</li><li>Bob</li><h4>Tutors</h4><li>Cy</li></ul>
+    </div>
+    <div id="map-1"><iframe src="https://maps.example/embed"></iframe></div>
+    </body></html>
+    """
+
+    private func room() throws -> ScrapeNode {
+        let document = try Scrape.document(page, url: URL(string: "https://example.com/portal/index.php"))
+        return try XCTUnwrap(Scrape.select(document, ".room"))
+    }
+
+    private func label(_ room: ScrapeNode, _ text: String) -> ScrapeNode? {
+        Scrape.selectAll(room, ".label").filter { Scrape.equals(Scrape.text($0, exclude: nil, missing: []), text) == true }.first
+    }
+
+    func testReadsTextOwnTextAndUnwraps() throws {
+        let room = try room()
+        XCTAssertEqual(Scrape.ownText(Scrape.select(room, "h2"), missing: []), "U6-22 con Podio")
+        XCTAssertEqual(Scrape.unwrap(Scrape.text(Scrape.select(room, "h2 span"), exclude: nil, missing: []), "[", "]"), "U6-22")
+        XCTAssertEqual(Scrape.text(Scrape.select(Scrape.root(room), "h1.page"), exclude: ".sr-only", missing: []), "Rooms")
+        XCTAssertNil(Scrape.text(Scrape.select(room, "h2"), exclude: nil, missing: ["U6-22 con Podio[U6-22]"]))
+    }
+
+    func testReadsLabelledValuesAndLines() throws {
+        let room = try room()
+        XCTAssertEqual(Scrape.int(Scrape.removeSuffix(Scrape.text(Scrape.lastSibling(label(room, "Capacity")), exclude: nil, missing: []), " seats")), 120)
+        XCTAssertEqual(Scrape.lines(label(room, "Notes"), missing: []), "First line\nSecond\n• Ramp")
+    }
+
+    func testResolvesUrlsQueryParametersAndLinks() throws {
+        let room = try room()
+        let url = Scrape.url(Scrape.select(room, "a.site"), "href")
+        XCTAssertEqual(url, "https://example.com/rooms/view.php?id=42")
+        XCTAssertEqual(Scrape.int(Scrape.queryParameter(url, "id")), 42)
+        XCTAssertEqual(Scrape.attribute(Scrape.select(Scrape.follow(Scrape.select(room, ".map"), "href"), "iframe"), "src", missing: []), "https://maps.example/embed")
+    }
+
+    func testGroupsSectionsAndMatchesPatterns() throws {
+        let sections = Scrape.sections(Scrape.select(try room(), ".staff"), header: "h4")
+        XCTAssertEqual(sections.map { Scrape.text(Scrape.select($0, "h4"), exclude: nil, missing: []) }, ["Teachers", "Tutors"])
+        XCTAssertEqual(Scrape.selectAll(sections.first, "li").compactMap { Scrape.text($0, exclude: nil, missing: []) }, ["Ada", "Bob"])
+        XCTAssertEqual(Scrape.regex("https://kaf/entryid/1_abc/x", "entryid/([\w-]+)"), "1_abc")
+        XCTAssertEqual(Scrape.replace("Terra", ["terra": "0"]), "0")
+    }
+
+    func testReadsScriptVariables() throws {
+        let script = "var elenco_sedi = [{\"id\": 1}];\nvar elenco_aule = {};"
+        let json = try XCTUnwrap(Scrape.scriptVariable(script, "elenco_aule"))
+        XCTAssertEqual(String(decoding: json, as: UTF8.self), "{}")
+        XCTAssertNil(Scrape.scriptVariable(script, "elenco_tipi"))
+    }
+}

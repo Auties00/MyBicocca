@@ -27,7 +27,8 @@ class SwiftTarget : CodeTarget {
         val layout = SwiftLayout(spec, options.runtimeModule)
         val records = SwiftRecordEmitter(layout)
         val enums = SwiftEnumEmitter(layout)
-        val services = SwiftServiceEmitter(spec, layout)
+        val scrapers = SwiftScrapeEmitter(spec, layout, records)
+        val services = SwiftServiceEmitter(spec, layout, scrapers)
 
         fun file(name: String, emit: (CodeWriter) -> Unit) =
             SwiftFile(name, layout.runtimeModule).also { emit(it.body) }.toGeneratedFile()
@@ -49,6 +50,9 @@ class SwiftTarget : CodeTarget {
             }
             if (spec.servers.isNotEmpty()) {
                 add(file("${layout.server}.swift") { servers(spec, layout, it) })
+            }
+            if (scrapers.isNeeded) {
+                add(file(scrapers.fileName) { scrapers.emit(it) })
             }
             add(file("${layout.facadeName}.swift") { facade(spec, layout, it) })
         }

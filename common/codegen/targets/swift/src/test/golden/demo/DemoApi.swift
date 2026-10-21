@@ -8,6 +8,7 @@ public struct DemoApi: Sendable {
     public let items: DemoItemsApi
     public let search: DemoSearchApi
     public let calendar: DemoCalendarApi
+    public let pages: DemoPagesApi
     public let shared: DemoSharedApi
 
     /// - Parameters:
@@ -16,6 +17,7 @@ public struct DemoApi: Sendable {
         self.items = DemoItemsApi(client: client, tenant: tenant)
         self.search = DemoSearchApi(client: client, tenant: tenant)
         self.calendar = DemoCalendarApi(client: client, tenant: tenant, region: region)
+        self.pages = DemoPagesApi(client: client, tenant: tenant)
         self.shared = DemoSharedApi(client: client, tenant: tenant)
     }
 }

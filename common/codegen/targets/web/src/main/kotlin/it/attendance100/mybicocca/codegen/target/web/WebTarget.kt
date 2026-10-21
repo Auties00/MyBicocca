@@ -32,7 +32,8 @@ class WebTarget : CodeTarget {
         val codecs = TsCodecs(layout)
         val records = TsRecordEmitter(layout, codecs)
         val enums = TsEnumEmitter(layout)
-        val services = TsServiceEmitter(spec, layout, codecs)
+        val scrapers = TsScrapeEmitter(spec, layout)
+        val services = TsServiceEmitter(spec, layout, codecs, scrapers)
 
         fun file(name: String, emit: (TsFile) -> Unit) = TsFile(name).also(emit).toGeneratedFile()
 
@@ -56,6 +57,9 @@ class WebTarget : CodeTarget {
             }
             if (spec.parameters.isNotEmpty()) {
                 add(file(layout.parametersFile) { parameters(spec, layout, it) })
+            }
+            if (scrapers.isNeeded) {
+                add(file(scrapers.fileName) { scrapers.emit(it) })
             }
             add(file("${layout.facadeName}.ts") { facade(spec, layout, it) })
         }

@@ -12,8 +12,11 @@ let package = Package(
         .library(name: "Esse3", targets: ["Esse3"]),
         .library(name: "Moodle", targets: ["Moodle"]),
     ],
+    dependencies: [
+        .package(url: "https://github.com/scinfu/SwiftSoup.git", from: "2.7.0"),
+    ],
     targets: [
-        .target(name: "DataApiRuntime"),
+        .target(name: "DataApiRuntime", dependencies: ["SwiftSoup"]),
         .target(name: "Affluences", dependencies: ["DataApiRuntime"]),
         .target(name: "EasyStaffPlanning", dependencies: ["DataApiRuntime"]),
         .target(name: "Esse3", dependencies: ["DataApiRuntime"]),

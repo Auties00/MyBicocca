@@ -121,20 +121,22 @@ internal class RecordEmitter(
     private fun type(field: Field, file: KotlinFile): String =
         serializers.render(field.type, file, field.name) + if (field.nullable) "?" else ""
 
-    private fun default(field: Field): String = when (val default = field.default) {
-        null -> ""
-        DefaultValue.Null -> " = null"
-        DefaultValue.EmptyList -> " = emptyList()"
-        DefaultValue.EmptyMap -> " = emptyMap()"
-        is DefaultValue.Literal -> " = " + literal(field.type, default)
-        DefaultValue.Zero -> " = " + when ((field.type as TypeRef.Primitive).kind) {
+    private fun default(field: Field): String = field.default?.let { " = " + defaultValue(field.type, it) }.orEmpty()
+
+    /** The Kotlin expression of [default] as a value of [type]. */
+    fun defaultValue(type: TypeRef, default: DefaultValue): String = when (default) {
+        DefaultValue.Null -> "null"
+        DefaultValue.EmptyList -> "emptyList()"
+        DefaultValue.EmptyMap -> "emptyMap()"
+        is DefaultValue.Literal -> literal(type, default)
+        DefaultValue.Zero -> when ((type as TypeRef.Primitive).kind) {
             PrimitiveKind.STRING -> "\"\""
             PrimitiveKind.INT32 -> "0"
             PrimitiveKind.INT64 -> "0L"
             PrimitiveKind.FLOAT32 -> "0f"
             PrimitiveKind.FLOAT64 -> "0.0"
             PrimitiveKind.BOOLEAN -> "false"
-            else -> error("Field '${field.name}' can't default to zero")
+            else -> error("A ${type.kind} can't default to zero")
         }
     }
 

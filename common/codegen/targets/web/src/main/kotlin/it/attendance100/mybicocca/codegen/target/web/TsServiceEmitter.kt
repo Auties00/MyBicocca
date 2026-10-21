@@ -21,6 +21,7 @@ internal class TsServiceEmitter(
     private val spec: ApiSpec,
     private val layout: TsLayout,
     private val codecs: TsCodecs,
+    private val scrapers: TsScrapeEmitter,
 ) {
     fun emit(module: ApiModule, file: TsFile) {
         file.import(layout.client, layout.clientModule)
@@ -70,22 +71,31 @@ internal class TsServiceEmitter(
             ResponseBody.None -> "void"
             ResponseBody.Binary -> "Uint8Array"
             is ResponseBody.Json -> layout.render(response.type, file)
+            is ResponseBody.ScriptVariable -> layout.render(response.type, file)
+            is ResponseBody.Html -> layout.render(response.type, file)
         }
         val parameters = positional + listOfNotNull(options)
         val header = "): Promise<$returnType> {"
         commaListOrLine("async ${operation.name}(", parameters, header, MAX_LINE_LENGTH, trailingComma = true)
         indent {
-            val (call, decoder) = when (val response = operation.response) {
-                ResponseBody.None -> "await this.client.send" to null
-                ResponseBody.Binary -> "return this.client.bytes" to null
+            val (call, reading) = when (val response = operation.response) {
+                ResponseBody.None -> "await this.client.send" to emptyList()
+                ResponseBody.Binary -> "return this.client.bytes" to emptyList()
                 is ResponseBody.Json -> when (val type = response.type) {
-                    is TypeRef.ListOf -> "return this.client.jsonList" to codecs.decoder(type.element, file)
-                    else -> "return this.client.json" to codecs.decoder(type, file)
+                    is TypeRef.ListOf -> "return this.client.jsonList" to listOf(codecs.decoder(type.element, file))
+                    else -> "return this.client.json" to listOf(codecs.decoder(type, file))
+                }
+                is ResponseBody.ScriptVariable ->
+                    "return this.client.script" to listOf(TsSyntax.string(response.variable), codecs.decoder(response.type, file))
+                is ResponseBody.Html -> {
+                    val function = scrapers.responseFunction(module, operation)
+                    file.import(function, layout.moduleOf(scrapers.fileName))
+                    "return this.client.html" to listOf(function)
                 }
             }
             val request = nested { block("{", "}") { requestFields(module, operation, optional.toSet(), file) } }
             val roles = if (spec.usesRoles) roles(operation) else null
-            commaList("$call(", listOfNotNull(request, roles, decoder), ");", trailingComma = true)
+            commaList("$call(", listOfNotNull(request, roles) + reading, ");", trailingComma = true)
         }
         line("}")
     }
@@ -97,7 +107,8 @@ internal class TsServiceEmitter(
         val fixedQuery = operation.query.map { (name, value) -> "[${TsSyntax.string(name)}, ${TsSyntax.string(value)}]" }
         val query = apiParameters[ParameterLocation.QUERY].orEmpty() + operation.queryParameters
         if (fixedQuery.isNotEmpty() || query.isNotEmpty()) lines("query: ${pairs(query, optional, file, fixedQuery)},")
-        operation.formParameters.takeIf { it.isNotEmpty() }?.let { lines("form: ${pairs(it, optional, file)},") }
+        val fixedForm = operation.form.map { (name, value) -> "[${TsSyntax.string(name)}, ${TsSyntax.string(value)}]" }
+        if (fixedForm.isNotEmpty() || operation.formParameters.isNotEmpty()) lines("form: ${pairs(operation.formParameters, optional, file, fixedForm)},")
         val headers = operation.headers.map { (name, value) -> "[${TsSyntax.string(name)}, ${template(value)}]" } +
             (apiParameters[ParameterLocation.HEADER].orEmpty() + operation.headerParameters).map { "[${TsSyntax.string(it.wireName)}, ${valueOf(it, optional, file)}]" }
         if (headers.isNotEmpty()) lines("headers: ${array(headers)},")
@@ -128,8 +139,13 @@ internal class TsServiceEmitter(
     private fun CodeWriter.pairs(parameters: List<Parameter>, optional: Set<Parameter>, file: TsFile, fixed: List<String> = emptyList()): String =
         array(fixed + parameters.map { pair(it, optional, file) })
 
-    /** A name/value pair, or for a bracket-encoded parameter the spread of its fields. */
+    /** A name/value pair, or for a bracket-encoded or repeated parameter the spread of its fields. */
     private fun pair(parameter: Parameter, optional: Set<Parameter>, file: TsFile): String {
+        if (parameter.encoding == ParameterEncoding.REPEATED) {
+            layout.importRuntime(file, "repeated")
+            val value = if (parameter in optional) "$OPTIONS.${parameter.name}" else TsSyntax.variable(parameter.name)
+            return "...repeated(${TsSyntax.string(parameter.wireName)}, $value)"
+        }
         if (parameter.encoding != ParameterEncoding.BRACKETS) return "[${TsSyntax.string(parameter.wireName)}, ${valueOf(parameter, optional, file)}]"
         layout.importRuntime(file, "brackets")
         val value = if (parameter in optional) "$OPTIONS.${parameter.name}" else TsSyntax.variable(parameter.name)
