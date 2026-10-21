@@ -40,9 +40,10 @@ class OpenApiPagesTest {
         val operation = operations.getValue("getRooms")
         assertEquals(mapOf("view" to "vetrina_aule", "list" to ""), operation.form)
         assertEquals(
-            listOf("rooms" to ParameterEncoding.REPEATED, "buildings" to ParameterEncoding.REPEATED),
+            listOf("rooms" to ParameterEncoding.REPEATED, "buildings" to ParameterEncoding.REPEATED, "language" to ParameterEncoding.PLAIN),
             operation.parameters.map { it.name to it.encoding },
         )
+        assertEquals("it", operation.parameters.single { it.name == "language" }.default?.value)
         assertEquals(
             ResponseBody.Html(TypeRef.ListOf(TypeRef.Named("PagesRoom")), listOf(ScrapeStep.SelectAll(".attendance-section"))),
             operation.response,

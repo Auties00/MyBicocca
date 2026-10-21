@@ -55,6 +55,10 @@ paths:
                   type: array
                   items:
                     type: string
+                _lang:
+                  x-mb-name: language
+                  type: string
+                  default: it
       responses:
         "200":
           description: The showcase page.
