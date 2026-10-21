@@ -13,7 +13,7 @@ import it.attendance100.mybicocca.data.mapper.appointment.toDomain
 import it.attendance100.mybicocca.data.mapper.appointment.toEntity
 import it.attendance100.mybicocca.data.mapper.appointment.toMonthAvailability
 import it.attendance100.mybicocca.data.mapper.appointment.toReservationRequest
-import it.attendance100.mybicocca.data.remote.easystaff.api.EasyStaffApi
+import it.attendance100.mybicocca.data.remote.easystaff.api.EasyStaffPlanningApi
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningEntryFilters
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningIdReference
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningPortal
@@ -47,11 +47,10 @@ import javax.inject.Singleton
 @Singleton
 class AppointmentRepositoryImpl @Inject constructor(
     private val stringResolver: StringResolver,
-    private val easyStaffApi: EasyStaffApi,
+    private val desks: EasyStaffPlanningApi,
     private val reservationDao: AppointmentReservationDao,
 ) : AppointmentRepository {
 
-    private val desks get() = easyStaffApi.planning
 
     override suspend fun getServices(): List<AppointmentService> =
         desks.catalog.getServices().map { it.toAppointmentService() }

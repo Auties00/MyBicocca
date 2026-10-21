@@ -219,6 +219,12 @@ final class ScrapeTests: XCTestCase {
         XCTAssertEqual(String(decoding: json, as: UTF8.self), "{}")
         XCTAssertNil(Scrape.scriptVariable(script, "elenco_tipi"))
     }
+
+    func testReadsAssignmentsWithoutDeclaration() throws {
+        let page = "<script>\n    window.data_to_show = {\"1\": {}};\n</script>"
+        let json = try XCTUnwrap(Scrape.scriptVariable(page, "window.data_to_show"))
+        XCTAssertEqual(String(decoding: json, as: UTF8.self), "{\"1\": {}}")
+    }
 }
 
 final class PhpCodecTests: XCTestCase {

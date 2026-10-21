@@ -50,7 +50,7 @@ class EasyStaffPlanningApiTest : EasyStaffTestBase() {
     }
 
     /** The information desks portal. */
-    private val desks get() = api.planning
+    private val desks get() = planning
 
     /** A service/area pair with at least one bookable day, discovered once per class. */
     private data class AvailabilityCombo(

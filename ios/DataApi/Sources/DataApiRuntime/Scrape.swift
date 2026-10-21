@@ -21,10 +21,16 @@ public enum Scrape {
         try? SwiftSoup.parseBodyFragment(html)
     }
 
-    /// The JSON a script assigns to `variable` (`var name = [...];`), or nil when it assigns none.
+    /// The JSON a script assigns to `variable` on a line of its own, declaring it
+    /// (`var name = [...];`) or not (`window.name = {...};`), or nil when it assigns none.
     public static func scriptVariable(_ script: String, _ variable: String) -> Data? {
-        let prefix = "var \(variable) ="
-        guard let line = script.split(whereSeparator: \.isNewline).first(where: { $0.hasPrefix(prefix) }) else { return nil }
+        let prefix = "\(variable) ="
+        let statements = script.split(whereSeparator: \.isNewline).map { line in
+            ["var ", "let ", "const "].reduce(line.trimmingCharacters(in: .whitespaces)) { statement, keyword in
+                statement.hasPrefix(keyword) ? String(statement.dropFirst(keyword.count)) : statement
+            }
+        }
+        guard let line = statements.first(where: { $0.hasPrefix(prefix) }) else { return nil }
         var json = line.dropFirst(prefix.count).trimmingCharacters(in: .whitespaces)
         if json.hasSuffix(";") { json.removeLast() }
         return Data(json.utf8)
