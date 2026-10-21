@@ -1,14 +1,14 @@
 package it.attendance100.mybicocca.codegen.target.kotlin
 
 import it.attendance100.mybicocca.codegen.core.CodeWriter
-import it.attendance100.mybicocca.codegen.core.GENERATED_MARKER
+import it.attendance100.mybicocca.codegen.core.generatedMarker
 import it.attendance100.mybicocca.codegen.core.GeneratedFile
 
 /**
  * A Kotlin source file being built: emitters write declarations into [body] and register the
  * classes they reference with [import], so the import list always matches what is used.
  */
-internal class KotlinFile(private val packageName: String, private val fileName: String) {
+internal class KotlinFile(private val packageName: String, private val fileName: String, private val apiId: String) {
     private val imports = sortedSetOf<String>()
     val body = CodeWriter()
 
@@ -19,7 +19,7 @@ internal class KotlinFile(private val packageName: String, private val fileName:
 
     fun toGeneratedFile(): GeneratedFile {
         val content = buildString {
-            append("// $GENERATED_MARKER. Do not edit.\n")
+            append("// ${generatedMarker(apiId)}. Do not edit.\n")
             append("package $packageName\n\n")
             if (imports.isNotEmpty()) {
                 imports.forEach { append("import $it\n") }

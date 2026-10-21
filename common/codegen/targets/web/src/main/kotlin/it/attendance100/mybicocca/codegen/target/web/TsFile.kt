@@ -1,14 +1,14 @@
 package it.attendance100.mybicocca.codegen.target.web
 
 import it.attendance100.mybicocca.codegen.core.CodeWriter
-import it.attendance100.mybicocca.codegen.core.GENERATED_MARKER
+import it.attendance100.mybicocca.codegen.core.generatedMarker
 import it.attendance100.mybicocca.codegen.core.GeneratedFile
 
 /**
  * A TypeScript module being built: emitters write into [body] and register what they use
  * with [import], so that every import is used (as `noUnusedLocals` requires).
  */
-internal class TsFile(private val fileName: String) {
+internal class TsFile(private val fileName: String, private val apiId: String) {
     /** Packages first, then relative modules, each alphabetically. */
     private val imports = sortedMapOf<String, MutableSet<String>>(compareBy({ it.startsWith(".") }, { it }))
     val body = CodeWriter("  ")
@@ -21,7 +21,7 @@ internal class TsFile(private val fileName: String) {
 
     fun toGeneratedFile(): GeneratedFile {
         val content = buildString {
-            append("// $GENERATED_MARKER. Do not edit.\n\n")
+            append("// ${generatedMarker(apiId)}. Do not edit.\n\n")
             for ((module, names) in imports) {
                 append("import { ${names.joinToString(", ")} } from ${TsSyntax.string(module)};\n")
             }

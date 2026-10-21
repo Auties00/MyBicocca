@@ -32,6 +32,9 @@ class KotlinTarget : CodeTarget {
         val scrapers = ScrapeEmitter(spec, layout, records)
         val services = ServiceEmitter(spec, layout, scrapers)
 
+        fun file(packageName: String, fileName: String, emit: (KotlinFile) -> Unit): GeneratedFile =
+            KotlinFile(packageName, fileName, spec.id).also(emit).toGeneratedFile()
+
         return buildList {
             for (module in spec.modules) {
                 if (module.records.isNotEmpty()) {
@@ -59,7 +62,4 @@ class KotlinTarget : CodeTarget {
             add(file(layout.apiPackage, "${layout.facadeName}.kt") { FacadeEmitter(spec, layout).emit(it) })
         }
     }
-
-    private fun file(packageName: String, fileName: String, emit: (KotlinFile) -> Unit): GeneratedFile =
-        KotlinFile(packageName, fileName).also(emit).toGeneratedFile()
 }
