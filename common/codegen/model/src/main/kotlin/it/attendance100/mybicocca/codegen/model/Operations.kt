@@ -18,6 +18,8 @@ package it.attendance100.mybicocca.codegen.model
  *   replaced by the API parameter of that name (see [ApiSpec.parameters]).
  * @property query Query parameters sent with every call, by name, such as the function an
  *   RPC-style endpoint runs.
+ * @property form Form fields sent with every call, by name, such as the view a PHP endpoint
+ *   renders. An empty value sends the field with no value.
  * @property auth The credentials the operation accepts, if any.
  */
 data class Operation(
@@ -33,6 +35,7 @@ data class Operation(
     val headers: Map<String, String> = emptyMap(),
     val auth: AuthRequirement? = null,
     val query: Map<String, String> = emptyMap(),
+    val form: Map<String, String> = emptyMap(),
 ) {
     val pathParameters: List<Parameter> get() = parameters.filter { it.location == ParameterLocation.PATH }
     val queryParameters: List<Parameter> get() = parameters.filter { it.location == ParameterLocation.QUERY }
@@ -95,6 +98,12 @@ enum class ParameterEncoding {
      * parameters.
      */
     BRACKETS,
+
+    /**
+     * A list as one field per element, each named after the parameter, as PHP reads a wire name
+     * ending in `[]` (`days[]=1&days[]=2`). Only for query and form parameters.
+     */
+    REPEATED,
 }
 
 /** The body an operation sends. */
@@ -125,4 +134,16 @@ sealed interface ResponseBody {
 
     /** Raw bytes, such as a PDF. */
     data object Binary : ResponseBody
+
+    /**
+     * A JSON value of [type] assigned to the JavaScript [variable] by a script, as in
+     * `var elenco_sedi = [...];`. The script may assign other variables too.
+     */
+    data class ScriptVariable(val variable: String, val type: TypeRef) : ResponseBody
+
+    /**
+     * An HTML page, read into a value of [type] by [scrape] from the document. [type] is a
+     * scraped record, a list of them, or a value a field could scrape (see [Scrapes.kindFor]).
+     */
+    data class Html(val type: TypeRef, val scrape: List<ScrapeStep>) : ResponseBody
 }

@@ -128,6 +128,11 @@ public struct RestRequest: Sendable {
         return fields
     }
 
+    /// One field per element of `values`, each named `name`, as PHP reads a name ending in `[]`.
+    public static func repeated(_ name: String, _ values: [some QueryValueConvertible]?) -> [(String, (any QueryValueConvertible)?)] {
+        (values ?? []).map { (name, $0) }
+    }
+
     /// `value` as JSON text, for a parameter written as JSON; nil when there is no value.
     public static func json(_ value: (some Encodable)?) throws -> String? {
         try value.map { String(decoding: try JSONEncoder().encode($0), as: UTF8.self) }
@@ -150,6 +155,14 @@ public struct RestRequest: Sendable {
 public struct RestResponse: Sendable {
     public let status: Int
     public let body: Data
+    /// The URL that answered, after redirects; relative links of an HTML body resolve against it.
+    public let url: URL?
+
+    public init(status: Int, body: Data, url: URL? = nil) {
+        self.status = status
+        self.body = body
+        self.url = url
+    }
 
     public var isSuccess: Bool { (200..<400).contains(status) }
 
@@ -208,7 +221,7 @@ public struct RestConfiguration: Sendable {
         guard let http = response as? HTTPURLResponse else {
             throw URLError(.badServerResponse)
         }
-        return RestResponse(status: http.statusCode, body: data)
+        return RestResponse(status: http.statusCode, body: data, url: http.url)
     }
 
     func urlRequest(for request: RestRequest) throws -> URLRequest {
