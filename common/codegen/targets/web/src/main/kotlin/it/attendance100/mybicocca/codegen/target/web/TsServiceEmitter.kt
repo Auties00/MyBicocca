@@ -172,6 +172,10 @@ internal class TsServiceEmitter(
             if (parameter !in optional) return json
             return "$value == null ? ${default?.let { TsSyntax.string(it.value) } ?: "undefined"} : $json"
         }
+        parameter.pattern?.let { pattern ->
+            val formatted = "${codecs.runtime(file, "encodeTemporal")}($value, ${TsSyntax.string(pattern)})"
+            return if (parameter in optional) "$value == null ? undefined : $formatted" else formatted
+        }
         if (parameter !in optional || default == null) return value
         return "$value ?? ${layout.literal(parameter.type, default)}"
     }

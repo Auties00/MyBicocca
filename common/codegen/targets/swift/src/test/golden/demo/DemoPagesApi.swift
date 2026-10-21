@@ -15,14 +15,20 @@ public struct DemoPagesApi: Sendable {
     /// Rooms of the given buildings, read from the showcase page.
     public func getRooms(
         buildings: [String],
+        day: LocalDate,
+        from: LocalTime? = nil,
         levels: [DemoPriority]? = nil
     ) async throws -> [DemoRoom] {
         try await client.html(
             RestRequest(
                 method: .post,
                 path: "/portal/rooms.php",
-                query: RestRequest.repeated("level[]", levels),
-                form: [("view", "rooms"), ("list", "")] + RestRequest.repeated("sede[]", buildings),
+                query: [("start_time", from?.format(pattern: TemporalPattern("HH:mm")))] + RestRequest.repeated("level[]", levels),
+                form: [
+                    ("view", "rooms"),
+                    ("list", ""),
+                    ("date", day.format(pattern: TemporalPattern("dd-MM-yyyy")))
+                ] + RestRequest.repeated("sede[]", buildings),
                 headers: [("X-TENANT", tenant)],
                 server: DemoServer.main.rawValue
             ),

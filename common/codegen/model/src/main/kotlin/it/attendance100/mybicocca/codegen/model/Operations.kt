@@ -65,6 +65,8 @@ enum class HttpMethod { GET, POST, PUT, PATCH, DELETE }
  * @property default The value used when the caller gives none; such a parameter is always
  *   sent. For a [ParameterEncoding.JSON] parameter it is the JSON text to send.
  * @property encoding How the value is written.
+ * @property pattern The pattern a date or time is written with, in the syntax of
+ *   [Codec.Temporal]; ISO 8601 when null.
  */
 data class Parameter(
     val name: String,
@@ -76,6 +78,7 @@ data class Parameter(
     val valueDescriptions: Map<String, String> = emptyMap(),
     val default: DefaultValue.Literal? = null,
     val encoding: ParameterEncoding = ParameterEncoding.PLAIN,
+    val pattern: String? = null,
 ) {
     /** Whether the caller may leave the parameter out, in which case it isn't sent. */
     val isOmittable: Boolean get() = !required && default == null

@@ -227,6 +227,13 @@ object SpecValidator {
                     }
                 }
                 if (parameter.location == ParameterLocation.PATH && !parameter.required) add("$what isn't required")
+                if (parameter.pattern != null) {
+                    if ((parameter.type as? TypeRef.Primitive)?.kind?.isTemporal != true) add("$what has a pattern but isn't a date or time")
+                    if (parameter.encoding != ParameterEncoding.PLAIN) add("$what has a pattern but isn't plainly encoded")
+                    if (parameter.location !in setOf(ParameterLocation.QUERY, ParameterLocation.FORM, ParameterLocation.HEADER)) {
+                        add("$what has a pattern but isn't a query, form or header parameter")
+                    }
+                }
             }
             operation.server?.let { server ->
                 if (spec.servers.none { it.name == server }) add("$where targets unknown server '$server'")

@@ -146,7 +146,10 @@ internal class SwiftServiceEmitter(private val spec: ApiSpec, private val layout
     private fun pair(parameter: Parameter): String {
         val name = SwiftSyntax.identifier(parameter.name)
         val value = when (parameter.encoding) {
-            ParameterEncoding.PLAIN -> name
+            ParameterEncoding.PLAIN -> parameter.pattern?.let { pattern ->
+                val optional = if (!parameter.required && parameter.default == null) "?" else ""
+                "$name$optional.format(pattern: TemporalPattern(${SwiftSyntax.string(pattern)}))"
+            } ?: name
             ParameterEncoding.JSON -> "RestRequest.json($name)" + (parameter.default?.let { " ?? ${SwiftSyntax.string(it.value)}" } ?: "")
             ParameterEncoding.BRACKETS, ParameterEncoding.REPEATED -> error("Parameter '${parameter.name}' is written as several fields")
         }

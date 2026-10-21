@@ -12,6 +12,9 @@ import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
 import io.ktor.http.parameters
+import java.time.LocalDate
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
 import kotlinx.serialization.json.Json
 
 class DemoPagesApi(
@@ -25,6 +28,8 @@ class DemoPagesApi(
      */
     suspend fun getRooms(
         buildings: List<String>,
+        day: LocalDate,
+        from: LocalTime? = null,
         levels: List<DemoPriority>? = null
     ): List<DemoRoom> {
         return executeHtmlPost("/rooms.php", emptySet(), server = DemoServer.Main, scrape = DemoScrapers::pagesGetRooms) {
@@ -32,7 +37,9 @@ class DemoPagesApi(
                 append("view", "rooms")
                 append("list", "")
                 buildings.forEach { append("sede[]", it) }
+                append("date", day.format(DateTimeFormatter.ofPattern("dd-MM-yyyy")))
             }))
+            from?.let { parameter("start_time", it.format(DateTimeFormatter.ofPattern("HH:mm"))) }
             levels?.forEach { parameter("level[]", it.value) }
             header("X-TENANT", tenant)
         }
