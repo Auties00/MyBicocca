@@ -130,3 +130,11 @@ components:
           x-mb-html:
             - select: iframe
             - attribute: src
+    PagesTemplate:
+      type: object
+      x-mb-module: Templates
+      x-mb-scrape: {}
+      properties:
+        title:
+          type: string
+          x-mb-scrape: [{ select: h1 }, text]

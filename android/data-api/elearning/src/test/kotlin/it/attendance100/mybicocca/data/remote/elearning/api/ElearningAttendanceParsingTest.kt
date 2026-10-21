@@ -38,10 +38,13 @@ class ElearningAttendanceParsingTest {
     private fun link(sessId: Int, text: String) =
         """<td class="statuscol cell c2 lastcol" colspan="3"><a href="https://elearning.unimib.it/mod/attendance/attendance.php?sessid=$sessId&amp;sesskey=abc">$text</a></td>"""
 
+    private fun read(page: String, futureLinkText: String? = "Report future absence") =
+        ElearningAttendanceApi.classifyViewPage("/mod/attendance/view.php", Jsoup.parse(page), futureLinkText)
+            as ElearningAttendanceViewResponse.Success
+
     @Test
     fun `summary rows are read by position`() {
-        val page = Jsoup.parse(viewPage(42, ""))
-        val summary = ElearningAttendanceApi.parseSummaryTable(page)!!
+        val summary = read(viewPage(42, "")).summary!!
         assertEquals(10, summary.takenSessions)
         assertEquals("10 / 10", summary.pointsTakenLabel)
         assertEquals(100.0, summary.takenSessionsPercentage)
@@ -55,8 +58,9 @@ class ElearningAttendanceParsingTest {
     @Test
     fun `a summary with an unexpected number of rows is not mislabeled`() {
         val sevenRows = FULL_SUMMARY.lines().filter { it.isNotBlank() }.drop(1).joinToString("\n")
-        val page = Jsoup.parse(viewPage(42, "", summaryRows = sevenRows))
-        assertNull(ElearningAttendanceApi.parseSummaryTable(page))
+        assertNull(read(viewPage(42, "", summaryRows = sevenRows)).summary)
+        val nineRows = FULL_SUMMARY + "<tr><td>Altro:</td><td>1</td></tr>"
+        assertNull(read(viewPage(42, "", summaryRows = nineRows)).summary)
     }
 
     @Test
@@ -73,10 +77,7 @@ class ElearningAttendanceParsingTest {
             ),
         ).joinToString("\n")
 
-        val sessions = ElearningAttendanceApi.parseSubmittableSessions(
-            Jsoup.parse(viewPage(42, rows)),
-            futureLinkText = "Report future absence"
-        )
+        val sessions = read(viewPage(42, rows)).submittableSessions
 
         assertEquals(
             listOf(ElearningAttendanceSubmittableSession(sessionId = "901", time = "mer 18 nov 2026 2PM - 4PM")),
@@ -87,7 +88,7 @@ class ElearningAttendanceParsingTest {
     @Test
     fun `without the future link text every submit link is kept`() {
         val rows = row("gio 19 nov 2026", "2PM - 4PM", link(902, "Report future absence"))
-        val sessions = ElearningAttendanceApi.parseSubmittableSessions(Jsoup.parse(viewPage(42, rows)), futureLinkText = null)
+        val sessions = read(viewPage(42, rows), futureLinkText = null).submittableSessions
         assertEquals(listOf("902"), sessions.map { it.sessionId })
     }
 

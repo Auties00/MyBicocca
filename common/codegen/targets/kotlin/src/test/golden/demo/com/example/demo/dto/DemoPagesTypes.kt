@@ -41,6 +41,9 @@ data class DemoRoom(
     @SerialName("siteId")
     val siteId: Long? = null,
 
+    @SerialName("occupancy")
+    val occupancy: Double? = null,
+
     @SerialName("notes")
     val notes: String? = null,
 

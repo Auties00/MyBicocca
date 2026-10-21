@@ -347,6 +347,10 @@ object SampleSpecs {
             ),
             Field("siteId", "siteId", INT64, nullable = true, default = DefaultValue.Null, scrape = listOf(ScrapeStep.Select("a.site"), ScrapeStep.Url("href"), ScrapeStep.QueryParameter("id"))),
             Field(
+                "occupancy", "occupancy", TypeRef.Primitive(PrimitiveKind.FLOAT64), nullable = true, default = DefaultValue.Null,
+                scrape = listOf(ScrapeStep.Select(".occupancy"), ScrapeStep.Text(), ScrapeStep.RemoveSuffix("%"), ScrapeStep.ReplaceAll(mapOf("," to "."))),
+            ),
+            Field(
                 "notes", "notes", STRING, nullable = true, default = DefaultValue.Null,
                 scrape = listOf(ScrapeStep.SelectAll(".label"), ScrapeStep.Where(listOf(ScrapeStep.Text(), ScrapeStep.Equals("Notes"))), ScrapeStep.First, ScrapeStep.Lines),
             ),

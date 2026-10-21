@@ -11,9 +11,7 @@ import io.ktor.http.isSuccess
 import io.ktor.http.parameters
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceMarkResult
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceMarkableSession
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceStatusOption
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceSubmittableSession
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceSummary
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceViewResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningComponentString
 import it.attendance100.mybicocca.data.remote.elearning.exception.ElearningException
@@ -21,6 +19,8 @@ import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseModule
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleNamedValue
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleOption
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleWebAttendanceView
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleWebScrapers
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.decodeFromJsonElement
@@ -71,9 +71,6 @@ class ElearningAttendanceApi(
         /** Selects the "latest" (Ionic 5+) Angular templates the modern app expects. */
         private const val APP_VERSION_CODE = "45000"
 
-        /** Rows of the `attlist` summary when every session is shown (`construct_user_data_stat`). */
-        private const val SUMMARY_ROW_COUNT = 8
-
         /** Id Moodle gives the guest user, whom an expired `MoodleSession` falls back to. */
         private const val GUEST_USER_ID = 1
 
@@ -89,10 +86,7 @@ class ElearningAttendanceApi(
          */
         private val TRANSLATE_KEY_REGEX = Regex("plugin\\.mod_attendance\\.(\\w+)")
 
-        /**
-         * Captures the `sessid` of an `attendance.php` link, or of a mobile view mark
-         * action (`sessid: 123`).
-         */
+        /** Captures the `sessid` of a mobile view mark action (`sessid: 123`). */
         private val SESSID_REGEX = Regex("sessid[=:]\\s*(\\d+)")
 
         private val WHITESPACE_REGEX = Regex("\\s+")
@@ -121,80 +115,29 @@ class ElearningAttendanceApi(
             return when {
                 userId == null || userId <= GUEST_USER_ID -> ElearningAttendanceViewResponse.RequiresReauth
                 path != VIEW_PAGE_PATH -> ElearningAttendanceViewResponse.Unavailable
-                else -> ElearningAttendanceViewResponse.Success(
-                    summary = parseSummaryTable(document),
-                    submittableSessions = parseSubmittableSessions(document, futureLinkText)
-                )
+                else -> MoodleWebScrapers.attendanceView(document).let { view -> ElearningAttendanceViewResponse.Success(
+                    summary = view?.summary,
+                    submittableSessions = submittableSessions(view, futureLinkText)
+                ) }
             }
         }
 
         /**
-         * Parses the `attlist` summary table. Its rows carry localized labels, but
-         * `construct_user_data_stat` always emits the same eight rows in the same order when all
-         * sessions are shown, so the values are read by position. Any other number of rows
-         * means the markup changed, and the table is not read rather than mislabeled:
-         *
-         * ```
-         * Sessioni frequentate:                        10
-         * Punteggio sulle sessione già registrate:     10 / 10
-         * Percentuale sulle sessioni già registrate:   100,0%
-         * Numero totale delle sessioni:                82
-         * Punteggio su tutte le sessioni:              10 / 82
-         * Percentuale su tutte le sessioni:            12,2%
-         * Punteggio massimo possibile:                 82 / 82
-         * Percentuale massima possibile:               100,0%
-         * ```
-         *
-         * @param document The `view.php` page
-         * @return The parsed summary, or null when the page has no summary table of eight rows
-         */
-        internal fun parseSummaryTable(document: Document): ElearningAttendanceSummary? {
-            val values = document.select("table.attlist tr")
-                .mapNotNull { row -> row.select("td").getOrNull(1)?.text()?.trim() }
-            if (values.size != SUMMARY_ROW_COUNT) {
-                return null
-            }
-
-            return ElearningAttendanceSummary(
-                takenSessions = values[0].toIntOrNull(),
-                pointsTakenLabel = values[1].takeIf { it.isNotBlank() },
-                takenSessionsPercentage = values[2].parsePercentage(),
-                totalSessions = values[3].toIntOrNull(),
-                pointsAllSessionsLabel = values[4].takeIf { it.isNotBlank() },
-                allSessionsPercentage = values[5].parsePercentage(),
-                maxPossiblePointsLabel = values[6].takeIf { it.isNotBlank() },
-                maxPossiblePercentage = values[7].parsePercentage()
-            )
-        }
-
-        /**
-         * Collects the sessions the session log offers to submit attendance for right now. Such a
-         * session's status, points and remarks cells are merged into one cell holding a link to
-         * `attendance.php?sessid=…`. Left out are:
-         * - sessions that already have a status, even when it can still be updated;
-         * - sessions not open yet, whose link reads [futureLinkText] ("Report future absence")
-         *   and leads to a form for reporting an absence in advance;
-         * - rotating QR sessions, shown as a form instead of a link: the plugin's mobile handler
-         *   only accepts the session's fixed password, which a rotating QR never carries;
-         * - rows whose merged cell holds an enrolment message instead of a link.
+         * The sessions the session log offers to submit attendance for right now, as the
+         * generated scraper reads them, without the sessions not open yet: their link reads
+         * [futureLinkText] ("Report future absence") and leads to a form for reporting an
+         * absence in advance.
          *
          * @param futureLinkText The localized text of the future-session link, or null if unknown,
          *   in which case such sessions are kept
          */
-        internal fun parseSubmittableSessions(
-            document: Document,
+        private fun submittableSessions(
+            view: MoodleWebAttendanceView?,
             futureLinkText: String?
         ): List<ElearningAttendanceSubmittableSession> =
-            document.select("table.generaltable tr")
-                .mapNotNull { row ->
-                    val link = row.selectFirst("td[colspan=3] a[href*=attendance.php]") ?: return@mapNotNull null
-                    if (futureLinkText != null && link.text().trim() == futureLinkText.trim()) {
-                        return@mapNotNull null
-                    }
-                    val sessionId = SESSID_REGEX.find(link.attr("href"))?.groupValues?.get(1) ?: return@mapNotNull null
-                    val time = row.selectFirst("td")?.text()?.normalizeSpace() ?: return@mapNotNull null
-                    ElearningAttendanceSubmittableSession(sessionId = sessionId, time = time)
-                }
+            view?.submittableSessions.orEmpty()
+                .filter { futureLinkText == null || it.linkText.trim() != futureLinkText.trim() }
+                .map { ElearningAttendanceSubmittableSession(sessionId = it.id, time = it.time.normalizeSpace()) }
                 .distinctBy { it.sessionId }
 
         /**
@@ -206,17 +149,13 @@ class ElearningAttendanceApi(
             session: ElearningAttendanceSubmittableSession,
             formHtml: String
         ): ElearningAttendanceMarkableSession {
-            val form = Jsoup.parse(formHtml)
-            val refusal = form.select("span.messages")
-                .firstNotNullOfOrNull { TRANSLATE_KEY_REGEX.find(it.text())?.groupValues?.get(1) }
+            val form = MoodleWebScrapers.attendanceSessionForm(Jsoup.parse(formHtml))
+            val refusal = form?.refusal
             return ElearningAttendanceMarkableSession(
                 sessionId = session.sessionId,
                 time = session.time,
-                requiresPassword = refusal == null && form.selectFirst("[name=studentpass]") != null,
-                statuses = if (refusal != null) emptyList() else form.select("ion-radio").mapNotNull { radio ->
-                    val id = radio.attr("value").takeIf { it.isNotBlank() } ?: return@mapNotNull null
-                    ElearningAttendanceStatusOption(id = id, description = radio.text().trim())
-                },
+                requiresPassword = refusal == null && form?.requiresPassword == true,
+                statuses = if (refusal != null) emptyList() else form?.statuses.orEmpty(),
                 refusal = refusal
             )
         }
@@ -268,17 +207,6 @@ class ElearningAttendanceApi(
         }
 
         private fun String.normalizeSpace(): String = trim().replace(WHITESPACE_REGEX, " ")
-
-        /**
-         * Parses a localized percentage label (e.g. "100,0%") into its numeric value.
-         *
-         * @return The percentage in the 0.0 to 100.0 range, or null if not parseable
-         */
-        private fun String.parsePercentage(): Double? = this
-            .removeSuffix("%")
-            .replace(',', '.')
-            .trim()
-            .toDoubleOrNull()
     }
 
     /** The language the web services render in, which `view.php` is asked to match. */

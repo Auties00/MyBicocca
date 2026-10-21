@@ -181,6 +181,12 @@ public enum Scrape {
         return replacements.first(where: { $0.key.caseInsensitiveCompare(text) == .orderedSame })?.value ?? text
     }
 
+    /// The text with every occurrence of each part replaced by its replacement, in order.
+    public static func replaceAll(_ text: String?, _ replacements: [(String, String)]) -> String? {
+        guard let text else { return nil }
+        return present(replacements.reduce(text) { $0.replacingOccurrences(of: $1.0, with: $1.1) }, [])
+    }
+
     public static func equals(_ text: String?, _ value: String) -> Bool? {
         text.map { $0.caseInsensitiveCompare(value) == .orderedSame }
     }

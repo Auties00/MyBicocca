@@ -270,6 +270,10 @@ internal class ScrapeEmitter(private val spec: ApiSpec, private val layout: Kotl
                 is ScrapeStep.NullIf -> call(Helper.NULL_IF, v, list(step.values))
                 is ScrapeStep.QueryParameter -> call(Helper.QUERY_PARAMETER, v, str(step.name))
                 is ScrapeStep.Replace -> call(Helper.REPLACE, v, "mapOf(${step.replacements.entries.joinToString(", ") { "${str(it.key)} to ${str(it.value)}" }})")
+                is ScrapeStep.ReplaceAll -> call(
+                    Helper.PRESENT,
+                    step.replacements.entries.fold(v) { text, (from, to) -> "$text?.replace(${str(from)}, ${str(to)})" },
+                )
                 is ScrapeStep.Equals -> value.then("equals(${str(step.value)}, ignoreCase = true)", nullable = false)
                 is ScrapeStep.Contains -> value.then("contains(${str(step.value)}, ignoreCase = true)", nullable = false)
                 ScrapeStep.Not -> value.then("not()", nullable = false)

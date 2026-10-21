@@ -18,12 +18,13 @@ export function scrapeDemoRoom(node: ScrapeNode): DemoRoom | undefined {
   const value7 = scrape.compact(scrape.selectAll(node, ".equipment span").filter((candidate4) => scrape.contains(scrape.text(scrape.next(candidate4), undefined, missing), "available") === true).map((item5) => decodeDemoKind(scrape.text(item5, undefined, missing))));
   const value8 = scrape.url(scrape.select(node, "a.site"), "href") ?? scrape.attribute(scrape.select(scrape.follow(scrape.select(node, ".map"), "href"), "iframe"), "src", missing) ?? null;
   const value9 = scrape.integer(scrape.queryParameter(scrape.url(scrape.select(node, "a.site"), "href"), "id")) ?? null;
-  const value10 = scrape.lines(scrape.selectAll(node, ".label").filter((candidate6) => scrape.equals(scrape.text(candidate6, undefined, missing), "Notes") === true)[0], missing) ?? null;
-  const value11 = scrape.nullIf(scrape.text(scrape.select(scrape.root(node), "h1.page"), ".sr-only", missing), ["Untitled"]) ?? null;
-  const value12 = scrape.html(scrape.select(node, ".description")) ?? "";
-  const value13 = decodeDemoPriority(scrape.removePrefix(scrape.attribute(scrape.select(node, ".level"), "data-level", missing), "level-")) ?? null;
-  const value14 = scrape.compact(scrape.sections(scrape.select(node, ".staff"), "h4").map((item7) => scrapeDemoStaffGroup(item7)));
-  const value15 = scrape.map(scrape.sections(scrape.select(node, ".staff"), "h4")[0], (node8) => scrapeDemoStaffGroup(node8)) ?? null;
+  const value10 = scrape.number(scrape.replaceAll(scrape.removeSuffix(scrape.text(scrape.select(node, ".occupancy"), undefined, missing), "%"), [[",", "."]])) ?? null;
+  const value11 = scrape.lines(scrape.selectAll(node, ".label").filter((candidate6) => scrape.equals(scrape.text(candidate6, undefined, missing), "Notes") === true)[0], missing) ?? null;
+  const value12 = scrape.nullIf(scrape.text(scrape.select(scrape.root(node), "h1.page"), ".sr-only", missing), ["Untitled"]) ?? null;
+  const value13 = scrape.html(scrape.select(node, ".description")) ?? "";
+  const value14 = decodeDemoPriority(scrape.removePrefix(scrape.attribute(scrape.select(node, ".level"), "data-level", missing), "level-")) ?? null;
+  const value15 = scrape.compact(scrape.sections(scrape.select(node, ".staff"), "h4").map((item7) => scrapeDemoStaffGroup(item7)));
+  const value16 = scrape.map(scrape.sections(scrape.select(node, ".staff"), "h4")[0], (node8) => scrapeDemoStaffGroup(node8)) ?? null;
   return {
     name: value0,
     code: value1,
@@ -35,12 +36,13 @@ export function scrapeDemoRoom(node: ScrapeNode): DemoRoom | undefined {
     kinds: value7,
     website: value8,
     siteId: value9,
-    notes: value10,
-    title: value11,
-    descriptionHtml: value12,
-    level: value13,
-    staff: value14,
-    lead: value15,
+    occupancy: value10,
+    notes: value11,
+    title: value12,
+    descriptionHtml: value13,
+    level: value14,
+    staff: value15,
+    lead: value16,
     note: null,
   };
 }

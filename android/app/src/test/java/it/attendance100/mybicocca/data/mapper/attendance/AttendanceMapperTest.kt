@@ -9,8 +9,8 @@ import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffCertificati
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffCertifyAttendanceResult
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceMarkResult
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceMarkableSession
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceStatusOption
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceSummary
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleWebAttendanceStatusOption
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleWebAttendanceSummary
 import it.attendance100.mybicocca.domain.model.attendance.AttendanceModuleRef
 import it.attendance100.mybicocca.domain.model.attendance.ClassroomAttendanceStatus
 import it.attendance100.mybicocca.domain.model.attendance.PresenceMarkOutcome
@@ -45,7 +45,7 @@ class AttendanceMapperTest {
 
     @Test
     fun `moodle summary maps to a labeled session register`() {
-        val summary = ElearningAttendanceSummary(
+        val summary = MoodleWebAttendanceSummary(
             takenSessions = 5,
             takenSessionsPercentage = 83.3,
             totalSessions = 12,
@@ -72,8 +72,8 @@ class AttendanceMapperTest {
             time = "mer 18 nov 2026 2PM - 4PM",
             requiresPassword = true,
             statuses = listOf(
-                ElearningAttendanceStatusOption("1", "Presente"),
-                ElearningAttendanceStatusOption("2", "Assente"),
+                MoodleWebAttendanceStatusOption("1", "Presente"),
+                MoodleWebAttendanceStatusOption("2", "Assente"),
             ),
         ).toDomain(module)
         assertThat(session.sessionId).isEqualTo("55")
