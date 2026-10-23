@@ -87,10 +87,3 @@ sealed interface Esse3SelfCertificationType {
             }
     }
 }
-
-// TODO: Diritto allo studio bandi DTOs (iniziative, borse, mobilità, 150 ore,
-//  corsi elettivi). Removed until a populated bando can be scraped to model the
-//  list rows and the per-bando detail page in depth.
-
-// TODO: Proroga DTOs (extension request + receipt). Removed until a real
-//  submitted request can be scraped to model the row and detail markup.
