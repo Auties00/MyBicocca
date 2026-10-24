@@ -8,8 +8,8 @@ import it.attendance100.mybicocca.codegen.model.ApiSpec
 import kotlinx.serialization.Serializable
 
 /**
- * Generates a Kotlin/JVM SDK built on Ktor and kotlinx.serialization, on top of the runtime
- * [KotlinRuntimeTarget] generates. See [KotlinLayout] for where declarations go.
+ * Generates a Kotlin/JVM SDK built on Ktor and kotlinx.serialization, on top of the
+ * [KotlinRuntime] it writes as its shared files. See [KotlinLayout] for where declarations go.
  */
 class KotlinTarget : CodeTarget {
     override val id: String = "kotlin"
@@ -71,4 +71,8 @@ class KotlinTarget : CodeTarget {
             }
         }
     }
+
+    /** The [KotlinRuntime], in the APIs' runtime package. */
+    override fun sharedFiles(context: TargetContext): List<GeneratedFile> =
+        KotlinRuntime.files(context.options.decodeOptions<Options>().runtimePackage)
 }

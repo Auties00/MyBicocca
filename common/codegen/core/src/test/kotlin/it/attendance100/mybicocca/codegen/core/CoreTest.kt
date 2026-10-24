@@ -1,5 +1,6 @@
 package it.attendance100.mybicocca.codegen.core
 
+import it.attendance100.mybicocca.codegen.model.ApiSpec
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.io.TempDir
@@ -71,6 +72,53 @@ class OutputSyncTest {
         dir.resolve("DemoPlanningApi.kt").writeText(generated("DemoPlanningApi.kt", "class DemoPlanningApi", apiId = "demo-planning").content)
         val plan = OutputSync.plan(dir, listOf(generated("DemoApi.kt", "class DemoApi")), "demo")
         assertTrue(plan.deletions.isEmpty())
+    }
+}
+
+class GeneratorTest {
+    private fun file(path: String, owner: String, body: String = "") = GeneratedFile(path, "// ${generatedMarker(owner)}. Do not edit.\n$body\n")
+
+    /** Reads an API named after its directory, and generates one file plus a shared one into `out`. */
+    private fun registry(sharedBody: (apiId: String) -> String = { "" }) = object : Plugins {
+        override fun reader(id: String) = object : SpecReader {
+            override val id = "fake"
+            override fun read(context: ReaderContext) = ApiSpec(id = context.specDir.fileName.toString(), prefix = "Fake", modules = emptyList(), enums = emptyList())
+        }
+
+        override fun target(id: String) = object : CodeTarget {
+            override val id = "fake"
+            override fun generate(spec: ApiSpec, context: TargetContext) = listOf(file("${spec.id}.txt", spec.id))
+            override fun sharedFiles(context: TargetContext) =
+                listOf(file("Runtime.txt", SHARED_FILES_OWNER, sharedBody(context.options.getValue("api").toString())))
+        }
+    }
+
+    private fun api(root: Path, id: String): Path = root.resolve(id).apply {
+        createDirectories()
+        resolve(CodegenConfig.FILE_NAME).writeText(
+            """{"reader": {"type": "fake"}, "targets": {"fake": {"outputDir": "../out", "options": {"api": "$id"}}}}"""
+        )
+    }
+
+    @Test
+    fun `writes the shared files once per directory, and no API's run deletes them`(@TempDir root: Path) {
+        val apis = listOf(api(root, "a"), api(root, "b"))
+        Generator(registry(), log = {}).run(apis)
+        val out = root.resolve("out")
+        assertTrue(out.resolve("Runtime.txt").exists())
+
+        // Regenerating one API keeps both the other API's files and the shared ones.
+        val plans = Generator(registry(), log = {}).run(listOf(apis[0]))
+        assertTrue(plans.all(SyncPlan::isUpToDate))
+        assertTrue(out.resolve("b.txt").exists())
+    }
+
+    @Test
+    fun `refuses APIs that disagree on a shared file`(@TempDir root: Path) {
+        val error = assertThrows<IllegalArgumentException> {
+            Generator(registry(sharedBody = { it }), log = {}).run(listOf(api(root, "a"), api(root, "b")))
+        }
+        assertContains(error.message.orEmpty(), "Runtime.txt")
     }
 }
 
