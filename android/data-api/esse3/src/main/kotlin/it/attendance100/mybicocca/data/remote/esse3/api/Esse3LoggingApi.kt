@@ -5,23 +5,26 @@ import io.ktor.client.HttpClient
 import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
+import io.ktor.http.HttpMethod
 import io.ktor.http.contentType
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3PermissionLevel
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3TransactionLogSession
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3TransactionLogSessionBody
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3TransactionLogViewParameters
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
 
 class Esse3LoggingApi(
     client: HttpClient,
     json: Json
-) : Esse3AbstractApi(client, json, "/logging-service-v1") {
+) : RestApi(client, json, "/logging-service-v1", Esse3Runtime.policy) {
 
     /**
      * Recupera sessioni in override
      */
     suspend fun getTlogSessions(): List<Esse3TransactionLogSession> {
-        return executeJsonGetList<Esse3TransactionLogSession>("/tlog/sessions", setOf(Esse3PermissionLevel.AUTHENTICATED_USER))
+        return jsonList(HttpMethod.Get, "/tlog/sessions", deserializer = serializer<List<Esse3TransactionLogSession>>(), roles = setOf(Esse3PermissionLevel.AUTHENTICATED_USER))
     }
 
     /**
@@ -34,7 +37,7 @@ class Esse3LoggingApi(
         sessionId: String,
         body: Esse3TransactionLogSessionBody
     ): Esse3TransactionLogSession {
-        return executeJsonPut<Esse3TransactionLogSession>("/tlog/sessions/${sessionId}", setOf(Esse3PermissionLevel.AUTHENTICATED_USER)) {
+        return json(HttpMethod.Put, "/tlog/sessions/${sessionId}", deserializer = serializer<Esse3TransactionLogSession>(), roles = setOf(Esse3PermissionLevel.AUTHENTICATED_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -56,7 +59,7 @@ class Esse3LoggingApi(
         startDate: String? = null,
         endDate: String? = null
     ): String {
-        return executeJsonGet<String>("/tlog/text", setOf(Esse3PermissionLevel.AUTHENTICATED_USER)) {
+        return json(HttpMethod.Get, "/tlog/text", deserializer = serializer<String>(), roles = setOf(Esse3PermissionLevel.AUTHENTICATED_USER)) {
             sessionId?.let { parameter("sessionId", it) }
             contextParamsId?.let { parameter("ctxParamsId", it) }
             transactionId?.let { parameter("transactionId", it) }
@@ -77,7 +80,7 @@ class Esse3LoggingApi(
         contextParamsId: Long? = null,
         transactionId: String? = null
     ): List<Esse3TransactionLogViewParameters> {
-        return executeJsonGetList<Esse3TransactionLogViewParameters>("/tlog/transactions", setOf(Esse3PermissionLevel.AUTHENTICATED_USER)) {
+        return jsonList(HttpMethod.Get, "/tlog/transactions", deserializer = serializer<List<Esse3TransactionLogViewParameters>>(), roles = setOf(Esse3PermissionLevel.AUTHENTICATED_USER)) {
             sessionId?.let { parameter("sessionId", it) }
             contextParamsId?.let { parameter("ctxParamsId", it) }
             transactionId?.let { parameter("transactionId", it) }

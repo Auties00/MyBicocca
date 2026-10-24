@@ -10,7 +10,8 @@ import io.ktor.client.HttpClientConfig
  */
 class EasyStaffApi(httpClientConfig: HttpClientConfig<*>.() -> Unit = {}) : AutoCloseable {
     private val json = EasyStaffRuntime.json
-    private val client = EasyStaffRuntime.createHttpClient(json, httpClientConfig)
+    private val settings = EasyStaffRuntime.settings()
+    private val client = EasyStaffRuntime.createHttpClient(json, settings, httpClientConfig)
 
     val core = EasyStaffCoreApi(client, json)
     val buildings = EasyStaffBuildingsApi(client, json)

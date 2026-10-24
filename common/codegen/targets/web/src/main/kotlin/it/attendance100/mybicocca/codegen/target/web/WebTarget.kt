@@ -10,25 +10,22 @@ import kotlinx.serialization.Serializable
 
 /**
  * Generates a TypeScript SDK for the web app, built on `fetch` and usable in browsers and
- * Node. See [TsLayout] for the names it uses and the runtime the API provides by hand.
+ * Node. See [TsLayout] for the names it uses and the hand-written runtime it builds on.
  */
 class WebTarget : CodeTarget {
     override val id: String = "web"
 
     /**
      * @property runtimeModule Import specifier of the shared hand-written runtime package.
-     * @property clientModule Import specifier of the API's hand-written client, relative to the
-     *   output directory.
      */
     @Serializable
     data class Options(
         val runtimeModule: String = "@mybicocca/data-api-runtime",
-        val clientModule: String = "../client.js",
     )
 
     override fun generate(spec: ApiSpec, context: TargetContext): List<GeneratedFile> {
         val options = context.options.decodeOptions<Options>()
-        val layout = TsLayout(spec, options.runtimeModule, options.clientModule)
+        val layout = TsLayout(spec, options.runtimeModule)
         val codecs = TsCodecs(layout)
         val records = TsRecordEmitter(layout, codecs)
         val enums = TsEnumEmitter(layout)
@@ -62,6 +59,7 @@ class WebTarget : CodeTarget {
                 add(file(scrapers.fileName) { scrapers.emit(it) })
             }
             add(file("${layout.facadeName}.ts") { facade(spec, layout, it) })
+            add(file("${layout.client}.ts") { TsClientEmitter(spec, layout).emit(it) })
         }
         return files + file("index.ts") { index ->
             files.forEach { index.body.line("export * from ${TsSyntax.string(layout.moduleOf(it.path))};") }

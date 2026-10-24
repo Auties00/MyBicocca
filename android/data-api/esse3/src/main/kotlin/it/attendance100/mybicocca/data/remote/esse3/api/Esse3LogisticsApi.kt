@@ -5,6 +5,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
+import io.ktor.http.HttpMethod
 import io.ktor.http.contentType
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3ActivityLog
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3ActivityLogWithSyllabus
@@ -21,12 +22,14 @@ import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3SyllabusActivityPat
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3SyllabusActivityPatchResult
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3SystemLogImportResult
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3TeachingUnitLogWithDetails
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
 
 class Esse3LogisticsApi(
     client: HttpClient,
     json: Json
-) : Esse3AbstractApi(client, json, "/logistica-service-v1") {
+) : RestApi(client, json, "/logistica-service-v1", Esse3Runtime.policy) {
 
     /**
      * informazioni logistiche per easystaff.
@@ -42,7 +45,7 @@ class Esse3LogisticsApi(
         courseOfStudyList: String? = null,
         optionalFields: String? = null
     ): List<Esse3EasystaffActivityLogWithDetails> {
-        return executeJsonGetList<Esse3EasystaffActivityLogWithDetails>("/easystaff/logistica/${academicYearOfferId}", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/easystaff/logistica/${academicYearOfferId}", deserializer = serializer<List<Esse3EasystaffActivityLogWithDetails>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             departmentCode?.let { parameter("dipCod", it) }
             courseOfStudyList?.let { parameter("listaCds", it) }
             optionalFields?.let { parameter("optionalFields", it) }
@@ -63,7 +66,7 @@ class Esse3LogisticsApi(
         courseOfStudyList: String? = null,
         optionalFields: String? = null
     ): List<Esse3EasystaffCourseOrderWithDetails> {
-        return executeJsonGetList<Esse3EasystaffCourseOrderWithDetails>("/easystaff/struttura/${academicYearOfferId}", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/easystaff/struttura/${academicYearOfferId}", deserializer = serializer<List<Esse3EasystaffCourseOrderWithDetails>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             departmentCode?.let { parameter("dipCod", it) }
             courseOfStudyList?.let { parameter("listaCds", it) }
             optionalFields?.let { parameter("optionalFields", it) }
@@ -108,7 +111,7 @@ class Esse3LogisticsApi(
         limit: Int? = null,
         order: String? = null
     ): List<Esse3ActivityLog> {
-        return executeJsonGetList<Esse3ActivityLog>("/logistica", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/logistica", deserializer = serializer<List<Esse3ActivityLog>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             academicYearOfferId?.let { parameter("aaOffId", it) }
             courseOfStudyCode?.let { parameter("cdsCod", it) }
             courseOfStudyDescription?.let { parameter("cdsDes", it) }
@@ -152,7 +155,7 @@ class Esse3LogisticsApi(
         teachingUnitCode: String? = null,
         domicilePartialCode: String? = null
     ): Esse3CoverageDeletable {
-        return executeJsonGet<Esse3CoverageDeletable>("/logistica/copertura/cancellabile", setOf(Esse3PermissionLevel.ANY)) {
+        return json(HttpMethod.Get, "/logistica/copertura/cancellabile", deserializer = serializer<Esse3CoverageDeletable>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             coverageId?.let { parameter("coperId", it) }
             matricola?.let { parameter("matricola", it) }
             academicYearOfferId?.let { parameter("aaOffId", it) }
@@ -175,7 +178,7 @@ class Esse3LogisticsApi(
         body: Esse3SyllabusActivityPatch,
         lecturerMatricola: String? = null
     ): Esse3SyllabusActivityPatchResult {
-        return executeJsonPut<Esse3SyllabusActivityPatchResult>("/logistica/syllabusAD", setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Put, "/logistica/syllabusAD", deserializer = serializer<Esse3SyllabusActivityPatchResult>(), roles = setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
             lecturerMatricola?.let { parameter("docenteMatricola", it) }
@@ -212,7 +215,7 @@ class Esse3LogisticsApi(
         order: String? = null,
         optionalFields: String? = null
     ): List<Esse3ActivityLogWithSyllabus> {
-        return executeJsonGetList<Esse3ActivityLogWithSyllabus>("/logistica/${activityLogId}/adLogConSyllabus", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/logistica/${activityLogId}/adLogConSyllabus", deserializer = serializer<List<Esse3ActivityLogWithSyllabus>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             academicYearOfferId?.let { parameter("aaOffId", it) }
             courseOfStudyCode?.let { parameter("cdsCod", it) }
             courseOfStudyDescription?.let { parameter("cdsDes", it) }
@@ -267,7 +270,7 @@ class Esse3LogisticsApi(
         order: String? = null,
         optionalFields: String? = null
     ): List<Esse3TeachingUnitLogWithDetails> {
-        return executeJsonGetList<Esse3TeachingUnitLogWithDetails>("/logistica/${activityLogId}/udLogConDettagli", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/logistica/${activityLogId}/udLogConDettagli", deserializer = serializer<List<Esse3TeachingUnitLogWithDetails>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             academicYearOfferId?.let { parameter("aaOffId", it) }
             courseOfStudyCode?.let { parameter("cdsCod", it) }
             courseOfStudyDescription?.let { parameter("cdsDes", it) }
@@ -317,7 +320,7 @@ class Esse3LogisticsApi(
         order: String? = null,
         optionalFields: String? = null
     ): List<Esse3LogisticsWithDetails> {
-        return executeJsonGetList<Esse3LogisticsWithDetails>("/logisticaFull/${activityLogId}/", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/logisticaFull/${activityLogId}/", deserializer = serializer<List<Esse3LogisticsWithDetails>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             academicYearOfferId?.let { parameter("aaOffId", it) }
             courseOfStudyCode?.let { parameter("cdsCod", it) }
             courseOfStudyDescription?.let { parameter("cdsDes", it) }
@@ -366,7 +369,7 @@ class Esse3LogisticsApi(
         order: String? = null,
         optionalFields: String? = null
     ): List<Esse3LogisticsWithDetails> {
-        return executeJsonGetList<Esse3LogisticsWithDetails>("/logisticaPerAdFull/${academicYearOfferId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/logisticaPerAdFull/${academicYearOfferId}", deserializer = serializer<List<Esse3LogisticsWithDetails>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             courseOfStudyId?.let { parameter("cdsId", it) }
             courseOfStudyCode?.let { parameter("cdsCod", it) }
             courseOfStudyDescription?.let { parameter("cdsDes", it) }
@@ -409,7 +412,7 @@ class Esse3LogisticsApi(
         limit: Int? = null,
         order: String? = null
     ): List<Esse3LogisticsPerTeacher> {
-        return executeJsonGetList<Esse3LogisticsPerTeacher>("/logisticaPerDocente", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/logisticaPerDocente", deserializer = serializer<List<Esse3LogisticsPerTeacher>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             lecturerId?.let { parameter("docenteId", it) }
             lecturerMatricola?.let { parameter("docenteMatricola", it) }
             lecturerSurname?.let { parameter("docenteCognome", it) }
@@ -453,7 +456,7 @@ class Esse3LogisticsApi(
         order: String? = null,
         optionalFields: String? = null
     ): List<Esse3LogisticsWithDetails> {
-        return executeJsonGetList<Esse3LogisticsWithDetails>("/logisticaPerOdFull/streamed/${academicYearOfferId}/${courseOfStudyOfferId}/", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/logisticaPerOdFull/streamed/${academicYearOfferId}/${courseOfStudyOfferId}/", deserializer = serializer<List<Esse3LogisticsWithDetails>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             courseOfStudyCode?.let { parameter("cdsCod", it) }
             courseOfStudyDescription?.let { parameter("cdsDes", it) }
             academicYearOrderId?.let { parameter("aaOrdId", it) }
@@ -497,7 +500,7 @@ class Esse3LogisticsApi(
         order: String? = null,
         optionalFields: String? = null
     ): List<Esse3LogisticsWithDetails> {
-        return executeJsonGetList<Esse3LogisticsWithDetails>("/logisticaPerOdFull/${academicYearOfferId}/${courseOfStudyOfferId}/", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/logisticaPerOdFull/${academicYearOfferId}/${courseOfStudyOfferId}/", deserializer = serializer<List<Esse3LogisticsWithDetails>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             courseOfStudyCode?.let { parameter("cdsCod", it) }
             courseOfStudyDescription?.let { parameter("cdsDes", it) }
             academicYearOrderId?.let { parameter("aaOrdId", it) }
@@ -523,7 +526,7 @@ class Esse3LogisticsApi(
         limit: Int? = null,
         order: String? = null
     ): List<Esse3DeletedLogistics> {
-        return executeJsonGetList<Esse3DeletedLogistics>("/logisticheEliminate", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/logisticheEliminate", deserializer = serializer<List<Esse3DeletedLogistics>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             logModificationDate?.let { parameter("dataModLog", it) }
             start?.let { parameter("start", it) }
             limit?.let { parameter("limit", it) }
@@ -547,7 +550,7 @@ class Esse3LogisticsApi(
         fields: String? = null,
         order: String? = null
     ): List<Esse3Classroom> {
-        return executeJsonGetList<Esse3Classroom>("/risFisse/aule", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/risFisse/aule", deserializer = serializer<List<Esse3Classroom>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             classroomCode?.let { parameter("aulaCod", it) }
             externalClassroomCode?.let { parameter("extAulaCod", it) }
             optionalFields?.let { parameter("optionalFields", it) }
@@ -570,7 +573,7 @@ class Esse3LogisticsApi(
         fields: String? = null,
         order: String? = null
     ): List<Esse3Building> {
-        return executeJsonGetList<Esse3Building>("/risFisse/edifici", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/risFisse/edifici", deserializer = serializer<List<Esse3Building>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             filter?.let { parameter("filter", it) }
             optionalFields?.let { parameter("optionalFields", it) }
             fields?.let { parameter("fields", it) }
@@ -590,7 +593,7 @@ class Esse3LogisticsApi(
         optionalFields: String? = null,
         fields: String? = null
     ): Esse3Building {
-        return executeJsonGet<Esse3Building>("/risFisse/edifici/${buildingId}", setOf(Esse3PermissionLevel.ANY)) {
+        return json(HttpMethod.Get, "/risFisse/edifici/${buildingId}", deserializer = serializer<Esse3Building>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             optionalFields?.let { parameter("optionalFields", it) }
             fields?.let { parameter("fields", it) }
         }
@@ -612,7 +615,7 @@ class Esse3LogisticsApi(
         fields: String? = null,
         order: String? = null
     ): List<Esse3Classroom> {
-        return executeJsonGetList<Esse3Classroom>("/risFisse/edifici/${buildingId}/aule", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/risFisse/edifici/${buildingId}/aule", deserializer = serializer<List<Esse3Classroom>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             filter?.let { parameter("filter", it) }
             optionalFields?.let { parameter("optionalFields", it) }
             fields?.let { parameter("fields", it) }
@@ -634,7 +637,7 @@ class Esse3LogisticsApi(
         optionalFields: String? = null,
         fields: String? = null
     ): List<Esse3Classroom> {
-        return executeJsonGetList<Esse3Classroom>("/risFisse/edifici/${buildingId}/aule/${classroomId}", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/risFisse/edifici/${buildingId}/aule/${classroomId}", deserializer = serializer<List<Esse3Classroom>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             optionalFields?.let { parameter("optionalFields", it) }
             fields?.let { parameter("fields", it) }
         }
@@ -644,6 +647,6 @@ class Esse3LogisticsApi(
      * sincronizzazione con il sistema di logisitica esterno
      */
     suspend fun syncSystemLog(): Esse3SystemLogImportResult {
-        return executeJsonPut<Esse3SystemLogImportResult>("/risFisse/syncConSistLog", setOf(Esse3PermissionLevel.TECHNICAL_USER))
+        return json(HttpMethod.Put, "/risFisse/syncConSistLog", deserializer = serializer<Esse3SystemLogImportResult>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 }

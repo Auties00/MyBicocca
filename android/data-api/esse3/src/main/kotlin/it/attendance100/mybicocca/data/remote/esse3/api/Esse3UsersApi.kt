@@ -5,6 +5,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
+import io.ktor.http.HttpMethod
 import io.ktor.http.contentType
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3CareerPortion
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3DigitalIdentities
@@ -13,12 +14,14 @@ import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3PermissionLevel
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3SignatureImportData
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3SignatureResponse
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3User
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
 
 class Esse3UsersApi(
     client: HttpClient,
     json: Json
-) : Esse3AbstractApi(client, json, "/utenti-service-v1") {
+) : RestApi(client, json, "/utenti-service-v1", Esse3Runtime.policy) {
 
     /**
      * Recupero degli utenti abilitati presenti a sistema
@@ -48,7 +51,7 @@ class Esse3UsersApi(
         limit: Int? = null,
         order: String? = null
     ): List<Esse3User> {
-        return executeJsonGetList<Esse3User>("/utenti", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/utenti", deserializer = serializer<List<Esse3User>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             name?.let { parameter("nome", it) }
             surname?.let { parameter("cognome", it) }
             fiscalCode?.let { parameter("codFis", it) }
@@ -71,7 +74,7 @@ class Esse3UsersApi(
     suspend fun postUserSignatureData(
         body: Esse3SignatureImportData
     ): List<Esse3SignatureResponse> {
-        return executeJsonPostList<Esse3SignatureResponse>("/utenti/datiFirma", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Post, "/utenti/datiFirma", deserializer = serializer<List<Esse3SignatureResponse>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -87,7 +90,7 @@ class Esse3UsersApi(
         body: String,
         delimiter: String? = null
     ): String {
-        return executeJsonPost<String>("/utenti/datiFirma/csv", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Post, "/utenti/datiFirma/csv", deserializer = serializer<String>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
             delimiter?.let { parameter("delimiter", it) }
@@ -110,7 +113,7 @@ class Esse3UsersApi(
         aliasRecoveryAuthorization: Int? = null,
         optionalFields: String? = null
     ): List<Esse3User> {
-        return executeJsonGetList<Esse3User>("/utenti/${userId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/utenti/${userId}", deserializer = serializer<List<Esse3User>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             caseSensitive?.let { parameter("caseSensitive", it) }
             grants?.let { parameter("grants", it) }
             aliasRecoveryAuthorization?.let { parameter("abilRecuperoAlias", it) }
@@ -128,7 +131,7 @@ class Esse3UsersApi(
         userId: String,
         cieCode: String? = null
     ): Esse3DigitalIdentities {
-        return executeJsonPut<Esse3DigitalIdentities>("/utenti/${userId}/cie", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Put, "/utenti/${userId}/cie", deserializer = serializer<Esse3DigitalIdentities>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             cieCode?.let { parameter("cieCode", it) }
         }
     }
@@ -141,7 +144,7 @@ class Esse3UsersApi(
     suspend fun getDigitalIdentity(
         userId: String
     ): Esse3DigitalIdentities {
-        return executeJsonGet<Esse3DigitalIdentities>("/utenti/${userId}/identitaDigitale", setOf(Esse3PermissionLevel.TECHNICAL_USER))
+        return json(HttpMethod.Get, "/utenti/${userId}/identitaDigitale", deserializer = serializer<Esse3DigitalIdentities>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -154,7 +157,7 @@ class Esse3UsersApi(
         userId: String,
         spidCode: String? = null
     ): Esse3DigitalIdentities {
-        return executeJsonPut<Esse3DigitalIdentities>("/utenti/${userId}/spid", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Put, "/utenti/${userId}/spid", deserializer = serializer<Esse3DigitalIdentities>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             spidCode?.let { parameter("spidCode", it) }
         }
     }
@@ -181,7 +184,7 @@ class Esse3UsersApi(
         externalCareerCode: String? = null,
         order: String? = null
     ): List<Esse3ExtendedCareerPortion> {
-        return executeJsonGetList<Esse3ExtendedCareerPortion>("/utenti/${userId}/trattiAttivi", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/utenti/${userId}/trattiAttivi", deserializer = serializer<List<Esse3ExtendedCareerPortion>>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
             studentStatusCode?.let { parameter("staStuCod", it) }
             statusReasonCode?.let { parameter("motStastuCod", it) }
             fiscalCode?.let { parameter("codFis", it) }
@@ -214,7 +217,7 @@ class Esse3UsersApi(
         externalCareerCode: String? = null,
         order: String? = null
     ): List<Esse3CareerPortion> {
-        return executeJsonGetList<Esse3CareerPortion>("/utenti/${userId}/trattiCarriera", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/utenti/${userId}/trattiCarriera", deserializer = serializer<List<Esse3CareerPortion>>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
             studentStatusCode?.let { parameter("staStuCod", it) }
             statusReasonCode?.let { parameter("motStastuCod", it) }
             fiscalCode?.let { parameter("codFis", it) }

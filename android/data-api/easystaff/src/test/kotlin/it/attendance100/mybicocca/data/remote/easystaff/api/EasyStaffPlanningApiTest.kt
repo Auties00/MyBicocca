@@ -1,6 +1,6 @@
 package it.attendance100.mybicocca.data.remote.easystaff.api
 
-import it.attendance100.mybicocca.data.remote.common.exception.ApiRequestException
+import it.attendance100.mybicocca.data.remote.easystaff.exception.EasyStaffPlanningException
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningArea
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningEntryFilters
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningFieldPosition
@@ -348,8 +348,8 @@ class EasyStaffPlanningApiTest : EasyStaffTestBase() {
         val error = runCatching {
             desks.reservations.getReservation(reservationCode = "BOGUSCODE", primaryValue = TEST_EMAIL)
         }.exceptionOrNull()
-        val planningError = assertInstanceOf<ApiRequestException>(error, "Bogus codes should be reported as ApiRequestException")
-        assertEquals("not_found", planningError.message, "Error message should identify the missing reservation")
+        val planningError = assertInstanceOf<EasyStaffPlanningException>(error, "Bogus codes should be reported as EasyStaffPlanningException")
+        assertEquals(EasyStaffPlanningException.NOT_FOUND, planningError.errorCode, "The error code should identify the missing reservation")
     }
 
     @Test
@@ -357,8 +357,8 @@ class EasyStaffPlanningApiTest : EasyStaffTestBase() {
         val error = runCatching {
             desks.reservations.getReservationServiceId(reservationCode = "BOGUSCODE", primaryValue = TEST_EMAIL)
         }.exceptionOrNull()
-        val planningError = assertInstanceOf<ApiRequestException>(error, "Bogus codes should be reported as ApiRequestException")
-        assertEquals("reservation_not_found", planningError.message, "Error message should identify the missing reservation")
+        val planningError = assertInstanceOf<EasyStaffPlanningException>(error, "Bogus codes should be reported as EasyStaffPlanningException")
+        assertEquals(EasyStaffPlanningException.RESERVATION_NOT_FOUND, planningError.errorCode, "The error code should identify the missing reservation")
     }
 
     /**

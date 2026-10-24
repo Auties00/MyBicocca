@@ -5,6 +5,10 @@ import it.attendance100.mybicocca.codegen.model.ApiSpec
 import it.attendance100.mybicocca.codegen.model.AuthParameter
 import it.attendance100.mybicocca.codegen.model.AuthRequirement
 import it.attendance100.mybicocca.codegen.model.AuthScheme
+import it.attendance100.mybicocca.codegen.model.ClientSetting
+import it.attendance100.mybicocca.codegen.model.ClientSpec
+import it.attendance100.mybicocca.codegen.model.ErrorCode
+import it.attendance100.mybicocca.codegen.model.ErrorFormat
 import it.attendance100.mybicocca.codegen.model.Codec
 import it.attendance100.mybicocca.codegen.model.DefaultValue
 import it.attendance100.mybicocca.codegen.model.EnumType
@@ -21,6 +25,8 @@ import it.attendance100.mybicocca.codegen.model.RecordScrape
 import it.attendance100.mybicocca.codegen.model.RecordType
 import it.attendance100.mybicocca.codegen.model.RequestBody
 import it.attendance100.mybicocca.codegen.model.ResponseBody
+import it.attendance100.mybicocca.codegen.model.RetryRequest
+import it.attendance100.mybicocca.codegen.model.RetryRule
 import it.attendance100.mybicocca.codegen.model.ScrapeStep
 import it.attendance100.mybicocca.codegen.model.Server
 import it.attendance100.mybicocca.codegen.model.TypeRef
@@ -476,6 +482,26 @@ object SampleSpecs {
         parameters = listOf(
             Parameter("tenant", "X-TENANT", ParameterLocation.HEADER, STRING, required = true, description = "Tenant every call acts for."),
             Parameter("region", "region", ParameterLocation.PATH, STRING, required = true),
+        ),
+        client = ClientSpec(
+            baseUrl = "https://api.example.com/v1",
+            timeoutSeconds = 30,
+            keepsCookies = true,
+            sendsNulls = false,
+            headers = mapOf("Accept-Language" to "it"),
+            query = mapOf("format" to "json"),
+            settings = listOf(ClientSetting("language", ParameterLocation.QUERY, "lang", "en", "Language of the server's strings.")),
+            emptyStatuses = setOf(404),
+            error = ErrorFormat(
+                detect = listOf("/exception"),
+                code = listOf("/error/code", "/error"),
+                message = listOf("/error/message"),
+                codes = listOf(ErrorCode("NotFound", "not_found", "Nothing has that id."), ErrorCode("InvalidToken", "invalid_token")),
+            ),
+            retries = listOf(
+                RetryRule(status = 401, code = "invalid_token", before = RetryRequest(HttpMethod.GET, "/{region}/token", mapOf("X-TENANT" to "{tenant}")), description = "Fetches a fresh token."),
+                RetryRule(status = 429, delaySeconds = 5),
+            ),
         ),
     )
 }

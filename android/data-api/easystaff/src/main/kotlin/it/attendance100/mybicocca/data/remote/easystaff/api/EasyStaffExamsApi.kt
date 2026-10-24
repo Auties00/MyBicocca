@@ -4,17 +4,20 @@ package it.attendance100.mybicocca.data.remote.easystaff.api
 import io.ktor.client.HttpClient
 import io.ktor.client.request.forms.FormDataContent
 import io.ktor.client.request.setBody
+import io.ktor.http.HttpMethod
 import io.ktor.http.parameters
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffExamCalendar
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffLanguage
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
 
 class EasyStaffExamsApi(
     client: HttpClient,
     json: Json
-) : EasyStaffAbstractApi(client, json, "") {
+) : RestApi(client, json, "", EasyStaffRuntime.policy) {
 
     /**
      * The exams of some years of a study program in a date range.
@@ -33,7 +36,7 @@ class EasyStaffExamsApi(
         to: LocalDate,
         language: EasyStaffLanguage = EasyStaffLanguage.Italian
     ): EasyStaffExamCalendar {
-        return executeJsonPost<EasyStaffExamCalendar>("/PortaleStudentiUnimib/test_call.php", server = EasyStaffServer.Main) {
+        return json(HttpMethod.Post, "/PortaleStudentiUnimib/test_call.php", deserializer = serializer<EasyStaffExamCalendar>(), server = EasyStaffServer.Main.url) {
             setBody(FormDataContent(parameters {
                 append("view", "easytest")
                 append("et_er", "1")
@@ -68,7 +71,7 @@ class EasyStaffExamsApi(
         to: LocalDate,
         language: EasyStaffLanguage = EasyStaffLanguage.Italian
     ): EasyStaffExamCalendar {
-        return executeJsonPost<EasyStaffExamCalendar>("/PortaleStudentiUnimib/test_call.php", server = EasyStaffServer.Main) {
+        return json(HttpMethod.Post, "/PortaleStudentiUnimib/test_call.php", deserializer = serializer<EasyStaffExamCalendar>(), server = EasyStaffServer.Main.url) {
             setBody(FormDataContent(parameters {
                 append("view", "easytest")
                 append("et_er", "1")

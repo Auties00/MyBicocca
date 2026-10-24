@@ -23,7 +23,7 @@ class Esse3CountriesApiTest : Esse3ApiTestBase() {
         val loginResult = api.auth.login()
         permissions = loginResult.profiles
             .mapNotNull { profile ->
-                profile.groupId?.let { Esse3PermissionLevel.fromGroupId(it.toInt()) }
+                profile.groupId?.let { esse3RoleOfGroup(it.toInt()) }
             }
             .toSet()
         logger.info("Derived permissions from login: $permissions")

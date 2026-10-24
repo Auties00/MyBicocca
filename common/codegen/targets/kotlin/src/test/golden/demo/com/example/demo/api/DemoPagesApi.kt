@@ -6,22 +6,26 @@ import com.example.demo.dto.DemoOwner
 import com.example.demo.dto.DemoPriority
 import com.example.demo.dto.DemoRoom
 import com.example.demo.dto.DemoScrapers
+import com.example.runtime.RestApi
 import io.ktor.client.HttpClient
 import io.ktor.client.request.forms.FormDataContent
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
+import io.ktor.http.HttpMethod
 import io.ktor.http.parameters
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
 
 class DemoPagesApi(
     client: HttpClient,
     json: Json,
-    private val tenant: String
-) : DemoAbstractApi(client, json, "/portal") {
+    private val tenant: String,
+    private val region: String
+) : RestApi(client, json, "/portal", DemoRuntime.policy, mapOf("tenant" to tenant.toString(), "region" to region.toString())) {
 
     /**
      * Rooms of the given buildings, read from the showcase page.
@@ -32,7 +36,7 @@ class DemoPagesApi(
         from: LocalTime? = null,
         levels: List<DemoPriority>? = null
     ): List<DemoRoom> {
-        return executeHtmlPost("/rooms.php", emptySet(), server = DemoServer.Main, scrape = DemoScrapers::pagesGetRooms) {
+        return html(HttpMethod.Post, "/rooms.php", scrape = DemoScrapers::pagesGetRooms, server = DemoServer.Main.url) {
             setBody(FormDataContent(parameters {
                 append("view", "rooms")
                 append("list", "")
@@ -48,7 +52,7 @@ class DemoPagesApi(
     suspend fun getRoom(
         id: Int
     ): DemoRoom {
-        return executeHtmlGet("/room.php", emptySet(), server = DemoServer.Main, scrape = DemoScrapers::pagesGetRoom) {
+        return html(HttpMethod.Get, "/room.php", scrape = DemoScrapers::pagesGetRoom, server = DemoServer.Main.url) {
             parameter("id", id)
             header("X-TENANT", tenant)
         }
@@ -57,14 +61,14 @@ class DemoPagesApi(
     suspend fun getVideoId(
         id: Int
     ): String {
-        return executeHtmlGet("/video.php", emptySet(), server = DemoServer.Main, scrape = DemoScrapers::pagesGetVideoId) {
+        return html(HttpMethod.Get, "/video.php", scrape = DemoScrapers::pagesGetVideoId, server = DemoServer.Main.url) {
             parameter("id", id)
             header("X-TENANT", tenant)
         }
     }
 
     suspend fun getLessons(): List<DemoLesson> {
-        return executeJsonPostList<DemoLesson>("/grid_call.php", emptySet(), server = DemoServer.Main, envelope = listOf("celle")) {
+        return jsonList(HttpMethod.Post, "/grid_call.php", deserializer = serializer<List<DemoLesson>>(), server = DemoServer.Main.url, envelope = listOf("celle")) {
             setBody(FormDataContent(parameters {
                 append("view", "easycourse")
             }))
@@ -73,7 +77,7 @@ class DemoPagesApi(
     }
 
     suspend fun getOwners(): List<DemoOwner> {
-        return executeScriptGet<List<DemoOwner>>("/combo.php", emptySet(), server = DemoServer.Main, variable = "elenco_sedi") {
+        return script(HttpMethod.Get, "/combo.php", variable = "elenco_sedi", deserializer = serializer<List<DemoOwner>>(), server = DemoServer.Main.url) {
             parameter("sw", "rooms_")
             header("X-TENANT", tenant)
         }

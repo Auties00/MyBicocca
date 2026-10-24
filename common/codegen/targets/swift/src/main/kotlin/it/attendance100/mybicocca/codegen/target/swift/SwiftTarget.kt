@@ -55,6 +55,7 @@ class SwiftTarget : CodeTarget {
                 add(file(scrapers.fileName) { scrapers.emit(it) })
             }
             add(file("${layout.facadeName}.swift") { facade(spec, layout, it) })
+            add(file("${layout.client}.swift") { SwiftClientEmitter(spec, layout).emit(it) })
         }
     }
 

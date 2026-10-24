@@ -15,13 +15,17 @@ class DemoApi(
     httpClientConfig: HttpClientConfig<*>.() -> Unit = {}
 ) : AutoCloseable {
     private val json = DemoRuntime.json
-    private val client = DemoRuntime.createHttpClient(json, httpClientConfig)
+    private val settings = DemoRuntime.settings()
+    private val client = DemoRuntime.createHttpClient(json, settings, httpClientConfig)
 
-    val items = DemoItemsApi(client, json, tenant)
-    val search = DemoSearchApi(client, json, tenant)
+    /** Language of the server's strings. Defaults to `en`. */
+    var language: String by settings
+
+    val items = DemoItemsApi(client, json, tenant, region)
+    val search = DemoSearchApi(client, json, tenant, region)
     val calendar = DemoCalendarApi(client, json, tenant, region)
-    val pages = DemoPagesApi(client, json, tenant)
-    val shared = DemoSharedApi(client, json, tenant)
+    val pages = DemoPagesApi(client, json, tenant, region)
+    val shared = DemoSharedApi(client, json, tenant, region)
 
     override fun close() {
         client.close()

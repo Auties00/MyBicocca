@@ -3,6 +3,7 @@ package it.attendance100.mybicocca.data.remote.affluences.api
 
 import io.ktor.client.HttpClient
 import io.ktor.client.request.parameter
+import io.ktor.http.HttpMethod
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesEvent
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesLiveData
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesPopInMessage
@@ -10,12 +11,14 @@ import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesSite
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesSiteCard
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesSiteDetails
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesWeekTimetable
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
 
 class AffluencesSitesApi(
     client: HttpClient,
     json: Json
-) : AffluencesAbstractApi(client, json, "") {
+) : RestApi(client, json, "", AffluencesRuntime.policy) {
 
     /**
      * Gets a site page.
@@ -25,7 +28,7 @@ class AffluencesSitesApi(
     suspend fun getSite(
         siteIdentifier: String
     ): AffluencesSite {
-        return executeJsonGet<AffluencesSite>("/sites/${siteIdentifier}", server = AffluencesServer.AppV4, envelope = listOf("data"))
+        return json(HttpMethod.Get, "/sites/${siteIdentifier}", deserializer = serializer<AffluencesSite>(), server = AffluencesServer.AppV4.url, envelope = listOf("data"))
     }
 
     /**
@@ -36,7 +39,7 @@ class AffluencesSitesApi(
     suspend fun getLiveData(
         siteIdentifier: String
     ): AffluencesLiveData {
-        return executeJsonGet<AffluencesLiveData>("/sites/${siteIdentifier}/live-data", server = AffluencesServer.AppV4, envelope = listOf("data"))
+        return json(HttpMethod.Get, "/sites/${siteIdentifier}/live-data", deserializer = serializer<AffluencesLiveData>(), server = AffluencesServer.AppV4.url, envelope = listOf("data"))
     }
 
     /**
@@ -49,7 +52,7 @@ class AffluencesSitesApi(
         siteIdentifier: String,
         weekOffset: Int = 0
     ): AffluencesWeekTimetable {
-        return executeJsonGet<AffluencesWeekTimetable>("/sites/${siteIdentifier}/timetables", server = AffluencesServer.AppV4, envelope = listOf("data")) {
+        return json(HttpMethod.Get, "/sites/${siteIdentifier}/timetables", deserializer = serializer<AffluencesWeekTimetable>(), server = AffluencesServer.AppV4.url, envelope = listOf("data")) {
             parameter("weekOffset", weekOffset)
         }
     }
@@ -62,7 +65,7 @@ class AffluencesSitesApi(
     suspend fun getDetails(
         siteIdentifier: String
     ): AffluencesSiteDetails {
-        return executeJsonGet<AffluencesSiteDetails>("/sites/${siteIdentifier}/details", server = AffluencesServer.AppV4, envelope = listOf("data"))
+        return json(HttpMethod.Get, "/sites/${siteIdentifier}/details", deserializer = serializer<AffluencesSiteDetails>(), server = AffluencesServer.AppV4.url, envelope = listOf("data"))
     }
 
     /**
@@ -73,7 +76,7 @@ class AffluencesSitesApi(
     suspend fun getChildren(
         siteIdentifier: String
     ): List<AffluencesSiteCard> {
-        return executeJsonGetList<AffluencesSiteCard>("/sites/${siteIdentifier}/children", server = AffluencesServer.AppV4, envelope = listOf("data"))
+        return jsonList(HttpMethod.Get, "/sites/${siteIdentifier}/children", deserializer = serializer<List<AffluencesSiteCard>>(), server = AffluencesServer.AppV4.url, envelope = listOf("data"))
     }
 
     /**
@@ -84,7 +87,7 @@ class AffluencesSitesApi(
     suspend fun getSimilarSites(
         siteIdentifier: String
     ): List<AffluencesSiteCard> {
-        return executeJsonGetList<AffluencesSiteCard>("/sites/${siteIdentifier}/similar", server = AffluencesServer.AppV4, envelope = listOf("data"))
+        return jsonList(HttpMethod.Get, "/sites/${siteIdentifier}/similar", deserializer = serializer<List<AffluencesSiteCard>>(), server = AffluencesServer.AppV4.url, envelope = listOf("data"))
     }
 
     /**
@@ -95,7 +98,7 @@ class AffluencesSitesApi(
     suspend fun getEvents(
         siteIdentifier: String
     ): List<AffluencesEvent> {
-        return executeJsonGetList<AffluencesEvent>("/sites/${siteIdentifier}/events", server = AffluencesServer.AppV4, envelope = listOf("data"))
+        return jsonList(HttpMethod.Get, "/sites/${siteIdentifier}/events", deserializer = serializer<List<AffluencesEvent>>(), server = AffluencesServer.AppV4.url, envelope = listOf("data"))
     }
 
     /**
@@ -108,7 +111,7 @@ class AffluencesSitesApi(
         siteIdentifier: String,
         lastCheckin: String? = null
     ): List<AffluencesPopInMessage> {
-        return executeJsonGetList<AffluencesPopInMessage>("/sites/${siteIdentifier}/messages", server = AffluencesServer.AppV4, envelope = listOf("data")) {
+        return jsonList(HttpMethod.Get, "/sites/${siteIdentifier}/messages", deserializer = serializer<List<AffluencesPopInMessage>>(), server = AffluencesServer.AppV4.url, envelope = listOf("data")) {
             lastCheckin?.let { parameter("lastCheckin", it) }
         }
     }

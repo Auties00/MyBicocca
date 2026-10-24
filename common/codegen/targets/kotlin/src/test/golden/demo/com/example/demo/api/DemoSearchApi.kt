@@ -4,21 +4,25 @@ package com.example.demo.api
 import com.example.demo.dto.DemoAuth
 import com.example.demo.dto.DemoItem
 import com.example.demo.dto.DemoKeyAuth
+import com.example.runtime.RestApi
 import io.ktor.client.HttpClient
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
+import io.ktor.http.HttpMethod
 import io.ktor.http.contentType
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.serializer
 
 class DemoSearchApi(
     client: HttpClient,
     json: Json,
-    private val tenant: String
-) : DemoAbstractApi(client, json, "") {
+    private val tenant: String,
+    private val region: String
+) : RestApi(client, json, "", DemoRuntime.policy, mapOf("tenant" to tenant.toString(), "region" to region.toString())) {
 
     /**
      * @param timeZone Zone the results are localised to.
@@ -30,7 +34,7 @@ class DemoSearchApi(
         timeZone: String = "Europe/Rome",
         auth: DemoAuth? = null
     ): List<DemoItem> {
-        return executeJsonGetList<DemoItem>("/search", emptySet(), server = DemoServer.Search, envelope = listOf("data", "items")) {
+        return jsonList(HttpMethod.Get, "/search", deserializer = serializer<List<DemoItem>>(), server = DemoServer.Search.url, envelope = listOf("data", "items")) {
             parameter("q", query)
             parameter("page", page)
             header("x-client", "sdk")
@@ -46,7 +50,7 @@ class DemoSearchApi(
     suspend fun touch(
         auth: DemoKeyAuth
     ): JsonElement {
-        return executeJsonPost<JsonElement>("/touch", emptySet(), server = DemoServer.Main) {
+        return json(HttpMethod.Post, "/touch", deserializer = serializer<JsonElement>(), server = DemoServer.Main.url) {
             contentType(ContentType.Application.Json)
             setBody(JsonObject(emptyMap()))
             header("X-TENANT", tenant)

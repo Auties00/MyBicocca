@@ -3,21 +3,23 @@ package it.attendance100.mybicocca.data.remote.esse3.api
 
 import io.ktor.client.HttpClient
 import io.ktor.client.request.parameter
+import io.ktor.http.HttpMethod
 import io.ktor.utils.io.ByteReadChannel
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3CertificatesPage
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3Scrapers
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import kotlinx.serialization.json.Json
 
 class Esse3CertificatesApi(
     client: HttpClient,
     json: Json
-) : Esse3AbstractApi(client, json, "") {
+) : RestApi(client, json, "", Esse3Runtime.policy) {
 
     /**
      * The self-declarations the student can print.
      */
     suspend fun getCertificates(): Esse3CertificatesPage {
-        return executeHtmlGet("/auth/studente/Certificati/ListaCertificati.do", emptySet(), server = Esse3Server.Web, scrape = Esse3Scrapers::certificatesGetCertificates) {
+        return html(HttpMethod.Get, "/auth/studente/Certificati/ListaCertificati.do", scrape = Esse3Scrapers::certificatesGetCertificates, server = Esse3Server.Web.url) {
             parameter("menu_opened_cod", "menu_link-navbox_studenti_Segreteria")
         }
     }
@@ -32,7 +34,7 @@ class Esse3CertificatesApi(
         solarYear: Int? = null,
         signatureFlag: String? = null
     ): ByteReadChannel {
-        return executeStreamGet("/auth/studente/Certificati/MessaggiCertificato.do", emptySet(), server = Esse3Server.Web) {
+        return stream(HttpMethod.Get, "/auth/studente/Certificati/MessaggiCertificato.do", server = Esse3Server.Web.url) {
             parameter("cert_conf_id", configurationId)
             parameter("doc_id", documentId)
             typeCode?.let { parameter("tipo_cert_cod", it) }

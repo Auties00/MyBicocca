@@ -6,17 +6,20 @@ import io.ktor.client.request.forms.FormDataContent
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
+import io.ktor.http.HttpMethod
 import io.ktor.http.parameters
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleSiteInfo
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
 import it.attendance100.mybicocca.data.remote.elearning.dto.appendBrackets
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.serializer
 
 class MoodleSiteApi(
     client: HttpClient,
     json: Json
-) : MoodleAbstractApi(client, json, "") {
+) : RestApi(client, json, "", MoodleRuntime.policy) {
 
     /**
      * Return some site info / user info / list web service functions
@@ -28,7 +31,7 @@ class MoodleSiteApi(
         serviceShortNames: List<String>? = null,
         auth: MoodleTokenAuth
     ): MoodleSiteInfo {
-        return executeJsonPost<MoodleSiteInfo>("/webservice/rest/server.php") {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleSiteInfo>()) {
             setBody(FormDataContent(parameters {
                 serviceShortNames?.let { appendBrackets("serviceshortnames", json.encodeToJsonElement(it)) }
                 auth.form.forEach { (name, value) -> append(name, value) }

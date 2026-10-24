@@ -3,6 +3,7 @@ package it.attendance100.mybicocca.data.remote.esse3.api
 
 import io.ktor.client.HttpClient
 import io.ktor.client.request.parameter
+import io.ktor.http.HttpMethod
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3AdmissionTitles
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3AdmissionTitlesWithCode
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3CourseCharacteristics
@@ -23,12 +24,14 @@ import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3StudyCourseWithDeta
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3StudyCourseWithStructure
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3StudyPath
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3TypologyCode
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
 
 class Esse3StructureApi(
     client: HttpClient,
     json: Json
-) : Esse3AbstractApi(client, json, "/struttura-service-v1") {
+) : RestApi(client, json, "/struttura-service-v1", Esse3Runtime.policy) {
 
     /**
      * @param disciplinaryAreaDescription descrizione dell'area disciplinare (se viene utilizzato il carattere * viene applicato il like)
@@ -38,7 +41,7 @@ class Esse3StructureApi(
         disciplinaryAreaDescription: String? = null,
         order: String? = null
     ): List<Esse3DisciplinaryArea> {
-        return executeJsonGetList<Esse3DisciplinaryArea>("/areeDisc", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/areeDisc", deserializer = serializer<List<Esse3DisciplinaryArea>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             disciplinaryAreaDescription?.let { parameter("areaDiscDes", it) }
             order?.let { parameter("order", it) }
         }
@@ -50,7 +53,7 @@ class Esse3StructureApi(
     suspend fun getDisciplinaryArea(
         disciplinaryAreaCode: String
     ): Esse3DisciplinaryArea {
-        return executeJsonGet<Esse3DisciplinaryArea>("/areeDisc/${disciplinaryAreaCode}", setOf(Esse3PermissionLevel.ANY))
+        return json(HttpMethod.Get, "/areeDisc/${disciplinaryAreaCode}", deserializer = serializer<Esse3DisciplinaryArea>(), roles = setOf(Esse3PermissionLevel.ANY))
     }
 
     /**
@@ -93,7 +96,7 @@ class Esse3StructureApi(
         limit: Int? = null,
         order: String? = null
     ): List<Esse3StudyCourseWithStructure> {
-        return executeJsonGetList<Esse3StudyCourseWithStructure>("/corsi", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/corsi", deserializer = serializer<List<Esse3StudyCourseWithStructure>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             courseOfStudyCode?.let { parameter("cdsCod", it) }
             courseOfStudyDescription?.let { parameter("cdsDes", it) }
             courseTypeCode?.let { parameter("tipoCorsoCod", it) }
@@ -126,7 +129,7 @@ class Esse3StructureApi(
         academicYearStart: Int,
         academicYearEnd: Int
     ): List<Esse3CourseCharacteristics> {
-        return executeJsonGetList<Esse3CourseCharacteristics>("/corsi/caratteristiche", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/corsi/caratteristiche", deserializer = serializer<List<Esse3CourseCharacteristics>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             parameter("cdsCod", courseOfStudyCode)
             parameter("aaInizio", academicYearStart)
             parameter("aaFine", academicYearEnd)
@@ -149,7 +152,7 @@ class Esse3StructureApi(
         evaluationStartDate: String? = null,
         evaluationEndDate: String? = null
     ): List<Esse3CoursePositions> {
-        return executeJsonGetList<Esse3CoursePositions>("/corsi/cariche", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/corsi/cariche", deserializer = serializer<List<Esse3CoursePositions>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             parameter("cdsCod", courseOfStudyCode)
             parameter("aaInizio", academicYearStart)
             parameter("aaFine", academicYearEnd)
@@ -168,7 +171,7 @@ class Esse3StructureApi(
         courseOfStudyCode: String,
         academicYearId: Int
     ): List<Esse3CourseDeadlines> {
-        return executeJsonGetList<Esse3CourseDeadlines>("/corsi/scadenze", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/corsi/scadenze", deserializer = serializer<List<Esse3CourseDeadlines>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             parameter("cdsCod", courseOfStudyCode)
             parameter("aaId", academicYearId)
         }
@@ -184,7 +187,7 @@ class Esse3StructureApi(
         courseOfStudyCode: String,
         academicYearId: Int
     ): List<Esse3CourseTuitionFees> {
-        return executeJsonGetList<Esse3CourseTuitionFees>("/corsi/tasse", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/corsi/tasse", deserializer = serializer<List<Esse3CourseTuitionFees>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             parameter("cdsCod", courseOfStudyCode)
             parameter("aaId", academicYearId)
         }
@@ -198,7 +201,7 @@ class Esse3StructureApi(
         courseOfStudyCode: String,
         typologyCode: Esse3TypologyCode
     ): List<Esse3AdmissionTitlesWithCode> {
-        return executeJsonGetList<Esse3AdmissionTitlesWithCode>("/corsi/titoli-accesso", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/corsi/titoli-accesso", deserializer = serializer<List<Esse3AdmissionTitlesWithCode>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             parameter("cdsCod", courseOfStudyCode)
             parameter("tipologiaCod", typologyCode.value)
         }
@@ -218,7 +221,7 @@ class Esse3StructureApi(
         optionalFields: String? = null,
         q: Esse3CourseOfStudySearchFilter? = null
     ): Esse3StudyCourseWithStructure {
-        return executeJsonGet<Esse3StudyCourseWithStructure>("/corsi/${courseOfStudyId}", setOf(Esse3PermissionLevel.ANY)) {
+        return json(HttpMethod.Get, "/corsi/${courseOfStudyId}", deserializer = serializer<Esse3StudyCourseWithStructure>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             fields?.let { parameter("fields", it) }
             optionalFields?.let { parameter("optionalFields", it) }
             q?.let { parameter("q", it.value) }
@@ -233,7 +236,7 @@ class Esse3StructureApi(
         courseOfStudyId: Long,
         optionalFields: String? = null
     ): List<Esse3RegulationWithPhDSectors> {
-        return executeJsonGetList<Esse3RegulationWithPhDSectors>("/corsi/${courseOfStudyId}/ordinamenti", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/corsi/${courseOfStudyId}/ordinamenti", deserializer = serializer<List<Esse3RegulationWithPhDSectors>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             optionalFields?.let { parameter("optionalFields", it) }
         }
     }
@@ -248,7 +251,7 @@ class Esse3StructureApi(
         academicYearOrderId: Int,
         optionalFields: String? = null
     ): Esse3RegulationWithPhDSectors {
-        return executeJsonGet<Esse3RegulationWithPhDSectors>("/corsi/${courseOfStudyId}/ordinamenti/${academicYearOrderId}", setOf(Esse3PermissionLevel.ANY)) {
+        return json(HttpMethod.Get, "/corsi/${courseOfStudyId}/ordinamenti/${academicYearOrderId}", deserializer = serializer<Esse3RegulationWithPhDSectors>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             optionalFields?.let { parameter("optionalFields", it) }
         }
     }
@@ -261,7 +264,7 @@ class Esse3StructureApi(
         courseOfStudyId: Long,
         academicYearOrderId: Int
     ): List<Esse3StudyPath> {
-        return executeJsonGetList<Esse3StudyPath>("/corsi/${courseOfStudyId}/ordinamenti/${academicYearOrderId}/percorsi", setOf(Esse3PermissionLevel.ANY))
+        return jsonList(HttpMethod.Get, "/corsi/${courseOfStudyId}/ordinamenti/${academicYearOrderId}/percorsi", deserializer = serializer<List<Esse3StudyPath>>(), roles = setOf(Esse3PermissionLevel.ANY))
     }
 
     /**
@@ -274,7 +277,7 @@ class Esse3StructureApi(
         academicYearOrderId: Int,
         studyPlanId: Long
     ): Esse3StudyPath {
-        return executeJsonGet<Esse3StudyPath>("/corsi/${courseOfStudyId}/ordinamenti/${academicYearOrderId}/percorsi/${studyPlanId}", setOf(Esse3PermissionLevel.ANY))
+        return json(HttpMethod.Get, "/corsi/${courseOfStudyId}/ordinamenti/${academicYearOrderId}/percorsi/${studyPlanId}", deserializer = serializer<Esse3StudyPath>(), roles = setOf(Esse3PermissionLevel.ANY))
     }
 
     /**
@@ -289,7 +292,7 @@ class Esse3StructureApi(
         studyPlanId: Long,
         typologyCode: String
     ): List<Esse3AdmissionTitles> {
-        return executeJsonGetList<Esse3AdmissionTitles>("/corsi/${courseOfStudyId}/ordinamenti/${academicYearOrderId}/percorsi/${studyPlanId}/titoli-accesso/${typologyCode}", setOf(Esse3PermissionLevel.ANY))
+        return jsonList(HttpMethod.Get, "/corsi/${courseOfStudyId}/ordinamenti/${academicYearOrderId}/percorsi/${studyPlanId}/titoli-accesso/${typologyCode}", deserializer = serializer<List<Esse3AdmissionTitles>>(), roles = setOf(Esse3PermissionLevel.ANY))
     }
 
     /**
@@ -302,7 +305,7 @@ class Esse3StructureApi(
         academicYearOrderId: Int,
         typologyCode: String
     ): List<Esse3AdmissionTitles> {
-        return executeJsonGetList<Esse3AdmissionTitles>("/corsi/${courseOfStudyId}/ordinamenti/${academicYearOrderId}/titoli-accesso/${typologyCode}", setOf(Esse3PermissionLevel.ANY))
+        return jsonList(HttpMethod.Get, "/corsi/${courseOfStudyId}/ordinamenti/${academicYearOrderId}/titoli-accesso/${typologyCode}", deserializer = serializer<List<Esse3AdmissionTitles>>(), roles = setOf(Esse3PermissionLevel.ANY))
     }
 
     /**
@@ -313,7 +316,7 @@ class Esse3StructureApi(
         courseOfStudyId: Long,
         typologyCode: String
     ): List<Esse3AdmissionTitles> {
-        return executeJsonGetList<Esse3AdmissionTitles>("/corsi/${courseOfStudyId}/titoli-accesso/${typologyCode}", setOf(Esse3PermissionLevel.ANY))
+        return jsonList(HttpMethod.Get, "/corsi/${courseOfStudyId}/titoli-accesso/${typologyCode}", deserializer = serializer<List<Esse3AdmissionTitles>>(), roles = setOf(Esse3PermissionLevel.ANY))
     }
 
     /**
@@ -328,7 +331,7 @@ class Esse3StructureApi(
         limit: Int? = null,
         order: String? = null
     ): List<Esse3DeletedStudyCourse> {
-        return executeJsonGetList<Esse3DeletedStudyCourse>("/corsiEliminati", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/corsiEliminati", deserializer = serializer<List<Esse3DeletedStudyCourse>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             courseOfStudyModificationDate?.let { parameter("dataModCds", it) }
             start?.let { parameter("start", it) }
             limit?.let { parameter("limit", it) }
@@ -350,7 +353,7 @@ class Esse3StructureApi(
         orderEnableEnrollmentFlag: Int? = null,
         optionalFields: String? = null
     ): Esse3StudyCourseWithDetails {
-        return executeJsonGet<Esse3StudyCourseWithDetails>("/corsiFull/${courseOfStudyId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Get, "/corsiFull/${courseOfStudyId}", deserializer = serializer<Esse3StudyCourseWithDetails>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             usageTypeId?.let { parameter("tipoUtilizzoId", it) }
             orderActiveFlag?.let { parameter("ordAttivoFlg", it) }
             orderEnableEnrollmentFlag?.let { parameter("ordAbilImmaFlg", it) }
@@ -376,7 +379,7 @@ class Esse3StructureApi(
         limit: Int? = null,
         order: String? = null
     ): List<Esse3ExternalEntity> {
-        return executeJsonGetList<Esse3ExternalEntity>("/entiEsterni", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/entiEsterni", deserializer = serializer<List<Esse3ExternalEntity>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             entityId?.let { parameter("enteId", it) }
             entityTypeCode?.let { parameter("tipoEnteCod", it) }
             entityCode?.let { parameter("enteCod", it) }
@@ -403,7 +406,7 @@ class Esse3StructureApi(
         courseOfStudyId: Long? = null,
         departmentId: Long? = null
     ): List<Esse3Location> {
-        return executeJsonGetList<Esse3Location>("/sedi", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/sedi", deserializer = serializer<List<Esse3Location>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             siteDescription?.let { parameter("sedeDes", it) }
             order?.let { parameter("order", it) }
             fields?.let { parameter("fields", it) }
@@ -419,7 +422,7 @@ class Esse3StructureApi(
     suspend fun getSite(
         siteId: Long
     ): Esse3Location {
-        return executeJsonGet<Esse3Location>("/sedi/${siteId}", setOf(Esse3PermissionLevel.ANY))
+        return json(HttpMethod.Get, "/sedi/${siteId}", deserializer = serializer<Esse3Location>(), roles = setOf(Esse3PermissionLevel.ANY))
     }
 
     /**
@@ -444,7 +447,7 @@ class Esse3StructureApi(
         fields: String? = null,
         filter: String? = null
     ): List<Esse3StructureWithLocations> {
-        return executeJsonGetList<Esse3StructureWithLocations>("/strutture", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/strutture", deserializer = serializer<List<Esse3StructureWithLocations>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             facultyCode?.let { parameter("facCod", it) }
             facultyDescription?.let { parameter("facDes", it) }
             siteType?.let { parameter("sdrTip", it) }
@@ -465,7 +468,7 @@ class Esse3StructureApi(
         facultyId: Long,
         optionalFields: String? = null
     ): Esse3StructureWithLocations {
-        return executeJsonGet<Esse3StructureWithLocations>("/strutture/${facultyId}/", setOf(Esse3PermissionLevel.ANY)) {
+        return json(HttpMethod.Get, "/strutture/${facultyId}/", deserializer = serializer<Esse3StructureWithLocations>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             optionalFields?.let { parameter("optionalFields", it) }
         }
     }
@@ -488,7 +491,7 @@ class Esse3StructureApi(
         tcGroupCode: String? = null,
         order: String? = null
     ): List<Esse3CourseTypes> {
-        return executeJsonGetList<Esse3CourseTypes>("/tipiCorso", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/tipiCorso", deserializer = serializer<List<Esse3CourseTypes>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             courseTypeCode?.let { parameter("tipoCorsoCod", it) }
             courseTypeDescription?.let { parameter("tipoCorsoDes", it) }
             facultyId?.let { parameter("facId", it) }

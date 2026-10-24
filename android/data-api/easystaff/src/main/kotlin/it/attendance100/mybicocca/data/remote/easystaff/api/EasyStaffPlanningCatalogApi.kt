@@ -4,26 +4,29 @@ package it.attendance100.mybicocca.data.remote.easystaff.api
 import io.ktor.client.HttpClient
 import io.ktor.client.request.header
 import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpMethod
 import io.ktor.http.encodeURLParameter
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningArea
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningAreaGroup
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningEntryFilters
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningNamedGroup
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningService
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
 
 class EasyStaffPlanningCatalogApi(
     client: HttpClient,
     json: Json,
     private val portalId: Int
-) : EasyStaffPlanningAbstractApi(client, json, "") {
+) : RestApi(client, json, "", EasyStaffPlanningRuntime.policy, mapOf("portalId" to portalId.toString())) {
 
     /**
      * Lists the service groups of the portal.
      */
     suspend fun getServiceGroups(): List<EasyStaffPlanningNamedGroup> {
-        return executeJsonGetList<EasyStaffPlanningNamedGroup>("/servizi/raggruppamenti_servizi/${portalId}", server = EasyStaffPlanningServer.Main, envelope = listOf("raggruppamenti_servizi")) {
+        return jsonList(HttpMethod.Get, "/servizi/raggruppamenti_servizi/${portalId}", deserializer = serializer<List<EasyStaffPlanningNamedGroup>>(), server = EasyStaffPlanningServer.Main.url, envelope = listOf("raggruppamenti_servizi")) {
             header("X-CLIENTE", "${portalId}")
         }
     }
@@ -36,7 +39,7 @@ class EasyStaffPlanningCatalogApi(
     suspend fun getServices(
         filters: EasyStaffPlanningEntryFilters? = null
     ): List<EasyStaffPlanningService> {
-        return executeJsonGetList<EasyStaffPlanningService>("/servizi/${portalId}", server = EasyStaffPlanningServer.Main, envelope = listOf("servizi")) {
+        return jsonList(HttpMethod.Get, "/servizi/${portalId}", deserializer = serializer<List<EasyStaffPlanningService>>(), server = EasyStaffPlanningServer.Main.url, envelope = listOf("servizi")) {
             header("X-CLIENTE", "${portalId}")
             header(HttpHeaders.Cookie, "entry-filters=" + (filters?.let { json.encodeToString(it) } ?: "{}").encodeURLParameter())
         }
@@ -46,7 +49,7 @@ class EasyStaffPlanningCatalogApi(
      * Lists the area groups of the portal.
      */
     suspend fun getAreaGroups(): List<EasyStaffPlanningAreaGroup> {
-        return executeJsonGetList<EasyStaffPlanningAreaGroup>("/servizi/raggruppamenti_area/${portalId}", server = EasyStaffPlanningServer.Main, envelope = listOf("raggruppamenti_area")) {
+        return jsonList(HttpMethod.Get, "/servizi/raggruppamenti_area/${portalId}", deserializer = serializer<List<EasyStaffPlanningAreaGroup>>(), server = EasyStaffPlanningServer.Main.url, envelope = listOf("raggruppamenti_area")) {
             header("X-CLIENTE", "${portalId}")
         }
     }
@@ -59,7 +62,7 @@ class EasyStaffPlanningCatalogApi(
     suspend fun getAreas(
         filters: EasyStaffPlanningEntryFilters? = null
     ): List<EasyStaffPlanningArea> {
-        return executeJsonGetList<EasyStaffPlanningArea>("/aree/${portalId}", server = EasyStaffPlanningServer.Main, envelope = listOf("aree")) {
+        return jsonList(HttpMethod.Get, "/aree/${portalId}", deserializer = serializer<List<EasyStaffPlanningArea>>(), server = EasyStaffPlanningServer.Main.url, envelope = listOf("aree")) {
             header("X-CLIENTE", "${portalId}")
             header(HttpHeaders.Cookie, "entry-filters=" + (filters?.let { json.encodeToString(it) } ?: "{}").encodeURLParameter())
         }

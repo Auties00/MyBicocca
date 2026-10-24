@@ -132,4 +132,27 @@ class SpecValidatorTest {
             problems.toSet(),
         )
     }
+
+    @Test
+    fun `reports clients whose errors or retries cannot work`() {
+        val client = ClientSpec(
+            settings = listOf(ClientSetting("language", ParameterLocation.FORM, "lang", "en")),
+            error = ErrorFormat(message = listOf("error"), codes = listOf(ErrorCode("NotFound", "not_found"))),
+            retries = listOf(
+                RetryRule(status = 401),
+                RetryRule(code = "expired", before = RetryRequest(HttpMethod.GET, "/token/{portal}")),
+            ),
+        )
+        assertEquals(
+            listOf(
+                "Client setting 'language' must be a query parameter or a header",
+                "Error location 'error' isn't a JSON pointer to a member",
+                "Error codes are declared, but not where errors hold them",
+                "Retry rule 1 does nothing before trying again",
+                "Retry rule 2 matches an error code, but errors hold none",
+                "Retry rule 2 names 'portal', which isn't an API parameter",
+            ),
+            SpecValidator.validate(spec().copy(client = client)),
+        )
+    }
 }

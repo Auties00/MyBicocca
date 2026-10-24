@@ -16,3 +16,4 @@ export * from "./EasyStaffEnumTypes.js";
 export * from "./EasyStaffServer.js";
 export * from "./EasyStaffScrapers.js";
 export * from "./EasyStaffApi.js";
+export * from "./EasyStaffClient.js";

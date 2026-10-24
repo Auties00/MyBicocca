@@ -5,6 +5,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
+import io.ktor.http.HttpMethod
 import io.ktor.http.contentType
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3Appointment
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3Booking
@@ -12,12 +13,14 @@ import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3ExamSessionCalendar
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3ExamSessionShiftCalendar
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3PermissionLevel
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3ShiftId
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
 
 class Esse3AppointmentsCalendarApi(
     client: HttpClient,
     json: Json
-) : Esse3AbstractApi(client, json, "/calendario-app-service-v1") {
+) : RestApi(client, json, "/calendario-app-service-v1", Esse3Runtime.policy) {
 
     /**
      * Prenota un appuntamento
@@ -29,11 +32,10 @@ class Esse3AppointmentsCalendarApi(
         personId: Long,
         body: Esse3Appointment
     ) {
-        val response = executePost("/calendari/appuntamenti/${personId}") {
+        send(HttpMethod.Post, "/calendari/appuntamenti/${personId}", roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
-        ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -48,7 +50,7 @@ class Esse3AppointmentsCalendarApi(
         personId: Long,
         body: Esse3Appointment
     ): Esse3ShiftId {
-        return executeJsonPut<Esse3ShiftId>("/calendari/appuntamenti/${personId}/${callId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Put, "/calendari/appuntamenti/${personId}/${callId}", deserializer = serializer<Esse3ShiftId>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -64,8 +66,7 @@ class Esse3AppointmentsCalendarApi(
         callId: Long,
         personId: Long
     ) {
-        val response = executeDelete("/calendari/appuntamenti/${personId}/${callId}")
-        ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
+        send(HttpMethod.Delete, "/calendari/appuntamenti/${personId}/${callId}", roles = setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -86,7 +87,7 @@ class Esse3AppointmentsCalendarApi(
         limit: Int? = null,
         order: String? = null
     ): List<Esse3ExamSessionCalendarTypesList> {
-        return executeJsonGetList<Esse3ExamSessionCalendarTypesList>("/calendari/contesti/${calendarContext}", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.AUTHENTICATED_USER)) {
+        return jsonList(HttpMethod.Get, "/calendari/contesti/${calendarContext}", deserializer = serializer<List<Esse3ExamSessionCalendarTypesList>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.AUTHENTICATED_USER)) {
             language?.let { parameter("lingua", it) }
             siteId?.let { parameter("sedeId", it) }
             start?.let { parameter("start", it) }
@@ -127,7 +128,7 @@ class Esse3AppointmentsCalendarApi(
         limit: Int? = null,
         order: String? = null
     ): List<Esse3Booking> {
-        return executeJsonGetList<Esse3Booking>("/calendari/contesti/${calendarContext}/appuntamenti/${personId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/calendari/contesti/${calendarContext}/appuntamenti/${personId}", deserializer = serializer<List<Esse3Booking>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             language?.let { parameter("lingua", it) }
             studentId?.let { parameter("stuId", it) }
             courseOfStudyId?.let { parameter("cdsId", it) }
@@ -162,7 +163,7 @@ class Esse3AppointmentsCalendarApi(
         limit: Int? = null,
         order: String? = null
     ): List<Esse3ExamSessionShiftCalendar> {
-        return executeJsonGetList<Esse3ExamSessionShiftCalendar>("/calendari/turni/${calendarTypeCode}", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.AUTHENTICATED_USER)) {
+        return jsonList(HttpMethod.Get, "/calendari/turni/${calendarTypeCode}", deserializer = serializer<List<Esse3ExamSessionShiftCalendar>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.AUTHENTICATED_USER)) {
             language?.let { parameter("lingua", it) }
             siteId?.let { parameter("sedeId", it) }
             administrativeStructureId?.let { parameter("StrutAmmId", it) }

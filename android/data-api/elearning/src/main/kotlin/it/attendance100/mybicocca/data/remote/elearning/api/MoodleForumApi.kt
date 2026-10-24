@@ -6,6 +6,7 @@ import io.ktor.client.request.forms.FormDataContent
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
+import io.ktor.http.HttpMethod
 import io.ktor.http.parameters
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAddDiscussionPostResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAddDiscussionResponse
@@ -21,13 +22,15 @@ import it.attendance100.mybicocca.data.remote.elearning.dto.MoodlePrepareDraftAr
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleStatusResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
 import it.attendance100.mybicocca.data.remote.elearning.dto.appendBrackets
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.serializer
 
 class MoodleForumApi(
     client: HttpClient,
     json: Json
-) : MoodleAbstractApi(client, json, "") {
+) : RestApi(client, json, "", MoodleRuntime.policy) {
 
     /**
      * Add a new discussion into an existing forum.
@@ -47,7 +50,7 @@ class MoodleForumApi(
         options: List<MoodleOption>? = null,
         auth: MoodleTokenAuth
     ): MoodleAddDiscussionResponse {
-        return executeJsonPost<MoodleAddDiscussionResponse>("/webservice/rest/server.php") {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleAddDiscussionResponse>()) {
             setBody(FormDataContent(parameters {
                 append("forumid", forumId.toString())
                 append("subject", subject)
@@ -80,7 +83,7 @@ class MoodleForumApi(
         messageFormat: Int? = null,
         auth: MoodleTokenAuth
     ): MoodleAddDiscussionPostResponse {
-        return executeJsonPost<MoodleAddDiscussionPostResponse>("/webservice/rest/server.php") {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleAddDiscussionPostResponse>()) {
             setBody(FormDataContent(parameters {
                 append("postid", postId.toString())
                 append("subject", subject)
@@ -107,7 +110,7 @@ class MoodleForumApi(
         groupId: Int? = null,
         auth: MoodleTokenAuth
     ): MoodleCanAddDiscussionResponse {
-        return executeJsonPost<MoodleCanAddDiscussionResponse>("/webservice/rest/server.php") {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleCanAddDiscussionResponse>()) {
             setBody(FormDataContent(parameters {
                 append("forumid", forumId.toString())
                 groupId?.let { append("groupid", it.toString()) }
@@ -129,7 +132,7 @@ class MoodleForumApi(
         postId: Int,
         auth: MoodleTokenAuth
     ): MoodleStatusResponse {
-        return executeJsonPost<MoodleStatusResponse>("/webservice/rest/server.php") {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleStatusResponse>()) {
             setBody(FormDataContent(parameters {
                 append("postid", postId.toString())
                 auth.form.forEach { (name, value) -> append(name, value) }
@@ -150,7 +153,7 @@ class MoodleForumApi(
         postId: Int,
         auth: MoodleTokenAuth
     ): MoodleDiscussionPostResponse {
-        return executeJsonPost<MoodleDiscussionPostResponse>("/webservice/rest/server.php") {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleDiscussionPostResponse>()) {
             setBody(FormDataContent(parameters {
                 append("postid", postId.toString())
                 auth.form.forEach { (name, value) -> append(name, value) }
@@ -177,7 +180,7 @@ class MoodleForumApi(
         includeInlineAttachments: Boolean? = null,
         auth: MoodleTokenAuth
     ): MoodleDiscussionPostsResponse {
-        return executeJsonPost<MoodleDiscussionPostsResponse>("/webservice/rest/server.php") {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleDiscussionPostsResponse>()) {
             setBody(FormDataContent(parameters {
                 append("discussionid", discussionId.toString())
                 sortBy?.let { append("sortby", it) }
@@ -209,7 +212,7 @@ class MoodleForumApi(
         groupId: Int? = null,
         auth: MoodleTokenAuth
     ): MoodleForumDiscussionsResponse {
-        return executeJsonPost<MoodleForumDiscussionsResponse>("/webservice/rest/server.php") {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleForumDiscussionsResponse>()) {
             setBody(FormDataContent(parameters {
                 append("forumid", forumId.toString())
                 sortOrder?.let { append("sortorder", it.toString()) }
@@ -234,7 +237,7 @@ class MoodleForumApi(
         courseIds: List<Int>? = null,
         auth: MoodleTokenAuth
     ): List<MoodleForum> {
-        return executeJsonPostList<MoodleForum>("/webservice/rest/server.php") {
+        return jsonList(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<List<MoodleForum>>()) {
             setBody(FormDataContent(parameters {
                 courseIds?.let { appendBrackets("courseids", json.encodeToJsonElement(it)) }
                 auth.form.forEach { (name, value) -> append(name, value) }
@@ -261,7 +264,7 @@ class MoodleForumApi(
         filesToKeep: List<MoodleFileToKeep>? = null,
         auth: MoodleTokenAuth
     ): MoodlePrepareDraftAreaResponse {
-        return executeJsonPost<MoodlePrepareDraftAreaResponse>("/webservice/rest/server.php") {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodlePrepareDraftAreaResponse>()) {
             setBody(FormDataContent(parameters {
                 append("postid", postId.toString())
                 append("area", area)
@@ -289,7 +292,7 @@ class MoodleForumApi(
         targetState: Boolean,
         auth: MoodleTokenAuth
     ): MoodleDiscussionSummary {
-        return executeJsonPost<MoodleDiscussionSummary>("/webservice/rest/server.php") {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleDiscussionSummary>()) {
             setBody(FormDataContent(parameters {
                 append("forumid", forumId.toString())
                 append("discussionid", discussionId.toString())
@@ -314,7 +317,7 @@ class MoodleForumApi(
         targetState: Boolean,
         auth: MoodleTokenAuth
     ): MoodleDiscussionSummary {
-        return executeJsonPost<MoodleDiscussionSummary>("/webservice/rest/server.php") {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleDiscussionSummary>()) {
             setBody(FormDataContent(parameters {
                 append("discussionid", discussionId.toString())
                 appendBrackets("targetstate", json.encodeToJsonElement(targetState))
@@ -344,7 +347,7 @@ class MoodleForumApi(
         options: List<MoodleOption>? = null,
         auth: MoodleTokenAuth
     ): MoodleStatusResponse {
-        return executeJsonPost<MoodleStatusResponse>("/webservice/rest/server.php") {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleStatusResponse>()) {
             setBody(FormDataContent(parameters {
                 append("postid", postId.toString())
                 subject?.let { append("subject", it) }
@@ -369,7 +372,7 @@ class MoodleForumApi(
         forumId: Int,
         auth: MoodleTokenAuth
     ): MoodleStatusResponse {
-        return executeJsonPost<MoodleStatusResponse>("/webservice/rest/server.php") {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleStatusResponse>()) {
             setBody(FormDataContent(parameters {
                 append("forumid", forumId.toString())
                 auth.form.forEach { (name, value) -> append(name, value) }
@@ -390,7 +393,7 @@ class MoodleForumApi(
         discussionId: Int,
         auth: MoodleTokenAuth
     ): MoodleStatusResponse {
-        return executeJsonPost<MoodleStatusResponse>("/webservice/rest/server.php") {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleStatusResponse>()) {
             setBody(FormDataContent(parameters {
                 append("discussionid", discussionId.toString())
                 auth.form.forEach { (name, value) -> append(name, value) }

@@ -5,6 +5,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
+import io.ktor.http.HttpMethod
 import io.ktor.http.contentType
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3Competition
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3CompetitionAdmissionInsert
@@ -20,13 +21,15 @@ import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3PermissionLevel
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3PersonRanking
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3RankingImport
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3RankingListImport
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.serializer
 
 class Esse3CompetitionsApi(
     client: HttpClient,
     json: Json
-) : Esse3AbstractApi(client, json, "/concorsi-service-v2") {
+) : RestApi(client, json, "/concorsi-service-v2", Esse3Runtime.policy) {
 
     /**
      * Configurazione concorsi
@@ -38,7 +41,7 @@ class Esse3CompetitionsApi(
         academicYearId: Long? = null,
         filter: String? = null
     ): List<Esse3Competition> {
-        return executeJsonGetList<Esse3Competition>("/concorsi", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/concorsi", deserializer = serializer<List<Esse3Competition>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             academicYearId?.let { parameter("aaId", it) }
             filter?.let { parameter("filter", it) }
         }
@@ -60,7 +63,7 @@ class Esse3CompetitionsApi(
         start: Int? = null,
         limit: Int? = null
     ): List<Esse3CompetitionRankingList> {
-        return executeJsonGetList<Esse3CompetitionRankingList>("/concorsi/graduatoria/${academicYearId}/${testId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/concorsi/graduatoria/${academicYearId}/${testId}", deserializer = serializer<List<Esse3CompetitionRankingList>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             personId?.let { parameter("persId", it) }
             start?.let { parameter("start", it) }
             limit?.let { parameter("limit", it) }
@@ -83,7 +86,7 @@ class Esse3CompetitionsApi(
         start: Int? = null,
         limit: Int? = null
     ): List<Esse3CompetitionRankingList> {
-        return executeJsonGetList<Esse3CompetitionRankingList>("/concorsi/graduatoria/${academicYearId}/${testId}/${testDetailId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/concorsi/graduatoria/${academicYearId}/${testId}/${testDetailId}", deserializer = serializer<List<Esse3CompetitionRankingList>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             start?.let { parameter("start", it) }
             limit?.let { parameter("limit", it) }
         }
@@ -99,7 +102,7 @@ class Esse3CompetitionsApi(
         personId: Long,
         positionId: Long
     ): List<Esse3CompetitionRankingList> {
-        return executeJsonGetList<Esse3CompetitionRankingList>("/concorsi/graduatoria/${personId}/${positionId}/persona", setOf(Esse3PermissionLevel.TECHNICAL_USER))
+        return jsonList(HttpMethod.Get, "/concorsi/graduatoria/${personId}/${positionId}/persona", deserializer = serializer<List<Esse3CompetitionRankingList>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -116,7 +119,7 @@ class Esse3CompetitionsApi(
         start: Int? = null,
         limit: Int? = null
     ): List<Esse3CompetitionWithDetails> {
-        return executeJsonGetList<Esse3CompetitionWithDetails>("/concorsi/${academicYearId}/${testId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/concorsi/${academicYearId}/${testId}", deserializer = serializer<List<Esse3CompetitionWithDetails>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             start?.let { parameter("start", it) }
             limit?.let { parameter("limit", it) }
         }
@@ -138,7 +141,7 @@ class Esse3CompetitionsApi(
         body: List<Esse3RankingImport>,
         fileTypology: Esse3CompetitionRankingFileType
     ): List<Esse3ImportResponse> {
-        return executeJsonPutList<Esse3ImportResponse>("/concorsi/${academicYearId}/${testId}/classifica/${competitionTestsId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Put, "/concorsi/${academicYearId}/${testId}/classifica/${competitionTestsId}", deserializer = serializer<List<Esse3ImportResponse>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
             parameter("tipologiaFile", fileTypology.value)
@@ -160,7 +163,7 @@ class Esse3CompetitionsApi(
         body: JsonObject,
         fileTypology: Esse3CompetitionRankingFileType
     ): List<Esse3ImportResponse> {
-        return executeJsonPutList<Esse3ImportResponse>("/concorsi/${academicYearId}/${testId}/classifica/${competitionTestsId}/file", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Put, "/concorsi/${academicYearId}/${testId}/classifica/${competitionTestsId}/file", deserializer = serializer<List<Esse3ImportResponse>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
             parameter("tipologiaFile", fileTypology.value)
@@ -185,7 +188,7 @@ class Esse3CompetitionsApi(
         start: Int? = null,
         limit: Int? = null
     ): List<Esse3CompetitionRanking> {
-        return executeJsonGetList<Esse3CompetitionRanking>("/concorsi/${academicYearId}/${testId}/classificaConcorso", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/concorsi/${academicYearId}/${testId}/classificaConcorso", deserializer = serializer<List<Esse3CompetitionRanking>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             personId?.let { parameter("persId", it) }
             order?.let { parameter("order", it) }
             start?.let { parameter("start", it) }
@@ -204,7 +207,7 @@ class Esse3CompetitionsApi(
         testId: Long,
         body: JsonObject
     ): List<Esse3ImportResponse> {
-        return executeJsonPutList<Esse3ImportResponse>("/concorsi/${academicYearId}/${testId}/graduatorie/file", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Put, "/concorsi/${academicYearId}/${testId}/graduatorie/file", deserializer = serializer<List<Esse3ImportResponse>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -224,7 +227,7 @@ class Esse3CompetitionsApi(
         testDetailId: Long,
         body: List<Esse3RankingListImport>
     ): List<Esse3ImportResponse> {
-        return executeJsonPutList<Esse3ImportResponse>("/concorsi/${academicYearId}/${testId}/graduatorie/${testDetailId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Put, "/concorsi/${academicYearId}/${testId}/graduatorie/${testDetailId}", deserializer = serializer<List<Esse3ImportResponse>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -243,7 +246,7 @@ class Esse3CompetitionsApi(
         testDetailId: Long,
         body: JsonObject
     ): List<Esse3ImportResponse> {
-        return executeJsonPutList<Esse3ImportResponse>("/concorsi/${academicYearId}/${testId}/graduatorie/${testDetailId}/file", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Put, "/concorsi/${academicYearId}/${testId}/graduatorie/${testDetailId}/file", deserializer = serializer<List<Esse3ImportResponse>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -265,7 +268,7 @@ class Esse3CompetitionsApi(
         start: Int? = null,
         limit: Int? = null
     ): List<Esse3CompetitionEnrolled> {
-        return executeJsonGetList<Esse3CompetitionEnrolled>("/concorsi/${academicYearId}/${testId}/iscrizioni", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/concorsi/${academicYearId}/${testId}/iscrizioni", deserializer = serializer<List<Esse3CompetitionEnrolled>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             personId?.let { parameter("persId", it) }
             start?.let { parameter("start", it) }
             limit?.let { parameter("limit", it) }
@@ -284,7 +287,7 @@ class Esse3CompetitionsApi(
         personId: Long,
         body: Esse3CompetitionAdmissionInsert
     ): List<Esse3CompetitionEnrolledDetail> {
-        return executeJsonPutList<Esse3CompetitionEnrolledDetail>("/concorsi/${academicYearId}/${testId}/iscrizioni/${personId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Put, "/concorsi/${academicYearId}/${testId}/iscrizioni/${personId}", deserializer = serializer<List<Esse3CompetitionEnrolledDetail>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -304,7 +307,7 @@ class Esse3CompetitionsApi(
         start: Int? = null,
         limit: Int? = null
     ): List<Esse3CompetitionTests> {
-        return executeJsonGetList<Esse3CompetitionTests>("/concorsi/${academicYearId}/${testId}/proveConcorso", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/concorsi/${academicYearId}/${testId}/proveConcorso", deserializer = serializer<List<Esse3CompetitionTests>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             start?.let { parameter("start", it) }
             limit?.let { parameter("limit", it) }
         }
@@ -322,7 +325,7 @@ class Esse3CompetitionsApi(
         positionId: Long,
         order: String? = null
     ): List<Esse3PersonRanking> {
-        return executeJsonGetList<Esse3PersonRanking>("/concorsi/${personId}/${positionId}/classifica", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/concorsi/${personId}/${positionId}/classifica", deserializer = serializer<List<Esse3PersonRanking>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             order?.let { parameter("order", it) }
         }
     }
@@ -337,6 +340,6 @@ class Esse3CompetitionsApi(
         personId: Long,
         positionId: Long
     ): List<Esse3CompetitionEnrolledDetail> {
-        return executeJsonGetList<Esse3CompetitionEnrolledDetail>("/concorsi/${personId}/${positionId}/dettaglioIscritto", setOf(Esse3PermissionLevel.TECHNICAL_USER))
+        return jsonList(HttpMethod.Get, "/concorsi/${personId}/${positionId}/dettaglioIscritto", deserializer = serializer<List<Esse3CompetitionEnrolledDetail>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 }

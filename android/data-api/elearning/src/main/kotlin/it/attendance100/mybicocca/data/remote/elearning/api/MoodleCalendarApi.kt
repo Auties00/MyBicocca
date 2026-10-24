@@ -6,19 +6,22 @@ import io.ktor.client.request.forms.FormDataContent
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
+import io.ktor.http.HttpMethod
 import io.ktor.http.parameters
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCalendarEventsResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCalendarMonth
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCalendarUpcomingView
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
 import it.attendance100.mybicocca.data.remote.elearning.dto.appendBrackets
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.serializer
 
 class MoodleCalendarApi(
     client: HttpClient,
     json: Json
-) : MoodleAbstractApi(client, json, "") {
+) : RestApi(client, json, "", MoodleRuntime.policy) {
 
     /**
      * Get calendar action events by course
@@ -40,7 +43,7 @@ class MoodleCalendarApi(
         searchValue: String? = null,
         auth: MoodleTokenAuth
     ): MoodleCalendarEventsResponse {
-        return executeJsonPost<MoodleCalendarEventsResponse>("/webservice/rest/server.php") {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleCalendarEventsResponse>()) {
             setBody(FormDataContent(parameters {
                 append("courseid", courseId.toString())
                 timeSortFrom?.let { append("timesortfrom", it.toString()) }
@@ -78,7 +81,7 @@ class MoodleCalendarApi(
         searchValue: String? = null,
         auth: MoodleTokenAuth
     ): MoodleCalendarEventsResponse {
-        return executeJsonPost<MoodleCalendarEventsResponse>("/webservice/rest/server.php") {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleCalendarEventsResponse>()) {
             setBody(FormDataContent(parameters {
                 timeSortFrom?.let { append("timesortfrom", it.toString()) }
                 timeSortTo?.let { append("timesortto", it.toString()) }
@@ -119,7 +122,7 @@ class MoodleCalendarApi(
         view: String? = null,
         auth: MoodleTokenAuth
     ): MoodleCalendarMonth {
-        return executeJsonPost<MoodleCalendarMonth>("/webservice/rest/server.php") {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleCalendarMonth>()) {
             setBody(FormDataContent(parameters {
                 append("year", year.toString())
                 append("month", month.toString())
@@ -149,7 +152,7 @@ class MoodleCalendarApi(
         categoryId: Int? = null,
         auth: MoodleTokenAuth
     ): MoodleCalendarUpcomingView {
-        return executeJsonPost<MoodleCalendarUpcomingView>("/webservice/rest/server.php") {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleCalendarUpcomingView>()) {
             setBody(FormDataContent(parameters {
                 courseId?.let { append("courseid", it.toString()) }
                 categoryId?.let { append("categoryid", it.toString()) }

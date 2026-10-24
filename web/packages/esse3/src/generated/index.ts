@@ -61,3 +61,4 @@ export * from "./Esse3EnumTypes.js";
 export * from "./Esse3Server.js";
 export * from "./Esse3Scrapers.js";
 export * from "./Esse3Api.js";
+export * from "./Esse3Client.js";

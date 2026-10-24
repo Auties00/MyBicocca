@@ -16,6 +16,7 @@ import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleSiteInfo
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
 import it.attendance100.mybicocca.data.remote.esse3.api.Esse3Api
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3CacheInfo
+import it.attendance100.mybicocca.data.remote.esse3.exception.Esse3Exception
 import io.ktor.http.Cookie
 import io.ktor.http.CookieEncoding
 import it.attendance100.mybicocca.di.ApplicationScope
@@ -587,10 +588,8 @@ class SessionManager @Inject constructor(
         /**
          * Collapses raw backend throwables into a UI-friendly [SignInFailure].
          *
-         * The data-api `ApiRequestException`/`Esse3Exception` types live in a module
-         * that isn't on `:app`'s compile classpath, so Esse3 failures are recognized by
-         * stable text in their messages (from `Esse3Exception.buildMessage`). The Moodle
-         * login runs in the app and reports bad credentials through [ElearningLoginException].
+         * Esse3 refuses bad credentials with an [Esse3Exception]; the Moodle login runs in the
+         * app and reports them through [ElearningLoginException].
          */
         fun classifySignInFailure(esse3: Throwable?, elearning: Throwable?): SignInFailure {
             if (looksLikeBadCredentials(esse3) || looksLikeBadCredentials(elearning)) {
@@ -603,20 +602,15 @@ class SessionManager @Inject constructor(
         }
 
         /**
-         * Walks the cause chain for the bad-credential signatures: the "Status code: 401" line
-         * of an `Esse3Exception` multi-line message, the verbatim Esse3 `retErrMsg` mentioning
-         * "credenziali" when the login is refused, and an [ElearningLoginException] flagged as
-         * bad credentials.
+         * Walks the cause chain for the bad-credential signatures: an [Esse3Exception] with
+         * status 401 or whose message (Esse3's `retErrMsg`) mentions "credenziali", and an
+         * [ElearningLoginException] flagged as bad credentials.
          */
         private fun looksLikeBadCredentials(t: Throwable?): Boolean {
             var cur: Throwable? = t
             while (cur != null) {
                 if (cur is ElearningLoginException && cur.badCredentials) return true
-                val msg = cur.message
-                if (msg != null) {
-                    if ("Status code: 401" in msg) return true
-                    if ("credenziali" in msg.lowercase()) return true
-                }
+                if (cur is Esse3Exception && (cur.statusCode == 401 || "credenziali" in cur.errorMessage.lowercase())) return true
                 cur = cur.cause
             }
             return false

@@ -8,6 +8,29 @@ info:
   version: "1"
 x-mb-id: affluences
 x-mb-prefix: Affluences
+x-mb-client:
+  timeoutSeconds: 30
+  headers:
+    # Language of the server's strings, such as error messages.
+    Accept-Language: it
+    # The app API runs device detection on the user agent and rejects unrecognised clients with
+    # "Invalid device", so requests carry a browser's.
+    User-Agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36"
+  error:
+    # The app API sends `{"error": {"code", "message"}}`, the reservation API
+    # `{"error": "<code>", "errorMessage" | "error_message": "…"}`.
+    code: [/error/code, /error]
+    message: [/error/message, /errorMessage, /error_message]
+    codes:
+      NotValidatedYet:
+        value: does_not_exist
+        description: Polling an email validation the user hasn't completed yet.
+      InvalidValidationCode:
+        value: invalid_validation_code
+        description: A validation code that doesn't match the reservation.
+      MissingAuthToken:
+        value: missing_auth_token
+        description: The operation needs the account's token.
 
 servers:
   - url: https://api.affluences.com/app/v4

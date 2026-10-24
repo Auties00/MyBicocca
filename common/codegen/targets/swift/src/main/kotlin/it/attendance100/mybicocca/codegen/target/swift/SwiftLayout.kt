@@ -12,8 +12,8 @@ import it.attendance100.mybicocca.codegen.model.RecordType
 import it.attendance100.mybicocca.codegen.model.TypeRef
 
 /**
- * Names of an API's generated Swift declarations and of the hand-written ones they rely on.
- * For an API with prefix `Esse3`, all in one Swift module:
+ * Names of an API's generated Swift declarations. For an API with prefix `Esse3`, all in one
+ * Swift module:
  *
  * | Declaration                    | File                         |
  * |--------------------------------|------------------------------|
@@ -21,19 +21,17 @@ import it.attendance100.mybicocca.codegen.model.TypeRef
  * | Every enum                     | `Esse3EnumTypes.swift`       |
  * | Operations of module `Careers` | `Esse3CareersApi.swift`      |
  * | Facade                         | `Esse3Api.swift`             |
+ * | Client, error and roles        | `Esse3Client.swift`          |
  * | Servers, if any                | `Esse3Server.swift` (enum)   |
  * | Auth schemes, if any           | `Esse3AuthTypes.swift`       |
  * | Scrapers, if any               | `Esse3Scrapers.swift`        |
  *
- * The hand-written runtime:
- * - The shared runtime module ([runtimeModule]): `LocalDate`, `LocalDateTime`, `JSONObject`,
- *   `WireEnum`, `WireMap`, `RestRequest` and the lenient `Codable` helpers.
- * - `Esse3Client`: sends `RestRequest`s and decodes responses and errors, through
- *   `json(_:roles:)`, `jsonList(_:roles:)` (empty on HTTP 404), `data(_:roles:)` and
- *   `send(_:roles:)`; an API with script or HTML responses also needs `script(_:variable:)`,
- *   decoding the JSON a script assigns to a variable, and `html(_:scrape:)`, reading the page
- *   with a function of `Esse3Scrapers` and failing when it returns nil.
- * - `Esse3PermissionLevel`: enum of the role names operations declare, as lowerCamel cases.
+ * They build on the hand-written runtime module ([runtimeModule]): `LocalDate`, `LocalDateTime`,
+ * `JSONObject`, `WireEnum`, `WireMap`, `RestRequest`, `RestClient` and the lenient `Codable`
+ * helpers. `Esse3Client` sends `RestRequest`s and decodes responses and errors, through
+ * `json(_:roles:)`, `jsonList(_:roles:)`, `data(_:roles:)`, `script(_:variable:roles:)`,
+ * `html(_:scrape:roles:)` and `send(_:roles:)`; the `roles` of the `Esse3PermissionLevel`
+ * enum only when operations declare roles (see [SwiftClientEmitter]).
  */
 internal class SwiftLayout(private val spec: ApiSpec, val runtimeModule: String) {
     val enumsFileName = "${spec.prefix}EnumTypes.swift"

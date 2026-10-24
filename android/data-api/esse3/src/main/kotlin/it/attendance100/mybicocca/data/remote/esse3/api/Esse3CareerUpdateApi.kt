@@ -6,6 +6,7 @@ import io.ktor.client.request.forms.FormDataContent
 import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
+import io.ktor.http.HttpMethod
 import io.ktor.http.contentType
 import io.ktor.http.parameters
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3AttendanceProcedureParameters
@@ -17,18 +18,20 @@ import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3ProcedureUpdateActi
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3RemoveAttendanceProcedureParameters
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3SegmentProcedureParameters
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3SubstitutionProcedureParameters
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
 
 class Esse3CareerUpdateApi(
     client: HttpClient,
     json: Json
-) : Esse3AbstractApi(client, json, "/aggcarr-service-v1") {
+) : RestApi(client, json, "/aggcarr-service-v1", Esse3Runtime.policy) {
 
     /**
      * lista preview aggiorna carriera
      */
     suspend fun getCareerUpdateHeaders(): List<Esse3CareerUpdateHeader> {
-        return executeJsonGetList<Esse3CareerUpdateHeader>("/aggcarr", setOf(Esse3PermissionLevel.TECHNICAL_USER))
+        return jsonList(HttpMethod.Get, "/aggcarr", deserializer = serializer<List<Esse3CareerUpdateHeader>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -39,11 +42,10 @@ class Esse3CareerUpdateApi(
     suspend fun postAddTeachingActivityOffer(
         body: Esse3ProcedureUpdateActivityOfferParameters
     ) {
-        val response = executePost("/aggcarr/AGG_AD_OFF/") {
+        send(HttpMethod.Post, "/aggcarr/AGG_AD_OFF/", roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
-        ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -56,7 +58,7 @@ class Esse3CareerUpdateApi(
         matId: Long,
         body: Esse3ProcedureUpdateActivityOfferParameters
     ): List<Esse3CareerUpdateLog> {
-        return executeJsonPutList<Esse3CareerUpdateLog>("/aggcarr/AGG_AD_OFF/${matId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Put, "/aggcarr/AGG_AD_OFF/${matId}", deserializer = serializer<List<Esse3CareerUpdateLog>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -70,11 +72,10 @@ class Esse3CareerUpdateApi(
     suspend fun postAttendance(
         body: Esse3AttendanceProcedureParameters
     ) {
-        val response = executePost("/aggcarr/FREQ/") {
+        send(HttpMethod.Post, "/aggcarr/FREQ/", roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
-        ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -87,7 +88,7 @@ class Esse3CareerUpdateApi(
         matId: Long,
         body: Esse3AttendanceProcedureParameters
     ): List<Esse3CareerUpdateLog> {
-        return executeJsonPutList<Esse3CareerUpdateLog>("/aggcarr/FREQ/${matId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Put, "/aggcarr/FREQ/${matId}", deserializer = serializer<List<Esse3CareerUpdateLog>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -101,11 +102,10 @@ class Esse3CareerUpdateApi(
     suspend fun postRemoveAttendance(
         body: Esse3RemoveAttendanceProcedureParameters
     ) {
-        val response = executePost("/aggcarr/RIMUOVI_FREQ/") {
+        send(HttpMethod.Post, "/aggcarr/RIMUOVI_FREQ/", roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
-        ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -118,7 +118,7 @@ class Esse3CareerUpdateApi(
         matId: Long,
         body: Esse3RemoveAttendanceProcedureParameters
     ): List<Esse3CareerUpdateLog> {
-        return executeJsonPutList<Esse3CareerUpdateLog>("/aggcarr/RIMUOVI_FREQ/${matId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Put, "/aggcarr/RIMUOVI_FREQ/${matId}", deserializer = serializer<List<Esse3CareerUpdateLog>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -132,11 +132,10 @@ class Esse3CareerUpdateApi(
     suspend fun postSEG(
         body: Esse3SegmentProcedureParameters
     ) {
-        val response = executePost("/aggcarr/SEG/") {
+        send(HttpMethod.Post, "/aggcarr/SEG/", roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
-        ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -149,7 +148,7 @@ class Esse3CareerUpdateApi(
         matId: Long,
         body: Esse3SegmentProcedureParameters
     ): List<Esse3CareerUpdateLog> {
-        return executeJsonPutList<Esse3CareerUpdateLog>("/aggcarr/SEG/${matId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Put, "/aggcarr/SEG/${matId}", deserializer = serializer<List<Esse3CareerUpdateLog>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -163,11 +162,10 @@ class Esse3CareerUpdateApi(
     suspend fun postSubstitution(
         body: Esse3SubstitutionProcedureParameters
     ) {
-        val response = executePost("/aggcarr/SOST/") {
+        send(HttpMethod.Post, "/aggcarr/SOST/", roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
-        ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -180,7 +178,7 @@ class Esse3CareerUpdateApi(
         matId: Long,
         body: Esse3SubstitutionProcedureParameters
     ): List<Esse3CareerUpdateLog> {
-        return executeJsonPutList<Esse3CareerUpdateLog>("/aggcarr/SOST/${matId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Put, "/aggcarr/SOST/${matId}", deserializer = serializer<List<Esse3CareerUpdateLog>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -194,7 +192,7 @@ class Esse3CareerUpdateApi(
     suspend fun getCareerUpdateHeader(
         careerUpdateId: Long
     ): Esse3CareerUpdateHeader {
-        return executeJsonGet<Esse3CareerUpdateHeader>("/aggcarr/${careerUpdateId}/", setOf(Esse3PermissionLevel.TECHNICAL_USER))
+        return json(HttpMethod.Get, "/aggcarr/${careerUpdateId}/", deserializer = serializer<Esse3CareerUpdateHeader>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -205,8 +203,7 @@ class Esse3CareerUpdateApi(
     suspend fun deletePreview(
         careerUpdateId: Long
     ) {
-        val response = executeDelete("/aggcarr/${careerUpdateId}/")
-        ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
+        send(HttpMethod.Delete, "/aggcarr/${careerUpdateId}/", roles = setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -225,7 +222,7 @@ class Esse3CareerUpdateApi(
         start: Int? = null,
         limit: Int? = null
     ): List<Esse3CareerUpdateRow> {
-        return executeJsonGetList<Esse3CareerUpdateRow>("/aggcarr/${careerUpdateId}/dettagli", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/aggcarr/${careerUpdateId}/dettagli", deserializer = serializer<List<Esse3CareerUpdateRow>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             fields?.let { parameter("fields", it) }
             optionalFields?.let { parameter("optionalFields", it) }
             start?.let { parameter("start", it) }
@@ -247,7 +244,7 @@ class Esse3CareerUpdateApi(
         fields: String? = null,
         optionalFields: String? = null
     ): Esse3CareerUpdateRow {
-        return executeJsonGet<Esse3CareerUpdateRow>("/aggcarr/${careerUpdateId}/dettagli/${careerUpdateDetailId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Get, "/aggcarr/${careerUpdateId}/dettagli/${careerUpdateDetailId}", deserializer = serializer<Esse3CareerUpdateRow>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             fields?.let { parameter("fields", it) }
             optionalFields?.let { parameter("optionalFields", it) }
         }
@@ -269,7 +266,7 @@ class Esse3CareerUpdateApi(
         fields: String? = null,
         optionalFields: String? = null
     ): Esse3CareerUpdateRow {
-        return executeJsonPut<Esse3CareerUpdateRow>("/aggcarr/${careerUpdateId}/dettagli/${careerUpdateDetailId}/elabora", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Put, "/aggcarr/${careerUpdateId}/dettagli/${careerUpdateDetailId}/elabora", deserializer = serializer<Esse3CareerUpdateRow>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             setBody(FormDataContent(parameters {
                 append("elabora", processNow.toString())
             }))
@@ -286,7 +283,7 @@ class Esse3CareerUpdateApi(
     suspend fun executeUpdateCareers(
         careerUpdateId: Long
     ): List<Esse3CareerUpdateLog> {
-        return executeJsonPutList<Esse3CareerUpdateLog>("/aggcarr/${careerUpdateId}/esegui", setOf(Esse3PermissionLevel.TECHNICAL_USER))
+        return jsonList(HttpMethod.Put, "/aggcarr/${careerUpdateId}/esegui", deserializer = serializer<List<Esse3CareerUpdateLog>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -297,6 +294,6 @@ class Esse3CareerUpdateApi(
     suspend fun getUpdateCareersLog(
         careerUpdateId: Long
     ): List<Esse3CareerUpdateLog> {
-        return executeJsonGetList<Esse3CareerUpdateLog>("/aggcarr/${careerUpdateId}/log", setOf(Esse3PermissionLevel.TECHNICAL_USER))
+        return jsonList(HttpMethod.Get, "/aggcarr/${careerUpdateId}/log", deserializer = serializer<List<Esse3CareerUpdateLog>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 }
