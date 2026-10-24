@@ -34,7 +34,7 @@ import it.attendance100.mybicocca.codegen.model.TypeRef
  * They build on the shared hand-written runtime package ([runtimeModule]): `LocalDate`,
  * `LocalDateTime`, the lenient `decode*` helpers, the temporal codec, `pathSegment`, the request
  * types and `RestClient`. `Esse3Client.ts` holds the API's client, with `json`, `jsonList`,
- * `bytes`, `script`, `html` and `send`, its error, the `Esse3PermissionLevel` union of role
+ * `bytes`, `text`, `script`, `html` and `send`, its error, the `Esse3PermissionLevel` union of role
  * names and `createEsse3Api` (see [TsClientEmitter]).
  */
 internal class TsLayout(private val spec: ApiSpec, val runtimeModule: String) {
@@ -131,6 +131,10 @@ internal class TsLayout(private val spec: ApiSpec, val runtimeModule: String) {
             PrimitiveKind.JSON_OBJECT -> runtimeType("JsonObject", file)
             PrimitiveKind.JSON_VALUE -> runtimeType("JsonValue", file)
             PrimitiveKind.BINARY -> "Uint8Array"
+            PrimitiveKind.FILE -> {
+                importRuntime(file, "type FileUpload")
+                "FileUpload"
+            }
         }
     }
 

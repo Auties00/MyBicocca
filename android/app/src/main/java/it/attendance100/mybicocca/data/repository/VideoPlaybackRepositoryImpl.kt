@@ -6,10 +6,9 @@ import it.attendance100.mybicocca.data.local.elearning.video.KalturaEntryEntity
 import it.attendance100.mybicocca.data.local.elearning.video.VideoProgressDao
 import it.attendance100.mybicocca.data.local.elearning.video.VideoProgressEntity
 import it.attendance100.mybicocca.data.mapper.elearning.toDomain
-import it.attendance100.mybicocca.data.remote.elearning.api.ElearningKalturaApi
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningKalturaEntryIdResponse
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningKalturaVideoStreamResponse
-import it.attendance100.mybicocca.data.remote.elearning.exception.ElearningException
+import it.attendance100.mybicocca.data.elearning.ElearningKaltura
+import it.attendance100.mybicocca.data.elearning.ElearningKalturaEntryIdResponse
+import it.attendance100.mybicocca.data.elearning.ElearningKalturaVideoStreamResponse
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.domain.model.elearning.video.VideoProgress
@@ -45,10 +44,7 @@ class VideoPlaybackRepositoryImpl @Inject constructor(
 
     override suspend fun resolveStream(cmId: Int): VideoStream {
         val entryId = resolveEntryId(cmId)
-            ?: throw ElearningException(
-                errorCode = null,
-                errorMessage = "Could not resolve the Kaltura entry of cmId=$cmId after reauth",
-            )
+            ?: throw IllegalStateException("Could not resolve the Kaltura entry of cmId=$cmId after reauth")
         return when (val stream = sessionManager.elearning().api.kaltura.getVideoStream(entryId)) {
             is ElearningKalturaVideoStreamResponse.Success -> stream.toDomain(cmId)
             ElearningKalturaVideoStreamResponse.Unavailable -> throw VideoUnavailableException(cmId)
@@ -56,7 +52,7 @@ class VideoPlaybackRepositoryImpl @Inject constructor(
     }
 
     override suspend fun thumbnailUrl(cmId: Int): String? =
-        resolveEntryId(cmId)?.let { ElearningKalturaApi.thumbnailUrl(it, widthPx = THUMBNAIL_WIDTH_PX) }
+        resolveEntryId(cmId)?.let { ElearningKaltura.thumbnailUrl(it, widthPx = THUMBNAIL_WIDTH_PX) }
 
     /**
      * Returns the persisted entry id of [cmId], or reads it from `view.php`, renewing the

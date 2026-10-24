@@ -140,6 +140,13 @@ which a list is empty, and the failures to recover from by sending the request a
 another request, such as one handing out a fresh token, or a delay). Every target generates
 from it the API's client and error type, with a constant per error code.
 
+### Bodies
+
+Besides JSON, operations send URL-encoded or multipart forms, whose files are the runtimes'
+`FileUpload` (name, media type and bytes), and read bytes, text (such as a playlist), the JSON a
+script assigns to a variable, or an HTML page through a scraper. A raw path parameter is sent as
+given, slashes included, as when the server hands out the path of a file.
+
 ### Runtimes
 
 Generated code builds on a shared runtime per language:

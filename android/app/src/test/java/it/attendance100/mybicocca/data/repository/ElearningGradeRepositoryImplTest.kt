@@ -16,7 +16,7 @@ import it.attendance100.mybicocca.data.local.elearning.grade.GradeItemEntity
 import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncScope
 import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncStateDao
 import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncStateEntity
-import it.attendance100.mybicocca.data.remote.elearning.api.ElearningApi
+import it.attendance100.mybicocca.data.elearning.ElearningApi
 import it.attendance100.mybicocca.data.auth.ElearningSession
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseGrade
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseGradesResponse

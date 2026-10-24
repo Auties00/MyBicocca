@@ -55,6 +55,7 @@ object MoodleWebScrapers {
 
     /** Reads [MoodleWebAttendanceView] out of [node], or returns null when a value it requires is missing. */
     fun attendanceView(node: Node): MoodleWebAttendanceView? = MoodleWebAttendanceView(
+        shown = (select(node, "body#page-mod-attendance-view") != null),
         summary = select(node, "table.attlist")?.let { attendanceSummary(it) },
         submittableSessions = selectAll(node, "table.generaltable td[colspan=3]").mapNotNull { submittableSession(it) }
     )
@@ -89,16 +90,38 @@ object MoodleWebScrapers {
         description = text(node, null, emptyList()) ?: ""
     )
 
+    /** Reads [MoodleWebAttendanceMarkPage] out of [node], or returns null when a value it requires is missing. */
+    fun attendanceMarkPage(node: Node): MoodleWebAttendanceMarkPage? = MoodleWebAttendanceMarkPage(
+        messages = selectAll(node, "span.messages").mapNotNull { attendanceMessage(it) },
+        markActions = selectAll(node, "ion-button[core-site-plugins-new-content]").mapNotNull { attendanceMarkAction(it) },
+        headings = selectAll(node, "ion-item h3").mapNotNull { text(it, null, emptyList()) }
+    )
+
+    /** Reads [MoodleWebAttendanceMessage] out of [node], or returns null when a value it requires is missing. */
+    fun attendanceMessage(node: Node): MoodleWebAttendanceMessage? = MoodleWebAttendanceMessage(
+        key = regex(text(node, null, emptyList()), PATTERN_3) ?: return null
+    )
+
+    /** Reads [MoodleWebAttendanceMarkAction] out of [node], or returns null when a value it requires is missing. */
+    fun attendanceMarkAction(node: Node): MoodleWebAttendanceMarkAction? = MoodleWebAttendanceMarkAction(
+        sessionId = regex(attribute(node, "[args]", emptyList()), PATTERN_4) ?: return null
+    )
+
     internal fun catalogGetCourseInfo(document: Node): MoodleWebCourseInfo? =
         select(document, ".coursebox.has-info.has-metadata")?.let { courseInfo(it) }
 
     internal fun mediaGetKalturaPlayer(document: Node): MoodleWebKalturaPlayer? =
         kalturaPlayer(document)
+
+    internal fun attendanceGetAttendanceView(document: Node): MoodleWebAttendanceView? =
+        attendanceView(document)
 }
 
 private val PATTERN_0 = Regex("^contact-(.+@.+)\$")
 private val PATTERN_1 = Regex("entryid(?:/|%2F)([\\w-]+)")
 private val PATTERN_2 = Regex("sessid[=:]\\s*(\\d+)")
+private val PATTERN_3 = Regex("plugin\\.mod_attendance\\.(\\w+)")
+private val PATTERN_4 = Regex("sessid:\\s*(\\d+)")
 
 /** The text trimmed, or null when blank or a text the page shows for a missing value. */
 private fun present(text: String?, missing: List<String> = emptyList()): String? {

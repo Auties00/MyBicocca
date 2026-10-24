@@ -24,6 +24,8 @@ export * from "./MoodleQuizTypes.js";
 export * from "./MoodleQuizApi.js";
 export * from "./MoodleMobileTypes.js";
 export * from "./MoodleMobileApi.js";
+export * from "./MoodleFilesTypes.js";
+export * from "./MoodleFilesApi.js";
 export * from "./MoodleAuthTypes.js";
 export * from "./MoodleApi.js";
 export * from "./MoodleClient.js";

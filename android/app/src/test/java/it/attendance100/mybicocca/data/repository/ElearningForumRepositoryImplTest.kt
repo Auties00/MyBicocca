@@ -13,7 +13,7 @@ import it.attendance100.mybicocca.data.local.elearning.forum.DiscussionEntity
 import it.attendance100.mybicocca.data.local.elearning.forum.ForumDao
 import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncScope
 import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncStateDao
-import it.attendance100.mybicocca.data.remote.elearning.api.ElearningApi
+import it.attendance100.mybicocca.data.elearning.ElearningApi
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAddDiscussionResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAddDiscussionPostResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseGroup
@@ -23,7 +23,7 @@ import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleDiscussionPost
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleForumDiscussionsResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleOption
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodlePrepareDraftAreaResponse
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningUploadedFile
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleUploadedFile
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
@@ -247,7 +247,7 @@ class ElearningForumRepositoryImplTest {
         val scope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher(testScheduler))
         val repository = newRepository(scope)
         coEvery { elearningApi.files.uploadToDraftArea(token, any(), 0) } returns listOf(
-            ElearningUploadedFile(itemId = 4321),
+            MoodleUploadedFile(itemId = 4321),
         )
 
         val id = repository.uploadAttachments(accountId, files = emptyList(), baseDraftItemId = null)

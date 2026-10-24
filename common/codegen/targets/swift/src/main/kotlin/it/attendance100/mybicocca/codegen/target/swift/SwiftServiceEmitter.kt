@@ -8,6 +8,7 @@ import it.attendance100.mybicocca.codegen.model.Operation
 import it.attendance100.mybicocca.codegen.model.Parameter
 import it.attendance100.mybicocca.codegen.model.ParameterEncoding
 import it.attendance100.mybicocca.codegen.model.ParameterLocation
+import it.attendance100.mybicocca.codegen.model.PrimitiveKind
 import it.attendance100.mybicocca.codegen.model.RequestBody
 import it.attendance100.mybicocca.codegen.model.ResponseBody
 import it.attendance100.mybicocca.codegen.model.TypeRef
@@ -68,6 +69,7 @@ internal class SwiftServiceEmitter(private val spec: ApiSpec, private val layout
         val returns = when (val response = operation.response) {
             ResponseBody.None -> ""
             ResponseBody.Binary -> " -> Data"
+            ResponseBody.Text -> " -> String"
             is ResponseBody.Json -> " -> ${layout.render(response.type)}"
             is ResponseBody.ScriptVariable -> " -> ${layout.render(response.type)}"
             is ResponseBody.Html -> " -> ${layout.render(response.type)}"
@@ -78,6 +80,7 @@ internal class SwiftServiceEmitter(private val spec: ApiSpec, private val layout
             val method = when (val response = operation.response) {
                 ResponseBody.None -> "send"
                 ResponseBody.Binary -> "data"
+                ResponseBody.Text -> "text"
                 is ResponseBody.Json -> if (response.type is TypeRef.ListOf) "jsonList" else "json"
                 is ResponseBody.ScriptVariable -> "script"
                 is ResponseBody.Html -> "html"
@@ -102,11 +105,14 @@ internal class SwiftServiceEmitter(private val spec: ApiSpec, private val layout
         val query = apiParameters[ParameterLocation.QUERY].orEmpty() + operation.queryParameters
         if (fixedQuery.isNotEmpty() || query.isNotEmpty()) add("query: ${items(query, fixedQuery)}")
         val fixedForm = operation.form.map { (name, value) -> "(${SwiftSyntax.string(name)}, ${SwiftSyntax.string(value)})" }
-        if (fixedForm.isNotEmpty() || operation.formParameters.isNotEmpty()) add("form: ${items(operation.formParameters, fixedForm)}")
+        val (files, fields) = operation.formParameters.partition { it.type == TypeRef.Primitive(PrimitiveKind.FILE) }
+        if (fixedForm.isNotEmpty() || fields.isNotEmpty()) add("form: ${items(fields, fixedForm)}")
         val headers = operation.headers.map { (name, value) -> "(${SwiftSyntax.string(name)}, ${template(value)})" } +
             (apiParameters[ParameterLocation.HEADER].orEmpty() + operation.headerParameters).map(::pair)
         if (headers.isNotEmpty()) add("headers: ${array(headers)}")
         (apiParameters[ParameterLocation.COOKIE].orEmpty() + operation.cookieParameters).takeIf { it.isNotEmpty() }?.let { add("cookies: ${items(it)}") }
+        if (files.isNotEmpty()) add("files: ${array(files.map { "(${SwiftSyntax.string(it.wireName)}, ${SwiftSyntax.identifier(it.name)})" })}")
+        if (operation.multipart) add("multipart: true")
         when (operation.body) {
             is RequestBody.Json -> add("body: $BODY")
             RequestBody.EmptyObject -> add("body: EmptyObject()")
@@ -118,12 +124,16 @@ internal class SwiftServiceEmitter(private val spec: ApiSpec, private val layout
         if (envelope.isNotEmpty()) add("envelope: ${envelope.joinToString(", ", "[", "]") { SwiftSyntax.string(it) }}")
     }
 
-    /** The full path as a string literal, with path parameters interpolated as encoded segments. */
+    /** The full path as a string literal, with path parameters interpolated as encoded segments, or as given when raw. */
     private fun path(module: ApiModule, operation: Operation): String {
-        val names = (spec.parameters.filter { it.location == ParameterLocation.PATH } + operation.pathParameters)
-            .associate { it.wireName to SwiftSyntax.identifier(it.name) }
+        val parameters = spec.parameters.filter { it.location == ParameterLocation.PATH } + operation.pathParameters
+        val names = parameters.associate { it.wireName to SwiftSyntax.identifier(it.name) }
+        val raw = parameters.filter { it.raw }.map { it.wireName }.toSet()
         val literal = SwiftSyntax.string(module.basePath.trimEnd('/') + operation.path)
-        return PLACEHOLDER.replace(literal) { "\\(RestRequest.pathSegment(${names.getValue(it.groupValues[1])}))" }
+        return PLACEHOLDER.replace(literal) { match ->
+            val wireName = match.groupValues[1]
+            if (wireName in raw) "\\(${names.getValue(wireName)})" else "\\(RestRequest.pathSegment(${names.getValue(wireName)}))"
+        }
     }
 
     /** A header value as a string literal interpolating the API parameters it names. */

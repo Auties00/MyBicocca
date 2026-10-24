@@ -16,7 +16,7 @@ import it.attendance100.mybicocca.data.local.elearning.badge.BadgeEntity
 import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncScope
 import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncStateDao
 import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncStateEntity
-import it.attendance100.mybicocca.data.remote.elearning.api.ElearningApi
+import it.attendance100.mybicocca.data.elearning.ElearningApi
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleUserBadgesResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleUserBadge

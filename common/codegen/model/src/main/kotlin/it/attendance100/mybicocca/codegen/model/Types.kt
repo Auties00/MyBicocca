@@ -50,7 +50,10 @@ enum class PrimitiveKind {
     JSON_VALUE,
 
     /** Raw bytes, streamed when the target supports it. */
-    BINARY;
+    BINARY,
+
+    /** A file to upload, with its name and media type; only a field of a multipart form. */
+    FILE;
 
     /** Whether values of this kind are dates or times, whose wire format a [Codec.Temporal] can set. */
     val isTemporal: Boolean get() = this == LOCAL_DATE || this == LOCAL_DATE_TIME || this == LOCAL_TIME

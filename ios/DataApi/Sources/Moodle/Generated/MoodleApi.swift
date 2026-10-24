@@ -17,6 +17,7 @@ public struct MoodleApi: Sendable {
     public let forum: MoodleForumApi
     public let quiz: MoodleQuizApi
     public let mobile: MoodleMobileApi
+    public let files: MoodleFilesApi
 
     public init(client: MoodleClient) {
         self.badge = MoodleBadgeApi(client: client)
@@ -31,5 +32,6 @@ public struct MoodleApi: Sendable {
         self.forum = MoodleForumApi(client: client)
         self.quiz = MoodleQuizApi(client: client)
         self.mobile = MoodleMobileApi(client: client)
+        self.files = MoodleFilesApi(client: client)
     }
 }

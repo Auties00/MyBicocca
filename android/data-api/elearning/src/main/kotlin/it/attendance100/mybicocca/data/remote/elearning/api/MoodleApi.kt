@@ -28,6 +28,7 @@ class MoodleApi(httpClientConfig: HttpClientConfig<*>.() -> Unit = {}) : AutoClo
     val forum = MoodleForumApi(client, json)
     val quiz = MoodleQuizApi(client, json)
     val mobile = MoodleMobileApi(client, json)
+    val files = MoodleFilesApi(client, json)
 
     override fun close() {
         client.close()

@@ -9,7 +9,7 @@ import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncStateDa
 import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncStateEntity
 import it.attendance100.mybicocca.data.mapper.elearning.toDomain
 import it.attendance100.mybicocca.data.mapper.elearning.toEntity
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningUpload
+import it.attendance100.mybicocca.data.remote.runtime.FileUpload
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleOption
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
 import it.attendance100.mybicocca.di.ApplicationScope
@@ -259,7 +259,7 @@ class ElearningForumRepositoryImpl @Inject constructor(
         baseDraftItemId: Int?,
     ): Int {
         val (api, token) = sessionManager.elearning()
-        val uploads = files.map { ElearningUpload(it.fileName, it.mimeType, it.bytes) }
+        val uploads = files.map { FileUpload(it.fileName, it.mimeType, it.bytes) }
         val stored = api.files.uploadToDraftArea(token, uploads, itemId = baseDraftItemId ?: 0)
         return stored.firstOrNull()?.itemId
             ?: baseDraftItemId

@@ -23,6 +23,10 @@ tags:
       logged-in user's view instead.
   - name: Media
     description: The pages of video resources, which need the user's browser session (the MoodleSession cookie).
+  - name: Attendance
+    description: >-
+      The pages of the attendance plugin, which need the user's browser session, and the templates
+      it renders for the Moodle app, which core_get_mobile_content returns.
 
 paths:
   /course/info.php:
@@ -70,6 +74,31 @@ paths:
             text/html:
               schema:
                 $ref: "#/components/schemas/MoodleWebKalturaPlayer"
+  /mod/attendance/view.php:
+    get:
+      tags: [Attendance]
+      operationId: getAttendanceView
+      summary: >-
+        An attendance activity's page showing every session: the student's statistics and the
+        sessions it offers to submit attendance for. It only reads; marking happens on the pages
+        its links lead to. Without a valid session, or for a course the user isn't enrolled in,
+        Moodle serves another page instead, which `shown` tells apart.
+      x-mb-query:
+        view: "5"
+      parameters:
+        - name: id
+          in: query
+          required: true
+          x-mb-name: courseModuleId
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: The activity's page, or the page Moodle redirected to.
+          content:
+            text/html:
+              schema:
+                $ref: "#/components/schemas/MoodleWebAttendanceView"
 
 components:
   schemas:
@@ -199,9 +228,15 @@ components:
         An attendance activity's `view.php` showing every session (`view=5`): the student's
         statistics and the sessions it offers to submit attendance for.
       type: object
-      x-mb-module: Attendance
       x-mb-scrape: {}
       properties:
+        shown:
+          description: >-
+            Whether Moodle showed the activity's page, rather than its login page (an expired
+            session) or another one (a course the user isn't enrolled in).
+          type: boolean
+          default: false
+          x-mb-scrape: [{ select: "body#page-mod-attendance-view" }, exists]
         summary:
           description: The student's statistics, or none when the page shows no table of them.
           allOf: [{ $ref: "#/components/schemas/MoodleWebAttendanceSummary" }]
@@ -305,3 +340,48 @@ components:
           type: string
           default: ""
           x-mb-scrape: [text]
+    MoodleWebAttendanceMarkPage:
+      description: >-
+        The template of `mobile_view_activity` after marking: a message for each reason the
+        presence wasn't recorded, a button for each session still open for marking, and the
+        status of each session.
+      type: object
+      x-mb-module: Attendance
+      x-mb-scrape: {}
+      properties:
+        messages:
+          type: array
+          items: { $ref: "#/components/schemas/MoodleWebAttendanceMessage" }
+          x-mb-scrape: [{ select-all: span.messages }]
+        markActions:
+          type: array
+          items: { $ref: "#/components/schemas/MoodleWebAttendanceMarkAction" }
+          x-mb-scrape: [{ select-all: "ion-button[core-site-plugins-new-content]" }]
+        headings:
+          description: >-
+            The headings of the sessions' items, in order: a marked session's group, then the
+            status it was assigned.
+          type: array
+          items: { type: string }
+          x-mb-scrape: [{ select-all: "ion-item h3" }]
+    MoodleWebAttendanceMessage:
+      description: A message of the plugin, which the template names by its string key (`plugin.mod_attendance.<key>`).
+      type: object
+      x-mb-module: Attendance
+      x-mb-scrape: {}
+      required: [key]
+      properties:
+        key:
+          description: The string key, such as `incorrectpasswordshort`.
+          type: string
+          x-mb-scrape: [text, { regex: 'plugin\.mod_attendance\.(\w+)' }]
+    MoodleWebAttendanceMarkAction:
+      description: The button marking a session, whose arguments name the session.
+      type: object
+      x-mb-module: Attendance
+      x-mb-scrape: {}
+      required: [sessionId]
+      properties:
+        sessionId:
+          type: string
+          x-mb-scrape: [{ attribute: "[args]" }, { regex: 'sessid:\s*(\d+)' }]
