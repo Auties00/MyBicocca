@@ -14,16 +14,17 @@ import it.attendance100.mybicocca.data.local.elearning.forum.ForumDao
 import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncScope
 import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncStateDao
 import it.attendance100.mybicocca.data.remote.elearning.api.ElearningApi
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAddForumDiscussionResponse
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAddForumPostResponse
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningDiscussionOption
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningForumDiscussion
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningGetCourseUserGroupsResponse
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningGetForumDiscussionPostsResponse
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningGetForumDiscussionsResponse
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningPrepareDraftAreaResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAddDiscussionResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAddDiscussionPostResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseGroup
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleForumDiscussion
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseUserGroupsResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleDiscussionPostsResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleForumDiscussionsResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleOption
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodlePrepareDraftAreaResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningUploadedFile
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningUserGroup
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.domain.model.elearning.forum.DiscussionId
@@ -55,6 +56,7 @@ class ElearningForumRepositoryImplTest {
     private val lmsUserId = 7
     private val account = elearningRepoTestAccount(accountId, lmsUserId)
     private val token = "x".repeat(32)
+    private val auth = MoodleTokenAuth(token)
 
     private val sessionManager = mockk<SessionManager>(relaxed = true)
     private val forumDao = mockk<ForumDao>(relaxed = true)
@@ -69,15 +71,15 @@ class ElearningForumRepositoryImplTest {
         return ElearningForumRepositoryImpl(sessionManager, forumDao, syncStateDao, stalePolicy, scope)
     }
 
-    private fun discussionDto(id: Int) = ElearningForumDiscussion(id = id, name = "Thread $id")
+    private fun discussionDto(id: Int) = MoodleForumDiscussion(id = id, name = "Thread $id")
 
     @Test
     fun `refreshDiscussions page zero replaces the forum list`() = runTest {
         val scope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher(testScheduler))
         val repository = newRepository(scope)
         coEvery {
-            elearningApi.forums.getForumDiscussions(token, forumId.value, any(), 0, any(), 0)
-        } returns ElearningGetForumDiscussionsResponse(discussions = listOf(discussionDto(1), discussionDto(2)))
+            elearningApi.moodle.forum.getForumDiscussions(forumId.value, any(), 0, any(), 0, auth)
+        } returns MoodleForumDiscussionsResponse(discussions = listOf(discussionDto(1), discussionDto(2)))
 
         val count = repository.refreshDiscussions(accountId, forumId, page = 0, perPage = 10)
 
@@ -95,8 +97,8 @@ class ElearningForumRepositoryImplTest {
         val scope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher(testScheduler))
         val repository = newRepository(scope)
         coEvery {
-            elearningApi.forums.getForumDiscussions(token, forumId.value, any(), 1, any(), 0)
-        } returns ElearningGetForumDiscussionsResponse(discussions = listOf(discussionDto(3)))
+            elearningApi.moodle.forum.getForumDiscussions(forumId.value, any(), 1, any(), 0, auth)
+        } returns MoodleForumDiscussionsResponse(discussions = listOf(discussionDto(3)))
 
         repository.refreshDiscussions(accountId, forumId, page = 1, perPage = 10)
 
@@ -110,8 +112,8 @@ class ElearningForumRepositoryImplTest {
         val scope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher(testScheduler))
         val repository = newRepository(scope)
         coEvery {
-            elearningApi.forums.getForumDiscussions(token, forumId.value, any(), 2, any(), 0)
-        } returns ElearningGetForumDiscussionsResponse(discussions = emptyList())
+            elearningApi.moodle.forum.getForumDiscussions(forumId.value, any(), 2, any(), 0, auth)
+        } returns MoodleForumDiscussionsResponse(discussions = emptyList())
 
         val count = repository.refreshDiscussions(accountId, forumId, page = 2, perPage = 10)
 
@@ -125,7 +127,7 @@ class ElearningForumRepositoryImplTest {
     fun `setFavourite reverts the optimistic flag when the server call fails`() = runTest {
         val scope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher(testScheduler))
         val repository = newRepository(scope)
-        coEvery { elearningApi.forums.toggleFavourite(token, discussionId.value, true) } throws RuntimeException("boom")
+        coEvery { elearningApi.moodle.forum.toggleFavouriteState(discussionId.value, true, auth) } throws RuntimeException("boom")
 
         val thrown = repository.runCatching {
             setFavourite(accountId, forumId, discussionId, favourite = true)
@@ -153,7 +155,7 @@ class ElearningForumRepositoryImplTest {
     fun `markDiscussionRead clears unread then logs the view best-effort`() = runTest {
         val scope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher(testScheduler))
         val repository = newRepository(scope)
-        coEvery { elearningApi.forums.markDiscussionViewed(token, discussionId.value) } throws RuntimeException("offline")
+        coEvery { elearningApi.moodle.forum.viewForumDiscussion(discussionId.value, auth) } throws RuntimeException("offline")
 
         repository.markDiscussionRead(accountId, discussionId)
 
@@ -166,17 +168,17 @@ class ElearningForumRepositoryImplTest {
         val scope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher(testScheduler))
         val repository = newRepository(scope)
         coEvery {
-            elearningApi.forums.addDiscussion(token, forumId.value, "Subj", any(), null, any())
-        } returns ElearningAddForumDiscussionResponse(discussionId = 99)
+            elearningApi.moodle.forum.addDiscussion(forumId.value, "Subj", any(), null, any(), auth)
+        } returns MoodleAddDiscussionResponse(discussionId = 99)
         coEvery {
-            elearningApi.forums.getForumDiscussions(token, forumId.value, any(), 0, any(), 0)
-        } returns ElearningGetForumDiscussionsResponse(discussions = emptyList())
+            elearningApi.moodle.forum.getForumDiscussions(forumId.value, any(), 0, any(), 0, auth)
+        } returns MoodleForumDiscussionsResponse(discussions = emptyList())
 
         val newId = repository.createDiscussion(accountId, forumId, "Subj", "line1\nline2", groupId = null, attachmentDraftItemId = null)
 
         assertThat(newId).isEqualTo(DiscussionId(99))
         val message = slot<String>()
-        coVerify { elearningApi.forums.addDiscussion(token, forumId.value, "Subj", capture(message), null, any()) }
+        coVerify { elearningApi.moodle.forum.addDiscussion(forumId.value, "Subj", capture(message), null, any(), auth) }
         assertThat(message.captured).isEqualTo("line1<br>line2")
         scope.coroutineContext[Job]?.cancel()
     }
@@ -186,17 +188,17 @@ class ElearningForumRepositoryImplTest {
         val scope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher(testScheduler))
         val repository = newRepository(scope)
         coEvery {
-            elearningApi.forums.addPost(token, postId.value, "Re", any(), any())
-        } returns ElearningAddForumPostResponse(postId = 77)
+            elearningApi.moodle.forum.addDiscussionPost(postId.value, "Re", any(), any(), any(), auth)
+        } returns MoodleAddDiscussionPostResponse(postId = 77, post = mockk(relaxed = true))
         coEvery {
-            elearningApi.forums.getDiscussionPosts(token, discussionId.value, true)
-        } returns ElearningGetForumDiscussionPostsResponse(posts = emptyList())
+            elearningApi.moodle.forum.getDiscussionPosts(discussionId.value, any(), any(), true, auth)
+        } returns MoodleDiscussionPostsResponse(posts = emptyList())
 
         val newPost = repository.reply(accountId, discussionId, postId, "Re", "body", attachmentDraftItemId = 1234)
 
         assertThat(newPost).isEqualTo(PostId(77))
-        val options = slot<List<ElearningDiscussionOption>>()
-        coVerify { elearningApi.forums.addPost(token, postId.value, "Re", any(), capture(options)) }
+        val options = slot<List<MoodleOption>>()
+        coVerify { elearningApi.moodle.forum.addDiscussionPost(postId.value, "Re", any(), capture(options), any(), auth) }
         assertThat(options.captured.first().name).isEqualTo("attachmentsid")
         assertThat(options.captured.first().value).isEqualTo("1234")
         scope.coroutineContext[Job]?.cancel()
@@ -207,15 +209,15 @@ class ElearningForumRepositoryImplTest {
         val scope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher(testScheduler))
         val repository = newRepository(scope)
         coEvery {
-            elearningApi.forums.addPost(token, postId.value, "Re", any(), any())
-        } returns ElearningAddForumPostResponse(postId = 78)
+            elearningApi.moodle.forum.addDiscussionPost(postId.value, "Re", any(), any(), any(), auth)
+        } returns MoodleAddDiscussionPostResponse(postId = 78, post = mockk(relaxed = true))
         coEvery {
-            elearningApi.forums.getDiscussionPosts(token, discussionId.value, true)
-        } returns ElearningGetForumDiscussionPostsResponse(posts = emptyList())
+            elearningApi.moodle.forum.getDiscussionPosts(discussionId.value, any(), any(), true, auth)
+        } returns MoodleDiscussionPostsResponse(posts = emptyList())
 
         repository.reply(accountId, discussionId, postId, "Re", "body", attachmentDraftItemId = null)
 
-        coVerify { elearningApi.forums.addPost(token, postId.value, "Re", any(), null) }
+        coVerify { elearningApi.moodle.forum.addDiscussionPost(postId.value, "Re", any(), null, any(), auth) }
         scope.coroutineContext[Job]?.cancel()
     }
 
@@ -224,11 +226,11 @@ class ElearningForumRepositoryImplTest {
         val scope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher(testScheduler))
         val repository = newRepository(scope)
         coEvery {
-            elearningApi.forums.getCourseUserGroups(token, courseId.value, 0)
-        } returns ElearningGetCourseUserGroupsResponse(
+            elearningApi.moodle.course.getCourseUserGroups(courseId.value, 0, any(), auth)
+        } returns MoodleCourseUserGroupsResponse(
             groups = listOf(
-                ElearningUserGroup(id = 5, name = "Gruppo A"),
-                ElearningUserGroup(id = 6, name = null),
+                MoodleCourseGroup(id = 5, name = "Gruppo A"),
+                MoodleCourseGroup(id = 6, name = ""),
             ),
         )
 
@@ -258,8 +260,8 @@ class ElearningForumRepositoryImplTest {
     fun `prepareEditAttachments returns the seeded draft id`() = runTest {
         val scope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher(testScheduler))
         val repository = newRepository(scope)
-        coEvery { elearningApi.forums.prepareDraftAreaForPost(token, postId.value) } returns
-            ElearningPrepareDraftAreaResponse(draftItemId = 9999)
+        coEvery { elearningApi.moodle.forum.prepareDraftAreaForPost(postId.value, "attachment", any(), any(), auth) } returns
+            MoodlePrepareDraftAreaResponse(draftItemId = 9999)
 
         val id = repository.prepareEditAttachments(accountId, postId)
 

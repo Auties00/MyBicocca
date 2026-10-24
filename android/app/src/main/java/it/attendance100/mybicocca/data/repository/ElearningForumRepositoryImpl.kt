@@ -9,9 +9,9 @@ import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncStateDa
 import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncStateEntity
 import it.attendance100.mybicocca.data.mapper.elearning.toDomain
 import it.attendance100.mybicocca.data.mapper.elearning.toEntity
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningDiscussionOption
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningDiscussionSortOrder
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningUpload
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleOption
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
 import it.attendance100.mybicocca.di.ApplicationScope
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
@@ -25,6 +25,9 @@ import it.attendance100.mybicocca.domain.model.elearning.forum.ForumId
 import it.attendance100.mybicocca.domain.model.elearning.forum.Post
 import it.attendance100.mybicocca.domain.model.elearning.forum.PostId
 import it.attendance100.mybicocca.domain.repository.ElearningForumRepository
+import java.util.concurrent.ConcurrentHashMap
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
@@ -33,9 +36,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import java.util.concurrent.ConcurrentHashMap
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Room-backed forum repository over the Moodle mod_forum web services.
@@ -103,8 +103,8 @@ class ElearningForumRepositoryImpl @Inject constructor(
     private suspend fun doRefreshForumsForCourse(accountId: AccountId, courseId: CourseId, force: Boolean) {
         if (!force && !isStale(accountId, ElearningSyncScope.COURSE_FORUMS, courseId.value.toLong())) return
         val (api, token) = sessionManager.elearning()
-        val response = api.forums.getForumsForCourse(token, courseId.value)
-        val rows = response.forums.map { it.toEntity(accountId) }
+        val forums = api.moodle.forum.getForumsByCourses(courseIds = listOf(courseId.value), auth = MoodleTokenAuth(token))
+        val rows = forums.map { it.toEntity(accountId) }
         forumDao.replaceForumsForCourse(accountId.value, courseId.value, rows)
         stamp(accountId, ElearningSyncScope.COURSE_FORUMS, courseId.value.toLong())
     }
@@ -116,13 +116,13 @@ class ElearningForumRepositoryImpl @Inject constructor(
         perPage: Int,
     ): Int {
         val (api, token) = sessionManager.elearning()
-        val response = api.forums.getForumDiscussions(
-            wsToken = token,
+        val response = api.moodle.forum.getForumDiscussions(
             forumId = forumId.value,
-            sortOrder = ElearningDiscussionSortOrder.LAST_POST_DESCENDING,
+            sortOrder = SORT_BY_LAST_POST_DESCENDING,
             page = page,
             perPage = perPage,
             groupId = 0,
+            auth = MoodleTokenAuth(token),
         )
         val rows = response.discussions.map { it.toEntity(accountId, forumId.value) }
         if (page == 0) {
@@ -136,10 +136,10 @@ class ElearningForumRepositoryImpl @Inject constructor(
 
     override suspend fun refreshPosts(accountId: AccountId, discussionId: DiscussionId) {
         val (api, token) = sessionManager.elearning()
-        val response = api.forums.getDiscussionPosts(
-            wsToken = token,
+        val response = api.moodle.forum.getDiscussionPosts(
             discussionId = discussionId.value,
             includeInlineAttachments = true,
+            auth = MoodleTokenAuth(token),
         )
         val rows = response.posts.map { it.toEntity(accountId, discussionId.value) }
         forumDao.replacePostsForDiscussion(accountId.value, discussionId.value, rows)
@@ -155,13 +155,13 @@ class ElearningForumRepositoryImpl @Inject constructor(
         attachmentDraftItemId: Int?,
     ): DiscussionId {
         val (api, token) = sessionManager.elearning()
-        val response = api.forums.addDiscussion(
-            wsToken = token,
+        val response = api.moodle.forum.addDiscussion(
             forumId = forumId.value,
             subject = subject,
             message = ForumHtml.plainToHtml(message),
             groupId = groupId,
             options = attachmentOptions(attachmentDraftItemId),
+            auth = MoodleTokenAuth(token),
         )
         runCatching { refreshDiscussions(accountId, forumId, page = 0) }
         return DiscussionId(response.discussionId)
@@ -176,12 +176,12 @@ class ElearningForumRepositoryImpl @Inject constructor(
         attachmentDraftItemId: Int?,
     ): PostId {
         val (api, token) = sessionManager.elearning()
-        val response = api.forums.addPost(
-            wsToken = token,
+        val response = api.moodle.forum.addDiscussionPost(
             postId = parentPostId.value,
             subject = subject,
             message = ForumHtml.plainToHtml(message),
             options = attachmentOptions(attachmentDraftItemId),
+            auth = MoodleTokenAuth(token),
         )
         runCatching { refreshPosts(accountId, discussionId) }
         return PostId(response.postId)
@@ -196,19 +196,19 @@ class ElearningForumRepositoryImpl @Inject constructor(
         attachmentDraftItemId: Int?,
     ) {
         val (api, token) = sessionManager.elearning()
-        api.forums.updatePost(
-            wsToken = token,
+        api.moodle.forum.updateDiscussionPost(
             postId = postId.value,
             subject = subject,
             message = ForumHtml.plainToHtml(message),
             options = attachmentOptions(attachmentDraftItemId),
+            auth = MoodleTokenAuth(token),
         )
         refreshPosts(accountId, discussionId)
     }
 
     override suspend fun deletePost(accountId: AccountId, discussionId: DiscussionId, postId: PostId) {
         val (api, token) = sessionManager.elearning()
-        api.forums.deletePost(token, postId.value)
+        api.moodle.forum.deletePost(postId.value, auth = MoodleTokenAuth(token))
         refreshPosts(accountId, discussionId)
     }
 
@@ -221,7 +221,7 @@ class ElearningForumRepositoryImpl @Inject constructor(
         forumDao.setDiscussionFavourite(accountId.value, discussionId.value, favourite)
         try {
             val (api, token) = sessionManager.elearning()
-            api.forums.toggleFavourite(token, discussionId.value, favourite)
+            api.moodle.forum.toggleFavouriteState(discussionId.value, favourite, auth = MoodleTokenAuth(token))
         } catch (t: Throwable) {
             forumDao.setDiscussionFavourite(accountId.value, discussionId.value, !favourite)
             throw t
@@ -235,21 +235,22 @@ class ElearningForumRepositoryImpl @Inject constructor(
         subscribed: Boolean,
     ) {
         val (api, token) = sessionManager.elearning()
-        api.forums.setDiscussionSubscription(token, forumId.value, discussionId.value, subscribed)
+        api.moodle.forum.setSubscriptionState(forumId.value, discussionId.value, subscribed, auth = MoodleTokenAuth(token))
     }
 
     override suspend fun markDiscussionRead(accountId: AccountId, discussionId: DiscussionId) {
         forumDao.clearDiscussionUnread(accountId.value, discussionId.value)
         runCatching {
             val (api, token) = sessionManager.elearning()
-            api.forums.markDiscussionViewed(token, discussionId.value)
+            api.moodle.forum.viewForumDiscussion(discussionId.value, auth = MoodleTokenAuth(token))
         }
     }
 
     override suspend fun getCourseGroups(accountId: AccountId, courseId: CourseId): List<ForumGroup> {
         val (api, token) = sessionManager.elearning()
-        return api.forums.getCourseUserGroups(token, courseId.value).groups
-            .map { ForumGroup(id = it.id, name = it.name ?: "Gruppo ${it.id}") }
+        // A user id of 0 is the authenticated user.
+        return api.moodle.course.getCourseUserGroups(courseId = courseId.value, userId = 0, auth = MoodleTokenAuth(token)).groups
+            .map { ForumGroup(id = it.id, name = it.name.ifEmpty { "Gruppo ${it.id}" }) }
     }
 
     override suspend fun uploadAttachments(
@@ -267,12 +268,12 @@ class ElearningForumRepositoryImpl @Inject constructor(
 
     override suspend fun prepareEditAttachments(accountId: AccountId, postId: PostId): Int {
         val (api, token) = sessionManager.elearning()
-        return api.forums.prepareDraftAreaForPost(token, postId.value).draftItemId
+        return api.moodle.forum.prepareDraftAreaForPost(postId.value, area = ATTACHMENT_AREA, auth = MoodleTokenAuth(token)).draftItemId
     }
 
     /** Wraps a draft-area id as the `attachmentsid` option the mod_forum write services accept. */
-    private fun attachmentOptions(draftItemId: Int?): List<ElearningDiscussionOption>? =
-        draftItemId?.let { listOf(ElearningDiscussionOption("attachmentsid", it.toString())) }
+    private fun attachmentOptions(draftItemId: Int?): List<MoodleOption>? =
+        draftItemId?.let { listOf(MoodleOption("attachmentsid", it.toString())) }
 
     override suspend fun clearForAccount(accountId: AccountId) {
         forumDao.clearAllForAccount(accountId.value)
@@ -297,4 +298,12 @@ class ElearningForumRepositoryImpl @Inject constructor(
     }
 
     private data class RefreshKey(val accountId: AccountId, val courseId: CourseId)
+
+    private companion object {
+        /** mod_forum's sort order by last post, newest first. */
+        const val SORT_BY_LAST_POST_DESCENDING = 1
+
+        /** The file area of a post's attachments. */
+        const val ATTACHMENT_AREA = "attachment"
+    }
 }

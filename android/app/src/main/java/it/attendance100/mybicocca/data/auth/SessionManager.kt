@@ -12,7 +12,8 @@ import it.attendance100.mybicocca.data.mapper.account.toDomain
 import it.attendance100.mybicocca.data.mapper.account.toEntity
 import it.attendance100.mybicocca.data.mapper.account.toLearningIdentity
 import it.attendance100.mybicocca.data.remote.elearning.api.ElearningApi
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningGetSiteInfoResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleSiteInfo
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
 import it.attendance100.mybicocca.data.remote.esse3.api.Esse3Api
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3CacheInfo
 import it.attendance100.mybicocca.data.remote.esse3.scraper.api.Esse3Api as Esse3LegacyApi
@@ -162,7 +163,7 @@ class SessionManager @Inject constructor(
                 val login = elearningAuthenticator.login(normalizedUsername, password)
                 val api = elearningApiFactory.create(login.moodleSessionCookie)
                 val siteInfo = try {
-                    api.site.getSiteInfo(login.wsToken)
+                    api.moodle.site.getSiteInfo(auth = MoodleTokenAuth(login.wsToken))
                 } catch (t: Throwable) {
                     api.close()
                     throw t
@@ -558,7 +559,7 @@ class SessionManager @Inject constructor(
         val wsToken: String,
         val privateToken: String?,
         val moodleSessionCookie: String?,
-        val siteInfo: ElearningGetSiteInfoResponse,
+        val siteInfo: MoodleSiteInfo,
     )
 
     private data class ElearningTokens(

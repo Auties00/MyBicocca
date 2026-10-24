@@ -4,12 +4,15 @@ import com.google.common.truth.Truth.assertThat
 import it.attendance100.mybicocca.data.local.elearning.forum.DiscussionEntity
 import it.attendance100.mybicocca.data.local.elearning.forum.ForumEntity
 import it.attendance100.mybicocca.data.local.elearning.forum.PostEntity
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningFile
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningForum
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningForumDiscussion
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningForumPost
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningForumPostAuthor
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningForumPostCapabilities
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleForum
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleForumDiscussion
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleForumPost
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodlePostAttachment
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodlePostAttachmentHtml
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodlePostAttachmentUrls
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodlePostAuthor
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodlePostAuthorUrls
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodlePostCapabilities
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.domain.model.elearning.forum.DiscussionId
@@ -32,22 +35,22 @@ class ElearningForumMapperTest {
     private fun forum(
         id: Int = 30,
         courseId: Int = 5,
-        type: String? = "news",
-        forceSubscribe: Int? = 1,
-        maxAttachments: Int? = 3,
+        type: String = "news",
+        forceSubscribe: Int = 1,
+        maxAttachments: Int = 3,
         numberOfDiscussions: Int? = 4,
         canCreateDiscussions: Boolean? = true,
-    ) = ElearningForum(
+    ) = MoodleForum(
         id = id,
-        courseId = courseId,
+        course = courseId,
         type = type,
         name = "Annunci",
-        introduction = "intro",
+        intro = "intro",
         forceSubscribe = forceSubscribe,
         maxAttachments = maxAttachments,
-        numberOfDiscussions = numberOfDiscussions,
+        numDiscussions = numberOfDiscussions,
         canCreateDiscussions = canCreateDiscussions,
-        courseModuleId = 300,
+        cmId = 300,
     )
 
     @Test
@@ -64,7 +67,7 @@ class ElearningForumMapperTest {
 
     @Test
     fun `forum toEntity falls back to the other type when none is reported`() {
-        assertThat(forum(type = null).toEntity(account).typeRaw).isEqualTo(ForumType.Other.raw)
+        assertThat(forum(type = "").toEntity(account).typeRaw).isEqualTo(ForumType.Other.raw)
     }
 
     @Test
@@ -77,7 +80,6 @@ class ElearningForumMapperTest {
     fun `forum toEntity allows attaching only when an attachment is permitted`() {
         assertThat(forum(maxAttachments = 3).toEntity(account).canAttachFiles).isTrue()
         assertThat(forum(maxAttachments = 0).toEntity(account).canAttachFiles).isFalse()
-        assertThat(forum(maxAttachments = null).toEntity(account).canAttachFiles).isFalse()
     }
 
     @Test
@@ -109,31 +111,31 @@ class ElearningForumMapperTest {
 
     private fun discussion(
         id: Int = 500,
-        discussionId: Int? = 501,
-        parentPostId: Int? = 600,
-        subject: String? = "Domanda",
+        discussionId: Int = 501,
+        parentPostId: Int = 600,
+        subject: String = "Domanda",
         name: String = "Domanda thread",
-        authorFullName: String? = "Mario Rossi",
-        modifierFullName: String? = "Luca Bianchi",
-        message: String? = "<p>Ciao &amp; benvenuti</p>",
-        createdTimestamp: Long? = 1_000L,
-        modifiedAtTimestamp: Long? = 3_000L,
-        modifiedTimestamp: Long? = 2_000L,
-        pinned: Boolean? = true,
-        starred: Boolean? = true,
-        canFavourite: Boolean? = true,
-    ) = ElearningForumDiscussion(
+        authorFullName: String = "Mario Rossi",
+        modifierFullName: String = "Luca Bianchi",
+        message: String = "<p>Ciao &amp; benvenuti</p>",
+        createdTimestamp: Long = 1_000L,
+        modifiedAtTimestamp: Long = 3_000L,
+        modifiedTimestamp: Long = 2_000L,
+        pinned: Boolean = true,
+        starred: Boolean = true,
+        canFavourite: Boolean = true,
+    ) = MoodleForumDiscussion(
         id = id,
         name = name,
-        discussionId = discussionId,
-        parentPostId = parentPostId,
+        discussion = discussionId,
+        parent = parentPostId,
         subject = subject,
         message = message,
-        authorFullName = authorFullName,
-        modifierFullName = modifierFullName,
-        createdTimestamp = createdTimestamp,
-        modifiedAtTimestamp = modifiedAtTimestamp,
-        modifiedTimestamp = modifiedTimestamp,
+        userFullName = authorFullName,
+        userModifiedFullName = modifierFullName,
+        created = createdTimestamp,
+        modified = modifiedAtTimestamp,
+        timeModified = modifiedTimestamp,
         pinned = pinned,
         starred = starred,
         canFavourite = canFavourite,
@@ -149,20 +151,20 @@ class ElearningForumMapperTest {
 
     @Test
     fun `discussion toEntity falls back to the overloaded id`() {
-        val entity = discussion(id = 500, discussionId = null, parentPostId = null).toEntity(account, forumId = 30)
+        val entity = discussion(id = 500, discussionId = 0, parentPostId = 0).toEntity(account, forumId = 30)
         assertThat(entity.discussionId).isEqualTo(500)
         assertThat(entity.firstPostId).isEqualTo(500)
     }
 
     @Test
     fun `discussion toEntity falls back from subject to thread name`() {
-        val entity = discussion(subject = null, name = "Thread name").toEntity(account, forumId = 30)
+        val entity = discussion(subject = "", name = "Thread name").toEntity(account, forumId = 30)
         assertThat(entity.subject).isEqualTo("Thread name")
     }
 
     @Test
     fun `discussion toEntity uses a dash placeholder for a missing author`() {
-        assertThat(discussion(authorFullName = null).toEntity(account, forumId = 30).authorName).isEqualTo("—")
+        assertThat(discussion(authorFullName = "").toEntity(account, forumId = 30).authorName).isEqualTo("—")
     }
 
     @Test
@@ -174,7 +176,7 @@ class ElearningForumMapperTest {
 
     @Test
     fun `discussion toEntity falls back to the modified timestamp`() {
-        val entity = discussion(modifiedAtTimestamp = null, modifiedTimestamp = 2_000L)
+        val entity = discussion(modifiedAtTimestamp = 0L, modifiedTimestamp = 2_000L)
             .toEntity(account, forumId = 30)
         assertThat(entity.timeModifiedMs).isEqualTo(2_000_000L)
     }
@@ -187,7 +189,7 @@ class ElearningForumMapperTest {
 
     @Test
     fun `discussion toEntity falls back to the author for the last post author`() {
-        val entity = discussion(modifierFullName = null, authorFullName = "Mario Rossi")
+        val entity = discussion(modifierFullName = "", authorFullName = "Mario Rossi")
             .toEntity(account, forumId = 30)
         assertThat(entity.lastPostAuthorName).isEqualTo("Mario Rossi")
     }
@@ -200,7 +202,7 @@ class ElearningForumMapperTest {
 
     @Test
     fun `discussion toEntity yields a null preview when the message is absent`() {
-        assertThat(discussion(message = null).toEntity(account, forumId = 30).messagePreview).isNull()
+        assertThat(discussion(message = "").toEntity(account, forumId = 30).messagePreview).isNull()
     }
 
     @Test
@@ -243,16 +245,16 @@ class ElearningForumMapperTest {
 
     private fun post(
         id: Int = 600,
-        discussionId: Int? = 501,
+        discussionId: Int = 501,
         parentId: Int? = null,
-        author: ElearningForumPostAuthor? = ElearningForumPostAuthor(id = 7, fullName = "Mario Rossi"),
-        subject: String? = "Re: Domanda",
-        message: String? = "<p>risposta</p>",
-        capabilities: ElearningForumPostCapabilities? =
-            ElearningForumPostCapabilities(reply = true, edit = true, delete = false),
-        attachments: List<ElearningFile>? = null,
-        isDeleted: Boolean? = false,
-    ) = ElearningForumPost(
+        author: MoodlePostAuthor = author(id = 7, fullName = "Mario Rossi"),
+        subject: String = "Re: Domanda",
+        message: String = "<p>risposta</p>",
+        capabilities: MoodlePostCapabilities =
+            MoodlePostCapabilities(reply = true, edit = true, delete = false),
+        attachments: List<MoodlePostAttachment> = emptyList(),
+        isDeleted: Boolean = false,
+    ) = MoodleForumPost(
         id = id,
         discussionId = discussionId,
         parentId = parentId,
@@ -262,9 +264,21 @@ class ElearningForumMapperTest {
         capabilities = capabilities,
         attachments = attachments,
         isDeleted = isDeleted,
-        createdTimestamp = 1_000L,
-        modifiedTimestamp = 2_000L,
+        timeCreated = 1_000L,
+        timeModified = 2_000L,
     )
+
+    private fun author(id: Int? = null, fullName: String? = null) =
+        MoodlePostAuthor(id = id, fullName = fullName, urls = MoodlePostAuthorUrls())
+
+    private fun attachment(fileName: String, url: String = "https://m/x", fileSize: Long = 12L) =
+        MoodlePostAttachment(
+            fileName = fileName,
+            url = url,
+            fileSize = fileSize,
+            urls = MoodlePostAttachmentUrls(),
+            html = MoodlePostAttachmentHtml(),
+        )
 
     @Test
     fun `post toEntity flattens the capability flags`() {
@@ -278,13 +292,13 @@ class ElearningForumMapperTest {
     fun `post toEntity uses the discussion id and falls back when null`() {
         assertThat(post(discussionId = 501).toEntity(account, discussionIdFallback = 999).discussionId)
             .isEqualTo(501)
-        assertThat(post(discussionId = null).toEntity(account, discussionIdFallback = 999).discussionId)
+        assertThat(post(discussionId = 0).toEntity(account, discussionIdFallback = 999).discussionId)
             .isEqualTo(999)
     }
 
     @Test
     fun `post toEntity defaults author, subject and message`() {
-        val entity = post(author = null, subject = null, message = null).toEntity(account, discussionIdFallback = 999)
+        val entity = post(author = author(), subject = "", message = "").toEntity(account, discussionIdFallback = 999)
         assertThat(entity.authorName).isEqualTo("—")
         assertThat(entity.authorUserId).isNull()
         assertThat(entity.subject).isEqualTo("")
@@ -293,14 +307,13 @@ class ElearningForumMapperTest {
 
     @Test
     fun `post toEntity leaves the attachments column null when there are none`() {
-        assertThat(post(attachments = null).toEntity(account, discussionIdFallback = 999).attachmentsJson).isNull()
         assertThat(post(attachments = emptyList()).toEntity(account, discussionIdFallback = 999).attachmentsJson)
             .isNull()
     }
 
     @Test
     fun `post toEntity packs attachments into the JSON column`() {
-        val file = ElearningFile(fileName = "slides.pdf", fileUrl = "https://m/x", mimeType = "application/pdf", fileSize = 12L)
+        val file = attachment(fileName = "slides.pdf")
         val entity = post(attachments = listOf(file)).toEntity(account, discussionIdFallback = 999)
         assertThat(entity.attachmentsJson).isNotNull()
         assertThat(entity.attachmentsJson).contains("slides.pdf")
@@ -308,7 +321,7 @@ class ElearningForumMapperTest {
 
     @Test
     fun `post toEntity names an attachment with a missing file name file`() {
-        val file = ElearningFile(fileName = null, fileUrl = "https://m/x")
+        val file = attachment(fileName = "")
         val entity = post(attachments = listOf(file)).toEntity(account, discussionIdFallback = 999)
         assertThat(entity.attachmentsJson).contains("file")
     }
@@ -316,7 +329,7 @@ class ElearningForumMapperTest {
     @Test
     fun `post entity toDomain decodes attachments and wraps ids`() {
         val source = post(
-            attachments = listOf(ElearningFile(fileName = "a.pdf", fileUrl = "u", mimeType = "application/pdf", fileSize = 5L)),
+            attachments = listOf(attachment(fileName = "a.pdf", url = "u", fileSize = 5L)),
         ).toEntity(account, discussionIdFallback = 999)
         val domain = source.toDomain()
         assertThat(domain.id).isEqualTo(PostId(600))

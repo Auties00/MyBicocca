@@ -1,7 +1,7 @@
 package it.attendance100.mybicocca.data.mapper.account
 
 import com.google.common.truth.Truth.assertThat
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningGetSiteInfoResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleSiteInfo
 import org.junit.Test
 
 /**
@@ -15,18 +15,18 @@ class LearningMapperTest {
         username: String = "name.surname@campus.unimib.it",
         language: String = "it",
         userIsSiteAdmin: Boolean = false,
-        userMaxUploadFileSize: Int = 52_428_800,
+        userMaxUploadFileSize: Long = 52_428_800,
         userQuota: Int = 104_857_600,
-    ) = ElearningGetSiteInfoResponse(
+    ) = MoodleSiteInfo(
         advancedFeatures = emptyList(),
-        downloadFilesEnabled = 1,
+        downloadFiles = 1,
         firstName = "Name",
         fullName = "Name Surname",
         functions = emptyList(),
-        language = language,
+        lang = language,
         lastName = "Surname",
         limitConcurrentLogins = 0,
-        mobileCascadingStyleSheetUrl = "",
+        mobileCssUrl = "",
         policyAgreed = 1,
         release = "4.1",
         siteCalendarType = "gregorian",
@@ -34,7 +34,7 @@ class LearningMapperTest {
         siteName = "E-Learning",
         siteUrl = "https://elearning.unimib.it",
         theme = "boost",
-        uploadFilesEnabled = 1,
+        uploadFiles = 1,
         userCalendarType = "gregorian",
         userCanManageOwnFiles = true,
         userHomePage = 0,

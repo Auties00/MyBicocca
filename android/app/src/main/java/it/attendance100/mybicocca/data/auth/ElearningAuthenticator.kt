@@ -23,7 +23,11 @@ import io.ktor.http.Url
 import io.ktor.http.content.TextContent
 import io.ktor.utils.io.jvm.javaio.toInputStream
 import it.attendance100.mybicocca.data.observability.HttpMetrics
+import io.ktor.client.plugins.UserAgent
 import it.attendance100.mybicocca.data.remote.elearning.api.ElearningApi
+import it.attendance100.mybicocca.data.remote.elearning.api.MoodleApi
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
+import it.attendance100.mybicocca.data.remote.elearning.exception.ElearningException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -88,26 +92,20 @@ class ElearningAuthenticator @Inject constructor() {
     suspend fun renewSession(wsToken: String, privateToken: String, userId: Int): String {
         val cookies = AcceptAllCookiesStorage()
         return buildClient(cookies).use { client ->
-            val keyResponse = client.post(WS_REST_URL) {
-                header(HttpHeaders.UserAgent, MOODLE_MOBILE_USER_AGENT)
-                // The private token must travel in the body: Moodle rejects it as a GET parameter.
-                setBody(FormDataContent(Parameters.build {
-                    append("wstoken", wsToken)
-                    append("wsfunction", "tool_mobile_get_autologin_key")
-                    append("moodlewsrestformat", "json")
-                    append("privatetoken", privateToken)
-                }))
+            val autologin = MoodleApi(httpClientConfig = { install(UserAgent) { agent = MOODLE_MOBILE_USER_AGENT } }).use { moodle ->
+                try {
+                    moodle.mobile.getAutologinKey(privateToken, auth = MoodleTokenAuth(wsToken))
+                } catch (e: ElearningException) {
+                    throw ElearningLoginException("Cannot renew session: ${e.errorCode ?: e.errorMessage}")
+                }
             }
-            val result = Json.parseToJsonElement(keyResponse.bodyAsText()) as? JsonObject
-                ?: throw ElearningLoginException("Cannot renew session: empty autologin key response")
-            val key = result["key"]?.jsonPrimitive?.contentOrNull
-                ?: throw ElearningLoginException("Cannot renew session: ${result["errorcode"]?.jsonPrimitive?.contentOrNull ?: "no autologin key"}")
-            val autologinUrl = result["autologinurl"]?.jsonPrimitive?.contentOrNull
-                ?: throw ElearningLoginException("Cannot renew session: no autologin url")
+            if (autologin.key.isEmpty() || autologin.autologinUrl.isEmpty()) {
+                throw ElearningLoginException("Cannot renew session: no autologin key")
+            }
 
-            val landing = client.get(URLBuilder(autologinUrl).apply {
+            val landing = client.get(URLBuilder(autologin.autologinUrl).apply {
                 parameters.append("userid", userId.toString())
-                parameters.append("key", key)
+                parameters.append("key", autologin.key)
                 parameters.append("urltogo", AUTOLOGIN_LANDING_URL)
             }.buildString())
             // A refused key ends on the login page instead, still with a (guest) MoodleSession.
@@ -267,7 +265,6 @@ class ElearningAuthenticator @Inject constructor() {
         const val TIMEOUT_MS = 30_000L
         const val MOODLE_URL = "https://elearning.unimib.it/"
         const val AJAX_URL = "https://elearning.unimib.it/lib/ajax/service.php"
-        const val WS_REST_URL = "https://elearning.unimib.it/webservice/rest/server.php"
         const val AUTOLOGIN_LANDING_URL = "https://elearning.unimib.it/user/profile.php"
 
         /** Moodle only hands out autologin keys to clients that identify as its mobile app. */

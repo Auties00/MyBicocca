@@ -74,6 +74,14 @@ class MoodleApiTest {
     }
 
     @Test
+    fun `courses by field carry the course sheet custom fields`(): Unit = runBlocking {
+        val course = api.course.getCoursesByField(field = "id", value = "60702", auth = auth).courses.single()
+        val fields = course.customFields.associate { it.shortName to it.value }
+        assertEquals("INF/01", fields["settore"])
+        assertEquals("8", fields["cfu"])
+    }
+
+    @Test
     fun `groups, profiles and users decode`(): Unit = runBlocking {
         assumeTrue(courses.isNotEmpty(), "The user has no courses")
         api.course.getCourseUserGroups(courseId = courses.first().id, userId = userId, auth = auth)

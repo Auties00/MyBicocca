@@ -7,12 +7,12 @@ import it.attendance100.mybicocca.data.local.elearning.course.CourseStaffEntity
 import it.attendance100.mybicocca.data.local.elearning.course.CourseSyllabusEntity
 import it.attendance100.mybicocca.data.local.elearning.course.EnrolledCourseEntity
 import it.attendance100.mybicocca.data.local.elearning.sync.ElearningJson
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningActivityCompletionStatus
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningCourseMetadata
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningCourseModule
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleActivityCompletionStatus
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseModule
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningCoursePublicInfo
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningCourseSection
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningEnrolledCourse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseSection
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleEnrolledCourse
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.elearning.course.CompletionState
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
@@ -121,25 +121,25 @@ internal data class SyllabusBlobJson(
  * server booleans to false, normalizes epoch-second timestamps to milliseconds, and
  * records the list position as the sort order.
  */
-internal fun ElearningEnrolledCourse.toEntity(accountId: AccountId, sortOrder: Int): EnrolledCourseEntity =
+internal fun MoodleEnrolledCourse.toEntity(accountId: AccountId, sortOrder: Int): EnrolledCourseEntity =
     EnrolledCourseEntity(
         accountId = accountId.value,
         courseId = id,
         shortName = shortName.stripMlang(),
         fullName = fullName.stripMlang(),
         displayName = (displayName ?: fullName).stripMlang(),
-        idNumber = identificationNumber?.takeIf { it.isNotBlank() },
+        idNumber = idNumber.ifBlank { null },
         summary = summary,
-        courseImageUrl = courseImageUrl,
+        courseImageUrl = courseImage,
         format = format,
-        language = language,
-        categoryId = categoryId,
+        language = lang,
+        categoryId = category,
         progress = progress,
         completed = completed == true,
-        completionEnabled = completionEnabled == true,
-        startDateMs = startDateTimestamp?.toMillisOrNull(),
-        endDateMs = endDateTimestamp?.toMillisOrNull(),
-        lastAccessMs = lastAccessTimestamp?.toMillisOrNull(),
+        completionEnabled = enableCompletion == true,
+        startDateMs = startDate?.toMillisOrNull(),
+        endDateMs = endDate?.toMillisOrNull(),
+        lastAccessMs = lastAccess?.toMillisOrNull(),
         isFavourite = isFavourite == true,
         hidden = hidden == true,
         sortOrder = sortOrder,
@@ -178,12 +178,12 @@ internal fun EnrolledCourseEntity.toDomain(deadlines: List<Deadline> = emptyList
  * stripping {mlang} markup from the name and reading `visible` as the 0/1 flag Moodle
  * ships.
  */
-internal fun ElearningCourseSection.toEntity(accountId: AccountId, courseId: Int): CourseSectionEntity =
+internal fun MoodleCourseSection.toEntity(accountId: AccountId, courseId: Int): CourseSectionEntity =
     CourseSectionEntity(
         accountId = accountId.value,
         courseId = courseId,
         sectionId = id,
-        sectionNumber = sectionNumber ?: 0,
+        sectionNumber = section ?: 0,
         name = name.stripMlang(),
         summary = summary,
         visible = visible != 0,
@@ -201,7 +201,7 @@ internal fun ElearningCourseSection.toEntity(accountId: AccountId, courseId: Int
  * (uservisible false) is kept and rendered locked, not dropped, with the gate recorded
  * in the `accessible` column.
  */
-internal fun List<ElearningCourseSection>.toModuleEntities(
+internal fun List<MoodleCourseSection>.toModuleEntities(
     accountId: AccountId,
     courseId: Int,
 ): List<CourseModuleEntity> {
@@ -216,11 +216,11 @@ internal fun List<ElearningCourseSection>.toModuleEntities(
                     fileUrl = it.fileUrl,
                     mimeType = it.mimeType,
                     sizeBytes = it.fileSize,
-                    timeModifiedMs = it.timeModifiedTimestamp?.toMillisOrNull(),
+                    timeModifiedMs = it.timeModified.toMillisOrNull(),
                 )
             }
-            val dates = module.dates.orEmpty().mapNotNull {
-                val ms = it.timestamp?.toMillisOrNull() ?: return@mapNotNull null
+            val dates = module.dates.mapNotNull {
+                val ms = it.timestamp.toMillisOrNull() ?: return@mapNotNull null
                 ModuleDateJson(label = it.label, timestampMs = ms, dataId = it.dataId)
             }
             result += CourseModuleEntity(
@@ -229,19 +229,19 @@ internal fun List<ElearningCourseSection>.toModuleEntities(
                 cmId = module.id,
                 sectionId = section.id,
                 sortOrder = index,
-                instanceId = module.instanceId,
+                instanceId = module.instance,
                 name = module.name.stripMlang(),
-                modName = module.moduleName,
-                typeLabel = module.modulePluralName?.takeIf { it.isNotBlank() },
+                modName = module.modName,
+                typeLabel = module.modPlural.ifBlank { null },
                 description = module.description,
                 url = module.url,
-                iconUrl = module.moduleIconUrl,
+                iconUrl = module.modIcon,
                 visible = module.visible != 0,
                 accessible = module.userVisible != false,
                 availabilityInfo = module.availabilityInfo?.takeIf { it.isNotBlank() },
                 onCoursePage = module.visibleOnCoursePage != 0,
-                indent = module.indent ?: 0,
-                afterLink = module.afterLinkHtml.htmlToPlainTextOrNull(),
+                indent = module.indent,
+                afterLink = module.afterLink.htmlToPlainTextOrNull(),
                 linkedSectionId = module.linkedSectionId(),
                 datesJson = if (dates.isEmpty()) null else ElearningJson.encodeToString(dates),
                 contentsJson = if (contents.isEmpty()) null else ElearningJson.encodeToString(contents),
@@ -256,7 +256,7 @@ internal fun List<ElearningCourseSection>.toModuleEntities(
  * customdata, e.g. {"sectionid":"333817"}. customData is a JSON string (sometimes the
  * literal "" when empty), so any parse failure yields null.
  */
-private fun ElearningCourseModule.linkedSectionId(): Int? {
+private fun MoodleCourseModule.linkedSectionId(): Int? {
     val raw = customData ?: return null
     return runCatching {
         val element = ElearningJson.parseToJsonElement(raw)
@@ -345,6 +345,36 @@ internal fun CourseModuleEntity.toDomain(): CourseModule {
 }
 
 /**
+ * The "Scheda del corso" facts of a course, read from its custom fields. Categorical values
+ * come localized in the language of the web service calls.
+ */
+internal data class CourseSheetMetadata(
+    val disciplinarySector: String?,
+    val cfu: Int?,
+    val period: String?,
+    val activityType: String?,
+    val hours: Int?,
+    val degreeType: String?,
+    val deliveryMode: String?,
+    val language: String?,
+)
+
+/** Reads the course sheet from the course's custom fields; blank fields are unset, and so are zero hours. */
+internal fun MoodleCourse.toCourseSheetMetadata(): CourseSheetMetadata {
+    val values = customFields.associate { it.shortName to it.value.trim().takeIf(String::isNotEmpty) }
+    return CourseSheetMetadata(
+        disciplinarySector = values["settore"],
+        cfu = values["cfu"]?.toIntOrNull(),
+        period = values["periodo"],
+        activityType = values["tipo"],
+        hours = values["ore"]?.toIntOrNull()?.takeIf { it > 0 },
+        degreeType = values["tipologiacds"],
+        deliveryMode = values["erogazione"],
+        language = values["lingua"],
+    )
+}
+
+/**
  * Maps the course sheet of the public course page, together with the course's metadata
  * when it could be fetched, into its cache row, or null when the page exposes no sheet.
  * Sheet tabs are one-per-language ("it", "en"); the tab matching the app language is
@@ -354,7 +384,7 @@ internal fun CourseModuleEntity.toDomain(): CourseModule {
 internal fun ElearningCoursePublicInfo.toSyllabusEntity(
     accountId: AccountId,
     courseId: Int,
-    metadata: ElearningCourseMetadata?,
+    metadata: CourseSheetMetadata?,
 ): CourseSyllabusEntity? {
     val appLanguage = Locale.getDefault().language.lowercase()
     val primary = syllabus.firstOrNull { it.language.equals(appLanguage, ignoreCase = true) }
@@ -439,7 +469,7 @@ private fun SyllabusInfoJson.toDomain(): SyllabusInfo = SyllabusInfo(
  */
 private fun buildSyllabusInfo(
     fields: List<it.attendance100.mybicocca.data.remote.elearning.dto.ElearningCourseSyllabusField>,
-    metadata: ElearningCourseMetadata?,
+    metadata: CourseSheetMetadata?,
 ): SyllabusInfoJson {
     val byKey = fields.associate { field ->
         field.title.trim().lowercase() to Jsoup.parseBodyFragment(field.htmlContent).body()
@@ -843,18 +873,17 @@ internal fun CourseStaffEntity.toDomain(): CourseStaffMember =
  * Moodle's `state` codes collapse to a boolean (2 = done, 3 = done-with-pass; 0 also
  * means untracked) and `tracking` to the manual (1) / automatic (2) flags.
  */
-internal fun ElearningActivityCompletionStatus.toEntity(
+internal fun MoodleActivityCompletionStatus.toEntity(
     accountId: AccountId,
     courseId: Int,
 ): ActivityCompletionEntity {
     val isCompleted = state == 2 || state == 3
-    val tracking = tracking ?: 0
-    return ActivityCompletionEntity(
+        return ActivityCompletionEntity(
         accountId = accountId.value,
         courseId = courseId,
-        cmId = courseModuleId,
+        cmId = cmId,
         isCompleted = isCompleted,
-        completedAtMs = timeCompleted?.toMillisOrNull(),
+        completedAtMs = timeCompleted.toMillisOrNull(),
         isManual = tracking == 1,
         isAutomatic = tracking == 2,
         isTracked = state != 0,

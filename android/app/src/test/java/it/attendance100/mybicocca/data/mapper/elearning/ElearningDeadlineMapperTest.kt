@@ -2,8 +2,9 @@ package it.attendance100.mybicocca.data.mapper.elearning
 
 import com.google.common.truth.Truth.assertThat
 import it.attendance100.mybicocca.data.local.elearning.deadline.DeadlineEntity
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningCalendarEvent
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningEventCourse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCalendarEvent
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleEventCourse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleEventIcon
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.elearning.assignment.AssignmentId
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
@@ -29,15 +30,16 @@ class ElearningDeadlineMapperTest {
         moduleName: String? = "assign",
         name: String = "Compito 1",
         timeStart: Long = 1_000L,
-        timeSort: Long? = 2_000L,
-    ) = ElearningCalendarEvent(
+        timeSort: Long = 2_000L,
+    ) = MoodleCalendarEvent(
         id = id,
         name = name,
         moduleName = moduleName,
         instance = instance,
         timeStart = timeStart,
         timeSort = timeSort,
-        course = courseId?.let { ElearningEventCourse(id = it) },
+        icon = MoodleEventIcon(),
+        course = courseId?.let { MoodleEventCourse(id = it) },
     )
 
     @Test
@@ -93,7 +95,7 @@ class ElearningDeadlineMapperTest {
 
     @Test
     fun `due time falls back to timestart when timesort is absent`() {
-        val entity = event(timeStart = 1_000L, timeSort = null).toDeadlineEntity(account)
+        val entity = event(timeStart = 1_000L, timeSort = 0L).toDeadlineEntity(account)
         assertThat(entity?.dueAtMs).isEqualTo(1_000_000L)
     }
 
