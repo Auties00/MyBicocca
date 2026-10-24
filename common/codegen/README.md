@@ -51,6 +51,21 @@ Each API's `specs/<api>/codegen.json` names its reader and the targets to run:
 }
 ```
 
+An API described by several specs lists a reader for each under `readers` instead of `reader`.
+Esse3 does, for the web portal pages its REST API doesn't cover:
+
+```json
+"readers": [
+  { "type": "esse3" },
+  { "type": "openapi", "options": { "spec": "web/certificates.yaml" } }
+]
+```
+
+The parts are merged into one API (`ApiSpec.merge`), with one facade whose modules come from
+every part. They must share the API's id, prefix and parameters, and may repeat an enum, server
+or auth scheme only identically. Operations naming no server, such as the REST ones, use the base
+URL the runtime provides; the pages name theirs.
+
 ### The model
 
 Readers do all the API-specific work (translating names, merging enums, deciding defaults), so
