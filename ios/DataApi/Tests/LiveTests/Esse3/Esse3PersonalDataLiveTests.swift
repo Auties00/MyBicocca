@@ -348,6 +348,26 @@ final class Esse3PersonalDataLiveTests: XCTestCase {
         }
     }
 
+    func test_putMobilePhoneWrite() async throws {
+        try await liveCase(Esse3Live.api, "PersonalData.putMobilePhone#write", effect: "reversible") { live in
+            let personId = try live.choose("personId", [try await Esse3Live.personalDataGetPersonTitles(live)].compactMap { $0.personId }.compactMap { Int64($0) })
+            let body = try live.decode(Esse3MobileParameter.self, json: "{\"cellulare\":\"3330000000\"}")
+            let snapshot = try await live.call("{\"k\":\"record\",\"n\":\"Esse3Person\"}") { try await live.api.personalData.getPerson(personId: personId) }
+            let before = try live.choose("the value to restore", [snapshot].compactMap { $0.mobilePhone })
+            _ = try await live.call("{\"k\":\"record\",\"n\":\"Esse3MobileParameter\"}") { try await live.api.personalData.putMobilePhone(personId: personId, body: body) }
+            do {
+                let verified = try await live.call("{\"k\":\"record\",\"n\":\"Esse3Person\"}") { try await live.api.personalData.getPerson(personId: personId) }
+                try live.expectContains("mobilePhone", [verified].compactMap { $0.mobilePhone }, try live.first("mobilePhone", [body].compactMap { $0.mobilePhone }))
+            } catch {
+                _ = try? await live.call("{\"k\":\"record\",\"n\":\"Esse3MobileParameter\"}") { try await live.api.personalData.putMobilePhone(personId: personId, body: { var copy = body; copy.mobilePhone = before; return copy }()) }
+                throw error
+            }
+            _ = try await live.call("{\"k\":\"record\",\"n\":\"Esse3MobileParameter\"}") { try await live.api.personalData.putMobilePhone(personId: personId, body: { var copy = body; copy.mobilePhone = before; return copy }()) }
+            let restored = try await live.call("{\"k\":\"record\",\"n\":\"Esse3Person\"}") { try await live.api.personalData.getPerson(personId: personId) }
+            try live.expectContains("mobilePhone", [restored].compactMap { $0.mobilePhone }, before)
+        }
+    }
+
     func test_getPersonPhoto1() async throws {
         try await liveCase(Esse3Live.api, "PersonalData.getPersonPhoto#1") { live in
             let personId = try live.choose("personId", [try await Esse3Live.personalDataGetPersonTitles(live)].compactMap { $0.personId }.compactMap { Int64($0) })

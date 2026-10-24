@@ -13,13 +13,13 @@ enum AffluencesLive {
         maxRequests: 400,
         shapes: shapes,
         skips: [
-            ("Reservations.createReservation", "irreversible"),
+            ("Reservations.createReservation", "reversible, but tests.yaml doesn't say how to undo it"),
             ("Reservations.validateReservation", "irreversible"),
             ("Reservations.confirmReservation", "irreversible"),
             ("Reservations.getReservationToCancel", "needs inputs emailToken (nothing provides them)"),
             ("Reservations.cancelReservation", "irreversible"),
-            ("Reservations.confirmEmail", "irreversible"),
-            ("Reservations.trustDevice", "irreversible"),
+            ("Reservations.confirmEmail", "needs inputs token (only takes values from tests.yaml)"),
+            ("Reservations.trustDevice", "needs inputs body (only takes values from tests.yaml)"),
             ("Account.pollEmailValidation", "needs inputs requestUuid (nothing provides them)"),
             ("Account.requestEmailValidation", "irreversible"),
             ("Account.getMyReservations", "needs credentials of Account in account.auth")

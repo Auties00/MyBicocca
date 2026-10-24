@@ -35,7 +35,7 @@ enum DemoLive {
                     _ = try await live.api.items.deleteItem(itemId: values["itemId"] ?? "")
                     return true
                 case "Items.renameItem#write":
-                    _ = try await live.api.items.renameItem(itemId: "42", name: values["name"] ?? "")
+                    _ = try await live.api.items.renameItem(itemId: values["itemId"] ?? "", name: values["name"] ?? "")
                     return true
                 default:
                     return false

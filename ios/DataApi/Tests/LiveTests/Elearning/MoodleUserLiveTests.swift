@@ -44,4 +44,12 @@ final class MoodleUserLiveTests: XCTestCase {
             _ = try await live.call("{\"k\":\"record\",\"n\":\"MoodleUserPreferencesResponse\"}") { try await live.api.user.getUserPreferences(userId: userId, auth: auth) }
         }
     }
+
+    func test_viewUserProfile1() async throws {
+        try await liveCase(MoodleLive.api, "User.viewUserProfile#1", effect: "benign") { live in
+            let userId = try live.choose("userId", [try await MoodleLive.siteGetSiteInfo(live)].compactMap { $0.userId })
+            let auth = try await MoodleLive.tokenCredentials(live)
+            _ = try await live.call("{\"k\":\"record\",\"n\":\"MoodleStatusResponse\"}") { try await live.api.user.viewUserProfile(userId: userId, auth: auth) }
+        }
+    }
 }

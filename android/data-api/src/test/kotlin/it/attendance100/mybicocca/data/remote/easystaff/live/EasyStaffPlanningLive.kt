@@ -38,11 +38,11 @@ internal object EasyStaffPlanningLive : LiveApi<EasyStaffPlanningApi>(
     maxRequests = 200,
     shapes = SHAPES,
     skips = mapOf(
-        "Reservations.createReservation" to "Books a slot at a real information desk; review it once before enabling it, with a body holding a form the desk accepts.",
+        "Reservations.createReservation" to "Its body needs the start of a free slot as epoch seconds, and the desk's form filled by field type, which tests.yaml can't express yet.",
         "Reservations.confirmReservation" to "irreversible",
         "Reservations.getReservation" to "needs inputs reservationCode, primaryValue (nothing provides them)",
         "Reservations.getReservationServiceId" to "needs inputs reservationCode, primaryValue (nothing provides them)",
-        "Reservations.updateReservation" to "irreversible",
+        "Reservations.updateReservation" to "reversible, but tests.yaml doesn't say how to undo it",
         "Reservations.deleteReservation" to "irreversible",
         "Reservations.getReservationPdf" to "needs inputs entryId (nothing provides them)",
         "Reservations.getReservationIcs" to "needs inputs repeatId (nothing provides them)",

@@ -14,7 +14,7 @@ export const MoodleWebLive: LiveApi<MoodleWebApi> = {
   maxRequests: 100,
   shapes: SHAPES,
   skips: {
-    "Media.getKalturaPlayer": "irreversible",
+    "Media.getKalturaPlayer": "needs inputs courseModuleId (only takes values from tests.yaml)",
     "Attendance.getAttendanceView": "irreversible",
   },
   create(fetch, anonymous) {

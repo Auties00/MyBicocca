@@ -94,7 +94,7 @@ final class DemoItemsLiveTests: XCTestCase {
             let snapshot = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"DemoItem\"}}", envelope: ["data", "items"]) { try await live.api.search.searchItems(query: "42", auth: try await DemoLive.tokenCredentials(live)) }
             let before = try live.choose("the value to restore", [snapshot].compactMap { $0.indices.contains(0) ? $0[0] : nil }.compactMap { $0.name })
             _ = try await live.call(nil) { try await live.api.items.renameItem(itemId: "42", name: "Renamed") }
-            live.journal(["name": String(describing: before)])
+            live.journal(["itemId": String(describing: "42"), "name": String(describing: before)])
             _ = try await live.call(nil) { try await live.api.items.renameItem(itemId: "42", name: before) }
             live.unjournal()
             let restored = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"DemoItem\"}}", envelope: ["data", "items"]) { try await live.api.search.searchItems(query: "42", auth: try await DemoLive.tokenCredentials(live)) }

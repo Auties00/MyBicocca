@@ -237,7 +237,10 @@ class TestPlanner(private val spec: ApiSpec, private val config: LiveTestsConfig
                 val saved = path(undo.pick, readType, emptyMap(), "$where.undo.restore.pick")
                 val input = undo.into.substringBefore('.')
                 val inputType = operation.inputType(input) ?: throw IllegalArgumentException("$where.undo.restore.into names unknown input '$input'")
-                val base = args[input] ?: throw IllegalArgumentException("$where.undo.restore.into names '$input', which the call doesn't send")
+                if (input !in args) throw IllegalArgumentException("$where.undo.restore.into names '$input', which the call doesn't send")
+                // The undo sends the same values the call did, rather than picking them again.
+                val same = args.mapValues { (name, arg) -> if (name == Input.AUTH) arg else Arg.Ref(Arg.Ref.Root.ARGS, name, Path.identity(operation.inputType(name)!!)) }
+                val base = same.getValue(input)
                 val restored = if ('.' in undo.into) {
                     val record = TestTypes.record(spec, inputType) ?: throw IllegalArgumentException("$where.undo.restore.into: '$input' isn't a record")
                     val name = undo.into.substringAfter('.')
@@ -252,7 +255,7 @@ class TestPlanner(private val spec: ApiSpec, private val config: LiveTestsConfig
                 WritePlan(
                     snapshot = snapshot to saved,
                     verify = verify(tests.verify, verifyRefs, where),
-                    undo = Call(operation, args + (input to restored)),
+                    undo = Call(operation, same + (input to restored)),
                 )
             }
         }

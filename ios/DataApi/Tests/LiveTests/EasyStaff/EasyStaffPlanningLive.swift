@@ -13,11 +13,11 @@ enum EasyStaffPlanningLive {
         maxRequests: 200,
         shapes: shapes,
         skips: [
-            ("Reservations.createReservation", "Books a slot at a real information desk; review it once before enabling it, with a body holding a form the desk accepts."),
+            ("Reservations.createReservation", "Its body needs the start of a free slot as epoch seconds, and the desk's form filled by field type, which tests.yaml can't express yet."),
             ("Reservations.confirmReservation", "irreversible"),
             ("Reservations.getReservation", "needs inputs reservationCode, primaryValue (nothing provides them)"),
             ("Reservations.getReservationServiceId", "needs inputs reservationCode, primaryValue (nothing provides them)"),
-            ("Reservations.updateReservation", "irreversible"),
+            ("Reservations.updateReservation", "reversible, but tests.yaml doesn't say how to undo it"),
             ("Reservations.deleteReservation", "irreversible"),
             ("Reservations.getReservationPdf", "needs inputs entryId (nothing provides them)"),
             ("Reservations.getReservationIcs", "needs inputs repeatId (nothing provides them)")

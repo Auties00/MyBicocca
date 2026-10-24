@@ -264,7 +264,7 @@ internal class TsTestEmitter(private val plan: TestPlan, private val layout: TsL
             refs.before = names.local("before")
             line("const ${refs.before} = live.choose(\"the value to restore\", ${path(snapshot, path, file)});")
         }
-        if (case.operation.resultType != null) {
+        if (case.operation.resultType != null && write.usesResult) {
             refs.result = names.local("result")
             line("const ${refs.result} = await live.call(${callOptions(case.operation)}, async () => ${invocation(case.call, args)});")
         } else {

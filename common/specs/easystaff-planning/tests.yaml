@@ -14,8 +14,8 @@ defaults:
 operations:
   Reservations.createReservation:
     skip: >-
-      Books a slot at a real information desk; review it once before enabling it, with a body
-      holding a form the desk accepts.
+      Its body needs the start of a free slot as epoch seconds, and the desk's form filled by
+      field type, which tests.yaml can't express yet.
     undo:
       call: Reservations.deleteReservation
       with:

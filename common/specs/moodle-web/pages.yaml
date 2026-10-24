@@ -58,7 +58,7 @@ paths:
     get:
       tags: [Media]
       operationId: getKalturaPlayer
-      x-mb-effect: irreversible
+      x-mb-effect: benign
       summary: >-
         The Kaltura player of a video resource. Without a valid session Moodle serves its login page,
         which has no player.
