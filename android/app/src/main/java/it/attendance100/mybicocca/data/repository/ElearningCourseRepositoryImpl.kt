@@ -246,11 +246,13 @@ class ElearningCourseRepositoryImpl @Inject constructor(
         coroutineScope {
             val sectionsAsync = async { runCatching { api.courses.getCourseContents(token, courseId.value) }.getOrNull() }
             val publicAsync = async { runCatching { api.courses.getCoursePublicInfo(courseId.value) }.getOrNull() }
+            val metadataAsync = async { runCatching { api.courses.getCourseMetadata(token, courseId.value) }.getOrNull() }
             val completionAsync = async {
                 runCatching { api.completion.getActivitiesCompletionStatus(token, courseId.value, null) }.getOrNull()
             }
             val sectionsResp = sectionsAsync.await()
             val publicInfo = publicAsync.await()
+            val metadata = metadataAsync.await()
             val completion = completionAsync.await()
 
             if (sectionsResp != null) {
@@ -261,7 +263,7 @@ class ElearningCourseRepositoryImpl @Inject constructor(
             if (publicInfo != null) {
                 val staffRows = publicInfo.toStaffEntities(accountId, courseId.value)
                 courseDao.replaceCourseStaff(accountId.value, courseId.value, staffRows)
-                publicInfo.toSyllabusEntity(accountId, courseId.value)?.let { courseDao.upsertSyllabus(it) }
+                publicInfo.toSyllabusEntity(accountId, courseId.value, metadata)?.let { courseDao.upsertSyllabus(it) }
             }
             if (completion != null) {
                 val completionRows = completion.statuses.map { it.toEntity(accountId, courseId.value) }

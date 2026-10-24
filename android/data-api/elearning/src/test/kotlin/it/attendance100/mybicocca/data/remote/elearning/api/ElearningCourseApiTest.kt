@@ -31,11 +31,21 @@ class ElearningCourseApiTest : ElearningTestApiBase() {
         assertTrue(info.name.isNotBlank())
         assertTrue(info.code.isNotBlank())
         assertTrue(info.viewUrl.contains("course/view.php"))
-        assertNotNull(info.metadata)
         assertTrue(info.syllabus.isNotEmpty())
         assertTrue(info.syllabus.any { it.language == "it" })
         assertTrue(info.syllabus.all { it.fields.isNotEmpty() })
         assertTrue(info.staff.isNotEmpty())
         assertTrue(info.enrolmentMethods.isNotEmpty())
     }
+
+    @Test
+    suspend fun getCourseMetadata() {
+        val metadata = api.courses.getCourseMetadata(session.wsToken, 60702)
+        assertNotNull(metadata)
+        assertEquals("INF/01", metadata!!.disciplinarySector)
+        assertEquals(8, metadata.cfu)
+        assertNotNull(metadata.period)
+        assertNotNull(metadata.degreeType)
+    }
+
 }

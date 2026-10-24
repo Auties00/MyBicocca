@@ -440,7 +440,6 @@ data class ElearningModuleDate(
  * @property name The full display name of the course.
  * @property code The short course code (e.g. "2526-3-E3101Q113").
  * @property viewUrl URL to the (gated) course content page.
- * @property metadata Course "Scheda" metadata block (CFU, period, etc.).
  * @property syllabus Per-language syllabus content (typically one entry for "it" and one for "en").
  * @property staff Course staff grouped by role ("Docente", "Tutor", "Esercitatore", ...).
  * @property enrolmentMethods Localized names of available enrolment methods.
@@ -453,7 +452,6 @@ data class ElearningCoursePublicInfo(
     val name: String,
     val code: String,
     val viewUrl: String,
-    val metadata: ElearningCoursePublicMetadata,
     val syllabus: List<ElearningCourseSyllabus>,
     val staff: List<ElearningCourseStaffGroup>,
     val enrolmentMethods: List<String>,
@@ -462,25 +460,89 @@ data class ElearningCoursePublicInfo(
 )
 
 /**
- * "Scheda del corso" metadata block. Categorical fields are kept as the
- * server-localized strings (e.g. "Primo Semestre", "Obbligatorio", "Italiano").
+ * Request to find courses by a single field, used to read a course's custom fields.
+ *
+ * @property field The field to match: `id`, `ids`, `shortname`, `idnumber` or `category`.
+ * @property value The value to match.
+ */
+@Serializable
+class ElearningGetCoursesByFieldRequest(
+    private val field: String,
+    private val value: String
+) : ElearningRequest<ElearningGetCoursesByFieldResponse> {
+    override val functionName: String
+        get() = "core_course_get_courses_by_field"
+
+    override fun writeAdditionalData(formData: ParametersBuilder) {
+        formData.append("field", field)
+        formData.append("value", value)
+    }
+}
+
+/**
+ * Response containing the courses matching an [ElearningGetCoursesByFieldRequest].
+ *
+ * @property courses The matching courses the user can see.
+ * @property warnings Any warnings that occurred during the request.
+ */
+@Serializable
+data class ElearningGetCoursesByFieldResponse(
+    @SerialName("courses")
+    val courses: List<ElearningCourseByField> = emptyList(),
+    @SerialName("warnings")
+    val warnings: List<ElearningResponseWarning> = emptyList()
+) : ElearningResponse
+
+/**
+ * A course returned by `core_course_get_courses_by_field`, reduced to the fields the API reads.
+ *
+ * @property id The unique identifier of the course.
+ * @property customFields The course's custom fields, which hold the "Scheda del corso".
+ */
+@Serializable
+data class ElearningCourseByField(
+    @SerialName("id")
+    val id: Int,
+    @SerialName("customfields")
+    val customFields: List<ElearningCourseCustomField> = emptyList()
+)
+
+/**
+ * A course custom field.
+ *
+ * @property shortName Stable field key, e.g. `"cfu"` or `"periodo"`.
+ * @property value Display value, localized and filtered; null when the field is unset.
+ */
+@Serializable
+data class ElearningCourseCustomField(
+    @SerialName("shortname")
+    val shortName: String,
+    @SerialName("value")
+    val value: String? = null
+)
+
+/**
+ * "Scheda del corso" metadata, read from the course's custom fields. Categorical fields are
+ * kept as the server-localized strings (e.g. "Primo Semestre", "Obbligatorio", "Italiano").
  *
  * @property disciplinarySector Italian SSD code, e.g. "INF/01", "MAT/02".
  * @property cfu Credit value (CFU) parsed as an integer.
  * @property period Teaching period (e.g. "Primo Semestre").
  * @property activityType Activity type (e.g. "Obbligatorio", "Obbligatorio a scelta").
- * @property hours Total contact hours parsed as an integer.
+ * @property hours Total contact hours parsed as an integer; null when unset or zero.
  * @property degreeType Degree type (e.g. "Laurea Triennale").
+ * @property deliveryMode Delivery mode ("Tipologia erogazione"), often unset.
  * @property language Teaching language (e.g. "Italiano").
  */
 @Serializable
-data class ElearningCoursePublicMetadata(
+data class ElearningCourseMetadata(
     val disciplinarySector: String?,
     val cfu: Int?,
     val period: String?,
     val activityType: String?,
     val hours: Int?,
     val degreeType: String?,
+    val deliveryMode: String?,
     val language: String?
 )
 

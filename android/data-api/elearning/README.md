@@ -27,7 +27,7 @@ The cookie is only needed by the web-page endpoints (Kaltura video resolution).
 |--------------|--------------------------------------------|
 | `site`       | Site info                                  |
 | `users`      | User profiles and preferences              |
-| `courses`    | Enrolled courses, contents, enrollment     |
+| `courses`    | Courses, contents, metadata, enrollment    |
 | `quizzes`    | Quiz attempts, questions, results          |
 | `assignments`| Assignment submissions, grades, feedback   |
 | `forums`     | Forum discussions, posts, replies          |
@@ -88,4 +88,4 @@ Request parameters are sent as form data with the web service token.
 
 One operation uses HTML scraping (no authentication required):
 
-- `courses.getCoursePublicInfo(courseId)` - Scrapes the public info page for a course (syllabus, staff, "Scheda del corso" metadata, enrolment methods); works for courses the user is not enrolled in
+- `courses.getCoursePublicInfo(courseId)` - Scrapes the public info page for a course (syllabus, staff, enrolment methods); works for courses the user is not enrolled in
