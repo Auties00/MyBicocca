@@ -1,12 +1,13 @@
 package it.attendance100.mybicocca.codegen.core
 
+import it.attendance100.mybicocca.codegen.model.ApiSpec
 import it.attendance100.mybicocca.codegen.model.SpecValidator
 import java.nio.file.Path
 import kotlin.io.path.absolute
 
 /**
- * Runs the pipeline for one API: read its spec, validate the model, then generate and sync
- * each requested target.
+ * Runs the pipeline for one API: read its specs, merge and validate the model, then generate and
+ * sync each requested target.
  */
 class Generator(
     private val registry: PluginRegistry = PluginRegistry,
@@ -23,8 +24,9 @@ class Generator(
         val unknownTargets = targetIds.orEmpty() - config.targets.keys
         require(unknownTargets.isEmpty()) { "Targets not configured in $specDir: $unknownTargets" }
 
-        val reader = registry.reader(config.reader.type)
-        val spec = reader.read(ReaderContext(specDir, config.reader.options, mayUpdateSpecFiles = !check, log))
+        val spec = ApiSpec.merge(config.specReaders.map { readerConfig ->
+            registry.reader(readerConfig.type).read(ReaderContext(specDir, readerConfig.options, mayUpdateSpecFiles = !check, log))
+        })
         SpecValidator.requireValid(spec)
         log("Read API '${spec.id}': ${spec.modules.size} modules, ${spec.declarations.size} types, ${spec.modules.sumOf { it.operations.size }} operations")
 

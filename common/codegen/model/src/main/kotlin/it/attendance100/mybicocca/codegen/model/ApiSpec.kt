@@ -14,8 +14,9 @@ package it.attendance100.mybicocca.codegen.model
  *   carry it; targets also use it to name the API's hand-written runtime support types.
  * @property modules The API's sub-APIs, each grouping operations and the records they use.
  * @property enums Enumerations shared by every module.
- * @property servers Base URLs operations can target (see [Operation.server]). Empty when the
- *   API has a single base URL, which its runtime then provides.
+ * @property servers Base URLs operations can target (see [Operation.server]). Operations naming
+ *   none use the base URL the API's runtime provides, so this is empty when the API has a single
+ *   one.
  * @property authSchemes Ways a caller can authenticate, used by [Operation.auth].
  * @property parameters Values the caller gives once, when creating the API, rather than to
  *   each operation: path parameters fill the placeholders of every operation whose path names
@@ -67,8 +68,42 @@ data class ApiSpec(
         is TypeRef.ListOf, is TypeRef.MapOf -> false
     }
 
-    private companion object {
-        val MAP_KEY_KINDS = setOf(PrimitiveKind.STRING, PrimitiveKind.INT32, PrimitiveKind.INT64, PrimitiveKind.LOCAL_DATE)
+    companion object {
+        private val MAP_KEY_KINDS = setOf(PrimitiveKind.STRING, PrimitiveKind.INT32, PrimitiveKind.INT64, PrimitiveKind.LOCAL_DATE)
+
+        /**
+         * Joins the parts of an API described by several specs, such as a REST API and the web
+         * pages of the same site, into one: their modules side by side, and the enums, servers
+         * and auth schemes of every part. Parts may repeat a declaration only identically, and
+         * must agree on the API's identity and parameters, which every operation uses.
+         */
+        fun merge(parts: List<ApiSpec>): ApiSpec {
+            require(parts.isNotEmpty()) { "An API needs at least one spec" }
+            val first = parts.first()
+            if (parts.size == 1) return first
+            for (part in parts) {
+                require(part.id == first.id && part.prefix == first.prefix) {
+                    "The specs of one API must share its id and prefix: '${first.id}'/${first.prefix} and '${part.id}'/${part.prefix}"
+                }
+                require(part.parameters == first.parameters) { "The specs of API '${first.id}' must declare the same API parameters" }
+            }
+            return ApiSpec(
+                id = first.id,
+                prefix = first.prefix,
+                modules = parts.flatMap { it.modules },
+                enums = union(parts.flatMap { it.enums }, "Enum") { it.name },
+                servers = union(parts.flatMap { it.servers }, "Server") { it.name },
+                authSchemes = union(parts.flatMap { it.authSchemes }, "Auth scheme") { it.name },
+                parameters = first.parameters,
+            )
+        }
+
+        /** The distinct [items], failing when two of them share a name but differ. */
+        private fun <T> union(items: List<T>, kind: String, name: (T) -> String): List<T> =
+            items.groupBy(name).map { (key, declared) ->
+                require(declared.distinct().size == 1) { "$kind '$key' is declared differently by the specs of one API" }
+                declared.first()
+            }
     }
 }
 
