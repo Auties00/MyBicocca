@@ -26,8 +26,8 @@ import it.attendance100.mybicocca.codegen.model.TypeRef
  * | Serializers, if any             | `…esse3.dto.Esse3Serializers.kt`           |
  * | Scrapers, if any                | `…esse3.dto.Esse3Scrapers.kt`              |
  *
- * Modules extend the shared runtime's `RestApi`, in [runtimePackage], which [KotlinRuntimeTarget]
- * generates.
+ * Modules extend `RestApi`, in [runtimePackage]: the [KotlinRuntime] that [KotlinTarget] writes
+ * as its shared files.
  */
 internal class KotlinLayout(private val spec: ApiSpec, packageName: String, val runtimePackage: String) {
     val dtoPackage = "$packageName.dto"

@@ -1,9 +1,0 @@
-# Names the runtime the generated Kotlin APIs build on, which the kotlin-runtime target writes
-# from its own sources. It describes no operations.
-openapi: 3.0.3
-info:
-  title: Data API runtime
-  version: "1"
-x-mb-id: runtime
-x-mb-prefix: Runtime
-paths: {}
