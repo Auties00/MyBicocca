@@ -210,9 +210,17 @@ export class LiveCase<A> {
     return this.run.anonymous;
   }
 
-  /** One of `candidates`, which differs between cases and runs; skips the case when there is none. */
+  /**
+   * One of `candidates`, which differs between cases and runs; skips the case when there is none.
+   * They are sorted first, so that every platform picks the same, whatever order a map of the
+   * response kept.
+   */
   choose<T>(name: string, candidates: readonly (T | null | undefined)[]): T {
-    const values = distinct(candidates.filter((value): value is T => value !== null && value !== undefined && !Number.isNaN(value)));
+    const key = (value: T) => (typeof value === "object" ? JSON.stringify(value) : String(value));
+    const values = distinct(candidates.filter((value): value is T => value !== null && value !== undefined && !Number.isNaN(value)))
+      .map((value) => [key(value), value] as const)
+      .sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0))
+      .map(([, value]) => value);
     if (values.length === 0) throw new LiveSkip(`no value for ${name}`);
     const index = (((this.index + LiveSettings.seed) % values.length) + values.length) % values.length;
     return values[index]!;

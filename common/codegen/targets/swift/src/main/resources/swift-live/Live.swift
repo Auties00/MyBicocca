@@ -223,9 +223,14 @@ final class LiveCase<Api: Sendable>: @unchecked Sendable {
     var anonymousApi: Api { run.anonymous }
 
     /// One of `candidates`, which differs between cases and runs; skips the case when there is none.
-    func choose<T: Hashable>(_ name: String, _ candidates: [T?]) throws -> T {
+    /// They are sorted by `key` first, so that every platform picks the same, whatever order a map
+    /// of the response kept.
+    func choose<T: Hashable>(_ name: String, _ candidates: [T?], key: (T) -> String = { "\($0)" }) throws -> T {
         var seen = Set<T>()
         let values = candidates.compactMap { $0 }.filter { seen.insert($0).inserted }
+            .map { (key($0), $0) }
+            .sorted { Array($0.0.utf16).lexicographicallyPrecedes(Array($1.0.utf16)) }
+            .map { $0.1 }
         if values.isEmpty { throw LiveSkip("no value for \(name)") }
         let count = values.count
         return values[((index + LiveSettings.seed) % count + count) % count]

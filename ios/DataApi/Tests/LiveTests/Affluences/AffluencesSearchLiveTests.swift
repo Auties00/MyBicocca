@@ -25,8 +25,7 @@ final class AffluencesSearchLiveTests: XCTestCase {
     func test_searchSitesOnMap1() async throws {
         try await liveCase(AffluencesLive.api, "Search.searchSitesOnMap#1") { live in
             let body = try live.decode(AffluencesSiteSearchRequest.self, json: "{\"latitude\":45.518,\"longitude\":9.21375}")
-            let result = try await live.call("{\"k\":\"record\",\"n\":\"AffluencesMapSearchResults\"}", envelope: ["data"]) { try await live.api.search.searchSitesOnMap(body: body) }
-            live.fingerprint { f in AffluencesLive.writeAffluencesMapSearchResults(f, result) }
+            _ = try await live.call("{\"k\":\"record\",\"n\":\"AffluencesMapSearchResults\"}", envelope: ["data"]) { try await live.api.search.searchSitesOnMap(body: body) }
         }
     }
 

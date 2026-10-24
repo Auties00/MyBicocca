@@ -377,7 +377,9 @@ internal class TestEmitter(private val plan: TestPlan, private val layout: Kotli
         is Arg.Pick -> {
             val target = if (arg.wrap) (type as TypeRef.ListOf).element else type!!
             val candidates = convertAll(path("${arg.source.id}()", arg.path, file), arg.path.type, target, file)
-            val chosen = "choose(${KotlinSyntax.string(name)}, $candidates)"
+            // Enums sort by their wire value, as on every platform.
+            val key = if (TestTypes.enum(spec, target) != null) " { it.value }" else ""
+            val chosen = "choose(${KotlinSyntax.string(name)}, $candidates)$key"
             if (arg.wrap) "listOf($chosen)" else chosen
         }
         else -> argument(arg, type, file)

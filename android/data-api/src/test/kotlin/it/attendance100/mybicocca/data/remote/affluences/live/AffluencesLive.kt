@@ -15,7 +15,6 @@ import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesHourlyFor
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesIdentityProvider
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesLiveAttendance
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesLocation
-import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesMapSearchResults
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesOpeningHours
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesOverviewCategory
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesOverviewNotice
@@ -240,14 +239,6 @@ internal fun LiveFingerprint.writeAffluencesLocation(value: AffluencesLocation?)
     obj(value) {
         writeAffluencesCoordinates(value.coordinates)
         writeAffluencesAddress(value.address)
-    }
-}
-
-internal fun LiveFingerprint.writeAffluencesMapSearchResults(value: AffluencesMapSearchResults?) {
-    if (value == null) return nil()
-    obj(value) {
-        writeAffluencesCoordinates(value.center)
-        list(value.results) { writeAffluencesSiteOverview(it) }
     }
 }
 

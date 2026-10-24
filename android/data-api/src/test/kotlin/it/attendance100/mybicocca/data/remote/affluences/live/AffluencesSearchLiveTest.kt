@@ -32,10 +32,9 @@ class AffluencesSearchLiveTest : LiveTest<AffluencesApi>(AffluencesLive) {
     @Test
     @DisplayName("Search.searchSitesOnMap#1")
     fun searchSitesOnMap1() = case("Search.searchSitesOnMap#1") {
-        val result = call("{\"k\":\"record\",\"n\":\"AffluencesMapSearchResults\"}", envelope = listOf("data")) {
+        call("{\"k\":\"record\",\"n\":\"AffluencesMapSearchResults\"}", envelope = listOf("data")) {
             api.search.searchSitesOnMap(body = LiveJson.decodeFromString<AffluencesSiteSearchRequest>("{\"latitude\":45.518,\"longitude\":9.21375}"))
-        } ?: return@case
-        fingerprint { writeAffluencesMapSearchResults(result) }
+        }
     }
 
     @Test

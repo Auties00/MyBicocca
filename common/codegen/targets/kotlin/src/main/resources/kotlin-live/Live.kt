@@ -148,9 +148,13 @@ class LiveCase<A : AutoCloseable>(val run: LiveRun<A>, val id: String, val index
     val anonymousApi: A get() = run.anonymous
     internal var fingerprint: String? = null
 
-    /** One of [candidates], which differs between cases and runs; skips the case when there is none. */
-    fun <T> choose(name: String, candidates: List<T?>): T {
-        val values = candidates.filterNotNull().distinct()
+    /**
+     * One of [candidates], which differs between cases and runs; skips the case when there is none.
+     * They are sorted by [key] first, so that every platform picks the same, whatever order a map
+     * of the response kept.
+     */
+    fun <T> choose(name: String, candidates: List<T?>, key: (T) -> String = { it.toString() }): T {
+        val values = candidates.filterNotNull().distinct().sortedBy(key)
         if (values.isEmpty()) throw LiveSkip("no value for $name")
         return values[((index + LiveSettings.seed) % values.size).toInt().let { if (it < 0) it + values.size else it }]
     }

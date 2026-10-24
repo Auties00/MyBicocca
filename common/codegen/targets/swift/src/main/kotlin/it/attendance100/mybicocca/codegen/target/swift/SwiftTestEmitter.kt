@@ -330,7 +330,9 @@ internal class SwiftTestEmitter(private val plan: TestPlan, private val layout: 
         is Arg.Pick -> {
             val target = if (arg.wrap) (type as TypeRef.ListOf).element else type!!
             val candidates = convertAll(path("try await $support.${arg.source.id}(live)", arg.path), arg.path.type, target)
-            val chosen = "try live.choose(${SwiftSyntax.string(name)}, $candidates)"
+            // Enums sort by their wire value, as on every platform.
+            val key = if (TestTypes.enum(spec, target) != null) ", key: { \$0.wireValue }" else ""
+            val chosen = "try live.choose(${SwiftSyntax.string(name)}, $candidates$key)"
             if (arg.wrap) "[$chosen]" else chosen
         }
         is Arg.AccountCredentials -> credentials(arg)

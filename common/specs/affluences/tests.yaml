@@ -21,6 +21,8 @@ operations:
     inputs: { body: { search_query: bicocca, page: 0 } }
   Search.searchSitesOnMap:
     inputs: { body: { latitude: 45.518, longitude: 9.21375 } }
+    # Sites carry their live occupancy.
+    volatile: true
   Reservations.getReservationInfo:
     # Only the central library takes bookings.
     inputs: { siteIdentifier: 4912615d-501b-4c4e-a2a7-ccaec81c5429 }

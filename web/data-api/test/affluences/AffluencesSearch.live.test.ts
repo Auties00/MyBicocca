@@ -3,7 +3,7 @@
 import { describe } from "vitest";
 import { decodeAffluencesSiteSearchRequest } from "../../src/affluences/models/index.js";
 import { isPresent, liveCase } from "../runtime/live.js";
-import { AffluencesLive, searchSearchSites, writeAffluencesMapSearchResults, writeAffluencesPlaylist, writeAffluencesSearchResults, writeAffluencesSiteFilters, writeAffluencesSiteSearchPage, writeAffluencesSuggestedCategory, writeAffluencesSuggestedSite } from "./AffluencesLive.js";
+import { AffluencesLive, searchSearchSites, writeAffluencesPlaylist, writeAffluencesSearchResults, writeAffluencesSiteFilters, writeAffluencesSiteSearchPage, writeAffluencesSuggestedCategory, writeAffluencesSuggestedSite } from "./AffluencesLive.js";
 
 // The live tests of the Affluences Search module, planned from common/specs/affluences/tests.yaml.
 describe("Affluences Search", () => {
@@ -18,8 +18,7 @@ describe("Affluences Search", () => {
   });
 
   liveCase(AffluencesLive, "Search.searchSitesOnMap#1", {}, async (live) => {
-    const result = await live.call("{\"k\":\"record\",\"n\":\"AffluencesMapSearchResults\"}", { envelope: ["data"] }, async () => live.api.search.searchSitesOnMap(live.decode(decodeAffluencesSiteSearchRequest, "{\"latitude\":45.518,\"longitude\":9.21375}")));
-    live.fingerprint((f) => writeAffluencesMapSearchResults(f, result));
+    await live.call("{\"k\":\"record\",\"n\":\"AffluencesMapSearchResults\"}", { envelope: ["data"] }, async () => live.api.search.searchSitesOnMap(live.decode(decodeAffluencesSiteSearchRequest, "{\"latitude\":45.518,\"longitude\":9.21375}")));
   });
 
   liveCase(AffluencesLive, "Search.getSiteFilters#1", {}, async (live) => {

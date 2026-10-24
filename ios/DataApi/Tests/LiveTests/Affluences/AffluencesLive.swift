@@ -203,14 +203,6 @@ enum AffluencesLive {
         }
     }
 
-    static func writeAffluencesMapSearchResults(_ f: LiveFingerprint, _ value: AffluencesMapSearchResults?) {
-        guard let value else { return f.nil() }
-        f.obj {
-            AffluencesLive.writeAffluencesCoordinates(f, value.center)
-            f.list(value.results) { item0 in AffluencesLive.writeAffluencesSiteOverview(f, item0) }
-        }
-    }
-
     static func writeAffluencesOpeningHours(_ f: LiveFingerprint, _ value: AffluencesOpeningHours?) {
         guard let value else { return f.nil() }
         f.obj {
