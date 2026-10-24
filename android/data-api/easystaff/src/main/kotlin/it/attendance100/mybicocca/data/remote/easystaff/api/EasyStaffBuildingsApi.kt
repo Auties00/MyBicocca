@@ -8,7 +8,7 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
-import org.jsoup.nodes.Document
+import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import org.jsoup.nodes.TextNode
 import java.time.LocalDate
@@ -34,6 +34,16 @@ class EasyStaffBuildingsApi(
 
     companion object {
         private const val ROOM_OCCUPATION_ENDPOINT = "/PortaleStudentiUnimib/rooms_call.php"
+
+        /**
+         * Global the room showcase page assigns its data to; the page's own PDF export reads it.
+         */
+        private const val ROOM_SHOWCASE_VARIABLE = "window.data_to_show"
+
+        /**
+         * Equipment status the room showcase renders as "DISPONIBILE".
+         */
+        private const val AVAILABLE_EQUIPMENT_STATUS = "0"
     }
 
     /**
@@ -160,210 +170,128 @@ class EasyStaffBuildingsApi(
             put("_lang", listOf(language.code))
 
         }
-        val doc = executeGetHtml(AGENDA_WEB_ENDPOINT, params)
-
-        return doc.select(".attendance-section")
-            .mapNotNull { parseRoomDetails(doc, it)  }
+        val page = executeGetText(AGENDA_WEB_ENDPOINT, params)
+        val jsonString = extractJsonFromJsAssignment(page, ROOM_SHOWCASE_VARIABLE)
+            ?: throw HtmlParsingException("Cannot find $ROOM_SHOWCASE_VARIABLE in the room showcase")
+        return json.decodeFromString(PhpArrayValuesSerializer(EasyStaffRoomShowcaseBuilding.serializer()), jsonString)
+            .flatMap { building -> building.rooms.map { parseRoomDetails(building, it) } }
     }
 
     /**
-     * Parses one room showcase card into [EasyStaffRoomDetails].
+     * Turns one room of the showcase data into [EasyStaffRoomDetails].
      *
-     * Markup quirks this relies on:
-     * - The card header carries the room's own identity, e.g.
-     *   `U6-22 con Podio<span><br>[U6-22]</span>`.
-     * - The 360° tour is rendered as an unlabeled anchor around the room image, so the
-     *   anchor's href is the primary source; a labeled "Immagine interattiva 360°" field
-     *   is used as a fallback when present.
-     * - The "Validata da Spazio B.Inclusion" field's content is just a badge image, so the
-     *   field's presence is the signal.
+     * The 360° tour and the "Spazio B.Inclusion" badge sit on the room, while the address and
+     * the usual Google Maps embed sit on its building; laboratories often carry their own embed.
      */
-    private fun parseRoomDetails(doc: Document, card: Element): EasyStaffRoomDetails? {
-        val headerToElementMap = card.select(".custom-color-bold")
-            .associateBy { it.text().cleanText() }
+    private fun parseRoomDetails(
+        building: EasyStaffRoomShowcaseBuilding,
+        room: EasyStaffRoomShowcaseRoom
+    ): EasyStaffRoomDetails = EasyStaffRoomDetails(
+        roomCode = room.code?.cleanText()?.takeIf { it.isNotBlank() },
+        roomName = room.name?.cleanText()?.takeIf { it.isNotBlank() },
+        name = building.name.cleanText(),
+        address = building.address?.cleanText()?.takeIf { it.isNotBlank() },
+        googleMapsLink = parseRoomMapsLink(room.googleMapsIframe)
+            ?: parseRoomMapsLink(building.googleMapsIframe),
+        interactive360Link = room.interactive360Link?.takeIf { it.isNotBlank() },
+        description = room.description?.let { parseMultilineText(it) },
+        capacity = room.capacity?.toIntOrNull()?.takeIf { it > 0 },
+        roomType = room.typeName?.cleanText()?.takeIf { it.isNotBlank() && it != "non definito" },
+        floor = room.floorName?.let { parseRoomFloor(it) },
+        isAccessible = room.barrierFree == "1",
+        accessibilityNotes = room.accessibilityNotes?.let { parseMultilineText(it) },
+        isInclusionValidated = room.inclusionValidated == "1",
+        equipment = (room.fixedEquipment + room.mobileEquipment)
+            .filter { it.status == AVAILABLE_EQUIPMENT_STATUS }
+            .map { parseRoomEquipment(it.name.trim()) }
+    )
 
-        fun extractText(label: String): String? {
-            val node = headerToElementMap[label]?.siblingNodes()?.lastOrNull()
-            return if(node is TextNode) {
-                node.text()
-                    .cleanText()
-                    .takeIf { !it.equals("Dato mancante", ignoreCase = true) }
-            } else {
-                null
-            }
-        }
-
-        /**
-         * Renders every node following the field's header span, preserving the source line
-         * structure: text nodes keep their embedded newlines ([TextNode.text] would collapse
-         * them) and `<ul>` lists become bulleted lines. Used for free-form fields like
-         * "Descrizione" and "Note accessibilità" whose content spans multiple lines/elements.
-         */
-        fun extractMultilineText(label: String): String? {
-            val header = headerToElementMap[label] ?: return null
-            val rendered = buildString {
-                header.siblingNodes().forEach { node ->
-                    when {
-                        node is TextNode -> append(node.wholeText)
-                        node is Element && node.tagName() == "br" -> append('\n')
-                        node is Element && node.tagName() == "ul" -> node.select("li").forEach { item ->
-                            append('\n')
-                            append("• ")
-                            append(item.text().cleanText())
-                        }
-                        node is Element -> append(node.text().cleanText())
+    /**
+     * Renders a free-form field, which may hold HTML, as plain text that keeps the source line
+     * structure: text keeps its embedded newlines, `<br>` becomes a newline and `<ul>` lists
+     * become bulleted lines. Used for "Descrizione" and "Note accessibilità".
+     */
+    private fun parseMultilineText(html: String): String? {
+        val body = Jsoup.parseBodyFragment(html).body()
+        val rendered = buildString {
+            body.childNodes().forEach { node ->
+                when {
+                    node is TextNode -> append(node.wholeText)
+                    node is Element && node.tagName() == "br" -> append('\n')
+                    node is Element && node.tagName() == "ul" -> node.select("li").forEach { item ->
+                        append('\n')
+                        append("• ")
+                        append(item.text().cleanText())
                     }
+                    node is Element -> append(node.text().cleanText())
                 }
             }
-            return rendered.lines()
-                .map { it.trim() }
-                .joinToString("\n")
-                .replace(Regex("\n{3,}"), "\n\n")
-                .trim()
-                .takeIf { it.isNotBlank() && !it.equals("Dato mancante", ignoreCase = true) }
         }
+        return rendered.lines()
+            .map { it.trim() }
+            .joinToString("\n")
+            .replace(Regex("\n{3,}"), "\n\n")
+            .trim()
+            .takeIf { it.isNotBlank() && !it.equals("Dato mancante", ignoreCase = true) }
+    }
 
-        fun extractLink(label: String): String? {
-            val node = headerToElementMap[label]?.siblingNodes()?.lastOrNull()
-            return if(node != null && node.hasAttr("href")) {
-                node.attr("href")
-            } else {
-                null
-            }
+    private fun parseRoomMapsLink(iframe: String?): String? {
+        if (iframe.isNullOrBlank()) {
+            return null
         }
-
-        val cardHeader = card.selectFirst(".attendance-course-name")
-        val roomCode = cardHeader?.selectFirst("span")
-            ?.text()
-            ?.cleanText()
-            ?.removeSurrounding("[", "]")
+        return Jsoup.parseBodyFragment(iframe)
+            .selectFirst("iframe")
+            ?.attr("src")
             ?.takeIf { it.isNotBlank() }
-        val roomName = cardHeader?.ownText()
-            ?.cleanText()
-            ?.takeIf { it.isNotBlank() }
-
-        val locationName = extractText("Sede")
-            ?: return null
-
-        val address = extractText("Indirizzo")
-
-        val googleMapsLink = extractLink("Google Maps")
-            ?.let { parseRoomMapsLink(doc, it) }
-
-        val interactive360Link = card.selectFirst("a[href*=images360]")
-            ?.attr("href")
-            ?: extractLink("Immagine interattiva 360°")
-
-        val description = extractMultilineText("Descrizione")
-
-        val capacity = extractText("Capacità")
-            ?.let { parseRoomCapacity(it) }
-
-        val roomType = extractText("Tipo")
-            ?.takeIf { it != "non definito" }
-
-        val floor = extractText("Piano")
-            ?.let { parseRoomFloor(it) }
-
-        val accessibility = extractText("Accessibile")
-        val isAccessible = parseRoomAccessibility(accessibility)
-
-        val accessibilityNotes = extractMultilineText("Note accessibilità")
-
-        val isInclusionValidated = headerToElementMap.containsKey("Validata da Spazio B.Inclusion")
-
-        val equipment = extractLink("Attrezzature")
-            ?.let { parseRoomEquipment(card, it) }
-            ?: emptyList()
-
-        return EasyStaffRoomDetails(
-            roomCode = roomCode,
-            roomName = roomName,
-            name = locationName,
-            address = address,
-            googleMapsLink = googleMapsLink,
-            interactive360Link = interactive360Link,
-            description = description,
-            capacity = capacity,
-            roomType = roomType,
-            floor = floor,
-            isAccessible = isAccessible,
-            accessibilityNotes = accessibilityNotes,
-            isInclusionValidated = isInclusionValidated,
-            equipment = equipment
-        )
     }
 
-    private fun parseRoomMapsLink(doc: Document, selector: String): String? {
-        val iframe = doc.selectFirst(selector)
-            ?.selectFirst("iframe")
-        return if (iframe != null && iframe.hasAttr("src")) {
-            iframe.attr("src")
-        } else {
-            null
-        }
-    }
-
-    private fun parseRoomCapacity(string: String): Int? {
-        return string.removeSuffix(" posti").toIntOrNull()
-    }
-
+    /**
+     * Parses the floor as typed by the staff: a number, optionally prefixed by "Piano" in any
+     * case ("1", "Piano -1", "piano 2"), or a spelling of the ground floor ("T", "PT", "Terra",
+     * "piano terra", and "Rialzato" for the raised ground floor).
+     */
     private fun parseRoomFloor(string: String): Int? {
-        return if (string.equals("Terra", ignoreCase = true) || string.equals("T", ignoreCase = true) || string.equals("PT", ignoreCase = true)) {
-            0
-        } else {
-            string.toIntOrNull()
+        val floor = string.trim()
+            .lowercase()
+            .removePrefix("piano")
+            .trim()
+        return when (floor) {
+            "t", "pt", "terra", "rialzato" -> 0
+            else -> floor.toIntOrNull()
         }
     }
 
-    private fun parseRoomAccessibility(accessibility: String?): Boolean {
-        return accessibility != null && accessibility.equals("sì", ignoreCase = true)
-    }
-
-    private fun parseRoomEquipment(card: Element, selector: String): List<Esse3RoomEquipment> {
-        return card.selectFirst(selector)
-            ?.select(".contenuto span")
-            ?.mapNotNull { parseRoomEquipmentEntry(it) }
-            ?: emptyList()
-    }
-
-    private fun parseRoomEquipmentEntry(span: Element): Esse3RoomEquipment? {
-        val name = span.text().trim()
-        return if (span.nextElementSibling()?.text()?.contains("DISPONIBILE", ignoreCase = true) == true) {
-            when (name) {
-                "Attrezzature fisse" -> Esse3RoomEquipment.FixedEquipment
-                "Attrezzature mobili" -> Esse3RoomEquipment.MobileEquipment
-                "Cattedra" -> Esse3RoomEquipment.TeacherDesk
-                "Finestre oscurabili" -> Esse3RoomEquipment.BlackoutWindows
-                "Gradoni" -> Esse3RoomEquipment.TieredSeating
-                "Impianto audio" -> Esse3RoomEquipment.AudioSystem
-                "Kit aule standard per videolezioni" -> Esse3RoomEquipment.StandardVideoLessonKit
-                "Lavagna a fogli" -> Esse3RoomEquipment.FlipChart
-                "Lavagna a pennarelli" -> Esse3RoomEquipment.Whiteboard
-                "Lavagna in ardesia" -> Esse3RoomEquipment.SlateBlackboard
-                "Lavagna luminosa" -> Esse3RoomEquipment.OverheadProjector
-                "Lavagna saliscendi" -> Esse3RoomEquipment.SlidingBlackboard
-                "Lettini" -> Esse3RoomEquipment.ExaminationBeds
-                "Monitor-Tv lcd-plasma" -> Esse3RoomEquipment.LcdPlasmaMonitor
-                "PC cattedra" -> Esse3RoomEquipment.TeacherPc
-                "Podio" -> Esse3RoomEquipment.Podium
-                "Presa elettrica su postazione studente" -> Esse3RoomEquipment.StudentPowerSocket
-                "Registrazione" -> Esse3RoomEquipment.RecordingSystem
-                "Rete fissa" -> Esse3RoomEquipment.WiredNetwork
-                "Rete wifi" -> Esse3RoomEquipment.WifiNetwork
-                "Sedie Fisse con Banco" -> Esse3RoomEquipment.FixedChairsWithDesks
-                "Sedie fisse con ribaltina" -> Esse3RoomEquipment.FixedChairsWithTabletArms
-                "Sedie mobili con ribaltina" -> Esse3RoomEquipment.MobileChairsWithTabletArms
-                "Sedie mobili senza ribaltina" -> Esse3RoomEquipment.MobileChairsWithoutTabletArms
-                "Tavolo Accessibile (disabilità)" -> Esse3RoomEquipment.AccessibleTable
-                "Telecamera" -> Esse3RoomEquipment.Camera
-                "Video-Call conference" -> Esse3RoomEquipment.VideoConference
-                "Videoproiettore soffitto+Telo" -> Esse3RoomEquipment.CeilingProjectorAndScreen
-                "Webconference" -> Esse3RoomEquipment.WebConference
-                else -> Esse3RoomEquipment.Other(name)
-            }
-        } else {
-            null
+    private fun parseRoomEquipment(name: String): Esse3RoomEquipment =
+        when (name) {
+            "Attrezzature fisse" -> Esse3RoomEquipment.FixedEquipment
+            "Attrezzature mobili" -> Esse3RoomEquipment.MobileEquipment
+            "Cattedra" -> Esse3RoomEquipment.TeacherDesk
+            "Finestre oscurabili" -> Esse3RoomEquipment.BlackoutWindows
+            "Gradoni" -> Esse3RoomEquipment.TieredSeating
+            "Impianto audio" -> Esse3RoomEquipment.AudioSystem
+            "Kit aule standard per videolezioni" -> Esse3RoomEquipment.StandardVideoLessonKit
+            "Lavagna a fogli" -> Esse3RoomEquipment.FlipChart
+            "Lavagna a pennarelli" -> Esse3RoomEquipment.Whiteboard
+            "Lavagna in ardesia" -> Esse3RoomEquipment.SlateBlackboard
+            "Lavagna luminosa" -> Esse3RoomEquipment.OverheadProjector
+            "Lavagna saliscendi" -> Esse3RoomEquipment.SlidingBlackboard
+            "Lettini" -> Esse3RoomEquipment.ExaminationBeds
+            "Monitor-Tv lcd-plasma" -> Esse3RoomEquipment.LcdPlasmaMonitor
+            "PC cattedra" -> Esse3RoomEquipment.TeacherPc
+            "Podio" -> Esse3RoomEquipment.Podium
+            "Presa elettrica su postazione studente" -> Esse3RoomEquipment.StudentPowerSocket
+            "Registrazione" -> Esse3RoomEquipment.RecordingSystem
+            "Rete fissa" -> Esse3RoomEquipment.WiredNetwork
+            "Rete wifi" -> Esse3RoomEquipment.WifiNetwork
+            "Sedie Fisse con Banco" -> Esse3RoomEquipment.FixedChairsWithDesks
+            "Sedie fisse con ribaltina" -> Esse3RoomEquipment.FixedChairsWithTabletArms
+            "Sedie mobili con ribaltina" -> Esse3RoomEquipment.MobileChairsWithTabletArms
+            "Sedie mobili senza ribaltina" -> Esse3RoomEquipment.MobileChairsWithoutTabletArms
+            "Tavolo Accessibile (disabilità)" -> Esse3RoomEquipment.AccessibleTable
+            "Telecamera" -> Esse3RoomEquipment.Camera
+            "Video-Call conference" -> Esse3RoomEquipment.VideoConference
+            "Videoproiettore soffitto+Telo" -> Esse3RoomEquipment.CeilingProjectorAndScreen
+            "Webconference" -> Esse3RoomEquipment.WebConference
+            else -> Esse3RoomEquipment.Other(name)
         }
-    }
 }

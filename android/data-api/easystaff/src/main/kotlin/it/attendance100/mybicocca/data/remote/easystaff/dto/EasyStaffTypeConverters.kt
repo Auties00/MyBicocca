@@ -161,6 +161,33 @@ object MapsIframeUrlSerializer : KSerializer<String?> {
     }
 }
 
+/**
+ * Decodes a PHP associative array into the list of its values.
+ *
+ * PHP's `json_encode` writes an associative array as a JSON object keyed by id, but an empty one
+ * as `[]`, so both shapes are accepted; the keys are dropped.
+ */
+class PhpArrayValuesSerializer<T>(private val elementSerializer: KSerializer<T>) : KSerializer<List<T>> {
+    private val listSerializer = ListSerializer(elementSerializer)
+
+    override val descriptor: SerialDescriptor = listSerializer.descriptor
+
+    override fun serialize(encoder: Encoder, value: List<T>) {
+        listSerializer.serialize(encoder, value)
+    }
+
+    override fun deserialize(decoder: Decoder): List<T> {
+        val jsonDecoder = decoder as? JsonDecoder
+            ?: return listSerializer.deserialize(decoder)
+        val values = when (val element = jsonDecoder.decodeJsonElement()) {
+            is JsonObject -> element.values
+            is JsonArray -> element
+            else -> emptyList()
+        }
+        return values.map { jsonDecoder.json.decodeFromJsonElement(elementSerializer, it) }
+    }
+}
+
 object CommaSeparatedListSerializer : KSerializer<List<String>> {
     override val descriptor = PrimitiveSerialDescriptor("CommaSeparatedList", PrimitiveKind.STRING)
 

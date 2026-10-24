@@ -83,11 +83,24 @@ abstract class EasyStaffAbstractApi(
          * @param variableName The name of the variable to extract
          * @return The JSON string, or null if not found
          */
-        fun extractJsonFromJsVariable(jsContent: String, variableName: String): String? {
-            val prefix = "var $variableName ="
+        fun extractJsonFromJsVariable(jsContent: String, variableName: String): String? =
+            extractJsonFromJsAssignment(jsContent, "var $variableName")
+
+        /**
+         * Extracts JSON content from a single-line JavaScript assignment, such as
+         * `window.data_to_show = {JSON_DATA};` in the room showcase page.
+         *
+         * @param jsContent The JavaScript or HTML content containing the assignment
+         * @param target The left-hand side of the assignment, e.g. `window.data_to_show`
+         * @return The JSON string, or null if not found
+         */
+        fun extractJsonFromJsAssignment(jsContent: String, target: String): String? {
+            val prefix = "$target ="
             return jsContent.lineSequence()
+                .map { it.trimStart() }
                 .firstOrNull { it.startsWith(prefix) }
                 ?.removePrefix(prefix)
+                ?.trim()
                 ?.removeSuffix(";")
                 ?.trim()
         }
