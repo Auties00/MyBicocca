@@ -1,7 +1,8 @@
 import DataApiRuntime
 import Foundation
 
-/// Sends the generated Esse3 operations' requests and decodes responses and errors.
+/// Sends the generated Esse3 operations' requests and decodes responses and errors: the REST
+/// API's JSON, and the web portal's pages, read by one of ``Esse3Scrapers``.
 public final class Esse3Client: Sendable {
     public static let defaultBaseURL = URL(string: "https://s3w.si.unimib.it/e3rest/api")!
 
@@ -30,6 +31,10 @@ public final class Esse3Client: Sendable {
 
     public func data(_ request: RestRequest, roles: Set<Esse3PermissionLevel>) async throws -> Data {
         try await execute(request, roles: roles).body
+    }
+
+    public func html<T>(_ request: RestRequest, scrape: (ScrapeNode) -> T?, roles: Set<Esse3PermissionLevel>) async throws -> T {
+        try await execute(request, roles: roles).scrape(scrape)
     }
 
     public func send(_ request: RestRequest, roles: Set<Esse3PermissionLevel>) async throws {

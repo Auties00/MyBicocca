@@ -1607,3 +1607,30 @@ public enum Esse3TypologyCode: WireEnum {
         }
     }
 }
+
+/// The kind of a self-declaration, by Esse3's code.
+public enum Esse3CertificateType: WireEnum {
+    case enrolment
+    case degreeAward
+    case tuitionFees
+    /// A value this SDK doesn't know yet.
+    case unknown(String)
+
+    public init(wireValue: String) {
+        switch wireValue {
+        case "I": self = .enrolment
+        case "L": self = .degreeAward
+        case "TAX": self = .tuitionFees
+        default: self = .unknown(wireValue)
+        }
+    }
+
+    public var wireValue: String {
+        switch self {
+        case .enrolment: return "I"
+        case .degreeAward: return "L"
+        case .tuitionFees: return "TAX"
+        case .unknown(let value): return value
+        }
+    }
+}

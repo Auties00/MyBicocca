@@ -16,7 +16,6 @@ import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleSiteInfo
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
 import it.attendance100.mybicocca.data.remote.esse3.api.Esse3Api
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3CacheInfo
-import it.attendance100.mybicocca.data.remote.esse3.scraper.api.Esse3Api as Esse3LegacyApi
 import io.ktor.http.Cookie
 import io.ktor.http.CookieEncoding
 import it.attendance100.mybicocca.di.ApplicationScope
@@ -58,7 +57,7 @@ import javax.inject.Singleton
  * Owns every authenticated session. Persists accounts and careers at sign-in, exposes the
  * active-account and account-list streams, and builds, caches, and re-authenticates the
  * per-platform API clients: Esse3 REST (HTTP Basic plus JWT), Moodle (wstoken plus
- * `MoodleSession` cookie), and the legacy Esse3 web-SSO scrape session. Per-account auth work
+ * `MoodleSession` cookie), and the Esse3 web portal (SSO session cookies). Per-account auth work
  * is serialized through [AccountKeyedMutexes]; each client cache is guarded by its own mutex.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -69,7 +68,8 @@ class SessionManager @Inject constructor(
     private val credentialsStore: CredentialsStore,
     private val sessionCache: SessionCache,
     private val esse3Factory: Esse3ApiFactory,
-    private val esse3LegacyApiFactory: Esse3LegacyApiFactory,
+    private val esse3WebApiFactory: Esse3WebApiFactory,
+    private val esse3WebAuthenticator: Esse3WebAuthenticator,
     private val elearningApiFactory: ElearningApiFactory,
     private val elearningAuthenticator: ElearningAuthenticator,
     private val authMutexes: AccountKeyedMutexes,
@@ -92,14 +92,14 @@ class SessionManager @Inject constructor(
     private val esse3Mutex = Mutex()
 
     /**
-     * Legacy Esse3 web-SSO (scrape) sessions, keyed per account. Each is established lazily on
-     * the first access of a feature that needs the scrape surface and kept entirely independent
-     * of the REST [esse3] / [elearning] paths, so a SAML failure here can never break sign-in.
-     * Cookies are minted once via SAML and cached both in memory and in [SessionCache]; the api
-     * re-logs in on expiry.
+     * Esse3 web portal clients, keyed per account, for the pages the REST API doesn't cover.
+     * Each is established lazily on the first access of a feature that needs the portal and kept
+     * entirely independent of the REST [esse3] / [elearning] paths, so a SAML failure here can
+     * never break sign-in. Cookies are minted once via SAML and cached both in memory and in
+     * [SessionCache]; callers re-log in on expiry through [reauthEsse3Web].
      */
-    private val esse3LegacyApis = mutableMapOf<AccountId, Esse3LegacyApi>()
-    private val esse3LegacyMutex = Mutex()
+    private val esse3WebApis = mutableMapOf<AccountId, Esse3Api>()
+    private val esse3WebMutex = Mutex()
 
     /**
      * Account lifecycle events for the single UI consumer. A buffered [Channel] rather than a
@@ -246,8 +246,8 @@ class SessionManager @Inject constructor(
             esse3Mutex.withLock {
                 esse3Apis.remove(accountId)?.close()
             }
-            esse3LegacyMutex.withLock {
-                esse3LegacyApis.remove(accountId)?.close()
+            esse3WebMutex.withLock {
+                esse3WebApis.remove(accountId)?.close()
             }
             credentialsStore.delete(accountId)
             sessionCache.delete(accountId)
@@ -270,10 +270,10 @@ class SessionManager @Inject constructor(
             toClose.values.forEach { it.close() }
             esse3Apis.keys.removeAll(toClose.keys)
         }
-        esse3LegacyMutex.withLock {
-            val toClose = esse3LegacyApis.filterKeys { it != accountId }
+        esse3WebMutex.withLock {
+            val toClose = esse3WebApis.filterKeys { it != accountId }
             toClose.values.forEach { it.close() }
-            esse3LegacyApis.keys.removeAll(toClose.keys)
+            esse3WebApis.keys.removeAll(toClose.keys)
         }
         activeAccountStore.set(accountId)
         accountDao.updateLastUsed(accountId.value, System.currentTimeMillis())
@@ -339,27 +339,27 @@ class SessionManager @Inject constructor(
     }
 
     /**
-     * Legacy Esse3 web-SSO scrape session for the active account, established lazily: the
-     * first use reseeds from cached cookies when present and otherwise runs the SAML login and
-     * caches the resulting cookies. Independent of [esse3] and [elearning].
+     * Esse3 web portal client for the active account, established lazily: the first use
+     * reseeds from cached cookies when present and otherwise runs the SAML login and caches the
+     * resulting cookies. Independent of [esse3] and [elearning].
      */
-    suspend fun esse3Legacy(): Esse3LegacyApi {
+    suspend fun esse3Web(): Esse3Api {
         val active = activeAccount.value ?: error("No active account.")
-        return esse3LegacyForAccount(active.id)
+        return esse3WebForAccount(active.id)
     }
 
     /**
-     * Forces a fresh SAML login for the active account's legacy session, discarding the cached
-     * cookies and scrape client. Intended for when the scrape layer raises its
-     * AuthenticationException — the session cookie died and Esse3 bounced to the IdP.
+     * Forces a fresh SAML login for the active account's portal session, discarding the cached
+     * cookies and client. Intended for when a portal page reports the session expired: Esse3
+     * bounced to the IdP.
      */
-    suspend fun reauthEsse3Legacy(): Esse3LegacyApi {
+    suspend fun reauthEsse3Web(): Esse3Api {
         val active = activeAccount.value ?: error("No active account.")
-        esse3LegacyMutex.withLock {
-            esse3LegacyApis.remove(active.id)?.close()
+        esse3WebMutex.withLock {
+            esse3WebApis.remove(active.id)?.close()
         }
-        sessionCache.update(active.id) { copy(esse3LegacyCookies = null) }
-        return esse3LegacyForAccount(active.id)
+        sessionCache.update(active.id) { copy(esse3WebCookies = null) }
+        return esse3WebForAccount(active.id)
     }
 
     suspend fun streamPersonPhoto(accountId: AccountId): ByteReadChannel {
@@ -407,24 +407,24 @@ class SessionManager @Inject constructor(
      * Single-flighted per account under the auth mutexes, so concurrent callers share one SAML
      * round-trip instead of each kicking off their own.
      */
-    private suspend fun esse3LegacyForAccount(accountId: AccountId): Esse3LegacyApi =
+    private suspend fun esse3WebForAccount(accountId: AccountId): Esse3Api =
         authMutexes.withLock(accountId) {
-            esse3LegacyMutex.withLock { esse3LegacyApis[accountId] }?.let { return@withLock it }
+            esse3WebMutex.withLock { esse3WebApis[accountId] }?.let { return@withLock it }
 
             val cached = sessionCache.read(accountId)
-            val cookies = deserializeCookies(cached.esse3LegacyCookies)
+            val cookies = deserializeCookies(cached.esse3WebCookies)
                 ?: run {
                     val creds = credentialsStore.read(accountId)
                         ?: error("No stored credentials for ${accountId.value}.")
-                    val fresh = esse3LegacyApiFactory.login(creds.username, creds.password)
-                    sessionCache.update(accountId) { copy(esse3LegacyCookies = serializeCookies(fresh)) }
+                    val fresh = esse3WebAuthenticator.login(creds.username, creds.password)
+                    sessionCache.update(accountId) { copy(esse3WebCookies = serializeCookies(fresh)) }
                     fresh
                 }
 
-            val api = esse3LegacyApiFactory.create(cookies)
-            esse3LegacyMutex.withLock {
-                esse3LegacyApis.remove(accountId)?.close()
-                esse3LegacyApis[accountId] = api
+            val api = esse3WebApiFactory.create(cookies)
+            esse3WebMutex.withLock {
+                esse3WebApis.remove(accountId)?.close()
+                esse3WebApis[accountId] = api
             }
             api
         }

@@ -33,6 +33,7 @@ public struct Esse3Api: Sendable {
     public let services: Esse3ServicesApi
     public let users: Esse3UsersApi
     public let appointmentsCalendar: Esse3AppointmentsCalendarApi
+    public let certificates: Esse3CertificatesApi
 
     public init(client: Esse3Client) {
         self.attachments = Esse3AttachmentsApi(client: client)
@@ -63,5 +64,6 @@ public struct Esse3Api: Sendable {
         self.services = Esse3ServicesApi(client: client)
         self.users = Esse3UsersApi(client: client)
         self.appointmentsCalendar = Esse3AppointmentsCalendarApi(client: client)
+        self.certificates = Esse3CertificatesApi(client: client)
     }
 }
