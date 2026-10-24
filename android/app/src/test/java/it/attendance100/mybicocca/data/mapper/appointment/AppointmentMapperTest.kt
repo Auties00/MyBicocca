@@ -8,7 +8,7 @@ import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningFie
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningFieldType
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningFormField
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningMonthSchedule
-import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningPortal
+import it.attendance100.mybicocca.data.easystaff.EasyStaffPlanningPortal
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningReservationResult
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningService
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningSlotAvailability

@@ -7,7 +7,7 @@
   },
   "targets": {
     "kotlin": {
-      "outputDir": "../../../android/data-api/affluences/src/main/kotlin",
+      "outputDir": "../../../android/data-api/src/main/kotlin",
       "options": {
         "packageName": "it.attendance100.mybicocca.data.remote.affluences",
         "temporalSerializers": [

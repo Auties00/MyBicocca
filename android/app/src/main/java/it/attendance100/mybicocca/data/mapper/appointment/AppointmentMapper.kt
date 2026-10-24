@@ -8,13 +8,13 @@ import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningFie
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningFieldType
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningFormField
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningMonthSchedule
-import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningPortal
+import it.attendance100.mybicocca.data.easystaff.EasyStaffPlanningPortal
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningReservationRequest
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningReservationResult
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningService
-import it.attendance100.mybicocca.data.remote.easystaff.dto.entryId
-import it.attendance100.mybicocca.data.remote.easystaff.dto.options
-import it.attendance100.mybicocca.data.remote.easystaff.dto.slots
+import it.attendance100.mybicocca.data.easystaff.entryId
+import it.attendance100.mybicocca.data.easystaff.options
+import it.attendance100.mybicocca.data.easystaff.slots
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentArea
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentForm
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentFormField
