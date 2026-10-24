@@ -19,7 +19,8 @@ import it.attendance100.mybicocca.data.local.map.MapRoomSyncStateEntity
 import it.attendance100.mybicocca.data.remote.easystaff.api.EasyStaffApi
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffBookingStatus
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffRoom
-import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffRoomDetails
+import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffRoomShowcaseBuilding
+import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffRoomShowcaseRoom
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffRoomOccupationEvent
 import it.attendance100.mybicocca.domain.model.map.BuildingCode
 import it.attendance100.mybicocca.domain.model.map.MapRoom
@@ -99,20 +100,21 @@ class MapRepositoryImplTest {
 
         repository.refreshRooms(buildingCode)
 
-        coVerify(exactly = 0) { easyStaffApi.buildings.getRooms(any(), any()) }
+        coVerify(exactly = 0) { easyStaffApi.buildings.getRooms(any()) }
         coVerify(exactly = 0) { roomDao.replaceForBuilding(any(), any()) }
     }
 
     @Test
     fun `refreshRooms replaces rooms dropping the allow-all sentinel and joining floors`() = runTest {
         coEvery { syncStateDao.getState("U06") } returns null
-        coEvery { easyStaffApi.buildings.getRooms(any(), any()) } returns listOf(
-            EasyStaffRoom(code = "U6-22", name = "U6-22 con Podio", capacity = 80),
-            EasyStaffRoom.FILTER_ALLOW_ALL,
+        coEvery { easyStaffApi.buildings.getRooms(any()) } returns mapOf(
+            "U06" to listOf(
+                EasyStaffRoom(code = "U6-22", name = "U6-22 con Podio", capacity = 80),
+                EasyStaffRoom(code = "all", name = "Tutte le aule"),
+            ),
+            "U07" to listOf(EasyStaffRoom(code = "U7-01", name = "U7-01")),
         )
-        coEvery { easyStaffApi.buildings.getRoomDetails(any(), any(), any()) } returns listOf(
-            roomDetails(roomCode = "U6-22", floor = 1),
-        )
+        coEvery { easyStaffApi.buildings.getRoomDetails(any(), any()) } returns showcase(roomCode = "U6-22", floor = "1")
         val written = slot<List<MapRoomEntity>>()
         coEvery { roomDao.replaceForBuilding("U06", capture(written)) } just Runs
         coEvery { syncStateDao.upsertState(any()) } just Runs
@@ -128,10 +130,10 @@ class MapRepositoryImplTest {
     @Test
     fun `refreshRooms still maps rooms when floor resolution fails`() = runTest {
         coEvery { syncStateDao.getState("U06") } returns null
-        coEvery { easyStaffApi.buildings.getRooms(any(), any()) } returns listOf(
-            EasyStaffRoom(code = "U6-01", name = "U6-01", capacity = 40),
+        coEvery { easyStaffApi.buildings.getRooms(any()) } returns mapOf(
+            "U06" to listOf(EasyStaffRoom(code = "U6-01", name = "U6-01", capacity = 40)),
         )
-        coEvery { easyStaffApi.buildings.getRoomDetails(any(), any(), any()) } throws RuntimeException("parse error")
+        coEvery { easyStaffApi.buildings.getRoomDetails(any(), any()) } throws RuntimeException("parse error")
         val written = slot<List<MapRoomEntity>>()
         coEvery { roomDao.replaceForBuilding("U06", capture(written)) } just Runs
         coEvery { syncStateDao.upsertState(any()) } just Runs
@@ -145,8 +147,8 @@ class MapRepositoryImplTest {
     @Test
     fun `loadDaySchedule keeps only confirmed bookings`() = runTest {
         coEvery { easyStaffApi.buildings.getBuildingOccupation(any(), any(), any(), any()) } returns listOf(
-            occupationEvent("1", EasyStaffBookingStatus.CONFIRMED),
-            occupationEvent("2", EasyStaffBookingStatus.CANCELLED),
+            occupationEvent("1", EasyStaffBookingStatus.Confirmed),
+            occupationEvent("2", EasyStaffBookingStatus.Cancelled),
         )
 
         val schedule = repository.loadDaySchedule(buildingCode, LocalDate.of(2026, 6, 15))
@@ -156,10 +158,8 @@ class MapRepositoryImplTest {
     }
 
     @Test
-    fun `loadRoomDetail maps the single showcase card`() = runTest {
-        coEvery { easyStaffApi.buildings.getRoomDetails(any(), any(), any()) } returns listOf(
-            roomDetails(roomCode = "U6-22", floor = 2),
-        )
+    fun `loadRoomDetail maps the room of the showcase`() = runTest {
+        coEvery { easyStaffApi.buildings.getRoomDetails(any(), any()) } returns showcase(roomCode = "U6-22", floor = "2")
 
         val room = MapRoom(
             code = RoomCode("U6-22"),
@@ -174,21 +174,11 @@ class MapRepositoryImplTest {
         assertThat(detail!!.floor).isEqualTo(2)
     }
 
-    private fun roomDetails(roomCode: String, floor: Int?) = EasyStaffRoomDetails(
-        roomCode = roomCode,
-        roomName = roomCode,
-        name = "Sede Centrale",
-        address = null,
-        googleMapsLink = null,
-        interactive360Link = null,
-        description = null,
-        capacity = 80,
-        roomType = null,
-        floor = floor,
-        isAccessible = false,
-        accessibilityNotes = null,
-        isInclusionValidated = false,
-        equipment = emptyList(),
+    private fun showcase(roomCode: String, floor: String?) = mapOf(
+        "7" to EasyStaffRoomShowcaseBuilding(
+            name = "Sede Centrale",
+            rooms = listOf(EasyStaffRoomShowcaseRoom(code = roomCode, name = roomCode, capacity = 80, floor = floor)),
+        ),
     )
 
     private fun occupationEvent(id: String, status: EasyStaffBookingStatus) = EasyStaffRoomOccupationEvent(
@@ -205,6 +195,6 @@ class MapRepositoryImplTest {
         status = status,
         eventType = "Lezione",
         isUniversityEvent = false,
-        teachersList = emptyList(),
+        teachers = emptyList(),
     )
 }

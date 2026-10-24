@@ -4,6 +4,7 @@ import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.text.UiText
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffAttendanceRecord
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffAttendanceStatus
+import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffCertificationResult
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffCertifyAttendanceResult
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceMarkResult
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceMarkableSession
@@ -23,9 +24,9 @@ fun EasyStaffAttendanceRecord.toDomain(): ClassroomAttendance = ClassroomAttenda
     hoursCompleted = totalHours,
     requirementProgressPercentage = requirementProgressPercentage,
     status = when (state) {
-        EasyStaffAttendanceStatus.ATTENDING -> ClassroomAttendanceStatus.Attending
-        EasyStaffAttendanceStatus.IN_PROGRESS -> ClassroomAttendanceStatus.InProgress
-        EasyStaffAttendanceStatus.NOT_ATTENDING -> ClassroomAttendanceStatus.NotAttending
+        EasyStaffAttendanceStatus.Attending -> ClassroomAttendanceStatus.Attending
+        EasyStaffAttendanceStatus.InProgress -> ClassroomAttendanceStatus.InProgress
+        EasyStaffAttendanceStatus.NotAttending, is EasyStaffAttendanceStatus.Unknown, null -> ClassroomAttendanceStatus.NotAttending
     },
 )
 
@@ -100,7 +101,7 @@ fun ElearningAttendanceMarkResult.toOutcome(): PresenceMarkOutcome = when (this)
  * as a wrong lesson code.
  */
 fun EasyStaffCertifyAttendanceResult.toOutcome(): PresenceMarkOutcome = when {
-    success -> PresenceMarkOutcome.Recorded(
+    result == EasyStaffCertificationResult.Ok -> PresenceMarkOutcome.Recorded(
         message = if (message.isBlank()) UiText.StringResource(R.string.attendance_msg_recorded) else UiText.DynamicString(
             message
         ),

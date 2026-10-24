@@ -1,0 +1,1352 @@
+# Agenda Web, EasyStaff's public timetable portal of the university (lesson schedules, exam
+# calendars, rooms and events), and EasyBadge, its attendance service on the same host. EasyStaff
+# publishes no spec, so this one is written by hand from the traffic of the official web
+# front-end. See common/codegen/readers/openapi for the x-mb-* extensions.
+#
+# Agenda Web is a PHP application: its option lists are JSON assigned to variables of a script
+# (combo.php), its searches are form posts carrying the state of the search form, and its room
+# showcase is a page whose script assigns the rooms as JSON too. Dates are sent as dd-MM-yyyy,
+# and lessons and events time-stamped with epoch seconds.
+openapi: 3.0.3
+info:
+  title: EasyStaff Agenda Web
+  version: "1"
+x-mb-id: easystaff-agenda
+x-mb-prefix: EasyStaff
+
+servers:
+  - url: https://gestioneorari.didattica.unimib.it
+    x-mb-name: Main
+
+tags:
+  - name: Core
+    description: Academic years, teachers and study programs.
+  - name: Buildings
+    description: Buildings, rooms and their occupation.
+  - name: Schedule
+    description: Weekly lesson schedules.
+  - name: Exams
+    description: Exam calendars.
+  - name: Events
+    description: Events booked in the university's rooms.
+  - name: Attendance
+    description: EasyBadge, the attendance records of lessons with compulsory attendance.
+
+paths:
+  # combo.php declares the options of the search forms as script variables; one call declares
+  # several, which are separate operations here.
+  /PortaleStudentiUnimib/combo.php?academic-years:
+    get:
+      tags: [Core]
+      operationId: getAcademicYears
+      summary: The academic years, keyed by an internal identifier.
+      x-mb-path: /PortaleStudentiUnimib/combo.php
+      x-mb-query: { sw: ec_, aa: "1" }
+      x-mb-script-variable: anni_accademici_ec
+      responses:
+        "200":
+          description: The script declaring the years.
+          content:
+            text/javascript:
+              schema:
+                type: object
+                additionalProperties:
+                  $ref: "#/components/schemas/EasyStaffAcademicYear"
+  /PortaleStudentiUnimib/combo.php?teachers:
+    get:
+      tags: [Core]
+      operationId: getTeachers
+      summary: The teachers of an academic year, with the courses they teach.
+      x-mb-path: /PortaleStudentiUnimib/combo.php
+      x-mb-query: { sw: ec_, page: docenti }
+      x-mb-script-variable: elenco_docenti
+      parameters:
+        - $ref: "#/components/parameters/AcademicYear"
+      responses:
+        "200":
+          description: The script declaring the teachers.
+          content:
+            text/javascript:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EasyStaffTeacher"
+  /PortaleStudentiUnimib/combo.php?study-programs:
+    get:
+      tags: [Core]
+      operationId: getStudyPrograms
+      summary: The study programs of an academic year, with their years and subjects.
+      x-mb-path: /PortaleStudentiUnimib/combo.php
+      x-mb-query: { sw: ec_, page: corsi }
+      x-mb-script-variable: elenco_corsi
+      parameters:
+        - $ref: "#/components/parameters/AcademicYear"
+      responses:
+        "200":
+          description: The script declaring the study programs.
+          content:
+            text/javascript:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EasyStaffStudyProgram"
+  /PortaleStudentiUnimib/combo.php?buildings:
+    get:
+      tags: [Buildings]
+      operationId: getBuildings
+      x-mb-path: /PortaleStudentiUnimib/combo.php
+      x-mb-query: { sw: rooms_ }
+      x-mb-script-variable: elenco_sedi
+      parameters:
+        - $ref: "#/components/parameters/Language"
+      responses:
+        "200":
+          description: The script declaring the buildings.
+          content:
+            text/javascript:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EasyStaffBuilding"
+  /PortaleStudentiUnimib/combo.php?rooms:
+    get:
+      tags: [Buildings]
+      operationId: getRooms
+      summary: The rooms of every building, keyed by the building's code.
+      x-mb-path: /PortaleStudentiUnimib/combo.php
+      x-mb-query: { sw: rooms_ }
+      x-mb-script-variable: elenco_aule
+      parameters:
+        - $ref: "#/components/parameters/Language"
+      responses:
+        "200":
+          description: The script declaring the rooms.
+          content:
+            text/javascript:
+              schema:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/EasyStaffRoom"
+  /PortaleStudentiUnimib/combo.php?teaching-areas:
+    get:
+      tags: [Buildings]
+      operationId: getTeachingAreas
+      summary: The teaching areas (schools and departments).
+      x-mb-path: /PortaleStudentiUnimib/combo.php
+      x-mb-query: { sw: rooms_ }
+      x-mb-script-variable: elenco_scuole
+      parameters:
+        - $ref: "#/components/parameters/Language"
+      responses:
+        "200":
+          description: The script declaring the teaching areas.
+          content:
+            text/javascript:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EasyStaffTeachingArea"
+  /PortaleStudentiUnimib/combo.php?event-types:
+    get:
+      tags: [Events]
+      operationId: getEventTypes
+      x-mb-path: /PortaleStudentiUnimib/combo.php
+      x-mb-query: { sw: rooms_ }
+      x-mb-script-variable: elenco_tipi
+      parameters:
+        - $ref: "#/components/parameters/Language"
+      responses:
+        "200":
+          description: The script declaring the event types.
+          content:
+            text/javascript:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EasyStaffEventType"
+
+  /PortaleStudentiUnimib/rooms_call.php:
+    post:
+      tags: [Buildings]
+      operationId: getBuildingOccupation
+      summary: The events of a building's rooms on a day.
+      x-mb-envelope: [events]
+      x-mb-form:
+        view: rooms
+        include: rooms
+        list: ""
+        week_grid_type: "-1"
+        ar_codes_: ""
+        ar_select_: ""
+        col_cells: "0"
+        empty_box: "0"
+        only_grid: "0"
+        highlighted_date: "0"
+        all_events: "0"
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: ["sede[]", date]
+              properties:
+                sede[]:
+                  x-mb-name: buildings
+                  x-mb-repeated: true
+                  description: The codes of the buildings.
+                  type: array
+                  items:
+                    type: string
+                aula[]:
+                  x-mb-name: rooms
+                  x-mb-repeated: true
+                  description: The codes of the rooms to restrict the occupation to.
+                  type: array
+                  items:
+                    type: string
+                date:
+                  type: string
+                  format: date
+                  x-mb-pattern: dd-MM-yyyy
+                _lang:
+                  x-mb-name: language
+                  default: it
+                  allOf:
+                    - $ref: "#/components/schemas/EasyStaffLanguage"
+      responses:
+        "200":
+          description: The events.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EasyStaffRoomOccupationEvent"
+
+  /PortaleStudentiUnimib/index.php:
+    get:
+      tags: [Buildings]
+      operationId: getRoomDetails
+      summary: The showcase of a building's rooms (capacity, floor, equipment, accessibility), by building identifier.
+      description: The showcase page assigns the rooms it shows to `window.data_to_show`, which its own PDF export reads.
+      x-mb-query:
+        form-type: vetrina_aule
+        view: vetrina_aule
+        include: vetrina_aule
+        list: ""
+        week_grid_type: "-1"
+        ar_codes_: ""
+        ar_select_: ""
+        col_cells: "0"
+        empty_box: "1"
+        only_grid: "0"
+        highlighted_date: "0"
+        all_events: "0"
+      x-mb-script-variable: window.data_to_show
+      parameters:
+        - name: sede[]
+          in: query
+          required: true
+          x-mb-name: buildings
+          x-mb-repeated: true
+          description: The codes of the buildings.
+          schema:
+            type: array
+            items:
+              type: string
+        - name: aula[]
+          in: query
+          x-mb-name: rooms
+          x-mb-repeated: true
+          description: The codes of the rooms to restrict the showcase to.
+          schema:
+            type: array
+            items:
+              type: string
+        - name: _lang
+          in: query
+          x-mb-name: language
+          schema:
+            default: it
+            allOf:
+              - $ref: "#/components/schemas/EasyStaffLanguage"
+      responses:
+        "200":
+          description: The showcase page.
+          content:
+            text/html:
+              schema:
+                type: object
+                additionalProperties:
+                  $ref: "#/components/schemas/EasyStaffRoomShowcaseBuilding"
+
+  # grid_call.php answers the lesson schedule search, in three modes.
+  /PortaleStudentiUnimib/grid_call.php?program:
+    post:
+      tags: [Schedule]
+      operationId: getScheduleByProgram
+      summary: The week of lessons of some years of a study program.
+      x-mb-path: /PortaleStudentiUnimib/grid_call.php
+      x-mb-envelope: [celle]
+      x-mb-form:
+        view: easycourse
+        form-type: corso
+        include: corso
+        empty_box: "1"
+        highlighted_date: "0"
+        all_events: "1"
+        ar_codes_: ""
+        ar_select_: ""
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [anno, corso, "anno2[]", date]
+              properties:
+                anno:
+                  x-mb-name: academicYear
+                  description: The first calendar year of the academic year.
+                  type: string
+                corso:
+                  x-mb-name: program
+                  description: The code of the study program.
+                  type: string
+                anno2[]:
+                  x-mb-name: years
+                  x-mb-repeated: true
+                  description: The codes of the years of the study program.
+                  type: array
+                  items:
+                    type: string
+                date:
+                  x-mb-name: week
+                  description: A day of the week.
+                  type: string
+                  format: date
+                  x-mb-pattern: dd-MM-yyyy
+                _lang:
+                  x-mb-name: language
+                  default: it
+                  allOf:
+                    - $ref: "#/components/schemas/EasyStaffLanguage"
+      responses:
+        "200":
+          description: The cells of the schedule.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EasyStaffScheduleCell"
+  /PortaleStudentiUnimib/grid_call.php?teacher:
+    post:
+      tags: [Schedule]
+      operationId: getScheduleByTeacher
+      summary: The week of lessons a teacher gives in some years of a study program.
+      x-mb-path: /PortaleStudentiUnimib/grid_call.php
+      x-mb-envelope: [celle]
+      x-mb-form:
+        view: easycourse
+        form-type: docente
+        include: docente
+        visualizzazione_orario: cal
+        periodo_didattico: ""
+        list: ""
+        week_grid_type: "-1"
+        ar_codes_: ""
+        ar_select_: ""
+        col_cells: "0"
+        empty_box: "1"
+        only_grid: "0"
+        highlighted_date: "0"
+        all_events: "1"
+        faculty_group: "0"
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [anno, docente, corso, "anno2[]", date]
+              properties:
+                anno:
+                  x-mb-name: academicYear
+                  description: The first calendar year of the academic year.
+                  type: string
+                docente:
+                  x-mb-name: teacher
+                  description: The code of the teacher.
+                  type: string
+                corso:
+                  x-mb-name: program
+                  description: The code of the study program.
+                  type: string
+                anno2[]:
+                  x-mb-name: years
+                  x-mb-repeated: true
+                  description: The codes of the years of the study program.
+                  type: array
+                  items:
+                    type: string
+                txtcurr:
+                  x-mb-name: yearNames
+                  description: The names of the years, comma-separated, as the form shows them.
+                  type: string
+                date:
+                  x-mb-name: week
+                  description: A day of the week.
+                  type: string
+                  format: date
+                  x-mb-pattern: dd-MM-yyyy
+                _lang:
+                  x-mb-name: language
+                  default: it
+                  allOf:
+                    - $ref: "#/components/schemas/EasyStaffLanguage"
+      responses:
+        "200":
+          description: The cells of the schedule.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EasyStaffScheduleCell"
+  /PortaleStudentiUnimib/grid_call.php?subjects:
+    post:
+      tags: [Schedule]
+      operationId: getScheduleBySubjects
+      summary: >-
+        The week of lessons of some subjects, merged into one schedule. Each cell carries its
+        subject's code; the cells are those of a separate search per subject.
+      x-mb-path: /PortaleStudentiUnimib/grid_call.php
+      x-mb-envelope: [celle]
+      x-mb-form:
+        view: easycourse
+        form-type: attivita
+        include: attivita
+        visualizzazione_orario: cal
+        periodo_didattico: ""
+        list: ""
+        week_grid_type: "-1"
+        ar_codes_: ""
+        ar_select_: ""
+        col_cells: "0"
+        empty_box: "1"
+        only_grid: "0"
+        highlighted_date: "0"
+        all_events: "1"
+        faculty_group: "0"
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [anno, "attivita[]", date]
+              properties:
+                anno:
+                  x-mb-name: academicYear
+                  description: The first calendar year of the academic year.
+                  type: string
+                attivita[]:
+                  x-mb-name: subjects
+                  x-mb-repeated: true
+                  description: The codes of the subjects.
+                  type: array
+                  items:
+                    type: string
+                date:
+                  x-mb-name: week
+                  description: A day of the week.
+                  type: string
+                  format: date
+                  x-mb-pattern: dd-MM-yyyy
+                _lang:
+                  x-mb-name: language
+                  default: it
+                  allOf:
+                    - $ref: "#/components/schemas/EasyStaffLanguage"
+      responses:
+        "200":
+          description: The cells of the schedule.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EasyStaffScheduleCell"
+
+  # test_call.php answers the exam calendar search, in three modes.
+  /PortaleStudentiUnimib/test_call.php?program:
+    post:
+      tags: [Exams]
+      operationId: getExamsByProgram
+      summary: The exams of some years of a study program in a date range.
+      x-mb-path: /PortaleStudentiUnimib/test_call.php
+      x-mb-form:
+        view: easytest
+        et_er: "1"
+        week_grid_type: "-1"
+        col_cells: "0"
+        empty_box: "1"
+        only_grid: "0"
+        highlighted_date: "0"
+        all_events: "0"
+        form-type: et_cdl
+        include: et_cdl
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [scuola, esami_cdl, "anno2[]", datefrom, dateto]
+              properties:
+                scuola:
+                  x-mb-name: teachingArea
+                  description: The code of the study program's teaching area.
+                  type: string
+                esami_cdl:
+                  x-mb-name: program
+                  description: The code of the study program.
+                  type: string
+                anno2[]:
+                  x-mb-name: years
+                  x-mb-repeated: true
+                  description: The numbers of the years of the study program (1, 2, …).
+                  type: array
+                  items:
+                    type: string
+                datefrom:
+                  x-mb-name: from
+                  description: The first day.
+                  type: string
+                  format: date
+                  x-mb-pattern: dd-MM-yyyy
+                dateto:
+                  x-mb-name: to
+                  description: The last day.
+                  type: string
+                  format: date
+                  x-mb-pattern: dd-MM-yyyy
+                _lang:
+                  x-mb-name: language
+                  default: it
+                  allOf:
+                    - $ref: "#/components/schemas/EasyStaffLanguage"
+      responses:
+        "200":
+          description: The exams, grouped by subject.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EasyStaffExamCalendar"
+  /PortaleStudentiUnimib/test_call.php?teacher:
+    post:
+      tags: [Exams]
+      operationId: getExamsByTeacher
+      summary: The exams of a teacher in a date range.
+      x-mb-path: /PortaleStudentiUnimib/test_call.php
+      x-mb-form:
+        view: easytest
+        et_er: "1"
+        week_grid_type: "-1"
+        col_cells: "0"
+        empty_box: "1"
+        only_grid: "0"
+        highlighted_date: "0"
+        all_events: "0"
+        form-type: et_docente
+        include: et_docente
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [esami_docente, datefrom, dateto]
+              properties:
+                esami_docente:
+                  x-mb-name: teacher
+                  description: The identifier of the teacher.
+                  type: string
+                datefrom:
+                  x-mb-name: from
+                  description: The first day.
+                  type: string
+                  format: date
+                  x-mb-pattern: dd-MM-yyyy
+                dateto:
+                  x-mb-name: to
+                  description: The last day.
+                  type: string
+                  format: date
+                  x-mb-pattern: dd-MM-yyyy
+                _lang:
+                  x-mb-name: language
+                  default: it
+                  allOf:
+                    - $ref: "#/components/schemas/EasyStaffLanguage"
+      responses:
+        "200":
+          description: The exams, grouped by subject.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EasyStaffExamCalendar"
+  /PortaleStudentiUnimib/bookings_call.php:
+    post:
+      tags: [Events]
+      operationId: getEvents
+      summary: The events booked in a date range, filtered by building, room, type, status, day and time.
+      x-mb-envelope: [events]
+      x-mb-form:
+        view: bookings
+        form-type: bookings
+        include: bookings
+        mode: bookings
+        list: ""
+        week_grid_type: "-1"
+        ar_codes_: ""
+        ar_select_: ""
+        col_cells: "0"
+        empty_box: "0"
+        only_grid: "0"
+        highlighted_date: "0"
+        all_events: "0"
+      requestBody:
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: ["sede[]", datefrom, dateto]
+              properties:
+                sede[]:
+                  x-mb-name: buildings
+                  x-mb-repeated: true
+                  description: The codes of the buildings; `all` for every building, `senza_aula` for events without a room.
+                  type: array
+                  items:
+                    type: string
+                aula[]:
+                  x-mb-name: rooms
+                  x-mb-repeated: true
+                  description: The codes of the rooms.
+                  type: array
+                  items:
+                    type: string
+                tipo:
+                  x-mb-name: type
+                  description: The code of the event type.
+                  type: integer
+                stato:
+                  x-mb-name: status
+                  allOf:
+                    - $ref: "#/components/schemas/EasyStaffBookingStatus"
+                ricerca:
+                  x-mb-name: keyword
+                  type: string
+                datefrom:
+                  x-mb-name: from
+                  description: The first day.
+                  type: string
+                  format: date
+                  x-mb-pattern: dd-MM-yyyy
+                dateto:
+                  x-mb-name: to
+                  description: The last day.
+                  type: string
+                  format: date
+                  x-mb-pattern: dd-MM-yyyy
+                giorno_settimana[]:
+                  x-mb-name: daysOfWeek
+                  x-mb-repeated: true
+                  type: array
+                  items:
+                    $ref: "#/components/schemas/EasyStaffDayOfWeek"
+                start_time:
+                  x-mb-name: startTime
+                  type: string
+                  format: time
+                  x-mb-pattern: HH:mm
+                end_time:
+                  x-mb-name: endTime
+                  type: string
+                  format: time
+                  x-mb-pattern: HH:mm
+                _lang:
+                  x-mb-name: language
+                  default: it
+                  allOf:
+                    - $ref: "#/components/schemas/EasyStaffLanguage"
+      responses:
+        "200":
+          description: The events.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EasyStaffEvent"
+
+  /easybadge/api/corso_iscritti.php:
+    post:
+      tags: [Attendance]
+      operationId: getAttendanceHistory
+      summary: >-
+        A student's attendance, keyed by the student's number and then by course; a student with
+        no record is sent with an empty map.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EasyStaffAttendanceHistoryRequest"
+      responses:
+        "200":
+          description: The attendance records.
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties:
+                  type: object
+                  additionalProperties:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/EasyStaffAttendanceRecord"
+  /easybadge/api/TimbratureApi.php:
+    post:
+      tags: [Attendance]
+      operationId: certifyAttendance
+      summary: Records the student's presence at a lesson, from the code shown in the room.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EasyStaffCertifyAttendanceRequest"
+      responses:
+        "200":
+          description: Whether the presence was recorded.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EasyStaffCertifyAttendanceResult"
+
+components:
+  parameters:
+    AcademicYear:
+      name: aa
+      in: query
+      required: true
+      x-mb-name: academicYear
+      description: The first calendar year of the academic year.
+      schema:
+        type: string
+    Language:
+      name: _lang
+      in: query
+      x-mb-name: language
+      description: The language of the names and labels.
+      schema:
+        default: it
+        allOf:
+          - $ref: "#/components/schemas/EasyStaffLanguage"
+
+  schemas:
+    EasyStaffLanguage:
+      type: string
+      enum: [it, en, es, de, fr]
+      x-enum-varnames: [Italian, English, Spanish, German, French]
+    EasyStaffDayOfWeek:
+      type: string
+      enum: ["1", "2", "3", "4", "5", "6", "7"]
+      x-enum-varnames: [Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday]
+    EasyStaffBookingStatus:
+      description: Whether a booked lesson or event takes place.
+      type: string
+      enum: ["0", "1"]
+      x-enum-varnames: [Confirmed, Cancelled]
+    EasyStaffScheduleCellType:
+      type: string
+      enum: [Lezione, chiusura_type]
+      x-enum-varnames: [Lesson, Closure]
+    EasyStaffExamType:
+      type: string
+      enum: [esame scritto, esame orale, esame scritto-orale]
+      x-enum-varnames: [Written, Oral, OralAndWritten]
+    EasyStaffAttendanceStatus:
+      type: string
+      enum: [frequentante, in_frequenza, non_frequentante]
+      x-enum-varnames: [Attending, InProgress, NotAttending]
+    EasyStaffCertificationResult:
+      type: string
+      enum: [ok, failure]
+      x-enum-varnames: [Ok, Failure]
+    EasyStaffRoomEquipment:
+      description: Equipment of a room in the showcase, by its Italian name.
+      type: string
+      enum:
+        - Attrezzature fisse
+        - Attrezzature mobili
+        - Cattedra
+        - Finestre oscurabili
+        - Gradoni
+        - Impianto audio
+        - Kit aule standard per videolezioni
+        - Lavagna a fogli
+        - Lavagna a pennarelli
+        - Lavagna in ardesia
+        - Lavagna luminosa
+        - Lavagna saliscendi
+        - Lettini
+        - Monitor-Tv lcd-plasma
+        - PC cattedra
+        - Podio
+        - Presa elettrica su postazione studente
+        - Registrazione
+        - Rete fissa
+        - Rete wifi
+        - Sedie Fisse con Banco
+        - Sedie fisse con ribaltina
+        - Sedie mobili con ribaltina
+        - Sedie mobili senza ribaltina
+        - Tavolo Accessibile (disabilità)
+        - Telecamera
+        - Video-Call conference
+        - Videoproiettore soffitto+Telo
+        - Webconference
+      x-enum-varnames:
+        - FixedEquipment
+        - MobileEquipment
+        - TeacherDesk
+        - BlackoutWindows
+        - TieredSeating
+        - AudioSystem
+        - StandardVideoLessonKit
+        - FlipChart
+        - Whiteboard
+        - SlateBlackboard
+        - OverheadProjector
+        - SlidingBlackboard
+        - ExaminationBeds
+        - LcdPlasmaMonitor
+        - TeacherPc
+        - Podium
+        - StudentPowerSocket
+        - RecordingSystem
+        - WiredNetwork
+        - WifiNetwork
+        - FixedChairsWithDesks
+        - FixedChairsWithTabletArms
+        - MobileChairsWithTabletArms
+        - MobileChairsWithoutTabletArms
+        - AccessibleTable
+        - Camera
+        - VideoConference
+        - CeilingProjectorAndScreen
+        - WebConference
+
+    EasyStaffAcademicYear:
+      type: object
+      required: [valore]
+      properties:
+        valore:
+          x-mb-name: startYear
+          description: The first calendar year of the academic year, as the searches take it.
+          type: integer
+        label:
+          type: string
+          default: ""
+    EasyStaffTeachingArea:
+      type: object
+      required: [valore, label]
+      properties:
+        valore: { type: string, x-mb-name: code }
+        label: { type: string, x-mb-name: name }
+    EasyStaffTeacher:
+      type: object
+      required: [id, label, valore]
+      properties:
+        id: { type: integer }
+        label: { type: string, x-mb-name: fullName }
+        valore: { type: string, x-mb-name: code }
+        facolta_id: { type: integer, x-mb-name: facultyId, default: 0 }
+        facolta_code: { type: string, x-mb-name: primaryFacultyCode, default: "" }
+        periodi:
+          x-mb-name: activePeriods
+          type: array
+          items: { $ref: "#/components/schemas/EasyStaffTeacherPeriod" }
+        teacher_cdl:
+          x-mb-name: courses
+          type: array
+          items: { $ref: "#/components/schemas/EasyStaffTeacherCourse" }
+    EasyStaffTeacherPeriod:
+      type: object
+      required: [id, label, valore]
+      properties:
+        id: { type: integer }
+        label: { type: string, x-mb-name: description }
+        valore: { type: string, x-mb-name: code }
+        aa_id: { type: integer, x-mb-name: academicYearId, default: 0 }
+        facolta_code: { type: string, x-mb-name: facultyCode, default: "" }
+    EasyStaffTeacherCourse:
+      type: object
+      required: [CorsoLaureaNome, CorsoLaureaCodice]
+      properties:
+        CorsoLaureaNome: { type: string, x-mb-name: name }
+        CorsoLaureaCodice: { type: string, x-mb-name: code }
+        elencoCurriculum:
+          x-mb-name: yearsOfStudy
+          type: array
+          items: { $ref: "#/components/schemas/EasyStaffTeacherCourseYearOfStudy" }
+    EasyStaffTeacherCourseYearOfStudy:
+      type: object
+      required: [valore, label]
+      properties:
+        valore: { type: string, x-mb-name: code }
+        label: { type: string, x-mb-name: name }
+    EasyStaffStudyProgram:
+      type: object
+      required: [valore, label]
+      properties:
+        valore: { type: string, x-mb-name: code }
+        label: { type: string, x-mb-name: name }
+        tipo: { type: string, x-mb-name: degreeType, default: "" }
+        cdl_id: { type: string, x-mb-name: internalId, default: "" }
+        scuola: { type: string, x-mb-name: teachingAreaCode, default: "" }
+        elenco_anni:
+          x-mb-name: years
+          type: array
+          items: { $ref: "#/components/schemas/EasyStaffStudyProgramYear" }
+        periodi:
+          x-mb-name: teachingPeriods
+          type: array
+          items: { $ref: "#/components/schemas/EasyStaffStudyProgramTeachingPeriod" }
+        pub_type: { type: string, x-mb-name: displayMode, default: "" }
+    EasyStaffStudyProgramYear:
+      type: object
+      required: [valore, label]
+      properties:
+        valore:
+          x-mb-name: code
+          description: The code of the year, ending with `|` and its number (`E3101Q|1`).
+          type: string
+        label: { type: string, x-mb-name: name }
+        order_lbl: { type: string, x-mb-name: trackName, default: "" }
+        elenco_insegnamenti:
+          x-mb-name: subjects
+          type: array
+          items: { $ref: "#/components/schemas/EasyStaffStudyProgramSubject" }
+    EasyStaffStudyProgramSubject:
+      type: object
+      required: [valore, label]
+      properties:
+        id: { type: string, default: "" }
+        valore: { type: string, x-mb-name: code }
+        label: { type: string, x-mb-name: name }
+        docente: { type: string, x-mb-name: teacherName, default: "" }
+        id_periodo: { type: string, x-mb-name: periodId, default: "" }
+    EasyStaffStudyProgramTeachingPeriod:
+      type: object
+      required: [valore, label]
+      properties:
+        id: { type: string, default: "" }
+        valore: { type: string, x-mb-name: code }
+        label: { type: string, x-mb-name: name }
+
+    EasyStaffScheduleCell:
+      description: >-
+        A cell of a weekly schedule: a lesson, a closure of the university, or a kind this SDK
+        doesn't know, which has none of the values below.
+      type: object
+      required: [tipo]
+      properties:
+        tipo:
+          x-mb-name: type
+          allOf:
+            - $ref: "#/components/schemas/EasyStaffScheduleCellType"
+        nome:
+          x-mb-name: name
+          description: The name of a closure.
+          type: string
+        nome_insegnamento:
+          x-mb-name: subjectName
+          description: The name of a lesson's subject.
+          type: string
+        codice_insegnamento:
+          x-mb-name: subjectCode
+          type: string
+        id: { type: string }
+        timestamp:
+          x-mb-name: dateTime
+          type: string
+          format: date-time
+          x-mb-epoch-seconds: true
+        data:
+          x-mb-name: date
+          type: string
+          format: date
+          x-mb-pattern: dd-MM-yyyy
+        ora_inizio:
+          x-mb-name: startTime
+          type: string
+          format: time
+          x-mb-pattern: HH:mm
+        ora_fine:
+          x-mb-name: endTime
+          type: string
+          format: time
+          x-mb-pattern: HH:mm
+        codice_aula:
+          x-mb-name: roomCode
+          type: string
+          x-mb-blank-as-null: true
+        codice_sede:
+          x-mb-name: buildingCode
+          type: string
+          x-mb-blank-as-null: true
+        aula:
+          x-mb-name: roomName
+          type: string
+        mostra_aula:
+          x-mb-name: showRoom
+          type: boolean
+          default: true
+        Annullato:
+          x-mb-name: status
+          allOf:
+            - $ref: "#/components/schemas/EasyStaffBookingStatus"
+        codice_docente:
+          x-mb-name: teacherCodes
+          x-mb-joined: ","
+          type: array
+          items: { type: string }
+        docente:
+          x-mb-name: teacherNames
+          x-mb-joined: ","
+          type: array
+          items: { type: string }
+        mail_docente:
+          x-mb-name: teacherEmails
+          x-mb-joined: ","
+          type: array
+          items: { type: string }
+        tel_docente:
+          x-mb-name: teacherPhones
+          x-mb-joined: ","
+          type: array
+          items: { type: string }
+        percorso_didattico:
+          x-mb-name: curriculumPath
+          type: string
+          default: ""
+        insegnamento_tipo:
+          x-mb-name: subjectTypes
+          type: array
+          items: { type: string }
+        maps:
+          x-mb-name: mapsUrl
+          description: The address of the map of the room, out of the embedded map it is sent as.
+          type: string
+          x-mb-html:
+            - select: iframe
+            - attribute: src
+        highlighted:
+          x-mb-name: isHighlighted
+          type: boolean
+          default: false
+        from_esterno:
+          x-mb-name: isExternal
+          type: boolean
+          default: false
+
+    EasyStaffExamCalendar:
+      type: object
+      properties:
+        Insegnamenti:
+          x-mb-name: subjects
+          x-mb-object-values: true
+          type: array
+          items: { $ref: "#/components/schemas/EasyStaffExamSubject" }
+    EasyStaffExamSubject:
+      type: object
+      required: [DatiInsegnamento]
+      properties:
+        DatiInsegnamento:
+          x-mb-name: subjectData
+          allOf:
+            - $ref: "#/components/schemas/EasyStaffExamSubjectData"
+        Appelli:
+          x-mb-name: exams
+          type: array
+          items: { $ref: "#/components/schemas/EasyStaffScheduledExam" }
+    EasyStaffExamSubjectData:
+      type: object
+      required: [Codice, Nome]
+      properties:
+        Codice: { type: string, x-mb-name: code }
+        CodiceGenerale: { type: string, x-mb-name: generalCode, default: "" }
+        Nome: { type: string, x-mb-name: name }
+    EasyStaffScheduledExam:
+      type: object
+      required: [nome, Data, OraInizio, OraFine]
+      properties:
+        nome: { type: string, x-mb-name: subjectName }
+        Data:
+          x-mb-name: date
+          type: string
+          format: date
+          x-mb-pattern: dd-MM-yyyy
+        OraInizio:
+          x-mb-name: startTime
+          type: string
+          format: time
+          x-mb-pattern: HH:mm
+        OraFine:
+          x-mb-name: endTime
+          type: string
+          format: time
+          x-mb-pattern: HH:mm
+        Aula: { type: string, x-mb-name: room, default: "" }
+        Sede:
+          x-mb-name: building
+          type: string
+          x-mb-blank-as-null: true
+        event_docenti:
+          x-mb-name: examiners
+          type: array
+          items: { $ref: "#/components/schemas/EasyStaffExamExaminer" }
+        event_PublicNotes: { type: string, x-mb-name: notes, default: "" }
+        TipoEsame:
+          x-mb-name: examType
+          allOf:
+            - $ref: "#/components/schemas/EasyStaffExamType"
+        event_Annullato:
+          x-mb-name: isCancelled
+          type: boolean
+          default: false
+        event_id: { type: string, x-mb-name: eventId, default: "" }
+    EasyStaffExamExaminer:
+      type: object
+      properties:
+        Nome: { type: string, x-mb-name: name, default: "" }
+        Cognome: { type: string, x-mb-name: lastName, default: "" }
+        Matricola: { type: string, x-mb-name: code, x-mb-blank-as-null: true }
+        Mail1: { type: string, x-mb-name: email, x-mb-blank-as-null: true }
+        Mail2: { type: string, x-mb-name: fallbackEmail, x-mb-blank-as-null: true }
+    EasyStaffBuilding:
+      type: object
+      required: [valore, label]
+      properties:
+        valore: { type: string, x-mb-name: code }
+        label: { type: string, x-mb-name: name }
+    EasyStaffRoom:
+      type: object
+      required: [valore, label]
+      properties:
+        valore: { type: string, x-mb-name: code }
+        label: { type: string, x-mb-name: name }
+        capacity: { type: integer }
+    EasyStaffRoomOccupationEvent:
+      type: object
+      required: [id, name, Giorno, timestamp_from, timestamp_to]
+      properties:
+        id: { type: string }
+        name: { type: string, x-mb-name: title }
+        Giorno: { type: string, format: date, x-mb-name: date }
+        timestamp_from:
+          x-mb-name: startDateTime
+          type: string
+          format: date-time
+          x-mb-epoch-seconds: true
+        timestamp_to:
+          x-mb-name: endDateTime
+          type: string
+          format: date-time
+          x-mb-epoch-seconds: true
+        NomeAula: { type: string, x-mb-name: roomName, default: "" }
+        CodiceAula: { type: string, x-mb-name: roomCode, default: "" }
+        NomeSede: { type: string, x-mb-name: buildingName, default: "" }
+        CodiceSede: { type: string, x-mb-name: buildingCode, default: "" }
+        faculty: { type: string, x-mb-name: facultyId, default: "" }
+        Annullato:
+          x-mb-name: status
+          allOf:
+            - $ref: "#/components/schemas/EasyStaffBookingStatus"
+        type: { type: string, x-mb-name: eventType, default: "" }
+        EventoAteneo: { type: boolean, x-mb-name: isUniversityEvent, default: false }
+        Utenti:
+          x-mb-name: teachers
+          type: array
+          items: { $ref: "#/components/schemas/EasyStaffEventTeacher" }
+    EasyStaffRoomShowcaseBuilding:
+      description: A building of the room showcase, with its rooms.
+      type: object
+      required: [area_name]
+      properties:
+        area_name: { type: string, x-mb-name: name }
+        address: { type: string, nullable: true }
+        area_google_map_link:
+          x-mb-name: googleMapsLink
+          description: The address of the building's embedded map.
+          type: string
+          nullable: true
+          x-mb-html:
+            - select: iframe
+            - attribute: src
+        elenco_aule:
+          x-mb-name: rooms
+          type: array
+          x-mb-object-values: true
+          items: { $ref: "#/components/schemas/EasyStaffRoomShowcaseRoom" }
+    EasyStaffRoomShowcaseRoom:
+      description: A room of the showcase. Text is as typed by the staff, and may be blank or hold HTML.
+      type: object
+      properties:
+        room_code: { type: string, nullable: true, x-mb-name: code }
+        room_name: { type: string, nullable: true, x-mb-name: name }
+        room_description: { type: string, nullable: true, x-mb-name: description, description: "Free-form text, which may hold HTML." }
+        room_capacity: { type: integer, nullable: true, x-mb-name: capacity, description: "The seats; 0 when unknown." }
+        room_type_name: { type: string, nullable: true, x-mb-name: typeName, description: 'The room category, or "non definito".' }
+        room_google_map_link:
+          x-mb-name: googleMapsLink
+          description: The address of the room's own embedded map, set mostly for laboratories.
+          type: string
+          nullable: true
+          x-mb-html:
+            - select: iframe
+            - attribute: src
+        room_floor_name: { type: string, nullable: true, x-mb-name: floor, description: 'The floor as typed by the staff: "1", "T", "piano terra", "Piano -1", "Rialzato".' }
+        room_senza_barriere_architettoniche: { type: boolean, default: false, x-mb-name: isAccessible }
+        note_accessibilita: { type: string, nullable: true, x-mb-name: accessibilityNotes, description: "Free-form text, which may hold HTML." }
+        validato: { type: boolean, default: false, x-mb-name: isInclusionValidated, description: Whether the room is validated by Spazio B.Inclusion. }
+        file_img_360: { type: string, nullable: true, x-mb-name: interactive360Link }
+        room_equipment_fixed:
+          x-mb-name: fixedEquipment
+          type: array
+          x-mb-object-values: true
+          items: { $ref: "#/components/schemas/EasyStaffRoomShowcaseEquipment" }
+        room_equipment_mobile:
+          x-mb-name: mobileEquipment
+          type: array
+          x-mb-object-values: true
+          items: { $ref: "#/components/schemas/EasyStaffRoomShowcaseEquipment" }
+    EasyStaffRoomShowcaseEquipment:
+      description: A piece of equipment of a room.
+      type: object
+      required: [Nome]
+      properties:
+        Nome:
+          x-mb-name: name
+          allOf:
+            - $ref: "#/components/schemas/EasyStaffRoomEquipment"
+        Stato: { type: string, nullable: true, x-mb-name: status, description: '"0" when the equipment is available.' }
+
+    EasyStaffEventType:
+      type: object
+      required: [valore, label]
+      properties:
+        valore: { type: integer, x-mb-name: code }
+        label: { type: string, x-mb-name: name }
+    EasyStaffEvent:
+      type: object
+      required: [id, name, Giorno, timestamp_from, timestamp_to]
+      properties:
+        id: { type: string }
+        name: { type: string, x-mb-name: title }
+        Giorno: { type: string, format: date, x-mb-name: date }
+        timestamp_from:
+          x-mb-name: startDateTime
+          type: string
+          format: date-time
+          x-mb-epoch-seconds: true
+        timestamp_to:
+          x-mb-name: endDateTime
+          type: string
+          format: date-time
+          x-mb-epoch-seconds: true
+        NomeAula: { type: string, x-mb-name: roomName, default: "" }
+        faculty: { type: string, x-mb-name: facultyId, default: "" }
+        Annullato:
+          x-mb-name: status
+          allOf:
+            - $ref: "#/components/schemas/EasyStaffBookingStatus"
+        type_id: { type: string, x-mb-name: eventType, default: "" }
+        passato: { type: boolean, x-mb-name: isPast, default: false }
+        EventoAteneo: { type: boolean, x-mb-name: isUniversityEvent, default: false }
+        Utenti:
+          x-mb-name: teachers
+          type: array
+          items: { $ref: "#/components/schemas/EasyStaffEventTeacher" }
+        attivita_didattiche:
+          x-mb-name: activities
+          type: array
+          items: { $ref: "#/components/schemas/EasyStaffEventActivity" }
+    EasyStaffEventTeacher:
+      type: object
+      properties:
+        Nome: { type: string, x-mb-name: name, default: "" }
+        Cognome: { type: string, x-mb-name: surname, default: "" }
+        Mail: { type: string, x-mb-name: email, x-mb-blank-as-null: true }
+        Codice: { type: string, x-mb-name: code, x-mb-blank-as-null: true }
+    EasyStaffEventActivity:
+      type: object
+      properties:
+        ID: { type: string, x-mb-name: id, default: "" }
+        Codice: { type: string, x-mb-name: code, default: "" }
+        Nome: { type: string, x-mb-name: name, default: "" }
+
+    EasyStaffAttendanceHistoryRequest:
+      type: object
+      required: [Matricola]
+      properties:
+        Matricola: { type: string, x-mb-name: studentId }
+    EasyStaffAttendanceRecord:
+      type: object
+      required: [codice, nome]
+      properties:
+        codice: { type: string, x-mb-name: courseCode }
+        nome: { type: string, x-mb-name: courseName }
+        Percentuale: { type: number, x-mb-name: attendancePercentage, default: 0 }
+        Frequentate: { type: integer, x-mb-name: lessonsAttended, default: 0 }
+        OreFatte: { type: integer, x-mb-name: totalHours, default: 0 }
+        percentuale_conseguimento: { type: number, x-mb-name: requirementProgressPercentage, default: 0 }
+        Stato:
+          x-mb-name: state
+          allOf:
+            - $ref: "#/components/schemas/EasyStaffAttendanceStatus"
+    EasyStaffCertifyAttendanceRequest:
+      type: object
+      required: [matricola_studente, codice_lezione, device_token, posto, lingua, autenticazione, action, dati_addizionali]
+      properties:
+        matricola_studente: { type: string, x-mb-name: studentId }
+        codice_lezione: { type: string, x-mb-name: lessonCode }
+        device_token: { type: string, x-mb-name: deviceToken }
+        posto: { type: string, x-mb-name: seat }
+        lingua: { type: string, x-mb-name: language }
+        autenticazione: { type: boolean, x-mb-name: isAuthenticated }
+        action:
+          description: The action of the API, `CreateFromJSON`.
+          type: string
+        dati_addizionali:
+          x-mb-name: additionalData
+          allOf:
+            - $ref: "#/components/schemas/EasyStaffCertifyAttendanceAdditionalData"
+    EasyStaffCertifyAttendanceAdditionalData:
+      type: object
+      required: [timestamp, longitudine, latitudine]
+      properties:
+        timestamp:
+          description: When the presence was recorded, in milliseconds since the Unix epoch.
+          type: integer
+          format: int64
+        longitudine: { type: number, x-mb-name: longitude }
+        latitudine: { type: number, x-mb-name: latitude }
+    EasyStaffCertifyAttendanceResult:
+      type: object
+      required: [result]
+      properties:
+        result:
+          allOf:
+            - $ref: "#/components/schemas/EasyStaffCertificationResult"
+        message: { type: string, default: "" }
