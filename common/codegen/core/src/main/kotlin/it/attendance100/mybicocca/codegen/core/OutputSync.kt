@@ -66,6 +66,19 @@ object OutputSync {
         return SyncPlan(outputDir, writes, deletions)
     }
 
+    /** The generated files in [outputDir], relative to it, except those of [exceptOwner]. */
+    fun generatedPaths(outputDir: Path, exceptOwner: String): Set<String> {
+        if (!outputDir.exists()) return emptySet()
+        val excluded = "${generatedMarker(exceptOwner)}."
+        return Files.walk(outputDir).use { paths ->
+            paths.filter { it.isRegularFile() }
+                .filter { file -> file.head().let { GENERATED_MARKER in it && excluded !in it } }
+                .map { it.relativeTo(outputDir).invariantSeparatorsPathString }
+                .toList()
+                .toSet()
+        }
+    }
+
     fun apply(plan: SyncPlan) {
         for (file in plan.writes) {
             val target = plan.outputDir.resolve(file.path)

@@ -16,19 +16,14 @@ import it.attendance100.mybicocca.codegen.model.ParameterLocation
  */
 internal class SwiftClientEmitter(private val spec: ApiSpec, private val layout: SwiftLayout) {
     private val client = spec.client
-    private val errorName = "${spec.prefix}Error"
-    private val roles = "${spec.prefix}PermissionLevel"
+    private val errorName = layout.error
+    private val roles = layout.roles
 
-    fun emit(out: CodeWriter) {
+    /** The client, and the facade initializer building it. */
+    fun emitClient(out: CodeWriter) {
         clientClass(out)
         out.line()
         facadeInitializer(out)
-        out.line()
-        errorType(out)
-        if (spec.usesRoles) {
-            out.line()
-            rolesEnum(out)
-        }
     }
 
     private fun clientClass(out: CodeWriter) {
@@ -168,7 +163,7 @@ internal class SwiftClientEmitter(private val spec: ApiSpec, private val layout:
         }
     }
 
-    private fun errorType(out: CodeWriter) {
+    fun emitError(out: CodeWriter) {
         out.line("/// A request the ${spec.prefix} API rejected. Match on ``code``, such as one of the constants below,")
         out.line("/// or on ``status`` when the server sent none; never on the message.")
         out.block("public struct $errorName: Error, CustomStringConvertible {") {
@@ -201,7 +196,8 @@ internal class SwiftClientEmitter(private val spec: ApiSpec, private val layout:
         }
     }
 
-    private fun rolesEnum(out: CodeWriter) {
+    /** The roles operations declare; only emitted when they declare any. */
+    fun emitRoles(out: CodeWriter) {
         out.line("/// The roles ${spec.prefix} operations may require, as their specs name them.")
         out.block("public enum $roles: String, Hashable, Sendable, CaseIterable {") {
             for (role in spec.roles) line("case ${layout.role(role)} = ${SwiftSyntax.string(role)}")

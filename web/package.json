@@ -3,10 +3,10 @@
   "private": true,
   "type": "module",
   "workspaces": [
-    "packages/*"
+    "data-api"
   ],
   "scripts": {
-    "typecheck": "tsc -p packages/runtime && tsc -p packages/esse3 && tsc -p packages/affluences && tsc -p packages/easystaff && tsc -p packages/easystaff-planning && tsc -p packages/moodle && tsc -p packages/moodle-web && tsc -p packages/kaltura"
+    "typecheck": "tsc -p data-api"
   },
   "devDependencies": {
     "typescript": "^5.8.3"

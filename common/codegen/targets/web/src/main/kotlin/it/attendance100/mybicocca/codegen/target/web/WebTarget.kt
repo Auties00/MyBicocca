@@ -4,28 +4,35 @@ import it.attendance100.mybicocca.codegen.core.CodeTarget
 import it.attendance100.mybicocca.codegen.core.GeneratedFile
 import it.attendance100.mybicocca.codegen.core.TargetContext
 import it.attendance100.mybicocca.codegen.core.decapitalized
+import it.attendance100.mybicocca.codegen.core.SHARED_FILES_OWNER
 import it.attendance100.mybicocca.codegen.core.decodeOptions
+import it.attendance100.mybicocca.codegen.core.resourceFiles
 import it.attendance100.mybicocca.codegen.model.ApiSpec
 import kotlinx.serialization.Serializable
 
 /**
- * Generates a TypeScript SDK for the web app, built on `fetch` and usable in browsers and
- * Node. See [TsLayout] for the names it uses and the hand-written runtime it builds on.
+ * Generates a TypeScript SDK for the web app, built on `fetch` and usable in browsers and Node:
+ * the API's modules in the folder of its subpackage, the runtime they build on as its shared
+ * files, and an `index.ts` re-exporting each folder. See [TsLayout] for the names and files it
+ * uses.
  */
 class WebTarget : CodeTarget {
     override val id: String = "web"
 
     /**
-     * @property runtimeModule Import specifier of the shared hand-written runtime package.
+     * @property packageName The subpackage, and folder, the API's modules go in; by default the
+     *   API's id. APIs of the same service share one (e.g. `elearning`).
+     * @property runtimePath The folder of the runtime.
      */
     @Serializable
     data class Options(
-        val runtimeModule: String = "@mybicocca/data-api-runtime",
+        val packageName: String? = null,
+        val runtimePath: String = "runtime",
     )
 
     override fun generate(spec: ApiSpec, context: TargetContext): List<GeneratedFile> {
         val options = context.options.decodeOptions<Options>()
-        val layout = TsLayout(spec, options.runtimeModule)
+        val layout = TsLayout(spec, options.packageName ?: spec.id, options.runtimePath)
         val codecs = TsCodecs(layout)
         val records = TsRecordEmitter(layout, codecs)
         val enums = TsEnumEmitter(layout)
@@ -34,13 +41,13 @@ class WebTarget : CodeTarget {
 
         fun file(name: String, emit: (TsFile) -> Unit) = TsFile(name, spec.id).also(emit).toGeneratedFile()
 
-        val files = buildList {
+        return buildList {
             for (module in spec.modules) {
                 if (module.records.isNotEmpty()) {
                     add(file(layout.recordsFile(module)) { file -> file.body.separated(module.records) { records.emit(it, file) } })
                 }
                 if (module.operations.isNotEmpty()) {
-                    add(file("${layout.serviceName(module)}.ts") { services.emit(module, it) })
+                    add(file(layout.serviceFile(module)) { services.emit(module, it) })
                 }
             }
             if (spec.enums.isNotEmpty()) {
@@ -58,11 +65,34 @@ class WebTarget : CodeTarget {
             if (scrapers.isNeeded) {
                 add(file(scrapers.fileName) { scrapers.emit(it) })
             }
-            add(file("${layout.facadeName}.ts") { facade(spec, layout, it) })
-            add(file("${layout.client}.ts") { TsClientEmitter(spec, layout).emit(it) })
+            val client = TsClientEmitter(spec, layout)
+            add(file(layout.facadeFile) { facade(spec, layout, it) })
+            add(file(layout.clientFile) { client.emitClient(it) })
+            add(file(layout.errorFile) { client.emitError(it) })
+            if (spec.usesRoles) {
+                add(file(layout.rolesFile) { client.emitRoles(it) })
+            }
         }
-        return files + file("index.ts") { index ->
-            files.forEach { index.body.line("export * from ${TsSyntax.string(layout.moduleOf(it.path))};") }
+    }
+
+    /** The runtime, from this module's `web-runtime` resources. */
+    override fun sharedFiles(context: TargetContext): List<GeneratedFile> =
+        resourceFiles(javaClass, "web-runtime", RUNTIME_FILES, context.options.decodeOptions<Options>().runtimePath)
+
+    /**
+     * An `index.ts` in every folder holding the APIs' modules, but the output directory itself,
+     * re-exporting its modules and its folders' indexes: `elearning/index.ts` re-exports
+     * `elearning/api/index.ts`, which re-exports the API modules of every e-learning API.
+     */
+    override fun indexFiles(paths: Set<String>, context: TargetContext): List<GeneratedFile> {
+        val modules = paths.filter { it.endsWith(".ts") }
+        val folders = modules.flatMap { path -> path.split('/').dropLast(1).runningReduce { parent, name -> "$parent/$name" } }.toSortedSet()
+        return folders.map { folder ->
+            val index = TsFile("$folder/index.ts", SHARED_FILES_OWNER)
+            val exported = modules.filter { it.substringBeforeLast('/') == folder } +
+                folders.filter { it.substringBeforeLast('/', "") == folder }.map { "$it/index.ts" }
+            exported.sorted().forEach { index.body.line("export * from ${TsSyntax.string(TsFile.relativeModule(index.path, it))};") }
+            index.toGeneratedFile()
         }
     }
 
@@ -129,9 +159,9 @@ class WebTarget : CodeTarget {
 
     private fun facade(spec: ApiSpec, layout: TsLayout, file: TsFile) {
         val modules = spec.modules.filter { it.operations.isNotEmpty() }
-        file.import(layout.client, layout.clientModule)
-        modules.forEach { file.import(layout.serviceName(it), layout.moduleOf("${layout.serviceName(it)}.ts")) }
-        if (spec.parameters.isNotEmpty()) file.import(layout.parameters, layout.moduleOf(layout.parametersFile))
+        file.importFile(layout.client, layout.clientFile)
+        modules.forEach { file.importFile(layout.serviceName(it), layout.serviceFile(it)) }
+        if (spec.parameters.isNotEmpty()) file.importFile(layout.parameters, layout.parametersFile)
         file.body.apply {
             line("/** Entry point of the ${spec.prefix} API: one property per module, all sharing one client. */")
             block("export class ${layout.facadeName} {") {
@@ -155,6 +185,7 @@ class WebTarget : CodeTarget {
 
     private companion object {
         const val MAX_LINE_LENGTH = 100
+        val RUNTIME_FILES = listOf("client.ts", "coding.ts", "index.ts", "rest.ts", "scrape.ts", "temporal.ts")
         val PLACEHOLDER = Regex("""\{([^}]+)}""")
     }
 }
