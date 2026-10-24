@@ -32,6 +32,28 @@ public struct MoodleCourseApi: Sendable {
         )
     }
 
+    /// Get courses matching a specific field (id/s, shortname, idnumber, category)
+    ///
+    /// - Parameters:
+    ///   - field: The field to search can be left empty for all courses or: id: course id ids: comma separated course ids shortname: course short name idnumber: course id number category: category id the course belongs to sectionid: section id that belongs to a course
+    ///   - value: The value to match
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getCoursesByField(
+        field: String? = nil,
+        value: String? = nil,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleCoursesByFieldResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_course_get_courses_by_field"), ("moodlewsrestformat", "json")],
+                form: [("field", field), ("value", value)],
+                auth: auth
+            )
+        )
+    }
+
     /// Get the list of courses where a user is enrolled in
     ///
     /// - Parameters:

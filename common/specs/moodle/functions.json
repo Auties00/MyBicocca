@@ -5416,6 +5416,667 @@
             }
         },
         {
+            "name": "core_course_get_courses_by_field",
+            "component": "core_course",
+            "type": "read",
+            "loginrequired": true,
+            "description": "Get courses matching a specific field (id/s, shortname, idnumber, category)",
+            "parameters": {
+                "kind": "object",
+                "keys": {
+                    "field": {
+                        "kind": "value",
+                        "type": "alpha",
+                        "presence": "default",
+                        "nullable": true,
+                        "description": "The field to search can be left empty for all courses or: id: course id ids: comma separated course ids shortname: course short name idnumber: course id number category: category id the course belongs to sectionid: section id that belongs to a course",
+                        "default": ""
+                    },
+                    "value": {
+                        "kind": "value",
+                        "type": "raw",
+                        "presence": "default",
+                        "nullable": true,
+                        "description": "The value to match",
+                        "default": ""
+                    }
+                },
+                "presence": "required",
+                "nullable": false,
+                "description": ""
+            },
+            "returns": {
+                "kind": "object",
+                "keys": {
+                    "courses": {
+                        "kind": "list",
+                        "content": {
+                            "kind": "object",
+                            "keys": {
+                                "id": {
+                                    "kind": "value",
+                                    "type": "int",
+                                    "presence": "required",
+                                    "nullable": true,
+                                    "description": "course id"
+                                },
+                                "fullname": {
+                                    "kind": "value",
+                                    "type": "raw",
+                                    "presence": "required",
+                                    "nullable": true,
+                                    "description": "course full name"
+                                },
+                                "displayname": {
+                                    "kind": "value",
+                                    "type": "raw",
+                                    "presence": "required",
+                                    "nullable": true,
+                                    "description": "course display name"
+                                },
+                                "shortname": {
+                                    "kind": "value",
+                                    "type": "raw",
+                                    "presence": "required",
+                                    "nullable": true,
+                                    "description": "course short name"
+                                },
+                                "courseimage": {
+                                    "kind": "value",
+                                    "type": "url",
+                                    "presence": "optional",
+                                    "nullable": true,
+                                    "description": "Course image"
+                                },
+                                "categoryid": {
+                                    "kind": "value",
+                                    "type": "int",
+                                    "presence": "required",
+                                    "nullable": true,
+                                    "description": "category id"
+                                },
+                                "categoryname": {
+                                    "kind": "value",
+                                    "type": "raw",
+                                    "presence": "required",
+                                    "nullable": true,
+                                    "description": "category name"
+                                },
+                                "sortorder": {
+                                    "kind": "value",
+                                    "type": "int",
+                                    "presence": "optional",
+                                    "nullable": true,
+                                    "description": "Sort order in the category"
+                                },
+                                "summary": {
+                                    "kind": "value",
+                                    "type": "raw",
+                                    "presence": "required",
+                                    "nullable": true,
+                                    "description": "summary"
+                                },
+                                "summaryformat": {
+                                    "kind": "value",
+                                    "type": "int",
+                                    "presence": "required",
+                                    "nullable": true,
+                                    "description": "summary format (1 = HTML, 0 = MOODLE, 2 = PLAIN, or 4 = MARKDOWN)"
+                                },
+                                "summaryfiles": {
+                                    "kind": "list",
+                                    "content": {
+                                        "kind": "object",
+                                        "keys": {
+                                            "filename": {
+                                                "kind": "value",
+                                                "type": "file",
+                                                "presence": "optional",
+                                                "nullable": true,
+                                                "description": "File name."
+                                            },
+                                            "filepath": {
+                                                "kind": "value",
+                                                "type": "path",
+                                                "presence": "optional",
+                                                "nullable": true,
+                                                "description": "File path."
+                                            },
+                                            "filesize": {
+                                                "kind": "value",
+                                                "type": "int",
+                                                "presence": "optional",
+                                                "nullable": true,
+                                                "description": "File size."
+                                            },
+                                            "fileurl": {
+                                                "kind": "value",
+                                                "type": "url",
+                                                "presence": "optional",
+                                                "nullable": true,
+                                                "description": "Downloadable file url."
+                                            },
+                                            "timemodified": {
+                                                "kind": "value",
+                                                "type": "int",
+                                                "presence": "optional",
+                                                "nullable": true,
+                                                "description": "Time modified."
+                                            },
+                                            "mimetype": {
+                                                "kind": "value",
+                                                "type": "raw",
+                                                "presence": "optional",
+                                                "nullable": true,
+                                                "description": "File mime type."
+                                            },
+                                            "isexternalfile": {
+                                                "kind": "value",
+                                                "type": "bool",
+                                                "presence": "optional",
+                                                "nullable": true,
+                                                "description": "Whether is an external file."
+                                            },
+                                            "repositorytype": {
+                                                "kind": "value",
+                                                "type": "plugin",
+                                                "presence": "optional",
+                                                "nullable": true,
+                                                "description": "The repository type for external files."
+                                            },
+                                            "icon": {
+                                                "kind": "value",
+                                                "type": "raw",
+                                                "presence": "optional",
+                                                "nullable": true,
+                                                "description": "The relative path to the relevant file type icon based on the file's mime type."
+                                            }
+                                        },
+                                        "presence": "required",
+                                        "nullable": false,
+                                        "description": "File."
+                                    },
+                                    "presence": "optional",
+                                    "nullable": false,
+                                    "description": "summary files in the summary field"
+                                },
+                                "overviewfiles": {
+                                    "kind": "list",
+                                    "content": {
+                                        "kind": "object",
+                                        "keys": {
+                                            "filename": {
+                                                "kind": "value",
+                                                "type": "file",
+                                                "presence": "optional",
+                                                "nullable": true,
+                                                "description": "File name."
+                                            },
+                                            "filepath": {
+                                                "kind": "value",
+                                                "type": "path",
+                                                "presence": "optional",
+                                                "nullable": true,
+                                                "description": "File path."
+                                            },
+                                            "filesize": {
+                                                "kind": "value",
+                                                "type": "int",
+                                                "presence": "optional",
+                                                "nullable": true,
+                                                "description": "File size."
+                                            },
+                                            "fileurl": {
+                                                "kind": "value",
+                                                "type": "url",
+                                                "presence": "optional",
+                                                "nullable": true,
+                                                "description": "Downloadable file url."
+                                            },
+                                            "timemodified": {
+                                                "kind": "value",
+                                                "type": "int",
+                                                "presence": "optional",
+                                                "nullable": true,
+                                                "description": "Time modified."
+                                            },
+                                            "mimetype": {
+                                                "kind": "value",
+                                                "type": "raw",
+                                                "presence": "optional",
+                                                "nullable": true,
+                                                "description": "File mime type."
+                                            },
+                                            "isexternalfile": {
+                                                "kind": "value",
+                                                "type": "bool",
+                                                "presence": "optional",
+                                                "nullable": true,
+                                                "description": "Whether is an external file."
+                                            },
+                                            "repositorytype": {
+                                                "kind": "value",
+                                                "type": "plugin",
+                                                "presence": "optional",
+                                                "nullable": true,
+                                                "description": "The repository type for external files."
+                                            },
+                                            "icon": {
+                                                "kind": "value",
+                                                "type": "raw",
+                                                "presence": "optional",
+                                                "nullable": true,
+                                                "description": "The relative path to the relevant file type icon based on the file's mime type."
+                                            }
+                                        },
+                                        "presence": "required",
+                                        "nullable": false,
+                                        "description": "File."
+                                    },
+                                    "presence": "required",
+                                    "nullable": false,
+                                    "description": "additional overview files attached to this course"
+                                },
+                                "showactivitydates": {
+                                    "kind": "value",
+                                    "type": "bool",
+                                    "presence": "required",
+                                    "nullable": true,
+                                    "description": "Whether the activity dates are shown or not"
+                                },
+                                "showcompletionconditions": {
+                                    "kind": "value",
+                                    "type": "bool",
+                                    "presence": "required",
+                                    "nullable": true,
+                                    "description": "Whether the activity completion conditions are shown or not"
+                                },
+                                "contacts": {
+                                    "kind": "list",
+                                    "content": {
+                                        "kind": "object",
+                                        "keys": {
+                                            "id": {
+                                                "kind": "value",
+                                                "type": "int",
+                                                "presence": "required",
+                                                "nullable": true,
+                                                "description": "contact user id"
+                                            },
+                                            "fullname": {
+                                                "kind": "value",
+                                                "type": "notags",
+                                                "presence": "required",
+                                                "nullable": true,
+                                                "description": "contact user fullname"
+                                            }
+                                        },
+                                        "presence": "required",
+                                        "nullable": false,
+                                        "description": ""
+                                    },
+                                    "presence": "required",
+                                    "nullable": false,
+                                    "description": "contact users"
+                                },
+                                "enrollmentmethods": {
+                                    "kind": "list",
+                                    "content": {
+                                        "kind": "value",
+                                        "type": "plugin",
+                                        "presence": "required",
+                                        "nullable": true,
+                                        "description": "enrollment method"
+                                    },
+                                    "presence": "required",
+                                    "nullable": false,
+                                    "description": "enrollment methods list"
+                                },
+                                "customfields": {
+                                    "kind": "list",
+                                    "content": {
+                                        "kind": "object",
+                                        "keys": {
+                                            "name": {
+                                                "kind": "value",
+                                                "type": "raw",
+                                                "presence": "required",
+                                                "nullable": true,
+                                                "description": "The name of the custom field"
+                                            },
+                                            "shortname": {
+                                                "kind": "value",
+                                                "type": "raw",
+                                                "presence": "required",
+                                                "nullable": true,
+                                                "description": "The shortname of the custom field - to be able to build the field class in the code"
+                                            },
+                                            "type": {
+                                                "kind": "value",
+                                                "type": "alphanumext",
+                                                "presence": "required",
+                                                "nullable": true,
+                                                "description": "The type of the custom field - text field, checkbox..."
+                                            },
+                                            "valueraw": {
+                                                "kind": "value",
+                                                "type": "raw",
+                                                "presence": "required",
+                                                "nullable": true,
+                                                "description": "The raw value of the custom field"
+                                            },
+                                            "value": {
+                                                "kind": "value",
+                                                "type": "raw",
+                                                "presence": "required",
+                                                "nullable": true,
+                                                "description": "The value of the custom field"
+                                            }
+                                        },
+                                        "presence": "required",
+                                        "nullable": false,
+                                        "description": ""
+                                    },
+                                    "presence": "optional",
+                                    "nullable": false,
+                                    "description": "Custom fields"
+                                },
+                                "idnumber": {
+                                    "kind": "value",
+                                    "type": "raw",
+                                    "presence": "optional",
+                                    "nullable": true,
+                                    "description": "Id number"
+                                },
+                                "format": {
+                                    "kind": "value",
+                                    "type": "plugin",
+                                    "presence": "optional",
+                                    "nullable": true,
+                                    "description": "Course format: weeks, topics, social, site,.."
+                                },
+                                "showgrades": {
+                                    "kind": "value",
+                                    "type": "int",
+                                    "presence": "optional",
+                                    "nullable": true,
+                                    "description": "1 if grades are shown, otherwise 0"
+                                },
+                                "newsitems": {
+                                    "kind": "value",
+                                    "type": "int",
+                                    "presence": "optional",
+                                    "nullable": true,
+                                    "description": "Number of recent items appearing on the course page"
+                                },
+                                "startdate": {
+                                    "kind": "value",
+                                    "type": "int",
+                                    "presence": "optional",
+                                    "nullable": true,
+                                    "description": "Timestamp when the course start"
+                                },
+                                "enddate": {
+                                    "kind": "value",
+                                    "type": "int",
+                                    "presence": "optional",
+                                    "nullable": true,
+                                    "description": "Timestamp when the course end"
+                                },
+                                "maxbytes": {
+                                    "kind": "value",
+                                    "type": "int",
+                                    "presence": "optional",
+                                    "nullable": true,
+                                    "description": "Largest size of file that can be uploaded into"
+                                },
+                                "showreports": {
+                                    "kind": "value",
+                                    "type": "int",
+                                    "presence": "optional",
+                                    "nullable": true,
+                                    "description": "Are activity report shown (yes = 1, no =0)"
+                                },
+                                "visible": {
+                                    "kind": "value",
+                                    "type": "int",
+                                    "presence": "optional",
+                                    "nullable": true,
+                                    "description": "1: available to student, 0:not available"
+                                },
+                                "groupmode": {
+                                    "kind": "value",
+                                    "type": "int",
+                                    "presence": "optional",
+                                    "nullable": true,
+                                    "description": "no group, separate, visible"
+                                },
+                                "groupmodeforce": {
+                                    "kind": "value",
+                                    "type": "int",
+                                    "presence": "optional",
+                                    "nullable": true,
+                                    "description": "1: yes, 0: no"
+                                },
+                                "defaultgroupingid": {
+                                    "kind": "value",
+                                    "type": "int",
+                                    "presence": "optional",
+                                    "nullable": true,
+                                    "description": "default grouping id"
+                                },
+                                "enablecompletion": {
+                                    "kind": "value",
+                                    "type": "int",
+                                    "presence": "optional",
+                                    "nullable": true,
+                                    "description": "Completion enabled? 1: yes 0: no"
+                                },
+                                "completionnotify": {
+                                    "kind": "value",
+                                    "type": "int",
+                                    "presence": "optional",
+                                    "nullable": true,
+                                    "description": "1: yes 0: no"
+                                },
+                                "lang": {
+                                    "kind": "value",
+                                    "type": "safedir",
+                                    "presence": "optional",
+                                    "nullable": true,
+                                    "description": "Forced course language"
+                                },
+                                "theme": {
+                                    "kind": "value",
+                                    "type": "plugin",
+                                    "presence": "optional",
+                                    "nullable": true,
+                                    "description": "Fame of the forced theme"
+                                },
+                                "marker": {
+                                    "kind": "value",
+                                    "type": "int",
+                                    "presence": "optional",
+                                    "nullable": true,
+                                    "description": "Current course marker"
+                                },
+                                "legacyfiles": {
+                                    "kind": "value",
+                                    "type": "int",
+                                    "presence": "optional",
+                                    "nullable": true,
+                                    "description": "If legacy files are enabled"
+                                },
+                                "calendartype": {
+                                    "kind": "value",
+                                    "type": "plugin",
+                                    "presence": "optional",
+                                    "nullable": true,
+                                    "description": "Calendar type"
+                                },
+                                "timecreated": {
+                                    "kind": "value",
+                                    "type": "int",
+                                    "presence": "optional",
+                                    "nullable": true,
+                                    "description": "Time when the course was created"
+                                },
+                                "timemodified": {
+                                    "kind": "value",
+                                    "type": "int",
+                                    "presence": "optional",
+                                    "nullable": true,
+                                    "description": "Last time the course was updated"
+                                },
+                                "requested": {
+                                    "kind": "value",
+                                    "type": "int",
+                                    "presence": "optional",
+                                    "nullable": true,
+                                    "description": "If is a requested course"
+                                },
+                                "cacherev": {
+                                    "kind": "value",
+                                    "type": "int",
+                                    "presence": "optional",
+                                    "nullable": true,
+                                    "description": "Cache revision number"
+                                },
+                                "filters": {
+                                    "kind": "list",
+                                    "content": {
+                                        "kind": "object",
+                                        "keys": {
+                                            "filter": {
+                                                "kind": "value",
+                                                "type": "plugin",
+                                                "presence": "required",
+                                                "nullable": true,
+                                                "description": "Filter plugin name"
+                                            },
+                                            "localstate": {
+                                                "kind": "value",
+                                                "type": "int",
+                                                "presence": "required",
+                                                "nullable": true,
+                                                "description": "Filter state: 1 for on, -1 for off, 0 if inherit"
+                                            },
+                                            "inheritedstate": {
+                                                "kind": "value",
+                                                "type": "int",
+                                                "presence": "required",
+                                                "nullable": true,
+                                                "description": "1 or 0 to use when localstate is set to inherit"
+                                            }
+                                        },
+                                        "presence": "required",
+                                        "nullable": false,
+                                        "description": ""
+                                    },
+                                    "presence": "optional",
+                                    "nullable": false,
+                                    "description": "Course filters"
+                                },
+                                "courseformatoptions": {
+                                    "kind": "list",
+                                    "content": {
+                                        "kind": "object",
+                                        "keys": {
+                                            "name": {
+                                                "kind": "value",
+                                                "type": "raw",
+                                                "presence": "required",
+                                                "nullable": true,
+                                                "description": "Course format option name."
+                                            },
+                                            "value": {
+                                                "kind": "value",
+                                                "type": "raw",
+                                                "presence": "required",
+                                                "nullable": true,
+                                                "description": "Course format option value."
+                                            }
+                                        },
+                                        "presence": "required",
+                                        "nullable": false,
+                                        "description": ""
+                                    },
+                                    "presence": "optional",
+                                    "nullable": false,
+                                    "description": "Additional options for particular course format."
+                                },
+                                "communicationroomname": {
+                                    "kind": "value",
+                                    "type": "text",
+                                    "presence": "optional",
+                                    "nullable": true,
+                                    "description": "Communication tool room name."
+                                },
+                                "communicationroomurl": {
+                                    "kind": "value",
+                                    "type": "raw",
+                                    "presence": "optional",
+                                    "nullable": true,
+                                    "description": "Communication tool room URL."
+                                }
+                            },
+                            "presence": "required",
+                            "nullable": false,
+                            "description": ""
+                        },
+                        "presence": "required",
+                        "nullable": false,
+                        "description": "Course"
+                    },
+                    "warnings": {
+                        "kind": "list",
+                        "content": {
+                            "kind": "object",
+                            "keys": {
+                                "item": {
+                                    "kind": "value",
+                                    "type": "text",
+                                    "presence": "optional",
+                                    "nullable": true,
+                                    "description": "item"
+                                },
+                                "itemid": {
+                                    "kind": "value",
+                                    "type": "int",
+                                    "presence": "optional",
+                                    "nullable": true,
+                                    "description": "item id"
+                                },
+                                "warningcode": {
+                                    "kind": "value",
+                                    "type": "alphanum",
+                                    "presence": "required",
+                                    "nullable": true,
+                                    "description": "the warning code can be used by the client app to implement specific behaviour"
+                                },
+                                "message": {
+                                    "kind": "value",
+                                    "type": "raw",
+                                    "presence": "required",
+                                    "nullable": true,
+                                    "description": "untranslated english message to explain the warning"
+                                }
+                            },
+                            "presence": "required",
+                            "nullable": false,
+                            "description": "warning"
+                        },
+                        "presence": "optional",
+                        "nullable": false,
+                        "description": "list of warnings"
+                    }
+                },
+                "presence": "required",
+                "nullable": false,
+                "description": ""
+            }
+        },
+        {
             "name": "core_enrol_get_users_courses",
             "component": "core_enrol",
             "type": "read",
@@ -20090,6 +20751,92 @@
                         "presence": "required",
                         "nullable": false,
                         "description": ""
+                    },
+                    "warnings": {
+                        "kind": "list",
+                        "content": {
+                            "kind": "object",
+                            "keys": {
+                                "item": {
+                                    "kind": "value",
+                                    "type": "text",
+                                    "presence": "optional",
+                                    "nullable": true,
+                                    "description": "item"
+                                },
+                                "itemid": {
+                                    "kind": "value",
+                                    "type": "int",
+                                    "presence": "optional",
+                                    "nullable": true,
+                                    "description": "item id"
+                                },
+                                "warningcode": {
+                                    "kind": "value",
+                                    "type": "alphanum",
+                                    "presence": "required",
+                                    "nullable": true,
+                                    "description": "the warning code can be used by the client app to implement specific behaviour"
+                                },
+                                "message": {
+                                    "kind": "value",
+                                    "type": "raw",
+                                    "presence": "required",
+                                    "nullable": true,
+                                    "description": "untranslated english message to explain the warning"
+                                }
+                            },
+                            "presence": "required",
+                            "nullable": false,
+                            "description": "warning"
+                        },
+                        "presence": "optional",
+                        "nullable": false,
+                        "description": "list of warnings"
+                    }
+                },
+                "presence": "required",
+                "nullable": false,
+                "description": ""
+            }
+        },
+        {
+            "name": "tool_mobile_get_autologin_key",
+            "component": "tool_mobile",
+            "type": "write",
+            "loginrequired": true,
+            "description": "Creates an auto-login key for the current user. Is created only in https sites and is restricted by time, ip address and only works if the request comes from the Moodle mobile or desktop app.",
+            "parameters": {
+                "kind": "object",
+                "keys": {
+                    "privatetoken": {
+                        "kind": "value",
+                        "type": "alphanum",
+                        "presence": "required",
+                        "nullable": true,
+                        "description": "Private token, usually generated by login/token.php"
+                    }
+                },
+                "presence": "required",
+                "nullable": false,
+                "description": ""
+            },
+            "returns": {
+                "kind": "object",
+                "keys": {
+                    "key": {
+                        "kind": "value",
+                        "type": "alphanumext",
+                        "presence": "required",
+                        "nullable": true,
+                        "description": "Auto-login key for a single usage with time expiration."
+                    },
+                    "autologinurl": {
+                        "kind": "value",
+                        "type": "url",
+                        "presence": "required",
+                        "nullable": true,
+                        "description": "Auto-login URL."
                     },
                     "warnings": {
                         "kind": "list",

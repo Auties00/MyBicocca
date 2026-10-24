@@ -596,6 +596,387 @@ export function encodeMoodleModuleContentsInfo(value: MoodleModuleContentsInfo):
   };
 }
 
+export interface MoodleCoursesByFieldResponse {
+  /** Course */
+  courses: MoodleCourse[];
+  /** list of warnings */
+  warnings: MoodleWarning[];
+}
+
+/** Decodes a {@link MoodleCoursesByFieldResponse}; `undefined` when `json` isn't an object. */
+export function decodeMoodleCoursesByFieldResponse(json: unknown): MoodleCoursesByFieldResponse | undefined {
+  const object = asJsonObject(json);
+  if (object === undefined) return undefined;
+  return {
+    courses: decodeList(object["courses"], decodeMoodleCourse) ?? [],
+    warnings: decodeList(object["warnings"], decodeMoodleWarning) ?? [],
+  };
+}
+
+export function encodeMoodleCoursesByFieldResponse(value: MoodleCoursesByFieldResponse): JsonObject {
+  return {
+    "courses": value.courses.map((item) => encodeMoodleCourse(item)),
+    "warnings": value.warnings.map((item) => encodeMoodleWarning(item)),
+  };
+}
+
+export interface MoodleCourse {
+  /** course id */
+  id: number;
+  /** course full name */
+  fullName: string;
+  /** course display name */
+  displayName: string;
+  /** course short name */
+  shortName: string;
+  /** Course image */
+  courseImage: string | null;
+  /** category id */
+  categoryId: number;
+  /** category name */
+  categoryName: string;
+  /** Sort order in the category */
+  sortOrder: number | null;
+  /** summary */
+  summary: string;
+  /** summary format (1 = HTML, 0 = MOODLE, 2 = PLAIN, or 4 = MARKDOWN) */
+  summaryFormat: number;
+  /** summary files in the summary field */
+  summaryFiles: MoodleFile[];
+  /** additional overview files attached to this course */
+  overviewFiles: MoodleFile[];
+  /** Whether the activity dates are shown or not */
+  showActivityDates: boolean;
+  /** Whether the activity completion conditions are shown or not */
+  showCompletionConditions: boolean;
+  /** contact users */
+  contacts: MoodleContact[];
+  /** enrollment methods list */
+  enrollmentMethods: string[];
+  /** Custom fields */
+  customFields: MoodleCourseCustomField[];
+  /** Id number */
+  idNumber: string | null;
+  /** Course format: weeks, topics, social, site,.. */
+  format: string | null;
+  /** 1 if grades are shown, otherwise 0 */
+  showGrades: number | null;
+  /** Number of recent items appearing on the course page */
+  newsItems: number | null;
+  /** Timestamp when the course start */
+  startDate: number | null;
+  /** Timestamp when the course end */
+  endDate: number | null;
+  /** Largest size of file that can be uploaded into */
+  maxBytes: number | null;
+  /** Are activity report shown (yes = 1, no =0) */
+  showReports: number | null;
+  /** 1: available to student, 0:not available */
+  visible: number | null;
+  /** no group, separate, visible */
+  groupMode: number | null;
+  /** 1: yes, 0: no */
+  groupModeForce: number | null;
+  /** default grouping id */
+  defaultGroupingId: number | null;
+  /** Completion enabled? 1: yes 0: no */
+  enableCompletion: number | null;
+  /** 1: yes 0: no */
+  completionNotify: number | null;
+  /** Forced course language */
+  lang: string | null;
+  /** Fame of the forced theme */
+  theme: string | null;
+  /** Current course marker */
+  marker: number | null;
+  /** If legacy files are enabled */
+  legacyFiles: number | null;
+  /** Calendar type */
+  calendarType: string | null;
+  /** Time when the course was created */
+  timeCreated: number | null;
+  /** Last time the course was updated */
+  timeModified: number | null;
+  /** If is a requested course */
+  requested: number | null;
+  /** Cache revision number */
+  cacheRevision: number | null;
+  /** Course filters */
+  filters: MoodleFilter[];
+  /** Additional options for particular course format. */
+  courseFormatOptions: MoodleKeyValue[];
+  /** Communication tool room name. */
+  communicationRoomName: string | null;
+  /** Communication tool room URL. */
+  communicationRoomUrl: string | null;
+}
+
+/** Decodes a {@link MoodleCourse}; `undefined` when `json` isn't an object. */
+export function decodeMoodleCourse(json: unknown): MoodleCourse | undefined {
+  const object = asJsonObject(json);
+  if (object === undefined) return undefined;
+  return {
+    id: decodeInteger(object["id"]) ?? 0,
+    fullName: decodeString(object["fullname"]) ?? "",
+    displayName: decodeString(object["displayname"]) ?? "",
+    shortName: decodeString(object["shortname"]) ?? "",
+    courseImage: decodeString(object["courseimage"]) ?? null,
+    categoryId: decodeInteger(object["categoryid"]) ?? 0,
+    categoryName: decodeString(object["categoryname"]) ?? "",
+    sortOrder: decodeInteger(object["sortorder"]) ?? null,
+    summary: decodeString(object["summary"]) ?? "",
+    summaryFormat: decodeInteger(object["summaryformat"]) ?? 0,
+    summaryFiles: decodeList(object["summaryfiles"], decodeMoodleFile) ?? [],
+    overviewFiles: decodeList(object["overviewfiles"], decodeMoodleFile) ?? [],
+    showActivityDates: decodeBoolean(object["showactivitydates"]) ?? false,
+    showCompletionConditions: decodeBoolean(object["showcompletionconditions"]) ?? false,
+    contacts: decodeList(object["contacts"], decodeMoodleContact) ?? [],
+    enrollmentMethods: decodeList(object["enrollmentmethods"], decodeString) ?? [],
+    customFields: decodeList(object["customfields"], decodeMoodleCourseCustomField) ?? [],
+    idNumber: decodeString(object["idnumber"]) ?? null,
+    format: decodeString(object["format"]) ?? null,
+    showGrades: decodeInteger(object["showgrades"]) ?? null,
+    newsItems: decodeInteger(object["newsitems"]) ?? null,
+    startDate: decodeInteger(object["startdate"]) ?? null,
+    endDate: decodeInteger(object["enddate"]) ?? null,
+    maxBytes: decodeInteger(object["maxbytes"]) ?? null,
+    showReports: decodeInteger(object["showreports"]) ?? null,
+    visible: decodeInteger(object["visible"]) ?? null,
+    groupMode: decodeInteger(object["groupmode"]) ?? null,
+    groupModeForce: decodeInteger(object["groupmodeforce"]) ?? null,
+    defaultGroupingId: decodeInteger(object["defaultgroupingid"]) ?? null,
+    enableCompletion: decodeInteger(object["enablecompletion"]) ?? null,
+    completionNotify: decodeInteger(object["completionnotify"]) ?? null,
+    lang: decodeString(object["lang"]) ?? null,
+    theme: decodeString(object["theme"]) ?? null,
+    marker: decodeInteger(object["marker"]) ?? null,
+    legacyFiles: decodeInteger(object["legacyfiles"]) ?? null,
+    calendarType: decodeString(object["calendartype"]) ?? null,
+    timeCreated: decodeInteger(object["timecreated"]) ?? null,
+    timeModified: decodeInteger(object["timemodified"]) ?? null,
+    requested: decodeInteger(object["requested"]) ?? null,
+    cacheRevision: decodeInteger(object["cacherev"]) ?? null,
+    filters: decodeList(object["filters"], decodeMoodleFilter) ?? [],
+    courseFormatOptions: decodeList(object["courseformatoptions"], decodeMoodleKeyValue) ?? [],
+    communicationRoomName: decodeString(object["communicationroomname"]) ?? null,
+    communicationRoomUrl: decodeString(object["communicationroomurl"]) ?? null,
+  };
+}
+
+export function encodeMoodleCourse(value: MoodleCourse): JsonObject {
+  return {
+    "id": value.id,
+    "fullname": value.fullName,
+    "displayname": value.displayName,
+    "shortname": value.shortName,
+    "courseimage": value.courseImage,
+    "categoryid": value.categoryId,
+    "categoryname": value.categoryName,
+    "sortorder": value.sortOrder,
+    "summary": value.summary,
+    "summaryformat": value.summaryFormat,
+    "summaryfiles": value.summaryFiles.map((item) => encodeMoodleFile(item)),
+    "overviewfiles": value.overviewFiles.map((item) => encodeMoodleFile(item)),
+    "showactivitydates": value.showActivityDates,
+    "showcompletionconditions": value.showCompletionConditions,
+    "contacts": value.contacts.map((item) => encodeMoodleContact(item)),
+    "enrollmentmethods": value.enrollmentMethods,
+    "customfields": value.customFields.map((item) => encodeMoodleCourseCustomField(item)),
+    "idnumber": value.idNumber,
+    "format": value.format,
+    "showgrades": value.showGrades,
+    "newsitems": value.newsItems,
+    "startdate": value.startDate,
+    "enddate": value.endDate,
+    "maxbytes": value.maxBytes,
+    "showreports": value.showReports,
+    "visible": value.visible,
+    "groupmode": value.groupMode,
+    "groupmodeforce": value.groupModeForce,
+    "defaultgroupingid": value.defaultGroupingId,
+    "enablecompletion": value.enableCompletion,
+    "completionnotify": value.completionNotify,
+    "lang": value.lang,
+    "theme": value.theme,
+    "marker": value.marker,
+    "legacyfiles": value.legacyFiles,
+    "calendartype": value.calendarType,
+    "timecreated": value.timeCreated,
+    "timemodified": value.timeModified,
+    "requested": value.requested,
+    "cacherev": value.cacheRevision,
+    "filters": value.filters.map((item) => encodeMoodleFilter(item)),
+    "courseformatoptions": value.courseFormatOptions.map((item) => encodeMoodleKeyValue(item)),
+    "communicationroomname": value.communicationRoomName,
+    "communicationroomurl": value.communicationRoomUrl,
+  };
+}
+
+/** File. */
+export interface MoodleFile {
+  /** File name. */
+  fileName: string | null;
+  /** File path. */
+  filePath: string | null;
+  /** File size. */
+  fileSize: number | null;
+  /** Downloadable file url. */
+  fileUrl: string | null;
+  /** Time modified. */
+  timeModified: number | null;
+  /** File mime type. */
+  mimeType: string | null;
+  /** Whether is an external file. */
+  isExternalFile: boolean | null;
+  /** The repository type for external files. */
+  repositoryType: string | null;
+  /** The relative path to the relevant file type icon based on the file's mime type. */
+  icon: string | null;
+}
+
+/** Decodes a {@link MoodleFile}; `undefined` when `json` isn't an object. */
+export function decodeMoodleFile(json: unknown): MoodleFile | undefined {
+  const object = asJsonObject(json);
+  if (object === undefined) return undefined;
+  return {
+    fileName: decodeString(object["filename"]) ?? null,
+    filePath: decodeString(object["filepath"]) ?? null,
+    fileSize: decodeInteger(object["filesize"]) ?? null,
+    fileUrl: decodeString(object["fileurl"]) ?? null,
+    timeModified: decodeInteger(object["timemodified"]) ?? null,
+    mimeType: decodeString(object["mimetype"]) ?? null,
+    isExternalFile: decodeBoolean(object["isexternalfile"]) ?? null,
+    repositoryType: decodeString(object["repositorytype"]) ?? null,
+    icon: decodeString(object["icon"]) ?? null,
+  };
+}
+
+export function encodeMoodleFile(value: MoodleFile): JsonObject {
+  return {
+    "filename": value.fileName,
+    "filepath": value.filePath,
+    "filesize": value.fileSize,
+    "fileurl": value.fileUrl,
+    "timemodified": value.timeModified,
+    "mimetype": value.mimeType,
+    "isexternalfile": value.isExternalFile,
+    "repositorytype": value.repositoryType,
+    "icon": value.icon,
+  };
+}
+
+export interface MoodleContact {
+  /** contact user id */
+  id: number;
+  /** contact user fullname */
+  fullName: string;
+}
+
+/** Decodes a {@link MoodleContact}; `undefined` when `json` isn't an object. */
+export function decodeMoodleContact(json: unknown): MoodleContact | undefined {
+  const object = asJsonObject(json);
+  if (object === undefined) return undefined;
+  return {
+    id: decodeInteger(object["id"]) ?? 0,
+    fullName: decodeString(object["fullname"]) ?? "",
+  };
+}
+
+export function encodeMoodleContact(value: MoodleContact): JsonObject {
+  return {
+    "id": value.id,
+    "fullname": value.fullName,
+  };
+}
+
+export interface MoodleCourseCustomField {
+  /** The name of the custom field */
+  name: string;
+  /** The shortname of the custom field - to be able to build the field class in the code */
+  shortName: string;
+  /** The type of the custom field - text field, checkbox... */
+  type: string;
+  /** The raw value of the custom field */
+  valueRaw: string;
+  /** The value of the custom field */
+  value: string;
+}
+
+/** Decodes a {@link MoodleCourseCustomField}; `undefined` when `json` isn't an object. */
+export function decodeMoodleCourseCustomField(json: unknown): MoodleCourseCustomField | undefined {
+  const object = asJsonObject(json);
+  if (object === undefined) return undefined;
+  return {
+    name: decodeString(object["name"]) ?? "",
+    shortName: decodeString(object["shortname"]) ?? "",
+    type: decodeString(object["type"]) ?? "",
+    valueRaw: decodeString(object["valueraw"]) ?? "",
+    value: decodeString(object["value"]) ?? "",
+  };
+}
+
+export function encodeMoodleCourseCustomField(value: MoodleCourseCustomField): JsonObject {
+  return {
+    "name": value.name,
+    "shortname": value.shortName,
+    "type": value.type,
+    "valueraw": value.valueRaw,
+    "value": value.value,
+  };
+}
+
+export interface MoodleFilter {
+  /** Filter plugin name */
+  filter: string;
+  /** Filter state: 1 for on, -1 for off, 0 if inherit */
+  localState: number;
+  /** 1 or 0 to use when localstate is set to inherit */
+  inheritedState: number;
+}
+
+/** Decodes a {@link MoodleFilter}; `undefined` when `json` isn't an object. */
+export function decodeMoodleFilter(json: unknown): MoodleFilter | undefined {
+  const object = asJsonObject(json);
+  if (object === undefined) return undefined;
+  return {
+    filter: decodeString(object["filter"]) ?? "",
+    localState: decodeInteger(object["localstate"]) ?? 0,
+    inheritedState: decodeInteger(object["inheritedstate"]) ?? 0,
+  };
+}
+
+export function encodeMoodleFilter(value: MoodleFilter): JsonObject {
+  return {
+    "filter": value.filter,
+    "localstate": value.localState,
+    "inheritedstate": value.inheritedState,
+  };
+}
+
+export interface MoodleKeyValue {
+  /** Course format option name. */
+  name: string;
+  /** Course format option value. */
+  value: string;
+}
+
+/** Decodes a {@link MoodleKeyValue}; `undefined` when `json` isn't an object. */
+export function decodeMoodleKeyValue(json: unknown): MoodleKeyValue | undefined {
+  const object = asJsonObject(json);
+  if (object === undefined) return undefined;
+  return {
+    name: decodeString(object["name"]) ?? "",
+    value: decodeString(object["value"]) ?? "",
+  };
+}
+
+export function encodeMoodleKeyValue(value: MoodleKeyValue): JsonObject {
+  return {
+    "name": value.name,
+    "value": value.value,
+  };
+}
+
 export interface MoodleEnrolledCourse {
   /** id of course */
   id: number;
@@ -725,59 +1106,6 @@ export function encodeMoodleEnrolledCourse(value: MoodleEnrolledCourse): JsonObj
     "showactivitydates": value.showActivityDates,
     "showcompletionconditions": value.showCompletionConditions,
     "timemodified": value.timeModified,
-  };
-}
-
-/** File. */
-export interface MoodleFile {
-  /** File name. */
-  fileName: string | null;
-  /** File path. */
-  filePath: string | null;
-  /** File size. */
-  fileSize: number | null;
-  /** Downloadable file url. */
-  fileUrl: string | null;
-  /** Time modified. */
-  timeModified: number | null;
-  /** File mime type. */
-  mimeType: string | null;
-  /** Whether is an external file. */
-  isExternalFile: boolean | null;
-  /** The repository type for external files. */
-  repositoryType: string | null;
-  /** The relative path to the relevant file type icon based on the file's mime type. */
-  icon: string | null;
-}
-
-/** Decodes a {@link MoodleFile}; `undefined` when `json` isn't an object. */
-export function decodeMoodleFile(json: unknown): MoodleFile | undefined {
-  const object = asJsonObject(json);
-  if (object === undefined) return undefined;
-  return {
-    fileName: decodeString(object["filename"]) ?? null,
-    filePath: decodeString(object["filepath"]) ?? null,
-    fileSize: decodeInteger(object["filesize"]) ?? null,
-    fileUrl: decodeString(object["fileurl"]) ?? null,
-    timeModified: decodeInteger(object["timemodified"]) ?? null,
-    mimeType: decodeString(object["mimetype"]) ?? null,
-    isExternalFile: decodeBoolean(object["isexternalfile"]) ?? null,
-    repositoryType: decodeString(object["repositorytype"]) ?? null,
-    icon: decodeString(object["icon"]) ?? null,
-  };
-}
-
-export function encodeMoodleFile(value: MoodleFile): JsonObject {
-  return {
-    "filename": value.fileName,
-    "filepath": value.filePath,
-    "filesize": value.fileSize,
-    "fileurl": value.fileUrl,
-    "timemodified": value.timeModified,
-    "mimetype": value.mimeType,
-    "isexternalfile": value.isExternalFile,
-    "repositorytype": value.repositoryType,
-    "icon": value.icon,
   };
 }
 

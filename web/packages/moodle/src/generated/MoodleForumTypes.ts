@@ -2,8 +2,7 @@
 
 import { JsonObject, asJsonObject, decodeBoolean, decodeFolded, decodeInteger, decodeList, decodeNumber, decodeString, required } from "@mybicocca/data-api-runtime";
 import { MoodleWarning, decodeMoodleWarning, encodeMoodleWarning } from "./MoodleBadgeTypes.js";
-import { MoodleFile, decodeMoodleFile, encodeMoodleFile } from "./MoodleCourseTypes.js";
-import { MoodleKeyValue, decodeMoodleKeyValue, encodeMoodleKeyValue } from "./MoodleUserTypes.js";
+import { MoodleFile, MoodleKeyValue, decodeMoodleFile, decodeMoodleKeyValue, encodeMoodleFile, encodeMoodleKeyValue } from "./MoodleCourseTypes.js";
 
 export interface MoodleAddDiscussionResponse {
   /** New Discussion ID */

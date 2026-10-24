@@ -5,6 +5,21 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
+data class MoodleAutologinKey(
+    /** Auto-login key for a single usage with time expiration. */
+    @SerialName("key")
+    val key: String = "",
+
+    /** Auto-login URL. */
+    @SerialName("autologinurl")
+    val autologinUrl: String = "",
+
+    /** list of warnings */
+    @SerialName("warnings")
+    val warnings: List<MoodleWarning> = emptyList()
+)
+
+@Serializable
 data class MoodleMobileContent(
     /** Templates required by the generated content. */
     @SerialName("templates")

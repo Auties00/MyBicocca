@@ -920,6 +920,602 @@ public struct MoodleModuleContentsInfo: Codable, Hashable, Sendable {
     }
 }
 
+public struct MoodleCoursesByFieldResponse: Codable, Hashable, Sendable {
+    /// Course
+    public var courses: [MoodleCourse]
+    /// list of warnings
+    public var warnings: [MoodleWarning]
+
+    public init(
+        courses: [MoodleCourse] = [],
+        warnings: [MoodleWarning] = []
+    ) {
+        self.courses = courses
+        self.warnings = warnings
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case courses = "courses"
+        case warnings = "warnings"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.courses = container.decodeLenient([MoodleCourse].self, forKey: .courses) ?? []
+        self.warnings = container.decodeLenient([MoodleWarning].self, forKey: .warnings) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(courses, forKey: .courses)
+        try container.encode(warnings, forKey: .warnings)
+    }
+}
+
+public struct MoodleCourse: Codable, Hashable, Sendable {
+    /// course id
+    public var id: Int
+    /// course full name
+    public var fullName: String
+    /// course display name
+    public var displayName: String
+    /// course short name
+    public var shortName: String
+    /// Course image
+    public var courseImage: String?
+    /// category id
+    public var categoryId: Int
+    /// category name
+    public var categoryName: String
+    /// Sort order in the category
+    public var sortOrder: Int?
+    /// summary
+    public var summary: String
+    /// summary format (1 = HTML, 0 = MOODLE, 2 = PLAIN, or 4 = MARKDOWN)
+    public var summaryFormat: Int
+    /// summary files in the summary field
+    public var summaryFiles: [MoodleFile]
+    /// additional overview files attached to this course
+    public var overviewFiles: [MoodleFile]
+    /// Whether the activity dates are shown or not
+    public var showActivityDates: Bool
+    /// Whether the activity completion conditions are shown or not
+    public var showCompletionConditions: Bool
+    /// contact users
+    public var contacts: [MoodleContact]
+    /// enrollment methods list
+    public var enrollmentMethods: [String]
+    /// Custom fields
+    public var customFields: [MoodleCourseCustomField]
+    /// Id number
+    public var idNumber: String?
+    /// Course format: weeks, topics, social, site,..
+    public var format: String?
+    /// 1 if grades are shown, otherwise 0
+    public var showGrades: Int?
+    /// Number of recent items appearing on the course page
+    public var newsItems: Int?
+    /// Timestamp when the course start
+    public var startDate: Int64?
+    /// Timestamp when the course end
+    public var endDate: Int64?
+    /// Largest size of file that can be uploaded into
+    public var maxBytes: Int64?
+    /// Are activity report shown (yes = 1, no =0)
+    public var showReports: Int?
+    /// 1: available to student, 0:not available
+    public var visible: Int?
+    /// no group, separate, visible
+    public var groupMode: Int?
+    /// 1: yes, 0: no
+    public var groupModeForce: Int?
+    /// default grouping id
+    public var defaultGroupingId: Int?
+    /// Completion enabled? 1: yes 0: no
+    public var enableCompletion: Int?
+    /// 1: yes 0: no
+    public var completionNotify: Int?
+    /// Forced course language
+    public var lang: String?
+    /// Fame of the forced theme
+    public var theme: String?
+    /// Current course marker
+    public var marker: Int?
+    /// If legacy files are enabled
+    public var legacyFiles: Int?
+    /// Calendar type
+    public var calendarType: String?
+    /// Time when the course was created
+    public var timeCreated: Int64?
+    /// Last time the course was updated
+    public var timeModified: Int64?
+    /// If is a requested course
+    public var requested: Int?
+    /// Cache revision number
+    public var cacheRevision: Int?
+    /// Course filters
+    public var filters: [MoodleFilter]
+    /// Additional options for particular course format.
+    public var courseFormatOptions: [MoodleKeyValue]
+    /// Communication tool room name.
+    public var communicationRoomName: String?
+    /// Communication tool room URL.
+    public var communicationRoomUrl: String?
+
+    public init(
+        id: Int = 0,
+        fullName: String = "",
+        displayName: String = "",
+        shortName: String = "",
+        courseImage: String? = nil,
+        categoryId: Int = 0,
+        categoryName: String = "",
+        sortOrder: Int? = nil,
+        summary: String = "",
+        summaryFormat: Int = 0,
+        summaryFiles: [MoodleFile] = [],
+        overviewFiles: [MoodleFile] = [],
+        showActivityDates: Bool = false,
+        showCompletionConditions: Bool = false,
+        contacts: [MoodleContact] = [],
+        enrollmentMethods: [String] = [],
+        customFields: [MoodleCourseCustomField] = [],
+        idNumber: String? = nil,
+        format: String? = nil,
+        showGrades: Int? = nil,
+        newsItems: Int? = nil,
+        startDate: Int64? = nil,
+        endDate: Int64? = nil,
+        maxBytes: Int64? = nil,
+        showReports: Int? = nil,
+        visible: Int? = nil,
+        groupMode: Int? = nil,
+        groupModeForce: Int? = nil,
+        defaultGroupingId: Int? = nil,
+        enableCompletion: Int? = nil,
+        completionNotify: Int? = nil,
+        lang: String? = nil,
+        theme: String? = nil,
+        marker: Int? = nil,
+        legacyFiles: Int? = nil,
+        calendarType: String? = nil,
+        timeCreated: Int64? = nil,
+        timeModified: Int64? = nil,
+        requested: Int? = nil,
+        cacheRevision: Int? = nil,
+        filters: [MoodleFilter] = [],
+        courseFormatOptions: [MoodleKeyValue] = [],
+        communicationRoomName: String? = nil,
+        communicationRoomUrl: String? = nil
+    ) {
+        self.id = id
+        self.fullName = fullName
+        self.displayName = displayName
+        self.shortName = shortName
+        self.courseImage = courseImage
+        self.categoryId = categoryId
+        self.categoryName = categoryName
+        self.sortOrder = sortOrder
+        self.summary = summary
+        self.summaryFormat = summaryFormat
+        self.summaryFiles = summaryFiles
+        self.overviewFiles = overviewFiles
+        self.showActivityDates = showActivityDates
+        self.showCompletionConditions = showCompletionConditions
+        self.contacts = contacts
+        self.enrollmentMethods = enrollmentMethods
+        self.customFields = customFields
+        self.idNumber = idNumber
+        self.format = format
+        self.showGrades = showGrades
+        self.newsItems = newsItems
+        self.startDate = startDate
+        self.endDate = endDate
+        self.maxBytes = maxBytes
+        self.showReports = showReports
+        self.visible = visible
+        self.groupMode = groupMode
+        self.groupModeForce = groupModeForce
+        self.defaultGroupingId = defaultGroupingId
+        self.enableCompletion = enableCompletion
+        self.completionNotify = completionNotify
+        self.lang = lang
+        self.theme = theme
+        self.marker = marker
+        self.legacyFiles = legacyFiles
+        self.calendarType = calendarType
+        self.timeCreated = timeCreated
+        self.timeModified = timeModified
+        self.requested = requested
+        self.cacheRevision = cacheRevision
+        self.filters = filters
+        self.courseFormatOptions = courseFormatOptions
+        self.communicationRoomName = communicationRoomName
+        self.communicationRoomUrl = communicationRoomUrl
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id = "id"
+        case fullName = "fullname"
+        case displayName = "displayname"
+        case shortName = "shortname"
+        case courseImage = "courseimage"
+        case categoryId = "categoryid"
+        case categoryName = "categoryname"
+        case sortOrder = "sortorder"
+        case summary = "summary"
+        case summaryFormat = "summaryformat"
+        case summaryFiles = "summaryfiles"
+        case overviewFiles = "overviewfiles"
+        case showActivityDates = "showactivitydates"
+        case showCompletionConditions = "showcompletionconditions"
+        case contacts = "contacts"
+        case enrollmentMethods = "enrollmentmethods"
+        case customFields = "customfields"
+        case idNumber = "idnumber"
+        case format = "format"
+        case showGrades = "showgrades"
+        case newsItems = "newsitems"
+        case startDate = "startdate"
+        case endDate = "enddate"
+        case maxBytes = "maxbytes"
+        case showReports = "showreports"
+        case visible = "visible"
+        case groupMode = "groupmode"
+        case groupModeForce = "groupmodeforce"
+        case defaultGroupingId = "defaultgroupingid"
+        case enableCompletion = "enablecompletion"
+        case completionNotify = "completionnotify"
+        case lang = "lang"
+        case theme = "theme"
+        case marker = "marker"
+        case legacyFiles = "legacyfiles"
+        case calendarType = "calendartype"
+        case timeCreated = "timecreated"
+        case timeModified = "timemodified"
+        case requested = "requested"
+        case cacheRevision = "cacherev"
+        case filters = "filters"
+        case courseFormatOptions = "courseformatoptions"
+        case communicationRoomName = "communicationroomname"
+        case communicationRoomUrl = "communicationroomurl"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = container.decodeLenient(Int.self, forKey: .id) ?? 0
+        self.fullName = container.decodeLenient(String.self, forKey: .fullName) ?? ""
+        self.displayName = container.decodeLenient(String.self, forKey: .displayName) ?? ""
+        self.shortName = container.decodeLenient(String.self, forKey: .shortName) ?? ""
+        self.courseImage = container.decodeLenient(String.self, forKey: .courseImage)
+        self.categoryId = container.decodeLenient(Int.self, forKey: .categoryId) ?? 0
+        self.categoryName = container.decodeLenient(String.self, forKey: .categoryName) ?? ""
+        self.sortOrder = container.decodeLenient(Int.self, forKey: .sortOrder)
+        self.summary = container.decodeLenient(String.self, forKey: .summary) ?? ""
+        self.summaryFormat = container.decodeLenient(Int.self, forKey: .summaryFormat) ?? 0
+        self.summaryFiles = container.decodeLenient([MoodleFile].self, forKey: .summaryFiles) ?? []
+        self.overviewFiles = container.decodeLenient([MoodleFile].self, forKey: .overviewFiles) ?? []
+        self.showActivityDates = container.decodeLenient(Bool.self, forKey: .showActivityDates) ?? false
+        self.showCompletionConditions = container.decodeLenient(Bool.self, forKey: .showCompletionConditions) ?? false
+        self.contacts = container.decodeLenient([MoodleContact].self, forKey: .contacts) ?? []
+        self.enrollmentMethods = container.decodeLenient([String].self, forKey: .enrollmentMethods) ?? []
+        self.customFields = container.decodeLenient([MoodleCourseCustomField].self, forKey: .customFields) ?? []
+        self.idNumber = container.decodeLenient(String.self, forKey: .idNumber)
+        self.format = container.decodeLenient(String.self, forKey: .format)
+        self.showGrades = container.decodeLenient(Int.self, forKey: .showGrades)
+        self.newsItems = container.decodeLenient(Int.self, forKey: .newsItems)
+        self.startDate = container.decodeLenient(Int64.self, forKey: .startDate)
+        self.endDate = container.decodeLenient(Int64.self, forKey: .endDate)
+        self.maxBytes = container.decodeLenient(Int64.self, forKey: .maxBytes)
+        self.showReports = container.decodeLenient(Int.self, forKey: .showReports)
+        self.visible = container.decodeLenient(Int.self, forKey: .visible)
+        self.groupMode = container.decodeLenient(Int.self, forKey: .groupMode)
+        self.groupModeForce = container.decodeLenient(Int.self, forKey: .groupModeForce)
+        self.defaultGroupingId = container.decodeLenient(Int.self, forKey: .defaultGroupingId)
+        self.enableCompletion = container.decodeLenient(Int.self, forKey: .enableCompletion)
+        self.completionNotify = container.decodeLenient(Int.self, forKey: .completionNotify)
+        self.lang = container.decodeLenient(String.self, forKey: .lang)
+        self.theme = container.decodeLenient(String.self, forKey: .theme)
+        self.marker = container.decodeLenient(Int.self, forKey: .marker)
+        self.legacyFiles = container.decodeLenient(Int.self, forKey: .legacyFiles)
+        self.calendarType = container.decodeLenient(String.self, forKey: .calendarType)
+        self.timeCreated = container.decodeLenient(Int64.self, forKey: .timeCreated)
+        self.timeModified = container.decodeLenient(Int64.self, forKey: .timeModified)
+        self.requested = container.decodeLenient(Int.self, forKey: .requested)
+        self.cacheRevision = container.decodeLenient(Int.self, forKey: .cacheRevision)
+        self.filters = container.decodeLenient([MoodleFilter].self, forKey: .filters) ?? []
+        self.courseFormatOptions = container.decodeLenient([MoodleKeyValue].self, forKey: .courseFormatOptions) ?? []
+        self.communicationRoomName = container.decodeLenient(String.self, forKey: .communicationRoomName)
+        self.communicationRoomUrl = container.decodeLenient(String.self, forKey: .communicationRoomUrl)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(fullName, forKey: .fullName)
+        try container.encode(displayName, forKey: .displayName)
+        try container.encode(shortName, forKey: .shortName)
+        try container.encode(courseImage, forKey: .courseImage)
+        try container.encode(categoryId, forKey: .categoryId)
+        try container.encode(categoryName, forKey: .categoryName)
+        try container.encode(sortOrder, forKey: .sortOrder)
+        try container.encode(summary, forKey: .summary)
+        try container.encode(summaryFormat, forKey: .summaryFormat)
+        try container.encode(summaryFiles, forKey: .summaryFiles)
+        try container.encode(overviewFiles, forKey: .overviewFiles)
+        try container.encode(showActivityDates, forKey: .showActivityDates)
+        try container.encode(showCompletionConditions, forKey: .showCompletionConditions)
+        try container.encode(contacts, forKey: .contacts)
+        try container.encode(enrollmentMethods, forKey: .enrollmentMethods)
+        try container.encode(customFields, forKey: .customFields)
+        try container.encode(idNumber, forKey: .idNumber)
+        try container.encode(format, forKey: .format)
+        try container.encode(showGrades, forKey: .showGrades)
+        try container.encode(newsItems, forKey: .newsItems)
+        try container.encode(startDate, forKey: .startDate)
+        try container.encode(endDate, forKey: .endDate)
+        try container.encode(maxBytes, forKey: .maxBytes)
+        try container.encode(showReports, forKey: .showReports)
+        try container.encode(visible, forKey: .visible)
+        try container.encode(groupMode, forKey: .groupMode)
+        try container.encode(groupModeForce, forKey: .groupModeForce)
+        try container.encode(defaultGroupingId, forKey: .defaultGroupingId)
+        try container.encode(enableCompletion, forKey: .enableCompletion)
+        try container.encode(completionNotify, forKey: .completionNotify)
+        try container.encode(lang, forKey: .lang)
+        try container.encode(theme, forKey: .theme)
+        try container.encode(marker, forKey: .marker)
+        try container.encode(legacyFiles, forKey: .legacyFiles)
+        try container.encode(calendarType, forKey: .calendarType)
+        try container.encode(timeCreated, forKey: .timeCreated)
+        try container.encode(timeModified, forKey: .timeModified)
+        try container.encode(requested, forKey: .requested)
+        try container.encode(cacheRevision, forKey: .cacheRevision)
+        try container.encode(filters, forKey: .filters)
+        try container.encode(courseFormatOptions, forKey: .courseFormatOptions)
+        try container.encode(communicationRoomName, forKey: .communicationRoomName)
+        try container.encode(communicationRoomUrl, forKey: .communicationRoomUrl)
+    }
+}
+
+/// File.
+public struct MoodleFile: Codable, Hashable, Sendable {
+    /// File name.
+    public var fileName: String?
+    /// File path.
+    public var filePath: String?
+    /// File size.
+    public var fileSize: Int64?
+    /// Downloadable file url.
+    public var fileUrl: String?
+    /// Time modified.
+    public var timeModified: Int64?
+    /// File mime type.
+    public var mimeType: String?
+    /// Whether is an external file.
+    public var isExternalFile: Bool?
+    /// The repository type for external files.
+    public var repositoryType: String?
+    /// The relative path to the relevant file type icon based on the file's mime type.
+    public var icon: String?
+
+    public init(
+        fileName: String? = nil,
+        filePath: String? = nil,
+        fileSize: Int64? = nil,
+        fileUrl: String? = nil,
+        timeModified: Int64? = nil,
+        mimeType: String? = nil,
+        isExternalFile: Bool? = nil,
+        repositoryType: String? = nil,
+        icon: String? = nil
+    ) {
+        self.fileName = fileName
+        self.filePath = filePath
+        self.fileSize = fileSize
+        self.fileUrl = fileUrl
+        self.timeModified = timeModified
+        self.mimeType = mimeType
+        self.isExternalFile = isExternalFile
+        self.repositoryType = repositoryType
+        self.icon = icon
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case fileName = "filename"
+        case filePath = "filepath"
+        case fileSize = "filesize"
+        case fileUrl = "fileurl"
+        case timeModified = "timemodified"
+        case mimeType = "mimetype"
+        case isExternalFile = "isexternalfile"
+        case repositoryType = "repositorytype"
+        case icon = "icon"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.fileName = container.decodeLenient(String.self, forKey: .fileName)
+        self.filePath = container.decodeLenient(String.self, forKey: .filePath)
+        self.fileSize = container.decodeLenient(Int64.self, forKey: .fileSize)
+        self.fileUrl = container.decodeLenient(String.self, forKey: .fileUrl)
+        self.timeModified = container.decodeLenient(Int64.self, forKey: .timeModified)
+        self.mimeType = container.decodeLenient(String.self, forKey: .mimeType)
+        self.isExternalFile = container.decodeLenient(Bool.self, forKey: .isExternalFile)
+        self.repositoryType = container.decodeLenient(String.self, forKey: .repositoryType)
+        self.icon = container.decodeLenient(String.self, forKey: .icon)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(fileName, forKey: .fileName)
+        try container.encode(filePath, forKey: .filePath)
+        try container.encode(fileSize, forKey: .fileSize)
+        try container.encode(fileUrl, forKey: .fileUrl)
+        try container.encode(timeModified, forKey: .timeModified)
+        try container.encode(mimeType, forKey: .mimeType)
+        try container.encode(isExternalFile, forKey: .isExternalFile)
+        try container.encode(repositoryType, forKey: .repositoryType)
+        try container.encode(icon, forKey: .icon)
+    }
+}
+
+public struct MoodleContact: Codable, Hashable, Sendable {
+    /// contact user id
+    public var id: Int
+    /// contact user fullname
+    public var fullName: String
+
+    public init(
+        id: Int = 0,
+        fullName: String = ""
+    ) {
+        self.id = id
+        self.fullName = fullName
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id = "id"
+        case fullName = "fullname"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = container.decodeLenient(Int.self, forKey: .id) ?? 0
+        self.fullName = container.decodeLenient(String.self, forKey: .fullName) ?? ""
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(fullName, forKey: .fullName)
+    }
+}
+
+public struct MoodleCourseCustomField: Codable, Hashable, Sendable {
+    /// The name of the custom field
+    public var name: String
+    /// The shortname of the custom field - to be able to build the field class in the code
+    public var shortName: String
+    /// The type of the custom field - text field, checkbox...
+    public var type: String
+    /// The raw value of the custom field
+    public var valueRaw: String
+    /// The value of the custom field
+    public var value: String
+
+    public init(
+        name: String = "",
+        shortName: String = "",
+        type: String = "",
+        valueRaw: String = "",
+        value: String = ""
+    ) {
+        self.name = name
+        self.shortName = shortName
+        self.type = type
+        self.valueRaw = valueRaw
+        self.value = value
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case name = "name"
+        case shortName = "shortname"
+        case type = "type"
+        case valueRaw = "valueraw"
+        case value = "value"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.name = container.decodeLenient(String.self, forKey: .name) ?? ""
+        self.shortName = container.decodeLenient(String.self, forKey: .shortName) ?? ""
+        self.type = container.decodeLenient(String.self, forKey: .type) ?? ""
+        self.valueRaw = container.decodeLenient(String.self, forKey: .valueRaw) ?? ""
+        self.value = container.decodeLenient(String.self, forKey: .value) ?? ""
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(name, forKey: .name)
+        try container.encode(shortName, forKey: .shortName)
+        try container.encode(type, forKey: .type)
+        try container.encode(valueRaw, forKey: .valueRaw)
+        try container.encode(value, forKey: .value)
+    }
+}
+
+public struct MoodleFilter: Codable, Hashable, Sendable {
+    /// Filter plugin name
+    public var filter: String
+    /// Filter state: 1 for on, -1 for off, 0 if inherit
+    public var localState: Int
+    /// 1 or 0 to use when localstate is set to inherit
+    public var inheritedState: Int
+
+    public init(
+        filter: String = "",
+        localState: Int = 0,
+        inheritedState: Int = 0
+    ) {
+        self.filter = filter
+        self.localState = localState
+        self.inheritedState = inheritedState
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case filter = "filter"
+        case localState = "localstate"
+        case inheritedState = "inheritedstate"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.filter = container.decodeLenient(String.self, forKey: .filter) ?? ""
+        self.localState = container.decodeLenient(Int.self, forKey: .localState) ?? 0
+        self.inheritedState = container.decodeLenient(Int.self, forKey: .inheritedState) ?? 0
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(filter, forKey: .filter)
+        try container.encode(localState, forKey: .localState)
+        try container.encode(inheritedState, forKey: .inheritedState)
+    }
+}
+
+public struct MoodleKeyValue: Codable, Hashable, Sendable {
+    /// Course format option name.
+    public var name: String
+    /// Course format option value.
+    public var value: String
+
+    public init(
+        name: String = "",
+        value: String = ""
+    ) {
+        self.name = name
+        self.value = value
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case name = "name"
+        case value = "value"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.name = container.decodeLenient(String.self, forKey: .name) ?? ""
+        self.value = container.decodeLenient(String.self, forKey: .value) ?? ""
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(name, forKey: .name)
+        try container.encode(value, forKey: .value)
+    }
+}
+
 public struct MoodleEnrolledCourse: Codable, Hashable, Sendable {
     /// id of course
     public var id: Int
@@ -1138,88 +1734,6 @@ public struct MoodleEnrolledCourse: Codable, Hashable, Sendable {
         try container.encode(showActivityDates, forKey: .showActivityDates)
         try container.encode(showCompletionConditions, forKey: .showCompletionConditions)
         try container.encode(timeModified, forKey: .timeModified)
-    }
-}
-
-/// File.
-public struct MoodleFile: Codable, Hashable, Sendable {
-    /// File name.
-    public var fileName: String?
-    /// File path.
-    public var filePath: String?
-    /// File size.
-    public var fileSize: Int64?
-    /// Downloadable file url.
-    public var fileUrl: String?
-    /// Time modified.
-    public var timeModified: Int64?
-    /// File mime type.
-    public var mimeType: String?
-    /// Whether is an external file.
-    public var isExternalFile: Bool?
-    /// The repository type for external files.
-    public var repositoryType: String?
-    /// The relative path to the relevant file type icon based on the file's mime type.
-    public var icon: String?
-
-    public init(
-        fileName: String? = nil,
-        filePath: String? = nil,
-        fileSize: Int64? = nil,
-        fileUrl: String? = nil,
-        timeModified: Int64? = nil,
-        mimeType: String? = nil,
-        isExternalFile: Bool? = nil,
-        repositoryType: String? = nil,
-        icon: String? = nil
-    ) {
-        self.fileName = fileName
-        self.filePath = filePath
-        self.fileSize = fileSize
-        self.fileUrl = fileUrl
-        self.timeModified = timeModified
-        self.mimeType = mimeType
-        self.isExternalFile = isExternalFile
-        self.repositoryType = repositoryType
-        self.icon = icon
-    }
-
-    private enum CodingKeys: String, CodingKey {
-        case fileName = "filename"
-        case filePath = "filepath"
-        case fileSize = "filesize"
-        case fileUrl = "fileurl"
-        case timeModified = "timemodified"
-        case mimeType = "mimetype"
-        case isExternalFile = "isexternalfile"
-        case repositoryType = "repositorytype"
-        case icon = "icon"
-    }
-
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.fileName = container.decodeLenient(String.self, forKey: .fileName)
-        self.filePath = container.decodeLenient(String.self, forKey: .filePath)
-        self.fileSize = container.decodeLenient(Int64.self, forKey: .fileSize)
-        self.fileUrl = container.decodeLenient(String.self, forKey: .fileUrl)
-        self.timeModified = container.decodeLenient(Int64.self, forKey: .timeModified)
-        self.mimeType = container.decodeLenient(String.self, forKey: .mimeType)
-        self.isExternalFile = container.decodeLenient(Bool.self, forKey: .isExternalFile)
-        self.repositoryType = container.decodeLenient(String.self, forKey: .repositoryType)
-        self.icon = container.decodeLenient(String.self, forKey: .icon)
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(fileName, forKey: .fileName)
-        try container.encode(filePath, forKey: .filePath)
-        try container.encode(fileSize, forKey: .fileSize)
-        try container.encode(fileUrl, forKey: .fileUrl)
-        try container.encode(timeModified, forKey: .timeModified)
-        try container.encode(mimeType, forKey: .mimeType)
-        try container.encode(isExternalFile, forKey: .isExternalFile)
-        try container.encode(repositoryType, forKey: .repositoryType)
-        try container.encode(icon, forKey: .icon)
     }
 }
 

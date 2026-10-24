@@ -4,7 +4,7 @@ import { brackets } from "@mybicocca/data-api-runtime";
 import { MoodleClient } from "../client.js";
 import { MoodleTokenAuth } from "./MoodleAuthTypes.js";
 import { MoodleStatusResponse, decodeMoodleStatusResponse } from "./MoodleCompletionTypes.js";
-import { MoodleCourseSection, MoodleCourseUserGroupsResponse, MoodleEnrolledCourse, MoodleOption, decodeMoodleCourseSection, decodeMoodleCourseUserGroupsResponse, decodeMoodleEnrolledCourse, encodeMoodleOption } from "./MoodleCourseTypes.js";
+import { MoodleCourseSection, MoodleCourseUserGroupsResponse, MoodleCoursesByFieldResponse, MoodleEnrolledCourse, MoodleOption, decodeMoodleCourseSection, decodeMoodleCourseUserGroupsResponse, decodeMoodleCoursesByFieldResponse, decodeMoodleEnrolledCourse, encodeMoodleOption } from "./MoodleCourseTypes.js";
 
 export class MoodleCourseApi {
   constructor(private readonly client: MoodleClient) {}
@@ -32,6 +32,32 @@ export class MoodleCourseApi {
         auth: auth,
       },
       decodeMoodleCourseSection,
+    );
+  }
+
+  /**
+   * Get courses matching a specific field (id/s, shortname, idnumber, category)
+   *
+   * @param options.field The field to search can be left empty for all courses or: id: course id ids: comma separated course ids shortname: course short name idnumber: course id number category: category id the course belongs to sectionid: section id that belongs to a course
+   * @param options.value The value to match
+   * @param auth The credentials: {@link MoodleTokenAuth}.
+   */
+  async getCoursesByField(
+    auth: MoodleTokenAuth,
+    options: {
+      field?: string | null;
+      value?: string | null;
+    } = {},
+  ): Promise<MoodleCoursesByFieldResponse> {
+    return this.client.json(
+      {
+        method: "POST",
+        path: "/webservice/rest/server.php",
+        query: [["wsfunction", "core_course_get_courses_by_field"], ["moodlewsrestformat", "json"]],
+        form: [["field", options.field], ["value", options.value]],
+        auth: auth,
+      },
+      decodeMoodleCoursesByFieldResponse,
     );
   }
 

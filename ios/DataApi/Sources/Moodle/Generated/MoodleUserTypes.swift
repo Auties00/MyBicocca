@@ -351,38 +351,6 @@ public struct MoodleUserCustomField: Codable, Hashable, Sendable {
     }
 }
 
-public struct MoodleKeyValue: Codable, Hashable, Sendable {
-    /// The name of the preferences
-    public var name: String
-    /// The value of the preference
-    public var value: String
-
-    public init(
-        name: String = "",
-        value: String = ""
-    ) {
-        self.name = name
-        self.value = value
-    }
-
-    private enum CodingKeys: String, CodingKey {
-        case name = "name"
-        case value = "value"
-    }
-
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.name = container.decodeLenient(String.self, forKey: .name) ?? ""
-        self.value = container.decodeLenient(String.self, forKey: .value) ?? ""
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(name, forKey: .name)
-        try container.encode(value, forKey: .value)
-    }
-}
-
 public struct MoodleUserGroup: Codable, Hashable, Sendable {
     /// group id
     public var id: Int
