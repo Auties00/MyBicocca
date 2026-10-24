@@ -43,10 +43,18 @@ public struct MoodleWebAttendanceView: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(userId, forKey: .userId)
-        try container.encode(shown, forKey: .shown)
-        try container.encode(summary, forKey: .summary)
-        try container.encode(submittableSessions, forKey: .submittableSessions)
+        if userId != nil {
+            try container.encode(userId, forKey: .userId)
+        }
+        if shown != false {
+            try container.encode(shown, forKey: .shown)
+        }
+        if summary != nil {
+            try container.encode(summary, forKey: .summary)
+        }
+        if !submittableSessions.isEmpty {
+            try container.encode(submittableSessions, forKey: .submittableSessions)
+        }
     }
 }
 
@@ -108,14 +116,30 @@ public struct MoodleWebAttendanceSummary: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(takenSessions, forKey: .takenSessions)
-        try container.encode(pointsTakenLabel, forKey: .pointsTakenLabel)
-        try container.encode(takenSessionsPercentage, forKey: .takenSessionsPercentage)
-        try container.encode(totalSessions, forKey: .totalSessions)
-        try container.encode(pointsAllSessionsLabel, forKey: .pointsAllSessionsLabel)
-        try container.encode(allSessionsPercentage, forKey: .allSessionsPercentage)
-        try container.encode(maxPossiblePointsLabel, forKey: .maxPossiblePointsLabel)
-        try container.encode(maxPossiblePercentage, forKey: .maxPossiblePercentage)
+        if takenSessions != nil {
+            try container.encode(takenSessions, forKey: .takenSessions)
+        }
+        if pointsTakenLabel != nil {
+            try container.encode(pointsTakenLabel, forKey: .pointsTakenLabel)
+        }
+        if takenSessionsPercentage != nil {
+            try container.encode(takenSessionsPercentage, forKey: .takenSessionsPercentage)
+        }
+        if totalSessions != nil {
+            try container.encode(totalSessions, forKey: .totalSessions)
+        }
+        if pointsAllSessionsLabel != nil {
+            try container.encode(pointsAllSessionsLabel, forKey: .pointsAllSessionsLabel)
+        }
+        if allSessionsPercentage != nil {
+            try container.encode(allSessionsPercentage, forKey: .allSessionsPercentage)
+        }
+        if maxPossiblePointsLabel != nil {
+            try container.encode(maxPossiblePointsLabel, forKey: .maxPossiblePointsLabel)
+        }
+        if maxPossiblePercentage != nil {
+            try container.encode(maxPossiblePercentage, forKey: .maxPossiblePercentage)
+        }
     }
 }
 
@@ -154,7 +178,9 @@ public struct MoodleWebSubmittableSession: Codable, Hashable, Sendable {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(id, forKey: .id)
         try container.encode(time, forKey: .time)
-        try container.encode(linkText, forKey: .linkText)
+        if linkText != "" {
+            try container.encode(linkText, forKey: .linkText)
+        }
     }
 }
 
@@ -191,9 +217,15 @@ public struct MoodleWebAttendanceSessionForm: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(refusal, forKey: .refusal)
-        try container.encode(requiresPassword, forKey: .requiresPassword)
-        try container.encode(statuses, forKey: .statuses)
+        if refusal != nil {
+            try container.encode(refusal, forKey: .refusal)
+        }
+        if requiresPassword != false {
+            try container.encode(requiresPassword, forKey: .requiresPassword)
+        }
+        if !statuses.isEmpty {
+            try container.encode(statuses, forKey: .statuses)
+        }
     }
 }
 
@@ -224,7 +256,9 @@ public struct MoodleWebAttendanceStatusOption: Codable, Hashable, Sendable {
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(id, forKey: .id)
-        try container.encode(description, forKey: .description)
+        if description != "" {
+            try container.encode(description, forKey: .description)
+        }
     }
 }
 
@@ -254,8 +288,12 @@ public struct MoodleWebAttendanceMarkPage: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(messages, forKey: .messages)
-        try container.encode(sessions, forKey: .sessions)
+        if !messages.isEmpty {
+            try container.encode(messages, forKey: .messages)
+        }
+        if !sessions.isEmpty {
+            try container.encode(sessions, forKey: .sessions)
+        }
     }
 }
 
@@ -293,8 +331,12 @@ public struct MoodleWebAttendanceMarkSession: Codable, Hashable, Sendable {
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(time, forKey: .time)
-        try container.encode(markActions, forKey: .markActions)
-        try container.encode(headings, forKey: .headings)
+        if !markActions.isEmpty {
+            try container.encode(markActions, forKey: .markActions)
+        }
+        if !headings.isEmpty {
+            try container.encode(headings, forKey: .headings)
+        }
     }
 }
 

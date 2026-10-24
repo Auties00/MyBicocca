@@ -103,6 +103,7 @@ paths:
     post:
       tags: [files]
       operationId: touchFile
+      x-mb-effect: benign
       parameters: [{ $ref: "#/components/parameters/itemId" }]
       x-mb-empty-body: true
       responses:

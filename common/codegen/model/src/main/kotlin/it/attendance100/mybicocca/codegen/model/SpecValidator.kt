@@ -232,6 +232,7 @@ object SpecValidator {
         checkUnique(module.operations.map { it.name }) { "Module '${module.name}' declares operation '$it' more than once" }
         for (operation in module.operations) {
             val where = "Operation '${module.name}.${operation.name}'"
+            if (operation.effect == null) add("$where declares no effect (read, benign, reversible or irreversible)")
             checkUnique(operation.parameters.map { it.name }) { "$where declares parameter '$it' more than once" }
             for (name in operation.parameters.map { it.name }.intersect(spec.parameters.map { it.name }.toSet())) {
                 add("$where parameter '$name' clashes with an API parameter")

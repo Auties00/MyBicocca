@@ -1,0 +1,647 @@
+{
+  "AppointmentsCalendar.cancelAppointment": {
+    "effect": "irreversible",
+    "reason": "Cancels a booked appointment; it cannot be restored identically."
+  },
+  "AppointmentsCalendar.insertAppointment": {
+    "effect": "irreversible",
+    "reason": "Books an appointment staff will see; it returns no id, so it cannot be cancelled reliably.",
+    "notes": "cancelAppointment exists but needs the appointment id, which the insert does not return."
+  },
+  "AppointmentsCalendar.updateAppointment": {
+    "effect": "irreversible",
+    "reason": "Moves a booked appointment to another shift, which staff see."
+  },
+  "Attachments.deleteUploadedAttachment": {
+    "effect": "irreversible",
+    "reason": "Deletes the upload metadata of an attachment with no way to restore it."
+  },
+  "Attachments.postGenericAttachmentMetadata": {
+    "effect": "irreversible",
+    "reason": "Inserts the metadata of a new attachment, which staff see; the API has no matching delete."
+  },
+  "Attachments.uploadAttachment": {
+    "effect": "irreversible",
+    "reason": "Uploads the file of an attachment, completing an attachment staff see."
+  },
+  "Attachments.validateAttachment": {
+    "effect": "irreversible",
+    "reason": "Changes the metadata of an attachment, such as its validation state, which staff act on."
+  },
+  "Auth.changeUserPassword": {
+    "effect": "irreversible",
+    "reason": "Changes the user's password."
+  },
+  "Auth.checkLogon": {
+    "effect": "benign",
+    "reason": "Verifies the Basic credentials, possibly opening a session or logging an access."
+  },
+  "Auth.getJWT": {
+    "effect": "benign",
+    "reason": "Issues a JWT for the already authenticated session."
+  },
+  "Auth.login": {
+    "effect": "benign",
+    "reason": "Logs in and opens an Esse3 session."
+  },
+  "Auth.logout": {
+    "effect": "benign",
+    "reason": "Ends the current session.",
+    "notes": "Invalidates the session the test is using; run it last or with its own session."
+  },
+  "Auth.refreshJWT": {
+    "effect": "benign",
+    "reason": "Issues a refreshed JWT for the given token."
+  },
+  "Auth.setCacheParameters": {
+    "effect": "benign",
+    "reason": "Changes only the cache settings of the current session."
+  },
+  "Auth.setLanguageCode": {
+    "effect": "benign",
+    "reason": "Changes only the session language used for descriptions."
+  },
+  "BadgeImport.postImportAward": {
+    "effect": "irreversible",
+    "reason": "Imports badge awards for people into Esse3 (batch import)."
+  },
+  "BadgeImport.postImportBadgeClass": {
+    "effect": "irreversible",
+    "reason": "Imports badge classes into Esse3 (batch import)."
+  },
+  "BadgeImport.putBadgeIssuing": {
+    "effect": "irreversible",
+    "reason": "Records the issuing or revocation of a badge, which the holder and staff see."
+  },
+  "CareerUpdate.deletePreview": {
+    "effect": "irreversible",
+    "reason": "Deletes a career-update preview prepared by staff; it cannot be restored."
+  },
+  "CareerUpdate.executeUpdateCareers": {
+    "effect": "irreversible",
+    "reason": "Executes a career-update preview, changing students' careers."
+  },
+  "CareerUpdate.postAddTeachingActivityOffer": {
+    "effect": "irreversible",
+    "reason": "Starts a mass career-update job (AGG_AD_OFF) over many students."
+  },
+  "CareerUpdate.postAttendance": {
+    "effect": "irreversible",
+    "reason": "Starts a mass career-update job that records attendance (FREQ)."
+  },
+  "CareerUpdate.postRemoveAttendance": {
+    "effect": "irreversible",
+    "reason": "Starts a mass career-update job that removes attendance (RIMUOVI_FREQ)."
+  },
+  "CareerUpdate.postSEG": {
+    "effect": "irreversible",
+    "reason": "Starts a mass career-update job (SEG)."
+  },
+  "CareerUpdate.postSubstitution": {
+    "effect": "irreversible",
+    "reason": "Starts a mass career-update job that substitutes activities (SOST)."
+  },
+  "CareerUpdate.putAddTeachingActivityOfferByStudent": {
+    "effect": "irreversible",
+    "reason": "Runs the AGG_AD_OFF career update for one student."
+  },
+  "CareerUpdate.putAttendanceByStudent": {
+    "effect": "irreversible",
+    "reason": "Records attendance (FREQ) in one student's career."
+  },
+  "CareerUpdate.putRemoveAttendanceByStudent": {
+    "effect": "irreversible",
+    "reason": "Removes attendance (RIMUOVI_FREQ) from one student's career."
+  },
+  "CareerUpdate.putSEGByStudent": {
+    "effect": "irreversible",
+    "reason": "Runs the SEG career update for one student."
+  },
+  "CareerUpdate.putSubstitutionByStudent": {
+    "effect": "irreversible",
+    "reason": "Substitutes activities (SOST) in one student's career."
+  },
+  "CareerUpdate.setProcessingDetailFlag": {
+    "effect": "irreversible",
+    "reason": "Marks a row of a staff career-update preview to be processed by the engine.",
+    "notes": "Could be undone by setting the old flag back (read via CareerUpdate.getPreviewDetail), but if the preview is executed in between, the row is applied to a real career."
+  },
+  "Careers.careerClosure": {
+    "effect": "irreversible",
+    "reason": "Closes a student's career with a closure reason and date.",
+    "notes": "Catastrophic for the test account; no reopen operation exists in this API."
+  },
+  "Careers.putCanteenBand": {
+    "effect": "irreversible",
+    "reason": "Changes the student's canteen fee band for an academic year, which affects what the student pays.",
+    "notes": "TECHNICAL_USER only; subject to context rules, so restoring the old band is not guaranteed to succeed."
+  },
+  "Careers.putCareerByStudent": {
+    "effect": "irreversible",
+    "reason": "Updates the student's protocol number on the career record.",
+    "notes": "TECHNICAL_USER only; official administrative record."
+  },
+  "Careers.putEnrollmentDateAndExemptionTypeByMatricola": {
+    "effect": "irreversible",
+    "reason": "Changes the enrollment date and fee-exemption type of an annual enrollment, which affects tuition fees.",
+    "notes": "TECHNICAL_USER only; exemption changes can trigger fee recalculation that restoring the old value may not undo."
+  },
+  "Careers.putEnrollmentDateAndExemptionTypeByStudentId": {
+    "effect": "irreversible",
+    "reason": "Changes the enrollment date and fee-exemption type of an annual enrollment, which affects tuition fees.",
+    "notes": "TECHNICAL_USER only; exemption changes can trigger fee recalculation that restoring the old value may not undo."
+  },
+  "Careers.putGraduationWaiting": {
+    "effect": "irreversible",
+    "reason": "Sets the graduation-waiting flag and date on a student's career, an official record the graduation office acts on.",
+    "notes": "TECHNICAL_USER only. A restore via Careers.getCareerByStudent is conceivable but the flag may drive graduation workflows, so not treated as reversible."
+  },
+  "Careers.putStudentTypeCode": {
+    "effect": "irreversible",
+    "reason": "Changes the student type code of an annual enrollment, an administrative record staff rely on.",
+    "notes": "TECHNICAL_USER only."
+  },
+  "ChoiceRules.patchChoiceRegulation": {
+    "effect": "irreversible",
+    "reason": "Changes the state of a choice regulation.",
+    "notes": "Massive technical-user operation; state transitions affect every student's study plan."
+  },
+  "ChoiceRules.putLinkedPlansCount": {
+    "effect": "read",
+    "reason": "Computes counts of plans linked to a choice regulation; the body only selects which counts to show.",
+    "notes": "Sent as PUT, but the body (Esse3PlansCountsFilters) holds only display flags."
+  },
+  "Communications.postCommunication": {
+    "effect": "irreversible",
+    "reason": "Creates and sends a communication (e-mail, SMS or app notification) to recipients.",
+    "notes": "Can target all students, teachers or staff; must never run."
+  },
+  "Competitions.putCompetitionEnrollment": {
+    "effect": "irreversible",
+    "reason": "Enrols a person in an admission test; the API has no operation to withdraw it."
+  },
+  "Competitions.putCompetitionRanking": {
+    "effect": "irreversible",
+    "reason": "Imports the standings of an admission test from JSON, overwriting official results."
+  },
+  "Competitions.putCompetitionRankingFile": {
+    "effect": "irreversible",
+    "reason": "Imports the standings of an admission test from a file, overwriting official results."
+  },
+  "Competitions.putCompetitionRankingsFile": {
+    "effect": "irreversible",
+    "reason": "Imports the rankings of an admission test from a file."
+  },
+  "Competitions.putRankingTestDetail": {
+    "effect": "irreversible",
+    "reason": "Imports a ranking of an admission test detail from JSON."
+  },
+  "Competitions.putRankingTestDetailFile": {
+    "effect": "irreversible",
+    "reason": "Imports a single ranking of an admission test from a file."
+  },
+  "DegreeAward.postCommitteeApplication": {
+    "effect": "irreversible",
+    "reason": "Submits the student's degree application, which the student office acts on.",
+    "notes": "putCancelCommitteeApplication can cancel it, but the cancelled application stays on record and staff are involved."
+  },
+  "DegreeAward.postThesisAttachmentMetadata": {
+    "effect": "irreversible",
+    "reason": "Inserts the metadata of a thesis attachment, which staff see."
+  },
+  "DegreeAward.postThesisIntoCommitteeApplication": {
+    "effect": "irreversible",
+    "reason": "Adds a thesis to the degree application, which supervisors and staff see; there is no matching delete."
+  },
+  "DegreeAward.putAntiplagiarismData": {
+    "effect": "irreversible",
+    "reason": "Records anti-plagiarism results and approval for a thesis attachment."
+  },
+  "DegreeAward.putCancelCommitteeApplication": {
+    "effect": "irreversible",
+    "reason": "Cancels the student's degree application."
+  },
+  "DegreeAward.putThesisDiscussionMode": {
+    "effect": "irreversible",
+    "reason": "Changes the consultation mode of a thesis, a record staff and the library rely on."
+  },
+  "DegreeAward.putThesisRelation": {
+    "effect": "irreversible",
+    "reason": "Adds supervisors to a thesis, which the supervisors see."
+  },
+  "ExamsCalendar.deleteEsacomChild": {
+    "effect": "irreversible",
+    "reason": "Removes a child activity from a common exam; the original configuration cannot be restored exactly."
+  },
+  "ExamsCalendar.deleteExamCall": {
+    "effect": "irreversible",
+    "reason": "Deletes an exam call, possibly forcing the cancellation of its bookings; it cannot be restored."
+  },
+  "ExamsCalendar.deleteExamCallEnrolledList": {
+    "effect": "irreversible",
+    "reason": "Cancels a student's exam booking; re-booking may be impossible after the deadline and loses the original position/shift."
+  },
+  "ExamsCalendar.importSystemLog": {
+    "effect": "irreversible",
+    "reason": "Imports rooms/commitments from the external logistics system (batch import)."
+  },
+  "ExamsCalendar.postExamCall": {
+    "effect": "irreversible",
+    "reason": "Creates a new exam call that students can see and book; the result has no id to delete it by."
+  },
+  "ExamsCalendar.postExamCallEnrolledList": {
+    "effect": "irreversible",
+    "reason": "Books the student onto an exam call; teachers see the booking in the enrolled list.",
+    "notes": "Would be reversible with ExamsCalendar.deleteExamCallEnrolledList(courseOfStudyId, activityId, callId, studentId), but studentId (the career id, stuId) is neither an argument nor in the result (the response is empty), so the undo cannot be expressed. If the harness can supply the test student's stuId it could be promoted to reversible, run only before the booking deadline (bookings may count toward booking limits/no-show rules)."
+  },
+  "ExamsCalendar.putAcknowledgmentOfReceipt": {
+    "effect": "irreversible",
+    "reason": "Accepts or rejects the published exam outcome (presa visione), which the teacher acts on for the minutes."
+  },
+  "ExamsCalendar.putAcknowledgmentOfReceiptApplicationList": {
+    "effect": "irreversible",
+    "reason": "Accepts or rejects the published exam outcome of a booking (presa visione), which the teacher acts on."
+  },
+  "ExamsCalendar.putApplicationListOutcome": {
+    "effect": "irreversible",
+    "reason": "Records an exam outcome (grade) for a student."
+  },
+  "ExamsCalendar.putEsacomChild": {
+    "effect": "irreversible",
+    "reason": "Adds a child activity to a common exam, changing how exam calls are shared across courses.",
+    "notes": "ExamsCalendar.deleteEsacomChild with the same path arguments removes it, but if the child already existed the PUT updates it and the delete would destroy existing configuration; forceFlag may also cascade."
+  },
+  "ExamsCalendar.putExamCall": {
+    "effect": "irreversible",
+    "reason": "Changes an exam call's details (dates, rooms, enrolment window) that booked students rely on."
+  },
+  "ExamsCalendar.putExamCallPublication": {
+    "effect": "irreversible",
+    "reason": "Publishes the outcomes of an exam call to its students, who are notified."
+  },
+  "ExamsCalendar.putModifyBooking": {
+    "effect": "irreversible",
+    "reason": "Changes the exam type and compensatory measures of an existing booking, which teachers see.",
+    "notes": "The old values could be read from ExamsCalendar.getEnrolledExamCall, but they live inside the body object, which the restore form cannot target; it also needs an existing booking."
+  },
+  "ExamsCalendar.putShiftPublication": {
+    "effect": "irreversible",
+    "reason": "Publishes the outcomes of an exam shift to its students, who are notified."
+  },
+  "ExamsCalendar.updateCommitment": {
+    "effect": "irreversible",
+    "reason": "Updates commitments coming from the external logistics system."
+  },
+  "Logging.putTlogSessions": {
+    "effect": "benign",
+    "reason": "Sets a temporary log-level override for a session, which only affects server logging and expires after its timeout.",
+    "notes": "Only call it with the test's own session id and a short llevelMinutesTimeout; a verbose level makes the server log more."
+  },
+  "Logistics.putSyllabusTeachingActivity": {
+    "effect": "irreversible",
+    "reason": "Updates the published syllabus of a teaching activity, content teachers and students see.",
+    "notes": "TEACHER/TECHNICAL_USER only."
+  },
+  "Logistics.syncSystemLog": {
+    "effect": "irreversible",
+    "reason": "Runs a synchronisation of classrooms and buildings with the external logistics system.",
+    "notes": "Batch job on university-wide data."
+  },
+  "Offer.patchContextualizedTeachingActivity": {
+    "effect": "irreversible",
+    "reason": "Modifies a contextualised teaching activity of the didactic offer (e.g. its website URL).",
+    "notes": "TECHNICAL_USER only; university-wide offer data."
+  },
+  "Offer.putActivityPlanCount": {
+    "effect": "read",
+    "reason": "Returns counts of study plans linked to a generic teaching activity for the filters in the body.",
+    "notes": "Sent as PUT but the body is a filter object and the response is a count (404 when no data); description is empty, so a reviewer may prefer irreversible. TECHNICAL_USER only."
+  },
+  "PersonalData.careerClosure": {
+    "effect": "irreversible",
+    "reason": "Closes a student's career."
+  },
+  "PersonalData.deleteCareerAttachmentMetadata": {
+    "effect": "irreversible",
+    "reason": "Deletes a career attachment with no way to restore it."
+  },
+  "PersonalData.deleteExternalSubject": {
+    "effect": "irreversible",
+    "reason": "Deletes an external subject record with no way to restore it."
+  },
+  "PersonalData.deletePersonalDocumentAttachmentMetadata": {
+    "effect": "irreversible",
+    "reason": "Deletes an identity document attachment with no way to restore it."
+  },
+  "PersonalData.dismissEmail": {
+    "effect": "irreversible",
+    "reason": "Decommissions a person's institutional e-mail address."
+  },
+  "PersonalData.dismissEmailByAteEmail": {
+    "effect": "irreversible",
+    "reason": "Decommissions an institutional e-mail address."
+  },
+  "PersonalData.insertCompensatoryMeasuresHandicapDeclaration": {
+    "effect": "irreversible",
+    "reason": "Adds compensatory measures to a disability declaration; no delete exists."
+  },
+  "PersonalData.postAuthorizedAttachmentMetadata": {
+    "effect": "irreversible",
+    "reason": "Inserts attachment metadata for an authorized person; no delete exists for this attachment kind."
+  },
+  "PersonalData.postAuthorizedPersonalDocumentAttachmentMetadata": {
+    "effect": "irreversible",
+    "reason": "Inserts attachment metadata for an authorized person's identity document; no matching delete in this API."
+  },
+  "PersonalData.postCompensatoryMeasuresHandicapDeclaration": {
+    "effect": "irreversible",
+    "reason": "Adds compensatory measures to a disability declaration; no delete exists."
+  },
+  "PersonalData.postForeignTitleAttachmentMetadata": {
+    "effect": "irreversible",
+    "reason": "Inserts a foreign title attachment; no undo in this API."
+  },
+  "PersonalData.postHandicapDeclarationAttachmentMetadata": {
+    "effect": "irreversible",
+    "reason": "Inserts an attachment to a disability declaration that staff evaluate; returns no id to remove it."
+  },
+  "PersonalData.postHighSchoolGraduationAttachmentMetadata": {
+    "effect": "irreversible",
+    "reason": "Inserts a high school diploma attachment; no undo in this API."
+  },
+  "PersonalData.postIdentityDocumentAttachmentMetadata": {
+    "effect": "irreversible",
+    "reason": "Inserts an identity document attachment; it returns no id, so it cannot be deleted reliably.",
+    "notes": "deletePersonalDocumentAttachmentMetadata exists, but the insert returns nothing, so the new attachment id cannot be derived."
+  },
+  "PersonalData.postItalianTitleAttachmentMetadata": {
+    "effect": "irreversible",
+    "reason": "Inserts an Italian title attachment; no undo in this API."
+  },
+  "PersonalData.postMatricolaAttachmentMetadata": {
+    "effect": "irreversible",
+    "reason": "Inserts an enrollment-number attachment; no undo in this API."
+  },
+  "PersonalData.postPersonPhotoAttachmentMetadata": {
+    "effect": "irreversible",
+    "reason": "Inserts a person's photo attachment, which staff validate; no undo."
+  },
+  "PersonalData.putCanteenBand": {
+    "effect": "irreversible",
+    "reason": "Changes a student's canteen fee band."
+  },
+  "PersonalData.putCareerByStudent": {
+    "effect": "irreversible",
+    "reason": "Changes a student's protocol number in the career record."
+  },
+  "PersonalData.putDomicilePhone": {
+    "effect": "irreversible",
+    "reason": "Changes a person's domicile phone; the body's number and prefix cannot both be restored exactly from the person record.",
+    "notes": "It would be reversible if getPerson.domicilePhone mapped exactly to phoneNumber with an empty prefix, but the spec does not confirm that."
+  },
+  "PersonalData.putEnrollmentDateAndExemptionTypeByMatricola": {
+    "effect": "irreversible",
+    "reason": "Changes the enrollment date and fee exemption type of an annual enrollment."
+  },
+  "PersonalData.putEnrollmentDateAndExemptionTypeByStudentId": {
+    "effect": "irreversible",
+    "reason": "Changes the enrollment date and fee exemption type of an annual enrollment."
+  },
+  "PersonalData.putExternalSubject": {
+    "effect": "irreversible",
+    "reason": "Inserts or updates an external subject record."
+  },
+  "PersonalData.putExternalSubjectConsents": {
+    "effect": "irreversible",
+    "reason": "Changes an external subject's privacy consents, which are legally recorded."
+  },
+  "PersonalData.putGraduationWaiting": {
+    "effect": "irreversible",
+    "reason": "Changes a student's awaiting-graduation status in the career record."
+  },
+  "PersonalData.putHandicapDeclaration": {
+    "effect": "irreversible",
+    "reason": "Changes a disability declaration that staff evaluate."
+  },
+  "PersonalData.putHandicapDeclarationById": {
+    "effect": "irreversible",
+    "reason": "Changes a disability declaration that staff evaluate."
+  },
+  "PersonalData.putMobilePhone": {
+    "effect": "reversible",
+    "reason": "Sets the person's mobile phone number; setting the previous number back undoes it.",
+    "notes": "The setter takes a body object (Esse3MobileParameter.mobilePhone), so 'into' names a body field. If the original number is null the restore may be rejected, so skip the test in that case. Any SMS the university sends during the test would go to the test number."
+  },
+  "PersonalData.putPersonCompensatoryMeasuresHandicapDeclaration": {
+    "effect": "irreversible",
+    "reason": "Changes compensatory measures of a disability declaration that staff manage."
+  },
+  "PersonalData.putResidencePhone": {
+    "effect": "irreversible",
+    "reason": "Changes a person's residence phone; the body's number and prefix cannot both be restored exactly from the person record.",
+    "notes": "It would be reversible if getPerson.residencePhone mapped exactly to phoneNumber with an empty prefix, but the spec does not confirm that."
+  },
+  "PersonalData.putStudentAteEmail": {
+    "effect": "irreversible",
+    "reason": "Changes a student's institutional e-mail address, which identifies the account."
+  },
+  "PersonalData.putStudentConsents": {
+    "effect": "irreversible",
+    "reason": "Changes a student's privacy consents, which are legally recorded."
+  },
+  "PersonalData.putStudentEmail": {
+    "effect": "irreversible",
+    "reason": "Changes a student's personal e-mail address, which the university uses to contact them.",
+    "notes": "It could be restored from getPerson.email into email, but the university may send mail to the changed address in the meantime, so it stays irreversible to be safe."
+  },
+  "PersonalData.putStudentTypeCode": {
+    "effect": "irreversible",
+    "reason": "Changes a student's typology code for an academic year."
+  },
+  "PersonalData.putTitles": {
+    "effect": "irreversible",
+    "reason": "Imports or updates a person's study titles in bulk."
+  },
+  "PersonalData.refreshToken": {
+    "effect": "irreversible",
+    "reason": "Extends the expiry of an applicant's DreamApply activation token and returns its URL; the previous expiry cannot be restored.",
+    "notes": "A token refresh could be argued benign, but this changes how long an applicant's activation link stays valid, which admissions staff rely on."
+  },
+  "PersonalData.updatePersonCompensatoryMeasuresHandicapDeclaration": {
+    "effect": "irreversible",
+    "reason": "Changes compensatory measures of a disability declaration that staff manage."
+  },
+  "Plans.postStudentPlan": {
+    "effect": "irreversible",
+    "reason": "Inserts a new study plan for a student, possibly approving it and cancelling the valid one."
+  },
+  "Questionnaires.putQuestionnaireComponentConfirm": {
+    "effect": "irreversible",
+    "reason": "Submits a completed questionnaire."
+  },
+  "Questionnaires.savePageAnswers": {
+    "effect": "irreversible",
+    "reason": "Saves the student's answers to a questionnaire page (e.g. course evaluation).",
+    "notes": "No operation deletes saved answers; evaluation questionnaires are often a prerequisite for exam booking."
+  },
+  "Questionnaires.setNewSurvey": {
+    "effect": "irreversible",
+    "reason": "Starts a new questionnaire compilation for the student.",
+    "notes": "Creates a compilation record that no operation of the API deletes."
+  },
+  "Questionnaires.setVisibility": {
+    "effect": "irreversible",
+    "reason": "Sets a visibility flag on a compiled questionnaire; the previous value cannot be read back.",
+    "notes": "Staff-only; no read exposes the flag, so it cannot be restored exactly."
+  },
+  "Records.importMinutes": {
+    "effect": "irreversible",
+    "reason": "Imports exam minutes (verbali) as a batch job, creating or updating official exam records.",
+    "notes": "TECHNICAL_USER only."
+  },
+  "Records.uploadMinutesBlob": {
+    "effect": "irreversible",
+    "reason": "Uploads the image of an exam minute and launches its acquisition.",
+    "notes": "TECHNICAL_USER only."
+  },
+  "Services.deleteAlias": {
+    "effect": "irreversible",
+    "reason": "Deletes a user's login alias."
+  },
+  "Services.getCodeFromId": {
+    "effect": "read",
+    "reason": "Translates codes into ids; sent as PUT but changes nothing."
+  },
+  "Services.insertUpdateAlias": {
+    "effect": "irreversible",
+    "reason": "Inserts or replaces a user's login alias, which affects how they sign in.",
+    "notes": "deleteAlias removes an alias, but cannot bring back a previous alias this call overwrote."
+  },
+  "Teachers.deleteLecturerSchedule": {
+    "effect": "irreversible",
+    "reason": "Deletes a lecturer's office hours with no way to restore them exactly."
+  },
+  "Teachers.postLecturerSchedule": {
+    "effect": "irreversible",
+    "reason": "Adds office hours to a lecturer, which students see and may act on.",
+    "notes": "deleteLecturerSchedule could remove them, but its filters are all optional and a call missing them may delete every slot of the lecturer."
+  },
+  "Teachers.putLecturer": {
+    "effect": "irreversible",
+    "reason": "Changes a lecturer's e-mail address, a contact detail others rely on.",
+    "notes": "A restore via getLecturer is conceivable, but a changed e-mail can misroute mail and may be synced to other systems."
+  },
+  "Teachers.putLecturerNotes": {
+    "effect": "irreversible",
+    "reason": "Inserts or overwrites a lecturer's public notes.",
+    "notes": "The result type (Esse3TeachersNotes) differs from the body (Esse3PutTeacherNotes), so no exact single-field restore exists."
+  },
+  "Teachers.putLecturerSchedule": {
+    "effect": "irreversible",
+    "reason": "Changes a lecturer's office hours, which students see and may act on."
+  },
+  "Transcript.deleteRecordBookRecognitionRow": {
+    "effect": "irreversible",
+    "reason": "Cancels a recognition on a record book row."
+  },
+  "Transcript.deleteRecordBookRow": {
+    "effect": "irreversible",
+    "reason": "Deletes a row from a student's record book."
+  },
+  "Transcript.patchRecordBookRow": {
+    "effect": "irreversible",
+    "reason": "Changes the mission state of a record book row.",
+    "notes": "Mission state transitions are staff-visible and may not be reversible; no guarantee the old state can be set back."
+  },
+  "Transcript.postRecordBookRow": {
+    "effect": "irreversible",
+    "reason": "Inserts an activity into a student's record book.",
+    "notes": "Returns no id, and deleting the row would not restore the record exactly."
+  },
+  "Transcript.putMassiveAttendance": {
+    "effect": "irreversible",
+    "reason": "Sets or removes attendance for a list of students, overwriting attendance detections."
+  },
+  "Transcript.putMassiveDetections": {
+    "effect": "irreversible",
+    "reason": "Records attendance detections for students."
+  },
+  "Transcript.putRecordBookRowRecognition": {
+    "effect": "irreversible",
+    "reason": "Records a recognition or validation of an activity with grade and date."
+  },
+  "Transcript.setManualAttendance": {
+    "effect": "irreversible",
+    "reason": "Sets or removes attendance on a record book row, recording teacher and date.",
+    "notes": "Removing attendance (P) does not erase the detection data or audit."
+  },
+  "TuitionFees.cancelInvoice": {
+    "effect": "irreversible",
+    "reason": "Cancels an invoice, which cannot be restored."
+  },
+  "TuitionFees.postAcquireExemptions": {
+    "effect": "irreversible",
+    "reason": "Imports fee exemptions, a batch job that changes students' fees."
+  },
+  "TuitionFees.postAcquireScholarshipOutcomeApplications": {
+    "effect": "irreversible",
+    "reason": "Imports the outcomes of regional scholarships, a batch job that changes students' fees."
+  },
+  "TuitionFees.postCollection": {
+    "effect": "irreversible",
+    "reason": "Records a payment collection."
+  },
+  "TuitionFees.postCreateStudentInvoice": {
+    "effect": "irreversible",
+    "reason": "Creates an invoice for a student, a payment request they see."
+  },
+  "TuitionFees.postInitPagoPaTransaction": {
+    "effect": "irreversible",
+    "reason": "Starts a pagoPA immediate-payment transaction for an invoice, recorded in Esse3."
+  },
+  "TuitionFees.postInvoiceAttachmentMetadata": {
+    "effect": "irreversible",
+    "reason": "Attaches a document to an invoice, which staff see; there is no matching delete."
+  },
+  "TuitionFees.postNotifyStatus": {
+    "effect": "irreversible",
+    "reason": "Updates the status of a payment transaction in Esse3."
+  },
+  "TuitionFees.postPayInvoice": {
+    "effect": "irreversible",
+    "reason": "Records the payment of an invoice."
+  },
+  "TuitionFees.putCancelPayment": {
+    "effect": "irreversible",
+    "reason": "Cancels a manually recorded payment."
+  },
+  "TuitionFees.putPrintPagoPANotice": {
+    "effect": "irreversible",
+    "reason": "Generates the pagoPA payment notice of an invoice, which may register the debt position with pagoPA.",
+    "notes": "Sent as PUT and documented only as returning the notice; it may be a pure render, but generating an IUV/debt position is a real change, so it is classified conservatively."
+  },
+  "TuitionFees.putRequestPaymentStatus": {
+    "effect": "irreversible",
+    "reason": "Asks pagoPA for the payment status and marks the invoice as paid if it was."
+  },
+  "TuitionFees.rejectExemption": {
+    "effect": "irreversible",
+    "reason": "Rejects a student's fee exemption, a decision staff and the student see."
+  },
+  "Users.postUserSignatureData": {
+    "effect": "irreversible",
+    "reason": "Imports users' signature data (batch update of user records)."
+  },
+  "Users.postUserSignatureDataCsv": {
+    "effect": "irreversible",
+    "reason": "Imports users' signature data from a CSV (batch update of user records)."
+  },
+  "Users.putCieCode": {
+    "effect": "irreversible",
+    "reason": "Associates CIE credentials with a user account, changing how the user logs in, with no undo."
+  },
+  "Users.putSpidCode": {
+    "effect": "irreversible",
+    "reason": "Associates SPID credentials with a user account, changing how the user logs in, with no undo."
+  }
+}

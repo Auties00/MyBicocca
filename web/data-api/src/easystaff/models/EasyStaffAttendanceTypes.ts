@@ -51,11 +51,11 @@ export function encodeEasyStaffAttendanceRecord(value: EasyStaffAttendanceRecord
   return {
     "codice": value.courseCode,
     "nome": value.courseName,
-    "Percentuale": value.attendancePercentage,
-    "Frequentate": value.lessonsAttended,
-    "OreFatte": value.totalHours,
-    "percentuale_conseguimento": value.requirementProgressPercentage,
-    "Stato": value.state,
+    ...(value.attendancePercentage !== 0 ? { "Percentuale": value.attendancePercentage } : {}),
+    ...(value.lessonsAttended !== 0 ? { "Frequentate": value.lessonsAttended } : {}),
+    ...(value.totalHours !== 0 ? { "OreFatte": value.totalHours } : {}),
+    ...(value.requirementProgressPercentage !== 0 ? { "percentuale_conseguimento": value.requirementProgressPercentage } : {}),
+    ...(value.state !== null ? { "Stato": value.state } : {}),
   };
 }
 
@@ -144,6 +144,6 @@ export function decodeEasyStaffCertifyAttendanceResult(json: unknown): EasyStaff
 export function encodeEasyStaffCertifyAttendanceResult(value: EasyStaffCertifyAttendanceResult): JsonObject {
   return {
     "result": value.result,
-    "message": value.message,
+    ...(value.message !== "" ? { "message": value.message } : {}),
   };
 }

@@ -19,7 +19,7 @@ import kotlin.reflect.KProperty
  * @property keepsCookies Whether the client stores the cookies servers set and sends them back.
  * @property caches Whether the client caches responses as their headers allow.
  * @property headers Headers sent with every request, unless the request sets them.
- * @property query Query parameters sent with every request.
+ * @property query Query parameters sent with every request, unless the request sets them.
  */
 class RestClientOptions(
     val timeoutMillis: Long? = null,
@@ -57,11 +57,18 @@ internal fun HttpClientConfig<*>.configure(json: Json, options: RestClientOption
     }
     if (options.keepsCookies) install(HttpCookies)
     if (options.caches) install(HttpCache)
-    if (options.headers.isNotEmpty() || options.query.isNotEmpty()) {
+    if (options.headers.isNotEmpty()) {
         install(DefaultRequest) {
             options.headers.forEach { (name, value) -> headers.append(name, value) }
-            options.query.forEach { (name, value) -> url.parameters.append(name, value) }
         }
+    }
+    // DefaultRequest ignores its query parameters for absolute URLs, which every request uses.
+    if (options.query.isNotEmpty()) {
+        install(createClientPlugin("DefaultQuery") {
+            onRequest { request, _ ->
+                options.query.forEach { (name, value) -> if (name !in request.url.parameters) request.url.parameters.append(name, value) }
+            }
+        })
     }
     if (settings.definitions.isNotEmpty()) {
         install(createClientPlugin("ClientSettings") {

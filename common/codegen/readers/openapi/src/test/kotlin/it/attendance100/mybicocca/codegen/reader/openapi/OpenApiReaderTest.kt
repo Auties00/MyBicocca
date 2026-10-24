@@ -2,6 +2,7 @@ package it.attendance100.mybicocca.codegen.reader.openapi
 
 import it.attendance100.mybicocca.codegen.core.ReaderContext
 import it.attendance100.mybicocca.codegen.model.ApiSpec
+import it.attendance100.mybicocca.codegen.model.Effect
 import it.attendance100.mybicocca.codegen.model.AuthRequirement
 import it.attendance100.mybicocca.codegen.model.Codec
 import it.attendance100.mybicocca.codegen.model.DefaultValue
@@ -35,6 +36,13 @@ class OpenApiReaderTest {
         assertEquals(listOf("Main", "Files"), spec.servers.map { it.name })
         assertEquals(mapOf("Authorization" to "Bearer {token}"), spec.authSchemes.single().headers)
         assertEquals(listOf("Items", "Files"), spec.modules.map { it.name })
+    }
+
+    @Test
+    fun `reads effects, which default to read for GETs`() {
+        val effects = spec.modules.flatMap { it.operations }.associate { it.name to it.effect }
+        assertEquals(Effect.READ, effects["getItem"])
+        assertEquals(Effect.BENIGN, effects["touchFile"])
     }
 
     @Test

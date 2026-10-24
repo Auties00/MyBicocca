@@ -1,0 +1,57 @@
+# The live tests of Moodle, run with a student's web service token: see "Live tests" in
+# common/codegen/README.md.
+account:
+  env: [MOODLE_TOKEN]
+  auth:
+    Token: { token: "{env:MOODLE_TOKEN}" }
+limits:
+  requestsPerSecond: 2
+  maxRequests: 800
+defaults:
+  # The user is the token's owner; other users' data needs permissions a student lacks.
+  userId: { from: Site.getSiteInfo, pick: userId }
+  courseId: { from: Course.getUsersCourses, pick: "[*].id" }
+operations:
+  Course.getCoursesByField:
+    # Without a filter, Moodle sends every course of the site, which takes longer than the timeout.
+    inputs:
+      field: id
+      value: { from: Course.getUsersCourses, pick: "[*].id" }
+  Calendar.getCalendarMonthlyView:
+    inputs:
+      year: "{today:yyyy}"
+      month: "{today:MM}"
+    # Days carry the time of the request.
+    volatile: true
+  Calendar.getCalendarUpcomingView:
+    volatile: true
+  User.getUserPreferences:
+    # Moodle notes when the preferences were last loaded.
+    volatile: true
+  Calendar.getActionEventsByTimesort:
+    # Naming a user, even the token's owner, needs a capability students lack.
+    inputs: { userId: null }
+    # Action links carry a session key of their own.
+    volatile: true
+  Grade.getGradeItems:
+    inputs: { userId: null }
+    # Courses may hide their grade report from students.
+    errors: [nopermissions]
+  Calendar.getActionEventsByCourse:
+    # Moodle refuses its own response for courses with some kinds of events.
+    errors: [invalidresponse]
+  Forum.getDiscussionPosts:
+    # Forums of hidden courses are listed, but their discussions can't be read.
+    errors: [requireloginerror]
+  Forum.getDiscussionPost:
+    errors: [requireloginerror]
+  Forum.getForumDiscussions:
+    errors: [requireloginerror]
+  Forum.canAddDiscussion:
+    errors: [requireloginerror]
+  Message.blockUser:
+    skip: Needs a user nobody minds being blocked for a moment; set one before enabling it.
+  Message.unblockUser:
+    skip: Only safe as the undo of Message.blockUser.
+  Mobile.getAutologinKey:
+    skip: Replaces the key of the student's app, and Moodle allows one every 6 minutes.

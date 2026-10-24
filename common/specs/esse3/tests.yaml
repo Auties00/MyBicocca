@@ -1,0 +1,30 @@
+# The live tests of Esse3, run with a student's account: see "Live tests" in common/codegen/README.md.
+account:
+  env: [ESSE3_USERNAME, ESSE3_PASSWORD]
+  roles: [STUDENT, AUTHENTICATED_USER, ANY]
+  headers:
+    Authorization: "Basic {base64:{env:ESSE3_USERNAME}:{env:ESSE3_PASSWORD}}"
+  anonymous: [Careers.getCareers]
+limits:
+  requestsPerSecond: 2
+  maxRequests: 2500
+operations:
+  Auth.logout:
+    skip: Ends the session the other cases use.
+  PersonalData.putMobilePhone:
+    skip: >-
+      Changes the student's phone number on their record, then sets it back; review it once
+      before enabling it, with the number to set for a moment.
+    inputs:
+      personId: { from: PersonalData.getPersonTitles, pick: personId }
+      body: { cellulare: "{env:ESSE3_TEMPORARY_PHONE}" }
+    undo:
+      restore:
+        read: PersonalData.getPerson
+        with: { personId: $args.personId }
+        pick: mobilePhone
+        into: body.mobilePhone
+    verify:
+      call: PersonalData.getPerson
+      with: { personId: $args.personId }
+      contains: { path: mobilePhone, value: $args.body.mobilePhone }

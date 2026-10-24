@@ -17,6 +17,7 @@ import it.attendance100.mybicocca.codegen.core.CodegenConfig
 import it.attendance100.mybicocca.codegen.core.Generator
 import it.attendance100.mybicocca.codegen.core.PluginRegistry
 import it.attendance100.mybicocca.codegen.core.SyncPlan
+import it.attendance100.mybicocca.codegen.core.TestPlanReport
 import java.nio.file.Path
 import kotlin.io.path.Path
 import kotlin.io.path.exists
@@ -35,6 +36,9 @@ private class Codegen : CoreCliktCommand(name = "codegen") {
     private val check by option("--check", help = "Write nothing; exit with status 1 if any generated file is out of date.")
         .flag()
 
+    private val plan by option("--plan", help = "Write nothing; print the live tests each API's tests.yaml plans, and the operations they skip.")
+        .flag()
+
     private val targets by option("--target", metavar = "<id>", help = "Only run this target (repeatable). Default: every configured target.")
         .choice(*PluginRegistry.targets.keys.sorted().toTypedArray())
         .multiple()
@@ -47,6 +51,12 @@ private class Codegen : CoreCliktCommand(name = "codegen") {
         "Generates the SDKs of the APIs whose spec directories are given, or of every API under ./$DEFAULT_SPECS_ROOT when none is."
 
     override fun run() {
+        if (plan) {
+            for (specDir in specDirs.ifEmpty { allSpecDirs() }) {
+                Generator(log = {}).plan(specDir)?.let { echo(TestPlanReport.text(it)) }
+            }
+            return
+        }
         val plans = Generator().run(specDirs.ifEmpty { allSpecDirs() }, targets.toSet().ifEmpty { null }, check)
         if (!check) return
 

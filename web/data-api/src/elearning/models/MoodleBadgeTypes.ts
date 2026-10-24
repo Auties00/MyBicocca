@@ -20,8 +20,8 @@ export function decodeMoodleUserBadgesResponse(json: unknown): MoodleUserBadgesR
 
 export function encodeMoodleUserBadgesResponse(value: MoodleUserBadgesResponse): JsonObject {
   return {
-    "badges": value.badges.map((item) => encodeMoodleUserBadge(item)),
-    "warnings": value.warnings.map((item) => encodeMoodleWarning(item)),
+    ...(value.badges.length > 0 ? { "badges": value.badges.map((item) => encodeMoodleUserBadge(item)) } : {}),
+    ...(value.warnings.length > 0 ? { "warnings": value.warnings.map((item) => encodeMoodleWarning(item)) } : {}),
   };
 }
 
@@ -151,44 +151,44 @@ export function decodeMoodleUserBadge(json: unknown): MoodleUserBadge | undefine
 
 export function encodeMoodleUserBadge(value: MoodleUserBadge): JsonObject {
   return {
-    "id": value.id,
-    "name": value.name,
-    "description": value.description,
-    "timecreated": value.timeCreated,
-    "timemodified": value.timeModified,
-    "usercreated": value.userCreated,
-    "usermodified": value.userModified,
-    "issuername": value.issuerName,
-    "issuerurl": value.issuerUrl,
-    "issuercontact": value.issuerContact,
-    "expiredate": value.expireDate,
-    "expireperiod": value.expirePeriod,
-    "type": value.type,
-    "courseid": value.courseId,
-    "message": value.message,
-    "messagesubject": value.messageSubject,
-    "attachment": value.attachment,
-    "notification": value.notification,
-    "nextcron": value.nextCron,
-    "status": value.status,
-    "issuedid": value.issuedId,
-    "uniquehash": value.uniqueHash,
-    "dateissued": value.dateIssued,
-    "dateexpire": value.dateExpire,
-    "visible": value.visible,
-    "recipientid": value.recipientId,
-    "recipientfullname": value.recipientFullName,
-    "email": value.email,
-    "version": value.version,
-    "language": value.language,
-    "imageauthorname": value.imageAuthorName,
-    "imageauthoremail": value.imageAuthorEmail,
-    "imageauthorurl": value.imageAuthorUrl,
-    "imagecaption": value.imageCaption,
-    "badgeurl": value.badgeUrl,
-    "endorsement": value.endorsement === null ? null : encodeMoodleBadgeEndorsement(value.endorsement),
-    "alignment": value.alignment.map((item) => encodeMoodleBadgeAlignment(item)),
-    "relatedbadges": value.relatedBadges.map((item) => encodeMoodleRelatedBadge(item)),
+    ...(value.id !== null ? { "id": value.id } : {}),
+    ...(value.name !== "" ? { "name": value.name } : {}),
+    ...(value.description !== "" ? { "description": value.description } : {}),
+    ...(value.timeCreated !== null ? { "timecreated": value.timeCreated } : {}),
+    ...(value.timeModified !== null ? { "timemodified": value.timeModified } : {}),
+    ...(value.userCreated !== null ? { "usercreated": value.userCreated } : {}),
+    ...(value.userModified !== null ? { "usermodified": value.userModified } : {}),
+    ...(value.issuerName !== "" ? { "issuername": value.issuerName } : {}),
+    ...(value.issuerUrl !== "" ? { "issuerurl": value.issuerUrl } : {}),
+    ...(value.issuerContact !== "" ? { "issuercontact": value.issuerContact } : {}),
+    ...(value.expireDate !== null ? { "expiredate": value.expireDate } : {}),
+    ...(value.expirePeriod !== null ? { "expireperiod": value.expirePeriod } : {}),
+    ...(value.type !== null ? { "type": value.type } : {}),
+    ...(value.courseId !== null ? { "courseid": value.courseId } : {}),
+    ...(value.message !== null ? { "message": value.message } : {}),
+    ...(value.messageSubject !== null ? { "messagesubject": value.messageSubject } : {}),
+    ...(value.attachment !== null ? { "attachment": value.attachment } : {}),
+    ...(value.notification !== null ? { "notification": value.notification } : {}),
+    ...(value.nextCron !== null ? { "nextcron": value.nextCron } : {}),
+    ...(value.status !== null ? { "status": value.status } : {}),
+    ...(value.issuedId !== null ? { "issuedid": value.issuedId } : {}),
+    ...(value.uniqueHash !== "" ? { "uniquehash": value.uniqueHash } : {}),
+    ...(value.dateIssued !== 0 ? { "dateissued": value.dateIssued } : {}),
+    ...(value.dateExpire !== 0 ? { "dateexpire": value.dateExpire } : {}),
+    ...(value.visible !== null ? { "visible": value.visible } : {}),
+    ...(value.recipientId !== 0 ? { "recipientid": value.recipientId } : {}),
+    ...(value.recipientFullName !== "" ? { "recipientfullname": value.recipientFullName } : {}),
+    ...(value.email !== null ? { "email": value.email } : {}),
+    ...(value.version !== null ? { "version": value.version } : {}),
+    ...(value.language !== null ? { "language": value.language } : {}),
+    ...(value.imageAuthorName !== null ? { "imageauthorname": value.imageAuthorName } : {}),
+    ...(value.imageAuthorEmail !== null ? { "imageauthoremail": value.imageAuthorEmail } : {}),
+    ...(value.imageAuthorUrl !== null ? { "imageauthorurl": value.imageAuthorUrl } : {}),
+    ...(value.imageCaption !== null ? { "imagecaption": value.imageCaption } : {}),
+    ...(value.badgeUrl !== "" ? { "badgeurl": value.badgeUrl } : {}),
+    ...(value.endorsement !== null ? { "endorsement": value.endorsement === null ? null : encodeMoodleBadgeEndorsement(value.endorsement) } : {}),
+    ...(value.alignment.length > 0 ? { "alignment": value.alignment.map((item) => encodeMoodleBadgeAlignment(item)) } : {}),
+    ...(value.relatedBadges.length > 0 ? { "relatedbadges": value.relatedBadges.map((item) => encodeMoodleRelatedBadge(item)) } : {}),
   };
 }
 
@@ -229,14 +229,14 @@ export function decodeMoodleBadgeEndorsement(json: unknown): MoodleBadgeEndorsem
 
 export function encodeMoodleBadgeEndorsement(value: MoodleBadgeEndorsement): JsonObject {
   return {
-    "id": value.id,
-    "badgeid": value.badgeId,
-    "issuername": value.issuerName,
-    "issuerurl": value.issuerUrl,
-    "issueremail": value.issuerEmail,
-    "claimid": value.claimId,
-    "claimcomment": value.claimComment,
-    "dateissued": value.dateIssued,
+    ...(value.id !== 0 ? { "id": value.id } : {}),
+    ...(value.badgeId !== 0 ? { "badgeid": value.badgeId } : {}),
+    ...(value.issuerName !== "" ? { "issuername": value.issuerName } : {}),
+    ...(value.issuerUrl !== "" ? { "issuerurl": value.issuerUrl } : {}),
+    ...(value.issuerEmail !== "" ? { "issueremail": value.issuerEmail } : {}),
+    ...(value.claimId !== "" ? { "claimid": value.claimId } : {}),
+    ...(value.claimComment !== "" ? { "claimcomment": value.claimComment } : {}),
+    ...(value.dateIssued !== 0 ? { "dateissued": value.dateIssued } : {}),
   };
 }
 
@@ -274,13 +274,13 @@ export function decodeMoodleBadgeAlignment(json: unknown): MoodleBadgeAlignment 
 
 export function encodeMoodleBadgeAlignment(value: MoodleBadgeAlignment): JsonObject {
   return {
-    "id": value.id,
-    "badgeid": value.badgeId,
-    "targetName": value.targetName,
-    "targetUrl": value.targetUrl,
-    "targetDescription": value.targetDescription,
-    "targetFramework": value.targetFramework,
-    "targetCode": value.targetCode,
+    ...(value.id !== null ? { "id": value.id } : {}),
+    ...(value.badgeId !== null ? { "badgeid": value.badgeId } : {}),
+    ...(value.targetName !== null ? { "targetName": value.targetName } : {}),
+    ...(value.targetUrl !== null ? { "targetUrl": value.targetUrl } : {}),
+    ...(value.targetDescription !== null ? { "targetDescription": value.targetDescription } : {}),
+    ...(value.targetFramework !== null ? { "targetFramework": value.targetFramework } : {}),
+    ...(value.targetCode !== null ? { "targetCode": value.targetCode } : {}),
   };
 }
 
@@ -312,11 +312,11 @@ export function decodeMoodleRelatedBadge(json: unknown): MoodleRelatedBadge | un
 
 export function encodeMoodleRelatedBadge(value: MoodleRelatedBadge): JsonObject {
   return {
-    "id": value.id,
-    "name": value.name,
-    "version": value.version,
-    "language": value.language,
-    "type": value.type,
+    ...(value.id !== 0 ? { "id": value.id } : {}),
+    ...(value.name !== "" ? { "name": value.name } : {}),
+    ...(value.version !== null ? { "version": value.version } : {}),
+    ...(value.language !== null ? { "language": value.language } : {}),
+    ...(value.type !== null ? { "type": value.type } : {}),
   };
 }
 
@@ -346,9 +346,9 @@ export function decodeMoodleWarning(json: unknown): MoodleWarning | undefined {
 
 export function encodeMoodleWarning(value: MoodleWarning): JsonObject {
   return {
-    "item": value.item,
-    "itemid": value.itemId,
-    "warningcode": value.warningCode,
-    "message": value.message,
+    ...(value.item !== null ? { "item": value.item } : {}),
+    ...(value.itemId !== null ? { "itemid": value.itemId } : {}),
+    ...(value.warningCode !== "" ? { "warningcode": value.warningCode } : {}),
+    ...(value.message !== "" ? { "message": value.message } : {}),
   };
 }

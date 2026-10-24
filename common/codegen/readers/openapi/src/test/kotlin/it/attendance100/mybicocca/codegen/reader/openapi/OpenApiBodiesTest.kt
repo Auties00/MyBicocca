@@ -34,6 +34,7 @@ class OpenApiBodiesTest {
             |    post:
             |      tags: [Files]
             |      operationId: upload
+            |      x-mb-effect: irreversible
             |      requestBody:
             |        content:
             |          multipart/form-data:

@@ -36,9 +36,15 @@ public struct MoodleCalendarEventsResponse: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(events, forKey: .events)
-        try container.encode(firstId, forKey: .firstId)
-        try container.encode(lastId, forKey: .lastId)
+        if !events.isEmpty {
+            try container.encode(events, forKey: .events)
+        }
+        if firstId != 0 {
+            try container.encode(firstId, forKey: .firstId)
+        }
+        if lastId != 0 {
+            try container.encode(lastId, forKey: .lastId)
+        }
     }
 }
 
@@ -316,50 +322,136 @@ public struct MoodleCalendarEvent: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(id, forKey: .id)
-        try container.encode(name, forKey: .name)
-        try container.encode(description, forKey: .description)
-        try container.encode(descriptionFormat, forKey: .descriptionFormat)
-        try container.encode(location, forKey: .location)
-        try container.encode(categoryId, forKey: .categoryId)
-        try container.encode(groupId, forKey: .groupId)
-        try container.encode(userId, forKey: .userId)
-        try container.encode(repeatId, forKey: .repeatId)
-        try container.encode(eventCount, forKey: .eventCount)
-        try container.encode(component, forKey: .component)
-        try container.encode(moduleName, forKey: .moduleName)
-        try container.encode(activityName, forKey: .activityName)
-        try container.encode(activityStr, forKey: .activityStr)
-        try container.encode(instance, forKey: .instance)
-        try container.encode(eventType, forKey: .eventType)
-        try container.encode(timeStart, forKey: .timeStart)
-        try container.encode(timeDuration, forKey: .timeDuration)
-        try container.encode(timeSort, forKey: .timeSort)
-        try container.encode(timeUserMidnight, forKey: .timeUserMidnight)
-        try container.encode(visible, forKey: .visible)
-        try container.encode(timeModified, forKey: .timeModified)
-        try container.encode(overdue, forKey: .overdue)
+        if id != 0 {
+            try container.encode(id, forKey: .id)
+        }
+        if name != "" {
+            try container.encode(name, forKey: .name)
+        }
+        if description != nil {
+            try container.encode(description, forKey: .description)
+        }
+        if descriptionFormat != 1 {
+            try container.encode(descriptionFormat, forKey: .descriptionFormat)
+        }
+        if location != nil {
+            try container.encode(location, forKey: .location)
+        }
+        if categoryId != nil {
+            try container.encode(categoryId, forKey: .categoryId)
+        }
+        if groupId != nil {
+            try container.encode(groupId, forKey: .groupId)
+        }
+        if userId != nil {
+            try container.encode(userId, forKey: .userId)
+        }
+        if repeatId != nil {
+            try container.encode(repeatId, forKey: .repeatId)
+        }
+        if eventCount != nil {
+            try container.encode(eventCount, forKey: .eventCount)
+        }
+        if component != nil {
+            try container.encode(component, forKey: .component)
+        }
+        if moduleName != nil {
+            try container.encode(moduleName, forKey: .moduleName)
+        }
+        if activityName != nil {
+            try container.encode(activityName, forKey: .activityName)
+        }
+        if activityStr != nil {
+            try container.encode(activityStr, forKey: .activityStr)
+        }
+        if instance != nil {
+            try container.encode(instance, forKey: .instance)
+        }
+        if eventType != "" {
+            try container.encode(eventType, forKey: .eventType)
+        }
+        if timeStart != 0 {
+            try container.encode(timeStart, forKey: .timeStart)
+        }
+        if timeDuration != 0 {
+            try container.encode(timeDuration, forKey: .timeDuration)
+        }
+        if timeSort != 0 {
+            try container.encode(timeSort, forKey: .timeSort)
+        }
+        if timeUserMidnight != 0 {
+            try container.encode(timeUserMidnight, forKey: .timeUserMidnight)
+        }
+        if visible != 0 {
+            try container.encode(visible, forKey: .visible)
+        }
+        if timeModified != 0 {
+            try container.encode(timeModified, forKey: .timeModified)
+        }
+        if overdue != nil {
+            try container.encode(overdue, forKey: .overdue)
+        }
         try container.encode(icon, forKey: .icon)
-        try container.encode(category, forKey: .category)
-        try container.encode(course, forKey: .course)
-        try container.encode(subscription, forKey: .subscription)
-        try container.encode(canEdit, forKey: .canEdit)
-        try container.encode(canDelete, forKey: .canDelete)
-        try container.encode(deleteUrl, forKey: .deleteUrl)
-        try container.encode(editUrl, forKey: .editUrl)
-        try container.encode(viewUrl, forKey: .viewUrl)
-        try container.encode(formattedTime, forKey: .formattedTime)
-        try container.encode(formattedLocation, forKey: .formattedLocation)
-        try container.encode(isActionEvent, forKey: .isActionEvent)
-        try container.encode(isCourseEvent, forKey: .isCourseEvent)
-        try container.encode(isCategoryEvent, forKey: .isCategoryEvent)
-        try container.encode(groupName, forKey: .groupName)
-        try container.encode(normalisedEventType, forKey: .normalisedEventType)
-        try container.encode(normalisedEventTypeText, forKey: .normalisedEventTypeText)
-        try container.encode(action, forKey: .action)
-        try container.encode(purpose, forKey: .purpose)
-        try container.encode(branded, forKey: .branded)
-        try container.encode(url, forKey: .url)
+        if category != nil {
+            try container.encode(category, forKey: .category)
+        }
+        if course != nil {
+            try container.encode(course, forKey: .course)
+        }
+        if subscription != nil {
+            try container.encode(subscription, forKey: .subscription)
+        }
+        if canEdit != false {
+            try container.encode(canEdit, forKey: .canEdit)
+        }
+        if canDelete != false {
+            try container.encode(canDelete, forKey: .canDelete)
+        }
+        if deleteUrl != "" {
+            try container.encode(deleteUrl, forKey: .deleteUrl)
+        }
+        if editUrl != "" {
+            try container.encode(editUrl, forKey: .editUrl)
+        }
+        if viewUrl != "" {
+            try container.encode(viewUrl, forKey: .viewUrl)
+        }
+        if formattedTime != "" {
+            try container.encode(formattedTime, forKey: .formattedTime)
+        }
+        if formattedLocation != "" {
+            try container.encode(formattedLocation, forKey: .formattedLocation)
+        }
+        if isActionEvent != false {
+            try container.encode(isActionEvent, forKey: .isActionEvent)
+        }
+        if isCourseEvent != false {
+            try container.encode(isCourseEvent, forKey: .isCourseEvent)
+        }
+        if isCategoryEvent != false {
+            try container.encode(isCategoryEvent, forKey: .isCategoryEvent)
+        }
+        if groupName != nil {
+            try container.encode(groupName, forKey: .groupName)
+        }
+        if normalisedEventType != "" {
+            try container.encode(normalisedEventType, forKey: .normalisedEventType)
+        }
+        if normalisedEventTypeText != "" {
+            try container.encode(normalisedEventTypeText, forKey: .normalisedEventTypeText)
+        }
+        if action != nil {
+            try container.encode(action, forKey: .action)
+        }
+        if purpose != "" {
+            try container.encode(purpose, forKey: .purpose)
+        }
+        if branded != nil {
+            try container.encode(branded, forKey: .branded)
+        }
+        if url != "" {
+            try container.encode(url, forKey: .url)
+        }
     }
 }
 
@@ -408,11 +500,21 @@ public struct MoodleEventIcon: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(key, forKey: .key)
-        try container.encode(component, forKey: .component)
-        try container.encode(altText, forKey: .altText)
-        try container.encode(iconUrl, forKey: .iconUrl)
-        try container.encode(iconClass, forKey: .iconClass)
+        if key != "" {
+            try container.encode(key, forKey: .key)
+        }
+        if component != "" {
+            try container.encode(component, forKey: .component)
+        }
+        if altText != "" {
+            try container.encode(altText, forKey: .altText)
+        }
+        if iconUrl != "" {
+            try container.encode(iconUrl, forKey: .iconUrl)
+        }
+        if iconClass != "" {
+            try container.encode(iconClass, forKey: .iconClass)
+        }
     }
 }
 
@@ -497,17 +599,39 @@ public struct MoodleEventCategory: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(id, forKey: .id)
-        try container.encode(name, forKey: .name)
-        try container.encode(idNumber, forKey: .idNumber)
-        try container.encode(description, forKey: .description)
-        try container.encode(parent, forKey: .parent)
-        try container.encode(courseCount, forKey: .courseCount)
-        try container.encode(visible, forKey: .visible)
-        try container.encode(timeModified, forKey: .timeModified)
-        try container.encode(depth, forKey: .depth)
-        try container.encode(nestedName, forKey: .nestedName)
-        try container.encode(url, forKey: .url)
+        if id != 0 {
+            try container.encode(id, forKey: .id)
+        }
+        if name != "" {
+            try container.encode(name, forKey: .name)
+        }
+        if idNumber != "" {
+            try container.encode(idNumber, forKey: .idNumber)
+        }
+        if description != nil {
+            try container.encode(description, forKey: .description)
+        }
+        if parent != 0 {
+            try container.encode(parent, forKey: .parent)
+        }
+        if courseCount != 0 {
+            try container.encode(courseCount, forKey: .courseCount)
+        }
+        if visible != 0 {
+            try container.encode(visible, forKey: .visible)
+        }
+        if timeModified != 0 {
+            try container.encode(timeModified, forKey: .timeModified)
+        }
+        if depth != 0 {
+            try container.encode(depth, forKey: .depth)
+        }
+        if nestedName != "" {
+            try container.encode(nestedName, forKey: .nestedName)
+        }
+        if url != "" {
+            try container.encode(url, forKey: .url)
+        }
     }
 }
 
@@ -658,28 +782,72 @@ public struct MoodleEventCourse: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(id, forKey: .id)
-        try container.encode(fullName, forKey: .fullName)
-        try container.encode(shortName, forKey: .shortName)
-        try container.encode(idNumber, forKey: .idNumber)
-        try container.encode(summary, forKey: .summary)
-        try container.encode(summaryFormat, forKey: .summaryFormat)
-        try container.encode(startDate, forKey: .startDate)
-        try container.encode(endDate, forKey: .endDate)
-        try container.encode(visible, forKey: .visible)
-        try container.encode(showActivityDates, forKey: .showActivityDates)
-        try container.encode(showCompletionConditions, forKey: .showCompletionConditions)
-        try container.encode(pdfExportFont, forKey: .pdfExportFont)
-        try container.encode(fullNameDisplay, forKey: .fullNameDisplay)
-        try container.encode(viewUrl, forKey: .viewUrl)
-        try container.encode(courseImage, forKey: .courseImage)
-        try container.encode(progress, forKey: .progress)
-        try container.encode(hasProgress, forKey: .hasProgress)
-        try container.encode(isFavourite, forKey: .isFavourite)
-        try container.encode(hidden, forKey: .hidden)
-        try container.encode(timeAccess, forKey: .timeAccess)
-        try container.encode(showShortName, forKey: .showShortName)
-        try container.encode(courseCategory, forKey: .courseCategory)
+        if id != 0 {
+            try container.encode(id, forKey: .id)
+        }
+        if fullName != "" {
+            try container.encode(fullName, forKey: .fullName)
+        }
+        if shortName != "" {
+            try container.encode(shortName, forKey: .shortName)
+        }
+        if idNumber != "" {
+            try container.encode(idNumber, forKey: .idNumber)
+        }
+        if summary != "" {
+            try container.encode(summary, forKey: .summary)
+        }
+        if summaryFormat != 0 {
+            try container.encode(summaryFormat, forKey: .summaryFormat)
+        }
+        if startDate != 0 {
+            try container.encode(startDate, forKey: .startDate)
+        }
+        if endDate != 0 {
+            try container.encode(endDate, forKey: .endDate)
+        }
+        if visible != false {
+            try container.encode(visible, forKey: .visible)
+        }
+        if showActivityDates != false {
+            try container.encode(showActivityDates, forKey: .showActivityDates)
+        }
+        if showCompletionConditions != false {
+            try container.encode(showCompletionConditions, forKey: .showCompletionConditions)
+        }
+        if pdfExportFont != "" {
+            try container.encode(pdfExportFont, forKey: .pdfExportFont)
+        }
+        if fullNameDisplay != "" {
+            try container.encode(fullNameDisplay, forKey: .fullNameDisplay)
+        }
+        if viewUrl != "" {
+            try container.encode(viewUrl, forKey: .viewUrl)
+        }
+        if courseImage != "" {
+            try container.encode(courseImage, forKey: .courseImage)
+        }
+        if progress != nil {
+            try container.encode(progress, forKey: .progress)
+        }
+        if hasProgress != false {
+            try container.encode(hasProgress, forKey: .hasProgress)
+        }
+        if isFavourite != false {
+            try container.encode(isFavourite, forKey: .isFavourite)
+        }
+        if hidden != false {
+            try container.encode(hidden, forKey: .hidden)
+        }
+        if timeAccess != nil {
+            try container.encode(timeAccess, forKey: .timeAccess)
+        }
+        if showShortName != false {
+            try container.encode(showShortName, forKey: .showShortName)
+        }
+        if courseCategory != "" {
+            try container.encode(courseCategory, forKey: .courseCategory)
+        }
     }
 }
 
@@ -716,9 +884,15 @@ public struct MoodleEventSubscription: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(displayEventSource, forKey: .displayEventSource)
-        try container.encode(subscriptionName, forKey: .subscriptionName)
-        try container.encode(subscriptionUrl, forKey: .subscriptionUrl)
+        if displayEventSource != false {
+            try container.encode(displayEventSource, forKey: .displayEventSource)
+        }
+        if subscriptionName != nil {
+            try container.encode(subscriptionName, forKey: .subscriptionName)
+        }
+        if subscriptionUrl != nil {
+            try container.encode(subscriptionUrl, forKey: .subscriptionUrl)
+        }
     }
 }
 
@@ -767,11 +941,21 @@ public struct MoodleEventAction: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(name, forKey: .name)
-        try container.encode(url, forKey: .url)
-        try container.encode(itemCount, forKey: .itemCount)
-        try container.encode(actionable, forKey: .actionable)
-        try container.encode(showItemCount, forKey: .showItemCount)
+        if name != "" {
+            try container.encode(name, forKey: .name)
+        }
+        if url != "" {
+            try container.encode(url, forKey: .url)
+        }
+        if itemCount != 0 {
+            try container.encode(itemCount, forKey: .itemCount)
+        }
+        if actionable != false {
+            try container.encode(actionable, forKey: .actionable)
+        }
+        if showItemCount != false {
+            try container.encode(showItemCount, forKey: .showItemCount)
+        }
     }
 }
 
@@ -931,30 +1115,72 @@ public struct MoodleCalendarMonth: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(url, forKey: .url)
-        try container.encode(courseId, forKey: .courseId)
-        try container.encode(categoryId, forKey: .categoryId)
-        try container.encode(filterSelector, forKey: .filterSelector)
-        try container.encode(weeks, forKey: .weeks)
-        try container.encode(dayNames, forKey: .dayNames)
-        try container.encode(view, forKey: .view)
+        if url != "" {
+            try container.encode(url, forKey: .url)
+        }
+        if courseId != 0 {
+            try container.encode(courseId, forKey: .courseId)
+        }
+        if categoryId != nil {
+            try container.encode(categoryId, forKey: .categoryId)
+        }
+        if filterSelector != nil {
+            try container.encode(filterSelector, forKey: .filterSelector)
+        }
+        if !weeks.isEmpty {
+            try container.encode(weeks, forKey: .weeks)
+        }
+        if !dayNames.isEmpty {
+            try container.encode(dayNames, forKey: .dayNames)
+        }
+        if view != "" {
+            try container.encode(view, forKey: .view)
+        }
         try container.encode(date, forKey: .date)
-        try container.encode(periodName, forKey: .periodName)
-        try container.encode(includeNavigation, forKey: .includeNavigation)
-        try container.encode(initialEventsLoaded, forKey: .initialEventsLoaded)
+        if periodName != "" {
+            try container.encode(periodName, forKey: .periodName)
+        }
+        if includeNavigation != false {
+            try container.encode(includeNavigation, forKey: .includeNavigation)
+        }
+        if initialEventsLoaded != false {
+            try container.encode(initialEventsLoaded, forKey: .initialEventsLoaded)
+        }
         try container.encode(previousPeriod, forKey: .previousPeriod)
-        try container.encode(previousPeriodLink, forKey: .previousPeriodLink)
-        try container.encode(previousPeriodName, forKey: .previousPeriodName)
+        if previousPeriodLink != "" {
+            try container.encode(previousPeriodLink, forKey: .previousPeriodLink)
+        }
+        if previousPeriodName != "" {
+            try container.encode(previousPeriodName, forKey: .previousPeriodName)
+        }
         try container.encode(nextPeriod, forKey: .nextPeriod)
-        try container.encode(nextPeriodName, forKey: .nextPeriodName)
-        try container.encode(nextPeriodLink, forKey: .nextPeriodLink)
-        try container.encode(leftArrow, forKey: .leftArrow)
-        try container.encode(rightArrow, forKey: .rightArrow)
-        try container.encode(defaultEventContext, forKey: .defaultEventContext)
-        try container.encode(calendarInstanceId, forKey: .calendarInstanceId)
-        try container.encode(viewingMonth, forKey: .viewingMonth)
-        try container.encode(showViewSelector, forKey: .showViewSelector)
-        try container.encode(viewingInBlock, forKey: .viewingInBlock)
+        if nextPeriodName != "" {
+            try container.encode(nextPeriodName, forKey: .nextPeriodName)
+        }
+        if nextPeriodLink != "" {
+            try container.encode(nextPeriodLink, forKey: .nextPeriodLink)
+        }
+        if leftArrow != "" {
+            try container.encode(leftArrow, forKey: .leftArrow)
+        }
+        if rightArrow != "" {
+            try container.encode(rightArrow, forKey: .rightArrow)
+        }
+        if defaultEventContext != 0 {
+            try container.encode(defaultEventContext, forKey: .defaultEventContext)
+        }
+        if calendarInstanceId != 0 {
+            try container.encode(calendarInstanceId, forKey: .calendarInstanceId)
+        }
+        if viewingMonth != false {
+            try container.encode(viewingMonth, forKey: .viewingMonth)
+        }
+        if showViewSelector != false {
+            try container.encode(showViewSelector, forKey: .showViewSelector)
+        }
+        if viewingInBlock != false {
+            try container.encode(viewingInBlock, forKey: .viewingInBlock)
+        }
     }
 }
 
@@ -991,9 +1217,15 @@ public struct MoodleCalendarWeek: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(prePadding, forKey: .prePadding)
-        try container.encode(postPadding, forKey: .postPadding)
-        try container.encode(days, forKey: .days)
+        if !prePadding.isEmpty {
+            try container.encode(prePadding, forKey: .prePadding)
+        }
+        if !postPadding.isEmpty {
+            try container.encode(postPadding, forKey: .postPadding)
+        }
+        if !days.isEmpty {
+            try container.encode(days, forKey: .days)
+        }
     }
 }
 
@@ -1138,27 +1370,69 @@ public struct MoodleCalendarDay: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(seconds, forKey: .seconds)
-        try container.encode(minutes, forKey: .minutes)
-        try container.encode(hours, forKey: .hours)
-        try container.encode(dayOfMonth, forKey: .dayOfMonth)
-        try container.encode(dayOfWeek, forKey: .dayOfWeek)
-        try container.encode(year, forKey: .year)
-        try container.encode(dayOfYear, forKey: .dayOfYear)
-        try container.encode(isToday, forKey: .isToday)
-        try container.encode(isWeekend, forKey: .isWeekend)
-        try container.encode(timestamp, forKey: .timestamp)
-        try container.encode(newEventTimestamp, forKey: .newEventTimestamp)
-        try container.encode(viewDayLink, forKey: .viewDayLink)
-        try container.encode(viewDayLinkTitle, forKey: .viewDayLinkTitle)
-        try container.encode(events, forKey: .events)
-        try container.encode(hasEvents, forKey: .hasEvents)
-        try container.encode(calendarEventTypes, forKey: .calendarEventTypes)
-        try container.encode(previousPeriod, forKey: .previousPeriod)
-        try container.encode(nextPeriod, forKey: .nextPeriod)
-        try container.encode(hasLastDayOfEvent, forKey: .hasLastDayOfEvent)
-        try container.encode(popoverTitle, forKey: .popoverTitle)
-        try container.encode(dayTitle, forKey: .dayTitle)
+        if seconds != 0 {
+            try container.encode(seconds, forKey: .seconds)
+        }
+        if minutes != 0 {
+            try container.encode(minutes, forKey: .minutes)
+        }
+        if hours != 0 {
+            try container.encode(hours, forKey: .hours)
+        }
+        if dayOfMonth != 0 {
+            try container.encode(dayOfMonth, forKey: .dayOfMonth)
+        }
+        if dayOfWeek != 0 {
+            try container.encode(dayOfWeek, forKey: .dayOfWeek)
+        }
+        if year != 0 {
+            try container.encode(year, forKey: .year)
+        }
+        if dayOfYear != 0 {
+            try container.encode(dayOfYear, forKey: .dayOfYear)
+        }
+        if isToday != false {
+            try container.encode(isToday, forKey: .isToday)
+        }
+        if isWeekend != false {
+            try container.encode(isWeekend, forKey: .isWeekend)
+        }
+        if timestamp != 0 {
+            try container.encode(timestamp, forKey: .timestamp)
+        }
+        if newEventTimestamp != 0 {
+            try container.encode(newEventTimestamp, forKey: .newEventTimestamp)
+        }
+        if viewDayLink != nil {
+            try container.encode(viewDayLink, forKey: .viewDayLink)
+        }
+        if viewDayLinkTitle != nil {
+            try container.encode(viewDayLinkTitle, forKey: .viewDayLinkTitle)
+        }
+        if !events.isEmpty {
+            try container.encode(events, forKey: .events)
+        }
+        if hasEvents != false {
+            try container.encode(hasEvents, forKey: .hasEvents)
+        }
+        if !calendarEventTypes.isEmpty {
+            try container.encode(calendarEventTypes, forKey: .calendarEventTypes)
+        }
+        if previousPeriod != 0 {
+            try container.encode(previousPeriod, forKey: .previousPeriod)
+        }
+        if nextPeriod != 0 {
+            try container.encode(nextPeriod, forKey: .nextPeriod)
+        }
+        if hasLastDayOfEvent != false {
+            try container.encode(hasLastDayOfEvent, forKey: .hasLastDayOfEvent)
+        }
+        if popoverTitle != "" {
+            try container.encode(popoverTitle, forKey: .popoverTitle)
+        }
+        if dayTitle != "" {
+            try container.encode(dayTitle, forKey: .dayTitle)
+        }
     }
 }
 
@@ -1478,57 +1752,157 @@ public struct MoodleCalendarDayEvent: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(id, forKey: .id)
-        try container.encode(name, forKey: .name)
-        try container.encode(description, forKey: .description)
-        try container.encode(descriptionFormat, forKey: .descriptionFormat)
-        try container.encode(location, forKey: .location)
-        try container.encode(categoryId, forKey: .categoryId)
-        try container.encode(groupId, forKey: .groupId)
-        try container.encode(userId, forKey: .userId)
-        try container.encode(repeatId, forKey: .repeatId)
-        try container.encode(eventCount, forKey: .eventCount)
-        try container.encode(component, forKey: .component)
-        try container.encode(moduleName, forKey: .moduleName)
-        try container.encode(activityName, forKey: .activityName)
-        try container.encode(activityStr, forKey: .activityStr)
-        try container.encode(instance, forKey: .instance)
-        try container.encode(eventType, forKey: .eventType)
-        try container.encode(timeStart, forKey: .timeStart)
-        try container.encode(timeDuration, forKey: .timeDuration)
-        try container.encode(timeSort, forKey: .timeSort)
-        try container.encode(timeUserMidnight, forKey: .timeUserMidnight)
-        try container.encode(visible, forKey: .visible)
-        try container.encode(timeModified, forKey: .timeModified)
-        try container.encode(overdue, forKey: .overdue)
+        if id != 0 {
+            try container.encode(id, forKey: .id)
+        }
+        if name != "" {
+            try container.encode(name, forKey: .name)
+        }
+        if description != nil {
+            try container.encode(description, forKey: .description)
+        }
+        if descriptionFormat != 1 {
+            try container.encode(descriptionFormat, forKey: .descriptionFormat)
+        }
+        if location != nil {
+            try container.encode(location, forKey: .location)
+        }
+        if categoryId != nil {
+            try container.encode(categoryId, forKey: .categoryId)
+        }
+        if groupId != nil {
+            try container.encode(groupId, forKey: .groupId)
+        }
+        if userId != nil {
+            try container.encode(userId, forKey: .userId)
+        }
+        if repeatId != nil {
+            try container.encode(repeatId, forKey: .repeatId)
+        }
+        if eventCount != nil {
+            try container.encode(eventCount, forKey: .eventCount)
+        }
+        if component != nil {
+            try container.encode(component, forKey: .component)
+        }
+        if moduleName != nil {
+            try container.encode(moduleName, forKey: .moduleName)
+        }
+        if activityName != nil {
+            try container.encode(activityName, forKey: .activityName)
+        }
+        if activityStr != nil {
+            try container.encode(activityStr, forKey: .activityStr)
+        }
+        if instance != nil {
+            try container.encode(instance, forKey: .instance)
+        }
+        if eventType != "" {
+            try container.encode(eventType, forKey: .eventType)
+        }
+        if timeStart != 0 {
+            try container.encode(timeStart, forKey: .timeStart)
+        }
+        if timeDuration != 0 {
+            try container.encode(timeDuration, forKey: .timeDuration)
+        }
+        if timeSort != 0 {
+            try container.encode(timeSort, forKey: .timeSort)
+        }
+        if timeUserMidnight != 0 {
+            try container.encode(timeUserMidnight, forKey: .timeUserMidnight)
+        }
+        if visible != 0 {
+            try container.encode(visible, forKey: .visible)
+        }
+        if timeModified != 0 {
+            try container.encode(timeModified, forKey: .timeModified)
+        }
+        if overdue != nil {
+            try container.encode(overdue, forKey: .overdue)
+        }
         try container.encode(icon, forKey: .icon)
-        try container.encode(category, forKey: .category)
-        try container.encode(course, forKey: .course)
-        try container.encode(subscription, forKey: .subscription)
-        try container.encode(canEdit, forKey: .canEdit)
-        try container.encode(canDelete, forKey: .canDelete)
-        try container.encode(deleteUrl, forKey: .deleteUrl)
-        try container.encode(editUrl, forKey: .editUrl)
-        try container.encode(viewUrl, forKey: .viewUrl)
-        try container.encode(formattedTime, forKey: .formattedTime)
-        try container.encode(formattedLocation, forKey: .formattedLocation)
-        try container.encode(isActionEvent, forKey: .isActionEvent)
-        try container.encode(isCourseEvent, forKey: .isCourseEvent)
-        try container.encode(isCategoryEvent, forKey: .isCategoryEvent)
-        try container.encode(groupName, forKey: .groupName)
-        try container.encode(normalisedEventType, forKey: .normalisedEventType)
-        try container.encode(normalisedEventTypeText, forKey: .normalisedEventTypeText)
-        try container.encode(action, forKey: .action)
-        try container.encode(purpose, forKey: .purpose)
-        try container.encode(branded, forKey: .branded)
-        try container.encode(url, forKey: .url)
-        try container.encode(isLastDay, forKey: .isLastDay)
-        try container.encode(popupName, forKey: .popupName)
-        try container.encode(minDayTimestamp, forKey: .minDayTimestamp)
-        try container.encode(minDayError, forKey: .minDayError)
-        try container.encode(maxDayTimestamp, forKey: .maxDayTimestamp)
-        try container.encode(maxDayError, forKey: .maxDayError)
-        try container.encode(draggable, forKey: .draggable)
+        if category != nil {
+            try container.encode(category, forKey: .category)
+        }
+        if course != nil {
+            try container.encode(course, forKey: .course)
+        }
+        if subscription != nil {
+            try container.encode(subscription, forKey: .subscription)
+        }
+        if canEdit != false {
+            try container.encode(canEdit, forKey: .canEdit)
+        }
+        if canDelete != false {
+            try container.encode(canDelete, forKey: .canDelete)
+        }
+        if deleteUrl != "" {
+            try container.encode(deleteUrl, forKey: .deleteUrl)
+        }
+        if editUrl != "" {
+            try container.encode(editUrl, forKey: .editUrl)
+        }
+        if viewUrl != "" {
+            try container.encode(viewUrl, forKey: .viewUrl)
+        }
+        if formattedTime != "" {
+            try container.encode(formattedTime, forKey: .formattedTime)
+        }
+        if formattedLocation != "" {
+            try container.encode(formattedLocation, forKey: .formattedLocation)
+        }
+        if isActionEvent != false {
+            try container.encode(isActionEvent, forKey: .isActionEvent)
+        }
+        if isCourseEvent != false {
+            try container.encode(isCourseEvent, forKey: .isCourseEvent)
+        }
+        if isCategoryEvent != false {
+            try container.encode(isCategoryEvent, forKey: .isCategoryEvent)
+        }
+        if groupName != nil {
+            try container.encode(groupName, forKey: .groupName)
+        }
+        if normalisedEventType != "" {
+            try container.encode(normalisedEventType, forKey: .normalisedEventType)
+        }
+        if normalisedEventTypeText != "" {
+            try container.encode(normalisedEventTypeText, forKey: .normalisedEventTypeText)
+        }
+        if action != nil {
+            try container.encode(action, forKey: .action)
+        }
+        if purpose != "" {
+            try container.encode(purpose, forKey: .purpose)
+        }
+        if branded != nil {
+            try container.encode(branded, forKey: .branded)
+        }
+        if url != "" {
+            try container.encode(url, forKey: .url)
+        }
+        if isLastDay != false {
+            try container.encode(isLastDay, forKey: .isLastDay)
+        }
+        if popupName != "" {
+            try container.encode(popupName, forKey: .popupName)
+        }
+        if minDayTimestamp != nil {
+            try container.encode(minDayTimestamp, forKey: .minDayTimestamp)
+        }
+        if minDayError != nil {
+            try container.encode(minDayError, forKey: .minDayError)
+        }
+        if maxDayTimestamp != nil {
+            try container.encode(maxDayTimestamp, forKey: .maxDayTimestamp)
+        }
+        if maxDayError != nil {
+            try container.encode(maxDayError, forKey: .maxDayError)
+        }
+        if draggable != false {
+            try container.encode(draggable, forKey: .draggable)
+        }
     }
 }
 
@@ -1565,9 +1939,15 @@ public struct MoodleCalendarDayName: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(dayNo, forKey: .dayNo)
-        try container.encode(shortName, forKey: .shortName)
-        try container.encode(fullName, forKey: .fullName)
+        if dayNo != 0 {
+            try container.encode(dayNo, forKey: .dayNo)
+        }
+        if shortName != "" {
+            try container.encode(shortName, forKey: .shortName)
+        }
+        if fullName != "" {
+            try container.encode(fullName, forKey: .fullName)
+        }
     }
 }
 
@@ -1652,17 +2032,39 @@ public struct MoodleCalendarDate: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(seconds, forKey: .seconds)
-        try container.encode(minutes, forKey: .minutes)
-        try container.encode(hours, forKey: .hours)
-        try container.encode(dayOfMonth, forKey: .dayOfMonth)
-        try container.encode(dayOfWeek, forKey: .dayOfWeek)
-        try container.encode(monthNumber, forKey: .monthNumber)
-        try container.encode(year, forKey: .year)
-        try container.encode(dayOfYear, forKey: .dayOfYear)
-        try container.encode(weekday, forKey: .weekday)
-        try container.encode(month, forKey: .month)
-        try container.encode(timestamp, forKey: .timestamp)
+        if seconds != 0 {
+            try container.encode(seconds, forKey: .seconds)
+        }
+        if minutes != 0 {
+            try container.encode(minutes, forKey: .minutes)
+        }
+        if hours != 0 {
+            try container.encode(hours, forKey: .hours)
+        }
+        if dayOfMonth != 0 {
+            try container.encode(dayOfMonth, forKey: .dayOfMonth)
+        }
+        if dayOfWeek != 0 {
+            try container.encode(dayOfWeek, forKey: .dayOfWeek)
+        }
+        if monthNumber != 0 {
+            try container.encode(monthNumber, forKey: .monthNumber)
+        }
+        if year != 0 {
+            try container.encode(year, forKey: .year)
+        }
+        if dayOfYear != 0 {
+            try container.encode(dayOfYear, forKey: .dayOfYear)
+        }
+        if weekday != "" {
+            try container.encode(weekday, forKey: .weekday)
+        }
+        if month != "" {
+            try container.encode(month, forKey: .month)
+        }
+        if timestamp != 0 {
+            try container.encode(timestamp, forKey: .timestamp)
+        }
     }
 }
 
@@ -1722,12 +2124,24 @@ public struct MoodleCalendarUpcomingView: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(events, forKey: .events)
-        try container.encode(defaultEventContext, forKey: .defaultEventContext)
-        try container.encode(filterSelector, forKey: .filterSelector)
-        try container.encode(courseId, forKey: .courseId)
-        try container.encode(categoryId, forKey: .categoryId)
-        try container.encode(isLoggedIn, forKey: .isLoggedIn)
+        if !events.isEmpty {
+            try container.encode(events, forKey: .events)
+        }
+        if defaultEventContext != 0 {
+            try container.encode(defaultEventContext, forKey: .defaultEventContext)
+        }
+        if filterSelector != "" {
+            try container.encode(filterSelector, forKey: .filterSelector)
+        }
+        if courseId != 0 {
+            try container.encode(courseId, forKey: .courseId)
+        }
+        if categoryId != nil {
+            try container.encode(categoryId, forKey: .categoryId)
+        }
+        if isLoggedIn != false {
+            try container.encode(isLoggedIn, forKey: .isLoggedIn)
+        }
         try container.encode(date, forKey: .date)
     }
 }

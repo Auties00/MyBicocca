@@ -56,21 +56,21 @@ export function encodeAffluencesSite(value: AffluencesSite): JsonObject {
     "id": value.id,
     "slug": value.slug,
     "primaryName": value.primaryName,
-    "secondaryName": value.secondaryName,
-    "lang": value.language,
-    "timeZone": value.timeZone,
-    "email": value.email,
-    "phone": value.phone,
-    "websiteUrl": value.websiteUrl,
-    "booking": value.booking === null ? null : encodeAffluencesBookingInfo(value.booking),
-    "publicationStatus": value.publicationStatus,
-    "address": value.address,
-    "latitude": value.latitude,
-    "longitude": value.longitude,
-    "categories": value.categories.map((item) => encodeAffluencesSiteCategory(item)),
-    "pictures": value.pictures,
-    "pageLayout": value.pageLayout === null ? null : encodeAffluencesPageLayout(value.pageLayout),
-    "parent": value.parent === null ? null : encodeAffluencesSiteCard(value.parent),
+    ...(value.secondaryName !== null ? { "secondaryName": value.secondaryName } : {}),
+    ...(value.language !== null ? { "lang": value.language } : {}),
+    ...(value.timeZone !== null ? { "timeZone": value.timeZone } : {}),
+    ...(value.email !== null ? { "email": value.email } : {}),
+    ...(value.phone !== null ? { "phone": value.phone } : {}),
+    ...(value.websiteUrl !== null ? { "websiteUrl": value.websiteUrl } : {}),
+    ...(value.booking !== null ? { "booking": value.booking === null ? null : encodeAffluencesBookingInfo(value.booking) } : {}),
+    ...(value.publicationStatus !== null ? { "publicationStatus": value.publicationStatus } : {}),
+    ...(value.address !== null ? { "address": value.address } : {}),
+    ...(value.latitude !== null ? { "latitude": value.latitude } : {}),
+    ...(value.longitude !== null ? { "longitude": value.longitude } : {}),
+    ...(value.categories.length > 0 ? { "categories": value.categories.map((item) => encodeAffluencesSiteCategory(item)) } : {}),
+    ...(value.pictures.length > 0 ? { "pictures": value.pictures } : {}),
+    ...(value.pageLayout !== null ? { "pageLayout": value.pageLayout === null ? null : encodeAffluencesPageLayout(value.pageLayout) } : {}),
+    ...(value.parent !== null ? { "parent": value.parent === null ? null : encodeAffluencesSiteCard(value.parent) } : {}),
   };
 }
 
@@ -93,9 +93,9 @@ export function decodeAffluencesBookingInfo(json: unknown): AffluencesBookingInf
 
 export function encodeAffluencesBookingInfo(value: AffluencesBookingInfo): JsonObject {
   return {
-    "hasBooking": value.hasBooking,
-    "bookingUrl": value.bookingUrl,
-    "ticketUrl": value.ticketUrl,
+    ...(value.hasBooking !== false ? { "hasBooking": value.hasBooking } : {}),
+    ...(value.bookingUrl !== null ? { "bookingUrl": value.bookingUrl } : {}),
+    ...(value.ticketUrl !== null ? { "ticketUrl": value.ticketUrl } : {}),
   };
 }
 
@@ -120,7 +120,7 @@ export function encodeAffluencesSiteCategory(value: AffluencesSiteCategory): Jso
   return {
     "id": value.id,
     "name": value.name,
-    "namePlural": value.namePlural,
+    ...(value.namePlural !== null ? { "namePlural": value.namePlural } : {}),
   };
 }
 
@@ -141,8 +141,8 @@ export function decodeAffluencesPageLayout(json: unknown): AffluencesPageLayout 
 
 export function encodeAffluencesPageLayout(value: AffluencesPageLayout): JsonObject {
   return {
-    "timetables": value.timetables,
-    "events": value.events,
+    ...(value.timetables !== null ? { "timetables": value.timetables } : {}),
+    ...(value.events !== null ? { "events": value.events } : {}),
   };
 }
 
@@ -179,11 +179,11 @@ export function encodeAffluencesSiteCard(value: AffluencesSiteCard): JsonObject 
     "id": value.id,
     "slug": value.slug,
     "primaryName": value.primaryName,
-    "secondaryName": value.secondaryName,
-    "pictures": value.pictures,
-    "status": value.status === null ? null : encodeAffluencesSiteCardStatus(value.status),
-    "liveAttendance": value.liveAttendance === null ? null : encodeAffluencesLiveAttendance(value.liveAttendance),
-    "booking": value.booking === null ? null : encodeAffluencesBookingInfo(value.booking),
+    ...(value.secondaryName !== null ? { "secondaryName": value.secondaryName } : {}),
+    ...(value.pictures.length > 0 ? { "pictures": value.pictures } : {}),
+    ...(value.status !== null ? { "status": value.status === null ? null : encodeAffluencesSiteCardStatus(value.status) } : {}),
+    ...(value.liveAttendance !== null ? { "liveAttendance": value.liveAttendance === null ? null : encodeAffluencesLiveAttendance(value.liveAttendance) } : {}),
+    ...(value.booking !== null ? { "booking": value.booking === null ? null : encodeAffluencesBookingInfo(value.booking) } : {}),
   };
 }
 
@@ -211,10 +211,10 @@ export function decodeAffluencesSiteCardStatus(json: unknown): AffluencesSiteCar
 export function encodeAffluencesSiteCardStatus(value: AffluencesSiteCardStatus): JsonObject {
   return {
     "isOpen": value.isOpen,
-    "openingText": value.openingText,
-    "isOpeningSoon": value.isOpeningSoon,
-    "closingText": value.closingText,
-    "isClosingSoon": value.isClosingSoon,
+    ...(value.openingText !== null ? { "openingText": value.openingText } : {}),
+    ...(value.isOpeningSoon !== null ? { "isOpeningSoon": value.isOpeningSoon } : {}),
+    ...(value.closingText !== null ? { "closingText": value.closingText } : {}),
+    ...(value.isClosingSoon !== null ? { "isClosingSoon": value.isClosingSoon } : {}),
   };
 }
 
@@ -242,10 +242,10 @@ export function decodeAffluencesEvent(json: unknown): AffluencesEvent | undefine
 export function encodeAffluencesEvent(value: AffluencesEvent): JsonObject {
   return {
     "id": value.id,
-    "title": value.title,
-    "descriptionHtml": value.descriptionHtml,
-    "imageUrl": value.imageUrl,
-    "url": value.url,
+    ...(value.title !== null ? { "title": value.title } : {}),
+    ...(value.descriptionHtml !== null ? { "descriptionHtml": value.descriptionHtml } : {}),
+    ...(value.imageUrl !== null ? { "imageUrl": value.imageUrl } : {}),
+    ...(value.url !== null ? { "url": value.url } : {}),
   };
 }
 
@@ -266,8 +266,8 @@ export function decodeAffluencesPopInMessage(json: unknown): AffluencesPopInMess
 
 export function encodeAffluencesPopInMessage(value: AffluencesPopInMessage): JsonObject {
   return {
-    "contentHtml": value.contentHtml,
-    "url": value.url,
+    ...(value.contentHtml !== null ? { "contentHtml": value.contentHtml } : {}),
+    ...(value.url !== null ? { "url": value.url } : {}),
   };
 }
 
@@ -296,10 +296,10 @@ export function decodeAffluencesLiveData(json: unknown): AffluencesLiveData | un
 export function encodeAffluencesLiveData(value: AffluencesLiveData): JsonObject {
   return {
     "status": encodeAffluencesSiteStatus(value.status),
-    "notices": value.notices.map((item) => encodeAffluencesNotice(item)),
-    "liveAttendance": value.liveAttendance === null ? null : encodeAffluencesLiveAttendance(value.liveAttendance),
-    "todayForecasts": value.todayForecasts.map((item) => encodeAffluencesForecastSlot(item)),
-    "forecasts": value.forecasts.map((item) => encodeAffluencesDayForecasts(item)),
+    ...(value.notices.length > 0 ? { "notices": value.notices.map((item) => encodeAffluencesNotice(item)) } : {}),
+    ...(value.liveAttendance !== null ? { "liveAttendance": value.liveAttendance === null ? null : encodeAffluencesLiveAttendance(value.liveAttendance) } : {}),
+    ...(value.todayForecasts.length > 0 ? { "todayForecasts": value.todayForecasts.map((item) => encodeAffluencesForecastSlot(item)) } : {}),
+    ...(value.forecasts.length > 0 ? { "forecasts": value.forecasts.map((item) => encodeAffluencesDayForecasts(item)) } : {}),
   };
 }
 
@@ -333,12 +333,12 @@ export function decodeAffluencesSiteStatus(json: unknown): AffluencesSiteStatus 
 export function encodeAffluencesSiteStatus(value: AffluencesSiteStatus): JsonObject {
   return {
     "isOpen": value.isOpen,
-    "openingText": value.openingText,
-    "openingAt": value.openingAt,
-    "closingText": value.closingText,
-    "closingAt": value.closingAt,
-    "isOpeningSoon": value.isOpeningSoon,
-    "isClosingSoon": value.isClosingSoon,
+    ...(value.openingText !== null ? { "openingText": value.openingText } : {}),
+    ...(value.openingAt !== null ? { "openingAt": value.openingAt } : {}),
+    ...(value.closingText !== null ? { "closingText": value.closingText } : {}),
+    ...(value.closingAt !== null ? { "closingAt": value.closingAt } : {}),
+    ...(value.isOpeningSoon !== null ? { "isOpeningSoon": value.isOpeningSoon } : {}),
+    ...(value.isClosingSoon !== null ? { "isClosingSoon": value.isClosingSoon } : {}),
   };
 }
 
@@ -359,8 +359,8 @@ export function decodeAffluencesNotice(json: unknown): AffluencesNotice | undefi
 
 export function encodeAffluencesNotice(value: AffluencesNotice): JsonObject {
   return {
-    "contentHtml": value.contentHtml,
-    "url": value.url,
+    ...(value.contentHtml !== null ? { "contentHtml": value.contentHtml } : {}),
+    ...(value.url !== null ? { "url": value.url } : {}),
   };
 }
 
@@ -383,9 +383,9 @@ export function decodeAffluencesLiveAttendance(json: unknown): AffluencesLiveAtt
 
 export function encodeAffluencesLiveAttendance(value: AffluencesLiveAttendance): JsonObject {
   return {
-    "flow": value.flow,
-    "occupancy": value.occupancyPercentage,
-    "waitingTime": value.waitingTimeMinutes,
+    ...(value.flow !== null ? { "flow": value.flow } : {}),
+    ...(value.occupancyPercentage !== null ? { "occupancy": value.occupancyPercentage } : {}),
+    ...(value.waitingTimeMinutes !== null ? { "waitingTime": value.waitingTimeMinutes } : {}),
   };
 }
 
@@ -417,13 +417,13 @@ export function decodeAffluencesForecastSlot(json: unknown): AffluencesForecastS
 
 export function encodeAffluencesForecastSlot(value: AffluencesForecastSlot): JsonObject {
   return {
-    "hourRange": value.hourRange,
-    "flow": value.flow,
-    "flowEvolution": value.flowEvolution,
-    "occupancy": value.occupancyPercentage,
-    "occupancyEvolution": value.occupancyEvolution,
-    "waitingTime": value.waitingTimeMinutes,
-    "waitingTimeEvolution": value.waitingTimeEvolution,
+    ...(value.hourRange.length > 0 ? { "hourRange": value.hourRange } : {}),
+    ...(value.flow !== null ? { "flow": value.flow } : {}),
+    ...(value.flowEvolution !== null ? { "flowEvolution": value.flowEvolution } : {}),
+    ...(value.occupancyPercentage !== null ? { "occupancy": value.occupancyPercentage } : {}),
+    ...(value.occupancyEvolution !== null ? { "occupancyEvolution": value.occupancyEvolution } : {}),
+    ...(value.waitingTimeMinutes !== null ? { "waitingTime": value.waitingTimeMinutes } : {}),
+    ...(value.waitingTimeEvolution !== null ? { "waitingTimeEvolution": value.waitingTimeEvolution } : {}),
   };
 }
 
@@ -447,8 +447,8 @@ export function decodeAffluencesDayForecasts(json: unknown): AffluencesDayForeca
 export function encodeAffluencesDayForecasts(value: AffluencesDayForecasts): JsonObject {
   return {
     "day": value.day,
-    "todayOffset": value.todayOffset,
-    "forecasts": value.forecasts.map((item) => encodeAffluencesForecastSlot(item)),
+    ...(value.todayOffset !== 0 ? { "todayOffset": value.todayOffset } : {}),
+    ...(value.forecasts.length > 0 ? { "forecasts": value.forecasts.map((item) => encodeAffluencesForecastSlot(item)) } : {}),
   };
 }
 
@@ -475,8 +475,8 @@ export function encodeAffluencesWeekTimetable(value: AffluencesWeekTimetable): J
   return {
     "startDate": value.startDate,
     "endDate": value.endDate,
-    "entries": value.entries.map((item) => encodeAffluencesDayTimetable(item)),
-    "information": value.information,
+    ...(value.entries.length > 0 ? { "entries": value.entries.map((item) => encodeAffluencesDayTimetable(item)) } : {}),
+    ...(value.information !== null ? { "information": value.information } : {}),
   };
 }
 
@@ -501,8 +501,8 @@ export function decodeAffluencesDayTimetable(json: unknown): AffluencesDayTimeta
 export function encodeAffluencesDayTimetable(value: AffluencesDayTimetable): JsonObject {
   return {
     "day": value.day,
-    "isToday": value.isToday,
-    "openingHours": value.openingHours.map((item) => encodeAffluencesOpeningHours(item)),
+    ...(value.isToday !== false ? { "isToday": value.isToday } : {}),
+    ...(value.openingHours.length > 0 ? { "openingHours": value.openingHours.map((item) => encodeAffluencesOpeningHours(item)) } : {}),
   };
 }
 
@@ -547,8 +547,8 @@ export function decodeAffluencesSiteDetails(json: unknown): AffluencesSiteDetail
 
 export function encodeAffluencesSiteDetails(value: AffluencesSiteDetails): JsonObject {
   return {
-    "services": value.services.map((item) => encodeAffluencesSiteService(item)),
-    "infos": value.infos.map((item) => encodeAffluencesSiteInfoSection(item)),
+    ...(value.services.length > 0 ? { "services": value.services.map((item) => encodeAffluencesSiteService(item)) } : {}),
+    ...(value.infos.length > 0 ? { "infos": value.infos.map((item) => encodeAffluencesSiteInfoSection(item)) } : {}),
   };
 }
 
@@ -593,8 +593,8 @@ export function decodeAffluencesSiteInfoSection(json: unknown): AffluencesSiteIn
 
 export function encodeAffluencesSiteInfoSection(value: AffluencesSiteInfoSection): JsonObject {
   return {
-    "type": value.type,
-    "title": value.title,
-    "contentHtml": value.contentHtml,
+    ...(value.type !== null ? { "type": value.type } : {}),
+    ...(value.title !== null ? { "title": value.title } : {}),
+    ...(value.contentHtml !== null ? { "contentHtml": value.contentHtml } : {}),
   };
 }

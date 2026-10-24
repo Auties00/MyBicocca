@@ -5,8 +5,10 @@ import it.attendance100.mybicocca.codegen.core.TargetContext
 import it.attendance100.mybicocca.codegen.core.generatedMarker
 import it.attendance100.mybicocca.codegen.testing.Golden
 import it.attendance100.mybicocca.codegen.testing.SampleSpecs
+import it.attendance100.mybicocca.codegen.testing.SampleTests
 import kotlinx.serialization.json.JsonObject
 import org.junit.jupiter.api.Test
+import kotlin.io.path.Path
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
@@ -27,6 +29,18 @@ class WebTargetTest {
         val header = "// ${generatedMarker(SHARED_FILES_OWNER)}. Do not edit.\n\n"
         assertEquals(header + "export * from \"./api/index.js\";\nexport * from \"./models/index.js\";\n", indexes["elearning/index.ts"])
         assertEquals(header + "export * from \"./KalturaApi.js\";\nexport * from \"./MoodleApi.js\";\n", indexes["elearning/api/index.ts"])
+    }
+
+    @Test
+    fun `generates the live tests of the sample API`() {
+        Golden.assertMatches("demo-tests", WebTarget().generateTests(SampleTests.plan, context))
+    }
+
+    @Test
+    fun `imports the SDK from the live tests through the output directories`() {
+        val dirs = TargetContext(JsonObject(emptyMap()), Path("web/data-api/src"), Path("web/data-api/test")) {}
+        val runtime = WebTarget().sharedTestFiles(dirs).single { it.path == "runtime/live.ts" }
+        assertTrue("from \"../../src/runtime/index.js\"" in runtime.content)
     }
 
     @Test

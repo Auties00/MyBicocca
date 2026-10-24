@@ -1,0 +1,438 @@
+import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import type { JsonValue, LocalDate, LocalDateTime, LocalTime } from "__RUNTIME__";
+import { LiveSettings } from "./live.js";
+
+/** A response a case received, as the live tests record it. */
+export interface Observed {
+  readonly status: number;
+  readonly contentType: string | null;
+  readonly body: string | undefined;
+}
+
+/**
+ * The report of an API's live tests: one JSON object per line, in `<platform>-<api>.jsonl` under
+ * {@link LiveSettings.reportDir}. It holds outcomes, findings and fingerprints, never values or
+ * credentials, so that it can be shared.
+ */
+export class LiveReport {
+  private readonly file: string;
+  private readonly findings = new Set<string>();
+  private readonly seen = new Set<string>();
+
+  constructor(private readonly api: string) {
+    this.file = join(LiveSettings.reportDir, `${LiveSettings.platform}-${api}.jsonl`);
+  }
+
+  start(skips: Readonly<Record<string, string>>, declared: readonly string[]): void {
+    mkdirSync(dirname(this.file), { recursive: true });
+    writeFileSync(this.file, "");
+    this.write("run", { seed: LiveSettings.seed, writes: LiveSettings.writes });
+    for (const [operation, reason] of Object.entries(skips)) this.write("skip", { id: operation, reason });
+    this.write("declared", { fields: declared });
+  }
+
+  case(id: string, status: string, reason: string | undefined, fingerprint: string | undefined, ms: number): void {
+    this.write("case", { id, status, ...(reason === undefined ? {} : { reason }), ...(fingerprint === undefined ? {} : { fingerprint }), ms });
+  }
+
+  /** Something a response did that the spec doesn't say, reported once per kind and place. */
+  finding(kind: string, record: string, field: string, detail: string): void {
+    const key = `${kind}|${record}|${field}`;
+    if (this.findings.has(key)) return;
+    this.findings.add(key);
+    this.write("finding", { kind, record, field, detail });
+  }
+
+  /** A field of a record that held a value. */
+  noteSeen(record: string, field: string): void {
+    const key = `${record}|${field}`;
+    if (this.seen.has(key)) return;
+    this.seen.add(key);
+    this.write("seen", { record, field });
+  }
+
+  event(kind: string, id: string, detail: string): void {
+    this.write(kind, { id, detail });
+  }
+
+  private write(type: string, body: Record<string, unknown>): void {
+    appendFileSync(this.file, JSON.stringify({ type, platform: LiveSettings.platform, api: this.api, ...body }) + "\n");
+  }
+}
+
+/** A change a write case made and hasn't undone yet. */
+export interface JournalEntry {
+  readonly api: string;
+  readonly case: string;
+  readonly values: Readonly<Record<string, string>>;
+}
+
+/**
+ * The changes write cases made and haven't undone yet, in {@link LiveSettings.journal}, so that a
+ * run interrupted between a change and its undo is cleaned up by the next one.
+ */
+export const LiveJournal = {
+  entries(api: string): JournalEntry[] {
+    return read().filter((entry) => entry.api === api);
+  },
+
+  add(entry: JournalEntry): void {
+    write([...read().filter((other) => other.api !== entry.api || other.case !== entry.case), entry]);
+  },
+
+  remove(api: string, caseId: string): void {
+    write(read().filter((entry) => entry.api !== api || entry.case !== caseId));
+  },
+};
+
+function read(): JournalEntry[] {
+  if (!existsSync(LiveSettings.journal)) return [];
+  const text = readFileSync(LiveSettings.journal, "utf8");
+  return text.trim() === "" ? [] : (JSON.parse(text) as JournalEntry[]);
+}
+
+function write(entries: JournalEntry[]): void {
+  mkdirSync(dirname(LiveSettings.journal), { recursive: true });
+  writeFileSync(LiveSettings.journal, JSON.stringify(entries.map((entry) => ({ ...entry, platform: LiveSettings.platform }))));
+}
+
+type Shape = { k: string; [key: string]: unknown };
+type FieldShape = [string, Shape, boolean];
+
+/**
+ * Checks responses against what the spec says they look like (the generator's `Shapes`),
+ * reporting fields the spec doesn't know, values of another type than declared, required fields
+ * that are missing and enum values it doesn't list, and noting the fields that held values.
+ */
+export class LiveShapes {
+  private readonly records: Record<string, FieldShape[]>;
+  private readonly enums: Record<string, { values: string[]; int: boolean; wrapped: boolean }>;
+  private readonly temporals = new Map<string, RegExp>();
+
+  constructor(catalog: string, private readonly report: LiveReport) {
+    const root = JSON.parse(catalog) as { records: Record<string, FieldShape[]>; enums: LiveShapes["enums"] };
+    this.records = root.records;
+    this.enums = root.enums;
+  }
+
+  /** Every field of the records, as `Record.wireName`. */
+  get fields(): string[] {
+    return Object.entries(this.records).flatMap(([name, fields]) => fields.map((field) => `${name}.${field[0]}`));
+  }
+
+  check(shape: string, response: Observed, envelope: readonly string[], variable: string | undefined): void {
+    if (response.body === undefined) return;
+    const text = variable === undefined ? response.body : scriptVariable(response.body, variable);
+    if (text === undefined) return;
+    let value: unknown;
+    try {
+      value = JSON.parse(text);
+    } catch {
+      return;
+    }
+    for (const key of envelope) {
+      value = isObject(value) ? value[key] : undefined;
+      if (value === undefined) return;
+    }
+    this.visit(value, JSON.parse(shape) as Shape, "", "");
+  }
+
+  private visit(value: unknown, shape: Shape, record: string, field: string): void {
+    if (value === null || value === undefined) return;
+    const mismatch = (expected: string) => this.report.finding("type-mismatch", record, field, `expected ${expected}, got ${kindOf(value)}`);
+    const primitive = typeof value === "string" || typeof value === "number" || typeof value === "boolean";
+    const text = primitive ? String(value) : undefined;
+    switch (shape.k) {
+      case "string":
+        if (!primitive) mismatch("a string");
+        break;
+      case "int":
+        if (!primitive || (text!.trim() !== "" && !/^-?\d+$/.test(text!.trim()))) mismatch("an integer");
+        break;
+      case "number":
+      case "epoch":
+        if (!primitive || (text!.trim() !== "" && Number.isNaN(Number(text)))) mismatch("a number");
+        break;
+      case "bool":
+        if (!primitive || !["true", "false", "0", "1"].includes(text!.toLowerCase())) mismatch("a boolean");
+        break;
+      case "date":
+      case "datetime":
+      case "time": {
+        const pattern = shape["p"] as string;
+        if (typeof value !== "string") mismatch(`a ${shape.k} in ${pattern}`);
+        else if (value.trim() === "" || value === "null") {
+          if (shape["blank"] !== true) mismatch(`a ${shape.k} in ${pattern}`);
+        } else if (!this.temporal(pattern).test(value)) this.report.finding("type-mismatch", record, field, `expected a ${shape.k} in ${pattern}`);
+        break;
+      }
+      case "enum": {
+        const name = shape["n"] as string;
+        const enumeration = this.enums[name]!;
+        const raw = enumeration.wrapped && isObject(value) ? value["value"] : value;
+        const content = typeof raw === "string" || typeof raw === "number" ? String(raw) : undefined;
+        if (content === undefined) mismatch(`a value of ${name}`);
+        else if (!enumeration.values.includes(content)) this.report.finding("unknown-enum", name, field, `'${content}' isn't one of its values`);
+        break;
+      }
+      case "record":
+        this.record(value, shape, record, field);
+        break;
+      case "list": {
+        const element = shape["e"] as Shape;
+        if (Array.isArray(value)) value.slice(0, MAX_ELEMENTS).forEach((item) => this.visit(item, element, record, field));
+        else if (isObject(value) && shape["objectValues"] === true) Object.values(value).slice(0, MAX_ELEMENTS).forEach((item) => this.visit(item, element, record, field));
+        else if (!(primitive && shape["joined"] === true)) mismatch("a list");
+        break;
+      }
+      case "map": {
+        const element = shape["v"] as Shape;
+        if (isObject(value)) Object.values(value).slice(0, MAX_ELEMENTS).forEach((item) => this.visit(item, element, record, field));
+        else if (Array.isArray(value)) value.filter(isObject).flatMap((item) => Object.values(item)).slice(0, MAX_ELEMENTS).forEach((item) => this.visit(item, element, record, field));
+        else mismatch("an object");
+        break;
+      }
+      case "json":
+        if (!isObject(value)) mismatch("an object");
+        break;
+    }
+  }
+
+  private record(value: unknown, shape: Shape, record: string, field: string): void {
+    const name = shape["n"] as string;
+    let object: Record<string, unknown>;
+    if (isObject(value)) object = value;
+    else if (Array.isArray(value) && shape["folded"] === true) object = Object.assign({}, ...value.filter(isObject));
+    else if (typeof value === "string" && shape["embedded"] === true) {
+      if (value.trim() === "") return;
+      let parsed: unknown;
+      try {
+        parsed = JSON.parse(value);
+      } catch {
+        parsed = undefined;
+      }
+      if (!isObject(parsed)) return this.report.finding("type-mismatch", record, field, `expected JSON of ${name} in a string`);
+      object = parsed;
+    } else if (Array.isArray(value) && value.length === 0) return;
+    else return this.report.finding("type-mismatch", record, field, `expected an object of ${name}, got ${kindOf(value)}`);
+
+    const fields = this.records[name];
+    if (fields === undefined) return;
+    const declared = new Map(fields.map((definition) => [definition[0], definition] as const));
+    for (const key of Object.keys(object)) if (!declared.has(key)) this.report.finding("unknown-key", name, key, "the spec doesn't declare it");
+    for (const [wire, fieldShape, optional] of fields) {
+      const item = object[wire];
+      if (item === undefined) {
+        if (!optional) this.report.finding("missing-key", name, wire, "a required field is missing");
+      } else if (item === null) {
+        if (!optional) this.report.finding("missing-key", name, wire, "a required field is null");
+      } else {
+        if (!(typeof item === "string" && item.trim() === "")) this.report.noteSeen(name, wire);
+        this.visit(item, fieldShape, name, wire);
+      }
+    }
+  }
+
+  /** A regex matching the start of a date or time written in `pattern` (Unicode date syntax). */
+  private temporal(pattern: string): RegExp {
+    let regex = this.temporals.get(pattern);
+    if (regex !== undefined) return regex;
+    let source = "^";
+    let index = 0;
+    while (index < pattern.length) {
+      const char = pattern[index]!;
+      let end = index;
+      while (end < pattern.length && pattern[end] === char) end++;
+      const count = end - index;
+      if (char === "'") {
+        let close = pattern.indexOf("'", index + 1);
+        if (close < 0) close = pattern.length;
+        source += escapeRegex(pattern.slice(index + 1, close));
+        end = close + 1;
+      } else if (char === "y") source += count === 2 ? "\\d{2}" : "\\d{4}";
+      else if (char === "S") source += "\\d+";
+      else if (/[A-Za-z]/.test(char)) source += "\\d{1,2}";
+      else source += escapeRegex(pattern.slice(index, end));
+      index = end;
+    }
+    regex = new RegExp(source);
+    this.temporals.set(pattern, regex);
+    return regex;
+  }
+}
+
+const MAX_ELEMENTS = 50;
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function kindOf(value: unknown): string {
+  if (Array.isArray(value)) return "a list";
+  if (value === null) return "null";
+  switch (typeof value) {
+    case "object":
+      return "an object";
+    case "string":
+      return "a string";
+    case "boolean":
+      return "a boolean";
+    default:
+      return "a number";
+  }
+}
+
+function escapeRegex(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function scriptVariable(script: string, variable: string): string | undefined {
+  const prefix = `${variable} =`;
+  for (const line of script.split("\n")) {
+    let statement = line.trim();
+    for (const keyword of ["var ", "let ", "const "]) if (statement.startsWith(keyword)) statement = statement.slice(keyword.length);
+    if (statement.startsWith(prefix)) return statement.slice(prefix.length).trim().replace(/;$/, "");
+  }
+  return undefined;
+}
+
+/**
+ * The canonical form of a decoded result, the same on every platform, and its hash: atoms end
+ * with `;` (`~` for no value, `"…"` text with `\` and `"` escaped, integers, numbers as
+ * millionths rounded down after adding a half, `t`/`f`, dates in ISO 8601, `b<size>` for bytes,
+ * JSON with sorted keys); lists are `[…]`, or `<…>` with their elements sorted when their order
+ * isn't meaningful, records `(…)` with their fields in declaration order, maps `{key=value…}`
+ * sorted by key. The hash is the 64-bit FNV-1a of the UTF-8 text, in hex.
+ */
+export class LiveFingerprint {
+  private out = "";
+
+  nil(): void {
+    this.out += "~;";
+  }
+
+  str(value: string | null | undefined): void {
+    this.atom(value, (text) => `"${escape(text)}"`);
+  }
+
+  int(value: number | null | undefined): void {
+    this.atom(value, (number) => String(Math.trunc(number)));
+  }
+
+  num(value: number | null | undefined): void {
+    this.atom(value, millionths);
+  }
+
+  bool(value: boolean | null | undefined): void {
+    this.atom(value, (flag) => (flag ? "t" : "f"));
+  }
+
+  date(value: LocalDate | null | undefined): void {
+    this.atom(value, (date) => `${pad(date.year, 4)}-${pad(date.month, 2)}-${pad(date.day, 2)}`);
+  }
+
+  dateTime(value: LocalDateTime | null | undefined): void {
+    this.atom(value, (time) => `${pad(time.date.year, 4)}-${pad(time.date.month, 2)}-${pad(time.date.day, 2)}T${pad(time.hour, 2)}:${pad(time.minute, 2)}:${pad(time.second, 2)}`);
+  }
+
+  time(value: LocalTime | null | undefined): void {
+    this.atom(value, (time) => `${pad(time.hour, 2)}:${pad(time.minute, 2)}:${pad(time.second, 2)}`);
+  }
+
+  bytes(size: number): void {
+    this.out += `b${size};`;
+  }
+
+  json(value: JsonValue | null | undefined): void {
+    this.atom(value, canonical);
+  }
+
+  list<T>(value: readonly T[] | null | undefined, each: (item: T) => void): void {
+    if (value === null || value === undefined) return this.nil();
+    this.out += "[";
+    value.forEach(each);
+    this.out += "]";
+  }
+
+  /** A list whose order isn't meaningful, such as one sent as an object's values: its elements, sorted. */
+  unordered<T>(value: readonly T[] | null | undefined, each: (fingerprint: LiveFingerprint, item: T) => void): void {
+    if (value === null || value === undefined) return this.nil();
+    const texts = value.map((item) => {
+      const element = new LiveFingerprint();
+      each(element, item);
+      return element.text();
+    });
+    this.out += `<${texts.sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)).join("")}>`;
+  }
+
+  obj(value: unknown, fields: () => void): void {
+    if (value === null || value === undefined) return this.nil();
+    this.out += "(";
+    fields();
+    this.out += ")";
+  }
+
+  map<K, V>(entries: Iterable<readonly [K, V]> | null | undefined, key: (fingerprint: LiveFingerprint, key: K) => void, each: (value: V) => void): void {
+    if (entries === null || entries === undefined) return this.nil();
+    const sorted = Array.from(entries, ([k, v]) => {
+      const text = new LiveFingerprint();
+      key(text, k);
+      return [text.text(), v] as const;
+    }).sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
+    this.out += "{";
+    for (const [k, v] of sorted) {
+      this.out += `${k}=`;
+      each(v);
+    }
+    this.out += "}";
+  }
+
+  text(): string {
+    return this.out;
+  }
+
+  hash(): string {
+    let hash = 0xcbf29ce484222325n;
+    for (const byte of new TextEncoder().encode(this.out)) {
+      hash ^= BigInt(byte);
+      hash = (hash * 0x100000001b3n) & 0xffffffffffffffffn;
+    }
+    return hash.toString(16).padStart(16, "0");
+  }
+
+  private atom<T>(value: T | null | undefined, render: (value: T) => string): void {
+    if (value === null || value === undefined) return this.nil();
+    this.out += `${render(value)};`;
+  }
+}
+
+function escape(text: string): string {
+  return text.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+}
+
+function pad(value: number, width: number): string {
+  return String(value).padStart(width, "0");
+}
+
+function millionths(value: number): string {
+  return BigInt(Math.floor(value * 1_000_000 + 0.5)).toString();
+}
+
+function canonical(value: JsonValue): string {
+  if (value === null) return "null";
+  if (Array.isArray(value)) return `[${value.map(canonical).join(",")}]`;
+  switch (typeof value) {
+    case "string":
+      return `"${escape(value)}"`;
+    case "boolean":
+      return String(value);
+    case "number":
+      return Number.isInteger(value) && Math.abs(value) < 9.007199254740992e15 ? BigInt(value).toString() : millionths(value);
+    default:
+      return `{${Object.keys(value)
+        .sort()
+        .map((key) => `"${escape(key)}":${canonical((value as Record<string, JsonValue>)[key]!)}`)
+        .join(",")}}`;
+  }
+}

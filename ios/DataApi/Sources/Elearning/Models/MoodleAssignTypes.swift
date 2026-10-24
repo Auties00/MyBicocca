@@ -30,8 +30,12 @@ public struct MoodleAssignmentsResponse: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(courses, forKey: .courses)
-        try container.encode(warnings, forKey: .warnings)
+        if !courses.isEmpty {
+            try container.encode(courses, forKey: .courses)
+        }
+        if !warnings.isEmpty {
+            try container.encode(warnings, forKey: .warnings)
+        }
     }
 }
 
@@ -81,11 +85,21 @@ public struct MoodleCourseAssignments: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(id, forKey: .id)
-        try container.encode(fullName, forKey: .fullName)
-        try container.encode(shortName, forKey: .shortName)
-        try container.encode(timeModified, forKey: .timeModified)
-        try container.encode(assignments, forKey: .assignments)
+        if id != 0 {
+            try container.encode(id, forKey: .id)
+        }
+        if fullName != "" {
+            try container.encode(fullName, forKey: .fullName)
+        }
+        if shortName != "" {
+            try container.encode(shortName, forKey: .shortName)
+        }
+        if timeModified != 0 {
+            try container.encode(timeModified, forKey: .timeModified)
+        }
+        if !assignments.isEmpty {
+            try container.encode(assignments, forKey: .assignments)
+        }
     }
 }
 
@@ -351,47 +365,129 @@ public struct MoodleAssignment: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(id, forKey: .id)
-        try container.encode(cmId, forKey: .cmId)
-        try container.encode(course, forKey: .course)
-        try container.encode(name, forKey: .name)
-        try container.encode(noSubmissions, forKey: .noSubmissions)
-        try container.encode(submissionDrafts, forKey: .submissionDrafts)
-        try container.encode(sendNotifications, forKey: .sendNotifications)
-        try container.encode(sendLateNotifications, forKey: .sendLateNotifications)
-        try container.encode(sendStudentNotifications, forKey: .sendStudentNotifications)
-        try container.encode(dueDate, forKey: .dueDate)
-        try container.encode(allowSubmissionsFromDate, forKey: .allowSubmissionsFromDate)
-        try container.encode(grade, forKey: .grade)
-        try container.encode(timeModified, forKey: .timeModified)
-        try container.encode(completionSubmit, forKey: .completionSubmit)
-        try container.encode(cutoffDate, forKey: .cutoffDate)
-        try container.encode(gradingDueDate, forKey: .gradingDueDate)
-        try container.encode(teamSubmission, forKey: .teamSubmission)
-        try container.encode(requireAllTeamMembersSubmit, forKey: .requireAllTeamMembersSubmit)
-        try container.encode(teamSubmissionGroupingId, forKey: .teamSubmissionGroupingId)
-        try container.encode(blindMarking, forKey: .blindMarking)
-        try container.encode(hideGrader, forKey: .hideGrader)
-        try container.encode(revealIdentities, forKey: .revealIdentities)
-        try container.encode(attemptReopenMethod, forKey: .attemptReopenMethod)
-        try container.encode(maxAttempts, forKey: .maxAttempts)
-        try container.encode(markingWorkflow, forKey: .markingWorkflow)
-        try container.encode(markingAllocation, forKey: .markingAllocation)
-        try container.encode(markingAnonymous, forKey: .markingAnonymous)
-        try container.encode(requireSubmissionStatement, forKey: .requireSubmissionStatement)
-        try container.encode(preventSubmissionNotInGroup, forKey: .preventSubmissionNotInGroup)
-        try container.encode(submissionStatement, forKey: .submissionStatement)
-        try container.encode(submissionStatementFormat, forKey: .submissionStatementFormat)
-        try container.encode(configs, forKey: .configs)
-        try container.encode(intro, forKey: .intro)
-        try container.encode(introFormat, forKey: .introFormat)
-        try container.encode(introFiles, forKey: .introFiles)
-        try container.encode(introAttachments, forKey: .introAttachments)
-        try container.encode(activity, forKey: .activity)
-        try container.encode(activityFormat, forKey: .activityFormat)
-        try container.encode(activityAttachments, forKey: .activityAttachments)
-        try container.encode(timeLimit, forKey: .timeLimit)
-        try container.encode(submissionAttachments, forKey: .submissionAttachments)
+        if id != 0 {
+            try container.encode(id, forKey: .id)
+        }
+        if cmId != 0 {
+            try container.encode(cmId, forKey: .cmId)
+        }
+        if course != 0 {
+            try container.encode(course, forKey: .course)
+        }
+        if name != "" {
+            try container.encode(name, forKey: .name)
+        }
+        if noSubmissions != 0 {
+            try container.encode(noSubmissions, forKey: .noSubmissions)
+        }
+        if submissionDrafts != 0 {
+            try container.encode(submissionDrafts, forKey: .submissionDrafts)
+        }
+        if sendNotifications != 0 {
+            try container.encode(sendNotifications, forKey: .sendNotifications)
+        }
+        if sendLateNotifications != 0 {
+            try container.encode(sendLateNotifications, forKey: .sendLateNotifications)
+        }
+        if sendStudentNotifications != 0 {
+            try container.encode(sendStudentNotifications, forKey: .sendStudentNotifications)
+        }
+        if dueDate != 0 {
+            try container.encode(dueDate, forKey: .dueDate)
+        }
+        if allowSubmissionsFromDate != 0 {
+            try container.encode(allowSubmissionsFromDate, forKey: .allowSubmissionsFromDate)
+        }
+        if grade != 0 {
+            try container.encode(grade, forKey: .grade)
+        }
+        if timeModified != 0 {
+            try container.encode(timeModified, forKey: .timeModified)
+        }
+        if completionSubmit != 0 {
+            try container.encode(completionSubmit, forKey: .completionSubmit)
+        }
+        if cutoffDate != 0 {
+            try container.encode(cutoffDate, forKey: .cutoffDate)
+        }
+        if gradingDueDate != 0 {
+            try container.encode(gradingDueDate, forKey: .gradingDueDate)
+        }
+        if teamSubmission != 0 {
+            try container.encode(teamSubmission, forKey: .teamSubmission)
+        }
+        if requireAllTeamMembersSubmit != 0 {
+            try container.encode(requireAllTeamMembersSubmit, forKey: .requireAllTeamMembersSubmit)
+        }
+        if teamSubmissionGroupingId != 0 {
+            try container.encode(teamSubmissionGroupingId, forKey: .teamSubmissionGroupingId)
+        }
+        if blindMarking != 0 {
+            try container.encode(blindMarking, forKey: .blindMarking)
+        }
+        if hideGrader != 0 {
+            try container.encode(hideGrader, forKey: .hideGrader)
+        }
+        if revealIdentities != 0 {
+            try container.encode(revealIdentities, forKey: .revealIdentities)
+        }
+        if attemptReopenMethod != "" {
+            try container.encode(attemptReopenMethod, forKey: .attemptReopenMethod)
+        }
+        if maxAttempts != 0 {
+            try container.encode(maxAttempts, forKey: .maxAttempts)
+        }
+        if markingWorkflow != 0 {
+            try container.encode(markingWorkflow, forKey: .markingWorkflow)
+        }
+        if markingAllocation != 0 {
+            try container.encode(markingAllocation, forKey: .markingAllocation)
+        }
+        if markingAnonymous != 0 {
+            try container.encode(markingAnonymous, forKey: .markingAnonymous)
+        }
+        if requireSubmissionStatement != 0 {
+            try container.encode(requireSubmissionStatement, forKey: .requireSubmissionStatement)
+        }
+        if preventSubmissionNotInGroup != nil {
+            try container.encode(preventSubmissionNotInGroup, forKey: .preventSubmissionNotInGroup)
+        }
+        if submissionStatement != nil {
+            try container.encode(submissionStatement, forKey: .submissionStatement)
+        }
+        if submissionStatementFormat != nil {
+            try container.encode(submissionStatementFormat, forKey: .submissionStatementFormat)
+        }
+        if !configs.isEmpty {
+            try container.encode(configs, forKey: .configs)
+        }
+        if intro != nil {
+            try container.encode(intro, forKey: .intro)
+        }
+        if introFormat != nil {
+            try container.encode(introFormat, forKey: .introFormat)
+        }
+        if !introFiles.isEmpty {
+            try container.encode(introFiles, forKey: .introFiles)
+        }
+        if !introAttachments.isEmpty {
+            try container.encode(introAttachments, forKey: .introAttachments)
+        }
+        if activity != nil {
+            try container.encode(activity, forKey: .activity)
+        }
+        if activityFormat != nil {
+            try container.encode(activityFormat, forKey: .activityFormat)
+        }
+        if !activityAttachments.isEmpty {
+            try container.encode(activityAttachments, forKey: .activityAttachments)
+        }
+        if timeLimit != nil {
+            try container.encode(timeLimit, forKey: .timeLimit)
+        }
+        if submissionAttachments != nil {
+            try container.encode(submissionAttachments, forKey: .submissionAttachments)
+        }
     }
 }
 
@@ -447,12 +543,24 @@ public struct MoodleAssignmentConfig: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(id, forKey: .id)
-        try container.encode(assignment, forKey: .assignment)
-        try container.encode(plugin, forKey: .plugin)
-        try container.encode(subtype, forKey: .subtype)
-        try container.encode(name, forKey: .name)
-        try container.encode(value, forKey: .value)
+        if id != nil {
+            try container.encode(id, forKey: .id)
+        }
+        if assignment != nil {
+            try container.encode(assignment, forKey: .assignment)
+        }
+        if plugin != "" {
+            try container.encode(plugin, forKey: .plugin)
+        }
+        if subtype != "" {
+            try container.encode(subtype, forKey: .subtype)
+        }
+        if name != "" {
+            try container.encode(name, forKey: .name)
+        }
+        if value != "" {
+            try container.encode(value, forKey: .value)
+        }
     }
 }
 
@@ -507,12 +615,24 @@ public struct MoodleSubmissionStatus: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(gradingSummary, forKey: .gradingSummary)
-        try container.encode(lastAttempt, forKey: .lastAttempt)
-        try container.encode(feedback, forKey: .feedback)
-        try container.encode(previousAttempts, forKey: .previousAttempts)
-        try container.encode(assignmentData, forKey: .assignmentData)
-        try container.encode(warnings, forKey: .warnings)
+        if gradingSummary != nil {
+            try container.encode(gradingSummary, forKey: .gradingSummary)
+        }
+        if lastAttempt != nil {
+            try container.encode(lastAttempt, forKey: .lastAttempt)
+        }
+        if feedback != nil {
+            try container.encode(feedback, forKey: .feedback)
+        }
+        if !previousAttempts.isEmpty {
+            try container.encode(previousAttempts, forKey: .previousAttempts)
+        }
+        if assignmentData != nil {
+            try container.encode(assignmentData, forKey: .assignmentData)
+        }
+        if !warnings.isEmpty {
+            try container.encode(warnings, forKey: .warnings)
+        }
     }
 }
 
@@ -568,12 +688,24 @@ public struct MoodleGradingSummary: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(participantCount, forKey: .participantCount)
-        try container.encode(submissionDraftsCount, forKey: .submissionDraftsCount)
-        try container.encode(submissionsEnabled, forKey: .submissionsEnabled)
-        try container.encode(submissionsSubmittedCount, forKey: .submissionsSubmittedCount)
-        try container.encode(submissionsNeedGradingCount, forKey: .submissionsNeedGradingCount)
-        try container.encode(warnOfUngroupedUsers, forKey: .warnOfUngroupedUsers)
+        if participantCount != 0 {
+            try container.encode(participantCount, forKey: .participantCount)
+        }
+        if submissionDraftsCount != 0 {
+            try container.encode(submissionDraftsCount, forKey: .submissionDraftsCount)
+        }
+        if submissionsEnabled != false {
+            try container.encode(submissionsEnabled, forKey: .submissionsEnabled)
+        }
+        if submissionsSubmittedCount != 0 {
+            try container.encode(submissionsSubmittedCount, forKey: .submissionsSubmittedCount)
+        }
+        if submissionsNeedGradingCount != 0 {
+            try container.encode(submissionsNeedGradingCount, forKey: .submissionsNeedGradingCount)
+        }
+        if warnOfUngroupedUsers != "" {
+            try container.encode(warnOfUngroupedUsers, forKey: .warnOfUngroupedUsers)
+        }
     }
 }
 
@@ -683,21 +815,51 @@ public struct MoodleLastAttempt: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(submission, forKey: .submission)
-        try container.encode(teamSubmission, forKey: .teamSubmission)
-        try container.encode(submissionGroup, forKey: .submissionGroup)
-        try container.encode(submissionGroupMembersWhoNeedToSubmit, forKey: .submissionGroupMembersWhoNeedToSubmit)
-        try container.encode(submissionsEnabled, forKey: .submissionsEnabled)
-        try container.encode(locked, forKey: .locked)
-        try container.encode(graded, forKey: .graded)
-        try container.encode(canEdit, forKey: .canEdit)
-        try container.encode(canEditOwner, forKey: .canEditOwner)
-        try container.encode(canSubmit, forKey: .canSubmit)
-        try container.encode(extensionDueDate, forKey: .extensionDueDate)
-        try container.encode(timeLimit, forKey: .timeLimit)
-        try container.encode(blindMarking, forKey: .blindMarking)
-        try container.encode(gradingStatus, forKey: .gradingStatus)
-        try container.encode(userGroups, forKey: .userGroups)
+        if submission != nil {
+            try container.encode(submission, forKey: .submission)
+        }
+        if teamSubmission != nil {
+            try container.encode(teamSubmission, forKey: .teamSubmission)
+        }
+        if submissionGroup != nil {
+            try container.encode(submissionGroup, forKey: .submissionGroup)
+        }
+        if !submissionGroupMembersWhoNeedToSubmit.isEmpty {
+            try container.encode(submissionGroupMembersWhoNeedToSubmit, forKey: .submissionGroupMembersWhoNeedToSubmit)
+        }
+        if submissionsEnabled != false {
+            try container.encode(submissionsEnabled, forKey: .submissionsEnabled)
+        }
+        if locked != false {
+            try container.encode(locked, forKey: .locked)
+        }
+        if graded != false {
+            try container.encode(graded, forKey: .graded)
+        }
+        if canEdit != false {
+            try container.encode(canEdit, forKey: .canEdit)
+        }
+        if canEditOwner != false {
+            try container.encode(canEditOwner, forKey: .canEditOwner)
+        }
+        if canSubmit != false {
+            try container.encode(canSubmit, forKey: .canSubmit)
+        }
+        if extensionDueDate != 0 {
+            try container.encode(extensionDueDate, forKey: .extensionDueDate)
+        }
+        if timeLimit != nil {
+            try container.encode(timeLimit, forKey: .timeLimit)
+        }
+        if blindMarking != false {
+            try container.encode(blindMarking, forKey: .blindMarking)
+        }
+        if gradingStatus != "" {
+            try container.encode(gradingStatus, forKey: .gradingStatus)
+        }
+        if !userGroups.isEmpty {
+            try container.encode(userGroups, forKey: .userGroups)
+        }
     }
 }
 
@@ -789,18 +951,42 @@ public struct MoodleSubmission: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(id, forKey: .id)
-        try container.encode(userId, forKey: .userId)
-        try container.encode(attemptNumber, forKey: .attemptNumber)
-        try container.encode(timeCreated, forKey: .timeCreated)
-        try container.encode(timeModified, forKey: .timeModified)
-        try container.encode(timeStarted, forKey: .timeStarted)
-        try container.encode(status, forKey: .status)
-        try container.encode(groupId, forKey: .groupId)
-        try container.encode(assignment, forKey: .assignment)
-        try container.encode(latest, forKey: .latest)
-        try container.encode(plugins, forKey: .plugins)
-        try container.encode(gradingStatus, forKey: .gradingStatus)
+        if id != 0 {
+            try container.encode(id, forKey: .id)
+        }
+        if userId != 0 {
+            try container.encode(userId, forKey: .userId)
+        }
+        if attemptNumber != 0 {
+            try container.encode(attemptNumber, forKey: .attemptNumber)
+        }
+        if timeCreated != 0 {
+            try container.encode(timeCreated, forKey: .timeCreated)
+        }
+        if timeModified != 0 {
+            try container.encode(timeModified, forKey: .timeModified)
+        }
+        if timeStarted != nil {
+            try container.encode(timeStarted, forKey: .timeStarted)
+        }
+        if status != "" {
+            try container.encode(status, forKey: .status)
+        }
+        if groupId != 0 {
+            try container.encode(groupId, forKey: .groupId)
+        }
+        if assignment != nil {
+            try container.encode(assignment, forKey: .assignment)
+        }
+        if latest != nil {
+            try container.encode(latest, forKey: .latest)
+        }
+        if !plugins.isEmpty {
+            try container.encode(plugins, forKey: .plugins)
+        }
+        if gradingStatus != nil {
+            try container.encode(gradingStatus, forKey: .gradingStatus)
+        }
     }
 }
 
@@ -843,10 +1029,18 @@ public struct MoodleSubmissionPlugin: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(type, forKey: .type)
-        try container.encode(name, forKey: .name)
-        try container.encode(fileAreas, forKey: .fileAreas)
-        try container.encode(editorFields, forKey: .editorFields)
+        if type != "" {
+            try container.encode(type, forKey: .type)
+        }
+        if name != "" {
+            try container.encode(name, forKey: .name)
+        }
+        if !fileAreas.isEmpty {
+            try container.encode(fileAreas, forKey: .fileAreas)
+        }
+        if !editorFields.isEmpty {
+            try container.encode(editorFields, forKey: .editorFields)
+        }
     }
 }
 
@@ -877,8 +1071,12 @@ public struct MoodleFileArea: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(area, forKey: .area)
-        try container.encode(files, forKey: .files)
+        if area != "" {
+            try container.encode(area, forKey: .area)
+        }
+        if !files.isEmpty {
+            try container.encode(files, forKey: .files)
+        }
     }
 }
 
@@ -921,10 +1119,18 @@ public struct MoodleEditorField: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(name, forKey: .name)
-        try container.encode(description, forKey: .description)
-        try container.encode(text, forKey: .text)
-        try container.encode(format, forKey: .format)
+        if name != "" {
+            try container.encode(name, forKey: .name)
+        }
+        if description != "" {
+            try container.encode(description, forKey: .description)
+        }
+        if text != "" {
+            try container.encode(text, forKey: .text)
+        }
+        if format != 0 {
+            try container.encode(format, forKey: .format)
+        }
     }
 }
 
@@ -968,10 +1174,18 @@ public struct MoodleFeedback: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(grade, forKey: .grade)
-        try container.encode(gradeForDisplay, forKey: .gradeForDisplay)
-        try container.encode(gradedDate, forKey: .gradedDate)
-        try container.encode(plugins, forKey: .plugins)
+        if grade != nil {
+            try container.encode(grade, forKey: .grade)
+        }
+        if gradeForDisplay != "" {
+            try container.encode(gradeForDisplay, forKey: .gradeForDisplay)
+        }
+        if gradedDate != 0 {
+            try container.encode(gradedDate, forKey: .gradedDate)
+        }
+        if !plugins.isEmpty {
+            try container.encode(plugins, forKey: .plugins)
+        }
     }
 }
 
@@ -1045,15 +1259,33 @@ public struct MoodleAssignmentGrade: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(id, forKey: .id)
-        try container.encode(assignment, forKey: .assignment)
-        try container.encode(userId, forKey: .userId)
-        try container.encode(attemptNumber, forKey: .attemptNumber)
-        try container.encode(timeCreated, forKey: .timeCreated)
-        try container.encode(timeModified, forKey: .timeModified)
-        try container.encode(grader, forKey: .grader)
-        try container.encode(grade, forKey: .grade)
-        try container.encode(gradeForDisplay, forKey: .gradeForDisplay)
+        if id != 0 {
+            try container.encode(id, forKey: .id)
+        }
+        if assignment != nil {
+            try container.encode(assignment, forKey: .assignment)
+        }
+        if userId != 0 {
+            try container.encode(userId, forKey: .userId)
+        }
+        if attemptNumber != 0 {
+            try container.encode(attemptNumber, forKey: .attemptNumber)
+        }
+        if timeCreated != 0 {
+            try container.encode(timeCreated, forKey: .timeCreated)
+        }
+        if timeModified != 0 {
+            try container.encode(timeModified, forKey: .timeModified)
+        }
+        if grader != 0 {
+            try container.encode(grader, forKey: .grader)
+        }
+        if grade != "" {
+            try container.encode(grade, forKey: .grade)
+        }
+        if gradeForDisplay != nil {
+            try container.encode(gradeForDisplay, forKey: .gradeForDisplay)
+        }
     }
 }
 
@@ -1096,10 +1328,18 @@ public struct MoodlePreviousAttempt: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(attemptNumber, forKey: .attemptNumber)
-        try container.encode(submission, forKey: .submission)
-        try container.encode(grade, forKey: .grade)
-        try container.encode(feedbackPlugins, forKey: .feedbackPlugins)
+        if attemptNumber != 0 {
+            try container.encode(attemptNumber, forKey: .attemptNumber)
+        }
+        if submission != nil {
+            try container.encode(submission, forKey: .submission)
+        }
+        if grade != nil {
+            try container.encode(grade, forKey: .grade)
+        }
+        if !feedbackPlugins.isEmpty {
+            try container.encode(feedbackPlugins, forKey: .feedbackPlugins)
+        }
     }
 }
 
@@ -1137,9 +1377,15 @@ public struct MoodleAssignmentData: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(attachments, forKey: .attachments)
-        try container.encode(activity, forKey: .activity)
-        try container.encode(activityFormat, forKey: .activityFormat)
+        if attachments != nil {
+            try container.encode(attachments, forKey: .attachments)
+        }
+        if activity != nil {
+            try container.encode(activity, forKey: .activity)
+        }
+        if activityFormat != nil {
+            try container.encode(activityFormat, forKey: .activityFormat)
+        }
     }
 }
 
@@ -1171,8 +1417,12 @@ public struct MoodleAssignmentAttachments: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(intro, forKey: .intro)
-        try container.encode(activity, forKey: .activity)
+        if !intro.isEmpty {
+            try container.encode(intro, forKey: .intro)
+        }
+        if !activity.isEmpty {
+            try container.encode(activity, forKey: .activity)
+        }
     }
 }
 
@@ -1203,8 +1453,12 @@ public struct MoodleSubmissionPluginData: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(filesFilemanager, forKey: .filesFilemanager)
-        try container.encode(onlinetextEditor, forKey: .onlinetextEditor)
+        if filesFilemanager != nil {
+            try container.encode(filesFilemanager, forKey: .filesFilemanager)
+        }
+        if onlinetextEditor != nil {
+            try container.encode(onlinetextEditor, forKey: .onlinetextEditor)
+        }
     }
 }
 
@@ -1242,8 +1496,14 @@ public struct MoodleOnlineTextEditor: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(text, forKey: .text)
-        try container.encode(format, forKey: .format)
-        try container.encode(itemId, forKey: .itemId)
+        if text != "" {
+            try container.encode(text, forKey: .text)
+        }
+        if format != 0 {
+            try container.encode(format, forKey: .format)
+        }
+        if itemId != 0 {
+            try container.encode(itemId, forKey: .itemId)
+        }
     }
 }

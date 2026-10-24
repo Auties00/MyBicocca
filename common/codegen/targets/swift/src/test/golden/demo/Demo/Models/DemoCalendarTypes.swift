@@ -53,13 +53,27 @@ public struct DemoCalendar: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(days, forKey: .days)
-        try container.encode(seats, forKey: .seats)
-        try container.encode(labels, forKey: .labels)
-        try container.encode(level, forKey: .level)
-        try container.encode(note, forKey: .note)
-        try container.encode(settings, forKey: .settings)
-        try container.encode(policy, forKey: .policy)
+        if !days.entries.isEmpty {
+            try container.encode(days, forKey: .days)
+        }
+        if !seats.entries.isEmpty {
+            try container.encode(seats, forKey: .seats)
+        }
+        if !labels.entries.isEmpty {
+            try container.encode(labels, forKey: .labels)
+        }
+        if level != nil {
+            try container.encode(level, forKey: .level)
+        }
+        if note != nil {
+            try container.encode(note, forKey: .note)
+        }
+        if settings != nil {
+            try container.encode(settings, forKey: .settings)
+        }
+        if policy != nil {
+            try container.encode(policy, forKey: .policy)
+        }
     }
 }
 
@@ -129,7 +143,11 @@ public struct DemoSettings: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(enabled, forKey: .enabled)
-        try container.encode(limit, forKey: .limit)
+        if enabled != false {
+            try container.encode(enabled, forKey: .enabled)
+        }
+        if limit != 0 {
+            try container.encode(limit, forKey: .limit)
+        }
     }
 }

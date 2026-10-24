@@ -8,6 +8,7 @@
   "targets": {
     "kotlin": {
       "outputDir": "../../../android/data-api/src/main/kotlin",
+      "testOutputDir": "../../../android/data-api/src/test/kotlin",
       "options": {
         "packageName": "it.attendance100.mybicocca.data.remote.affluences",
         "temporalSerializers": [
@@ -30,12 +31,14 @@
     },
     "swift": {
       "outputDir": "../../../ios/DataApi/Sources",
+      "testOutputDir": "../../../ios/DataApi/Tests/LiveTests",
       "options": {
         "module": "Affluences"
       }
     },
     "web": {
       "outputDir": "../../../web/data-api/src",
+      "testOutputDir": "../../../web/data-api/test",
       "options": {
         "packageName": "affluences"
       }

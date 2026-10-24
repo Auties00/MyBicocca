@@ -30,13 +30,13 @@ export function decodeDemoCalendar(json: unknown): DemoCalendar | undefined {
 
 export function encodeDemoCalendar(value: DemoCalendar): JsonObject {
   return {
-    "giorni": encodeWireMap(value.days, (item) => item.map((item) => encodeDemoSlot(item))),
-    "posti": encodeWireMap(value.seats, (item) => encodeWireMap(item, (item) => item)),
-    "etichette": value.labels,
-    "livello": value.level === null ? null : Number(value.level),
-    "nota": value.note,
-    "impostazioni": value.settings === null ? null : encodeDemoSettings(value.settings),
-    "regole": value.policy === null ? null : encodeDemoSettings(value.policy),
+    ...(value.days.size > 0 ? { "giorni": encodeWireMap(value.days, (item) => item.map((item) => encodeDemoSlot(item))) } : {}),
+    ...(value.seats.size > 0 ? { "posti": encodeWireMap(value.seats, (item) => encodeWireMap(item, (item) => item)) } : {}),
+    ...(Object.keys(value.labels).length > 0 ? { "etichette": value.labels } : {}),
+    ...(value.level !== null ? { "livello": value.level === null ? null : Number(value.level) } : {}),
+    ...(value.note !== null ? { "nota": value.note } : {}),
+    ...(value.settings !== null ? { "impostazioni": value.settings === null ? null : encodeDemoSettings(value.settings) } : {}),
+    ...(value.policy !== null ? { "regole": value.policy === null ? null : encodeDemoSettings(value.policy) } : {}),
   };
 }
 
@@ -80,7 +80,7 @@ export function decodeDemoSettings(json: unknown): DemoSettings | undefined {
 
 export function encodeDemoSettings(value: DemoSettings): JsonObject {
   return {
-    "abilitato": value.enabled,
-    "limite": value.limit,
+    ...(value.enabled !== false ? { "abilitato": value.enabled } : {}),
+    ...(value.limit !== 0 ? { "limite": value.limit } : {}),
   };
 }
