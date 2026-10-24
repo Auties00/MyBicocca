@@ -21,8 +21,8 @@ export function decodeMoodleCourseGradesResponse(json: unknown): MoodleCourseGra
 
 export function encodeMoodleCourseGradesResponse(value: MoodleCourseGradesResponse): JsonObject {
   return {
-    "grades": value.grades.map((item) => encodeMoodleCourseGrade(item)),
-    "warnings": value.warnings.map((item) => encodeMoodleWarning(item)),
+    ...(value.grades.length > 0 ? { "grades": value.grades.map((item) => encodeMoodleCourseGrade(item)) } : {}),
+    ...(value.warnings.length > 0 ? { "warnings": value.warnings.map((item) => encodeMoodleWarning(item)) } : {}),
   };
 }
 
@@ -51,10 +51,10 @@ export function decodeMoodleCourseGrade(json: unknown): MoodleCourseGrade | unde
 
 export function encodeMoodleCourseGrade(value: MoodleCourseGrade): JsonObject {
   return {
-    "courseid": value.courseId,
-    "grade": value.grade,
-    "rawgrade": value.rawGrade,
-    "rank": value.rank,
+    ...(value.courseId !== 0 ? { "courseid": value.courseId } : {}),
+    ...(value.grade !== "" ? { "grade": value.grade } : {}),
+    ...(value.rawGrade !== "" ? { "rawgrade": value.rawGrade } : {}),
+    ...(value.rank !== null ? { "rank": value.rank } : {}),
   };
 }
 
@@ -76,8 +76,8 @@ export function decodeMoodleGradeItemsResponse(json: unknown): MoodleGradeItemsR
 
 export function encodeMoodleGradeItemsResponse(value: MoodleGradeItemsResponse): JsonObject {
   return {
-    "usergrades": value.userGrades.map((item) => encodeMoodleUserGrades(item)),
-    "warnings": value.warnings.map((item) => encodeMoodleWarning(item)),
+    ...(value.userGrades.length > 0 ? { "usergrades": value.userGrades.map((item) => encodeMoodleUserGrades(item)) } : {}),
+    ...(value.warnings.length > 0 ? { "warnings": value.warnings.map((item) => encodeMoodleWarning(item)) } : {}),
   };
 }
 
@@ -114,13 +114,13 @@ export function decodeMoodleUserGrades(json: unknown): MoodleUserGrades | undefi
 
 export function encodeMoodleUserGrades(value: MoodleUserGrades): JsonObject {
   return {
-    "courseid": value.courseId,
-    "courseidnumber": value.courseIdNumber,
-    "userid": value.userId,
-    "userfullname": value.userFullName,
-    "useridnumber": value.userIdNumber,
-    "maxdepth": value.maxDepth,
-    "gradeitems": value.gradeItems.map((item) => encodeMoodleGradeItem(item)),
+    ...(value.courseId !== 0 ? { "courseid": value.courseId } : {}),
+    ...(value.courseIdNumber !== "" ? { "courseidnumber": value.courseIdNumber } : {}),
+    ...(value.userId !== 0 ? { "userid": value.userId } : {}),
+    ...(value.userFullName !== "" ? { "userfullname": value.userFullName } : {}),
+    ...(value.userIdNumber !== "" ? { "useridnumber": value.userIdNumber } : {}),
+    ...(value.maxDepth !== 0 ? { "maxdepth": value.maxDepth } : {}),
+    ...(value.gradeItems.length > 0 ? { "gradeitems": value.gradeItems.map((item) => encodeMoodleGradeItem(item)) } : {}),
   };
 }
 
@@ -240,39 +240,39 @@ export function decodeMoodleGradeItem(json: unknown): MoodleGradeItem | undefine
 
 export function encodeMoodleGradeItem(value: MoodleGradeItem): JsonObject {
   return {
-    "id": value.id,
-    "itemname": value.itemName,
-    "itemtype": value.itemType,
-    "itemmodule": value.itemModule,
-    "iteminstance": value.itemInstance,
-    "itemnumber": value.itemNumber,
-    "idnumber": value.idNumber,
-    "categoryid": value.categoryId,
-    "outcomeid": value.outcomeId,
-    "scaleid": value.scaleId,
-    "locked": value.locked,
-    "cmid": value.cmId,
-    "weightraw": value.weightRaw,
-    "weightformatted": value.weightFormatted,
-    "status": value.status,
-    "graderaw": value.gradeRaw,
-    "gradedatesubmitted": value.gradeDateSubmitted,
-    "gradedategraded": value.gradeDateGraded,
-    "gradehiddenbydate": value.gradeHiddenByDate,
-    "gradeneedsupdate": value.gradeNeedsUpdate,
-    "gradeishidden": value.gradeIsHidden,
-    "gradeislocked": value.gradeIsLocked,
-    "gradeisoverridden": value.gradeIsOverridden,
-    "gradeformatted": value.gradeFormatted,
-    "grademin": value.gradeMin,
-    "grademax": value.gradeMax,
-    "rangeformatted": value.rangeFormatted,
-    "percentageformatted": value.percentageFormatted,
-    "lettergradeformatted": value.letterGradeFormatted,
-    "rank": value.rank,
-    "numusers": value.numUsers,
-    "averageformatted": value.averageFormatted,
-    "feedback": value.feedback,
-    "feedbackformat": value.feedbackFormat,
+    ...(value.id !== 0 ? { "id": value.id } : {}),
+    ...(value.itemName !== "" ? { "itemname": value.itemName } : {}),
+    ...(value.itemType !== "" ? { "itemtype": value.itemType } : {}),
+    ...(value.itemModule !== "" ? { "itemmodule": value.itemModule } : {}),
+    ...(value.itemInstance !== 0 ? { "iteminstance": value.itemInstance } : {}),
+    ...(value.itemNumber !== 0 ? { "itemnumber": value.itemNumber } : {}),
+    ...(value.idNumber !== "" ? { "idnumber": value.idNumber } : {}),
+    ...(value.categoryId !== 0 ? { "categoryid": value.categoryId } : {}),
+    ...(value.outcomeId !== 0 ? { "outcomeid": value.outcomeId } : {}),
+    ...(value.scaleId !== 0 ? { "scaleid": value.scaleId } : {}),
+    ...(value.locked !== null ? { "locked": value.locked } : {}),
+    ...(value.cmId !== null ? { "cmid": value.cmId } : {}),
+    ...(value.weightRaw !== null ? { "weightraw": value.weightRaw } : {}),
+    ...(value.weightFormatted !== null ? { "weightformatted": value.weightFormatted } : {}),
+    ...(value.status !== null ? { "status": value.status } : {}),
+    ...(value.gradeRaw !== null ? { "graderaw": value.gradeRaw } : {}),
+    ...(value.gradeDateSubmitted !== null ? { "gradedatesubmitted": value.gradeDateSubmitted } : {}),
+    ...(value.gradeDateGraded !== null ? { "gradedategraded": value.gradeDateGraded } : {}),
+    ...(value.gradeHiddenByDate !== null ? { "gradehiddenbydate": value.gradeHiddenByDate } : {}),
+    ...(value.gradeNeedsUpdate !== null ? { "gradeneedsupdate": value.gradeNeedsUpdate } : {}),
+    ...(value.gradeIsHidden !== null ? { "gradeishidden": value.gradeIsHidden } : {}),
+    ...(value.gradeIsLocked !== null ? { "gradeislocked": value.gradeIsLocked } : {}),
+    ...(value.gradeIsOverridden !== null ? { "gradeisoverridden": value.gradeIsOverridden } : {}),
+    ...(value.gradeFormatted !== null ? { "gradeformatted": value.gradeFormatted } : {}),
+    ...(value.gradeMin !== null ? { "grademin": value.gradeMin } : {}),
+    ...(value.gradeMax !== null ? { "grademax": value.gradeMax } : {}),
+    ...(value.rangeFormatted !== null ? { "rangeformatted": value.rangeFormatted } : {}),
+    ...(value.percentageFormatted !== null ? { "percentageformatted": value.percentageFormatted } : {}),
+    ...(value.letterGradeFormatted !== null ? { "lettergradeformatted": value.letterGradeFormatted } : {}),
+    ...(value.rank !== null ? { "rank": value.rank } : {}),
+    ...(value.numUsers !== null ? { "numusers": value.numUsers } : {}),
+    ...(value.averageFormatted !== null ? { "averageformatted": value.averageFormatted } : {}),
+    ...(value.feedback !== null ? { "feedback": value.feedback } : {}),
+    ...(value.feedbackFormat !== null ? { "feedbackformat": value.feedbackFormat } : {}),
   };
 }

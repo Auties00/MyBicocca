@@ -28,9 +28,9 @@ export function decodeMoodleUploadedFile(json: unknown): MoodleUploadedFile | un
 export function encodeMoodleUploadedFile(value: MoodleUploadedFile): JsonObject {
   return {
     "itemid": value.itemId,
-    "filename": value.fileName,
-    "filepath": value.filePath,
-    "filesize": value.fileSize,
-    "filearea": value.fileArea,
+    ...(value.fileName !== null ? { "filename": value.fileName } : {}),
+    ...(value.filePath !== null ? { "filepath": value.filePath } : {}),
+    ...(value.fileSize !== null ? { "filesize": value.fileSize } : {}),
+    ...(value.fileArea !== null ? { "filearea": value.fileArea } : {}),
   };
 }

@@ -21,7 +21,7 @@ export function decodeEasyStaffAcademicYear(json: unknown): EasyStaffAcademicYea
 export function encodeEasyStaffAcademicYear(value: EasyStaffAcademicYear): JsonObject {
   return {
     "valore": value.startYear,
-    "label": value.label,
+    ...(value.label !== "" ? { "label": value.label } : {}),
   };
 }
 
@@ -55,10 +55,10 @@ export function encodeEasyStaffTeacher(value: EasyStaffTeacher): JsonObject {
     "id": value.id,
     "label": value.fullName,
     "valore": value.code,
-    "facolta_id": value.facultyId,
-    "facolta_code": value.primaryFacultyCode,
-    "periodi": value.activePeriods.map((item) => encodeEasyStaffTeacherPeriod(item)),
-    "teacher_cdl": value.courses.map((item) => encodeEasyStaffTeacherCourse(item)),
+    ...(value.facultyId !== 0 ? { "facolta_id": value.facultyId } : {}),
+    ...(value.primaryFacultyCode !== "" ? { "facolta_code": value.primaryFacultyCode } : {}),
+    ...(value.activePeriods.length > 0 ? { "periodi": value.activePeriods.map((item) => encodeEasyStaffTeacherPeriod(item)) } : {}),
+    ...(value.courses.length > 0 ? { "teacher_cdl": value.courses.map((item) => encodeEasyStaffTeacherCourse(item)) } : {}),
   };
 }
 
@@ -88,8 +88,8 @@ export function encodeEasyStaffTeacherPeriod(value: EasyStaffTeacherPeriod): Jso
     "id": value.id,
     "label": value.description,
     "valore": value.code,
-    "aa_id": value.academicYearId,
-    "facolta_code": value.facultyCode,
+    ...(value.academicYearId !== 0 ? { "aa_id": value.academicYearId } : {}),
+    ...(value.facultyCode !== "" ? { "facolta_code": value.facultyCode } : {}),
   };
 }
 
@@ -114,7 +114,7 @@ export function encodeEasyStaffTeacherCourse(value: EasyStaffTeacherCourse): Jso
   return {
     "CorsoLaureaNome": value.name,
     "CorsoLaureaCodice": value.code,
-    "elencoCurriculum": value.yearsOfStudy.map((item) => encodeEasyStaffTeacherCourseYearOfStudy(item)),
+    ...(value.yearsOfStudy.length > 0 ? { "elencoCurriculum": value.yearsOfStudy.map((item) => encodeEasyStaffTeacherCourseYearOfStudy(item)) } : {}),
   };
 }
 
@@ -171,12 +171,12 @@ export function encodeEasyStaffStudyProgram(value: EasyStaffStudyProgram): JsonO
   return {
     "valore": value.code,
     "label": value.name,
-    "tipo": value.degreeType,
-    "cdl_id": value.internalId,
-    "scuola": value.teachingAreaCode,
-    "elenco_anni": value.years.map((item) => encodeEasyStaffStudyProgramYear(item)),
-    "periodi": value.teachingPeriods.map((item) => encodeEasyStaffStudyProgramTeachingPeriod(item)),
-    "pub_type": value.displayMode,
+    ...(value.degreeType !== "" ? { "tipo": value.degreeType } : {}),
+    ...(value.internalId !== "" ? { "cdl_id": value.internalId } : {}),
+    ...(value.teachingAreaCode !== "" ? { "scuola": value.teachingAreaCode } : {}),
+    ...(value.years.length > 0 ? { "elenco_anni": value.years.map((item) => encodeEasyStaffStudyProgramYear(item)) } : {}),
+    ...(value.teachingPeriods.length > 0 ? { "periodi": value.teachingPeriods.map((item) => encodeEasyStaffStudyProgramTeachingPeriod(item)) } : {}),
+    ...(value.displayMode !== "" ? { "pub_type": value.displayMode } : {}),
   };
 }
 
@@ -204,8 +204,8 @@ export function encodeEasyStaffStudyProgramYear(value: EasyStaffStudyProgramYear
   return {
     "valore": value.code,
     "label": value.name,
-    "order_lbl": value.trackName,
-    "elenco_insegnamenti": value.subjects.map((item) => encodeEasyStaffStudyProgramSubject(item)),
+    ...(value.trackName !== "" ? { "order_lbl": value.trackName } : {}),
+    ...(value.subjects.length > 0 ? { "elenco_insegnamenti": value.subjects.map((item) => encodeEasyStaffStudyProgramSubject(item)) } : {}),
   };
 }
 
@@ -232,11 +232,11 @@ export function decodeEasyStaffStudyProgramSubject(json: unknown): EasyStaffStud
 
 export function encodeEasyStaffStudyProgramSubject(value: EasyStaffStudyProgramSubject): JsonObject {
   return {
-    "id": value.id,
+    ...(value.id !== "" ? { "id": value.id } : {}),
     "valore": value.code,
     "label": value.name,
-    "docente": value.teacherName,
-    "id_periodo": value.periodId,
+    ...(value.teacherName !== "" ? { "docente": value.teacherName } : {}),
+    ...(value.periodId !== "" ? { "id_periodo": value.periodId } : {}),
   };
 }
 
@@ -259,7 +259,7 @@ export function decodeEasyStaffStudyProgramTeachingPeriod(json: unknown): EasySt
 
 export function encodeEasyStaffStudyProgramTeachingPeriod(value: EasyStaffStudyProgramTeachingPeriod): JsonObject {
   return {
-    "id": value.id,
+    ...(value.id !== "" ? { "id": value.id } : {}),
     "valore": value.code,
     "label": value.name,
   };

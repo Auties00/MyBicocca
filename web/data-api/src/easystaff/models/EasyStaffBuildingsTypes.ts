@@ -69,7 +69,7 @@ export function encodeEasyStaffRoom(value: EasyStaffRoom): JsonObject {
   return {
     "valore": value.code,
     "label": value.name,
-    "capacity": value.capacity,
+    ...(value.capacity !== null ? { "capacity": value.capacity } : {}),
   };
 }
 
@@ -119,15 +119,15 @@ export function encodeEasyStaffRoomOccupationEvent(value: EasyStaffRoomOccupatio
     "Giorno": encodeIsoTemporal(value.date),
     "timestamp_from": encodeEpochSeconds(value.startDateTime),
     "timestamp_to": encodeEpochSeconds(value.endDateTime),
-    "NomeAula": value.roomName,
-    "CodiceAula": value.roomCode,
-    "NomeSede": value.buildingName,
-    "CodiceSede": value.buildingCode,
-    "faculty": value.facultyId,
-    "Annullato": value.status,
-    "type": value.eventType,
-    "EventoAteneo": value.isUniversityEvent,
-    "Utenti": value.teachers.map((item) => encodeEasyStaffEventTeacher(item)),
+    ...(value.roomName !== "" ? { "NomeAula": value.roomName } : {}),
+    ...(value.roomCode !== "" ? { "CodiceAula": value.roomCode } : {}),
+    ...(value.buildingName !== "" ? { "NomeSede": value.buildingName } : {}),
+    ...(value.buildingCode !== "" ? { "CodiceSede": value.buildingCode } : {}),
+    ...(value.facultyId !== "" ? { "faculty": value.facultyId } : {}),
+    ...(value.status !== null ? { "Annullato": value.status } : {}),
+    ...(value.eventType !== "" ? { "type": value.eventType } : {}),
+    ...(value.isUniversityEvent !== false ? { "EventoAteneo": value.isUniversityEvent } : {}),
+    ...(value.teachers.length > 0 ? { "Utenti": value.teachers.map((item) => encodeEasyStaffEventTeacher(item)) } : {}),
   };
 }
 
@@ -155,9 +155,9 @@ export function decodeEasyStaffRoomShowcaseBuilding(json: unknown): EasyStaffRoo
 export function encodeEasyStaffRoomShowcaseBuilding(value: EasyStaffRoomShowcaseBuilding): JsonObject {
   return {
     "area_name": value.name,
-    "address": value.address,
-    "area_google_map_link": "",
-    "elenco_aule": value.rooms.map((item) => encodeEasyStaffRoomShowcaseRoom(item)),
+    ...(value.address !== null ? { "address": value.address } : {}),
+    ...(value.googleMapsLink !== null ? { "area_google_map_link": "" } : {}),
+    ...(value.rooms.length > 0 ? { "elenco_aule": value.rooms.map((item) => encodeEasyStaffRoomShowcaseRoom(item)) } : {}),
   };
 }
 
@@ -208,19 +208,19 @@ export function decodeEasyStaffRoomShowcaseRoom(json: unknown): EasyStaffRoomSho
 
 export function encodeEasyStaffRoomShowcaseRoom(value: EasyStaffRoomShowcaseRoom): JsonObject {
   return {
-    "room_code": value.code,
-    "room_name": value.name,
-    "room_description": value.description,
-    "room_capacity": value.capacity,
-    "room_type_name": value.typeName,
-    "room_google_map_link": "",
-    "room_floor_name": value.floor,
-    "room_senza_barriere_architettoniche": value.isAccessible,
-    "note_accessibilita": value.accessibilityNotes,
-    "validato": value.isInclusionValidated,
-    "file_img_360": value.interactive360Link,
-    "room_equipment_fixed": value.fixedEquipment.map((item) => encodeEasyStaffRoomShowcaseEquipment(item)),
-    "room_equipment_mobile": value.mobileEquipment.map((item) => encodeEasyStaffRoomShowcaseEquipment(item)),
+    ...(value.code !== null ? { "room_code": value.code } : {}),
+    ...(value.name !== null ? { "room_name": value.name } : {}),
+    ...(value.description !== null ? { "room_description": value.description } : {}),
+    ...(value.capacity !== null ? { "room_capacity": value.capacity } : {}),
+    ...(value.typeName !== null ? { "room_type_name": value.typeName } : {}),
+    ...(value.googleMapsLink !== null ? { "room_google_map_link": "" } : {}),
+    ...(value.floor !== null ? { "room_floor_name": value.floor } : {}),
+    ...(value.isAccessible !== false ? { "room_senza_barriere_architettoniche": value.isAccessible } : {}),
+    ...(value.accessibilityNotes !== null ? { "note_accessibilita": value.accessibilityNotes } : {}),
+    ...(value.isInclusionValidated !== false ? { "validato": value.isInclusionValidated } : {}),
+    ...(value.interactive360Link !== null ? { "file_img_360": value.interactive360Link } : {}),
+    ...(value.fixedEquipment.length > 0 ? { "room_equipment_fixed": value.fixedEquipment.map((item) => encodeEasyStaffRoomShowcaseEquipment(item)) } : {}),
+    ...(value.mobileEquipment.length > 0 ? { "room_equipment_mobile": value.mobileEquipment.map((item) => encodeEasyStaffRoomShowcaseEquipment(item)) } : {}),
   };
 }
 
@@ -244,7 +244,7 @@ export function decodeEasyStaffRoomShowcaseEquipment(json: unknown): EasyStaffRo
 export function encodeEasyStaffRoomShowcaseEquipment(value: EasyStaffRoomShowcaseEquipment): JsonObject {
   return {
     "Nome": value.name,
-    "Stato": value.status,
+    ...(value.status !== null ? { "Stato": value.status } : {}),
   };
 }
 
@@ -269,9 +269,9 @@ export function decodeEasyStaffEventTeacher(json: unknown): EasyStaffEventTeache
 
 export function encodeEasyStaffEventTeacher(value: EasyStaffEventTeacher): JsonObject {
   return {
-    "Nome": value.name,
-    "Cognome": value.surname,
-    "Mail": value.email,
-    "Codice": value.code,
+    ...(value.name !== "" ? { "Nome": value.name } : {}),
+    ...(value.surname !== "" ? { "Cognome": value.surname } : {}),
+    ...(value.email !== null ? { "Mail": value.email } : {}),
+    ...(value.code !== null ? { "Codice": value.code } : {}),
   };
 }

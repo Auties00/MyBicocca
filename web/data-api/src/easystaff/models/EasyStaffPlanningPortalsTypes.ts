@@ -59,9 +59,9 @@ export function encodeEasyStaffPlanningPortalConfig(value: EasyStaffPlanningPort
     "id": value.id,
     "Nome": value.name,
     "Codice": value.code,
-    "Logo": value.logoPath,
-    "config": value.settings === null ? null : encodeEasyStaffPlanningPortalSettings(value.settings),
-    "colors": value.colors === null ? null : encodeEasyStaffPlanningPortalColors(value.colors),
+    ...(value.logoPath !== null ? { "Logo": value.logoPath } : {}),
+    ...(value.settings !== null ? { "config": value.settings === null ? null : encodeEasyStaffPlanningPortalSettings(value.settings) } : {}),
+    ...(value.colors !== null ? { "colors": value.colors === null ? null : encodeEasyStaffPlanningPortalColors(value.colors) } : {}),
   };
 }
 
@@ -80,7 +80,7 @@ export function decodeEasyStaffPlanningPortalColors(json: unknown): EasyStaffPla
 
 export function encodeEasyStaffPlanningPortalColors(value: EasyStaffPlanningPortalColors): JsonObject {
   return {
-    "scritte": value.textColor,
+    ...(value.textColor !== null ? { "scritte": value.textColor } : {}),
   };
 }
 
@@ -111,12 +111,12 @@ export function decodeEasyStaffPlanningPortalSettings(json: unknown): EasyStaffP
 
 export function encodeEasyStaffPlanningPortalSettings(value: EasyStaffPlanningPortalSettings): JsonObject {
   return {
-    "general": value.general === null ? null : encodeEasyStaffPlanningGeneralSettings(value.general),
-    "campi_tipologia_servizi": value.serviceCategories === null ? null : encodeEasyStaffPlanningServiceCategorySettings(value.serviceCategories),
-    "login_pubblico": value.publicLogin === null ? null : encodeEasyStaffPlanningLoginSettings(value.publicLogin),
-    "griglia": value.grid === null ? null : encodeEasyStaffPlanningGridSettings(value.grid),
-    "campi_portale": value.portalFields === null ? null : encodeEasyStaffPlanningPortalFieldsSettings(value.portalFields),
-    "portale_pubblico": value.publicPortal === null ? null : encodeEasyStaffPlanningPublicPortalSettings(value.publicPortal),
+    ...(value.general !== null ? { "general": value.general === null ? null : encodeEasyStaffPlanningGeneralSettings(value.general) } : {}),
+    ...(value.serviceCategories !== null ? { "campi_tipologia_servizi": value.serviceCategories === null ? null : encodeEasyStaffPlanningServiceCategorySettings(value.serviceCategories) } : {}),
+    ...(value.publicLogin !== null ? { "login_pubblico": value.publicLogin === null ? null : encodeEasyStaffPlanningLoginSettings(value.publicLogin) } : {}),
+    ...(value.grid !== null ? { "griglia": value.grid === null ? null : encodeEasyStaffPlanningGridSettings(value.grid) } : {}),
+    ...(value.portalFields !== null ? { "campi_portale": value.portalFields === null ? null : encodeEasyStaffPlanningPortalFieldsSettings(value.portalFields) } : {}),
+    ...(value.publicPortal !== null ? { "portale_pubblico": value.publicPortal === null ? null : encodeEasyStaffPlanningPublicPortalSettings(value.publicPortal) } : {}),
   };
 }
 
@@ -143,11 +143,11 @@ export function decodeEasyStaffPlanningGeneralSettings(json: unknown): EasyStaff
 
 export function encodeEasyStaffPlanningGeneralSettings(value: EasyStaffPlanningGeneralSettings): JsonObject {
   return {
-    "captcha_control": value.captchaRequired,
-    "prenotazioni_contemporanee": value.concurrentBookingsAllowed,
-    "prenotazione_in_corso": value.bookingInProgressCheck,
-    "public_position": value.publicPosition,
-    "servizi_brevi": value.shortServicesEnabled,
+    ...(value.captchaRequired !== false ? { "captcha_control": value.captchaRequired } : {}),
+    ...(value.concurrentBookingsAllowed !== false ? { "prenotazioni_contemporanee": value.concurrentBookingsAllowed } : {}),
+    ...(value.bookingInProgressCheck !== false ? { "prenotazione_in_corso": value.bookingInProgressCheck } : {}),
+    ...(value.publicPosition !== false ? { "public_position": value.publicPosition } : {}),
+    ...(value.shortServicesEnabled !== false ? { "servizi_brevi": value.shortServicesEnabled } : {}),
   };
 }
 
@@ -166,7 +166,7 @@ export function decodeEasyStaffPlanningServiceCategorySettings(json: unknown): E
 
 export function encodeEasyStaffPlanningServiceCategorySettings(value: EasyStaffPlanningServiceCategorySettings): JsonObject {
   return {
-    "scelta_pubblica": value.publicChoice,
+    ...(value.publicChoice !== false ? { "scelta_pubblica": value.publicChoice } : {}),
   };
 }
 
@@ -192,10 +192,10 @@ export function decodeEasyStaffPlanningLoginSettings(json: unknown): EasyStaffPl
 
 export function encodeEasyStaffPlanningLoginSettings(value: EasyStaffPlanningLoginSettings): JsonObject {
   return {
-    "stato": value.state,
-    "metodo": value.method,
-    "url": value.url,
-    "auth_blocked": value.authBlocked,
+    ...(value.state !== "facoltativo" ? { "stato": value.state } : {}),
+    ...(value.method !== null ? { "metodo": value.method } : {}),
+    ...(value.url !== null ? { "url": value.url } : {}),
+    ...(value.authBlocked !== false ? { "auth_blocked": value.authBlocked } : {}),
   };
 }
 
@@ -214,7 +214,7 @@ export function decodeEasyStaffPlanningGridSettings(json: unknown): EasyStaffPla
 
 export function encodeEasyStaffPlanningGridSettings(value: EasyStaffPlanningGridSettings): JsonObject {
   return {
-    "mostra_ora_fine": value.showEndTime,
+    ...(value.showEndTime !== false ? { "mostra_ora_fine": value.showEndTime } : {}),
   };
 }
 
@@ -244,12 +244,12 @@ export function decodeEasyStaffPlanningPortalFieldsSettings(json: unknown): Easy
 
 export function encodeEasyStaffPlanningPortalFieldsSettings(value: EasyStaffPlanningPortalFieldsSettings): JsonObject {
   return {
-    "raggruppamento_servizi": value.serviceGroup,
-    "servizi": value.service,
-    "raggruppamento_aree": value.areaGroup,
-    "aree": value.area,
-    "raggruppamento_servizi_obbligatorio": value.serviceGroupRequired,
-    "raggruppamento_aree_obbligatorio": value.areaGroupRequired,
+    ...(value.serviceGroup !== 0 ? { "raggruppamento_servizi": value.serviceGroup } : {}),
+    ...(value.service !== 0 ? { "servizi": value.service } : {}),
+    ...(value.areaGroup !== 0 ? { "raggruppamento_aree": value.areaGroup } : {}),
+    ...(value.area !== 0 ? { "aree": value.area } : {}),
+    ...(value.serviceGroupRequired !== false ? { "raggruppamento_servizi_obbligatorio": value.serviceGroupRequired } : {}),
+    ...(value.areaGroupRequired !== false ? { "raggruppamento_aree_obbligatorio": value.areaGroupRequired } : {}),
   };
 }
 
@@ -277,11 +277,11 @@ export function decodeEasyStaffPlanningPublicPortalSettings(json: unknown): Easy
 
 export function encodeEasyStaffPlanningPublicPortalSettings(value: EasyStaffPlanningPublicPortalSettings): JsonObject {
   return {
-    "nascondi_tasto_modifica": value.hideEditButton,
-    "scansiona_qr": value.qrScanEnabled,
-    "feedback": value.feedbackEnabled,
-    "mostra_numero_risorse_libere": value.showFreeResourceCount,
-    "layout_home": value.homeLayout,
+    ...(value.hideEditButton !== false ? { "nascondi_tasto_modifica": value.hideEditButton } : {}),
+    ...(value.qrScanEnabled !== false ? { "scansiona_qr": value.qrScanEnabled } : {}),
+    ...(value.feedbackEnabled !== false ? { "feedback": value.feedbackEnabled } : {}),
+    ...(value.showFreeResourceCount !== false ? { "mostra_numero_risorse_libere": value.showFreeResourceCount } : {}),
+    ...(value.homeLayout !== null ? { "layout_home": value.homeLayout } : {}),
   };
 }
 
@@ -339,17 +339,17 @@ export function encodeEasyStaffPlanningFormField(value: EasyStaffPlanningFormFie
     "label": value.label,
     "codice": value.code,
     "tipo": value.type,
-    "valori": value.values,
-    "predefinito": value.defaultValue,
-    "placeholder": value.placeholder,
-    "primaria": value.primary,
-    "obbligatorio": value.required,
-    "servizio": value.serviceId,
+    ...(value.values !== null ? { "valori": value.values } : {}),
+    ...(value.defaultValue !== null ? { "predefinito": value.defaultValue } : {}),
+    ...(value.placeholder !== null ? { "placeholder": value.placeholder } : {}),
+    ...(value.primary !== false ? { "primaria": value.primary } : {}),
+    ...(value.required !== false ? { "obbligatorio": value.required } : {}),
+    ...(value.serviceId !== null ? { "servizio": value.serviceId } : {}),
     "cliente": value.portalId,
-    "software": value.softwareId,
-    "valore_auth": value.authPrefilled,
-    "identificativo": value.identifying,
-    "blocked": value.blocked,
-    "posizione": value.position,
+    ...(value.softwareId !== 0 ? { "software": value.softwareId } : {}),
+    ...(value.authPrefilled !== false ? { "valore_auth": value.authPrefilled } : {}),
+    ...(value.identifying !== false ? { "identificativo": value.identifying } : {}),
+    ...(value.blocked !== false ? { "blocked": value.blocked } : {}),
+    ...(value.position !== "1" ? { "posizione": value.position } : {}),
   };
 }

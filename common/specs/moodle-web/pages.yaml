@@ -33,6 +33,7 @@ paths:
     get:
       tags: [Catalog]
       operationId: getCourseInfo
+      x-mb-effect: benign
       summary: >-
         A course's public page: its syllabus, staff and enrolment methods, for any course,
         including those the user isn't enrolled in. Its details ("Scheda del corso") come from the
@@ -57,6 +58,7 @@ paths:
     get:
       tags: [Media]
       operationId: getKalturaPlayer
+      x-mb-effect: irreversible
       summary: >-
         The Kaltura player of a video resource. Without a valid session Moodle serves its login page,
         which has no player.
@@ -78,6 +80,7 @@ paths:
     get:
       tags: [Attendance]
       operationId: getAttendanceView
+      x-mb-effect: irreversible
       summary: >-
         An attendance activity's page showing every session: the student's statistics and the
         sessions it offers to submit attendance for. It only reads; marking happens on the pages

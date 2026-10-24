@@ -230,26 +230,42 @@ private struct EnvelopeKeys: CodingKey {
     init?(intValue: Int) { nil }
 }
 
+/// Watches the requests a client sends and the responses it receives, as the live tests do to pace
+/// requests and check responses against the spec.
+public protocol RestObserver: Sendable {
+    /// Called before `request` is sent; throwing stops it.
+    func willSend(_ request: URLRequest) async throws
+
+    func didReceive(_ response: RestResponse, contentType: String?) async
+}
+
 /// Where and how an API client sends its requests.
 public struct RestConfiguration: Sendable {
     public var baseURL: URL
     public var session: URLSession
     /// Headers sent with every request, such as `Authorization`.
     public var headers: [String: String]
+    /// Watches the requests sent with this configuration; nil for none.
+    public var observer: (any RestObserver)?
 
-    public init(baseURL: URL, session: URLSession = .shared, headers: [String: String] = [:]) {
+    public init(baseURL: URL, session: URLSession = .shared, headers: [String: String] = [:], observer: (any RestObserver)? = nil) {
         self.baseURL = baseURL
         self.session = session
         self.headers = headers
+        self.observer = observer
     }
 
     /// Sends `request` and returns the response whatever its status.
     public func send(_ request: RestRequest) async throws -> RestResponse {
-        let (data, response) = try await session.data(for: urlRequest(for: request))
+        let urlRequest = try urlRequest(for: request)
+        try await observer?.willSend(urlRequest)
+        let (data, response) = try await session.data(for: urlRequest)
         guard let http = response as? HTTPURLResponse else {
             throw URLError(.badServerResponse)
         }
-        return RestResponse(status: http.statusCode, body: data, url: http.url)
+        let result = RestResponse(status: http.statusCode, body: data, url: http.url)
+        await observer?.didReceive(result, contentType: http.value(forHTTPHeaderField: "Content-Type"))
+        return result
     }
 
     func urlRequest(for request: RestRequest) throws -> URLRequest {

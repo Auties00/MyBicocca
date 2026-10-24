@@ -175,6 +175,7 @@ paths:
     post:
       tags: [Buildings]
       operationId: getBuildingOccupation
+      x-mb-effect: read
       summary: The events of a building's rooms on a day.
       x-mb-envelope: [events]
       x-mb-form:
@@ -291,6 +292,7 @@ paths:
     post:
       tags: [Schedule]
       operationId: getScheduleByProgram
+      x-mb-effect: read
       summary: The week of lessons of some years of a study program.
       x-mb-path: /PortaleStudentiUnimib/grid_call.php
       x-mb-envelope: [celle]
@@ -349,6 +351,7 @@ paths:
     post:
       tags: [Schedule]
       operationId: getScheduleByTeacher
+      x-mb-effect: read
       summary: The week of lessons a teacher gives in some years of a study program.
       x-mb-path: /PortaleStudentiUnimib/grid_call.php
       x-mb-envelope: [celle]
@@ -422,6 +425,7 @@ paths:
     post:
       tags: [Schedule]
       operationId: getScheduleBySubjects
+      x-mb-effect: read
       summary: >-
         The week of lessons of some subjects, merged into one schedule. Each cell carries its
         subject's code; the cells are those of a separate search per subject.
@@ -487,6 +491,7 @@ paths:
     post:
       tags: [Exams]
       operationId: getExamsByProgram
+      x-mb-effect: read
       summary: The exams of some years of a study program in a date range.
       x-mb-path: /PortaleStudentiUnimib/test_call.php
       x-mb-form:
@@ -550,6 +555,7 @@ paths:
     post:
       tags: [Exams]
       operationId: getExamsByTeacher
+      x-mb-effect: read
       summary: The exams of a teacher in a date range.
       x-mb-path: /PortaleStudentiUnimib/test_call.php
       x-mb-form:
@@ -602,6 +608,7 @@ paths:
     post:
       tags: [Events]
       operationId: getEvents
+      x-mb-effect: read
       summary: The events booked in a date range, filtered by building, room, type, status, day and time.
       x-mb-envelope: [events]
       x-mb-form:
@@ -697,6 +704,7 @@ paths:
     post:
       tags: [Attendance]
       operationId: getAttendanceHistory
+      x-mb-effect: read
       summary: >-
         A student's attendance, keyed by the student's number and then by course; a student with
         no record is sent with an empty map.
@@ -722,6 +730,7 @@ paths:
     post:
       tags: [Attendance]
       operationId: certifyAttendance
+      x-mb-effect: irreversible
       summary: Records the student's presence at a lesson, from the code shown in the room.
       requestBody:
         content:

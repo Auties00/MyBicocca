@@ -1,6 +1,7 @@
 package it.attendance100.mybicocca.codegen.target.swift
 
 import it.attendance100.mybicocca.codegen.core.CodeWriter
+import it.attendance100.mybicocca.codegen.model.ClientSpec
 import it.attendance100.mybicocca.codegen.model.Codec
 import it.attendance100.mybicocca.codegen.model.DefaultValue
 import it.attendance100.mybicocca.codegen.model.Field
@@ -18,7 +19,7 @@ import it.attendance100.mybicocca.codegen.target.swift.SwiftSyntax.doc
  * A delimited record is a `WireMapKey` too: its string form is its `wireKey`, so it can key
  * a `WireMap`.
  */
-internal class SwiftRecordEmitter(private val layout: SwiftLayout) {
+internal class SwiftRecordEmitter(private val layout: SwiftLayout, private val client: ClientSpec = ClientSpec.DEFAULT) {
 
     fun emit(record: RecordType, out: CodeWriter) {
         // Initializers assign `self.name = name`, which a member named `self` would shadow.
@@ -56,7 +57,8 @@ internal class SwiftRecordEmitter(private val layout: SwiftLayout) {
             block("public func encode(to encoder: Encoder) throws {") {
                 line("var container = encoder.container(keyedBy: CodingKeys.self)")
                 for (field in record.fields) {
-                    line(encode(field))
+                    val kept = kept(field)
+                    if (kept == null) line(encode(field)) else block("if $kept {") { line(encode(field)) }
                 }
             }
         }
@@ -196,6 +198,27 @@ internal class SwiftRecordEmitter(private val layout: SwiftLayout) {
         // A value read out of HTML can't be written back; an empty fragment reads as no value.
         is Codec.EmbeddedHtml -> "try container.encode(\"\", forKey: ${key(field)})"
         is Codec.BlankAsNull, Codec.FoldedObject, Codec.EmbeddedJson, Codec.ObjectValues, null -> "try container.encode(${name(field)}, forKey: ${key(field)})"
+    }
+
+    /**
+     * The condition under which [field] is written, as the client's [ClientSpec.sendsDefaults] and
+     * [ClientSpec.sendsNulls] say; null when it always is.
+     */
+    private fun kept(field: Field): String? {
+        val name = name(field)
+        val conditions = buildList {
+            if (!client.sendsNulls && field.nullable) add("$name != nil")
+            val default = field.default
+            if (!client.sendsDefaults && default != null) {
+                when (default) {
+                    DefaultValue.Null -> add("$name != nil")
+                    DefaultValue.EmptyList -> add(if (field.nullable) "$name?.isEmpty == false" else "!$name.isEmpty")
+                    DefaultValue.EmptyMap -> add(if (field.nullable) "$name?.entries.isEmpty == false" else "!$name.entries.isEmpty")
+                    DefaultValue.Zero, is DefaultValue.Literal -> add("$name != ${defaultLiteral(field.type, default)}")
+                }
+            }
+        }
+        return conditions.distinct().joinToString(" && ").ifEmpty { null }
     }
 
     private fun defaultLiteral(field: Field): String? = field.default?.let { defaultLiteral(field.type, it) }

@@ -9,5 +9,13 @@
     "./elearning": "./src/elearning/index.ts",
     "./esse3": "./src/esse3/index.ts",
     "./runtime": "./src/runtime/index.ts"
+  },
+  "scripts": {
+    "test:live": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "22.15.3",
+    "linkedom": "0.18.12",
+    "vitest": "5.0.3"
   }
 }

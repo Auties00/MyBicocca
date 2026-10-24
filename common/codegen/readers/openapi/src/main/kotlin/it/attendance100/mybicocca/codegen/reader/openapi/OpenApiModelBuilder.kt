@@ -149,6 +149,7 @@ internal class OpenApiModelBuilder(private val api: OpenAPI) {
             query = Extensions.stringMap(extensions[Extensions.QUERY], "${Extensions.QUERY} of $name"),
             form = Extensions.stringMap(extensions[Extensions.FORM], "${Extensions.FORM} of $name"),
             multipart = multipartSchema != null,
+            effect = Extensions.effect(extensions[Extensions.EFFECT], method, name),
         )
     }
 

@@ -28,9 +28,9 @@ export function encodeAffluencesCheckinRequest(value: AffluencesCheckinRequest):
   return {
     "deviceId": value.deviceId,
     "deviceLang": value.deviceLang,
-    "lastCheckin": value.lastCheckin,
-    "lastCheckinAdvertPopup": value.lastCheckinAdvertPopup,
-    "firebaseToken": value.firebaseToken,
+    ...(value.lastCheckin !== null ? { "lastCheckin": value.lastCheckin } : {}),
+    ...(value.lastCheckinAdvertPopup !== null ? { "lastCheckinAdvertPopup": value.lastCheckinAdvertPopup } : {}),
+    ...(value.firebaseToken !== null ? { "firebaseToken": value.firebaseToken } : {}),
   };
 }
 
@@ -53,9 +53,9 @@ export function decodeAffluencesCheckin(json: unknown): AffluencesCheckin | unde
 
 export function encodeAffluencesCheckin(value: AffluencesCheckin): JsonObject {
   return {
-    "apiKey": value.apiKey,
-    "latestVersion": value.latestVersion,
-    "buildExpired": value.buildExpired,
+    ...(value.apiKey !== null ? { "apiKey": value.apiKey } : {}),
+    ...(value.latestVersion !== null ? { "latestVersion": value.latestVersion } : {}),
+    ...(value.buildExpired !== false ? { "buildExpired": value.buildExpired } : {}),
   };
 }
 
@@ -95,8 +95,8 @@ export function decodeAffluencesEmailLinkRequest(json: unknown): AffluencesEmail
 
 export function encodeAffluencesEmailLinkRequest(value: AffluencesEmailLinkRequest): JsonObject {
   return {
-    "message": value.message,
-    "request_uuid": value.requestUuid,
+    ...(value.message !== null ? { "message": value.message } : {}),
+    ...(value.requestUuid !== null ? { "request_uuid": value.requestUuid } : {}),
   };
 }
 
@@ -117,8 +117,8 @@ export function decodeAffluencesEmailValidation(json: unknown): AffluencesEmailV
 
 export function encodeAffluencesEmailValidation(value: AffluencesEmailValidation): JsonObject {
   return {
-    "auth_token": value.authToken,
-    "message": value.message,
+    ...(value.authToken !== null ? { "auth_token": value.authToken } : {}),
+    ...(value.message !== null ? { "message": value.message } : {}),
   };
 }
 
@@ -139,8 +139,8 @@ export function decodeAffluencesMyReservations(json: unknown): AffluencesMyReser
 
 export function encodeAffluencesMyReservations(value: AffluencesMyReservations): JsonObject {
   return {
-    "email": value.email,
-    "results": value.results.map((item) => encodeAffluencesMyReservation(item)),
+    ...(value.email !== null ? { "email": value.email } : {}),
+    ...(value.results.length > 0 ? { "results": value.results.map((item) => encodeAffluencesMyReservation(item)) } : {}),
   };
 }
 
@@ -197,22 +197,22 @@ export function decodeAffluencesMyReservation(json: unknown): AffluencesMyReserv
 export function encodeAffluencesMyReservation(value: AffluencesMyReservation): JsonObject {
   return {
     "reservation_id": value.reservationId,
-    "resource_id": value.resourceId,
-    "resource_name": value.resourceName,
-    "site_name": value.siteName,
-    "site_secondary_name": value.siteSecondaryName,
-    "site_timezone": value.siteTimeZone,
-    "reservation_token": value.reservationToken,
-    "cancellation_token": value.cancellationToken,
-    "person_count": value.personCount,
-    "note": value.note,
-    "reservation_start_datetime": value.startDateTime,
-    "reservation_end_datetime": value.endDateTime,
-    "request_datetime": value.requestDateTime,
-    "state": value.state,
-    "validated": value.validated,
-    "confirmation_mandatory": value.confirmationMandatory,
-    "user_validation": value.userValidation,
-    "ticket_payload": value.ticketPayload,
+    ...(value.resourceId !== null ? { "resource_id": value.resourceId } : {}),
+    ...(value.resourceName !== null ? { "resource_name": value.resourceName } : {}),
+    ...(value.siteName !== null ? { "site_name": value.siteName } : {}),
+    ...(value.siteSecondaryName !== null ? { "site_secondary_name": value.siteSecondaryName } : {}),
+    ...(value.siteTimeZone !== null ? { "site_timezone": value.siteTimeZone } : {}),
+    ...(value.reservationToken !== null ? { "reservation_token": value.reservationToken } : {}),
+    ...(value.cancellationToken !== null ? { "cancellation_token": value.cancellationToken } : {}),
+    ...(value.personCount !== 1 ? { "person_count": value.personCount } : {}),
+    ...(value.note !== null ? { "note": value.note } : {}),
+    ...(value.startDateTime !== null ? { "reservation_start_datetime": value.startDateTime } : {}),
+    ...(value.endDateTime !== null ? { "reservation_end_datetime": value.endDateTime } : {}),
+    ...(value.requestDateTime !== null ? { "request_datetime": value.requestDateTime } : {}),
+    ...(value.state !== null ? { "state": value.state } : {}),
+    ...(value.validated !== false ? { "validated": value.validated } : {}),
+    ...(value.confirmationMandatory !== false ? { "confirmation_mandatory": value.confirmationMandatory } : {}),
+    ...(value.userValidation !== false ? { "user_validation": value.userValidation } : {}),
+    ...(value.ticketPayload !== null ? { "ticket_payload": value.ticketPayload } : {}),
   };
 }

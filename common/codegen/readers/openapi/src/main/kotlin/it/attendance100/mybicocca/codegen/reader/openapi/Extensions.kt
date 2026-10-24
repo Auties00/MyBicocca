@@ -3,6 +3,8 @@ package it.attendance100.mybicocca.codegen.reader.openapi
 import it.attendance100.mybicocca.codegen.model.AuthParameter
 import it.attendance100.mybicocca.codegen.model.AuthRequirement
 import it.attendance100.mybicocca.codegen.model.AuthScheme
+import it.attendance100.mybicocca.codegen.model.Effect
+import it.attendance100.mybicocca.codegen.model.HttpMethod
 
 /**
  * The `x-mb-*` extensions the reader understands, by where they appear:
@@ -17,6 +19,7 @@ import it.attendance100.mybicocca.codegen.model.AuthScheme
  * | server                | `x-mb-name`          | PascalCase name of the server.                                    |
  * | components            | `x-mb-auth-schemes`  | Auth schemes: `{Name: {description, parameters: [{name, description}], headers: {Header: "Bearer {param}"}}}`. |
  * | operation             | `x-mb-auth`          | `{schemes: [Name, …], required: true}`.                          |
+ * | operation             | `x-mb-effect`        | What the operation does: `read`, `benign`, `reversible` or `irreversible` (see `Effect`); GETs default to `read`. |
  * | operation             | `x-mb-headers`       | Fixed headers, `{name: value}`; `{parameter}` in a value names an API parameter. |
  * | operation             | `x-mb-query`         | Fixed query parameters, `{name: value}`.                         |
  * | operation             | `x-mb-form`          | Fixed form fields, `{name: value}`; an empty value sends the field empty. |
@@ -62,6 +65,7 @@ internal object Extensions {
     const val NAME = "x-mb-name"
     const val AUTH_SCHEMES = "x-mb-auth-schemes"
     const val AUTH = "x-mb-auth"
+    const val EFFECT = "x-mb-effect"
     const val HEADERS = "x-mb-headers"
     const val ENVELOPE = "x-mb-envelope"
     const val EMPTY_BODY = "x-mb-empty-body"
@@ -108,6 +112,13 @@ internal object Extensions {
         val map = raw as? Map<*, *> ?: return null
         val schemes = (map["schemes"] as? List<*>)?.map { it.toString() } ?: error("$AUTH needs a list of schemes")
         return AuthRequirement(schemes, required = map["required"] as? Boolean ?: true)
+    }
+
+    /** The operation's `x-mb-effect`; GETs that don't declare one are reads. */
+    fun effect(raw: Any?, method: HttpMethod, what: String): Effect? = when (raw) {
+        null -> Effect.READ.takeIf { method == HttpMethod.GET }
+        else -> Effect.fromWireName(raw.toString())
+            ?: error("$EFFECT of $what must be one of ${Effect.entries.map { it.wireName }}, not '$raw'")
     }
 
     fun stringMap(raw: Any?, what: String): Map<String, String> = when (raw) {

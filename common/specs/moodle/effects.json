@@ -1,0 +1,139 @@
+{
+  "Assign.removeSubmission": {
+    "effect": "irreversible",
+    "reason": "Deletes the content of an assignment submission, with no way to restore it."
+  },
+  "Assign.saveSubmission": {
+    "effect": "irreversible",
+    "reason": "Saves the student's assignment submission, which teachers see.",
+    "notes": "When the assignment does not use drafts, saving counts as submitting and notifies graders."
+  },
+  "Assign.submitForGrading": {
+    "effect": "irreversible",
+    "reason": "Submits the assignment for grading."
+  },
+  "Completion.updateActivityCompletionStatusManually": {
+    "effect": "irreversible",
+    "reason": "Marks an activity complete or incomplete, which teachers see in completion reports.",
+    "notes": "Calling it again with the opposite flag resets the activity state, but marking complete can trigger course completion, badge awards and completion events that are not undone."
+  },
+  "Course.enrolUser": {
+    "effect": "irreversible",
+    "reason": "Self-enrols the user in a course, which teachers see in the participant list; this API has no self-unenrol operation.",
+    "notes": "enrol_self_unenrol_user exists in Moodle but is not part of this API; enrolment can also send a welcome message."
+  },
+  "Forum.addDiscussion": {
+    "effect": "irreversible",
+    "reason": "Posts a new discussion that other participants see and that subscribers are e-mailed."
+  },
+  "Forum.addDiscussionPost": {
+    "effect": "irreversible",
+    "reason": "Posts a reply that other participants see and that subscribers are e-mailed."
+  },
+  "Forum.deletePost": {
+    "effect": "irreversible",
+    "reason": "Deletes a forum post or whole discussion permanently."
+  },
+  "Forum.prepareDraftAreaForPost": {
+    "effect": "benign",
+    "reason": "Copies a post's files into a temporary draft file area for editing; the post itself is not changed.",
+    "notes": "Draft areas are private scratch space cleaned up by cron. Needs a post the student can edit."
+  },
+  "Forum.setSubscriptionState": {
+    "effect": "irreversible",
+    "reason": "Subscribes or unsubscribes the user from a discussion; the prior state cannot be read, so no exact undo can be expressed.",
+    "notes": "The toggle itself is private and symmetric (calling it again with the old state restores the records exactly), but no read operation in this API exposes a discussion's subscription state before the call (only the setter's own result, userState.subscribed, does), and undo cannot negate an argument. Could be made reversible if the undo form allowed a literal or negated targetState, or a read exposed the subscription state."
+  },
+  "Forum.toggleFavouriteState": {
+    "effect": "irreversible",
+    "reason": "Stars or unstars a discussion for the user; the prior state cannot be read at a fixed path, so no exact undo can be expressed.",
+    "notes": "Private and symmetric: favourites are a per-user record that unstarring deletes. The prior state is only in getForumDiscussions(forumId).discussions[*].starred, which cannot be matched to this discussionId (and the call has no forumId). Could be made reversible with a literal or negated targetState in the undo."
+  },
+  "Forum.updateDiscussionPost": {
+    "effect": "irreversible",
+    "reason": "Edits a post that other participants see; restoring the text does not reset its modified time or edit trail."
+  },
+  "Forum.viewForum": {
+    "effect": "irreversible",
+    "reason": "Logs a course module viewed event and can mark the forum complete on view."
+  },
+  "Forum.viewForumDiscussion": {
+    "effect": "irreversible",
+    "reason": "A *_view_* function: logs a discussion viewed event that teachers can see.",
+    "notes": "Does not update completion itself; kept irreversible per the *_view_* rule."
+  },
+  "Message.blockUser": {
+    "effect": "reversible",
+    "reason": "Adds a user to the current user's private block list; unblocking removes the record again.",
+    "notes": "The undo is exact only if the target was not already blocked (otherwise blocking does nothing and the undo removes a block the student had set). The block list cannot be read without a shared conversation (members[].isBlocked of getConversationMessages), so no verify. Pick a target who is not staff: users who can message even when blocked cannot be blocked. While the block is in place the target cannot message the student."
+  },
+  "Message.deleteConversationsById": {
+    "effect": "irreversible",
+    "reason": "Deletes conversations for the user with no way to restore them."
+  },
+  "Message.markAllConversationMessagesAsRead": {
+    "effect": "irreversible",
+    "reason": "Marks a conversation's messages as read; the API has no way to mark them unread again, and the student would see the change."
+  },
+  "Message.sendInstantMessages": {
+    "effect": "irreversible",
+    "reason": "Sends messages to other people."
+  },
+  "Message.unblockUser": {
+    "effect": "reversible",
+    "reason": "Removes a user from the current user's private block list; blocking adds them back.",
+    "notes": "The undo is exact only if the target was blocked beforehand; otherwise unblocking does nothing and the undo leaves a new block. Safest to run only as the undo of Message.blockUser."
+  },
+  "Mobile.getAutologinKey": {
+    "effect": "benign",
+    "reason": "Issues a short-lived auto-login key for the current user.",
+    "notes": "Moodle replaces any previous mobile auto-login key and rate-limits generation (about one key every 6 minutes), so a test may fail if the student's app has just requested one. Requires https and the mobile app user agent."
+  },
+  "Mobile.getContent": {
+    "effect": "irreversible",
+    "reason": "Runs an arbitrary plugin's mobile handler, whose effect depends on the component and method.",
+    "notes": "Moodle flags it as read, but some handlers act on their args, e.g. mod_attendance's mobile view can record self-marked attendance, and some activity handlers log views and completion. Could be allowed per component and method after review."
+  },
+  "Quiz.getAttemptData": {
+    "effect": "irreversible",
+    "reason": "Works on a quiz attempt in progress and can change its state.",
+    "notes": "Moodle flags it as read, but attempt validation runs handle_if_time_expired (which can finish or abandon an overdue attempt) and the page request can move the attempt's current page, which with sequential navigation stops the student from going back. Only usable on a real in-progress attempt, which tests must not touch."
+  },
+  "Quiz.getAttemptSummary": {
+    "effect": "irreversible",
+    "reason": "Works on a quiz attempt in progress, and validating it can close an overdue attempt.",
+    "notes": "Moodle flags it as read; the risk is that handle_if_time_expired finishes an expired attempt, and that it acts on a real in-progress attempt. Could be read on review."
+  },
+  "Quiz.processAttempt": {
+    "effect": "irreversible",
+    "reason": "Records quiz answers and can finish the attempt for grading."
+  },
+  "Quiz.saveAttempt": {
+    "effect": "irreversible",
+    "reason": "Saves answers into a quiz attempt in progress, which staff can see."
+  },
+  "Quiz.startAttempt": {
+    "effect": "irreversible",
+    "reason": "Starts a new quiz attempt, using up an attempt that staff see."
+  },
+  "User.addUserDevice": {
+    "effect": "benign",
+    "reason": "Registers a mobile device for push notifications.",
+    "notes": "Use a made-up uuid and pushId and remove it afterwards with User.removeUserDevice(uuid = $args.uuid, appId = $args.appId). Reusing the student's real device uuid and appId would overwrite that device's push registration."
+  },
+  "User.removeUserDevice": {
+    "effect": "benign",
+    "reason": "Removes a push-notification device registration.",
+    "notes": "Benign only for a device the test registered itself (User.addUserDevice). Removing the student's real device uuid would stop push notifications to their phone, which they would notice."
+  },
+  "User.updateUserPreferences": {
+    "effect": "irreversible",
+    "reason": "Changes the user's preferences or the emailstop flag (notification delivery), and this API cannot express an exact restore.",
+    "notes": "Single preferences could be restored (getUserPreferences(name) returns null for an unset preference, and updating with a null value deletes it again), but the read returns name/value pairs while the update takes type/value lists, and emailstop cannot be read at all. The restore form cannot express that. Could become reversible if restore supported nested into-paths."
+  },
+  "User.viewUserProfile": {
+    "effect": "irreversible",
+    "reason": "A *_view_* function: logs a user_profile_viewed event, which teachers can see in course logs.",
+    "notes": "Profile views have no activity completion, so a reviewer might downgrade this to benign; kept irreversible per the *_view_* rule."
+  }
+}

@@ -19,8 +19,8 @@ export function decodeAffluencesReservationSiteInfo(json: unknown): AffluencesRe
 
 export function encodeAffluencesReservationSiteInfo(value: AffluencesReservationSiteInfo): JsonObject {
   return {
-    "types": value.types.map((item) => encodeAffluencesResourceTypeInfo(item)),
-    "contact_email": value.contactEmail,
+    ...(value.types.length > 0 ? { "types": value.types.map((item) => encodeAffluencesResourceTypeInfo(item)) } : {}),
+    ...(value.contactEmail !== null ? { "contact_email": value.contactEmail } : {}),
   };
 }
 
@@ -52,12 +52,12 @@ export function decodeAffluencesResourceTypeInfo(json: unknown): AffluencesResou
 export function encodeAffluencesResourceTypeInfo(value: AffluencesResourceTypeInfo): JsonObject {
   return {
     "resource_type": value.resourceTypeId,
-    "image": value.imageUrl,
-    "localized_description": value.description,
-    "localized_subdescription": value.subdescription,
-    "rank": value.rank,
-    "map": value.mapUrl,
-    "time_limit": value.timeLimit,
+    ...(value.imageUrl !== null ? { "image": value.imageUrl } : {}),
+    ...(value.description !== null ? { "localized_description": value.description } : {}),
+    ...(value.subdescription !== null ? { "localized_subdescription": value.subdescription } : {}),
+    ...(value.rank !== null ? { "rank": value.rank } : {}),
+    ...(value.mapUrl !== null ? { "map": value.mapUrl } : {}),
+    ...(value.timeLimit !== null ? { "time_limit": value.timeLimit } : {}),
   };
 }
 
@@ -121,28 +121,28 @@ export function decodeAffluencesAvailableResource(json: unknown): AffluencesAvai
 export function encodeAffluencesAvailableResource(value: AffluencesAvailableResource): JsonObject {
   return {
     "resource_id": value.resourceId,
-    "resource_name": value.resourceName,
-    "resource_type": value.resourceTypeId,
-    "granularity": value.granularityMinutes,
-    "time_slot_count": value.timeSlotCount,
-    "static_time_slot": value.staticTimeSlot,
-    "note_available": value.noteAvailable,
-    "note_required": value.noteRequired,
-    "note_description": value.noteDescription,
-    "description": value.description,
-    "description_html": value.descriptionHtml,
-    "capacity": value.capacity,
-    "site_timezone": value.siteTimeZone,
-    "user_name_required": value.userNameRequired,
-    "user_phone_required": value.userPhoneRequired,
-    "user_name_available": value.userNameAvailable,
-    "user_phone_available": value.userPhoneAvailable,
-    "time_before_reservations_closed": value.timeBeforeReservationsClosed,
-    "min_places_per_reservation": value.minPlacesPerReservation,
-    "max_places_per_reservation": value.maxPlacesPerReservation,
-    "image_url": value.imageUrl,
-    "slots_state": value.slotsState,
-    "hours": value.hours.map((item) => encodeAffluencesTimeSlot(item)),
+    ...(value.resourceName !== null ? { "resource_name": value.resourceName } : {}),
+    ...(value.resourceTypeId !== null ? { "resource_type": value.resourceTypeId } : {}),
+    ...(value.granularityMinutes !== null ? { "granularity": value.granularityMinutes } : {}),
+    ...(value.timeSlotCount !== null ? { "time_slot_count": value.timeSlotCount } : {}),
+    ...(value.staticTimeSlot !== false ? { "static_time_slot": value.staticTimeSlot } : {}),
+    ...(value.noteAvailable !== false ? { "note_available": value.noteAvailable } : {}),
+    ...(value.noteRequired !== false ? { "note_required": value.noteRequired } : {}),
+    ...(value.noteDescription !== null ? { "note_description": value.noteDescription } : {}),
+    ...(value.description !== null ? { "description": value.description } : {}),
+    ...(value.descriptionHtml !== null ? { "description_html": value.descriptionHtml } : {}),
+    ...(value.capacity !== 0 ? { "capacity": value.capacity } : {}),
+    ...(value.siteTimeZone !== null ? { "site_timezone": value.siteTimeZone } : {}),
+    ...(value.userNameRequired !== false ? { "user_name_required": value.userNameRequired } : {}),
+    ...(value.userPhoneRequired !== false ? { "user_phone_required": value.userPhoneRequired } : {}),
+    ...(value.userNameAvailable !== false ? { "user_name_available": value.userNameAvailable } : {}),
+    ...(value.userPhoneAvailable !== false ? { "user_phone_available": value.userPhoneAvailable } : {}),
+    ...(value.timeBeforeReservationsClosed !== null ? { "time_before_reservations_closed": value.timeBeforeReservationsClosed } : {}),
+    ...(value.minPlacesPerReservation !== null ? { "min_places_per_reservation": value.minPlacesPerReservation } : {}),
+    ...(value.maxPlacesPerReservation !== null ? { "max_places_per_reservation": value.maxPlacesPerReservation } : {}),
+    ...(value.imageUrl !== null ? { "image_url": value.imageUrl } : {}),
+    ...(value.slotsState !== null ? { "slots_state": value.slotsState } : {}),
+    ...(value.hours.length > 0 ? { "hours": value.hours.map((item) => encodeAffluencesTimeSlot(item)) } : {}),
   };
 }
 
@@ -173,11 +173,11 @@ export function decodeAffluencesTimeSlot(json: unknown): AffluencesTimeSlot | un
 export function encodeAffluencesTimeSlot(value: AffluencesTimeSlot): JsonObject {
   return {
     "hour": value.hour,
-    "state": value.state,
-    "granularity": value.granularityMinutes,
-    "person_count": value.personCount,
-    "places_available": value.placesAvailable,
-    "places_bookable": value.placesBookable,
+    ...(value.state !== null ? { "state": value.state } : {}),
+    ...(value.granularityMinutes !== null ? { "granularity": value.granularityMinutes } : {}),
+    ...(value.personCount !== 0 ? { "person_count": value.personCount } : {}),
+    ...(value.placesAvailable !== 0 ? { "places_available": value.placesAvailable } : {}),
+    ...(value.placesBookable !== 0 ? { "places_bookable": value.placesBookable } : {}),
   };
 }
 
@@ -207,11 +207,11 @@ export function decodeAffluencesResourceTypeFilters(json: unknown): AffluencesRe
 export function encodeAffluencesResourceTypeFilters(value: AffluencesResourceTypeFilters): JsonObject {
   return {
     "resource_type_id": value.resourceTypeId,
-    "open_days": value.openDays,
-    "open_hours": value.openHours,
-    "durations": value.durations,
-    "capacities": value.capacities,
-    "resources": value.resources.map((item) => encodeAffluencesResourceSummary(item)),
+    ...(value.openDays.length > 0 ? { "open_days": value.openDays } : {}),
+    ...(value.openHours.length > 0 ? { "open_hours": value.openHours } : {}),
+    ...(value.durations.length > 0 ? { "durations": value.durations } : {}),
+    ...(value.capacities.length > 0 ? { "capacities": value.capacities } : {}),
+    ...(value.resources.length > 0 ? { "resources": value.resources.map((item) => encodeAffluencesResourceSummary(item)) } : {}),
   };
 }
 
@@ -233,7 +233,7 @@ export function decodeAffluencesResourceSummary(json: unknown): AffluencesResour
 export function encodeAffluencesResourceSummary(value: AffluencesResourceSummary): JsonObject {
   return {
     "resource_id": value.resourceId,
-    "resource_name": value.resourceName,
+    ...(value.resourceName !== null ? { "resource_name": value.resourceName } : {}),
   };
 }
 
@@ -263,11 +263,11 @@ export function decodeAffluencesAgreement(json: unknown): AffluencesAgreement | 
 export function encodeAffluencesAgreement(value: AffluencesAgreement): JsonObject {
   return {
     "agreements_id": value.agreementId,
-    "agreements_details_id": value.agreementDetailsId,
-    "latest_change": value.latestChange,
-    "name": value.name,
-    "url": value.url,
-    "mandatory_consent": value.mandatoryConsent,
+    ...(value.agreementDetailsId !== null ? { "agreements_details_id": value.agreementDetailsId } : {}),
+    ...(value.latestChange !== null ? { "latest_change": value.latestChange } : {}),
+    ...(value.name !== null ? { "name": value.name } : {}),
+    ...(value.url !== null ? { "url": value.url } : {}),
+    ...(value.mandatoryConsent !== false ? { "mandatory_consent": value.mandatoryConsent } : {}),
   };
 }
 
@@ -290,9 +290,9 @@ export function decodeAffluencesResourceEmailPolicy(json: unknown): AffluencesRe
 
 export function encodeAffluencesResourceEmailPolicy(value: AffluencesResourceEmailPolicy): JsonObject {
   return {
-    "filter_error_message": value.filterErrorMessage,
-    "filter_error_message_html": value.filterErrorMessageHtml,
-    "filters": value.filters,
+    ...(value.filterErrorMessage !== null ? { "filter_error_message": value.filterErrorMessage } : {}),
+    ...(value.filterErrorMessageHtml !== null ? { "filter_error_message_html": value.filterErrorMessageHtml } : {}),
+    ...(value.filters.length > 0 ? { "filters": value.filters } : {}),
   };
 }
 
@@ -311,7 +311,7 @@ export function decodeAffluencesResourceForms(json: unknown): AffluencesResource
 
 export function encodeAffluencesResourceForms(value: AffluencesResourceForms): JsonObject {
   return {
-    "customForm": value.customForm,
+    ...(value.customForm !== null ? { "customForm": value.customForm } : {}),
   };
 }
 
@@ -336,10 +336,10 @@ export function decodeAffluencesIdentityProvider(json: unknown): AffluencesIdent
 
 export function encodeAffluencesIdentityProvider(value: AffluencesIdentityProvider): JsonObject {
   return {
-    "type": value.type,
-    "discoveryUrl": value.discoveryUrl,
-    "clientId": value.clientId,
-    "scopes": value.scopes,
+    ...(value.type !== null ? { "type": value.type } : {}),
+    ...(value.discoveryUrl !== null ? { "discoveryUrl": value.discoveryUrl } : {}),
+    ...(value.clientId !== null ? { "clientId": value.clientId } : {}),
+    ...(value.scopes.length > 0 ? { "scopes": value.scopes } : {}),
   };
 }
 
@@ -364,10 +364,10 @@ export function decodeAffluencesResourceStatus(json: unknown): AffluencesResourc
 
 export function encodeAffluencesResourceStatus(value: AffluencesResourceStatus): JsonObject {
   return {
-    "reservation_mail": value.reservationEmail,
-    "hours": value.hours.map((item) => encodeAffluencesTimeSlot(item)),
-    "current_state": value.currentState,
-    "resource": value.resource === null ? null : encodeAffluencesResourceDetail(value.resource),
+    ...(value.reservationEmail !== null ? { "reservation_mail": value.reservationEmail } : {}),
+    ...(value.hours.length > 0 ? { "hours": value.hours.map((item) => encodeAffluencesTimeSlot(item)) } : {}),
+    ...(value.currentState !== null ? { "current_state": value.currentState } : {}),
+    ...(value.resource !== null ? { "resource": value.resource === null ? null : encodeAffluencesResourceDetail(value.resource) } : {}),
   };
 }
 
@@ -425,25 +425,25 @@ export function decodeAffluencesResourceDetail(json: unknown): AffluencesResourc
 export function encodeAffluencesResourceDetail(value: AffluencesResourceDetail): JsonObject {
   return {
     "resource_id": value.resourceId,
-    "resource_name": value.resourceName,
-    "description": value.description,
-    "description_html": value.descriptionHtml,
-    "capacity": value.capacity,
-    "resource_type": value.resourceTypeId,
-    "granularity": value.granularityMinutes,
-    "time_slot_count": value.timeSlotCount,
-    "reservation_mandatory": value.reservationMandatory,
-    "time_limit": value.timeLimit,
-    "site_settings_message": value.siteSettingsMessage,
-    "site_settings_message_html": value.siteSettingsMessageHtml,
-    "site_settings_url": value.siteSettingsUrl,
-    "site_settings_contact_email": value.siteSettingsContactEmail,
-    "extra_infos_message": value.extraInfosMessage,
-    "extra_infos_message_html": value.extraInfosMessageHtml,
-    "extra_infos_url": value.extraInfosUrl,
-    "site_name": value.siteName,
-    "secondary_name": value.siteSecondaryName,
-    "site_uuid": value.siteUuid,
+    ...(value.resourceName !== null ? { "resource_name": value.resourceName } : {}),
+    ...(value.description !== null ? { "description": value.description } : {}),
+    ...(value.descriptionHtml !== null ? { "description_html": value.descriptionHtml } : {}),
+    ...(value.capacity !== 0 ? { "capacity": value.capacity } : {}),
+    ...(value.resourceTypeId !== null ? { "resource_type": value.resourceTypeId } : {}),
+    ...(value.granularityMinutes !== null ? { "granularity": value.granularityMinutes } : {}),
+    ...(value.timeSlotCount !== null ? { "time_slot_count": value.timeSlotCount } : {}),
+    ...(value.reservationMandatory !== false ? { "reservation_mandatory": value.reservationMandatory } : {}),
+    ...(value.timeLimit !== null ? { "time_limit": value.timeLimit } : {}),
+    ...(value.siteSettingsMessage !== null ? { "site_settings_message": value.siteSettingsMessage } : {}),
+    ...(value.siteSettingsMessageHtml !== null ? { "site_settings_message_html": value.siteSettingsMessageHtml } : {}),
+    ...(value.siteSettingsUrl !== null ? { "site_settings_url": value.siteSettingsUrl } : {}),
+    ...(value.siteSettingsContactEmail !== null ? { "site_settings_contact_email": value.siteSettingsContactEmail } : {}),
+    ...(value.extraInfosMessage !== null ? { "extra_infos_message": value.extraInfosMessage } : {}),
+    ...(value.extraInfosMessageHtml !== null ? { "extra_infos_message_html": value.extraInfosMessageHtml } : {}),
+    ...(value.extraInfosUrl !== null ? { "extra_infos_url": value.extraInfosUrl } : {}),
+    ...(value.siteName !== null ? { "site_name": value.siteName } : {}),
+    ...(value.siteSecondaryName !== null ? { "secondary_name": value.siteSecondaryName } : {}),
+    ...(value.siteUuid !== null ? { "site_uuid": value.siteUuid } : {}),
   };
 }
 
@@ -487,13 +487,13 @@ export function encodeAffluencesReservationRequest(value: AffluencesReservationR
     "date": encodeIsoTemporal(value.date),
     "start_time": encodeTemporal(value.startTime, "HH:mm"),
     "end_time": encodeTemporal(value.endTime, "HH:mm"),
-    "person_count": value.personCount,
-    "auth_type": value.authType,
-    "note": value.note,
-    "user_firstname": value.userFirstName,
-    "user_lastname": value.userLastName,
-    "user_phone": value.userPhone,
-    "user_device_token": value.userDeviceToken,
+    ...(value.personCount !== 1 ? { "person_count": value.personCount } : {}),
+    ...(value.authType !== null ? { "auth_type": value.authType } : {}),
+    ...(value.note !== null ? { "note": value.note } : {}),
+    ...(value.userFirstName !== null ? { "user_firstname": value.userFirstName } : {}),
+    ...(value.userLastName !== null ? { "user_lastname": value.userLastName } : {}),
+    ...(value.userPhone !== null ? { "user_phone": value.userPhone } : {}),
+    ...(value.userDeviceToken !== null ? { "user_device_token": value.userDeviceToken } : {}),
   };
 }
 
@@ -528,15 +528,15 @@ export function decodeAffluencesReservationResult(json: unknown): AffluencesRese
 
 export function encodeAffluencesReservationResult(value: AffluencesReservationResult): JsonObject {
   return {
-    "reservation_id": value.reservationId,
-    "auth_token": value.authToken,
-    "user_validation": value.userValidation,
-    "ticket_payload": value.ticketPayload,
-    "person_count": value.personCount,
-    "email": value.email,
-    "success": value.success,
-    "successMessage": value.successMessage,
-    "cancellation_token": value.cancellationToken,
+    ...(value.reservationId !== null ? { "reservation_id": value.reservationId } : {}),
+    ...(value.authToken !== null ? { "auth_token": value.authToken } : {}),
+    ...(value.userValidation !== null ? { "user_validation": value.userValidation } : {}),
+    ...(value.ticketPayload !== null ? { "ticket_payload": value.ticketPayload } : {}),
+    ...(value.personCount !== null ? { "person_count": value.personCount } : {}),
+    ...(value.email !== null ? { "email": value.email } : {}),
+    ...(value.success !== null ? { "success": value.success } : {}),
+    ...(value.successMessage !== null ? { "successMessage": value.successMessage } : {}),
+    ...(value.cancellationToken !== null ? { "cancellation_token": value.cancellationToken } : {}),
   };
 }
 
@@ -577,7 +577,7 @@ export function decodeAffluencesReservationValidation(json: unknown): Affluences
 
 export function encodeAffluencesReservationValidation(value: AffluencesReservationValidation): JsonObject {
   return {
-    "validateReservationWithCode": value.validatedReservations,
+    ...(value.validatedReservations !== null ? { "validateReservationWithCode": value.validatedReservations } : {}),
   };
 }
 
@@ -596,7 +596,7 @@ export function decodeAffluencesReservationCancellation(json: unknown): Affluenc
 
 export function encodeAffluencesReservationCancellation(value: AffluencesReservationCancellation): JsonObject {
   return {
-    "successMessage": value.successMessage,
+    ...(value.successMessage !== null ? { "successMessage": value.successMessage } : {}),
   };
 }
 
@@ -635,15 +635,15 @@ export function decodeAffluencesReservationToCancel(json: unknown): AffluencesRe
 
 export function encodeAffluencesReservationToCancel(value: AffluencesReservationToCancel): JsonObject {
   return {
-    "reservation_day": value.reservationDay,
-    "start_time": value.startTime,
-    "end_time": value.endTime,
-    "duration": value.duration,
-    "site_name": value.siteName,
-    "resource_name": value.resourceName,
-    "state": value.state,
-    "cancellable": value.cancellable,
-    "static_time_slot": value.staticTimeSlot,
+    ...(value.reservationDay !== null ? { "reservation_day": value.reservationDay } : {}),
+    ...(value.startTime !== null ? { "start_time": value.startTime } : {}),
+    ...(value.endTime !== null ? { "end_time": value.endTime } : {}),
+    ...(value.duration !== null ? { "duration": value.duration } : {}),
+    ...(value.siteName !== null ? { "site_name": value.siteName } : {}),
+    ...(value.resourceName !== null ? { "resource_name": value.resourceName } : {}),
+    ...(value.state !== null ? { "state": value.state } : {}),
+    ...(value.cancellable !== false ? { "cancellable": value.cancellable } : {}),
+    ...(value.staticTimeSlot !== false ? { "static_time_slot": value.staticTimeSlot } : {}),
   };
 }
 
@@ -668,10 +668,10 @@ export function decodeAffluencesEmailConfirmation(json: unknown): AffluencesEmai
 
 export function encodeAffluencesEmailConfirmation(value: AffluencesEmailConfirmation): JsonObject {
   return {
-    "redirect": value.redirect,
-    "confirmFailed": value.confirmFailed,
-    "not_found": value.notFound,
-    "already_confirmed": value.alreadyConfirmed,
+    ...(value.redirect !== false ? { "redirect": value.redirect } : {}),
+    ...(value.confirmFailed !== false ? { "confirmFailed": value.confirmFailed } : {}),
+    ...(value.notFound !== false ? { "not_found": value.notFound } : {}),
+    ...(value.alreadyConfirmed !== false ? { "already_confirmed": value.alreadyConfirmed } : {}),
   };
 }
 

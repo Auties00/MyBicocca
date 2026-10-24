@@ -6,7 +6,8 @@
     "data-api"
   ],
   "scripts": {
-    "typecheck": "tsc -p data-api"
+    "typecheck": "tsc -p data-api && tsc -p data-api/test",
+    "test:live": "npm run test:live -w data-api"
   },
   "devDependencies": {
     "typescript": "^5.8.3"

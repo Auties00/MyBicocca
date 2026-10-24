@@ -70,14 +70,14 @@ export function encodeEasyStaffEvent(value: EasyStaffEvent): JsonObject {
     "Giorno": encodeIsoTemporal(value.date),
     "timestamp_from": encodeEpochSeconds(value.startDateTime),
     "timestamp_to": encodeEpochSeconds(value.endDateTime),
-    "NomeAula": value.roomName,
-    "faculty": value.facultyId,
-    "Annullato": value.status,
-    "type_id": value.eventType,
-    "passato": value.isPast,
-    "EventoAteneo": value.isUniversityEvent,
-    "Utenti": value.teachers.map((item) => encodeEasyStaffEventTeacher(item)),
-    "attivita_didattiche": value.activities.map((item) => encodeEasyStaffEventActivity(item)),
+    ...(value.roomName !== "" ? { "NomeAula": value.roomName } : {}),
+    ...(value.facultyId !== "" ? { "faculty": value.facultyId } : {}),
+    ...(value.status !== null ? { "Annullato": value.status } : {}),
+    ...(value.eventType !== "" ? { "type_id": value.eventType } : {}),
+    ...(value.isPast !== false ? { "passato": value.isPast } : {}),
+    ...(value.isUniversityEvent !== false ? { "EventoAteneo": value.isUniversityEvent } : {}),
+    ...(value.teachers.length > 0 ? { "Utenti": value.teachers.map((item) => encodeEasyStaffEventTeacher(item)) } : {}),
+    ...(value.activities.length > 0 ? { "attivita_didattiche": value.activities.map((item) => encodeEasyStaffEventActivity(item)) } : {}),
   };
 }
 
@@ -100,8 +100,8 @@ export function decodeEasyStaffEventActivity(json: unknown): EasyStaffEventActiv
 
 export function encodeEasyStaffEventActivity(value: EasyStaffEventActivity): JsonObject {
   return {
-    "ID": value.id,
-    "Codice": value.code,
-    "Nome": value.name,
+    ...(value.id !== "" ? { "ID": value.id } : {}),
+    ...(value.code !== "" ? { "Codice": value.code } : {}),
+    ...(value.name !== "" ? { "Nome": value.name } : {}),
   };
 }

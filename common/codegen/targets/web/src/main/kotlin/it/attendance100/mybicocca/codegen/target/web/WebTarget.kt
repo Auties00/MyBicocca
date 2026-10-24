@@ -3,6 +3,7 @@ package it.attendance100.mybicocca.codegen.target.web
 import it.attendance100.mybicocca.codegen.core.CodeTarget
 import it.attendance100.mybicocca.codegen.core.GeneratedFile
 import it.attendance100.mybicocca.codegen.core.TargetContext
+import it.attendance100.mybicocca.codegen.core.TestPlan
 import it.attendance100.mybicocca.codegen.core.decapitalized
 import it.attendance100.mybicocca.codegen.core.SHARED_FILES_OWNER
 import it.attendance100.mybicocca.codegen.core.decodeOptions
@@ -34,7 +35,7 @@ class WebTarget : CodeTarget {
         val options = context.options.decodeOptions<Options>()
         val layout = TsLayout(spec, options.packageName ?: spec.id, options.runtimePath)
         val codecs = TsCodecs(layout)
-        val records = TsRecordEmitter(layout, codecs)
+        val records = TsRecordEmitter(layout, codecs, spec.client)
         val enums = TsEnumEmitter(layout)
         val scrapers = TsScrapeEmitter(spec, layout)
         val services = TsServiceEmitter(spec, layout, codecs, scrapers)
@@ -73,6 +74,32 @@ class WebTarget : CodeTarget {
                 add(file(layout.rolesFile) { client.emitRoles(it) })
             }
         }
+    }
+
+    /**
+     * The live tests of the API, in the test output directory's folder of its subpackage (see
+     * [TsTestEmitter]).
+     */
+    override fun generateTests(plan: TestPlan, context: TargetContext): List<GeneratedFile> {
+        val options = context.options.decodeOptions<Options>()
+        val layout = TsLayout(plan.spec, options.packageName ?: plan.spec.id, options.runtimePath)
+        return TsTestEmitter(plan, layout, sources(context)).files()
+    }
+
+    /**
+     * The live test runtime, from this module's `web-live` resources: the cases' runtime, the
+     * report and checks, and the setup giving Node a DOM for the scrapers.
+     */
+    override fun sharedTestFiles(context: TargetContext): List<GeneratedFile> {
+        val runtime = "../${sources(context)}/${context.options.decodeOptions<Options>().runtimePath}/index.js"
+        return resourceFiles(javaClass, "web-live", LIVE_FILES, TsTestEmitter.LIVE_FILE.substringBeforeLast('/')) { it.replace("__RUNTIME__", runtime) }
+    }
+
+    /** The SDK's output directory, relative to the test output directory. */
+    private fun sources(context: TargetContext): String {
+        val outputDir = context.outputDir ?: return DEFAULT_SOURCES
+        val testOutputDir = context.testOutputDir ?: return DEFAULT_SOURCES
+        return testOutputDir.relativize(outputDir).joinToString("/")
     }
 
     /** The runtime, from this module's `web-runtime` resources. */
@@ -186,6 +213,10 @@ class WebTarget : CodeTarget {
     private companion object {
         const val MAX_LINE_LENGTH = 100
         val RUNTIME_FILES = listOf("client.ts", "coding.ts", "index.ts", "rest.ts", "scrape.ts", "temporal.ts")
+        val LIVE_FILES = listOf("live.ts", "setup.ts", "support.ts")
+
+        /** Where the SDK is, from the tests, when the directories aren't known: `src` next to `test`. */
+        const val DEFAULT_SOURCES = "../src"
         val PLACEHOLDER = Regex("""\{([^}]+)}""")
     }
 }
