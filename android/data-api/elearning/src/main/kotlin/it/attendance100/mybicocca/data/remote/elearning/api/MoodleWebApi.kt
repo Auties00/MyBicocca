@@ -15,6 +15,7 @@ class MoodleWebApi(httpClientConfig: HttpClientConfig<*>.() -> Unit = {}) : Auto
 
     val catalog = MoodleWebCatalogApi(client, json)
     val media = MoodleWebMediaApi(client, json)
+    val attendance = MoodleWebAttendanceApi(client, json)
 
     override fun close() {
         client.close()

@@ -22,7 +22,7 @@ import it.attendance100.mybicocca.codegen.model.TypeRef
  *
  * - `json(…, deserializer = …)` decodes the body; `jsonList` decodes a list, empty when the
  *   status is one of the policy's empty ones;
- * - `stream(…)` returns the body as a `ByteReadChannel`;
+ * - `stream(…)` returns the body as a `ByteReadChannel`, and `text(…)` as a `String`;
  * - `script(…, variable = "name", deserializer = …)` decodes the JSON a script assigns to a
  *   variable;
  * - `html(…, scrape = <Prefix>Scrapers::<function>)` returns what the scraper reads from the
@@ -135,6 +135,7 @@ internal class ServiceEmitter(
     private fun returnType(response: ResponseBody, file: KotlinFile): String? = when (response) {
         ResponseBody.None -> null
         ResponseBody.Binary -> layout.render(TypeRef.Primitive(PrimitiveKind.BINARY), file)
+        ResponseBody.Text -> "String"
         is ResponseBody.Json -> layout.render(response.type, file)
         is ResponseBody.ScriptVariable -> layout.render(response.type, file)
         is ResponseBody.Html -> layout.render(response.type, file)
@@ -154,6 +155,7 @@ internal class ServiceEmitter(
         val (helper, reading) = when (val response = operation.response) {
             ResponseBody.None -> "send" to emptyList()
             ResponseBody.Binary -> "return stream" to emptyList()
+            ResponseBody.Text -> "return text" to emptyList()
             is ResponseBody.Json -> when (val type = response.type) {
                 is TypeRef.ListOf -> "return jsonList" to listOf("deserializer = ${deserializer(type, file)}")
                 else -> "return json" to listOf("deserializer = ${deserializer(type, file)}")
@@ -210,11 +212,27 @@ internal class ServiceEmitter(
         val authForm = operation.auth?.let { auth -> spec.authSchemes.any { it.name in auth.schemes && it.form.isNotEmpty() } } == true
         if (form.isNotEmpty() || operation.form.isNotEmpty() || authForm) {
             file.import("io.ktor.client.request.setBody")
-            file.import("io.ktor.client.request.forms.FormDataContent")
-            file.import("io.ktor.http.parameters")
-            block("setBody(FormDataContent(parameters {", "}))") {
+            val (opener, closer) = if (operation.multipart) {
+                file.import("io.ktor.client.request.forms.MultiPartFormDataContent")
+                file.import("io.ktor.client.request.forms.formData")
+                "setBody(MultiPartFormDataContent(formData {" to "}))"
+            } else {
+                file.import("io.ktor.client.request.forms.FormDataContent")
+                file.import("io.ktor.http.parameters")
+                "setBody(FormDataContent(parameters {" to "}))"
+            }
+            block(opener, closer) {
                 for ((name, value) in operation.form) line("append(${KotlinSyntax.string(name)}, ${KotlinSyntax.string(value)})")
-                for (parameter in form) send(parameter, "append", file) { formValue(parameter, it) }
+                for (parameter in form) {
+                    if (parameter.type == TypeRef.Primitive(PrimitiveKind.FILE)) {
+                        file.import(layout.runtime("appendFile"))
+                        val name = KotlinSyntax.identifier(parameter.name)
+                        val wireName = KotlinSyntax.string(parameter.wireName)
+                        line(if (parameter.isOmittable) "$name?.let { appendFile($wireName, it) }" else "appendFile($wireName, $name)")
+                    } else {
+                        send(parameter, "append", file) { formValue(parameter, it) }
+                    }
+                }
                 if (authForm) {
                     val send = "forEach { (name, value) -> append(name, value) }"
                     line(if (operation.auth!!.required) "$AUTH.form.$send" else "$AUTH?.form?.$send")

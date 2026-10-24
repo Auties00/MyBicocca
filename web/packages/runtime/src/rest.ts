@@ -38,14 +38,27 @@ export function repeated(name: string, values: readonly QueryScalar[] | null | u
   return (values ?? []).map((value) => [name, value]);
 }
 
+/** A file sent as a field of a multipart form. */
+export interface FileUpload {
+  /** The name the server stores the file under. */
+  readonly fileName: string;
+  /** The file's media type; the server infers it when absent. */
+  readonly contentType?: string;
+  readonly bytes: Uint8Array<ArrayBuffer> | Blob;
+}
+
 /** An HTTP request, relative to an API's base URL. */
 export interface RestRequest {
   method: HttpMethod;
   /** Path appended to the base URL, starting with `/`, with path parameters already encoded. */
   path: string;
   query?: ReadonlyArray<readonly [string, QueryValue]>;
-  /** Fields sent as `application/x-www-form-urlencoded`. */
+  /** Fields sent as `application/x-www-form-urlencoded`, or with `multipart`. */
   form?: ReadonlyArray<readonly [string, QueryValue]>;
+  /** Files sent as fields of a multipart form; those with no value are left out. */
+  files?: ReadonlyArray<readonly [string, FileUpload | null | undefined]>;
+  /** Whether the form is sent as `multipart/form-data`, as files need. */
+  multipart?: boolean;
   /** Headers; those with no value are left out. */
   headers?: ReadonlyArray<readonly [string, QueryValue]>;
   /**
@@ -92,9 +105,20 @@ export function sendRequest(configuration: RestConfiguration, request: RestReque
     value === null || value === undefined ? [] : [`${name}=${encodeURIComponent(formatQueryValue(value))}`],
   );
   if (cookies.length > 0) headers.set("Cookie", cookies.join("; "));
-  let body: string | URLSearchParams | undefined;
+  let body: string | URLSearchParams | FormData | undefined;
   const authForm = Object.entries(request.auth?.form ?? {});
-  if (request.form !== undefined || authForm.length > 0) {
+  if (request.multipart === true) {
+    // fetch sets the multipart content type, with its boundary.
+    body = new FormData();
+    for (const [name, value] of [...(request.form ?? []), ...authForm]) {
+      if (value !== null && value !== undefined) body.append(name, formatQueryValue(value));
+    }
+    for (const [name, file] of request.files ?? []) {
+      if (file === null || file === undefined) continue;
+      const blob = file.bytes instanceof Blob ? file.bytes : new Blob([file.bytes], file.contentType === undefined ? {} : { type: file.contentType });
+      body.append(name, blob, file.fileName);
+    }
+  } else if (request.form !== undefined || authForm.length > 0) {
     body = new URLSearchParams();
     for (const [name, value] of [...(request.form ?? []), ...authForm]) {
       if (value !== null && value !== undefined) body.append(name, formatQueryValue(value));

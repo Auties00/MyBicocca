@@ -12,10 +12,10 @@ import it.attendance100.mybicocca.data.auth.SessionManager
 import it.attendance100.mybicocca.data.local.settings.DeviceIdentityStore
 import it.attendance100.mybicocca.data.location.DeviceLocationProvider
 import it.attendance100.mybicocca.data.remote.easystaff.api.EasyStaffApi
-import it.attendance100.mybicocca.data.remote.elearning.api.ElearningApi
-import it.attendance100.mybicocca.data.remote.elearning.api.ElearningAttendanceApi
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceMarkableSession
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceViewResponse
+import it.attendance100.mybicocca.data.elearning.ElearningApi
+import it.attendance100.mybicocca.data.elearning.ElearningAttendance
+import it.attendance100.mybicocca.data.elearning.ElearningAttendanceMarkableSession
+import it.attendance100.mybicocca.data.elearning.ElearningAttendanceViewResponse
 import it.attendance100.mybicocca.domain.model.attendance.AttendanceModuleRef
 import it.attendance100.mybicocca.domain.model.attendance.PresenceMarkOutcome
 import it.attendance100.mybicocca.domain.model.attendance.PresenceScan
@@ -43,7 +43,7 @@ class AttendanceRepositoryImplTest {
     private val elearningCourseRepository: ElearningCourseRepository = mockk(relaxed = true)
     private val deviceIdentityStore: DeviceIdentityStore = mockk(relaxed = true)
     private val locationProvider: DeviceLocationProvider = mockk(relaxed = true)
-    private val attendanceApi: ElearningAttendanceApi = mockk(relaxed = true)
+    private val attendanceApi: ElearningAttendance = mockk(relaxed = true)
     private val elearningApi: ElearningApi = mockk(relaxed = true) {
         every { attendance } returns attendanceApi
     }

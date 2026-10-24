@@ -64,6 +64,10 @@ export class MoodleWebClient {
     return new Uint8Array(await (await this.execute(request, false))!.arrayBuffer());
   }
 
+  async text(request: RestRequest): Promise<string> {
+    return (await this.execute(request, false))!.text();
+  }
+
   /** Decodes the JSON a script assigns to `variable`. */
   async script<T>(request: RestRequest, variable: string, decode: (json: unknown) => T | undefined): Promise<T> {
     return scriptResponse((await this.execute(request, false))!, variable, decode);

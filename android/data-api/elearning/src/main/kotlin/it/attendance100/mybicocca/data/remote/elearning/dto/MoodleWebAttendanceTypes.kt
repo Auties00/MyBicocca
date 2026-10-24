@@ -7,6 +7,11 @@ import kotlinx.serialization.Serializable
 /** An attendance activity's `view.php` showing every session (`view=5`): the student's statistics and the sessions it offers to submit attendance for. */
 @Serializable
 data class MoodleWebAttendanceView(
+    /** Whether Moodle showed the activity's page, rather than its login page (an expired session) or another one (a course the user isn't enrolled in). */
+    @Serializable(with = MoodleWebBooleanSerializer::class)
+    @SerialName("shown")
+    val shown: Boolean = false,
+
     /** The student's statistics, or none when the page shows no table of them. */
     @SerialName("summary")
     val summary: MoodleWebAttendanceSummary? = null,
@@ -76,4 +81,33 @@ data class MoodleWebAttendanceStatusOption(
 
     @SerialName("description")
     val description: String = ""
+)
+
+/** The template of `mobile_view_activity` after marking: a message for each reason the presence wasn't recorded, a button for each session still open for marking, and the status of each session. */
+@Serializable
+data class MoodleWebAttendanceMarkPage(
+    @SerialName("messages")
+    val messages: List<MoodleWebAttendanceMessage> = emptyList(),
+
+    @SerialName("markActions")
+    val markActions: List<MoodleWebAttendanceMarkAction> = emptyList(),
+
+    /** The headings of the sessions' items, in order: a marked session's group, then the status it was assigned. */
+    @SerialName("headings")
+    val headings: List<String> = emptyList()
+)
+
+/** A message of the plugin, which the template names by its string key (`plugin.mod_attendance.<key>`). */
+@Serializable
+data class MoodleWebAttendanceMessage(
+    /** The string key, such as `incorrectpasswordshort`. */
+    @SerialName("key")
+    val key: String
+)
+
+/** The button marking a session, whose arguments name the session. */
+@Serializable
+data class MoodleWebAttendanceMarkAction(
+    @SerialName("sessionId")
+    val sessionId: String
 )

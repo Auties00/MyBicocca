@@ -8,7 +8,7 @@ specs in [`../common`](../common):
 - `packages/affluences` (`@mybicocca/affluences`), `packages/easystaff`
   (`@mybicocca/easystaff`), `packages/easystaff-planning` (`@mybicocca/easystaff-planning`),
   `packages/esse3` (`@mybicocca/esse3`), `packages/moodle` (`@mybicocca/moodle`) and
-  `packages/moodle-web` (`@mybicocca/moodle-web`) — generated sources in `src/generated`,
+  `packages/moodle-web` (`@mybicocca/moodle-web`) and `packages/kaltura` (`@mybicocca/kaltura`) — generated sources in `src/generated`,
   clients included; Portale Planning adds a few hand-written helpers
 
 ```ts

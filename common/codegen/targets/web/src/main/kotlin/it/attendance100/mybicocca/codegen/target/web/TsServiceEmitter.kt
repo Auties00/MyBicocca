@@ -10,6 +10,7 @@ import it.attendance100.mybicocca.codegen.model.ParameterEncoding
 import it.attendance100.mybicocca.codegen.model.ParameterLocation
 import it.attendance100.mybicocca.codegen.model.RequestBody
 import it.attendance100.mybicocca.codegen.model.ResponseBody
+import it.attendance100.mybicocca.codegen.model.PrimitiveKind
 import it.attendance100.mybicocca.codegen.model.TypeRef
 
 /**
@@ -70,6 +71,7 @@ internal class TsServiceEmitter(
         val returnType = when (val response = operation.response) {
             ResponseBody.None -> "void"
             ResponseBody.Binary -> "Uint8Array"
+            ResponseBody.Text -> "string"
             is ResponseBody.Json -> layout.render(response.type, file)
             is ResponseBody.ScriptVariable -> layout.render(response.type, file)
             is ResponseBody.Html -> layout.render(response.type, file)
@@ -81,6 +83,7 @@ internal class TsServiceEmitter(
             val (call, reading) = when (val response = operation.response) {
                 ResponseBody.None -> "await this.client.send" to emptyList()
                 ResponseBody.Binary -> "return this.client.bytes" to emptyList()
+                ResponseBody.Text -> "return this.client.text" to emptyList()
                 is ResponseBody.Json -> when (val type = response.type) {
                     is TypeRef.ListOf -> "return this.client.jsonList" to listOf(codecs.decoder(type.element, file))
                     else -> "return this.client.json" to listOf(codecs.decoder(type, file))
@@ -108,7 +111,10 @@ internal class TsServiceEmitter(
         val query = apiParameters[ParameterLocation.QUERY].orEmpty() + operation.queryParameters
         if (fixedQuery.isNotEmpty() || query.isNotEmpty()) lines("query: ${pairs(query, optional, file, fixedQuery)},")
         val fixedForm = operation.form.map { (name, value) -> "[${TsSyntax.string(name)}, ${TsSyntax.string(value)}]" }
-        if (fixedForm.isNotEmpty() || operation.formParameters.isNotEmpty()) lines("form: ${pairs(operation.formParameters, optional, file, fixedForm)},")
+        val (files, fields) = operation.formParameters.partition { it.type == TypeRef.Primitive(PrimitiveKind.FILE) }
+        if (fixedForm.isNotEmpty() || fields.isNotEmpty()) lines("form: ${pairs(fields, optional, file, fixedForm)},")
+        if (files.isNotEmpty()) lines("files: ${array(files.map { "[${TsSyntax.string(it.wireName)}, ${valueOf(it, optional, file)}]" })},")
+        if (operation.multipart) line("multipart: true,")
         val headers = operation.headers.map { (name, value) -> "[${TsSyntax.string(name)}, ${template(value)}]" } +
             (apiParameters[ParameterLocation.HEADER].orEmpty() + operation.headerParameters).map { "[${TsSyntax.string(it.wireName)}, ${valueOf(it, optional, file)}]" }
         if (headers.isNotEmpty()) lines("headers: ${array(headers)},")
@@ -180,15 +186,23 @@ internal class TsServiceEmitter(
         return "$value ?? ${layout.literal(parameter.type, default)}"
     }
 
-    /** The full path as a template literal, with path parameters as encoded segments. */
+    /** The full path as a template literal, with path parameters as encoded segments, or as given when raw. */
     private fun path(module: ApiModule, operation: Operation, file: TsFile): String {
         val names = spec.parameters.filter { it.location == ParameterLocation.PATH }.associate { it.wireName to "this.parameters.${it.name}" } +
             operation.pathParameters.associate { it.wireName to TsSyntax.variable(it.name) }
+        val raw = operation.pathParameters.filter { it.raw }.map { it.wireName }.toSet()
         val path = module.basePath.trimEnd('/') + operation.path
         if (PLACEHOLDER.find(path) == null) return TsSyntax.string(path)
-        layout.importRuntime(file, "pathSegment")
         val literals = PLACEHOLDER.split(path).map(TsSyntax::templateContent)
-        val placeholders = PLACEHOLDER.findAll(path).map { "\${pathSegment(${names.getValue(it.groupValues[1])})}" }.toList()
+        val placeholders = PLACEHOLDER.findAll(path).map { match ->
+            val wireName = match.groupValues[1]
+            if (wireName in raw) {
+                "\${${names.getValue(wireName)}}"
+            } else {
+                layout.importRuntime(file, "pathSegment")
+                "\${pathSegment(${names.getValue(wireName)})}"
+            }
+        }.toList()
         return "`" + literals.zip(placeholders + "").joinToString("") { (literal, placeholder) -> literal + placeholder } + "`"
     }
 

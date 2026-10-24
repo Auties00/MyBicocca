@@ -87,11 +87,13 @@ public enum MoodleWebScrapers {
 
     /// Reads ``MoodleWebAttendanceView`` out of `node`, or returns nil when a value it requires is missing.
     public static func attendanceView(_ node: ScrapeNode) -> MoodleWebAttendanceView? {
-        let value0 = Scrape.select(node, "table.attlist").flatMap { attendanceSummary($0) }
-        let value1 = Scrape.selectAll(node, "table.generaltable td[colspan=3]").compactMap { submittableSession($0) }
+        let value0 = (Scrape.select(node, "body#page-mod-attendance-view") != nil)
+        let value1 = Scrape.select(node, "table.attlist").flatMap { attendanceSummary($0) }
+        let value2 = Scrape.selectAll(node, "table.generaltable td[colspan=3]").compactMap { submittableSession($0) }
         return MoodleWebAttendanceView(
-            summary: value0,
-            submittableSessions: value1
+            shown: value0,
+            summary: value1,
+            submittableSessions: value2
         )
     }
 
@@ -147,11 +149,43 @@ public enum MoodleWebScrapers {
         )
     }
 
+    /// Reads ``MoodleWebAttendanceMarkPage`` out of `node`, or returns nil when a value it requires is missing.
+    public static func attendanceMarkPage(_ node: ScrapeNode) -> MoodleWebAttendanceMarkPage? {
+        let value0 = Scrape.selectAll(node, "span.messages").compactMap { attendanceMessage($0) }
+        let value1 = Scrape.selectAll(node, "ion-button[core-site-plugins-new-content]").compactMap { attendanceMarkAction($0) }
+        let value2 = Scrape.selectAll(node, "ion-item h3").compactMap { Scrape.text($0, exclude: nil, missing: []) }
+        return MoodleWebAttendanceMarkPage(
+            messages: value0,
+            markActions: value1,
+            headings: value2
+        )
+    }
+
+    /// Reads ``MoodleWebAttendanceMessage`` out of `node`, or returns nil when a value it requires is missing.
+    public static func attendanceMessage(_ node: ScrapeNode) -> MoodleWebAttendanceMessage? {
+        guard let value0 = Scrape.regex(Scrape.text(node, exclude: nil, missing: []), "plugin\\.mod_attendance\\.(\\w+)") else { return nil }
+        return MoodleWebAttendanceMessage(
+            key: value0
+        )
+    }
+
+    /// Reads ``MoodleWebAttendanceMarkAction`` out of `node`, or returns nil when a value it requires is missing.
+    public static func attendanceMarkAction(_ node: ScrapeNode) -> MoodleWebAttendanceMarkAction? {
+        guard let value0 = Scrape.regex(Scrape.attribute(node, "[args]", missing: []), "sessid:\\s*(\\d+)") else { return nil }
+        return MoodleWebAttendanceMarkAction(
+            sessionId: value0
+        )
+    }
+
     static func catalogGetCourseInfo(_ document: ScrapeNode) -> MoodleWebCourseInfo? {
         Scrape.select(document, ".coursebox.has-info.has-metadata").flatMap { courseInfo($0) }
     }
 
     static func mediaGetKalturaPlayer(_ document: ScrapeNode) -> MoodleWebKalturaPlayer? {
         kalturaPlayer(document)
+    }
+
+    static func attendanceGetAttendanceView(_ document: ScrapeNode) -> MoodleWebAttendanceView? {
+        attendanceView(document)
     }
 }

@@ -16,11 +16,11 @@ import it.attendance100.mybicocca.data.mapper.elearning.toEntity
 import it.attendance100.mybicocca.data.mapper.elearning.toSubmissionConfigJson
 import it.attendance100.mybicocca.data.mapper.elearning.toSubmissionForm
 import it.attendance100.mybicocca.data.mapper.elearning.toSubmissionStatusJson
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningUpload
+import it.attendance100.mybicocca.data.remote.runtime.FileUpload
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleOnlineTextEditor
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleSubmissionPluginData
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
-import it.attendance100.mybicocca.data.remote.elearning.dto.throwIfPresent
+import it.attendance100.mybicocca.data.elearning.throwIfPresent
 import it.attendance100.mybicocca.di.ApplicationScope
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.elearning.assignment.Assignment
@@ -175,9 +175,9 @@ class ElearningAssignmentRepositoryImpl @Inject constructor(
         val uploads = buildList {
             keepFiles.forEach { ref ->
                 val url = ref.fileUrl ?: return@forEach
-                add(ElearningUpload(ref.fileName, ref.mimeType, api.files.downloadFileBytes(token, url)))
+                add(FileUpload(ref.fileName, ref.mimeType, api.files.downloadFileBytes(token, url)))
             }
-            files.forEach { add(ElearningUpload(it.fileName, it.mimeType, it.bytes)) }
+            files.forEach { add(FileUpload(it.fileName, it.mimeType, it.bytes)) }
         }
         val filesItemId = if (uploads.isEmpty()) null else api.files.uploadToDraftArea(token, uploads).first().itemId
         // Online text goes as HTML (format 1); its item id is 0, since the text embeds no files.

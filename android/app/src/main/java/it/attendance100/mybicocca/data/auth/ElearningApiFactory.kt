@@ -2,7 +2,7 @@ package it.attendance100.mybicocca.data.auth
 
 import io.ktor.client.plugins.HttpTimeout
 import it.attendance100.mybicocca.data.observability.HttpMetrics
-import it.attendance100.mybicocca.data.remote.elearning.api.ElearningApi
+import it.attendance100.mybicocca.data.elearning.ElearningApi
 import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton

@@ -81,6 +81,10 @@ export class Esse3Client {
     return new Uint8Array(await (await this.execute(request, roles, false))!.arrayBuffer());
   }
 
+  async text(request: RestRequest, roles: readonly Esse3PermissionLevel[]): Promise<string> {
+    return (await this.execute(request, roles, false))!.text();
+  }
+
   /** Decodes the JSON a script assigns to `variable`. */
   async script<T>(request: RestRequest, roles: readonly Esse3PermissionLevel[], variable: string, decode: (json: unknown) => T | undefined): Promise<T> {
     return scriptResponse((await this.execute(request, roles, false))!, variable, decode);

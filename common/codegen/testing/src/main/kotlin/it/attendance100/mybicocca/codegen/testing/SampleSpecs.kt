@@ -149,6 +149,37 @@ object SampleSpecs {
         records = listOf(item, owner, empty),
         operations = listOf(
             Operation(
+                name = "uploadAttachment",
+                method = HttpMethod.POST,
+                path = "/items/{itemId}/attachments",
+                parameters = listOf(
+                    Parameter("itemId", "itemId", ParameterLocation.PATH, INT64, required = true),
+                    Parameter("note", "nota", ParameterLocation.FORM, STRING, required = false),
+                    Parameter("file", "file", ParameterLocation.FORM, TypeRef.Primitive(PrimitiveKind.FILE), required = true),
+                ),
+                body = null,
+                response = ResponseBody.None,
+                summary = "Attaches a file to an item.",
+                multipart = true,
+            ),
+            Operation(
+                name = "downloadAttachment",
+                method = HttpMethod.GET,
+                path = "/attachments/{path}",
+                parameters = listOf(Parameter("path", "path", ParameterLocation.PATH, STRING, required = true, description = "The attachment's path, as its link writes it.", raw = true)),
+                body = null,
+                response = ResponseBody.Binary,
+            ),
+            Operation(
+                name = "getItemLog",
+                method = HttpMethod.GET,
+                path = "/items/{itemId}/log",
+                parameters = listOf(Parameter("itemId", "itemId", ParameterLocation.PATH, INT64, required = true)),
+                body = null,
+                response = ResponseBody.Text,
+                summary = "The item's change log, as plain text.",
+            ),
+            Operation(
                 name = "getItems",
                 method = HttpMethod.GET,
                 path = "/owners/{ownerId}/items",

@@ -2,8 +2,8 @@ package it.attendance100.mybicocca.data.mapper.elearning
 
 import com.google.common.truth.Truth.assertThat
 import it.attendance100.mybicocca.data.local.elearning.video.VideoProgressEntity
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningKalturaVideoStreamResponse
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningKalturaVideoVariant
+import it.attendance100.mybicocca.data.elearning.ElearningKalturaVideoStreamResponse
+import it.attendance100.mybicocca.data.elearning.ElearningKalturaVideoVariant
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.elearning.video.VideoProgress
 import org.junit.Test

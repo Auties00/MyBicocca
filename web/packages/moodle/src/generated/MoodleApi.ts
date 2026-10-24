@@ -6,6 +6,7 @@ import { MoodleCalendarApi } from "./MoodleCalendarApi.js";
 import { MoodleClient } from "./MoodleClient.js";
 import { MoodleCompletionApi } from "./MoodleCompletionApi.js";
 import { MoodleCourseApi } from "./MoodleCourseApi.js";
+import { MoodleFilesApi } from "./MoodleFilesApi.js";
 import { MoodleForumApi } from "./MoodleForumApi.js";
 import { MoodleGradeApi } from "./MoodleGradeApi.js";
 import { MoodleMessageApi } from "./MoodleMessageApi.js";
@@ -28,6 +29,7 @@ export class MoodleApi {
   readonly forum: MoodleForumApi;
   readonly quiz: MoodleQuizApi;
   readonly mobile: MoodleMobileApi;
+  readonly files: MoodleFilesApi;
 
   constructor(readonly client: MoodleClient) {
     this.badge = new MoodleBadgeApi(client);
@@ -42,5 +44,6 @@ export class MoodleApi {
     this.forum = new MoodleForumApi(client);
     this.quiz = new MoodleQuizApi(client);
     this.mobile = new MoodleMobileApi(client);
+    this.files = new MoodleFilesApi(client);
   }
 }

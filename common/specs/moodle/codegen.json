@@ -8,6 +8,12 @@
       "options": {
         "spec": "client.yaml"
       }
+    },
+    {
+      "type": "openapi",
+      "options": {
+        "spec": "files.yaml"
+      }
     }
   ],
   "targets": {

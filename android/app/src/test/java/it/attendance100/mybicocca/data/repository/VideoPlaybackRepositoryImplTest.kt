@@ -12,11 +12,10 @@ import it.attendance100.mybicocca.data.local.elearning.video.KalturaEntryDao
 import it.attendance100.mybicocca.data.local.elearning.video.KalturaEntryEntity
 import it.attendance100.mybicocca.data.local.elearning.video.VideoProgressDao
 import it.attendance100.mybicocca.data.local.elearning.video.VideoProgressEntity
-import it.attendance100.mybicocca.data.remote.elearning.api.ElearningApi
-import it.attendance100.mybicocca.data.remote.elearning.api.ElearningKalturaApi
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningKalturaEntryIdResponse
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningKalturaVideoStreamResponse
-import it.attendance100.mybicocca.data.remote.elearning.exception.ElearningException
+import it.attendance100.mybicocca.data.elearning.ElearningApi
+import it.attendance100.mybicocca.data.elearning.ElearningKaltura
+import it.attendance100.mybicocca.data.elearning.ElearningKalturaEntryIdResponse
+import it.attendance100.mybicocca.data.elearning.ElearningKalturaVideoStreamResponse
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.domain.repository.ElearningCourseRepository
@@ -42,7 +41,7 @@ class VideoPlaybackRepositoryImplTest {
     private val videoProgressDao = mockk<VideoProgressDao>(relaxed = true)
     private val kalturaEntryDao = mockk<KalturaEntryDao>(relaxed = true)
     private val courseRepository = mockk<ElearningCourseRepository>(relaxed = true)
-    private val kalturaApi = mockk<ElearningKalturaApi>(relaxed = true)
+    private val kalturaApi = mockk<ElearningKaltura>(relaxed = true)
     private val elearningApi = mockk<ElearningApi>(relaxed = true) {
         every { kaltura } returns kalturaApi
     }
@@ -115,7 +114,7 @@ class VideoPlaybackRepositoryImplTest {
 
         val thrown = repository.runCatching { resolveStream(cmId) }.exceptionOrNull()
 
-        assertThat(thrown).isInstanceOf(ElearningException::class.java)
+        assertThat(thrown).isInstanceOf(IllegalStateException::class.java)
         coVerify(exactly = 1) { sessionManager.reauthElearning() }
     }
 

@@ -5,6 +5,7 @@ import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleEnrolledCourse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleOption
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
 import it.attendance100.mybicocca.data.remote.elearning.exception.MoodleException
+import io.ktor.utils.io.toByteArray
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -71,6 +72,37 @@ class MoodleApiTest {
             auth = auth,
         )
         filtered.flatMap { it.modules }.forEach { assertTrue(it.contents.isEmpty(), "excludecontents should drop module contents") }
+    }
+
+    @Test
+    fun `attendance activities are listed by module name`(): Unit = runBlocking {
+        var found = false
+        for (courseId in courses.map { it.id }) {
+            val modules = api.course.getContents(
+                courseId,
+                options = listOf(MoodleOption("modname", "attendance"), MoodleOption("excludecontents", "1")),
+                auth = auth,
+            ).flatMap { it.modules }.filter { it.modName == "attendance" }
+            found = modules.isNotEmpty()
+            if (found) break
+        }
+        assumeTrue(found, "No attendance activity in the user's courses")
+    }
+
+    @Test
+    fun `the files of course contents download`(): Unit = runBlocking {
+        val fileUrl = courseIds().asSequence()
+            .flatMap { runBlocking { api.course.getContents(it, auth = auth) }.asSequence() }
+            .flatMap { it.modules.asSequence() }
+            .flatMap { it.contents.asSequence() }
+            .mapNotNull { it.fileUrl?.takeIf { url -> "/webservice/pluginfile.php/" in url } }
+            .firstOrNull()
+        assumeTrue(fileUrl != null, "No file in the user's courses")
+        val path = fileUrl!!.substringAfter("/webservice/pluginfile.php/").substringBefore('?')
+        val bytes = api.files.downloadFile(path, auth.token).toByteArray()
+        assertTrue(bytes.isNotEmpty())
+        val error = assertThrows<MoodleException> { runBlocking { api.files.downloadFile(path, "0".repeat(32)) } }
+        assertEquals(MoodleException.INVALID_TOKEN, error.errorCode)
     }
 
     @Test

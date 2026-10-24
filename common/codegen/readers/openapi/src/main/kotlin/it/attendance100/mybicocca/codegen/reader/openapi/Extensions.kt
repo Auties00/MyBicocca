@@ -35,6 +35,7 @@ import it.attendance100.mybicocca.codegen.model.AuthScheme
  * | property, parameter   | `x-mb-name`          | camelCase name, when not derivable from the wire name.           |
  * | property              | `x-mb-scrape`        | How a scraped record's property is read (see [ScrapeSyntax]).     |
  * | array parameter, form property | `x-mb-repeated` | `true` to send one field per element (`days[]=1&days[]=2`). |
+ * | path parameter        | `x-mb-raw`           | `true` to send the value as given, slashes included: a path the server handed out. |
  * | string property, parameter | `x-mb-pattern`  | Date/time pattern of a `date`, `date-time` or `time` value.      |
  * | string property       | `x-mb-blank-as-null` | `true` when blank strings mean no value.                          |
  * | string property       | `x-mb-also-null`     | Other strings meaning no value, e.g. `["0"]` (with `x-mb-blank-as-null`). |
@@ -44,6 +45,10 @@ import it.attendance100.mybicocca.codegen.model.AuthScheme
  * | array property        | `x-mb-joined`        | Separator of a list of strings sent as one string (`"Ada, Bob"`). |
  * | array property        | `x-mb-object-values` | `true` when the list may arrive as an object whose values are its elements. |
  * | property              | `x-mb-html`          | The value is an HTML fragment sent as a string, read with this scrape (see [ScrapeSyntax]). |
+ *
+ * A `multipart/form-data` body is a form whose `format: binary` properties are files. A
+ * non-JSON, non-HTML response with a string schema, or of a text media type without one, is text;
+ * one with `format: binary`, or any other, is bytes.
  *
  * Keys next to a `$ref` are lost, so a property referencing a record with a codec, or a
  * parameter with a default, wraps the reference: `allOf: [$ref: …]`. Parameters `in: cookie` are cookies, and a
@@ -77,6 +82,7 @@ internal object Extensions {
     const val SCRIPT_VARIABLE = "x-mb-script-variable"
     const val SCRAPE = "x-mb-scrape"
     const val REPEATED = "x-mb-repeated"
+    const val RAW = "x-mb-raw"
     const val EPOCH_SECONDS = "x-mb-epoch-seconds"
     const val JOINED = "x-mb-joined"
     const val OBJECT_VALUES = "x-mb-object-values"

@@ -104,6 +104,7 @@ internal class KotlinLayout(private val spec: ApiSpec, packageName: String, val 
             PrimitiveKind.JSON_OBJECT -> imported("kotlinx.serialization.json.JsonObject", file)
             PrimitiveKind.JSON_VALUE -> imported("kotlinx.serialization.json.JsonElement", file)
             PrimitiveKind.BINARY -> imported("io.ktor.utils.io.ByteReadChannel", file)
+            PrimitiveKind.FILE -> imported(runtime("FileUpload"), file)
         }
     }
 
