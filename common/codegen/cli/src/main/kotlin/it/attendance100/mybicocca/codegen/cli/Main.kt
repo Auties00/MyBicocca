@@ -1,7 +1,21 @@
 package it.attendance100.mybicocca.codegen.cli
 
+import com.github.ajalt.clikt.core.CoreCliktCommand
+import com.github.ajalt.clikt.core.Context
+import com.github.ajalt.clikt.core.ProgramResult
+import com.github.ajalt.clikt.core.UsageError
+import com.github.ajalt.clikt.core.context
+import com.github.ajalt.clikt.core.main
+import com.github.ajalt.clikt.parameters.arguments.argument
+import com.github.ajalt.clikt.parameters.arguments.multiple
+import com.github.ajalt.clikt.parameters.options.flag
+import com.github.ajalt.clikt.parameters.options.multiple
+import com.github.ajalt.clikt.parameters.options.option
+import com.github.ajalt.clikt.parameters.types.choice
+import com.github.ajalt.clikt.parameters.types.path
 import it.attendance100.mybicocca.codegen.core.CodegenConfig
 import it.attendance100.mybicocca.codegen.core.Generator
+import it.attendance100.mybicocca.codegen.core.PluginRegistry
 import it.attendance100.mybicocca.codegen.core.SyncPlan
 import java.nio.file.Path
 import kotlin.io.path.Path
@@ -9,81 +23,53 @@ import kotlin.io.path.exists
 import kotlin.io.path.isDirectory
 import kotlin.io.path.listDirectoryEntries
 import kotlin.io.path.name
-import kotlin.system.exitProcess
 
-private const val USAGE = """
-Usage: codegen [--check] [--target <id>]... [<spec dir>...]
+fun main(args: Array<String>) = Codegen().main(args)
 
-Generates the SDKs of the APIs whose spec directories (each holding a codegen.json) are
-given, or of every API under ./specs when none is.
-
-  --check         Write nothing; exit with status 1 if any generated file is out of date.
-  --target <id>   Only run this target (repeatable). Default: every configured target.
-"""
-
-fun main(args: Array<String>) {
-    val arguments = try {
-        Arguments.parse(args.toList())
-    } catch (e: IllegalArgumentException) {
-        System.err.println(e.message)
-        System.err.println(USAGE.trimIndent())
-        exitProcess(2)
+private class Codegen : CoreCliktCommand(name = "codegen") {
+    init {
+        // Without Mordant, Clikt leaves exiting to the caller; CI relies on the status of --check.
+        context { exitProcess = { status -> kotlin.system.exitProcess(status) } }
     }
 
-    val plans = Generator().run(arguments.specDirs, arguments.targets, arguments.check)
+    private val check by option("--check", help = "Write nothing; exit with status 1 if any generated file is out of date.")
+        .flag()
 
-    if (arguments.check) {
+    private val targets by option("--target", metavar = "<id>", help = "Only run this target (repeatable). Default: every configured target.")
+        .choice(*PluginRegistry.targets.keys.sorted().toTypedArray())
+        .multiple()
+
+    private val specDirs by argument(name = "spec dir", help = "Directories each holding an API's codegen.json.")
+        .path(mustExist = true, canBeFile = false)
+        .multiple()
+
+    override fun help(context: Context): String =
+        "Generates the SDKs of the APIs whose spec directories are given, or of every API under ./$DEFAULT_SPECS_ROOT when none is."
+
+    override fun run() {
+        val plans = Generator().run(specDirs.ifEmpty { allSpecDirs() }, targets.toSet().ifEmpty { null }, check)
+        if (!check) return
+
         val stale = plans.filterNot(SyncPlan::isUpToDate)
         if (stale.isNotEmpty()) {
-            System.err.println("Generated code is out of date; run codegen without --check:")
+            echo("Generated code is out of date; run codegen without --check:", err = true)
             for (plan in stale) {
-                plan.writes.forEach { System.err.println("  changed: ${plan.outputDir.resolve(it.path)}") }
-                plan.deletions.forEach { System.err.println("  stale:   $it") }
+                plan.writes.forEach { echo("  changed: ${plan.outputDir.resolve(it.path)}", err = true) }
+                plan.deletions.forEach { echo("  stale:   $it", err = true) }
             }
-            exitProcess(1)
+            throw ProgramResult(1)
         }
-        println("Generated code is up to date.")
+        echo("Generated code is up to date.")
     }
-}
 
-private data class Arguments(
-    val specDirs: List<Path>,
-    val targets: Set<String>?,
-    val check: Boolean,
-) {
-    companion object {
-        private val DEFAULT_SPECS_ROOT = Path("specs")
+    private fun allSpecDirs(): List<Path> {
+        if (!DEFAULT_SPECS_ROOT.isDirectory()) throw UsageError("No spec directories given and ./$DEFAULT_SPECS_ROOT doesn't exist")
+        return DEFAULT_SPECS_ROOT.listDirectoryEntries()
+            .filter { it.resolve(CodegenConfig.FILE_NAME).exists() }
+            .sortedBy { it.name }
+    }
 
-        fun parse(args: List<String>): Arguments {
-            var check = false
-            val targets = mutableSetOf<String>()
-            val specDirs = mutableListOf<Path>()
-            val iterator = args.iterator()
-            while (iterator.hasNext()) {
-                when (val arg = iterator.next()) {
-                    "--check" -> check = true
-                    "--target" -> {
-                        require(iterator.hasNext()) { "--target needs a target id" }
-                        targets += iterator.next()
-                    }
-                    else -> {
-                        require(!arg.startsWith("--")) { "Unknown option: $arg" }
-                        specDirs.add(Path(arg))
-                    }
-                }
-            }
-            return Arguments(
-                specDirs = specDirs.toList().ifEmpty { allSpecDirs() },
-                targets = targets.ifEmpty { null },
-                check = check,
-            )
-        }
-
-        private fun allSpecDirs(): List<Path> {
-            require(DEFAULT_SPECS_ROOT.isDirectory()) { "No spec directories given and ./$DEFAULT_SPECS_ROOT doesn't exist" }
-            return DEFAULT_SPECS_ROOT.listDirectoryEntries()
-                .filter { it.resolve(CodegenConfig.FILE_NAME).exists() }
-                .sortedBy { it.name }
-        }
+    private companion object {
+        val DEFAULT_SPECS_ROOT = Path("specs")
     }
 }
