@@ -248,7 +248,7 @@ class ElearningCourseRepositoryImpl @Inject constructor(
         val userId = sessionManager.activeAccount.value?.learning?.lmsUserId
         coroutineScope {
             val sectionsAsync = async { runCatching { api.moodle.course.getContents(courseId.value, auth = auth) }.getOrNull() }
-            val publicAsync = async { runCatching { api.courses.getCoursePublicInfo(courseId.value) }.getOrNull() }
+            val publicAsync = async { runCatching { api.catalog.getCourseInfo(courseId.value) }.getOrNull() }
             val metadataAsync = async { runCatching { api.moodle.course.getCoursesByField(field = "id", value = courseId.value.toString(), auth = auth).courses.firstOrNull()?.toCourseSheetMetadata() }.getOrNull() }
             val completionAsync = async {
                 userId?.let { runCatching { api.moodle.completion.getActivitiesCompletionStatus(courseId.value, it, auth = auth) }.getOrNull() }

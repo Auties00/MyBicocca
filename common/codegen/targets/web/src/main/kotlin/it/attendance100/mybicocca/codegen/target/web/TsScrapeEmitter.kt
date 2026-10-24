@@ -212,6 +212,7 @@ internal class TsScrapeEmitter(private val spec: ApiSpec, private val layout: Ts
                 is ScrapeStep.NullIf -> call("nullIf", v, step.values.joinToString(", ", "[", "]") { str(it) })
                 is ScrapeStep.QueryParameter -> call("queryParameter", v, str(step.name))
                 is ScrapeStep.Replace -> call("replace", v, step.replacements.entries.joinToString(", ", "{ ", " }") { "${str(it.key)}: ${str(it.value)}" })
+                is ScrapeStep.ReplaceAll -> call("replaceAll", v, step.replacements.entries.joinToString(", ", "[", "]") { "[${str(it.key)}, ${str(it.value)}]" })
                 is ScrapeStep.Equals -> call("equals", v, str(step.value))
                 is ScrapeStep.Contains -> call("contains", v, str(step.value))
                 ScrapeStep.Not -> if (value.optional) call("not", v) else Expression("!($v)", optional = false)

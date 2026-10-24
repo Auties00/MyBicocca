@@ -201,6 +201,12 @@ export const scrape = {
     return Object.entries(replacements).find(([key]) => sameText(key, text))?.[1] ?? text;
   },
 
+  /** The text with every occurrence of each part replaced by its replacement, in order. */
+  replaceAll(text: string | undefined, replacements: ReadonlyArray<readonly [string, string]>): string | undefined {
+    if (text === undefined) return undefined;
+    return present(replacements.reduce((value, [from, to]) => value.split(from).join(to), text));
+  },
+
   equals(text: string | undefined, value: string): boolean | undefined {
     return text === undefined ? undefined : sameText(text, value);
   },

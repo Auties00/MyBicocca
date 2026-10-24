@@ -114,6 +114,9 @@ sealed interface ScrapeStep {
     /** The text replaced by the value [replacements] gives it, ignoring case; other texts are kept. */
     data class Replace(val replacements: Map<String, String>) : Transform
 
+    /** The text with every occurrence of each key of [replacements] replaced by its value, as `,` by `.` in `87,5`. */
+    data class ReplaceAll(val replacements: Map<String, String>) : Transform
+
     /** Whether the text is [value], ignoring case. */
     data class Equals(val value: String) : Test
 

@@ -1,54 +1,5 @@
 package it.attendance100.mybicocca.data.remote.elearning.dto
 
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
-
-/**
- * Attendance statistics of the current user for a single attendance module,
- * parsed from the summary table of the module's `view.php` page.
- *
- * "Taken" refers to the sessions whose attendance has already been recorded
- * by the teacher; "all" includes sessions not yet recorded. Percentages are
- * in the 0.0 to 100.0 range. The points fields mirror the grade points the
- * module awards per attended session and are kept as their rendered "earned /
- * maximum" labels because the plugin formats them locale-dependently.
- *
- * @property attendedSessions The number of sessions the user attended.
- * @property takenSessionsPercentage The attendance percentage over the recorded sessions.
- * @property totalSessions The total number of sessions of the module.
- * @property allSessionsPercentage The attendance percentage over all sessions.
- * @property pointsTakenLabel The "earned / available" points over the recorded sessions (e.g. "10 / 10").
- * @property pointsAllSessionsLabel The "earned / available" points over every session (e.g. "10 / 82").
- * @property maxPossiblePointsLabel The "earned / maximum" points achievable over every session (e.g. "82 / 82").
- * @property maxPossiblePercentage The best attendance percentage still reachable if every remaining session is attended.
- */
-@Serializable
-data class ElearningAttendanceSummary(
-    @SerialName("attendedSessions")
-    val attendedSessions: Int?,
-
-    @SerialName("takenSessionsPercentage")
-    val takenSessionsPercentage: Double?,
-
-    @SerialName("totalSessions")
-    val totalSessions: Int?,
-
-    @SerialName("allSessionsPercentage")
-    val allSessionsPercentage: Double?,
-
-    @SerialName("pointsTakenLabel")
-    val pointsTakenLabel: String? = null,
-
-    @SerialName("maxPossiblePointsLabel")
-    val maxPossiblePointsLabel: String? = null,
-
-    @SerialName("maxPossiblePercentage")
-    val maxPossiblePercentage: Double? = null,
-
-    @SerialName("pointsAllSessionsLabel")
-    val pointsAllSessionsLabel: String? = null
-)
-
 /**
  * Result of reading an attendance module's `view.php` page.
  */
@@ -62,7 +13,7 @@ sealed interface ElearningAttendanceViewResponse {
      *   [it.attendance100.mybicocca.data.remote.elearning.api.ElearningAttendanceApi.getMarkableSessions].
      */
     data class Success(
-        val summary: ElearningAttendanceSummary?,
+        val summary: MoodleWebAttendanceSummary?,
         val submittableSessionIds: List<String>,
     ) : ElearningAttendanceViewResponse
 
@@ -73,18 +24,6 @@ sealed interface ElearningAttendanceViewResponse {
      */
     data object RequiresReauth : ElearningAttendanceViewResponse
 }
-
-/**
- * A self-markable attendance status the student may pick for a session
- * (e.g. "Presente"), parsed from the mobile take form.
- *
- * @property id The status id (`stid`) passed back as the `status` argument when marking.
- * @property description The label the teacher configured, shown to the student.
- */
-data class ElearningAttendanceStatusOption(
-    val id: String,
-    val description: String
-)
 
 /**
  * A `mod_attendance` session the current student is currently allowed to
@@ -101,7 +40,7 @@ data class ElearningAttendanceStatusOption(
 data class ElearningAttendanceMarkableSession(
     val sessionId: String,
     val requiresPassword: Boolean,
-    val statuses: List<ElearningAttendanceStatusOption>
+    val statuses: List<MoodleWebAttendanceStatusOption>
 )
 
 /**

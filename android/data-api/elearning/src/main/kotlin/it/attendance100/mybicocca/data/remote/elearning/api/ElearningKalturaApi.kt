@@ -23,8 +23,8 @@ import kotlinx.serialization.json.Json
  *
  * This API skips the LTI iframe:
  *
- * 1. [resolveKalturaEntryIdForModule] reads the `mod/kalvidres/view.php` HTML to extract the
- *    Kaltura entry id from the iframe URL, the only place the cmId→entryId binding is
+ * 1. [resolveKalturaEntryIdForModule] reads the `mod/kalvidres/view.php` page (the generated
+ *    [MoodleWebMediaApi]) for the Kaltura entry id in the iframe URL, the only place the cmId→entryId binding is
  *    observable. Callers should cache the result: every load logs a "viewed" event in Moodle.
  * 2. [getVideoStream] builds the entry's `playManifest` URLs, which Kaltura serves without a
  *    Kaltura Session for Bicocca's entries, and reads the HLS master playlist for the quality
@@ -45,7 +45,8 @@ import kotlinx.serialization.json.Json
  */
 class ElearningKalturaApi(
     client: HttpClient,
-    json: Json
+    json: Json,
+    private val pages: MoodleWebMediaApi,
 ) : ElearningAbstractApi(client, json) {
 
     companion object {
@@ -102,14 +103,6 @@ class ElearningKalturaApi(
         /** Delivery format and file name of the MPEG-DASH manifest. */
         private const val DASH_FORMAT = "mpegdash/manifest.mpd"
 
-        /**
-         * Locates the Kaltura entry id inside the kalvidres iframe URL embedded in
-         * `mod/kalvidres/view.php`. The URL is rendered by `mod/kalvidres/renderer.php`
-         * (line 60 of the plugin source) which has emitted the exact `entryid/{id}/`
-         * pattern unchanged since the plugin's first release. This is the only place
-         * the cmId→entryId mapping is reachable from outside Moodle's database.
-         */
-        private val KALTURA_ENTRY_ID_FROM_IFRAME_URL_REGEX = Regex("""entryid(?:/|%2F)([\w-]+)""")
 
         /** Matches one `KEY=VALUE` attribute of an `#EXT-X-STREAM-INF` tag. */
         private val STREAM_INF_ATTRIBUTE_REGEX = Regex("""([A-Z-]+)=("[^"]*"|[^,]*)""")
@@ -130,18 +123,11 @@ class ElearningKalturaApi(
      *   [ElearningKalturaEntryIdResponse.RequiresReauth] if the iframe URL could not be
      *   located in the response body (typically the Moodle session expired and Moodle
      *   served the login page instead of the kalvidres view).
-     * @throws ElearningException If `view.php` returns a non-OK HTTP status.
+     * @throws it.attendance100.mybicocca.data.remote.common.exception.ApiRequestException If
+     *   `view.php` returns an error status.
      */
     suspend fun resolveKalturaEntryIdForModule(courseModuleId: Int): ElearningKalturaEntryIdResponse {
-        val viewPageUrl = "${BASE_URL}mod/kalvidres/view.php?id=$courseModuleId"
-        val response = client.get(viewPageUrl)
-        if (response.status != HttpStatusCode.OK) {
-            throw ElearningException(
-                errorCode = null,
-                errorMessage = "view.php returned ${response.status} for courseModuleId=$courseModuleId"
-            )
-        }
-        val entryId = KALTURA_ENTRY_ID_FROM_IFRAME_URL_REGEX.find(response.bodyAsText())?.groupValues?.get(1)
+        val entryId = pages.getKalturaPlayer(courseModuleId).entryId
             ?: return ElearningKalturaEntryIdResponse.RequiresReauth
         return ElearningKalturaEntryIdResponse.Success(entryId)
     }

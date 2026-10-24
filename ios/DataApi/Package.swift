@@ -12,6 +12,7 @@ let package = Package(
         .library(name: "EasyStaffPlanning", targets: ["EasyStaffPlanning"]),
         .library(name: "Esse3", targets: ["Esse3"]),
         .library(name: "Moodle", targets: ["Moodle"]),
+        .library(name: "MoodleWeb", targets: ["MoodleWeb"]),
     ],
     dependencies: [
         .package(url: "https://github.com/scinfu/SwiftSoup.git", from: "2.7.0"),
@@ -23,6 +24,7 @@ let package = Package(
         .target(name: "EasyStaffPlanning", dependencies: ["DataApiRuntime"]),
         .target(name: "Esse3", dependencies: ["DataApiRuntime"]),
         .target(name: "Moodle", dependencies: ["DataApiRuntime"]),
+        .target(name: "MoodleWeb", dependencies: ["DataApiRuntime"]),
         .testTarget(name: "DataApiRuntimeTests", dependencies: ["DataApiRuntime"]),
     ]
 )
