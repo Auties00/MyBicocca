@@ -78,7 +78,10 @@ class OutputSyncTest {
 class GeneratorTest {
     private fun file(path: String, owner: String, body: String = "") = GeneratedFile(path, "// ${generatedMarker(owner)}. Do not edit.\n$body\n")
 
-    /** Reads an API named after its directory, and generates one file plus a shared one into `out`. */
+    /**
+     * Reads an API named after its directory, and generates one file into `out`, plus a shared one
+     * and an index listing the APIs' files.
+     */
     private fun registry(sharedBody: (apiId: String) -> String = { "" }) = object : Plugins {
         override fun reader(id: String) = object : SpecReader {
             override val id = "fake"
@@ -90,6 +93,8 @@ class GeneratorTest {
             override fun generate(spec: ApiSpec, context: TargetContext) = listOf(file("${spec.id}.txt", spec.id))
             override fun sharedFiles(context: TargetContext) =
                 listOf(file("Runtime.txt", SHARED_FILES_OWNER, sharedBody(context.options.getValue("api").toString())))
+            override fun indexFiles(paths: Set<String>, context: TargetContext) =
+                listOf(file("Index.txt", SHARED_FILES_OWNER, paths.sorted().joinToString(" ")))
         }
     }
 
@@ -111,6 +116,16 @@ class GeneratorTest {
         val plans = Generator(registry(), log = {}).run(listOf(apis[0]))
         assertTrue(plans.all(SyncPlan::isUpToDate))
         assertTrue(out.resolve("b.txt").exists())
+    }
+
+    @Test
+    fun `indexes the files of every API in the directory, also those the run skipped`(@TempDir root: Path) {
+        val apis = listOf(api(root, "a"), api(root, "b"))
+        Generator(registry(), log = {}).run(apis)
+        val index = root.resolve("out/Index.txt")
+        assertContains(index.readText(), "a.txt b.txt")
+
+        assertTrue(Generator(registry(), log = {}).run(listOf(apis[1]), check = true).all(SyncPlan::isUpToDate))
     }
 
     @Test

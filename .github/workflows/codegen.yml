@@ -58,14 +58,7 @@ jobs:
 
       - name: Type-check the web SDKs
         working-directory: web
-        run: |
-          npx --yes -p typescript@5.8.3 tsc -p packages/runtime
-          npx --yes -p typescript@5.8.3 tsc -p packages/esse3
-          npx --yes -p typescript@5.8.3 tsc -p packages/affluences
-          npx --yes -p typescript@5.8.3 tsc -p packages/easystaff
-          npx --yes -p typescript@5.8.3 tsc -p packages/easystaff-planning
-          npx --yes -p typescript@5.8.3 tsc -p packages/moodle
-          npx --yes -p typescript@5.8.3 tsc -p packages/moodle-web
+        run: npx --yes -p typescript@5.8.3 tsc -p data-api
 
   swift:
     name: Swift SDKs
