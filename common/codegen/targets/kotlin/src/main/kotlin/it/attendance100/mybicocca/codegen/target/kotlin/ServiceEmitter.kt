@@ -131,6 +131,7 @@ internal class ServiceEmitter(private val spec: ApiSpec, private val layout: Kot
             operation.parameters.any { it.location != ParameterLocation.PATH } ||
             spec.parameters.any { it.location != ParameterLocation.PATH } ||
             operation.headers.isNotEmpty() ||
+            operation.query.isNotEmpty() ||
             operation.auth != null
 
         val response = operation.response
@@ -175,12 +176,17 @@ internal class ServiceEmitter(private val spec: ApiSpec, private val layout: Kot
         }
 
         val form = operation.formParameters
-        if (form.isNotEmpty()) {
+        val authForm = operation.auth?.let { auth -> spec.authSchemes.any { it.name in auth.schemes && it.form.isNotEmpty() } } == true
+        if (form.isNotEmpty() || authForm) {
             file.import("io.ktor.client.request.setBody")
             file.import("io.ktor.client.request.forms.FormDataContent")
             file.import("io.ktor.http.parameters")
             block("setBody(FormDataContent(parameters {", "}))") {
                 for (parameter in form) send(parameter, "append", file) { formValue(parameter, it) }
+                if (authForm) {
+                    val send = "forEach { (name, value) -> append(name, value) }"
+                    line(if (operation.auth!!.required) "$AUTH.form.$send" else "$AUTH?.form?.$send")
+                }
             }
         }
 
@@ -189,8 +195,11 @@ internal class ServiceEmitter(private val spec: ApiSpec, private val layout: Kot
         val headers = apiParameters[ParameterLocation.HEADER].orEmpty() + operation.headerParameters
         val cookies = apiParameters[ParameterLocation.COOKIE].orEmpty() + operation.cookieParameters
 
+        if (operation.query.isNotEmpty() || query.isNotEmpty()) file.import("io.ktor.client.request.parameter")
+        for ((name, value) in operation.query) {
+            line("parameter(${KotlinSyntax.string(name)}, ${KotlinSyntax.string(value)})")
+        }
         for (parameter in query) {
-            file.import("io.ktor.client.request.parameter")
             send(parameter, "parameter", file) { queryValue(parameter, it) }
         }
 
@@ -225,6 +234,18 @@ internal class ServiceEmitter(private val spec: ApiSpec, private val layout: Kot
     private fun CodeWriter.send(parameter: Parameter, function: String, file: KotlinFile, value: (String) -> String) {
         val name = KotlinSyntax.identifier(parameter.name)
         val wireName = KotlinSyntax.string(parameter.wireName)
+        if (parameter.encoding == ParameterEncoding.BRACKETS) {
+            // Form fields are appended to the form's builder, query parameters to the URL's.
+            val receiver = if (function == "append") "" else "url.parameters."
+            file.import("${layout.dtoPackage}.appendBrackets")
+            file.import("kotlinx.serialization.json.encodeToJsonElement")
+            if (parameter.isOmittable) {
+                line("$name?.let { ${receiver}appendBrackets($wireName, json.encodeToJsonElement(it)) }")
+            } else {
+                line("${receiver}appendBrackets($wireName, json.encodeToJsonElement($name))")
+            }
+            return
+        }
         if (parameter.encoding == ParameterEncoding.JSON) {
             file.import("kotlinx.serialization.encodeToString")
             val default = parameter.default
@@ -266,6 +287,7 @@ internal class ServiceEmitter(private val spec: ApiSpec, private val layout: Kot
                 ParameterEncoding.PLAIN ->
                     if (parameter.isOmittable) "$name?.let { $prefix + ${formValue(parameter, "it")}.encodeURLParameter() }"
                     else "$prefix + ${formValue(parameter, name)}.encodeURLParameter()"
+                ParameterEncoding.BRACKETS -> error("Cookie parameter '${parameter.name}' can't be bracket-encoded")
             }
         }
         if (pairs.size == 1 && !cookies.single().isOmittable) {

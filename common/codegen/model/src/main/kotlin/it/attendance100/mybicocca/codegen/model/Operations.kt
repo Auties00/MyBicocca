@@ -16,6 +16,8 @@ package it.attendance100.mybicocca.codegen.model
  * @property server Name of the [Server] the operation targets; null for the API's only one.
  * @property headers Headers sent with every call, by name. A value's `{name}` placeholders are
  *   replaced by the API parameter of that name (see [ApiSpec.parameters]).
+ * @property query Query parameters sent with every call, by name, such as the function an
+ *   RPC-style endpoint runs.
  * @property auth The credentials the operation accepts, if any.
  */
 data class Operation(
@@ -30,6 +32,7 @@ data class Operation(
     val server: String? = null,
     val headers: Map<String, String> = emptyMap(),
     val auth: AuthRequirement? = null,
+    val query: Map<String, String> = emptyMap(),
 ) {
     val pathParameters: List<Parameter> get() = parameters.filter { it.location == ParameterLocation.PATH }
     val queryParameters: List<Parameter> get() = parameters.filter { it.location == ParameterLocation.QUERY }
@@ -84,6 +87,14 @@ enum class ParameterEncoding {
 
     /** The value encoded as JSON text, as a record or map parameter needs. */
     JSON,
+
+    /**
+     * The value as PHP-style bracketed fields, as PHP servers read lists and records: a list
+     * `ids` as `ids[0]=1&ids[1]=2`, a record `post` as `post[subject]=…`, nesting as deep as
+     * the value. Booleans are written `1` and `0`; nulls are left out. Only for query and form
+     * parameters.
+     */
+    BRACKETS,
 }
 
 /** The body an operation sends. */

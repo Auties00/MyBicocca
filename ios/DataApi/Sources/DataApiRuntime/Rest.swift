@@ -28,9 +28,14 @@ public enum HTTPMethod: String, Sendable {
     case delete = "DELETE"
 }
 
-/// Credentials that authenticate a request through headers.
+/// Credentials that authenticate a request through headers or form fields.
 public protocol RequestAuth: Sendable {
     var headers: [String: String] { get }
+    var form: [String: String] { get }
+}
+
+extension RequestAuth {
+    public var form: [String: String] { [:] }
 }
 
 /// An empty JSON object, `{}`, for servers that require a body but read nothing from it.
@@ -80,7 +85,7 @@ public struct RestRequest: Sendable {
     ///   - headers: Headers; those with no value are left out.
     ///   - cookies: Cookies; those with no value are left out.
     ///   - body: A value sent as JSON.
-    ///   - auth: Credentials whose headers are added.
+    ///   - auth: Credentials whose headers and form fields are added.
     public init(
         method: HTTPMethod,
         path: String,
@@ -96,12 +101,31 @@ public struct RestRequest: Sendable {
         self.method = method
         self.path = path
         self.query = RestRequest.items(query)
-        self.form = form.map(RestRequest.items)
+        let authForm = (auth?.form ?? [:]).sorted { $0.key < $1.key }.map { QueryItem(name: $0.key, value: $0.value) }
+        self.form = form.map(RestRequest.items).map { $0 + authForm } ?? (authForm.isEmpty ? nil : authForm)
         self.headers = RestRequest.items(headers) + (auth?.headers ?? [:]).sorted { $0.key < $1.key }.map { QueryItem(name: $0.key, value: $0.value) }
         self.cookies = RestRequest.items(cookies)
         self.body = try body.map { try JSONEncoder().encode($0) }
         self.server = server
         self.envelope = envelope
+    }
+
+    /// `value` as PHP-style bracketed fields named after `name` (`name[0][key]=value`), as PHP
+    /// servers read lists and records. Booleans are written `1` and `0`; nulls are left out.
+    public static func brackets(_ name: String, _ value: (some Encodable)?) throws -> [(String, (any QueryValueConvertible)?)] {
+        guard let value else { return [] }
+        var fields: [(String, (any QueryValueConvertible)?)] = []
+        func append(_ name: String, _ json: JSONValue) {
+            switch json {
+            case .null: break
+            case .bool(let bool): fields.append((name, bool ? "1" : "0"))
+            case .number, .string: fields.append((name, String(lenient: json)))
+            case .array(let items): items.enumerated().forEach { append("\(name)[\($0.offset)]", $0.element) }
+            case .object(let object): object.sorted { $0.key < $1.key }.forEach { append("\(name)[\($0.key)]", $0.value) }
+            }
+        }
+        append(name, try JSONDecoder().decode(JSONValue.self, from: JSONEncoder().encode(value)))
+        return fields
     }
 
     /// `value` as JSON text, for a parameter written as JSON; nil when there is no value.

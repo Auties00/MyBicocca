@@ -3,8 +3,12 @@ package com.example.demo.api
 
 import com.example.demo.dto.DemoCalendar
 import com.example.demo.dto.DemoLevel
+import com.example.demo.dto.DemoSessionAuth
 import com.example.demo.dto.DemoSettings
+import com.example.demo.dto.DemoSlot
+import com.example.demo.dto.appendBrackets
 import io.ktor.client.HttpClient
+import io.ktor.client.request.forms.FormDataContent
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
@@ -12,9 +16,11 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.contentType
 import io.ktor.http.encodeURLParameter
+import io.ktor.http.parameters
 import java.time.LocalDate
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.encodeToJsonElement
 
 class DemoCalendarApi(
     client: HttpClient,
@@ -36,6 +42,29 @@ class DemoCalendarApi(
             header("x-region", "region-${region}")
             header("X-TENANT", tenant)
             header(HttpHeaders.Cookie, "filters=" + (filters?.let { json.encodeToString(it) } ?: "{}").encodeURLParameter())
+        }
+    }
+
+    /**
+     * @param auth The credentials: [DemoSessionAuth].
+     */
+    suspend fun runQuery(
+        ids: List<Long>,
+        settings: DemoSettings? = null,
+        tags: List<String>? = null,
+        auth: DemoSessionAuth
+    ): List<DemoSlot> {
+        return executeJsonPostList<DemoSlot>("/rpc", emptySet(), server = DemoServer.Main) {
+            setBody(FormDataContent(parameters {
+                appendBrackets("ids", json.encodeToJsonElement(ids))
+                settings?.let { appendBrackets("settings", json.encodeToJsonElement(it)) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("function", "demo_run_query")
+            parameter("format", "json")
+            tags?.let { url.parameters.appendBrackets("tags", json.encodeToJsonElement(it)) }
+            header("X-TENANT", tenant)
+            auth.headers.forEach { (name, value) -> header(name, value) }
         }
     }
 

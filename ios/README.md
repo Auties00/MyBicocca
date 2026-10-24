@@ -11,6 +11,8 @@ The iOS app. It consumes the Swift SDKs generated from the specs in [`../common`
 - `EasyStaffPlanning` — generated sources in `Generated/` plus the hand-written
   `EasyStaffPlanningClient`, for appointments at the student information desks
 - `Esse3` — generated sources in `Generated/` plus the hand-written `Esse3Client`
+- `Moodle` — generated sources in `Generated/` plus the hand-written `MoodleClient`, for the
+  e-learning site's web services
 
 ```swift
 let esse3 = Esse3Api(configuration: RestConfiguration(

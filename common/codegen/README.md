@@ -33,7 +33,7 @@ specs/<api>/  ──reader──▶  ApiSpec (model)  ──validator──▶  
 |-------------|--------------------------------------------------------------------------------------------|
 | `model`     | The language-neutral description of an API: modules, records, enums, operations, codecs.  |
 | `core`      | Plugin interfaces (`SpecReader`, `CodeTarget`), `CodeWriter`, config, output sync, pipeline. |
-| `readers/*` | One per spec format. `esse3` reads the Swagger specs scraped from Esse3 plus its overlays; `openapi` reads hand-written OpenAPI 3.0 with the `x-mb-*` extensions listed in its `Extensions.kt` (used by Affluences and EasyStaff Planning). |
+| `readers/*` | One per spec format. `esse3` reads the Swagger specs scraped from Esse3 plus its overlays; `openapi` reads hand-written OpenAPI 3.0 with the `x-mb-*` extensions listed in its `Extensions.kt` (used by Affluences and EasyStaff Planning); `moodle` reads Moodle web service functions dumped from Moodle's source (see `specs/moodle`). |
 | `targets/*` | One per platform: `kotlin`, `swift`, `web`.                                                |
 | `cli`       | The command line, wiring the plugins found on the classpath.                               |
 | `testing`   | A sample API covering every model feature, and golden-file assertions.                     |
@@ -65,9 +65,10 @@ dates, enums or delimited records (a record written as one string, like `09:00-0
 accept PHP's `[]` for an empty map. Enums may be integer-valued.
 
 Operations can target one of several `servers`, unwrap their response from an `envelope`
-(`{"data": …}`), send fixed `headers`, header and cookie parameters, and parameters encoded as
-JSON, and accept credentials from `authSchemes`, which targets turn into one type per scheme so
-a caller can only pass one valid set. API `parameters` are given once, when creating the API:
+(`{"data": …}`), send fixed `headers` and `query` parameters, header and cookie parameters, and
+parameters encoded as JSON or as PHP's brackets (`ids[0]=1`), and accept credentials from
+`authSchemes` (headers or form fields), which targets turn into one type per scheme so a caller
+can only pass one valid set. API `parameters` are given once, when creating the API:
 they fill path placeholders, are sent by every operation, or appear in fixed headers
 (`X-CLIENTE: "{portalId}"`).
 

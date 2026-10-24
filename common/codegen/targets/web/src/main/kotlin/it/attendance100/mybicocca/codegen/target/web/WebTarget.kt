@@ -79,6 +79,14 @@ class WebTarget : CodeTarget {
                             for ((name, template) in scheme.headers) line("${TsSyntax.string(name)}: ${headerTemplate(template)},")
                         }
                     }
+                    if (scheme.form.isNotEmpty()) {
+                        line()
+                        block("get form(): Readonly<Record<string, string>> {") {
+                            block("return {", "};") {
+                                for ((name, template) in scheme.form) line("${TsSyntax.string(name)}: ${headerTemplate(template)},")
+                            }
+                        }
+                    }
                 }
                 line()
             }

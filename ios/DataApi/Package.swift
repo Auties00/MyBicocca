@@ -10,12 +10,14 @@ let package = Package(
         .library(name: "Affluences", targets: ["Affluences"]),
         .library(name: "EasyStaffPlanning", targets: ["EasyStaffPlanning"]),
         .library(name: "Esse3", targets: ["Esse3"]),
+        .library(name: "Moodle", targets: ["Moodle"]),
     ],
     targets: [
         .target(name: "DataApiRuntime"),
         .target(name: "Affluences", dependencies: ["DataApiRuntime"]),
         .target(name: "EasyStaffPlanning", dependencies: ["DataApiRuntime"]),
         .target(name: "Esse3", dependencies: ["DataApiRuntime"]),
+        .target(name: "Moodle", dependencies: ["DataApiRuntime"]),
         .testTarget(name: "DataApiRuntimeTests", dependencies: ["DataApiRuntime"]),
     ]
 )
