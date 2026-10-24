@@ -9,29 +9,29 @@ import { MoodleLive, siteGetSiteInfo, tokenCredentials, writeMoodlePrivateFilesI
 describe("Moodle User", () => {
   liveCase(MoodleLive, "User.getPrivateFilesInfo#1", {}, async (live) => {
     const auth = await tokenCredentials(live);
-    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodlePrivateFilesInfo\"}", {}, () => live.api.user.getPrivateFilesInfo(auth));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodlePrivateFilesInfo\"}", {}, async () => live.api.user.getPrivateFilesInfo(auth));
     live.fingerprint((f) => writeMoodlePrivateFilesInfo(f, result));
   });
 
   liveCase(MoodleLive, "User.getPrivateFilesInfo#2", { index: 1 }, async (live) => {
     const userId = live.choose("userId", [await siteGetSiteInfo(live)].map((it) => it.userId).filter(isPresent));
     const auth = await tokenCredentials(live);
-    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodlePrivateFilesInfo\"}", {}, () => live.api.user.getPrivateFilesInfo(auth, { userId: userId }));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodlePrivateFilesInfo\"}", {}, async () => live.api.user.getPrivateFilesInfo(auth, { userId: userId }));
     live.fingerprint((f) => writeMoodlePrivateFilesInfo(f, result));
   });
 
   liveCase(MoodleLive, "User.getPrivateFilesInfo#invalid-credentials", {}, async (live) => {
-    await live.refused(false, () => live.api.user.getPrivateFilesInfo(new MoodleTokenAuth("mybicocca-invalid-credential")));
+    await live.refused(false, async () => live.api.user.getPrivateFilesInfo(new MoodleTokenAuth("mybicocca-invalid-credential")));
   });
 
   liveCase(MoodleLive, "User.getUserPreferences#1", {}, async (live) => {
     const auth = await tokenCredentials(live);
-    await live.call("{\"k\":\"record\",\"n\":\"MoodleUserPreferencesResponse\"}", {}, () => live.api.user.getUserPreferences(auth));
+    await live.call("{\"k\":\"record\",\"n\":\"MoodleUserPreferencesResponse\"}", {}, async () => live.api.user.getUserPreferences(auth));
   });
 
   liveCase(MoodleLive, "User.getUserPreferences#2", { index: 1 }, async (live) => {
     const userId = live.choose("userId", [await siteGetSiteInfo(live)].map((it) => it.userId).filter(isPresent));
     const auth = await tokenCredentials(live);
-    await live.call("{\"k\":\"record\",\"n\":\"MoodleUserPreferencesResponse\"}", {}, () => live.api.user.getUserPreferences(auth, { userId: userId }));
+    await live.call("{\"k\":\"record\",\"n\":\"MoodleUserPreferencesResponse\"}", {}, async () => live.api.user.getUserPreferences(auth, { userId: userId }));
   });
 });

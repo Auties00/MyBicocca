@@ -3,7 +3,11 @@ package it.attendance100.mybicocca.data.remote.easystaff.live
 
 import it.attendance100.mybicocca.data.remote.easystaff.api.EasyStaffApi
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffLanguage
+import it.attendance100.mybicocca.data.remote.runtime.live.LiveJson
+import it.attendance100.mybicocca.data.remote.runtime.live.LiveTemplates
 import it.attendance100.mybicocca.data.remote.runtime.live.LiveTest
+import java.time.LocalDate
+import kotlinx.serialization.decodeFromString
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 
@@ -169,5 +173,109 @@ class EasyStaffBuildingsLiveTest : LiveTest<EasyStaffApi>(EasyStaffLive) {
             api.buildings.getTeachingAreas(language = EasyStaffLanguage.French)
         } ?: return@case
         fingerprint { list(result) { writeEasyStaffTeachingArea(it) } }
+    }
+
+    @Test
+    @DisplayName("Buildings.getBuildingOccupation#1")
+    fun getBuildingOccupation1() = case("Buildings.getBuildingOccupation#1") {
+        val date = LocalDate.parse(LiveTemplates.resolve("{today}"))
+        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"EasyStaffRoomOccupationEvent\"}}", envelope = listOf("events")) {
+            api.buildings.getBuildingOccupation(buildings = LiveJson.decodeFromString<List<String>>("[\"U06\"]"), date = date)
+        } ?: return@case
+        fingerprint { list(result) { writeEasyStaffRoomOccupationEvent(it) } }
+    }
+
+    @Test
+    @DisplayName("Buildings.getBuildingOccupation#2")
+    fun getBuildingOccupation2() = case("Buildings.getBuildingOccupation#2", index = 1) {
+        val date = LocalDate.parse(LiveTemplates.resolve("{today}"))
+        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"EasyStaffRoomOccupationEvent\"}}", envelope = listOf("events")) {
+            api.buildings.getBuildingOccupation(buildings = LiveJson.decodeFromString<List<String>>("[\"U06\"]"), date = date, language = EasyStaffLanguage.Italian)
+        } ?: return@case
+        fingerprint { list(result) { writeEasyStaffRoomOccupationEvent(it) } }
+    }
+
+    @Test
+    @DisplayName("Buildings.getBuildingOccupation#3")
+    fun getBuildingOccupation3() = case("Buildings.getBuildingOccupation#3", index = 2) {
+        val date = LocalDate.parse(LiveTemplates.resolve("{today}"))
+        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"EasyStaffRoomOccupationEvent\"}}", envelope = listOf("events")) {
+            api.buildings.getBuildingOccupation(buildings = LiveJson.decodeFromString<List<String>>("[\"U06\"]"), date = date, language = EasyStaffLanguage.English)
+        } ?: return@case
+        fingerprint { list(result) { writeEasyStaffRoomOccupationEvent(it) } }
+    }
+
+    @Test
+    @DisplayName("Buildings.getBuildingOccupation#4")
+    fun getBuildingOccupation4() = case("Buildings.getBuildingOccupation#4", index = 3) {
+        val date = LocalDate.parse(LiveTemplates.resolve("{today}"))
+        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"EasyStaffRoomOccupationEvent\"}}", envelope = listOf("events")) {
+            api.buildings.getBuildingOccupation(buildings = LiveJson.decodeFromString<List<String>>("[\"U06\"]"), date = date, language = EasyStaffLanguage.Spanish)
+        } ?: return@case
+        fingerprint { list(result) { writeEasyStaffRoomOccupationEvent(it) } }
+    }
+
+    @Test
+    @DisplayName("Buildings.getBuildingOccupation#5")
+    fun getBuildingOccupation5() = case("Buildings.getBuildingOccupation#5", index = 4) {
+        val date = LocalDate.parse(LiveTemplates.resolve("{today}"))
+        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"EasyStaffRoomOccupationEvent\"}}", envelope = listOf("events")) {
+            api.buildings.getBuildingOccupation(buildings = LiveJson.decodeFromString<List<String>>("[\"U06\"]"), date = date, language = EasyStaffLanguage.German)
+        } ?: return@case
+        fingerprint { list(result) { writeEasyStaffRoomOccupationEvent(it) } }
+    }
+
+    @Test
+    @DisplayName("Buildings.getRoomDetails#1")
+    fun getRoomDetails1() = case("Buildings.getRoomDetails#1") {
+        val result = call("{\"k\":\"map\",\"v\":{\"k\":\"record\",\"n\":\"EasyStaffRoomShowcaseBuilding\"}}", variable = "window.data_to_show") {
+            api.buildings.getRoomDetails(buildings = LiveJson.decodeFromString<List<String>>("[\"U06\"]"))
+        } ?: return@case
+        fingerprint { map(result, { str(it) }) { writeEasyStaffRoomShowcaseBuilding(it) } }
+    }
+
+    @Test
+    @DisplayName("Buildings.getRoomDetails#2")
+    fun getRoomDetails2() = case("Buildings.getRoomDetails#2", index = 1) {
+        val result = call("{\"k\":\"map\",\"v\":{\"k\":\"record\",\"n\":\"EasyStaffRoomShowcaseBuilding\"}}", variable = "window.data_to_show") {
+            api.buildings.getRoomDetails(buildings = LiveJson.decodeFromString<List<String>>("[\"U06\"]"), language = EasyStaffLanguage.Italian)
+        } ?: return@case
+        fingerprint { map(result, { str(it) }) { writeEasyStaffRoomShowcaseBuilding(it) } }
+    }
+
+    @Test
+    @DisplayName("Buildings.getRoomDetails#3")
+    fun getRoomDetails3() = case("Buildings.getRoomDetails#3", index = 2) {
+        val result = call("{\"k\":\"map\",\"v\":{\"k\":\"record\",\"n\":\"EasyStaffRoomShowcaseBuilding\"}}", variable = "window.data_to_show") {
+            api.buildings.getRoomDetails(buildings = LiveJson.decodeFromString<List<String>>("[\"U06\"]"), language = EasyStaffLanguage.English)
+        } ?: return@case
+        fingerprint { map(result, { str(it) }) { writeEasyStaffRoomShowcaseBuilding(it) } }
+    }
+
+    @Test
+    @DisplayName("Buildings.getRoomDetails#4")
+    fun getRoomDetails4() = case("Buildings.getRoomDetails#4", index = 3) {
+        val result = call("{\"k\":\"map\",\"v\":{\"k\":\"record\",\"n\":\"EasyStaffRoomShowcaseBuilding\"}}", variable = "window.data_to_show") {
+            api.buildings.getRoomDetails(buildings = LiveJson.decodeFromString<List<String>>("[\"U06\"]"), language = EasyStaffLanguage.Spanish)
+        } ?: return@case
+        fingerprint { map(result, { str(it) }) { writeEasyStaffRoomShowcaseBuilding(it) } }
+    }
+
+    @Test
+    @DisplayName("Buildings.getRoomDetails#5")
+    fun getRoomDetails5() = case("Buildings.getRoomDetails#5", index = 4) {
+        val result = call("{\"k\":\"map\",\"v\":{\"k\":\"record\",\"n\":\"EasyStaffRoomShowcaseBuilding\"}}", variable = "window.data_to_show") {
+            api.buildings.getRoomDetails(buildings = LiveJson.decodeFromString<List<String>>("[\"U06\"]"), language = EasyStaffLanguage.German)
+        } ?: return@case
+        fingerprint { map(result, { str(it) }) { writeEasyStaffRoomShowcaseBuilding(it) } }
+    }
+
+    @Test
+    @DisplayName("Buildings.getRoomDetails#6")
+    fun getRoomDetails6() = case("Buildings.getRoomDetails#6", index = 5) {
+        val result = call("{\"k\":\"map\",\"v\":{\"k\":\"record\",\"n\":\"EasyStaffRoomShowcaseBuilding\"}}", variable = "window.data_to_show") {
+            api.buildings.getRoomDetails(buildings = LiveJson.decodeFromString<List<String>>("[\"U06\"]"), language = EasyStaffLanguage.French)
+        } ?: return@case
+        fingerprint { map(result, { str(it) }) { writeEasyStaffRoomShowcaseBuilding(it) } }
     }
 }

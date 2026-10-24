@@ -7,44 +7,44 @@ import { Esse3Live, loggingGetTlogSessions, loggingGetTlogTransactions, writeEss
 // The live tests of the Esse3 Logging module, planned from common/specs/esse3/tests.yaml.
 describe("Esse3 Logging", () => {
   liveCase(Esse3Live, "Logging.getTlogSessions#1", {}, async (live) => {
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TransactionLogSession\"}}", {}, () => live.api.logging.getTlogSessions());
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TransactionLogSession\"}}", {}, async () => live.api.logging.getTlogSessions());
     live.fingerprint((f) => f.list(result, (it) => writeEsse3TransactionLogSession(f, it)));
   });
 
   liveCase(Esse3Live, "Logging.getTlogText#1", {}, async (live) => {
-    const result = await live.call("{\"k\":\"string\"}", {}, () => live.api.logging.getTlogText());
+    const result = await live.call("{\"k\":\"string\"}", {}, async () => live.api.logging.getTlogText());
     live.fingerprint((f) => f.str(result));
   });
 
   liveCase(Esse3Live, "Logging.getTlogText#2", { index: 1 }, async (live) => {
     const contextParamsId = live.choose("contextParamsId", [await loggingGetTlogTransactions(live)].flat().map((it) => it.contextParamsId).filter(isPresent));
     const transactionId = live.choose("transactionId", [await loggingGetTlogTransactions(live)].flat().map((it) => it.transactionId).filter(isPresent));
-    const result = await live.call("{\"k\":\"string\"}", {}, () => live.api.logging.getTlogText({ contextParamsId: contextParamsId, transactionId: transactionId }));
+    const result = await live.call("{\"k\":\"string\"}", {}, async () => live.api.logging.getTlogText({ contextParamsId: contextParamsId, transactionId: transactionId }));
     live.fingerprint((f) => f.str(result));
   });
 
   liveCase(Esse3Live, "Logging.getTlogText#3", { index: 2 }, async (live) => {
     const sessionId = live.choose("sessionId", [await loggingGetTlogSessions(live)].flat().map((it) => it.sessionId).filter(isPresent));
     const contextParamsId = live.choose("contextParamsId", [await loggingGetTlogTransactions(live)].flat().map((it) => it.contextParamsId).filter(isPresent));
-    const result = await live.call("{\"k\":\"string\"}", {}, () => live.api.logging.getTlogText({ sessionId: sessionId, contextParamsId: contextParamsId }));
+    const result = await live.call("{\"k\":\"string\"}", {}, async () => live.api.logging.getTlogText({ sessionId: sessionId, contextParamsId: contextParamsId }));
     live.fingerprint((f) => f.str(result));
   });
 
   liveCase(Esse3Live, "Logging.getTlogText#4", { index: 3 }, async (live) => {
     const sessionId = live.choose("sessionId", [await loggingGetTlogSessions(live)].flat().map((it) => it.sessionId).filter(isPresent));
     const transactionId = live.choose("transactionId", [await loggingGetTlogTransactions(live)].flat().map((it) => it.transactionId).filter(isPresent));
-    const result = await live.call("{\"k\":\"string\"}", {}, () => live.api.logging.getTlogText({ sessionId: sessionId, transactionId: transactionId }));
+    const result = await live.call("{\"k\":\"string\"}", {}, async () => live.api.logging.getTlogText({ sessionId: sessionId, transactionId: transactionId }));
     live.fingerprint((f) => f.str(result));
   });
 
   liveCase(Esse3Live, "Logging.getTlogTransactions#1", {}, async (live) => {
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TransactionLogViewParameters\"}}", {}, () => live.api.logging.getTlogTransactions());
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TransactionLogViewParameters\"}}", {}, async () => live.api.logging.getTlogTransactions());
     live.fingerprint((f) => f.list(result, (it) => writeEsse3TransactionLogViewParameters(f, it)));
   });
 
   liveCase(Esse3Live, "Logging.getTlogTransactions#2", { index: 1 }, async (live) => {
     const sessionId = live.choose("sessionId", [await loggingGetTlogSessions(live)].flat().map((it) => it.sessionId).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TransactionLogViewParameters\"}}", {}, () => live.api.logging.getTlogTransactions({ sessionId: sessionId }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TransactionLogViewParameters\"}}", {}, async () => live.api.logging.getTlogTransactions({ sessionId: sessionId }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3TransactionLogViewParameters(f, it)));
   });
 });

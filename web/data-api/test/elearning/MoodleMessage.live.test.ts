@@ -10,60 +10,60 @@ describe("Moodle Message", () => {
   liveCase(MoodleLive, "Message.getConversations#1", {}, async (live) => {
     const userId = live.choose("userId", [await siteGetSiteInfo(live)].map((it) => it.userId).filter(isPresent));
     const auth = await tokenCredentials(live);
-    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleConversationsResponse\"}", {}, () => live.api.message.getConversations(userId, auth));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleConversationsResponse\"}", {}, async () => live.api.message.getConversations(userId, auth));
     live.fingerprint((f) => writeMoodleConversationsResponse(f, result));
   });
 
   liveCase(MoodleLive, "Message.getConversations#2", { index: 1 }, async (live) => {
     const userId = live.choose("userId", [await siteGetSiteInfo(live)].map((it) => it.userId).filter(isPresent));
     const auth = await tokenCredentials(live);
-    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleConversationsResponse\"}", {}, () => live.api.message.getConversations(userId, auth, { favourites: true }));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleConversationsResponse\"}", {}, async () => live.api.message.getConversations(userId, auth, { favourites: true }));
     live.fingerprint((f) => writeMoodleConversationsResponse(f, result));
   });
 
   liveCase(MoodleLive, "Message.getConversations#3", { index: 2 }, async (live) => {
     const userId = live.choose("userId", [await siteGetSiteInfo(live)].map((it) => it.userId).filter(isPresent));
     const auth = await tokenCredentials(live);
-    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleConversationsResponse\"}", {}, () => live.api.message.getConversations(userId, auth, { mergeSelf: true }));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleConversationsResponse\"}", {}, async () => live.api.message.getConversations(userId, auth, { mergeSelf: true }));
     live.fingerprint((f) => writeMoodleConversationsResponse(f, result));
   });
 
   liveCase(MoodleLive, "Message.getConversations#4", { index: 3 }, async (live) => {
     const userId = live.choose("userId", [await siteGetSiteInfo(live)].map((it) => it.userId).filter(isPresent));
     const auth = await tokenCredentials(live);
-    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleConversationsResponse\"}", {}, () => live.api.message.getConversations(userId, auth, { favourites: false, mergeSelf: false }));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleConversationsResponse\"}", {}, async () => live.api.message.getConversations(userId, auth, { favourites: false, mergeSelf: false }));
     live.fingerprint((f) => writeMoodleConversationsResponse(f, result));
   });
 
   liveCase(MoodleLive, "Message.getConversations#5", { index: 4 }, async (live) => {
     const userId = live.choose("userId", [await siteGetSiteInfo(live)].map((it) => it.userId).filter(isPresent));
     const auth = await tokenCredentials(live);
-    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleConversationsResponse\"}", {}, () => live.api.message.getConversations(userId, auth, { favourites: false }));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleConversationsResponse\"}", {}, async () => live.api.message.getConversations(userId, auth, { favourites: false }));
     live.fingerprint((f) => writeMoodleConversationsResponse(f, result));
   });
 
   liveCase(MoodleLive, "Message.getConversations#6", { index: 5 }, async (live) => {
     const userId = live.choose("userId", [await siteGetSiteInfo(live)].map((it) => it.userId).filter(isPresent));
     const auth = await tokenCredentials(live);
-    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleConversationsResponse\"}", {}, () => live.api.message.getConversations(userId, auth, { mergeSelf: false }));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleConversationsResponse\"}", {}, async () => live.api.message.getConversations(userId, auth, { mergeSelf: false }));
     live.fingerprint((f) => writeMoodleConversationsResponse(f, result));
   });
 
   liveCase(MoodleLive, "Message.getConversations#invalid-credentials", {}, async (live) => {
     const userId = live.choose("userId", [await siteGetSiteInfo(live)].map((it) => it.userId).filter(isPresent));
-    await live.refused(false, () => live.api.message.getConversations(userId, new MoodleTokenAuth("mybicocca-invalid-credential")));
+    await live.refused(false, async () => live.api.message.getConversations(userId, new MoodleTokenAuth("mybicocca-invalid-credential")));
   });
 
   liveCase(MoodleLive, "Message.getUnreadConversationCounts#1", {}, async (live) => {
     const auth = await tokenCredentials(live);
-    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleUnreadConversationCounts\"}", {}, () => live.api.message.getUnreadConversationCounts(auth));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleUnreadConversationCounts\"}", {}, async () => live.api.message.getUnreadConversationCounts(auth));
     live.fingerprint((f) => writeMoodleUnreadConversationCounts(f, result));
   });
 
   liveCase(MoodleLive, "Message.getUnreadConversationCounts#2", { index: 1 }, async (live) => {
     const userId = live.choose("userId", [await siteGetSiteInfo(live)].map((it) => it.userId).filter(isPresent));
     const auth = await tokenCredentials(live);
-    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleUnreadConversationCounts\"}", {}, () => live.api.message.getUnreadConversationCounts(auth, { userId: userId }));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleUnreadConversationCounts\"}", {}, async () => live.api.message.getUnreadConversationCounts(auth, { userId: userId }));
     live.fingerprint((f) => writeMoodleUnreadConversationCounts(f, result));
   });
 });

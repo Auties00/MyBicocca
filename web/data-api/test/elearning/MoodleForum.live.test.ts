@@ -10,7 +10,7 @@ describe("Moodle Forum", () => {
   liveCase(MoodleLive, "Forum.canAddDiscussion#1", {}, async (live) => {
     const forumId = live.choose("forumId", [await forumGetForumsByCourses(live)].flat().map((it) => it.id).filter(isPresent));
     const auth = await tokenCredentials(live);
-    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleCanAddDiscussionResponse\"}", { errors: ["requireloginerror"] }, () => live.api.forum.canAddDiscussion(forumId, auth));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleCanAddDiscussionResponse\"}", { errors: ["requireloginerror"] }, async () => live.api.forum.canAddDiscussion(forumId, auth));
     live.fingerprint((f) => writeMoodleCanAddDiscussionResponse(f, result));
   });
 
@@ -18,47 +18,47 @@ describe("Moodle Forum", () => {
     const forumId = live.choose("forumId", [await forumGetForumsByCourses(live)].flat().map((it) => it.id).filter(isPresent));
     const groupId = live.choose("groupId", [await calendarGetActionEventsByTimesort(live)].map((it) => it.events).filter(isPresent).flat().map((it) => it.groupId).filter(isPresent));
     const auth = await tokenCredentials(live);
-    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleCanAddDiscussionResponse\"}", { errors: ["requireloginerror"] }, () => live.api.forum.canAddDiscussion(forumId, auth, { groupId: groupId }));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleCanAddDiscussionResponse\"}", { errors: ["requireloginerror"] }, async () => live.api.forum.canAddDiscussion(forumId, auth, { groupId: groupId }));
     live.fingerprint((f) => writeMoodleCanAddDiscussionResponse(f, result));
   });
 
   liveCase(MoodleLive, "Forum.canAddDiscussion#invalid-credentials", {}, async (live) => {
     const forumId = live.choose("forumId", [await forumGetForumsByCourses(live)].flat().map((it) => it.id).filter(isPresent));
-    await live.refused(false, () => live.api.forum.canAddDiscussion(forumId, new MoodleTokenAuth("mybicocca-invalid-credential")));
+    await live.refused(false, async () => live.api.forum.canAddDiscussion(forumId, new MoodleTokenAuth("mybicocca-invalid-credential")));
   });
 
   liveCase(MoodleLive, "Forum.getDiscussionPost#1", {}, async (live) => {
     const postId = live.choose("postId", [await forumGetDiscussionPosts(live)].map((it) => it.posts).filter(isPresent).flat().map((it) => it.id).filter(isPresent));
     const auth = await tokenCredentials(live);
-    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleDiscussionPostResponse\"}", { errors: ["requireloginerror"] }, () => live.api.forum.getDiscussionPost(postId, auth));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleDiscussionPostResponse\"}", { errors: ["requireloginerror"] }, async () => live.api.forum.getDiscussionPost(postId, auth));
     live.fingerprint((f) => writeMoodleDiscussionPostResponse(f, result));
   });
 
   liveCase(MoodleLive, "Forum.getDiscussionPosts#1", {}, async (live) => {
     const discussionId = live.choose("discussionId", [await forumGetForumDiscussions(live)].map((it) => it.discussions).filter(isPresent).flat().map((it) => it.id).filter(isPresent));
     const auth = await tokenCredentials(live);
-    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleDiscussionPostsResponse\"}", { errors: ["requireloginerror"] }, () => live.api.forum.getDiscussionPosts(discussionId, auth));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleDiscussionPostsResponse\"}", { errors: ["requireloginerror"] }, async () => live.api.forum.getDiscussionPosts(discussionId, auth));
     live.fingerprint((f) => writeMoodleDiscussionPostsResponse(f, result));
   });
 
   liveCase(MoodleLive, "Forum.getDiscussionPosts#2", { index: 1 }, async (live) => {
     const discussionId = live.choose("discussionId", [await forumGetForumDiscussions(live)].map((it) => it.discussions).filter(isPresent).flat().map((it) => it.id).filter(isPresent));
     const auth = await tokenCredentials(live);
-    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleDiscussionPostsResponse\"}", { errors: ["requireloginerror"] }, () => live.api.forum.getDiscussionPosts(discussionId, auth, { includeInlineAttachments: true }));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleDiscussionPostsResponse\"}", { errors: ["requireloginerror"] }, async () => live.api.forum.getDiscussionPosts(discussionId, auth, { includeInlineAttachments: true }));
     live.fingerprint((f) => writeMoodleDiscussionPostsResponse(f, result));
   });
 
   liveCase(MoodleLive, "Forum.getDiscussionPosts#3", { index: 2 }, async (live) => {
     const discussionId = live.choose("discussionId", [await forumGetForumDiscussions(live)].map((it) => it.discussions).filter(isPresent).flat().map((it) => it.id).filter(isPresent));
     const auth = await tokenCredentials(live);
-    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleDiscussionPostsResponse\"}", { errors: ["requireloginerror"] }, () => live.api.forum.getDiscussionPosts(discussionId, auth, { includeInlineAttachments: false }));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleDiscussionPostsResponse\"}", { errors: ["requireloginerror"] }, async () => live.api.forum.getDiscussionPosts(discussionId, auth, { includeInlineAttachments: false }));
     live.fingerprint((f) => writeMoodleDiscussionPostsResponse(f, result));
   });
 
   liveCase(MoodleLive, "Forum.getForumDiscussions#1", {}, async (live) => {
     const forumId = live.choose("forumId", [await forumGetForumsByCourses(live)].flat().map((it) => it.id).filter(isPresent));
     const auth = await tokenCredentials(live);
-    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleForumDiscussionsResponse\"}", { errors: ["requireloginerror"] }, () => live.api.forum.getForumDiscussions(forumId, auth));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleForumDiscussionsResponse\"}", { errors: ["requireloginerror"] }, async () => live.api.forum.getForumDiscussions(forumId, auth));
     live.fingerprint((f) => writeMoodleForumDiscussionsResponse(f, result));
   });
 
@@ -66,13 +66,13 @@ describe("Moodle Forum", () => {
     const forumId = live.choose("forumId", [await forumGetForumsByCourses(live)].flat().map((it) => it.id).filter(isPresent));
     const groupId = live.choose("groupId", [await calendarGetActionEventsByTimesort(live)].map((it) => it.events).filter(isPresent).flat().map((it) => it.groupId).filter(isPresent));
     const auth = await tokenCredentials(live);
-    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleForumDiscussionsResponse\"}", { errors: ["requireloginerror"] }, () => live.api.forum.getForumDiscussions(forumId, auth, { groupId: groupId }));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleForumDiscussionsResponse\"}", { errors: ["requireloginerror"] }, async () => live.api.forum.getForumDiscussions(forumId, auth, { groupId: groupId }));
     live.fingerprint((f) => writeMoodleForumDiscussionsResponse(f, result));
   });
 
   liveCase(MoodleLive, "Forum.getForumsByCourses#1", {}, async (live) => {
     const auth = await tokenCredentials(live);
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleForum\"}}", {}, () => live.api.forum.getForumsByCourses(auth));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleForum\"}}", {}, async () => live.api.forum.getForumsByCourses(auth));
     live.fingerprint((f) => f.list(result, (it) => writeMoodleForum(f, it)));
   });
 });

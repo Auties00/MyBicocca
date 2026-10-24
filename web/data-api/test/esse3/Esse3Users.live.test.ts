@@ -8,7 +8,7 @@ import { Esse3Live, personalDataGetCareers, writeEsse3CareerPortion, writeEsse3E
 describe("Esse3 Users", () => {
   liveCase(Esse3Live, "Users.getExtendedCareer#1", {}, async (live) => {
     const userId = live.choose("userId", [await personalDataGetCareers(live)].flat().map((it) => it.userId).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExtendedCareerPortion\"}}", {}, () => live.api.users.getExtendedCareer(userId));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExtendedCareerPortion\"}}", {}, async () => live.api.users.getExtendedCareer(userId));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3ExtendedCareerPortion(f, it)));
   });
 
@@ -16,7 +16,7 @@ describe("Esse3 Users", () => {
     const userId = live.choose("userId", [await personalDataGetCareers(live)].flat().map((it) => it.userId).filter(isPresent));
     const studentStatusCode = live.choose("studentStatusCode", [await personalDataGetCareers(live)].flat().map((it) => it.studentStatusCode).filter(isPresent));
     const fiscalCode = live.choose("fiscalCode", [await personalDataGetCareers(live)].flat().map((it) => it.fiscalCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExtendedCareerPortion\"}}", {}, () => live.api.users.getExtendedCareer(userId, { studentStatusCode: studentStatusCode, fiscalCode: fiscalCode }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExtendedCareerPortion\"}}", {}, async () => live.api.users.getExtendedCareer(userId, { studentStatusCode: studentStatusCode, fiscalCode: fiscalCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3ExtendedCareerPortion(f, it)));
   });
 
@@ -24,7 +24,7 @@ describe("Esse3 Users", () => {
     const userId = live.choose("userId", [await personalDataGetCareers(live)].flat().map((it) => it.userId).filter(isPresent));
     const statusReasonCode = live.choose("statusReasonCode", [await personalDataGetCareers(live)].flat().map((it) => it.statusReasonCode).filter(isPresent));
     const fiscalCode = live.choose("fiscalCode", [await personalDataGetCareers(live)].flat().map((it) => it.fiscalCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExtendedCareerPortion\"}}", {}, () => live.api.users.getExtendedCareer(userId, { statusReasonCode: statusReasonCode, fiscalCode: fiscalCode }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExtendedCareerPortion\"}}", {}, async () => live.api.users.getExtendedCareer(userId, { statusReasonCode: statusReasonCode, fiscalCode: fiscalCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3ExtendedCareerPortion(f, it)));
   });
 
@@ -32,17 +32,17 @@ describe("Esse3 Users", () => {
     const userId = live.choose("userId", [await personalDataGetCareers(live)].flat().map((it) => it.userId).filter(isPresent));
     const studentStatusCode = live.choose("studentStatusCode", [await personalDataGetCareers(live)].flat().map((it) => it.studentStatusCode).filter(isPresent));
     const statusReasonCode = live.choose("statusReasonCode", [await personalDataGetCareers(live)].flat().map((it) => it.statusReasonCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExtendedCareerPortion\"}}", {}, () => live.api.users.getExtendedCareer(userId, { studentStatusCode: studentStatusCode, statusReasonCode: statusReasonCode }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExtendedCareerPortion\"}}", {}, async () => live.api.users.getExtendedCareer(userId, { studentStatusCode: studentStatusCode, statusReasonCode: statusReasonCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3ExtendedCareerPortion(f, it)));
   });
 
   liveCase(Esse3Live, "Users.getExtendedCareer#unknown-id", {}, async (live) => {
-    await live.refused(true, () => live.api.users.getExtendedCareer("mybicocca-unknown-id"));
+    await live.refused(true, async () => live.api.users.getExtendedCareer("mybicocca-unknown-id"));
   });
 
   liveCase(Esse3Live, "Users.getCareerSegments#1", {}, async (live) => {
     const userId = live.choose("userId", [await personalDataGetCareers(live)].flat().map((it) => it.userId).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}}", {}, () => live.api.users.getCareerSegments(userId));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}}", {}, async () => live.api.users.getCareerSegments(userId));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3CareerPortion(f, it)));
   });
 
@@ -50,7 +50,7 @@ describe("Esse3 Users", () => {
     const userId = live.choose("userId", [await personalDataGetCareers(live)].flat().map((it) => it.userId).filter(isPresent));
     const studentStatusCode = live.choose("studentStatusCode", [await personalDataGetCareers(live)].flat().map((it) => it.studentStatusCode).filter(isPresent));
     const statusReasonCode = live.choose("statusReasonCode", [await personalDataGetCareers(live)].flat().map((it) => it.statusReasonCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}}", {}, () => live.api.users.getCareerSegments(userId, { studentStatusCode: studentStatusCode, statusReasonCode: statusReasonCode }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}}", {}, async () => live.api.users.getCareerSegments(userId, { studentStatusCode: studentStatusCode, statusReasonCode: statusReasonCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3CareerPortion(f, it)));
   });
 
@@ -58,7 +58,7 @@ describe("Esse3 Users", () => {
     const userId = live.choose("userId", [await personalDataGetCareers(live)].flat().map((it) => it.userId).filter(isPresent));
     const studentStatusCode = live.choose("studentStatusCode", [await personalDataGetCareers(live)].flat().map((it) => it.studentStatusCode).filter(isPresent));
     const fiscalCode = live.choose("fiscalCode", [await personalDataGetCareers(live)].flat().map((it) => it.fiscalCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}}", {}, () => live.api.users.getCareerSegments(userId, { studentStatusCode: studentStatusCode, fiscalCode: fiscalCode }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}}", {}, async () => live.api.users.getCareerSegments(userId, { studentStatusCode: studentStatusCode, fiscalCode: fiscalCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3CareerPortion(f, it)));
   });
 
@@ -66,11 +66,11 @@ describe("Esse3 Users", () => {
     const userId = live.choose("userId", [await personalDataGetCareers(live)].flat().map((it) => it.userId).filter(isPresent));
     const statusReasonCode = live.choose("statusReasonCode", [await personalDataGetCareers(live)].flat().map((it) => it.statusReasonCode).filter(isPresent));
     const fiscalCode = live.choose("fiscalCode", [await personalDataGetCareers(live)].flat().map((it) => it.fiscalCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}}", {}, () => live.api.users.getCareerSegments(userId, { statusReasonCode: statusReasonCode, fiscalCode: fiscalCode }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}}", {}, async () => live.api.users.getCareerSegments(userId, { statusReasonCode: statusReasonCode, fiscalCode: fiscalCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3CareerPortion(f, it)));
   });
 
   liveCase(Esse3Live, "Users.getCareerSegments#unknown-id", {}, async (live) => {
-    await live.refused(true, () => live.api.users.getCareerSegments("mybicocca-unknown-id"));
+    await live.refused(true, async () => live.api.users.getCareerSegments("mybicocca-unknown-id"));
   });
 });

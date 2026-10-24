@@ -3,16 +3,54 @@ package it.attendance100.mybicocca.data.remote.affluences.live
 
 import io.ktor.client.HttpClientConfig
 import it.attendance100.mybicocca.data.remote.affluences.api.AffluencesApi
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesAddress
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesAgreement
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesAvailableResource
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesBookingInfo
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesCoordinates
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesDayTimetable
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesEvent
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesForecast
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesHourlyForecast
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesIdentityProvider
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesLiveAttendance
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesLocation
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesMapSearchResults
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesOpeningHours
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesOverviewCategory
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesOverviewNotice
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesPageLayout
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesPlaylist
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesPopInMessage
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesReservationSiteInfo
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesResourceDetail
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesResourceEmailPolicy
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesResourceForms
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesResourceStatus
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesResourceSummary
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesResourceTypeFilters
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesSearchResults
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesSearchSite
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesServiceFilter
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesSite
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesSiteCard
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesSiteCardStatus
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesSiteCategory
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesSiteDetails
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesSiteFilters
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesSiteInfoSection
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesSiteOverview
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesSiteSearchPage
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesSiteService
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesSuggestedCategory
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesSuggestedSite
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesTimeSlot
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesWeekTimetable
 import it.attendance100.mybicocca.data.remote.runtime.live.LiveApi
 import it.attendance100.mybicocca.data.remote.runtime.live.LiveCase
 import it.attendance100.mybicocca.data.remote.runtime.live.LiveFingerprint
 import it.attendance100.mybicocca.data.remote.runtime.live.LiveTemplates
+import java.time.LocalDate
 
 /** The live tests of Affluences: see `common/specs/affluences/tests.yaml`. */
 internal object AffluencesLive : LiveApi<AffluencesApi>(
@@ -22,26 +60,6 @@ internal object AffluencesLive : LiveApi<AffluencesApi>(
     maxRequests = 400,
     shapes = SHAPES,
     skips = mapOf(
-        "Sites.getSite" to "needs inputs siteIdentifier (nothing provides them)",
-        "Sites.getLiveData" to "needs inputs siteIdentifier (nothing provides them)",
-        "Sites.getWeekTimetable" to "needs inputs siteIdentifier (nothing provides them)",
-        "Sites.getDetails" to "needs inputs siteIdentifier (nothing provides them)",
-        "Sites.getChildren" to "needs inputs siteIdentifier (nothing provides them)",
-        "Sites.getSimilarSites" to "needs inputs siteIdentifier (nothing provides them)",
-        "Sites.getEvents" to "needs inputs siteIdentifier (nothing provides them)",
-        "Sites.getMessages" to "needs inputs siteIdentifier (nothing provides them)",
-        "Search.searchSites" to "needs inputs query (nothing provides them)",
-        "Search.searchSitesFiltered" to "needs inputs body (nothing provides them)",
-        "Search.searchSitesOnMap" to "needs inputs body (nothing provides them)",
-        "Search.getPlaylist" to "needs inputs playlistId (nothing provides them)",
-        "Reservations.getReservationInfo" to "needs inputs siteIdentifier (nothing provides them)",
-        "Reservations.getAvailableResources" to "needs inputs siteIdentifier, resourceTypeId (nothing provides them)",
-        "Reservations.getResourceTypeFilters" to "needs inputs siteIdentifier, resourceTypeId (nothing provides them)",
-        "Reservations.getAgreements" to "needs inputs siteIdentifier (nothing provides them)",
-        "Reservations.getResourceEmailPolicy" to "needs inputs resourceId (nothing provides them)",
-        "Reservations.getResourceForms" to "needs inputs resourceId (nothing provides them)",
-        "Reservations.getResourceIdentityProviders" to "needs inputs resourceId (nothing provides them)",
-        "Reservations.getResourceStatus" to "needs inputs resourceId (nothing provides them)",
         "Reservations.createReservation" to "irreversible",
         "Reservations.validateReservation" to "irreversible",
         "Reservations.confirmReservation" to "irreversible",
@@ -49,7 +67,6 @@ internal object AffluencesLive : LiveApi<AffluencesApi>(
         "Reservations.cancelReservation" to "irreversible",
         "Reservations.confirmEmail" to "irreversible",
         "Reservations.trustDevice" to "irreversible",
-        "Account.checkIn" to "needs inputs body (only takes values from tests.yaml)",
         "Account.pollEmailValidation" to "needs inputs requestUuid (nothing provides them)",
         "Account.requestEmailValidation" to "irreversible",
         "Account.getMyReservations" to "needs credentials of Account in account.auth",
@@ -61,12 +78,210 @@ internal object AffluencesLive : LiveApi<AffluencesApi>(
         })
 }
 
+internal suspend fun LiveCase<AffluencesApi>.searchSearchSites(): AffluencesSearchResults =
+    source("searchSearchSites", "{\"k\":\"record\",\"n\":\"AffluencesSearchResults\"}", envelope = listOf("data")) {
+        api.search.searchSites(query = "bicocca")
+    }
+
+internal suspend fun LiveCase<AffluencesApi>.reservationsGetReservationInfo(): AffluencesReservationSiteInfo =
+    source("reservationsGetReservationInfo", "{\"k\":\"record\",\"n\":\"AffluencesReservationSiteInfo\"}") {
+        api.reservations.getReservationInfo(siteIdentifier = "4912615d-501b-4c4e-a2a7-ccaec81c5429")
+    }
+
+internal suspend fun LiveCase<AffluencesApi>.reservationsGetResourceTypeFilters(): AffluencesResourceTypeFilters =
+    source("reservationsGetResourceTypeFilters", "{\"k\":\"record\",\"n\":\"AffluencesResourceTypeFilters\"}") {
+        val resourceTypeId = choose("resourceTypeId", listOf(reservationsGetReservationInfo()).mapNotNull { it.types }.flatten().mapNotNull { it.resourceTypeId })
+        val date = LocalDate.parse(LiveTemplates.resolve("{today}"))
+        api.reservations.getResourceTypeFilters(siteIdentifier = "4912615d-501b-4c4e-a2a7-ccaec81c5429", resourceTypeId = resourceTypeId, date = date)
+    }
+
+internal suspend fun LiveCase<AffluencesApi>.reservationsGetResourceStatus(): AffluencesResourceStatus =
+    source("reservationsGetResourceStatus", "{\"k\":\"record\",\"n\":\"AffluencesResourceStatus\"}") {
+        val resourceId = choose("resourceId", listOf(reservationsGetResourceTypeFilters()).mapNotNull { it.resources }.flatten().mapNotNull { it.resourceId })
+        api.reservations.getResourceStatus(resourceId = resourceId)
+    }
+
+internal suspend fun LiveCase<AffluencesApi>.reservationsGetAvailableResources(): List<AffluencesAvailableResource> =
+    source("reservationsGetAvailableResources", "{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"AffluencesAvailableResource\"}}") {
+        val date = LocalDate.parse(LiveTemplates.resolve("{today}"))
+        val resourceTypeId = choose("resourceTypeId", listOf(reservationsGetReservationInfo()).mapNotNull { it.types }.flatten().mapNotNull { it.resourceTypeId })
+        api.reservations.getAvailableResources(siteIdentifier = "4912615d-501b-4c4e-a2a7-ccaec81c5429", date = date, resourceTypeId = resourceTypeId)
+    }
+
+internal fun LiveFingerprint.writeAffluencesAddress(value: AffluencesAddress?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.route)
+        str(value.city)
+        str(value.zipCode)
+        str(value.region)
+        str(value.countryCode)
+    }
+}
+
+internal fun LiveFingerprint.writeAffluencesAgreement(value: AffluencesAgreement?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.agreementId.toLong())
+        int(value.agreementDetailsId?.toLong())
+        str(value.latestChange)
+        str(value.name)
+        str(value.url)
+        bool(value.mandatoryConsent)
+    }
+}
+
+internal fun LiveFingerprint.writeAffluencesAvailableResource(value: AffluencesAvailableResource?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.resourceId.toLong())
+        str(value.resourceName)
+        int(value.resourceTypeId?.toLong())
+        int(value.granularityMinutes?.toLong())
+        int(value.timeSlotCount?.toLong())
+        bool(value.staticTimeSlot)
+        bool(value.noteAvailable)
+        bool(value.noteRequired)
+        str(value.noteDescription)
+        str(value.description)
+        str(value.descriptionHtml)
+        int(value.capacity.toLong())
+        str(value.siteTimeZone)
+        bool(value.userNameRequired)
+        bool(value.userPhoneRequired)
+        bool(value.userNameAvailable)
+        bool(value.userPhoneAvailable)
+        int(value.timeBeforeReservationsClosed?.toLong())
+        int(value.minPlacesPerReservation?.toLong())
+        int(value.maxPlacesPerReservation?.toLong())
+        str(value.imageUrl)
+        str(value.slotsState)
+        list(value.hours) { writeAffluencesTimeSlot(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeAffluencesBookingInfo(value: AffluencesBookingInfo?) {
+    if (value == null) return nil()
+    obj(value) {
+        bool(value.hasBooking)
+        str(value.bookingUrl)
+        str(value.ticketUrl)
+    }
+}
+
+internal fun LiveFingerprint.writeAffluencesCoordinates(value: AffluencesCoordinates?) {
+    if (value == null) return nil()
+    obj(value) {
+        num(value.latitude)
+        num(value.longitude)
+    }
+}
+
+internal fun LiveFingerprint.writeAffluencesDayTimetable(value: AffluencesDayTimetable?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.day)
+        bool(value.isToday)
+        list(value.openingHours) { writeAffluencesOpeningHours(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeAffluencesEvent(value: AffluencesEvent?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        str(value.title)
+        str(value.descriptionHtml)
+        str(value.imageUrl)
+        str(value.url)
+    }
+}
+
+internal fun LiveFingerprint.writeAffluencesForecast(value: AffluencesForecast?) {
+    if (value == null) return nil()
+    obj(value) {
+        bool(value.opened)
+        int(value.occupancyPercentage?.toLong())
+        int(value.waitingTimeMinutes?.toLong())
+        bool(value.waitingTimeOverflow)
+        str(value.flow?.value)
+    }
+}
+
+internal fun LiveFingerprint.writeAffluencesHourlyForecast(value: AffluencesHourlyForecast?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.hour)
+        writeAffluencesForecast(value.forecast)
+    }
+}
+
+internal fun LiveFingerprint.writeAffluencesIdentityProvider(value: AffluencesIdentityProvider?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.type)
+        str(value.discoveryUrl)
+        str(value.clientId)
+        list(value.scopes) { str(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeAffluencesLiveAttendance(value: AffluencesLiveAttendance?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.flow?.value)
+        int(value.occupancyPercentage?.toLong())
+        int(value.waitingTimeMinutes?.toLong())
+    }
+}
+
+internal fun LiveFingerprint.writeAffluencesLocation(value: AffluencesLocation?) {
+    if (value == null) return nil()
+    obj(value) {
+        writeAffluencesCoordinates(value.coordinates)
+        writeAffluencesAddress(value.address)
+    }
+}
+
+internal fun LiveFingerprint.writeAffluencesMapSearchResults(value: AffluencesMapSearchResults?) {
+    if (value == null) return nil()
+    obj(value) {
+        writeAffluencesCoordinates(value.center)
+        list(value.results) { writeAffluencesSiteOverview(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeAffluencesOpeningHours(value: AffluencesOpeningHours?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.openingHour)
+        str(value.closingHour)
+    }
+}
+
 internal fun LiveFingerprint.writeAffluencesOverviewCategory(value: AffluencesOverviewCategory?) {
     if (value == null) return nil()
     obj(value) {
         int(value.id.toLong())
         str(value.name)
         str(value.namePlural)
+    }
+}
+
+internal fun LiveFingerprint.writeAffluencesOverviewNotice(value: AffluencesOverviewNotice?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.message)
+        str(value.messageHtml)
+        str(value.url)
+    }
+}
+
+internal fun LiveFingerprint.writeAffluencesPageLayout(value: AffluencesPageLayout?) {
+    if (value == null) return nil()
+    obj(value) {
+        bool(value.timetables)
+        bool(value.events)
     }
 }
 
@@ -81,6 +296,110 @@ internal fun LiveFingerprint.writeAffluencesPlaylist(value: AffluencesPlaylist?)
     }
 }
 
+internal fun LiveFingerprint.writeAffluencesPopInMessage(value: AffluencesPopInMessage?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.contentHtml)
+        str(value.url)
+    }
+}
+
+internal fun LiveFingerprint.writeAffluencesResourceDetail(value: AffluencesResourceDetail?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.resourceId.toLong())
+        str(value.resourceName)
+        str(value.description)
+        str(value.descriptionHtml)
+        int(value.capacity.toLong())
+        int(value.resourceTypeId?.toLong())
+        int(value.granularityMinutes?.toLong())
+        int(value.timeSlotCount?.toLong())
+        bool(value.reservationMandatory)
+        int(value.timeLimit?.toLong())
+        str(value.siteSettingsMessage)
+        str(value.siteSettingsMessageHtml)
+        str(value.siteSettingsUrl)
+        str(value.siteSettingsContactEmail)
+        str(value.extraInfosMessage)
+        str(value.extraInfosMessageHtml)
+        str(value.extraInfosUrl)
+        str(value.siteName)
+        str(value.siteSecondaryName)
+        str(value.siteUuid)
+    }
+}
+
+internal fun LiveFingerprint.writeAffluencesResourceEmailPolicy(value: AffluencesResourceEmailPolicy?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.filterErrorMessage)
+        str(value.filterErrorMessageHtml)
+        list(value.filters) { str(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeAffluencesResourceForms(value: AffluencesResourceForms?) {
+    if (value == null) return nil()
+    obj(value) {
+        json(value.customForm)
+    }
+}
+
+internal fun LiveFingerprint.writeAffluencesResourceStatus(value: AffluencesResourceStatus?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.reservationEmail)
+        list(value.hours) { writeAffluencesTimeSlot(it) }
+        str(value.currentState)
+        writeAffluencesResourceDetail(value.resource)
+    }
+}
+
+internal fun LiveFingerprint.writeAffluencesResourceSummary(value: AffluencesResourceSummary?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.resourceId.toLong())
+        str(value.resourceName)
+    }
+}
+
+internal fun LiveFingerprint.writeAffluencesResourceTypeFilters(value: AffluencesResourceTypeFilters?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.resourceTypeId.toLong())
+        list(value.openDays) { str(it) }
+        list(value.openHours) { str(it) }
+        list(value.durations) { int(it.toLong()) }
+        list(value.capacities) { int(it.toLong()) }
+        list(value.resources) { writeAffluencesResourceSummary(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeAffluencesSearchResults(value: AffluencesSearchResults?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.categories) { writeAffluencesOverviewCategory(it) }
+        list(value.sites) { writeAffluencesSearchSite(it) }
+        list(value.playlists) { writeAffluencesPlaylist(it) }
+        list(value.unreferencedSites) { writeAffluencesSearchSite(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeAffluencesSearchSite(value: AffluencesSearchSite?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.id)
+        str(value.slug)
+        str(value.name)
+        str(value.primaryName)
+        str(value.secondaryName)
+        str(value.description)
+        str(value.imageUrl)
+        list(value.images) { str(it) }
+    }
+}
+
 internal fun LiveFingerprint.writeAffluencesServiceFilter(value: AffluencesServiceFilter?) {
     if (value == null) return nil()
     obj(value) {
@@ -89,11 +408,130 @@ internal fun LiveFingerprint.writeAffluencesServiceFilter(value: AffluencesServi
     }
 }
 
+internal fun LiveFingerprint.writeAffluencesSite(value: AffluencesSite?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.id)
+        str(value.slug)
+        str(value.primaryName)
+        str(value.secondaryName)
+        str(value.language)
+        str(value.timeZone)
+        str(value.email)
+        str(value.phone)
+        str(value.websiteUrl)
+        writeAffluencesBookingInfo(value.booking)
+        str(value.publicationStatus)
+        str(value.address)
+        num(value.latitude)
+        num(value.longitude)
+        list(value.categories) { writeAffluencesSiteCategory(it) }
+        list(value.pictures) { str(it) }
+        writeAffluencesPageLayout(value.pageLayout)
+        writeAffluencesSiteCard(value.parent)
+    }
+}
+
+internal fun LiveFingerprint.writeAffluencesSiteCard(value: AffluencesSiteCard?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.id)
+        str(value.slug)
+        str(value.primaryName)
+        str(value.secondaryName)
+        list(value.pictures) { str(it) }
+        writeAffluencesSiteCardStatus(value.status)
+        writeAffluencesLiveAttendance(value.liveAttendance)
+        writeAffluencesBookingInfo(value.booking)
+    }
+}
+
+internal fun LiveFingerprint.writeAffluencesSiteCardStatus(value: AffluencesSiteCardStatus?) {
+    if (value == null) return nil()
+    obj(value) {
+        bool(value.isOpen)
+        str(value.openingText)
+        bool(value.isOpeningSoon)
+        str(value.closingText)
+        bool(value.isClosingSoon)
+    }
+}
+
+internal fun LiveFingerprint.writeAffluencesSiteCategory(value: AffluencesSiteCategory?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        str(value.name)
+        str(value.namePlural)
+    }
+}
+
+internal fun LiveFingerprint.writeAffluencesSiteDetails(value: AffluencesSiteDetails?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.services) { writeAffluencesSiteService(it) }
+        list(value.infos) { writeAffluencesSiteInfoSection(it) }
+    }
+}
+
 internal fun LiveFingerprint.writeAffluencesSiteFilters(value: AffluencesSiteFilters?) {
     if (value == null) return nil()
     obj(value) {
         list(value.categories) { writeAffluencesOverviewCategory(it) }
         list(value.services) { writeAffluencesServiceFilter(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeAffluencesSiteInfoSection(value: AffluencesSiteInfoSection?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.type)
+        str(value.title)
+        str(value.contentHtml)
+    }
+}
+
+internal fun LiveFingerprint.writeAffluencesSiteOverview(value: AffluencesSiteOverview?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.id)
+        str(value.slug)
+        str(value.parentSlug)
+        str(value.primaryName)
+        str(value.secondaryName)
+        str(value.concatName)
+        list(value.categories) { writeAffluencesOverviewCategory(it) }
+        str(value.precisionLevel)
+        str(value.timeZone)
+        str(value.language)
+        writeAffluencesLocation(value.location)
+        str(value.phoneNumber)
+        str(value.email)
+        str(value.websiteUrl)
+        list(value.notices) { writeAffluencesOverviewNotice(it) }
+        num(value.estimatedDistanceMeters)
+        writeAffluencesForecast(value.currentForecast)
+        list(value.todayForecasts) { writeAffluencesHourlyForecast(it) }
+        list(value.children) { writeAffluencesSiteOverview(it) }
+        str(value.posterImage)
+        list(value.images) { str(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeAffluencesSiteSearchPage(value: AffluencesSiteSearchPage?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.nextPage.toLong())
+        int(value.maxSize.toLong())
+        list(value.results) { writeAffluencesSiteOverview(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeAffluencesSiteService(value: AffluencesSiteService?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.type)
+        str(value.name)
     }
 }
 
@@ -116,5 +554,27 @@ internal fun LiveFingerprint.writeAffluencesSuggestedSite(value: AffluencesSugge
     }
 }
 
+internal fun LiveFingerprint.writeAffluencesTimeSlot(value: AffluencesTimeSlot?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.hour)
+        str(value.state)
+        int(value.granularityMinutes?.toLong())
+        int(value.personCount.toLong())
+        int(value.placesAvailable.toLong())
+        int(value.placesBookable.toLong())
+    }
+}
+
+internal fun LiveFingerprint.writeAffluencesWeekTimetable(value: AffluencesWeekTimetable?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.startDate)
+        str(value.endDate)
+        list(value.entries) { writeAffluencesDayTimetable(it) }
+        str(value.information)
+    }
+}
+
 /** What the responses of Affluences look like, for the runtime to check real ones against. */
-private val SHAPES = "{\"records\":{\"AffluencesOverviewCategory\":[[\"id\",{\"k\":\"int\"},false],[\"name\",{\"k\":\"string\"},false],[\"name_plural\",{\"k\":\"string\"},true]],\"AffluencesPlaylist\":[[\"id\",{\"k\":\"int\"},false],[\"name\",{\"k\":\"string\"},true],[\"description\",{\"k\":\"string\"},true],[\"image_url\",{\"k\":\"string\"},true],[\"icon\",{\"k\":\"string\"},true]],\"AffluencesServiceFilter\":[[\"id\",{\"k\":\"int\"},false],[\"name\",{\"k\":\"string\"},false]],\"AffluencesSiteFilters\":[[\"categories\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"AffluencesOverviewCategory\"}},true],[\"services\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"AffluencesServiceFilter\"}},true]],\"AffluencesSuggestedCategory\":[[\"name\",{\"k\":\"string\"},false],[\"imageUrl\",{\"k\":\"string\"},true],[\"categoriesIds\",{\"k\":\"list\",\"e\":{\"k\":\"int\"}},true]],\"AffluencesSuggestedSite\":[[\"id\",{\"k\":\"string\"},true],[\"slug\",{\"k\":\"string\"},true],[\"name\",{\"k\":\"string\"},true],[\"image_url\",{\"k\":\"string\"},true]]},\"enums\":{}}"
+private val SHAPES = "{\"records\":{\"AffluencesAddress\":[[\"route\",{\"k\":\"string\"},true],[\"city\",{\"k\":\"string\"},true],[\"zip_code\",{\"k\":\"string\"},true],[\"region\",{\"k\":\"string\"},true],[\"country_code\",{\"k\":\"string\"},true]],\"AffluencesAgreement\":[[\"agreements_id\",{\"k\":\"int\"},false],[\"agreements_details_id\",{\"k\":\"int\"},true],[\"latest_change\",{\"k\":\"string\"},true],[\"name\",{\"k\":\"string\"},true],[\"url\",{\"k\":\"string\"},true],[\"mandatory_consent\",{\"k\":\"bool\"},true]],\"AffluencesAvailableResource\":[[\"resource_id\",{\"k\":\"int\"},false],[\"resource_name\",{\"k\":\"string\"},true],[\"resource_type\",{\"k\":\"int\"},true],[\"granularity\",{\"k\":\"int\"},true],[\"time_slot_count\",{\"k\":\"int\"},true],[\"static_time_slot\",{\"k\":\"bool\"},true],[\"note_available\",{\"k\":\"bool\"},true],[\"note_required\",{\"k\":\"bool\"},true],[\"note_description\",{\"k\":\"string\"},true],[\"description\",{\"k\":\"string\"},true],[\"description_html\",{\"k\":\"string\"},true],[\"capacity\",{\"k\":\"int\"},true],[\"site_timezone\",{\"k\":\"string\"},true],[\"user_name_required\",{\"k\":\"bool\"},true],[\"user_phone_required\",{\"k\":\"bool\"},true],[\"user_name_available\",{\"k\":\"bool\"},true],[\"user_phone_available\",{\"k\":\"bool\"},true],[\"time_before_reservations_closed\",{\"k\":\"int\"},true],[\"min_places_per_reservation\",{\"k\":\"int\"},true],[\"max_places_per_reservation\",{\"k\":\"int\"},true],[\"image_url\",{\"k\":\"string\"},true],[\"slots_state\",{\"k\":\"string\"},true],[\"hours\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"AffluencesTimeSlot\"}},true]],\"AffluencesBookingInfo\":[[\"hasBooking\",{\"k\":\"bool\"},true],[\"bookingUrl\",{\"k\":\"string\"},true],[\"ticketUrl\",{\"k\":\"string\"},true]],\"AffluencesCheckin\":[[\"apiKey\",{\"k\":\"string\"},true],[\"latestVersion\",{\"k\":\"string\"},true],[\"buildExpired\",{\"k\":\"bool\"},true]],\"AffluencesCoordinates\":[[\"latitude\",{\"k\":\"number\"},false],[\"longitude\",{\"k\":\"number\"},false]],\"AffluencesDayForecasts\":[[\"day\",{\"k\":\"string\"},false],[\"todayOffset\",{\"k\":\"int\"},true],[\"forecasts\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"AffluencesForecastSlot\"}},true]],\"AffluencesDayTimetable\":[[\"day\",{\"k\":\"string\"},false],[\"isToday\",{\"k\":\"bool\"},true],[\"openingHours\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"AffluencesOpeningHours\"}},true]],\"AffluencesEvent\":[[\"id\",{\"k\":\"int\"},false],[\"title\",{\"k\":\"string\"},true],[\"descriptionHtml\",{\"k\":\"string\"},true],[\"imageUrl\",{\"k\":\"string\"},true],[\"url\",{\"k\":\"string\"},true]],\"AffluencesForecast\":[[\"opened\",{\"k\":\"bool\"},true],[\"occupancy\",{\"k\":\"int\"},true],[\"waiting_time\",{\"k\":\"int\"},true],[\"waiting_time_overflow\",{\"k\":\"bool\"},true],[\"flow\",{\"k\":\"enum\",\"n\":\"AffluencesCrowdLevel\"},true]],\"AffluencesForecastSlot\":[[\"hourRange\",{\"k\":\"list\",\"e\":{\"k\":\"string\"}},true],[\"flow\",{\"k\":\"enum\",\"n\":\"AffluencesCrowdLevel\"},true],[\"flowEvolution\",{\"k\":\"enum\",\"n\":\"AffluencesEvolution\"},true],[\"occupancy\",{\"k\":\"int\"},true],[\"occupancyEvolution\",{\"k\":\"enum\",\"n\":\"AffluencesEvolution\"},true],[\"waitingTime\",{\"k\":\"int\"},true],[\"waitingTimeEvolution\",{\"k\":\"enum\",\"n\":\"AffluencesEvolution\"},true]],\"AffluencesHourlyForecast\":[[\"hour\",{\"k\":\"string\"},false],[\"forecast\",{\"k\":\"record\",\"n\":\"AffluencesForecast\"},true]],\"AffluencesIdentityProvider\":[[\"type\",{\"k\":\"string\"},true],[\"discoveryUrl\",{\"k\":\"string\"},true],[\"clientId\",{\"k\":\"string\"},true],[\"scopes\",{\"k\":\"list\",\"e\":{\"k\":\"string\"}},true]],\"AffluencesLiveAttendance\":[[\"flow\",{\"k\":\"enum\",\"n\":\"AffluencesCrowdLevel\"},true],[\"occupancy\",{\"k\":\"int\"},true],[\"waitingTime\",{\"k\":\"int\"},true]],\"AffluencesLiveData\":[[\"status\",{\"k\":\"record\",\"n\":\"AffluencesSiteStatus\"},false],[\"notices\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"AffluencesNotice\"}},true],[\"liveAttendance\",{\"k\":\"record\",\"n\":\"AffluencesLiveAttendance\"},true],[\"todayForecasts\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"AffluencesForecastSlot\"}},true],[\"forecasts\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"AffluencesDayForecasts\"}},true]],\"AffluencesLocation\":[[\"coordinates\",{\"k\":\"record\",\"n\":\"AffluencesCoordinates\"},true],[\"address\",{\"k\":\"record\",\"n\":\"AffluencesAddress\"},true]],\"AffluencesMapSearchResults\":[[\"center\",{\"k\":\"record\",\"n\":\"AffluencesCoordinates\"},true],[\"results\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"AffluencesSiteOverview\"}},true]],\"AffluencesNotice\":[[\"contentHtml\",{\"k\":\"string\"},true],[\"url\",{\"k\":\"string\"},true]],\"AffluencesOpeningHours\":[[\"openingHour\",{\"k\":\"string\"},false],[\"closingHour\",{\"k\":\"string\"},false]],\"AffluencesOverviewCategory\":[[\"id\",{\"k\":\"int\"},false],[\"name\",{\"k\":\"string\"},false],[\"name_plural\",{\"k\":\"string\"},true]],\"AffluencesOverviewNotice\":[[\"message\",{\"k\":\"string\"},true],[\"message_html\",{\"k\":\"string\"},true],[\"url\",{\"k\":\"string\"},true]],\"AffluencesPageLayout\":[[\"timetables\",{\"k\":\"bool\"},true],[\"events\",{\"k\":\"bool\"},true]],\"AffluencesPlaylist\":[[\"id\",{\"k\":\"int\"},false],[\"name\",{\"k\":\"string\"},true],[\"description\",{\"k\":\"string\"},true],[\"image_url\",{\"k\":\"string\"},true],[\"icon\",{\"k\":\"string\"},true]],\"AffluencesPopInMessage\":[[\"contentHtml\",{\"k\":\"string\"},true],[\"url\",{\"k\":\"string\"},true]],\"AffluencesReservationSiteInfo\":[[\"types\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"AffluencesResourceTypeInfo\"}},true],[\"contact_email\",{\"k\":\"string\"},true]],\"AffluencesResourceDetail\":[[\"resource_id\",{\"k\":\"int\"},false],[\"resource_name\",{\"k\":\"string\"},true],[\"description\",{\"k\":\"string\"},true],[\"description_html\",{\"k\":\"string\"},true],[\"capacity\",{\"k\":\"int\"},true],[\"resource_type\",{\"k\":\"int\"},true],[\"granularity\",{\"k\":\"int\"},true],[\"time_slot_count\",{\"k\":\"int\"},true],[\"reservation_mandatory\",{\"k\":\"bool\"},true],[\"time_limit\",{\"k\":\"int\"},true],[\"site_settings_message\",{\"k\":\"string\"},true],[\"site_settings_message_html\",{\"k\":\"string\"},true],[\"site_settings_url\",{\"k\":\"string\"},true],[\"site_settings_contact_email\",{\"k\":\"string\"},true],[\"extra_infos_message\",{\"k\":\"string\"},true],[\"extra_infos_message_html\",{\"k\":\"string\"},true],[\"extra_infos_url\",{\"k\":\"string\"},true],[\"site_name\",{\"k\":\"string\"},true],[\"secondary_name\",{\"k\":\"string\"},true],[\"site_uuid\",{\"k\":\"string\"},true]],\"AffluencesResourceEmailPolicy\":[[\"filter_error_message\",{\"k\":\"string\"},true],[\"filter_error_message_html\",{\"k\":\"string\"},true],[\"filters\",{\"k\":\"list\",\"e\":{\"k\":\"string\"}},true]],\"AffluencesResourceForms\":[[\"customForm\",{\"k\":\"any\"},true]],\"AffluencesResourceStatus\":[[\"reservation_mail\",{\"k\":\"string\"},true],[\"hours\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"AffluencesTimeSlot\"}},true],[\"current_state\",{\"k\":\"string\"},true],[\"resource\",{\"k\":\"record\",\"n\":\"AffluencesResourceDetail\"},true]],\"AffluencesResourceSummary\":[[\"resource_id\",{\"k\":\"int\"},false],[\"resource_name\",{\"k\":\"string\"},true]],\"AffluencesResourceTypeFilters\":[[\"resource_type_id\",{\"k\":\"int\"},false],[\"open_days\",{\"k\":\"list\",\"e\":{\"k\":\"string\"}},true],[\"open_hours\",{\"k\":\"list\",\"e\":{\"k\":\"string\"}},true],[\"durations\",{\"k\":\"list\",\"e\":{\"k\":\"int\"}},true],[\"capacities\",{\"k\":\"list\",\"e\":{\"k\":\"int\"}},true],[\"resources\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"AffluencesResourceSummary\"}},true]],\"AffluencesResourceTypeInfo\":[[\"resource_type\",{\"k\":\"int\"},false],[\"image\",{\"k\":\"string\"},true],[\"localized_description\",{\"k\":\"string\"},true],[\"localized_subdescription\",{\"k\":\"string\"},true],[\"rank\",{\"k\":\"int\"},true],[\"map\",{\"k\":\"string\"},true],[\"time_limit\",{\"k\":\"string\"},true]],\"AffluencesSearchResults\":[[\"categories\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"AffluencesOverviewCategory\"}},true],[\"sites\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"AffluencesSearchSite\"}},true],[\"playlists\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"AffluencesPlaylist\"}},true],[\"unreferenced_sites\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"AffluencesSearchSite\"}},true]],\"AffluencesSearchSite\":[[\"id\",{\"k\":\"string\"},false],[\"slug\",{\"k\":\"string\"},false],[\"name\",{\"k\":\"string\"},true],[\"primary_name\",{\"k\":\"string\"},true],[\"secondary_name\",{\"k\":\"string\"},true],[\"description\",{\"k\":\"string\"},true],[\"image_url\",{\"k\":\"string\"},true],[\"images\",{\"k\":\"list\",\"e\":{\"k\":\"string\"}},true]],\"AffluencesServiceFilter\":[[\"id\",{\"k\":\"int\"},false],[\"name\",{\"k\":\"string\"},false]],\"AffluencesSite\":[[\"id\",{\"k\":\"string\"},false],[\"slug\",{\"k\":\"string\"},false],[\"primaryName\",{\"k\":\"string\"},false],[\"secondaryName\",{\"k\":\"string\"},true],[\"lang\",{\"k\":\"string\"},true],[\"timeZone\",{\"k\":\"string\"},true],[\"email\",{\"k\":\"string\"},true],[\"phone\",{\"k\":\"string\"},true],[\"websiteUrl\",{\"k\":\"string\"},true],[\"booking\",{\"k\":\"record\",\"n\":\"AffluencesBookingInfo\"},true],[\"publicationStatus\",{\"k\":\"string\"},true],[\"address\",{\"k\":\"string\"},true],[\"latitude\",{\"k\":\"number\"},true],[\"longitude\",{\"k\":\"number\"},true],[\"categories\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"AffluencesSiteCategory\"}},true],[\"pictures\",{\"k\":\"list\",\"e\":{\"k\":\"string\"}},true],[\"pageLayout\",{\"k\":\"record\",\"n\":\"AffluencesPageLayout\"},true],[\"parent\",{\"k\":\"record\",\"n\":\"AffluencesSiteCard\"},true]],\"AffluencesSiteCard\":[[\"id\",{\"k\":\"string\"},false],[\"slug\",{\"k\":\"string\"},false],[\"primaryName\",{\"k\":\"string\"},false],[\"secondaryName\",{\"k\":\"string\"},true],[\"pictures\",{\"k\":\"list\",\"e\":{\"k\":\"string\"}},true],[\"status\",{\"k\":\"record\",\"n\":\"AffluencesSiteCardStatus\"},true],[\"liveAttendance\",{\"k\":\"record\",\"n\":\"AffluencesLiveAttendance\"},true],[\"booking\",{\"k\":\"record\",\"n\":\"AffluencesBookingInfo\"},true]],\"AffluencesSiteCardStatus\":[[\"isOpen\",{\"k\":\"bool\"},false],[\"openingText\",{\"k\":\"string\"},true],[\"isOpeningSoon\",{\"k\":\"bool\"},true],[\"closingText\",{\"k\":\"string\"},true],[\"isClosingSoon\",{\"k\":\"bool\"},true]],\"AffluencesSiteCategory\":[[\"id\",{\"k\":\"int\"},false],[\"name\",{\"k\":\"string\"},false],[\"namePlural\",{\"k\":\"string\"},true]],\"AffluencesSiteDetails\":[[\"services\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"AffluencesSiteService\"}},true],[\"infos\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"AffluencesSiteInfoSection\"}},true]],\"AffluencesSiteFilters\":[[\"categories\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"AffluencesOverviewCategory\"}},true],[\"services\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"AffluencesServiceFilter\"}},true]],\"AffluencesSiteInfoSection\":[[\"type\",{\"k\":\"string\"},true],[\"title\",{\"k\":\"string\"},true],[\"contentHtml\",{\"k\":\"string\"},true]],\"AffluencesSiteOverview\":[[\"id\",{\"k\":\"string\"},false],[\"slug\",{\"k\":\"string\"},false],[\"parent\",{\"k\":\"string\"},true],[\"primary_name\",{\"k\":\"string\"},false],[\"secondary_name\",{\"k\":\"string\"},true],[\"concat_name\",{\"k\":\"string\"},true],[\"categories\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"AffluencesOverviewCategory\"}},true],[\"affluence_precision_level\",{\"k\":\"string\"},true],[\"time_zone\",{\"k\":\"string\"},true],[\"lang\",{\"k\":\"string\"},true],[\"location\",{\"k\":\"record\",\"n\":\"AffluencesLocation\"},true],[\"phone_number\",{\"k\":\"string\"},true],[\"email\",{\"k\":\"string\"},true],[\"url\",{\"k\":\"string\"},true],[\"notices\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"AffluencesOverviewNotice\"}},true],[\"estimated_distance\",{\"k\":\"number\"},true],[\"current_forecast\",{\"k\":\"record\",\"n\":\"AffluencesForecast\"},true],[\"today_forecasts\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"AffluencesHourlyForecast\"}},true],[\"children\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"AffluencesSiteOverview\"}},true],[\"poster_image\",{\"k\":\"string\"},true],[\"images\",{\"k\":\"list\",\"e\":{\"k\":\"string\"}},true]],\"AffluencesSiteSearchPage\":[[\"page\",{\"k\":\"int\"},true],[\"max_size\",{\"k\":\"int\"},true],[\"results\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"AffluencesSiteOverview\"}},true]],\"AffluencesSiteService\":[[\"type\",{\"k\":\"string\"},false],[\"name\",{\"k\":\"string\"},false]],\"AffluencesSiteStatus\":[[\"isOpen\",{\"k\":\"bool\"},false],[\"openingText\",{\"k\":\"string\"},true],[\"openingAt\",{\"k\":\"string\"},true],[\"closingText\",{\"k\":\"string\"},true],[\"closingAt\",{\"k\":\"string\"},true],[\"isOpeningSoon\",{\"k\":\"bool\"},true],[\"isClosingSoon\",{\"k\":\"bool\"},true]],\"AffluencesSuggestedCategory\":[[\"name\",{\"k\":\"string\"},false],[\"imageUrl\",{\"k\":\"string\"},true],[\"categoriesIds\",{\"k\":\"list\",\"e\":{\"k\":\"int\"}},true]],\"AffluencesSuggestedSite\":[[\"id\",{\"k\":\"string\"},true],[\"slug\",{\"k\":\"string\"},true],[\"name\",{\"k\":\"string\"},true],[\"image_url\",{\"k\":\"string\"},true]],\"AffluencesTimeSlot\":[[\"hour\",{\"k\":\"string\"},false],[\"state\",{\"k\":\"string\"},true],[\"granularity\",{\"k\":\"int\"},true],[\"person_count\",{\"k\":\"int\"},true],[\"places_available\",{\"k\":\"int\"},true],[\"places_bookable\",{\"k\":\"int\"},true]],\"AffluencesWeekTimetable\":[[\"startDate\",{\"k\":\"string\"},false],[\"endDate\",{\"k\":\"string\"},false],[\"entries\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"AffluencesDayTimetable\"}},true],[\"information\",{\"k\":\"string\"},true]]},\"enums\":{\"AffluencesCrowdLevel\":{\"values\":[\"FLUID\",\"MODERATE\",\"DENSE\"],\"int\":false,\"wrapped\":false},\"AffluencesEvolution\":{\"values\":[\"INCREASE\",\"DECREASE\"],\"int\":false,\"wrapped\":false}}}"

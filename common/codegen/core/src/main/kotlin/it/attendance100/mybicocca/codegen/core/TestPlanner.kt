@@ -8,6 +8,9 @@ import it.attendance100.mybicocca.codegen.model.PrimitiveKind
 import it.attendance100.mybicocca.codegen.model.RecordType
 import it.attendance100.mybicocca.codegen.model.RequestBody
 import it.attendance100.mybicocca.codegen.model.TypeRef
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.doubleOrNull
@@ -132,8 +135,11 @@ class TestPlanner(private val spec: ApiSpec, private val config: LiveTestsConfig
             skips += Skip(operation.id, reason)
             return emptyList()
         }
+        if (tests.skip != null) {
+            validate(operation, tests, effect)
+            return skip(tests.skip)
+        }
         when {
-            tests.skip != null -> return skip(tests.skip)
             required.isNotEmpty() && required.none { it in roles } ->
                 return skip("needs one of the roles ${required.sorted()}; the account has ${roles.sorted()}")
             effect == Effect.IRREVERSIBLE -> return skip("irreversible")
@@ -178,6 +184,19 @@ class TestPlanner(private val spec: ApiSpec, private val config: LiveTestsConfig
             if (operation.id in config.account.anonymous) {
                 add(TestCase("${operation.id}#anonymous", CaseKind.ANONYMOUS, Call(operation, first, anonymous = true), 0, effect))
             }
+        }
+    }
+
+    /**
+     * Works out the inputs, undo and checks `tests.yaml` gives a skipped operation, so that its
+     * mistakes fail generation even before it is enabled; values that can't be found are fine.
+     */
+    private fun validate(operation: OperationRef, tests: LiveTestsConfig.OperationTests, effect: Effect) {
+        val dimensions = dimensions(operation, tests, explicitOnly = effect != Effect.READ) as? Dimensions.Found ?: return
+        tests.expect.forEach { expectation(it, operation) }
+        if (tests.undo != null) {
+            val args = dimensions.fixed + dimensions.varying.mapNotNull { (name, values) -> values.first()?.let { name to it } }
+            write(operation, tests, args + listOfNotNull((auth(operation) as? Resolved.Value)?.arg?.let { Input.AUTH to it }))
         }
     }
 
@@ -405,7 +424,8 @@ class TestPlanner(private val spec: ApiSpec, private val config: LiveTestsConfig
             val structured = TestTypes.record(spec, type) != null || type is TypeRef.ListOf || type is TypeRef.MapOf ||
                 (type as? TypeRef.Primitive)?.kind in setOf(PrimitiveKind.JSON_OBJECT, PrimitiveKind.JSON_VALUE)
             require(structured) { "$where: JSON objects and lists only fit records, lists, maps and JSON, not ${describe(type)}" }
-            Resolved.Value(Arg.Json(value.value))
+            val templates = strings(value.value).filter { text -> Templates.parse(text).any { it !is Templates.Part.Literal } }
+            Resolved.Value(Arg.Json(value.value, templated = templates.isNotEmpty()))
         }
         is ValueSpec.OneOf -> throw IllegalArgumentException("$where: oneOf is only allowed as a whole input value")
         is ValueSpec.Ref -> {
@@ -444,6 +464,13 @@ class TestPlanner(private val spec: ApiSpec, private val config: LiveTestsConfig
                 Resolved.Value(pick(source, path, type) ?: throw IllegalArgumentException("$where picks ${describe(path.type)}, which doesn't fit ${describe(type)}"))
             }
         }
+    }
+
+    /** Every string in [json], keys left out. */
+    private fun strings(json: JsonElement): List<String> = when (json) {
+        is JsonObject -> json.values.flatMap(::strings)
+        is JsonArray -> json.flatMap(::strings)
+        is JsonPrimitive -> if (json.isString) listOf(json.content) else emptyList()
     }
 
     /** A [Arg.Pick] of [path] into an input of type [type], unwrapping lists the input doesn't take; null when the types don't fit. */

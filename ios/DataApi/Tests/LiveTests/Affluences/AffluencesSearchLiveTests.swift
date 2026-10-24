@@ -7,10 +7,47 @@ import XCTest
 
 /// The live tests of the Affluences Search module, planned from `common/specs/affluences/tests.yaml`.
 final class AffluencesSearchLiveTests: XCTestCase {
+    func test_searchSites1() async throws {
+        try await liveCase(AffluencesLive.api, "Search.searchSites#1") { live in
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"AffluencesSearchResults\"}", envelope: ["data"]) { try await live.api.search.searchSites(query: "bicocca") }
+            live.fingerprint { f in AffluencesLive.writeAffluencesSearchResults(f, result) }
+        }
+    }
+
+    func test_searchSitesFiltered1() async throws {
+        try await liveCase(AffluencesLive.api, "Search.searchSitesFiltered#1") { live in
+            let body = try live.decode(AffluencesSiteSearchRequest.self, json: "{\"search_query\":\"bicocca\",\"page\":0}")
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"AffluencesSiteSearchPage\"}", envelope: ["data"]) { try await live.api.search.searchSitesFiltered(body: body) }
+            live.fingerprint { f in AffluencesLive.writeAffluencesSiteSearchPage(f, result) }
+        }
+    }
+
+    func test_searchSitesOnMap1() async throws {
+        try await liveCase(AffluencesLive.api, "Search.searchSitesOnMap#1") { live in
+            let body = try live.decode(AffluencesSiteSearchRequest.self, json: "{\"latitude\":45.518,\"longitude\":9.21375}")
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"AffluencesMapSearchResults\"}", envelope: ["data"]) { try await live.api.search.searchSitesOnMap(body: body) }
+            live.fingerprint { f in AffluencesLive.writeAffluencesMapSearchResults(f, result) }
+        }
+    }
+
     func test_getSiteFilters1() async throws {
         try await liveCase(AffluencesLive.api, "Search.getSiteFilters#1") { live in
             let result = try await live.call("{\"k\":\"record\",\"n\":\"AffluencesSiteFilters\"}", envelope: ["data"]) { try await live.api.search.getSiteFilters() }
             live.fingerprint { f in AffluencesLive.writeAffluencesSiteFilters(f, result) }
+        }
+    }
+
+    func test_getPlaylist1() async throws {
+        try await liveCase(AffluencesLive.api, "Search.getPlaylist#1") { live in
+            let playlistId = try live.choose("playlistId", [try await AffluencesLive.searchSearchSites(live)].compactMap { $0.playlists }.flatMap { $0 }.compactMap { $0.id })
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"AffluencesPlaylist\"}", envelope: ["data"]) { try await live.api.search.getPlaylist(playlistId: playlistId) }
+            live.fingerprint { f in AffluencesLive.writeAffluencesPlaylist(f, result) }
+        }
+    }
+
+    func test_getPlaylistUnknownId() async throws {
+        try await liveCase(AffluencesLive.api, "Search.getPlaylist#unknown-id") { live in
+            try await live.refused(acceptsEmpty: true) { try await live.api.search.getPlaylist(playlistId: 987654321) }
         }
     }
 

@@ -85,7 +85,7 @@ export class LiveRun<A> {
   constructor(readonly live: LiveApi<A>) {
     this.report = new LiveReport(live.id);
     this.checker = new LiveShapes(live.shapes, this.report);
-    this.report.start(live.skips);
+    this.report.start(live.skips, this.checker.fields);
   }
 
   get api(): A {
@@ -384,6 +384,17 @@ export function liveCase<A>(live: LiveApi<A>, id: string, options: { effect?: st
 export const LiveTemplates = {
   resolve(template: string): string {
     return parse(template, 0, false)[0];
+  },
+
+  /** `json` with the placeholders of its strings replaced. */
+  resolveJson(json: string): string {
+    const resolve = (value: unknown): unknown => {
+      if (typeof value === "string") return LiveTemplates.resolve(value);
+      if (Array.isArray(value)) return value.map(resolve);
+      if (typeof value === "object" && value !== null) return Object.fromEntries(Object.entries(value).map(([key, item]) => [key, resolve(item)]));
+      return value;
+    };
+    return JSON.stringify(resolve(JSON.parse(json)));
   },
 };
 

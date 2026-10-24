@@ -7,19 +7,19 @@ import { Esse3Live, countriesGetMunicipalities, countriesGetNations, countriesGe
 // The live tests of the Esse3 Countries module, planned from common/specs/esse3/tests.yaml.
 describe("Esse3 Countries", () => {
   liveCase(Esse3Live, "Countries.getNations#1", {}, async (live) => {
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Country\"}}", {}, () => live.api.countries.getNations());
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Country\"}}", {}, async () => live.api.countries.getNations());
     live.fingerprint((f) => f.list(result, (it) => writeEsse3Country(f, it)));
   });
 
   liveCase(Esse3Live, "Countries.getNations#2", { index: 1 }, async (live) => {
     const iso6392Code = live.choose("iso6392Code", [await servicesGetLanguages(live)].flat().map((it) => it.iso6392Code).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Country\"}}", {}, () => live.api.countries.getNations({ iso6392Code: iso6392Code }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Country\"}}", {}, async () => live.api.countries.getNations({ iso6392Code: iso6392Code }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3Country(f, it)));
   });
 
   liveCase(Esse3Live, "Countries.getPostalCode#1", {}, async (live) => {
     const nationId = live.choose("nationId", [await countriesGetNations(live)].flat().map((it) => it.nationId).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PostalCode\"}}", {}, () => live.api.countries.getPostalCode(nationId));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PostalCode\"}}", {}, async () => live.api.countries.getPostalCode(nationId));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3PostalCode(f, it)));
   });
 
@@ -28,7 +28,7 @@ describe("Esse3 Countries", () => {
     const regionCode = live.choose("regionCode", [await countriesGetMunicipalities(live)].flat().map((it) => it.regionCode).filter(isPresent));
     const municipalityId = live.choose("municipalityId", [await structureGetExternalEntities(live)].flat().map((it) => it.municipalityId).filter(isPresent));
     const municipalityCode = live.choose("municipalityCode", [await structureGetExternalEntities(live)].flat().map((it) => it.municipalityCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PostalCode\"}}", {}, () => live.api.countries.getPostalCode(nationId, { regionCode: regionCode, municipalityId: municipalityId, municipalityCode: municipalityCode }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PostalCode\"}}", {}, async () => live.api.countries.getPostalCode(nationId, { regionCode: regionCode, municipalityId: municipalityId, municipalityCode: municipalityCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3PostalCode(f, it)));
   });
 
@@ -37,7 +37,7 @@ describe("Esse3 Countries", () => {
     const nationFiscalCode = live.choose("nationFiscalCode", [await structureGetExternalEntities(live)].flat().map((it) => it.nationFiscalCode).filter(isPresent));
     const regionCode = live.choose("regionCode", [await countriesGetMunicipalities(live)].flat().map((it) => it.regionCode).filter(isPresent));
     const municipalityCode = live.choose("municipalityCode", [await structureGetExternalEntities(live)].flat().map((it) => it.municipalityCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PostalCode\"}}", {}, () => live.api.countries.getPostalCode(nationId, { nationFiscalCode: nationFiscalCode, regionCode: regionCode, municipalityCode: municipalityCode }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PostalCode\"}}", {}, async () => live.api.countries.getPostalCode(nationId, { nationFiscalCode: nationFiscalCode, regionCode: regionCode, municipalityCode: municipalityCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3PostalCode(f, it)));
   });
 
@@ -45,7 +45,7 @@ describe("Esse3 Countries", () => {
     const nationId = live.choose("nationId", [await countriesGetNations(live)].flat().map((it) => it.nationId).filter(isPresent));
     const nationFiscalCode = live.choose("nationFiscalCode", [await structureGetExternalEntities(live)].flat().map((it) => it.nationFiscalCode).filter(isPresent));
     const municipalityId = live.choose("municipalityId", [await structureGetExternalEntities(live)].flat().map((it) => it.municipalityId).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PostalCode\"}}", {}, () => live.api.countries.getPostalCode(nationId, { nationFiscalCode: nationFiscalCode, municipalityId: municipalityId }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PostalCode\"}}", {}, async () => live.api.countries.getPostalCode(nationId, { nationFiscalCode: nationFiscalCode, municipalityId: municipalityId }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3PostalCode(f, it)));
   });
 
@@ -54,7 +54,7 @@ describe("Esse3 Countries", () => {
     const nationFiscalCode = live.choose("nationFiscalCode", [await structureGetExternalEntities(live)].flat().map((it) => it.nationFiscalCode).filter(isPresent));
     const regionCode = live.choose("regionCode", [await countriesGetMunicipalities(live)].flat().map((it) => it.regionCode).filter(isPresent));
     const municipalityId = live.choose("municipalityId", [await structureGetExternalEntities(live)].flat().map((it) => it.municipalityId).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PostalCode\"}}", {}, () => live.api.countries.getPostalCode(nationId, { nationFiscalCode: nationFiscalCode, regionCode: regionCode, municipalityId: municipalityId }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PostalCode\"}}", {}, async () => live.api.countries.getPostalCode(nationId, { nationFiscalCode: nationFiscalCode, regionCode: regionCode, municipalityId: municipalityId }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3PostalCode(f, it)));
   });
 
@@ -62,17 +62,17 @@ describe("Esse3 Countries", () => {
     const nationId = live.choose("nationId", [await countriesGetNations(live)].flat().map((it) => it.nationId).filter(isPresent));
     const municipalityId = live.choose("municipalityId", [await structureGetExternalEntities(live)].flat().map((it) => it.municipalityId).filter(isPresent));
     const municipalityCode = live.choose("municipalityCode", [await structureGetExternalEntities(live)].flat().map((it) => it.municipalityCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PostalCode\"}}", {}, () => live.api.countries.getPostalCode(nationId, { municipalityId: municipalityId, municipalityCode: municipalityCode }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PostalCode\"}}", {}, async () => live.api.countries.getPostalCode(nationId, { municipalityId: municipalityId, municipalityCode: municipalityCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3PostalCode(f, it)));
   });
 
   liveCase(Esse3Live, "Countries.getPostalCode#unknown-id", {}, async (live) => {
-    await live.refused(true, () => live.api.countries.getPostalCode(987654321));
+    await live.refused(true, async () => live.api.countries.getPostalCode(987654321));
   });
 
   liveCase(Esse3Live, "Countries.getMunicipalities#1", {}, async (live) => {
     const nationId = live.choose("nationId", [await countriesGetNations(live)].flat().map((it) => it.nationId).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Municipality\"}}", {}, () => live.api.countries.getMunicipalities(nationId));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Municipality\"}}", {}, async () => live.api.countries.getMunicipalities(nationId));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3Municipality(f, it)));
   });
 
@@ -81,7 +81,7 @@ describe("Esse3 Countries", () => {
     const iso6392Code = live.choose("iso6392Code", [await servicesGetLanguages(live)].flat().map((it) => it.iso6392Code).filter(isPresent));
     const nationFiscalCode = live.choose("nationFiscalCode", [await structureGetExternalEntities(live)].flat().map((it) => it.nationFiscalCode).filter(isPresent));
     const municipalityCode = live.choose("municipalityCode", [await structureGetExternalEntities(live)].flat().map((it) => it.municipalityCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Municipality\"}}", {}, () => live.api.countries.getMunicipalities(nationId, { iso6392Code: iso6392Code, nationFiscalCode: nationFiscalCode, municipalityCode: municipalityCode }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Municipality\"}}", {}, async () => live.api.countries.getMunicipalities(nationId, { iso6392Code: iso6392Code, nationFiscalCode: nationFiscalCode, municipalityCode: municipalityCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3Municipality(f, it)));
   });
 
@@ -89,7 +89,7 @@ describe("Esse3 Countries", () => {
     const nationId = live.choose("nationId", [await countriesGetNations(live)].flat().map((it) => it.nationId).filter(isPresent));
     const iso6392Code = live.choose("iso6392Code", [await servicesGetLanguages(live)].flat().map((it) => it.iso6392Code).filter(isPresent));
     const regionCode = live.choose("regionCode", [await countriesGetPostalCode(live)].flat().map((it) => it.regionCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Municipality\"}}", {}, () => live.api.countries.getMunicipalities(nationId, { iso6392Code: iso6392Code, regionCode: regionCode }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Municipality\"}}", {}, async () => live.api.countries.getMunicipalities(nationId, { iso6392Code: iso6392Code, regionCode: regionCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3Municipality(f, it)));
   });
 
@@ -98,7 +98,7 @@ describe("Esse3 Countries", () => {
     const nationFiscalCode = live.choose("nationFiscalCode", [await structureGetExternalEntities(live)].flat().map((it) => it.nationFiscalCode).filter(isPresent));
     const regionCode = live.choose("regionCode", [await countriesGetPostalCode(live)].flat().map((it) => it.regionCode).filter(isPresent));
     const municipalityCode = live.choose("municipalityCode", [await structureGetExternalEntities(live)].flat().map((it) => it.municipalityCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Municipality\"}}", {}, () => live.api.countries.getMunicipalities(nationId, { nationFiscalCode: nationFiscalCode, regionCode: regionCode, municipalityCode: municipalityCode }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Municipality\"}}", {}, async () => live.api.countries.getMunicipalities(nationId, { nationFiscalCode: nationFiscalCode, regionCode: regionCode, municipalityCode: municipalityCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3Municipality(f, it)));
   });
 
@@ -106,7 +106,7 @@ describe("Esse3 Countries", () => {
     const nationId = live.choose("nationId", [await countriesGetNations(live)].flat().map((it) => it.nationId).filter(isPresent));
     const regionCode = live.choose("regionCode", [await countriesGetPostalCode(live)].flat().map((it) => it.regionCode).filter(isPresent));
     const municipalityCode = live.choose("municipalityCode", [await structureGetExternalEntities(live)].flat().map((it) => it.municipalityCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Municipality\"}}", {}, () => live.api.countries.getMunicipalities(nationId, { regionCode: regionCode, municipalityCode: municipalityCode }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Municipality\"}}", {}, async () => live.api.countries.getMunicipalities(nationId, { regionCode: regionCode, municipalityCode: municipalityCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3Municipality(f, it)));
   });
 
@@ -114,28 +114,28 @@ describe("Esse3 Countries", () => {
     const nationId = live.choose("nationId", [await countriesGetNations(live)].flat().map((it) => it.nationId).filter(isPresent));
     const nationFiscalCode = live.choose("nationFiscalCode", [await structureGetExternalEntities(live)].flat().map((it) => it.nationFiscalCode).filter(isPresent));
     const regionCode = live.choose("regionCode", [await countriesGetPostalCode(live)].flat().map((it) => it.regionCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Municipality\"}}", {}, () => live.api.countries.getMunicipalities(nationId, { nationFiscalCode: nationFiscalCode, regionCode: regionCode }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Municipality\"}}", {}, async () => live.api.countries.getMunicipalities(nationId, { nationFiscalCode: nationFiscalCode, regionCode: regionCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3Municipality(f, it)));
   });
 
   liveCase(Esse3Live, "Countries.getMunicipalities#unknown-id", {}, async (live) => {
-    await live.refused(true, () => live.api.countries.getMunicipalities(987654321));
+    await live.refused(true, async () => live.api.countries.getMunicipalities(987654321));
   });
 
   liveCase(Esse3Live, "Countries.getProvinces#1", {}, async (live) => {
     const nationId = live.choose("nationId", [await countriesGetNations(live)].flat().map((it) => it.nationId).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Province\"}}", {}, () => live.api.countries.getProvinces(nationId));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Province\"}}", {}, async () => live.api.countries.getProvinces(nationId));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3Province(f, it)));
   });
 
   liveCase(Esse3Live, "Countries.getProvinces#2", { index: 1 }, async (live) => {
     const nationId = live.choose("nationId", [await countriesGetNations(live)].flat().map((it) => it.nationId).filter(isPresent));
     const nationFiscalCode = live.choose("nationFiscalCode", [await structureGetExternalEntities(live)].flat().map((it) => it.nationFiscalCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Province\"}}", {}, () => live.api.countries.getProvinces(nationId, { nationFiscalCode: nationFiscalCode }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Province\"}}", {}, async () => live.api.countries.getProvinces(nationId, { nationFiscalCode: nationFiscalCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3Province(f, it)));
   });
 
   liveCase(Esse3Live, "Countries.getProvinces#unknown-id", {}, async (live) => {
-    await live.refused(true, () => live.api.countries.getProvinces(987654321));
+    await live.refused(true, async () => live.api.countries.getProvinces(987654321));
   });
 });

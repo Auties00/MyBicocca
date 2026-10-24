@@ -45,13 +45,16 @@ names the codes callers may want to handle, such as `MoodleException.INVALID_TOK
 
 ## Tests
 
-`src/test` holds hand-written tests. Those tagged `live` call the real services, read-only, and
-are excluded unless `-PincludeLive` is set; some need credentials in environment variables (see
-each suite):
+`src/test` holds the live tests, generated like the SDK from each API's `tests.yaml`. They call
+the real services, and the iOS and web SDKs run the same cases (see "Live tests" in the
+[codegen README](../../common/codegen)). `test` leaves them out; `liveTest` runs them, skipping
+the APIs whose account isn't in the environment:
 
 ```sh
-./gradlew -p data-api test                                           # offline tests
-./gradlew -p data-api test -PincludeLive --tests "*.MoodleApiTest"   # one live suite
+./gradlew -p data-api liveTest                                         # every API
+ESSE3_USERNAME=… ESSE3_PASSWORD=… ./gradlew -p data-api liveTest --tests "*.esse3.live.*"
 ```
+
+Reports go to `build/live-reports`.
 
 Requires JDK 17+.

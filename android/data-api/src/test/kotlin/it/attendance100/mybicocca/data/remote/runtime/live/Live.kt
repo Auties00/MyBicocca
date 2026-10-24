@@ -88,7 +88,7 @@ class LiveRun<A : AutoCloseable>(val live: LiveApi<A>) {
     val anonymous: A by lazy { live.create({ observe() }, anonymous = true) }
 
     init {
-        report.start(live.skips)
+        report.start(live.skips, checker.fields)
         Runtime.getRuntime().addShutdownHook(Thread { runCatching { api.close() } })
     }
 
@@ -318,6 +318,15 @@ object LiveTemplates {
     private val TODAY = Regex("""today(?:([+-])(\d+))?(?::(.+))?""")
 
     fun resolve(template: String): String = parse(template, 0, nested = false).first
+
+    /** [json] with the placeholders of its strings replaced. */
+    fun resolveJson(json: String): String = resolveStrings(kotlinx.serialization.json.Json.parseToJsonElement(json)).toString()
+
+    private fun resolveStrings(json: kotlinx.serialization.json.JsonElement): kotlinx.serialization.json.JsonElement = when (json) {
+        is kotlinx.serialization.json.JsonObject -> kotlinx.serialization.json.JsonObject(json.mapValues { resolveStrings(it.value) })
+        is kotlinx.serialization.json.JsonArray -> kotlinx.serialization.json.JsonArray(json.map(::resolveStrings))
+        is kotlinx.serialization.json.JsonPrimitive -> if (json.isString) kotlinx.serialization.json.JsonPrimitive(resolve(json.content)) else json
+    }
 
     private fun parse(text: String, start: Int, nested: Boolean): Pair<String, Int> {
         val out = StringBuilder()

@@ -7,27 +7,27 @@ import { EasyStaffPlanningLive, portalsGetPrimaryField, writeEasyStaffPlanningFo
 // The live tests of the EasyStaffPlanning Portals module, planned from common/specs/easystaff-planning/tests.yaml.
 describe("EasyStaffPlanning Portals", () => {
   liveCase(EasyStaffPlanningLive, "Portals.getPortals#1", {}, async (live) => {
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"EasyStaffPlanningPortalSummary\"}}", {}, () => live.api.portals.getPortals());
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"EasyStaffPlanningPortalSummary\"}}", {}, async () => live.api.portals.getPortals());
     live.fingerprint((f) => f.list(result, (it) => writeEasyStaffPlanningPortalSummary(f, it)));
   });
 
   liveCase(EasyStaffPlanningLive, "Portals.getPortal#1", {}, async (live) => {
-    const result = await live.call("{\"k\":\"record\",\"n\":\"EasyStaffPlanningPortalConfig\"}", {}, () => live.api.portals.getPortal());
+    const result = await live.call("{\"k\":\"record\",\"n\":\"EasyStaffPlanningPortalConfig\"}", {}, async () => live.api.portals.getPortal());
     live.fingerprint((f) => writeEasyStaffPlanningPortalConfig(f, result));
   });
 
   liveCase(EasyStaffPlanningLive, "Portals.getPrimaryField#1", {}, async (live) => {
-    const result = await live.call("{\"k\":\"record\",\"n\":\"EasyStaffPlanningFormField\"}", {}, () => live.api.portals.getPrimaryField());
+    const result = await live.call("{\"k\":\"record\",\"n\":\"EasyStaffPlanningFormField\"}", {}, async () => live.api.portals.getPrimaryField());
     live.fingerprint((f) => writeEasyStaffPlanningFormField(f, result));
   });
 
   liveCase(EasyStaffPlanningLive, "Portals.getServiceForm#1", {}, async (live) => {
     const serviceId = live.choose("serviceId", [await portalsGetPrimaryField(live)].map((it) => it.serviceId).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"EasyStaffPlanningFormField\"}}", {}, () => live.api.portals.getServiceForm(serviceId));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"EasyStaffPlanningFormField\"}}", {}, async () => live.api.portals.getServiceForm(serviceId));
     live.fingerprint((f) => f.list(result, (it) => writeEasyStaffPlanningFormField(f, it)));
   });
 
   liveCase(EasyStaffPlanningLive, "Portals.getServiceForm#unknown-id", {}, async (live) => {
-    await live.refused(true, () => live.api.portals.getServiceForm(987654321));
+    await live.refused(true, async () => live.api.portals.getServiceForm(987654321));
   });
 });

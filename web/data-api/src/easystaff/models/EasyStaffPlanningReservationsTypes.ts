@@ -108,17 +108,17 @@ export function decodeEasyStaffPlanningReservationResult(json: unknown): EasySta
 
 export function encodeEasyStaffPlanningReservationResult(value: EasyStaffPlanningReservationResult): JsonObject {
   return {
-    "codice_prenotazione": value.reservationCode,
-    "user_primary": value.primaryValue,
-    "entry": value.entry,
-    "user_identifier": value.userIdentifier,
-    "start_time": value.startTimeEpochSeconds,
-    "end_time": value.endTimeEpochSeconds,
-    "risorsa": value.resource === null ? null : encodeEasyStaffPlanningResource(value.resource),
-    "repeat_id": value.repeatId,
-    "public_fields": value.fieldLabels,
-    "web_conference_url": value.webConferenceUrl,
-    "qr_code": value.qrCode,
+    ...(value.reservationCode !== null ? { "codice_prenotazione": value.reservationCode } : {}),
+    ...(value.primaryValue !== null ? { "user_primary": value.primaryValue } : {}),
+    ...(value.entry !== null ? { "entry": value.entry } : {}),
+    ...(value.userIdentifier !== null ? { "user_identifier": value.userIdentifier } : {}),
+    ...(value.startTimeEpochSeconds !== null ? { "start_time": value.startTimeEpochSeconds } : {}),
+    ...(value.endTimeEpochSeconds !== null ? { "end_time": value.endTimeEpochSeconds } : {}),
+    ...(value.resource !== null ? { "risorsa": value.resource === null ? null : encodeEasyStaffPlanningResource(value.resource) } : {}),
+    ...(value.repeatId !== null ? { "repeat_id": value.repeatId } : {}),
+    ...(Object.keys(value.fieldLabels).length > 0 ? { "public_fields": value.fieldLabels } : {}),
+    ...(value.webConferenceUrl !== null ? { "web_conference_url": value.webConferenceUrl } : {}),
+    ...(value.qrCode !== null ? { "qr_code": value.qrCode } : {}),
   };
 }
 
@@ -161,18 +161,18 @@ export function decodeEasyStaffPlanningManagedReservation(json: unknown): EasySt
 
 export function encodeEasyStaffPlanningManagedReservation(value: EasyStaffPlanningManagedReservation): JsonObject {
   return {
-    "success": value.success,
-    "codice": value.reservationCode,
-    "primaria": value.primaryValue,
-    "public_fields": value.publicFields,
-    "area": value.area === null ? null : encodeEasyStaffPlanningReservationArea(value.area),
-    "entry": value.entry === null ? null : encodeEasyStaffPlanningReservationEntry(value.entry),
-    "servizio": value.service === null ? null : encodeEasyStaffPlanningReservationService(value.service),
-    "libera_posto": value.seatReleaseEnabled,
-    "risorsa": value.resourceName,
-    "confermata": value.confirmed,
-    "stato": value.status,
-    "qr_code": value.qrCode,
+    ...(value.success !== true ? { "success": value.success } : {}),
+    ...(value.reservationCode !== null ? { "codice": value.reservationCode } : {}),
+    ...(value.primaryValue !== null ? { "primaria": value.primaryValue } : {}),
+    ...(Object.keys(value.publicFields).length > 0 ? { "public_fields": value.publicFields } : {}),
+    ...(value.area !== null ? { "area": value.area === null ? null : encodeEasyStaffPlanningReservationArea(value.area) } : {}),
+    ...(value.entry !== null ? { "entry": value.entry === null ? null : encodeEasyStaffPlanningReservationEntry(value.entry) } : {}),
+    ...(value.service !== null ? { "servizio": value.service === null ? null : encodeEasyStaffPlanningReservationService(value.service) } : {}),
+    ...(value.seatReleaseEnabled !== false ? { "libera_posto": value.seatReleaseEnabled } : {}),
+    ...(value.resourceName !== null ? { "risorsa": value.resourceName } : {}),
+    ...(value.confirmed !== false ? { "confermata": value.confirmed } : {}),
+    ...(value.status !== null ? { "stato": value.status } : {}),
+    ...(value.qrCode !== null ? { "qr_code": value.qrCode } : {}),
   };
 }
 
@@ -193,8 +193,8 @@ export function decodeEasyStaffPlanningReservationArea(json: unknown): EasyStaff
 
 export function encodeEasyStaffPlanningReservationArea(value: EasyStaffPlanningReservationArea): JsonObject {
   return {
-    "name": value.name,
-    "address": value.address,
+    ...(value.name !== null ? { "name": value.name } : {}),
+    ...(value.address !== null ? { "address": value.address } : {}),
   };
 }
 
@@ -220,9 +220,9 @@ export function decodeEasyStaffPlanningReservationEntry(json: unknown): EasyStaf
 export function encodeEasyStaffPlanningReservationEntry(value: EasyStaffPlanningReservationEntry): JsonObject {
   return {
     "id": value.id,
-    "start_time": value.startTimeEpochSeconds,
-    "end_time": value.endTimeEpochSeconds,
-    "day_time": value.date === null ? null : encodeIsoTemporal(value.date),
+    ...(value.startTimeEpochSeconds !== null ? { "start_time": value.startTimeEpochSeconds } : {}),
+    ...(value.endTimeEpochSeconds !== null ? { "end_time": value.endTimeEpochSeconds } : {}),
+    ...(value.date !== null ? { "day_time": value.date === null ? null : encodeIsoTemporal(value.date) } : {}),
   };
 }
 
@@ -243,8 +243,8 @@ export function decodeEasyStaffPlanningReservationService(json: unknown): EasySt
 
 export function encodeEasyStaffPlanningReservationService(value: EasyStaffPlanningReservationService): JsonObject {
   return {
-    "type": value.name,
-    "servizio_breve": value.shortService,
+    ...(value.name !== null ? { "type": value.name } : {}),
+    ...(value.shortService !== false ? { "servizio_breve": value.shortService } : {}),
   };
 }
 
@@ -270,9 +270,9 @@ export function decodeEasyStaffPlanningReservationUpdate(json: unknown): EasySta
 
 export function encodeEasyStaffPlanningReservationUpdate(value: EasyStaffPlanningReservationUpdate): JsonObject {
   return {
-    "type": value.type,
-    "postazione": value.station,
-    "public_fields": value.publicFields,
+    ...(value.type !== null ? { "type": value.type } : {}),
+    ...(value.station !== null ? { "postazione": value.station } : {}),
+    ...(Object.keys(value.publicFields).length > 0 ? { "public_fields": value.publicFields } : {}),
   };
 }
 
@@ -292,6 +292,6 @@ export function decodeEasyStaffPlanningReservationDeletion(json: unknown): EasyS
 
 export function encodeEasyStaffPlanningReservationDeletion(value: EasyStaffPlanningReservationDeletion): JsonObject {
   return {
-    "force": value.force,
+    ...(value.force !== null ? { "force": value.force } : {}),
   };
 }

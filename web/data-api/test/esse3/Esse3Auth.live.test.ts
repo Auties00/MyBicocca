@@ -7,37 +7,37 @@ import { Esse3Live, writeEsse3CacheInfo, writeEsse3JWKModel, writeEsse3SessionLa
 // The live tests of the Esse3 Auth module, planned from common/specs/esse3/tests.yaml.
 describe("Esse3 Auth", () => {
   liveCase(Esse3Live, "Auth.checkLogon#1", { effect: "benign" }, async (live) => {
-    await live.call("{\"k\":\"record\",\"n\":\"Esse3CheckLoginResult\"}", {}, () => live.api.auth.checkLogon());
+    await live.call("{\"k\":\"record\",\"n\":\"Esse3CheckLoginResult\"}", {}, async () => live.api.auth.checkLogon());
   });
 
   liveCase(Esse3Live, "Auth.getJWK#1", {}, async (live) => {
-    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3JWKModel\"}", {}, () => live.api.auth.getJWK());
+    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3JWKModel\"}", {}, async () => live.api.auth.getJWK());
     live.fingerprint((f) => writeEsse3JWKModel(f, result));
   });
 
   liveCase(Esse3Live, "Auth.refreshJWT#1", { effect: "benign" }, async (live) => {
-    await live.call("{\"k\":\"record\",\"n\":\"Esse3JWTModel\"}", {}, () => live.api.auth.refreshJWT());
+    await live.call("{\"k\":\"record\",\"n\":\"Esse3JWTModel\"}", {}, async () => live.api.auth.refreshJWT());
   });
 
   liveCase(Esse3Live, "Auth.login#1", { effect: "benign" }, async (live) => {
-    await live.call("{\"k\":\"record\",\"n\":\"Esse3UserSession\"}", {}, () => live.api.auth.login());
+    await live.call("{\"k\":\"record\",\"n\":\"Esse3UserSession\"}", {}, async () => live.api.auth.login());
   });
 
   liveCase(Esse3Live, "Auth.getCacheParameters#1", {}, async (live) => {
-    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3CacheInfo\"}", {}, () => live.api.auth.getCacheParameters());
+    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3CacheInfo\"}", {}, async () => live.api.auth.getCacheParameters());
     live.fingerprint((f) => writeEsse3CacheInfo(f, result));
   });
 
   liveCase(Esse3Live, "Auth.getJWT#1", { effect: "benign" }, async (live) => {
-    await live.call("{\"k\":\"record\",\"n\":\"Esse3JWTModel\"}", {}, () => live.api.auth.getJWT());
+    await live.call("{\"k\":\"record\",\"n\":\"Esse3JWTModel\"}", {}, async () => live.api.auth.getJWT());
   });
 
   liveCase(Esse3Live, "Auth.getLanguageCode#1", {}, async (live) => {
-    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3SessionLanguage\"}", {}, () => live.api.auth.getLanguageCode());
+    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3SessionLanguage\"}", {}, async () => live.api.auth.getLanguageCode());
     live.fingerprint((f) => writeEsse3SessionLanguage(f, result));
   });
 
   liveCase(Esse3Live, "Auth.setLanguageCode#1", { effect: "benign" }, async (live) => {
-    await live.call("{\"k\":\"record\",\"n\":\"Esse3SessionLanguage\"}", {}, () => live.api.auth.setLanguageCode());
+    await live.call("{\"k\":\"record\",\"n\":\"Esse3SessionLanguage\"}", {}, async () => live.api.auth.setLanguageCode());
   });
 });

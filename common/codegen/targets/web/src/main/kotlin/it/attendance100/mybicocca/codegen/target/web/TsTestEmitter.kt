@@ -232,8 +232,8 @@ internal class TsTestEmitter(private val plan: TestPlan, private val layout: TsL
             val names = Names()
             val args = arguments(case.call, this, file, names)
             when (case.kind) {
-                CaseKind.UNKNOWN_ID -> line("await live.refused(true, () => ${invocation(case.call, args)});")
-                CaseKind.INVALID_CREDENTIALS, CaseKind.ANONYMOUS -> line("await live.refused(false, () => ${invocation(case.call, args)});")
+                CaseKind.UNKNOWN_ID -> line("await live.refused(true, async () => ${invocation(case.call, args)});")
+                CaseKind.INVALID_CREDENTIALS, CaseKind.ANONYMOUS -> line("await live.refused(false, async () => ${invocation(case.call, args)});")
                 CaseKind.SMOKE, CaseKind.COMBINATION -> read(case, args, names, file)
                 CaseKind.WRITE -> write(case, args, names, file)
             }
@@ -245,11 +245,11 @@ internal class TsTestEmitter(private val plan: TestPlan, private val layout: TsL
         val errors = case.errors.takeIf { it.isNotEmpty() }?.joinToString(", ", "errors: [", "]") { TsSyntax.string(it) }
         val options = callOptions(case.operation, errors)
         if (result == null || (!case.compare && case.expectations.isEmpty())) {
-            line("await live.call($options, () => ${invocation(case.call, args)});")
+            line("await live.call($options, async () => ${invocation(case.call, args)});")
             return
         }
         val value = names.local("result")
-        line("const $value = await live.call($options, () => ${invocation(case.call, args)});")
+        line("const $value = await live.call($options, async () => ${invocation(case.call, args)});")
         if (case.compare) line("live.fingerprint((f) => ${fingerprint(result, value, file)});")
         for (expectation in case.expectations) expectation(expectation, value, args, file)
     }
@@ -259,15 +259,15 @@ internal class TsTestEmitter(private val plan: TestPlan, private val layout: TsL
         val refs = Refs(args, null, null)
         write.snapshot?.let { (call, path) ->
             val snapshot = names.local("snapshot")
-            line("const $snapshot = await live.call(${callOptions(call.operation)}, () => ${invocation(call, refArguments(call, refs, file))});")
+            line("const $snapshot = await live.call(${callOptions(call.operation)}, async () => ${invocation(call, refArguments(call, refs, file))});")
             refs.before = names.local("before")
             line("const ${refs.before} = live.choose(\"the value to restore\", ${path(snapshot, path, file)});")
         }
         if (case.operation.resultType != null) {
             refs.result = names.local("result")
-            line("const ${refs.result} = await live.call(${callOptions(case.operation)}, () => ${invocation(case.call, args)});")
+            line("const ${refs.result} = await live.call(${callOptions(case.operation)}, async () => ${invocation(case.call, args)});")
         } else {
-            line("await live.call(${callOptions(case.operation)}, () => ${invocation(case.call, args)});")
+            line("await live.call(${callOptions(case.operation)}, async () => ${invocation(case.call, args)});")
         }
         val undoArgs = refArguments(write.undo, refs, file)
         val replayable = case in plan.replays
@@ -276,23 +276,28 @@ internal class TsTestEmitter(private val plan: TestPlan, private val layout: TsL
             line("live.journal({ $saved });")
         }
         val verify = write.verify
-        block("try {") {
-            verify?.let { (call, contains) -> verifyCall(call, contains, names.local("verified"), refs, "expectContains", file) }
-        }
-        block("} finally {", "}") {
-            line("await live.call(${callOptions(write.undo.operation)}, () => ${invocation(write.undo, undoArgs)});")
+        fun CodeWriter.undo() {
+            line("await live.call(${callOptions(write.undo.operation)}, async () => ${invocation(write.undo, undoArgs)});")
             if (replayable) line("live.unjournal();")
+        }
+        if (verify == null) {
+            undo()
+        } else {
+            // The change is undone whatever the check finds.
+            block("try {", "} finally {") { verifyCall(verify.first, verify.second, names.local("verified"), refs, "expectContains", file) }
+            indent { undo() }
+            line("}")
         }
         if (verify != null && write.snapshot == null) verifyCall(verify.first, verify.second, names.local("undone"), refs, "expectNotContains", file)
         write.snapshot?.let { (call, path) ->
             val restored = names.local("restored")
-            line("const $restored = await live.call(${callOptions(call.operation)}, () => ${invocation(call, refArguments(call, refs, file))});")
+            line("const $restored = await live.call(${callOptions(call.operation)}, async () => ${invocation(call, refArguments(call, refs, file))});")
             line("live.expectContains(${TsSyntax.string(path.toString())}, ${path(restored, path, file)}, ${refs.before});")
         }
     }
 
     private fun CodeWriter.verifyCall(call: Call, contains: Expectation.Contains, name: String, refs: Refs, check: String, file: TsFile) {
-        line("const $name = await live.call(${callOptions(call.operation)}, () => ${invocation(call, refArguments(call, refs, file))});")
+        line("const $name = await live.call(${callOptions(call.operation)}, async () => ${invocation(call, refArguments(call, refs, file))});")
         line("live.$check(${TsSyntax.string(contains.path.toString())}, ${path(name, contains.path, file)}, ${refValue(contains.value, contains.path.type, refs, file)});")
     }
 
@@ -378,7 +383,11 @@ internal class TsTestEmitter(private val plan: TestPlan, private val layout: TsL
             live(file, "LiveTemplates")
             fromText("LiveTemplates.resolve(${TsSyntax.string(arg.template)})", type!!, file)
         }
-        is Arg.Json -> "live.decode(${decoder(type!!, file)}, ${TsSyntax.string(arg.value.toString())})"
+        is Arg.Json -> {
+            val json = TsSyntax.string(arg.value.toString())
+            val text = if (arg.templated) "${live(file, "LiveTemplates")}.resolveJson($json)" else json
+            "live.decode(${decoder(type!!, file)}, $text)"
+        }
         Arg.Unknown -> if ((type as TypeRef.Primitive).kind == PrimitiveKind.STRING) TsSyntax.string(UNKNOWN_TEXT) else UNKNOWN_ID.toString()
         is Arg.InvalidCredentials -> invalidCredentials(arg.scheme, file)
         is Arg.AccountCredentials -> credentials(arg, file)

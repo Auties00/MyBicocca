@@ -11,13 +11,13 @@ describe("Moodle Completion", () => {
     const courseId = live.choose("courseId", [await courseGetUsersCourses(live)].flat().map((it) => it.id).filter(isPresent));
     const userId = live.choose("userId", [await siteGetSiteInfo(live)].map((it) => it.userId).filter(isPresent));
     const auth = await tokenCredentials(live);
-    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleActivitiesCompletionResponse\"}", {}, () => live.api.completion.getActivitiesCompletionStatus(courseId, userId, auth));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleActivitiesCompletionResponse\"}", {}, async () => live.api.completion.getActivitiesCompletionStatus(courseId, userId, auth));
     live.fingerprint((f) => writeMoodleActivitiesCompletionResponse(f, result));
   });
 
   liveCase(MoodleLive, "Completion.getActivitiesCompletionStatus#invalid-credentials", {}, async (live) => {
     const courseId = live.choose("courseId", [await courseGetUsersCourses(live)].flat().map((it) => it.id).filter(isPresent));
     const userId = live.choose("userId", [await siteGetSiteInfo(live)].map((it) => it.userId).filter(isPresent));
-    await live.refused(false, () => live.api.completion.getActivitiesCompletionStatus(courseId, userId, new MoodleTokenAuth("mybicocca-invalid-credential")));
+    await live.refused(false, async () => live.api.completion.getActivitiesCompletionStatus(courseId, userId, new MoodleTokenAuth("mybicocca-invalid-credential")));
   });
 });

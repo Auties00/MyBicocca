@@ -9,17 +9,17 @@ describe("Esse3 Records", () => {
   liveCase(Esse3Live, "Records.getMinutes#1", {}, async (live) => {
     const lotBatchId = live.choose("lotBatchId", [await recordsFindMinutes(live)].flat().map((it) => it.lotBatchId).filter(isPresent));
     const minutesId = live.choose("minutesId", [await recordsFindMinutes(live)].flat().map((it) => it.minutesId).filter(isPresent));
-    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3RecordWithDetails\"}", {}, () => live.api.records.getMinutes(lotBatchId, minutesId));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3RecordWithDetails\"}", {}, async () => live.api.records.getMinutes(lotBatchId, minutesId));
     live.fingerprint((f) => writeEsse3RecordWithDetails(f, result));
   });
 
   liveCase(Esse3Live, "Records.getMinutes#unknown-id", {}, async (live) => {
     const minutesId = live.choose("minutesId", [await recordsFindMinutes(live)].flat().map((it) => it.minutesId).filter(isPresent));
-    await live.refused(true, () => live.api.records.getMinutes(987654321, minutesId));
+    await live.refused(true, async () => live.api.records.getMinutes(987654321, minutesId));
   });
 
   liveCase(Esse3Live, "Records.findMinutes#1", {}, async (live) => {
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Record\"}}", {}, () => live.api.records.findMinutes());
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Record\"}}", {}, async () => live.api.records.findMinutes());
     live.fingerprint((f) => f.list(result, (it) => writeEsse3Record(f, it)));
   });
 
@@ -29,7 +29,7 @@ describe("Esse3 Records", () => {
     const activityCode = live.choose("activityCode", [await offerGetGenericTeachingActivities(live)].flat().map((it) => it.activityCode).filter(isPresent));
     const courseOfStudyCode = live.choose("courseOfStudyCode", [await structureGetCoursesOfStudy(live)].flat().map((it) => it.courseOfStudyCode).filter(isPresent));
     const studentActivityCode = live.choose("studentActivityCode", [await examsCalendarGetBookingsByMatId(live)].flat().map((it) => it.studentActivityCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Record\"}}", {}, () => live.api.records.findMinutes({ studentFiscalCode: studentFiscalCode, lecturerFiscalCode: lecturerFiscalCode, activityCode: activityCode, courseOfStudyCode: courseOfStudyCode, studentActivityCode: studentActivityCode }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Record\"}}", {}, async () => live.api.records.findMinutes({ studentFiscalCode: studentFiscalCode, lecturerFiscalCode: lecturerFiscalCode, activityCode: activityCode, courseOfStudyCode: courseOfStudyCode, studentActivityCode: studentActivityCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3Record(f, it)));
   });
 
@@ -38,7 +38,7 @@ describe("Esse3 Records", () => {
     const lecturerFiscalCode = live.choose("lecturerFiscalCode", [await logisticsGetEasystaffLogistics(live)].flat().map((it) => it.lecturers).filter(isPresent).flat().map((it) => it.lecturerFiscalCode).filter(isPresent));
     const studentActivityCode = live.choose("studentActivityCode", [await examsCalendarGetBookingsByMatId(live)].flat().map((it) => it.studentActivityCode).filter(isPresent));
     const courseOfStudyStudentCode = live.choose("courseOfStudyStudentCode", [await examsCalendarGetBookingsByMatId(live)].flat().map((it) => it.courseOfStudyStudentCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Record\"}}", {}, () => live.api.records.findMinutes({ studentFiscalCode: studentFiscalCode, lecturerFiscalCode: lecturerFiscalCode, studentActivityCode: studentActivityCode, courseOfStudyStudentCode: courseOfStudyStudentCode }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Record\"}}", {}, async () => live.api.records.findMinutes({ studentFiscalCode: studentFiscalCode, lecturerFiscalCode: lecturerFiscalCode, studentActivityCode: studentActivityCode, courseOfStudyStudentCode: courseOfStudyStudentCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3Record(f, it)));
   });
 
@@ -46,14 +46,14 @@ describe("Esse3 Records", () => {
     const activityCode = live.choose("activityCode", [await offerGetGenericTeachingActivities(live)].flat().map((it) => it.activityCode).filter(isPresent));
     const courseOfStudyCode = live.choose("courseOfStudyCode", [await structureGetCoursesOfStudy(live)].flat().map((it) => it.courseOfStudyCode).filter(isPresent));
     const courseOfStudyStudentCode = live.choose("courseOfStudyStudentCode", [await examsCalendarGetBookingsByMatId(live)].flat().map((it) => it.courseOfStudyStudentCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Record\"}}", {}, () => live.api.records.findMinutes({ activityCode: activityCode, courseOfStudyCode: courseOfStudyCode, courseOfStudyStudentCode: courseOfStudyStudentCode }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Record\"}}", {}, async () => live.api.records.findMinutes({ activityCode: activityCode, courseOfStudyCode: courseOfStudyCode, courseOfStudyStudentCode: courseOfStudyStudentCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3Record(f, it)));
   });
 
   liveCase(Esse3Live, "Records.findMinutes#5", { index: 4 }, async (live) => {
     const studentFiscalCode = live.choose("studentFiscalCode", [await examsCalendarGetBookingsByMatId(live)].flat().map((it) => it.studentFiscalCode).filter(isPresent));
     const activityCode = live.choose("activityCode", [await offerGetGenericTeachingActivities(live)].flat().map((it) => it.activityCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Record\"}}", {}, () => live.api.records.findMinutes({ studentFiscalCode: studentFiscalCode, activityCode: activityCode }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Record\"}}", {}, async () => live.api.records.findMinutes({ studentFiscalCode: studentFiscalCode, activityCode: activityCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3Record(f, it)));
   });
 
@@ -61,7 +61,7 @@ describe("Esse3 Records", () => {
     const lecturerFiscalCode = live.choose("lecturerFiscalCode", [await logisticsGetEasystaffLogistics(live)].flat().map((it) => it.lecturers).filter(isPresent).flat().map((it) => it.lecturerFiscalCode).filter(isPresent));
     const courseOfStudyCode = live.choose("courseOfStudyCode", [await structureGetCoursesOfStudy(live)].flat().map((it) => it.courseOfStudyCode).filter(isPresent));
     const studentActivityCode = live.choose("studentActivityCode", [await examsCalendarGetBookingsByMatId(live)].flat().map((it) => it.studentActivityCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Record\"}}", {}, () => live.api.records.findMinutes({ lecturerFiscalCode: lecturerFiscalCode, courseOfStudyCode: courseOfStudyCode, studentActivityCode: studentActivityCode }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Record\"}}", {}, async () => live.api.records.findMinutes({ lecturerFiscalCode: lecturerFiscalCode, courseOfStudyCode: courseOfStudyCode, studentActivityCode: studentActivityCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3Record(f, it)));
   });
 });

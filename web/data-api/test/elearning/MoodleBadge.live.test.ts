@@ -9,14 +9,14 @@ import { MoodleLive, courseGetUsersCourses, siteGetSiteInfo, tokenCredentials, w
 describe("Moodle Badge", () => {
   liveCase(MoodleLive, "Badge.getUserBadges#1", {}, async (live) => {
     const auth = await tokenCredentials(live);
-    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleUserBadgesResponse\"}", {}, () => live.api.badge.getUserBadges(auth));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleUserBadgesResponse\"}", {}, async () => live.api.badge.getUserBadges(auth));
     live.fingerprint((f) => writeMoodleUserBadgesResponse(f, result));
   });
 
   liveCase(MoodleLive, "Badge.getUserBadges#2", { index: 1 }, async (live) => {
     const userId = live.choose("userId", [await siteGetSiteInfo(live)].map((it) => it.userId).filter(isPresent));
     const auth = await tokenCredentials(live);
-    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleUserBadgesResponse\"}", {}, () => live.api.badge.getUserBadges(auth, { userId: userId, onlyPublic: true }));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleUserBadgesResponse\"}", {}, async () => live.api.badge.getUserBadges(auth, { userId: userId, onlyPublic: true }));
     live.fingerprint((f) => writeMoodleUserBadgesResponse(f, result));
   });
 
@@ -24,20 +24,20 @@ describe("Moodle Badge", () => {
     const userId = live.choose("userId", [await siteGetSiteInfo(live)].map((it) => it.userId).filter(isPresent));
     const courseId = live.choose("courseId", [await courseGetUsersCourses(live)].flat().map((it) => it.id).filter(isPresent));
     const auth = await tokenCredentials(live);
-    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleUserBadgesResponse\"}", {}, () => live.api.badge.getUserBadges(auth, { userId: userId, courseId: courseId }));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleUserBadgesResponse\"}", {}, async () => live.api.badge.getUserBadges(auth, { userId: userId, courseId: courseId }));
     live.fingerprint((f) => writeMoodleUserBadgesResponse(f, result));
   });
 
   liveCase(MoodleLive, "Badge.getUserBadges#4", { index: 3 }, async (live) => {
     const courseId = live.choose("courseId", [await courseGetUsersCourses(live)].flat().map((it) => it.id).filter(isPresent));
     const auth = await tokenCredentials(live);
-    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleUserBadgesResponse\"}", {}, () => live.api.badge.getUserBadges(auth, { courseId: courseId, onlyPublic: true }));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleUserBadgesResponse\"}", {}, async () => live.api.badge.getUserBadges(auth, { courseId: courseId, onlyPublic: true }));
     live.fingerprint((f) => writeMoodleUserBadgesResponse(f, result));
   });
 
   liveCase(MoodleLive, "Badge.getUserBadges#5", { index: 4 }, async (live) => {
     const auth = await tokenCredentials(live);
-    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleUserBadgesResponse\"}", {}, () => live.api.badge.getUserBadges(auth, { onlyPublic: false }));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleUserBadgesResponse\"}", {}, async () => live.api.badge.getUserBadges(auth, { onlyPublic: false }));
     live.fingerprint((f) => writeMoodleUserBadgesResponse(f, result));
   });
 
@@ -45,11 +45,11 @@ describe("Moodle Badge", () => {
     const userId = live.choose("userId", [await siteGetSiteInfo(live)].map((it) => it.userId).filter(isPresent));
     const courseId = live.choose("courseId", [await courseGetUsersCourses(live)].flat().map((it) => it.id).filter(isPresent));
     const auth = await tokenCredentials(live);
-    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleUserBadgesResponse\"}", {}, () => live.api.badge.getUserBadges(auth, { userId: userId, courseId: courseId, onlyPublic: false }));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleUserBadgesResponse\"}", {}, async () => live.api.badge.getUserBadges(auth, { userId: userId, courseId: courseId, onlyPublic: false }));
     live.fingerprint((f) => writeMoodleUserBadgesResponse(f, result));
   });
 
   liveCase(MoodleLive, "Badge.getUserBadges#invalid-credentials", {}, async (live) => {
-    await live.refused(false, () => live.api.badge.getUserBadges(new MoodleTokenAuth("mybicocca-invalid-credential")));
+    await live.refused(false, async () => live.api.badge.getUserBadges(new MoodleTokenAuth("mybicocca-invalid-credential")));
   });
 });

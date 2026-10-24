@@ -16,11 +16,12 @@ final class LiveReport: @unchecked Sendable {
         file = URL(fileURLWithPath: LiveSettings.reportDir).appendingPathComponent("\(LiveSettings.platform)-\(api).jsonl")
     }
 
-    func start(skips: [(String, String)]) {
+    func start(skips: [(String, String)], declared: [String]) {
         try? FileManager.default.createDirectory(at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
         FileManager.default.createFile(atPath: file.path, contents: Data())
         write("run", ["seed": LiveSettings.seed, "writes": LiveSettings.writes])
         for (operation, reason) in skips { write("skip", ["id": operation, "reason": reason]) }
+        write("declared", ["fields": declared])
     }
 
     func `case`(_ id: String, status: String, reason: String?, fingerprint: String?, ms: Int) {
@@ -125,6 +126,11 @@ final class LiveShapes: @unchecked Sendable {
         records = root["records"] as? [String: [[Any]]] ?? [:]
         enums = root["enums"] as? [String: [String: Any]] ?? [:]
         self.report = report
+    }
+
+    /// Every field of the records, as `Record.wireName`.
+    var fields: [String] {
+        records.flatMap { name, fields in fields.compactMap { ($0.first as? String).map { "\(name).\($0)" } } }
     }
 
     func check(shape: String, response: Observed, envelope: [String], variable: String?) {

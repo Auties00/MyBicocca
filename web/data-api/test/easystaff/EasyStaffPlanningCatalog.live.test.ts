@@ -7,20 +7,20 @@ import { EasyStaffPlanningLive, writeEasyStaffPlanningAreaGroup, writeEasyStaffP
 // The live tests of the EasyStaffPlanning Catalog module, planned from common/specs/easystaff-planning/tests.yaml.
 describe("EasyStaffPlanning Catalog", () => {
   liveCase(EasyStaffPlanningLive, "Catalog.getServiceGroups#1", {}, async (live) => {
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"EasyStaffPlanningNamedGroup\"}}", { envelope: ["raggruppamenti_servizi"] }, () => live.api.catalog.getServiceGroups());
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"EasyStaffPlanningNamedGroup\"}}", { envelope: ["raggruppamenti_servizi"] }, async () => live.api.catalog.getServiceGroups());
     live.fingerprint((f) => f.list(result, (it) => writeEasyStaffPlanningNamedGroup(f, it)));
   });
 
   liveCase(EasyStaffPlanningLive, "Catalog.getServices#1", { effect: "benign" }, async (live) => {
-    await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"EasyStaffPlanningService\"}}", { envelope: ["servizi"] }, () => live.api.catalog.getServices());
+    await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"EasyStaffPlanningService\"}}", { envelope: ["servizi"] }, async () => live.api.catalog.getServices());
   });
 
   liveCase(EasyStaffPlanningLive, "Catalog.getAreaGroups#1", {}, async (live) => {
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"EasyStaffPlanningAreaGroup\"}}", { envelope: ["raggruppamenti_area"] }, () => live.api.catalog.getAreaGroups());
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"EasyStaffPlanningAreaGroup\"}}", { envelope: ["raggruppamenti_area"] }, async () => live.api.catalog.getAreaGroups());
     live.fingerprint((f) => f.list(result, (it) => writeEasyStaffPlanningAreaGroup(f, it)));
   });
 
   liveCase(EasyStaffPlanningLive, "Catalog.getAreas#1", { effect: "benign" }, async (live) => {
-    await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"EasyStaffPlanningArea\"}}", { envelope: ["aree"] }, () => live.api.catalog.getAreas());
+    await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"EasyStaffPlanningArea\"}}", { envelope: ["aree"] }, async () => live.api.catalog.getAreas());
   });
 });

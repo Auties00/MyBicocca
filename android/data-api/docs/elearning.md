@@ -44,9 +44,9 @@ What no web service exposes is read out of Moodle's pages (see `common/specs/moo
 
 ## Tests
 
-The tests call the live sites and are tagged `live`. `MoodleWebApiTest` and `KalturaApiTest`
-need nothing; the web service tests need a token in `MOODLE_TOKEN`:
+The live tests are generated from the `tests.yaml` of `common/specs/moodle`, `moodle-web` and
+`kaltura`. The pages and Kaltura need nothing; the web services need a token in `MOODLE_TOKEN`:
 
 ```sh
-MOODLE_TOKEN=... ./gradlew -p data-api test -PincludeLive --tests "*.MoodleApiTest" --tests "*.MoodleWebApiTest" --tests "*.KalturaApiTest"
+MOODLE_TOKEN=... ./gradlew -p data-api liveTest --tests "*.elearning.live.*"
 ```

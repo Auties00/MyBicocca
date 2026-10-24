@@ -7,6 +7,46 @@ import XCTest
 
 /// The live tests of the EasyStaffPlanning Availability module, planned from `common/specs/easystaff-planning/tests.yaml`.
 final class EasyStaffPlanningAvailabilityLiveTests: XCTestCase {
+    func test_getMonthSchedule1() async throws {
+        try await liveCase(EasyStaffPlanningLive.api, "Availability.getMonthSchedule#1") { live in
+            let serviceId = try live.choose("serviceId", [try await EasyStaffPlanningLive.portalsGetPrimaryField(live)].compactMap { $0.serviceId })
+            let month = LiveTemplates.resolve("{today:yyyy-MM}")
+            let areaId = try live.choose("areaId", [try await EasyStaffPlanningLive.catalogGetAreaGroups(live)].flatMap { $0 }.compactMap { $0.link }.compactMap { $0.areaId })
+            let durationSeconds = try live.choose("durationSeconds", [try await EasyStaffPlanningLive.catalogGetServices(live)].flatMap { $0 }.compactMap { $0.durationSeconds })
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"EasyStaffPlanningMonthSchedule\"}") { try await live.api.availability.getMonthSchedule(serviceId: serviceId, month: month, areaId: areaId, durationSeconds: durationSeconds) }
+            live.fingerprint { f in EasyStaffPlanningLive.writeEasyStaffPlanningMonthSchedule(f, result) }
+        }
+    }
+
+    func test_getMonthScheduleUnknownId() async throws {
+        try await liveCase(EasyStaffPlanningLive.api, "Availability.getMonthSchedule#unknown-id") { live in
+            let month = LiveTemplates.resolve("{today:yyyy-MM}")
+            let areaId = try live.choose("areaId", [try await EasyStaffPlanningLive.catalogGetAreaGroups(live)].flatMap { $0 }.compactMap { $0.link }.compactMap { $0.areaId })
+            let durationSeconds = try live.choose("durationSeconds", [try await EasyStaffPlanningLive.catalogGetServices(live)].flatMap { $0 }.compactMap { $0.durationSeconds })
+            try await live.refused(acceptsEmpty: true) { try await live.api.availability.getMonthSchedule(serviceId: 987654321, month: month, areaId: areaId, durationSeconds: durationSeconds) }
+        }
+    }
+
+    func test_getDaySchedule1() async throws {
+        try await liveCase(EasyStaffPlanningLive.api, "Availability.getDaySchedule#1") { live in
+            let serviceId = try live.choose("serviceId", [try await EasyStaffPlanningLive.portalsGetPrimaryField(live)].compactMap { $0.serviceId })
+            let date = try LiveText.date(LiveTemplates.resolve("{today+1}"))
+            let areaId = try live.choose("areaId", [try await EasyStaffPlanningLive.catalogGetAreaGroups(live)].flatMap { $0 }.compactMap { $0.link }.compactMap { $0.areaId })
+            let durationSeconds = try live.choose("durationSeconds", [try await EasyStaffPlanningLive.catalogGetServices(live)].flatMap { $0 }.compactMap { $0.durationSeconds })
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"EasyStaffPlanningDaySchedule\"}") { try await live.api.availability.getDaySchedule(serviceId: serviceId, date: date, areaId: areaId, durationSeconds: durationSeconds) }
+            live.fingerprint { f in EasyStaffPlanningLive.writeEasyStaffPlanningDaySchedule(f, result) }
+        }
+    }
+
+    func test_getDayScheduleUnknownId() async throws {
+        try await liveCase(EasyStaffPlanningLive.api, "Availability.getDaySchedule#unknown-id") { live in
+            let date = try LiveText.date(LiveTemplates.resolve("{today+1}"))
+            let areaId = try live.choose("areaId", [try await EasyStaffPlanningLive.catalogGetAreaGroups(live)].flatMap { $0 }.compactMap { $0.link }.compactMap { $0.areaId })
+            let durationSeconds = try live.choose("durationSeconds", [try await EasyStaffPlanningLive.catalogGetServices(live)].flatMap { $0 }.compactMap { $0.durationSeconds })
+            try await live.refused(acceptsEmpty: true) { try await live.api.availability.getDaySchedule(serviceId: 987654321, date: date, areaId: areaId, durationSeconds: durationSeconds) }
+        }
+    }
+
     func test_getFirstAvailability1() async throws {
         try await liveCase(EasyStaffPlanningLive.api, "Availability.getFirstAvailability#1") { live in
             let serviceId = try live.choose("serviceId", [try await EasyStaffPlanningLive.portalsGetPrimaryField(live)].compactMap { $0.serviceId })
@@ -20,6 +60,26 @@ final class EasyStaffPlanningAvailabilityLiveTests: XCTestCase {
         try await liveCase(EasyStaffPlanningLive.api, "Availability.getFirstAvailability#unknown-id") { live in
             let areaId = try live.choose("areaId", [try await EasyStaffPlanningLive.catalogGetAreaGroups(live)].flatMap { $0 }.compactMap { $0.link }.compactMap { $0.areaId })
             try await live.refused(acceptsEmpty: true) { try await live.api.availability.getFirstAvailability(serviceId: 987654321, areaId: areaId) }
+        }
+    }
+
+    func test_getResourceAvailability1() async throws {
+        try await liveCase(EasyStaffPlanningLive.api, "Availability.getResourceAvailability#1") { live in
+            let serviceId = try live.choose("serviceId", [try await EasyStaffPlanningLive.portalsGetPrimaryField(live)].compactMap { $0.serviceId })
+            let areaId = try live.choose("areaId", [try await EasyStaffPlanningLive.catalogGetAreaGroups(live)].flatMap { $0 }.compactMap { $0.link }.compactMap { $0.areaId })
+            let date = try LiveText.date(LiveTemplates.resolve("{today+1}"))
+            let durationSeconds = try live.choose("durationSeconds", [try await EasyStaffPlanningLive.catalogGetServices(live)].flatMap { $0 }.compactMap { $0.durationSeconds })
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"EasyStaffPlanningResourceAvailability\"}}") { try await live.api.availability.getResourceAvailability(serviceId: serviceId, areaId: areaId, date: date, durationSeconds: durationSeconds) }
+            live.fingerprint { f in f.list(result) { item0 in EasyStaffPlanningLive.writeEasyStaffPlanningResourceAvailability(f, item0) } }
+        }
+    }
+
+    func test_getResourceAvailabilityUnknownId() async throws {
+        try await liveCase(EasyStaffPlanningLive.api, "Availability.getResourceAvailability#unknown-id") { live in
+            let areaId = try live.choose("areaId", [try await EasyStaffPlanningLive.catalogGetAreaGroups(live)].flatMap { $0 }.compactMap { $0.link }.compactMap { $0.areaId })
+            let date = try LiveText.date(LiveTemplates.resolve("{today+1}"))
+            let durationSeconds = try live.choose("durationSeconds", [try await EasyStaffPlanningLive.catalogGetServices(live)].flatMap { $0 }.compactMap { $0.durationSeconds })
+            try await live.refused(acceptsEmpty: true) { try await live.api.availability.getResourceAvailability(serviceId: 987654321, areaId: areaId, date: date, durationSeconds: durationSeconds) }
         }
     }
 }

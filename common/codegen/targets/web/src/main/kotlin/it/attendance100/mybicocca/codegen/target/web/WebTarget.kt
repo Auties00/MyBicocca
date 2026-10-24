@@ -35,7 +35,7 @@ class WebTarget : CodeTarget {
         val options = context.options.decodeOptions<Options>()
         val layout = TsLayout(spec, options.packageName ?: spec.id, options.runtimePath)
         val codecs = TsCodecs(layout)
-        val records = TsRecordEmitter(layout, codecs)
+        val records = TsRecordEmitter(layout, codecs, spec.client)
         val enums = TsEnumEmitter(layout)
         val scrapers = TsScrapeEmitter(spec, layout)
         val services = TsServiceEmitter(spec, layout, codecs, scrapers)

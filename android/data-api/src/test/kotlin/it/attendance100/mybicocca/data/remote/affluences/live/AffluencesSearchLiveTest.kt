@@ -2,12 +2,42 @@
 package it.attendance100.mybicocca.data.remote.affluences.live
 
 import it.attendance100.mybicocca.data.remote.affluences.api.AffluencesApi
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesSiteSearchRequest
+import it.attendance100.mybicocca.data.remote.runtime.live.LiveJson
 import it.attendance100.mybicocca.data.remote.runtime.live.LiveTest
+import kotlinx.serialization.decodeFromString
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 
 /** The live tests of the Affluences Search module, planned from `common/specs/affluences/tests.yaml`. */
 class AffluencesSearchLiveTest : LiveTest<AffluencesApi>(AffluencesLive) {
+    @Test
+    @DisplayName("Search.searchSites#1")
+    fun searchSites1() = case("Search.searchSites#1") {
+        val result = call("{\"k\":\"record\",\"n\":\"AffluencesSearchResults\"}", envelope = listOf("data")) {
+            api.search.searchSites(query = "bicocca")
+        } ?: return@case
+        fingerprint { writeAffluencesSearchResults(result) }
+    }
+
+    @Test
+    @DisplayName("Search.searchSitesFiltered#1")
+    fun searchSitesFiltered1() = case("Search.searchSitesFiltered#1") {
+        val result = call("{\"k\":\"record\",\"n\":\"AffluencesSiteSearchPage\"}", envelope = listOf("data")) {
+            api.search.searchSitesFiltered(body = LiveJson.decodeFromString<AffluencesSiteSearchRequest>("{\"search_query\":\"bicocca\",\"page\":0}"))
+        } ?: return@case
+        fingerprint { writeAffluencesSiteSearchPage(result) }
+    }
+
+    @Test
+    @DisplayName("Search.searchSitesOnMap#1")
+    fun searchSitesOnMap1() = case("Search.searchSitesOnMap#1") {
+        val result = call("{\"k\":\"record\",\"n\":\"AffluencesMapSearchResults\"}", envelope = listOf("data")) {
+            api.search.searchSitesOnMap(body = LiveJson.decodeFromString<AffluencesSiteSearchRequest>("{\"latitude\":45.518,\"longitude\":9.21375}"))
+        } ?: return@case
+        fingerprint { writeAffluencesMapSearchResults(result) }
+    }
+
     @Test
     @DisplayName("Search.getSiteFilters#1")
     fun getSiteFilters1() = case("Search.getSiteFilters#1") {
@@ -15,6 +45,24 @@ class AffluencesSearchLiveTest : LiveTest<AffluencesApi>(AffluencesLive) {
             api.search.getSiteFilters()
         } ?: return@case
         fingerprint { writeAffluencesSiteFilters(result) }
+    }
+
+    @Test
+    @DisplayName("Search.getPlaylist#1")
+    fun getPlaylist1() = case("Search.getPlaylist#1") {
+        val playlistId = choose("playlistId", listOf(searchSearchSites()).mapNotNull { it.playlists }.flatten().mapNotNull { it.id })
+        val result = call("{\"k\":\"record\",\"n\":\"AffluencesPlaylist\"}", envelope = listOf("data")) {
+            api.search.getPlaylist(playlistId = playlistId)
+        } ?: return@case
+        fingerprint { writeAffluencesPlaylist(result) }
+    }
+
+    @Test
+    @DisplayName("Search.getPlaylist#unknown-id")
+    fun getPlaylistUnknownId() = case("Search.getPlaylist#unknown-id") {
+        refused(acceptsEmpty = true) {
+            api.search.getPlaylist(playlistId = 987654321)
+        }
     }
 
     @Test

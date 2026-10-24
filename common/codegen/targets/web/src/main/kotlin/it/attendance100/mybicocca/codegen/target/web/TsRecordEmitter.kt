@@ -1,5 +1,6 @@
 package it.attendance100.mybicocca.codegen.target.web
 
+import it.attendance100.mybicocca.codegen.model.ClientSpec
 import it.attendance100.mybicocca.codegen.model.Codec
 import it.attendance100.mybicocca.codegen.model.DefaultValue
 import it.attendance100.mybicocca.codegen.model.Field
@@ -14,7 +15,7 @@ import it.attendance100.mybicocca.codegen.target.web.TsSyntax.doc
  * property names and apply the fields' defaults and codecs. A delimited record's functions
  * read and write its string form instead.
  */
-internal class TsRecordEmitter(private val layout: TsLayout, private val codecs: TsCodecs) {
+internal class TsRecordEmitter(private val layout: TsLayout, private val codecs: TsCodecs, private val client: ClientSpec = ClientSpec.DEFAULT) {
 
     fun emit(record: RecordType, file: TsFile) {
         val out = file.body
@@ -51,7 +52,9 @@ internal class TsRecordEmitter(private val layout: TsLayout, private val codecs:
         out.block("export function ${layout.encoderName(record.name)}($parameter: ${record.name}): JsonObject {") {
             block("return {", "};") {
                 for (field in record.fields) {
-                    line("${TsSyntax.string(field.wireName)}: ${codecs.encode(property(field), field.type, field.codec, field.nullable, file)},")
+                    val entry = "${TsSyntax.string(field.wireName)}: ${codecs.encode(property(field), field.type, field.codec, field.nullable, file)}"
+                    val kept = kept(field)
+                    line(if (kept == null) "$entry," else "...($kept ? { $entry } : {}),")
                 }
             }
         }
@@ -81,6 +84,38 @@ internal class TsRecordEmitter(private val layout: TsLayout, private val codecs:
         out.block("export function ${layout.encoderName(record.name)}(value: ${record.name}): string {") {
             line("return [${fields.joinToString(", ") { format(it, file) }}].join($separator);")
         }
+    }
+
+    /**
+     * The condition under which [field] is written, as the client's [ClientSpec.sendsDefaults] and
+     * [ClientSpec.sendsNulls] say; null when it always is.
+     */
+    private fun kept(field: Field): String? {
+        val value = property(field)
+        val conditions = buildList {
+            if (!client.sendsNulls && field.nullable) add("$value !== null")
+            val default = field.default
+            if (!client.sendsDefaults && default != null) {
+                when (default) {
+                    DefaultValue.Null -> add("$value !== null")
+                    DefaultValue.EmptyList -> add(if (field.nullable) "($value?.length ?? 0) > 0" else "$value.length > 0")
+                    DefaultValue.EmptyMap -> {
+                        val type = field.type as TypeRef.MapOf
+                        val size = if (type.key == TypeRef.STRING) "Object.keys($value).length" else "$value.size"
+                        add(if (field.nullable) "$value !== null && $size > 0" else "$size > 0")
+                    }
+                    DefaultValue.Zero -> add(
+                        "$value !== " + when ((field.type as TypeRef.Primitive).kind) {
+                            PrimitiveKind.STRING -> "\"\""
+                            PrimitiveKind.BOOLEAN -> "false"
+                            else -> "0"
+                        }
+                    )
+                    is DefaultValue.Literal -> add("$value !== ${layout.literal(field.type, default)}")
+                }
+            }
+        }
+        return conditions.distinct().joinToString(" && ").ifEmpty { null }
     }
 
     private fun property(field: Field): String =

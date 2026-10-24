@@ -7,59 +7,59 @@ import { Esse3Live, badgeGetNewBadges, personalDataGetCareers, structureGetCours
 // The live tests of the Esse3 Badge module, planned from common/specs/esse3/tests.yaml.
 describe("Esse3 Badge", () => {
   liveCase(Esse3Live, "Badge.getNewBadges#1", {}, async (live) => {
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3BadgeData\"}}", {}, () => live.api.badge.getNewBadges());
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3BadgeData\"}}", {}, async () => live.api.badge.getNewBadges());
     live.fingerprint((f) => f.list(result, (it) => writeEsse3BadgeData(f, it)));
   });
 
   liveCase(Esse3Live, "Badge.getNewBadges#2", { index: 1 }, async (live) => {
     const studentId = live.choose("studentId", [await personalDataGetCareers(live)].flat().map((it) => it.studentId).filter(isPresent));
     const courseOfStudyCode = live.choose("courseOfStudyCode", [await structureGetCoursesOfStudy(live)].flat().map((it) => it.courseOfStudyCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3BadgeData\"}}", {}, () => live.api.badge.getNewBadges({ studentId: studentId, courseOfStudyCode: courseOfStudyCode, studentStatusCode: "I", matStatusCode: "I" }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3BadgeData\"}}", {}, async () => live.api.badge.getNewBadges({ studentId: studentId, courseOfStudyCode: courseOfStudyCode, studentStatusCode: "I", matStatusCode: "I" }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3BadgeData(f, it)));
   });
 
   liveCase(Esse3Live, "Badge.getNewBadges#3", { index: 2 }, async (live) => {
     const fiscalCode = live.choose("fiscalCode", [await personalDataGetCareers(live)].flat().map((it) => it.fiscalCode).filter(isPresent));
     const courseOfStudyCode = live.choose("courseOfStudyCode", [await structureGetCoursesOfStudy(live)].flat().map((it) => it.courseOfStudyCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3BadgeData\"}}", {}, () => live.api.badge.getNewBadges({ fiscalCode: fiscalCode, courseOfStudyCode: courseOfStudyCode, studentStatusCode: "A", matStatusCode: "S" }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3BadgeData\"}}", {}, async () => live.api.badge.getNewBadges({ fiscalCode: fiscalCode, courseOfStudyCode: courseOfStudyCode, studentStatusCode: "A", matStatusCode: "S" }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3BadgeData(f, it)));
   });
 
   liveCase(Esse3Live, "Badge.getNewBadges#4", { index: 3 }, async (live) => {
     const studentId = live.choose("studentId", [await personalDataGetCareers(live)].flat().map((it) => it.studentId).filter(isPresent));
     const fiscalCode = live.choose("fiscalCode", [await personalDataGetCareers(live)].flat().map((it) => it.fiscalCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3BadgeData\"}}", {}, () => live.api.badge.getNewBadges({ studentId: studentId, fiscalCode: fiscalCode, studentStatusCode: "X", matStatusCode: "A" }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3BadgeData\"}}", {}, async () => live.api.badge.getNewBadges({ studentId: studentId, fiscalCode: fiscalCode, studentStatusCode: "X", matStatusCode: "A" }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3BadgeData(f, it)));
   });
 
   liveCase(Esse3Live, "Badge.getNewBadges#5", { index: 4 }, async (live) => {
     const studentId = live.choose("studentId", [await personalDataGetCareers(live)].flat().map((it) => it.studentId).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3BadgeData\"}}", {}, () => live.api.badge.getNewBadges({ studentId: studentId, studentStatusCode: "S", matStatusCode: "S" }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3BadgeData\"}}", {}, async () => live.api.badge.getNewBadges({ studentId: studentId, studentStatusCode: "S", matStatusCode: "S" }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3BadgeData(f, it)));
   });
 
   liveCase(Esse3Live, "Badge.getNewBadges#6", { index: 5 }, async (live) => {
     const fiscalCode = live.choose("fiscalCode", [await personalDataGetCareers(live)].flat().map((it) => it.fiscalCode).filter(isPresent));
     const courseOfStudyCode = live.choose("courseOfStudyCode", [await structureGetCoursesOfStudy(live)].flat().map((it) => it.courseOfStudyCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3BadgeData\"}}", {}, () => live.api.badge.getNewBadges({ fiscalCode: fiscalCode, courseOfStudyCode: courseOfStudyCode, studentStatusCode: "S" }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3BadgeData\"}}", {}, async () => live.api.badge.getNewBadges({ fiscalCode: fiscalCode, courseOfStudyCode: courseOfStudyCode, studentStatusCode: "S" }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3BadgeData(f, it)));
   });
 
   liveCase(Esse3Live, "Badge.getBadgeBlobFrontPage#1", {}, async (live) => {
     const badgeBlobId = live.choose("badgeBlobId", [await badgeGetNewBadges(live)].flat().map((it) => it.badgeBlobId).filter(isPresent));
-    await live.call(undefined, {}, () => live.api.badge.getBadgeBlobFrontPage(badgeBlobId));
+    await live.call(undefined, {}, async () => live.api.badge.getBadgeBlobFrontPage(badgeBlobId));
   });
 
   liveCase(Esse3Live, "Badge.getBadgeBlobFrontPage#unknown-id", {}, async (live) => {
-    await live.refused(true, () => live.api.badge.getBadgeBlobFrontPage(987654321));
+    await live.refused(true, async () => live.api.badge.getBadgeBlobFrontPage(987654321));
   });
 
   liveCase(Esse3Live, "Badge.getBadgeBlobRearPage#1", {}, async (live) => {
     const badgeBlobId = live.choose("badgeBlobId", [await badgeGetNewBadges(live)].flat().map((it) => it.badgeBlobId).filter(isPresent));
-    await live.call(undefined, {}, () => live.api.badge.getBadgeBlobRearPage(badgeBlobId));
+    await live.call(undefined, {}, async () => live.api.badge.getBadgeBlobRearPage(badgeBlobId));
   });
 
   liveCase(Esse3Live, "Badge.getBadgeBlobRearPage#unknown-id", {}, async (live) => {
-    await live.refused(true, () => live.api.badge.getBadgeBlobRearPage(987654321));
+    await live.refused(true, async () => live.api.badge.getBadgeBlobRearPage(987654321));
   });
 });

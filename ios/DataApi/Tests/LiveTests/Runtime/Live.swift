@@ -92,7 +92,7 @@ final class LiveRun<Api: Sendable>: @unchecked Sendable {
         self.live = live
         report = LiveReport(api: live.id)
         checker = LiveShapes(catalog: live.shapes, report: report)
-        report.start(skips: live.skips)
+        report.start(skips: live.skips, declared: checker.fields)
     }
 
     lazy var api: Api = live.create(LiveObserver(run: self), URLSession(configuration: .ephemeral), false)
@@ -406,6 +406,21 @@ func liveCase<Api: Sendable>(
 enum LiveTemplates {
     static func resolve(_ template: String) -> String {
         parse(Array(template), 0, nested: false).0
+    }
+
+    /// `json` with the placeholders of its strings replaced.
+    static func resolveJson(_ json: String) -> String {
+        func resolveStrings(_ value: Any) -> Any {
+            switch value {
+            case let string as String: return resolve(string)
+            case let array as [Any]: return array.map(resolveStrings)
+            case let object as [String: Any]: return object.mapValues(resolveStrings)
+            default: return value
+            }
+        }
+        guard let parsed = try? JSONSerialization.jsonObject(with: Data(json.utf8), options: [.fragmentsAllowed]),
+              let data = try? JSONSerialization.data(withJSONObject: resolveStrings(parsed), options: [.fragmentsAllowed]) else { return json }
+        return String(decoding: data, as: UTF8.self)
     }
 
     private static func parse(_ text: [Character], _ start: Int, nested: Bool) -> (String, Int) {

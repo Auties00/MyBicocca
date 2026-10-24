@@ -23,8 +23,8 @@ export function decodeMoodleNamedValue(json: unknown): MoodleNamedValue | undefi
 
 export function encodeMoodleNamedValue(value: MoodleNamedValue): JsonObject {
   return {
-    "name": value.name,
-    "value": value.value,
+    ...(value.name !== "" ? { "name": value.name } : {}),
+    ...(value.value !== "" ? { "value": value.value } : {}),
   };
 }
 
@@ -55,10 +55,10 @@ export function decodeMoodleAttemptDataResponse(json: unknown): MoodleAttemptDat
 export function encodeMoodleAttemptDataResponse(value: MoodleAttemptDataResponse): JsonObject {
   return {
     "attempt": encodeMoodleQuizAttempt(value.attempt),
-    "messages": value.messages,
-    "nextpage": value.nextPage,
-    "questions": value.questions.map((item) => encodeMoodleQuizQuestion(item)),
-    "warnings": value.warnings.map((item) => encodeMoodleWarning(item)),
+    ...(value.messages.length > 0 ? { "messages": value.messages } : {}),
+    ...(value.nextPage !== 0 ? { "nextpage": value.nextPage } : {}),
+    ...(value.questions.length > 0 ? { "questions": value.questions.map((item) => encodeMoodleQuizQuestion(item)) } : {}),
+    ...(value.warnings.length > 0 ? { "warnings": value.warnings.map((item) => encodeMoodleWarning(item)) } : {}),
   };
 }
 
@@ -126,23 +126,23 @@ export function decodeMoodleQuizAttempt(json: unknown): MoodleQuizAttempt | unde
 
 export function encodeMoodleQuizAttempt(value: MoodleQuizAttempt): JsonObject {
   return {
-    "id": value.id,
-    "quiz": value.quiz,
-    "userid": value.userId,
-    "attempt": value.attempt,
-    "uniqueid": value.uniqueId,
-    "layout": value.layout,
-    "currentpage": value.currentPage,
-    "preview": value.preview,
-    "state": value.state,
-    "timestart": value.timeStart,
-    "timefinish": value.timeFinish,
-    "timemodified": value.timeModified,
-    "timemodifiedoffline": value.timeModifiedOffline,
-    "timecheckstate": value.timeCheckState,
-    "sumgrades": value.sumGrades,
-    "gradeitemmarks": value.gradeItemMarks.map((item) => encodeMoodleGradeItemMark(item)),
-    "gradednotificationsenttime": value.gradedNotificationSentTime,
+    ...(value.id !== null ? { "id": value.id } : {}),
+    ...(value.quiz !== null ? { "quiz": value.quiz } : {}),
+    ...(value.userId !== null ? { "userid": value.userId } : {}),
+    ...(value.attempt !== null ? { "attempt": value.attempt } : {}),
+    ...(value.uniqueId !== null ? { "uniqueid": value.uniqueId } : {}),
+    ...(value.layout !== null ? { "layout": value.layout } : {}),
+    ...(value.currentPage !== null ? { "currentpage": value.currentPage } : {}),
+    ...(value.preview !== null ? { "preview": value.preview } : {}),
+    ...(value.state !== null ? { "state": value.state } : {}),
+    ...(value.timeStart !== null ? { "timestart": value.timeStart } : {}),
+    ...(value.timeFinish !== null ? { "timefinish": value.timeFinish } : {}),
+    ...(value.timeModified !== null ? { "timemodified": value.timeModified } : {}),
+    ...(value.timeModifiedOffline !== null ? { "timemodifiedoffline": value.timeModifiedOffline } : {}),
+    ...(value.timeCheckState !== null ? { "timecheckstate": value.timeCheckState } : {}),
+    ...(value.sumGrades !== null ? { "sumgrades": value.sumGrades } : {}),
+    ...(value.gradeItemMarks.length > 0 ? { "gradeitemmarks": value.gradeItemMarks.map((item) => encodeMoodleGradeItemMark(item)) } : {}),
+    ...(value.gradedNotificationSentTime !== null ? { "gradednotificationsenttime": value.gradedNotificationSentTime } : {}),
   };
 }
 
@@ -169,9 +169,9 @@ export function decodeMoodleGradeItemMark(json: unknown): MoodleGradeItemMark | 
 
 export function encodeMoodleGradeItemMark(value: MoodleGradeItemMark): JsonObject {
   return {
-    "name": value.name,
-    "grade": value.grade,
-    "maxgrade": value.maxGrade,
+    ...(value.name !== "" ? { "name": value.name } : {}),
+    ...(value.grade !== 0 ? { "grade": value.grade } : {}),
+    ...(value.maxGrade !== 0 ? { "maxgrade": value.maxGrade } : {}),
   };
 }
 
@@ -243,24 +243,24 @@ export function decodeMoodleQuizQuestion(json: unknown): MoodleQuizQuestion | un
 
 export function encodeMoodleQuizQuestion(value: MoodleQuizQuestion): JsonObject {
   return {
-    "slot": value.slot,
-    "type": value.type,
-    "page": value.page,
-    "questionnumber": value.questionNumber,
-    "number": value.number,
-    "html": value.html,
-    "responsefileareas": value.responseFileAreas.map((item) => encodeMoodleResponseFileArea(item)),
-    "sequencecheck": value.sequenceCheck,
-    "lastactiontime": value.lastActionTime,
-    "hasautosavedstep": value.hasAutoSavedStep,
-    "flagged": value.flagged,
-    "state": value.state,
-    "stateclass": value.stateClass,
-    "status": value.status,
-    "blockedbyprevious": value.blockedByPrevious,
-    "mark": value.mark,
-    "maxmark": value.maxMark,
-    "settings": value.settings,
+    ...(value.slot !== 0 ? { "slot": value.slot } : {}),
+    ...(value.type !== "" ? { "type": value.type } : {}),
+    ...(value.page !== 0 ? { "page": value.page } : {}),
+    ...(value.questionNumber !== "" ? { "questionnumber": value.questionNumber } : {}),
+    ...(value.number !== null ? { "number": value.number } : {}),
+    ...(value.html !== "" ? { "html": value.html } : {}),
+    ...(value.responseFileAreas.length > 0 ? { "responsefileareas": value.responseFileAreas.map((item) => encodeMoodleResponseFileArea(item)) } : {}),
+    ...(value.sequenceCheck !== null ? { "sequencecheck": value.sequenceCheck } : {}),
+    ...(value.lastActionTime !== null ? { "lastactiontime": value.lastActionTime } : {}),
+    ...(value.hasAutoSavedStep !== null ? { "hasautosavedstep": value.hasAutoSavedStep } : {}),
+    ...(value.flagged !== false ? { "flagged": value.flagged } : {}),
+    ...(value.state !== null ? { "state": value.state } : {}),
+    ...(value.stateClass !== null ? { "stateclass": value.stateClass } : {}),
+    ...(value.status !== null ? { "status": value.status } : {}),
+    ...(value.blockedByPrevious !== null ? { "blockedbyprevious": value.blockedByPrevious } : {}),
+    ...(value.mark !== null ? { "mark": value.mark } : {}),
+    ...(value.maxMark !== null ? { "maxmark": value.maxMark } : {}),
+    ...(value.settings !== null ? { "settings": value.settings } : {}),
   };
 }
 
@@ -283,8 +283,8 @@ export function decodeMoodleResponseFileArea(json: unknown): MoodleResponseFileA
 
 export function encodeMoodleResponseFileArea(value: MoodleResponseFileArea): JsonObject {
   return {
-    "area": value.area,
-    "files": value.files.map((item) => encodeMoodleFile(item)),
+    ...(value.area !== "" ? { "area": value.area } : {}),
+    ...(value.files.length > 0 ? { "files": value.files.map((item) => encodeMoodleFile(item)) } : {}),
   };
 }
 
@@ -313,11 +313,11 @@ export function decodeMoodleAttemptReviewResponse(json: unknown): MoodleAttemptR
 
 export function encodeMoodleAttemptReviewResponse(value: MoodleAttemptReviewResponse): JsonObject {
   return {
-    "grade": value.grade,
+    ...(value.grade !== "" ? { "grade": value.grade } : {}),
     "attempt": encodeMoodleQuizAttempt(value.attempt),
-    "additionaldata": value.additionalData.map((item) => encodeMoodleAttemptReviewData(item)),
-    "questions": value.questions.map((item) => encodeMoodleQuizQuestion(item)),
-    "warnings": value.warnings.map((item) => encodeMoodleWarning(item)),
+    ...(value.additionalData.length > 0 ? { "additionaldata": value.additionalData.map((item) => encodeMoodleAttemptReviewData(item)) } : {}),
+    ...(value.questions.length > 0 ? { "questions": value.questions.map((item) => encodeMoodleQuizQuestion(item)) } : {}),
+    ...(value.warnings.length > 0 ? { "warnings": value.warnings.map((item) => encodeMoodleWarning(item)) } : {}),
   };
 }
 
@@ -343,9 +343,9 @@ export function decodeMoodleAttemptReviewData(json: unknown): MoodleAttemptRevie
 
 export function encodeMoodleAttemptReviewData(value: MoodleAttemptReviewData): JsonObject {
   return {
-    "id": value.id,
-    "title": value.title,
-    "content": value.content,
+    ...(value.id !== "" ? { "id": value.id } : {}),
+    ...(value.title !== "" ? { "title": value.title } : {}),
+    ...(value.content !== "" ? { "content": value.content } : {}),
   };
 }
 
@@ -370,9 +370,9 @@ export function decodeMoodleAttemptSummaryResponse(json: unknown): MoodleAttempt
 
 export function encodeMoodleAttemptSummaryResponse(value: MoodleAttemptSummaryResponse): JsonObject {
   return {
-    "questions": value.questions.map((item) => encodeMoodleQuizQuestion(item)),
-    "totalunanswered": value.totalUnanswered,
-    "warnings": value.warnings.map((item) => encodeMoodleWarning(item)),
+    ...(value.questions.length > 0 ? { "questions": value.questions.map((item) => encodeMoodleQuizQuestion(item)) } : {}),
+    ...(value.totalUnanswered !== null ? { "totalunanswered": value.totalUnanswered } : {}),
+    ...(value.warnings.length > 0 ? { "warnings": value.warnings.map((item) => encodeMoodleWarning(item)) } : {}),
   };
 }
 
@@ -416,15 +416,15 @@ export function decodeMoodleQuizAccessInformation(json: unknown): MoodleQuizAcce
 
 export function encodeMoodleQuizAccessInformation(value: MoodleQuizAccessInformation): JsonObject {
   return {
-    "canattempt": value.canAttempt,
-    "canmanage": value.canManage,
-    "canpreview": value.canPreview,
-    "canreviewmyattempts": value.canReviewMyAttempts,
-    "canviewreports": value.canViewReports,
-    "accessrules": value.accessRules,
-    "activerulenames": value.activeRuleNames,
-    "preventaccessreasons": value.preventAccessReasons,
-    "warnings": value.warnings.map((item) => encodeMoodleWarning(item)),
+    ...(value.canAttempt !== false ? { "canattempt": value.canAttempt } : {}),
+    ...(value.canManage !== false ? { "canmanage": value.canManage } : {}),
+    ...(value.canPreview !== false ? { "canpreview": value.canPreview } : {}),
+    ...(value.canReviewMyAttempts !== false ? { "canreviewmyattempts": value.canReviewMyAttempts } : {}),
+    ...(value.canViewReports !== false ? { "canviewreports": value.canViewReports } : {}),
+    ...(value.accessRules.length > 0 ? { "accessrules": value.accessRules } : {}),
+    ...(value.activeRuleNames.length > 0 ? { "activerulenames": value.activeRuleNames } : {}),
+    ...(value.preventAccessReasons.length > 0 ? { "preventaccessreasons": value.preventAccessReasons } : {}),
+    ...(value.warnings.length > 0 ? { "warnings": value.warnings.map((item) => encodeMoodleWarning(item)) } : {}),
   };
 }
 
@@ -446,8 +446,8 @@ export function decodeMoodleQuizzesResponse(json: unknown): MoodleQuizzesRespons
 
 export function encodeMoodleQuizzesResponse(value: MoodleQuizzesResponse): JsonObject {
   return {
-    "quizzes": value.quizzes.map((item) => encodeMoodleQuiz(item)),
-    "warnings": value.warnings.map((item) => encodeMoodleWarning(item)),
+    ...(value.quizzes.length > 0 ? { "quizzes": value.quizzes.map((item) => encodeMoodleQuiz(item)) } : {}),
+    ...(value.warnings.length > 0 ? { "warnings": value.warnings.map((item) => encodeMoodleWarning(item)) } : {}),
   };
 }
 
@@ -620,58 +620,58 @@ export function decodeMoodleQuiz(json: unknown): MoodleQuiz | undefined {
 
 export function encodeMoodleQuiz(value: MoodleQuiz): JsonObject {
   return {
-    "id": value.id,
-    "coursemodule": value.courseModule,
-    "course": value.course,
-    "name": value.name,
-    "intro": value.intro,
-    "introformat": value.introFormat,
-    "introfiles": value.introFiles.map((item) => encodeMoodleFile(item)),
-    "section": value.section,
-    "visible": value.visible,
-    "groupmode": value.groupMode,
-    "groupingid": value.groupingId,
-    "lang": value.lang,
-    "timeopen": value.timeOpen,
-    "timeclose": value.timeClose,
-    "timelimit": value.timeLimit,
-    "overduehandling": value.overdueHandling,
-    "graceperiod": value.gracePeriod,
-    "preferredbehaviour": value.preferredBehaviour,
-    "canredoquestions": value.canRedoQuestions,
-    "attempts": value.attempts,
-    "attemptonlast": value.attemptOnLast,
-    "grademethod": value.gradeMethod,
-    "decimalpoints": value.decimalPoints,
-    "questiondecimalpoints": value.questionDecimalPoints,
-    "reviewattempt": value.reviewAttempt,
-    "reviewcorrectness": value.reviewCorrectness,
-    "reviewmaxmarks": value.reviewMaxMarks,
-    "reviewmarks": value.reviewMarks,
-    "reviewspecificfeedback": value.reviewSpecificFeedback,
-    "reviewgeneralfeedback": value.reviewGeneralFeedback,
-    "reviewrightanswer": value.reviewRightAnswer,
-    "reviewoverallfeedback": value.reviewOverallFeedback,
-    "questionsperpage": value.questionsPerPage,
-    "navmethod": value.navMethod,
-    "shuffleanswers": value.shuffleAnswers,
-    "sumgrades": value.sumGrades,
-    "grade": value.grade,
-    "timecreated": value.timeCreated,
-    "timemodified": value.timeModified,
-    "password": value.password,
-    "subnet": value.subnet,
-    "browsersecurity": value.browserSecurity,
-    "delay1": value.delay1,
-    "delay2": value.delay2,
-    "showuserpicture": value.showUserPicture,
-    "showblocks": value.showBlocks,
-    "completionattemptsexhausted": value.completionAttemptsExhausted,
-    "completionpass": value.completionPass,
-    "allowofflineattempts": value.allowOfflineAttempts,
-    "autosaveperiod": value.autoSavePeriod,
-    "hasfeedback": value.hasFeedback,
-    "hasquestions": value.hasQuestions,
+    ...(value.id !== 0 ? { "id": value.id } : {}),
+    ...(value.courseModule !== 0 ? { "coursemodule": value.courseModule } : {}),
+    ...(value.course !== 0 ? { "course": value.course } : {}),
+    ...(value.name !== "" ? { "name": value.name } : {}),
+    ...(value.intro !== null ? { "intro": value.intro } : {}),
+    ...(value.introFormat !== null ? { "introformat": value.introFormat } : {}),
+    ...(value.introFiles.length > 0 ? { "introfiles": value.introFiles.map((item) => encodeMoodleFile(item)) } : {}),
+    ...(value.section !== null ? { "section": value.section } : {}),
+    ...(value.visible !== null ? { "visible": value.visible } : {}),
+    ...(value.groupMode !== null ? { "groupmode": value.groupMode } : {}),
+    ...(value.groupingId !== null ? { "groupingid": value.groupingId } : {}),
+    ...(value.lang !== null ? { "lang": value.lang } : {}),
+    ...(value.timeOpen !== null ? { "timeopen": value.timeOpen } : {}),
+    ...(value.timeClose !== null ? { "timeclose": value.timeClose } : {}),
+    ...(value.timeLimit !== null ? { "timelimit": value.timeLimit } : {}),
+    ...(value.overdueHandling !== null ? { "overduehandling": value.overdueHandling } : {}),
+    ...(value.gracePeriod !== null ? { "graceperiod": value.gracePeriod } : {}),
+    ...(value.preferredBehaviour !== null ? { "preferredbehaviour": value.preferredBehaviour } : {}),
+    ...(value.canRedoQuestions !== null ? { "canredoquestions": value.canRedoQuestions } : {}),
+    ...(value.attempts !== null ? { "attempts": value.attempts } : {}),
+    ...(value.attemptOnLast !== null ? { "attemptonlast": value.attemptOnLast } : {}),
+    ...(value.gradeMethod !== null ? { "grademethod": value.gradeMethod } : {}),
+    ...(value.decimalPoints !== null ? { "decimalpoints": value.decimalPoints } : {}),
+    ...(value.questionDecimalPoints !== null ? { "questiondecimalpoints": value.questionDecimalPoints } : {}),
+    ...(value.reviewAttempt !== null ? { "reviewattempt": value.reviewAttempt } : {}),
+    ...(value.reviewCorrectness !== null ? { "reviewcorrectness": value.reviewCorrectness } : {}),
+    ...(value.reviewMaxMarks !== null ? { "reviewmaxmarks": value.reviewMaxMarks } : {}),
+    ...(value.reviewMarks !== null ? { "reviewmarks": value.reviewMarks } : {}),
+    ...(value.reviewSpecificFeedback !== null ? { "reviewspecificfeedback": value.reviewSpecificFeedback } : {}),
+    ...(value.reviewGeneralFeedback !== null ? { "reviewgeneralfeedback": value.reviewGeneralFeedback } : {}),
+    ...(value.reviewRightAnswer !== null ? { "reviewrightanswer": value.reviewRightAnswer } : {}),
+    ...(value.reviewOverallFeedback !== null ? { "reviewoverallfeedback": value.reviewOverallFeedback } : {}),
+    ...(value.questionsPerPage !== null ? { "questionsperpage": value.questionsPerPage } : {}),
+    ...(value.navMethod !== null ? { "navmethod": value.navMethod } : {}),
+    ...(value.shuffleAnswers !== null ? { "shuffleanswers": value.shuffleAnswers } : {}),
+    ...(value.sumGrades !== null ? { "sumgrades": value.sumGrades } : {}),
+    ...(value.grade !== null ? { "grade": value.grade } : {}),
+    ...(value.timeCreated !== null ? { "timecreated": value.timeCreated } : {}),
+    ...(value.timeModified !== null ? { "timemodified": value.timeModified } : {}),
+    ...(value.password !== null ? { "password": value.password } : {}),
+    ...(value.subnet !== null ? { "subnet": value.subnet } : {}),
+    ...(value.browserSecurity !== null ? { "browsersecurity": value.browserSecurity } : {}),
+    ...(value.delay1 !== null ? { "delay1": value.delay1 } : {}),
+    ...(value.delay2 !== null ? { "delay2": value.delay2 } : {}),
+    ...(value.showUserPicture !== null ? { "showuserpicture": value.showUserPicture } : {}),
+    ...(value.showBlocks !== null ? { "showblocks": value.showBlocks } : {}),
+    ...(value.completionAttemptsExhausted !== null ? { "completionattemptsexhausted": value.completionAttemptsExhausted } : {}),
+    ...(value.completionPass !== null ? { "completionpass": value.completionPass } : {}),
+    ...(value.allowOfflineAttempts !== null ? { "allowofflineattempts": value.allowOfflineAttempts } : {}),
+    ...(value.autoSavePeriod !== null ? { "autosaveperiod": value.autoSavePeriod } : {}),
+    ...(value.hasFeedback !== null ? { "hasfeedback": value.hasFeedback } : {}),
+    ...(value.hasQuestions !== null ? { "hasquestions": value.hasQuestions } : {}),
   };
 }
 
@@ -693,8 +693,8 @@ export function decodeMoodleUserAttemptsResponse(json: unknown): MoodleUserAttem
 
 export function encodeMoodleUserAttemptsResponse(value: MoodleUserAttemptsResponse): JsonObject {
   return {
-    "attempts": value.attempts.map((item) => encodeMoodleQuizAttempt(item)),
-    "warnings": value.warnings.map((item) => encodeMoodleWarning(item)),
+    ...(value.attempts.length > 0 ? { "attempts": value.attempts.map((item) => encodeMoodleQuizAttempt(item)) } : {}),
+    ...(value.warnings.length > 0 ? { "warnings": value.warnings.map((item) => encodeMoodleWarning(item)) } : {}),
   };
 }
 
@@ -723,10 +723,10 @@ export function decodeMoodleUserBestGradeResponse(json: unknown): MoodleUserBest
 
 export function encodeMoodleUserBestGradeResponse(value: MoodleUserBestGradeResponse): JsonObject {
   return {
-    "hasgrade": value.hasGrade,
-    "grade": value.grade,
-    "gradetopass": value.gradeToPass,
-    "warnings": value.warnings.map((item) => encodeMoodleWarning(item)),
+    ...(value.hasGrade !== false ? { "hasgrade": value.hasGrade } : {}),
+    ...(value.grade !== null ? { "grade": value.grade } : {}),
+    ...(value.gradeToPass !== null ? { "gradetopass": value.gradeToPass } : {}),
+    ...(value.warnings.length > 0 ? { "warnings": value.warnings.map((item) => encodeMoodleWarning(item)) } : {}),
   };
 }
 
@@ -749,8 +749,8 @@ export function decodeMoodleProcessAttemptResponse(json: unknown): MoodleProcess
 
 export function encodeMoodleProcessAttemptResponse(value: MoodleProcessAttemptResponse): JsonObject {
   return {
-    "state": value.state,
-    "warnings": value.warnings.map((item) => encodeMoodleWarning(item)),
+    ...(value.state !== "" ? { "state": value.state } : {}),
+    ...(value.warnings.length > 0 ? { "warnings": value.warnings.map((item) => encodeMoodleWarning(item)) } : {}),
   };
 }
 
@@ -773,6 +773,6 @@ export function decodeMoodleStartAttemptResponse(json: unknown): MoodleStartAtte
 export function encodeMoodleStartAttemptResponse(value: MoodleStartAttemptResponse): JsonObject {
   return {
     "attempt": encodeMoodleQuizAttempt(value.attempt),
-    "warnings": value.warnings.map((item) => encodeMoodleWarning(item)),
+    ...(value.warnings.length > 0 ? { "warnings": value.warnings.map((item) => encodeMoodleWarning(item)) } : {}),
   };
 }

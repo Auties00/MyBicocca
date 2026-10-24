@@ -79,11 +79,21 @@ public struct EasyStaffAttendanceRecord: Codable, Hashable, Sendable {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(courseCode, forKey: .courseCode)
         try container.encode(courseName, forKey: .courseName)
-        try container.encode(attendancePercentage, forKey: .attendancePercentage)
-        try container.encode(lessonsAttended, forKey: .lessonsAttended)
-        try container.encode(totalHours, forKey: .totalHours)
-        try container.encode(requirementProgressPercentage, forKey: .requirementProgressPercentage)
-        try container.encode(state, forKey: .state)
+        if attendancePercentage != 0 {
+            try container.encode(attendancePercentage, forKey: .attendancePercentage)
+        }
+        if lessonsAttended != 0 {
+            try container.encode(lessonsAttended, forKey: .lessonsAttended)
+        }
+        if totalHours != 0 {
+            try container.encode(totalHours, forKey: .totalHours)
+        }
+        if requirementProgressPercentage != 0 {
+            try container.encode(requirementProgressPercentage, forKey: .requirementProgressPercentage)
+        }
+        if state != nil {
+            try container.encode(state, forKey: .state)
+        }
     }
 }
 
@@ -217,6 +227,8 @@ public struct EasyStaffCertifyAttendanceResult: Codable, Hashable, Sendable {
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(result, forKey: .result)
-        try container.encode(message, forKey: .message)
+        if message != "" {
+            try container.encode(message, forKey: .message)
+        }
     }
 }

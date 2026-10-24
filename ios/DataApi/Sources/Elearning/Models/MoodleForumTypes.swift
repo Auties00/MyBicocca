@@ -30,8 +30,12 @@ public struct MoodleAddDiscussionResponse: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(discussionId, forKey: .discussionId)
-        try container.encode(warnings, forKey: .warnings)
+        if discussionId != 0 {
+            try container.encode(discussionId, forKey: .discussionId)
+        }
+        if !warnings.isEmpty {
+            try container.encode(warnings, forKey: .warnings)
+        }
     }
 }
 
@@ -73,10 +77,16 @@ public struct MoodleAddDiscussionPostResponse: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(postId, forKey: .postId)
-        try container.encode(warnings, forKey: .warnings)
+        if postId != 0 {
+            try container.encode(postId, forKey: .postId)
+        }
+        if !warnings.isEmpty {
+            try container.encode(warnings, forKey: .warnings)
+        }
         try container.encode(post, forKey: .post)
-        try container.encode(messages, forKey: .messages)
+        if !messages.isEmpty {
+            try container.encode(messages, forKey: .messages)
+        }
     }
 }
 
@@ -229,29 +239,71 @@ public struct MoodleForumPost: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(id, forKey: .id)
-        try container.encode(subject, forKey: .subject)
-        try container.encode(replySubject, forKey: .replySubject)
-        try container.encode(message, forKey: .message)
-        try container.encode(messageFormat, forKey: .messageFormat)
+        if id != 0 {
+            try container.encode(id, forKey: .id)
+        }
+        if subject != "" {
+            try container.encode(subject, forKey: .subject)
+        }
+        if replySubject != "" {
+            try container.encode(replySubject, forKey: .replySubject)
+        }
+        if message != "" {
+            try container.encode(message, forKey: .message)
+        }
+        if messageFormat != 0 {
+            try container.encode(messageFormat, forKey: .messageFormat)
+        }
         try container.encode(author, forKey: .author)
-        try container.encode(discussionId, forKey: .discussionId)
-        try container.encode(hasParent, forKey: .hasParent)
-        try container.encode(parentId, forKey: .parentId)
-        try container.encode(timeCreated, forKey: .timeCreated)
-        try container.encode(timeModified, forKey: .timeModified)
-        try container.encode(unread, forKey: .unread)
-        try container.encode(isDeleted, forKey: .isDeleted)
-        try container.encode(isPrivateReply, forKey: .isPrivateReply)
-        try container.encode(hasWordCount, forKey: .hasWordCount)
-        try container.encode(wordCount, forKey: .wordCount)
-        try container.encode(charCount, forKey: .charCount)
+        if discussionId != 0 {
+            try container.encode(discussionId, forKey: .discussionId)
+        }
+        if hasParent != false {
+            try container.encode(hasParent, forKey: .hasParent)
+        }
+        if parentId != nil {
+            try container.encode(parentId, forKey: .parentId)
+        }
+        if timeCreated != 0 {
+            try container.encode(timeCreated, forKey: .timeCreated)
+        }
+        if timeModified != 0 {
+            try container.encode(timeModified, forKey: .timeModified)
+        }
+        if unread != nil {
+            try container.encode(unread, forKey: .unread)
+        }
+        if isDeleted != false {
+            try container.encode(isDeleted, forKey: .isDeleted)
+        }
+        if isPrivateReply != false {
+            try container.encode(isPrivateReply, forKey: .isPrivateReply)
+        }
+        if hasWordCount != false {
+            try container.encode(hasWordCount, forKey: .hasWordCount)
+        }
+        if wordCount != nil {
+            try container.encode(wordCount, forKey: .wordCount)
+        }
+        if charCount != nil {
+            try container.encode(charCount, forKey: .charCount)
+        }
         try container.encode(capabilities, forKey: .capabilities)
-        try container.encode(urls, forKey: .urls)
-        try container.encode(attachments, forKey: .attachments)
-        try container.encode(messageInlineFiles, forKey: .messageInlineFiles)
-        try container.encode(tags, forKey: .tags)
-        try container.encode(html, forKey: .html)
+        if urls != nil {
+            try container.encode(urls, forKey: .urls)
+        }
+        if !attachments.isEmpty {
+            try container.encode(attachments, forKey: .attachments)
+        }
+        if !messageInlineFiles.isEmpty {
+            try container.encode(messageInlineFiles, forKey: .messageInlineFiles)
+        }
+        if !tags.isEmpty {
+            try container.encode(tags, forKey: .tags)
+        }
+        if html != nil {
+            try container.encode(html, forKey: .html)
+        }
     }
 }
 
@@ -299,10 +351,18 @@ public struct MoodlePostAuthor: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(id, forKey: .id)
-        try container.encode(fullName, forKey: .fullName)
-        try container.encode(isDeleted, forKey: .isDeleted)
-        try container.encode(groups, forKey: .groups)
+        if id != nil {
+            try container.encode(id, forKey: .id)
+        }
+        if fullName != nil {
+            try container.encode(fullName, forKey: .fullName)
+        }
+        if isDeleted != nil {
+            try container.encode(isDeleted, forKey: .isDeleted)
+        }
+        if !groups.isEmpty {
+            try container.encode(groups, forKey: .groups)
+        }
         try container.encode(urls, forKey: .urls)
     }
 }
@@ -339,8 +399,12 @@ public struct MoodlePostAuthorGroup: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(id, forKey: .id)
-        try container.encode(name, forKey: .name)
+        if id != 0 {
+            try container.encode(id, forKey: .id)
+        }
+        if name != "" {
+            try container.encode(name, forKey: .name)
+        }
         try container.encode(urls, forKey: .urls)
     }
 }
@@ -366,7 +430,9 @@ public struct MoodlePostAuthorGroupUrls: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(image, forKey: .image)
+        if image != nil {
+            try container.encode(image, forKey: .image)
+        }
     }
 }
 
@@ -397,8 +463,12 @@ public struct MoodlePostAuthorUrls: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(profile, forKey: .profile)
-        try container.encode(profileImage, forKey: .profileImage)
+        if profile != nil {
+            try container.encode(profile, forKey: .profile)
+        }
+        if profileImage != nil {
+            try container.encode(profileImage, forKey: .profileImage)
+        }
     }
 }
 
@@ -471,15 +541,33 @@ public struct MoodlePostCapabilities: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(view, forKey: .view)
-        try container.encode(edit, forKey: .edit)
-        try container.encode(delete, forKey: .delete)
-        try container.encode(split, forKey: .split)
-        try container.encode(reply, forKey: .reply)
-        try container.encode(selfEnrol, forKey: .selfEnrol)
-        try container.encode(export, forKey: .export)
-        try container.encode(controlReadStatus, forKey: .controlReadStatus)
-        try container.encode(canReplyPrivately, forKey: .canReplyPrivately)
+        if view != false {
+            try container.encode(view, forKey: .view)
+        }
+        if edit != false {
+            try container.encode(edit, forKey: .edit)
+        }
+        if delete != false {
+            try container.encode(delete, forKey: .delete)
+        }
+        if split != false {
+            try container.encode(split, forKey: .split)
+        }
+        if reply != false {
+            try container.encode(reply, forKey: .reply)
+        }
+        if selfEnrol != false {
+            try container.encode(selfEnrol, forKey: .selfEnrol)
+        }
+        if export != false {
+            try container.encode(export, forKey: .export)
+        }
+        if controlReadStatus != false {
+            try container.encode(controlReadStatus, forKey: .controlReadStatus)
+        }
+        if canReplyPrivately != false {
+            try container.encode(canReplyPrivately, forKey: .canReplyPrivately)
+        }
     }
 }
 
@@ -564,17 +652,39 @@ public struct MoodlePostUrls: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(view, forKey: .view)
-        try container.encode(viewIsolated, forKey: .viewIsolated)
-        try container.encode(viewParent, forKey: .viewParent)
-        try container.encode(edit, forKey: .edit)
-        try container.encode(delete, forKey: .delete)
-        try container.encode(split, forKey: .split)
-        try container.encode(reply, forKey: .reply)
-        try container.encode(export, forKey: .export)
-        try container.encode(markAsRead, forKey: .markAsRead)
-        try container.encode(markAsUnread, forKey: .markAsUnread)
-        try container.encode(discuss, forKey: .discuss)
+        if view != nil {
+            try container.encode(view, forKey: .view)
+        }
+        if viewIsolated != nil {
+            try container.encode(viewIsolated, forKey: .viewIsolated)
+        }
+        if viewParent != nil {
+            try container.encode(viewParent, forKey: .viewParent)
+        }
+        if edit != nil {
+            try container.encode(edit, forKey: .edit)
+        }
+        if delete != nil {
+            try container.encode(delete, forKey: .delete)
+        }
+        if split != nil {
+            try container.encode(split, forKey: .split)
+        }
+        if reply != nil {
+            try container.encode(reply, forKey: .reply)
+        }
+        if export != nil {
+            try container.encode(export, forKey: .export)
+        }
+        if markAsRead != nil {
+            try container.encode(markAsRead, forKey: .markAsRead)
+        }
+        if markAsUnread != nil {
+            try container.encode(markAsUnread, forKey: .markAsUnread)
+        }
+        if discuss != nil {
+            try container.encode(discuss, forKey: .discuss)
+        }
     }
 }
 
@@ -717,25 +827,63 @@ public struct MoodlePostAttachment: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(contextId, forKey: .contextId)
-        try container.encode(component, forKey: .component)
-        try container.encode(fileArea, forKey: .fileArea)
-        try container.encode(itemId, forKey: .itemId)
-        try container.encode(filePath, forKey: .filePath)
-        try container.encode(fileName, forKey: .fileName)
-        try container.encode(isDirectory, forKey: .isDirectory)
-        try container.encode(isImage, forKey: .isImage)
-        try container.encode(timeModified, forKey: .timeModified)
-        try container.encode(timeCreated, forKey: .timeCreated)
-        try container.encode(fileSize, forKey: .fileSize)
-        try container.encode(author, forKey: .author)
-        try container.encode(license, forKey: .license)
-        try container.encode(fileNameShort, forKey: .fileNameShort)
-        try container.encode(fileSizeFormatted, forKey: .fileSizeFormatted)
-        try container.encode(icon, forKey: .icon)
-        try container.encode(timeCreatedFormatted, forKey: .timeCreatedFormatted)
-        try container.encode(timeModifiedFormatted, forKey: .timeModifiedFormatted)
-        try container.encode(url, forKey: .url)
+        if contextId != 0 {
+            try container.encode(contextId, forKey: .contextId)
+        }
+        if component != "" {
+            try container.encode(component, forKey: .component)
+        }
+        if fileArea != "" {
+            try container.encode(fileArea, forKey: .fileArea)
+        }
+        if itemId != 0 {
+            try container.encode(itemId, forKey: .itemId)
+        }
+        if filePath != "" {
+            try container.encode(filePath, forKey: .filePath)
+        }
+        if fileName != "" {
+            try container.encode(fileName, forKey: .fileName)
+        }
+        if isDirectory != false {
+            try container.encode(isDirectory, forKey: .isDirectory)
+        }
+        if isImage != false {
+            try container.encode(isImage, forKey: .isImage)
+        }
+        if timeModified != 0 {
+            try container.encode(timeModified, forKey: .timeModified)
+        }
+        if timeCreated != 0 {
+            try container.encode(timeCreated, forKey: .timeCreated)
+        }
+        if fileSize != 0 {
+            try container.encode(fileSize, forKey: .fileSize)
+        }
+        if author != "" {
+            try container.encode(author, forKey: .author)
+        }
+        if license != "" {
+            try container.encode(license, forKey: .license)
+        }
+        if fileNameShort != "" {
+            try container.encode(fileNameShort, forKey: .fileNameShort)
+        }
+        if fileSizeFormatted != "" {
+            try container.encode(fileSizeFormatted, forKey: .fileSizeFormatted)
+        }
+        if icon != "" {
+            try container.encode(icon, forKey: .icon)
+        }
+        if timeCreatedFormatted != "" {
+            try container.encode(timeCreatedFormatted, forKey: .timeCreatedFormatted)
+        }
+        if timeModifiedFormatted != "" {
+            try container.encode(timeModifiedFormatted, forKey: .timeModifiedFormatted)
+        }
+        if url != "" {
+            try container.encode(url, forKey: .url)
+        }
         try container.encode(urls, forKey: .urls)
         try container.encode(html, forKey: .html)
     }
@@ -762,7 +910,9 @@ public struct MoodlePostAttachmentUrls: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(export, forKey: .export)
+        if export != nil {
+            try container.encode(export, forKey: .export)
+        }
     }
 }
 
@@ -787,7 +937,9 @@ public struct MoodlePostAttachmentHtml: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(plagiarism, forKey: .plagiarism)
+        if plagiarism != nil {
+            try container.encode(plagiarism, forKey: .plagiarism)
+        }
     }
 }
 
@@ -920,25 +1072,63 @@ public struct MoodlePostInlineFile: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(contextId, forKey: .contextId)
-        try container.encode(component, forKey: .component)
-        try container.encode(fileArea, forKey: .fileArea)
-        try container.encode(itemId, forKey: .itemId)
-        try container.encode(filePath, forKey: .filePath)
-        try container.encode(fileName, forKey: .fileName)
-        try container.encode(isDirectory, forKey: .isDirectory)
-        try container.encode(isImage, forKey: .isImage)
-        try container.encode(timeModified, forKey: .timeModified)
-        try container.encode(timeCreated, forKey: .timeCreated)
-        try container.encode(fileSize, forKey: .fileSize)
-        try container.encode(author, forKey: .author)
-        try container.encode(license, forKey: .license)
-        try container.encode(fileNameShort, forKey: .fileNameShort)
-        try container.encode(fileSizeFormatted, forKey: .fileSizeFormatted)
-        try container.encode(icon, forKey: .icon)
-        try container.encode(timeCreatedFormatted, forKey: .timeCreatedFormatted)
-        try container.encode(timeModifiedFormatted, forKey: .timeModifiedFormatted)
-        try container.encode(url, forKey: .url)
+        if contextId != 0 {
+            try container.encode(contextId, forKey: .contextId)
+        }
+        if component != "" {
+            try container.encode(component, forKey: .component)
+        }
+        if fileArea != "" {
+            try container.encode(fileArea, forKey: .fileArea)
+        }
+        if itemId != 0 {
+            try container.encode(itemId, forKey: .itemId)
+        }
+        if filePath != "" {
+            try container.encode(filePath, forKey: .filePath)
+        }
+        if fileName != "" {
+            try container.encode(fileName, forKey: .fileName)
+        }
+        if isDirectory != false {
+            try container.encode(isDirectory, forKey: .isDirectory)
+        }
+        if isImage != false {
+            try container.encode(isImage, forKey: .isImage)
+        }
+        if timeModified != 0 {
+            try container.encode(timeModified, forKey: .timeModified)
+        }
+        if timeCreated != 0 {
+            try container.encode(timeCreated, forKey: .timeCreated)
+        }
+        if fileSize != 0 {
+            try container.encode(fileSize, forKey: .fileSize)
+        }
+        if author != "" {
+            try container.encode(author, forKey: .author)
+        }
+        if license != "" {
+            try container.encode(license, forKey: .license)
+        }
+        if fileNameShort != "" {
+            try container.encode(fileNameShort, forKey: .fileNameShort)
+        }
+        if fileSizeFormatted != "" {
+            try container.encode(fileSizeFormatted, forKey: .fileSizeFormatted)
+        }
+        if icon != "" {
+            try container.encode(icon, forKey: .icon)
+        }
+        if timeCreatedFormatted != "" {
+            try container.encode(timeCreatedFormatted, forKey: .timeCreatedFormatted)
+        }
+        if timeModifiedFormatted != "" {
+            try container.encode(timeModifiedFormatted, forKey: .timeModifiedFormatted)
+        }
+        if url != "" {
+            try container.encode(url, forKey: .url)
+        }
     }
 }
 
@@ -992,11 +1182,21 @@ public struct MoodlePostTag: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(id, forKey: .id)
-        try container.encode(tagId, forKey: .tagId)
-        try container.encode(isStandard, forKey: .isStandard)
-        try container.encode(displayName, forKey: .displayName)
-        try container.encode(flag, forKey: .flag)
+        if id != 0 {
+            try container.encode(id, forKey: .id)
+        }
+        if tagId != 0 {
+            try container.encode(tagId, forKey: .tagId)
+        }
+        if isStandard != false {
+            try container.encode(isStandard, forKey: .isStandard)
+        }
+        if displayName != "" {
+            try container.encode(displayName, forKey: .displayName)
+        }
+        if flag != false {
+            try container.encode(flag, forKey: .flag)
+        }
         try container.encode(urls, forKey: .urls)
     }
 }
@@ -1022,7 +1222,9 @@ public struct MoodlePostTagUrls: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(view, forKey: .view)
+        if view != "" {
+            try container.encode(view, forKey: .view)
+        }
     }
 }
 
@@ -1059,9 +1261,15 @@ public struct MoodlePostHtml: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(rating, forKey: .rating)
-        try container.encode(tagList, forKey: .tagList)
-        try container.encode(authorSubheading, forKey: .authorSubheading)
+        if rating != nil {
+            try container.encode(rating, forKey: .rating)
+        }
+        if tagList != nil {
+            try container.encode(tagList, forKey: .tagList)
+        }
+        if authorSubheading != nil {
+            try container.encode(authorSubheading, forKey: .authorSubheading)
+        }
     }
 }
 
@@ -1093,8 +1301,12 @@ public struct MoodlePostMessage: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(type, forKey: .type)
-        try container.encode(message, forKey: .message)
+        if type != "" {
+            try container.encode(type, forKey: .type)
+        }
+        if message != "" {
+            try container.encode(message, forKey: .message)
+        }
     }
 }
 
@@ -1137,10 +1349,18 @@ public struct MoodleCanAddDiscussionResponse: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(status, forKey: .status)
-        try container.encode(canPinDiscussions, forKey: .canPinDiscussions)
-        try container.encode(canCreateAttachment, forKey: .canCreateAttachment)
-        try container.encode(warnings, forKey: .warnings)
+        if status != false {
+            try container.encode(status, forKey: .status)
+        }
+        if canPinDiscussions != nil {
+            try container.encode(canPinDiscussions, forKey: .canPinDiscussions)
+        }
+        if canCreateAttachment != nil {
+            try container.encode(canCreateAttachment, forKey: .canCreateAttachment)
+        }
+        if !warnings.isEmpty {
+            try container.encode(warnings, forKey: .warnings)
+        }
     }
 }
 
@@ -1171,7 +1391,9 @@ public struct MoodleDiscussionPostResponse: Codable, Hashable, Sendable {
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(post, forKey: .post)
-        try container.encode(warnings, forKey: .warnings)
+        if !warnings.isEmpty {
+            try container.encode(warnings, forKey: .warnings)
+        }
     }
 }
 
@@ -1219,11 +1441,21 @@ public struct MoodleDiscussionPostsResponse: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(posts, forKey: .posts)
-        try container.encode(forumId, forKey: .forumId)
-        try container.encode(courseId, forKey: .courseId)
-        try container.encode(ratingInfo, forKey: .ratingInfo)
-        try container.encode(warnings, forKey: .warnings)
+        if !posts.isEmpty {
+            try container.encode(posts, forKey: .posts)
+        }
+        if forumId != 0 {
+            try container.encode(forumId, forKey: .forumId)
+        }
+        if courseId != 0 {
+            try container.encode(courseId, forKey: .courseId)
+        }
+        if ratingInfo != nil {
+            try container.encode(ratingInfo, forKey: .ratingInfo)
+        }
+        if !warnings.isEmpty {
+            try container.encode(warnings, forKey: .warnings)
+        }
     }
 }
 
@@ -1285,13 +1517,27 @@ public struct MoodleRatingInfo: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(contextId, forKey: .contextId)
-        try container.encode(component, forKey: .component)
-        try container.encode(ratingArea, forKey: .ratingArea)
-        try container.encode(canViewAll, forKey: .canViewAll)
-        try container.encode(canViewAny, forKey: .canViewAny)
-        try container.encode(scales, forKey: .scales)
-        try container.encode(ratings, forKey: .ratings)
+        if contextId != 0 {
+            try container.encode(contextId, forKey: .contextId)
+        }
+        if component != "" {
+            try container.encode(component, forKey: .component)
+        }
+        if ratingArea != "" {
+            try container.encode(ratingArea, forKey: .ratingArea)
+        }
+        if canViewAll != nil {
+            try container.encode(canViewAll, forKey: .canViewAll)
+        }
+        if canViewAny != nil {
+            try container.encode(canViewAny, forKey: .canViewAny)
+        }
+        if !scales.isEmpty {
+            try container.encode(scales, forKey: .scales)
+        }
+        if !ratings.isEmpty {
+            try container.encode(ratings, forKey: .ratings)
+        }
     }
 }
 
@@ -1347,12 +1593,24 @@ public struct MoodleRatingScale: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(id, forKey: .id)
-        try container.encode(courseId, forKey: .courseId)
-        try container.encode(name, forKey: .name)
-        try container.encode(max, forKey: .max)
-        try container.encode(isNumeric, forKey: .isNumeric)
-        try container.encode(items, forKey: .items)
+        if id != 0 {
+            try container.encode(id, forKey: .id)
+        }
+        if courseId != nil {
+            try container.encode(courseId, forKey: .courseId)
+        }
+        if name != nil {
+            try container.encode(name, forKey: .name)
+        }
+        if max != 0 {
+            try container.encode(max, forKey: .max)
+        }
+        if isNumeric != false {
+            try container.encode(isNumeric, forKey: .isNumeric)
+        }
+        if !items.isEmpty {
+            try container.encode(items, forKey: .items)
+        }
     }
 }
 
@@ -1383,8 +1641,12 @@ public struct MoodleRatingScaleItem: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(value, forKey: .value)
-        try container.encode(name, forKey: .name)
+        if value != 0 {
+            try container.encode(value, forKey: .value)
+        }
+        if name != "" {
+            try container.encode(name, forKey: .name)
+        }
     }
 }
 
@@ -1463,16 +1725,36 @@ public struct MoodleRating: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(itemId, forKey: .itemId)
-        try container.encode(scaleId, forKey: .scaleId)
-        try container.encode(userId, forKey: .userId)
-        try container.encode(aggregate, forKey: .aggregate)
-        try container.encode(aggregateStr, forKey: .aggregateStr)
-        try container.encode(aggregateLabel, forKey: .aggregateLabel)
-        try container.encode(count, forKey: .count)
-        try container.encode(rating, forKey: .rating)
-        try container.encode(canRate, forKey: .canRate)
-        try container.encode(canViewAggregate, forKey: .canViewAggregate)
+        if itemId != 0 {
+            try container.encode(itemId, forKey: .itemId)
+        }
+        if scaleId != nil {
+            try container.encode(scaleId, forKey: .scaleId)
+        }
+        if userId != nil {
+            try container.encode(userId, forKey: .userId)
+        }
+        if aggregate != nil {
+            try container.encode(aggregate, forKey: .aggregate)
+        }
+        if aggregateStr != nil {
+            try container.encode(aggregateStr, forKey: .aggregateStr)
+        }
+        if aggregateLabel != nil {
+            try container.encode(aggregateLabel, forKey: .aggregateLabel)
+        }
+        if count != nil {
+            try container.encode(count, forKey: .count)
+        }
+        if rating != nil {
+            try container.encode(rating, forKey: .rating)
+        }
+        if canRate != nil {
+            try container.encode(canRate, forKey: .canRate)
+        }
+        if canViewAggregate != nil {
+            try container.encode(canViewAggregate, forKey: .canViewAggregate)
+        }
     }
 }
 
@@ -1502,8 +1784,12 @@ public struct MoodleForumDiscussionsResponse: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(discussions, forKey: .discussions)
-        try container.encode(warnings, forKey: .warnings)
+        if !discussions.isEmpty {
+            try container.encode(discussions, forKey: .discussions)
+        }
+        if !warnings.isEmpty {
+            try container.encode(warnings, forKey: .warnings)
+        }
     }
 }
 
@@ -1727,40 +2013,108 @@ public struct MoodleForumDiscussion: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(id, forKey: .id)
-        try container.encode(name, forKey: .name)
-        try container.encode(groupId, forKey: .groupId)
-        try container.encode(timeModified, forKey: .timeModified)
-        try container.encode(userModified, forKey: .userModified)
-        try container.encode(timeStart, forKey: .timeStart)
-        try container.encode(timeEnd, forKey: .timeEnd)
-        try container.encode(discussion, forKey: .discussion)
-        try container.encode(parent, forKey: .parent)
-        try container.encode(userId, forKey: .userId)
-        try container.encode(created, forKey: .created)
-        try container.encode(modified, forKey: .modified)
-        try container.encode(mailed, forKey: .mailed)
-        try container.encode(subject, forKey: .subject)
-        try container.encode(message, forKey: .message)
-        try container.encode(messageFormat, forKey: .messageFormat)
-        try container.encode(messageTrust, forKey: .messageTrust)
-        try container.encode(messageInlineFiles, forKey: .messageInlineFiles)
-        try container.encode(attachment, forKey: .attachment)
-        try container.encode(attachments, forKey: .attachments)
-        try container.encode(totalScore, forKey: .totalScore)
-        try container.encode(mailNow, forKey: .mailNow)
-        try container.encode(userFullName, forKey: .userFullName)
-        try container.encode(userModifiedFullName, forKey: .userModifiedFullName)
-        try container.encode(userPictureUrl, forKey: .userPictureUrl)
-        try container.encode(userModifiedPictureUrl, forKey: .userModifiedPictureUrl)
-        try container.encode(numReplies, forKey: .numReplies)
-        try container.encode(numUnread, forKey: .numUnread)
-        try container.encode(pinned, forKey: .pinned)
-        try container.encode(locked, forKey: .locked)
-        try container.encode(starred, forKey: .starred)
-        try container.encode(canReply, forKey: .canReply)
-        try container.encode(canLock, forKey: .canLock)
-        try container.encode(canFavourite, forKey: .canFavourite)
+        if id != 0 {
+            try container.encode(id, forKey: .id)
+        }
+        if name != "" {
+            try container.encode(name, forKey: .name)
+        }
+        if groupId != 0 {
+            try container.encode(groupId, forKey: .groupId)
+        }
+        if timeModified != 0 {
+            try container.encode(timeModified, forKey: .timeModified)
+        }
+        if userModified != 0 {
+            try container.encode(userModified, forKey: .userModified)
+        }
+        if timeStart != 0 {
+            try container.encode(timeStart, forKey: .timeStart)
+        }
+        if timeEnd != 0 {
+            try container.encode(timeEnd, forKey: .timeEnd)
+        }
+        if discussion != 0 {
+            try container.encode(discussion, forKey: .discussion)
+        }
+        if parent != 0 {
+            try container.encode(parent, forKey: .parent)
+        }
+        if userId != 0 {
+            try container.encode(userId, forKey: .userId)
+        }
+        if created != 0 {
+            try container.encode(created, forKey: .created)
+        }
+        if modified != 0 {
+            try container.encode(modified, forKey: .modified)
+        }
+        if mailed != 0 {
+            try container.encode(mailed, forKey: .mailed)
+        }
+        if subject != "" {
+            try container.encode(subject, forKey: .subject)
+        }
+        if message != "" {
+            try container.encode(message, forKey: .message)
+        }
+        if messageFormat != 0 {
+            try container.encode(messageFormat, forKey: .messageFormat)
+        }
+        if messageTrust != 0 {
+            try container.encode(messageTrust, forKey: .messageTrust)
+        }
+        if !messageInlineFiles.isEmpty {
+            try container.encode(messageInlineFiles, forKey: .messageInlineFiles)
+        }
+        if attachment != "" {
+            try container.encode(attachment, forKey: .attachment)
+        }
+        if !attachments.isEmpty {
+            try container.encode(attachments, forKey: .attachments)
+        }
+        if totalScore != 0 {
+            try container.encode(totalScore, forKey: .totalScore)
+        }
+        if mailNow != 0 {
+            try container.encode(mailNow, forKey: .mailNow)
+        }
+        if userFullName != "" {
+            try container.encode(userFullName, forKey: .userFullName)
+        }
+        if userModifiedFullName != "" {
+            try container.encode(userModifiedFullName, forKey: .userModifiedFullName)
+        }
+        if userPictureUrl != "" {
+            try container.encode(userPictureUrl, forKey: .userPictureUrl)
+        }
+        if userModifiedPictureUrl != "" {
+            try container.encode(userModifiedPictureUrl, forKey: .userModifiedPictureUrl)
+        }
+        if numReplies != 0 {
+            try container.encode(numReplies, forKey: .numReplies)
+        }
+        if numUnread != 0 {
+            try container.encode(numUnread, forKey: .numUnread)
+        }
+        if pinned != false {
+            try container.encode(pinned, forKey: .pinned)
+        }
+        if locked != false {
+            try container.encode(locked, forKey: .locked)
+        }
+        if starred != false {
+            try container.encode(starred, forKey: .starred)
+        }
+        if canReply != false {
+            try container.encode(canReply, forKey: .canReply)
+        }
+        if canLock != false {
+            try container.encode(canLock, forKey: .canLock)
+        }
+        if canFavourite != false {
+            try container.encode(canFavourite, forKey: .canFavourite)
+        }
     }
 }
 
@@ -1990,41 +2344,111 @@ public struct MoodleForum: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(id, forKey: .id)
-        try container.encode(course, forKey: .course)
-        try container.encode(type, forKey: .type)
-        try container.encode(name, forKey: .name)
-        try container.encode(intro, forKey: .intro)
-        try container.encode(introFormat, forKey: .introFormat)
-        try container.encode(introFiles, forKey: .introFiles)
-        try container.encode(lang, forKey: .lang)
-        try container.encode(dueDate, forKey: .dueDate)
-        try container.encode(cutoffDate, forKey: .cutoffDate)
-        try container.encode(assessed, forKey: .assessed)
-        try container.encode(assessTimeStart, forKey: .assessTimeStart)
-        try container.encode(assessTimeFinish, forKey: .assessTimeFinish)
-        try container.encode(scale, forKey: .scale)
-        try container.encode(gradeForum, forKey: .gradeForum)
-        try container.encode(gradeForumNotify, forKey: .gradeForumNotify)
-        try container.encode(maxBytes, forKey: .maxBytes)
-        try container.encode(maxAttachments, forKey: .maxAttachments)
-        try container.encode(forceSubscribe, forKey: .forceSubscribe)
-        try container.encode(trackingType, forKey: .trackingType)
-        try container.encode(rssType, forKey: .rssType)
-        try container.encode(rssArticles, forKey: .rssArticles)
-        try container.encode(timeModified, forKey: .timeModified)
-        try container.encode(warnAfter, forKey: .warnAfter)
-        try container.encode(blockAfter, forKey: .blockAfter)
-        try container.encode(blockPeriod, forKey: .blockPeriod)
-        try container.encode(completionDiscussions, forKey: .completionDiscussions)
-        try container.encode(completionReplies, forKey: .completionReplies)
-        try container.encode(completionPosts, forKey: .completionPosts)
-        try container.encode(cmId, forKey: .cmId)
-        try container.encode(numDiscussions, forKey: .numDiscussions)
-        try container.encode(canCreateDiscussions, forKey: .canCreateDiscussions)
-        try container.encode(lockDiscussionAfter, forKey: .lockDiscussionAfter)
-        try container.encode(isTracked, forKey: .isTracked)
-        try container.encode(unreadPostsCount, forKey: .unreadPostsCount)
+        if id != 0 {
+            try container.encode(id, forKey: .id)
+        }
+        if course != 0 {
+            try container.encode(course, forKey: .course)
+        }
+        if type != "" {
+            try container.encode(type, forKey: .type)
+        }
+        if name != "" {
+            try container.encode(name, forKey: .name)
+        }
+        if intro != "" {
+            try container.encode(intro, forKey: .intro)
+        }
+        if introFormat != 0 {
+            try container.encode(introFormat, forKey: .introFormat)
+        }
+        if !introFiles.isEmpty {
+            try container.encode(introFiles, forKey: .introFiles)
+        }
+        if lang != nil {
+            try container.encode(lang, forKey: .lang)
+        }
+        if dueDate != nil {
+            try container.encode(dueDate, forKey: .dueDate)
+        }
+        if cutoffDate != nil {
+            try container.encode(cutoffDate, forKey: .cutoffDate)
+        }
+        if assessed != 0 {
+            try container.encode(assessed, forKey: .assessed)
+        }
+        if assessTimeStart != 0 {
+            try container.encode(assessTimeStart, forKey: .assessTimeStart)
+        }
+        if assessTimeFinish != 0 {
+            try container.encode(assessTimeFinish, forKey: .assessTimeFinish)
+        }
+        if scale != 0 {
+            try container.encode(scale, forKey: .scale)
+        }
+        if gradeForum != 0 {
+            try container.encode(gradeForum, forKey: .gradeForum)
+        }
+        if gradeForumNotify != 0 {
+            try container.encode(gradeForumNotify, forKey: .gradeForumNotify)
+        }
+        if maxBytes != 0 {
+            try container.encode(maxBytes, forKey: .maxBytes)
+        }
+        if maxAttachments != 0 {
+            try container.encode(maxAttachments, forKey: .maxAttachments)
+        }
+        if forceSubscribe != 0 {
+            try container.encode(forceSubscribe, forKey: .forceSubscribe)
+        }
+        if trackingType != 0 {
+            try container.encode(trackingType, forKey: .trackingType)
+        }
+        if rssType != 0 {
+            try container.encode(rssType, forKey: .rssType)
+        }
+        if rssArticles != 0 {
+            try container.encode(rssArticles, forKey: .rssArticles)
+        }
+        if timeModified != 0 {
+            try container.encode(timeModified, forKey: .timeModified)
+        }
+        if warnAfter != 0 {
+            try container.encode(warnAfter, forKey: .warnAfter)
+        }
+        if blockAfter != 0 {
+            try container.encode(blockAfter, forKey: .blockAfter)
+        }
+        if blockPeriod != 0 {
+            try container.encode(blockPeriod, forKey: .blockPeriod)
+        }
+        if completionDiscussions != 0 {
+            try container.encode(completionDiscussions, forKey: .completionDiscussions)
+        }
+        if completionReplies != 0 {
+            try container.encode(completionReplies, forKey: .completionReplies)
+        }
+        if completionPosts != 0 {
+            try container.encode(completionPosts, forKey: .completionPosts)
+        }
+        if cmId != 0 {
+            try container.encode(cmId, forKey: .cmId)
+        }
+        if numDiscussions != nil {
+            try container.encode(numDiscussions, forKey: .numDiscussions)
+        }
+        if canCreateDiscussions != nil {
+            try container.encode(canCreateDiscussions, forKey: .canCreateDiscussions)
+        }
+        if lockDiscussionAfter != nil {
+            try container.encode(lockDiscussionAfter, forKey: .lockDiscussionAfter)
+        }
+        if isTracked != nil {
+            try container.encode(isTracked, forKey: .isTracked)
+        }
+        if unreadPostsCount != nil {
+            try container.encode(unreadPostsCount, forKey: .unreadPostsCount)
+        }
     }
 }
 
@@ -2055,8 +2479,12 @@ public struct MoodleFileToKeep: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(fileName, forKey: .fileName)
-        try container.encode(filePath, forKey: .filePath)
+        if fileName != "" {
+            try container.encode(fileName, forKey: .fileName)
+        }
+        if filePath != "" {
+            try container.encode(filePath, forKey: .filePath)
+        }
     }
 }
 
@@ -2105,11 +2533,21 @@ public struct MoodlePrepareDraftAreaResponse: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(draftItemId, forKey: .draftItemId)
-        try container.encode(files, forKey: .files)
-        try container.encode(areaOptions, forKey: .areaOptions)
-        try container.encode(messageText, forKey: .messageText)
-        try container.encode(warnings, forKey: .warnings)
+        if draftItemId != 0 {
+            try container.encode(draftItemId, forKey: .draftItemId)
+        }
+        if !files.isEmpty {
+            try container.encode(files, forKey: .files)
+        }
+        if !areaOptions.isEmpty {
+            try container.encode(areaOptions, forKey: .areaOptions)
+        }
+        if messageText != "" {
+            try container.encode(messageText, forKey: .messageText)
+        }
+        if !warnings.isEmpty {
+            try container.encode(warnings, forKey: .warnings)
+        }
     }
 }
 
@@ -2200,14 +2638,30 @@ public struct MoodleDiscussionSummary: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(id, forKey: .id)
-        try container.encode(forumId, forKey: .forumId)
-        try container.encode(pinned, forKey: .pinned)
-        try container.encode(locked, forKey: .locked)
-        try container.encode(isTimeLocked, forKey: .isTimeLocked)
-        try container.encode(name, forKey: .name)
-        try container.encode(firstPostId, forKey: .firstPostId)
-        try container.encode(group, forKey: .group)
+        if id != 0 {
+            try container.encode(id, forKey: .id)
+        }
+        if forumId != 0 {
+            try container.encode(forumId, forKey: .forumId)
+        }
+        if pinned != false {
+            try container.encode(pinned, forKey: .pinned)
+        }
+        if locked != false {
+            try container.encode(locked, forKey: .locked)
+        }
+        if isTimeLocked != false {
+            try container.encode(isTimeLocked, forKey: .isTimeLocked)
+        }
+        if name != "" {
+            try container.encode(name, forKey: .name)
+        }
+        if firstPostId != 0 {
+            try container.encode(firstPostId, forKey: .firstPostId)
+        }
+        if group != nil {
+            try container.encode(group, forKey: .group)
+        }
         try container.encode(times, forKey: .times)
         try container.encode(userState, forKey: .userState)
         try container.encode(capabilities, forKey: .capabilities)
@@ -2242,7 +2696,9 @@ public struct MoodleDiscussionGroup: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(name, forKey: .name)
+        if name != "" {
+            try container.encode(name, forKey: .name)
+        }
         try container.encode(urls, forKey: .urls)
     }
 }
@@ -2274,8 +2730,12 @@ public struct MoodleDiscussionGroupUrls: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(picture, forKey: .picture)
-        try container.encode(userList, forKey: .userList)
+        if picture != nil {
+            try container.encode(picture, forKey: .picture)
+        }
+        if userList != nil {
+            try container.encode(userList, forKey: .userList)
+        }
     }
 }
 
@@ -2318,10 +2778,18 @@ public struct MoodleDiscussionTimes: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(modified, forKey: .modified)
-        try container.encode(start, forKey: .start)
-        try container.encode(end, forKey: .end)
-        try container.encode(locked, forKey: .locked)
+        if modified != 0 {
+            try container.encode(modified, forKey: .modified)
+        }
+        if start != 0 {
+            try container.encode(start, forKey: .start)
+        }
+        if end != 0 {
+            try container.encode(end, forKey: .end)
+        }
+        if locked != 0 {
+            try container.encode(locked, forKey: .locked)
+        }
     }
 }
 
@@ -2352,8 +2820,12 @@ public struct MoodleDiscussionUserState: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(subscribed, forKey: .subscribed)
-        try container.encode(favourited, forKey: .favourited)
+        if subscribed != false {
+            try container.encode(subscribed, forKey: .subscribed)
+        }
+        if favourited != false {
+            try container.encode(favourited, forKey: .favourited)
+        }
     }
 }
 
@@ -2408,12 +2880,24 @@ public struct MoodleDiscussionCapabilities: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(subscribe, forKey: .subscribe)
-        try container.encode(move, forKey: .move)
-        try container.encode(pin, forKey: .pin)
-        try container.encode(post, forKey: .post)
-        try container.encode(manage, forKey: .manage)
-        try container.encode(favourite, forKey: .favourite)
+        if subscribe != false {
+            try container.encode(subscribe, forKey: .subscribe)
+        }
+        if move != false {
+            try container.encode(move, forKey: .move)
+        }
+        if pin != false {
+            try container.encode(pin, forKey: .pin)
+        }
+        if post != false {
+            try container.encode(post, forKey: .post)
+        }
+        if manage != false {
+            try container.encode(manage, forKey: .manage)
+        }
+        if favourite != false {
+            try container.encode(favourite, forKey: .favourite)
+        }
     }
 }
 
@@ -2468,12 +2952,24 @@ public struct MoodleDiscussionUrls: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(view, forKey: .view)
-        try container.encode(viewLatest, forKey: .viewLatest)
-        try container.encode(viewFirstUnread, forKey: .viewFirstUnread)
-        try container.encode(markAsRead, forKey: .markAsRead)
-        try container.encode(subscribe, forKey: .subscribe)
-        try container.encode(pin, forKey: .pin)
+        if view != "" {
+            try container.encode(view, forKey: .view)
+        }
+        if viewLatest != nil {
+            try container.encode(viewLatest, forKey: .viewLatest)
+        }
+        if viewFirstUnread != nil {
+            try container.encode(viewFirstUnread, forKey: .viewFirstUnread)
+        }
+        if markAsRead != "" {
+            try container.encode(markAsRead, forKey: .markAsRead)
+        }
+        if subscribe != "" {
+            try container.encode(subscribe, forKey: .subscribe)
+        }
+        if pin != nil {
+            try container.encode(pin, forKey: .pin)
+        }
     }
 }
 
@@ -2504,7 +3000,11 @@ public struct MoodleDiscussionTiming: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(isTimed, forKey: .isTimed)
-        try container.encode(visible, forKey: .visible)
+        if isTimed != nil {
+            try container.encode(isTimed, forKey: .isTimed)
+        }
+        if visible != nil {
+            try container.encode(visible, forKey: .visible)
+        }
     }
 }

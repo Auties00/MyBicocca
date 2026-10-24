@@ -9,23 +9,23 @@ import { MoodleLive, tokenCredentials, writeMoodleAssignmentsResponse } from "./
 describe("Moodle Assign", () => {
   liveCase(MoodleLive, "Assign.getAssignments#1", {}, async (live) => {
     const auth = await tokenCredentials(live);
-    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleAssignmentsResponse\"}", {}, () => live.api.assign.getAssignments(auth));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleAssignmentsResponse\"}", {}, async () => live.api.assign.getAssignments(auth));
     live.fingerprint((f) => writeMoodleAssignmentsResponse(f, result));
   });
 
   liveCase(MoodleLive, "Assign.getAssignments#2", { index: 1 }, async (live) => {
     const auth = await tokenCredentials(live);
-    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleAssignmentsResponse\"}", {}, () => live.api.assign.getAssignments(auth, { includeNotEnrolledCourses: true }));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleAssignmentsResponse\"}", {}, async () => live.api.assign.getAssignments(auth, { includeNotEnrolledCourses: true }));
     live.fingerprint((f) => writeMoodleAssignmentsResponse(f, result));
   });
 
   liveCase(MoodleLive, "Assign.getAssignments#3", { index: 2 }, async (live) => {
     const auth = await tokenCredentials(live);
-    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleAssignmentsResponse\"}", {}, () => live.api.assign.getAssignments(auth, { includeNotEnrolledCourses: false }));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleAssignmentsResponse\"}", {}, async () => live.api.assign.getAssignments(auth, { includeNotEnrolledCourses: false }));
     live.fingerprint((f) => writeMoodleAssignmentsResponse(f, result));
   });
 
   liveCase(MoodleLive, "Assign.getAssignments#invalid-credentials", {}, async (live) => {
-    await live.refused(false, () => live.api.assign.getAssignments(new MoodleTokenAuth("mybicocca-invalid-credential")));
+    await live.refused(false, async () => live.api.assign.getAssignments(new MoodleTokenAuth("mybicocca-invalid-credential")));
   });
 });

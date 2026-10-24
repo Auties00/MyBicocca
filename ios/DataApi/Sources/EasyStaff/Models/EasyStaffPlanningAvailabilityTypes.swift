@@ -72,8 +72,12 @@ public struct EasyStaffPlanningMonthSchedule: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encodeTemporal(firstAvailable, forKey: .firstAvailable, pattern: "yyyy-MM-dd HH:mm")
-        try container.encode(days, forKey: .days)
+        if firstAvailable != nil {
+            try container.encodeTemporal(firstAvailable, forKey: .firstAvailable, pattern: "yyyy-MM-dd HH:mm")
+        }
+        if !days.entries.isEmpty {
+            try container.encode(days, forKey: .days)
+        }
     }
 }
 
@@ -107,9 +111,15 @@ public struct EasyStaffPlanningSlotAvailability: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(availableCount, forKey: .availableCount)
-        try container.encode(totalCount, forKey: .totalCount)
-        try container.encode(reserved, forKey: .reserved)
+        if availableCount != 0 {
+            try container.encode(availableCount, forKey: .availableCount)
+        }
+        if totalCount != 0 {
+            try container.encode(totalCount, forKey: .totalCount)
+        }
+        if reserved != false {
+            try container.encode(reserved, forKey: .reserved)
+        }
     }
 }
 
@@ -135,7 +145,9 @@ public struct EasyStaffPlanningDaySchedule: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(days, forKey: .days)
+        if !days.entries.isEmpty {
+            try container.encode(days, forKey: .days)
+        }
     }
 }
 
@@ -209,12 +221,24 @@ public struct EasyStaffPlanningResource: Codable, Hashable, Sendable {
         try container.encode(areaId, forKey: .areaId)
         try container.encode(code, forKey: .code)
         try container.encode(name, forKey: .name)
-        try container.encode(description, forKey: .description)
-        try container.encode(type, forKey: .type)
-        try container.encode(orderNumber, forKey: .orderNumber)
-        try container.encode(visible, forKey: .visible)
-        try container.encode(disabled, forKey: .disabled)
-        try container.encode(virtual, forKey: .virtual)
+        if description != nil {
+            try container.encode(description, forKey: .description)
+        }
+        if type != 0 {
+            try container.encode(type, forKey: .type)
+        }
+        if orderNumber != nil {
+            try container.encode(orderNumber, forKey: .orderNumber)
+        }
+        if visible != true {
+            try container.encode(visible, forKey: .visible)
+        }
+        if disabled != false {
+            try container.encode(disabled, forKey: .disabled)
+        }
+        if virtual != false {
+            try container.encode(virtual, forKey: .virtual)
+        }
     }
 }
 
@@ -254,9 +278,15 @@ public struct EasyStaffPlanningResourceAvailability: Codable, Hashable, Sendable
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(resource, forKey: .resource)
-        try container.encode(openWindows, forKey: .openWindows)
-        try container.encode(exceptions, forKey: .exceptions)
-        try container.encode(occupiedSlots, forKey: .occupiedSlots)
+        if !openWindows.entries.isEmpty {
+            try container.encode(openWindows, forKey: .openWindows)
+        }
+        if !exceptions.entries.isEmpty {
+            try container.encode(exceptions, forKey: .exceptions)
+        }
+        if !occupiedSlots.entries.isEmpty {
+            try container.encode(occupiedSlots, forKey: .occupiedSlots)
+        }
     }
 }
 
@@ -281,6 +311,8 @@ public struct EasyStaffPlanningResult: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(success, forKey: .success)
+        if success != true {
+            try container.encode(success, forKey: .success)
+        }
     }
 }

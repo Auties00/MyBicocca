@@ -14,9 +14,7 @@ internal object KalturaLive : LiveApi<KalturaApi>(
     requestsPerSecond = 1.0,
     maxRequests = 50,
     shapes = SHAPES,
-    skips = mapOf(
-        "Playback.getHlsPlaylist" to "needs inputs partnerId, entryId (nothing provides them)",
-    ),
+    skips = emptyMap(),
 ) {
     override fun create(configure: HttpClientConfig<*>.() -> Unit, anonymous: Boolean): KalturaApi =
         KalturaApi(httpClientConfig = {

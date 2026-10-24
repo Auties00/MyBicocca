@@ -12,5 +12,7 @@ export default defineConfig({
     isolate: false,
     fileParallelism: false,
     testTimeout: 300_000,
+    // This config only runs the live tests, so running it means running them.
+    env: { LIVE_TESTS: "1" },
   },
 });

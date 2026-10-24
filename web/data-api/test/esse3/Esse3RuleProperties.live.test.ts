@@ -7,7 +7,7 @@ import { Esse3Live, personalDataGetCareers, personalDataGetPhdCareersData, ruleP
 // The live tests of the Esse3 RuleProperties module, planned from common/specs/esse3/tests.yaml.
 describe("Esse3 RuleProperties", () => {
   liveCase(Esse3Live, "RuleProperties.getPropaedeuticityRegulations#1", {}, async (live) => {
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PrerequisitesRegulation\"}}", {}, () => live.api.ruleProperties.getPropaedeuticityRegulations());
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PrerequisitesRegulation\"}}", {}, async () => live.api.ruleProperties.getPropaedeuticityRegulations());
     live.fingerprint((f) => f.list(result, (it) => writeEsse3PrerequisitesRegulation(f, it)));
   });
 
@@ -16,7 +16,7 @@ describe("Esse3 RuleProperties", () => {
     const facultyCode = live.choose("facultyCode", [await personalDataGetCareers(live)].flat().map((it) => it.facultyCode).filter(isPresent));
     const courseOfStudyCode = live.choose("courseOfStudyCode", [await structureGetCoursesOfStudy(live)].flat().map((it) => it.courseOfStudyCode).filter(isPresent));
     const courseTypeCode = live.choose("courseTypeCode", [await personalDataGetPhdCareersData(live)].flat().map((it) => it.courseTypeCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PrerequisitesRegulation\"}}", {}, () => live.api.ruleProperties.getPropaedeuticityRegulations({ proposalRuleState: "A", facultyId: facultyId, facultyCode: facultyCode, courseOfStudyCode: courseOfStudyCode, courseTypeCode: courseTypeCode }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PrerequisitesRegulation\"}}", {}, async () => live.api.ruleProperties.getPropaedeuticityRegulations({ proposalRuleState: "A", facultyId: facultyId, facultyCode: facultyCode, courseOfStudyCode: courseOfStudyCode, courseTypeCode: courseTypeCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3PrerequisitesRegulation(f, it)));
   });
 
@@ -24,7 +24,7 @@ describe("Esse3 RuleProperties", () => {
     const facultyId = live.choose("facultyId", [await structureGetDidacticStructures(live)].flat().map((it) => it.facultyId).filter(isPresent));
     const courseOfStudyId = live.choose("courseOfStudyId", [await personalDataGetCareers(live)].flat().map((it) => it.courseOfStudyId).filter(isPresent));
     const courseOfStudyCode = live.choose("courseOfStudyCode", [await structureGetCoursesOfStudy(live)].flat().map((it) => it.courseOfStudyCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PrerequisitesRegulation\"}}", {}, () => live.api.ruleProperties.getPropaedeuticityRegulations({ proposalRuleState: "B", facultyId: facultyId, courseOfStudyId: courseOfStudyId, courseOfStudyCode: courseOfStudyCode }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PrerequisitesRegulation\"}}", {}, async () => live.api.ruleProperties.getPropaedeuticityRegulations({ proposalRuleState: "B", facultyId: facultyId, courseOfStudyId: courseOfStudyId, courseOfStudyCode: courseOfStudyCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3PrerequisitesRegulation(f, it)));
   });
 
@@ -32,43 +32,43 @@ describe("Esse3 RuleProperties", () => {
     const facultyCode = live.choose("facultyCode", [await personalDataGetCareers(live)].flat().map((it) => it.facultyCode).filter(isPresent));
     const courseOfStudyId = live.choose("courseOfStudyId", [await personalDataGetCareers(live)].flat().map((it) => it.courseOfStudyId).filter(isPresent));
     const courseTypeCode = live.choose("courseTypeCode", [await personalDataGetPhdCareersData(live)].flat().map((it) => it.courseTypeCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PrerequisitesRegulation\"}}", {}, () => live.api.ruleProperties.getPropaedeuticityRegulations({ proposalRuleState: "X", facultyCode: facultyCode, courseOfStudyId: courseOfStudyId, courseTypeCode: courseTypeCode }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PrerequisitesRegulation\"}}", {}, async () => live.api.ruleProperties.getPropaedeuticityRegulations({ proposalRuleState: "X", facultyCode: facultyCode, courseOfStudyId: courseOfStudyId, courseTypeCode: courseTypeCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3PrerequisitesRegulation(f, it)));
   });
 
   liveCase(Esse3Live, "RuleProperties.getPropaedeuticityRegulations#5", { index: 4 }, async (live) => {
     const facultyCode = live.choose("facultyCode", [await personalDataGetCareers(live)].flat().map((it) => it.facultyCode).filter(isPresent));
     const courseOfStudyCode = live.choose("courseOfStudyCode", [await structureGetCoursesOfStudy(live)].flat().map((it) => it.courseOfStudyCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PrerequisitesRegulation\"}}", {}, () => live.api.ruleProperties.getPropaedeuticityRegulations({ proposalRuleState: "B", facultyCode: facultyCode, courseOfStudyCode: courseOfStudyCode }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PrerequisitesRegulation\"}}", {}, async () => live.api.ruleProperties.getPropaedeuticityRegulations({ proposalRuleState: "B", facultyCode: facultyCode, courseOfStudyCode: courseOfStudyCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3PrerequisitesRegulation(f, it)));
   });
 
   liveCase(Esse3Live, "RuleProperties.getPropaedeuticityRegulations#6", { index: 5 }, async (live) => {
     const facultyId = live.choose("facultyId", [await structureGetDidacticStructures(live)].flat().map((it) => it.facultyId).filter(isPresent));
     const courseOfStudyCode = live.choose("courseOfStudyCode", [await structureGetCoursesOfStudy(live)].flat().map((it) => it.courseOfStudyCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PrerequisitesRegulation\"}}", {}, () => live.api.ruleProperties.getPropaedeuticityRegulations({ proposalRuleState: "X", facultyId: facultyId, courseOfStudyCode: courseOfStudyCode }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PrerequisitesRegulation\"}}", {}, async () => live.api.ruleProperties.getPropaedeuticityRegulations({ proposalRuleState: "X", facultyId: facultyId, courseOfStudyCode: courseOfStudyCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3PrerequisitesRegulation(f, it)));
   });
 
   liveCase(Esse3Live, "RuleProperties.getPropaedeuticityRegulationWithDetails#1", {}, async (live) => {
     const proposalRuleId = live.choose("proposalRuleId", [await rulePropertiesGetPropaedeuticityRegulations(live)].flat().map((it) => it.proposalRuleId).filter(isPresent));
-    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3PrerequisitesRegulationWithConstraints\"}", {}, () => live.api.ruleProperties.getPropaedeuticityRegulationWithDetails(proposalRuleId));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3PrerequisitesRegulationWithConstraints\"}", {}, async () => live.api.ruleProperties.getPropaedeuticityRegulationWithDetails(proposalRuleId));
     live.fingerprint((f) => writeEsse3PrerequisitesRegulationWithConstraints(f, result));
   });
 
   liveCase(Esse3Live, "RuleProperties.getPropaedeuticityRegulationWithDetails#unknown-id", {}, async (live) => {
-    await live.refused(true, () => live.api.ruleProperties.getPropaedeuticityRegulationWithDetails(987654321));
+    await live.refused(true, async () => live.api.ruleProperties.getPropaedeuticityRegulationWithDetails(987654321));
   });
 
   liveCase(Esse3Live, "RuleProperties.getRegulationConstraints#1", {}, async (live) => {
     const proposalRuleId = live.choose("proposalRuleId", [await rulePropertiesGetPropaedeuticityRegulations(live)].flat().map((it) => it.proposalRuleId).filter(isPresent));
     const proposalRuleWinnerId = live.choose("proposalRuleWinnerId", [await rulePropertiesGetPropaedeuticityRegulationWithDetails(live)].map((it) => it.constraints).filter(isPresent).flat().map((it) => it.proposalRuleWinnerId).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PrerequisiteConstraint\"}}", {}, () => live.api.ruleProperties.getRegulationConstraints(proposalRuleId, proposalRuleWinnerId));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PrerequisiteConstraint\"}}", {}, async () => live.api.ruleProperties.getRegulationConstraints(proposalRuleId, proposalRuleWinnerId));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3PrerequisiteConstraint(f, it)));
   });
 
   liveCase(Esse3Live, "RuleProperties.getRegulationConstraints#unknown-id", {}, async (live) => {
     const proposalRuleWinnerId = live.choose("proposalRuleWinnerId", [await rulePropertiesGetPropaedeuticityRegulationWithDetails(live)].map((it) => it.constraints).filter(isPresent).flat().map((it) => it.proposalRuleWinnerId).filter(isPresent));
-    await live.refused(true, () => live.api.ruleProperties.getRegulationConstraints(987654321, proposalRuleWinnerId));
+    await live.refused(true, async () => live.api.ruleProperties.getRegulationConstraints(987654321, proposalRuleWinnerId));
   });
 });

@@ -3,3 +3,29 @@
 limits:
   requestsPerSecond: 2
   maxRequests: 400
+defaults:
+  academicYear: { from: Core.getAcademicYears, pick: "[*].startYear" }
+  program: { from: Core.getStudyPrograms, pick: "[*].code" }
+  teachingArea: { from: Core.getStudyPrograms, pick: "[*].teachingAreaCode" }
+  years: { from: Core.getStudyPrograms, pick: "[*].years[*].code" }
+  subjects: { from: Core.getStudyPrograms, pick: "[*].years[*].subjects[*].code" }
+  teacher: { from: Core.getTeachers, pick: "[*].code" }
+  # U6, the Agorà building, lists the equipment of its rooms.
+  buildings: [U06]
+  date: "{today}"
+  week: "{today}"
+  from: "{today}"
+  to: "{today+30}"
+operations:
+  # These answer null rather than results when asked in French, which no client can read.
+  Buildings.getBuildingOccupation:
+    inputs: { language: { oneOf: [null, it, en, es, de] } }
+  Exams.getExamsByProgram:
+    inputs: { language: { oneOf: [null, it, en, es, de] } }
+  Exams.getExamsByTeacher:
+    inputs:
+      # This search takes the teacher's numeric id, not the code the others take.
+      teacher: { from: Core.getTeachers, pick: "[*].id" }
+      language: { oneOf: [null, it, en, es, de] }
+  Attendance.getAttendanceHistory:
+    skip: Needs a student number; give one before enabling it.

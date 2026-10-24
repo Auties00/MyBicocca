@@ -13,4 +13,20 @@ final class EasyStaffCoreLiveTests: XCTestCase {
             live.fingerprint { f in f.map(result.entries, { k0, key0 in k0.str(key0) }) { item0 in EasyStaffLive.writeEasyStaffAcademicYear(f, item0) } }
         }
     }
+
+    func test_getTeachers1() async throws {
+        try await liveCase(EasyStaffLive.api, "Core.getTeachers#1") { live in
+            let academicYear = try live.choose("academicYear", [try await EasyStaffLive.coreGetAcademicYears(live)].flatMap { Array($0.entries.values) }.compactMap { $0.startYear }.compactMap { String($0) })
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"EasyStaffTeacher\"}}", variable: "elenco_docenti") { try await live.api.core.getTeachers(academicYear: academicYear) }
+            live.fingerprint { f in f.list(result) { item0 in EasyStaffLive.writeEasyStaffTeacher(f, item0) } }
+        }
+    }
+
+    func test_getStudyPrograms1() async throws {
+        try await liveCase(EasyStaffLive.api, "Core.getStudyPrograms#1") { live in
+            let academicYear = try live.choose("academicYear", [try await EasyStaffLive.coreGetAcademicYears(live)].flatMap { Array($0.entries.values) }.compactMap { $0.startYear }.compactMap { String($0) })
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"EasyStaffStudyProgram\"}}", variable: "elenco_corsi") { try await live.api.core.getStudyPrograms(academicYear: academicYear) }
+            live.fingerprint { f in f.list(result) { item0 in EasyStaffLive.writeEasyStaffStudyProgram(f, item0) } }
+        }
+    }
 }

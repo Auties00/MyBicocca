@@ -110,8 +110,13 @@ sealed interface Arg {
     /** Text whose placeholders the runtime replaces (see [Templates]), converted to the input's type. */
     data class Text(val template: String) : Arg
 
-    /** JSON decoded into the input's type, such as a record. */
-    data class Json(val value: JsonElement) : Arg
+    /**
+     * JSON decoded into the input's type, such as a record.
+     *
+     * @property templated Whether some of its strings have placeholders, which the runtime
+     *   replaces first (see [Templates]).
+     */
+    data class Json(val value: JsonElement, val templated: Boolean = false) : Arg
 
     /**
      * A value of a [source]'s result: one of those [path] reaches. Which one depends on the case

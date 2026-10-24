@@ -132,4 +132,97 @@ final class EasyStaffBuildingsLiveTests: XCTestCase {
             live.fingerprint { f in f.list(result) { item0 in EasyStaffLive.writeEasyStaffTeachingArea(f, item0) } }
         }
     }
+
+    func test_getBuildingOccupation1() async throws {
+        try await liveCase(EasyStaffLive.api, "Buildings.getBuildingOccupation#1") { live in
+            let buildings = try live.decode([String].self, json: "[\"U06\"]")
+            let date = try LiveText.date(LiveTemplates.resolve("{today}"))
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"EasyStaffRoomOccupationEvent\"}}", envelope: ["events"]) { try await live.api.buildings.getBuildingOccupation(buildings: buildings, date: date) }
+            live.fingerprint { f in f.list(result) { item0 in EasyStaffLive.writeEasyStaffRoomOccupationEvent(f, item0) } }
+        }
+    }
+
+    func test_getBuildingOccupation2() async throws {
+        try await liveCase(EasyStaffLive.api, "Buildings.getBuildingOccupation#2", index: 1) { live in
+            let buildings = try live.decode([String].self, json: "[\"U06\"]")
+            let date = try LiveText.date(LiveTemplates.resolve("{today}"))
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"EasyStaffRoomOccupationEvent\"}}", envelope: ["events"]) { try await live.api.buildings.getBuildingOccupation(buildings: buildings, date: date, language: EasyStaffLanguage.italian) }
+            live.fingerprint { f in f.list(result) { item0 in EasyStaffLive.writeEasyStaffRoomOccupationEvent(f, item0) } }
+        }
+    }
+
+    func test_getBuildingOccupation3() async throws {
+        try await liveCase(EasyStaffLive.api, "Buildings.getBuildingOccupation#3", index: 2) { live in
+            let buildings = try live.decode([String].self, json: "[\"U06\"]")
+            let date = try LiveText.date(LiveTemplates.resolve("{today}"))
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"EasyStaffRoomOccupationEvent\"}}", envelope: ["events"]) { try await live.api.buildings.getBuildingOccupation(buildings: buildings, date: date, language: EasyStaffLanguage.english) }
+            live.fingerprint { f in f.list(result) { item0 in EasyStaffLive.writeEasyStaffRoomOccupationEvent(f, item0) } }
+        }
+    }
+
+    func test_getBuildingOccupation4() async throws {
+        try await liveCase(EasyStaffLive.api, "Buildings.getBuildingOccupation#4", index: 3) { live in
+            let buildings = try live.decode([String].self, json: "[\"U06\"]")
+            let date = try LiveText.date(LiveTemplates.resolve("{today}"))
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"EasyStaffRoomOccupationEvent\"}}", envelope: ["events"]) { try await live.api.buildings.getBuildingOccupation(buildings: buildings, date: date, language: EasyStaffLanguage.spanish) }
+            live.fingerprint { f in f.list(result) { item0 in EasyStaffLive.writeEasyStaffRoomOccupationEvent(f, item0) } }
+        }
+    }
+
+    func test_getBuildingOccupation5() async throws {
+        try await liveCase(EasyStaffLive.api, "Buildings.getBuildingOccupation#5", index: 4) { live in
+            let buildings = try live.decode([String].self, json: "[\"U06\"]")
+            let date = try LiveText.date(LiveTemplates.resolve("{today}"))
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"EasyStaffRoomOccupationEvent\"}}", envelope: ["events"]) { try await live.api.buildings.getBuildingOccupation(buildings: buildings, date: date, language: EasyStaffLanguage.german) }
+            live.fingerprint { f in f.list(result) { item0 in EasyStaffLive.writeEasyStaffRoomOccupationEvent(f, item0) } }
+        }
+    }
+
+    func test_getRoomDetails1() async throws {
+        try await liveCase(EasyStaffLive.api, "Buildings.getRoomDetails#1") { live in
+            let buildings = try live.decode([String].self, json: "[\"U06\"]")
+            let result = try await live.call("{\"k\":\"map\",\"v\":{\"k\":\"record\",\"n\":\"EasyStaffRoomShowcaseBuilding\"}}", variable: "window.data_to_show") { try await live.api.buildings.getRoomDetails(buildings: buildings) }
+            live.fingerprint { f in f.map(result.entries, { k0, key0 in k0.str(key0) }) { item0 in EasyStaffLive.writeEasyStaffRoomShowcaseBuilding(f, item0) } }
+        }
+    }
+
+    func test_getRoomDetails2() async throws {
+        try await liveCase(EasyStaffLive.api, "Buildings.getRoomDetails#2", index: 1) { live in
+            let buildings = try live.decode([String].self, json: "[\"U06\"]")
+            let result = try await live.call("{\"k\":\"map\",\"v\":{\"k\":\"record\",\"n\":\"EasyStaffRoomShowcaseBuilding\"}}", variable: "window.data_to_show") { try await live.api.buildings.getRoomDetails(buildings: buildings, language: EasyStaffLanguage.italian) }
+            live.fingerprint { f in f.map(result.entries, { k0, key0 in k0.str(key0) }) { item0 in EasyStaffLive.writeEasyStaffRoomShowcaseBuilding(f, item0) } }
+        }
+    }
+
+    func test_getRoomDetails3() async throws {
+        try await liveCase(EasyStaffLive.api, "Buildings.getRoomDetails#3", index: 2) { live in
+            let buildings = try live.decode([String].self, json: "[\"U06\"]")
+            let result = try await live.call("{\"k\":\"map\",\"v\":{\"k\":\"record\",\"n\":\"EasyStaffRoomShowcaseBuilding\"}}", variable: "window.data_to_show") { try await live.api.buildings.getRoomDetails(buildings: buildings, language: EasyStaffLanguage.english) }
+            live.fingerprint { f in f.map(result.entries, { k0, key0 in k0.str(key0) }) { item0 in EasyStaffLive.writeEasyStaffRoomShowcaseBuilding(f, item0) } }
+        }
+    }
+
+    func test_getRoomDetails4() async throws {
+        try await liveCase(EasyStaffLive.api, "Buildings.getRoomDetails#4", index: 3) { live in
+            let buildings = try live.decode([String].self, json: "[\"U06\"]")
+            let result = try await live.call("{\"k\":\"map\",\"v\":{\"k\":\"record\",\"n\":\"EasyStaffRoomShowcaseBuilding\"}}", variable: "window.data_to_show") { try await live.api.buildings.getRoomDetails(buildings: buildings, language: EasyStaffLanguage.spanish) }
+            live.fingerprint { f in f.map(result.entries, { k0, key0 in k0.str(key0) }) { item0 in EasyStaffLive.writeEasyStaffRoomShowcaseBuilding(f, item0) } }
+        }
+    }
+
+    func test_getRoomDetails5() async throws {
+        try await liveCase(EasyStaffLive.api, "Buildings.getRoomDetails#5", index: 4) { live in
+            let buildings = try live.decode([String].self, json: "[\"U06\"]")
+            let result = try await live.call("{\"k\":\"map\",\"v\":{\"k\":\"record\",\"n\":\"EasyStaffRoomShowcaseBuilding\"}}", variable: "window.data_to_show") { try await live.api.buildings.getRoomDetails(buildings: buildings, language: EasyStaffLanguage.german) }
+            live.fingerprint { f in f.map(result.entries, { k0, key0 in k0.str(key0) }) { item0 in EasyStaffLive.writeEasyStaffRoomShowcaseBuilding(f, item0) } }
+        }
+    }
+
+    func test_getRoomDetails6() async throws {
+        try await liveCase(EasyStaffLive.api, "Buildings.getRoomDetails#6", index: 5) { live in
+            let buildings = try live.decode([String].self, json: "[\"U06\"]")
+            let result = try await live.call("{\"k\":\"map\",\"v\":{\"k\":\"record\",\"n\":\"EasyStaffRoomShowcaseBuilding\"}}", variable: "window.data_to_show") { try await live.api.buildings.getRoomDetails(buildings: buildings, language: EasyStaffLanguage.french) }
+            live.fingerprint { f in f.map(result.entries, { k0, key0 in k0.str(key0) }) { item0 in EasyStaffLive.writeEasyStaffRoomShowcaseBuilding(f, item0) } }
+        }
+    }
 }

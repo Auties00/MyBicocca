@@ -3,3 +3,7 @@
 limits:
   requestsPerSecond: 1
   maxRequests: 100
+operations:
+  Catalog.getCourseInfo:
+    # A course whose public page lists its syllabus and staff.
+    inputs: { courseId: 60702 }

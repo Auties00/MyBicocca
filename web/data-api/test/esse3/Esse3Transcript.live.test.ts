@@ -7,7 +7,7 @@ import { Esse3Live, certificatesGetCertificates, examsCalendarGetExamCallTypes, 
 // The live tests of the Esse3 Transcript module, planned from common/specs/esse3/tests.yaml.
 describe("Esse3 Transcript", () => {
   liveCase(Esse3Live, "Transcript.getCareerSegments#1", {}, async (live) => {
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}}", {}, () => live.api.transcript.getCareerSegments());
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}}", {}, async () => live.api.transcript.getCareerSegments());
     live.fingerprint((f) => f.list(result, (it) => writeEsse3CareerPortion(f, it)));
   });
 
@@ -18,7 +18,7 @@ describe("Esse3 Transcript", () => {
     const studyPlanStudentId = live.choose("studyPlanStudentId", [await plansGetStudentPlanHeaders(live)].flat().map((it) => it.studyPlanStudentId).filter(isPresent));
     const studyPlanStudentCode = live.choose("studyPlanStudentCode", [await transcriptGetBookingsByMatId(live)].flat().map((it) => it.studyPlanStudentCode).filter(isPresent));
     const fiscalCode = live.choose("fiscalCode", [await personalDataGetCareers(live)].flat().map((it) => it.fiscalCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}}", {}, () => live.api.transcript.getCareerSegments({ courseOfStudyStudentId: courseOfStudyStudentId, courseOfStudyStudentCode: courseOfStudyStudentCode, academicYearOrderStudentId: academicYearOrderStudentId, studyPlanStudentId: studyPlanStudentId, studyPlanStudentCode: studyPlanStudentCode, fiscalCode: fiscalCode }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}}", {}, async () => live.api.transcript.getCareerSegments({ courseOfStudyStudentId: courseOfStudyStudentId, courseOfStudyStudentCode: courseOfStudyStudentCode, academicYearOrderStudentId: academicYearOrderStudentId, studyPlanStudentId: studyPlanStudentId, studyPlanStudentCode: studyPlanStudentCode, fiscalCode: fiscalCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3CareerPortion(f, it)));
   });
 
@@ -27,7 +27,7 @@ describe("Esse3 Transcript", () => {
     const courseOfStudyStudentCode = live.choose("courseOfStudyStudentCode", [await recordsFindMinutes(live)].flat().map((it) => it.courseOfStudyStudentCode).filter(isPresent));
     const studyPlanStudentId = live.choose("studyPlanStudentId", [await plansGetStudentPlanHeaders(live)].flat().map((it) => it.studyPlanStudentId).filter(isPresent));
     const studentStatusCode = live.choose("studentStatusCode", [await personalDataGetCareers(live)].flat().map((it) => it.studentStatusCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}}", {}, () => live.api.transcript.getCareerSegments({ courseOfStudyStudentId: courseOfStudyStudentId, courseOfStudyStudentCode: courseOfStudyStudentCode, studyPlanStudentId: studyPlanStudentId, studentStatusCode: studentStatusCode }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}}", {}, async () => live.api.transcript.getCareerSegments({ courseOfStudyStudentId: courseOfStudyStudentId, courseOfStudyStudentCode: courseOfStudyStudentCode, studyPlanStudentId: studyPlanStudentId, studentStatusCode: studentStatusCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3CareerPortion(f, it)));
   });
 
@@ -36,7 +36,7 @@ describe("Esse3 Transcript", () => {
     const studyPlanStudentCode = live.choose("studyPlanStudentCode", [await transcriptGetBookingsByMatId(live)].flat().map((it) => it.studyPlanStudentCode).filter(isPresent));
     const fiscalCode = live.choose("fiscalCode", [await personalDataGetCareers(live)].flat().map((it) => it.fiscalCode).filter(isPresent));
     const studentStatusCode = live.choose("studentStatusCode", [await personalDataGetCareers(live)].flat().map((it) => it.studentStatusCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}}", {}, () => live.api.transcript.getCareerSegments({ academicYearOrderStudentId: academicYearOrderStudentId, studyPlanStudentCode: studyPlanStudentCode, fiscalCode: fiscalCode, studentStatusCode: studentStatusCode }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}}", {}, async () => live.api.transcript.getCareerSegments({ academicYearOrderStudentId: academicYearOrderStudentId, studyPlanStudentCode: studyPlanStudentCode, fiscalCode: fiscalCode, studentStatusCode: studentStatusCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3CareerPortion(f, it)));
   });
 
@@ -46,7 +46,7 @@ describe("Esse3 Transcript", () => {
     const studyPlanStudentCode = live.choose("studyPlanStudentCode", [await transcriptGetBookingsByMatId(live)].flat().map((it) => it.studyPlanStudentCode).filter(isPresent));
     const fiscalCode = live.choose("fiscalCode", [await personalDataGetCareers(live)].flat().map((it) => it.fiscalCode).filter(isPresent));
     const studentStatusCode = live.choose("studentStatusCode", [await personalDataGetCareers(live)].flat().map((it) => it.studentStatusCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}}", {}, () => live.api.transcript.getCareerSegments({ courseOfStudyStudentId: courseOfStudyStudentId, courseOfStudyStudentCode: courseOfStudyStudentCode, studyPlanStudentCode: studyPlanStudentCode, fiscalCode: fiscalCode, studentStatusCode: studentStatusCode }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}}", {}, async () => live.api.transcript.getCareerSegments({ courseOfStudyStudentId: courseOfStudyStudentId, courseOfStudyStudentCode: courseOfStudyStudentCode, studyPlanStudentCode: studyPlanStudentCode, fiscalCode: fiscalCode, studentStatusCode: studentStatusCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3CareerPortion(f, it)));
   });
 
@@ -56,184 +56,184 @@ describe("Esse3 Transcript", () => {
     const studyPlanStudentId = live.choose("studyPlanStudentId", [await plansGetStudentPlanHeaders(live)].flat().map((it) => it.studyPlanStudentId).filter(isPresent));
     const studyPlanStudentCode = live.choose("studyPlanStudentCode", [await transcriptGetBookingsByMatId(live)].flat().map((it) => it.studyPlanStudentCode).filter(isPresent));
     const studentStatusCode = live.choose("studentStatusCode", [await personalDataGetCareers(live)].flat().map((it) => it.studentStatusCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}}", {}, () => live.api.transcript.getCareerSegments({ courseOfStudyStudentId: courseOfStudyStudentId, academicYearOrderStudentId: academicYearOrderStudentId, studyPlanStudentId: studyPlanStudentId, studyPlanStudentCode: studyPlanStudentCode, studentStatusCode: studentStatusCode }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}}", {}, async () => live.api.transcript.getCareerSegments({ courseOfStudyStudentId: courseOfStudyStudentId, academicYearOrderStudentId: academicYearOrderStudentId, studyPlanStudentId: studyPlanStudentId, studyPlanStudentCode: studyPlanStudentCode, studentStatusCode: studentStatusCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3CareerPortion(f, it)));
   });
 
   liveCase(Esse3Live, "Transcript.getCareerSegment#1", {}, async (live) => {
     const matId = live.choose("matId", [await transcriptGetCareerSegments(live)].flat().map((it) => it.matId).filter(isPresent));
-    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}", {}, () => live.api.transcript.getCareerSegment(matId));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}", {}, async () => live.api.transcript.getCareerSegment(matId));
     live.fingerprint((f) => writeEsse3CareerPortion(f, result));
   });
 
   liveCase(Esse3Live, "Transcript.getCareerSegment#unknown-id", {}, async (live) => {
-    await live.refused(true, () => live.api.transcript.getCareerSegment(987654321));
+    await live.refused(true, async () => live.api.transcript.getCareerSegment(987654321));
   });
 
   liveCase(Esse3Live, "Transcript.getRecordBookExamCalls#1", {}, async (live) => {
     const matId = live.choose("matId", [await transcriptGetCareerSegments(live)].flat().map((it) => it.matId).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionTranscript\"}}", {}, () => live.api.transcript.getRecordBookExamCalls(matId));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionTranscript\"}}", {}, async () => live.api.transcript.getRecordBookExamCalls(matId));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3ExamSessionTranscript(f, it)));
   });
 
   liveCase(Esse3Live, "Transcript.getRecordBookExamCalls#2", { index: 1 }, async (live) => {
     const matId = live.choose("matId", [await transcriptGetCareerSegments(live)].flat().map((it) => it.matId).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionTranscript\"}}", {}, () => live.api.transcript.getRecordBookExamCalls(matId, { q: "APPELLI_PRENOTABILI" }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionTranscript\"}}", {}, async () => live.api.transcript.getRecordBookExamCalls(matId, { q: "APPELLI_PRENOTABILI" }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3ExamSessionTranscript(f, it)));
   });
 
   liveCase(Esse3Live, "Transcript.getRecordBookExamCalls#3", { index: 2 }, async (live) => {
     const matId = live.choose("matId", [await transcriptGetCareerSegments(live)].flat().map((it) => it.matId).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionTranscript\"}}", {}, () => live.api.transcript.getRecordBookExamCalls(matId, { q: "APPELLI_PRENOTABILI_E_FUTURI" }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionTranscript\"}}", {}, async () => live.api.transcript.getRecordBookExamCalls(matId, { q: "APPELLI_PRENOTABILI_E_FUTURI" }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3ExamSessionTranscript(f, it)));
   });
 
   liveCase(Esse3Live, "Transcript.getRecordBookExamCalls#4", { index: 3 }, async (live) => {
     const matId = live.choose("matId", [await transcriptGetCareerSegments(live)].flat().map((it) => it.matId).filter(isPresent));
     const actorCode = live.choose("actorCode", [await examsCalendarGetExamCallTypes(live)].flat().map((it) => it.actorCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionTranscript\"}}", {}, () => live.api.transcript.getRecordBookExamCalls(matId, { actorCode: actorCode }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionTranscript\"}}", {}, async () => live.api.transcript.getRecordBookExamCalls(matId, { actorCode: actorCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3ExamSessionTranscript(f, it)));
   });
 
   liveCase(Esse3Live, "Transcript.getRecordBookExamCalls#5", { index: 4 }, async (live) => {
     const matId = live.choose("matId", [await transcriptGetCareerSegments(live)].flat().map((it) => it.matId).filter(isPresent));
     const actorCode = live.choose("actorCode", [await examsCalendarGetExamCallTypes(live)].flat().map((it) => it.actorCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionTranscript\"}}", {}, () => live.api.transcript.getRecordBookExamCalls(matId, { actorCode: actorCode, q: "APPELLI_PRENOTABILI" }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionTranscript\"}}", {}, async () => live.api.transcript.getRecordBookExamCalls(matId, { actorCode: actorCode, q: "APPELLI_PRENOTABILI" }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3ExamSessionTranscript(f, it)));
   });
 
   liveCase(Esse3Live, "Transcript.getRecordBookExamCalls#6", { index: 5 }, async (live) => {
     const matId = live.choose("matId", [await transcriptGetCareerSegments(live)].flat().map((it) => it.matId).filter(isPresent));
     const actorCode = live.choose("actorCode", [await examsCalendarGetExamCallTypes(live)].flat().map((it) => it.actorCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionTranscript\"}}", {}, () => live.api.transcript.getRecordBookExamCalls(matId, { actorCode: actorCode, q: "APPELLI_PRENOTABILI_E_FUTURI" }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionTranscript\"}}", {}, async () => live.api.transcript.getRecordBookExamCalls(matId, { actorCode: actorCode, q: "APPELLI_PRENOTABILI_E_FUTURI" }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3ExamSessionTranscript(f, it)));
   });
 
   liveCase(Esse3Live, "Transcript.getRecordBookExamCalls#unknown-id", {}, async (live) => {
-    await live.refused(true, () => live.api.transcript.getRecordBookExamCalls(987654321));
+    await live.refused(true, async () => live.api.transcript.getRecordBookExamCalls(987654321));
   });
 
   liveCase(Esse3Live, "Transcript.getRecordBookAverages#1", {}, async (live) => {
     const matId = live.choose("matId", [await transcriptGetCareerSegments(live)].flat().map((it) => it.matId).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TranscriptAverage\"}}", {}, () => live.api.transcript.getRecordBookAverages(matId));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TranscriptAverage\"}}", {}, async () => live.api.transcript.getRecordBookAverages(matId));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3TranscriptAverage(f, it)));
   });
 
   liveCase(Esse3Live, "Transcript.getRecordBookAverages#unknown-id", {}, async (live) => {
-    await live.refused(true, () => live.api.transcript.getRecordBookAverages(987654321));
+    await live.refused(true, async () => live.api.transcript.getRecordBookAverages(987654321));
   });
 
   liveCase(Esse3Live, "Transcript.getRecordBookAverage#1", {}, async (live) => {
     const matId = live.choose("matId", [await transcriptGetCareerSegments(live)].flat().map((it) => it.matId).filter(isPresent));
     const base = live.choose("base", [await transcriptGetRecordBookAverages(live)].flat().map((it) => it.base).filter(isPresent).map((it) => String(it)));
     const type = live.choose("type", [await certificatesGetCertificates(live)].map((it) => it.certificates).filter(isPresent).flat().map((it) => it.type).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TranscriptAverage\"}}", {}, () => live.api.transcript.getRecordBookAverage(matId, base, type));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TranscriptAverage\"}}", {}, async () => live.api.transcript.getRecordBookAverage(matId, base, type));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3TranscriptAverage(f, it)));
   });
 
   liveCase(Esse3Live, "Transcript.getRecordBookAverage#unknown-id", {}, async (live) => {
     const base = live.choose("base", [await transcriptGetRecordBookAverages(live)].flat().map((it) => it.base).filter(isPresent).map((it) => String(it)));
     const type = live.choose("type", [await certificatesGetCertificates(live)].map((it) => it.certificates).filter(isPresent).flat().map((it) => it.type).filter(isPresent));
-    await live.refused(true, () => live.api.transcript.getRecordBookAverage(987654321, base, type));
+    await live.refused(true, async () => live.api.transcript.getRecordBookAverage(987654321, base, type));
   });
 
   liveCase(Esse3Live, "Transcript.getRecordBookPartitions#1", {}, async (live) => {
     const matId = live.choose("matId", [await transcriptGetCareerSegments(live)].flat().map((it) => it.matId).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TranscriptPartition\"}}", {}, () => live.api.transcript.getRecordBookPartitions(matId));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TranscriptPartition\"}}", {}, async () => live.api.transcript.getRecordBookPartitions(matId));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3TranscriptPartition(f, it)));
   });
 
   liveCase(Esse3Live, "Transcript.getRecordBookPartitions#unknown-id", {}, async (live) => {
-    await live.refused(true, () => live.api.transcript.getRecordBookPartitions(987654321));
+    await live.refused(true, async () => live.api.transcript.getRecordBookPartitions(987654321));
   });
 
   liveCase(Esse3Live, "Transcript.getBookingsByMatId#1", {}, async (live) => {
     const matId = live.choose("matId", [await transcriptGetCareerSegments(live)].flat().map((it) => it.matId).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionEnrollment\"}}", {}, () => live.api.transcript.getBookingsByMatId(matId));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionEnrollment\"}}", {}, async () => live.api.transcript.getBookingsByMatId(matId));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3ExamSessionEnrollment(f, it)));
   });
 
   liveCase(Esse3Live, "Transcript.getBookingsByMatId#2", { index: 1 }, async (live) => {
     const matId = live.choose("matId", [await transcriptGetCareerSegments(live)].flat().map((it) => it.matId).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionEnrollment\"}}", {}, () => live.api.transcript.getBookingsByMatId(matId, { q: "BACHECA_ESITI" }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionEnrollment\"}}", {}, async () => live.api.transcript.getBookingsByMatId(matId, { q: "BACHECA_ESITI" }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3ExamSessionEnrollment(f, it)));
   });
 
   liveCase(Esse3Live, "Transcript.getBookingsByMatId#3", { index: 2 }, async (live) => {
     const matId = live.choose("matId", [await transcriptGetCareerSegments(live)].flat().map((it) => it.matId).filter(isPresent));
     const actorCode = live.choose("actorCode", [await examsCalendarGetExamCallTypes(live)].flat().map((it) => it.actorCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionEnrollment\"}}", {}, () => live.api.transcript.getBookingsByMatId(matId, { actorCode: actorCode }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionEnrollment\"}}", {}, async () => live.api.transcript.getBookingsByMatId(matId, { actorCode: actorCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3ExamSessionEnrollment(f, it)));
   });
 
   liveCase(Esse3Live, "Transcript.getBookingsByMatId#4", { index: 3 }, async (live) => {
     const matId = live.choose("matId", [await transcriptGetCareerSegments(live)].flat().map((it) => it.matId).filter(isPresent));
     const actorCode = live.choose("actorCode", [await examsCalendarGetExamCallTypes(live)].flat().map((it) => it.actorCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionEnrollment\"}}", {}, () => live.api.transcript.getBookingsByMatId(matId, { actorCode: actorCode, q: "BACHECA_ESITI" }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionEnrollment\"}}", {}, async () => live.api.transcript.getBookingsByMatId(matId, { actorCode: actorCode, q: "BACHECA_ESITI" }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3ExamSessionEnrollment(f, it)));
   });
 
   liveCase(Esse3Live, "Transcript.getBookingsByMatId#unknown-id", {}, async (live) => {
-    await live.refused(true, () => live.api.transcript.getBookingsByMatId(987654321));
+    await live.refused(true, async () => live.api.transcript.getBookingsByMatId(987654321));
   });
 
   liveCase(Esse3Live, "Transcript.getRecordBookTests#1", {}, async (live) => {
     const matId = live.choose("matId", [await transcriptGetCareerSegments(live)].flat().map((it) => it.matId).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TranscriptTest\"}}", {}, () => live.api.transcript.getRecordBookTests(matId));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TranscriptTest\"}}", {}, async () => live.api.transcript.getRecordBookTests(matId));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3TranscriptTest(f, it)));
   });
 
   liveCase(Esse3Live, "Transcript.getRecordBookTests#unknown-id", {}, async (live) => {
-    await live.refused(true, () => live.api.transcript.getRecordBookTests(987654321));
+    await live.refused(true, async () => live.api.transcript.getRecordBookTests(987654321));
   });
 
   liveCase(Esse3Live, "Transcript.getRecordBookRows#1", {}, async (live) => {
     const matId = live.choose("matId", [await transcriptGetCareerSegments(live)].flat().map((it) => it.matId).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TranscriptRow\"}}", {}, () => live.api.transcript.getRecordBookRows(matId));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TranscriptRow\"}}", {}, async () => live.api.transcript.getRecordBookRows(matId));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3TranscriptRow(f, it)));
   });
 
   liveCase(Esse3Live, "Transcript.getRecordBookRows#2", { index: 1 }, async (live) => {
     const matId = live.choose("matId", [await transcriptGetCareerSegments(live)].flat().map((it) => it.matId).filter(isPresent));
     const activityCode = live.choose("activityCode", [await offerGetGenericTeachingActivities(live)].flat().map((it) => it.activityCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TranscriptRow\"}}", {}, () => live.api.transcript.getRecordBookRows(matId, { activityCode: activityCode }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TranscriptRow\"}}", {}, async () => live.api.transcript.getRecordBookRows(matId, { activityCode: activityCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3TranscriptRow(f, it)));
   });
 
   liveCase(Esse3Live, "Transcript.getRecordBookRows#unknown-id", {}, async (live) => {
-    await live.refused(true, () => live.api.transcript.getRecordBookRows(987654321));
+    await live.refused(true, async () => live.api.transcript.getRecordBookRows(987654321));
   });
 
   liveCase(Esse3Live, "Transcript.getRecordBookRow#1", {}, async (live) => {
     const matId = live.choose("matId", [await transcriptGetCareerSegments(live)].flat().map((it) => it.matId).filter(isPresent));
     const activityChoiceId = live.choose("activityChoiceId", [await recordsFindMinutes(live)].flat().map((it) => it.activityChoiceId).filter(isPresent));
-    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3TranscriptRow\"}", {}, () => live.api.transcript.getRecordBookRow(matId, activityChoiceId));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3TranscriptRow\"}", {}, async () => live.api.transcript.getRecordBookRow(matId, activityChoiceId));
     live.fingerprint((f) => writeEsse3TranscriptRow(f, result));
   });
 
   liveCase(Esse3Live, "Transcript.getRecordBookRow#unknown-id", {}, async (live) => {
     const activityChoiceId = live.choose("activityChoiceId", [await recordsFindMinutes(live)].flat().map((it) => it.activityChoiceId).filter(isPresent));
-    await live.refused(true, () => live.api.transcript.getRecordBookRow(987654321, activityChoiceId));
+    await live.refused(true, async () => live.api.transcript.getRecordBookRow(987654321, activityChoiceId));
   });
 
   liveCase(Esse3Live, "Transcript.getExamCallsByRecordBookRow#1", {}, async (live) => {
     const matId = live.choose("matId", [await transcriptGetCareerSegments(live)].flat().map((it) => it.matId).filter(isPresent));
     const activityChoiceId = live.choose("activityChoiceId", [await recordsFindMinutes(live)].flat().map((it) => it.activityChoiceId).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionTranscript\"}}", {}, () => live.api.transcript.getExamCallsByRecordBookRow(matId, activityChoiceId));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionTranscript\"}}", {}, async () => live.api.transcript.getExamCallsByRecordBookRow(matId, activityChoiceId));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3ExamSessionTranscript(f, it)));
   });
 
   liveCase(Esse3Live, "Transcript.getExamCallsByRecordBookRow#2", { index: 1 }, async (live) => {
     const matId = live.choose("matId", [await transcriptGetCareerSegments(live)].flat().map((it) => it.matId).filter(isPresent));
     const activityChoiceId = live.choose("activityChoiceId", [await recordsFindMinutes(live)].flat().map((it) => it.activityChoiceId).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionTranscript\"}}", {}, () => live.api.transcript.getExamCallsByRecordBookRow(matId, activityChoiceId, { q: "APPELLI_PRENOTABILI" }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionTranscript\"}}", {}, async () => live.api.transcript.getExamCallsByRecordBookRow(matId, activityChoiceId, { q: "APPELLI_PRENOTABILI" }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3ExamSessionTranscript(f, it)));
   });
 
   liveCase(Esse3Live, "Transcript.getExamCallsByRecordBookRow#3", { index: 2 }, async (live) => {
     const matId = live.choose("matId", [await transcriptGetCareerSegments(live)].flat().map((it) => it.matId).filter(isPresent));
     const activityChoiceId = live.choose("activityChoiceId", [await recordsFindMinutes(live)].flat().map((it) => it.activityChoiceId).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionTranscript\"}}", {}, () => live.api.transcript.getExamCallsByRecordBookRow(matId, activityChoiceId, { q: "APPELLI_PRENOTABILI_E_FUTURI" }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionTranscript\"}}", {}, async () => live.api.transcript.getExamCallsByRecordBookRow(matId, activityChoiceId, { q: "APPELLI_PRENOTABILI_E_FUTURI" }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3ExamSessionTranscript(f, it)));
   });
 
@@ -241,7 +241,7 @@ describe("Esse3 Transcript", () => {
     const matId = live.choose("matId", [await transcriptGetCareerSegments(live)].flat().map((it) => it.matId).filter(isPresent));
     const activityChoiceId = live.choose("activityChoiceId", [await recordsFindMinutes(live)].flat().map((it) => it.activityChoiceId).filter(isPresent));
     const actorCode = live.choose("actorCode", [await examsCalendarGetExamCallTypes(live)].flat().map((it) => it.actorCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionTranscript\"}}", {}, () => live.api.transcript.getExamCallsByRecordBookRow(matId, activityChoiceId, { actorCode: actorCode }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionTranscript\"}}", {}, async () => live.api.transcript.getExamCallsByRecordBookRow(matId, activityChoiceId, { actorCode: actorCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3ExamSessionTranscript(f, it)));
   });
 
@@ -249,7 +249,7 @@ describe("Esse3 Transcript", () => {
     const matId = live.choose("matId", [await transcriptGetCareerSegments(live)].flat().map((it) => it.matId).filter(isPresent));
     const activityChoiceId = live.choose("activityChoiceId", [await recordsFindMinutes(live)].flat().map((it) => it.activityChoiceId).filter(isPresent));
     const actorCode = live.choose("actorCode", [await examsCalendarGetExamCallTypes(live)].flat().map((it) => it.actorCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionTranscript\"}}", {}, () => live.api.transcript.getExamCallsByRecordBookRow(matId, activityChoiceId, { actorCode: actorCode, q: "APPELLI_PRENOTABILI" }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionTranscript\"}}", {}, async () => live.api.transcript.getExamCallsByRecordBookRow(matId, activityChoiceId, { actorCode: actorCode, q: "APPELLI_PRENOTABILI" }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3ExamSessionTranscript(f, it)));
   });
 
@@ -257,52 +257,52 @@ describe("Esse3 Transcript", () => {
     const matId = live.choose("matId", [await transcriptGetCareerSegments(live)].flat().map((it) => it.matId).filter(isPresent));
     const activityChoiceId = live.choose("activityChoiceId", [await recordsFindMinutes(live)].flat().map((it) => it.activityChoiceId).filter(isPresent));
     const actorCode = live.choose("actorCode", [await examsCalendarGetExamCallTypes(live)].flat().map((it) => it.actorCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionTranscript\"}}", {}, () => live.api.transcript.getExamCallsByRecordBookRow(matId, activityChoiceId, { actorCode: actorCode, q: "APPELLI_PRENOTABILI_E_FUTURI" }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionTranscript\"}}", {}, async () => live.api.transcript.getExamCallsByRecordBookRow(matId, activityChoiceId, { actorCode: actorCode, q: "APPELLI_PRENOTABILI_E_FUTURI" }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3ExamSessionTranscript(f, it)));
   });
 
   liveCase(Esse3Live, "Transcript.getExamCallsByRecordBookRow#unknown-id", {}, async (live) => {
     const activityChoiceId = live.choose("activityChoiceId", [await recordsFindMinutes(live)].flat().map((it) => it.activityChoiceId).filter(isPresent));
-    await live.refused(true, () => live.api.transcript.getExamCallsByRecordBookRow(987654321, activityChoiceId));
+    await live.refused(true, async () => live.api.transcript.getExamCallsByRecordBookRow(987654321, activityChoiceId));
   });
 
   liveCase(Esse3Live, "Transcript.getRecordBookRowPartitions#1", {}, async (live) => {
     const matId = live.choose("matId", [await transcriptGetCareerSegments(live)].flat().map((it) => it.matId).filter(isPresent));
     const activityChoiceId = live.choose("activityChoiceId", [await recordsFindMinutes(live)].flat().map((it) => it.activityChoiceId).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TranscriptPartition\"}}", {}, () => live.api.transcript.getRecordBookRowPartitions(matId, activityChoiceId));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TranscriptPartition\"}}", {}, async () => live.api.transcript.getRecordBookRowPartitions(matId, activityChoiceId));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3TranscriptPartition(f, it)));
   });
 
   liveCase(Esse3Live, "Transcript.getRecordBookRowPartitions#unknown-id", {}, async (live) => {
     const activityChoiceId = live.choose("activityChoiceId", [await recordsFindMinutes(live)].flat().map((it) => it.activityChoiceId).filter(isPresent));
-    await live.refused(true, () => live.api.transcript.getRecordBookRowPartitions(987654321, activityChoiceId));
+    await live.refused(true, async () => live.api.transcript.getRecordBookRowPartitions(987654321, activityChoiceId));
   });
 
   liveCase(Esse3Live, "Transcript.getRecordBookRowPartition#1", {}, async (live) => {
     const matId = live.choose("matId", [await transcriptGetCareerSegments(live)].flat().map((it) => it.matId).filter(isPresent));
     const activityChoiceId = live.choose("activityChoiceId", [await recordsFindMinutes(live)].flat().map((it) => it.activityChoiceId).filter(isPresent));
     const activityPartitionId = live.choose("activityPartitionId", [await transcriptGetRecordBookPartitions(live)].flat().map((it) => it.activityPartitionId).filter(isPresent));
-    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3TranscriptPartition\"}", {}, () => live.api.transcript.getRecordBookRowPartition(matId, activityChoiceId, activityPartitionId));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3TranscriptPartition\"}", {}, async () => live.api.transcript.getRecordBookRowPartition(matId, activityChoiceId, activityPartitionId));
     live.fingerprint((f) => writeEsse3TranscriptPartition(f, result));
   });
 
   liveCase(Esse3Live, "Transcript.getRecordBookRowPartition#unknown-id", {}, async (live) => {
     const activityChoiceId = live.choose("activityChoiceId", [await recordsFindMinutes(live)].flat().map((it) => it.activityChoiceId).filter(isPresent));
     const activityPartitionId = live.choose("activityPartitionId", [await transcriptGetRecordBookPartitions(live)].flat().map((it) => it.activityPartitionId).filter(isPresent));
-    await live.refused(true, () => live.api.transcript.getRecordBookRowPartition(987654321, activityChoiceId, activityPartitionId));
+    await live.refused(true, async () => live.api.transcript.getRecordBookRowPartition(987654321, activityChoiceId, activityPartitionId));
   });
 
   liveCase(Esse3Live, "Transcript.getBookingsByTeachingActivityChoiceId#1", {}, async (live) => {
     const matId = live.choose("matId", [await transcriptGetCareerSegments(live)].flat().map((it) => it.matId).filter(isPresent));
     const activityChoiceId = live.choose("activityChoiceId", [await recordsFindMinutes(live)].flat().map((it) => it.activityChoiceId).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionEnrollment\"}}", {}, () => live.api.transcript.getBookingsByTeachingActivityChoiceId(matId, activityChoiceId));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionEnrollment\"}}", {}, async () => live.api.transcript.getBookingsByTeachingActivityChoiceId(matId, activityChoiceId));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3ExamSessionEnrollment(f, it)));
   });
 
   liveCase(Esse3Live, "Transcript.getBookingsByTeachingActivityChoiceId#2", { index: 1 }, async (live) => {
     const matId = live.choose("matId", [await transcriptGetCareerSegments(live)].flat().map((it) => it.matId).filter(isPresent));
     const activityChoiceId = live.choose("activityChoiceId", [await recordsFindMinutes(live)].flat().map((it) => it.activityChoiceId).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionEnrollment\"}}", {}, () => live.api.transcript.getBookingsByTeachingActivityChoiceId(matId, activityChoiceId, { q: "BACHECA_ESITI" }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionEnrollment\"}}", {}, async () => live.api.transcript.getBookingsByTeachingActivityChoiceId(matId, activityChoiceId, { q: "BACHECA_ESITI" }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3ExamSessionEnrollment(f, it)));
   });
 
@@ -310,7 +310,7 @@ describe("Esse3 Transcript", () => {
     const matId = live.choose("matId", [await transcriptGetCareerSegments(live)].flat().map((it) => it.matId).filter(isPresent));
     const activityChoiceId = live.choose("activityChoiceId", [await recordsFindMinutes(live)].flat().map((it) => it.activityChoiceId).filter(isPresent));
     const actorCode = live.choose("actorCode", [await examsCalendarGetExamCallTypes(live)].flat().map((it) => it.actorCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionEnrollment\"}}", {}, () => live.api.transcript.getBookingsByTeachingActivityChoiceId(matId, activityChoiceId, { actorCode: actorCode }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionEnrollment\"}}", {}, async () => live.api.transcript.getBookingsByTeachingActivityChoiceId(matId, activityChoiceId, { actorCode: actorCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3ExamSessionEnrollment(f, it)));
   });
 
@@ -318,20 +318,20 @@ describe("Esse3 Transcript", () => {
     const matId = live.choose("matId", [await transcriptGetCareerSegments(live)].flat().map((it) => it.matId).filter(isPresent));
     const activityChoiceId = live.choose("activityChoiceId", [await recordsFindMinutes(live)].flat().map((it) => it.activityChoiceId).filter(isPresent));
     const actorCode = live.choose("actorCode", [await examsCalendarGetExamCallTypes(live)].flat().map((it) => it.actorCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionEnrollment\"}}", {}, () => live.api.transcript.getBookingsByTeachingActivityChoiceId(matId, activityChoiceId, { actorCode: actorCode, q: "BACHECA_ESITI" }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionEnrollment\"}}", {}, async () => live.api.transcript.getBookingsByTeachingActivityChoiceId(matId, activityChoiceId, { actorCode: actorCode, q: "BACHECA_ESITI" }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3ExamSessionEnrollment(f, it)));
   });
 
   liveCase(Esse3Live, "Transcript.getBookingsByTeachingActivityChoiceId#unknown-id", {}, async (live) => {
     const activityChoiceId = live.choose("activityChoiceId", [await recordsFindMinutes(live)].flat().map((it) => it.activityChoiceId).filter(isPresent));
-    await live.refused(true, () => live.api.transcript.getBookingsByTeachingActivityChoiceId(987654321, activityChoiceId));
+    await live.refused(true, async () => live.api.transcript.getBookingsByTeachingActivityChoiceId(987654321, activityChoiceId));
   });
 
   liveCase(Esse3Live, "Transcript.getBookingByTeachingActivityChoiceId#1", {}, async (live) => {
     const matId = live.choose("matId", [await transcriptGetCareerSegments(live)].flat().map((it) => it.matId).filter(isPresent));
     const activityChoiceId = live.choose("activityChoiceId", [await recordsFindMinutes(live)].flat().map((it) => it.activityChoiceId).filter(isPresent));
     const applicationListId = live.choose("applicationListId", [await recordsFindMinutes(live)].flat().map((it) => it.applicationListId).filter(isPresent));
-    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3ExamSessionEnrollment\"}", {}, () => live.api.transcript.getBookingByTeachingActivityChoiceId(matId, activityChoiceId, applicationListId));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3ExamSessionEnrollment\"}", {}, async () => live.api.transcript.getBookingByTeachingActivityChoiceId(matId, activityChoiceId, applicationListId));
     live.fingerprint((f) => writeEsse3ExamSessionEnrollment(f, result));
   });
 
@@ -339,7 +339,7 @@ describe("Esse3 Transcript", () => {
     const matId = live.choose("matId", [await transcriptGetCareerSegments(live)].flat().map((it) => it.matId).filter(isPresent));
     const activityChoiceId = live.choose("activityChoiceId", [await recordsFindMinutes(live)].flat().map((it) => it.activityChoiceId).filter(isPresent));
     const applicationListId = live.choose("applicationListId", [await recordsFindMinutes(live)].flat().map((it) => it.applicationListId).filter(isPresent));
-    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3ExamSessionEnrollment\"}", {}, () => live.api.transcript.getBookingByTeachingActivityChoiceId(matId, activityChoiceId, applicationListId, { q: "BACHECA_ESITI" }));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3ExamSessionEnrollment\"}", {}, async () => live.api.transcript.getBookingByTeachingActivityChoiceId(matId, activityChoiceId, applicationListId, { q: "BACHECA_ESITI" }));
     live.fingerprint((f) => writeEsse3ExamSessionEnrollment(f, result));
   });
 
@@ -348,7 +348,7 @@ describe("Esse3 Transcript", () => {
     const activityChoiceId = live.choose("activityChoiceId", [await recordsFindMinutes(live)].flat().map((it) => it.activityChoiceId).filter(isPresent));
     const applicationListId = live.choose("applicationListId", [await recordsFindMinutes(live)].flat().map((it) => it.applicationListId).filter(isPresent));
     const actorCode = live.choose("actorCode", [await examsCalendarGetExamCallTypes(live)].flat().map((it) => it.actorCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3ExamSessionEnrollment\"}", {}, () => live.api.transcript.getBookingByTeachingActivityChoiceId(matId, activityChoiceId, applicationListId, { actorCode: actorCode }));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3ExamSessionEnrollment\"}", {}, async () => live.api.transcript.getBookingByTeachingActivityChoiceId(matId, activityChoiceId, applicationListId, { actorCode: actorCode }));
     live.fingerprint((f) => writeEsse3ExamSessionEnrollment(f, result));
   });
 
@@ -357,191 +357,191 @@ describe("Esse3 Transcript", () => {
     const activityChoiceId = live.choose("activityChoiceId", [await recordsFindMinutes(live)].flat().map((it) => it.activityChoiceId).filter(isPresent));
     const applicationListId = live.choose("applicationListId", [await recordsFindMinutes(live)].flat().map((it) => it.applicationListId).filter(isPresent));
     const actorCode = live.choose("actorCode", [await examsCalendarGetExamCallTypes(live)].flat().map((it) => it.actorCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3ExamSessionEnrollment\"}", {}, () => live.api.transcript.getBookingByTeachingActivityChoiceId(matId, activityChoiceId, applicationListId, { actorCode: actorCode, q: "BACHECA_ESITI" }));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3ExamSessionEnrollment\"}", {}, async () => live.api.transcript.getBookingByTeachingActivityChoiceId(matId, activityChoiceId, applicationListId, { actorCode: actorCode, q: "BACHECA_ESITI" }));
     live.fingerprint((f) => writeEsse3ExamSessionEnrollment(f, result));
   });
 
   liveCase(Esse3Live, "Transcript.getBookingByTeachingActivityChoiceId#unknown-id", {}, async (live) => {
     const activityChoiceId = live.choose("activityChoiceId", [await recordsFindMinutes(live)].flat().map((it) => it.activityChoiceId).filter(isPresent));
     const applicationListId = live.choose("applicationListId", [await recordsFindMinutes(live)].flat().map((it) => it.applicationListId).filter(isPresent));
-    await live.refused(true, () => live.api.transcript.getBookingByTeachingActivityChoiceId(987654321, activityChoiceId, applicationListId));
+    await live.refused(true, async () => live.api.transcript.getBookingByTeachingActivityChoiceId(987654321, activityChoiceId, applicationListId));
   });
 
   liveCase(Esse3Live, "Transcript.getPresenceCertificateByApplicationListId#1", {}, async (live) => {
     const matId = live.choose("matId", [await transcriptGetCareerSegments(live)].flat().map((it) => it.matId).filter(isPresent));
     const activityChoiceId = live.choose("activityChoiceId", [await recordsFindMinutes(live)].flat().map((it) => it.activityChoiceId).filter(isPresent));
     const applicationListId = live.choose("applicationListId", [await recordsFindMinutes(live)].flat().map((it) => it.applicationListId).filter(isPresent));
-    await live.call(undefined, {}, () => live.api.transcript.getPresenceCertificateByApplicationListId(matId, activityChoiceId, applicationListId));
+    await live.call(undefined, {}, async () => live.api.transcript.getPresenceCertificateByApplicationListId(matId, activityChoiceId, applicationListId));
   });
 
   liveCase(Esse3Live, "Transcript.getPresenceCertificateByApplicationListId#unknown-id", {}, async (live) => {
     const activityChoiceId = live.choose("activityChoiceId", [await recordsFindMinutes(live)].flat().map((it) => it.activityChoiceId).filter(isPresent));
     const applicationListId = live.choose("applicationListId", [await recordsFindMinutes(live)].flat().map((it) => it.applicationListId).filter(isPresent));
-    await live.refused(true, () => live.api.transcript.getPresenceCertificateByApplicationListId(987654321, activityChoiceId, applicationListId));
+    await live.refused(true, async () => live.api.transcript.getPresenceCertificateByApplicationListId(987654321, activityChoiceId, applicationListId));
   });
 
   liveCase(Esse3Live, "Transcript.getBookingStatinoByApplicationListId#1", {}, async (live) => {
     const matId = live.choose("matId", [await transcriptGetCareerSegments(live)].flat().map((it) => it.matId).filter(isPresent));
     const activityChoiceId = live.choose("activityChoiceId", [await recordsFindMinutes(live)].flat().map((it) => it.activityChoiceId).filter(isPresent));
     const applicationListId = live.choose("applicationListId", [await recordsFindMinutes(live)].flat().map((it) => it.applicationListId).filter(isPresent));
-    await live.call(undefined, {}, () => live.api.transcript.getBookingStatinoByApplicationListId(matId, activityChoiceId, applicationListId));
+    await live.call(undefined, {}, async () => live.api.transcript.getBookingStatinoByApplicationListId(matId, activityChoiceId, applicationListId));
   });
 
   liveCase(Esse3Live, "Transcript.getBookingStatinoByApplicationListId#unknown-id", {}, async (live) => {
     const activityChoiceId = live.choose("activityChoiceId", [await recordsFindMinutes(live)].flat().map((it) => it.activityChoiceId).filter(isPresent));
     const applicationListId = live.choose("applicationListId", [await recordsFindMinutes(live)].flat().map((it) => it.applicationListId).filter(isPresent));
-    await live.refused(true, () => live.api.transcript.getBookingStatinoByApplicationListId(987654321, activityChoiceId, applicationListId));
+    await live.refused(true, async () => live.api.transcript.getBookingStatinoByApplicationListId(987654321, activityChoiceId, applicationListId));
   });
 
   liveCase(Esse3Live, "Transcript.getCheckProposalRecordBookRow#1", {}, async (live) => {
     const matId = live.choose("matId", [await transcriptGetCareerSegments(live)].flat().map((it) => it.matId).filter(isPresent));
     const activityChoiceId = live.choose("activityChoiceId", [await recordsFindMinutes(live)].flat().map((it) => it.activityChoiceId).filter(isPresent));
-    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3PrerequisitesCheck\"}", {}, () => live.api.transcript.getCheckProposalRecordBookRow(matId, activityChoiceId));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3PrerequisitesCheck\"}", {}, async () => live.api.transcript.getCheckProposalRecordBookRow(matId, activityChoiceId));
     live.fingerprint((f) => writeEsse3PrerequisitesCheck(f, result));
   });
 
   liveCase(Esse3Live, "Transcript.getCheckProposalRecordBookRow#unknown-id", {}, async (live) => {
     const activityChoiceId = live.choose("activityChoiceId", [await recordsFindMinutes(live)].flat().map((it) => it.activityChoiceId).filter(isPresent));
-    await live.refused(true, () => live.api.transcript.getCheckProposalRecordBookRow(987654321, activityChoiceId));
+    await live.refused(true, async () => live.api.transcript.getCheckProposalRecordBookRow(987654321, activityChoiceId));
   });
 
   liveCase(Esse3Live, "Transcript.getRecordBookRowTests#1", {}, async (live) => {
     const matId = live.choose("matId", [await transcriptGetCareerSegments(live)].flat().map((it) => it.matId).filter(isPresent));
     const activityChoiceId = live.choose("activityChoiceId", [await recordsFindMinutes(live)].flat().map((it) => it.activityChoiceId).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TranscriptTest\"}}", {}, () => live.api.transcript.getRecordBookRowTests(matId, activityChoiceId));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TranscriptTest\"}}", {}, async () => live.api.transcript.getRecordBookRowTests(matId, activityChoiceId));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3TranscriptTest(f, it)));
   });
 
   liveCase(Esse3Live, "Transcript.getRecordBookRowTests#unknown-id", {}, async (live) => {
     const activityChoiceId = live.choose("activityChoiceId", [await recordsFindMinutes(live)].flat().map((it) => it.activityChoiceId).filter(isPresent));
-    await live.refused(true, () => live.api.transcript.getRecordBookRowTests(987654321, activityChoiceId));
+    await live.refused(true, async () => live.api.transcript.getRecordBookRowTests(987654321, activityChoiceId));
   });
 
   liveCase(Esse3Live, "Transcript.getRecordBookRowTest#1", {}, async (live) => {
     const matId = live.choose("matId", [await transcriptGetCareerSegments(live)].flat().map((it) => it.matId).filter(isPresent));
     const activityChoiceId = live.choose("activityChoiceId", [await recordsFindMinutes(live)].flat().map((it) => it.activityChoiceId).filter(isPresent));
     const activityRegulationId = live.choose("activityRegulationId", [await recordsFindMinutes(live)].flat().map((it) => it.activityRegulationId).filter(isPresent));
-    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3TranscriptTest\"}", {}, () => live.api.transcript.getRecordBookRowTest(matId, activityChoiceId, activityRegulationId));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3TranscriptTest\"}", {}, async () => live.api.transcript.getRecordBookRowTest(matId, activityChoiceId, activityRegulationId));
     live.fingerprint((f) => writeEsse3TranscriptTest(f, result));
   });
 
   liveCase(Esse3Live, "Transcript.getRecordBookRowTest#unknown-id", {}, async (live) => {
     const activityChoiceId = live.choose("activityChoiceId", [await recordsFindMinutes(live)].flat().map((it) => it.activityChoiceId).filter(isPresent));
     const activityRegulationId = live.choose("activityRegulationId", [await recordsFindMinutes(live)].flat().map((it) => it.activityRegulationId).filter(isPresent));
-    await live.refused(true, () => live.api.transcript.getRecordBookRowTest(987654321, activityChoiceId, activityRegulationId));
+    await live.refused(true, async () => live.api.transcript.getRecordBookRowTest(987654321, activityChoiceId, activityRegulationId));
   });
 
   liveCase(Esse3Live, "Transcript.getRecordBookRowDetections#1", {}, async (live) => {
     const matId = live.choose("matId", [await transcriptGetCareerSegments(live)].flat().map((it) => it.matId).filter(isPresent));
     const activityChoiceId = live.choose("activityChoiceId", [await recordsFindMinutes(live)].flat().map((it) => it.activityChoiceId).filter(isPresent));
     const choiceReleaseId = live.choose("choiceReleaseId", [await transcriptGetRecordBookRows(live)].flat().map((it) => it.attendanceRelease).filter(isPresent).flat().map((it) => it.choiceReleaseId).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3AttendanceReleaseDetail\"}}", {}, () => live.api.transcript.getRecordBookRowDetections(matId, activityChoiceId, choiceReleaseId));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3AttendanceReleaseDetail\"}}", {}, async () => live.api.transcript.getRecordBookRowDetections(matId, activityChoiceId, choiceReleaseId));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3AttendanceReleaseDetail(f, it)));
   });
 
   liveCase(Esse3Live, "Transcript.getRecordBookRowDetections#unknown-id", {}, async (live) => {
     const activityChoiceId = live.choose("activityChoiceId", [await recordsFindMinutes(live)].flat().map((it) => it.activityChoiceId).filter(isPresent));
     const choiceReleaseId = live.choose("choiceReleaseId", [await transcriptGetRecordBookRows(live)].flat().map((it) => it.attendanceRelease).filter(isPresent).flat().map((it) => it.choiceReleaseId).filter(isPresent));
-    await live.refused(true, () => live.api.transcript.getRecordBookRowDetections(987654321, activityChoiceId, choiceReleaseId));
+    await live.refused(true, async () => live.api.transcript.getRecordBookRowDetections(987654321, activityChoiceId, choiceReleaseId));
   });
 
   liveCase(Esse3Live, "Transcript.getRecordBookRowSegments#1", {}, async (live) => {
     const matId = live.choose("matId", [await transcriptGetCareerSegments(live)].flat().map((it) => it.matId).filter(isPresent));
     const activityChoiceId = live.choose("activityChoiceId", [await recordsFindMinutes(live)].flat().map((it) => it.activityChoiceId).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TranscriptSegment\"}}", {}, () => live.api.transcript.getRecordBookRowSegments(matId, activityChoiceId));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TranscriptSegment\"}}", {}, async () => live.api.transcript.getRecordBookRowSegments(matId, activityChoiceId));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3TranscriptSegment(f, it)));
   });
 
   liveCase(Esse3Live, "Transcript.getRecordBookRowSegments#unknown-id", {}, async (live) => {
     const activityChoiceId = live.choose("activityChoiceId", [await recordsFindMinutes(live)].flat().map((it) => it.activityChoiceId).filter(isPresent));
-    await live.refused(true, () => live.api.transcript.getRecordBookRowSegments(987654321, activityChoiceId));
+    await live.refused(true, async () => live.api.transcript.getRecordBookRowSegments(987654321, activityChoiceId));
   });
 
   liveCase(Esse3Live, "Transcript.getRecordBookRowSegment#1", {}, async (live) => {
     const matId = live.choose("matId", [await transcriptGetCareerSegments(live)].flat().map((it) => it.matId).filter(isPresent));
     const activityChoiceId = live.choose("activityChoiceId", [await recordsFindMinutes(live)].flat().map((it) => it.activityChoiceId).filter(isPresent));
     const segmentChoiceId = live.choose("segmentChoiceId", [await transcriptGetRecordBookSegments(live)].flat().map((it) => it.segmentChoiceId).filter(isPresent));
-    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3TranscriptSegment\"}", {}, () => live.api.transcript.getRecordBookRowSegment(matId, activityChoiceId, segmentChoiceId));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3TranscriptSegment\"}", {}, async () => live.api.transcript.getRecordBookRowSegment(matId, activityChoiceId, segmentChoiceId));
     live.fingerprint((f) => writeEsse3TranscriptSegment(f, result));
   });
 
   liveCase(Esse3Live, "Transcript.getRecordBookRowSegment#unknown-id", {}, async (live) => {
     const activityChoiceId = live.choose("activityChoiceId", [await recordsFindMinutes(live)].flat().map((it) => it.activityChoiceId).filter(isPresent));
     const segmentChoiceId = live.choose("segmentChoiceId", [await transcriptGetRecordBookSegments(live)].flat().map((it) => it.segmentChoiceId).filter(isPresent));
-    await live.refused(true, () => live.api.transcript.getRecordBookRowSegment(987654321, activityChoiceId, segmentChoiceId));
+    await live.refused(true, async () => live.api.transcript.getRecordBookRowSegment(987654321, activityChoiceId, segmentChoiceId));
   });
 
   liveCase(Esse3Live, "Transcript.getSyllabusTeachingActivityRecordBookRow#1", {}, async (live) => {
     const matId = live.choose("matId", [await transcriptGetCareerSegments(live)].flat().map((it) => it.matId).filter(isPresent));
     const activityChoiceId = live.choose("activityChoiceId", [await recordsFindMinutes(live)].flat().map((it) => it.activityChoiceId).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3SyllabusActivityTranscript\"}}", {}, () => live.api.transcript.getSyllabusTeachingActivityRecordBookRow(matId, activityChoiceId));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3SyllabusActivityTranscript\"}}", {}, async () => live.api.transcript.getSyllabusTeachingActivityRecordBookRow(matId, activityChoiceId));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3SyllabusActivityTranscript(f, it)));
   });
 
   liveCase(Esse3Live, "Transcript.getSyllabusTeachingActivityRecordBookRow#unknown-id", {}, async (live) => {
     const activityChoiceId = live.choose("activityChoiceId", [await recordsFindMinutes(live)].flat().map((it) => it.activityChoiceId).filter(isPresent));
-    await live.refused(true, () => live.api.transcript.getSyllabusTeachingActivityRecordBookRow(987654321, activityChoiceId));
+    await live.refused(true, async () => live.api.transcript.getSyllabusTeachingActivityRecordBookRow(987654321, activityChoiceId));
   });
 
   liveCase(Esse3Live, "Transcript.getSyllabusTeachingUnitRecordBookRow#1", {}, async (live) => {
     const matId = live.choose("matId", [await transcriptGetCareerSegments(live)].flat().map((it) => it.matId).filter(isPresent));
     const activityChoiceId = live.choose("activityChoiceId", [await recordsFindMinutes(live)].flat().map((it) => it.activityChoiceId).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3SyllabusTeachingUnitTranscript\"}}", {}, () => live.api.transcript.getSyllabusTeachingUnitRecordBookRow(matId, activityChoiceId));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3SyllabusTeachingUnitTranscript\"}}", {}, async () => live.api.transcript.getSyllabusTeachingUnitRecordBookRow(matId, activityChoiceId));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3SyllabusTeachingUnitTranscript(f, it)));
   });
 
   liveCase(Esse3Live, "Transcript.getSyllabusTeachingUnitRecordBookRow#unknown-id", {}, async (live) => {
     const activityChoiceId = live.choose("activityChoiceId", [await recordsFindMinutes(live)].flat().map((it) => it.activityChoiceId).filter(isPresent));
-    await live.refused(true, () => live.api.transcript.getSyllabusTeachingUnitRecordBookRow(987654321, activityChoiceId));
+    await live.refused(true, async () => live.api.transcript.getSyllabusTeachingUnitRecordBookRow(987654321, activityChoiceId));
   });
 
   liveCase(Esse3Live, "Transcript.getRecordBookSegments#1", {}, async (live) => {
     const matId = live.choose("matId", [await transcriptGetCareerSegments(live)].flat().map((it) => it.matId).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TranscriptSegment\"}}", {}, () => live.api.transcript.getRecordBookSegments(matId));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TranscriptSegment\"}}", {}, async () => live.api.transcript.getRecordBookSegments(matId));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3TranscriptSegment(f, it)));
   });
 
   liveCase(Esse3Live, "Transcript.getRecordBookSegments#unknown-id", {}, async (live) => {
-    await live.refused(true, () => live.api.transcript.getRecordBookSegments(987654321));
+    await live.refused(true, async () => live.api.transcript.getRecordBookSegments(987654321));
   });
 
   liveCase(Esse3Live, "Transcript.getRecordBookStats#1", {}, async (live) => {
     const matId = live.choose("matId", [await transcriptGetCareerSegments(live)].flat().map((it) => it.matId).filter(isPresent));
-    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3TranscriptStats\"}", {}, () => live.api.transcript.getRecordBookStats(matId));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3TranscriptStats\"}", {}, async () => live.api.transcript.getRecordBookStats(matId));
     live.fingerprint((f) => writeEsse3TranscriptStats(f, result));
   });
 
   liveCase(Esse3Live, "Transcript.getRecordBookStats#2", { index: 1 }, async (live) => {
     const matId = live.choose("matId", [await transcriptGetCareerSegments(live)].flat().map((it) => it.matId).filter(isPresent));
-    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3TranscriptStats\"}", {}, () => live.api.transcript.getRecordBookStats(matId, { pathRulesReason: "OFFF", dataOriginReason: "LIBRETTO_AD_SUPERATE" }));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3TranscriptStats\"}", {}, async () => live.api.transcript.getRecordBookStats(matId, { pathRulesReason: "OFFF", dataOriginReason: "LIBRETTO_AD_SUPERATE" }));
     live.fingerprint((f) => writeEsse3TranscriptStats(f, result));
   });
 
   liveCase(Esse3Live, "Transcript.getRecordBookStats#3", { index: 2 }, async (live) => {
     const matId = live.choose("matId", [await transcriptGetCareerSegments(live)].flat().map((it) => it.matId).filter(isPresent));
-    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3TranscriptStats\"}", {}, () => live.api.transcript.getRecordBookStats(matId, { pathRulesReason: "OFFF" }));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3TranscriptStats\"}", {}, async () => live.api.transcript.getRecordBookStats(matId, { pathRulesReason: "OFFF" }));
     live.fingerprint((f) => writeEsse3TranscriptStats(f, result));
   });
 
   liveCase(Esse3Live, "Transcript.getRecordBookStats#4", { index: 3 }, async (live) => {
     const matId = live.choose("matId", [await transcriptGetCareerSegments(live)].flat().map((it) => it.matId).filter(isPresent));
-    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3TranscriptStats\"}", {}, () => live.api.transcript.getRecordBookStats(matId, { dataOriginReason: "LIBRETTO_TUTTE_AD" }));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3TranscriptStats\"}", {}, async () => live.api.transcript.getRecordBookStats(matId, { dataOriginReason: "LIBRETTO_TUTTE_AD" }));
     live.fingerprint((f) => writeEsse3TranscriptStats(f, result));
   });
 
   liveCase(Esse3Live, "Transcript.getRecordBookStats#5", { index: 4 }, async (live) => {
     const matId = live.choose("matId", [await transcriptGetCareerSegments(live)].flat().map((it) => it.matId).filter(isPresent));
-    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3TranscriptStats\"}", {}, () => live.api.transcript.getRecordBookStats(matId, { pathRulesReason: "OFFF", dataOriginReason: "LIBRETTO_TUTTE_AD" }));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3TranscriptStats\"}", {}, async () => live.api.transcript.getRecordBookStats(matId, { pathRulesReason: "OFFF", dataOriginReason: "LIBRETTO_TUTTE_AD" }));
     live.fingerprint((f) => writeEsse3TranscriptStats(f, result));
   });
 
   liveCase(Esse3Live, "Transcript.getRecordBookStats#6", { index: 5 }, async (live) => {
     const matId = live.choose("matId", [await transcriptGetCareerSegments(live)].flat().map((it) => it.matId).filter(isPresent));
-    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3TranscriptStats\"}", {}, () => live.api.transcript.getRecordBookStats(matId, { pathRulesReason: "OFFF", dataOriginReason: "PIANO" }));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3TranscriptStats\"}", {}, async () => live.api.transcript.getRecordBookStats(matId, { pathRulesReason: "OFFF", dataOriginReason: "PIANO" }));
     live.fingerprint((f) => writeEsse3TranscriptStats(f, result));
   });
 
   liveCase(Esse3Live, "Transcript.getRecordBookStats#unknown-id", {}, async (live) => {
-    await live.refused(true, () => live.api.transcript.getRecordBookStats(987654321));
+    await live.refused(true, async () => live.api.transcript.getRecordBookStats(987654321));
   });
 });

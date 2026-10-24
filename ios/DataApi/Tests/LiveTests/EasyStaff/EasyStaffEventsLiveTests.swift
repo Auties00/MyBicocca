@@ -48,4 +48,64 @@ final class EasyStaffEventsLiveTests: XCTestCase {
             live.fingerprint { f in f.list(result) { item0 in EasyStaffLive.writeEasyStaffEventType(f, item0) } }
         }
     }
+
+    func test_getEvents1() async throws {
+        try await liveCase(EasyStaffLive.api, "Events.getEvents#1") { live in
+            let buildings = try live.decode([String].self, json: "[\"U06\"]")
+            let from = try LiveText.date(LiveTemplates.resolve("{today}"))
+            let to = try LiveText.date(LiveTemplates.resolve("{today+30}"))
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"EasyStaffEvent\"}}", envelope: ["events"]) { try await live.api.events.getEvents(buildings: buildings, from: from, to: to) }
+            live.fingerprint { f in f.list(result) { item0 in EasyStaffLive.writeEasyStaffEvent(f, item0) } }
+        }
+    }
+
+    func test_getEvents2() async throws {
+        try await liveCase(EasyStaffLive.api, "Events.getEvents#2", index: 1) { live in
+            let buildings = try live.decode([String].self, json: "[\"U06\"]")
+            let from = try LiveText.date(LiveTemplates.resolve("{today}"))
+            let to = try LiveText.date(LiveTemplates.resolve("{today+30}"))
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"EasyStaffEvent\"}}", envelope: ["events"]) { try await live.api.events.getEvents(buildings: buildings, from: from, to: to, language: EasyStaffLanguage.spanish) }
+            live.fingerprint { f in f.list(result) { item0 in EasyStaffLive.writeEasyStaffEvent(f, item0) } }
+        }
+    }
+
+    func test_getEvents3() async throws {
+        try await liveCase(EasyStaffLive.api, "Events.getEvents#3", index: 2) { live in
+            let buildings = try live.decode([String].self, json: "[\"U06\"]")
+            let from = try LiveText.date(LiveTemplates.resolve("{today}"))
+            let to = try LiveText.date(LiveTemplates.resolve("{today+30}"))
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"EasyStaffEvent\"}}", envelope: ["events"]) { try await live.api.events.getEvents(buildings: buildings, status: EasyStaffBookingStatus.cancelled, from: from, to: to, language: EasyStaffLanguage.french) }
+            live.fingerprint { f in f.list(result) { item0 in EasyStaffLive.writeEasyStaffEvent(f, item0) } }
+        }
+    }
+
+    func test_getEvents4() async throws {
+        try await liveCase(EasyStaffLive.api, "Events.getEvents#4", index: 3) { live in
+            let buildings = try live.decode([String].self, json: "[\"U06\"]")
+            let from = try LiveText.date(LiveTemplates.resolve("{today}"))
+            let to = try LiveText.date(LiveTemplates.resolve("{today+30}"))
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"EasyStaffEvent\"}}", envelope: ["events"]) { try await live.api.events.getEvents(buildings: buildings, status: EasyStaffBookingStatus.cancelled, from: from, to: to, language: EasyStaffLanguage.german) }
+            live.fingerprint { f in f.list(result) { item0 in EasyStaffLive.writeEasyStaffEvent(f, item0) } }
+        }
+    }
+
+    func test_getEvents5() async throws {
+        try await liveCase(EasyStaffLive.api, "Events.getEvents#5", index: 4) { live in
+            let buildings = try live.decode([String].self, json: "[\"U06\"]")
+            let from = try LiveText.date(LiveTemplates.resolve("{today}"))
+            let to = try LiveText.date(LiveTemplates.resolve("{today+30}"))
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"EasyStaffEvent\"}}", envelope: ["events"]) { try await live.api.events.getEvents(buildings: buildings, status: EasyStaffBookingStatus.confirmed, from: from, to: to) }
+            live.fingerprint { f in f.list(result) { item0 in EasyStaffLive.writeEasyStaffEvent(f, item0) } }
+        }
+    }
+
+    func test_getEvents6() async throws {
+        try await liveCase(EasyStaffLive.api, "Events.getEvents#6", index: 5) { live in
+            let buildings = try live.decode([String].self, json: "[\"U06\"]")
+            let from = try LiveText.date(LiveTemplates.resolve("{today}"))
+            let to = try LiveText.date(LiveTemplates.resolve("{today+30}"))
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"EasyStaffEvent\"}}", envelope: ["events"]) { try await live.api.events.getEvents(buildings: buildings, status: EasyStaffBookingStatus.cancelled, from: from, to: to, language: EasyStaffLanguage.spanish) }
+            live.fingerprint { f in f.list(result) { item0 in EasyStaffLive.writeEasyStaffEvent(f, item0) } }
+        }
+    }
 }

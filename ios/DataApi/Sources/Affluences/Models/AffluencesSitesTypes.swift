@@ -112,21 +112,51 @@ public struct AffluencesSite: Codable, Hashable, Sendable {
         try container.encode(id, forKey: .id)
         try container.encode(slug, forKey: .slug)
         try container.encode(primaryName, forKey: .primaryName)
-        try container.encode(secondaryName, forKey: .secondaryName)
-        try container.encode(language, forKey: .language)
-        try container.encode(timeZone, forKey: .timeZone)
-        try container.encode(email, forKey: .email)
-        try container.encode(phone, forKey: .phone)
-        try container.encode(websiteUrl, forKey: .websiteUrl)
-        try container.encode(booking, forKey: .booking)
-        try container.encode(publicationStatus, forKey: .publicationStatus)
-        try container.encode(address, forKey: .address)
-        try container.encode(latitude, forKey: .latitude)
-        try container.encode(longitude, forKey: .longitude)
-        try container.encode(categories, forKey: .categories)
-        try container.encode(pictures, forKey: .pictures)
-        try container.encode(pageLayout, forKey: .pageLayout)
-        try container.encode(parent, forKey: .parent)
+        if secondaryName != nil {
+            try container.encode(secondaryName, forKey: .secondaryName)
+        }
+        if language != nil {
+            try container.encode(language, forKey: .language)
+        }
+        if timeZone != nil {
+            try container.encode(timeZone, forKey: .timeZone)
+        }
+        if email != nil {
+            try container.encode(email, forKey: .email)
+        }
+        if phone != nil {
+            try container.encode(phone, forKey: .phone)
+        }
+        if websiteUrl != nil {
+            try container.encode(websiteUrl, forKey: .websiteUrl)
+        }
+        if booking != nil {
+            try container.encode(booking, forKey: .booking)
+        }
+        if publicationStatus != nil {
+            try container.encode(publicationStatus, forKey: .publicationStatus)
+        }
+        if address != nil {
+            try container.encode(address, forKey: .address)
+        }
+        if latitude != nil {
+            try container.encode(latitude, forKey: .latitude)
+        }
+        if longitude != nil {
+            try container.encode(longitude, forKey: .longitude)
+        }
+        if !categories.isEmpty {
+            try container.encode(categories, forKey: .categories)
+        }
+        if !pictures.isEmpty {
+            try container.encode(pictures, forKey: .pictures)
+        }
+        if pageLayout != nil {
+            try container.encode(pageLayout, forKey: .pageLayout)
+        }
+        if parent != nil {
+            try container.encode(parent, forKey: .parent)
+        }
     }
 }
 
@@ -160,9 +190,15 @@ public struct AffluencesBookingInfo: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(hasBooking, forKey: .hasBooking)
-        try container.encode(bookingUrl, forKey: .bookingUrl)
-        try container.encode(ticketUrl, forKey: .ticketUrl)
+        if hasBooking != false {
+            try container.encode(hasBooking, forKey: .hasBooking)
+        }
+        if bookingUrl != nil {
+            try container.encode(bookingUrl, forKey: .bookingUrl)
+        }
+        if ticketUrl != nil {
+            try container.encode(ticketUrl, forKey: .ticketUrl)
+        }
     }
 }
 
@@ -198,7 +234,9 @@ public struct AffluencesSiteCategory: Codable, Hashable, Sendable {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(id, forKey: .id)
         try container.encode(name, forKey: .name)
-        try container.encode(namePlural, forKey: .namePlural)
+        if namePlural != nil {
+            try container.encode(namePlural, forKey: .namePlural)
+        }
     }
 }
 
@@ -227,8 +265,12 @@ public struct AffluencesPageLayout: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(timetables, forKey: .timetables)
-        try container.encode(events, forKey: .events)
+        if timetables != nil {
+            try container.encode(timetables, forKey: .timetables)
+        }
+        if events != nil {
+            try container.encode(events, forKey: .events)
+        }
     }
 }
 
@@ -291,11 +333,21 @@ public struct AffluencesSiteCard: Codable, Hashable, Sendable {
         try container.encode(id, forKey: .id)
         try container.encode(slug, forKey: .slug)
         try container.encode(primaryName, forKey: .primaryName)
-        try container.encode(secondaryName, forKey: .secondaryName)
-        try container.encode(pictures, forKey: .pictures)
-        try container.encode(status, forKey: .status)
-        try container.encode(liveAttendance, forKey: .liveAttendance)
-        try container.encode(booking, forKey: .booking)
+        if secondaryName != nil {
+            try container.encode(secondaryName, forKey: .secondaryName)
+        }
+        if !pictures.isEmpty {
+            try container.encode(pictures, forKey: .pictures)
+        }
+        if status != nil {
+            try container.encode(status, forKey: .status)
+        }
+        if liveAttendance != nil {
+            try container.encode(liveAttendance, forKey: .liveAttendance)
+        }
+        if booking != nil {
+            try container.encode(booking, forKey: .booking)
+        }
     }
 }
 
@@ -340,10 +392,18 @@ public struct AffluencesSiteCardStatus: Codable, Hashable, Sendable {
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(isOpen, forKey: .isOpen)
-        try container.encode(openingText, forKey: .openingText)
-        try container.encode(isOpeningSoon, forKey: .isOpeningSoon)
-        try container.encode(closingText, forKey: .closingText)
-        try container.encode(isClosingSoon, forKey: .isClosingSoon)
+        if openingText != nil {
+            try container.encode(openingText, forKey: .openingText)
+        }
+        if isOpeningSoon != nil {
+            try container.encode(isOpeningSoon, forKey: .isOpeningSoon)
+        }
+        if closingText != nil {
+            try container.encode(closingText, forKey: .closingText)
+        }
+        if isClosingSoon != nil {
+            try container.encode(isClosingSoon, forKey: .isClosingSoon)
+        }
     }
 }
 
@@ -388,10 +448,18 @@ public struct AffluencesEvent: Codable, Hashable, Sendable {
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(id, forKey: .id)
-        try container.encode(title, forKey: .title)
-        try container.encode(descriptionHtml, forKey: .descriptionHtml)
-        try container.encode(imageUrl, forKey: .imageUrl)
-        try container.encode(url, forKey: .url)
+        if title != nil {
+            try container.encode(title, forKey: .title)
+        }
+        if descriptionHtml != nil {
+            try container.encode(descriptionHtml, forKey: .descriptionHtml)
+        }
+        if imageUrl != nil {
+            try container.encode(imageUrl, forKey: .imageUrl)
+        }
+        if url != nil {
+            try container.encode(url, forKey: .url)
+        }
     }
 }
 
@@ -420,8 +488,12 @@ public struct AffluencesPopInMessage: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(contentHtml, forKey: .contentHtml)
-        try container.encode(url, forKey: .url)
+        if contentHtml != nil {
+            try container.encode(contentHtml, forKey: .contentHtml)
+        }
+        if url != nil {
+            try container.encode(url, forKey: .url)
+        }
     }
 }
 
@@ -467,10 +539,18 @@ public struct AffluencesLiveData: Codable, Hashable, Sendable {
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(status, forKey: .status)
-        try container.encode(notices, forKey: .notices)
-        try container.encode(liveAttendance, forKey: .liveAttendance)
-        try container.encode(todayForecasts, forKey: .todayForecasts)
-        try container.encode(forecasts, forKey: .forecasts)
+        if !notices.isEmpty {
+            try container.encode(notices, forKey: .notices)
+        }
+        if liveAttendance != nil {
+            try container.encode(liveAttendance, forKey: .liveAttendance)
+        }
+        if !todayForecasts.isEmpty {
+            try container.encode(todayForecasts, forKey: .todayForecasts)
+        }
+        if !forecasts.isEmpty {
+            try container.encode(forecasts, forKey: .forecasts)
+        }
     }
 }
 
@@ -527,12 +607,24 @@ public struct AffluencesSiteStatus: Codable, Hashable, Sendable {
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(isOpen, forKey: .isOpen)
-        try container.encode(openingText, forKey: .openingText)
-        try container.encode(openingAt, forKey: .openingAt)
-        try container.encode(closingText, forKey: .closingText)
-        try container.encode(closingAt, forKey: .closingAt)
-        try container.encode(isOpeningSoon, forKey: .isOpeningSoon)
-        try container.encode(isClosingSoon, forKey: .isClosingSoon)
+        if openingText != nil {
+            try container.encode(openingText, forKey: .openingText)
+        }
+        if openingAt != nil {
+            try container.encode(openingAt, forKey: .openingAt)
+        }
+        if closingText != nil {
+            try container.encode(closingText, forKey: .closingText)
+        }
+        if closingAt != nil {
+            try container.encode(closingAt, forKey: .closingAt)
+        }
+        if isOpeningSoon != nil {
+            try container.encode(isOpeningSoon, forKey: .isOpeningSoon)
+        }
+        if isClosingSoon != nil {
+            try container.encode(isClosingSoon, forKey: .isClosingSoon)
+        }
     }
 }
 
@@ -561,8 +653,12 @@ public struct AffluencesNotice: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(contentHtml, forKey: .contentHtml)
-        try container.encode(url, forKey: .url)
+        if contentHtml != nil {
+            try container.encode(contentHtml, forKey: .contentHtml)
+        }
+        if url != nil {
+            try container.encode(url, forKey: .url)
+        }
     }
 }
 
@@ -596,9 +692,15 @@ public struct AffluencesLiveAttendance: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(flow, forKey: .flow)
-        try container.encode(occupancyPercentage, forKey: .occupancyPercentage)
-        try container.encode(waitingTimeMinutes, forKey: .waitingTimeMinutes)
+        if flow != nil {
+            try container.encode(flow, forKey: .flow)
+        }
+        if occupancyPercentage != nil {
+            try container.encode(occupancyPercentage, forKey: .occupancyPercentage)
+        }
+        if waitingTimeMinutes != nil {
+            try container.encode(waitingTimeMinutes, forKey: .waitingTimeMinutes)
+        }
     }
 }
 
@@ -653,13 +755,27 @@ public struct AffluencesForecastSlot: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(hourRange, forKey: .hourRange)
-        try container.encode(flow, forKey: .flow)
-        try container.encode(flowEvolution, forKey: .flowEvolution)
-        try container.encode(occupancyPercentage, forKey: .occupancyPercentage)
-        try container.encode(occupancyEvolution, forKey: .occupancyEvolution)
-        try container.encode(waitingTimeMinutes, forKey: .waitingTimeMinutes)
-        try container.encode(waitingTimeEvolution, forKey: .waitingTimeEvolution)
+        if !hourRange.isEmpty {
+            try container.encode(hourRange, forKey: .hourRange)
+        }
+        if flow != nil {
+            try container.encode(flow, forKey: .flow)
+        }
+        if flowEvolution != nil {
+            try container.encode(flowEvolution, forKey: .flowEvolution)
+        }
+        if occupancyPercentage != nil {
+            try container.encode(occupancyPercentage, forKey: .occupancyPercentage)
+        }
+        if occupancyEvolution != nil {
+            try container.encode(occupancyEvolution, forKey: .occupancyEvolution)
+        }
+        if waitingTimeMinutes != nil {
+            try container.encode(waitingTimeMinutes, forKey: .waitingTimeMinutes)
+        }
+        if waitingTimeEvolution != nil {
+            try container.encode(waitingTimeEvolution, forKey: .waitingTimeEvolution)
+        }
     }
 }
 
@@ -694,8 +810,12 @@ public struct AffluencesDayForecasts: Codable, Hashable, Sendable {
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(day, forKey: .day)
-        try container.encode(todayOffset, forKey: .todayOffset)
-        try container.encode(forecasts, forKey: .forecasts)
+        if todayOffset != 0 {
+            try container.encode(todayOffset, forKey: .todayOffset)
+        }
+        if !forecasts.isEmpty {
+            try container.encode(forecasts, forKey: .forecasts)
+        }
     }
 }
 
@@ -736,8 +856,12 @@ public struct AffluencesWeekTimetable: Codable, Hashable, Sendable {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(startDate, forKey: .startDate)
         try container.encode(endDate, forKey: .endDate)
-        try container.encode(entries, forKey: .entries)
-        try container.encode(information, forKey: .information)
+        if !entries.isEmpty {
+            try container.encode(entries, forKey: .entries)
+        }
+        if information != nil {
+            try container.encode(information, forKey: .information)
+        }
     }
 }
 
@@ -773,8 +897,12 @@ public struct AffluencesDayTimetable: Codable, Hashable, Sendable {
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(day, forKey: .day)
-        try container.encode(isToday, forKey: .isToday)
-        try container.encode(openingHours, forKey: .openingHours)
+        if isToday != false {
+            try container.encode(isToday, forKey: .isToday)
+        }
+        if !openingHours.isEmpty {
+            try container.encode(openingHours, forKey: .openingHours)
+        }
     }
 }
 
@@ -835,8 +963,12 @@ public struct AffluencesSiteDetails: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(services, forKey: .services)
-        try container.encode(infos, forKey: .infos)
+        if !services.isEmpty {
+            try container.encode(services, forKey: .services)
+        }
+        if !infos.isEmpty {
+            try container.encode(infos, forKey: .infos)
+        }
     }
 }
 
@@ -900,8 +1032,14 @@ public struct AffluencesSiteInfoSection: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(type, forKey: .type)
-        try container.encode(title, forKey: .title)
-        try container.encode(contentHtml, forKey: .contentHtml)
+        if type != nil {
+            try container.encode(type, forKey: .type)
+        }
+        if title != nil {
+            try container.encode(title, forKey: .title)
+        }
+        if contentHtml != nil {
+            try container.encode(contentHtml, forKey: .contentHtml)
+        }
     }
 }

@@ -239,17 +239,17 @@ internal class SwiftTestEmitter(private val plan: TestPlan, private val layout: 
             line("live.journal([$saved])")
         }
         val verify = write.verify
-        line("do {")
-        indent {
-            verify?.let { (call, contains) -> verifyCall(call, contains, names.local("verified"), refs, "expectContains") }
+        val undo = "_ = try await live.call(${callOptions(write.undo.operation)}) { ${invocation(write.undo, undoArgs)} }"
+        if (verify != null) {
+            // The change is undone whatever the check finds.
+            block("do {", "} catch {") { verifyCall(verify.first, verify.second, names.local("verified"), refs, "expectContains") }
+            indent {
+                line(undo.replaceFirst("try await", "try? await"))
+                line("throw error")
+            }
+            line("}")
         }
-        line("} catch {")
-        indent {
-            line("_ = try? await live.call(${callOptions(write.undo.operation)}) { ${invocation(write.undo, undoArgs)} }")
-            line("throw error")
-        }
-        line("}")
-        line("_ = try await live.call(${callOptions(write.undo.operation)}) { ${invocation(write.undo, undoArgs)} }")
+        line(undo)
         if (replayable) line("live.unjournal()")
         if (verify != null && write.snapshot == null) verifyCall(verify.first, verify.second, names.local("undone"), refs, "expectNotContains")
         write.snapshot?.let { (call, path) ->
@@ -340,7 +340,10 @@ internal class SwiftTestEmitter(private val plan: TestPlan, private val layout: 
     private fun argument(arg: Arg, type: TypeRef?): String = when (arg) {
         is Arg.Literal -> literal(arg.value, type!!)
         is Arg.Text -> fromText("LiveTemplates.resolve(${SwiftSyntax.string(arg.template)})", type!!)
-        is Arg.Json -> "try live.decode(${layout.render(type!!)}.self, json: ${SwiftSyntax.string(arg.value.toString())})"
+        is Arg.Json -> {
+            val json = SwiftSyntax.string(arg.value.toString())
+            "try live.decode(${layout.render(type!!)}.self, json: ${if (arg.templated) "LiveTemplates.resolveJson($json)" else json})"
+        }
         Arg.Unknown -> if ((type as TypeRef.Primitive).kind == PrimitiveKind.STRING) SwiftSyntax.string(UNKNOWN_TEXT) else UNKNOWN_ID.toString()
         is Arg.InvalidCredentials -> invalidCredentials(arg.scheme)
         is Arg.AccountCredentials -> credentials(arg)

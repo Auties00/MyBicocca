@@ -293,7 +293,7 @@ internal object Esse3Live : LiveApi<Esse3Api>(
         "PersonalData.dismissEmailByAteEmail" to "needs one of the roles [TECHNICAL_USER]; the account has [ANY, AUTHENTICATED_USER, STUDENT]",
         "PersonalData.putPersonCompensatoryMeasuresHandicapDeclaration" to "needs one of the roles [TECHNICAL_USER]; the account has [ANY, AUTHENTICATED_USER, STUDENT]",
         "PersonalData.getAuthorizedForPerson" to "needs one of the roles [TECHNICAL_USER]; the account has [ANY, AUTHENTICATED_USER, STUDENT]",
-        "PersonalData.putMobilePhone" to "reversible, but tests.yaml doesn't say how to undo it",
+        "PersonalData.putMobilePhone" to "Changes the student's phone number on their record, then sets it back; review it once before enabling it, with the number to set for a moment.",
         "PersonalData.getStudentConsents" to "needs one of the roles [TECHNICAL_USER]; the account has [ANY, AUTHENTICATED_USER, STUDENT]",
         "PersonalData.putStudentConsents" to "needs one of the roles [TECHNICAL_USER]; the account has [ANY, AUTHENTICATED_USER, STUDENT]",
         "PersonalData.insertCompensatoryMeasuresHandicapDeclaration" to "needs one of the roles [EXTERNAL_SUBJECT, TEACHER, TECHNICAL_USER]; the account has [ANY, AUTHENTICATED_USER, STUDENT]",

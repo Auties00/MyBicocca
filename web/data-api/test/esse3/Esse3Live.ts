@@ -70,7 +70,7 @@ export const Esse3Live: LiveApi<Esse3Api> = {
     "PersonalData.dismissEmailByAteEmail": "needs one of the roles [TECHNICAL_USER]; the account has [ANY, AUTHENTICATED_USER, STUDENT]",
     "PersonalData.putPersonCompensatoryMeasuresHandicapDeclaration": "needs one of the roles [TECHNICAL_USER]; the account has [ANY, AUTHENTICATED_USER, STUDENT]",
     "PersonalData.getAuthorizedForPerson": "needs one of the roles [TECHNICAL_USER]; the account has [ANY, AUTHENTICATED_USER, STUDENT]",
-    "PersonalData.putMobilePhone": "reversible, but tests.yaml doesn't say how to undo it",
+    "PersonalData.putMobilePhone": "Changes the student's phone number on their record, then sets it back; review it once before enabling it, with the number to set for a moment.",
     "PersonalData.getStudentConsents": "needs one of the roles [TECHNICAL_USER]; the account has [ANY, AUTHENTICATED_USER, STUDENT]",
     "PersonalData.putStudentConsents": "needs one of the roles [TECHNICAL_USER]; the account has [ANY, AUTHENTICATED_USER, STUDENT]",
     "PersonalData.insertCompensatoryMeasuresHandicapDeclaration": "needs one of the roles [EXTERNAL_SUBJECT, TEACHER, TECHNICAL_USER]; the account has [ANY, AUTHENTICATED_USER, STUDENT]",

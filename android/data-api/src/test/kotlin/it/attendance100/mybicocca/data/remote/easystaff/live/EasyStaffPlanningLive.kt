@@ -5,10 +5,12 @@ import io.ktor.client.HttpClientConfig
 import it.attendance100.mybicocca.data.remote.easystaff.api.EasyStaffPlanningApi
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningAreaGroup
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningAreaGroupLink
+import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningDaySchedule
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningFormField
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningGeneralSettings
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningGridSettings
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningLoginSettings
+import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningMonthSchedule
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningNamedGroup
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningPortalColors
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningPortalConfig
@@ -16,8 +18,13 @@ import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningPor
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningPortalSettings
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningPortalSummary
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningPublicPortalSettings
+import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningResource
+import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningResourceAvailability
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningResult
+import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningService
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningServiceCategorySettings
+import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningSlotAvailability
+import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningTimeRange
 import it.attendance100.mybicocca.data.remote.runtime.live.LiveApi
 import it.attendance100.mybicocca.data.remote.runtime.live.LiveCase
 import it.attendance100.mybicocca.data.remote.runtime.live.LiveFingerprint
@@ -31,10 +38,7 @@ internal object EasyStaffPlanningLive : LiveApi<EasyStaffPlanningApi>(
     maxRequests = 200,
     shapes = SHAPES,
     skips = mapOf(
-        "Availability.getMonthSchedule" to "needs inputs month, durationSeconds (nothing provides them)",
-        "Availability.getDaySchedule" to "needs inputs durationSeconds (nothing provides them)",
-        "Availability.getResourceAvailability" to "needs inputs durationSeconds (nothing provides them)",
-        "Reservations.createReservation" to "reversible, but tests.yaml doesn't say how to undo it",
+        "Reservations.createReservation" to "Books a slot at a real information desk; review it once before enabling it, with a body holding a form the desk accepts.",
         "Reservations.confirmReservation" to "irreversible",
         "Reservations.getReservation" to "needs inputs reservationCode, primaryValue (nothing provides them)",
         "Reservations.getReservationServiceId" to "needs inputs reservationCode, primaryValue (nothing provides them)",
@@ -60,6 +64,11 @@ internal suspend fun LiveCase<EasyStaffPlanningApi>.catalogGetAreaGroups(): List
         api.catalog.getAreaGroups()
     }
 
+internal suspend fun LiveCase<EasyStaffPlanningApi>.catalogGetServices(): List<EasyStaffPlanningService> =
+    source("catalogGetServices", "{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"EasyStaffPlanningService\"}}", envelope = listOf("servizi")) {
+        api.catalog.getServices()
+    }
+
 internal fun LiveFingerprint.writeEasyStaffPlanningAreaGroup(value: EasyStaffPlanningAreaGroup?) {
     if (value == null) return nil()
     obj(value) {
@@ -77,6 +86,13 @@ internal fun LiveFingerprint.writeEasyStaffPlanningAreaGroupLink(value: EasyStaf
     obj(value) {
         int(value.areaId.toLong())
         int(value.groupId.toLong())
+    }
+}
+
+internal fun LiveFingerprint.writeEasyStaffPlanningDaySchedule(value: EasyStaffPlanningDaySchedule?) {
+    if (value == null) return nil()
+    obj(value) {
+        map(value.days, { date(it) }) { map(it, { writeEasyStaffPlanningTimeRange(it) }) { writeEasyStaffPlanningSlotAvailability(it) } }
     }
 }
 
@@ -127,6 +143,14 @@ internal fun LiveFingerprint.writeEasyStaffPlanningLoginSettings(value: EasyStaf
         str(value.method)
         str(value.url)
         bool(value.authBlocked)
+    }
+}
+
+internal fun LiveFingerprint.writeEasyStaffPlanningMonthSchedule(value: EasyStaffPlanningMonthSchedule?) {
+    if (value == null) return nil()
+    obj(value) {
+        dateTime(value.firstAvailable)
+        map(value.days, { date(it) }) { list(it) { writeEasyStaffPlanningTimeRange(it) } }
     }
 }
 
@@ -200,6 +224,32 @@ internal fun LiveFingerprint.writeEasyStaffPlanningPublicPortalSettings(value: E
     }
 }
 
+internal fun LiveFingerprint.writeEasyStaffPlanningResource(value: EasyStaffPlanningResource?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.areaId.toLong())
+        str(value.code)
+        str(value.name)
+        str(value.description)
+        int(value.type.toLong())
+        int(value.orderNumber?.toLong())
+        bool(value.visible)
+        bool(value.disabled)
+        bool(value.virtual)
+    }
+}
+
+internal fun LiveFingerprint.writeEasyStaffPlanningResourceAvailability(value: EasyStaffPlanningResourceAvailability?) {
+    if (value == null) return nil()
+    obj(value) {
+        writeEasyStaffPlanningResource(value.resource)
+        map(value.openWindows, { date(it) }) { list(it) { writeEasyStaffPlanningTimeRange(it) } }
+        map(value.exceptions, { date(it) }) { list(it) { writeEasyStaffPlanningTimeRange(it) } }
+        map(value.occupiedSlots, { date(it) }) { list(it) { writeEasyStaffPlanningTimeRange(it) } }
+    }
+}
+
 internal fun LiveFingerprint.writeEasyStaffPlanningResult(value: EasyStaffPlanningResult?) {
     if (value == null) return nil()
     obj(value) {
@@ -214,5 +264,22 @@ internal fun LiveFingerprint.writeEasyStaffPlanningServiceCategorySettings(value
     }
 }
 
+internal fun LiveFingerprint.writeEasyStaffPlanningSlotAvailability(value: EasyStaffPlanningSlotAvailability?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.availableCount.toLong())
+        int(value.totalCount.toLong())
+        bool(value.reserved)
+    }
+}
+
+internal fun LiveFingerprint.writeEasyStaffPlanningTimeRange(value: EasyStaffPlanningTimeRange?) {
+    if (value == null) return nil()
+    obj(value) {
+        time(value.start)
+        time(value.end)
+    }
+}
+
 /** What the responses of EasyStaffPlanning look like, for the runtime to check real ones against. */
-private val SHAPES = "{\"records\":{\"EasyStaffPlanningArea\":[[\"id\",{\"k\":\"int\"},false],[\"cliente\",{\"k\":\"int\"},false],[\"area_code\",{\"k\":\"string\"},false],[\"area_name\",{\"k\":\"string\"},false],[\"address\",{\"k\":\"string\",\"blank\":true},true],[\"google_map_link\",{\"k\":\"string\",\"blank\":true},true],[\"public_hidden\",{\"k\":\"bool\"},true],[\"daspo\",{\"k\":\"record\",\"n\":\"EasyStaffPlanningSuspensionPolicy\",\"embedded\":true},true],[\"referente\",{\"k\":\"string\",\"blank\":true},true],[\"servizi\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"EasyStaffPlanningDetailedService\"}},true]],\"EasyStaffPlanningAreaGroup\":[[\"ID\",{\"k\":\"int\"},false],[\"Nome\",{\"k\":\"string\"},false],[\"Mappa\",{\"k\":\"string\"},true],[\"Capienza\",{\"k\":\"int\"},true],[\"Ordine\",{\"k\":\"int\"},true],[\"pivot\",{\"k\":\"record\",\"n\":\"EasyStaffPlanningAreaGroupLink\"},true]],\"EasyStaffPlanningAreaGroupLink\":[[\"Sede\",{\"k\":\"int\"},false],[\"Raggruppamento\",{\"k\":\"int\"},false]],\"EasyStaffPlanningDetailedService\":[[\"id\",{\"k\":\"int\"},false],[\"cliente\",{\"k\":\"int\"},false],[\"type\",{\"k\":\"string\"},false],[\"durata\",{\"k\":\"int\"},false],[\"description\",{\"k\":\"string\",\"blank\":true},true],[\"add_prior\",{\"k\":\"int\"},true],[\"edit_prior\",{\"k\":\"int\"},true],[\"add_prior_limit_hour\",{\"k\":\"time\",\"p\":\"HH:mm:ss\"},true],[\"edit_prior_limit_hour\",{\"k\":\"time\",\"p\":\"HH:mm:ss\"},true],[\"max_range\",{\"k\":\"int\"},true],[\"booking_limit_number\",{\"k\":\"int\"},true],[\"booking_limit_interval\",{\"k\":\"int\"},true],[\"booking_limit_only_future\",{\"k\":\"bool\"},true],[\"booking_public_method\",{\"k\":\"int\"},true],[\"virtuale\",{\"k\":\"bool\"},true],[\"risoluzione_griglia_pubblica\",{\"k\":\"int\"},true],[\"followup_link\",{\"k\":\"string\"},true],[\"durate_select\",{\"k\":\"list\",\"e\":{\"k\":\"int\"}},true],[\"raggruppamento\",{\"k\":\"string\",\"blank\":true},true],[\"min_libera_posto\",{\"k\":\"int\"},true],[\"libera_posto\",{\"k\":\"bool\"},true],[\"daspo\",{\"k\":\"record\",\"n\":\"EasyStaffPlanningSuspensionPolicy\",\"embedded\":true},true],[\"limit_week\",{\"k\":\"int\"},true],[\"servizio_breve\",{\"k\":\"bool\"},true],[\"resource_grid\",{\"k\":\"bool\"},true],[\"reservation_type\",{\"k\":\"enum\",\"n\":\"EasyStaffPlanningReservationType\"},true],[\"multi_prenotazione\",{\"k\":\"bool\"},true]],\"EasyStaffPlanningFormField\":[[\"id\",{\"k\":\"int\"},false],[\"label\",{\"k\":\"string\"},false],[\"codice\",{\"k\":\"string\"},false],[\"tipo\",{\"k\":\"enum\",\"n\":\"EasyStaffPlanningFieldType\"},false],[\"valori\",{\"k\":\"any\"},true],[\"predefinito\",{\"k\":\"string\"},true],[\"placeholder\",{\"k\":\"string\"},true],[\"primaria\",{\"k\":\"bool\"},true],[\"obbligatorio\",{\"k\":\"bool\"},true],[\"servizio\",{\"k\":\"int\"},true],[\"cliente\",{\"k\":\"int\"},false],[\"software\",{\"k\":\"int\"},true],[\"valore_auth\",{\"k\":\"bool\"},true],[\"identificativo\",{\"k\":\"bool\"},true],[\"blocked\",{\"k\":\"bool\"},true],[\"posizione\",{\"k\":\"enum\",\"n\":\"EasyStaffPlanningFieldPosition\"},true]],\"EasyStaffPlanningGeneralSettings\":[[\"captcha_control\",{\"k\":\"bool\"},true],[\"prenotazioni_contemporanee\",{\"k\":\"bool\"},true],[\"prenotazione_in_corso\",{\"k\":\"bool\"},true],[\"public_position\",{\"k\":\"bool\"},true],[\"servizi_brevi\",{\"k\":\"bool\"},true]],\"EasyStaffPlanningGridSettings\":[[\"mostra_ora_fine\",{\"k\":\"bool\"},true]],\"EasyStaffPlanningLoginSettings\":[[\"stato\",{\"k\":\"enum\",\"n\":\"EasyStaffPlanningLoginState\"},true],[\"metodo\",{\"k\":\"string\"},true],[\"url\",{\"k\":\"string\",\"blank\":true,\"null\":[\"0\"]},true],[\"auth_blocked\",{\"k\":\"bool\"},true]],\"EasyStaffPlanningNamedGroup\":[[\"nome\",{\"k\":\"string\"},false]],\"EasyStaffPlanningPortalColors\":[[\"scritte\",{\"k\":\"string\"},true]],\"EasyStaffPlanningPortalConfig\":[[\"id\",{\"k\":\"int\"},false],[\"Nome\",{\"k\":\"string\"},false],[\"Codice\",{\"k\":\"string\"},false],[\"Logo\",{\"k\":\"string\"},true],[\"config\",{\"k\":\"record\",\"n\":\"EasyStaffPlanningPortalSettings\"},true],[\"colors\",{\"k\":\"record\",\"n\":\"EasyStaffPlanningPortalColors\"},true]],\"EasyStaffPlanningPortalFieldsSettings\":[[\"raggruppamento_servizi\",{\"k\":\"int\"},true],[\"servizi\",{\"k\":\"int\"},true],[\"raggruppamento_aree\",{\"k\":\"int\"},true],[\"aree\",{\"k\":\"int\"},true],[\"raggruppamento_servizi_obbligatorio\",{\"k\":\"bool\"},true],[\"raggruppamento_aree_obbligatorio\",{\"k\":\"bool\"},true]],\"EasyStaffPlanningPortalSettings\":[[\"general\",{\"k\":\"record\",\"n\":\"EasyStaffPlanningGeneralSettings\",\"folded\":true},true],[\"campi_tipologia_servizi\",{\"k\":\"record\",\"n\":\"EasyStaffPlanningServiceCategorySettings\",\"folded\":true},true],[\"login_pubblico\",{\"k\":\"record\",\"n\":\"EasyStaffPlanningLoginSettings\",\"folded\":true},true],[\"griglia\",{\"k\":\"record\",\"n\":\"EasyStaffPlanningGridSettings\",\"folded\":true},true],[\"campi_portale\",{\"k\":\"record\",\"n\":\"EasyStaffPlanningPortalFieldsSettings\",\"folded\":true},true],[\"portale_pubblico\",{\"k\":\"record\",\"n\":\"EasyStaffPlanningPublicPortalSettings\",\"folded\":true},true]],\"EasyStaffPlanningPortalSummary\":[[\"id\",{\"k\":\"int\"},false],[\"Nome\",{\"k\":\"string\"},false],[\"Codice\",{\"k\":\"string\"},false]],\"EasyStaffPlanningPublicPortalSettings\":[[\"nascondi_tasto_modifica\",{\"k\":\"bool\"},true],[\"scansiona_qr\",{\"k\":\"bool\"},true],[\"feedback\",{\"k\":\"bool\"},true],[\"mostra_numero_risorse_libere\",{\"k\":\"bool\"},true],[\"layout_home\",{\"k\":\"any\"},true]],\"EasyStaffPlanningResult\":[[\"success\",{\"k\":\"bool\"},true]],\"EasyStaffPlanningService\":[[\"id\",{\"k\":\"int\"},false],[\"type\",{\"k\":\"string\"},false],[\"durata\",{\"k\":\"int\"},false],[\"description\",{\"k\":\"string\",\"blank\":true},true],[\"risoluzione_griglia_pubblica\",{\"k\":\"int\"},true],[\"durate_select\",{\"k\":\"list\",\"e\":{\"k\":\"int\"}},true],[\"booking_public_method\",{\"k\":\"int\"},true],[\"resource_grid\",{\"k\":\"bool\"},true],[\"raggruppamento\",{\"k\":\"string\",\"blank\":true},true],[\"servizio_breve\",{\"k\":\"bool\"},true],[\"reservation_type\",{\"k\":\"enum\",\"n\":\"EasyStaffPlanningReservationType\"},true],[\"numero_risorse\",{\"k\":\"int\"},true],[\"multi_prenotazione\",{\"k\":\"bool\"},true]],\"EasyStaffPlanningServiceCategorySettings\":[[\"scelta_pubblica\",{\"k\":\"bool\"},true]],\"EasyStaffPlanningSuspensionPolicy\":[[\"giorni_intervallo\",{\"k\":\"int\"},true],[\"prenotazioni_non_evase\",{\"k\":\"int\"},true],[\"giorni_blocco\",{\"k\":\"int\"},true],[\"tipo_blocco\",{\"k\":\"string\"},true]]},\"enums\":{\"EasyStaffPlanningFieldPosition\":{\"values\":[\"1\",\"2\",\"100\",\"backoffice\"],\"int\":false,\"wrapped\":false},\"EasyStaffPlanningFieldType\":{\"values\":[\"email\",\"text\",\"textarea\",\"tel\",\"checkbox\",\"select\"],\"int\":false,\"wrapped\":false},\"EasyStaffPlanningLoginState\":{\"values\":[\"facoltativo\",\"obbligatorio\"],\"int\":false,\"wrapped\":false},\"EasyStaffPlanningReservationType\":{\"values\":[\"CONFERMATA\"],\"int\":false,\"wrapped\":false}}}"
+private val SHAPES = "{\"records\":{\"EasyStaffPlanningArea\":[[\"id\",{\"k\":\"int\"},false],[\"cliente\",{\"k\":\"int\"},false],[\"area_code\",{\"k\":\"string\"},false],[\"area_name\",{\"k\":\"string\"},false],[\"address\",{\"k\":\"string\",\"blank\":true},true],[\"google_map_link\",{\"k\":\"string\",\"blank\":true},true],[\"public_hidden\",{\"k\":\"bool\"},true],[\"daspo\",{\"k\":\"record\",\"n\":\"EasyStaffPlanningSuspensionPolicy\",\"embedded\":true},true],[\"referente\",{\"k\":\"string\",\"blank\":true},true],[\"servizi\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"EasyStaffPlanningDetailedService\"}},true]],\"EasyStaffPlanningAreaGroup\":[[\"ID\",{\"k\":\"int\"},false],[\"Nome\",{\"k\":\"string\"},false],[\"Mappa\",{\"k\":\"string\"},true],[\"Capienza\",{\"k\":\"int\"},true],[\"Ordine\",{\"k\":\"int\"},true],[\"pivot\",{\"k\":\"record\",\"n\":\"EasyStaffPlanningAreaGroupLink\"},true]],\"EasyStaffPlanningAreaGroupLink\":[[\"Sede\",{\"k\":\"int\"},false],[\"Raggruppamento\",{\"k\":\"int\"},false]],\"EasyStaffPlanningDaySchedule\":[[\"schedule\",{\"k\":\"map\",\"v\":{\"k\":\"map\",\"v\":{\"k\":\"record\",\"n\":\"EasyStaffPlanningSlotAvailability\"}}},true]],\"EasyStaffPlanningDetailedService\":[[\"id\",{\"k\":\"int\"},false],[\"cliente\",{\"k\":\"int\"},false],[\"type\",{\"k\":\"string\"},false],[\"durata\",{\"k\":\"int\"},false],[\"description\",{\"k\":\"string\",\"blank\":true},true],[\"add_prior\",{\"k\":\"int\"},true],[\"edit_prior\",{\"k\":\"int\"},true],[\"add_prior_limit_hour\",{\"k\":\"time\",\"p\":\"HH:mm:ss\"},true],[\"edit_prior_limit_hour\",{\"k\":\"time\",\"p\":\"HH:mm:ss\"},true],[\"max_range\",{\"k\":\"int\"},true],[\"booking_limit_number\",{\"k\":\"int\"},true],[\"booking_limit_interval\",{\"k\":\"int\"},true],[\"booking_limit_only_future\",{\"k\":\"bool\"},true],[\"booking_public_method\",{\"k\":\"int\"},true],[\"virtuale\",{\"k\":\"bool\"},true],[\"risoluzione_griglia_pubblica\",{\"k\":\"int\"},true],[\"followup_link\",{\"k\":\"string\"},true],[\"durate_select\",{\"k\":\"list\",\"e\":{\"k\":\"int\"}},true],[\"raggruppamento\",{\"k\":\"string\",\"blank\":true},true],[\"min_libera_posto\",{\"k\":\"int\"},true],[\"libera_posto\",{\"k\":\"bool\"},true],[\"daspo\",{\"k\":\"record\",\"n\":\"EasyStaffPlanningSuspensionPolicy\",\"embedded\":true},true],[\"limit_week\",{\"k\":\"int\"},true],[\"servizio_breve\",{\"k\":\"bool\"},true],[\"resource_grid\",{\"k\":\"bool\"},true],[\"reservation_type\",{\"k\":\"enum\",\"n\":\"EasyStaffPlanningReservationType\"},true],[\"multi_prenotazione\",{\"k\":\"bool\"},true]],\"EasyStaffPlanningFormField\":[[\"id\",{\"k\":\"int\"},false],[\"label\",{\"k\":\"string\"},false],[\"codice\",{\"k\":\"string\"},false],[\"tipo\",{\"k\":\"enum\",\"n\":\"EasyStaffPlanningFieldType\"},false],[\"valori\",{\"k\":\"any\"},true],[\"predefinito\",{\"k\":\"string\"},true],[\"placeholder\",{\"k\":\"string\"},true],[\"primaria\",{\"k\":\"bool\"},true],[\"obbligatorio\",{\"k\":\"bool\"},true],[\"servizio\",{\"k\":\"int\"},true],[\"cliente\",{\"k\":\"int\"},false],[\"software\",{\"k\":\"int\"},true],[\"valore_auth\",{\"k\":\"bool\"},true],[\"identificativo\",{\"k\":\"bool\"},true],[\"blocked\",{\"k\":\"bool\"},true],[\"posizione\",{\"k\":\"enum\",\"n\":\"EasyStaffPlanningFieldPosition\"},true]],\"EasyStaffPlanningGeneralSettings\":[[\"captcha_control\",{\"k\":\"bool\"},true],[\"prenotazioni_contemporanee\",{\"k\":\"bool\"},true],[\"prenotazione_in_corso\",{\"k\":\"bool\"},true],[\"public_position\",{\"k\":\"bool\"},true],[\"servizi_brevi\",{\"k\":\"bool\"},true]],\"EasyStaffPlanningGridSettings\":[[\"mostra_ora_fine\",{\"k\":\"bool\"},true]],\"EasyStaffPlanningLoginSettings\":[[\"stato\",{\"k\":\"enum\",\"n\":\"EasyStaffPlanningLoginState\"},true],[\"metodo\",{\"k\":\"string\"},true],[\"url\",{\"k\":\"string\",\"blank\":true,\"null\":[\"0\"]},true],[\"auth_blocked\",{\"k\":\"bool\"},true]],\"EasyStaffPlanningMonthSchedule\":[[\"prima_disp\",{\"k\":\"datetime\",\"p\":\"yyyy-MM-dd HH:mm\",\"blank\":true},true],[\"schedule\",{\"k\":\"map\",\"v\":{\"k\":\"list\",\"e\":{\"k\":\"string\"}}},true]],\"EasyStaffPlanningNamedGroup\":[[\"nome\",{\"k\":\"string\"},false]],\"EasyStaffPlanningPortalColors\":[[\"scritte\",{\"k\":\"string\"},true]],\"EasyStaffPlanningPortalConfig\":[[\"id\",{\"k\":\"int\"},false],[\"Nome\",{\"k\":\"string\"},false],[\"Codice\",{\"k\":\"string\"},false],[\"Logo\",{\"k\":\"string\"},true],[\"config\",{\"k\":\"record\",\"n\":\"EasyStaffPlanningPortalSettings\"},true],[\"colors\",{\"k\":\"record\",\"n\":\"EasyStaffPlanningPortalColors\"},true]],\"EasyStaffPlanningPortalFieldsSettings\":[[\"raggruppamento_servizi\",{\"k\":\"int\"},true],[\"servizi\",{\"k\":\"int\"},true],[\"raggruppamento_aree\",{\"k\":\"int\"},true],[\"aree\",{\"k\":\"int\"},true],[\"raggruppamento_servizi_obbligatorio\",{\"k\":\"bool\"},true],[\"raggruppamento_aree_obbligatorio\",{\"k\":\"bool\"},true]],\"EasyStaffPlanningPortalSettings\":[[\"general\",{\"k\":\"record\",\"n\":\"EasyStaffPlanningGeneralSettings\",\"folded\":true},true],[\"campi_tipologia_servizi\",{\"k\":\"record\",\"n\":\"EasyStaffPlanningServiceCategorySettings\",\"folded\":true},true],[\"login_pubblico\",{\"k\":\"record\",\"n\":\"EasyStaffPlanningLoginSettings\",\"folded\":true},true],[\"griglia\",{\"k\":\"record\",\"n\":\"EasyStaffPlanningGridSettings\",\"folded\":true},true],[\"campi_portale\",{\"k\":\"record\",\"n\":\"EasyStaffPlanningPortalFieldsSettings\",\"folded\":true},true],[\"portale_pubblico\",{\"k\":\"record\",\"n\":\"EasyStaffPlanningPublicPortalSettings\",\"folded\":true},true]],\"EasyStaffPlanningPortalSummary\":[[\"id\",{\"k\":\"int\"},false],[\"Nome\",{\"k\":\"string\"},false],[\"Codice\",{\"k\":\"string\"},false]],\"EasyStaffPlanningPublicPortalSettings\":[[\"nascondi_tasto_modifica\",{\"k\":\"bool\"},true],[\"scansiona_qr\",{\"k\":\"bool\"},true],[\"feedback\",{\"k\":\"bool\"},true],[\"mostra_numero_risorse_libere\",{\"k\":\"bool\"},true],[\"layout_home\",{\"k\":\"any\"},true]],\"EasyStaffPlanningResource\":[[\"id\",{\"k\":\"int\"},false],[\"area_id\",{\"k\":\"int\"},false],[\"resource_code\",{\"k\":\"string\"},false],[\"resource_name\",{\"k\":\"string\"},false],[\"description\",{\"k\":\"string\",\"blank\":true},true],[\"type\",{\"k\":\"int\"},true],[\"order_number\",{\"k\":\"int\"},true],[\"visible\",{\"k\":\"bool\"},true],[\"disabled\",{\"k\":\"bool\"},true],[\"virtuale\",{\"k\":\"bool\"},true]],\"EasyStaffPlanningResourceAvailability\":[[\"risorsa\",{\"k\":\"record\",\"n\":\"EasyStaffPlanningResource\"},false],[\"schedule\",{\"k\":\"map\",\"v\":{\"k\":\"list\",\"e\":{\"k\":\"string\"}}},true],[\"exceptions\",{\"k\":\"map\",\"v\":{\"k\":\"list\",\"e\":{\"k\":\"string\"}}},true],[\"periods\",{\"k\":\"map\",\"v\":{\"k\":\"list\",\"e\":{\"k\":\"string\"}}},true]],\"EasyStaffPlanningResult\":[[\"success\",{\"k\":\"bool\"},true]],\"EasyStaffPlanningService\":[[\"id\",{\"k\":\"int\"},false],[\"type\",{\"k\":\"string\"},false],[\"durata\",{\"k\":\"int\"},false],[\"description\",{\"k\":\"string\",\"blank\":true},true],[\"risoluzione_griglia_pubblica\",{\"k\":\"int\"},true],[\"durate_select\",{\"k\":\"list\",\"e\":{\"k\":\"int\"}},true],[\"booking_public_method\",{\"k\":\"int\"},true],[\"resource_grid\",{\"k\":\"bool\"},true],[\"raggruppamento\",{\"k\":\"string\",\"blank\":true},true],[\"servizio_breve\",{\"k\":\"bool\"},true],[\"reservation_type\",{\"k\":\"enum\",\"n\":\"EasyStaffPlanningReservationType\"},true],[\"numero_risorse\",{\"k\":\"int\"},true],[\"multi_prenotazione\",{\"k\":\"bool\"},true]],\"EasyStaffPlanningServiceCategorySettings\":[[\"scelta_pubblica\",{\"k\":\"bool\"},true]],\"EasyStaffPlanningSlotAvailability\":[[\"disponibili\",{\"k\":\"int\"},true],[\"su\",{\"k\":\"int\"},true],[\"reserved\",{\"k\":\"bool\"},true]],\"EasyStaffPlanningSuspensionPolicy\":[[\"giorni_intervallo\",{\"k\":\"int\"},true],[\"prenotazioni_non_evase\",{\"k\":\"int\"},true],[\"giorni_blocco\",{\"k\":\"int\"},true],[\"tipo_blocco\",{\"k\":\"string\"},true]]},\"enums\":{\"EasyStaffPlanningFieldPosition\":{\"values\":[\"1\",\"2\",\"100\",\"backoffice\"],\"int\":false,\"wrapped\":false},\"EasyStaffPlanningFieldType\":{\"values\":[\"email\",\"text\",\"textarea\",\"tel\",\"checkbox\",\"select\"],\"int\":false,\"wrapped\":false},\"EasyStaffPlanningLoginState\":{\"values\":[\"facoltativo\",\"obbligatorio\"],\"int\":false,\"wrapped\":false},\"EasyStaffPlanningReservationType\":{\"values\":[\"CONFERMATA\"],\"int\":false,\"wrapped\":false}}}"

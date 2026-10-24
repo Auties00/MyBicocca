@@ -9,11 +9,11 @@ import { MoodleLive, tokenCredentials, writeMoodleSiteInfo } from "./MoodleLive.
 describe("Moodle Site", () => {
   liveCase(MoodleLive, "Site.getSiteInfo#1", {}, async (live) => {
     const auth = await tokenCredentials(live);
-    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleSiteInfo\"}", {}, () => live.api.site.getSiteInfo(auth));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleSiteInfo\"}", {}, async () => live.api.site.getSiteInfo(auth));
     live.fingerprint((f) => writeMoodleSiteInfo(f, result));
   });
 
   liveCase(MoodleLive, "Site.getSiteInfo#invalid-credentials", {}, async (live) => {
-    await live.refused(false, () => live.api.site.getSiteInfo(new MoodleTokenAuth("mybicocca-invalid-credential")));
+    await live.refused(false, async () => live.api.site.getSiteInfo(new MoodleTokenAuth("mybicocca-invalid-credential")));
   });
 });

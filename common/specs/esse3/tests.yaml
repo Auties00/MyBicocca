@@ -11,3 +11,20 @@ limits:
 operations:
   Auth.logout:
     skip: Ends the session the other cases use.
+  PersonalData.putMobilePhone:
+    skip: >-
+      Changes the student's phone number on their record, then sets it back; review it once
+      before enabling it, with the number to set for a moment.
+    inputs:
+      personId: { from: PersonalData.getPersonTitles, pick: personId }
+      body: { cellulare: "{env:ESSE3_TEMPORARY_PHONE}" }
+    undo:
+      restore:
+        read: PersonalData.getPerson
+        with: { personId: $args.personId }
+        pick: mobilePhone
+        into: body.mobilePhone
+    verify:
+      call: PersonalData.getPerson
+      with: { personId: $args.personId }
+      contains: { path: mobilePhone, value: $args.body.mobilePhone }

@@ -33,7 +33,7 @@ class SwiftTarget : CodeTarget {
     override fun generate(spec: ApiSpec, context: TargetContext): List<GeneratedFile> {
         val options = context.options.decodeOptions<Options>()
         val layout = SwiftLayout(spec, options.module ?: spec.prefix, options.runtimeModule)
-        val records = SwiftRecordEmitter(layout)
+        val records = SwiftRecordEmitter(layout, spec.client)
         val enums = SwiftEnumEmitter(layout)
         val scrapers = SwiftScrapeEmitter(spec, layout, records)
         val services = SwiftServiceEmitter(spec, layout, scrapers)

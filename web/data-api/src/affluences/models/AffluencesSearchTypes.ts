@@ -82,25 +82,25 @@ export function encodeAffluencesSiteOverview(value: AffluencesSiteOverview): Jso
   return {
     "id": value.id,
     "slug": value.slug,
-    "parent": value.parentSlug,
+    ...(value.parentSlug !== null ? { "parent": value.parentSlug } : {}),
     "primary_name": value.primaryName,
-    "secondary_name": value.secondaryName,
-    "concat_name": value.concatName,
-    "categories": value.categories.map((item) => encodeAffluencesOverviewCategory(item)),
-    "affluence_precision_level": value.precisionLevel,
-    "time_zone": value.timeZone,
-    "lang": value.language,
-    "location": value.location === null ? null : encodeAffluencesLocation(value.location),
-    "phone_number": value.phoneNumber,
-    "email": value.email,
-    "url": value.websiteUrl,
-    "notices": value.notices.map((item) => encodeAffluencesOverviewNotice(item)),
-    "estimated_distance": value.estimatedDistanceMeters,
-    "current_forecast": value.currentForecast === null ? null : encodeAffluencesForecast(value.currentForecast),
-    "today_forecasts": value.todayForecasts.map((item) => encodeAffluencesHourlyForecast(item)),
-    "children": value.children.map((item) => encodeAffluencesSiteOverview(item)),
-    "poster_image": value.posterImage,
-    "images": value.images,
+    ...(value.secondaryName !== null ? { "secondary_name": value.secondaryName } : {}),
+    ...(value.concatName !== null ? { "concat_name": value.concatName } : {}),
+    ...(value.categories.length > 0 ? { "categories": value.categories.map((item) => encodeAffluencesOverviewCategory(item)) } : {}),
+    ...(value.precisionLevel !== null ? { "affluence_precision_level": value.precisionLevel } : {}),
+    ...(value.timeZone !== null ? { "time_zone": value.timeZone } : {}),
+    ...(value.language !== null ? { "lang": value.language } : {}),
+    ...(value.location !== null ? { "location": value.location === null ? null : encodeAffluencesLocation(value.location) } : {}),
+    ...(value.phoneNumber !== null ? { "phone_number": value.phoneNumber } : {}),
+    ...(value.email !== null ? { "email": value.email } : {}),
+    ...(value.websiteUrl !== null ? { "url": value.websiteUrl } : {}),
+    ...(value.notices.length > 0 ? { "notices": value.notices.map((item) => encodeAffluencesOverviewNotice(item)) } : {}),
+    ...(value.estimatedDistanceMeters !== null ? { "estimated_distance": value.estimatedDistanceMeters } : {}),
+    ...(value.currentForecast !== null ? { "current_forecast": value.currentForecast === null ? null : encodeAffluencesForecast(value.currentForecast) } : {}),
+    ...(value.todayForecasts.length > 0 ? { "today_forecasts": value.todayForecasts.map((item) => encodeAffluencesHourlyForecast(item)) } : {}),
+    ...(value.children.length > 0 ? { "children": value.children.map((item) => encodeAffluencesSiteOverview(item)) } : {}),
+    ...(value.posterImage !== null ? { "poster_image": value.posterImage } : {}),
+    ...(value.images.length > 0 ? { "images": value.images } : {}),
   };
 }
 
@@ -125,7 +125,7 @@ export function encodeAffluencesOverviewCategory(value: AffluencesOverviewCatego
   return {
     "id": value.id,
     "name": value.name,
-    "name_plural": value.namePlural,
+    ...(value.namePlural !== null ? { "name_plural": value.namePlural } : {}),
   };
 }
 
@@ -146,8 +146,8 @@ export function decodeAffluencesLocation(json: unknown): AffluencesLocation | un
 
 export function encodeAffluencesLocation(value: AffluencesLocation): JsonObject {
   return {
-    "coordinates": value.coordinates === null ? null : encodeAffluencesCoordinates(value.coordinates),
-    "address": value.address === null ? null : encodeAffluencesAddress(value.address),
+    ...(value.coordinates !== null ? { "coordinates": value.coordinates === null ? null : encodeAffluencesCoordinates(value.coordinates) } : {}),
+    ...(value.address !== null ? { "address": value.address === null ? null : encodeAffluencesAddress(value.address) } : {}),
   };
 }
 
@@ -174,11 +174,11 @@ export function decodeAffluencesAddress(json: unknown): AffluencesAddress | unde
 
 export function encodeAffluencesAddress(value: AffluencesAddress): JsonObject {
   return {
-    "route": value.route,
-    "city": value.city,
-    "zip_code": value.zipCode,
-    "region": value.region,
-    "country_code": value.countryCode,
+    ...(value.route !== null ? { "route": value.route } : {}),
+    ...(value.city !== null ? { "city": value.city } : {}),
+    ...(value.zipCode !== null ? { "zip_code": value.zipCode } : {}),
+    ...(value.region !== null ? { "region": value.region } : {}),
+    ...(value.countryCode !== null ? { "country_code": value.countryCode } : {}),
   };
 }
 
@@ -201,9 +201,9 @@ export function decodeAffluencesOverviewNotice(json: unknown): AffluencesOvervie
 
 export function encodeAffluencesOverviewNotice(value: AffluencesOverviewNotice): JsonObject {
   return {
-    "message": value.message,
-    "message_html": value.messageHtml,
-    "url": value.url,
+    ...(value.message !== null ? { "message": value.message } : {}),
+    ...(value.messageHtml !== null ? { "message_html": value.messageHtml } : {}),
+    ...(value.url !== null ? { "url": value.url } : {}),
   };
 }
 
@@ -230,11 +230,11 @@ export function decodeAffluencesForecast(json: unknown): AffluencesForecast | un
 
 export function encodeAffluencesForecast(value: AffluencesForecast): JsonObject {
   return {
-    "opened": value.opened,
-    "occupancy": value.occupancyPercentage,
-    "waiting_time": value.waitingTimeMinutes,
-    "waiting_time_overflow": value.waitingTimeOverflow,
-    "flow": value.flow,
+    ...(value.opened !== false ? { "opened": value.opened } : {}),
+    ...(value.occupancyPercentage !== null ? { "occupancy": value.occupancyPercentage } : {}),
+    ...(value.waitingTimeMinutes !== null ? { "waiting_time": value.waitingTimeMinutes } : {}),
+    ...(value.waitingTimeOverflow !== false ? { "waiting_time_overflow": value.waitingTimeOverflow } : {}),
+    ...(value.flow !== null ? { "flow": value.flow } : {}),
   };
 }
 
@@ -256,7 +256,7 @@ export function decodeAffluencesHourlyForecast(json: unknown): AffluencesHourlyF
 export function encodeAffluencesHourlyForecast(value: AffluencesHourlyForecast): JsonObject {
   return {
     "hour": value.hour,
-    "forecast": value.forecast === null ? null : encodeAffluencesForecast(value.forecast),
+    ...(value.forecast !== null ? { "forecast": value.forecast === null ? null : encodeAffluencesForecast(value.forecast) } : {}),
   };
 }
 
@@ -281,10 +281,10 @@ export function decodeAffluencesSearchResults(json: unknown): AffluencesSearchRe
 
 export function encodeAffluencesSearchResults(value: AffluencesSearchResults): JsonObject {
   return {
-    "categories": value.categories.map((item) => encodeAffluencesOverviewCategory(item)),
-    "sites": value.sites.map((item) => encodeAffluencesSearchSite(item)),
-    "playlists": value.playlists.map((item) => encodeAffluencesPlaylist(item)),
-    "unreferenced_sites": value.unreferencedSites.map((item) => encodeAffluencesSearchSite(item)),
+    ...(value.categories.length > 0 ? { "categories": value.categories.map((item) => encodeAffluencesOverviewCategory(item)) } : {}),
+    ...(value.sites.length > 0 ? { "sites": value.sites.map((item) => encodeAffluencesSearchSite(item)) } : {}),
+    ...(value.playlists.length > 0 ? { "playlists": value.playlists.map((item) => encodeAffluencesPlaylist(item)) } : {}),
+    ...(value.unreferencedSites.length > 0 ? { "unreferenced_sites": value.unreferencedSites.map((item) => encodeAffluencesSearchSite(item)) } : {}),
   };
 }
 
@@ -319,12 +319,12 @@ export function encodeAffluencesSearchSite(value: AffluencesSearchSite): JsonObj
   return {
     "id": value.id,
     "slug": value.slug,
-    "name": value.name,
-    "primary_name": value.primaryName,
-    "secondary_name": value.secondaryName,
-    "description": value.description,
-    "image_url": value.imageUrl,
-    "images": value.images,
+    ...(value.name !== null ? { "name": value.name } : {}),
+    ...(value.primaryName !== null ? { "primary_name": value.primaryName } : {}),
+    ...(value.secondaryName !== null ? { "secondary_name": value.secondaryName } : {}),
+    ...(value.description !== null ? { "description": value.description } : {}),
+    ...(value.imageUrl !== null ? { "image_url": value.imageUrl } : {}),
+    ...(value.images.length > 0 ? { "images": value.images } : {}),
   };
 }
 
@@ -352,10 +352,10 @@ export function decodeAffluencesPlaylist(json: unknown): AffluencesPlaylist | un
 export function encodeAffluencesPlaylist(value: AffluencesPlaylist): JsonObject {
   return {
     "id": value.id,
-    "name": value.name,
-    "description": value.description,
-    "image_url": value.imageUrl,
-    "icon": value.icon,
+    ...(value.name !== null ? { "name": value.name } : {}),
+    ...(value.description !== null ? { "description": value.description } : {}),
+    ...(value.imageUrl !== null ? { "image_url": value.imageUrl } : {}),
+    ...(value.icon !== null ? { "icon": value.icon } : {}),
   };
 }
 
@@ -393,16 +393,16 @@ export function decodeAffluencesSiteSearchRequest(json: unknown): AffluencesSite
 
 export function encodeAffluencesSiteSearchRequest(value: AffluencesSiteSearchRequest): JsonObject {
   return {
-    "search_query": value.searchQuery,
-    "page": value.page,
-    "subset": value.subset,
-    "selected_categories": value.selectedCategories,
-    "selected_services": value.selectedServices,
-    "playlist_id": value.playlistId,
-    "latitude": value.latitude,
-    "longitude": value.longitude,
-    "openDate": value.openDate,
-    "openTime": value.openTime,
+    ...(value.searchQuery !== null ? { "search_query": value.searchQuery } : {}),
+    ...(value.page !== null ? { "page": value.page } : {}),
+    ...(value.subset.length > 0 ? { "subset": value.subset } : {}),
+    ...(value.selectedCategories.length > 0 ? { "selected_categories": value.selectedCategories } : {}),
+    ...(value.selectedServices.length > 0 ? { "selected_services": value.selectedServices } : {}),
+    ...(value.playlistId !== null ? { "playlist_id": value.playlistId } : {}),
+    ...(value.latitude !== null ? { "latitude": value.latitude } : {}),
+    ...(value.longitude !== null ? { "longitude": value.longitude } : {}),
+    ...(value.openDate !== null ? { "openDate": value.openDate } : {}),
+    ...(value.openTime !== null ? { "openTime": value.openTime } : {}),
   };
 }
 
@@ -425,9 +425,9 @@ export function decodeAffluencesSiteSearchPage(json: unknown): AffluencesSiteSea
 
 export function encodeAffluencesSiteSearchPage(value: AffluencesSiteSearchPage): JsonObject {
   return {
-    "page": value.nextPage,
-    "max_size": value.maxSize,
-    "results": value.results.map((item) => encodeAffluencesSiteOverview(item)),
+    ...(value.nextPage !== 1 ? { "page": value.nextPage } : {}),
+    ...(value.maxSize !== 0 ? { "max_size": value.maxSize } : {}),
+    ...(value.results.length > 0 ? { "results": value.results.map((item) => encodeAffluencesSiteOverview(item)) } : {}),
   };
 }
 
@@ -448,8 +448,8 @@ export function decodeAffluencesMapSearchResults(json: unknown): AffluencesMapSe
 
 export function encodeAffluencesMapSearchResults(value: AffluencesMapSearchResults): JsonObject {
   return {
-    "center": value.center === null ? null : encodeAffluencesCoordinates(value.center),
-    "results": value.results.map((item) => encodeAffluencesSiteOverview(item)),
+    ...(value.center !== null ? { "center": value.center === null ? null : encodeAffluencesCoordinates(value.center) } : {}),
+    ...(value.results.length > 0 ? { "results": value.results.map((item) => encodeAffluencesSiteOverview(item)) } : {}),
   };
 }
 
@@ -470,8 +470,8 @@ export function decodeAffluencesSiteFilters(json: unknown): AffluencesSiteFilter
 
 export function encodeAffluencesSiteFilters(value: AffluencesSiteFilters): JsonObject {
   return {
-    "categories": value.categories.map((item) => encodeAffluencesOverviewCategory(item)),
-    "services": value.services.map((item) => encodeAffluencesServiceFilter(item)),
+    ...(value.categories.length > 0 ? { "categories": value.categories.map((item) => encodeAffluencesOverviewCategory(item)) } : {}),
+    ...(value.services.length > 0 ? { "services": value.services.map((item) => encodeAffluencesServiceFilter(item)) } : {}),
   };
 }
 
@@ -517,8 +517,8 @@ export function decodeAffluencesSuggestedCategory(json: unknown): AffluencesSugg
 export function encodeAffluencesSuggestedCategory(value: AffluencesSuggestedCategory): JsonObject {
   return {
     "name": value.name,
-    "imageUrl": value.imageUrl,
-    "categoriesIds": value.categoryIds,
+    ...(value.imageUrl !== null ? { "imageUrl": value.imageUrl } : {}),
+    ...(value.categoryIds.length > 0 ? { "categoriesIds": value.categoryIds } : {}),
   };
 }
 
@@ -543,9 +543,9 @@ export function decodeAffluencesSuggestedSite(json: unknown): AffluencesSuggeste
 
 export function encodeAffluencesSuggestedSite(value: AffluencesSuggestedSite): JsonObject {
   return {
-    "id": value.id,
-    "slug": value.slug,
-    "name": value.name,
-    "image_url": value.imageUrl,
+    ...(value.id !== null ? { "id": value.id } : {}),
+    ...(value.slug !== null ? { "slug": value.slug } : {}),
+    ...(value.name !== null ? { "name": value.name } : {}),
+    ...(value.imageUrl !== null ? { "image_url": value.imageUrl } : {}),
   };
 }

@@ -13,7 +13,6 @@ enum MoodleWebLive {
         maxRequests: 100,
         shapes: shapes,
         skips: [
-            ("Catalog.getCourseInfo", "needs inputs courseId (only takes values from tests.yaml)"),
             ("Media.getKalturaPlayer", "irreversible"),
             ("Attendance.getAttendanceView", "irreversible")
         ],
@@ -27,5 +26,5 @@ enum MoodleWebLive {
     )
 
     /// What the responses of MoodleWeb look like, for the runtime to check real ones against.
-    static let shapes = "{\"records\":{},\"enums\":{}}"
+    static let shapes = "{\"records\":{\"MoodleWebCourseInfo\":[[\"id\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"code\",{\"k\":\"string\"},true],[\"viewUrl\",{\"k\":\"string\"},true],[\"syllabus\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWebSyllabus\"}},true],[\"staff\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWebStaffGroup\"}},true],[\"enrolmentMethods\",{\"k\":\"list\",\"e\":{\"k\":\"string\"}},true],[\"studentOpinionUrl\",{\"k\":\"string\"},true],[\"bibliographyUrl\",{\"k\":\"string\"},true]],\"MoodleWebStaffGroup\":[[\"role\",{\"k\":\"string\"},false],[\"members\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWebStaffMember\"}},true]],\"MoodleWebStaffMember\":[[\"name\",{\"k\":\"string\"},true],[\"profileUrl\",{\"k\":\"string\"},true],[\"userId\",{\"k\":\"int\"},true],[\"initials\",{\"k\":\"string\"},true],[\"email\",{\"k\":\"string\"},true]],\"MoodleWebSyllabus\":[[\"language\",{\"k\":\"string\"},true],[\"exportPdfUrl\",{\"k\":\"string\"},true],[\"fields\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWebSyllabusField\"}},true]],\"MoodleWebSyllabusField\":[[\"title\",{\"k\":\"string\"},true],[\"htmlContent\",{\"k\":\"string\"},true]]},\"enums\":{}}"
 }

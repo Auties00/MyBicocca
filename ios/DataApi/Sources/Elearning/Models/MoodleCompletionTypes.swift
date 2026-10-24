@@ -30,8 +30,12 @@ public struct MoodleActivitiesCompletionResponse: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(statuses, forKey: .statuses)
-        try container.encode(warnings, forKey: .warnings)
+        if !statuses.isEmpty {
+            try container.encode(statuses, forKey: .statuses)
+        }
+        if !warnings.isEmpty {
+            try container.encode(warnings, forKey: .warnings)
+        }
     }
 }
 
@@ -135,20 +139,48 @@ public struct MoodleActivityCompletionStatus: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(cmId, forKey: .cmId)
-        try container.encode(modName, forKey: .modName)
-        try container.encode(instance, forKey: .instance)
-        try container.encode(state, forKey: .state)
-        try container.encode(timeCompleted, forKey: .timeCompleted)
-        try container.encode(tracking, forKey: .tracking)
-        try container.encode(overrideBy, forKey: .overrideBy)
-        try container.encode(valueUsed, forKey: .valueUsed)
-        try container.encode(hasCompletion, forKey: .hasCompletion)
-        try container.encode(isAutomatic, forKey: .isAutomatic)
-        try container.encode(isTrackedUser, forKey: .isTrackedUser)
-        try container.encode(userVisible, forKey: .userVisible)
-        try container.encode(details, forKey: .details)
-        try container.encode(isOverallComplete, forKey: .isOverallComplete)
+        if cmId != 0 {
+            try container.encode(cmId, forKey: .cmId)
+        }
+        if modName != "" {
+            try container.encode(modName, forKey: .modName)
+        }
+        if instance != 0 {
+            try container.encode(instance, forKey: .instance)
+        }
+        if state != 0 {
+            try container.encode(state, forKey: .state)
+        }
+        if timeCompleted != 0 {
+            try container.encode(timeCompleted, forKey: .timeCompleted)
+        }
+        if tracking != 0 {
+            try container.encode(tracking, forKey: .tracking)
+        }
+        if overrideBy != nil {
+            try container.encode(overrideBy, forKey: .overrideBy)
+        }
+        if valueUsed != nil {
+            try container.encode(valueUsed, forKey: .valueUsed)
+        }
+        if hasCompletion != nil {
+            try container.encode(hasCompletion, forKey: .hasCompletion)
+        }
+        if isAutomatic != nil {
+            try container.encode(isAutomatic, forKey: .isAutomatic)
+        }
+        if isTrackedUser != nil {
+            try container.encode(isTrackedUser, forKey: .isTrackedUser)
+        }
+        if userVisible != nil {
+            try container.encode(userVisible, forKey: .userVisible)
+        }
+        if !details.isEmpty {
+            try container.encode(details, forKey: .details)
+        }
+        if isOverallComplete != nil {
+            try container.encode(isOverallComplete, forKey: .isOverallComplete)
+        }
     }
 }
 
@@ -178,7 +210,9 @@ public struct MoodleCompletionRule: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(ruleName, forKey: .ruleName)
+        if ruleName != "" {
+            try container.encode(ruleName, forKey: .ruleName)
+        }
         try container.encode(ruleValue, forKey: .ruleValue)
     }
 }
@@ -210,8 +244,12 @@ public struct MoodleCompletionRuleValue: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(status, forKey: .status)
-        try container.encode(description, forKey: .description)
+        if status != 0 {
+            try container.encode(status, forKey: .status)
+        }
+        if description != "" {
+            try container.encode(description, forKey: .description)
+        }
     }
 }
 
@@ -242,7 +280,11 @@ public struct MoodleStatusResponse: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(status, forKey: .status)
-        try container.encode(warnings, forKey: .warnings)
+        if status != false {
+            try container.encode(status, forKey: .status)
+        }
+        if !warnings.isEmpty {
+            try container.encode(warnings, forKey: .warnings)
+        }
     }
 }

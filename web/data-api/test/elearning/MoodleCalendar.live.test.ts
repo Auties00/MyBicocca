@@ -10,35 +10,35 @@ describe("Moodle Calendar", () => {
   liveCase(MoodleLive, "Calendar.getActionEventsByCourse#1", {}, async (live) => {
     const courseId = live.choose("courseId", [await courseGetUsersCourses(live)].flat().map((it) => it.id).filter(isPresent));
     const auth = await tokenCredentials(live);
-    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleCalendarEventsResponse\"}", { errors: ["invalidresponse"] }, () => live.api.calendar.getActionEventsByCourse(courseId, auth));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleCalendarEventsResponse\"}", { errors: ["invalidresponse"] }, async () => live.api.calendar.getActionEventsByCourse(courseId, auth));
     live.fingerprint((f) => writeMoodleCalendarEventsResponse(f, result));
   });
 
   liveCase(MoodleLive, "Calendar.getActionEventsByCourse#invalid-credentials", {}, async (live) => {
     const courseId = live.choose("courseId", [await courseGetUsersCourses(live)].flat().map((it) => it.id).filter(isPresent));
-    await live.refused(false, () => live.api.calendar.getActionEventsByCourse(courseId, new MoodleTokenAuth("mybicocca-invalid-credential")));
+    await live.refused(false, async () => live.api.calendar.getActionEventsByCourse(courseId, new MoodleTokenAuth("mybicocca-invalid-credential")));
   });
 
   liveCase(MoodleLive, "Calendar.getActionEventsByTimesort#1", {}, async (live) => {
     const auth = await tokenCredentials(live);
-    await live.call("{\"k\":\"record\",\"n\":\"MoodleCalendarEventsResponse\"}", {}, () => live.api.calendar.getActionEventsByTimesort(auth));
+    await live.call("{\"k\":\"record\",\"n\":\"MoodleCalendarEventsResponse\"}", {}, async () => live.api.calendar.getActionEventsByTimesort(auth));
   });
 
   liveCase(MoodleLive, "Calendar.getActionEventsByTimesort#2", { index: 1 }, async (live) => {
     const auth = await tokenCredentials(live);
-    await live.call("{\"k\":\"record\",\"n\":\"MoodleCalendarEventsResponse\"}", {}, () => live.api.calendar.getActionEventsByTimesort(auth, { limitToNonSuspendedEvents: true }));
+    await live.call("{\"k\":\"record\",\"n\":\"MoodleCalendarEventsResponse\"}", {}, async () => live.api.calendar.getActionEventsByTimesort(auth, { limitToNonSuspendedEvents: true }));
   });
 
   liveCase(MoodleLive, "Calendar.getActionEventsByTimesort#3", { index: 2 }, async (live) => {
     const auth = await tokenCredentials(live);
-    await live.call("{\"k\":\"record\",\"n\":\"MoodleCalendarEventsResponse\"}", {}, () => live.api.calendar.getActionEventsByTimesort(auth, { limitToNonSuspendedEvents: false }));
+    await live.call("{\"k\":\"record\",\"n\":\"MoodleCalendarEventsResponse\"}", {}, async () => live.api.calendar.getActionEventsByTimesort(auth, { limitToNonSuspendedEvents: false }));
   });
 
   liveCase(MoodleLive, "Calendar.getCalendarMonthlyView#1", {}, async (live) => {
     const year = Number(LiveTemplates.resolve("{today:yyyy}"));
     const month = Number(LiveTemplates.resolve("{today:MM}"));
     const auth = await tokenCredentials(live);
-    await live.call("{\"k\":\"record\",\"n\":\"MoodleCalendarMonth\"}", {}, () => live.api.calendar.getCalendarMonthlyView(year, month, auth));
+    await live.call("{\"k\":\"record\",\"n\":\"MoodleCalendarMonth\"}", {}, async () => live.api.calendar.getCalendarMonthlyView(year, month, auth));
   });
 
   liveCase(MoodleLive, "Calendar.getCalendarMonthlyView#2", { index: 1 }, async (live) => {
@@ -46,7 +46,7 @@ describe("Moodle Calendar", () => {
     const month = Number(LiveTemplates.resolve("{today:MM}"));
     const categoryId = live.choose("categoryId", [await calendarGetCalendarUpcomingView(live)].map((it) => it.categoryId).filter(isPresent));
     const auth = await tokenCredentials(live);
-    await live.call("{\"k\":\"record\",\"n\":\"MoodleCalendarMonth\"}", {}, () => live.api.calendar.getCalendarMonthlyView(year, month, auth, { categoryId: categoryId, includeNavigation: false, mini: false }));
+    await live.call("{\"k\":\"record\",\"n\":\"MoodleCalendarMonth\"}", {}, async () => live.api.calendar.getCalendarMonthlyView(year, month, auth, { categoryId: categoryId, includeNavigation: false, mini: false }));
   });
 
   liveCase(MoodleLive, "Calendar.getCalendarMonthlyView#3", { index: 2 }, async (live) => {
@@ -54,7 +54,7 @@ describe("Moodle Calendar", () => {
     const month = Number(LiveTemplates.resolve("{today:MM}"));
     const courseId = live.choose("courseId", [await courseGetUsersCourses(live)].flat().map((it) => it.id).filter(isPresent));
     const auth = await tokenCredentials(live);
-    await live.call("{\"k\":\"record\",\"n\":\"MoodleCalendarMonth\"}", {}, () => live.api.calendar.getCalendarMonthlyView(year, month, auth, { courseId: courseId, includeNavigation: false, mini: true }));
+    await live.call("{\"k\":\"record\",\"n\":\"MoodleCalendarMonth\"}", {}, async () => live.api.calendar.getCalendarMonthlyView(year, month, auth, { courseId: courseId, includeNavigation: false, mini: true }));
   });
 
   liveCase(MoodleLive, "Calendar.getCalendarMonthlyView#4", { index: 3 }, async (live) => {
@@ -63,14 +63,14 @@ describe("Moodle Calendar", () => {
     const courseId = live.choose("courseId", [await courseGetUsersCourses(live)].flat().map((it) => it.id).filter(isPresent));
     const categoryId = live.choose("categoryId", [await calendarGetCalendarUpcomingView(live)].map((it) => it.categoryId).filter(isPresent));
     const auth = await tokenCredentials(live);
-    await live.call("{\"k\":\"record\",\"n\":\"MoodleCalendarMonth\"}", {}, () => live.api.calendar.getCalendarMonthlyView(year, month, auth, { courseId: courseId, categoryId: categoryId, includeNavigation: true }));
+    await live.call("{\"k\":\"record\",\"n\":\"MoodleCalendarMonth\"}", {}, async () => live.api.calendar.getCalendarMonthlyView(year, month, auth, { courseId: courseId, categoryId: categoryId, includeNavigation: true }));
   });
 
   liveCase(MoodleLive, "Calendar.getCalendarMonthlyView#5", { index: 4 }, async (live) => {
     const year = Number(LiveTemplates.resolve("{today:yyyy}"));
     const month = Number(LiveTemplates.resolve("{today:MM}"));
     const auth = await tokenCredentials(live);
-    await live.call("{\"k\":\"record\",\"n\":\"MoodleCalendarMonth\"}", {}, () => live.api.calendar.getCalendarMonthlyView(year, month, auth, { includeNavigation: true, mini: true }));
+    await live.call("{\"k\":\"record\",\"n\":\"MoodleCalendarMonth\"}", {}, async () => live.api.calendar.getCalendarMonthlyView(year, month, auth, { includeNavigation: true, mini: true }));
   });
 
   liveCase(MoodleLive, "Calendar.getCalendarMonthlyView#6", { index: 5 }, async (live) => {
@@ -79,30 +79,30 @@ describe("Moodle Calendar", () => {
     const courseId = live.choose("courseId", [await courseGetUsersCourses(live)].flat().map((it) => it.id).filter(isPresent));
     const categoryId = live.choose("categoryId", [await calendarGetCalendarUpcomingView(live)].map((it) => it.categoryId).filter(isPresent));
     const auth = await tokenCredentials(live);
-    await live.call("{\"k\":\"record\",\"n\":\"MoodleCalendarMonth\"}", {}, () => live.api.calendar.getCalendarMonthlyView(year, month, auth, { courseId: courseId, categoryId: categoryId, mini: true }));
+    await live.call("{\"k\":\"record\",\"n\":\"MoodleCalendarMonth\"}", {}, async () => live.api.calendar.getCalendarMonthlyView(year, month, auth, { courseId: courseId, categoryId: categoryId, mini: true }));
   });
 
   liveCase(MoodleLive, "Calendar.getCalendarUpcomingView#1", {}, async (live) => {
     const auth = await tokenCredentials(live);
-    await live.call("{\"k\":\"record\",\"n\":\"MoodleCalendarUpcomingView\"}", {}, () => live.api.calendar.getCalendarUpcomingView(auth));
+    await live.call("{\"k\":\"record\",\"n\":\"MoodleCalendarUpcomingView\"}", {}, async () => live.api.calendar.getCalendarUpcomingView(auth));
   });
 
   liveCase(MoodleLive, "Calendar.getCalendarUpcomingView#2", { index: 1 }, async (live) => {
     const categoryId = live.choose("categoryId", [await calendarGetActionEventsByTimesort(live)].map((it) => it.events).filter(isPresent).flat().map((it) => it.categoryId).filter(isPresent));
     const auth = await tokenCredentials(live);
-    await live.call("{\"k\":\"record\",\"n\":\"MoodleCalendarUpcomingView\"}", {}, () => live.api.calendar.getCalendarUpcomingView(auth, { categoryId: categoryId }));
+    await live.call("{\"k\":\"record\",\"n\":\"MoodleCalendarUpcomingView\"}", {}, async () => live.api.calendar.getCalendarUpcomingView(auth, { categoryId: categoryId }));
   });
 
   liveCase(MoodleLive, "Calendar.getCalendarUpcomingView#3", { index: 2 }, async (live) => {
     const courseId = live.choose("courseId", [await courseGetUsersCourses(live)].flat().map((it) => it.id).filter(isPresent));
     const auth = await tokenCredentials(live);
-    await live.call("{\"k\":\"record\",\"n\":\"MoodleCalendarUpcomingView\"}", {}, () => live.api.calendar.getCalendarUpcomingView(auth, { courseId: courseId }));
+    await live.call("{\"k\":\"record\",\"n\":\"MoodleCalendarUpcomingView\"}", {}, async () => live.api.calendar.getCalendarUpcomingView(auth, { courseId: courseId }));
   });
 
   liveCase(MoodleLive, "Calendar.getCalendarUpcomingView#4", { index: 3 }, async (live) => {
     const courseId = live.choose("courseId", [await courseGetUsersCourses(live)].flat().map((it) => it.id).filter(isPresent));
     const categoryId = live.choose("categoryId", [await calendarGetActionEventsByTimesort(live)].map((it) => it.events).filter(isPresent).flat().map((it) => it.categoryId).filter(isPresent));
     const auth = await tokenCredentials(live);
-    await live.call("{\"k\":\"record\",\"n\":\"MoodleCalendarUpcomingView\"}", {}, () => live.api.calendar.getCalendarUpcomingView(auth, { courseId: courseId, categoryId: categoryId }));
+    await live.call("{\"k\":\"record\",\"n\":\"MoodleCalendarUpcomingView\"}", {}, async () => live.api.calendar.getCalendarUpcomingView(auth, { courseId: courseId, categoryId: categoryId }));
   });
 });

@@ -37,11 +37,12 @@ class LiveReport(private val api: String) {
     private val findings = mutableSetOf<String>()
     private val seen = mutableSetOf<String>()
 
-    fun start(skips: Map<String, String>) {
+    fun start(skips: Map<String, String>, declared: List<String>) {
         file.parentFile.mkdirs()
         file.writeText("")
         write("run") { put("seed", LiveSettings.seed); put("writes", LiveSettings.writes) }
         for ((operation, reason) in skips) write("skip") { put("id", operation); put("reason", reason) }
+        write("declared") { put("fields", JsonArray(declared.map(::JsonPrimitive))) }
     }
 
     fun case(id: String, status: String, reason: String?, fingerprint: String?, millis: Long) = write("case") {
@@ -133,6 +134,9 @@ class LiveShapes(catalog: String, private val report: LiveReport) {
     private val root = Json.parseToJsonElement(catalog).jsonObject
     private val records = root.getValue("records").jsonObject
     private val enums = root.getValue("enums").jsonObject
+
+    /** Every field of the records, as `Record.wireName`. */
+    val fields: List<String> = records.flatMap { (name, fields) -> fields.jsonArray.map { "$name.${it.jsonArray[0].jsonPrimitive.content}" } }
 
     fun check(shape: String, response: Observed, envelope: List<String>, variable: String?) {
         val body = response.body ?: return

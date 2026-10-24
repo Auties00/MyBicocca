@@ -272,19 +272,18 @@ internal class TestEmitter(private val plan: TestPlan, private val layout: Kotli
             line("journal(mapOf(${saved.joinToString(", ")}))")
         }
         val verify = write.verify
-        line("try {")
-        indent {
-            if (verify != null) {
-                val verified = names.local("verified")
-                verifyCall(verify.first, verify.second, verified, refs, "expectContains", file)
-            }
-        }
-        line("} finally {")
-        indent {
+        fun CodeWriter.undo() {
             block("call(${callOptions(write.undo.operation)}) {") { line(invocation(write.undo, undoArgs, file)) }
             if (case in plan.replays) line("unjournal()")
         }
-        line("}")
+        if (verify == null) {
+            undo()
+        } else {
+            // The change is undone whatever the check finds.
+            block("try {", "} finally {") { verifyCall(verify.first, verify.second, names.local("verified"), refs, "expectContains", file) }
+            indent { undo() }
+            line("}")
+        }
         // After the undo, the change is gone: what the verify read showed no longer holds, and a restore put the old value back.
         if (verify != null && write.snapshot == null) {
             verifyCall(verify.first, verify.second, names.local("undone"), refs, "expectNotContains", file)
@@ -394,7 +393,14 @@ internal class TestEmitter(private val plan: TestPlan, private val layout: Kotli
         is Arg.Json -> {
             file.import("$livePackage.LiveJson")
             file.import("kotlinx.serialization.decodeFromString")
-            "LiveJson.decodeFromString<${layout.render(type!!, file)}>(${KotlinSyntax.string(arg.value.toString())})"
+            val json = KotlinSyntax.string(arg.value.toString())
+            val text = if (arg.templated) {
+                file.import("$livePackage.LiveTemplates")
+                "LiveTemplates.resolveJson($json)"
+            } else {
+                json
+            }
+            "LiveJson.decodeFromString<${layout.render(type!!, file)}>($text)"
         }
         Arg.Unknown -> when ((type as TypeRef.Primitive).kind) {
             PrimitiveKind.INT32 -> UNKNOWN_ID.toString()

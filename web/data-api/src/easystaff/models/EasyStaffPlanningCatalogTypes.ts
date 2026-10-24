@@ -49,16 +49,16 @@ export function encodeEasyStaffPlanningService(value: EasyStaffPlanningService):
     "id": value.id,
     "type": value.name,
     "durata": value.durationSeconds,
-    "description": value.description,
-    "risoluzione_griglia_pubblica": value.publicGridResolution,
-    "durate_select": value.durationOptionsSeconds,
-    "booking_public_method": value.bookingPublicMethod,
-    "resource_grid": value.resourceGrid,
-    "raggruppamento": value.group,
-    "servizio_breve": value.shortService,
-    "reservation_type": value.reservationType,
-    "numero_risorse": value.resourceCount,
-    "multi_prenotazione": value.multiBooking,
+    ...(value.description !== null ? { "description": value.description } : {}),
+    ...(value.publicGridResolution !== 0 ? { "risoluzione_griglia_pubblica": value.publicGridResolution } : {}),
+    ...(value.durationOptionsSeconds.length > 0 ? { "durate_select": value.durationOptionsSeconds } : {}),
+    ...(value.bookingPublicMethod !== 0 ? { "booking_public_method": value.bookingPublicMethod } : {}),
+    ...(value.resourceGrid !== false ? { "resource_grid": value.resourceGrid } : {}),
+    ...(value.group !== null ? { "raggruppamento": value.group } : {}),
+    ...(value.shortService !== false ? { "servizio_breve": value.shortService } : {}),
+    ...(value.reservationType !== "CONFERMATA" ? { "reservation_type": value.reservationType } : {}),
+    ...(value.resourceCount !== 1 ? { "numero_risorse": value.resourceCount } : {}),
+    ...(value.multiBooking !== false ? { "multi_prenotazione": value.multiBooking } : {}),
   };
 }
 
@@ -143,29 +143,29 @@ export function encodeEasyStaffPlanningDetailedService(value: EasyStaffPlanningD
     "cliente": value.portalId,
     "type": value.name,
     "durata": value.durationSeconds,
-    "description": value.description,
-    "add_prior": value.addDaysAhead,
-    "edit_prior": value.editDaysAhead,
-    "add_prior_limit_hour": value.addDeadline === null ? null : encodeIsoTemporal(value.addDeadline),
-    "edit_prior_limit_hour": value.editDeadline === null ? null : encodeIsoTemporal(value.editDeadline),
-    "max_range": value.maxRangeDays,
-    "booking_limit_number": value.bookingLimitCount,
-    "booking_limit_interval": value.bookingLimitIntervalDays,
-    "booking_limit_only_future": value.bookingLimitOnlyFuture,
-    "booking_public_method": value.bookingPublicMethod,
-    "virtuale": value.virtual,
-    "risoluzione_griglia_pubblica": value.publicGridResolution,
-    "followup_link": value.followUpLink,
-    "durate_select": value.durationOptionsSeconds,
-    "raggruppamento": value.group,
-    "min_libera_posto": value.minimumSeatReleaseSeconds,
-    "libera_posto": value.seatReleaseEnabled,
-    "daspo": value.suspensionPolicy === null ? null : encodeEasyStaffPlanningSuspensionPolicy(value.suspensionPolicy),
-    "limit_week": value.weeklyLimit,
-    "servizio_breve": value.shortService,
-    "resource_grid": value.resourceGrid,
-    "reservation_type": value.reservationType,
-    "multi_prenotazione": value.multiBooking,
+    ...(value.description !== null ? { "description": value.description } : {}),
+    ...(value.addDaysAhead !== 0 ? { "add_prior": value.addDaysAhead } : {}),
+    ...(value.editDaysAhead !== 0 ? { "edit_prior": value.editDaysAhead } : {}),
+    ...(value.addDeadline !== null ? { "add_prior_limit_hour": value.addDeadline === null ? null : encodeIsoTemporal(value.addDeadline) } : {}),
+    ...(value.editDeadline !== null ? { "edit_prior_limit_hour": value.editDeadline === null ? null : encodeIsoTemporal(value.editDeadline) } : {}),
+    ...(value.maxRangeDays !== null ? { "max_range": value.maxRangeDays } : {}),
+    ...(value.bookingLimitCount !== null ? { "booking_limit_number": value.bookingLimitCount } : {}),
+    ...(value.bookingLimitIntervalDays !== null ? { "booking_limit_interval": value.bookingLimitIntervalDays } : {}),
+    ...(value.bookingLimitOnlyFuture !== false ? { "booking_limit_only_future": value.bookingLimitOnlyFuture } : {}),
+    ...(value.bookingPublicMethod !== 0 ? { "booking_public_method": value.bookingPublicMethod } : {}),
+    ...(value.virtual !== false ? { "virtuale": value.virtual } : {}),
+    ...(value.publicGridResolution !== 0 ? { "risoluzione_griglia_pubblica": value.publicGridResolution } : {}),
+    ...(value.followUpLink !== null ? { "followup_link": value.followUpLink } : {}),
+    ...(value.durationOptionsSeconds.length > 0 ? { "durate_select": value.durationOptionsSeconds } : {}),
+    ...(value.group !== null ? { "raggruppamento": value.group } : {}),
+    ...(value.minimumSeatReleaseSeconds !== null ? { "min_libera_posto": value.minimumSeatReleaseSeconds } : {}),
+    ...(value.seatReleaseEnabled !== false ? { "libera_posto": value.seatReleaseEnabled } : {}),
+    ...(value.suspensionPolicy !== null ? { "daspo": value.suspensionPolicy === null ? null : encodeEasyStaffPlanningSuspensionPolicy(value.suspensionPolicy) } : {}),
+    ...(value.weeklyLimit !== null ? { "limit_week": value.weeklyLimit } : {}),
+    ...(value.shortService !== false ? { "servizio_breve": value.shortService } : {}),
+    ...(value.resourceGrid !== false ? { "resource_grid": value.resourceGrid } : {}),
+    ...(value.reservationType !== "CONFERMATA" ? { "reservation_type": value.reservationType } : {}),
+    ...(value.multiBooking !== false ? { "multi_prenotazione": value.multiBooking } : {}),
   };
 }
 
@@ -191,10 +191,10 @@ export function decodeEasyStaffPlanningSuspensionPolicy(json: unknown): EasyStaf
 
 export function encodeEasyStaffPlanningSuspensionPolicy(value: EasyStaffPlanningSuspensionPolicy): JsonObject {
   return {
-    "giorni_intervallo": value.intervalDays,
-    "prenotazioni_non_evase": value.unattendedBookingsThreshold,
-    "giorni_blocco": value.suspensionDays,
-    "tipo_blocco": value.suspensionScope,
+    ...(value.intervalDays !== 0 ? { "giorni_intervallo": value.intervalDays } : {}),
+    ...(value.unattendedBookingsThreshold !== 0 ? { "prenotazioni_non_evase": value.unattendedBookingsThreshold } : {}),
+    ...(value.suspensionDays !== 0 ? { "giorni_blocco": value.suspensionDays } : {}),
+    ...(value.suspensionScope !== null ? { "tipo_blocco": value.suspensionScope } : {}),
   };
 }
 
@@ -254,8 +254,8 @@ export function decodeEasyStaffPlanningEntryFilters(json: unknown): EasyStaffPla
 
 export function encodeEasyStaffPlanningEntryFilters(value: EasyStaffPlanningEntryFilters): JsonObject {
   return {
-    "raggruppamento_servizi": value.serviceGroup === null ? null : encodeEasyStaffPlanningNamedGroup(value.serviceGroup),
-    "servizio": value.service === null ? null : encodeEasyStaffPlanningIdReference(value.service),
+    ...(value.serviceGroup !== null ? { "raggruppamento_servizi": value.serviceGroup === null ? null : encodeEasyStaffPlanningNamedGroup(value.serviceGroup) } : {}),
+    ...(value.service !== null ? { "servizio": value.service === null ? null : encodeEasyStaffPlanningIdReference(value.service) } : {}),
   };
 }
 
@@ -286,10 +286,10 @@ export function encodeEasyStaffPlanningAreaGroup(value: EasyStaffPlanningAreaGro
   return {
     "ID": value.id,
     "Nome": value.name,
-    "Mappa": value.mapUrl,
-    "Capienza": value.capacity,
-    "Ordine": value.order,
-    "pivot": value.link === null ? null : encodeEasyStaffPlanningAreaGroupLink(value.link),
+    ...(value.mapUrl !== null ? { "Mappa": value.mapUrl } : {}),
+    ...(value.capacity !== 0 ? { "Capienza": value.capacity } : {}),
+    ...(value.order !== 0 ? { "Ordine": value.order } : {}),
+    ...(value.link !== null ? { "pivot": value.link === null ? null : encodeEasyStaffPlanningAreaGroupLink(value.link) } : {}),
   };
 }
 
@@ -354,11 +354,11 @@ export function encodeEasyStaffPlanningArea(value: EasyStaffPlanningArea): JsonO
     "cliente": value.portalId,
     "area_code": value.code,
     "area_name": value.name,
-    "address": value.address,
-    "google_map_link": value.googleMapsLink,
-    "public_hidden": value.publicHidden,
-    "daspo": value.suspensionPolicy === null ? null : encodeEasyStaffPlanningSuspensionPolicy(value.suspensionPolicy),
-    "referente": value.contact,
-    "servizi": value.services.map((item) => encodeEasyStaffPlanningDetailedService(item)),
+    ...(value.address !== null ? { "address": value.address } : {}),
+    ...(value.googleMapsLink !== null ? { "google_map_link": value.googleMapsLink } : {}),
+    ...(value.publicHidden !== false ? { "public_hidden": value.publicHidden } : {}),
+    ...(value.suspensionPolicy !== null ? { "daspo": value.suspensionPolicy === null ? null : encodeEasyStaffPlanningSuspensionPolicy(value.suspensionPolicy) } : {}),
+    ...(value.contact !== null ? { "referente": value.contact } : {}),
+    ...(value.services.length > 0 ? { "servizi": value.services.map((item) => encodeEasyStaffPlanningDetailedService(item)) } : {}),
   };
 }

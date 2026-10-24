@@ -7,3 +7,24 @@ account:
 limits:
   requestsPerSecond: 1
   maxRequests: 200
+defaults:
+  durationSeconds: { from: Catalog.getServices, pick: "[*].durationSeconds" }
+  month: "{today:yyyy-MM}"
+  date: "{today+1}"
+operations:
+  Reservations.createReservation:
+    skip: >-
+      Books a slot at a real information desk; review it once before enabling it, with a body
+      holding a form the desk accepts.
+    undo:
+      call: Reservations.deleteReservation
+      with:
+        reservationCode: $result.reservationCode
+        primaryValue: $result.primaryValue
+        body: { force: true }
+    verify:
+      call: Reservations.getReservation
+      with:
+        reservationCode: $result.reservationCode
+        primaryValue: $result.primaryValue
+      contains: { path: reservationCode, value: $result.reservationCode }

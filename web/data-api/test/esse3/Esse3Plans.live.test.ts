@@ -7,7 +7,7 @@ import { Esse3Live, personalDataGetCareers, plansGetCareerSegments, plansGetStud
 // The live tests of the Esse3 Plans module, planned from common/specs/esse3/tests.yaml.
 describe("Esse3 Plans", () => {
   liveCase(Esse3Live, "Plans.getCareerSegments#1", {}, async (live) => {
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}}", {}, () => live.api.plans.getCareerSegments());
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}}", {}, async () => live.api.plans.getCareerSegments());
     live.fingerprint((f) => f.list(result, (it) => writeEsse3CareerPortion(f, it)));
   });
 
@@ -18,7 +18,7 @@ describe("Esse3 Plans", () => {
     const studyPlanStudentId = live.choose("studyPlanStudentId", [await plansGetStudentPlanHeaders(live)].flat().map((it) => it.studyPlanStudentId).filter(isPresent));
     const fiscalCode = live.choose("fiscalCode", [await personalDataGetCareers(live)].flat().map((it) => it.fiscalCode).filter(isPresent));
     const studentStatusCode = live.choose("studentStatusCode", [await personalDataGetCareers(live)].flat().map((it) => it.studentStatusCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}}", {}, () => live.api.plans.getCareerSegments({ courseOfStudyStudentId: courseOfStudyStudentId, courseOfStudyStudentCode: courseOfStudyStudentCode, academicYearOrderStudentId: academicYearOrderStudentId, studyPlanStudentId: studyPlanStudentId, fiscalCode: fiscalCode, studentStatusCode: studentStatusCode }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}}", {}, async () => live.api.plans.getCareerSegments({ courseOfStudyStudentId: courseOfStudyStudentId, courseOfStudyStudentCode: courseOfStudyStudentCode, academicYearOrderStudentId: academicYearOrderStudentId, studyPlanStudentId: studyPlanStudentId, fiscalCode: fiscalCode, studentStatusCode: studentStatusCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3CareerPortion(f, it)));
   });
 
@@ -27,7 +27,7 @@ describe("Esse3 Plans", () => {
     const studyPlanStudentId = live.choose("studyPlanStudentId", [await plansGetStudentPlanHeaders(live)].flat().map((it) => it.studyPlanStudentId).filter(isPresent));
     const studyPlanStudentCode = live.choose("studyPlanStudentCode", [await plansGetStudentPlanHeaders(live)].flat().map((it) => it.studyPlanStudentCode).filter(isPresent));
     const fiscalCode = live.choose("fiscalCode", [await personalDataGetCareers(live)].flat().map((it) => it.fiscalCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}}", {}, () => live.api.plans.getCareerSegments({ academicYearOrderStudentId: academicYearOrderStudentId, studyPlanStudentId: studyPlanStudentId, studyPlanStudentCode: studyPlanStudentCode, fiscalCode: fiscalCode }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}}", {}, async () => live.api.plans.getCareerSegments({ academicYearOrderStudentId: academicYearOrderStudentId, studyPlanStudentId: studyPlanStudentId, studyPlanStudentCode: studyPlanStudentCode, fiscalCode: fiscalCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3CareerPortion(f, it)));
   });
 
@@ -36,7 +36,7 @@ describe("Esse3 Plans", () => {
     const courseOfStudyStudentCode = live.choose("courseOfStudyStudentCode", [await recordsFindMinutes(live)].flat().map((it) => it.courseOfStudyStudentCode).filter(isPresent));
     const studyPlanStudentCode = live.choose("studyPlanStudentCode", [await plansGetStudentPlanHeaders(live)].flat().map((it) => it.studyPlanStudentCode).filter(isPresent));
     const studentStatusCode = live.choose("studentStatusCode", [await personalDataGetCareers(live)].flat().map((it) => it.studentStatusCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}}", {}, () => live.api.plans.getCareerSegments({ courseOfStudyStudentId: courseOfStudyStudentId, courseOfStudyStudentCode: courseOfStudyStudentCode, studyPlanStudentCode: studyPlanStudentCode, studentStatusCode: studentStatusCode }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}}", {}, async () => live.api.plans.getCareerSegments({ courseOfStudyStudentId: courseOfStudyStudentId, courseOfStudyStudentCode: courseOfStudyStudentCode, studyPlanStudentCode: studyPlanStudentCode, studentStatusCode: studentStatusCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3CareerPortion(f, it)));
   });
 
@@ -44,77 +44,77 @@ describe("Esse3 Plans", () => {
     const courseOfStudyStudentId = live.choose("courseOfStudyStudentId", [await recordsFindMinutes(live)].flat().map((it) => it.courseOfStudyStudentId).filter(isPresent));
     const studyPlanStudentCode = live.choose("studyPlanStudentCode", [await plansGetStudentPlanHeaders(live)].flat().map((it) => it.studyPlanStudentCode).filter(isPresent));
     const fiscalCode = live.choose("fiscalCode", [await personalDataGetCareers(live)].flat().map((it) => it.fiscalCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}}", {}, () => live.api.plans.getCareerSegments({ courseOfStudyStudentId: courseOfStudyStudentId, studyPlanStudentCode: studyPlanStudentCode, fiscalCode: fiscalCode }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}}", {}, async () => live.api.plans.getCareerSegments({ courseOfStudyStudentId: courseOfStudyStudentId, studyPlanStudentCode: studyPlanStudentCode, fiscalCode: fiscalCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3CareerPortion(f, it)));
   });
 
   liveCase(Esse3Live, "Plans.getCareerSegments#6", { index: 5 }, async (live) => {
     const academicYearOrderStudentId = live.choose("academicYearOrderStudentId", [await plansGetStudentPlanHeaders(live)].flat().map((it) => it.academicYearOrderStudentId).filter(isPresent));
     const studentStatusCode = live.choose("studentStatusCode", [await personalDataGetCareers(live)].flat().map((it) => it.studentStatusCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}}", {}, () => live.api.plans.getCareerSegments({ academicYearOrderStudentId: academicYearOrderStudentId, studentStatusCode: studentStatusCode }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}}", {}, async () => live.api.plans.getCareerSegments({ academicYearOrderStudentId: academicYearOrderStudentId, studentStatusCode: studentStatusCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3CareerPortion(f, it)));
   });
 
   liveCase(Esse3Live, "Plans.getStudentPlanHeaders#1", {}, async (live) => {
     const studentId = live.choose("studentId", [await plansGetCareerSegments(live)].flat().map((it) => it.studentId).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3StudyPlanHeader\"}}", {}, () => live.api.plans.getStudentPlanHeaders(studentId));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3StudyPlanHeader\"}}", {}, async () => live.api.plans.getStudentPlanHeaders(studentId));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3StudyPlanHeader(f, it)));
   });
 
   liveCase(Esse3Live, "Plans.getStudentPlanHeaders#2", { index: 1 }, async (live) => {
     const studentId = live.choose("studentId", [await plansGetCareerSegments(live)].flat().map((it) => it.studentId).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3StudyPlanHeader\"}}", {}, () => live.api.plans.getStudentPlanHeaders(studentId, { planState: "B" }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3StudyPlanHeader\"}}", {}, async () => live.api.plans.getStudentPlanHeaders(studentId, { planState: "B" }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3StudyPlanHeader(f, it)));
   });
 
   liveCase(Esse3Live, "Plans.getStudentPlanHeaders#3", { index: 2 }, async (live) => {
     const studentId = live.choose("studentId", [await plansGetCareerSegments(live)].flat().map((it) => it.studentId).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3StudyPlanHeader\"}}", {}, () => live.api.plans.getStudentPlanHeaders(studentId, { planState: "P" }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3StudyPlanHeader\"}}", {}, async () => live.api.plans.getStudentPlanHeaders(studentId, { planState: "P" }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3StudyPlanHeader(f, it)));
   });
 
   liveCase(Esse3Live, "Plans.getStudentPlanHeaders#4", { index: 3 }, async (live) => {
     const studentId = live.choose("studentId", [await plansGetCareerSegments(live)].flat().map((it) => it.studentId).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3StudyPlanHeader\"}}", {}, () => live.api.plans.getStudentPlanHeaders(studentId, { planState: "V" }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3StudyPlanHeader\"}}", {}, async () => live.api.plans.getStudentPlanHeaders(studentId, { planState: "V" }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3StudyPlanHeader(f, it)));
   });
 
   liveCase(Esse3Live, "Plans.getStudentPlanHeaders#5", { index: 4 }, async (live) => {
     const studentId = live.choose("studentId", [await plansGetCareerSegments(live)].flat().map((it) => it.studentId).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3StudyPlanHeader\"}}", {}, () => live.api.plans.getStudentPlanHeaders(studentId, { planState: "A" }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3StudyPlanHeader\"}}", {}, async () => live.api.plans.getStudentPlanHeaders(studentId, { planState: "A" }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3StudyPlanHeader(f, it)));
   });
 
   liveCase(Esse3Live, "Plans.getStudentPlanHeaders#6", { index: 5 }, async (live) => {
     const studentId = live.choose("studentId", [await plansGetCareerSegments(live)].flat().map((it) => it.studentId).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3StudyPlanHeader\"}}", {}, () => live.api.plans.getStudentPlanHeaders(studentId, { planState: "R" }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3StudyPlanHeader\"}}", {}, async () => live.api.plans.getStudentPlanHeaders(studentId, { planState: "R" }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3StudyPlanHeader(f, it)));
   });
 
   liveCase(Esse3Live, "Plans.getStudentPlanHeaders#unknown-id", {}, async (live) => {
-    await live.refused(true, () => live.api.plans.getStudentPlanHeaders(987654321));
+    await live.refused(true, async () => live.api.plans.getStudentPlanHeaders(987654321));
   });
 
   liveCase(Esse3Live, "Plans.getStudentPlan#1", {}, async (live) => {
     const studentId = live.choose("studentId", [await plansGetCareerSegments(live)].flat().map((it) => it.studentId).filter(isPresent));
     const planId = live.choose("planId", [await plansGetStudentPlanHeaders(live)].flat().map((it) => it.planId).filter(isPresent));
-    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3StudyPlan\"}", {}, () => live.api.plans.getStudentPlan(studentId, planId));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3StudyPlan\"}", {}, async () => live.api.plans.getStudentPlan(studentId, planId));
     live.fingerprint((f) => writeEsse3StudyPlan(f, result));
   });
 
   liveCase(Esse3Live, "Plans.getStudentPlan#unknown-id", {}, async (live) => {
     const planId = live.choose("planId", [await plansGetStudentPlanHeaders(live)].flat().map((it) => it.planId).filter(isPresent));
-    await live.refused(true, () => live.api.plans.getStudentPlan(987654321, planId));
+    await live.refused(true, async () => live.api.plans.getStudentPlan(987654321, planId));
   });
 
   liveCase(Esse3Live, "Plans.getPlanPrint#1", {}, async (live) => {
     const studentId = live.choose("studentId", [await plansGetCareerSegments(live)].flat().map((it) => it.studentId).filter(isPresent));
     const planId = live.choose("planId", [await plansGetStudentPlanHeaders(live)].flat().map((it) => it.planId).filter(isPresent));
-    await live.call(undefined, {}, () => live.api.plans.getPlanPrint(studentId, planId));
+    await live.call(undefined, {}, async () => live.api.plans.getPlanPrint(studentId, planId));
   });
 
   liveCase(Esse3Live, "Plans.getPlanPrint#unknown-id", {}, async (live) => {
     const planId = live.choose("planId", [await plansGetStudentPlanHeaders(live)].flat().map((it) => it.planId).filter(isPresent));
-    await live.refused(true, () => live.api.plans.getPlanPrint(987654321, planId));
+    await live.refused(true, async () => live.api.plans.getPlanPrint(987654321, planId));
   });
 });

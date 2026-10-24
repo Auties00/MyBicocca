@@ -25,11 +25,12 @@ export class LiveReport {
     this.file = join(LiveSettings.reportDir, `${LiveSettings.platform}-${api}.jsonl`);
   }
 
-  start(skips: Readonly<Record<string, string>>): void {
+  start(skips: Readonly<Record<string, string>>, declared: readonly string[]): void {
     mkdirSync(dirname(this.file), { recursive: true });
     writeFileSync(this.file, "");
     this.write("run", { seed: LiveSettings.seed, writes: LiveSettings.writes });
     for (const [operation, reason] of Object.entries(skips)) this.write("skip", { id: operation, reason });
+    this.write("declared", { fields: declared });
   }
 
   case(id: string, status: string, reason: string | undefined, fingerprint: string | undefined, ms: number): void {
@@ -114,6 +115,11 @@ export class LiveShapes {
     const root = JSON.parse(catalog) as { records: Record<string, FieldShape[]>; enums: LiveShapes["enums"] };
     this.records = root.records;
     this.enums = root.enums;
+  }
+
+  /** Every field of the records, as `Record.wireName`. */
+  get fields(): string[] {
+    return Object.entries(this.records).flatMap(([name, fields]) => fields.map((field) => `${name}.${field[0]}`));
   }
 
   check(shape: string, response: Observed, envelope: readonly string[], variable: string | undefined): void {

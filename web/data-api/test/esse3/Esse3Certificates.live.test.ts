@@ -7,13 +7,13 @@ import { Esse3Live, certificatesGetCertificates, writeEsse3CertificatesPage } fr
 // The live tests of the Esse3 Certificates module, planned from common/specs/esse3/tests.yaml.
 describe("Esse3 Certificates", () => {
   liveCase(Esse3Live, "Certificates.getCertificates#1", {}, async (live) => {
-    const result = await live.call(undefined, {}, () => live.api.certificates.getCertificates());
+    const result = await live.call(undefined, {}, async () => live.api.certificates.getCertificates());
     live.fingerprint((f) => writeEsse3CertificatesPage(f, result));
   });
 
   liveCase(Esse3Live, "Certificates.getCertificatePdf#1", {}, async (live) => {
     const configurationId = live.choose("configurationId", [await certificatesGetCertificates(live)].map((it) => it.certificates).filter(isPresent).flat().map((it) => it.configurationId).filter(isPresent));
     const documentId = live.choose("documentId", [await certificatesGetCertificates(live)].map((it) => it.certificates).filter(isPresent).flat().map((it) => it.documentId).filter(isPresent));
-    await live.call(undefined, {}, () => live.api.certificates.getCertificatePdf(configurationId, documentId));
+    await live.call(undefined, {}, async () => live.api.certificates.getCertificatePdf(configurationId, documentId));
   });
 });

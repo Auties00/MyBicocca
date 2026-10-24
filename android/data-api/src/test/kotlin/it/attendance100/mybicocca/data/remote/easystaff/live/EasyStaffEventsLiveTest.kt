@@ -2,8 +2,13 @@
 package it.attendance100.mybicocca.data.remote.easystaff.live
 
 import it.attendance100.mybicocca.data.remote.easystaff.api.EasyStaffApi
+import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffBookingStatus
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffLanguage
+import it.attendance100.mybicocca.data.remote.runtime.live.LiveJson
+import it.attendance100.mybicocca.data.remote.runtime.live.LiveTemplates
 import it.attendance100.mybicocca.data.remote.runtime.live.LiveTest
+import java.time.LocalDate
+import kotlinx.serialization.decodeFromString
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 
@@ -61,5 +66,71 @@ class EasyStaffEventsLiveTest : LiveTest<EasyStaffApi>(EasyStaffLive) {
             api.events.getEventTypes(language = EasyStaffLanguage.French)
         } ?: return@case
         fingerprint { list(result) { writeEasyStaffEventType(it) } }
+    }
+
+    @Test
+    @DisplayName("Events.getEvents#1")
+    fun getEvents1() = case("Events.getEvents#1") {
+        val from = LocalDate.parse(LiveTemplates.resolve("{today}"))
+        val to = LocalDate.parse(LiveTemplates.resolve("{today+30}"))
+        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"EasyStaffEvent\"}}", envelope = listOf("events")) {
+            api.events.getEvents(buildings = LiveJson.decodeFromString<List<String>>("[\"U06\"]"), from = from, to = to)
+        } ?: return@case
+        fingerprint { list(result) { writeEasyStaffEvent(it) } }
+    }
+
+    @Test
+    @DisplayName("Events.getEvents#2")
+    fun getEvents2() = case("Events.getEvents#2", index = 1) {
+        val from = LocalDate.parse(LiveTemplates.resolve("{today}"))
+        val to = LocalDate.parse(LiveTemplates.resolve("{today+30}"))
+        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"EasyStaffEvent\"}}", envelope = listOf("events")) {
+            api.events.getEvents(buildings = LiveJson.decodeFromString<List<String>>("[\"U06\"]"), from = from, to = to, language = EasyStaffLanguage.Spanish)
+        } ?: return@case
+        fingerprint { list(result) { writeEasyStaffEvent(it) } }
+    }
+
+    @Test
+    @DisplayName("Events.getEvents#3")
+    fun getEvents3() = case("Events.getEvents#3", index = 2) {
+        val from = LocalDate.parse(LiveTemplates.resolve("{today}"))
+        val to = LocalDate.parse(LiveTemplates.resolve("{today+30}"))
+        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"EasyStaffEvent\"}}", envelope = listOf("events")) {
+            api.events.getEvents(buildings = LiveJson.decodeFromString<List<String>>("[\"U06\"]"), from = from, to = to, status = EasyStaffBookingStatus.Cancelled, language = EasyStaffLanguage.French)
+        } ?: return@case
+        fingerprint { list(result) { writeEasyStaffEvent(it) } }
+    }
+
+    @Test
+    @DisplayName("Events.getEvents#4")
+    fun getEvents4() = case("Events.getEvents#4", index = 3) {
+        val from = LocalDate.parse(LiveTemplates.resolve("{today}"))
+        val to = LocalDate.parse(LiveTemplates.resolve("{today+30}"))
+        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"EasyStaffEvent\"}}", envelope = listOf("events")) {
+            api.events.getEvents(buildings = LiveJson.decodeFromString<List<String>>("[\"U06\"]"), from = from, to = to, status = EasyStaffBookingStatus.Cancelled, language = EasyStaffLanguage.German)
+        } ?: return@case
+        fingerprint { list(result) { writeEasyStaffEvent(it) } }
+    }
+
+    @Test
+    @DisplayName("Events.getEvents#5")
+    fun getEvents5() = case("Events.getEvents#5", index = 4) {
+        val from = LocalDate.parse(LiveTemplates.resolve("{today}"))
+        val to = LocalDate.parse(LiveTemplates.resolve("{today+30}"))
+        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"EasyStaffEvent\"}}", envelope = listOf("events")) {
+            api.events.getEvents(buildings = LiveJson.decodeFromString<List<String>>("[\"U06\"]"), from = from, to = to, status = EasyStaffBookingStatus.Confirmed)
+        } ?: return@case
+        fingerprint { list(result) { writeEasyStaffEvent(it) } }
+    }
+
+    @Test
+    @DisplayName("Events.getEvents#6")
+    fun getEvents6() = case("Events.getEvents#6", index = 5) {
+        val from = LocalDate.parse(LiveTemplates.resolve("{today}"))
+        val to = LocalDate.parse(LiveTemplates.resolve("{today+30}"))
+        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"EasyStaffEvent\"}}", envelope = listOf("events")) {
+            api.events.getEvents(buildings = LiveJson.decodeFromString<List<String>>("[\"U06\"]"), from = from, to = to, status = EasyStaffBookingStatus.Cancelled, language = EasyStaffLanguage.Spanish)
+        } ?: return@case
+        fingerprint { list(result) { writeEasyStaffEvent(it) } }
     }
 }

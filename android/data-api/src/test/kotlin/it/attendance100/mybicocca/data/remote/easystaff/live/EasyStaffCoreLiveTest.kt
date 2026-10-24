@@ -16,4 +16,24 @@ class EasyStaffCoreLiveTest : LiveTest<EasyStaffApi>(EasyStaffLive) {
         } ?: return@case
         fingerprint { map(result, { str(it) }) { writeEasyStaffAcademicYear(it) } }
     }
+
+    @Test
+    @DisplayName("Core.getTeachers#1")
+    fun getTeachers1() = case("Core.getTeachers#1") {
+        val academicYear = choose("academicYear", listOf(coreGetAcademicYears()).flatMap { it.values }.mapNotNull { it.startYear }.map { it.toString() })
+        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"EasyStaffTeacher\"}}", variable = "elenco_docenti") {
+            api.core.getTeachers(academicYear = academicYear)
+        } ?: return@case
+        fingerprint { list(result) { writeEasyStaffTeacher(it) } }
+    }
+
+    @Test
+    @DisplayName("Core.getStudyPrograms#1")
+    fun getStudyPrograms1() = case("Core.getStudyPrograms#1") {
+        val academicYear = choose("academicYear", listOf(coreGetAcademicYears()).flatMap { it.values }.mapNotNull { it.startYear }.map { it.toString() })
+        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"EasyStaffStudyProgram\"}}", variable = "elenco_corsi") {
+            api.core.getStudyPrograms(academicYear = academicYear)
+        } ?: return@case
+        fingerprint { list(result) { writeEasyStaffStudyProgram(it) } }
+    }
 }

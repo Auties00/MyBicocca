@@ -12,9 +12,7 @@ enum KalturaLive {
         requestsPerSecond: 1.0,
         maxRequests: 50,
         shapes: shapes,
-        skips: [
-            ("Playback.getHlsPlaylist", "needs inputs partnerId, entryId (nothing provides them)")
-        ],
+        skips: [],
         create: { observer, session, anonymous in
             var configuration = KalturaClient.defaultConfiguration
             configuration.session = session

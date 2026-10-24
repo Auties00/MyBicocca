@@ -13,9 +13,7 @@ export const KalturaLive: LiveApi<KalturaApi> = {
   requestsPerSecond: 1.0,
   maxRequests: 50,
   shapes: SHAPES,
-  skips: {
-    "Playback.getHlsPlaylist": "needs inputs partnerId, entryId (nothing provides them)",
-  },
+  skips: {},
   create(fetch, anonymous) {
     const headers: Record<string, string> = anonymous ? {} : {};
     return createKalturaApi({ fetch, headers });
