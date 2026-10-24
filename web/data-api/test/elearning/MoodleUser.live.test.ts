@@ -34,4 +34,10 @@ describe("Moodle User", () => {
     const auth = await tokenCredentials(live);
     await live.call("{\"k\":\"record\",\"n\":\"MoodleUserPreferencesResponse\"}", {}, async () => live.api.user.getUserPreferences(auth, { userId: userId }));
   });
+
+  liveCase(MoodleLive, "User.viewUserProfile#1", { effect: "benign" }, async (live) => {
+    const userId = live.choose("userId", [await siteGetSiteInfo(live)].map((it) => it.userId).filter(isPresent));
+    const auth = await tokenCredentials(live);
+    await live.call("{\"k\":\"record\",\"n\":\"MoodleStatusResponse\"}", {}, async () => live.api.user.viewUserProfile(userId, auth));
+  });
 });

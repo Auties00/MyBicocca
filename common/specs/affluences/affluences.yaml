@@ -992,7 +992,7 @@ paths:
     post:
       tags: [Reservations]
       operationId: createReservation
-      x-mb-effect: irreversible
+      x-mb-effect: reversible
       summary: >-
         Books a resource. Anonymous and SSO bookings must then be validated with the code
         emailed to the user; account bookings are confirmed immediately.
@@ -1062,7 +1062,7 @@ paths:
     get:
       tags: [Reservations]
       operationId: confirmEmail
-      x-mb-effect: irreversible
+      x-mb-effect: benign
       summary: Confirms an email address, given the token of its confirmation link.
       parameters:
         - name: token
@@ -1076,7 +1076,7 @@ paths:
     post:
       tags: [Reservations]
       operationId: trustDevice
-      x-mb-effect: irreversible
+      x-mb-effect: benign
       summary: Trusts the device for an email address, given the token of the trust link.
       requestBody:
         required: true

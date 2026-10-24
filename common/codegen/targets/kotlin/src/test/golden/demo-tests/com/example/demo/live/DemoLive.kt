@@ -46,7 +46,7 @@ internal object DemoLive : LiveApi<DemoApi>(
     override suspend fun LiveCase<DemoApi>.replay(case: String, values: Map<String, String>): Boolean {
         when (case) {
             "Items.createItem#write" -> api.items.deleteItem(itemId = values.getValue("itemId"))
-            "Items.renameItem#write" -> api.items.renameItem(itemId = "42", name = values.getValue("name"))
+            "Items.renameItem#write" -> api.items.renameItem(itemId = values.getValue("itemId"), name = values.getValue("name"))
             else -> return false
         }
         return true

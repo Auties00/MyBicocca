@@ -761,7 +761,7 @@ paths:
     post:
       tags: [Reservations]
       operationId: updateReservation
-      x-mb-effect: irreversible
+      x-mb-effect: reversible
       summary: Changes a reservation.
       parameters: [{ $ref: "#/components/parameters/ReservationCode" }, { $ref: "#/components/parameters/PrimaryValue" }]
       requestBody:

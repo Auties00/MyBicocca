@@ -15,7 +15,7 @@ internal object MoodleWebLive : LiveApi<MoodleWebApi>(
     maxRequests = 100,
     shapes = SHAPES,
     skips = mapOf(
-        "Media.getKalturaPlayer" to "irreversible",
+        "Media.getKalturaPlayer" to "needs inputs courseModuleId (only takes values from tests.yaml)",
         "Attendance.getAttendanceView" to "irreversible",
     ),
 ) {

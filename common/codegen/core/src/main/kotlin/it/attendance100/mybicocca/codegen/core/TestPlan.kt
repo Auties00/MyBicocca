@@ -264,7 +264,19 @@ class WritePlan(
     val snapshot: Pair<Call, Path>?,
     val verify: Pair<Call, Expectation.Contains>?,
     val undo: Call,
-)
+) {
+    /** Whether the undo or the checks refer to the result of the case's call. */
+    val usesResult: Boolean
+        get() {
+            fun uses(arg: Arg): Boolean = when (arg) {
+                is Arg.Ref -> arg.root == Arg.Ref.Root.RESULT
+                is Arg.WithField -> uses(arg.base) || uses(arg.value)
+                else -> false
+            }
+            val calls = listOfNotNull(undo, snapshot?.first, verify?.first)
+            return calls.any { call -> call.args.values.any(::uses) } || verify?.second?.value?.let(::uses) == true
+        }
+}
 
 /** An operation no case calls, and why. */
 data class Skip(val operation: String, val reason: String)

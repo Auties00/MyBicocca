@@ -74,7 +74,7 @@ describe("Demo Items", () => {
     const snapshot = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"DemoItem\"}}", { envelope: ["data", "items"] }, async () => live.api.search.searchItems("42", { auth: await tokenCredentials(live) }));
     const before = live.choose("the value to restore", [snapshot].map((it) => it[0]).filter(isPresent).map((it) => it.name).filter(isPresent));
     await live.call(undefined, {}, async () => live.api.items.renameItem("42", "Renamed"));
-    live.journal({ name: String(before) });
+    live.journal({ itemId: String("42"), name: String(before) });
     await live.call(undefined, {}, async () => live.api.items.renameItem("42", before));
     live.unjournal();
     const restored = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"DemoItem\"}}", { envelope: ["data", "items"] }, async () => live.api.search.searchItems("42", { auth: await tokenCredentials(live) }));

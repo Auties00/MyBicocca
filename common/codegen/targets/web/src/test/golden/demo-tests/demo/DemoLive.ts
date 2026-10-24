@@ -32,7 +32,7 @@ export const DemoLive: LiveApi<DemoApi> = {
         await live.api.items.deleteItem(values["itemId"]!);
         return true;
       case "Items.renameItem#write":
-        await live.api.items.renameItem("42", values["name"]!);
+        await live.api.items.renameItem(values["itemId"]!, values["name"]!);
         return true;
       default:
         return false;

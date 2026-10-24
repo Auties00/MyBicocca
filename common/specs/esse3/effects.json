@@ -1,32 +1,37 @@
 {
   "AppointmentsCalendar.cancelAppointment": {
-    "effect": "irreversible",
-    "reason": "Cancels a booked appointment; it cannot be restored identically."
+    "effect": "reversible",
+    "reason": "Cancels a booked appointment. insertAppointment books the same shift again while it is still free.",
+    "notes": "Undo: read the appointment's shiftId (and note) beforehand, then call insertAppointment(personId=$args.personId, body.shiftId=<that shift>). The new booking has a new id, and the slot may be taken by someone else in between."
   },
   "AppointmentsCalendar.insertAppointment": {
-    "effect": "irreversible",
-    "reason": "Books an appointment staff will see; it returns no id, so it cannot be cancelled reliably.",
-    "notes": "cancelAppointment exists but needs the appointment id, which the insert does not return."
+    "effect": "reversible",
+    "reason": "Books an appointment in a shift for a person. AppointmentsCalendar.cancelAppointment cancels it.",
+    "notes": "Undo: find the new appointment id with AppointmentsCalendar.getBookingsList(calendarContext, personId) (likely calendarCallEnrolledId), because the insert returns nothing. Then call cancelAppointment(callId=<that id>, personId=$args.personId). Use a test calendar or shift, because staff see the booking until it is cancelled."
   },
   "AppointmentsCalendar.updateAppointment": {
-    "effect": "irreversible",
-    "reason": "Moves a booked appointment to another shift, which staff see."
+    "effect": "reversible",
+    "reason": "Moves a booking to another shift (books the new one and cancels the old). Calling it again with the original shift moves it back.",
+    "notes": "Undo: read the original shiftId before the call, find the new appointment id with getBookingsList, then call updateAppointment(callId=<new id>, personId, body.shiftId=<original shift>). This works only while the original slot is still free, and the appointment gets a new id."
   },
   "Attachments.deleteUploadedAttachment": {
-    "effect": "irreversible",
-    "reason": "Deletes the upload metadata of an attachment with no way to restore it."
+    "effect": "benign",
+    "reason": "Deletes the upload staging record (uploadId) once an upload has finished, or to abort one no longer needed; the attachment itself stays, and only the user who started the upload may call it.",
+    "notes": "On an upload still waiting for its blob, that upload can no longer be completed and the attachment has to be inserted again; only call it on the test's own uploadId."
   },
   "Attachments.postGenericAttachmentMetadata": {
     "effect": "irreversible",
-    "reason": "Inserts the metadata of a new attachment, which staff see; the API has no matching delete."
+    "reason": "Inserts the metadata of a new attachment of the given type (the Location header leads to its blob upload); the attachments API has no operation that deletes an attachment.",
+    "notes": "deleteUploadedAttachment only removes the upload staging record, not the attachment."
   },
   "Attachments.uploadAttachment": {
     "effect": "irreversible",
-    "reason": "Uploads the file of an attachment, completing an attachment staff see."
+    "reason": "Uploads the file of an attachment whose metadata was inserted, completing an attachment staff see; no operation deletes attachments."
   },
   "Attachments.validateAttachment": {
-    "effect": "irreversible",
-    "reason": "Changes the metadata of an attachment, such as its validation state, which staff act on."
+    "effect": "reversible",
+    "reason": "Sets an attachment's valid flag (validFlag 0 or 1); the previous flag can be read with getAttachmentMetadata and written back.",
+    "notes": "The spec only talks about setting the flag to 1 and answers 422 when the change is not allowed, so writing 0 back may be refused; validity is something staff act on, so use a test attachment nobody relies on."
   },
   "Auth.changeUserPassword": {
     "effect": "irreversible",
@@ -63,108 +68,119 @@
   },
   "BadgeImport.postImportAward": {
     "effect": "irreversible",
-    "reason": "Imports badge awards for people into Esse3 (batch import)."
+    "reason": "Imports one or more badge awards, which Esse3 records as university titles of the holders (batch import); no operation deletes them."
   },
   "BadgeImport.postImportBadgeClass": {
     "effect": "irreversible",
-    "reason": "Imports badge classes into Esse3 (batch import)."
+    "reason": "Imports one or more badge classes into Esse3's university title types (batch import); no operation deletes them."
   },
   "BadgeImport.putBadgeIssuing": {
     "effect": "irreversible",
-    "reason": "Records the issuing or revocation of a badge, which the holder and staff see."
+    "reason": "Records that a badge was issued or cancelled on the external platform, in answer to an Esse3 request; the holder and staff see it."
   },
   "CareerUpdate.deletePreview": {
     "effect": "irreversible",
-    "reason": "Deletes a career-update preview prepared by staff; it cannot be restored."
+    "reason": "Deletes a career-update preview prepared by staff; it cannot be restored.",
+    "notes": "Rerunning the bulk procedure could rebuild an unexecuted preview, but with a new id and without the per-row flags. For an executed preview, the processing log is lost."
   },
   "CareerUpdate.executeUpdateCareers": {
     "effect": "irreversible",
     "reason": "Executes a career-update preview, changing students' careers."
   },
   "CareerUpdate.postAddTeachingActivityOffer": {
-    "effect": "irreversible",
-    "reason": "Starts a mass career-update job (AGG_AD_OFF) over many students."
+    "effect": "reversible",
+    "reason": "The bulk invocation of AGG_AD_OFF only builds a career-update preview (staging rows); careers change only when CareerUpdate.executeUpdateCareers runs it, and CareerUpdate.deletePreview removes the preview.",
+    "notes": "Undo: CareerUpdate.deletePreview(careerUpdateId) on the new preview. Its id is returned only in the Link header (the response is empty), so find it as the newest CareerUpdate.getCareerUpdateHeaders entry with procedureCode AGG_AD_OFF. Never call executeUpdateCareers in between. The spec's flow is POST -> preview -> (elabora) -> esegui -> delete."
   },
   "CareerUpdate.postAttendance": {
-    "effect": "irreversible",
-    "reason": "Starts a mass career-update job that records attendance (FREQ)."
+    "effect": "reversible",
+    "reason": "The bulk invocation of FREQ only builds a career-update preview (staging rows); careers change only when CareerUpdate.executeUpdateCareers runs it, and CareerUpdate.deletePreview removes the preview.",
+    "notes": "Undo: CareerUpdate.deletePreview(careerUpdateId) on the new preview. Its id is returned only in the Link header (the response is empty), so find it as the newest CareerUpdate.getCareerUpdateHeaders entry with procedureCode FREQ. Never call executeUpdateCareers in between. The spec's flow is POST -> preview -> (elabora) -> esegui -> delete."
   },
   "CareerUpdate.postRemoveAttendance": {
-    "effect": "irreversible",
-    "reason": "Starts a mass career-update job that removes attendance (RIMUOVI_FREQ)."
+    "effect": "reversible",
+    "reason": "The bulk invocation of RIMUOVI_FREQ only builds a career-update preview (staging rows); careers change only when CareerUpdate.executeUpdateCareers runs it, and CareerUpdate.deletePreview removes the preview.",
+    "notes": "Undo: CareerUpdate.deletePreview(careerUpdateId) on the new preview. Its id is returned only in the Link header (the response is empty), so find it as the newest CareerUpdate.getCareerUpdateHeaders entry with procedureCode RIMUOVI_FREQ. Never call executeUpdateCareers in between. The spec's flow is POST -> preview -> (elabora) -> esegui -> delete."
   },
   "CareerUpdate.postSEG": {
-    "effect": "irreversible",
-    "reason": "Starts a mass career-update job (SEG)."
+    "effect": "reversible",
+    "reason": "The bulk invocation of SEG only builds a career-update preview (staging rows); careers change only when CareerUpdate.executeUpdateCareers runs it, and CareerUpdate.deletePreview removes the preview.",
+    "notes": "Undo: CareerUpdate.deletePreview(careerUpdateId) on the new preview. Its id is returned only in the Link header (the response is empty), so find it as the newest CareerUpdate.getCareerUpdateHeaders entry with procedureCode SEG. Never call executeUpdateCareers in between. The spec's flow is POST -> preview -> (elabora) -> esegui -> delete."
   },
   "CareerUpdate.postSubstitution": {
-    "effect": "irreversible",
-    "reason": "Starts a mass career-update job that substitutes activities (SOST)."
+    "effect": "reversible",
+    "reason": "The bulk invocation of SOST only builds a career-update preview (staging rows); careers change only when CareerUpdate.executeUpdateCareers runs it, and CareerUpdate.deletePreview removes the preview.",
+    "notes": "Undo: CareerUpdate.deletePreview(careerUpdateId) on the new preview. Its id is returned only in the Link header (the response is empty), so find it as the newest CareerUpdate.getCareerUpdateHeaders entry with procedureCode SOST. Never call executeUpdateCareers in between. The spec's flow is POST -> preview -> (elabora) -> esegui -> delete."
   },
   "CareerUpdate.putAddTeachingActivityOfferByStudent": {
     "effect": "irreversible",
-    "reason": "Runs the AGG_AD_OFF career update for one student."
+    "reason": "Runs the AGG_AD_OFF career update for one student.",
+    "notes": "The per-student invocation runs the engine at once (spec: 'il motore viene lanciato in modo contestuale') and returns its log, changing the student's career directly."
   },
   "CareerUpdate.putAttendanceByStudent": {
     "effect": "irreversible",
-    "reason": "Records attendance (FREQ) in one student's career."
+    "reason": "Records attendance (FREQ) in one student's career.",
+    "notes": "The per-student invocation runs the engine at once (spec: 'il motore viene lanciato in modo contestuale') and returns its log, changing the student's career directly."
   },
   "CareerUpdate.putRemoveAttendanceByStudent": {
     "effect": "irreversible",
-    "reason": "Removes attendance (RIMUOVI_FREQ) from one student's career."
+    "reason": "Removes attendance (RIMUOVI_FREQ) from one student's career.",
+    "notes": "The per-student invocation runs the engine at once (spec: 'il motore viene lanciato in modo contestuale') and returns its log, changing the student's career directly."
   },
   "CareerUpdate.putSEGByStudent": {
     "effect": "irreversible",
-    "reason": "Runs the SEG career update for one student."
+    "reason": "Runs the SEG career update for one student.",
+    "notes": "The per-student invocation runs the engine at once (spec: 'il motore viene lanciato in modo contestuale') and returns its log, changing the student's career directly."
   },
   "CareerUpdate.putSubstitutionByStudent": {
     "effect": "irreversible",
-    "reason": "Substitutes activities (SOST) in one student's career."
+    "reason": "Substitutes activities (SOST) in one student's career.",
+    "notes": "The per-student invocation runs the engine at once (spec: 'il motore viene lanciato in modo contestuale') and returns its log, changing the student's career directly."
   },
   "CareerUpdate.setProcessingDetailFlag": {
-    "effect": "irreversible",
-    "reason": "Marks a row of a staff career-update preview to be processed by the engine.",
-    "notes": "Could be undone by setting the old flag back (read via CareerUpdate.getPreviewDetail), but if the preview is executed in between, the row is applied to a real career."
+    "effect": "reversible",
+    "reason": "Toggles the 'process' flag of one row of a staff preview. The previous flag can be read and set back with the same call.",
+    "notes": "processFlag is read as 1/0 and processNow takes a boolean, so the restore needs that conversion. If the preview is executed before the undo, the row is applied to a real career, so only use a test preview."
   },
   "Careers.careerClosure": {
     "effect": "irreversible",
-    "reason": "Closes a student's career with a closure reason and date.",
+    "reason": "Closes a student's career with a closure reason and date; no operation reopens a career.",
     "notes": "Catastrophic for the test account; no reopen operation exists in this API."
   },
   "Careers.putCanteenBand": {
-    "effect": "irreversible",
-    "reason": "Changes the student's canteen fee band for an academic year, which affects what the student pays.",
-    "notes": "TECHNICAL_USER only; subject to context rules, so restoring the old band is not guaranteed to succeed."
+    "effect": "reversible",
+    "reason": "Sets the student's canteen fee band for an academic year; the previous band can be read from getAnnualEnrollment and written back.",
+    "notes": "The band must pass the FASCIA_MENSA context rules, so writing the old band back could be refused if the rules changed; the band affects what the student pays, so use a test career."
   },
   "Careers.putCareerByStudent": {
-    "effect": "irreversible",
-    "reason": "Updates the student's protocol number on the career record.",
-    "notes": "TECHNICAL_USER only; official administrative record."
+    "effect": "reversible",
+    "reason": "Sets the student's protocol number on the career record; the previous number can be read from getCareerByStudent and written back.",
+    "notes": "body.protocolNumber is a non-null string, so a career with no protocol number cannot be put back exactly; skip it in that case."
   },
   "Careers.putEnrollmentDateAndExemptionTypeByMatricola": {
-    "effect": "irreversible",
-    "reason": "Changes the enrollment date and fee-exemption type of an annual enrollment, which affects tuition fees.",
-    "notes": "TECHNICAL_USER only; exemption changes can trigger fee recalculation that restoring the old value may not undo."
+    "effect": "reversible",
+    "reason": "Sets the enrollment date and fee exemption type of an annual enrollment; the previous values can be read from getAnnualEnrollment and written back.",
+    "notes": "The call takes only the matricola, so the undo first resolves studentId with Careers.getCareers(studentMatricola = $args.matricola), then reads Careers.getAnnualEnrollment(studentId, academicYear = $args.academicYear) and writes [0].exemptionTypeCode and [0].enrollmentDate back with this call. Esse3 may recalculate fees from the exemption type; restoring the old value should recalculate them back, but run it only on a test career."
   },
   "Careers.putEnrollmentDateAndExemptionTypeByStudentId": {
-    "effect": "irreversible",
-    "reason": "Changes the enrollment date and fee-exemption type of an annual enrollment, which affects tuition fees.",
-    "notes": "TECHNICAL_USER only; exemption changes can trigger fee recalculation that restoring the old value may not undo."
+    "effect": "reversible",
+    "reason": "Sets the enrollment date and fee exemption type of an annual enrollment; the previous values can be read from getAnnualEnrollment and written back.",
+    "notes": "Restore [0].enrollmentDate into body.enrollmentDate too. Esse3 may recalculate fees from the exemption type; restoring the old value should recalculate them back, but run it only on a test career."
   },
   "Careers.putGraduationWaiting": {
-    "effect": "irreversible",
-    "reason": "Sets the graduation-waiting flag and date on a student's career, an official record the graduation office acts on.",
-    "notes": "TECHNICAL_USER only. A restore via Careers.getCareerByStudent is conceivable but the flag may drive graduation workflows, so not treated as reversible."
+    "effect": "reversible",
+    "reason": "Sets the awaiting-graduation flag and date on a student's career; the previous values can be read from getCareerByStudent and written back.",
+    "notes": "Restore degreeAwardDate into body.degreeAwardDate too (it must be null when the flag is 0). The body must identify the student by studentId (or matricola, then read studentId from getCareers). The flag may be read by graduation workflows, so use a test career."
   },
   "Careers.putStudentTypeCode": {
-    "effect": "irreversible",
-    "reason": "Changes the student type code of an annual enrollment, an administrative record staff rely on.",
-    "notes": "TECHNICAL_USER only."
+    "effect": "reversible",
+    "reason": "Sets the student type code of an annual enrollment; the previous code can be read from getAnnualEnrollment and written back.",
+    "notes": "The spec accepts null, so an empty previous code can be written back too."
   },
   "ChoiceRules.patchChoiceRegulation": {
-    "effect": "irreversible",
-    "reason": "Changes the state of a choice regulation.",
-    "notes": "Massive technical-user operation; state transitions affect every student's study plan."
+    "effect": "reversible",
+    "reason": "The only allowed change is the regulation's state (A active / B draft), which can be read beforehand and written back with the same call.",
+    "notes": "Until the undo runs, the regulation's state decides whether students can fill in study plans under it, so use a regulation nobody is using. Esse3 may refuse some transitions, e.g. back to draft once plans are linked. The X (deleted) state read back is not a settable value."
   },
   "ChoiceRules.putLinkedPlansCount": {
     "effect": "read",
@@ -178,19 +194,20 @@
   },
   "Competitions.putCompetitionEnrollment": {
     "effect": "irreversible",
-    "reason": "Enrols a person in an admission test; the API has no operation to withdraw it."
+    "reason": "Enrols a person in an admission test; the API has no operation to withdraw it.",
+    "notes": "No operation of the Esse3 API withdraws a candidate from an admission test; enrolment can also generate the admission-fee invoice and a ranking entry."
   },
   "Competitions.putCompetitionRanking": {
     "effect": "irreversible",
-    "reason": "Imports the standings of an admission test from JSON, overwriting official results."
+    "reason": "Imports the ranking of an admission test from JSON, overwriting official results."
   },
   "Competitions.putCompetitionRankingFile": {
     "effect": "irreversible",
-    "reason": "Imports the standings of an admission test from a file, overwriting official results."
+    "reason": "Imports the ranking of an admission test from a txt or csv file, overwriting official results."
   },
   "Competitions.putCompetitionRankingsFile": {
     "effect": "irreversible",
-    "reason": "Imports the rankings of an admission test from a file."
+    "reason": "Imports the admission rankings of a competition from a txt or csv file."
   },
   "Competitions.putRankingTestDetail": {
     "effect": "irreversible",
@@ -198,7 +215,7 @@
   },
   "Competitions.putRankingTestDetailFile": {
     "effect": "irreversible",
-    "reason": "Imports a single ranking of an admission test from a file."
+    "reason": "Imports a single ranking of an admission test from a txt or csv file."
   },
   "DegreeAward.postCommitteeApplication": {
     "effect": "irreversible",
@@ -207,7 +224,8 @@
   },
   "DegreeAward.postThesisAttachmentMetadata": {
     "effect": "irreversible",
-    "reason": "Inserts the metadata of a thesis attachment, which staff see."
+    "reason": "Inserts the metadata of a thesis attachment, which staff see.",
+    "notes": "The insert returns the upload URL only in a Location header. Attachments.deleteUploadedAttachment can abort a pending upload, but the spec doesn't say this removes the attachment, so no exact undo is documented."
   },
   "DegreeAward.postThesisIntoCommitteeApplication": {
     "effect": "irreversible",
@@ -215,44 +233,51 @@
   },
   "DegreeAward.putAntiplagiarismData": {
     "effect": "irreversible",
-    "reason": "Records anti-plagiarism results and approval for a thesis attachment."
+    "reason": "Records anti-plagiarism results and approval for a thesis attachment.",
+    "notes": "The spec says it may also approve the final thesis attachment and with it the thesis, a decision staff act on."
   },
   "DegreeAward.putCancelCommitteeApplication": {
     "effect": "irreversible",
     "reason": "Cancels the student's degree application."
   },
   "DegreeAward.putThesisDiscussionMode": {
-    "effect": "irreversible",
-    "reason": "Changes the consultation mode of a thesis, a record staff and the library rely on."
+    "effect": "reversible",
+    "reason": "Sets a thesis's consultation mode code. The previous code can be read with getThesisByThesisId and written back with the same call.",
+    "notes": "Use a test thesis, because the library and staff read this code while it is changed."
   },
   "DegreeAward.putThesisRelation": {
     "effect": "irreversible",
-    "reason": "Adds supervisors to a thesis, which the supervisors see."
+    "reason": "Adds supervisors to a thesis, which the supervisors see.",
+    "notes": "There is no operation to remove a supervisor from a thesis."
   },
   "ExamsCalendar.deleteEsacomChild": {
-    "effect": "irreversible",
-    "reason": "Removes a child activity from a common exam; the original configuration cannot be restored exactly."
+    "effect": "reversible",
+    "reason": "Removes a child activity from a common exam. putEsacomChild with the same keys and the old flags puts it back.",
+    "notes": "The undo body (mutualFlag, logConditionFlag) must be read beforehand with ExamsCalendar.getEsacomChild. Until it is restored, the child course does not share the parent's exam calls, so use a common exam nobody relies on. forceFlag may cascade to existing calls."
   },
   "ExamsCalendar.deleteExamCall": {
     "effect": "irreversible",
-    "reason": "Deletes an exam call, possibly forcing the cancellation of its bookings; it cannot be restored."
+    "reason": "Deletes an exam call, possibly forcing the cancellation of its bookings; it cannot be restored.",
+    "notes": "postExamCall could recreate an empty call with the same data, but with a new callId. With forceCancellation > 0 it also cancels bookings and publications that can't be restored."
   },
   "ExamsCalendar.deleteExamCallEnrolledList": {
-    "effect": "irreversible",
-    "reason": "Cancels a student's exam booking; re-booking may be impossible after the deadline and loses the original position/shift."
+    "effect": "reversible",
+    "reason": "Cancels a student's exam booking. postExamCallEnrolledList books it again while booking is open.",
+    "notes": "The undo body needs activityChoiceId (and callLogId/examType if set), read beforehand with getEnrolledExamCall(courseOfStudyId, activityId, callId, studentId). Only run before the booking deadline. Rebooking gets a new applicationListId and may change the student's position in the list."
   },
   "ExamsCalendar.importSystemLog": {
     "effect": "irreversible",
     "reason": "Imports rooms/commitments from the external logistics system (batch import)."
   },
   "ExamsCalendar.postExamCall": {
-    "effect": "irreversible",
-    "reason": "Creates a new exam call that students can see and book; the result has no id to delete it by."
+    "effect": "reversible",
+    "reason": "Creates an exam call that ExamsCalendar.deleteExamCall removes again, as long as nobody books it in the meantime.",
+    "notes": "Undo: find the new callId with ExamsCalendar.getExamCalls(courseOfStudyId, activityId), matching the date from the body (the response is empty), then call deleteExamCall(courseOfStudyId, activityId, callId, forceCancellation=0). Use a test activity, because students of the course can see and book the call until it is deleted."
   },
   "ExamsCalendar.postExamCallEnrolledList": {
-    "effect": "irreversible",
-    "reason": "Books the student onto an exam call; teachers see the booking in the enrolled list.",
-    "notes": "Would be reversible with ExamsCalendar.deleteExamCallEnrolledList(courseOfStudyId, activityId, callId, studentId), but studentId (the career id, stuId) is neither an argument nor in the result (the response is empty), so the undo cannot be expressed. If the harness can supply the test student's stuId it could be promoted to reversible, run only before the booking deadline (bookings may count toward booking limits/no-show rules)."
+    "effect": "reversible",
+    "reason": "Books a student onto an exam call. ExamsCalendar.deleteExamCallEnrolledList cancels the booking before the booking deadline.",
+    "notes": "Undo: deleteExamCallEnrolledList(courseOfStudyId, activityId, callId, studentId), where studentId is the booked student's career id (stuId). It is neither an argument nor in the (empty) result, so the harness must supply the test student's stuId. It can also be read from ExamsCalendar.getExamCallEnrolledList. Only run before the booking deadline."
   },
   "ExamsCalendar.putAcknowledgmentOfReceipt": {
     "effect": "irreversible",
@@ -267,22 +292,23 @@
     "reason": "Records an exam outcome (grade) for a student."
   },
   "ExamsCalendar.putEsacomChild": {
-    "effect": "irreversible",
-    "reason": "Adds a child activity to a common exam, changing how exam calls are shared across courses.",
-    "notes": "ExamsCalendar.deleteEsacomChild with the same path arguments removes it, but if the child already existed the PUT updates it and the delete would destroy existing configuration; forceFlag may also cascade."
+    "effect": "reversible",
+    "reason": "Adds a child activity to a common exam. ExamsCalendar.deleteEsacomChild with the same keys removes it.",
+    "notes": "Exact only if the child did not exist before (check with getEsacomChild). If it did, the PUT updates it, and the undo should restore mutualFlag/logConditionFlag instead of deleting. Use a common exam nobody relies on."
   },
   "ExamsCalendar.putExamCall": {
-    "effect": "irreversible",
-    "reason": "Changes an exam call's details (dates, rooms, enrolment window) that booked students rely on."
+    "effect": "reversible",
+    "reason": "Updates an exam call's details. The previous values can be read with ExamsCalendar.getExamCall and written back with the same call.",
+    "notes": "Undo: read getExamCall(courseOfStudyId, activityId, callId) first and putExamCall again with the old values of the changed fields. The restore form can't hold a whole body. Return code 11 ('Errore nell'invio della comunicazione') shows changes can e-mail booked students, so only use a call with no bookings."
   },
   "ExamsCalendar.putExamCallPublication": {
     "effect": "irreversible",
     "reason": "Publishes the outcomes of an exam call to its students, who are notified."
   },
   "ExamsCalendar.putModifyBooking": {
-    "effect": "irreversible",
-    "reason": "Changes the exam type and compensatory measures of an existing booking, which teachers see.",
-    "notes": "The old values could be read from ExamsCalendar.getEnrolledExamCall, but they live inside the body object, which the restore form cannot target; it also needs an existing booking."
+    "effect": "reversible",
+    "reason": "Changes the exam type and compensatory measures of an existing booking. The previous values can be read with getEnrolledExamCall and written back with the same call.",
+    "notes": "The restore covers the exam type only. If compensatoryMeasures were changed, write back the list read from getEnrolledExamCall too. Needs an existing test booking."
   },
   "ExamsCalendar.putShiftPublication": {
     "effect": "irreversible",
@@ -298,9 +324,9 @@
     "notes": "Only call it with the test's own session id and a short llevelMinutesTimeout; a verbose level makes the server log more."
   },
   "Logistics.putSyllabusTeachingActivity": {
-    "effect": "irreversible",
-    "reason": "Updates the published syllabus of a teaching activity, content teachers and students see.",
-    "notes": "TEACHER/TECHNICAL_USER only."
+    "effect": "reversible",
+    "reason": "Overwrites syllabus fields of a teaching activity's logistics. The previous values can be read and written back with the same call.",
+    "notes": "Undo: before the call, read the current syllabus (Logistics.getTeachingActivityLogWithSyllabus or Transcript.getSyllabusTeachingActivityRecordBookRow), then call putSyllabusTeachingActivity again with the same keys and the old syllabusFields, publication flag and SDG list. The restore form can't hold a list of fields. The syllabus is public while changed, so use a test activity."
   },
   "Logistics.syncSystemLog": {
     "effect": "irreversible",
@@ -308,9 +334,9 @@
     "notes": "Batch job on university-wide data."
   },
   "Offer.patchContextualizedTeachingActivity": {
-    "effect": "irreversible",
-    "reason": "Modifies a contextualised teaching activity of the didactic offer (e.g. its website URL).",
-    "notes": "TECHNICAL_USER only; university-wide offer data."
+    "effect": "reversible",
+    "reason": "Only sets the activity's Moodle course URL, which can be read beforehand and written back with the same call.",
+    "notes": "If the old value was null, a PATCH with null may be read as 'no change'. Esse3 uses special null markers such as #!N!# elsewhere, so check this before relying on the undo."
   },
   "Offer.putActivityPlanCount": {
     "effect": "read",
@@ -319,113 +345,131 @@
   },
   "PersonalData.careerClosure": {
     "effect": "irreversible",
-    "reason": "Closes a student's career."
+    "reason": "Closes a student's career with a closure reason and date; no operation reopens a career."
   },
   "PersonalData.deleteCareerAttachmentMetadata": {
     "effect": "irreversible",
-    "reason": "Deletes a career attachment with no way to restore it."
+    "reason": "Deletes an attachment of a career segment.",
+    "notes": "It could be re-created by downloading the blob first and inserting and uploading it again, but the copy gets a new id and loses its validation state and dates, so it is not an exact undo."
   },
   "PersonalData.deleteExternalSubject": {
     "effect": "irreversible",
-    "reason": "Deletes an external subject record with no way to restore it."
+    "reason": "Deletes an external subject record.",
+    "notes": "putExternalSubject could create a similar subject, but with a new id and without the data linked to the old one, so it is not an exact undo."
   },
   "PersonalData.deletePersonalDocumentAttachmentMetadata": {
     "effect": "irreversible",
-    "reason": "Deletes an identity document attachment with no way to restore it."
+    "reason": "Deletes an identity document attachment.",
+    "notes": "Re-inserting it (postIdentityDocumentAttachmentMetadata plus the blob upload) gives a new id and loses its validation state, so it is not an exact undo."
   },
   "PersonalData.dismissEmail": {
     "effect": "irreversible",
-    "reason": "Decommissions a person's institutional e-mail address."
+    "reason": "Decommissions a person's institutional e-mail address; no operation reinstates it.",
+    "notes": "putStudentAteEmail could write the address back, but it is not clear that Esse3 accepts a dismissed address again, and the dismissal is likely propagated to the university's account and mailbox systems."
   },
   "PersonalData.dismissEmailByAteEmail": {
     "effect": "irreversible",
-    "reason": "Decommissions an institutional e-mail address."
+    "reason": "Decommissions an institutional e-mail address (looked up by the address itself); no operation reinstates it.",
+    "notes": "putStudentAteEmail could write the address back, but it is not clear that Esse3 accepts a dismissed address again, and the dismissal is likely propagated to the university's account and mailbox systems."
   },
   "PersonalData.insertCompensatoryMeasuresHandicapDeclaration": {
     "effect": "irreversible",
-    "reason": "Adds compensatory measures to a disability declaration; no delete exists."
+    "reason": "Adds compensatory measures (exam accommodations) to a disability declaration; no operation deletes a measure.",
+    "notes": "The update calls could set the measure's state or end date, but the measure record would remain."
   },
   "PersonalData.postAuthorizedAttachmentMetadata": {
     "effect": "irreversible",
-    "reason": "Inserts attachment metadata for an authorized person; no delete exists for this attachment kind."
+    "reason": "Inserts attachment metadata for an authorized person; no operation deletes this kind of attachment."
   },
   "PersonalData.postAuthorizedPersonalDocumentAttachmentMetadata": {
     "effect": "irreversible",
-    "reason": "Inserts attachment metadata for an authorized person's identity document; no matching delete in this API."
+    "reason": "Inserts attachment metadata for an authorized person's identity document; no operation deletes this kind of attachment.",
+    "notes": "deletePersonalDocumentAttachmentMetadata takes a person's identity document id (docPersId); it is not clear that an authorized person's document id (personalDataDocAuthorizationId) is accepted there. If it is, this becomes reversible like postIdentityDocumentAttachmentMetadata."
   },
   "PersonalData.postCompensatoryMeasuresHandicapDeclaration": {
     "effect": "irreversible",
-    "reason": "Adds compensatory measures to a disability declaration; no delete exists."
+    "reason": "Adds compensatory measures (exam accommodations) to a disability declaration; no operation deletes a measure.",
+    "notes": "The update calls could set the measure's state or end date, but the measure record would remain."
   },
   "PersonalData.postForeignTitleAttachmentMetadata": {
     "effect": "irreversible",
-    "reason": "Inserts a foreign title attachment; no undo in this API."
+    "reason": "Inserts a foreign degree attachment; no operation deletes it."
   },
   "PersonalData.postHandicapDeclarationAttachmentMetadata": {
     "effect": "irreversible",
-    "reason": "Inserts an attachment to a disability declaration that staff evaluate; returns no id to remove it."
+    "reason": "Inserts an attachment to a disability declaration that staff evaluate; no operation deletes it."
   },
   "PersonalData.postHighSchoolGraduationAttachmentMetadata": {
     "effect": "irreversible",
-    "reason": "Inserts a high school diploma attachment; no undo in this API."
+    "reason": "Inserts a high school diploma attachment; no operation deletes it."
   },
   "PersonalData.postIdentityDocumentAttachmentMetadata": {
-    "effect": "irreversible",
-    "reason": "Inserts an identity document attachment; it returns no id, so it cannot be deleted reliably.",
-    "notes": "deletePersonalDocumentAttachmentMetadata exists, but the insert returns nothing, so the new attachment id cannot be derived."
+    "effect": "reversible",
+    "reason": "Inserts an identity document attachment, which deletePersonalDocumentAttachmentMetadata can remove once its id is found in the listing.",
+    "notes": "The insert returns no body (only a Location header), so the undo needs two steps: list getIdentityDocumentAttachmentMetadata(personId, identityDocumentTypeCode, personalDocumentId) before and after to find the new attachmentId, then call deletePersonalDocumentAttachmentMetadata(personalDocumentId = $args.body.personalDocumentId, attachmentId = <new id>, personId = $args.personId). Use a test person's document, since staff validate these attachments."
   },
   "PersonalData.postItalianTitleAttachmentMetadata": {
     "effect": "irreversible",
-    "reason": "Inserts an Italian title attachment; no undo in this API."
+    "reason": "Inserts an Italian degree attachment; no operation deletes it."
   },
   "PersonalData.postMatricolaAttachmentMetadata": {
-    "effect": "irreversible",
-    "reason": "Inserts an enrollment-number attachment; no undo in this API."
+    "effect": "reversible",
+    "reason": "Inserts an attachment of the student's career (matricola), which deleteCareerAttachmentMetadata can remove once its id is found in the listing.",
+    "notes": "The insert returns no body, so the undo needs two steps: list getMatricolaAttachmentMetadata(studentId) before and after to find the new attachmentId, read matId from getCareerByStudent(studentId), then call deleteCareerAttachmentMetadata(matId, attachmentId). This assumes matricola attachments are the career-segment attachments that delete removes; check on a test student first."
   },
   "PersonalData.postPersonPhotoAttachmentMetadata": {
     "effect": "irreversible",
-    "reason": "Inserts a person's photo attachment, which staff validate; no undo."
+    "reason": "Inserts a person's photo attachment, which staff validate; no operation deletes or lists it."
   },
   "PersonalData.putCanteenBand": {
-    "effect": "irreversible",
-    "reason": "Changes a student's canteen fee band."
+    "effect": "reversible",
+    "reason": "Sets the student's canteen fee band for an academic year; the previous band can be read from getAnnualEnrollment and written back.",
+    "notes": "The band must pass the FASCIA_MENSA context rules, so writing the old band back could be refused if the rules changed; the band affects what the student pays, so use a test career. The anagrafica-service-v2 career endpoints are marked deprecated, to be removed on 31/01/2026; the call may already fail with 404, in which case use the carriere-service-v1 twin."
   },
   "PersonalData.putCareerByStudent": {
-    "effect": "irreversible",
-    "reason": "Changes a student's protocol number in the career record."
+    "effect": "reversible",
+    "reason": "Sets the student's protocol number on the career record; the previous number can be read from getCareerByStudent and written back.",
+    "notes": "body.protocolNumber is a non-null string, so a career with no protocol number cannot be put back exactly; skip it in that case. The anagrafica-service-v2 career endpoints are marked deprecated, to be removed on 31/01/2026; the call may already fail with 404, in which case use the carriere-service-v1 twin."
   },
   "PersonalData.putDomicilePhone": {
-    "effect": "irreversible",
-    "reason": "Changes a person's domicile phone; the body's number and prefix cannot both be restored exactly from the person record.",
-    "notes": "It would be reversible if getPerson.domicilePhone mapped exactly to phoneNumber with an empty prefix, but the spec does not confirm that."
+    "effect": "reversible",
+    "reason": "Sets a person's domicile phone number and prefix; the previous values can be read from getPerson and written back.",
+    "notes": "Restore domicileInternationalPrefix into body.prefix too. Both the domicile and the other phone operation are described as 'aggiornamento telefono di residenza' in the spec, so check which field actually changes. Skip the test if the old number is null and the server rejects null."
   },
   "PersonalData.putEnrollmentDateAndExemptionTypeByMatricola": {
-    "effect": "irreversible",
-    "reason": "Changes the enrollment date and fee exemption type of an annual enrollment."
+    "effect": "reversible",
+    "reason": "Sets the enrollment date and fee exemption type of an annual enrollment; the previous values can be read from getAnnualEnrollment and written back.",
+    "notes": "The call takes only the matricola, so the undo first resolves studentId with PersonalData.getCareers(studentMatricola = $args.matricola), then reads PersonalData.getAnnualEnrollment(studentId, academicYear = $args.academicYear) and writes [0].exemptionTypeCode and [0].enrollmentDate back with this call. Esse3 may recalculate fees from the exemption type; restoring the old value should recalculate them back, but run it only on a test career. The anagrafica-service-v2 career endpoints are marked deprecated, to be removed on 31/01/2026; the call may already fail with 404, in which case use the carriere-service-v1 twin."
   },
   "PersonalData.putEnrollmentDateAndExemptionTypeByStudentId": {
-    "effect": "irreversible",
-    "reason": "Changes the enrollment date and fee exemption type of an annual enrollment."
+    "effect": "reversible",
+    "reason": "Sets the enrollment date and fee exemption type of an annual enrollment; the previous values can be read from getAnnualEnrollment and written back.",
+    "notes": "Restore [0].enrollmentDate into body.enrollmentDate too. Esse3 may recalculate fees from the exemption type; restoring the old value should recalculate them back, but run it only on a test career. The anagrafica-service-v2 career endpoints are marked deprecated, to be removed on 31/01/2026; the call may already fail with 404, in which case use the carriere-service-v1 twin."
   },
   "PersonalData.putExternalSubject": {
-    "effect": "irreversible",
-    "reason": "Inserts or updates an external subject record."
+    "effect": "reversible",
+    "reason": "Creates an external subject when the body has no externalSubjectId, fiscal code or abbreviatedId (otherwise updates one); a created subject can be removed with deleteExternalSubject.",
+    "notes": "Only the create mode is reversible this way. In update mode the read (getExternalSubject) lacks several body fields (phone, fax, mobile, prefixes), so an update cannot be put back exactly; test with a new subject only."
   },
   "PersonalData.putExternalSubjectConsents": {
-    "effect": "irreversible",
-    "reason": "Changes an external subject's privacy consents, which are legally recorded."
+    "effect": "reversible",
+    "reason": "Sets an external subject's privacy consent flags; the previous flags can be read with getExternalSubjectConsents and written back with the same call.",
+    "notes": "Undo: before the call read getExternalSubjectConsents(externalSubjectId, webProcedureCode), then call this operation again with, for each consent in the body, consentTypeCode = consentTypesConsentTypeCode and the old consentFlag and startDate. Consent changes are probably logged with their date, so the history keeps the toggle; only run it on a test external subject, for example one created with putExternalSubject."
   },
   "PersonalData.putGraduationWaiting": {
-    "effect": "irreversible",
-    "reason": "Changes a student's awaiting-graduation status in the career record."
+    "effect": "reversible",
+    "reason": "Sets the awaiting-graduation flag and date on a student's career; the previous values can be read from getCareerByStudent and written back.",
+    "notes": "Restore degreeAwardDate into body.degreeAwardDate too (it must be null when the flag is 0). The body must identify the student by studentId (or matricola, then read studentId from getCareers). The flag may be read by graduation workflows, so use a test career. The anagrafica-service-v2 career endpoints are marked deprecated, to be removed on 31/01/2026; the call may already fail with 404, in which case use the carriere-service-v1 twin."
   },
   "PersonalData.putHandicapDeclaration": {
-    "effect": "irreversible",
-    "reason": "Changes a disability declaration that staff evaluate."
+    "effect": "reversible",
+    "reason": "Sets the state, percentage and dates of a disability declaration (by id, by type, or the most recent one); the previous values can be read and written back.",
+    "notes": "Undo: the call returns the updated declarations; before it, read getHandicapDeclaration(personId, handicapDeclarationId) and afterwards call putHandicapDeclarationById(personId, declarationId) with the old handicapDeclarationState, handicapPercentage, startDate and endDate. Without handicapDeclarationId the target is 'the most recent non-cancelled declaration', so pass the id to know which one changed. State transitions may be constrained, and staff evaluate these declarations, so use a test person."
   },
   "PersonalData.putHandicapDeclarationById": {
-    "effect": "irreversible",
-    "reason": "Changes a disability declaration that staff evaluate."
+    "effect": "reversible",
+    "reason": "Sets the state, percentage and dates of a disability declaration; the previous values can be read with getHandicapDeclarationById and written back.",
+    "notes": "Restore handicapPercentage, startDate and endDate the same way (same field names in the read and the body). State transitions may be constrained, and staff evaluate these declarations, so use a test person."
   },
   "PersonalData.putMobilePhone": {
     "effect": "reversible",
@@ -433,43 +477,48 @@
     "notes": "The setter takes a body object (Esse3MobileParameter.mobilePhone), so 'into' names a body field. If the original number is null the restore may be rejected, so skip the test in that case. Any SMS the university sends during the test would go to the test number."
   },
   "PersonalData.putPersonCompensatoryMeasuresHandicapDeclaration": {
-    "effect": "irreversible",
-    "reason": "Changes compensatory measures of a disability declaration that staff manage."
+    "effect": "reversible",
+    "reason": "Sets the state and dates of a compensatory measure of a disability declaration; the previous values can be read and written back with the same call.",
+    "notes": "Undo: before the call read getPersonCompensatoryMeasuresHandicapDeclaration(personId, handicapDeclarationId), pick the element whose handicapDeclarationMeasuresId (or compensatoryMeasureCode) matches the target, and call this operation again with its compensatoryMeasureState, measureStartDate and measureEndDate. The measures grant a student exam accommodations that staff act on, so use a test person."
   },
   "PersonalData.putResidencePhone": {
-    "effect": "irreversible",
-    "reason": "Changes a person's residence phone; the body's number and prefix cannot both be restored exactly from the person record.",
-    "notes": "It would be reversible if getPerson.residencePhone mapped exactly to phoneNumber with an empty prefix, but the spec does not confirm that."
+    "effect": "reversible",
+    "reason": "Sets a person's residence phone number and prefix; the previous values can be read from getPerson and written back.",
+    "notes": "Restore residenceInternationalPrefix into body.prefix too. Both the residence and the other phone operation are described as 'aggiornamento telefono di residenza' in the spec, so check which field actually changes. Skip the test if the old number is null and the server rejects null."
   },
   "PersonalData.putStudentAteEmail": {
-    "effect": "irreversible",
-    "reason": "Changes a student's institutional e-mail address, which identifies the account."
+    "effect": "reversible",
+    "reason": "Sets a student's institutional e-mail address; the previous address can be read from getPerson and written back.",
+    "notes": "The address cannot be set to null, so a person with no institutional address cannot be put back; skip that case. The address may be synchronized to the university's account systems while it is changed, so use a test person."
   },
   "PersonalData.putStudentConsents": {
-    "effect": "irreversible",
-    "reason": "Changes a student's privacy consents, which are legally recorded."
+    "effect": "reversible",
+    "reason": "Sets a student's privacy consent flags; the previous flags can be read with getStudentConsents and written back with the same call.",
+    "notes": "Undo: before the call read getStudentConsents(personId, webProcedureCode, studentId, academicYearId), then call this operation again with, for each consent in the body, consentTypeCode = consentTypesConsentTypeCode and the old consentFlag and startDate. Consent changes are probably logged with their date, so the history keeps the toggle; only run it on a test person, since a consent is the person's own declaration."
   },
   "PersonalData.putStudentEmail": {
-    "effect": "irreversible",
-    "reason": "Changes a student's personal e-mail address, which the university uses to contact them.",
-    "notes": "It could be restored from getPerson.email into email, but the university may send mail to the changed address in the meantime, so it stays irreversible to be safe."
+    "effect": "reversible",
+    "reason": "Sets a student's personal e-mail address (null allowed); the previous address can be read from getPerson and written back.",
+    "notes": "Mail the university sends during the test would go to the test address; use a test person."
   },
   "PersonalData.putStudentTypeCode": {
-    "effect": "irreversible",
-    "reason": "Changes a student's typology code for an academic year."
+    "effect": "reversible",
+    "reason": "Sets the student type code of an annual enrollment; the previous code can be read from getAnnualEnrollment and written back.",
+    "notes": "The spec accepts null, so an empty previous code can be written back too. The anagrafica-service-v2 career endpoints are marked deprecated, to be removed on 31/01/2026; the call may already fail with 404, in which case use the carriere-service-v1 twin."
   },
   "PersonalData.putTitles": {
     "effect": "irreversible",
-    "reason": "Imports or updates a person's study titles in bulk."
+    "reason": "Imports (inserts or updates) the study titles of one or more people in bulk; no operation deletes a title."
   },
   "PersonalData.refreshToken": {
     "effect": "irreversible",
-    "reason": "Extends the expiry of an applicant's DreamApply activation token and returns its URL; the previous expiry cannot be restored.",
-    "notes": "A token refresh could be argued benign, but this changes how long an applicant's activation link stays valid, which admissions staff rely on."
+    "reason": "Extends the expiry of a DreamApply applicant's activation token and, per the spec, may move the application to state A; neither the old expiry nor the old state can be written back.",
+    "notes": "The spec description says 'eventualmente aggiornando la domanda in stato A', so this is more than a token refresh."
   },
   "PersonalData.updatePersonCompensatoryMeasuresHandicapDeclaration": {
-    "effect": "irreversible",
-    "reason": "Changes compensatory measures of a disability declaration that staff manage."
+    "effect": "reversible",
+    "reason": "Sets the state and dates of a compensatory measure identified by its id; the previous values can be read and written back with the same call.",
+    "notes": "Undo: before the call read getPersonCompensatoryMeasuresHandicapDeclaration(personId, handicapDeclarationId), take the element with handicapDeclarationMeasuresId = $args.handicapDeclarationMeasuresId, and call this operation again with its compensatoryMeasureState, measureStartDate and measureEndDate. Staff act on these measures, so use a test person."
   },
   "Plans.postStudentPlan": {
     "effect": "irreversible",
@@ -480,19 +529,18 @@
     "reason": "Submits a completed questionnaire."
   },
   "Questionnaires.savePageAnswers": {
-    "effect": "irreversible",
-    "reason": "Saves the student's answers to a questionnaire page (e.g. course evaluation).",
-    "notes": "No operation deletes saved answers; evaluation questionnaires are often a prerequisite for exam booking."
+    "effect": "reversible",
+    "reason": "Saves the answers of one page of a questionnaire still being filled in; saving the page again with the previous answers puts it back until the questionnaire is confirmed.",
+    "notes": "Undo: before the call read getPage(studentId, activityChoiceId, questionnaireId, questionComponentId, pageId, userComponentId) and afterwards save its previous answers with this call. It is not clear that a page with no answers can be emptied again, and evaluation questionnaires gate exam booking, so use a compilation that will never be confirmed."
   },
   "Questionnaires.setNewSurvey": {
     "effect": "irreversible",
-    "reason": "Starts a new questionnaire compilation for the student.",
-    "notes": "Creates a compilation record that no operation of the API deletes."
+    "reason": "Starts a new questionnaire compilation for the student and returns its first page; no operation deletes a compilation."
   },
   "Questionnaires.setVisibility": {
-    "effect": "irreversible",
-    "reason": "Sets a visibility flag on a compiled questionnaire; the previous value cannot be read back.",
-    "notes": "Staff-only; no read exposes the flag, so it cannot be restored exactly."
+    "effect": "reversible",
+    "reason": "Sets a visibility flag (visibleKind = visibleValue) on a user's compiled questionnaire; calling it again with the previous value puts it back.",
+    "notes": "Undo: the same call with the previous visibleValue. No operation exposes the flag, so whoever configures the test has to know its previous value (or the default); without it the undo cannot be set up. visibleKind has no documented values in the spec."
   },
   "Records.importMinutes": {
     "effect": "irreversible",
@@ -505,58 +553,63 @@
     "notes": "TECHNICAL_USER only."
   },
   "Services.deleteAlias": {
-    "effect": "irreversible",
-    "reason": "Deletes a user's login alias."
+    "effect": "reversible",
+    "reason": "Removes a user's login alias. Services.insertUpdateAlias recreates it with the same value.",
+    "notes": "Read the alias's expirationDate with Services.getAlias(userId) first and pass it to the undo. Until it is restored, the user can't sign in with the alias, so use a test user."
   },
   "Services.getCodeFromId": {
     "effect": "read",
     "reason": "Translates codes into ids; sent as PUT but changes nothing."
   },
   "Services.insertUpdateAlias": {
-    "effect": "irreversible",
-    "reason": "Inserts or replaces a user's login alias, which affects how they sign in.",
-    "notes": "deleteAlias removes an alias, but cannot bring back a previous alias this call overwrote."
+    "effect": "reversible",
+    "reason": "Adds a login alias to a user, or updates its expiry date if it exists. Services.deleteAlias removes a new alias.",
+    "notes": "The undo is exact only for an alias the user didn't have, so check with getAlias first. For an existing alias, the call only changes its expiry date, and the undo calls insertUpdateAlias again with the old expirationDate. An alias is an extra login name, not a password. Use a test user."
   },
   "Teachers.deleteLecturerSchedule": {
-    "effect": "irreversible",
-    "reason": "Deletes a lecturer's office hours with no way to restore them exactly."
+    "effect": "reversible",
+    "reason": "Deletes office-hour slots of a lecturer (all of them when no day is given); they can be re-created with postLecturerSchedule from a prior read.",
+    "notes": "Undo: before the call read getLecturerSchedule(lecturerId, day) and afterwards re-post the deleted slots with postLecturerSchedule (day, startTime, endTime, placeDescription, note). The re-created slots get new lecturerScheduleId values. Always pass day and the slot's id or times, or every slot is deleted. Use a test lecturer."
   },
   "Teachers.postLecturerSchedule": {
-    "effect": "irreversible",
-    "reason": "Adds office hours to a lecturer, which students see and may act on.",
-    "notes": "deleteLecturerSchedule could remove them, but its filters are all optional and a call missing them may delete every slot of the lecturer."
+    "effect": "reversible",
+    "reason": "Adds office-hour slots to a lecturer; deleteLecturerSchedule can remove them again by day and time.",
+    "notes": "The body is a list; undo each slot added, and pass lecturerResearchScheduleId (the new lecturerScheduleId from the result) when it can be told apart. Always pass day to the delete: without it every slot of the lecturer is deleted. Students can see the slot while it exists, so use a test lecturer."
   },
   "Teachers.putLecturer": {
-    "effect": "irreversible",
-    "reason": "Changes a lecturer's e-mail address, a contact detail others rely on.",
-    "notes": "A restore via getLecturer is conceivable, but a changed e-mail can misroute mail and may be synced to other systems."
+    "effect": "reversible",
+    "reason": "Sets a lecturer's e-mail address; the previous address can be read from getLecturer and written back.",
+    "notes": "A null field is ignored, so a lecturer with no e-mail is put back by sending the special string '#!N!#'. Mail sent during the test would go to the test address, and the address may be synchronized elsewhere, so use a test lecturer."
   },
   "Teachers.putLecturerNotes": {
-    "effect": "irreversible",
-    "reason": "Inserts or overwrites a lecturer's public notes.",
-    "notes": "The result type (Esse3TeachersNotes) differs from the body (Esse3PutTeacherNotes), so no exact single-field restore exists."
+    "effect": "reversible",
+    "reason": "Inserts or updates a lecturer's notes (biographical, publications, curriculum, general); the previous notes can be read with getLecturerNotes and written back.",
+    "notes": "Restore every field the call changed (biographicalNotes, publicationsNotes, curriculumNotes, lecturerNotes; same names in the read and the body). A null field is left unchanged, so a field that was empty before may need an empty string to clear. The notes are public on the lecturer's page while the test runs."
   },
   "Teachers.putLecturerSchedule": {
-    "effect": "irreversible",
-    "reason": "Changes a lecturer's office hours, which students see and may act on."
+    "effect": "reversible",
+    "reason": "Updates one office-hour slot of a lecturer; the slot's previous values can be read with getLecturerSchedule and written back with the same call.",
+    "notes": "Undo: before the call read getLecturerSchedule(lecturerId) and keep the target slot (by lecturerScheduleId); afterwards call this operation with lecturerResearchScheduleId = that id and the old day, startTime, endTime, placeDescription and note. Clearing a field takes the string 'null' or -1. Students can see the change, so use a test lecturer."
   },
   "Transcript.deleteRecordBookRecognitionRow": {
     "effect": "irreversible",
-    "reason": "Cancels a recognition on a record book row."
+    "reason": "Cancels a recognition on a record book row.",
+    "notes": "Re-inserting the recognition would record the grade again as a new official act. It does not restore the original."
   },
   "Transcript.deleteRecordBookRow": {
     "effect": "irreversible",
-    "reason": "Deletes a row from a student's record book."
+    "reason": "Deletes a row from a student's record book.",
+    "notes": "postRecordBookRow can re-add the activity, but with a new activityChoiceId and without any outcome, bookings or attendance the deleted row carried."
   },
   "Transcript.patchRecordBookRow": {
-    "effect": "irreversible",
-    "reason": "Changes the mission state of a record book row.",
-    "notes": "Mission state transitions are staff-visible and may not be reversible; no guarantee the old state can be set back."
+    "effect": "reversible",
+    "reason": "Only sets the row's mission state (statoMissione). The previous state can be read with getRecordBookRow and written back with the same call.",
+    "notes": "missionState is an optional field, so it must be requested via optionalFields. Esse3 may refuse some mission-state transitions."
   },
   "Transcript.postRecordBookRow": {
-    "effect": "irreversible",
-    "reason": "Inserts an activity into a student's record book.",
-    "notes": "Returns no id, and deleting the row would not restore the record exactly."
+    "effect": "reversible",
+    "reason": "Inserts a planned activity (year, offer/off-offer details, no grade) into a record book. Transcript.deleteRecordBookRow removes the new row.",
+    "notes": "Undo: find the new row's activityChoiceId with Transcript.getRecordBookRows(matId), matching the inserted activity code (the response is empty), then call deleteRecordBookRow(matId, activityChoiceId). The record book is a staff-visible career record, so use a test career."
   },
   "Transcript.putMassiveAttendance": {
     "effect": "irreversible",
@@ -568,12 +621,13 @@
   },
   "Transcript.putRecordBookRowRecognition": {
     "effect": "irreversible",
-    "reason": "Records a recognition or validation of an activity with grade and date."
+    "reason": "Records a recognition or validation of an activity with grade and date.",
+    "notes": "deleteRecordBookRecognitionRow cancels it, but a recognition records a grade and date, an official record staff act on."
   },
   "Transcript.setManualAttendance": {
     "effect": "irreversible",
     "reason": "Sets or removes attendance on a record book row, recording teacher and date.",
-    "notes": "Removing attendance (P) does not erase the detection data or audit."
+    "notes": "Removing attendance (staSceCod P) does not erase the detection data or audit. Attendance is an official record, so it stays irreversible even though the same call can flip it back."
   },
   "TuitionFees.cancelInvoice": {
     "effect": "irreversible",
@@ -593,19 +647,22 @@
   },
   "TuitionFees.postCreateStudentInvoice": {
     "effect": "irreversible",
-    "reason": "Creates an invoice for a student, a payment request they see."
+    "reason": "Creates an invoice for a student, a payment request they see.",
+    "notes": "cancelInvoice can cancel the invoice, but the cancelled invoice stays on record and the student has already seen a payment request."
   },
   "TuitionFees.postInitPagoPaTransaction": {
     "effect": "irreversible",
-    "reason": "Starts a pagoPA immediate-payment transaction for an invoice, recorded in Esse3."
+    "reason": "Opens a pagoPA payment session for an invoice, which can block other payment attempts until it expires."
   },
   "TuitionFees.postInvoiceAttachmentMetadata": {
     "effect": "irreversible",
-    "reason": "Attaches a document to an invoice, which staff see; there is no matching delete."
+    "reason": "Attaches a document to an invoice, which staff see; there is no matching delete.",
+    "notes": "The insert returns the upload URL only in a Location header. Attachments.deleteUploadedAttachment can abort a pending upload, but the spec does not say this removes the attachment metadata row, so no exact undo is documented. Could be promoted to reversible if aborting is confirmed to remove it."
   },
   "TuitionFees.postNotifyStatus": {
     "effect": "irreversible",
-    "reason": "Updates the status of a payment transaction in Esse3."
+    "reason": "Updates the status of a payment transaction in Esse3.",
+    "notes": "Payment-gateway callback: a test call could mark a transaction as paid or failed without a real payment."
   },
   "TuitionFees.postPayInvoice": {
     "effect": "irreversible",
@@ -616,13 +673,14 @@
     "reason": "Cancels a manually recorded payment."
   },
   "TuitionFees.putPrintPagoPANotice": {
-    "effect": "irreversible",
-    "reason": "Generates the pagoPA payment notice of an invoice, which may register the debt position with pagoPA.",
-    "notes": "Sent as PUT and documented only as returning the notice; it may be a pure render, but generating an IUV/debt position is a real change, so it is classified conservatively."
+    "effect": "benign",
+    "reason": "Returns the pagoPA payment notice PDF of an existing invoice, as the student portal does when the student clicks 'print notice'.",
+    "notes": "The spec only says it returns the notice ('Restituisce l'avviso di pagamento pagoPA'). At most, the first print assigns the invoice's IUV/debt position. That position belongs to an invoice that already exists, the step is idempotent, and the student would trigger it by viewing the notice, so nothing needs undoing."
   },
   "TuitionFees.putRequestPaymentStatus": {
-    "effect": "irreversible",
-    "reason": "Asks pagoPA for the payment status and marks the invoice as paid if it was."
+    "effect": "benign",
+    "reason": "Asks pagoPA for the payment status of an invoice and updates Esse3 only if the payment really happened, the same reconciliation Esse3's own scheduled jobs do.",
+    "notes": "It cannot mark an unpaid invoice as paid. It only brings Esse3 in line with pagoPA. If the owner sees any reconciliation as an official-record write, downgrade to irreversible."
   },
   "TuitionFees.rejectExemption": {
     "effect": "irreversible",
@@ -638,10 +696,12 @@
   },
   "Users.putCieCode": {
     "effect": "irreversible",
-    "reason": "Associates CIE credentials with a user account, changing how the user logs in, with no undo."
+    "reason": "Associates CIE credentials with a user account, changing how the user logs in, with no undo.",
+    "notes": "It sets the code only if none is associated, and no operation removes it. It changes how the user signs in (credentials)."
   },
   "Users.putSpidCode": {
     "effect": "irreversible",
-    "reason": "Associates SPID credentials with a user account, changing how the user logs in, with no undo."
+    "reason": "Associates SPID credentials with a user account, changing how the user logs in, with no undo.",
+    "notes": "It sets the code only if none is associated, and no operation removes it. It changes how the user signs in (credentials)."
   }
 }

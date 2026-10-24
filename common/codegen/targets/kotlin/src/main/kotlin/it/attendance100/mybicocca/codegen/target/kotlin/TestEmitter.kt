@@ -259,7 +259,7 @@ internal class TestEmitter(private val plan: TestPlan, private val layout: Kotli
             line("val ${refs.before} = choose(\"the value to restore\", ${path(snapshot, path, file)})")
         }
         val resultType = case.operation.resultType
-        if (resultType != null) {
+        if (resultType != null && write.usesResult) {
             refs.result = names.local("result")
             line("val ${refs.result} = call(${callOptions(case.operation)}) {")
             indent { line(invocation(case.call, args, file)) }

@@ -52,4 +52,13 @@ class MoodleUserLiveTest : LiveTest<MoodleApi>(MoodleLive) {
             api.user.getUserPreferences(userId = userId, auth = tokenCredentials())
         }
     }
+
+    @Test
+    @DisplayName("User.viewUserProfile#1")
+    fun viewUserProfile1() = case("User.viewUserProfile#1", effect = "benign") {
+        val userId = choose("userId", listOf(siteGetSiteInfo()).mapNotNull { it.userId })
+        call("{\"k\":\"record\",\"n\":\"MoodleStatusResponse\"}") {
+            api.user.viewUserProfile(userId = userId, auth = tokenCredentials())
+        }
+    }
 }

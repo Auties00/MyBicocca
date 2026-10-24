@@ -3,7 +3,10 @@ package it.attendance100.mybicocca.data.remote.esse3.live
 
 import it.attendance100.mybicocca.data.remote.esse3.api.Esse3Api
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3CompensatoryMeasureFilter
+import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3MobileParameter
+import it.attendance100.mybicocca.data.remote.runtime.live.LiveJson
 import it.attendance100.mybicocca.data.remote.runtime.live.LiveTest
+import kotlinx.serialization.decodeFromString
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 
@@ -422,6 +425,33 @@ class Esse3PersonalDataLiveTest : LiveTest<Esse3Api>(Esse3Live) {
         refused(acceptsEmpty = true) {
             api.personalData.getCareerByStudentPerson(personId = 987654321L, studentId = studentId)
         }
+    }
+
+    @Test
+    @DisplayName("PersonalData.putMobilePhone#write")
+    fun putMobilePhoneWrite() = case("PersonalData.putMobilePhone#write", effect = "reversible") {
+        val personId = choose("personId", listOf(personalDataGetPersonTitles()).mapNotNull { it.personId }.map { it.toLongOrNull() })
+        val snapshot = call("{\"k\":\"record\",\"n\":\"Esse3Person\"}") {
+            api.personalData.getPerson(personId = personId)
+        } ?: return@case
+        val before = choose("the value to restore", listOf(snapshot).mapNotNull { it.mobilePhone })
+        call("{\"k\":\"record\",\"n\":\"Esse3MobileParameter\"}") {
+            api.personalData.putMobilePhone(personId = personId, body = LiveJson.decodeFromString<Esse3MobileParameter>("{\"cellulare\":\"3330000000\"}"))
+        }
+        try {
+            val verified = call("{\"k\":\"record\",\"n\":\"Esse3Person\"}") {
+                api.personalData.getPerson(personId = personId)
+            } ?: return@case
+            expectContains("mobilePhone", listOf(verified).mapNotNull { it.mobilePhone }, first("mobilePhone", listOf(LiveJson.decodeFromString<Esse3MobileParameter>("{\"cellulare\":\"3330000000\"}")).mapNotNull { it.mobilePhone }))
+        } finally {
+            call("{\"k\":\"record\",\"n\":\"Esse3MobileParameter\"}") {
+                api.personalData.putMobilePhone(personId = personId, body = LiveJson.decodeFromString<Esse3MobileParameter>("{\"cellulare\":\"3330000000\"}").copy(mobilePhone = before))
+            }
+        }
+        val restored = call("{\"k\":\"record\",\"n\":\"Esse3Person\"}") {
+            api.personalData.getPerson(personId = personId)
+        } ?: return@case
+        expectContains("mobilePhone", listOf(restored).mapNotNull { it.mobilePhone }, before)
     }
 
     @Test

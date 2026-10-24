@@ -12,12 +12,11 @@ operations:
   Auth.logout:
     skip: Ends the session the other cases use.
   PersonalData.putMobilePhone:
-    skip: >-
-      Changes the student's phone number on their record, then sets it back; review it once
-      before enabling it, with the number to set for a moment.
+    # Sets a placeholder number on the student's record for a moment, then puts the old one back.
+    # A student with no number on record is skipped: there would be nothing to restore.
     inputs:
       personId: { from: PersonalData.getPersonTitles, pick: personId }
-      body: { cellulare: "{env:ESSE3_TEMPORARY_PHONE}" }
+      body: { cellulare: "3330000000" }
     undo:
       restore:
         read: PersonalData.getPerson

@@ -125,7 +125,7 @@ class DemoItemsLiveTest : LiveTest<DemoApi>(DemoLive) {
         call(null) {
             api.items.renameItem(itemId = "42", name = "Renamed")
         }
-        journal(mapOf("name" to before.toString()))
+        journal(mapOf("itemId" to "42".toString(), "name" to before.toString()))
         call(null) {
             api.items.renameItem(itemId = "42", name = before)
         }

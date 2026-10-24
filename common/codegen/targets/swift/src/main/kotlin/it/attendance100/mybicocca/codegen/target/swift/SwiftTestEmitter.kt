@@ -227,7 +227,7 @@ internal class SwiftTestEmitter(private val plan: TestPlan, private val layout: 
             refs.before = names.local("before")
             line("let ${refs.before} = try live.choose(\"the value to restore\", ${path(snapshot, path)})")
         }
-        if (case.operation.resultType != null) {
+        if (case.operation.resultType != null && write.usesResult) {
             refs.result = names.local("result")
             line("let ${refs.result} = try await live.call(${callOptions(case.operation)}) { ${invocation(case.call, args)} }")
         } else {
