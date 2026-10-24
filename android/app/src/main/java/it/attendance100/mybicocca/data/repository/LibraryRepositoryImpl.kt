@@ -258,7 +258,7 @@ class LibraryRepositoryImpl @Inject constructor(
 
     /** An expired or rejected auth token. */
     private fun Throwable.isSessionExpired(): Boolean =
-        this is AffluencesException && (statusCode == 401 || errorCode == "missing_auth_token")
+        this is AffluencesException && (statusCode == 401 || errorCode == AffluencesException.MISSING_AUTH_TOKEN)
 
     /** A reservation that no longer exists server-side. */
     private fun Throwable.isReservationGone(): Boolean =

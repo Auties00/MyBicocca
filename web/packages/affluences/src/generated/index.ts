@@ -12,3 +12,4 @@ export * from "./AffluencesEnumTypes.js";
 export * from "./AffluencesAuthTypes.js";
 export * from "./AffluencesServer.js";
 export * from "./AffluencesApi.js";
+export * from "./AffluencesClient.js";

@@ -1,0 +1,16 @@
+{
+  "reader": {
+    "type": "openapi",
+    "options": {
+      "spec": "runtime.yaml"
+    }
+  },
+  "targets": {
+    "kotlin-runtime": {
+      "outputDir": "../../../android/data-api/src/main/kotlin",
+      "options": {
+        "packageName": "it.attendance100.mybicocca.data.remote.runtime"
+      }
+    }
+  }
+}

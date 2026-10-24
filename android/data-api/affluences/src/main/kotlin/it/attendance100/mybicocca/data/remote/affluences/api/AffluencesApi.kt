@@ -10,7 +10,8 @@ import io.ktor.client.HttpClientConfig
  */
 class AffluencesApi(httpClientConfig: HttpClientConfig<*>.() -> Unit = {}) : AutoCloseable {
     private val json = AffluencesRuntime.json
-    private val client = AffluencesRuntime.createHttpClient(json, httpClientConfig)
+    private val settings = AffluencesRuntime.settings()
+    private val client = AffluencesRuntime.createHttpClient(json, settings, httpClientConfig)
 
     val sites = AffluencesSitesApi(client, json)
     val search = AffluencesSearchApi(client, json)

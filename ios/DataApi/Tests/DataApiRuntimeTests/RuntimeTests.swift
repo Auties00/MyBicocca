@@ -258,3 +258,28 @@ final class PhpCodecTests: XCTestCase {
         XCTAssertEqual(Scrape.attribute(Scrape.select(Scrape.fragment(fragment), "iframe"), "src", missing: []), "https://maps.example/embed")
     }
 }
+
+final class ErrorFormatTests: XCTestCase {
+    private func json(_ text: String) throws -> JSONValue {
+        try JSONDecoder().decode(JSONValue.self, from: Data(text.utf8))
+    }
+
+    func testReadsTheFirstCodeAndMessageHeld() throws {
+        let format = ErrorFormat(code: ["/error/code", "/error"], message: ["/error/message", "/errorMessage"])
+        let nested = try json(#"{"error": {"code": "denied", "message": "No access"}}"#)
+        XCTAssertEqual(format.code(nested), "denied")
+        XCTAssertEqual(format.message(nested), "No access")
+        let flat = try json(#"{"error": "gone", "errorMessage": "Gone", "retCode": -1}"#)
+        XCTAssertEqual(format.code(flat), "gone")
+        XCTAssertEqual(format.message(flat), "Gone")
+        XCTAssertEqual(ErrorFormat(code: ["/retCode"]).code(flat), "-1")
+    }
+
+    func testDetectsErrorsReportedWithSuccess() throws {
+        let format = ErrorFormat(detect: ["/exception", "/error"])
+        XCTAssertTrue(format.detects(try json(#"{"exception": "x"}"#)))
+        XCTAssertTrue(format.detects(try json(#"{"error": "invalid token"}"#)))
+        XCTAssertFalse(format.detects(try json(#"{"error": false, "data": 1}"#)))
+        XCTAssertFalse(format.detects(try json(#"[1, 2]"#)))
+    }
+}

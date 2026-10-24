@@ -46,4 +46,20 @@ class ApiSpecMergeTest {
         }
         assertContains(error.message.orEmpty(), "Enum 'DemoStatus'")
     }
+
+    @Test
+    fun `takes the client of the part describing it`() {
+        val client = ClientSpec(baseUrl = "https://example.com/api", emptyStatuses = setOf(404))
+        val api = ApiSpec.merge(listOf(part("Items"), part("Client").copy(client = client)))
+        assertEquals(client, api.client)
+    }
+
+    @Test
+    fun `refuses two parts describing the client`() {
+        val client = ClientSpec(baseUrl = "https://example.com/api")
+        val error = assertThrows<IllegalArgumentException> {
+            ApiSpec.merge(listOf(part("Items").copy(client = client), part("Pages").copy(client = client)))
+        }
+        assertContains(error.message.orEmpty(), "describe its client")
+    }
 }

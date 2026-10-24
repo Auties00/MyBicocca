@@ -3,14 +3,16 @@ package it.attendance100.mybicocca.data.remote.elearning.api
 
 import io.ktor.client.HttpClient
 import io.ktor.client.request.parameter
+import io.ktor.http.HttpMethod
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleWebCourseInfo
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleWebScrapers
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import kotlinx.serialization.json.Json
 
 class MoodleWebCatalogApi(
     client: HttpClient,
     json: Json
-) : MoodleWebAbstractApi(client, json, "") {
+) : RestApi(client, json, "", MoodleWebRuntime.policy) {
 
     /**
      * A course's public page: its syllabus, staff and enrolment methods, for any course, including those the user isn't enrolled in. Its details ("Scheda del corso") come from the course's custom fields instead (core_course_get_courses_by_field).
@@ -18,7 +20,7 @@ class MoodleWebCatalogApi(
     suspend fun getCourseInfo(
         courseId: Int
     ): MoodleWebCourseInfo {
-        return executeHtmlGet("/course/info.php", server = MoodleWebServer.Main, scrape = MoodleWebScrapers::catalogGetCourseInfo) {
+        return html(HttpMethod.Get, "/course/info.php", scrape = MoodleWebScrapers::catalogGetCourseInfo, server = MoodleWebServer.Main.url) {
             parameter("id", courseId)
         }
     }

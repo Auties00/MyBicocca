@@ -24,9 +24,9 @@ class Esse3BadgeImportApiTest : Esse3ApiTestBase() {
     @BeforeAll
     fun setUp() = runTest {
         val loginResult = api.auth.login()
-        val groupPermission = Esse3PermissionLevel.fromGroupId(loginResult.user.groupId)
+        val groupPermission = esse3RoleOfGroup(loginResult.user.groupId)
         val profilePermissions = loginResult.profiles.mapNotNull { profile ->
-            profile.description?.let { Esse3PermissionLevel.fromProfileName(it) }
+            profile.description?.let { esse3RoleOfProfile(it) }
         }.toSet()
 
         userPermissions = buildSet {
@@ -93,7 +93,7 @@ class Esse3BadgeImportApiTest : Esse3ApiTestBase() {
                 fail("Expected Esse3Exception to be thrown")
             } catch (e: Esse3Exception) {
                 logger.info("testPostImportAward: correctly threw Esse3Exception - ${e.message}")
-                assertNotNull(e.expectedPermissionLevels)
+                assertNotNull(e.expectedRoles)
             }
         }
     }
@@ -169,7 +169,7 @@ class Esse3BadgeImportApiTest : Esse3ApiTestBase() {
                 fail("Expected Esse3Exception to be thrown")
             } catch (e: Esse3Exception) {
                 logger.info("testPostImportBadgeClass: correctly threw Esse3Exception - ${e.message}")
-                assertNotNull(e.expectedPermissionLevels)
+                assertNotNull(e.expectedRoles)
             }
         }
     }
@@ -213,7 +213,7 @@ class Esse3BadgeImportApiTest : Esse3ApiTestBase() {
                 fail("Expected Esse3Exception to be thrown")
             } catch (e: Esse3Exception) {
                 logger.info("testPutBadgeIssuing: correctly threw Esse3Exception - ${e.message}")
-                assertNotNull(e.expectedPermissionLevels)
+                assertNotNull(e.expectedRoles)
             }
         }
     }

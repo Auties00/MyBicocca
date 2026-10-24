@@ -3,18 +3,21 @@ package it.attendance100.mybicocca.data.remote.esse3.api
 
 import io.ktor.client.HttpClient
 import io.ktor.client.request.parameter
+import io.ktor.http.HttpMethod
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3PermissionLevel
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3TeacherDiary
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3TeacherDiaryStateFilter
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3TeacherDiaryWithDetails
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3TeacherRegister
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3TeacherRegisterWithDetails
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
 
 class Esse3TeacherReportingApi(
     client: HttpClient,
     json: Json
-) : Esse3AbstractApi(client, json, "/rendicontazione-doc-service-v1") {
+) : RestApi(client, json, "/rendicontazione-doc-service-v1", Esse3Runtime.policy) {
 
     /**
      * filtra le informazioni di testata dei diari docente
@@ -42,7 +45,7 @@ class Esse3TeacherReportingApi(
         order: String? = null,
         fields: String? = null
     ): List<Esse3TeacherDiary> {
-        return executeJsonGetList<Esse3TeacherDiary>("/diari", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/diari", deserializer = serializer<List<Esse3TeacherDiary>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             academicYearId?.let { parameter("aaId", it) }
             lecturerId?.let { parameter("docenteId", it) }
             fiscalCode?.let { parameter("codFis", it) }
@@ -64,7 +67,7 @@ class Esse3TeacherReportingApi(
     suspend fun getLecturerDiary(
         diaryId: Long
     ): List<Esse3TeacherDiaryWithDetails> {
-        return executeJsonGetList<Esse3TeacherDiaryWithDetails>("/diari/${diaryId}", setOf(Esse3PermissionLevel.TECHNICAL_USER))
+        return jsonList(HttpMethod.Get, "/diari/${diaryId}", deserializer = serializer<List<Esse3TeacherDiaryWithDetails>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -101,7 +104,7 @@ class Esse3TeacherReportingApi(
         fields: String? = null,
         optionalFields: String? = null
     ): List<Esse3TeacherRegister> {
-        return executeJsonGetList<Esse3TeacherRegister>("/registri", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/registri", deserializer = serializer<List<Esse3TeacherRegister>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             academicYearOfferId?.let { parameter("aaOffId", it) }
             facultyCode?.let { parameter("facCod", it) }
             activityCode?.let { parameter("adCod", it) }
@@ -131,7 +134,7 @@ class Esse3TeacherReportingApi(
         fields: String? = null,
         optionalFields: String? = null
     ): List<Esse3TeacherRegisterWithDetails> {
-        return executeJsonGetList<Esse3TeacherRegisterWithDetails>("/registri/${registrationId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/registri/${registrationId}", deserializer = serializer<List<Esse3TeacherRegisterWithDetails>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             fields?.let { parameter("fields", it) }
             optionalFields?.let { parameter("optionalFields", it) }
         }

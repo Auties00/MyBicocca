@@ -11,8 +11,7 @@ import it.attendance100.mybicocca.codegen.model.RecordType
 import it.attendance100.mybicocca.codegen.model.TypeRef
 
 /**
- * Names and files of an API's generated TypeScript declarations, and the hand-written ones
- * they rely on. For an API with prefix `Esse3`:
+ * Names and files of an API's generated TypeScript declarations. For an API with prefix `Esse3`:
  *
  * | Declaration                    | File                     |
  * |--------------------------------|--------------------------|
@@ -24,6 +23,7 @@ import it.attendance100.mybicocca.codegen.model.TypeRef
  * | Auth schemes, if any           | `Esse3AuthTypes.ts`      |
  * | API parameters, if any         | `Esse3Parameters.ts`     |
  * | Scrapers, if any               | `Esse3Scrapers.ts`       |
+ * | Client, error and roles        | `Esse3Client.ts`         |
  * | Re-exports of all of the above | `index.ts`               |
  *
  * A record `X` is an interface with `decodeX(json)` and `encodeX(value)` functions; an enum
@@ -31,19 +31,17 @@ import it.attendance100.mybicocca.codegen.model.TypeRef
  * A map with string keys is a `Record`, any other a runtime `WireMap`. API parameters are
  * the fields of the `Esse3Parameters` interface, which the facade passes to every module.
  *
- * The hand-written runtime:
- * - The shared runtime package ([runtimeModule]): `LocalDate`, `LocalDateTime`, the lenient
- *   `decode*` helpers, the temporal codec, `pathSegment` and the request types.
- * - The API's client module ([clientModule]): `Esse3Client` with `json`, `jsonList` (empty on
- *   HTTP 404), `bytes` and `send`, and the `Esse3PermissionLevel` union of role names. An API
- *   with script or HTML responses also needs `script(request, variable, decode)`, decoding the
- *   JSON a script assigns to a variable, and `html(request, scrape)`, reading the page with a
- *   function of `Esse3Scrapers.ts` and failing when it returns `undefined`.
+ * They build on the shared hand-written runtime package ([runtimeModule]): `LocalDate`,
+ * `LocalDateTime`, the lenient `decode*` helpers, the temporal codec, `pathSegment`, the request
+ * types and `RestClient`. `Esse3Client.ts` holds the API's client, with `json`, `jsonList`,
+ * `bytes`, `script`, `html` and `send`, its error, the `Esse3PermissionLevel` union of role
+ * names and `createEsse3Api` (see [TsClientEmitter]).
  */
-internal class TsLayout(private val spec: ApiSpec, val runtimeModule: String, val clientModule: String) {
+internal class TsLayout(private val spec: ApiSpec, val runtimeModule: String) {
     val enumsFile = "${spec.prefix}EnumTypes.ts"
     val facadeName = "${spec.prefix}Api"
     val client = "${spec.prefix}Client"
+    val clientModule = "./${spec.prefix}Client.js"
     val roles = "${spec.prefix}PermissionLevel"
     val server = "${spec.prefix}Server"
     val serverFile = "${spec.prefix}Server.ts"

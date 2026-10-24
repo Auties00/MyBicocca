@@ -6,6 +6,7 @@ import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
+import io.ktor.http.HttpMethod
 import io.ktor.http.contentType
 import io.ktor.utils.io.ByteReadChannel
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningManagedReservation
@@ -14,14 +15,16 @@ import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningRes
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningReservationResult
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningReservationUpdate
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningResult
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.serializer
 
 class EasyStaffPlanningReservationsApi(
     client: HttpClient,
     json: Json,
     private val portalId: Int
-) : EasyStaffPlanningAbstractApi(client, json, "") {
+) : RestApi(client, json, "", EasyStaffPlanningRuntime.policy, mapOf("portalId" to portalId.toString())) {
 
     /**
      * Creates a provisional reservation, which holds the slot until confirmed within the booking session (30 minutes on the web front-end), or discarded with a forced deletion.
@@ -29,7 +32,7 @@ class EasyStaffPlanningReservationsApi(
     suspend fun createReservation(
         body: EasyStaffPlanningReservationRequest
     ): EasyStaffPlanningReservationResult {
-        return executeJsonPost<EasyStaffPlanningReservationResult>("/entry/store", server = EasyStaffPlanningServer.Main) {
+        return json(HttpMethod.Post, "/entry/store", deserializer = serializer<EasyStaffPlanningReservationResult>(), server = EasyStaffPlanningServer.Main.url) {
             contentType(ContentType.Application.Json)
             setBody(body)
             header("X-CLIENTE", "${portalId}")
@@ -44,7 +47,7 @@ class EasyStaffPlanningReservationsApi(
     suspend fun confirmReservation(
         entryId: Int
     ): EasyStaffPlanningResult {
-        return executeJsonPost<EasyStaffPlanningResult>("/entry/confirm/${entryId}", server = EasyStaffPlanningServer.Main) {
+        return json(HttpMethod.Post, "/entry/confirm/${entryId}", deserializer = serializer<EasyStaffPlanningResult>(), server = EasyStaffPlanningServer.Main.url) {
             contentType(ContentType.Application.Json)
             setBody(JsonObject(emptyMap()))
             header("X-CLIENTE", "${portalId}")
@@ -61,7 +64,7 @@ class EasyStaffPlanningReservationsApi(
         reservationCode: String,
         primaryValue: String
     ): EasyStaffPlanningManagedReservation {
-        return executeJsonGet<EasyStaffPlanningManagedReservation>("/entry/manage/${reservationCode}", server = EasyStaffPlanningServer.Main) {
+        return json(HttpMethod.Get, "/entry/manage/${reservationCode}", deserializer = serializer<EasyStaffPlanningManagedReservation>(), server = EasyStaffPlanningServer.Main.url) {
             parameter("chiave", primaryValue)
             header("X-CLIENTE", "${portalId}")
         }
@@ -77,7 +80,7 @@ class EasyStaffPlanningReservationsApi(
         reservationCode: String,
         primaryValue: String
     ): Int {
-        return executeJsonGet<Int>("/entry/${reservationCode}/info", server = EasyStaffPlanningServer.Main) {
+        return json(HttpMethod.Get, "/entry/${reservationCode}/info", deserializer = serializer<Int>(), server = EasyStaffPlanningServer.Main.url) {
             parameter("chiave", primaryValue)
             header("X-CLIENTE", "${portalId}")
         }
@@ -94,7 +97,7 @@ class EasyStaffPlanningReservationsApi(
         body: EasyStaffPlanningReservationUpdate,
         primaryValue: String
     ): EasyStaffPlanningResult {
-        return executeJsonPost<EasyStaffPlanningResult>("/entry/update/${reservationCode}", server = EasyStaffPlanningServer.Main) {
+        return json(HttpMethod.Post, "/entry/update/${reservationCode}", deserializer = serializer<EasyStaffPlanningResult>(), server = EasyStaffPlanningServer.Main.url) {
             contentType(ContentType.Application.Json)
             setBody(body)
             parameter("chiave", primaryValue)
@@ -113,7 +116,7 @@ class EasyStaffPlanningReservationsApi(
         body: EasyStaffPlanningReservationDeletion,
         primaryValue: String
     ): EasyStaffPlanningResult {
-        return executeJsonPost<EasyStaffPlanningResult>("/entry/delete/${reservationCode}", server = EasyStaffPlanningServer.Main) {
+        return json(HttpMethod.Post, "/entry/delete/${reservationCode}", deserializer = serializer<EasyStaffPlanningResult>(), server = EasyStaffPlanningServer.Main.url) {
             contentType(ContentType.Application.Json)
             setBody(body)
             parameter("chiave", primaryValue)
@@ -129,7 +132,7 @@ class EasyStaffPlanningReservationsApi(
     suspend fun getReservationPdf(
         entryId: Int
     ): ByteReadChannel {
-        return executeStreamGet("/entry/pdf/${entryId}", server = EasyStaffPlanningServer.Main) {
+        return stream(HttpMethod.Get, "/entry/pdf/${entryId}", server = EasyStaffPlanningServer.Main.url) {
             header("X-CLIENTE", "${portalId}")
         }
     }
@@ -144,7 +147,7 @@ class EasyStaffPlanningReservationsApi(
         repeatId: Int,
         timeZone: String = "Europe/Rome"
     ): ByteReadChannel {
-        return executeStreamGet("/ics/${repeatId}", server = EasyStaffPlanningServer.Main) {
+        return stream(HttpMethod.Get, "/ics/${repeatId}", server = EasyStaffPlanningServer.Main.url) {
             parameter("timezone", timeZone)
             header("X-CLIENTE", "${portalId}")
         }

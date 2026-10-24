@@ -8,6 +8,12 @@
       "options": {
         "spec": "web/certificates.yaml"
       }
+    },
+    {
+      "type": "openapi",
+      "options": {
+        "spec": "client.yaml"
+      }
     }
   ],
   "targets": {

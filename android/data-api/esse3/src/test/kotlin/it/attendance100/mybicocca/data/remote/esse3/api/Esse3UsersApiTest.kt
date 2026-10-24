@@ -27,12 +27,12 @@ class Esse3UsersApiTest : Esse3ApiTestBase() {
         val permissions = mutableSetOf(
             Esse3PermissionLevel.ANY,
             Esse3PermissionLevel.AUTHENTICATED_USER,
-            Esse3PermissionLevel.fromGroupId(loginResult.user.groupId)
+            esse3RoleOfGroup(loginResult.user.groupId)
         )
         for (profile in loginResult.profiles) {
             val description = profile.description
             if (description != null) {
-                permissions.add(Esse3PermissionLevel.fromProfileName(description))
+                permissions.add(esse3RoleOfProfile(description))
             }
         }
         userPermissions = permissions
@@ -106,7 +106,7 @@ class Esse3UsersApiTest : Esse3ApiTestBase() {
     fun testGetUsersWithGroupIdFilter() = runTest {
         val requiredPermissions = setOf(Esse3PermissionLevel.TECHNICAL_USER)
         if (userPermissions.any { it in requiredPermissions }) {
-            val targetGroupId = Esse3PermissionLevel.STUDENT.groupId?.toLong() ?: 6L
+            val targetGroupId = STUDENT_GROUP_ID.toLong()
             logger.info("testGetUsersWithGroupIdFilter: calling getUsers() with groupId=$targetGroupId, start=0, limit=5")
             val result = api.users.getUsers(groupId = targetGroupId, start = 0, limit = 5)
             logger.info("testGetUsersWithGroupIdFilter: result size=${result.size}")

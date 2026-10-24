@@ -5,6 +5,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
+import io.ktor.http.HttpMethod
 import io.ktor.http.contentType
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3ChoiceRegulation
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3ChoiceRegulationWindow
@@ -23,12 +24,14 @@ import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3StudentsStatistics
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3StudyPlanHeaderPerActivity
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3StudyPlanHeaderPerRule
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3UpdateChoiceRegulation
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
 
 class Esse3ChoiceRulesApi(
     client: HttpClient,
     json: Json
-) : Esse3AbstractApi(client, json, "/regsce-service-v1") {
+) : RestApi(client, json, "/regsce-service-v1", Esse3Runtime.policy) {
 
     /**
      * informazioni di testata sul regolamento di scelta
@@ -66,7 +69,7 @@ class Esse3ChoiceRulesApi(
         optionalFields: String? = null,
         order: String? = null
     ): List<Esse3ChoiceRegulation> {
-        return executeJsonGetList<Esse3ChoiceRegulation>("/regsce", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/regsce", deserializer = serializer<List<Esse3ChoiceRegulation>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             choiceRegulationState?.let { parameter("statoRegsce", it.value) }
             facultyId?.let { parameter("facId", it) }
             facultyCode?.let { parameter("facCod", it) }
@@ -101,7 +104,7 @@ class Esse3ChoiceRulesApi(
         order: String? = null,
         filter: String? = null
     ): Esse3ChoiceRegulationWithSchemas {
-        return executeJsonGet<Esse3ChoiceRegulationWithSchemas>("/regsce/${choiceRegulationId}", setOf(Esse3PermissionLevel.ANY)) {
+        return json(HttpMethod.Get, "/regsce/${choiceRegulationId}", deserializer = serializer<Esse3ChoiceRegulationWithSchemas>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             fields?.let { parameter("fields", it) }
             optionalFields?.let { parameter("optionalFields", it) }
             order?.let { parameter("order", it) }
@@ -127,7 +130,7 @@ class Esse3ChoiceRulesApi(
         order: String? = null,
         filter: String? = null
     ): Esse3ChoiceRegulationWithSchemas {
-        return executeJsonPatch<Esse3ChoiceRegulationWithSchemas>("/regsce/${choiceRegulationId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Patch, "/regsce/${choiceRegulationId}", deserializer = serializer<Esse3ChoiceRegulationWithSchemas>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
             fields?.let { parameter("fields", it) }
@@ -151,7 +154,7 @@ class Esse3ChoiceRulesApi(
         optionalFields: String? = null,
         filter: String? = null
     ): List<Esse3ChoiceRegulationWindow> {
-        return executeJsonGetList<Esse3ChoiceRegulationWindow>("/regsce/${choiceRegulationId}/finestre", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/regsce/${choiceRegulationId}/finestre", deserializer = serializer<List<Esse3ChoiceRegulationWindow>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             fields?.let { parameter("fields", it) }
             optionalFields?.let { parameter("optionalFields", it) }
             filter?.let { parameter("filter", it) }
@@ -172,7 +175,7 @@ class Esse3ChoiceRulesApi(
         fields: String? = null,
         optionalFields: String? = null
     ): Esse3ChoiceRegulationWindow {
-        return executeJsonGet<Esse3ChoiceRegulationWindow>("/regsce/${choiceRegulationId}/finestre/${finalRegulationChoiceId}", setOf(Esse3PermissionLevel.ANY)) {
+        return json(HttpMethod.Get, "/regsce/${choiceRegulationId}/finestre/${finalRegulationChoiceId}", deserializer = serializer<Esse3ChoiceRegulationWindow>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             fields?.let { parameter("fields", it) }
             optionalFields?.let { parameter("optionalFields", it) }
         }
@@ -190,7 +193,7 @@ class Esse3ChoiceRulesApi(
         body: Esse3PlansCountsFilters,
         optionalFields: String? = null
     ): Esse3ChoiceRegulationWithCounts {
-        return executeJsonPut<Esse3ChoiceRegulationWithCounts>("/regsce/${choiceRegulationId}/piani-collegati/conteggi", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Put, "/regsce/${choiceRegulationId}/piani-collegati/conteggi", deserializer = serializer<Esse3ChoiceRegulationWithCounts>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
             optionalFields?.let { parameter("optionalFields", it) }
@@ -205,7 +208,7 @@ class Esse3ChoiceRulesApi(
     suspend fun getPlansStatsByChoiceRegulationId(
         choiceRegulationId: Long
     ): Esse3StudentsStatistics {
-        return executeJsonGet<Esse3StudentsStatistics>("/regsce/${choiceRegulationId}/piani/stats", setOf(Esse3PermissionLevel.TECHNICAL_USER))
+        return json(HttpMethod.Get, "/regsce/${choiceRegulationId}/piani/stats", deserializer = serializer<Esse3StudentsStatistics>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -224,7 +227,7 @@ class Esse3ChoiceRulesApi(
         order: String? = null,
         filter: String? = null
     ): List<Esse3ChoiceRuleWithSchemas> {
-        return executeJsonGetList<Esse3ChoiceRuleWithSchemas>("/regsce/${choiceRegulationId}/regole", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/regsce/${choiceRegulationId}/regole", deserializer = serializer<List<Esse3ChoiceRuleWithSchemas>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             fields?.let { parameter("fields", it) }
             optionalFields?.let { parameter("optionalFields", it) }
             order?.let { parameter("order", it) }
@@ -246,7 +249,7 @@ class Esse3ChoiceRulesApi(
         fields: String? = null,
         optionalFields: String? = null
     ): Esse3ChoiceRuleWithDetails {
-        return executeJsonGet<Esse3ChoiceRuleWithDetails>("/regsce/${choiceRegulationId}/regole/${choiceId}", setOf(Esse3PermissionLevel.ANY)) {
+        return json(HttpMethod.Get, "/regsce/${choiceRegulationId}/regole/${choiceId}", deserializer = serializer<Esse3ChoiceRuleWithDetails>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             fields?.let { parameter("fields", it) }
             optionalFields?.let { parameter("optionalFields", it) }
         }
@@ -276,7 +279,7 @@ class Esse3ChoiceRulesApi(
         limit: Int? = null,
         order: String? = null
     ): List<Esse3StudyPlanHeaderPerActivity> {
-        return executeJsonGetList<Esse3StudyPlanHeaderPerActivity>("/regsce/${choiceRegulationId}/regole/${choiceId}/AD/${teachingActivityChoiceId}/piani", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/regsce/${choiceRegulationId}/regole/${choiceId}/AD/${teachingActivityChoiceId}/piani", deserializer = serializer<List<Esse3StudyPlanHeaderPerActivity>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             planStates?.let { parameter("statiPiano", it) }
             fields?.let { parameter("fields", it) }
             optionalFields?.let { parameter("optionalFields", it) }
@@ -308,7 +311,7 @@ class Esse3ChoiceRulesApi(
         limit: Int? = null,
         order: String? = null
     ): List<Esse3StudyPlanHeaderPerRule> {
-        return executeJsonGetList<Esse3StudyPlanHeaderPerRule>("/regsce/${choiceRegulationId}/regole/${choiceId}/piani", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/regsce/${choiceRegulationId}/regole/${choiceId}/piani", deserializer = serializer<List<Esse3StudyPlanHeaderPerRule>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             planStates?.let { parameter("statiPiano", it) }
             fields?.let { parameter("fields", it) }
             optionalFields?.let { parameter("optionalFields", it) }
@@ -328,7 +331,7 @@ class Esse3ChoiceRulesApi(
         choiceRegulationId: Long,
         choiceId: Long
     ): Esse3StudentsStatistics {
-        return executeJsonGet<Esse3StudentsStatistics>("/regsce/${choiceRegulationId}/regole/${choiceId}/piani/stats", setOf(Esse3PermissionLevel.TECHNICAL_USER))
+        return json(HttpMethod.Get, "/regsce/${choiceRegulationId}/regole/${choiceId}/piani/stats", deserializer = serializer<Esse3StudentsStatistics>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -347,7 +350,7 @@ class Esse3ChoiceRulesApi(
         order: String? = null,
         filter: String? = null
     ): List<Esse3PlanSchema> {
-        return executeJsonGetList<Esse3PlanSchema>("/regsce/${choiceRegulationId}/schemi", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/regsce/${choiceRegulationId}/schemi", deserializer = serializer<List<Esse3PlanSchema>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             fields?.let { parameter("fields", it) }
             optionalFields?.let { parameter("optionalFields", it) }
             order?.let { parameter("order", it) }
@@ -369,7 +372,7 @@ class Esse3ChoiceRulesApi(
         fields: String? = null,
         optionalFields: String? = null
     ): Esse3PlanSchemaWithDetails {
-        return executeJsonGet<Esse3PlanSchemaWithDetails>("/regsce/${choiceRegulationId}/schemi/${schemaId}", setOf(Esse3PermissionLevel.ANY)) {
+        return json(HttpMethod.Get, "/regsce/${choiceRegulationId}/schemi/${schemaId}", deserializer = serializer<Esse3PlanSchemaWithDetails>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             fields?.let { parameter("fields", it) }
             optionalFields?.let { parameter("optionalFields", it) }
         }
@@ -385,7 +388,7 @@ class Esse3ChoiceRulesApi(
         choiceRegulationId: Long,
         schemaId: Long
     ): Esse3StudentsStatistics {
-        return executeJsonGet<Esse3StudentsStatistics>("/regsce/${choiceRegulationId}/schemi/${schemaId}/piani/stats", setOf(Esse3PermissionLevel.TECHNICAL_USER))
+        return json(HttpMethod.Get, "/regsce/${choiceRegulationId}/schemi/${schemaId}/piani/stats", deserializer = serializer<Esse3StudentsStatistics>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -402,7 +405,7 @@ class Esse3ChoiceRulesApi(
         optionalFields: String? = null,
         filter: String? = null
     ): Esse3ChoiceRegulationWithDetails {
-        return executeJsonGet<Esse3ChoiceRegulationWithDetails>("/regsceFull/${choiceRegulationId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Get, "/regsceFull/${choiceRegulationId}", deserializer = serializer<Esse3ChoiceRegulationWithDetails>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             order?.let { parameter("order", it) }
             fields?.let { parameter("fields", it) }
             optionalFields?.let { parameter("optionalFields", it) }
@@ -422,7 +425,7 @@ class Esse3ChoiceRulesApi(
         optionalFields: String? = null,
         filter: String? = null
     ): Esse3PrerequisitesRegulationWithConstraints {
-        return executeJsonGet<Esse3PrerequisitesRegulationWithConstraints>("/regsceFull/${choiceRegulationId}/regprop", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Get, "/regsceFull/${choiceRegulationId}/regprop", deserializer = serializer<Esse3PrerequisitesRegulationWithConstraints>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             fields?.let { parameter("fields", it) }
             optionalFields?.let { parameter("optionalFields", it) }
             filter?.let { parameter("filter", it) }

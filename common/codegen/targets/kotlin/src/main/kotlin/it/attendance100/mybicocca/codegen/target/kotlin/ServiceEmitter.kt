@@ -16,30 +16,28 @@ import it.attendance100.mybicocca.codegen.model.ResponseBody
 import it.attendance100.mybicocca.codegen.model.TypeRef
 
 /**
- * Emits a module as a class of suspend functions extending the API's `AbstractApi`, whose
- * request helpers form the runtime contract:
+ * Emits a module as a class of suspend functions extending the shared runtime's `RestApi`,
+ * with the API's request policy from its `Runtime` object. Each function calls one of the
+ * runtime's helpers with the HTTP method and the endpoint, then named arguments:
  *
- * - `executeJson<Method><T>(endpoint, roles) { … }` decodes the body as `T`;
- * - `executeJson<Method>List<T>(…)` decodes a list (Esse3's runtime returns an empty one on
- *   HTTP 404);
- * - for a response holding maps or booleans, the same helpers take a `deserializer` instead of
- *   a reified type, so that they read PHP's `[]` for an empty map and booleans sent as `0`/`1`;
- * - `executeStream<Method>(…)` returns the body as a `ByteReadChannel`;
- * - `executeScript<Method><T>(…, variable = "name")` decodes as `T` the JSON a script assigns to
- *   a variable;
- * - `executeHtml<Method>(…, scrape = <Prefix>Scrapers::<function>)` parses the body as an HTML
- *   document, with the request URL as its base, and returns what `scrape` reads from it,
- *   failing when it returns null;
- * - `execute<Method>(endpoint) { … }` plus `ensureSuccess(response, roles)` when the body
- *   isn't needed.
+ * - `json(…, deserializer = …)` decodes the body; `jsonList` decodes a list, empty when the
+ *   status is one of the policy's empty ones;
+ * - `stream(…)` returns the body as a `ByteReadChannel`;
+ * - `script(…, variable = "name", deserializer = …)` decodes the JSON a script assigns to a
+ *   variable;
+ * - `html(…, scrape = <Prefix>Scrapers::<function>)` returns what the scraper reads from the
+ *   page;
+ * - `send(…)` when the body isn't needed.
  *
- * `roles` is passed only by APIs whose operations declare roles. When the spec uses them, the
- * helpers also take the named arguments `server` (a value of the API's `Server` enum) and
- * `envelope` (the keys the response value is nested in). The trailing block configures the
- * Ktor request: parameters, headers, cookies and body. JSON-encoded parameters are written
- * with the module's `json`.
+ * They also take `server` (the URL of a value of the API's `Server` enum), `envelope` (the keys
+ * the response value is nested in) and `roles` (the roles the operation requires) when the
+ * operation has them. Deserializers are the reified type's, or for a response holding maps or
+ * booleans the lenient serializers'. The trailing block configures the Ktor request:
+ * parameters, headers, cookies and body. JSON-encoded parameters are written with the module's
+ * `json`.
  *
- * The API parameters a module uses are constructor parameters, passed by the facade.
+ * The API parameters a module uses are constructor parameters, passed by the facade; those the
+ * policy's retry requests name are also handed to `RestApi`.
  */
 internal class ServiceEmitter(
     private val spec: ApiSpec,
@@ -51,15 +49,19 @@ internal class ServiceEmitter(
     fun emit(module: ApiModule, file: KotlinFile) {
         file.import("io.ktor.client.HttpClient")
         file.import("kotlinx.serialization.json.Json")
-        file.import(layout.abstractApi)
+        file.import(layout.runtime("RestApi"))
+        file.import(layout.runtime)
         val constructor = listOf("client: HttpClient", "json: Json") +
-            spec.parametersOf(module).map { "private val ${KotlinSyntax.identifier(it.name)}: ${layout.render(it.type, file)}" }
+            layout.moduleParameters(module).map { "private val ${KotlinSyntax.identifier(it.name)}: ${layout.render(it.type, file)}" }
+        val retried = spec.retryParameters.map { "${KotlinSyntax.string(it.name)} to ${KotlinSyntax.identifier(it.name)}.toString()" }
+        val superArguments = listOf("client", "json", KotlinSyntax.string(module.basePath), "${layout.runtime.substringAfterLast('.')}.policy") +
+            listOfNotNull(retried.takeIf { it.isNotEmpty() }?.joinToString(", ", "mapOf(", ")"))
         file.body.apply {
             line("class ${layout.serviceName(module)}(")
             indent {
                 constructor.forEachIndexed { index, parameter -> line(parameter + if (index < constructor.lastIndex) "," else "") }
             }
-            line(") : ${layout.abstractApi.substringAfterLast('.')}(client, json, ${KotlinSyntax.string(module.basePath)}) {")
+            line(") : RestApi(${superArguments.joinToString(", ")}) {")
             line()
             indent {
                 separated(module.operations) { function(module, it, file) }
@@ -139,9 +141,8 @@ internal class ServiceEmitter(
     }
 
     private fun CodeWriter.call(module: ApiModule, operation: Operation, file: KotlinFile) {
-        val method = operation.method.name.lowercase().capitalized()
-        val roles = if (spec.usesRoles) roles(operation, file) else null
-        val target = listOfNotNull(endpoint(operation), roles) + targetArguments(operation, file)
+        file.import("io.ktor.http.HttpMethod")
+        val method = "HttpMethod.${operation.method.name.lowercase().capitalized()}"
         val hasBlock = operation.body != null ||
             operation.parameters.any { it.location != ParameterLocation.PATH } ||
             spec.parameters.any { it.location != ParameterLocation.PATH } ||
@@ -150,52 +151,45 @@ internal class ServiceEmitter(
             operation.form.isNotEmpty() ||
             operation.auth != null
 
-        val response = operation.response
-        val invocation = when (response) {
-            ResponseBody.None -> "val response = execute$method(${(listOf(endpoint(operation)) + targetArguments(operation, file)).joinToString(", ")})"
-            ResponseBody.Binary -> "return executeStream$method(${target.joinToString(", ")})"
+        val (helper, reading) = when (val response = operation.response) {
+            ResponseBody.None -> "send" to emptyList()
+            ResponseBody.Binary -> "return stream" to emptyList()
             is ResponseBody.Json -> when (val type = response.type) {
-                is TypeRef.ListOf -> if (serializers.isLenient(type.element)) {
-                    "return executeJson${method}List(${(target + "deserializer = ${serializers.expression(type.element, file)}").joinToString(", ")})"
-                } else {
-                    "return executeJson${method}List<${layout.render(type.element, file)}>(${target.joinToString(", ")})"
-                }
-                else -> if (serializers.isLenient(type)) {
-                    "return executeJson$method(${(target + "deserializer = ${serializers.expression(type, file)}").joinToString(", ")})"
-                } else {
-                    "return executeJson$method<${layout.render(type, file)}>(${target.joinToString(", ")})"
-                }
+                is TypeRef.ListOf -> "return jsonList" to listOf("deserializer = ${deserializer(type, file)}")
+                else -> "return json" to listOf("deserializer = ${deserializer(type, file)}")
             }
-            is ResponseBody.ScriptVariable -> {
-                val variable = "variable = ${KotlinSyntax.string(response.variable)}"
-                if (serializers.isLenient(response.type)) {
-                    "return executeScript$method(${(target + variable + "deserializer = ${serializers.expression(response.type, file)}").joinToString(", ")})"
-                } else {
-                    "return executeScript$method<${layout.render(response.type, file)}>(${(target + variable).joinToString(", ")})"
-                }
-            }
+            is ResponseBody.ScriptVariable ->
+                "return script" to listOf("variable = ${KotlinSyntax.string(response.variable)}", "deserializer = ${deserializer(response.type, file)}")
             is ResponseBody.Html -> {
                 file.import("${layout.dtoPackage}.${scrapers.objectName}")
-                val arguments = target + "scrape = ${scrapers.objectName}::${scrapers.responseFunction(module, operation)}"
-                "return executeHtml$method(${arguments.joinToString(", ")})"
+                "return html" to listOf("scrape = ${scrapers.objectName}::${scrapers.responseFunction(module, operation)}")
             }
         }
+        val arguments = listOf(method, endpoint(operation)) + reading + targetArguments(operation, file)
+        val invocation = "$helper(${arguments.joinToString(", ")})"
         if (hasBlock) {
             block("$invocation {") { requestConfiguration(operation, file) }
         } else {
             line(invocation)
         }
-        if (response == ResponseBody.None) line(listOfNotNull("response", roles).joinToString(", ", "ensureSuccess(", ")"))
     }
 
-    /** The named `server` and `envelope` arguments, when the operation needs them. */
+    /** The deserializer of a response of [type]: the lenient serializers', or the reified type's. */
+    private fun deserializer(type: TypeRef, file: KotlinFile): String {
+        if (serializers.isLenient(type)) return serializers.expression(type, file)
+        file.import("kotlinx.serialization.serializer")
+        return "serializer<${layout.render(type, file)}>()"
+    }
+
+    /** The named `server`, `envelope` and `roles` arguments, when the operation needs them. */
     private fun targetArguments(operation: Operation, file: KotlinFile): List<String> = buildList {
         operation.server?.let { server ->
             file.import(layout.server)
-            add("server = ${layout.server.substringAfterLast('.')}.$server")
+            add("server = ${layout.server.substringAfterLast('.')}.$server.url")
         }
         val envelope = (operation.response as? ResponseBody.Json)?.envelope.orEmpty()
         if (envelope.isNotEmpty()) add("envelope = ${envelope.joinToString(", ", "listOf(", ")") { KotlinSyntax.string(it) }}")
+        if (operation.roles.isNotEmpty()) add("roles = ${roles(operation, file)}")
     }
 
     private fun CodeWriter.requestConfiguration(operation: Operation, file: KotlinFile) {

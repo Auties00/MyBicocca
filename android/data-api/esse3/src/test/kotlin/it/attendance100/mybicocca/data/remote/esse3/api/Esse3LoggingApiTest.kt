@@ -25,11 +25,11 @@ class Esse3LoggingApiTest : Esse3ApiTestBase() {
             for (profile in loginResult.profiles) {
                 val groupId = profile.groupId?.toInt()
                 if (groupId != null) {
-                    add(Esse3PermissionLevel.fromGroupId(groupId))
+                    add(esse3RoleOfGroup(groupId))
                 }
                 val description = profile.description
                 if (description != null) {
-                    add(Esse3PermissionLevel.fromProfileName(description))
+                    add(esse3RoleOfProfile(description))
                 }
             }
             add(Esse3PermissionLevel.ANY)

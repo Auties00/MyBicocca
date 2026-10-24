@@ -10,6 +10,7 @@ object SpecValidator {
     fun validate(spec: ApiSpec): List<String> = buildList {
         checkDeclarations(spec)
         checkApiParameters(spec)
+        checkClient(spec)
         for (module in spec.modules) {
             checkModule(spec, module)
         }
@@ -134,6 +135,33 @@ object SpecValidator {
             if (parameter.location == ParameterLocation.FORM) add("$where is a form parameter")
             if (parameter.encoding != ParameterEncoding.PLAIN) add("$where isn't plainly encoded")
             if (!isPlain(spec, parameter.type)) add("$where can't be written as plain text")
+        }
+    }
+
+    private fun MutableList<String>.checkClient(spec: ApiSpec) {
+        val client = spec.client
+        checkUnique(client.settings.map { it.name }) { "Client setting '$it' is declared more than once" }
+        for (setting in client.settings) {
+            if (setting.location != ParameterLocation.QUERY && setting.location != ParameterLocation.HEADER) {
+                add("Client setting '${setting.name}' must be a query parameter or a header")
+            }
+        }
+        val error = client.error
+        for (pointer in error.detect + error.code + error.message) {
+            if (!pointer.startsWith("/") || pointer.length == 1) add("Error location '$pointer' isn't a JSON pointer to a member")
+        }
+        checkUnique(error.codes.map { it.name }) { "Error code '$it' is declared more than once" }
+        checkUnique(error.codes.map { it.value }) { "Error code value '$it' is declared more than once" }
+        if (error.codes.isNotEmpty() && error.code.isEmpty()) add("Error codes are declared, but not where errors hold them")
+        val parameterNames = spec.parameters.map { it.name }.toSet()
+        client.retries.forEachIndexed { index, rule ->
+            val where = "Retry rule ${index + 1}"
+            if (rule.status == null && rule.code == null) add("$where matches every failure")
+            if (rule.code != null && error.code.isEmpty()) add("$where matches an error code, but errors hold none")
+            if (rule.before == null && rule.delaySeconds == null) add("$where does nothing before trying again")
+            val before = rule.before ?: return@forEachIndexed
+            val placeholders = (listOf(before.path) + before.headers.values).flatMap { template -> PLACEHOLDER.findAll(template).map { it.groupValues[1] } }
+            for (name in placeholders.filter { it !in parameterNames }) add("$where names '$name', which isn't an API parameter")
         }
     }
 

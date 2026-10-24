@@ -6,6 +6,7 @@ import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
+import io.ktor.http.HttpMethod
 import io.ktor.http.contentType
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesAccountAuth
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesCheckin
@@ -15,12 +16,14 @@ import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesEmailLink
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesEmailTokenRequest
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesEmailValidation
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesMyReservations
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
 
 class AffluencesAccountApi(
     client: HttpClient,
     json: Json
-) : AffluencesAbstractApi(client, json, "") {
+) : RestApi(client, json, "", AffluencesRuntime.policy) {
 
     /**
      * Registers the device and gets its API key.
@@ -28,7 +31,7 @@ class AffluencesAccountApi(
     suspend fun checkIn(
         body: AffluencesCheckinRequest
     ): AffluencesCheckin {
-        return executeJsonPost<AffluencesCheckin>("/apps/checkin", server = AffluencesServer.AppV4, envelope = listOf("data")) {
+        return json(HttpMethod.Post, "/apps/checkin", deserializer = serializer<AffluencesCheckin>(), server = AffluencesServer.AppV4.url, envelope = listOf("data")) {
             contentType(ContentType.Application.Json)
             setBody(body)
             header("x-app-version", "202605190")
@@ -46,7 +49,7 @@ class AffluencesAccountApi(
         requestUuid: String,
         auth: AffluencesDeviceAuth
     ): AffluencesEmailValidation {
-        return executeJsonGet<AffluencesEmailValidation>("/myreservations/token", server = AffluencesServer.Reservation) {
+        return json(HttpMethod.Get, "/myreservations/token", deserializer = serializer<AffluencesEmailValidation>(), server = AffluencesServer.Reservation.url) {
             parameter("request_uuid", requestUuid)
             auth.headers.forEach { (name, value) -> header(name, value) }
         }
@@ -61,7 +64,7 @@ class AffluencesAccountApi(
         body: AffluencesEmailTokenRequest,
         auth: AffluencesDeviceAuth
     ): AffluencesEmailLinkRequest {
-        return executeJsonPost<AffluencesEmailLinkRequest>("/myreservations/token", server = AffluencesServer.Reservation) {
+        return json(HttpMethod.Post, "/myreservations/token", deserializer = serializer<AffluencesEmailLinkRequest>(), server = AffluencesServer.Reservation.url) {
             contentType(ContentType.Application.Json)
             setBody(body)
             auth.headers.forEach { (name, value) -> header(name, value) }
@@ -76,7 +79,7 @@ class AffluencesAccountApi(
     suspend fun getMyReservations(
         auth: AffluencesAccountAuth
     ): AffluencesMyReservations {
-        return executeJsonGet<AffluencesMyReservations>("/myreservations", server = AffluencesServer.Reservation) {
+        return json(HttpMethod.Get, "/myreservations", deserializer = serializer<AffluencesMyReservations>(), server = AffluencesServer.Reservation.url) {
             auth.headers.forEach { (name, value) -> header(name, value) }
         }
     }

@@ -19,6 +19,7 @@ import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningIdR
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningPortal
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningReservationDeletion
 import it.attendance100.mybicocca.data.remote.easystaff.dto.entryId
+import it.attendance100.mybicocca.data.remote.easystaff.exception.EasyStaffPlanningException
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentForm
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentMonthAvailability
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentOffering
@@ -214,16 +215,12 @@ class AppointmentRepositoryImpl @Inject constructor(
     }
 
     /**
-     * Detects "this reservation does not exist on the portal". The data-api exception types
-     * aren't on :app's compile classpath, so — same as SessionManager — the stable error key is
-     * sniffed rather than type-checked: the planning ApiRequestException carries the backend
-     * key ("not_found" from the manage endpoint, "reservation_not_found" from the info
-     * endpoint) as its message.
+     * Detects "this reservation does not exist on the portal": the manage endpoint reports it as
+     * `not_found`, the info endpoint as `reservation_not_found`.
      */
-    private fun Throwable.isReservationGone(): Boolean {
-        val message = message?.lowercase().orEmpty()
-        return "not_found" in message
-    }
+    private fun Throwable.isReservationGone(): Boolean =
+        this is EasyStaffPlanningException &&
+            (errorCode == EasyStaffPlanningException.NOT_FOUND || errorCode == EasyStaffPlanningException.RESERVATION_NOT_FOUND)
 
     /**
      * Collects the non-blank values of one form section, keyed by field code. The GDPR consent

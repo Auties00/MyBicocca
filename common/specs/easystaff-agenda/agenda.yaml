@@ -13,6 +13,10 @@ info:
   version: "1"
 x-mb-id: easystaff-agenda
 x-mb-prefix: EasyStaff
+x-mb-client:
+  # The university's servers are slow.
+  timeoutSeconds: 30
+  sendsNulls: false
 
 servers:
   - url: https://gestioneorari.didattica.unimib.it

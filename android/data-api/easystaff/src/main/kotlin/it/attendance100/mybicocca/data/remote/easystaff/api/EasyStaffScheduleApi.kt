@@ -4,17 +4,20 @@ package it.attendance100.mybicocca.data.remote.easystaff.api
 import io.ktor.client.HttpClient
 import io.ktor.client.request.forms.FormDataContent
 import io.ktor.client.request.setBody
+import io.ktor.http.HttpMethod
 import io.ktor.http.parameters
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffLanguage
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffScheduleCell
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
 
 class EasyStaffScheduleApi(
     client: HttpClient,
     json: Json
-) : EasyStaffAbstractApi(client, json, "") {
+) : RestApi(client, json, "", EasyStaffRuntime.policy) {
 
     /**
      * The week of lessons of some years of a study program.
@@ -31,7 +34,7 @@ class EasyStaffScheduleApi(
         week: LocalDate,
         language: EasyStaffLanguage = EasyStaffLanguage.Italian
     ): List<EasyStaffScheduleCell> {
-        return executeJsonPostList<EasyStaffScheduleCell>("/PortaleStudentiUnimib/grid_call.php", server = EasyStaffServer.Main, envelope = listOf("celle")) {
+        return jsonList(HttpMethod.Post, "/PortaleStudentiUnimib/grid_call.php", deserializer = serializer<List<EasyStaffScheduleCell>>(), server = EasyStaffServer.Main.url, envelope = listOf("celle")) {
             setBody(FormDataContent(parameters {
                 append("view", "easycourse")
                 append("form-type", "corso")
@@ -69,7 +72,7 @@ class EasyStaffScheduleApi(
         week: LocalDate,
         language: EasyStaffLanguage = EasyStaffLanguage.Italian
     ): List<EasyStaffScheduleCell> {
-        return executeJsonPostList<EasyStaffScheduleCell>("/PortaleStudentiUnimib/grid_call.php", server = EasyStaffServer.Main, envelope = listOf("celle")) {
+        return jsonList(HttpMethod.Post, "/PortaleStudentiUnimib/grid_call.php", deserializer = serializer<List<EasyStaffScheduleCell>>(), server = EasyStaffServer.Main.url, envelope = listOf("celle")) {
             setBody(FormDataContent(parameters {
                 append("view", "easycourse")
                 append("form-type", "docente")
@@ -110,7 +113,7 @@ class EasyStaffScheduleApi(
         week: LocalDate,
         language: EasyStaffLanguage = EasyStaffLanguage.Italian
     ): List<EasyStaffScheduleCell> {
-        return executeJsonPostList<EasyStaffScheduleCell>("/PortaleStudentiUnimib/grid_call.php", server = EasyStaffServer.Main, envelope = listOf("celle")) {
+        return jsonList(HttpMethod.Post, "/PortaleStudentiUnimib/grid_call.php", deserializer = serializer<List<EasyStaffScheduleCell>>(), server = EasyStaffServer.Main.url, envelope = listOf("celle")) {
             setBody(FormDataContent(parameters {
                 append("view", "easycourse")
                 append("form-type", "attivita")

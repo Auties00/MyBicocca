@@ -5,21 +5,24 @@ import io.ktor.client.HttpClient
 import io.ktor.client.request.forms.FormDataContent
 import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
+import io.ktor.http.HttpMethod
 import io.ktor.http.parameters
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffBookingStatus
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffDayOfWeek
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffEvent
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffEventType
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffLanguage
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
 
 class EasyStaffEventsApi(
     client: HttpClient,
     json: Json
-) : EasyStaffAbstractApi(client, json, "") {
+) : RestApi(client, json, "", EasyStaffRuntime.policy) {
 
     /**
      * @param language The language of the names and labels.
@@ -27,7 +30,7 @@ class EasyStaffEventsApi(
     suspend fun getEventTypes(
         language: EasyStaffLanguage = EasyStaffLanguage.Italian
     ): List<EasyStaffEventType> {
-        return executeScriptGet<List<EasyStaffEventType>>("/PortaleStudentiUnimib/combo.php", server = EasyStaffServer.Main, variable = "elenco_tipi") {
+        return script(HttpMethod.Get, "/PortaleStudentiUnimib/combo.php", variable = "elenco_tipi", deserializer = serializer<List<EasyStaffEventType>>(), server = EasyStaffServer.Main.url) {
             parameter("sw", "rooms_")
             parameter("_lang", language.value)
         }
@@ -55,7 +58,7 @@ class EasyStaffEventsApi(
         endTime: LocalTime? = null,
         language: EasyStaffLanguage = EasyStaffLanguage.Italian
     ): List<EasyStaffEvent> {
-        return executeJsonPostList<EasyStaffEvent>("/PortaleStudentiUnimib/bookings_call.php", server = EasyStaffServer.Main, envelope = listOf("events")) {
+        return jsonList(HttpMethod.Post, "/PortaleStudentiUnimib/bookings_call.php", deserializer = serializer<List<EasyStaffEvent>>(), server = EasyStaffServer.Main.url, envelope = listOf("events")) {
             setBody(FormDataContent(parameters {
                 append("view", "bookings")
                 append("form-type", "bookings")

@@ -1,3 +1,4 @@
+export * from "./client.js";
 export * from "./coding.js";
 export * from "./rest.js";
 export * from "./scrape.js";

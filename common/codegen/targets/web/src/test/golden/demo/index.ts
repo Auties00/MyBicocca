@@ -14,3 +14,4 @@ export * from "./DemoServer.js";
 export * from "./DemoParameters.js";
 export * from "./DemoScrapers.js";
 export * from "./DemoApi.js";
+export * from "./DemoClient.js";

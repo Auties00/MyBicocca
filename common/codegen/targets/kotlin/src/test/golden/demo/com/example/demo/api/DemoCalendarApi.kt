@@ -8,6 +8,7 @@ import com.example.demo.dto.DemoSessionAuth
 import com.example.demo.dto.DemoSettings
 import com.example.demo.dto.DemoSlot
 import com.example.demo.dto.appendBrackets
+import com.example.runtime.RestApi
 import io.ktor.client.HttpClient
 import io.ktor.client.request.forms.FormDataContent
 import io.ktor.client.request.header
@@ -15,6 +16,7 @@ import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpMethod
 import io.ktor.http.contentType
 import io.ktor.http.encodeURLParameter
 import io.ktor.http.parameters
@@ -23,13 +25,14 @@ import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.serializer
 
 class DemoCalendarApi(
     client: HttpClient,
     json: Json,
     private val tenant: String,
     private val region: String
-) : DemoAbstractApi(client, json, "") {
+) : RestApi(client, json, "", DemoRuntime.policy, mapOf("tenant" to tenant.toString(), "region" to region.toString())) {
 
     /**
      * @param filters Sticky filters.
@@ -39,7 +42,7 @@ class DemoCalendarApi(
         filters: DemoSettings? = null,
         level: DemoLevel? = null
     ): DemoCalendar {
-        return executeJsonGet<DemoCalendar>("/regions/${region}/calendar/${day}", emptySet(), server = DemoServer.Main) {
+        return json(HttpMethod.Get, "/regions/${region}/calendar/${day}", deserializer = serializer<DemoCalendar>(), server = DemoServer.Main.url) {
             level?.let { parameter("level", it.value) }
             header("x-region", "region-${region}")
             header("X-TENANT", tenant)
@@ -56,7 +59,7 @@ class DemoCalendarApi(
         tags: List<String>? = null,
         auth: DemoSessionAuth
     ): List<DemoSlot> {
-        return executeJsonPostList<DemoSlot>("/rpc", emptySet(), server = DemoServer.Main) {
+        return jsonList(HttpMethod.Post, "/rpc", deserializer = serializer<List<DemoSlot>>(), server = DemoServer.Main.url) {
             setBody(FormDataContent(parameters {
                 appendBrackets("ids", json.encodeToJsonElement(ids))
                 settings?.let { appendBrackets("settings", json.encodeToJsonElement(it)) }
@@ -73,7 +76,7 @@ class DemoCalendarApi(
     suspend fun saveLabels(
         body: Map<String, String>
     ): Map<String, DemoLevel> {
-        return executeJsonPost("/labels", emptySet(), server = DemoServer.Main, deserializer = DemoMapSerializer(String.serializer(), DemoLevel.serializer())) {
+        return json(HttpMethod.Post, "/labels", deserializer = DemoMapSerializer(String.serializer(), DemoLevel.serializer()), server = DemoServer.Main.url) {
             contentType(ContentType.Application.Json)
             setBody(body)
             header("X-TENANT", tenant)
