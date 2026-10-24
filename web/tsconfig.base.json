@@ -12,10 +12,6 @@
     "noFallthroughCasesInSwitch": true,
     "isolatedModules": true,
     "skipLibCheck": true,
-    "noEmit": true,
-    "baseUrl": ".",
-    "paths": {
-      "@mybicocca/data-api-runtime": ["packages/runtime/src/index.ts"]
-    }
+    "noEmit": true
   }
 }

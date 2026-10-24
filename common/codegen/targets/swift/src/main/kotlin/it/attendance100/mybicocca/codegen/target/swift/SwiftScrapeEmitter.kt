@@ -29,7 +29,7 @@ import it.attendance100.mybicocca.codegen.model.TypeRef
  */
 internal class SwiftScrapeEmitter(private val spec: ApiSpec, private val layout: SwiftLayout, private val records: SwiftRecordEmitter) {
     val typeName = layout.scrapers
-    val fileName = "$typeName.swift"
+    val fileName = layout.models("$typeName.swift")
 
     private val scrapedRecords = spec.modules.flatMap { it.records }.filter { it.scrape != null }
     private val htmlOperations = spec.modules.flatMap { module ->

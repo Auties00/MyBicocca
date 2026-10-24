@@ -43,10 +43,16 @@
       }
     },
     "swift": {
-      "outputDir": "../../../ios/DataApi/Sources/EasyStaffPlanning/Generated"
+      "outputDir": "../../../ios/DataApi/Sources",
+      "options": {
+        "module": "EasyStaff"
+      }
     },
     "web": {
-      "outputDir": "../../../web/packages/easystaff-planning/src/generated"
+      "outputDir": "../../../web/data-api/src",
+      "options": {
+        "packageName": "easystaff"
+      }
     }
   }
 }

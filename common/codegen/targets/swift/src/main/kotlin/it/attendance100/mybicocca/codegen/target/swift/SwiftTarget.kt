@@ -6,25 +6,32 @@ import it.attendance100.mybicocca.codegen.core.GeneratedFile
 import it.attendance100.mybicocca.codegen.core.TargetContext
 import it.attendance100.mybicocca.codegen.core.decapitalized
 import it.attendance100.mybicocca.codegen.core.decodeOptions
+import it.attendance100.mybicocca.codegen.core.resourceFiles
 import it.attendance100.mybicocca.codegen.model.ApiSpec
 import kotlinx.serialization.Serializable
 
 /**
- * Generates a Swift SDK built on `URLSession` and `Codable`, as the sources of one Swift
- * module. See [SwiftLayout] for the names it uses and the runtime the API provides by hand.
+ * Generates a Swift SDK built on `URLSession` and `Codable`: the API's sources in the folder of
+ * its Swift module, and the runtime module they build on as its shared files. See [SwiftLayout]
+ * for the names and files it uses.
  */
 class SwiftTarget : CodeTarget {
     override val id: String = "swift"
 
-    /** @property runtimeModule The Swift module of the shared hand-written runtime. */
+    /**
+     * @property module The Swift module, and folder, the API's sources go in; by default the
+     *   API's prefix. APIs of the same service share one (e.g. `Elearning`).
+     * @property runtimeModule The Swift module of the runtime.
+     */
     @Serializable
     data class Options(
+        val module: String? = null,
         val runtimeModule: String = "DataApiRuntime",
     )
 
     override fun generate(spec: ApiSpec, context: TargetContext): List<GeneratedFile> {
         val options = context.options.decodeOptions<Options>()
-        val layout = SwiftLayout(spec, options.runtimeModule)
+        val layout = SwiftLayout(spec, options.module ?: spec.prefix, options.runtimeModule)
         val records = SwiftRecordEmitter(layout)
         val enums = SwiftEnumEmitter(layout)
         val scrapers = SwiftScrapeEmitter(spec, layout, records)
@@ -39,7 +46,7 @@ class SwiftTarget : CodeTarget {
                     add(file(layout.recordsFileName(module)) { out -> out.separated(module.records) { records.emit(it, out) } })
                 }
                 if (module.operations.isNotEmpty()) {
-                    add(file("${layout.serviceName(module)}.swift") { services.emit(module, it) })
+                    add(file(layout.api("${layout.serviceName(module)}.swift")) { services.emit(module, it) })
                 }
             }
             if (spec.enums.isNotEmpty()) {
@@ -49,15 +56,24 @@ class SwiftTarget : CodeTarget {
                 add(file(layout.authFileName) { authTypes(spec, layout, it) })
             }
             if (spec.servers.isNotEmpty()) {
-                add(file("${layout.server}.swift") { servers(spec, layout, it) })
+                add(file(layout.api("${layout.server}.swift")) { servers(spec, layout, it) })
             }
             if (scrapers.isNeeded) {
                 add(file(scrapers.fileName) { scrapers.emit(it) })
             }
-            add(file("${layout.facadeName}.swift") { facade(spec, layout, it) })
-            add(file("${layout.client}.swift") { SwiftClientEmitter(spec, layout).emit(it) })
+            val client = SwiftClientEmitter(spec, layout)
+            add(file(layout.api("${layout.facadeName}.swift")) { facade(spec, layout, it) })
+            add(file(layout.api("${layout.client}.swift")) { client.emitClient(it) })
+            add(file(layout.errors("${layout.error}.swift")) { client.emitError(it) })
+            if (spec.usesRoles) {
+                add(file(layout.models("${layout.roles}.swift")) { client.emitRoles(it) })
+            }
         }
     }
+
+    /** The runtime module, from this module's `swift-runtime` resources. */
+    override fun sharedFiles(context: TargetContext): List<GeneratedFile> =
+        resourceFiles(javaClass, "swift-runtime", RUNTIME_FILES, context.options.decodeOptions<Options>().runtimeModule)
 
     /**
      * A protocol every scheme's credentials conform to, so operations accepting several
@@ -131,6 +147,7 @@ class SwiftTarget : CodeTarget {
 
     private companion object {
         const val MAX_LINE_LENGTH = 100
+        val RUNTIME_FILES = listOf("Coding.swift", "Maps.swift", "Rest.swift", "RestClient.swift", "Scrape.swift", "Temporal.swift")
         val PLACEHOLDER = Regex("""\{([^}]+)}""")
     }
 }

@@ -24,10 +24,16 @@
       }
     },
     "swift": {
-      "outputDir": "../../../ios/DataApi/Sources/Moodle/Generated"
+      "outputDir": "../../../ios/DataApi/Sources",
+      "options": {
+        "module": "Elearning"
+      }
     },
     "web": {
-      "outputDir": "../../../web/packages/moodle/src/generated"
+      "outputDir": "../../../web/data-api/src",
+      "options": {
+        "packageName": "elearning"
+      }
     }
   }
 }

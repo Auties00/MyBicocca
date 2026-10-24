@@ -11,51 +11,69 @@ import it.attendance100.mybicocca.codegen.model.RecordType
 import it.attendance100.mybicocca.codegen.model.TypeRef
 
 /**
- * Names and files of an API's generated TypeScript declarations. For an API with prefix `Esse3`:
+ * Names and files of an API's generated TypeScript declarations. The API's files go in the folder
+ * of its subpackage ([packageName]), which several APIs may share, split like the Kotlin SDK's
+ * packages. For an API with prefix `Esse3` in subpackage `esse3`:
  *
- * | Declaration                    | File                     |
- * |--------------------------------|--------------------------|
- * | Records of module `Careers`    | `Esse3CareersTypes.ts`   |
- * | Every enum                     | `Esse3EnumTypes.ts`      |
- * | Operations of module `Careers` | `Esse3CareersApi.ts`     |
- * | Facade                         | `Esse3Api.ts`            |
- * | Servers, if any                | `Esse3Server.ts`         |
- * | Auth schemes, if any           | `Esse3AuthTypes.ts`      |
- * | API parameters, if any         | `Esse3Parameters.ts`     |
- * | Scrapers, if any               | `Esse3Scrapers.ts`       |
- * | Client, error and roles        | `Esse3Client.ts`         |
- * | Re-exports of all of the above | `index.ts`               |
+ * | Declaration                    | File                                |
+ * |--------------------------------|-------------------------------------|
+ * | Facade                         | `esse3/api/Esse3Api.ts`             |
+ * | Operations of module `Careers` | `esse3/api/Esse3CareersApi.ts`      |
+ * | Client and `createEsse3Api`    | `esse3/api/Esse3Client.ts`          |
+ * | Servers, if any                | `esse3/api/Esse3Server.ts`          |
+ * | API parameters, if any         | `esse3/api/Esse3Parameters.ts`      |
+ * | Records of module `Careers`    | `esse3/models/Esse3CareersTypes.ts` |
+ * | Every enum                     | `esse3/models/Esse3EnumTypes.ts`    |
+ * | Auth schemes, if any           | `esse3/models/Esse3AuthTypes.ts`    |
+ * | Roles, if operations name any  | `esse3/models/Esse3PermissionLevel.ts` |
+ * | Scrapers, if any               | `esse3/models/Esse3Scrapers.ts`     |
+ * | Error                          | `esse3/errors/Esse3Error.ts`        |
+ *
+ * Each folder's `index.ts` re-exports it, written by [WebTarget.indexFiles] for every API sharing
+ * the folder.
  *
  * A record `X` is an interface with `decodeX(json)` and `encodeX(value)` functions; an enum
  * `X` is a string-literal union with a same-named `const` of its values and `decodeX(json)`.
  * A map with string keys is a `Record`, any other a runtime `WireMap`. API parameters are
  * the fields of the `Esse3Parameters` interface, which the facade passes to every module.
  *
- * They build on the shared hand-written runtime package ([runtimeModule]): `LocalDate`,
- * `LocalDateTime`, the lenient `decode*` helpers, the temporal codec, `pathSegment`, the request
- * types and `RestClient`. `Esse3Client.ts` holds the API's client, with `json`, `jsonList`,
- * `bytes`, `text`, `script`, `html` and `send`, its error, the `Esse3PermissionLevel` union of role
- * names and `createEsse3Api` (see [TsClientEmitter]).
+ * They build on the runtime in [runtimePath], which [WebTarget] writes as its shared files:
+ * `LocalDate`, `LocalDateTime`, the lenient `decode*` helpers, the temporal codec,
+ * `pathSegment`, the request types and `RestClient`. `Esse3Client` has `json`, `jsonList`,
+ * `bytes`, `text`, `script`, `html` and `send` (see [TsClientEmitter]).
  */
-internal class TsLayout(private val spec: ApiSpec, val runtimeModule: String) {
-    val enumsFile = "${spec.prefix}EnumTypes.ts"
+internal class TsLayout(private val spec: ApiSpec, val packageName: String, val runtimePath: String) {
     val facadeName = "${spec.prefix}Api"
+    val facadeFile = api("$facadeName.ts")
     val client = "${spec.prefix}Client"
-    val clientModule = "./${spec.prefix}Client.js"
-    val roles = "${spec.prefix}PermissionLevel"
+    val clientFile = api("$client.ts")
     val server = "${spec.prefix}Server"
-    val serverFile = "${spec.prefix}Server.ts"
-    val authFile = "${spec.prefix}AuthTypes.ts"
-    val authBase = "${spec.prefix}Auth"
+    val serverFile = api("$server.ts")
     val parameters = "${spec.prefix}Parameters"
-    val parametersFile = "${spec.prefix}Parameters.ts"
+    val parametersFile = api("$parameters.ts")
+    val enumsFile = models("${spec.prefix}EnumTypes.ts")
+    val authFile = models("${spec.prefix}AuthTypes.ts")
+    val authBase = "${spec.prefix}Auth"
+    val roles = "${spec.prefix}PermissionLevel"
+    val rolesFile = models("$roles.ts")
+    val error = "${spec.prefix}Error"
+    val errorFile = errors("$error.ts")
+
+    /** The file of the API's declaration [name] in the subpackage's `api` folder. */
+    fun api(name: String): String = "$packageName/api/$name"
+
+    /** The file of the API's declaration [name] in the subpackage's `models` folder. */
+    fun models(name: String): String = "$packageName/models/$name"
+
+    /** The file of the API's declaration [name] in the subpackage's `errors` folder. */
+    fun errors(name: String): String = "$packageName/errors/$name"
 
     fun authClass(name: String): String = "${spec.prefix}${name}Auth"
 
     /** The parameter type of [auth]: the scheme's class when there is one, else the union of all. */
     fun authType(auth: AuthRequirement, file: TsFile): String {
         val type = auth.schemes.singleOrNull()?.let(::authClass) ?: authBase
-        file.import(type, moduleOf(authFile))
+        file.importFile(type, authFile)
         return type
     }
 
@@ -75,19 +93,18 @@ internal class TsLayout(private val spec: ApiSpec, val runtimeModule: String) {
         spec.modules.flatMap { module -> module.records.map { it.name to recordsFile(module) } }.toMap() +
             spec.enums.associate { it.name to enumsFile }
 
-    fun recordsFile(module: ApiModule): String = "${spec.prefix}${module.name}Types.ts"
+    fun recordsFile(module: ApiModule): String = models("${spec.prefix}${module.name}Types.ts")
 
     fun serviceName(module: ApiModule): String = "${spec.prefix}${module.name}Api"
 
+    fun serviceFile(module: ApiModule): String = api("${serviceName(module)}.ts")
+
     /** The file of the API's scrapers (see [TsScrapeEmitter]). */
-    val scrapersFile = "${spec.prefix}Scrapers.ts"
+    val scrapersFile = models("${spec.prefix}Scrapers.ts")
 
     /** The function reading [field] of [record] out of the HTML fragment it is sent as. */
     fun htmlFunction(record: RecordType, field: Field): String =
         "scrape${record.name}${field.name.replaceFirstChar(Char::uppercaseChar)}"
-
-    /** The import specifier of a generated file, relative to another generated file. */
-    fun moduleOf(fileName: String): String = "./${fileName.removeSuffix(".ts")}.js"
 
     fun decoderName(declaration: String): String = "decode$declaration"
 
@@ -95,10 +112,10 @@ internal class TsLayout(private val spec: ApiSpec, val runtimeModule: String) {
 
     /** Imports declaration [name] (or one of its functions) into [file]. */
     fun importDeclaration(file: TsFile, declaration: String, name: String = declaration) {
-        file.import(name, moduleOf(fileByDeclaration.getValue(declaration)))
+        file.importFile(name, fileByDeclaration.getValue(declaration))
     }
 
-    fun importRuntime(file: TsFile, name: String) = file.import(name, runtimeModule)
+    fun importRuntime(file: TsFile, name: String) = file.importFile(name, "$runtimePath/index.ts")
 
     fun declaration(type: TypeRef.Named) = spec.resolve(type)
 

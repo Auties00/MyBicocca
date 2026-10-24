@@ -1,0 +1,13 @@
+{
+  "name": "@mybicocca/data-api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./affluences": "./src/affluences/index.ts",
+    "./easystaff": "./src/easystaff/index.ts",
+    "./elearning": "./src/elearning/index.ts",
+    "./esse3": "./src/esse3/index.ts",
+    "./runtime": "./src/runtime/index.ts"
+  }
+}

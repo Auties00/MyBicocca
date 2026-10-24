@@ -12,34 +12,49 @@ import it.attendance100.mybicocca.codegen.model.RecordType
 import it.attendance100.mybicocca.codegen.model.TypeRef
 
 /**
- * Names of an API's generated Swift declarations. For an API with prefix `Esse3`, all in one
- * Swift module:
+ * Names and files of an API's generated Swift declarations. The API's files go in the folder of
+ * its Swift module ([module]), which several APIs may share, split like the Kotlin SDK's packages.
+ * For an API with prefix `Esse3` in module `Esse3`:
  *
- * | Declaration                    | File                         |
- * |--------------------------------|------------------------------|
- * | Records of module `Careers`    | `Esse3CareersTypes.swift`    |
- * | Every enum                     | `Esse3EnumTypes.swift`       |
- * | Operations of module `Careers` | `Esse3CareersApi.swift`      |
- * | Facade                         | `Esse3Api.swift`             |
- * | Client, error and roles        | `Esse3Client.swift`          |
- * | Servers, if any                | `Esse3Server.swift` (enum)   |
- * | Auth schemes, if any           | `Esse3AuthTypes.swift`       |
- * | Scrapers, if any               | `Esse3Scrapers.swift`        |
+ * | Declaration                    | File                                   |
+ * |--------------------------------|----------------------------------------|
+ * | Facade                         | `Esse3/API/Esse3Api.swift`             |
+ * | Operations of module `Careers` | `Esse3/API/Esse3CareersApi.swift`      |
+ * | Client                         | `Esse3/API/Esse3Client.swift`          |
+ * | Servers, if any                | `Esse3/API/Esse3Server.swift` (enum)   |
+ * | Records of module `Careers`    | `Esse3/Models/Esse3CareersTypes.swift` |
+ * | Every enum                     | `Esse3/Models/Esse3EnumTypes.swift`    |
+ * | Auth schemes, if any           | `Esse3/Models/Esse3AuthTypes.swift`    |
+ * | Roles, if operations name any  | `Esse3/Models/Esse3PermissionLevel.swift` |
+ * | Scrapers, if any               | `Esse3/Models/Esse3Scrapers.swift`     |
+ * | Error                          | `Esse3/Errors/Esse3Error.swift`        |
  *
- * They build on the hand-written runtime module ([runtimeModule]): `LocalDate`, `LocalDateTime`,
- * `JSONObject`, `WireEnum`, `WireMap`, `RestRequest`, `RestClient` and the lenient `Codable`
- * helpers. `Esse3Client` sends `RestRequest`s and decodes responses and errors, through
- * `json(_:roles:)`, `jsonList(_:roles:)`, `data(_:roles:)`, `text(_:roles:)`, `script(_:variable:roles:)`,
- * `html(_:scrape:roles:)` and `send(_:roles:)`; the `roles` of the `Esse3PermissionLevel`
- * enum only when operations declare roles (see [SwiftClientEmitter]).
+ * They build on the runtime module ([runtimeModule]), which [SwiftTarget] writes as its shared
+ * files: `LocalDate`, `LocalDateTime`, `JSONObject`, `WireEnum`, `WireMap`, `RestRequest`,
+ * `RestClient` and the lenient `Codable` helpers. `Esse3Client` sends `RestRequest`s and decodes
+ * responses and errors, through `json(_:roles:)`, `jsonList(_:roles:)`, `data(_:roles:)`,
+ * `text(_:roles:)`, `script(_:variable:roles:)`, `html(_:scrape:roles:)` and `send(_:roles:)`;
+ * the `roles` of the `Esse3PermissionLevel` enum only when operations declare roles (see
+ * [SwiftClientEmitter]).
  */
-internal class SwiftLayout(private val spec: ApiSpec, val runtimeModule: String) {
-    val enumsFileName = "${spec.prefix}EnumTypes.swift"
+internal class SwiftLayout(private val spec: ApiSpec, val module: String, val runtimeModule: String) {
+    val enumsFileName = models("${spec.prefix}EnumTypes.swift")
     val facadeName = "${spec.prefix}Api"
     val client = "${spec.prefix}Client"
     val server = "${spec.prefix}Server"
-    val authFileName = "${spec.prefix}AuthTypes.swift"
+    val error = "${spec.prefix}Error"
+    val roles = "${spec.prefix}PermissionLevel"
+    val authFileName = models("${spec.prefix}AuthTypes.swift")
     val authBase = "${spec.prefix}Auth"
+
+    /** The file of the API's declaration [name] in the module's `API` folder. */
+    fun api(name: String): String = "$module/API/$name"
+
+    /** The file of the API's declaration [name] in the module's `Models` folder. */
+    fun models(name: String): String = "$module/Models/$name"
+
+    /** The file of the API's declaration [name] in the module's `Errors` folder. */
+    fun errors(name: String): String = "$module/Errors/$name"
 
     fun authClass(name: String): String = "${spec.prefix}${name}Auth"
 
@@ -63,7 +78,7 @@ internal class SwiftLayout(private val spec: ApiSpec, val runtimeModule: String)
         is TypeRef.ListOf, is TypeRef.MapOf -> error("Collections can't have a literal default")
     }
 
-    fun recordsFileName(module: ApiModule): String = "${spec.prefix}${module.name}Types.swift"
+    fun recordsFileName(module: ApiModule): String = models("${spec.prefix}${module.name}Types.swift")
 
     /** The enum of the API's scrapers (see [SwiftScrapeEmitter]). */
     val scrapers = "${spec.prefix}Scrapers"

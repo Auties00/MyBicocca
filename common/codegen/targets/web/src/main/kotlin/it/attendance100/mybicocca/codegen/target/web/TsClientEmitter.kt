@@ -15,22 +15,17 @@ import it.attendance100.mybicocca.codegen.model.ParameterLocation
  */
 internal class TsClientEmitter(private val spec: ApiSpec, private val layout: TsLayout) {
     private val client = spec.client
-    private val errorName = "${spec.prefix}Error"
+    private val errorName = layout.error
 
-    fun emit(file: TsFile) {
+    /** The client, its policy, and `create<Prefix>Api`. */
+    fun emitClient(file: TsFile) {
         listOf("ApiFailure", "DecodeError", "RestClient", "scrapeResponse", "scriptResponse", "unwrapEnvelope").forEach { layout.importRuntime(file, it) }
         listOf("RestConfiguration", "RestPolicy", "RestRequest", "ScrapeNode").forEach { layout.importRuntime(file, "type $it") }
-        file.import(layout.facadeName, layout.moduleOf("${layout.facadeName}.ts"))
-        if (spec.parameters.isNotEmpty()) file.import("type ${layout.parameters}", layout.moduleOf(layout.parametersFile))
+        file.importFile(layout.facadeName, layout.facadeFile)
+        file.importFile(errorName, layout.errorFile)
+        if (spec.usesRoles) file.importFile("type ${layout.roles}", layout.rolesFile)
+        if (spec.parameters.isNotEmpty()) file.importFile("type ${layout.parameters}", layout.parametersFile)
         file.body.apply {
-            if (spec.usesRoles) {
-                line("/** The roles ${spec.prefix} operations may require, as their specs name them. */")
-                line("export type ${layout.roles} =")
-                indent { spec.roles.forEachIndexed { index, role -> line("| ${TsSyntax.string(role)}" + if (index == spec.roles.lastIndex) ";" else "") } }
-                line()
-            }
-            errorClass(this)
-            line()
             policy(this)
             line()
             clientClass(this)
@@ -39,8 +34,20 @@ internal class TsClientEmitter(private val spec: ApiSpec, private val layout: Ts
         }
     }
 
-    private fun errorClass(out: CodeWriter) {
+    /** The roles operations declare; only emitted when they declare any. */
+    fun emitRoles(file: TsFile) {
+        file.body.apply {
+            line("/** The roles ${spec.prefix} operations may require, as their specs name them. */")
+            line("export type ${layout.roles} =")
+            indent { spec.roles.forEachIndexed { index, role -> line("| ${TsSyntax.string(role)}" + if (index == spec.roles.lastIndex) ";" else "") } }
+        }
+    }
+
+    fun emitError(file: TsFile) {
         val roles = spec.usesRoles
+        layout.importRuntime(file, "type ApiFailure")
+        if (roles) file.importFile("type ${layout.roles}", layout.rolesFile)
+        val out = file.body
         out.line("/**")
         out.line(" * A request the ${spec.prefix} API rejected. Match on `code`, such as one of the constants below,")
         out.line(" * or on `status` when the server sent none; never on the message.")

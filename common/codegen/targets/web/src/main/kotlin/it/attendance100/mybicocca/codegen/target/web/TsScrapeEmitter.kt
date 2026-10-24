@@ -48,7 +48,7 @@ internal class TsScrapeEmitter(private val spec: ApiSpec, private val layout: Ts
     fun emit(file: TsFile) {
         layout.importRuntime(file, "scrape")
         // Fragment readers take the HTML itself; only record and response readers take a node.
-        if (scrapedRecords.isNotEmpty() || htmlOperations.isNotEmpty()) file.import("type ScrapeNode", layout.runtimeModule)
+        if (scrapedRecords.isNotEmpty() || htmlOperations.isNotEmpty()) layout.importRuntime(file, "type ScrapeNode")
         val sections = buildList<CodeWriter.() -> Unit> {
             scrapedRecords.forEach { add { record(it, file) } }
             htmlOperations.forEach { (module, operation) -> add { response(module, operation, file) } }

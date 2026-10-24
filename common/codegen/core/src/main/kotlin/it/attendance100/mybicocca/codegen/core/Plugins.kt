@@ -59,6 +59,34 @@ interface CodeTarget {
      *   sharing it must lead to the same files.
      */
     fun sharedFiles(context: TargetContext): List<GeneratedFile> = emptyList()
+
+    /**
+     * Returns files derived from the files the APIs generated into an output directory, such as
+     * the index modules re-exporting each folder. They are written and owned like the
+     * [sharedFiles], once every API of the run is generated, and also cover the files of APIs
+     * the run skipped, which are already on disk.
+     *
+     * @param paths The APIs' generated files in the directory once the run is applied, relative to
+     *   it; shared files are left out.
+     */
+    fun indexFiles(paths: Set<String>, context: TargetContext): List<GeneratedFile> = emptyList()
+}
+
+/**
+ * Shared files copied from the resource directory [directory] of [anchor]'s module, such as a
+ * hand-written runtime: each of [names] lands under [outputPath], after [transform] and a line
+ * comment carrying the [generatedMarker] of [SHARED_FILES_OWNER].
+ */
+fun resourceFiles(
+    anchor: Class<*>,
+    directory: String,
+    names: List<String>,
+    outputPath: String,
+    transform: (String) -> String = { it },
+): List<GeneratedFile> = names.map { name ->
+    val source = anchor.getResource("/$directory/$name")?.readText()?.replace("\r\n", "\n")
+        ?: error("Missing resource $directory/$name")
+    GeneratedFile("$outputPath/$name", "// ${generatedMarker(SHARED_FILES_OWNER)}. Do not edit.\n" + transform(source))
 }
 
 /** The owner named by the [generatedMarker] of [CodeTarget.sharedFiles]; no API has this id. */
