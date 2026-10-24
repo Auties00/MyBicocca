@@ -10,7 +10,11 @@ import io.ktor.client.HttpClientConfig
  */
 class MoodleApi(httpClientConfig: HttpClientConfig<*>.() -> Unit = {}) : AutoCloseable {
     private val json = MoodleRuntime.json
-    private val client = MoodleRuntime.createHttpClient(json, httpClientConfig)
+    private val settings = MoodleRuntime.settings()
+    private val client = MoodleRuntime.createHttpClient(json, settings, httpClientConfig)
+
+    /** The langpack Moodle formats strings in, such as `it`, and server-side filters (multilang) pick the language of. Defaults to `en`. */
+    var language: String by settings
 
     val badge = MoodleBadgeApi(client, json)
     val calendar = MoodleCalendarApi(client, json)

@@ -4,7 +4,7 @@ import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseSection
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleEnrolledCourse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleOption
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
-import it.attendance100.mybicocca.data.remote.elearning.exception.ElearningException
+import it.attendance100.mybicocca.data.remote.elearning.exception.MoodleException
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.Assertions.assertEquals
@@ -51,8 +51,8 @@ class MoodleApiTest {
 
     @Test
     fun `invalid tokens are errors`() {
-        val error = assertThrows<ElearningException> { runBlocking { api.site.getSiteInfo(auth = MoodleTokenAuth("0".repeat(32))) } }
-        assertEquals("invalidtoken", error.errorCode)
+        val error = assertThrows<MoodleException> { runBlocking { api.site.getSiteInfo(auth = MoodleTokenAuth("0".repeat(32))) } }
+        assertEquals(MoodleException.INVALID_TOKEN, error.errorCode)
     }
 
     @Test

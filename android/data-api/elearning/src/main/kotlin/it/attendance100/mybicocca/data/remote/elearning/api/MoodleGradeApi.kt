@@ -6,16 +6,19 @@ import io.ktor.client.request.forms.FormDataContent
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
+import io.ktor.http.HttpMethod
 import io.ktor.http.parameters
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseGradesResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleGradeItemsResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
 
 class MoodleGradeApi(
     client: HttpClient,
     json: Json
-) : MoodleAbstractApi(client, json, "") {
+) : RestApi(client, json, "", MoodleRuntime.policy) {
 
     /**
      * Get the given user courses final grades
@@ -27,7 +30,7 @@ class MoodleGradeApi(
         userId: Int? = null,
         auth: MoodleTokenAuth
     ): MoodleCourseGradesResponse {
-        return executeJsonPost<MoodleCourseGradesResponse>("/webservice/rest/server.php") {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleCourseGradesResponse>()) {
             setBody(FormDataContent(parameters {
                 userId?.let { append("userid", it.toString()) }
                 auth.form.forEach { (name, value) -> append(name, value) }
@@ -52,7 +55,7 @@ class MoodleGradeApi(
         groupId: Int? = null,
         auth: MoodleTokenAuth
     ): MoodleGradeItemsResponse {
-        return executeJsonPost<MoodleGradeItemsResponse>("/webservice/rest/server.php") {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleGradeItemsResponse>()) {
             setBody(FormDataContent(parameters {
                 append("courseid", courseId.toString())
                 userId?.let { append("userid", it.toString()) }

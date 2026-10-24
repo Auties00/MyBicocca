@@ -3,17 +3,20 @@ package it.attendance100.mybicocca.data.remote.esse3.api
 
 import io.ktor.client.HttpClient
 import io.ktor.client.request.parameter
+import io.ktor.http.HttpMethod
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3Country
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3Municipality
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3PermissionLevel
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3PostalCode
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3Province
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
 
 class Esse3CountriesApi(
     client: HttpClient,
     json: Json
-) : Esse3AbstractApi(client, json, "/nazioni-service-v1") {
+) : RestApi(client, json, "/nazioni-service-v1", Esse3Runtime.policy) {
 
     /**
      * recupero delle nazioni
@@ -23,7 +26,7 @@ class Esse3CountriesApi(
     suspend fun getNations(
         iso6392Code: String? = null
     ): List<Esse3Country> {
-        return executeJsonGetList<Esse3Country>("/nazioni", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/nazioni", deserializer = serializer<List<Esse3Country>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             iso6392Code?.let { parameter("iso6392Cod", it) }
         }
     }
@@ -46,7 +49,7 @@ class Esse3CountriesApi(
         municipalityId: Long? = null,
         municipalityCode: String? = null
     ): List<Esse3PostalCode> {
-        return executeJsonGetList<Esse3PostalCode>("/nazioni/${nationId}/cap", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/nazioni/${nationId}/cap", deserializer = serializer<List<Esse3PostalCode>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             nationFiscalCode?.let { parameter("nazioneCodFisc", it) }
             regionCode?.let { parameter("regioneCod", it) }
             abbreviation?.let { parameter("sigla", it) }
@@ -79,7 +82,7 @@ class Esse3CountriesApi(
         limit: Int? = null,
         order: String? = null
     ): List<Esse3Municipality> {
-        return executeJsonGetList<Esse3Municipality>("/nazioni/${nationId}/comuni", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/nazioni/${nationId}/comuni", deserializer = serializer<List<Esse3Municipality>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             iso6392Code?.let { parameter("iso6392Cod", it) }
             nationFiscalCode?.let { parameter("nazioneCodFisc", it) }
             regionCode?.let { parameter("regioneCod", it) }
@@ -101,7 +104,7 @@ class Esse3CountriesApi(
         nationId: Long,
         nationFiscalCode: String? = null
     ): List<Esse3Province> {
-        return executeJsonGetList<Esse3Province>("/nazioni/${nationId}/province", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/nazioni/${nationId}/province", deserializer = serializer<List<Esse3Province>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             nationFiscalCode?.let { parameter("nazioneCodFisc", it) }
         }
     }

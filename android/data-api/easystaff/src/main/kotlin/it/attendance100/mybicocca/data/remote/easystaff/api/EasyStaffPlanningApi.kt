@@ -16,7 +16,8 @@ class EasyStaffPlanningApi(
     httpClientConfig: HttpClientConfig<*>.() -> Unit = {}
 ) : AutoCloseable {
     private val json = EasyStaffPlanningRuntime.json
-    private val client = EasyStaffPlanningRuntime.createHttpClient(json, httpClientConfig)
+    private val settings = EasyStaffPlanningRuntime.settings()
+    private val client = EasyStaffPlanningRuntime.createHttpClient(json, settings, httpClientConfig)
 
     val portals = EasyStaffPlanningPortalsApi(client, json, portalId, portalCode)
     val catalog = EasyStaffPlanningCatalogApi(client, json, portalId)

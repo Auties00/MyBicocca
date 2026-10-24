@@ -5,6 +5,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
+import io.ktor.http.HttpMethod
 import io.ktor.http.contentType
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3AntiplagiarismDataInsert
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3ExamSession
@@ -26,12 +27,14 @@ import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3ThesisSummary
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3ThesisSupervisorsDepartments
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3ThesisTeachingDomainSummary
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3ThesisTypes
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
 
 class Esse3DegreeAwardApi(
     client: HttpClient,
     json: Json
-) : Esse3AbstractApi(client, json, "/consTit-service-v1") {
+) : RestApi(client, json, "/consTit-service-v1", Esse3Runtime.policy) {
 
     /**
      * inserimento metadati allegato
@@ -41,11 +44,10 @@ class Esse3DegreeAwardApi(
     suspend fun postThesisAttachmentMetadata(
         body: Esse3ThesisAttachmentInsertMetadata
     ) {
-        val response = executePost("/allegati/tesi/") {
+        send(HttpMethod.Post, "/allegati/tesi/", roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
-        ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -64,7 +66,7 @@ class Esse3DegreeAwardApi(
         antiplagiarismNote: String? = null,
         attachmentApprovalFlag: Long? = null
     ): Esse3AntiplagiarismDataInsert {
-        return executeJsonPut<Esse3AntiplagiarismDataInsert>("/allegati/tesi/antiplagio", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Put, "/allegati/tesi/antiplagio", deserializer = serializer<Esse3AntiplagiarismDataInsert>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             attachmentId?.let { parameter("allegatoId", it) }
             antiplagiarismIndex?.let { parameter("indxAntiplagio", it) }
             antiplagiarismLink?.let { parameter("linkAntiplagio", it) }
@@ -89,7 +91,7 @@ class Esse3DegreeAwardApi(
         limit: Int? = null,
         order: String? = null
     ): List<Esse3ExamSession> {
-        return executeJsonGetList<Esse3ExamSession>("/appelliCt", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/appelliCt", deserializer = serializer<List<Esse3ExamSession>>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
             courseTypeCode?.let { parameter("tipoCorsoCod", it) }
             courseOfStudyCode?.let { parameter("cdsCod", it) }
             start?.let { parameter("start", it) }
@@ -106,7 +108,7 @@ class Esse3DegreeAwardApi(
     suspend fun getCommitteeCall(
         callCommitteeId: Long
     ): List<Esse3ExamSession> {
-        return executeJsonGetList<Esse3ExamSession>("/appelliCt/${callCommitteeId}", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER))
+        return jsonList(HttpMethod.Get, "/appelliCt/${callCommitteeId}", deserializer = serializer<List<Esse3ExamSession>>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -117,11 +119,10 @@ class Esse3DegreeAwardApi(
     suspend fun postCommitteeApplication(
         body: Esse3TeachingDomainInsert
     ) {
-        val response = executePost("/domandeCt") {
+        send(HttpMethod.Post, "/domandeCt", roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
-        ensureSuccess(response, setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -136,7 +137,7 @@ class Esse3DegreeAwardApi(
         studentId: Long? = null,
         deadlinesCheck: Boolean? = null
     ): Esse3TeachingDomainCancellation {
-        return executeJsonPut<Esse3TeachingDomainCancellation>("/domandeCt/annullaDomandaCt", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Put, "/domandeCt/annullaDomandaCt", deserializer = serializer<Esse3TeachingDomainCancellation>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
             domicileTitleDeliveryId?.let { parameter("domConsTitId", it) }
             studentId?.let { parameter("studId", it) }
             deadlinesCheck?.let { parameter("checkScadenze", it) }
@@ -155,7 +156,7 @@ class Esse3DegreeAwardApi(
         start: Int? = null,
         limit: Int? = null
     ): List<Esse3ThesisTeachingDomainSummary> {
-        return executeJsonGetList<Esse3ThesisTeachingDomainSummary>("/domandeCt/appCtId/${callCommitteeId}/tesi", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/domandeCt/appCtId/${callCommitteeId}/tesi", deserializer = serializer<List<Esse3ThesisTeachingDomainSummary>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             start?.let { parameter("start", it) }
             limit?.let { parameter("limit", it) }
         }
@@ -169,7 +170,7 @@ class Esse3DegreeAwardApi(
     suspend fun getCommitteeApplicationByMatId(
         matId: Long
     ): List<Esse3TeachingDomainSummary> {
-        return executeJsonGetList<Esse3TeachingDomainSummary>("/domandeCt/matId/${matId}", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER))
+        return jsonList(HttpMethod.Get, "/domandeCt/matId/${matId}", deserializer = serializer<List<Esse3TeachingDomainSummary>>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -180,7 +181,7 @@ class Esse3DegreeAwardApi(
     suspend fun getCommitteeApplicationByStudentId(
         studentId: Long
     ): List<Esse3TeachingDomainSummary> {
-        return executeJsonGetList<Esse3TeachingDomainSummary>("/domandeCt/stuId/${studentId}", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER))
+        return jsonList(HttpMethod.Get, "/domandeCt/stuId/${studentId}", deserializer = serializer<List<Esse3TeachingDomainSummary>>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -191,11 +192,10 @@ class Esse3DegreeAwardApi(
     suspend fun postThesisIntoCommitteeApplication(
         body: Esse3ThesisIntoTeachingDomainInsert
     ) {
-        val response = executePost("/domandeCt/tesi") {
+        send(HttpMethod.Post, "/domandeCt/tesi", roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
-        ensureSuccess(response, setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -206,7 +206,7 @@ class Esse3DegreeAwardApi(
     suspend fun getCommitteeApplication(
         domicileCommitteeId: Long
     ): Esse3TeachingDomainSummary {
-        return executeJsonGet<Esse3TeachingDomainSummary>("/domandeCt/${domicileCommitteeId}", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER))
+        return json(HttpMethod.Get, "/domandeCt/${domicileCommitteeId}", deserializer = serializer<Esse3TeachingDomainSummary>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -217,7 +217,7 @@ class Esse3DegreeAwardApi(
     suspend fun getTheses(
         domicileCommitteeId: Long
     ): Esse3ThesisTeachingDomainSummary {
-        return executeJsonGet<Esse3ThesisTeachingDomainSummary>("/domandeCt/${domicileCommitteeId}/tesi", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER))
+        return json(HttpMethod.Get, "/domandeCt/${domicileCommitteeId}/tesi", deserializer = serializer<Esse3ThesisTeachingDomainSummary>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -228,7 +228,7 @@ class Esse3DegreeAwardApi(
     suspend fun getThesisDiscussionMode(
         authorizationFlag: Long? = null
     ): List<Esse3ThesisConsultationMode> {
-        return executeJsonGetList<Esse3ThesisConsultationMode>("/modConsTesi", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/modConsTesi", deserializer = serializer<List<Esse3ThesisConsultationMode>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             authorizationFlag?.let { parameter("abilFlg", it) }
         }
     }
@@ -247,7 +247,7 @@ class Esse3DegreeAwardApi(
         limit: Int? = null,
         order: String? = null
     ): List<Esse3SupervisorTeacher> {
-        return executeJsonGetList<Esse3SupervisorTeacher>("/relatori/docenti", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/relatori/docenti", deserializer = serializer<List<Esse3SupervisorTeacher>>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
             surname?.let { parameter("cognome", it) }
             start?.let { parameter("start", it) }
             limit?.let { parameter("limit", it) }
@@ -269,7 +269,7 @@ class Esse3DegreeAwardApi(
         limit: Int? = null,
         order: String? = null
     ): List<Esse3ExternalSubject> {
-        return executeJsonGetList<Esse3ExternalSubject>("/relatori/soggEst/", setOf(Esse3PermissionLevel.STUDENT)) {
+        return jsonList(HttpMethod.Get, "/relatori/soggEst/", deserializer = serializer<List<Esse3ExternalSubject>>(), roles = setOf(Esse3PermissionLevel.STUDENT)) {
             surname?.let { parameter("cognome", it) }
             start?.let { parameter("start", it) }
             limit?.let { parameter("limit", it) }
@@ -295,7 +295,7 @@ class Esse3DegreeAwardApi(
         externalSubjectId: Long? = null,
         relationTypeCode: String? = null
     ): Esse3ThesisSupervisorsDepartments {
-        return executeJsonGet<Esse3ThesisSupervisorsDepartments>("/report/tesi/relatori/${departmentCode}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Get, "/report/tesi/relatori/${departmentCode}", deserializer = serializer<Esse3ThesisSupervisorsDepartments>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             parameter("dataIni", startDate)
             parameter("dataFine", endDate)
             lecturerId?.let { parameter("docenteId", it) }
@@ -314,7 +314,7 @@ class Esse3DegreeAwardApi(
         academicYearId: Long? = null,
         department: String? = null
     ): List<Esse3ExamSessionLocation> {
-        return executeJsonGetList<Esse3ExamSessionLocation>("/sedAppCt", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/sedAppCt", deserializer = serializer<List<Esse3ExamSessionLocation>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             academicYearId?.let { parameter("aaId", it) }
             department?.let { parameter("dipartimento", it) }
         }
@@ -328,7 +328,7 @@ class Esse3DegreeAwardApi(
     suspend fun getThesisByThesisId(
         thesisId: Long
     ): Esse3ThesisSummary {
-        return executeJsonGet<Esse3ThesisSummary>("/tesi/${thesisId}", setOf(Esse3PermissionLevel.TECHNICAL_USER))
+        return json(HttpMethod.Get, "/tesi/${thesisId}", deserializer = serializer<Esse3ThesisSummary>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -341,7 +341,7 @@ class Esse3DegreeAwardApi(
         thesisId: Long,
         thesisDiscussionModeCode: String
     ): Esse3ThesisDiscussionModeCodeInsert {
-        return executeJsonPut<Esse3ThesisDiscussionModeCodeInsert>("/tesi/${thesisId}/modConsTesi", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Put, "/tesi/${thesisId}/modConsTesi", deserializer = serializer<Esse3ThesisDiscussionModeCodeInsert>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             parameter("modConsTesiCod", thesisDiscussionModeCode)
         }
     }
@@ -356,7 +356,7 @@ class Esse3DegreeAwardApi(
         thesisId: Long,
         body: List<Esse3SupervisorsInsert>
     ): Esse3ImportSupervisorsResponse {
-        return executeJsonPut<Esse3ImportSupervisorsResponse>("/tesi/${thesisId}/relatori", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Put, "/tesi/${thesisId}/relatori", deserializer = serializer<Esse3ImportSupervisorsResponse>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -370,7 +370,7 @@ class Esse3DegreeAwardApi(
     suspend fun getThesisRelationTypes(
         studentId: Long
     ): List<Esse3SupervisorTypeRegulation> {
-        return executeJsonGetList<Esse3SupervisorTypeRegulation>("/tipiRelTesi/${studentId}", setOf(Esse3PermissionLevel.TECHNICAL_USER))
+        return jsonList(HttpMethod.Get, "/tipiRelTesi/${studentId}", deserializer = serializer<List<Esse3SupervisorTypeRegulation>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -387,7 +387,7 @@ class Esse3DegreeAwardApi(
         limit: Int? = null,
         order: String? = null
     ): List<Esse3ThesisTypes> {
-        return executeJsonGetList<Esse3ThesisTypes>("/tipiTesiStu", setOf(Esse3PermissionLevel.STUDENT)) {
+        return jsonList(HttpMethod.Get, "/tipiTesiStu", deserializer = serializer<List<Esse3ThesisTypes>>(), roles = setOf(Esse3PermissionLevel.STUDENT)) {
             committeeRegulationId?.let { parameter("regCtId", it) }
             start?.let { parameter("start", it) }
             limit?.let { parameter("limit", it) }

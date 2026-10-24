@@ -5,6 +5,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
+import io.ktor.http.HttpMethod
 import io.ktor.http.contentType
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3CacheInfo
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3ChangePasswordResult
@@ -15,12 +16,14 @@ import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3JWTModel
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3PermissionLevel
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3SessionLanguage
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3UserSession
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
 
 class Esse3AuthApi(
     client: HttpClient,
     json: Json
-) : Esse3AbstractApi(client, json, "/") {
+) : RestApi(client, json, "/", Esse3Runtime.policy) {
 
     /**
      * @param body Oggetto con i campi da modificare
@@ -28,18 +31,18 @@ class Esse3AuthApi(
     suspend fun changeUserPassword(
         body: Esse3ChangeUserPasswordParameters
     ): Esse3ChangePasswordResult {
-        return executeJsonPut<Esse3ChangePasswordResult>("/changeUserPassword", setOf(Esse3PermissionLevel.AUTHENTICATED_USER)) {
+        return json(HttpMethod.Put, "/changeUserPassword", deserializer = serializer<Esse3ChangePasswordResult>(), roles = setOf(Esse3PermissionLevel.AUTHENTICATED_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
     }
 
     suspend fun checkLogon(): Esse3CheckLoginResult {
-        return executeJsonGet<Esse3CheckLoginResult>("/checkLogon", setOf(Esse3PermissionLevel.ANY))
+        return json(HttpMethod.Get, "/checkLogon", deserializer = serializer<Esse3CheckLoginResult>(), roles = setOf(Esse3PermissionLevel.ANY))
     }
 
     suspend fun getJWK(): Esse3JWKModel {
-        return executeJsonGet<Esse3JWKModel>("/jwt/jwk", setOf(Esse3PermissionLevel.ANY))
+        return json(HttpMethod.Get, "/jwt/jwk", deserializer = serializer<Esse3JWKModel>(), roles = setOf(Esse3PermissionLevel.ANY))
     }
 
     /**
@@ -48,7 +51,7 @@ class Esse3AuthApi(
     suspend fun refreshJWT(
         jwt: String? = null
     ): Esse3JWTModel {
-        return executeJsonGet<Esse3JWTModel>("/jwt/refresh", setOf(Esse3PermissionLevel.ANY)) {
+        return json(HttpMethod.Get, "/jwt/refresh", deserializer = serializer<Esse3JWTModel>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             jwt?.let { parameter("jwt", it) }
         }
     }
@@ -61,14 +64,14 @@ class Esse3AuthApi(
         sessionLanguageCode: String? = null,
         optionalFields: String? = null
     ): Esse3UserSession {
-        return executeJsonGet<Esse3UserSession>("/login", setOf(Esse3PermissionLevel.ANY)) {
+        return json(HttpMethod.Get, "/login", deserializer = serializer<Esse3UserSession>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             sessionLanguageCode?.let { parameter("sessionLinguaCod", it) }
             optionalFields?.let { parameter("optionalFields", it) }
         }
     }
 
     suspend fun getCacheParameters(): Esse3CacheInfo {
-        return executeJsonGet<Esse3CacheInfo>("/login/cache/", setOf(Esse3PermissionLevel.AUTHENTICATED_USER))
+        return json(HttpMethod.Get, "/login/cache/", deserializer = serializer<Esse3CacheInfo>(), roles = setOf(Esse3PermissionLevel.AUTHENTICATED_USER))
     }
 
     /**
@@ -77,18 +80,18 @@ class Esse3AuthApi(
     suspend fun setCacheParameters(
         body: Esse3CacheInfo
     ): Esse3CacheInfo {
-        return executeJsonPut<Esse3CacheInfo>("/login/cache/", setOf(Esse3PermissionLevel.AUTHENTICATED_USER)) {
+        return json(HttpMethod.Put, "/login/cache/", deserializer = serializer<Esse3CacheInfo>(), roles = setOf(Esse3PermissionLevel.AUTHENTICATED_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
     }
 
     suspend fun getJWT(): Esse3JWTModel {
-        return executeJsonGet<Esse3JWTModel>("/login/jwt/new", setOf(Esse3PermissionLevel.AUTHENTICATED_USER))
+        return json(HttpMethod.Get, "/login/jwt/new", deserializer = serializer<Esse3JWTModel>(), roles = setOf(Esse3PermissionLevel.AUTHENTICATED_USER))
     }
 
     suspend fun getLanguageCode(): Esse3SessionLanguage {
-        return executeJsonGet<Esse3SessionLanguage>("/login/lingua", setOf(Esse3PermissionLevel.AUTHENTICATED_USER))
+        return json(HttpMethod.Get, "/login/lingua", deserializer = serializer<Esse3SessionLanguage>(), roles = setOf(Esse3PermissionLevel.AUTHENTICATED_USER))
     }
 
     /**
@@ -97,14 +100,13 @@ class Esse3AuthApi(
     suspend fun setLanguageCode(
         sessionLanguageCode: String? = null
     ): Esse3SessionLanguage {
-        return executeJsonPut<Esse3SessionLanguage>("/login/lingua", setOf(Esse3PermissionLevel.AUTHENTICATED_USER)) {
+        return json(HttpMethod.Put, "/login/lingua", deserializer = serializer<Esse3SessionLanguage>(), roles = setOf(Esse3PermissionLevel.AUTHENTICATED_USER)) {
             sessionLanguageCode?.let { parameter("sessionLinguaCod", it) }
         }
     }
 
     suspend fun logout() {
-        val response = executeGet("/logout")
-        ensureSuccess(response, setOf(Esse3PermissionLevel.AUTHENTICATED_USER))
+        send(HttpMethod.Get, "/logout", roles = setOf(Esse3PermissionLevel.AUTHENTICATED_USER))
     }
 
     /**
@@ -113,7 +115,6 @@ class Esse3AuthApi(
     suspend fun checkSessionId(
         sessionId: String
     ) {
-        val response = executeGet("/sessions/${sessionId}/check")
-        ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
+        send(HttpMethod.Get, "/sessions/${sessionId}/check", roles = setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 }

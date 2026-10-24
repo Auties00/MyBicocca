@@ -3,23 +3,26 @@ package it.attendance100.mybicocca.data.remote.easystaff.api
 
 import io.ktor.client.HttpClient
 import io.ktor.client.request.header
+import io.ktor.http.HttpMethod
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningFormField
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningPortalConfig
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningPortalSummary
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
 
 class EasyStaffPlanningPortalsApi(
     client: HttpClient,
     json: Json,
     private val portalId: Int,
     private val portalCode: String
-) : EasyStaffPlanningAbstractApi(client, json, "") {
+) : RestApi(client, json, "", EasyStaffPlanningRuntime.policy, mapOf("portalId" to portalId.toString())) {
 
     /**
      * Lists the publicly listed portals. The information desks portal isn't listed, but its configuration can be read.
      */
     suspend fun getPortals(): List<EasyStaffPlanningPortalSummary> {
-        return executeJsonGetList<EasyStaffPlanningPortalSummary>("/cliente/index", server = EasyStaffPlanningServer.Main) {
+        return jsonList(HttpMethod.Get, "/cliente/index", deserializer = serializer<List<EasyStaffPlanningPortalSummary>>(), server = EasyStaffPlanningServer.Main.url) {
             header("X-CLIENTE", "${portalId}")
         }
     }
@@ -28,7 +31,7 @@ class EasyStaffPlanningPortalsApi(
      * Gets the configuration of the portal.
      */
     suspend fun getPortal(): EasyStaffPlanningPortalConfig {
-        return executeJsonGet<EasyStaffPlanningPortalConfig>("/cliente/show/${portalCode}", server = EasyStaffPlanningServer.Main) {
+        return json(HttpMethod.Get, "/cliente/show/${portalCode}", deserializer = serializer<EasyStaffPlanningPortalConfig>(), server = EasyStaffPlanningServer.Main.url) {
             header("X-CLIENTE", "${portalId}")
         }
     }
@@ -37,7 +40,7 @@ class EasyStaffPlanningPortalsApi(
      * Gets the primary form field of the portal, whose value (the email address) keys every reservation.
      */
     suspend fun getPrimaryField(): EasyStaffPlanningFormField {
-        return executeJsonGet<EasyStaffPlanningFormField>("/cliente/${portalId}/primaria", server = EasyStaffPlanningServer.Main) {
+        return json(HttpMethod.Get, "/cliente/${portalId}/primaria", deserializer = serializer<EasyStaffPlanningFormField>(), server = EasyStaffPlanningServer.Main.url) {
             header("X-CLIENTE", "${portalId}")
         }
     }
@@ -50,7 +53,7 @@ class EasyStaffPlanningPortalsApi(
     suspend fun getServiceForm(
         serviceId: Int
     ): List<EasyStaffPlanningFormField> {
-        return executeJsonGetList<EasyStaffPlanningFormField>("/cliente/${portalCode}/formData/${serviceId}", server = EasyStaffPlanningServer.Main) {
+        return jsonList(HttpMethod.Get, "/cliente/${portalCode}/formData/${serviceId}", deserializer = serializer<List<EasyStaffPlanningFormField>>(), server = EasyStaffPlanningServer.Main.url) {
             header("X-CLIENTE", "${portalId}")
         }
     }

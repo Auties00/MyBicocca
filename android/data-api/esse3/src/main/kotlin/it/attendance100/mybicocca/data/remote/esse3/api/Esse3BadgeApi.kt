@@ -3,17 +3,20 @@ package it.attendance100.mybicocca.data.remote.esse3.api
 
 import io.ktor.client.HttpClient
 import io.ktor.client.request.parameter
+import io.ktor.http.HttpMethod
 import io.ktor.utils.io.ByteReadChannel
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3BadgeData
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3BadgeMatriculationStateFilter
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3BadgeStudentStateFilter
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3PermissionLevel
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
 
 class Esse3BadgeApi(
     client: HttpClient,
     json: Json
-) : Esse3AbstractApi(client, json, "/badge-service-v1") {
+) : RestApi(client, json, "/badge-service-v1", Esse3Runtime.policy) {
 
     /**
      * recupera i dati del badge
@@ -41,7 +44,7 @@ class Esse3BadgeApi(
         fields: String? = null,
         filter: String? = null
     ): List<Esse3BadgeData> {
-        return executeJsonGetList<Esse3BadgeData>("/badges", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.STUDENT)) {
+        return jsonList(HttpMethod.Get, "/badges", deserializer = serializer<List<Esse3BadgeData>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.STUDENT)) {
             rfid?.let { parameter("rfid", it) }
             studentId?.let { parameter("stuId", it) }
             fiscalCode?.let { parameter("codFis", it) }
@@ -63,7 +66,7 @@ class Esse3BadgeApi(
     suspend fun getBadgeBlobFrontPage(
         badgeBlobId: Long
     ): ByteReadChannel {
-        return executeStreamGet("/badges/blobs/${badgeBlobId}/front", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.STUDENT))
+        return stream(HttpMethod.Get, "/badges/blobs/${badgeBlobId}/front", roles = setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.STUDENT))
     }
 
     /**
@@ -74,6 +77,6 @@ class Esse3BadgeApi(
     suspend fun getBadgeBlobRearPage(
         badgeBlobId: Long
     ): ByteReadChannel {
-        return executeStreamGet("/badges/blobs/${badgeBlobId}/rear", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.STUDENT))
+        return stream(HttpMethod.Get, "/badges/blobs/${badgeBlobId}/rear", roles = setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.STUDENT))
     }
 }

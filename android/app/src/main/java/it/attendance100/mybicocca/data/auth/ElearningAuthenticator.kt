@@ -27,7 +27,7 @@ import io.ktor.client.plugins.UserAgent
 import it.attendance100.mybicocca.data.remote.elearning.api.ElearningApi
 import it.attendance100.mybicocca.data.remote.elearning.api.MoodleApi
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
-import it.attendance100.mybicocca.data.remote.elearning.exception.ElearningException
+import it.attendance100.mybicocca.data.remote.elearning.exception.MoodleException
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -95,7 +95,7 @@ class ElearningAuthenticator @Inject constructor() {
             val autologin = MoodleApi(httpClientConfig = { install(UserAgent) { agent = MOODLE_MOBILE_USER_AGENT } }).use { moodle ->
                 try {
                     moodle.mobile.getAutologinKey(privateToken, auth = MoodleTokenAuth(wsToken))
-                } catch (e: ElearningException) {
+                } catch (e: MoodleException) {
                     throw ElearningLoginException("Cannot renew session: ${e.errorCode ?: e.errorMessage}")
                 }
             }

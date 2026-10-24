@@ -49,7 +49,8 @@ internal class OpenApiModelBuilder(private val api: OpenAPI) {
 
     private val apiParameterNames: List<String> = Extensions.refNames(api.extensions?.get(Extensions.PARAMETERS), Extensions.PARAMETERS)
 
-    private val servers: List<Server> = api.servers.orEmpty().map { server ->
+    // The parser adds a server at `/` to documents declaring none, such as those only describing the client.
+    private val servers: List<Server> = api.servers.orEmpty().filterNot { it.url == "/" && it.extensions == null }.map { server ->
         Server(server.extensions?.get(Extensions.NAME)?.toString() ?: error("Server ${server.url} needs ${Extensions.NAME}"), server.url)
     }
 
@@ -88,6 +89,7 @@ internal class OpenApiModelBuilder(private val api: OpenAPI) {
             parameters = apiParameterNames.map { name ->
                 parameter("the API", api.components?.parameters?.get(name) ?: error("Unknown API parameter $name"))
             },
+            client = ClientSyntax.read(api.extensions?.get(Extensions.CLIENT)),
         )
     }
 
@@ -352,8 +354,9 @@ internal class OpenApiModelBuilder(private val api: OpenAPI) {
                 )
             }
         }
-        val first = operationsByModule.keys.first()
-        return schemas.keys.filter { it !in enumNames }.associateWith { owners[it] ?: first }
+        val records = schemas.keys.filter { it !in enumNames }
+        val first = operationsByModule.keys.firstOrNull() ?: return records.associateWith { error("Record $it belongs to no module") }
+        return records.associateWith { owners[it] ?: first }
     }
 
     private fun nameOf(schema: Schema<*>, wire: String): String = nameOf(schema.extensions, wire)

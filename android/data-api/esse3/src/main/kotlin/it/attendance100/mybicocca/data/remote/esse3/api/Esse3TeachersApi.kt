@@ -5,6 +5,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
+import io.ktor.http.HttpMethod
 import io.ktor.http.contentType
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3NewTeachers
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3PermissionLevel
@@ -14,12 +15,14 @@ import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3TeacherParameters
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3TeacherRole
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3TeachersNotes
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3TeachersTimetable
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
 
 class Esse3TeachersApi(
     client: HttpClient,
     json: Json
-) : Esse3AbstractApi(client, json, "/docenti-service-v1") {
+) : RestApi(client, json, "/docenti-service-v1", Esse3Runtime.policy) {
 
     /**
      * @param lecturerMatricola matricola del docente
@@ -61,7 +64,7 @@ class Esse3TeachersApi(
         optionalFields: String? = null,
         order: String? = null
     ): List<Esse3NewTeachers> {
-        return executeJsonGetList<Esse3NewTeachers>("/docenti", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/docenti", deserializer = serializer<List<Esse3NewTeachers>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             lecturerMatricola?.let { parameter("docenteMatricola", it) }
             lecturerSurname?.let { parameter("docenteCognome", it) }
             lecturerName?.let { parameter("docenteNome", it) }
@@ -103,7 +106,7 @@ class Esse3TeachersApi(
         start: Int? = null,
         limit: Int? = null
     ): List<Esse3TeacherRole> {
-        return executeJsonGetList<Esse3TeacherRole>("/docenti/ruoli", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/docenti/ruoli", deserializer = serializer<List<Esse3TeacherRole>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             lecturerRoleCode?.let { parameter("ruoloDocCod", it) }
             csaCode?.let { parameter("csaCod", it) }
             lecturerRoleTypeCode?.let { parameter("tipoRuoloDocCod", it) }
@@ -124,7 +127,7 @@ class Esse3TeachersApi(
         fields: String? = null,
         optionalFields: String? = null
     ): List<Esse3NewTeachers> {
-        return executeJsonGetList<Esse3NewTeachers>("/docenti/${lecturerId}", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER)) {
+        return jsonList(HttpMethod.Get, "/docenti/${lecturerId}", deserializer = serializer<List<Esse3NewTeachers>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER)) {
             fields?.let { parameter("fields", it) }
             optionalFields?.let { parameter("optionalFields", it) }
         }
@@ -142,7 +145,7 @@ class Esse3TeachersApi(
         body: Esse3TeacherParameters,
         optionalFields: String? = null
     ): List<Esse3NewTeachers> {
-        return executeJsonPatchList<Esse3NewTeachers>("/docenti/${lecturerId}", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER)) {
+        return jsonList(HttpMethod.Patch, "/docenti/${lecturerId}", deserializer = serializer<List<Esse3NewTeachers>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
             optionalFields?.let { parameter("optionalFields", it) }
@@ -157,7 +160,7 @@ class Esse3TeachersApi(
     suspend fun getLecturerNotes(
         lecturerId: Long
     ): Esse3TeachersNotes {
-        return executeJsonGet<Esse3TeachersNotes>("/docenti/${lecturerId}/note", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER))
+        return json(HttpMethod.Get, "/docenti/${lecturerId}/note", deserializer = serializer<Esse3TeachersNotes>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER))
     }
 
     /**
@@ -170,7 +173,7 @@ class Esse3TeachersApi(
         lecturerId: Long,
         body: Esse3PutTeacherNotes
     ): Esse3TeachersNotes {
-        return executeJsonPut<Esse3TeachersNotes>("/docenti/${lecturerId}/note", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER)) {
+        return json(HttpMethod.Put, "/docenti/${lecturerId}/note", deserializer = serializer<Esse3TeachersNotes>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -186,7 +189,7 @@ class Esse3TeachersApi(
         lecturerId: Long,
         day: Int? = null
     ): List<Esse3TeachersTimetable> {
-        return executeJsonGetList<Esse3TeachersTimetable>("/docenti/${lecturerId}/orario", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER)) {
+        return jsonList(HttpMethod.Get, "/docenti/${lecturerId}/orario", deserializer = serializer<List<Esse3TeachersTimetable>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER)) {
             day?.let { parameter("giorno", it) }
         }
     }
@@ -201,7 +204,7 @@ class Esse3TeachersApi(
         lecturerId: Long,
         body: List<Esse3PostTeacherSchedule>
     ): List<Esse3TeachersTimetable> {
-        return executeJsonPostList<Esse3TeachersTimetable>("/docenti/${lecturerId}/orario", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER)) {
+        return jsonList(HttpMethod.Post, "/docenti/${lecturerId}/orario", deserializer = serializer<List<Esse3TeachersTimetable>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -225,7 +228,7 @@ class Esse3TeachersApi(
         startTime: String? = null,
         endTime: String? = null
     ): List<Esse3TeachersTimetable> {
-        return executeJsonPutList<Esse3TeachersTimetable>("/docenti/${lecturerId}/orario", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER)) {
+        return jsonList(HttpMethod.Put, "/docenti/${lecturerId}/orario", deserializer = serializer<List<Esse3TeachersTimetable>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
             day?.let { parameter("giorno", it) }
@@ -251,12 +254,11 @@ class Esse3TeachersApi(
         startTime: String? = null,
         endTime: String? = null
     ) {
-        val response = executeDelete("/docenti/${lecturerId}/orario") {
+        send(HttpMethod.Delete, "/docenti/${lecturerId}/orario", roles = setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER)) {
             day?.let { parameter("giorno", it) }
             lecturerResearchScheduleId?.let { parameter("docenteOrarioRicId", it) }
             startTime?.let { parameter("oraInizio", it) }
             endTime?.let { parameter("oraFine", it) }
         }
-        ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER))
     }
 }

@@ -1,0 +1,40 @@
+# How the Moodle client calls the site's web service functions (functions.json). It joins them
+# as one more part of the same API: see the readers of codegen.json. See
+# common/codegen/readers/openapi for the x-mb-* extensions.
+openapi: 3.0.3
+info:
+  title: Moodle client
+  version: "1"
+x-mb-id: moodle
+x-mb-prefix: Moodle
+x-mb-client:
+  baseUrl: https://elearning.unimib.it
+  timeoutSeconds: 30
+  headers:
+    Accept: application/json
+  # Filter text and rewrite file URLs as the mobile app does, so that links work with the token.
+  query:
+    moodlewssettingfilter: "true"
+    moodlewssettingfileurl: "true"
+  settings:
+    - name: language
+      in: query
+      wireName: moodlewssettinglang
+      default: en
+      description: >-
+        The langpack Moodle formats strings in, such as `it`, and server-side filters (multilang)
+        pick the language of.
+  error:
+    # Moodle answers errors with HTTP 200: `{"exception", "errorcode", "message"}` when a function
+    # fails, `{"error", "errorcode"}` when the server rejects the call, as for an invalid token.
+    detect: [/exception, /errorcode, /error]
+    code: [/errorcode]
+    message: [/message, /error]
+    codes:
+      InvalidToken:
+        value: invalidtoken
+        description: The web service token is invalid or expired; the user must log in again.
+      AccessException:
+        value: accessexception
+        description: The user may not call the function, such as for a course they left.
+paths: {}

@@ -5,6 +5,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
+import io.ktor.http.HttpMethod
 import io.ktor.http.contentType
 import io.ktor.utils.io.ByteReadChannel
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3ActivitiesToInsert
@@ -34,12 +35,14 @@ import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3TranscriptRowPerAct
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3TranscriptSegment
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3TranscriptStats
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3TranscriptTest
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
 
 class Esse3TranscriptApi(
     client: HttpClient,
     json: Json
-) : Esse3AbstractApi(client, json, "/libretto-service-v2") {
+) : RestApi(client, json, "/libretto-service-v2", Esse3Runtime.policy) {
 
     /**
      * Tratti carriera che contengono i libretti
@@ -71,7 +74,7 @@ class Esse3TranscriptApi(
         limit: Int? = null,
         order: String? = null
     ): List<Esse3CareerPortion> {
-        return executeJsonGetList<Esse3CareerPortion>("/libretti", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/libretti", deserializer = serializer<List<Esse3CareerPortion>>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             matricola?.let { parameter("matricola", it) }
             courseOfStudyStudentId?.let { parameter("cdsStuId", it) }
             courseOfStudyStudentCode?.let { parameter("cdsStuCod", it) }
@@ -127,7 +130,7 @@ class Esse3TranscriptApi(
         optionalFields: String? = null,
         order: String? = null
     ): List<Esse3TranscriptRowPerActivityLog> {
-        return executeJsonGetList<Esse3TranscriptRowPerActivityLog>("/libretti/classe-studenti", setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/libretti/classe-studenti", deserializer = serializer<List<Esse3TranscriptRowPerActivityLog>>(), roles = setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             parameter("logAaOffId", academicYearOfferLogId)
             parameter("logAdCod", teachingActivityLogCode)
             parameter("logCdsCod", courseOfStudyLogCode)
@@ -180,7 +183,7 @@ class Esse3TranscriptApi(
         optionalFields: String? = null,
         order: String? = null
     ): List<Esse3TranscriptRowPerActivityLog> {
-        return executeJsonGetList<Esse3TranscriptRowPerActivityLog>("/libretti/classe-studenti/${activityLogId}", setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/libretti/classe-studenti/${activityLogId}", deserializer = serializer<List<Esse3TranscriptRowPerActivityLog>>(), roles = setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             activityCode?.let { parameter("adCod", it) }
             courseOfStudyStudentCode?.let { parameter("cdsStuCod", it) }
             studentStatusCode?.let { parameter("staStuCod", it) }
@@ -204,7 +207,7 @@ class Esse3TranscriptApi(
     suspend fun putMassiveAttendance(
         body: Esse3BulkAttendanceParameters
     ): Esse3BulkAttendanceResult {
-        return executeJsonPut<Esse3BulkAttendanceResult>("/libretti/freq", setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Put, "/libretti/freq", deserializer = serializer<Esse3BulkAttendanceResult>(), roles = setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -218,7 +221,7 @@ class Esse3TranscriptApi(
     suspend fun putMassiveDetections(
         body: Esse3BulkPresenceReleaseParameters
     ): Esse3BulkAttendanceResult {
-        return executeJsonPut<Esse3BulkAttendanceResult>("/libretti/rilevazioni-freq/", setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Put, "/libretti/rilevazioni-freq/", deserializer = serializer<Esse3BulkAttendanceResult>(), roles = setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -234,7 +237,7 @@ class Esse3TranscriptApi(
         matId: Long,
         optionalFields: String? = null
     ): Esse3CareerPortion {
-        return executeJsonGet<Esse3CareerPortion>("/libretti/${matId}", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Get, "/libretti/${matId}", deserializer = serializer<Esse3CareerPortion>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             optionalFields?.let { parameter("optionalFields", it) }
         }
     }
@@ -262,7 +265,7 @@ class Esse3TranscriptApi(
         fields: String? = null,
         optionalFields: String? = null
     ): List<Esse3ExamSessionTranscript> {
-        return executeJsonGetList<Esse3ExamSessionTranscript>("/libretti/${matId}/appelli", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/libretti/${matId}/appelli", deserializer = serializer<List<Esse3ExamSessionTranscript>>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             actorCode?.let { parameter("attoreCod", it) }
             q?.let { parameter("q", it.value) }
             filter?.let { parameter("filter", it) }
@@ -284,7 +287,7 @@ class Esse3TranscriptApi(
         initialAveragesReferenceDate: String? = null,
         finalAveragesReferenceDate: String? = null
     ): List<Esse3TranscriptAverage> {
-        return executeJsonGetList<Esse3TranscriptAverage>("/libretti/${matId}/medie", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/libretti/${matId}/medie", deserializer = serializer<List<Esse3TranscriptAverage>>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             initialAveragesReferenceDate?.let { parameter("dataRifMedieIni", it) }
             finalAveragesReferenceDate?.let { parameter("dataRifMedieFin", it) }
         }
@@ -306,7 +309,7 @@ class Esse3TranscriptApi(
         initialAveragesReferenceDate: String? = null,
         finalAveragesReferenceDate: String? = null
     ): List<Esse3TranscriptAverage> {
-        return executeJsonGetList<Esse3TranscriptAverage>("/libretti/${matId}/medie/${base}/${type}", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/libretti/${matId}/medie/${base}/${type}", deserializer = serializer<List<Esse3TranscriptAverage>>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             initialAveragesReferenceDate?.let { parameter("dataRifMedieIni", it) }
             finalAveragesReferenceDate?.let { parameter("dataRifMedieFin", it) }
         }
@@ -328,7 +331,7 @@ class Esse3TranscriptApi(
         start: Int? = null,
         limit: Int? = null
     ): List<Esse3TranscriptPartition> {
-        return executeJsonGetList<Esse3TranscriptPartition>("/libretti/${matId}/partizioni", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/libretti/${matId}/partizioni", deserializer = serializer<List<Esse3TranscriptPartition>>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             fields?.let { parameter("fields", it) }
             order?.let { parameter("order", it) }
             start?.let { parameter("start", it) }
@@ -360,7 +363,7 @@ class Esse3TranscriptApi(
         optionalFields: String? = null,
         filter: String? = null
     ): List<Esse3ExamSessionEnrollment> {
-        return executeJsonGetList<Esse3ExamSessionEnrollment>("/libretti/${matId}/prenotazioni", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/libretti/${matId}/prenotazioni", deserializer = serializer<List<Esse3ExamSessionEnrollment>>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
             actorCode?.let { parameter("attoreCod", it) }
             minimumBookingDate?.let { parameter("dataMinPren", it) }
             q?.let { parameter("q", it.value) }
@@ -387,7 +390,7 @@ class Esse3TranscriptApi(
         start: Int? = null,
         limit: Int? = null
     ): List<Esse3TranscriptTest> {
-        return executeJsonGetList<Esse3TranscriptTest>("/libretti/${matId}/prove", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/libretti/${matId}/prove", deserializer = serializer<List<Esse3TranscriptTest>>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             fields?.let { parameter("fields", it) }
             order?.let { parameter("order", it) }
             start?.let { parameter("start", it) }
@@ -415,7 +418,7 @@ class Esse3TranscriptApi(
         order: String? = null,
         filter: String? = null
     ): List<Esse3TranscriptRow> {
-        return executeJsonGetList<Esse3TranscriptRow>("/libretti/${matId}/righe/", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/libretti/${matId}/righe/", deserializer = serializer<List<Esse3TranscriptRow>>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             activityCode?.let { parameter("adCod", it) }
             nonDeletableActivities?.let { parameter("adNonCancellabili", it) }
             optionalFields?.let { parameter("optionalFields", it) }
@@ -435,11 +438,10 @@ class Esse3TranscriptApi(
         matId: Long,
         body: Esse3ActivitiesToInsert
     ) {
-        val response = executePost("/libretti/${matId}/righe/") {
+        send(HttpMethod.Post, "/libretti/${matId}/righe/", roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
-        ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -456,7 +458,7 @@ class Esse3TranscriptApi(
         fields: String? = null,
         optionalFields: String? = null
     ): Esse3TranscriptRow {
-        return executeJsonGet<Esse3TranscriptRow>("/libretti/${matId}/righe/${activityChoiceId}", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Get, "/libretti/${matId}/righe/${activityChoiceId}", deserializer = serializer<Esse3TranscriptRow>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             fields?.let { parameter("fields", it) }
             optionalFields?.let { parameter("optionalFields", it) }
         }
@@ -472,8 +474,7 @@ class Esse3TranscriptApi(
         matId: Long,
         activityChoiceId: Long
     ) {
-        val response = executeDelete("/libretti/${matId}/righe/${activityChoiceId}")
-        ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
+        send(HttpMethod.Delete, "/libretti/${matId}/righe/${activityChoiceId}", roles = setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -492,7 +493,7 @@ class Esse3TranscriptApi(
         fields: String? = null,
         optionalFields: String? = null
     ): Esse3TranscriptRow {
-        return executeJsonPatch<Esse3TranscriptRow>("/libretti/${matId}/righe/${activityChoiceId}", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Patch, "/libretti/${matId}/righe/${activityChoiceId}", deserializer = serializer<Esse3TranscriptRow>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
             fields?.let { parameter("fields", it) }
@@ -525,7 +526,7 @@ class Esse3TranscriptApi(
         fields: String? = null,
         optionalFields: String? = null
     ): List<Esse3ExamSessionTranscript> {
-        return executeJsonGetList<Esse3ExamSessionTranscript>("/libretti/${matId}/righe/${activityChoiceId}/appelli", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/libretti/${matId}/righe/${activityChoiceId}/appelli", deserializer = serializer<List<Esse3ExamSessionTranscript>>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             actorCode?.let { parameter("attoreCod", it) }
             q?.let { parameter("q", it.value) }
             filter?.let { parameter("filter", it) }
@@ -551,7 +552,7 @@ class Esse3TranscriptApi(
         fields: String? = null,
         optionalFields: String? = null
     ): Esse3TranscriptRow {
-        return executeJsonPut<Esse3TranscriptRow>("/libretti/${matId}/righe/${activityChoiceId}/freq", setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Put, "/libretti/${matId}/righe/${activityChoiceId}/freq", deserializer = serializer<Esse3TranscriptRow>(), roles = setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
             fields?.let { parameter("fields", it) }
@@ -573,7 +574,7 @@ class Esse3TranscriptApi(
         fields: String? = null,
         order: String? = null
     ): List<Esse3TranscriptPartition> {
-        return executeJsonGetList<Esse3TranscriptPartition>("/libretti/${matId}/righe/${activityChoiceId}/partizioni", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/libretti/${matId}/righe/${activityChoiceId}/partizioni", deserializer = serializer<List<Esse3TranscriptPartition>>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             fields?.let { parameter("fields", it) }
             order?.let { parameter("order", it) }
         }
@@ -591,7 +592,7 @@ class Esse3TranscriptApi(
         activityChoiceId: Long,
         activityPartitionId: Long
     ): Esse3TranscriptPartition {
-        return executeJsonGet<Esse3TranscriptPartition>("/libretti/${matId}/righe/${activityChoiceId}/partizioni/${activityPartitionId}", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER))
+        return json(HttpMethod.Get, "/libretti/${matId}/righe/${activityChoiceId}/partizioni/${activityPartitionId}", deserializer = serializer<Esse3TranscriptPartition>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -618,7 +619,7 @@ class Esse3TranscriptApi(
         optionalFields: String? = null,
         filter: String? = null
     ): List<Esse3ExamSessionEnrollment> {
-        return executeJsonGetList<Esse3ExamSessionEnrollment>("/libretti/${matId}/righe/${activityChoiceId}/prenotazioni", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/libretti/${matId}/righe/${activityChoiceId}/prenotazioni", deserializer = serializer<List<Esse3ExamSessionEnrollment>>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
             actorCode?.let { parameter("attoreCod", it) }
             q?.let { parameter("q", it.value) }
             order?.let { parameter("order", it) }
@@ -654,7 +655,7 @@ class Esse3TranscriptApi(
         optionalFields: String? = null,
         filter: String? = null
     ): Esse3ExamSessionEnrollment {
-        return executeJsonGet<Esse3ExamSessionEnrollment>("/libretti/${matId}/righe/${activityChoiceId}/prenotazioni/${applicationListId}", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Get, "/libretti/${matId}/righe/${activityChoiceId}/prenotazioni/${applicationListId}", deserializer = serializer<Esse3ExamSessionEnrollment>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
             actorCode?.let { parameter("attoreCod", it) }
             q?.let { parameter("q", it.value) }
             order?.let { parameter("order", it) }
@@ -676,7 +677,7 @@ class Esse3TranscriptApi(
         activityChoiceId: Long,
         applicationListId: Long
     ): ByteReadChannel {
-        return executeStreamGet("/libretti/${matId}/righe/${activityChoiceId}/prenotazioni/${applicationListId}/attestato-di-presenza", setOf(Esse3PermissionLevel.STUDENT))
+        return stream(HttpMethod.Get, "/libretti/${matId}/righe/${activityChoiceId}/prenotazioni/${applicationListId}/attestato-di-presenza", roles = setOf(Esse3PermissionLevel.STUDENT))
     }
 
     /**
@@ -691,7 +692,7 @@ class Esse3TranscriptApi(
         activityChoiceId: Long,
         applicationListId: Long
     ): ByteReadChannel {
-        return executeStreamGet("/libretti/${matId}/righe/${activityChoiceId}/prenotazioni/${applicationListId}/statino-prenotazione", setOf(Esse3PermissionLevel.STUDENT))
+        return stream(HttpMethod.Get, "/libretti/${matId}/righe/${activityChoiceId}/prenotazioni/${applicationListId}/statino-prenotazione", roles = setOf(Esse3PermissionLevel.STUDENT))
     }
 
     /**
@@ -706,7 +707,7 @@ class Esse3TranscriptApi(
         activityChoiceId: Long,
         referenceDate: String? = null
     ): Esse3PrerequisitesCheck {
-        return executeJsonGet<Esse3PrerequisitesCheck>("/libretti/${matId}/righe/${activityChoiceId}/prop", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Get, "/libretti/${matId}/righe/${activityChoiceId}/prop", deserializer = serializer<Esse3PrerequisitesCheck>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             referenceDate?.let { parameter("dataRif", it) }
         }
     }
@@ -725,7 +726,7 @@ class Esse3TranscriptApi(
         fields: String? = null,
         order: String? = null
     ): List<Esse3TranscriptTest> {
-        return executeJsonGetList<Esse3TranscriptTest>("/libretti/${matId}/righe/${activityChoiceId}/prove", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/libretti/${matId}/righe/${activityChoiceId}/prove", deserializer = serializer<List<Esse3TranscriptTest>>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             fields?.let { parameter("fields", it) }
             order?.let { parameter("order", it) }
         }
@@ -743,7 +744,7 @@ class Esse3TranscriptApi(
         activityChoiceId: Long,
         activityRegulationId: Long
     ): Esse3TranscriptTest {
-        return executeJsonGet<Esse3TranscriptTest>("/libretti/${matId}/righe/${activityChoiceId}/prove/${activityRegulationId}", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER))
+        return json(HttpMethod.Get, "/libretti/${matId}/righe/${activityChoiceId}/prove/${activityRegulationId}", deserializer = serializer<Esse3TranscriptTest>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER))
     }
 
     /**
@@ -762,7 +763,7 @@ class Esse3TranscriptApi(
         optionalFields: String? = null,
         type: Esse3RecordBookRecognitionType? = null
     ): Esse3TranscriptRow {
-        return executeJsonPut<Esse3TranscriptRow>("/libretti/${matId}/righe/${activityChoiceId}/riconoscimento", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Put, "/libretti/${matId}/righe/${activityChoiceId}/riconoscimento", deserializer = serializer<Esse3TranscriptRow>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
             optionalFields?.let { parameter("optionalFields", it) }
@@ -782,7 +783,7 @@ class Esse3TranscriptApi(
         activityChoiceId: Long,
         optionalFields: String? = null
     ): Esse3TranscriptRow {
-        return executeJsonDelete<Esse3TranscriptRow>("/libretti/${matId}/righe/${activityChoiceId}/riconoscimento", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Delete, "/libretti/${matId}/righe/${activityChoiceId}/riconoscimento", deserializer = serializer<Esse3TranscriptRow>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             optionalFields?.let { parameter("optionalFields", it) }
         }
     }
@@ -803,7 +804,7 @@ class Esse3TranscriptApi(
         order: String? = null,
         filter: String? = null
     ): List<Esse3AttendanceReleaseDetail> {
-        return executeJsonGetList<Esse3AttendanceReleaseDetail>("/libretti/${matId}/righe/${activityChoiceId}/rilevazioni-in-aula/${choiceReleaseId}/eventi", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/libretti/${matId}/righe/${activityChoiceId}/rilevazioni-in-aula/${choiceReleaseId}/eventi", deserializer = serializer<List<Esse3AttendanceReleaseDetail>>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             order?.let { parameter("order", it) }
             filter?.let { parameter("filter", it) }
         }
@@ -823,7 +824,7 @@ class Esse3TranscriptApi(
         fields: String? = null,
         order: String? = null
     ): List<Esse3TranscriptSegment> {
-        return executeJsonGetList<Esse3TranscriptSegment>("/libretti/${matId}/righe/${activityChoiceId}/segmenti", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/libretti/${matId}/righe/${activityChoiceId}/segmenti", deserializer = serializer<List<Esse3TranscriptSegment>>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             fields?.let { parameter("fields", it) }
             order?.let { parameter("order", it) }
         }
@@ -841,7 +842,7 @@ class Esse3TranscriptApi(
         activityChoiceId: Long,
         segmentChoiceId: Long
     ): Esse3TranscriptSegment {
-        return executeJsonGet<Esse3TranscriptSegment>("/libretti/${matId}/righe/${activityChoiceId}/segmenti/${segmentChoiceId}", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER))
+        return json(HttpMethod.Get, "/libretti/${matId}/righe/${activityChoiceId}/segmenti/${segmentChoiceId}", deserializer = serializer<Esse3TranscriptSegment>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -858,7 +859,7 @@ class Esse3TranscriptApi(
         fields: String? = null,
         order: String? = null
     ): List<Esse3SyllabusActivityTranscript> {
-        return executeJsonGetList<Esse3SyllabusActivityTranscript>("/libretti/${matId}/righe/${activityChoiceId}/syllabus/AD", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/libretti/${matId}/righe/${activityChoiceId}/syllabus/AD", deserializer = serializer<List<Esse3SyllabusActivityTranscript>>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             fields?.let { parameter("fields", it) }
             order?.let { parameter("order", it) }
         }
@@ -878,7 +879,7 @@ class Esse3TranscriptApi(
         fields: String? = null,
         order: String? = null
     ): List<Esse3SyllabusTeachingUnitTranscript> {
-        return executeJsonGetList<Esse3SyllabusTeachingUnitTranscript>("/libretti/${matId}/righe/${activityChoiceId}/syllabus/UD", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/libretti/${matId}/righe/${activityChoiceId}/syllabus/UD", deserializer = serializer<List<Esse3SyllabusTeachingUnitTranscript>>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             fields?.let { parameter("fields", it) }
             order?.let { parameter("order", it) }
         }
@@ -902,7 +903,7 @@ class Esse3TranscriptApi(
         start: Int? = null,
         limit: Int? = null
     ): List<Esse3TranscriptSegment> {
-        return executeJsonGetList<Esse3TranscriptSegment>("/libretti/${matId}/segmenti", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/libretti/${matId}/segmenti", deserializer = serializer<List<Esse3TranscriptSegment>>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             nonDeletableActivities?.let { parameter("adNonCancellabili", it) }
             fields?.let { parameter("fields", it) }
             order?.let { parameter("order", it) }
@@ -929,7 +930,7 @@ class Esse3TranscriptApi(
         pathRulesReason: Esse3RecordBookStatsRuleFilter? = null,
         dataOriginReason: Esse3RecordBookStatsDataOriginFilter? = null
     ): Esse3TranscriptStats {
-        return executeJsonGet<Esse3TranscriptStats>("/libretti/${matId}/stats", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Get, "/libretti/${matId}/stats", deserializer = serializer<Esse3TranscriptStats>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             optionalFields?.let { parameter("optionalFields", it) }
             initialAveragesReferenceDate?.let { parameter("dataRifMedieIni", it) }
             finalAveragesReferenceDate?.let { parameter("dataRifMedieFin", it) }

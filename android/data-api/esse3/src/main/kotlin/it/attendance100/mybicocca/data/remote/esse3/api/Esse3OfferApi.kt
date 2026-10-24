@@ -5,6 +5,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
+import io.ktor.http.HttpMethod
 import io.ktor.http.contentType
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3ActivitiesCountPlans
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3ActivitiesCountPlansFilters
@@ -25,12 +26,14 @@ import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3PermissionLevel
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3QuestionStateCode
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3TeachersPerTeachingUnit
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3UpdateContextualizedActivity
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
 
 class Esse3OfferApi(
     client: HttpClient,
     json: Json
-) : Esse3AbstractApi(client, json, "/offerta-service-v1") {
+) : RestApi(client, json, "/offerta-service-v1", Esse3Runtime.policy) {
 
     /**
      * Recupera i raggruppamenti delle AD.
@@ -44,7 +47,7 @@ class Esse3OfferApi(
         courseOfStudyCode: String? = null,
         activityCode: String? = null
     ): List<Esse3ActivityParentGroup> {
-        return executeJsonGetList<Esse3ActivityParentGroup>("/ad-raggruppate", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/ad-raggruppate", deserializer = serializer<List<Esse3ActivityParentGroup>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             parameter("annoCoorte", cohortYear)
             courseOfStudyCode?.let { parameter("cdsCod", it) }
             activityCode?.let { parameter("adCod", it) }
@@ -69,7 +72,7 @@ class Esse3OfferApi(
         limit: Int? = null,
         order: String? = null
     ): List<Esse3GenericActivity> {
-        return executeJsonGetList<Esse3GenericActivity>("/attivitaGeneriche", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/attivitaGeneriche", deserializer = serializer<List<Esse3GenericActivity>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             activityId?.let { parameter("adId", it) }
             activityCode?.let { parameter("adCod", it) }
             activityDescription?.let { parameter("adDes", it) }
@@ -95,7 +98,7 @@ class Esse3OfferApi(
         limit: Int? = null,
         order: String? = null
     ): List<Esse3FullPartitions> {
-        return executeJsonGetList<Esse3FullPartitions>("/dominiPartizione", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/dominiPartizione", deserializer = serializer<List<Esse3FullPartitions>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             invoicePartialCode?.let { parameter("fatPartCod", it) }
             invoicePartialDescription?.let { parameter("fatPartDes", it) }
             start?.let { parameter("start", it) }
@@ -120,7 +123,7 @@ class Esse3OfferApi(
         limit: Int? = null,
         order: String? = null
     ): List<Esse3PartitionFactor> {
-        return executeJsonGetList<Esse3PartitionFactor>("/fattoriPartizione", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/fattoriPartizione", deserializer = serializer<List<Esse3PartitionFactor>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             invoicePartialCode?.let { parameter("fatPartCod", it) }
             invoicePartialDescription?.let { parameter("fatPartDes", it) }
             start?.let { parameter("start", it) }
@@ -157,7 +160,7 @@ class Esse3OfferApi(
         limit: Int? = null,
         order: String? = null
     ): List<Esse3Offer> {
-        return executeJsonGetList<Esse3Offer>("/offerte", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/offerte", deserializer = serializer<List<Esse3Offer>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             academicYearOfferId?.let { parameter("aaOffId", it) }
             courseOfStudyCode?.let { parameter("cdsCod", it) }
             courseOfStudyDescription?.let { parameter("cdsDes", it) }
@@ -192,7 +195,7 @@ class Esse3OfferApi(
         activityCode: String? = null,
         teachingUnitCode: String? = null
     ): Esse3ActivityDeletable {
-        return executeJsonGet<Esse3ActivityDeletable>("/offerte/attivita/cancellabile", setOf(Esse3PermissionLevel.ANY)) {
+        return json(HttpMethod.Get, "/offerte/attivita/cancellabile", deserializer = serializer<Esse3ActivityDeletable>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             activityFunctionId?.let { parameter("afId", it) }
             academicYearOfferId?.let { parameter("aaOffId", it) }
             courseOfStudyCode?.let { parameter("cdsCod", it) }
@@ -211,7 +214,7 @@ class Esse3OfferApi(
     suspend fun putActivityPlanCount(
         body: Esse3ActivitiesCountPlansFilters
     ): Esse3ActivitiesCountPlans {
-        return executeJsonPut<Esse3ActivitiesCountPlans>("/offerte/attivita/conteggio-piani", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Put, "/offerte/attivita/conteggio-piani", deserializer = serializer<Esse3ActivitiesCountPlans>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -247,7 +250,7 @@ class Esse3OfferApi(
         limit: Int? = null,
         order: String? = null
     ): List<Esse3ContextualizedActivity> {
-        return executeJsonGetList<Esse3ContextualizedActivity>("/offerte/${academicYearOfferId}/${courseOfStudyOfferId}/attivita", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/offerte/${academicYearOfferId}/${courseOfStudyOfferId}/attivita", deserializer = serializer<List<Esse3ContextualizedActivity>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             academicYearOrderId?.let { parameter("aaOrdId", it) }
             studyPlanId?.let { parameter("pdsId", it) }
             studyPlanCode?.let { parameter("pdsCod", it) }
@@ -287,7 +290,7 @@ class Esse3OfferApi(
         limit: Int? = null,
         order: String? = null
     ): List<Esse3OfferActivityDeletable> {
-        return executeJsonGetList<Esse3OfferActivityDeletable>("/offerte/${academicYearOfferId}/${courseOfStudyOfferId}/attivita/cancellabile", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/offerte/${academicYearOfferId}/${courseOfStudyOfferId}/attivita/cancellabile", deserializer = serializer<List<Esse3OfferActivityDeletable>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             academicYearOrderId?.let { parameter("aaOrdId", it) }
             studyPlanId?.let { parameter("pdsId", it) }
             studyPlanCode?.let { parameter("pdsCod", it) }
@@ -317,7 +320,7 @@ class Esse3OfferApi(
         activityOfferId: Long,
         body: Esse3UpdateContextualizedActivity
     ): Esse3ContextualizedActivity {
-        return executeJsonPatch<Esse3ContextualizedActivity>("/offerte/${academicYearOfferId}/${courseOfStudyOfferId}/attivita/${academicYearOrderOfferId}/${studyPlanOfferId}/${activityOfferId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Patch, "/offerte/${academicYearOfferId}/${courseOfStudyOfferId}/attivita/${academicYearOrderOfferId}/${studyPlanOfferId}/${activityOfferId}", deserializer = serializer<Esse3ContextualizedActivity>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -357,7 +360,7 @@ class Esse3OfferApi(
         lecturerName: String? = null,
         order: String? = null
     ): List<Esse3TeachersPerTeachingUnit> {
-        return executeJsonGetList<Esse3TeachersPerTeachingUnit>("/offerte/${academicYearOfferId}/${courseOfStudyOfferId}/docentiPerUD", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/offerte/${academicYearOfferId}/${courseOfStudyOfferId}/docentiPerUD", deserializer = serializer<List<Esse3TeachersPerTeachingUnit>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             academicYearOrderId?.let { parameter("aaOrdId", it) }
             studyPlanId?.let { parameter("pdsId", it) }
             studyPlanCode?.let { parameter("pdsCod", it) }
@@ -403,7 +406,7 @@ class Esse3OfferApi(
         limit: Int? = null,
         order: String? = null
     ): List<Esse3ContextualizedTeachingUnit> {
-        return executeJsonGetList<Esse3ContextualizedTeachingUnit>("/offerte/${academicYearOfferId}/${courseOfStudyOfferId}/moduli", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/offerte/${academicYearOfferId}/${courseOfStudyOfferId}/moduli", deserializer = serializer<List<Esse3ContextualizedTeachingUnit>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             academicYearOrderId?.let { parameter("aaOrdId", it) }
             studyPlanId?.let { parameter("pdsId", it) }
             studyPlanCode?.let { parameter("pdsCod", it) }
@@ -447,7 +450,7 @@ class Esse3OfferApi(
         limit: Int? = null,
         order: String? = null
     ): List<Esse3OfferTeachingUnitDeletable> {
-        return executeJsonGetList<Esse3OfferTeachingUnitDeletable>("/offerte/${academicYearOfferId}/${courseOfStudyOfferId}/moduli/cancellabili", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/offerte/${academicYearOfferId}/${courseOfStudyOfferId}/moduli/cancellabili", deserializer = serializer<List<Esse3OfferTeachingUnitDeletable>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             academicYearOrderId?.let { parameter("aaOrdId", it) }
             studyPlanId?.let { parameter("pdsId", it) }
             studyPlanCode?.let { parameter("pdsCod", it) }
@@ -497,7 +500,7 @@ class Esse3OfferApi(
         limit: Int? = null,
         order: String? = null
     ): List<Esse3ContextualizedSegment> {
-        return executeJsonGetList<Esse3ContextualizedSegment>("/offerte/${academicYearOfferId}/${courseOfStudyOfferId}/segmenti", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/offerte/${academicYearOfferId}/${courseOfStudyOfferId}/segmenti", deserializer = serializer<List<Esse3ContextualizedSegment>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             academicYearOrderId?.let { parameter("aaOrdId", it) }
             studyPlanId?.let { parameter("pdsId", it) }
             studyPlanCode?.let { parameter("pdsCod", it) }
@@ -530,7 +533,7 @@ class Esse3OfferApi(
         studyPlanOfferId: Long,
         activityOfferId: Long
     ): Esse3ContextualizedActivity {
-        return executeJsonGet<Esse3ContextualizedActivity>("/offerte/${academicYearOfferId}/${courseOfStudyOfferId}/${academicYearOrderOfferId}/${studyPlanOfferId}/${activityOfferId}", setOf(Esse3PermissionLevel.ANY))
+        return json(HttpMethod.Get, "/offerte/${academicYearOfferId}/${courseOfStudyOfferId}/${academicYearOrderOfferId}/${studyPlanOfferId}/${activityOfferId}", deserializer = serializer<Esse3ContextualizedActivity>(), roles = setOf(Esse3PermissionLevel.ANY))
     }
 
     /**
@@ -547,7 +550,7 @@ class Esse3OfferApi(
         limit: Int? = null,
         order: String? = null
     ): List<Esse3DeletedOffer> {
-        return executeJsonGetList<Esse3DeletedOffer>("/offerteEliminate", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/offerteEliminate", deserializer = serializer<List<Esse3DeletedOffer>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             odModificationDate?.let { parameter("dataModOd", it) }
             start?.let { parameter("start", it) }
             limit?.let { parameter("limit", it) }
@@ -583,7 +586,7 @@ class Esse3OfferApi(
         order: String? = null,
         fields: String? = null
     ): Esse3OfferWithDetails {
-        return executeJsonGet<Esse3OfferWithDetails>("/offerteFull/${academicYearOfferId}/${courseOfStudyOfferId}/", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Get, "/offerteFull/${academicYearOfferId}/${courseOfStudyOfferId}/", deserializer = serializer<Esse3OfferWithDetails>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             academicYearOrderId?.let { parameter("aaOrdId", it) }
             studyPlanId?.let { parameter("pdsId", it) }
             studyPlanCode?.let { parameter("pdsCod", it) }

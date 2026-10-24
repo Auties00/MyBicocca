@@ -14,7 +14,7 @@ import it.attendance100.mybicocca.codegen.model.TypeRef
  * Chooses the serializer of every value kotlinx.serialization can't read with its defaults,
  * and emits the ones the API needs into `<Prefix>Serializers.kt`:
  *
- * - dates and times use the runtime's serializers (see [TemporalSerializers]);
+ * - dates and times use a serializer per format, named by [TemporalSerializers];
  * - booleans use `<Prefix>BooleanSerializer`, which also reads `0`/`1` and strings;
  * - maps use `<Prefix>MapSerializer`, which also reads PHP's `[]` and arrays of objects;
  * - [Codec.BlankAsNull], [Codec.FoldedObject], [Codec.EmbeddedJson], [Codec.EpochSeconds],
@@ -63,12 +63,21 @@ internal class KotlinSerializers(
     /** Every type a serializer may be needed for: the fields', and the responses' that [isLenient]. */
     private val types: List<TypeRef> = fields.map { it.type } + responseTypes.filter(::isLenient)
 
+    /**
+     * The date and time serializers records and responses named so far, emitted when they are in
+     * the `dto` package; so [emit] runs after the records and modules are emitted.
+     */
+    private val usedTemporalSerializers = linkedMapOf<String, TemporalSerializer>()
+
+    private val temporalSerializers: List<TemporalSerializer>
+        get() = usedTemporalSerializers.values.filter { '.' !in it.serializer }
+
     private val usesBrackets: Boolean =
         spec.modules.any { module -> module.operations.any { operation -> operation.parameters.any { it.encoding == ParameterEncoding.BRACKETS } } }
 
     /** Whether the API needs any of the declarations this class emits. */
     val isNeeded: Boolean
-        get() = usesBrackets ||
+        get() = usesBrackets || temporalSerializers.isNotEmpty() ||
             fields.any { field -> field.codec.let { it != null && it !is Codec.Temporal && it !is Codec.EmbeddedHtml } } ||
                 types.any { type -> type.contains { isBoolean(it) || it is TypeRef.MapOf } }
 
@@ -118,7 +127,9 @@ internal class KotlinSerializers(
 
     private fun temporal(type: TypeRef, codec: Codec.Temporal, nullable: Boolean, where: String): String {
         val kind = (type as? TypeRef.Primitive)?.kind?.takeIf { it.isTemporal } ?: error("'$where' has a temporal codec but isn't a date or time")
-        return temporal.find(kind, codec, nullable)
+        val serializer = temporal.serializer(kind, codec, nullable)
+        usedTemporalSerializers.putIfAbsent(serializer.serializer, serializer)
+        return serializer.serializer
     }
 
     /** Imports [name] when it's qualified, and returns its simple name. */
@@ -182,6 +193,7 @@ internal class KotlinSerializers(
     fun emit(file: KotlinFile) {
         val out = file.body
         val sections = buildList<CodeWriter.() -> Unit> {
+            for (serializer in temporalSerializers) add { temporalSerializer(serializer, file) }
             if (types.any { type -> type.contains(::isBoolean) }) add { booleanSerializer(file) }
             val folding = fields.any { field -> field.codec == Codec.FoldedObject } || types.any { type -> type.contains { it is TypeRef.MapOf } }
             if (types.any { type -> type.contains { it is TypeRef.MapOf } }) add { mapSerializer(file) }
@@ -200,6 +212,55 @@ internal class KotlinSerializers(
     private fun recordsWith(codec: Codec): List<RecordType> =
         fields.filter { it.codec == codec }.map { (it.type as TypeRef.Named).name }.distinct()
             .map { spec.resolve(TypeRef.Named(it)) as RecordType }
+
+    /**
+     * A serializer of dates or times written with one pattern. One reading blank strings as no
+     * value is nullable, and also reads `null` and values that aren't strings as no value.
+     */
+    private fun CodeWriter.temporalSerializer(serializer: TemporalSerializer, file: KotlinFile) {
+        val type = when (serializer.kind) {
+            PrimitiveKind.LOCAL_DATE -> "LocalDate"
+            PrimitiveKind.LOCAL_DATE_TIME -> "LocalDateTime"
+            PrimitiveKind.LOCAL_TIME -> "LocalTime"
+            else -> error("${serializer.kind} isn't a date or time")
+        }
+        importAll(file, "kotlinx.serialization.KSerializer", PRIMITIVE_KIND, PRIMITIVE_DESCRIPTOR, DECODER, ENCODER, "java.time.$type", "java.time.format.DateTimeFormatter")
+        val name = serializer.serializer
+        val what = if (serializer.kind == PrimitiveKind.LOCAL_TIME) "Times" else if (serializer.kind == PrimitiveKind.LOCAL_DATE) "Dates" else "Dates and times"
+        val pattern = KotlinSyntax.string(serializer.pattern)
+        if (serializer.blankAsNull) {
+            importAll(file, JSON_DECODER, JSON_PRIMITIVE, "kotlinx.serialization.descriptors.nullable")
+            line("/** $what written `${KotlinSyntax.docText(serializer.pattern)}`; blank strings, `null` and values that aren't strings mean no value. */")
+            block("object $name : KSerializer<$type?> {") {
+                line("private val formatter = DateTimeFormatter.ofPattern($pattern)")
+                line()
+                line("override val descriptor = PrimitiveSerialDescriptor(${KotlinSyntax.string(name)}, PrimitiveKind.STRING).nullable")
+                line()
+                line("override fun serialize(encoder: Encoder, value: $type?) = encoder.encodeString(value?.format(formatter).orEmpty())")
+                line()
+                block("override fun deserialize(decoder: Decoder): $type? {") {
+                    line("val text = when (decoder) {")
+                    indent {
+                        line("is JsonDecoder -> (decoder.decodeJsonElement() as? JsonPrimitive)?.takeIf { it.isString }?.content")
+                        line("else -> decoder.decodeString()")
+                    }
+                    line("}")
+                    line("return text?.takeUnless { it.isBlank() || it == \"null\" }?.let { $type.parse(it, formatter) }")
+                }
+            }
+        } else {
+            line("/** $what written `${KotlinSyntax.docText(serializer.pattern)}`. */")
+            block("object $name : KSerializer<$type> {") {
+                line("private val formatter = DateTimeFormatter.ofPattern($pattern)")
+                line()
+                line("override val descriptor = PrimitiveSerialDescriptor(${KotlinSyntax.string(name)}, PrimitiveKind.STRING)")
+                line()
+                line("override fun serialize(encoder: Encoder, value: $type) = encoder.encodeString(value.format(formatter))")
+                line()
+                line("override fun deserialize(decoder: Decoder): $type = $type.parse(decoder.decodeString(), formatter)")
+            }
+        }
+    }
 
     private fun CodeWriter.booleanSerializer(file: KotlinFile) {
         importAll(file, "kotlinx.serialization.KSerializer", "kotlinx.serialization.SerializationException", PRIMITIVE_KIND, PRIMITIVE_DESCRIPTOR, DECODER, ENCODER, JSON_DECODER, JSON_PRIMITIVE, "kotlinx.serialization.json.JsonNull")

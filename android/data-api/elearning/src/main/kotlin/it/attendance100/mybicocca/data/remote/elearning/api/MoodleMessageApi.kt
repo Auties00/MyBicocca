@@ -6,6 +6,7 @@ import io.ktor.client.request.forms.FormDataContent
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
+import io.ktor.http.HttpMethod
 import io.ktor.http.parameters
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleConversationMessages
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleConversationsResponse
@@ -15,13 +16,15 @@ import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleUnreadConversationCounts
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleWarning
 import it.attendance100.mybicocca.data.remote.elearning.dto.appendBrackets
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.serializer
 
 class MoodleMessageApi(
     client: HttpClient,
     json: Json
-) : MoodleAbstractApi(client, json, "") {
+) : RestApi(client, json, "", MoodleRuntime.policy) {
 
     /**
      * Blocks a user
@@ -35,7 +38,7 @@ class MoodleMessageApi(
         blockedUserId: Int,
         auth: MoodleTokenAuth
     ): List<MoodleWarning> {
-        return executeJsonPostList<MoodleWarning>("/webservice/rest/server.php") {
+        return jsonList(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<List<MoodleWarning>>()) {
             setBody(FormDataContent(parameters {
                 append("userid", userId.toString())
                 append("blockeduserid", blockedUserId.toString())
@@ -59,7 +62,7 @@ class MoodleMessageApi(
         conversationIds: List<Int>,
         auth: MoodleTokenAuth
     ): List<MoodleWarning> {
-        return executeJsonPostList<MoodleWarning>("/webservice/rest/server.php") {
+        return jsonList(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<List<MoodleWarning>>()) {
             setBody(FormDataContent(parameters {
                 append("userid", userId.toString())
                 appendBrackets("conversationids", json.encodeToJsonElement(conversationIds))
@@ -91,7 +94,7 @@ class MoodleMessageApi(
         timeFrom: Long? = null,
         auth: MoodleTokenAuth
     ): MoodleConversationMessages {
-        return executeJsonPost<MoodleConversationMessages>("/webservice/rest/server.php") {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleConversationMessages>()) {
             setBody(FormDataContent(parameters {
                 append("currentuserid", currentUserId.toString())
                 append("convid", conversationId.toString())
@@ -127,7 +130,7 @@ class MoodleMessageApi(
         mergeSelf: Boolean? = null,
         auth: MoodleTokenAuth
     ): MoodleConversationsResponse {
-        return executeJsonPost<MoodleConversationsResponse>("/webservice/rest/server.php") {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleConversationsResponse>()) {
             setBody(FormDataContent(parameters {
                 append("userid", userId.toString())
                 limitFrom?.let { append("limitfrom", it.toString()) }
@@ -153,7 +156,7 @@ class MoodleMessageApi(
         userId: Int? = null,
         auth: MoodleTokenAuth
     ): MoodleUnreadConversationCounts {
-        return executeJsonPost<MoodleUnreadConversationCounts>("/webservice/rest/server.php") {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleUnreadConversationCounts>()) {
             setBody(FormDataContent(parameters {
                 userId?.let { append("userid", it.toString()) }
                 auth.form.forEach { (name, value) -> append(name, value) }
@@ -176,7 +179,7 @@ class MoodleMessageApi(
         conversationId: Int,
         auth: MoodleTokenAuth
     ) {
-        val response = executePost("/webservice/rest/server.php") {
+        send(HttpMethod.Post, "/webservice/rest/server.php") {
             setBody(FormDataContent(parameters {
                 append("userid", userId.toString())
                 append("conversationid", conversationId.toString())
@@ -186,7 +189,6 @@ class MoodleMessageApi(
             parameter("moodlewsrestformat", "json")
             auth.headers.forEach { (name, value) -> header(name, value) }
         }
-        ensureSuccess(response)
     }
 
     /**
@@ -198,7 +200,7 @@ class MoodleMessageApi(
         messages: List<MoodleOutgoingMessage>,
         auth: MoodleTokenAuth
     ): List<MoodleSentMessage> {
-        return executeJsonPostList<MoodleSentMessage>("/webservice/rest/server.php") {
+        return jsonList(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<List<MoodleSentMessage>>()) {
             setBody(FormDataContent(parameters {
                 appendBrackets("messages", json.encodeToJsonElement(messages))
                 auth.form.forEach { (name, value) -> append(name, value) }
@@ -221,7 +223,7 @@ class MoodleMessageApi(
         unblockedUserId: Int,
         auth: MoodleTokenAuth
     ): List<MoodleWarning> {
-        return executeJsonPostList<MoodleWarning>("/webservice/rest/server.php") {
+        return jsonList(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<List<MoodleWarning>>()) {
             setBody(FormDataContent(parameters {
                 append("userid", userId.toString())
                 append("unblockeduserid", unblockedUserId.toString())

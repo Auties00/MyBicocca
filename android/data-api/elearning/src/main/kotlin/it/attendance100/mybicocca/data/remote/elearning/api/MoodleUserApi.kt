@@ -6,6 +6,7 @@ import io.ktor.client.request.forms.FormDataContent
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
+import io.ktor.http.HttpMethod
 import io.ktor.http.parameters
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseUserProfile
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseUserReference
@@ -18,13 +19,15 @@ import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleUser
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleUserPreferencesResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleWarning
 import it.attendance100.mybicocca.data.remote.elearning.dto.appendBrackets
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.serializer
 
 class MoodleUserApi(
     client: HttpClient,
     json: Json
-) : MoodleAbstractApi(client, json, "") {
+) : RestApi(client, json, "", MoodleRuntime.policy) {
 
     /**
      * Store mobile user devices information for PUSH Notifications.
@@ -50,7 +53,7 @@ class MoodleUserApi(
         publicKey: String? = null,
         auth: MoodleTokenAuth
     ): List<List<MoodleWarning>> {
-        return executeJsonPostList<List<MoodleWarning>>("/webservice/rest/server.php") {
+        return jsonList(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<List<List<MoodleWarning>>>()) {
             setBody(FormDataContent(parameters {
                 append("appid", appId)
                 append("name", name)
@@ -77,7 +80,7 @@ class MoodleUserApi(
         userList: List<MoodleCourseUserReference>,
         auth: MoodleTokenAuth
     ): List<MoodleCourseUserProfile> {
-        return executeJsonPostList<MoodleCourseUserProfile>("/webservice/rest/server.php") {
+        return jsonList(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<List<MoodleCourseUserProfile>>()) {
             setBody(FormDataContent(parameters {
                 appendBrackets("userlist", json.encodeToJsonElement(userList))
                 auth.form.forEach { (name, value) -> append(name, value) }
@@ -98,7 +101,7 @@ class MoodleUserApi(
         userId: Int? = null,
         auth: MoodleTokenAuth
     ): MoodlePrivateFilesInfo {
-        return executeJsonPost<MoodlePrivateFilesInfo>("/webservice/rest/server.php") {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodlePrivateFilesInfo>()) {
             setBody(FormDataContent(parameters {
                 userId?.let { append("userid", it.toString()) }
                 auth.form.forEach { (name, value) -> append(name, value) }
@@ -121,7 +124,7 @@ class MoodleUserApi(
         userId: Int? = null,
         auth: MoodleTokenAuth
     ): MoodleUserPreferencesResponse {
-        return executeJsonPost<MoodleUserPreferencesResponse>("/webservice/rest/server.php") {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleUserPreferencesResponse>()) {
             setBody(FormDataContent(parameters {
                 name?.let { append("name", it) }
                 userId?.let { append("userid", it.toString()) }
@@ -144,7 +147,7 @@ class MoodleUserApi(
         values: List<String>,
         auth: MoodleTokenAuth
     ): List<MoodleUser> {
-        return executeJsonPostList<MoodleUser>("/webservice/rest/server.php") {
+        return jsonList(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<List<MoodleUser>>()) {
             setBody(FormDataContent(parameters {
                 append("field", field)
                 appendBrackets("values", json.encodeToJsonElement(values))
@@ -168,7 +171,7 @@ class MoodleUserApi(
         appId: String? = null,
         auth: MoodleTokenAuth
     ): MoodleRemoveUserDeviceResponse {
-        return executeJsonPost<MoodleRemoveUserDeviceResponse>("/webservice/rest/server.php") {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleRemoveUserDeviceResponse>()) {
             setBody(FormDataContent(parameters {
                 append("uuid", uuid)
                 appId?.let { append("appid", it) }
@@ -194,7 +197,7 @@ class MoodleUserApi(
         preferences: List<MoodlePreferenceUpdate>? = null,
         auth: MoodleTokenAuth
     ) {
-        val response = executePost("/webservice/rest/server.php") {
+        send(HttpMethod.Post, "/webservice/rest/server.php") {
             setBody(FormDataContent(parameters {
                 userId?.let { append("userid", it.toString()) }
                 emailStop?.let { append("emailstop", it.toString()) }
@@ -205,7 +208,6 @@ class MoodleUserApi(
             parameter("moodlewsrestformat", "json")
             auth.headers.forEach { (name, value) -> header(name, value) }
         }
-        ensureSuccess(response)
     }
 
     /**
@@ -220,7 +222,7 @@ class MoodleUserApi(
         courseId: Int? = null,
         auth: MoodleTokenAuth
     ): MoodleStatusResponse {
-        return executeJsonPost<MoodleStatusResponse>("/webservice/rest/server.php") {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleStatusResponse>()) {
             setBody(FormDataContent(parameters {
                 append("userid", userId.toString())
                 courseId?.let { append("courseid", it.toString()) }

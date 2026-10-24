@@ -6,6 +6,7 @@ import io.ktor.client.request.forms.FormDataContent
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
+import io.ktor.http.HttpMethod
 import io.ktor.http.parameters
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAssignmentsResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleStatusResponse
@@ -14,13 +15,15 @@ import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleSubmissionStat
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleWarning
 import it.attendance100.mybicocca.data.remote.elearning.dto.appendBrackets
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.serializer
 
 class MoodleAssignApi(
     client: HttpClient,
     json: Json
-) : MoodleAbstractApi(client, json, "") {
+) : RestApi(client, json, "", MoodleRuntime.policy) {
 
     /**
      * Returns the courses and assignments for the users capability
@@ -36,7 +39,7 @@ class MoodleAssignApi(
         includeNotEnrolledCourses: Boolean? = null,
         auth: MoodleTokenAuth
     ): MoodleAssignmentsResponse {
-        return executeJsonPost<MoodleAssignmentsResponse>("/webservice/rest/server.php") {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleAssignmentsResponse>()) {
             setBody(FormDataContent(parameters {
                 courseIds?.let { appendBrackets("courseids", json.encodeToJsonElement(it)) }
                 capabilities?.let { appendBrackets("capabilities", json.encodeToJsonElement(it)) }
@@ -63,7 +66,7 @@ class MoodleAssignApi(
         groupId: Int? = null,
         auth: MoodleTokenAuth
     ): MoodleSubmissionStatus {
-        return executeJsonPost<MoodleSubmissionStatus>("/webservice/rest/server.php") {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleSubmissionStatus>()) {
             setBody(FormDataContent(parameters {
                 append("assignid", assignId.toString())
                 userId?.let { append("userid", it.toString()) }
@@ -88,7 +91,7 @@ class MoodleAssignApi(
         assignId: Int,
         auth: MoodleTokenAuth
     ): MoodleStatusResponse {
-        return executeJsonPost<MoodleStatusResponse>("/webservice/rest/server.php") {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleStatusResponse>()) {
             setBody(FormDataContent(parameters {
                 append("userid", userId.toString())
                 append("assignid", assignId.toString())
@@ -111,7 +114,7 @@ class MoodleAssignApi(
         pluginData: MoodleSubmissionPluginData,
         auth: MoodleTokenAuth
     ): List<MoodleWarning> {
-        return executeJsonPostList<MoodleWarning>("/webservice/rest/server.php") {
+        return jsonList(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<List<MoodleWarning>>()) {
             setBody(FormDataContent(parameters {
                 append("assignmentid", assignmentId.toString())
                 appendBrackets("plugindata", json.encodeToJsonElement(pluginData))
@@ -135,7 +138,7 @@ class MoodleAssignApi(
         acceptSubmissionStatement: Boolean,
         auth: MoodleTokenAuth
     ): List<MoodleWarning> {
-        return executeJsonPostList<MoodleWarning>("/webservice/rest/server.php") {
+        return jsonList(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<List<MoodleWarning>>()) {
             setBody(FormDataContent(parameters {
                 append("assignmentid", assignmentId.toString())
                 appendBrackets("acceptsubmissionstatement", json.encodeToJsonElement(acceptSubmissionStatement))

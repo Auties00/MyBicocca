@@ -6,6 +6,7 @@ import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
+import io.ktor.http.HttpMethod
 import io.ktor.http.contentType
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesMapSearchResults
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesPlaylist
@@ -15,13 +16,15 @@ import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesSiteSearc
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesSiteSearchRequest
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesSuggestedCategory
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesSuggestedSite
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.serializer
 
 class AffluencesSearchApi(
     client: HttpClient,
     json: Json
-) : AffluencesAbstractApi(client, json, "") {
+) : RestApi(client, json, "", AffluencesRuntime.policy) {
 
     /**
      * Searches sites, playlists and categories by text.
@@ -29,7 +32,7 @@ class AffluencesSearchApi(
     suspend fun searchSites(
         query: String
     ): AffluencesSearchResults {
-        return executeJsonGet<AffluencesSearchResults>("/sites/search", server = AffluencesServer.AppV3, envelope = listOf("data")) {
+        return json(HttpMethod.Get, "/sites/search", deserializer = serializer<AffluencesSearchResults>(), server = AffluencesServer.AppV3.url, envelope = listOf("data")) {
             parameter("q", query)
         }
     }
@@ -40,7 +43,7 @@ class AffluencesSearchApi(
     suspend fun searchSitesFiltered(
         body: AffluencesSiteSearchRequest
     ): AffluencesSiteSearchPage {
-        return executeJsonPost<AffluencesSiteSearchPage>("/sites", server = AffluencesServer.AppV3, envelope = listOf("data")) {
+        return json(HttpMethod.Post, "/sites", deserializer = serializer<AffluencesSiteSearchPage>(), server = AffluencesServer.AppV3.url, envelope = listOf("data")) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -52,7 +55,7 @@ class AffluencesSearchApi(
     suspend fun searchSitesOnMap(
         body: AffluencesSiteSearchRequest
     ): AffluencesMapSearchResults {
-        return executeJsonPost<AffluencesMapSearchResults>("/sites/map", server = AffluencesServer.AppV3, envelope = listOf("data")) {
+        return json(HttpMethod.Post, "/sites/map", deserializer = serializer<AffluencesMapSearchResults>(), server = AffluencesServer.AppV3.url, envelope = listOf("data")) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -62,7 +65,7 @@ class AffluencesSearchApi(
      * Lists the categories and services sites can be filtered by.
      */
     suspend fun getSiteFilters(): AffluencesSiteFilters {
-        return executeJsonPost<AffluencesSiteFilters>("/sites/filters", server = AffluencesServer.AppV3, envelope = listOf("data")) {
+        return json(HttpMethod.Post, "/sites/filters", deserializer = serializer<AffluencesSiteFilters>(), server = AffluencesServer.AppV3.url, envelope = listOf("data")) {
             contentType(ContentType.Application.Json)
             setBody(JsonObject(emptyMap()))
         }
@@ -74,7 +77,7 @@ class AffluencesSearchApi(
     suspend fun getPlaylist(
         playlistId: Int
     ): AffluencesPlaylist {
-        return executeJsonGet<AffluencesPlaylist>("/sites/playlists/${playlistId}", server = AffluencesServer.AppV3, envelope = listOf("data"))
+        return json(HttpMethod.Get, "/sites/playlists/${playlistId}", deserializer = serializer<AffluencesPlaylist>(), server = AffluencesServer.AppV3.url, envelope = listOf("data"))
     }
 
     /**
@@ -85,7 +88,7 @@ class AffluencesSearchApi(
     suspend fun getSuggestedCategories(
         timeZone: String = "Europe/Rome"
     ): List<AffluencesSuggestedCategory> {
-        return executeJsonGetList<AffluencesSuggestedCategory>("/suggestions/categories", server = AffluencesServer.AppV3, envelope = listOf("data", "categories")) {
+        return jsonList(HttpMethod.Get, "/suggestions/categories", deserializer = serializer<List<AffluencesSuggestedCategory>>(), server = AffluencesServer.AppV3.url, envelope = listOf("data", "categories")) {
             header("X-TIMEZONE", timeZone)
         }
     }
@@ -100,7 +103,7 @@ class AffluencesSearchApi(
         highlighted: Boolean,
         timeZone: String = "Europe/Rome"
     ): List<AffluencesPlaylist> {
-        return executeJsonGetList<AffluencesPlaylist>("/suggestions/playlists", server = AffluencesServer.AppV3, envelope = listOf("data", "playlists")) {
+        return jsonList(HttpMethod.Get, "/suggestions/playlists", deserializer = serializer<List<AffluencesPlaylist>>(), server = AffluencesServer.AppV3.url, envelope = listOf("data", "playlists")) {
             parameter("highlighted", highlighted)
             header("X-TIMEZONE", timeZone)
         }
@@ -114,7 +117,7 @@ class AffluencesSearchApi(
     suspend fun getSuggestedSites(
         timeZone: String = "Europe/Rome"
     ): List<AffluencesSuggestedSite> {
-        return executeJsonGetList<AffluencesSuggestedSite>("/suggestions/sites", server = AffluencesServer.AppV3, envelope = listOf("data", "sites")) {
+        return jsonList(HttpMethod.Get, "/suggestions/sites", deserializer = serializer<List<AffluencesSuggestedSite>>(), server = AffluencesServer.AppV3.url, envelope = listOf("data", "sites")) {
             header("X-TIMEZONE", timeZone)
         }
     }

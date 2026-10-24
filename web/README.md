@@ -5,10 +5,11 @@ specs in [`../common`](../common):
 
 - `packages/runtime` (`@mybicocca/data-api-runtime`) — the hand-written runtime every SDK uses
   (dates, lenient decoding, requests over `fetch`)
-- `packages/affluences` (`@mybicocca/affluences`), `packages/easystaff-planning`
-  (`@mybicocca/easystaff-planning`), `packages/esse3` (`@mybicocca/esse3`) and
-  `packages/moodle` (`@mybicocca/moodle`) — generated sources in `src/generated` plus a
-  hand-written `client.ts` each
+- `packages/affluences` (`@mybicocca/affluences`), `packages/easystaff`
+  (`@mybicocca/easystaff`), `packages/easystaff-planning` (`@mybicocca/easystaff-planning`),
+  `packages/esse3` (`@mybicocca/esse3`), `packages/moodle` (`@mybicocca/moodle`) and
+  `packages/moodle-web` (`@mybicocca/moodle-web`) — generated sources in `src/generated`,
+  clients included; Portale Planning adds a few hand-written helpers
 
 ```ts
 import { createEsse3Api } from "@mybicocca/esse3";

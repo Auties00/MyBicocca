@@ -5,6 +5,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
+import io.ktor.http.HttpMethod
 import io.ktor.http.contentType
 import io.ktor.utils.io.ByteReadChannel
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3CareerPortion
@@ -14,12 +15,14 @@ import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3StudyPlan
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3StudyPlanHeader
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3StudyPlanStateFilter
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3StudyPlansStatistics
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
 
 class Esse3PlansApi(
     client: HttpClient,
     json: Json
-) : Esse3AbstractApi(client, json, "/piani-service-v1") {
+) : RestApi(client, json, "/piani-service-v1", Esse3Runtime.policy) {
 
     /**
      * matricole in cui è possibile trovare un piano di studio
@@ -55,7 +58,7 @@ class Esse3PlansApi(
         order: String? = null,
         fields: String? = null
     ): List<Esse3CareerPortion> {
-        return executeJsonGetList<Esse3CareerPortion>("/piani", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/piani", deserializer = serializer<List<Esse3CareerPortion>>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             matricola?.let { parameter("matricola", it) }
             courseOfStudyStudentId?.let { parameter("cdsStuId", it) }
             courseOfStudyStudentCode?.let { parameter("cdsStuCod", it) }
@@ -89,7 +92,7 @@ class Esse3PlansApi(
         courseTypeCode: String? = null,
         courseOfStudyCode: String? = null
     ): List<Esse3StudyPlansStatistics> {
-        return executeJsonGetList<Esse3StudyPlansStatistics>("/piani/stats", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/piani/stats", deserializer = serializer<List<Esse3StudyPlansStatistics>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             facultyCode?.let { parameter("facCod", it) }
             cohort?.let { parameter("coorte", it) }
             minimumCohort?.let { parameter("coorteMin", it) }
@@ -114,7 +117,7 @@ class Esse3PlansApi(
         fields: String? = null,
         optionalFields: String? = null
     ): List<Esse3StudyPlanHeader> {
-        return executeJsonGetList<Esse3StudyPlanHeader>("/piani/${studentId}", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/piani/${studentId}", deserializer = serializer<List<Esse3StudyPlanHeader>>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             planState?.let { parameter("statoPiano", it.value) }
             order?.let { parameter("order", it) }
             fields?.let { parameter("fields", it) }
@@ -132,11 +135,10 @@ class Esse3PlansApi(
         studentId: Long,
         body: Esse3PostPlanBody
     ) {
-        val response = executePost("/piani/${studentId}") {
+        send(HttpMethod.Post, "/piani/${studentId}", roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
-        ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -155,7 +157,7 @@ class Esse3PlansApi(
         optionalFields: String? = null,
         filter: String? = null
     ): Esse3StudyPlan {
-        return executeJsonGet<Esse3StudyPlan>("/piani/${studentId}/${planId}", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Get, "/piani/${studentId}/${planId}", deserializer = serializer<Esse3StudyPlan>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             fields?.let { parameter("fields", it) }
             optionalFields?.let { parameter("optionalFields", it) }
             filter?.let { parameter("filter", it) }
@@ -172,6 +174,6 @@ class Esse3PlansApi(
         studentId: Long,
         planId: Long
     ): ByteReadChannel {
-        return executeStreamGet("/piani/${studentId}/${planId}/stampa", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER))
+        return stream(HttpMethod.Get, "/piani/${studentId}/${planId}/stampa", roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER))
     }
 }

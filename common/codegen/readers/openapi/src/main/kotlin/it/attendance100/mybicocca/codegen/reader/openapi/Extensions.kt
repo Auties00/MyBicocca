@@ -13,6 +13,7 @@ import it.attendance100.mybicocca.codegen.model.AuthScheme
  * | root                  | `x-mb-prefix`        | Prefix of its declarations (e.g. `Affluences`).                   |
  * | root                  | `x-mb-parameters`    | API parameters, as `$ref`s to component parameters. Operations reference the path ones as usual; the reader drops those references. |
  * | root                  | `x-mb-headers`       | Headers every operation sends, before its own.                   |
+ * | root                  | `x-mb-client`        | How the client sends requests and reads failures (see [ClientSyntax]). |
  * | server                | `x-mb-name`          | PascalCase name of the server.                                    |
  * | components            | `x-mb-auth-schemes`  | Auth schemes: `{Name: {description, parameters: [{name, description}], headers: {Header: "Bearer {param}"}}}`. |
  * | operation             | `x-mb-auth`          | `{schemes: [Name, …], required: true}`.                          |
@@ -52,6 +53,7 @@ internal object Extensions {
     const val ID = "x-mb-id"
     const val PREFIX = "x-mb-prefix"
     const val PARAMETERS = "x-mb-parameters"
+    const val CLIENT = "x-mb-client"
     const val NAME = "x-mb-name"
     const val AUTH_SCHEMES = "x-mb-auth-schemes"
     const val AUTH = "x-mb-auth"

@@ -2,8 +2,11 @@
 package it.attendance100.mybicocca.data.remote.easystaff.dto
 
 import java.time.Instant
+import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
 import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.builtins.ListSerializer
@@ -21,6 +24,39 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.JsonTransformingSerializer
 import kotlinx.serialization.json.contentOrNull
+
+/** Dates written `yyyy-MM-dd`. */
+object EasyStaffIsoDateSerializer : KSerializer<LocalDate> {
+    private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+
+    override val descriptor = PrimitiveSerialDescriptor("EasyStaffIsoDateSerializer", PrimitiveKind.STRING)
+
+    override fun serialize(encoder: Encoder, value: LocalDate) = encoder.encodeString(value.format(formatter))
+
+    override fun deserialize(decoder: Decoder): LocalDate = LocalDate.parse(decoder.decodeString(), formatter)
+}
+
+/** Dates written `dd-MM-yyyy`. */
+object EasyStaffItalianDateSerializer : KSerializer<LocalDate> {
+    private val formatter = DateTimeFormatter.ofPattern("dd-MM-yyyy")
+
+    override val descriptor = PrimitiveSerialDescriptor("EasyStaffItalianDateSerializer", PrimitiveKind.STRING)
+
+    override fun serialize(encoder: Encoder, value: LocalDate) = encoder.encodeString(value.format(formatter))
+
+    override fun deserialize(decoder: Decoder): LocalDate = LocalDate.parse(decoder.decodeString(), formatter)
+}
+
+/** Times written `HH:mm`. */
+object EasyStaffTimeSerializer : KSerializer<LocalTime> {
+    private val formatter = DateTimeFormatter.ofPattern("HH:mm")
+
+    override val descriptor = PrimitiveSerialDescriptor("EasyStaffTimeSerializer", PrimitiveKind.STRING)
+
+    override fun serialize(encoder: Encoder, value: LocalTime) = encoder.encodeString(value.format(formatter))
+
+    override fun deserialize(decoder: Decoder): LocalTime = LocalTime.parse(decoder.decodeString(), formatter)
+}
 
 /** Booleans, also sent as `0`/`1` or as strings (`"true"`, `"1"`), as lenient servers send them. */
 object EasyStaffBooleanSerializer : KSerializer<Boolean> {

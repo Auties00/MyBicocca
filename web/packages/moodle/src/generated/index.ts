@@ -26,3 +26,4 @@ export * from "./MoodleMobileTypes.js";
 export * from "./MoodleMobileApi.js";
 export * from "./MoodleAuthTypes.js";
 export * from "./MoodleApi.js";
+export * from "./MoodleClient.js";

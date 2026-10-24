@@ -5,6 +5,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
+import io.ktor.http.HttpMethod
 import io.ktor.http.contentType
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3Batch
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3BatchRecord
@@ -15,13 +16,15 @@ import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3PermissionLevel
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3Record
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3RecordWithDetails
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3RecordsImportResponse
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.serializer
 
 class Esse3RecordsApi(
     client: HttpClient,
     json: Json
-) : Esse3AbstractApi(client, json, "/verbali-service-v1") {
+) : RestApi(client, json, "/verbali-service-v1", Esse3Runtime.policy) {
 
     /**
      * recupera le informazioni di un batch di importazione
@@ -43,7 +46,7 @@ class Esse3RecordsApi(
         limit: Int? = null,
         order: String? = null
     ): List<Esse3BatchRecord> {
-        return executeJsonGetList<Esse3BatchRecord>("/batches", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/batches", deserializer = serializer<List<Esse3BatchRecord>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             activityCode?.let { parameter("adCod", it) }
             courseOfStudyCode?.let { parameter("cdsCod", it) }
             toDate?.let { parameter("aData", it) }
@@ -62,7 +65,7 @@ class Esse3RecordsApi(
     suspend fun importMinutes(
         body: Esse3ImportBatch
     ): Esse3RecordsImportResponse {
-        return executeJsonPost<Esse3RecordsImportResponse>("/batches", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Post, "/batches", deserializer = serializer<Esse3RecordsImportResponse>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -77,7 +80,7 @@ class Esse3RecordsApi(
         uploadId: Long,
         body: JsonObject
     ): String {
-        return executeJsonPut<String>("/batches/upload/${uploadId}/blob", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Put, "/batches/upload/${uploadId}/blob", deserializer = serializer<String>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -91,7 +94,7 @@ class Esse3RecordsApi(
     suspend fun getBatch(
         batchId: Long
     ): Esse3BatchRecordWithDetails {
-        return executeJsonGet<Esse3BatchRecordWithDetails>("/batches/${batchId}", setOf(Esse3PermissionLevel.TECHNICAL_USER))
+        return json(HttpMethod.Get, "/batches/${batchId}", deserializer = serializer<Esse3BatchRecordWithDetails>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -128,7 +131,7 @@ class Esse3RecordsApi(
         fields: String? = null,
         order: String? = null
     ): List<Esse3Batch> {
-        return executeJsonGetList<Esse3Batch>("/lotti", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER)) {
+        return jsonList(HttpMethod.Get, "/lotti", deserializer = serializer<List<Esse3Batch>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER)) {
             studentMatricola?.let { parameter("matricolaStu", it) }
             lecturerMatricola?.let { parameter("matricolaDoc", it) }
             studentFiscalCode?.let { parameter("codFisStu", it) }
@@ -158,7 +161,7 @@ class Esse3RecordsApi(
         fields: String? = null,
         optionalFields: String? = null
     ): List<Esse3BatchWithDetails> {
-        return executeJsonGetList<Esse3BatchWithDetails>("/lotti/${lotBatchId}", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER)) {
+        return jsonList(HttpMethod.Get, "/lotti/${lotBatchId}", deserializer = serializer<List<Esse3BatchWithDetails>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER)) {
             fields?.let { parameter("fields", it) }
             optionalFields?.let { parameter("optionalFields", it) }
         }
@@ -178,7 +181,7 @@ class Esse3RecordsApi(
         fields: String? = null,
         optionalFields: String? = null
     ): List<Esse3RecordWithDetails> {
-        return executeJsonGetList<Esse3RecordWithDetails>("/lotti/${lotBatchId}/verbali", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER)) {
+        return jsonList(HttpMethod.Get, "/lotti/${lotBatchId}/verbali", deserializer = serializer<List<Esse3RecordWithDetails>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER)) {
             filter?.let { parameter("filter", it) }
             fields?.let { parameter("fields", it) }
             optionalFields?.let { parameter("optionalFields", it) }
@@ -199,7 +202,7 @@ class Esse3RecordsApi(
         fields: String? = null,
         optionalFields: String? = null
     ): Esse3RecordWithDetails {
-        return executeJsonGet<Esse3RecordWithDetails>("/lotti/${lotBatchId}/verbali/${minutesId}", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.STUDENT)) {
+        return json(HttpMethod.Get, "/lotti/${lotBatchId}/verbali/${minutesId}", deserializer = serializer<Esse3RecordWithDetails>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.STUDENT)) {
             fields?.let { parameter("fields", it) }
             optionalFields?.let { parameter("optionalFields", it) }
         }
@@ -239,7 +242,7 @@ class Esse3RecordsApi(
         limit: Int? = null,
         order: String? = null
     ): List<Esse3Record> {
-        return executeJsonGetList<Esse3Record>("/verbali", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.STUDENT)) {
+        return jsonList(HttpMethod.Get, "/verbali", deserializer = serializer<List<Esse3Record>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.STUDENT)) {
             studentMatricola?.let { parameter("matricolaStu", it) }
             lecturerMatricola?.let { parameter("matricolaDoc", it) }
             studentFiscalCode?.let { parameter("codFisStu", it) }

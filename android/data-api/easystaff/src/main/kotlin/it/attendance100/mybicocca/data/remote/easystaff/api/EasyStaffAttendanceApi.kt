@@ -4,20 +4,23 @@ package it.attendance100.mybicocca.data.remote.easystaff.api
 import io.ktor.client.HttpClient
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
+import io.ktor.http.HttpMethod
 import io.ktor.http.contentType
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffAttendanceHistoryRequest
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffAttendanceRecord
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffCertifyAttendanceRequest
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffCertifyAttendanceResult
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffMapSerializer
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
 
 class EasyStaffAttendanceApi(
     client: HttpClient,
     json: Json
-) : EasyStaffAbstractApi(client, json, "") {
+) : RestApi(client, json, "", EasyStaffRuntime.policy) {
 
     /**
      * A student's attendance, keyed by the student's number and then by course; a student with no record is sent with an empty map.
@@ -25,7 +28,7 @@ class EasyStaffAttendanceApi(
     suspend fun getAttendanceHistory(
         body: EasyStaffAttendanceHistoryRequest
     ): Map<String, Map<String, List<EasyStaffAttendanceRecord>>> {
-        return executeJsonPost("/easybadge/api/corso_iscritti.php", server = EasyStaffServer.Main, deserializer = EasyStaffMapSerializer(String.serializer(), EasyStaffMapSerializer(String.serializer(), ListSerializer(EasyStaffAttendanceRecord.serializer())))) {
+        return json(HttpMethod.Post, "/easybadge/api/corso_iscritti.php", deserializer = EasyStaffMapSerializer(String.serializer(), EasyStaffMapSerializer(String.serializer(), ListSerializer(EasyStaffAttendanceRecord.serializer()))), server = EasyStaffServer.Main.url) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -37,7 +40,7 @@ class EasyStaffAttendanceApi(
     suspend fun certifyAttendance(
         body: EasyStaffCertifyAttendanceRequest
     ): EasyStaffCertifyAttendanceResult {
-        return executeJsonPost<EasyStaffCertifyAttendanceResult>("/easybadge/api/TimbratureApi.php", server = EasyStaffServer.Main) {
+        return json(HttpMethod.Post, "/easybadge/api/TimbratureApi.php", deserializer = serializer<EasyStaffCertifyAttendanceResult>(), server = EasyStaffServer.Main.url) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }

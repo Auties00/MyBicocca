@@ -1,6 +1,7 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
+    `java-library`
     id("org.jetbrains.kotlin.jvm") version "2.3.0"
     id("com.google.devtools.ksp") version "2.2.21-2.0.4" apply false
     id("org.openapi.generator") version "7.17.0" apply false
@@ -11,8 +12,10 @@ group = "it.attendance100.mybicocca.data.remote"
 version = "0.1"
 
 dependencies {
-    // Ktor HTTP Client
-    implementation("io.ktor:ktor-client-core:3.3.3")
+    // Ktor HTTP Client: the generated runtime's API exposes it
+    api("io.ktor:ktor-client-core:3.3.3")
+    implementation("io.ktor:ktor-client-content-negotiation:3.3.3")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:3.3.3")
 
     // Jsoup for HTML parsing
     implementation("org.jsoup:jsoup:1.18.3")
@@ -30,6 +33,11 @@ dependencies {
 
     // Coroutines testing
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.10.2")
+    testImplementation("io.ktor:ktor-client-mock:3.3.3")
+}
+
+tasks.test {
+    useJUnitPlatform()
 }
 
 // Expose test sources for submodules
@@ -60,14 +68,15 @@ tasks.withType<JavaCompile> {
 }
 
 subprojects {
+    apply(plugin = "java-library")
     apply(plugin = "org.jetbrains.kotlin.jvm")
 
     group = rootProject.group
     version = rootProject.version
 
     dependencies {
-        // Root project
-        implementation(project(":"))
+        // Root project: the generated runtime, whose exceptions callers handle
+        "api"(project(":"))
 
         // Ktor HTTP Client
         implementation("io.ktor:ktor-client-core:3.3.3")

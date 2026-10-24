@@ -5,22 +5,26 @@ import com.example.demo.dto.DemoItem
 import com.example.demo.dto.DemoPermissionLevel
 import com.example.demo.dto.DemoPriority
 import com.example.demo.dto.DemoStatus
+import com.example.runtime.RestApi
 import io.ktor.client.HttpClient
 import io.ktor.client.request.forms.FormDataContent
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
+import io.ktor.http.HttpMethod
 import io.ktor.http.contentType
 import io.ktor.http.parameters
 import io.ktor.utils.io.ByteReadChannel
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
 
 class DemoItemsApi(
     client: HttpClient,
     json: Json,
-    private val tenant: String
-) : DemoAbstractApi(client, json, "/items-service-v1") {
+    private val tenant: String,
+    private val region: String
+) : RestApi(client, json, "/items-service-v1", DemoRuntime.policy, mapOf("tenant" to tenant.toString(), "region" to region.toString())) {
 
     /**
      * Lists the items of an owner.
@@ -35,7 +39,7 @@ class DemoItemsApi(
         ids: List<Long>? = null,
         limit: Int
     ): List<DemoItem> {
-        return executeJsonGetList<DemoItem>("/owners/${ownerId}/items", setOf(DemoPermissionLevel.STUDENT, DemoPermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/owners/${ownerId}/items", deserializer = serializer<List<DemoItem>>(), roles = setOf(DemoPermissionLevel.STUDENT, DemoPermissionLevel.TECHNICAL_USER)) {
             status?.let { parameter("stato", it.value) }
             ids?.let { parameter("ids", it.joinToString(",")) }
             parameter("limit", limit)
@@ -50,7 +54,7 @@ class DemoItemsApi(
         body: DemoItem,
         notify: Boolean? = null
     ): DemoItem {
-        return executeJsonPost<DemoItem>("/items", emptySet()) {
+        return json(HttpMethod.Post, "/items", deserializer = serializer<DemoItem>()) {
             contentType(ContentType.Application.Json)
             setBody(body)
             notify?.let { parameter("notifica", it) }
@@ -64,7 +68,7 @@ class DemoItemsApi(
         count: Int? = null,
         status: DemoStatus? = null
     ) {
-        val response = executePut("/items/${itemId}/name") {
+        send(HttpMethod.Put, "/items/${itemId}/name") {
             setBody(FormDataContent(parameters {
                 append("nome", name)
                 count?.let { append("num", it.toString()) }
@@ -72,23 +76,21 @@ class DemoItemsApi(
             }))
             header("X-TENANT", tenant)
         }
-        ensureSuccess(response, emptySet())
     }
 
     suspend fun deleteItem(
         itemId: String
     ) {
-        val response = executeDelete("/items/${itemId}") {
+        send(HttpMethod.Delete, "/items/${itemId}") {
             header("X-TENANT", tenant)
         }
-        ensureSuccess(response, emptySet())
     }
 
     suspend fun getItemPdf(
         itemId: String,
         priority: DemoPriority
     ): ByteReadChannel {
-        return executeStreamGet("/items/${itemId}/pdf", emptySet()) {
+        return stream(HttpMethod.Get, "/items/${itemId}/pdf") {
             parameter("priority", priority.value)
             header("X-TENANT", tenant)
         }
