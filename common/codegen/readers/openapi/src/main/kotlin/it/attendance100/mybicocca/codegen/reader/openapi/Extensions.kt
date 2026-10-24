@@ -17,21 +17,32 @@ import it.attendance100.mybicocca.codegen.model.AuthScheme
  * | components            | `x-mb-auth-schemes`  | Auth schemes: `{Name: {description, parameters: [{name, description}], headers: {Header: "Bearer {param}"}}}`. |
  * | operation             | `x-mb-auth`          | `{schemes: [Name, …], required: true}`.                          |
  * | operation             | `x-mb-headers`       | Fixed headers, `{name: value}`; `{parameter}` in a value names an API parameter. |
+ * | operation             | `x-mb-query`         | Fixed query parameters, `{name: value}`.                         |
+ * | operation             | `x-mb-form`          | Fixed form fields, `{name: value}`; an empty value sends the field empty. |
+ * | operation             | `x-mb-script-variable` | The response is a script; its value is the JSON this variable is assigned (`var name = …;`). |
+ * | operation             | `x-mb-scrape`        | How a `text/html` response is read (see [ScrapeSyntax]); the document itself when absent. |
  * | operation             | `x-mb-envelope`      | Keys the response value is nested in, e.g. `[data]`.             |
  * | operation             | `x-mb-empty-body`    | `true` to send `{}` as the body.                                 |
  * | operation             | `x-mb-path`          | The path to send, when it clashes with another operation's: OpenAPI forbids paths that differ only in parameter names. |
  * | schema                | `x-mb-module`        | Module the record belongs to, when not the first that uses it.   |
+ * | object schema         | `x-mb-scrape`        | `{missing: [texts]}`: the record is read out of HTML, with these texts meaning no value. |
  * | object schema         | `x-mb-delimited`     | Separator of a record written as one string (`09:00-09:30`).      |
  * | map schema            | `x-mb-key`           | Key type: `integer`, `int64`, `date` or a schema name (default: strings). |
  * | enum schema           | `x-enum-varnames`    | PascalCase names of the values, in order.                         |
  * | enum schema           | `x-mb-open`          | `false` to reject unknown values (enums are open by default).    |
  * | enum schema           | `x-mb-wrapped`       | `true` when values may arrive as `{"value": "…"}`.               |
  * | property, parameter   | `x-mb-name`          | camelCase name, when not derivable from the wire name.           |
- * | string property       | `x-mb-pattern`       | Date/time pattern of a `date`, `date-time` or `time` value.      |
+ * | property              | `x-mb-scrape`        | How a scraped record's property is read (see [ScrapeSyntax]).     |
+ * | array parameter, form property | `x-mb-repeated` | `true` to send one field per element (`days[]=1&days[]=2`). |
+ * | string property, parameter | `x-mb-pattern`  | Date/time pattern of a `date`, `date-time` or `time` value.      |
  * | string property       | `x-mb-blank-as-null` | `true` when blank strings mean no value.                          |
  * | string property       | `x-mb-also-null`     | Other strings meaning no value, e.g. `["0"]` (with `x-mb-blank-as-null`). |
  * | `allOf` property      | `x-mb-folded`        | `true` when the record may arrive as an array of single-key objects. |
  * | `allOf` property      | `x-mb-embedded`      | `true` when the record may arrive as JSON inside a string.        |
+ * | `date-time` property  | `x-mb-epoch-seconds` | `true` when sent as seconds since the Unix epoch.                 |
+ * | array property        | `x-mb-joined`        | Separator of a list of strings sent as one string (`"Ada, Bob"`). |
+ * | array property        | `x-mb-object-values` | `true` when the list may arrive as an object whose values are its elements. |
+ * | property              | `x-mb-html`          | The value is an HTML fragment sent as a string, read with this scrape (see [ScrapeSyntax]). |
  *
  * Keys next to a `$ref` are lost, so a property referencing a record with a codec, or a
  * parameter with a default, wraps the reference: `allOf: [$ref: …]`. Parameters `in: cookie` are cookies, and a
@@ -59,6 +70,15 @@ internal object Extensions {
     const val ALSO_NULL = "x-mb-also-null"
     const val FOLDED = "x-mb-folded"
     const val EMBEDDED = "x-mb-embedded"
+    const val QUERY = "x-mb-query"
+    const val FORM = "x-mb-form"
+    const val SCRIPT_VARIABLE = "x-mb-script-variable"
+    const val SCRAPE = "x-mb-scrape"
+    const val REPEATED = "x-mb-repeated"
+    const val EPOCH_SECONDS = "x-mb-epoch-seconds"
+    const val JOINED = "x-mb-joined"
+    const val OBJECT_VALUES = "x-mb-object-values"
+    const val HTML = "x-mb-html"
 
     fun authSchemes(raw: Any?): List<AuthScheme> {
         val schemes = raw as? Map<*, *> ?: return emptyList()

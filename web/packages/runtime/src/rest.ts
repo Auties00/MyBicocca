@@ -33,6 +33,11 @@ export function brackets(name: string, value: JsonValue | undefined): Array<[str
   return entries.flatMap(([key, item]) => brackets(`${name}[${key}]`, item));
 }
 
+/** One field per element of `values`, each named `name`, as PHP reads a name ending in `[]`. */
+export function repeated(name: string, values: readonly QueryScalar[] | null | undefined): Array<[string, QueryValue]> {
+  return (values ?? []).map((value) => [name, value]);
+}
+
 /** An HTTP request, relative to an API's base URL. */
 export interface RestRequest {
   method: HttpMethod;

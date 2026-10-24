@@ -22,7 +22,14 @@ import it.attendance100.mybicocca.codegen.model.TypeRef
  * - `executeJson<Method><T>(endpoint, roles) { … }` decodes the body as `T`;
  * - `executeJson<Method>List<T>(…)` decodes a list (Esse3's runtime returns an empty one on
  *   HTTP 404);
+ * - for a response holding maps or booleans, the same helpers take a `deserializer` instead of
+ *   a reified type, so that they read PHP's `[]` for an empty map and booleans sent as `0`/`1`;
  * - `executeStream<Method>(…)` returns the body as a `ByteReadChannel`;
+ * - `executeScript<Method><T>(…, variable = "name")` decodes as `T` the JSON a script assigns to
+ *   a variable;
+ * - `executeHtml<Method>(…, scrape = <Prefix>Scrapers::<function>)` parses the body as an HTML
+ *   document, with the request URL as its base, and returns what `scrape` reads from it,
+ *   failing when it returns null;
  * - `execute<Method>(endpoint) { … }` plus `ensureSuccess(response, roles)` when the body
  *   isn't needed.
  *
@@ -34,7 +41,12 @@ import it.attendance100.mybicocca.codegen.model.TypeRef
  *
  * The API parameters a module uses are constructor parameters, passed by the facade.
  */
-internal class ServiceEmitter(private val spec: ApiSpec, private val layout: KotlinLayout) {
+internal class ServiceEmitter(
+    private val spec: ApiSpec,
+    private val layout: KotlinLayout,
+    private val scrapers: ScrapeEmitter,
+    private val serializers: KotlinSerializers,
+) {
 
     fun emit(module: ApiModule, file: KotlinFile) {
         file.import("io.ktor.client.HttpClient")
@@ -50,15 +62,16 @@ internal class ServiceEmitter(private val spec: ApiSpec, private val layout: Kot
             line(") : ${layout.abstractApi.substringAfterLast('.')}(client, json, ${KotlinSyntax.string(module.basePath)}) {")
             line()
             indent {
-                separated(module.operations) { function(it, file) }
+                separated(module.operations) { function(module, it, file) }
             }
             line("}")
         }
     }
 
-    private fun CodeWriter.function(operation: Operation, file: KotlinFile) {
+    private fun CodeWriter.function(module: ApiModule, operation: Operation, file: KotlinFile) {
         requireReifiable((operation.body as? RequestBody.Json)?.type, "${operation.name} body")
         requireReifiable((operation.response as? ResponseBody.Json)?.type, "${operation.name} response")
+        requireReifiable((operation.response as? ResponseBody.ScriptVariable)?.type, "${operation.name} response")
         doc(operation)
         val parameters = signatureParameters(operation, file)
         val returnType = returnType(operation.response, file)
@@ -68,7 +81,7 @@ internal class ServiceEmitter(private val spec: ApiSpec, private val layout: Kot
         } else {
             commaList("suspend fun ${KotlinSyntax.identifier(operation.name)}(", parameters, ")$returns {")
         }
-        indent { call(operation, file) }
+        indent { call(module, operation, file) }
         line("}")
     }
 
@@ -121,9 +134,11 @@ internal class ServiceEmitter(private val spec: ApiSpec, private val layout: Kot
         ResponseBody.None -> null
         ResponseBody.Binary -> layout.render(TypeRef.Primitive(PrimitiveKind.BINARY), file)
         is ResponseBody.Json -> layout.render(response.type, file)
+        is ResponseBody.ScriptVariable -> layout.render(response.type, file)
+        is ResponseBody.Html -> layout.render(response.type, file)
     }
 
-    private fun CodeWriter.call(operation: Operation, file: KotlinFile) {
+    private fun CodeWriter.call(module: ApiModule, operation: Operation, file: KotlinFile) {
         val method = operation.method.name.lowercase().capitalized()
         val roles = if (spec.usesRoles) roles(operation, file) else null
         val target = listOfNotNull(endpoint(operation), roles) + targetArguments(operation, file)
@@ -132,6 +147,7 @@ internal class ServiceEmitter(private val spec: ApiSpec, private val layout: Kot
             spec.parameters.any { it.location != ParameterLocation.PATH } ||
             operation.headers.isNotEmpty() ||
             operation.query.isNotEmpty() ||
+            operation.form.isNotEmpty() ||
             operation.auth != null
 
         val response = operation.response
@@ -139,8 +155,29 @@ internal class ServiceEmitter(private val spec: ApiSpec, private val layout: Kot
             ResponseBody.None -> "val response = execute$method(${(listOf(endpoint(operation)) + targetArguments(operation, file)).joinToString(", ")})"
             ResponseBody.Binary -> "return executeStream$method(${target.joinToString(", ")})"
             is ResponseBody.Json -> when (val type = response.type) {
-                is TypeRef.ListOf -> "return executeJson${method}List<${layout.render(type.element, file)}>(${target.joinToString(", ")})"
-                else -> "return executeJson$method<${layout.render(type, file)}>(${target.joinToString(", ")})"
+                is TypeRef.ListOf -> if (serializers.isLenient(type.element)) {
+                    "return executeJson${method}List(${(target + "deserializer = ${serializers.expression(type.element, file)}").joinToString(", ")})"
+                } else {
+                    "return executeJson${method}List<${layout.render(type.element, file)}>(${target.joinToString(", ")})"
+                }
+                else -> if (serializers.isLenient(type)) {
+                    "return executeJson$method(${(target + "deserializer = ${serializers.expression(type, file)}").joinToString(", ")})"
+                } else {
+                    "return executeJson$method<${layout.render(type, file)}>(${target.joinToString(", ")})"
+                }
+            }
+            is ResponseBody.ScriptVariable -> {
+                val variable = "variable = ${KotlinSyntax.string(response.variable)}"
+                if (serializers.isLenient(response.type)) {
+                    "return executeScript$method(${(target + variable + "deserializer = ${serializers.expression(response.type, file)}").joinToString(", ")})"
+                } else {
+                    "return executeScript$method<${layout.render(response.type, file)}>(${(target + variable).joinToString(", ")})"
+                }
+            }
+            is ResponseBody.Html -> {
+                file.import("${layout.dtoPackage}.${scrapers.objectName}")
+                val arguments = target + "scrape = ${scrapers.objectName}::${scrapers.responseFunction(module, operation)}"
+                "return executeHtml$method(${arguments.joinToString(", ")})"
             }
         }
         if (hasBlock) {
@@ -177,11 +214,12 @@ internal class ServiceEmitter(private val spec: ApiSpec, private val layout: Kot
 
         val form = operation.formParameters
         val authForm = operation.auth?.let { auth -> spec.authSchemes.any { it.name in auth.schemes && it.form.isNotEmpty() } } == true
-        if (form.isNotEmpty() || authForm) {
+        if (form.isNotEmpty() || operation.form.isNotEmpty() || authForm) {
             file.import("io.ktor.client.request.setBody")
             file.import("io.ktor.client.request.forms.FormDataContent")
             file.import("io.ktor.http.parameters")
             block("setBody(FormDataContent(parameters {", "}))") {
+                for ((name, value) in operation.form) line("append(${KotlinSyntax.string(name)}, ${KotlinSyntax.string(value)})")
                 for (parameter in form) send(parameter, "append", file) { formValue(parameter, it) }
                 if (authForm) {
                     val send = "forEach { (name, value) -> append(name, value) }"
@@ -234,6 +272,12 @@ internal class ServiceEmitter(private val spec: ApiSpec, private val layout: Kot
     private fun CodeWriter.send(parameter: Parameter, function: String, file: KotlinFile, value: (String) -> String) {
         val name = KotlinSyntax.identifier(parameter.name)
         val wireName = KotlinSyntax.string(parameter.wireName)
+        if (parameter.encoding == ParameterEncoding.REPEATED) {
+            val element = (parameter.type as TypeRef.ListOf).element
+            val value = if (isEnum(element)) "it.value" else if (element == TypeRef.STRING) "it" else "it.toString()"
+            line("$name${if (parameter.isOmittable) "?" else ""}.forEach { $function($wireName, $value) }")
+            return
+        }
         if (parameter.encoding == ParameterEncoding.BRACKETS) {
             // Form fields are appended to the form's builder, query parameters to the URL's.
             val receiver = if (function == "append") "" else "url.parameters."
@@ -256,10 +300,15 @@ internal class ServiceEmitter(private val spec: ApiSpec, private val layout: Kot
             }
             return
         }
+        val pattern = parameter.pattern
+        val write: (String) -> String = if (pattern == null) value else { variable ->
+            file.import("java.time.format.DateTimeFormatter")
+            "$variable.format(DateTimeFormatter.ofPattern(${KotlinSyntax.string(pattern)}))"
+        }
         if (parameter.isOmittable) {
-            line("$name?.let { $function($wireName, ${value("it")}) }")
+            line("$name?.let { $function($wireName, ${write("it")}) }")
         } else {
-            line("$function($wireName, ${value(name)})")
+            line("$function($wireName, ${write(name)})")
         }
     }
 
@@ -287,7 +336,7 @@ internal class ServiceEmitter(private val spec: ApiSpec, private val layout: Kot
                 ParameterEncoding.PLAIN ->
                     if (parameter.isOmittable) "$name?.let { $prefix + ${formValue(parameter, "it")}.encodeURLParameter() }"
                     else "$prefix + ${formValue(parameter, name)}.encodeURLParameter()"
-                ParameterEncoding.BRACKETS -> error("Cookie parameter '${parameter.name}' can't be bracket-encoded")
+                ParameterEncoding.BRACKETS, ParameterEncoding.REPEATED -> error("Cookie parameter '${parameter.name}' can only be plain or JSON")
             }
         }
         if (pairs.size == 1 && !cookies.single().isOmittable) {
@@ -325,6 +374,8 @@ internal class ServiceEmitter(private val spec: ApiSpec, private val layout: Kot
             PrimitiveKind.STRING -> KotlinSyntax.string(literal.value)
             PrimitiveKind.INT64 -> "${literal.value}L"
             PrimitiveKind.FLOAT32 -> "${literal.value}f"
+            // A whole number is an Int literal in Kotlin, which a Double can't take.
+            PrimitiveKind.FLOAT64 -> if (literal.value.any { it == '.' || it == 'e' || it == 'E' }) literal.value else "${literal.value}.0"
             else -> literal.value
         }
         is TypeRef.ListOf, is TypeRef.MapOf -> error("Collections can't have a literal default")

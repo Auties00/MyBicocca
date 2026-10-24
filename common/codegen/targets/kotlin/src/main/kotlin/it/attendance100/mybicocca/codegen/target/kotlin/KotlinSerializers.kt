@@ -7,6 +7,7 @@ import it.attendance100.mybicocca.codegen.model.Field
 import it.attendance100.mybicocca.codegen.model.ParameterEncoding
 import it.attendance100.mybicocca.codegen.model.PrimitiveKind
 import it.attendance100.mybicocca.codegen.model.RecordType
+import it.attendance100.mybicocca.codegen.model.ResponseBody
 import it.attendance100.mybicocca.codegen.model.TypeRef
 
 /**
@@ -16,10 +17,15 @@ import it.attendance100.mybicocca.codegen.model.TypeRef
  * - dates and times use the runtime's serializers (see [TemporalSerializers]);
  * - booleans use `<Prefix>BooleanSerializer`, which also reads `0`/`1` and strings;
  * - maps use `<Prefix>MapSerializer`, which also reads PHP's `[]` and arrays of objects;
- * - [Codec.BlankAsNull], [Codec.FoldedObject] and [Codec.EmbeddedJson] fields use a
- *   serializer per codec and type.
+ * - [Codec.BlankAsNull], [Codec.FoldedObject], [Codec.EmbeddedJson], [Codec.EpochSeconds],
+ *   [Codec.Joined] and [Codec.ObjectValues] fields use a serializer per codec and type;
+ * - [Codec.EmbeddedHtml] fields use a serializer per field, emitted with the scrapers (see
+ *   [ScrapeEmitter]).
  *
  * The file also holds `appendBrackets`, which writes [ParameterEncoding.BRACKETS] parameters.
+ *
+ * Responses holding maps or booleans name their deserializer too (see [isLenient] and
+ * [expression]), since a reified type can't carry the annotations.
  *
  * A field names its serializer with `@Serializable(with = …)`; values nested in lists and maps
  * name theirs with the same annotation on the type argument.
@@ -32,13 +38,30 @@ internal class KotlinSerializers(
     private val prefix = spec.prefix
     private val boolean = "${prefix}BooleanSerializer"
     private val map = "${prefix}MapSerializer"
+    private val epochSeconds = "${prefix}EpochSecondsSerializer"
+    private val objectValues = "${prefix}ListSerializer"
 
     private val fields: List<Field> = spec.modules.flatMap { it.records }.flatMap { it.fields }
 
     /** Every distinct [Codec.BlankAsNull], in the order fields first use it. */
     private val blankAsNullCodecs: List<Codec.BlankAsNull> = fields.mapNotNull { it.codec as? Codec.BlankAsNull }.distinct()
 
+    /** Every distinct [Codec.Joined], in the order fields first use it. */
+    private val joinedCodecs: List<Codec.Joined> = fields.mapNotNull { it.codec as? Codec.Joined }.distinct()
+
     val fileName = "${prefix}Serializers.kt"
+
+    /** The types of the JSON responses, which are converted by type rather than by field. */
+    private val responseTypes: List<TypeRef> = spec.modules.flatMap { it.operations }.mapNotNull { operation ->
+        when (val response = operation.response) {
+            is ResponseBody.Json -> response.type
+            is ResponseBody.ScriptVariable -> response.type
+            else -> null
+        }
+    }
+
+    /** Every type a serializer may be needed for: the fields', and the responses' that [isLenient]. */
+    private val types: List<TypeRef> = fields.map { it.type } + responseTypes.filter(::isLenient)
 
     private val usesBrackets: Boolean =
         spec.modules.any { module -> module.operations.any { operation -> operation.parameters.any { it.encoding == ParameterEncoding.BRACKETS } } }
@@ -46,12 +69,14 @@ internal class KotlinSerializers(
     /** Whether the API needs any of the declarations this class emits. */
     val isNeeded: Boolean
         get() = usesBrackets ||
-            fields.any { field -> field.codec.let { it != null && it !is Codec.Temporal } || field.type.contains { isBoolean(it) || it is TypeRef.MapOf } }
+            fields.any { field -> field.codec.let { it != null && it !is Codec.Temporal && it !is Codec.EmbeddedHtml } } ||
+                types.any { type -> type.contains { isBoolean(it) || it is TypeRef.MapOf } }
 
     /**
      * The serializer of a field, or null when the type's own one does. [file] imports it.
      */
-    fun of(field: Field, file: KotlinFile): String? = of(field.type, field.codec, field.nullable, field.name, file)
+    fun of(record: RecordType, field: Field, file: KotlinFile): String? =
+        if (field.codec is Codec.EmbeddedHtml) layout.htmlSerializer(record, field) else of(field.type, field.codec, field.nullable, field.name, file)
 
     /**
      * Renders [type] as the type of a field, annotating the type arguments whose values need
@@ -77,6 +102,10 @@ internal class KotlinSerializers(
             is Codec.BlankAsNull -> blankAsNull(codec)
             Codec.FoldedObject -> folded((type as TypeRef.Named).name)
             Codec.EmbeddedJson -> embedded((type as TypeRef.Named).name)
+            Codec.EpochSeconds -> epochSeconds
+            is Codec.Joined -> joined(codec)
+            Codec.ObjectValues -> objectValues
+            is Codec.EmbeddedHtml -> error("'$where' is read from HTML by a serializer of the scrapers")
             null -> when {
                 type is TypeRef.Primitive && type.kind.isTemporal -> temporal(type, Codec.Temporal.iso(type.kind), nullable, where)
                 isBoolean(type) -> boolean
@@ -109,11 +138,39 @@ internal class KotlinSerializers(
         return "${prefix}BlankOr${marker}AsNullSerializer"
     }
 
+    private fun joined(codec: Codec.Joined): String =
+        if (joinedCodecs.size == 1) "${prefix}JoinedSerializer" else "${prefix}Joined${joinedCodecs.indexOf(codec) + 1}Serializer"
+
     private fun folded(record: String): String = "${record}FoldedSerializer"
 
     private fun embedded(record: String): String = "${record}EmbeddedSerializer"
 
     private fun isBoolean(type: TypeRef): Boolean = type is TypeRef.Primitive && type.kind == PrimitiveKind.BOOLEAN
+
+    /**
+     * Whether a response of [type] needs the lenient map or boolean serializers, which a
+     * reified type can't name: the response then passes [expression] as its deserializer.
+     */
+    fun isLenient(type: TypeRef): Boolean = type.contains { isBoolean(it) || it is TypeRef.MapOf }
+
+    /** An expression of the serializer of [type], with the lenient serializers where needed. [file] imports what it uses. */
+    fun expression(type: TypeRef, file: KotlinFile): String = when (type) {
+        is TypeRef.Named -> "${layout.render(type, file)}.serializer()"
+        is TypeRef.ListOf -> {
+            file.import("kotlinx.serialization.builtins.ListSerializer")
+            "ListSerializer(${expression(type.element, file)})"
+        }
+        is TypeRef.MapOf -> "${qualified(map, file)}(${expression(type.key, file)}, ${expression(type.value, file)})"
+        is TypeRef.Primitive -> when (type.kind) {
+            PrimitiveKind.BOOLEAN -> qualified(boolean, file)
+            PrimitiveKind.JSON_OBJECT, PrimitiveKind.JSON_VALUE -> "${layout.render(type, file)}.serializer()"
+            PrimitiveKind.STRING, PrimitiveKind.INT32, PrimitiveKind.INT64, PrimitiveKind.FLOAT32, PrimitiveKind.FLOAT64 -> {
+                file.import("kotlinx.serialization.builtins.serializer")
+                "${layout.render(type, file)}.serializer()"
+            }
+            else -> error("A ${type.kind} has no serializer outside a record")
+        }
+    }
 
     private fun TypeRef.contains(predicate: (TypeRef) -> Boolean): Boolean = predicate(this) || when (this) {
         is TypeRef.ListOf -> element.contains(predicate)
@@ -125,12 +182,15 @@ internal class KotlinSerializers(
     fun emit(file: KotlinFile) {
         val out = file.body
         val sections = buildList<CodeWriter.() -> Unit> {
-            if (fields.any { field -> field.type.contains(::isBoolean) }) add { booleanSerializer(file) }
-            val folding = fields.any { field -> field.codec == Codec.FoldedObject || field.type.contains { it is TypeRef.MapOf } }
-            if (fields.any { field -> field.type.contains { it is TypeRef.MapOf } }) add { mapSerializer(file) }
+            if (types.any { type -> type.contains(::isBoolean) }) add { booleanSerializer(file) }
+            val folding = fields.any { field -> field.codec == Codec.FoldedObject } || types.any { type -> type.contains { it is TypeRef.MapOf } }
+            if (types.any { type -> type.contains { it is TypeRef.MapOf } }) add { mapSerializer(file) }
             for (codec in blankAsNullCodecs) add { blankAsNullSerializer(codec, file) }
             for (record in recordsWith(Codec.FoldedObject)) add { foldedSerializer(record, file) }
             for (record in recordsWith(Codec.EmbeddedJson)) add { embeddedSerializer(record, file) }
+            if (fields.any { it.codec == Codec.EpochSeconds }) add { epochSecondsSerializer(file) }
+            for (codec in joinedCodecs) add { joinedSerializer(codec, file) }
+            if (fields.any { it.codec == Codec.ObjectValues }) add { objectValuesSerializer(file) }
             if (folding) add { foldObjects(file) }
             if (usesBrackets) add { appendBrackets(file) }
         }
@@ -231,6 +291,57 @@ internal class KotlinSerializers(
                 }
             }
         }
+    }
+
+    private fun CodeWriter.epochSecondsSerializer(file: KotlinFile) {
+        importAll(
+            file, "kotlinx.serialization.KSerializer", "kotlinx.serialization.SerializationException", PRIMITIVE_KIND, PRIMITIVE_DESCRIPTOR,
+            DECODER, ENCODER, JSON_DECODER, JSON_PRIMITIVE, "java.time.Instant", "java.time.LocalDateTime", "java.time.ZoneId",
+        )
+        line("/** Dates and times sent as seconds since the Unix epoch, read in the device's time zone; numbers may be sent as strings. */")
+        block("object $epochSeconds : KSerializer<LocalDateTime> {") {
+            line("override val descriptor = PrimitiveSerialDescriptor(${KotlinSyntax.string(epochSeconds)}, PrimitiveKind.LONG)")
+            line()
+            line("override fun serialize(encoder: Encoder, value: LocalDateTime) = encoder.encodeLong(value.atZone(ZoneId.systemDefault()).toEpochSecond())")
+            line()
+            block("override fun deserialize(decoder: Decoder): LocalDateTime {") {
+                line("val json = decoder as? JsonDecoder")
+                line("val seconds = if (json == null) decoder.decodeLong() else {")
+                indent {
+                    line("val element = json.decodeJsonElement()")
+                    line("(element as? JsonPrimitive)?.content?.toLongOrNull() ?: throw SerializationException(\"Expected epoch seconds, found \$element\")")
+                }
+                line("}")
+                line("return LocalDateTime.ofInstant(Instant.ofEpochSecond(seconds), ZoneId.systemDefault())")
+            }
+        }
+    }
+
+    private fun CodeWriter.joinedSerializer(codec: Codec.Joined, file: KotlinFile) {
+        importAll(file, "kotlinx.serialization.KSerializer", PRIMITIVE_KIND, PRIMITIVE_DESCRIPTOR, DECODER, ENCODER, JSON_DECODER, JSON_PRIMITIVE, "kotlinx.serialization.json.contentOrNull")
+        val name = joined(codec)
+        val separator = KotlinSyntax.string(codec.separator)
+        line("/** Lists of strings sent as one string joining them with `${KotlinSyntax.docText(codec.separator)}`; blank elements are left out. */")
+        block("object $name : KSerializer<List<String>> {") {
+            line("override val descriptor = PrimitiveSerialDescriptor(${KotlinSyntax.string(name)}, PrimitiveKind.STRING)")
+            line()
+            line("override fun serialize(encoder: Encoder, value: List<String>) = encoder.encodeString(value.joinToString($separator))")
+            line()
+            block("override fun deserialize(decoder: Decoder): List<String> {") {
+                line("val text = if (decoder is JsonDecoder) (decoder.decodeJsonElement() as? JsonPrimitive)?.contentOrNull else decoder.decodeString()")
+                line("return text.orEmpty().split($separator).map { it.trim() }.filter { it.isNotEmpty() }")
+            }
+        }
+    }
+
+    private fun CodeWriter.objectValuesSerializer(file: KotlinFile) {
+        importAll(file, "kotlinx.serialization.KSerializer", "kotlinx.serialization.builtins.ListSerializer", JSON_ELEMENT, TRANSFORMING, "kotlinx.serialization.json.JsonArray", "kotlinx.serialization.json.JsonObject")
+        line("/** Lists, also sent as an object whose values are the elements. */")
+        line("class $objectValues<T>(elementSerializer: KSerializer<T>) : JsonTransformingSerializer<List<T>>(ListSerializer(elementSerializer)) {")
+        indent {
+            line("override fun transformDeserialize(element: JsonElement): JsonElement = if (element is JsonObject) JsonArray(element.values.toList()) else element")
+        }
+        line("}")
     }
 
     private fun CodeWriter.foldObjects(file: KotlinFile) {
