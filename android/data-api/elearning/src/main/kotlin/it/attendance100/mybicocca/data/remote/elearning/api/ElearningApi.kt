@@ -14,7 +14,6 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.Url
 import io.ktor.serialization.kotlinx.json.json
 import it.attendance100.mybicocca.data.remote.elearning.api.ElearningAbstractApi.Companion.BASE_URL
-import it.attendance100.mybicocca.data.remote.elearning.api.ElearningAuthApi.Companion.MOODLE_SESSION_COOKIE_NAME
 import kotlinx.serialization.json.Json
 
 /**
@@ -23,16 +22,15 @@ import kotlinx.serialization.json.Json
  * This class serves as a facade that provides access to all specialized API classes
  * for interacting with a Moodle learning management system.
  *
- * @param moodleSessionCookie Optional pre-seeded `MoodleSession` browser cookie. When
- *   non-`null`, the cookie is installed into this instance's cookie jar before the
- *   first request, so web-scope endpoints (e.g. `mod/kalvidres/view.php`) can be hit
- *   on a cold process start without re-running the SAML login flow. The matching
- *   value comes from [it.attendance100.mybicocca.data.remote.elearning.dto.ElearningLoginResponse.Success.moodleSessionCookie]
- *   on a previous successful [ElearningAuthApi.login] and should be persisted by the
- *   caller. Pass `null` (or omit) when no persisted cookie is available — a fresh
- *   [ElearningAuthApi.login] will install one via Moodle's `Set-Cookie` response
- *   naturally. The cookie is fixed for the lifetime of this instance; account switches
- *   should construct a new [ElearningApi].
+ * Logging in is not part of this API: the caller runs the SSO login, which yields the web
+ * service token passed to each call and the `MoodleSession` cookie passed here.
+ *
+ * @param moodleSessionCookie Optional `MoodleSession` browser cookie ([MOODLE_SESSION_COOKIE_NAME]).
+ *   When non-`null`, the cookie is installed into this instance's cookie jar before the
+ *   first request, so web-scope endpoints (e.g. `mod/kalvidres/view.php`) work. Pass
+ *   `null` (or omit) when the caller has no session cookie; those endpoints then report
+ *   that the session is missing. The cookie is fixed for the lifetime of this instance;
+ *   account switches should construct a new [ElearningApi].
  * @param language Moodle langpack code (e.g. `"it"`, `"en"`) sent as
  *   `moodlewssettinglang` with every web service request. It selects the language of
  *   Moodle UI strings in responses and the language picked by server-side filters
@@ -114,11 +112,6 @@ class ElearningApi(
     }
 
     /**
-     * API for auth-related operations.
-     */
-    val auth: ElearningAuthApi = ElearningAuthApi(client, json)
-
-    /**
      * API for site-level operations.
      */
     val site: ElearningSiteApi = ElearningSiteApi(client, json)
@@ -198,5 +191,12 @@ class ElearningApi(
      */
     override fun close() {
         client.close()
+    }
+
+    companion object {
+        /**
+         * Name of Moodle's browser-session cookie, which the SSO login leaves in its cookie jar.
+         */
+        const val MOODLE_SESSION_COOKIE_NAME = "MoodleSession"
     }
 }
