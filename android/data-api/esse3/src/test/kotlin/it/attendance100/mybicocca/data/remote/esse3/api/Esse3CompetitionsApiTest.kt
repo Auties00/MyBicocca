@@ -344,7 +344,7 @@ class Esse3CompetitionsApiTest : Esse3ApiTestBase() {
                 val testId = competition.testId!!
 
                 logger.info("testGetCompetitionRankingClassifica: calling getCompetitionRanking() classificaConcorso with aaId=$aaId, testId=$testId (defaults)")
-                val defaultResult: List<it.attendance100.mybicocca.data.remote.esse3.dto.Esse3CompetitionRanking> = api.competitions.getCompetitionRanking(
+                val defaultResult: List<it.attendance100.mybicocca.data.remote.esse3.dto.Esse3CompetitionRanking> = api.competitions.getCompetitionStandings(
                     academicYearId = aaId,
                     testId = testId,
                     personId = null,
@@ -359,7 +359,7 @@ class Esse3CompetitionsApiTest : Esse3ApiTestBase() {
                 }
 
                 logger.info("testGetCompetitionRankingClassifica: calling with pagination start=0, limit=5")
-                val paginatedResult: List<it.attendance100.mybicocca.data.remote.esse3.dto.Esse3CompetitionRanking> = api.competitions.getCompetitionRanking(
+                val paginatedResult: List<it.attendance100.mybicocca.data.remote.esse3.dto.Esse3CompetitionRanking> = api.competitions.getCompetitionStandings(
                     academicYearId = aaId,
                     testId = testId,
                     personId = null,
@@ -371,7 +371,7 @@ class Esse3CompetitionsApiTest : Esse3ApiTestBase() {
                 assertTrue(paginatedResult.size <= 5, "Paginated result size should be <= 5")
 
                 logger.info("testGetCompetitionRankingClassifica: calling with order=asc")
-                val orderedResult: List<it.attendance100.mybicocca.data.remote.esse3.dto.Esse3CompetitionRanking> = api.competitions.getCompetitionRanking(
+                val orderedResult: List<it.attendance100.mybicocca.data.remote.esse3.dto.Esse3CompetitionRanking> = api.competitions.getCompetitionStandings(
                     academicYearId = aaId,
                     testId = testId,
                     personId = null,
@@ -385,7 +385,7 @@ class Esse3CompetitionsApiTest : Esse3ApiTestBase() {
                     val firstRanking = defaultResult.first()
                     if (firstRanking.personId != null) {
                         logger.info("testGetCompetitionRankingClassifica: calling with personId=${firstRanking.personId}")
-                        val filteredResult: List<it.attendance100.mybicocca.data.remote.esse3.dto.Esse3CompetitionRanking> = api.competitions.getCompetitionRanking(
+                        val filteredResult: List<it.attendance100.mybicocca.data.remote.esse3.dto.Esse3CompetitionRanking> = api.competitions.getCompetitionStandings(
                             academicYearId = aaId,
                             testId = testId,
                             personId = firstRanking.personId,
@@ -403,7 +403,7 @@ class Esse3CompetitionsApiTest : Esse3ApiTestBase() {
         } else {
             logger.info("testGetCompetitionRankingClassifica: user lacks TECHNICAL_USER permission, expecting Esse3Exception")
             assertFailsWith<Esse3Exception> {
-                api.competitions.getCompetitionRanking(
+                api.competitions.getCompetitionStandings(
                     academicYearId = 2024,
                     testId = 1,
                     personId = null,
@@ -623,7 +623,7 @@ class Esse3CompetitionsApiTest : Esse3ApiTestBase() {
                     val positionId = enrolledEntry.positionId!!
 
                     logger.info("testGetPersonRankingClassifica: calling getPersonRanking(personId=$personId, positionId=$positionId) for classifica (defaults)")
-                    val defaultResult: List<it.attendance100.mybicocca.data.remote.esse3.dto.Esse3PersonRanking> = api.competitions.getPersonRanking(
+                    val defaultResult: List<it.attendance100.mybicocca.data.remote.esse3.dto.Esse3PersonRanking> = api.competitions.getPersonStandings(
                         personId = personId,
                         positionId = positionId,
                         order = null
@@ -635,7 +635,7 @@ class Esse3CompetitionsApiTest : Esse3ApiTestBase() {
                     }
 
                     logger.info("testGetPersonRankingClassifica: calling with order=asc")
-                    val orderedResult: List<it.attendance100.mybicocca.data.remote.esse3.dto.Esse3PersonRanking> = api.competitions.getPersonRanking(
+                    val orderedResult: List<it.attendance100.mybicocca.data.remote.esse3.dto.Esse3PersonRanking> = api.competitions.getPersonStandings(
                         personId = personId,
                         positionId = positionId,
                         order = "asc"
@@ -650,7 +650,7 @@ class Esse3CompetitionsApiTest : Esse3ApiTestBase() {
         } else {
             logger.info("testGetPersonRankingClassifica: user lacks TECHNICAL_USER permission, expecting Esse3Exception")
             assertFailsWith<Esse3Exception> {
-                api.competitions.getPersonRanking(
+                api.competitions.getPersonStandings(
                     personId = studentProfile.personId,
                     positionId = 1L,
                     order = null

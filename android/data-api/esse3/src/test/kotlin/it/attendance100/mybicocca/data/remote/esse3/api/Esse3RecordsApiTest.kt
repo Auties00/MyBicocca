@@ -251,7 +251,7 @@ class Esse3RecordsApiTest : Esse3ApiTestBase() {
                 assertNotNull(lotBatchId, "lotBatchId should not be null for the first batch")
 
                 logger.info("testGetBatchByLotId: calling getBatch(lotBatchId=$lotBatchId) with defaults")
-                val result = api.records.getBatch(lotBatchId = lotBatchId)
+                val result = api.records.getLot(lotBatchId = lotBatchId)
                 logger.info("testGetBatchByLotId: result size=${result.size}")
                 assertNotNull(result, "getBatch(lotBatchId) result should not be null")
                 for (item in result) {
@@ -259,14 +259,14 @@ class Esse3RecordsApiTest : Esse3ApiTestBase() {
                 }
 
                 logger.info("testGetBatchByLotId: calling getBatch(lotBatchId=$lotBatchId) with fields=lottoId,adCod,statoLotto")
-                val resultWithFields = api.records.getBatch(
+                val resultWithFields = api.records.getLot(
                     lotBatchId = lotBatchId,
                     fields = "lottoId,adCod,statoLotto"
                 )
                 logger.info("testGetBatchByLotId: result with fields size=${resultWithFields.size}")
 
                 logger.info("testGetBatchByLotId: calling getBatch(lotBatchId=$lotBatchId) with optionalFields=commissione,transizioniStato")
-                val resultWithOptFields = api.records.getBatch(
+                val resultWithOptFields = api.records.getLot(
                     lotBatchId = lotBatchId,
                     optionalFields = "commissione,transizioniStato"
                 )
@@ -286,7 +286,7 @@ class Esse3RecordsApiTest : Esse3ApiTestBase() {
         } else {
             logger.info("testGetBatchByLotId: user lacks required permissions, expecting Esse3Exception")
             assertFailsWith<Esse3Exception> {
-                api.records.getBatch(lotBatchId = 1L)
+                api.records.getLot(lotBatchId = 1L)
             }
             logger.info("testGetBatchByLotId: Esse3Exception thrown as expected")
         }

@@ -1,0 +1,14 @@
+{
+  "name": "mybicocca-web",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "typecheck": "tsc -p packages/runtime && tsc -p packages/esse3"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  }
+}
