@@ -14,7 +14,6 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "MyBicoccaDataAPI"
-include(":bicoccapp")
 include(":elearning")
 include(":esse3-scraper")
 include(":esse3")
