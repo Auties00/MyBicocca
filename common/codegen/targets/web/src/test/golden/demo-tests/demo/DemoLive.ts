@@ -89,7 +89,7 @@ export function writeDemoLesson(f: LiveFingerprint, value: DemoLesson | null | u
     f.dateTime(value.start);
     f.num(value.attendance);
     f.list(value.teachers, (it) => f.str(it));
-    f.list(value.owners, (it) => writeDemoOwner(f, it));
+    f.unordered(value.owners, (g, it) => writeDemoOwner(g, it));
     f.str(value.mapsUrl);
     writeDemoStaffGroup(f, value.staff);
     f.list(value.rooms, (it) => f.str(it));

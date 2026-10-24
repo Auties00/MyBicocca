@@ -273,8 +273,9 @@ class LiveShapes(catalog: String, private val report: LiveReport) {
  * The canonical form of a decoded result, the same on every platform, and its hash: atoms end
  * with `;` (`~` for no value, `"…"` text with `\` and `"` escaped, integers, numbers as
  * millionths rounded down after adding a half, `t`/`f`, dates in ISO 8601, `b<size>` for bytes,
- * JSON with sorted keys); lists are `[…]`, records `(…)` with their fields in declaration order,
- * maps `{key=value…}` sorted by key. The hash is the 64-bit FNV-1a of the UTF-8 text, in hex.
+ * JSON with sorted keys); lists are `[…]`, or `<…>` with their elements sorted when their order
+ * isn't meaningful, records `(…)` with their fields in declaration order, maps `{key=value…}`
+ * sorted by key. The hash is the 64-bit FNV-1a of the UTF-8 text, in hex.
  */
 class LiveFingerprint {
     private val out = StringBuilder()
@@ -309,6 +310,14 @@ class LiveFingerprint {
         out.append('[')
         value.forEach(each)
         out.append(']')
+    }
+
+    /** A list whose order isn't meaningful, such as one sent as an object's values: its elements, sorted. */
+    fun <T> unordered(value: List<T>?, each: LiveFingerprint.(T) -> Unit) {
+        if (value == null) return nil()
+        out.append('<')
+        value.map { LiveFingerprint().apply { each(it) }.out.toString() }.sorted().forEach { out.append(it) }
+        out.append('>')
     }
 
     fun obj(value: Any?, fields: () -> Unit) {

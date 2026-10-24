@@ -27,8 +27,6 @@ concurrency:
 
 env:
   LIVE_TESTS: '1'
-  # TEMPORARY: canonical texts, to compare the platforms' public results by hand.
-  LIVE_FINGERPRINT_TEXT: '1'
   # Scheduled runs include writes; manual runs only when asked.
   LIVE_WRITES: ${{ (github.event_name == 'schedule' || inputs.writes) && '1' || '0' }}
   # The test accounts. A case whose account is missing is skipped.

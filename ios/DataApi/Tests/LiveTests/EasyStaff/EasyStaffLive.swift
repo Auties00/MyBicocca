@@ -110,7 +110,7 @@ enum EasyStaffLive {
     static func writeEasyStaffExamCalendar(_ f: LiveFingerprint, _ value: EasyStaffExamCalendar?) {
         guard let value else { return f.nil() }
         f.obj {
-            f.list(value.subjects) { item0 in EasyStaffLive.writeEasyStaffExamSubject(f, item0) }
+            f.unordered(value.subjects) { g, item0 in EasyStaffLive.writeEasyStaffExamSubject(g, item0) }
         }
     }
 
@@ -177,7 +177,7 @@ enum EasyStaffLive {
             f.str(value.name)
             f.str(value.address)
             f.str(value.googleMapsLink)
-            f.list(value.rooms) { item0 in EasyStaffLive.writeEasyStaffRoomShowcaseRoom(f, item0) }
+            f.unordered(value.rooms) { g, item0 in EasyStaffLive.writeEasyStaffRoomShowcaseRoom(g, item0) }
         }
     }
 
@@ -203,8 +203,8 @@ enum EasyStaffLive {
             f.str(value.accessibilityNotes)
             f.bool(value.isInclusionValidated)
             f.str(value.interactive360Link)
-            f.list(value.fixedEquipment) { item0 in EasyStaffLive.writeEasyStaffRoomShowcaseEquipment(f, item0) }
-            f.list(value.mobileEquipment) { item0 in EasyStaffLive.writeEasyStaffRoomShowcaseEquipment(f, item0) }
+            f.unordered(value.fixedEquipment) { g, item0 in EasyStaffLive.writeEasyStaffRoomShowcaseEquipment(g, item0) }
+            f.unordered(value.mobileEquipment) { g, item0 in EasyStaffLive.writeEasyStaffRoomShowcaseEquipment(g, item0) }
         }
     }
 

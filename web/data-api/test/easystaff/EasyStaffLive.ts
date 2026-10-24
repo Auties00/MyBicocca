@@ -110,7 +110,7 @@ export function writeEasyStaffEventType(f: LiveFingerprint, value: EasyStaffEven
 export function writeEasyStaffExamCalendar(f: LiveFingerprint, value: EasyStaffExamCalendar | null | undefined): void {
   if (value === null || value === undefined) return f.nil();
   f.obj(value, () => {
-    f.list(value.subjects, (it) => writeEasyStaffExamSubject(f, it));
+    f.unordered(value.subjects, (g, it) => writeEasyStaffExamSubject(g, it));
   });
 }
 
@@ -177,7 +177,7 @@ export function writeEasyStaffRoomShowcaseBuilding(f: LiveFingerprint, value: Ea
     f.str(value.name);
     f.str(value.address);
     f.str(value.googleMapsLink);
-    f.list(value.rooms, (it) => writeEasyStaffRoomShowcaseRoom(f, it));
+    f.unordered(value.rooms, (g, it) => writeEasyStaffRoomShowcaseRoom(g, it));
   });
 }
 
@@ -203,8 +203,8 @@ export function writeEasyStaffRoomShowcaseRoom(f: LiveFingerprint, value: EasySt
     f.str(value.accessibilityNotes);
     f.bool(value.isInclusionValidated);
     f.str(value.interactive360Link);
-    f.list(value.fixedEquipment, (it) => writeEasyStaffRoomShowcaseEquipment(f, it));
-    f.list(value.mobileEquipment, (it) => writeEasyStaffRoomShowcaseEquipment(f, it));
+    f.unordered(value.fixedEquipment, (g, it) => writeEasyStaffRoomShowcaseEquipment(g, it));
+    f.unordered(value.mobileEquipment, (g, it) => writeEasyStaffRoomShowcaseEquipment(g, it));
   });
 }
 

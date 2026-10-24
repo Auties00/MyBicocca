@@ -19,6 +19,7 @@ import it.attendance100.mybicocca.codegen.core.capitalized
 import it.attendance100.mybicocca.codegen.core.decapitalized
 import it.attendance100.mybicocca.codegen.model.ApiSpec
 import it.attendance100.mybicocca.codegen.model.AuthScheme
+import it.attendance100.mybicocca.codegen.model.Codec
 import it.attendance100.mybicocca.codegen.model.PrimitiveKind
 import it.attendance100.mybicocca.codegen.model.RecordType
 import it.attendance100.mybicocca.codegen.model.ResponseBody
@@ -587,7 +588,15 @@ internal class TestEmitter(private val plan: TestPlan, private val layout: Kotli
                 line("obj(value) {}")
             } else {
                 block("obj(value) {") {
-                    for (field in fields) line(fingerprint(field.type, "value.${KotlinSyntax.identifier(field.name)}", field.nullable, file))
+                    for (field in fields) {
+                        val value = "value.${KotlinSyntax.identifier(field.name)}"
+                        val type = field.type
+                        // A list sent as an object's values has no order every platform keeps.
+                        line(
+                            if (field.codec == Codec.ObjectValues && type is TypeRef.ListOf) "unordered($value) { ${fingerprint(type.element, "it", nullable = false, file)} }"
+                            else fingerprint(type, value, field.nullable, file)
+                        )
+                    }
                 }
             }
         }

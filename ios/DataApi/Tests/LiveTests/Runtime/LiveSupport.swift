@@ -310,8 +310,9 @@ final class LiveShapes: @unchecked Sendable {
 /// The canonical form of a decoded result, the same on every platform, and its hash: atoms end
 /// with `;` (`~` for no value, `"…"` text with `\` and `"` escaped, integers, numbers as
 /// millionths rounded down after adding a half, `t`/`f`, dates in ISO 8601, `b<size>` for bytes,
-/// JSON with sorted keys); lists are `[…]`, records `(…)` with their fields in declaration order,
-/// maps `{key=value…}` sorted by key. The hash is the 64-bit FNV-1a of the UTF-8 text, in hex.
+/// JSON with sorted keys); lists are `[…]`, or `<…>` with their elements sorted when their order
+/// isn't meaningful, records `(…)` with their fields in declaration order, maps `{key=value…}`
+/// sorted by key. The hash is the 64-bit FNV-1a of the UTF-8 text, in hex.
 final class LiveFingerprint {
     private(set) var text = ""
 
@@ -374,6 +375,17 @@ final class LiveFingerprint {
         text += "["
         value.forEach(each)
         text += "]"
+    }
+
+    /// A list whose order isn't meaningful, such as one sent as an object's values: its elements, sorted.
+    func unordered<T>(_ value: [T]?, _ each: (LiveFingerprint, T) -> Void) {
+        guard let value else { return self.nil() }
+        let texts = value.map { item -> String in
+            let element = LiveFingerprint()
+            each(element, item)
+            return element.text
+        }
+        text += "<" + texts.sorted { Array($0.utf16).lexicographicallyPrecedes(Array($1.utf16)) }.joined() + ">"
     }
 
     func obj(_ fields: () -> Void) {

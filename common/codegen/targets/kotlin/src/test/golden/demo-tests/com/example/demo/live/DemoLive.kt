@@ -98,7 +98,7 @@ internal fun LiveFingerprint.writeDemoLesson(value: DemoLesson?) {
         dateTime(value.start)
         num(value.attendance)
         list(value.teachers) { str(it) }
-        list(value.owners) { writeDemoOwner(it) }
+        unordered(value.owners) { writeDemoOwner(it) }
         str(value.mapsUrl)
         writeDemoStaffGroup(value.staff)
         list(value.rooms) { str(it) }

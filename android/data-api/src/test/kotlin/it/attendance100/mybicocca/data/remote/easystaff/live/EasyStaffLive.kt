@@ -134,7 +134,7 @@ internal fun LiveFingerprint.writeEasyStaffEventType(value: EasyStaffEventType?)
 internal fun LiveFingerprint.writeEasyStaffExamCalendar(value: EasyStaffExamCalendar?) {
     if (value == null) return nil()
     obj(value) {
-        list(value.subjects) { writeEasyStaffExamSubject(it) }
+        unordered(value.subjects) { writeEasyStaffExamSubject(it) }
     }
 }
 
@@ -201,7 +201,7 @@ internal fun LiveFingerprint.writeEasyStaffRoomShowcaseBuilding(value: EasyStaff
         str(value.name)
         str(value.address)
         str(value.googleMapsLink)
-        list(value.rooms) { writeEasyStaffRoomShowcaseRoom(it) }
+        unordered(value.rooms) { writeEasyStaffRoomShowcaseRoom(it) }
     }
 }
 
@@ -227,8 +227,8 @@ internal fun LiveFingerprint.writeEasyStaffRoomShowcaseRoom(value: EasyStaffRoom
         str(value.accessibilityNotes)
         bool(value.isInclusionValidated)
         str(value.interactive360Link)
-        list(value.fixedEquipment) { writeEasyStaffRoomShowcaseEquipment(it) }
-        list(value.mobileEquipment) { writeEasyStaffRoomShowcaseEquipment(it) }
+        unordered(value.fixedEquipment) { writeEasyStaffRoomShowcaseEquipment(it) }
+        unordered(value.mobileEquipment) { writeEasyStaffRoomShowcaseEquipment(it) }
     }
 }
 

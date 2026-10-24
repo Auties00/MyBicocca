@@ -91,7 +91,7 @@ enum DemoLive {
             f.dateTime(value.start)
             f.num(value.attendance)
             f.list(value.teachers) { item0 in f.str(item0) }
-            f.list(value.owners) { item0 in DemoLive.writeDemoOwner(f, item0) }
+            f.unordered(value.owners) { g, item0 in DemoLive.writeDemoOwner(g, item0) }
             f.str(value.mapsUrl)
             DemoLive.writeDemoStaffGroup(f, value.staff)
             f.list(value.rooms) { item0 in f.str(item0) }

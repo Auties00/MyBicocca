@@ -19,6 +19,7 @@ import it.attendance100.mybicocca.codegen.core.decapitalized
 import it.attendance100.mybicocca.codegen.core.generatedMarker
 import it.attendance100.mybicocca.codegen.model.ApiSpec
 import it.attendance100.mybicocca.codegen.model.AuthScheme
+import it.attendance100.mybicocca.codegen.model.Codec
 import it.attendance100.mybicocca.codegen.model.ParameterLocation
 import it.attendance100.mybicocca.codegen.model.PrimitiveKind
 import it.attendance100.mybicocca.codegen.model.RecordType
@@ -505,7 +506,15 @@ internal class SwiftTestEmitter(private val plan: TestPlan, private val layout: 
                 line("f.obj {}")
             } else {
                 block("f.obj {") {
-                    for (field in record.fields) line(fingerprint(field.type, "value.${SwiftSyntax.identifier(field.name)}", field.nullable, depth = 0))
+                    for (field in record.fields) {
+                        val value = "value.${SwiftSyntax.identifier(field.name)}"
+                        val type = field.type
+                        // A list sent as an object's values has no order every platform keeps.
+                        line(
+                            if (field.codec == Codec.ObjectValues && type is TypeRef.ListOf) "f.unordered($value) { g, item0 in ${fingerprint(type.element, "item0", nullable = false, depth = 1, receiver = "g")} }"
+                            else fingerprint(type, value, field.nullable, depth = 0)
+                        )
+                    }
                 }
             }
         }

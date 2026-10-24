@@ -301,8 +301,9 @@ function scriptVariable(script: string, variable: string): string | undefined {
  * The canonical form of a decoded result, the same on every platform, and its hash: atoms end
  * with `;` (`~` for no value, `"…"` text with `\` and `"` escaped, integers, numbers as
  * millionths rounded down after adding a half, `t`/`f`, dates in ISO 8601, `b<size>` for bytes,
- * JSON with sorted keys); lists are `[…]`, records `(…)` with their fields in declaration order,
- * maps `{key=value…}` sorted by key. The hash is the 64-bit FNV-1a of the UTF-8 text, in hex.
+ * JSON with sorted keys); lists are `[…]`, or `<…>` with their elements sorted when their order
+ * isn't meaningful, records `(…)` with their fields in declaration order, maps `{key=value…}`
+ * sorted by key. The hash is the 64-bit FNV-1a of the UTF-8 text, in hex.
  */
 export class LiveFingerprint {
   private out = "";
@@ -352,6 +353,17 @@ export class LiveFingerprint {
     this.out += "[";
     value.forEach(each);
     this.out += "]";
+  }
+
+  /** A list whose order isn't meaningful, such as one sent as an object's values: its elements, sorted. */
+  unordered<T>(value: readonly T[] | null | undefined, each: (fingerprint: LiveFingerprint, item: T) => void): void {
+    if (value === null || value === undefined) return this.nil();
+    const texts = value.map((item) => {
+      const element = new LiveFingerprint();
+      each(element, item);
+      return element.text();
+    });
+    this.out += `<${texts.sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)).join("")}>`;
   }
 
   obj(value: unknown, fields: () => void): void {

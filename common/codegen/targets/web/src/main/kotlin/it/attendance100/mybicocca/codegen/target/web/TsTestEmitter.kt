@@ -18,6 +18,7 @@ import it.attendance100.mybicocca.codegen.core.TestTypes
 import it.attendance100.mybicocca.codegen.core.decapitalized
 import it.attendance100.mybicocca.codegen.model.ApiSpec
 import it.attendance100.mybicocca.codegen.model.AuthScheme
+import it.attendance100.mybicocca.codegen.model.Codec
 import it.attendance100.mybicocca.codegen.model.ParameterLocation
 import it.attendance100.mybicocca.codegen.model.PrimitiveKind
 import it.attendance100.mybicocca.codegen.model.RecordType
@@ -559,7 +560,15 @@ internal class TsTestEmitter(private val plan: TestPlan, private val layout: TsL
                 line("f.obj(value, () => {});")
             } else {
                 block("f.obj(value, () => {", "});") {
-                    for (field in record.fields) line("${fingerprint(field.type, access("value", field.name), file)};")
+                    for (field in record.fields) {
+                        val value = access("value", field.name)
+                        val type = field.type
+                        // A list sent as an object's values has no order every platform keeps.
+                        line(
+                            if (field.codec == Codec.ObjectValues && type is TypeRef.ListOf) "f.unordered($value, (g, it) => ${fingerprint(type.element, "it", file, "g")});"
+                            else "${fingerprint(type, value, file)};"
+                        )
+                    }
                 }
             }
         }
