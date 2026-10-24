@@ -3,6 +3,38 @@
 import DataApiRuntime
 import Foundation
 
+public struct MoodleComponentString: Codable, Hashable, Sendable {
+    /// string id
+    public var stringId: String
+    /// translated string
+    public var string: String
+
+    public init(
+        stringId: String = "",
+        string: String = ""
+    ) {
+        self.stringId = stringId
+        self.string = string
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case stringId = "stringid"
+        case string = "string"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.stringId = container.decodeLenient(String.self, forKey: .stringId) ?? ""
+        self.string = container.decodeLenient(String.self, forKey: .string) ?? ""
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(stringId, forKey: .stringId)
+        try container.encode(string, forKey: .string)
+    }
+}
+
 public struct MoodleSiteInfo: Codable, Hashable, Sendable {
     /// site name
     public var siteName: String

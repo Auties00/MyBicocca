@@ -155,4 +155,22 @@ class SpecValidatorTest {
             SpecValidator.validate(spec().copy(client = client)),
         )
     }
+
+    @Test
+    fun `reports files outside multipart forms and raw parameters that aren't path strings`() {
+        val file = TypeRef.Primitive(PrimitiveKind.FILE)
+        val upload = Operation(
+            "upload", HttpMethod.POST, "/upload",
+            listOf(Parameter("file", "file", ParameterLocation.FORM, file, required = true), Parameter("id", "id", ParameterLocation.QUERY, TypeRef.STRING, required = true, raw = true)),
+            body = null, response = ResponseBody.None,
+        )
+        assertEquals(
+            listOf(
+                "Operation 'Items.upload' parameter 'file' is a file but isn't a field of a multipart form",
+                "Operation 'Items.upload' parameter 'id' is sent raw but isn't a string path parameter",
+            ),
+            SpecValidator.validate(spec(operations = listOf(upload))),
+        )
+        assertTrue(SpecValidator.validate(spec(operations = listOf(upload.copy(parameters = upload.parameters.take(1), multipart = true)))).isEmpty())
+    }
 }

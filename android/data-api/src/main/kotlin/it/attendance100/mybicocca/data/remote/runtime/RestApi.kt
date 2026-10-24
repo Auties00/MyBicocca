@@ -87,6 +87,15 @@ abstract class RestApi(
         block: HttpRequestBuilder.() -> Unit = {},
     ): ByteReadChannel = execute(method, endpoint, server, roles, readsJson = false, allowEmpty = false, block)!!.bodyAsChannel()
 
+    /** Sends a request and returns its body as text, such as a playlist. */
+    protected suspend fun text(
+        method: HttpMethod,
+        endpoint: String,
+        server: String? = null,
+        roles: Set<Enum<*>> = emptySet(),
+        block: HttpRequestBuilder.() -> Unit = {},
+    ): String = execute(method, endpoint, server, roles, readsJson = false, allowEmpty = false, block)!!.bodyAsText()
+
     /**
      * Sends a request for a script and decodes the JSON it assigns to [variable], on a line of
      * its own: declared (`var name = …;`) or assigned (`window.name = …;`).

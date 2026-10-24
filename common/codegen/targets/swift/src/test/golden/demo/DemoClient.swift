@@ -47,6 +47,10 @@ public final class DemoClient: Sendable {
         try await execute(request, roles: roles, readsJSON: false)!.body
     }
 
+    public func text(_ request: RestRequest, roles: Set<DemoPermissionLevel>) async throws -> String {
+        try await execute(request, roles: roles, readsJSON: false)!.text
+    }
+
     /// Decodes the JSON a script assigns to `variable`.
     public func script<T: Decodable>(_ request: RestRequest, variable: String, roles: Set<DemoPermissionLevel>) async throws -> T {
         try await execute(request, roles: roles, readsJSON: false)!.script(T.self, variable: variable)

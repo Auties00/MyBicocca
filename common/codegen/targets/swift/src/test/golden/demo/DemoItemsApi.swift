@@ -12,6 +12,46 @@ public struct DemoItemsApi: Sendable {
         self.tenant = tenant
     }
 
+    /// Attaches a file to an item.
+    public func uploadAttachment(itemId: Int64, note: String? = nil, file: FileUpload) async throws {
+        try await client.send(
+            RestRequest(
+                method: .post,
+                path: "/items-service-v1/items/\(RestRequest.pathSegment(itemId))/attachments",
+                form: [("nota", note)],
+                headers: [("X-TENANT", tenant)],
+                files: [("file", file)],
+                multipart: true
+            ),
+            roles: []
+        )
+    }
+
+    /// - Parameters:
+    ///   - path: The attachment's path, as its link writes it.
+    public func downloadAttachment(path: String) async throws -> Data {
+        try await client.data(
+            RestRequest(
+                method: .get,
+                path: "/items-service-v1/attachments/\(path)",
+                headers: [("X-TENANT", tenant)]
+            ),
+            roles: []
+        )
+    }
+
+    /// The item's change log, as plain text.
+    public func getItemLog(itemId: Int64) async throws -> String {
+        try await client.text(
+            RestRequest(
+                method: .get,
+                path: "/items-service-v1/items/\(RestRequest.pathSegment(itemId))/log",
+                headers: [("X-TENANT", tenant)]
+            ),
+            roles: []
+        )
+    }
+
     /// Lists the items of an owner.
     ///
     /// - Parameters:

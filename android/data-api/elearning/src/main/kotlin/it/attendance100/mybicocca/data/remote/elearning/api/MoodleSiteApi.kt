@@ -8,6 +8,7 @@ import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
 import io.ktor.http.HttpMethod
 import io.ktor.http.parameters
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleComponentString
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleSiteInfo
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
 import it.attendance100.mybicocca.data.remote.elearning.dto.appendBrackets
@@ -20,6 +21,30 @@ class MoodleSiteApi(
     client: HttpClient,
     json: Json
 ) : RestApi(client, json, "", MoodleRuntime.policy) {
+
+    /**
+     * Return all raw strings (with {$a->xxx}), for a specific component - similar to core get_component_strings(), call
+     *
+     * @param component component
+     * @param lang lang
+     * @param auth The credentials, if any: [MoodleTokenAuth].
+     */
+    suspend fun componentStrings(
+        component: String,
+        lang: String? = null,
+        auth: MoodleTokenAuth? = null
+    ): List<MoodleComponentString> {
+        return jsonList(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<List<MoodleComponentString>>()) {
+            setBody(FormDataContent(parameters {
+                append("component", component)
+                lang?.let { append("lang", it) }
+                auth?.form?.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_get_component_strings")
+            parameter("moodlewsrestformat", "json")
+            auth?.headers?.forEach { (name, value) -> header(name, value) }
+        }
+    }
 
     /**
      * Return some site info / user info / list web service functions

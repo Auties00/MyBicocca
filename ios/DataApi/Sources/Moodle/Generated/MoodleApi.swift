@@ -9,27 +9,29 @@ public struct MoodleApi: Sendable {
     public let calendar: MoodleCalendarApi
     public let completion: MoodleCompletionApi
     public let course: MoodleCourseApi
+    public let site: MoodleSiteApi
     public let message: MoodleMessageApi
     public let user: MoodleUserApi
-    public let site: MoodleSiteApi
     public let grade: MoodleGradeApi
     public let assign: MoodleAssignApi
     public let forum: MoodleForumApi
     public let quiz: MoodleQuizApi
     public let mobile: MoodleMobileApi
+    public let files: MoodleFilesApi
 
     public init(client: MoodleClient) {
         self.badge = MoodleBadgeApi(client: client)
         self.calendar = MoodleCalendarApi(client: client)
         self.completion = MoodleCompletionApi(client: client)
         self.course = MoodleCourseApi(client: client)
+        self.site = MoodleSiteApi(client: client)
         self.message = MoodleMessageApi(client: client)
         self.user = MoodleUserApi(client: client)
-        self.site = MoodleSiteApi(client: client)
         self.grade = MoodleGradeApi(client: client)
         self.assign = MoodleAssignApi(client: client)
         self.forum = MoodleForumApi(client: client)
         self.quiz = MoodleQuizApi(client: client)
         self.mobile = MoodleMobileApi(client: client)
+        self.files = MoodleFilesApi(client: client)
     }
 }

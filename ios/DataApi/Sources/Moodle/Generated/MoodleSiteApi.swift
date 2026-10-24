@@ -10,6 +10,28 @@ public struct MoodleSiteApi: Sendable {
         self.client = client
     }
 
+    /// Return all raw strings (with {$a->xxx}), for a specific component - similar to core get_component_strings(), call
+    ///
+    /// - Parameters:
+    ///   - component: component
+    ///   - lang: lang
+    ///   - auth: The credentials, if any: ``MoodleTokenAuth``.
+    public func componentStrings(
+        component: String,
+        lang: String? = nil,
+        auth: (MoodleTokenAuth)? = nil
+    ) async throws -> [MoodleComponentString] {
+        try await client.jsonList(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_get_component_strings"), ("moodlewsrestformat", "json")],
+                form: [("component", component), ("lang", lang)],
+                auth: auth
+            )
+        )
+    }
+
     /// Return some site info / user info / list web service functions
     ///
     /// - Parameters:

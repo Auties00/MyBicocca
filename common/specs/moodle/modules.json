@@ -4,6 +4,7 @@
     "core_completion": "Completion",
     "core_course": "Course",
     "core_enrol": "Course",
+    "core_get": "Site",
     "core_group": "Course",
     "core_message": "Message",
     "core_user": "User",

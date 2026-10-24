@@ -49,6 +49,21 @@ public struct EmptyObject: Encodable, Sendable {
     private enum EmptyKey: CodingKey {}
 }
 
+/// A file sent as a field of a multipart form, held in memory.
+public struct FileUpload: Hashable, Sendable {
+    /// The name the server stores the file under.
+    public var fileName: String
+    /// The file's media type, or nil to let the server infer it.
+    public var contentType: String?
+    public var bytes: Data
+
+    public init(fileName: String, contentType: String? = nil, bytes: Data) {
+        self.fileName = fileName
+        self.contentType = contentType
+        self.bytes = bytes
+    }
+}
+
 /// A name/value pair of a query string or form body.
 public struct QueryItem: Hashable, Sendable {
     public var name: String
@@ -66,8 +81,12 @@ public struct RestRequest: Sendable {
     /// Path appended to the base URL, starting with `/`, with path parameters already encoded.
     public var path: String
     public var query: [QueryItem]
-    /// Fields sent as `application/x-www-form-urlencoded`, if the request has a form body.
+    /// Fields sent as `application/x-www-form-urlencoded`, or with ``multipart``, if the request has a form body.
     public var form: [QueryItem]?
+    /// Files sent as fields of a multipart form.
+    public var files: [(String, FileUpload)]
+    /// Whether the form is sent as `multipart/form-data`, as files need.
+    public var multipart: Bool
     /// Headers, including those of the credentials.
     public var headers: [QueryItem]
     /// Cookies, with their values not yet percent-encoded.
@@ -84,6 +103,8 @@ public struct RestRequest: Sendable {
     ///   - form: Form fields; those with no value are left out.
     ///   - headers: Headers; those with no value are left out.
     ///   - cookies: Cookies; those with no value are left out.
+    ///   - files: Files sent as fields of a multipart form; those with no value are left out.
+    ///   - multipart: Whether the form is sent as `multipart/form-data`.
     ///   - body: A value sent as JSON.
     ///   - auth: Credentials whose headers and form fields are added.
     public init(
@@ -93,6 +114,8 @@ public struct RestRequest: Sendable {
         form: [(String, (any QueryValueConvertible)?)]? = nil,
         headers: [(String, (any QueryValueConvertible)?)] = [],
         cookies: [(String, (any QueryValueConvertible)?)] = [],
+        files: [(String, FileUpload?)] = [],
+        multipart: Bool = false,
         body: (any Encodable)? = nil,
         auth: (any RequestAuth)? = nil,
         server: String? = nil,
@@ -105,6 +128,8 @@ public struct RestRequest: Sendable {
         self.form = form.map(RestRequest.items).map { $0 + authForm } ?? (authForm.isEmpty ? nil : authForm)
         self.headers = RestRequest.items(headers) + (auth?.headers ?? [:]).sorted { $0.key < $1.key }.map { QueryItem(name: $0.key, value: $0.value) }
         self.cookies = RestRequest.items(cookies)
+        self.files = files.compactMap { name, file in file.map { (name, $0) } }
+        self.multipart = multipart
         self.body = try body.map { try JSONEncoder().encode($0) }
         self.server = server
         self.envelope = envelope
@@ -165,6 +190,9 @@ public struct RestResponse: Sendable {
     }
 
     public var isSuccess: Bool { (200..<400).contains(status) }
+
+    /// The body as UTF-8 text, such as a playlist.
+    public var text: String { String(decoding: body, as: UTF8.self) }
 
     /// Decodes the body as `T`, after unwrapping it from the objects named by `envelope`.
     public func decode<T: Decodable>(_ type: T.Type, envelope: [String] = []) throws -> T {
@@ -249,7 +277,11 @@ public struct RestConfiguration: Sendable {
         if !request.cookies.isEmpty {
             setCookies(request.cookies, for: url, on: &urlRequest)
         }
-        if let form = request.form {
+        if request.multipart {
+            let boundary = "DataApi-\(UUID().uuidString)"
+            urlRequest.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+            urlRequest.httpBody = RestConfiguration.multipartBody(fields: request.form ?? [], files: request.files, boundary: boundary)
+        } else if let form = request.form {
             urlRequest.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
             urlRequest.httpBody = Data(form.map { "\(RestConfiguration.formEncode($0.name))=\(RestConfiguration.formEncode($0.value))" }.joined(separator: "&").utf8)
         } else if let body = request.body {
@@ -273,6 +305,23 @@ public struct RestConfiguration: Sendable {
                 storage.setCookie(cookie)
             }
         }
+    }
+
+    /// `fields` and `files` as the parts of a `multipart/form-data` body.
+    static func multipartBody(fields: [QueryItem], files: [(String, FileUpload)], boundary: String) -> Data {
+        var body = Data()
+        func append(_ text: String) { body.append(Data(text.utf8)) }
+        for field in fields {
+            append("--\(boundary)\r\nContent-Disposition: form-data; name=\"\(field.name)\"\r\n\r\n\(field.value)\r\n")
+        }
+        for (name, file) in files {
+            append("--\(boundary)\r\nContent-Disposition: form-data; name=\"\(name)\"; filename=\"\(file.fileName)\"\r\n")
+            append("Content-Type: \(file.contentType ?? "application/octet-stream")\r\n\r\n")
+            body.append(file.bytes)
+            append("\r\n")
+        }
+        append("--\(boundary)--\r\n")
+        return body
     }
 
     private static let formCharacters = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "-._~"))

@@ -2,6 +2,30 @@
 
 import { JsonObject, asJsonObject, decodeBoolean, decodeInteger, decodeList, decodeString } from "@mybicocca/data-api-runtime";
 
+export interface MoodleComponentString {
+  /** string id */
+  stringId: string;
+  /** translated string */
+  string: string;
+}
+
+/** Decodes a {@link MoodleComponentString}; `undefined` when `json` isn't an object. */
+export function decodeMoodleComponentString(json: unknown): MoodleComponentString | undefined {
+  const object = asJsonObject(json);
+  if (object === undefined) return undefined;
+  return {
+    stringId: decodeString(object["stringid"]) ?? "",
+    string: decodeString(object["string"]) ?? "",
+  };
+}
+
+export function encodeMoodleComponentString(value: MoodleComponentString): JsonObject {
+  return {
+    "stringid": value.stringId,
+    "string": value.string,
+  };
+}
+
 export interface MoodleSiteInfo {
   /** site name */
   siteName: string;

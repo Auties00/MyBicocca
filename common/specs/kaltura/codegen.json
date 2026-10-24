@@ -1,0 +1,22 @@
+{
+  "reader": {
+    "type": "openapi",
+    "options": {
+      "spec": "kaltura.yaml"
+    }
+  },
+  "targets": {
+    "kotlin": {
+      "outputDir": "../../../android/data-api/elearning/src/main/kotlin",
+      "options": {
+        "packageName": "it.attendance100.mybicocca.data.remote.elearning"
+      }
+    },
+    "swift": {
+      "outputDir": "../../../ios/DataApi/Sources/Kaltura/Generated"
+    },
+    "web": {
+      "outputDir": "../../../web/packages/kaltura/src/generated"
+    }
+  }
+}

@@ -33,7 +33,7 @@ internal class TsCodecs(private val layout: TsLayout) {
                 PrimitiveKind.LOCAL_TIME -> "decodeLocalTime"
                 PrimitiveKind.JSON_OBJECT -> "decodeJsonObject"
                 PrimitiveKind.JSON_VALUE -> "decodeJsonValue"
-                PrimitiveKind.BINARY -> error("Binary values can't be decoded from JSON")
+                PrimitiveKind.BINARY, PrimitiveKind.FILE -> error("Bytes and files can't be decoded from JSON")
             },
         )
     }

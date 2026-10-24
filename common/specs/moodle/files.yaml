@@ -1,0 +1,112 @@
+# The file endpoints of Moodle's web services, which aren't functions: downloading the files
+# course contents link to, and uploading files to a draft area, as an assignment submission
+# needs. They join the functions (functions.json) as one more part of the same API: see the
+# readers of codegen.json. See common/codegen/readers/openapi for the x-mb-* extensions.
+#
+# Both take the web service token as the `token` query parameter, and report failures like the
+# functions do, as JSON with HTTP 200 (see client.yaml).
+openapi: 3.0.3
+info:
+  title: Moodle files
+  version: "1"
+x-mb-id: moodle
+x-mb-prefix: Moodle
+
+tags:
+  - name: Files
+    description: Downloads of the files course contents link to, and uploads to draft areas.
+
+paths:
+  /webservice/pluginfile.php/{path}:
+    get:
+      tags: [Files]
+      operationId: downloadFile
+      summary: >-
+        Downloads a file a course content links to (its `fileUrl`). The endpoint honours HTTP
+        `Range` requests, so the same URL with the token can be handed to a media player.
+      parameters:
+        - name: path
+          in: path
+          required: true
+          x-mb-raw: true
+          description: >-
+            The path of the file after `webservice/pluginfile.php/`, as the content's `fileUrl`
+            writes it, without its query.
+          schema: { type: string }
+        - name: token
+          in: query
+          required: true
+          description: The web service token.
+          schema: { type: string }
+      responses:
+        "200":
+          description: The file.
+          content:
+            application/octet-stream:
+              schema: { type: string, format: binary }
+  /webservice/upload.php:
+    post:
+      tags: [Files]
+      operationId: uploadFile
+      summary: >-
+        Uploads a file to the user's draft area: a new one, or the one `itemId` names, to add
+        files to it. The submission saving the draft area names it by its item id.
+      parameters:
+        - name: token
+          in: query
+          required: true
+          description: The web service token.
+          schema: { type: string }
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                itemid:
+                  description: The draft area to add the file to, or `0` for a new one.
+                  type: integer
+                  default: 0
+                  x-mb-name: itemId
+                filepath:
+                  description: The folder of the draft area to store the file in.
+                  type: string
+                  default: /
+                  x-mb-name: filePath
+                file:
+                  type: string
+                  format: binary
+      responses:
+        "200":
+          description: The stored file.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/MoodleUploadedFile" }
+
+components:
+  schemas:
+    MoodleUploadedFile:
+      description: A file stored in a draft area.
+      type: object
+      required: [itemid]
+      properties:
+        itemid:
+          description: The draft area, which further uploads and the submission name.
+          type: integer
+          x-mb-name: itemId
+        filename:
+          type: string
+          x-mb-name: fileName
+        filepath:
+          type: string
+          x-mb-name: filePath
+        filesize:
+          type: integer
+          format: int64
+          x-mb-name: fileSize
+        filearea:
+          type: string
+          x-mb-name: fileArea

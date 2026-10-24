@@ -5,32 +5,46 @@ import Foundation
 
 /// An attendance activity's `view.php` showing every session (`view=5`): the student's statistics and the sessions it offers to submit attendance for.
 public struct MoodleWebAttendanceView: Codable, Hashable, Sendable {
+    /// The user Moodle rendered the page for, from its JavaScript config (`M.cfg`): 1, the guest user, when the session expired.
+    public var userId: Int?
+    /// Whether Moodle showed the activity's page, rather than another one: its enrol page (an expired session, or a course the user isn't enrolled in), the teachers' or the report viewers' page, or a policy or access restriction page.
+    public var shown: Bool
     /// The student's statistics, or none when the page shows no table of them, or one without the eight rows it is read by, which means the markup changed.
     public var summary: MoodleWebAttendanceSummary?
     /// The session log's rows whose status, points and remarks cells are merged into one link to `attendance.php`. Sessions that have a status are left out, even when it can still be updated, and so are rotating QR sessions, shown as a form instead: the plugin's mobile handler only accepts a session's fixed password.
     public var submittableSessions: [MoodleWebSubmittableSession]
 
     public init(
+        userId: Int? = nil,
+        shown: Bool = false,
         summary: MoodleWebAttendanceSummary? = nil,
         submittableSessions: [MoodleWebSubmittableSession] = []
     ) {
+        self.userId = userId
+        self.shown = shown
         self.summary = summary
         self.submittableSessions = submittableSessions
     }
 
     private enum CodingKeys: String, CodingKey {
+        case userId = "userId"
+        case shown = "shown"
         case summary = "summary"
         case submittableSessions = "submittableSessions"
     }
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.userId = container.decodeLenient(Int.self, forKey: .userId)
+        self.shown = container.decodeLenient(Bool.self, forKey: .shown) ?? false
         self.summary = container.decodeLenient(MoodleWebAttendanceSummary.self, forKey: .summary)
         self.submittableSessions = container.decodeLenient([MoodleWebSubmittableSession].self, forKey: .submittableSessions) ?? []
     }
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(userId, forKey: .userId)
+        try container.encode(shown, forKey: .shown)
         try container.encode(summary, forKey: .summary)
         try container.encode(submittableSessions, forKey: .submittableSessions)
     }
@@ -211,5 +225,126 @@ public struct MoodleWebAttendanceStatusOption: Codable, Hashable, Sendable {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(id, forKey: .id)
         try container.encode(description, forKey: .description)
+    }
+}
+
+/// The template of `mobile_view_activity` after marking: a message for each reason the presence wasn't recorded, and an item for each session it lists. It only lists the sessions starting between 6 hours ago and 24 hours from now (the site's defaults).
+public struct MoodleWebAttendanceMarkPage: Codable, Hashable, Sendable {
+    public var messages: [MoodleWebAttendanceMessage]
+    public var sessions: [MoodleWebAttendanceMarkSession]
+
+    public init(
+        messages: [MoodleWebAttendanceMessage] = [],
+        sessions: [MoodleWebAttendanceMarkSession] = []
+    ) {
+        self.messages = messages
+        self.sessions = sessions
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case messages = "messages"
+        case sessions = "sessions"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.messages = container.decodeLenient([MoodleWebAttendanceMessage].self, forKey: .messages) ?? []
+        self.sessions = container.decodeLenient([MoodleWebAttendanceMarkSession].self, forKey: .sessions) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(messages, forKey: .messages)
+        try container.encode(sessions, forKey: .sessions)
+    }
+}
+
+/// A session's item in the template of `mobile_view_activity`: its date and time, the button marking it while it is open, and the status it was assigned once marked.
+public struct MoodleWebAttendanceMarkSession: Codable, Hashable, Sendable {
+    /// The session's date and time, as `view.php` writes them in the same language (`MoodleWebSubmittableSession.time`).
+    public var time: String
+    public var markActions: [MoodleWebAttendanceMarkAction]
+    /// The item's headings, in order: the session's group, then the status it was assigned.
+    public var headings: [String]
+
+    public init(
+        time: String,
+        markActions: [MoodleWebAttendanceMarkAction] = [],
+        headings: [String] = []
+    ) {
+        self.time = time
+        self.markActions = markActions
+        self.headings = headings
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case time = "time"
+        case markActions = "markActions"
+        case headings = "headings"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.time = try container.decodeRequired(String.self, forKey: .time)
+        self.markActions = container.decodeLenient([MoodleWebAttendanceMarkAction].self, forKey: .markActions) ?? []
+        self.headings = container.decodeLenient([String].self, forKey: .headings) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(time, forKey: .time)
+        try container.encode(markActions, forKey: .markActions)
+        try container.encode(headings, forKey: .headings)
+    }
+}
+
+/// A message of the plugin, which the template names by its string key (`plugin.mod_attendance.<key>`).
+public struct MoodleWebAttendanceMessage: Codable, Hashable, Sendable {
+    /// The string key, such as `incorrectpasswordshort`.
+    public var key: String
+
+    public init(
+        key: String
+    ) {
+        self.key = key
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case key = "key"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.key = try container.decodeRequired(String.self, forKey: .key)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(key, forKey: .key)
+    }
+}
+
+/// The button marking a session, whose arguments name the session.
+public struct MoodleWebAttendanceMarkAction: Codable, Hashable, Sendable {
+    public var sessionId: String
+
+    public init(
+        sessionId: String
+    ) {
+        self.sessionId = sessionId
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case sessionId = "sessionId"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.sessionId = try container.decodeRequired(String.self, forKey: .sessionId)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(sessionId, forKey: .sessionId)
     }
 }

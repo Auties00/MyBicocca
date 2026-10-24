@@ -14,10 +14,10 @@ import it.attendance100.mybicocca.data.remote.easystaff.api.EasyStaffApi
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffAttendanceHistoryRequest
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffAttendanceRecord
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffCertifyAttendanceRequest
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceMarkResult
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceMarkableSession
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceSubmittableSession
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceViewResponse
+import it.attendance100.mybicocca.data.elearning.ElearningAttendanceMarkResult
+import it.attendance100.mybicocca.data.elearning.ElearningAttendanceMarkableSession
+import it.attendance100.mybicocca.data.elearning.ElearningAttendanceSubmittableSession
+import it.attendance100.mybicocca.data.elearning.ElearningAttendanceViewResponse
 import it.attendance100.mybicocca.domain.model.attendance.AttendanceModuleRef
 import it.attendance100.mybicocca.domain.model.attendance.ClassroomAttendance
 import it.attendance100.mybicocca.domain.model.attendance.CourseAttendance

@@ -7,9 +7,11 @@ import Foundation
 public struct MoodleWebApi: Sendable {
     public let catalog: MoodleWebCatalogApi
     public let media: MoodleWebMediaApi
+    public let attendance: MoodleWebAttendanceApi
 
     public init(client: MoodleWebClient) {
         self.catalog = MoodleWebCatalogApi(client: client)
         self.media = MoodleWebMediaApi(client: client)
+        self.attendance = MoodleWebAttendanceApi(client: client)
     }
 }

@@ -3,10 +3,36 @@
 import { brackets } from "@mybicocca/data-api-runtime";
 import { MoodleTokenAuth } from "./MoodleAuthTypes.js";
 import { MoodleClient } from "./MoodleClient.js";
-import { MoodleSiteInfo, decodeMoodleSiteInfo } from "./MoodleSiteTypes.js";
+import { MoodleComponentString, MoodleSiteInfo, decodeMoodleComponentString, decodeMoodleSiteInfo } from "./MoodleSiteTypes.js";
 
 export class MoodleSiteApi {
   constructor(private readonly client: MoodleClient) {}
+
+  /**
+   * Return all raw strings (with {$a->xxx}), for a specific component - similar to core get_component_strings(), call
+   *
+   * @param component component
+   * @param options.lang lang
+   * @param options.auth The credentials, if any: {@link MoodleTokenAuth}.
+   */
+  async componentStrings(
+    component: string,
+    options: {
+      lang?: string | null;
+      auth?: MoodleTokenAuth | null;
+    } = {},
+  ): Promise<MoodleComponentString[]> {
+    return this.client.jsonList(
+      {
+        method: "POST",
+        path: "/webservice/rest/server.php",
+        query: [["wsfunction", "core_get_component_strings"], ["moodlewsrestformat", "json"]],
+        form: [["component", component], ["lang", options.lang]],
+        auth: options.auth,
+      },
+      decodeMoodleComponentString,
+    );
+  }
 
   /**
    * Return some site info / user info / list web service functions
