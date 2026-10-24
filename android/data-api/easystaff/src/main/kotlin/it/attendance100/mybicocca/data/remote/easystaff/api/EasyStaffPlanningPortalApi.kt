@@ -128,12 +128,12 @@ open class EasyStaffPlanningPortalApi(
      * Builds the `entry-filters` cookie header the list endpoints read their filters from,
      * mirroring the cookie the web front-end persists: its value is the URL-encoded JSON of
      * the selected filters.
+     *
+     * The cookie is sent even without filters, as `{}`: the client's cookie storage keeps
+     * whatever filters the previous call set, and they would otherwise apply to this one.
      */
     private fun entryFilters(builder: JsonObjectBuilder.() -> Unit): Map<String, String> {
         val filters = buildJsonObject(builder)
-        if (filters.isEmpty()) {
-            return emptyMap()
-        }
         val encoded = URLEncoder.encode(filters.toString(), Charsets.UTF_8).replace("+", "%20")
         return mapOf(HttpHeaders.Cookie to "entry-filters=$encoded")
     }

@@ -221,6 +221,18 @@ class EasyStaffPlanningApiTest : EasyStaffTestBase() {
     }
 
     @Test
+    suspend fun getServiceFormWithoutGuestTokenRenewsIt() {
+        val services = informationDesks.getServices()
+        assumeTrue(services.isNotEmpty(), "No service available, cannot test the guest token renewal")
+
+        // A fresh client has no `jwt_public` cookie yet, so the first form request is rejected.
+        EasyStaffApi().use { freshApi ->
+            val form = freshApi.planning.informationDesks.getServiceForm(services.first().id)
+            assertTrue(form.isNotEmpty(), "The booking form should load once the guest token is renewed")
+        }
+    }
+
+    @Test
     suspend fun getPrimaryField() {
         val field = informationDesks.getPrimaryField()
         assertTrue(field.primary, "The primary field should be flagged as primary")
