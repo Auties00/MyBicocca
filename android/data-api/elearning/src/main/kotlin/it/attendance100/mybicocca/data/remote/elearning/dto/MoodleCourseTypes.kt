@@ -458,6 +458,299 @@ data class MoodleModuleContentsInfo(
 )
 
 @Serializable
+data class MoodleCoursesByFieldResponse(
+    /** Course */
+    @SerialName("courses")
+    val courses: List<MoodleCourse> = emptyList(),
+
+    /** list of warnings */
+    @SerialName("warnings")
+    val warnings: List<MoodleWarning> = emptyList()
+)
+
+@Serializable
+data class MoodleCourse(
+    /** course id */
+    @SerialName("id")
+    val id: Int = 0,
+
+    /** course full name */
+    @SerialName("fullname")
+    val fullName: String = "",
+
+    /** course display name */
+    @SerialName("displayname")
+    val displayName: String = "",
+
+    /** course short name */
+    @SerialName("shortname")
+    val shortName: String = "",
+
+    /** Course image */
+    @SerialName("courseimage")
+    val courseImage: String? = null,
+
+    /** category id */
+    @SerialName("categoryid")
+    val categoryId: Int = 0,
+
+    /** category name */
+    @SerialName("categoryname")
+    val categoryName: String = "",
+
+    /** Sort order in the category */
+    @SerialName("sortorder")
+    val sortOrder: Int? = null,
+
+    /** summary */
+    @SerialName("summary")
+    val summary: String = "",
+
+    /** summary format (1 = HTML, 0 = MOODLE, 2 = PLAIN, or 4 = MARKDOWN) */
+    @SerialName("summaryformat")
+    val summaryFormat: Int = 0,
+
+    /** summary files in the summary field */
+    @SerialName("summaryfiles")
+    val summaryFiles: List<MoodleFile> = emptyList(),
+
+    /** additional overview files attached to this course */
+    @SerialName("overviewfiles")
+    val overviewFiles: List<MoodleFile> = emptyList(),
+
+    /** Whether the activity dates are shown or not */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("showactivitydates")
+    val showActivityDates: Boolean = false,
+
+    /** Whether the activity completion conditions are shown or not */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("showcompletionconditions")
+    val showCompletionConditions: Boolean = false,
+
+    /** contact users */
+    @SerialName("contacts")
+    val contacts: List<MoodleContact> = emptyList(),
+
+    /** enrollment methods list */
+    @SerialName("enrollmentmethods")
+    val enrollmentMethods: List<String> = emptyList(),
+
+    /** Custom fields */
+    @SerialName("customfields")
+    val customFields: List<MoodleCourseCustomField> = emptyList(),
+
+    /** Id number */
+    @SerialName("idnumber")
+    val idNumber: String? = null,
+
+    /** Course format: weeks, topics, social, site,.. */
+    @SerialName("format")
+    val format: String? = null,
+
+    /** 1 if grades are shown, otherwise 0 */
+    @SerialName("showgrades")
+    val showGrades: Int? = null,
+
+    /** Number of recent items appearing on the course page */
+    @SerialName("newsitems")
+    val newsItems: Int? = null,
+
+    /** Timestamp when the course start */
+    @SerialName("startdate")
+    val startDate: Long? = null,
+
+    /** Timestamp when the course end */
+    @SerialName("enddate")
+    val endDate: Long? = null,
+
+    /** Largest size of file that can be uploaded into */
+    @SerialName("maxbytes")
+    val maxBytes: Long? = null,
+
+    /** Are activity report shown (yes = 1, no =0) */
+    @SerialName("showreports")
+    val showReports: Int? = null,
+
+    /** 1: available to student, 0:not available */
+    @SerialName("visible")
+    val visible: Int? = null,
+
+    /** no group, separate, visible */
+    @SerialName("groupmode")
+    val groupMode: Int? = null,
+
+    /** 1: yes, 0: no */
+    @SerialName("groupmodeforce")
+    val groupModeForce: Int? = null,
+
+    /** default grouping id */
+    @SerialName("defaultgroupingid")
+    val defaultGroupingId: Int? = null,
+
+    /** Completion enabled? 1: yes 0: no */
+    @SerialName("enablecompletion")
+    val enableCompletion: Int? = null,
+
+    /** 1: yes 0: no */
+    @SerialName("completionnotify")
+    val completionNotify: Int? = null,
+
+    /** Forced course language */
+    @SerialName("lang")
+    val lang: String? = null,
+
+    /** Fame of the forced theme */
+    @SerialName("theme")
+    val theme: String? = null,
+
+    /** Current course marker */
+    @SerialName("marker")
+    val marker: Int? = null,
+
+    /** If legacy files are enabled */
+    @SerialName("legacyfiles")
+    val legacyFiles: Int? = null,
+
+    /** Calendar type */
+    @SerialName("calendartype")
+    val calendarType: String? = null,
+
+    /** Time when the course was created */
+    @SerialName("timecreated")
+    val timeCreated: Long? = null,
+
+    /** Last time the course was updated */
+    @SerialName("timemodified")
+    val timeModified: Long? = null,
+
+    /** If is a requested course */
+    @SerialName("requested")
+    val requested: Int? = null,
+
+    /** Cache revision number */
+    @SerialName("cacherev")
+    val cacheRevision: Int? = null,
+
+    /** Course filters */
+    @SerialName("filters")
+    val filters: List<MoodleFilter> = emptyList(),
+
+    /** Additional options for particular course format. */
+    @SerialName("courseformatoptions")
+    val courseFormatOptions: List<MoodleKeyValue> = emptyList(),
+
+    /** Communication tool room name. */
+    @SerialName("communicationroomname")
+    val communicationRoomName: String? = null,
+
+    /** Communication tool room URL. */
+    @SerialName("communicationroomurl")
+    val communicationRoomUrl: String? = null
+)
+
+/** File. */
+@Serializable
+data class MoodleFile(
+    /** File name. */
+    @SerialName("filename")
+    val fileName: String? = null,
+
+    /** File path. */
+    @SerialName("filepath")
+    val filePath: String? = null,
+
+    /** File size. */
+    @SerialName("filesize")
+    val fileSize: Long? = null,
+
+    /** Downloadable file url. */
+    @SerialName("fileurl")
+    val fileUrl: String? = null,
+
+    /** Time modified. */
+    @SerialName("timemodified")
+    val timeModified: Long? = null,
+
+    /** File mime type. */
+    @SerialName("mimetype")
+    val mimeType: String? = null,
+
+    /** Whether is an external file. */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("isexternalfile")
+    val isExternalFile: Boolean? = null,
+
+    /** The repository type for external files. */
+    @SerialName("repositorytype")
+    val repositoryType: String? = null,
+
+    /** The relative path to the relevant file type icon based on the file's mime type. */
+    @SerialName("icon")
+    val icon: String? = null
+)
+
+@Serializable
+data class MoodleContact(
+    /** contact user id */
+    @SerialName("id")
+    val id: Int = 0,
+
+    /** contact user fullname */
+    @SerialName("fullname")
+    val fullName: String = ""
+)
+
+@Serializable
+data class MoodleCourseCustomField(
+    /** The name of the custom field */
+    @SerialName("name")
+    val name: String = "",
+
+    /** The shortname of the custom field - to be able to build the field class in the code */
+    @SerialName("shortname")
+    val shortName: String = "",
+
+    /** The type of the custom field - text field, checkbox... */
+    @SerialName("type")
+    val type: String = "",
+
+    /** The raw value of the custom field */
+    @SerialName("valueraw")
+    val valueRaw: String = "",
+
+    /** The value of the custom field */
+    @SerialName("value")
+    val value: String = ""
+)
+
+@Serializable
+data class MoodleFilter(
+    /** Filter plugin name */
+    @SerialName("filter")
+    val filter: String = "",
+
+    /** Filter state: 1 for on, -1 for off, 0 if inherit */
+    @SerialName("localstate")
+    val localState: Int = 0,
+
+    /** 1 or 0 to use when localstate is set to inherit */
+    @SerialName("inheritedstate")
+    val inheritedState: Int = 0
+)
+
+@Serializable
+data class MoodleKeyValue(
+    /** Course format option name. */
+    @SerialName("name")
+    val name: String = "",
+
+    /** Course format option value. */
+    @SerialName("value")
+    val value: String = ""
+)
+
+@Serializable
 data class MoodleEnrolledCourse(
     /** id of course */
     @SerialName("id")
@@ -583,47 +876,6 @@ data class MoodleEnrolledCourse(
     /** Last time course settings were updated (timestamp). */
     @SerialName("timemodified")
     val timeModified: Long? = null
-)
-
-/** File. */
-@Serializable
-data class MoodleFile(
-    /** File name. */
-    @SerialName("filename")
-    val fileName: String? = null,
-
-    /** File path. */
-    @SerialName("filepath")
-    val filePath: String? = null,
-
-    /** File size. */
-    @SerialName("filesize")
-    val fileSize: Long? = null,
-
-    /** Downloadable file url. */
-    @SerialName("fileurl")
-    val fileUrl: String? = null,
-
-    /** Time modified. */
-    @SerialName("timemodified")
-    val timeModified: Long? = null,
-
-    /** File mime type. */
-    @SerialName("mimetype")
-    val mimeType: String? = null,
-
-    /** Whether is an external file. */
-    @Serializable(with = MoodleBooleanSerializer::class)
-    @SerialName("isexternalfile")
-    val isExternalFile: Boolean? = null,
-
-    /** The repository type for external files. */
-    @SerialName("repositorytype")
-    val repositoryType: String? = null,
-
-    /** The relative path to the relevant file type icon based on the file's mime type. */
-    @SerialName("icon")
-    val icon: String? = null
 )
 
 @Serializable

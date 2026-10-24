@@ -9,6 +9,7 @@ import io.ktor.client.request.setBody
 import io.ktor.http.parameters
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseSection
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseUserGroupsResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCoursesByFieldResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleEnrolledCourse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleOption
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleStatusResponse
@@ -41,6 +42,30 @@ class MoodleCourseApi(
                 auth.form.forEach { (name, value) -> append(name, value) }
             }))
             parameter("wsfunction", "core_course_get_contents")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Get courses matching a specific field (id/s, shortname, idnumber, category)
+     *
+     * @param field The field to search can be left empty for all courses or: id: course id ids: comma separated course ids shortname: course short name idnumber: course id number category: category id the course belongs to sectionid: section id that belongs to a course
+     * @param value The value to match
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getCoursesByField(
+        field: String? = null,
+        value: String? = null,
+        auth: MoodleTokenAuth
+    ): MoodleCoursesByFieldResponse {
+        return executeJsonPost<MoodleCoursesByFieldResponse>("/webservice/rest/server.php") {
+            setBody(FormDataContent(parameters {
+                field?.let { append("field", it) }
+                value?.let { append("value", it) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_course_get_courses_by_field")
             parameter("moodlewsrestformat", "json")
             auth.headers.forEach { (name, value) -> header(name, value) }
         }

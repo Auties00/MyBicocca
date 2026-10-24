@@ -184,17 +184,6 @@ data class MoodleUserCustomField(
 )
 
 @Serializable
-data class MoodleKeyValue(
-    /** The name of the preferences */
-    @SerialName("name")
-    val name: String = "",
-
-    /** The value of the preference */
-    @SerialName("value")
-    val value: String = ""
-)
-
-@Serializable
 data class MoodleUserGroup(
     /** group id */
     @SerialName("id")

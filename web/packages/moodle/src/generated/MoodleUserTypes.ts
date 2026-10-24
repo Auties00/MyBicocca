@@ -2,6 +2,7 @@
 
 import { JsonObject, asJsonObject, decodeBoolean, decodeInteger, decodeList, decodeString } from "@mybicocca/data-api-runtime";
 import { MoodleWarning, decodeMoodleWarning, encodeMoodleWarning } from "./MoodleBadgeTypes.js";
+import { MoodleKeyValue, decodeMoodleKeyValue, encodeMoodleKeyValue } from "./MoodleCourseTypes.js";
 
 export interface MoodleCourseUserReference {
   /** userid */
@@ -216,30 +217,6 @@ export function encodeMoodleUserCustomField(value: MoodleUserCustomField): JsonO
     "displayvalue": value.displayValue,
     "name": value.name,
     "shortname": value.shortName,
-  };
-}
-
-export interface MoodleKeyValue {
-  /** The name of the preferences */
-  name: string;
-  /** The value of the preference */
-  value: string;
-}
-
-/** Decodes a {@link MoodleKeyValue}; `undefined` when `json` isn't an object. */
-export function decodeMoodleKeyValue(json: unknown): MoodleKeyValue | undefined {
-  const object = asJsonObject(json);
-  if (object === undefined) return undefined;
-  return {
-    name: decodeString(object["name"]) ?? "",
-    value: decodeString(object["value"]) ?? "",
-  };
-}
-
-export function encodeMoodleKeyValue(value: MoodleKeyValue): JsonObject {
-  return {
-    "name": value.name,
-    "value": value.value,
   };
 }
 

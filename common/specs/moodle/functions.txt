@@ -6,6 +6,7 @@ core_calendar_get_calendar_upcoming_view
 core_completion_get_activities_completion_status
 core_completion_update_activity_completion_status_manually
 core_course_get_contents
+core_course_get_courses_by_field
 core_enrol_get_users_courses
 core_group_get_course_user_groups
 core_message_block_user
@@ -57,4 +58,5 @@ mod_quiz_get_user_best_grade
 mod_quiz_process_attempt
 mod_quiz_save_attempt
 mod_quiz_start_attempt
+tool_mobile_get_autologin_key
 tool_mobile_get_content

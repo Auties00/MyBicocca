@@ -3,6 +3,45 @@
 import DataApiRuntime
 import Foundation
 
+public struct MoodleAutologinKey: Codable, Hashable, Sendable {
+    /// Auto-login key for a single usage with time expiration.
+    public var key: String
+    /// Auto-login URL.
+    public var autologinUrl: String
+    /// list of warnings
+    public var warnings: [MoodleWarning]
+
+    public init(
+        key: String = "",
+        autologinUrl: String = "",
+        warnings: [MoodleWarning] = []
+    ) {
+        self.key = key
+        self.autologinUrl = autologinUrl
+        self.warnings = warnings
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case key = "key"
+        case autologinUrl = "autologinurl"
+        case warnings = "warnings"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.key = container.decodeLenient(String.self, forKey: .key) ?? ""
+        self.autologinUrl = container.decodeLenient(String.self, forKey: .autologinUrl) ?? ""
+        self.warnings = container.decodeLenient([MoodleWarning].self, forKey: .warnings) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(key, forKey: .key)
+        try container.encode(autologinUrl, forKey: .autologinUrl)
+        try container.encode(warnings, forKey: .warnings)
+    }
+}
+
 public struct MoodleMobileContent: Codable, Hashable, Sendable {
     /// Templates required by the generated content.
     public var templates: [MoodleMobileTemplate]

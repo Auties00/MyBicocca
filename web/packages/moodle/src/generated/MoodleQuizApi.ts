@@ -4,8 +4,8 @@ import { brackets } from "@mybicocca/data-api-runtime";
 import { MoodleClient } from "../client.js";
 import { MoodleTokenAuth } from "./MoodleAuthTypes.js";
 import { MoodleStatusResponse, decodeMoodleStatusResponse } from "./MoodleCompletionTypes.js";
+import { MoodleKeyValue, encodeMoodleKeyValue } from "./MoodleCourseTypes.js";
 import { MoodleAttemptDataResponse, MoodleAttemptReviewResponse, MoodleAttemptSummaryResponse, MoodleNamedValue, MoodleProcessAttemptResponse, MoodleQuizAccessInformation, MoodleQuizzesResponse, MoodleStartAttemptResponse, MoodleUserAttemptsResponse, MoodleUserBestGradeResponse, decodeMoodleAttemptDataResponse, decodeMoodleAttemptReviewResponse, decodeMoodleAttemptSummaryResponse, decodeMoodleProcessAttemptResponse, decodeMoodleQuizAccessInformation, decodeMoodleQuizzesResponse, decodeMoodleStartAttemptResponse, decodeMoodleUserAttemptsResponse, decodeMoodleUserBestGradeResponse, encodeMoodleNamedValue } from "./MoodleQuizTypes.js";
-import { MoodleKeyValue, encodeMoodleKeyValue } from "./MoodleUserTypes.js";
 
 export class MoodleQuizApi {
   constructor(private readonly client: MoodleClient) {}
