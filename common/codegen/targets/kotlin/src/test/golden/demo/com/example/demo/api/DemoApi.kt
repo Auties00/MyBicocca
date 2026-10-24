@@ -13,6 +13,7 @@ class DemoApi(httpClientConfig: HttpClientConfig<*>.() -> Unit = {}) : AutoClose
     private val client = DemoRuntime.createHttpClient(json, httpClientConfig)
 
     val items = DemoItemsApi(client, json)
+    val search = DemoSearchApi(client, json)
     val shared = DemoSharedApi(client, json)
 
     override fun close() {

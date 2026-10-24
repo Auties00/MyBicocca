@@ -13,6 +13,9 @@ package it.attendance100.mybicocca.codegen.model
  * @property body The request body, if the operation sends one.
  * @property roles Names of the access roles allowed to call the operation, as defined by the
  *   API's runtime. Empty when the API doesn't say.
+ * @property server Name of the [Server] the operation targets; null for the API's only one.
+ * @property headers Headers sent with every call, by name.
+ * @property auth The credentials the operation accepts, if any.
  */
 data class Operation(
     val name: String,
@@ -23,22 +26,35 @@ data class Operation(
     val response: ResponseBody,
     val roles: Set<String> = emptySet(),
     val summary: String? = null,
+    val server: String? = null,
+    val headers: Map<String, String> = emptyMap(),
+    val auth: AuthRequirement? = null,
 ) {
     val pathParameters: List<Parameter> get() = parameters.filter { it.location == ParameterLocation.PATH }
     val queryParameters: List<Parameter> get() = parameters.filter { it.location == ParameterLocation.QUERY }
     val formParameters: List<Parameter> get() = parameters.filter { it.location == ParameterLocation.FORM }
+    val headerParameters: List<Parameter> get() = parameters.filter { it.location == ParameterLocation.HEADER }
 }
+
+/**
+ * The credentials an operation accepts.
+ *
+ * @property schemes Names of the accepted [AuthScheme]s.
+ * @property required Whether a call must be authenticated.
+ */
+data class AuthRequirement(val schemes: List<String>, val required: Boolean)
 
 enum class HttpMethod { GET, POST, PUT, PATCH, DELETE }
 
 /**
- * A path, query or form parameter. A list value is sent as one comma-separated value, the
- * Swagger/OpenAPI default for query parameters.
+ * A path, query, form or header parameter. A list value is sent as one comma-separated value,
+ * the Swagger/OpenAPI default for query parameters.
  *
  * @property name camelCase name of the parameter.
  * @property wireName Name of the parameter on the wire.
  * @property valueDescriptions Descriptions of the accepted values, by wire value, when
  *   [type] is an enum.
+ * @property default The value used when the caller gives none; such a parameter is always sent.
  */
 data class Parameter(
     val name: String,
@@ -48,9 +64,13 @@ data class Parameter(
     val required: Boolean,
     val description: String? = null,
     val valueDescriptions: Map<String, String> = emptyMap(),
-)
+    val default: DefaultValue.Literal? = null,
+) {
+    /** Whether the caller may leave the parameter out, in which case it isn't sent. */
+    val isOmittable: Boolean get() = !required && default == null
+}
 
-enum class ParameterLocation { PATH, QUERY, FORM }
+enum class ParameterLocation { PATH, QUERY, FORM, HEADER }
 
 /** The body an operation sends. */
 sealed interface RequestBody {
@@ -58,6 +78,11 @@ sealed interface RequestBody {
 
     /** A value encoded as JSON. */
     data class Json(val type: TypeRef, override val description: String? = null) : RequestBody
+
+    /** An empty JSON object, `{}`, which some servers require instead of no body. */
+    data object EmptyObject : RequestBody {
+        override val description: String? get() = null
+    }
 }
 
 /** What a successful response carries. */
@@ -65,8 +90,13 @@ sealed interface ResponseBody {
     /** Nothing the caller needs. */
     data object None : ResponseBody
 
-    /** A JSON value of [type]. */
-    data class Json(val type: TypeRef) : ResponseBody
+    /**
+     * A JSON value of [type].
+     *
+     * @property envelope Keys of the objects the value is nested in, outermost first (e.g.
+     *   `["data"]` for `{"data": value}`); empty when the body is the value itself.
+     */
+    data class Json(val type: TypeRef, val envelope: List<String> = emptyList()) : ResponseBody
 
     /** Raw bytes, such as a PDF. */
     data object Binary : ResponseBody

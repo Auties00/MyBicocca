@@ -4,6 +4,7 @@ import it.attendance100.mybicocca.codegen.core.CodeWriter
 import it.attendance100.mybicocca.codegen.core.capitalized
 import it.attendance100.mybicocca.codegen.model.ApiModule
 import it.attendance100.mybicocca.codegen.model.ApiSpec
+import it.attendance100.mybicocca.codegen.model.DefaultValue
 import it.attendance100.mybicocca.codegen.model.EnumType
 import it.attendance100.mybicocca.codegen.model.Operation
 import it.attendance100.mybicocca.codegen.model.Parameter
@@ -18,12 +19,16 @@ import it.attendance100.mybicocca.codegen.model.TypeRef
  * request helpers form the runtime contract:
  *
  * - `executeJson<Method><T>(endpoint, roles) { … }` decodes the body as `T`;
- * - `executeJson<Method>List<T>(…)` decodes a list, returning an empty one on HTTP 404;
+ * - `executeJson<Method>List<T>(…)` decodes a list (Esse3's runtime returns an empty one on
+ *   HTTP 404);
  * - `executeStream<Method>(…)` returns the body as a `ByteReadChannel`;
  * - `execute<Method>(endpoint) { … }` plus `ensureSuccess(response, roles)` when the body
  *   isn't needed.
  *
- * The trailing block configures the Ktor request (parameters and body).
+ * `roles` is passed only by APIs whose operations declare roles. When the spec uses them, the
+ * helpers also take the named arguments `server` (a value of the API's `Server` enum) and
+ * `envelope` (the keys the response value is nested in). The trailing block configures the
+ * Ktor request: parameters, headers and body.
  */
 internal class ServiceEmitter(private val spec: ApiSpec, private val layout: KotlinLayout) {
 
@@ -60,19 +65,31 @@ internal class ServiceEmitter(private val spec: ApiSpec, private val layout: Kot
         line("}")
     }
 
-    /** Path parameters, then the body, then the remaining parameters; optional ones default to null. */
+    /**
+     * Path parameters, then the body, then the remaining parameters, then the credentials.
+     * Optional parameters default to their declared value, or to null (and aren't sent).
+     */
     private fun signatureParameters(operation: Operation, file: KotlinFile): List<String> = buildList {
         operation.pathParameters.forEach { add("${KotlinSyntax.identifier(it.name)}: ${layout.render(it.type, file)}") }
         when (val body = operation.body) {
             is RequestBody.Json -> add("$BODY: ${layout.render(body.type, file)}")
-            null -> Unit
+            RequestBody.EmptyObject, null -> Unit
         }
         operation.parameters.filter { it.location != ParameterLocation.PATH }.forEach { parameter ->
+            val name = KotlinSyntax.identifier(parameter.name)
             val type = layout.render(parameter.type, file)
+            val default = parameter.default
             add(
-                if (parameter.required) "${KotlinSyntax.identifier(parameter.name)}: $type"
-                else "${KotlinSyntax.identifier(parameter.name)}: $type? = null"
+                when {
+                    parameter.required -> "$name: $type"
+                    default != null -> "$name: $type = ${literal(parameter.type, default, file)}"
+                    else -> "$name: $type? = null"
+                }
             )
+        }
+        operation.auth?.let { auth ->
+            val type = layout.authType(auth, file)
+            add(if (auth.required) "$AUTH: $type" else "$AUTH: $type? = null")
         }
     }
 
@@ -84,17 +101,20 @@ internal class ServiceEmitter(private val spec: ApiSpec, private val layout: Kot
 
     private fun CodeWriter.call(operation: Operation, file: KotlinFile) {
         val method = operation.method.name.lowercase().capitalized()
-        val endpoint = endpoint(operation)
-        val roles = roles(operation, file)
-        val hasBlock = operation.body != null || operation.parameters.any { it.location != ParameterLocation.PATH }
+        val roles = if (spec.usesRoles) roles(operation, file) else null
+        val target = listOfNotNull(endpoint(operation), roles) + targetArguments(operation, file)
+        val hasBlock = operation.body != null ||
+            operation.parameters.any { it.location != ParameterLocation.PATH } ||
+            operation.headers.isNotEmpty() ||
+            operation.auth != null
 
         val response = operation.response
         val invocation = when (response) {
-            ResponseBody.None -> "val response = execute$method($endpoint)"
-            ResponseBody.Binary -> "return executeStream$method($endpoint, $roles)"
+            ResponseBody.None -> "val response = execute$method(${(listOf(endpoint(operation)) + targetArguments(operation, file)).joinToString(", ")})"
+            ResponseBody.Binary -> "return executeStream$method(${target.joinToString(", ")})"
             is ResponseBody.Json -> when (val type = response.type) {
-                is TypeRef.ListOf -> "return executeJson${method}List<${layout.render(type.element, file)}>($endpoint, $roles)"
-                else -> "return executeJson$method<${layout.render(type, file)}>($endpoint, $roles)"
+                is TypeRef.ListOf -> "return executeJson${method}List<${layout.render(type.element, file)}>(${target.joinToString(", ")})"
+                else -> "return executeJson$method<${layout.render(type, file)}>(${target.joinToString(", ")})"
             }
         }
         if (hasBlock) {
@@ -102,16 +122,31 @@ internal class ServiceEmitter(private val spec: ApiSpec, private val layout: Kot
         } else {
             line(invocation)
         }
-        if (response == ResponseBody.None) line("ensureSuccess(response, $roles)")
+        if (response == ResponseBody.None) line(listOfNotNull("response", roles).joinToString(", ", "ensureSuccess(", ")"))
+    }
+
+    /** The named `server` and `envelope` arguments, when the operation needs them. */
+    private fun targetArguments(operation: Operation, file: KotlinFile): List<String> = buildList {
+        operation.server?.let { server ->
+            file.import(layout.server)
+            add("server = ${layout.server.substringAfterLast('.')}.$server")
+        }
+        val envelope = (operation.response as? ResponseBody.Json)?.envelope.orEmpty()
+        if (envelope.isNotEmpty()) add("envelope = ${envelope.joinToString(", ", "listOf(", ")") { KotlinSyntax.string(it) }}")
     }
 
     private fun CodeWriter.requestConfiguration(operation: Operation, file: KotlinFile) {
-        if (operation.body is RequestBody.Json) {
-            file.import("io.ktor.client.request.setBody")
-            file.import("io.ktor.http.ContentType")
-            file.import("io.ktor.http.contentType")
-            line("contentType(ContentType.Application.Json)")
-            line("setBody($BODY)")
+        when (operation.body) {
+            is RequestBody.Json -> {
+                jsonContent(file)
+                line("setBody($BODY)")
+            }
+            RequestBody.EmptyObject -> {
+                jsonContent(file)
+                file.import("kotlinx.serialization.json.JsonObject")
+                line("setBody(JsonObject(emptyMap()))")
+            }
+            null -> Unit
         }
 
         val form = operation.formParameters
@@ -120,38 +155,56 @@ internal class ServiceEmitter(private val spec: ApiSpec, private val layout: Kot
             file.import("io.ktor.client.request.forms.FormDataContent")
             file.import("io.ktor.http.parameters")
             block("setBody(FormDataContent(parameters {", "}))") {
-                for (parameter in form) {
-                    val name = KotlinSyntax.identifier(parameter.name)
-                    val wireName = KotlinSyntax.string(parameter.wireName)
-                    if (parameter.required) {
-                        line("append($wireName, ${formValue(parameter, name)})")
-                    } else {
-                        line("$name?.let { append($wireName, ${formValue(parameter, "it")}) }")
-                    }
-                }
+                for (parameter in form) send(parameter, "append") { formValue(parameter, it) }
             }
         }
 
         for (parameter in operation.queryParameters) {
             file.import("io.ktor.client.request.parameter")
-            val name = KotlinSyntax.identifier(parameter.name)
-            val wireName = KotlinSyntax.string(parameter.wireName)
-            if (parameter.required) {
-                line("parameter($wireName, ${queryValue(parameter, name)})")
-            } else {
-                line("$name?.let { parameter($wireName, ${queryValue(parameter, "it")}) }")
-            }
+            send(parameter, "parameter") { queryValue(parameter, it) }
+        }
+
+        if (operation.headers.isNotEmpty() || operation.headerParameters.isNotEmpty() || operation.auth != null) {
+            file.import("io.ktor.client.request.header")
+        }
+        for ((name, value) in operation.headers) {
+            line("header(${KotlinSyntax.string(name)}, ${KotlinSyntax.string(value)})")
+        }
+        for (parameter in operation.headerParameters) {
+            send(parameter, "header") { queryValue(parameter, it) }
+        }
+        operation.auth?.let { auth ->
+            val send = "forEach { (name, value) -> header(name, value) }"
+            line(if (auth.required) "$AUTH.headers.$send" else "$AUTH?.headers?.$send")
         }
     }
 
-    /** Form values must be strings; enums send their wire value and lists are comma-separated. */
+    private fun CodeWriter.jsonContent(file: KotlinFile) {
+        file.import("io.ktor.client.request.setBody")
+        file.import("io.ktor.http.ContentType")
+        file.import("io.ktor.http.contentType")
+        line("contentType(ContentType.Application.Json)")
+    }
+
+    /** Sends [parameter] with [function] (`parameter`, `append` or `header`), skipping it when omitted. */
+    private fun CodeWriter.send(parameter: Parameter, function: String, value: (String) -> String) {
+        val name = KotlinSyntax.identifier(parameter.name)
+        val wireName = KotlinSyntax.string(parameter.wireName)
+        if (parameter.isOmittable) {
+            line("$name?.let { $function($wireName, ${value("it")}) }")
+        } else {
+            line("$function($wireName, ${value(name)})")
+        }
+    }
+
+    /** Form and header values must be strings; enums send their wire value and lists are comma-separated. */
     private fun formValue(parameter: Parameter, value: String): String = when (val type = parameter.type) {
         is TypeRef.ListOf -> joined(type, value)
         TypeRef.STRING -> value
         else -> if (isEnum(type)) "$value.value" else "$value.toString()"
     }
 
-    /** Ktor formats query values itself; enums send their wire value and lists are comma-separated. */
+    /** Ktor formats query and header values itself; enums send their wire value and lists are comma-separated. */
     private fun queryValue(parameter: Parameter, value: String): String = when (val type = parameter.type) {
         is TypeRef.ListOf -> joined(type, value)
         else -> if (isEnum(type)) "$value.value" else value
@@ -161,6 +214,21 @@ internal class ServiceEmitter(private val spec: ApiSpec, private val layout: Kot
         if (isEnum(type.element)) "$value.joinToString(\",\") { it.value }" else "$value.joinToString(\",\")"
 
     private fun isEnum(type: TypeRef): Boolean = type is TypeRef.Named && spec.resolve(type) is EnumType
+
+    /** A Kotlin literal for [literal] as a value of [type]. */
+    private fun literal(type: TypeRef, literal: DefaultValue.Literal, file: KotlinFile): String = when (type) {
+        is TypeRef.Named -> {
+            val enum = spec.resolve(type) as EnumType
+            "${layout.render(type, file)}.${enum.values.first { it.wireValue == literal.value }.name}"
+        }
+        is TypeRef.Primitive -> when (type.kind) {
+            PrimitiveKind.STRING -> KotlinSyntax.string(literal.value)
+            PrimitiveKind.INT64 -> "${literal.value}L"
+            PrimitiveKind.FLOAT32 -> "${literal.value}f"
+            else -> literal.value
+        }
+        is TypeRef.ListOf -> error("Lists can't have a literal default")
+    }
 
     /** The path as a string template, relative to the module's base path. */
     private fun endpoint(operation: Operation): String {
@@ -183,6 +251,7 @@ internal class ServiceEmitter(private val spec: ApiSpec, private val layout: Kot
             addAll(operation.pathParameters.map { DocumentedInput(KotlinSyntax.identifier(it.name), it.description, it) })
             operation.body?.let { add(DocumentedInput(BODY, it.description, null)) }
             addAll(operation.parameters.filter { it.location != ParameterLocation.PATH }.map { DocumentedInput(KotlinSyntax.identifier(it.name), it.description, it) })
+            operation.auth?.let { auth -> add(DocumentedInput(AUTH, layout.authDescription(auth), null)) }
         }
         val hasInputDocs = documented.any { it.description != null || it.parameter?.valueDescriptions?.isNotEmpty() == true }
         if (operation.summary == null && !hasInputDocs) return
@@ -215,6 +284,7 @@ internal class ServiceEmitter(private val spec: ApiSpec, private val layout: Kot
 
     private companion object {
         const val BODY = "body"
+        const val AUTH = "auth"
         val PLACEHOLDER = Regex("""\{([^}]+)}""")
     }
 }

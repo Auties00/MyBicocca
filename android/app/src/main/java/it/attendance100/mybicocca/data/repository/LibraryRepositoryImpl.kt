@@ -13,7 +13,14 @@ import it.attendance100.mybicocca.data.mapper.library.toSeat
 import it.attendance100.mybicocca.data.mapper.library.toWeekHours
 import it.attendance100.mybicocca.data.mapper.library.toZone
 import it.attendance100.mybicocca.data.remote.affluences.api.AffluencesApi
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesAccountAuth
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesCheckinRequest
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesDeviceAuth
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesEmailTokenRequest
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesReservationRequest
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesReservationState
+import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesValidateReservationRequest
+import it.attendance100.mybicocca.data.remote.affluences.exception.AffluencesException
 import it.attendance100.mybicocca.di.ApplicationScope
 import it.attendance100.mybicocca.domain.model.library.Library
 import it.attendance100.mybicocca.domain.model.library.LibraryAgreement
@@ -46,9 +53,8 @@ import javax.inject.Singleton
  * agreements come from the per-site live-data, week-timetable, and reservation endpoints.
  * Reservations sync from the account "my reservations" endpoint into the Room cache the UI
  * reads. The account session — per-install device api key minted via check-in, plus the auth
- * token and e-mail of the validated address — lives in the encrypted account store. data-api
- * exception types are not on the app classpath, so failures are recognized by sniffing stable
- * error keys in exception messages.
+ * token and e-mail of the validated address — lives in the encrypted account store. Failures
+ * are recognized by the error code or HTTP status of [AffluencesException].
  */
 @Singleton
 class LibraryRepositoryImpl @Inject constructor(
@@ -117,14 +123,15 @@ class LibraryRepositoryImpl @Inject constructor(
         val endTime = LocalDateTime.of(date, startTime).plusMinutes(durationMinutes.toLong()).toLocalTime()
         val result = api.reservations.createReservation(
             resourceId = seat.resourceId,
-            email = email,
-            date = date,
-            startTime = startTime,
-            endTime = endTime,
-            personCount = 1,
-            note = note,
-            accountApiKey = accountStore.apiKey(),
-            accountAuthToken = accountStore.authToken(),
+            body = AffluencesReservationRequest(
+                email = email,
+                date = date,
+                startTime = startTime,
+                endTime = endTime,
+                personCount = 1,
+                note = note,
+            ),
+            auth = accountAuth(),
         )
         runCatching { refreshReservations() }
         return result.reservationId?.toString()
@@ -137,7 +144,7 @@ class LibraryRepositoryImpl @Inject constructor(
 
     override suspend fun requestEmailValidation(email: String): String {
         val apiKey = ensureApiKey()
-        val request = api.account.requestEmailValidation(apiKey, email)
+        val request = api.account.requestEmailValidation(AffluencesEmailTokenRequest(email), AffluencesDeviceAuth(apiKey))
         return request.requestUuid ?: error("Missing request_uuid from validation request")
     }
 
@@ -149,7 +156,7 @@ class LibraryRepositoryImpl @Inject constructor(
     override suspend fun confirmEmailValidation(email: String, requestUuid: String): Boolean {
         val apiKey = ensureApiKey()
         val token = try {
-            api.account.pollEmailValidation(apiKey, requestUuid).authToken
+            api.account.pollEmailValidation(requestUuid, AffluencesDeviceAuth(apiKey)).authToken
         } catch (cause: Exception) {
             if (cause.isNotValidatedYet()) return false else throw cause
         }
@@ -176,10 +183,9 @@ class LibraryRepositoryImpl @Inject constructor(
      * [LibraryNotLoggedInException].
      */
     override suspend fun refreshReservations() {
-        val apiKey = accountStore.apiKey() ?: throw LibraryNotLoggedInException()
-        val token = accountStore.authToken() ?: throw LibraryNotLoggedInException()
+        val auth = accountAuth() ?: throw LibraryNotLoggedInException()
         val list = try {
-            api.account.getMyReservations(apiKey, token)
+            api.account.getMyReservations(auth)
         } catch (cause: Exception) {
             if (cause.isSessionExpired()) {
                 logout()
@@ -189,7 +195,7 @@ class LibraryRepositoryImpl @Inject constructor(
         }
         reservationDao.replaceAll(
             list.results
-                .filterNot { it.state == AffluencesReservationState.CANCELLED }
+                .filterNot { it.state == AffluencesReservationState.Cancelled }
                 .map { it.toEntity() }
         )
     }
@@ -212,7 +218,7 @@ class LibraryRepositoryImpl @Inject constructor(
     override suspend fun verifyPresence(code: String): Boolean {
         val email = accountStore.email() ?: throw LibraryNotLoggedInException()
         return try {
-            api.reservations.validateReservation(code, email)
+            api.reservations.validateReservation(AffluencesValidateReservationRequest(validationCode = code, email = email))
             runCatching { refreshReservations() }
             true
         } catch (cause: Exception) {
@@ -233,29 +239,32 @@ class LibraryRepositoryImpl @Inject constructor(
     /** Returns the stored device api key, registering the device via check-in once to mint it. */
     private suspend fun ensureApiKey(): String =
         accountStore.apiKey() ?: run {
-            val checkin = api.account.checkIn(deviceId = accountStore.deviceId(), deviceLang = "it")
+            val checkin = api.account.checkIn(AffluencesCheckinRequest(deviceId = accountStore.deviceId(), deviceLang = "it"))
             val key = checkin.apiKey ?: error("Check-in did not return an api key")
             accountStore.setApiKey(key)
             key
         }
 
-    /** Detects the does_not_exist answer (HTTP 404) given until the e-mailed link is opened. */
+    /** The account credentials, once the e-mail validation has stored a session token. */
+    private suspend fun accountAuth(): AffluencesAccountAuth? {
+        val apiKey = accountStore.apiKey() ?: return null
+        val token = accountStore.authToken() ?: return null
+        return AffluencesAccountAuth(apiKey = apiKey, authToken = token)
+    }
+
+    /** The does_not_exist answer (HTTP 404) given until the e-mailed link is opened. */
     private fun Throwable.isNotValidatedYet(): Boolean =
-        message?.lowercase()?.contains("does_not_exist") == true
+        (this as? AffluencesException)?.errorCode == AffluencesException.NOT_VALIDATED_YET
 
-    /** Detects an expired or rejected auth token. */
-    private fun Throwable.isSessionExpired(): Boolean {
-        val message = message?.lowercase().orEmpty()
-        return "missing_auth_token" in message || "401" in message || "unauthor" in message
-    }
+    /** An expired or rejected auth token. */
+    private fun Throwable.isSessionExpired(): Boolean =
+        this is AffluencesException && (statusCode == 401 || errorCode == "missing_auth_token")
 
-    /** Detects a reservation that no longer exists server-side. */
-    private fun Throwable.isReservationGone(): Boolean {
-        val message = message?.lowercase().orEmpty()
-        return "not_found" in message || "not found" in message
-    }
+    /** A reservation that no longer exists server-side. */
+    private fun Throwable.isReservationGone(): Boolean =
+        this is AffluencesException && (statusCode == 404 || errorCode?.contains("not_found") == true)
 
-    /** Detects a rejected presence-validation code. */
+    /** A rejected presence-validation code. */
     private fun Throwable.isInvalidCode(): Boolean =
-        message?.lowercase()?.contains("invalid_validation_code") == true
+        (this as? AffluencesException)?.errorCode == AffluencesException.INVALID_VALIDATION_CODE
 }

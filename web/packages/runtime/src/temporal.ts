@@ -94,6 +94,43 @@ export class LocalDateTime implements TemporalValue {
   }
 }
 
+/** A time of day without a time zone, such as an opening hour. */
+export class LocalTime implements TemporalValue {
+  constructor(
+    readonly hour: number,
+    readonly minute: number,
+    readonly second: number = 0,
+  ) {}
+
+  static fromFields(fields: TemporalFields): LocalTime | undefined {
+    const { hour, minute, second } = fields;
+    if (hour > 23 || minute > 59 || second > 59) return undefined;
+    return new LocalTime(hour, minute, second);
+  }
+
+  /** Parses `text` written with `pattern` (ISO `HH:mm:ss` by default). */
+  static parse(text: string, pattern: string | TemporalPattern = TemporalPattern.isoTime): LocalTime | undefined {
+    return parseTemporal(text, LocalTime, pattern);
+  }
+
+  toFields(): TemporalFields {
+    return { year: 1970, month: 1, day: 1, hour: this.hour, minute: this.minute, second: this.second };
+  }
+
+  equals(other: LocalTime): boolean {
+    return this.hour === other.hour && this.minute === other.minute && this.second === other.second;
+  }
+
+  /** The ISO 8601 form, `HH:mm:ss`. */
+  toString(): string {
+    return TemporalPattern.isoTime.format(this.toFields());
+  }
+
+  toJSON(): string {
+    return this.toString();
+  }
+}
+
 type Field = keyof TemporalFields;
 
 type Token = { kind: "number"; field: Field; width: number } | { kind: "literal"; text: string };
@@ -114,6 +151,7 @@ const FIELD_LETTERS: Record<string, Field> = {
 export class TemporalPattern {
   static readonly isoDate = new TemporalPattern("yyyy-MM-dd");
   static readonly isoDateTime = new TemporalPattern("yyyy-MM-dd'T'HH:mm:ss");
+  static readonly isoTime = new TemporalPattern("HH:mm:ss");
 
   private static readonly cache = new Map<string, TemporalPattern>();
 
@@ -200,7 +238,7 @@ export function encodeTemporal(value: TemporalValue | null, pattern: string): st
 }
 
 /** Encodes a date or time in its ISO 8601 form. */
-export function encodeIsoTemporal(value: LocalDate | LocalDateTime): string {
+export function encodeIsoTemporal(value: LocalDate | LocalDateTime | LocalTime): string {
   return value.toString();
 }
 
@@ -210,4 +248,8 @@ export function decodeLocalDate(json: unknown): LocalDate | undefined {
 
 export function decodeLocalDateTime(json: unknown): LocalDateTime | undefined {
   return typeof json === "string" ? LocalDateTime.parse(json) : undefined;
+}
+
+export function decodeLocalTime(json: unknown): LocalTime | undefined {
+  return typeof json === "string" ? LocalTime.parse(json) : undefined;
 }

@@ -2,6 +2,9 @@ package it.attendance100.mybicocca.codegen.testing
 
 import it.attendance100.mybicocca.codegen.model.ApiModule
 import it.attendance100.mybicocca.codegen.model.ApiSpec
+import it.attendance100.mybicocca.codegen.model.AuthParameter
+import it.attendance100.mybicocca.codegen.model.AuthRequirement
+import it.attendance100.mybicocca.codegen.model.AuthScheme
 import it.attendance100.mybicocca.codegen.model.Codec
 import it.attendance100.mybicocca.codegen.model.DefaultValue
 import it.attendance100.mybicocca.codegen.model.EnumType
@@ -15,6 +18,7 @@ import it.attendance100.mybicocca.codegen.model.PrimitiveKind
 import it.attendance100.mybicocca.codegen.model.RecordType
 import it.attendance100.mybicocca.codegen.model.RequestBody
 import it.attendance100.mybicocca.codegen.model.ResponseBody
+import it.attendance100.mybicocca.codegen.model.Server
 import it.attendance100.mybicocca.codegen.model.TypeRef
 
 /**
@@ -74,6 +78,13 @@ object SampleSpecs {
             Field("owner", "proprietario", TypeRef.Named(owner.name), nullable = false, default = null),
             Field("previousOwners", "storico", TypeRef.ListOf(TypeRef.Named(owner.name)), nullable = false, default = DefaultValue.EmptyList),
             Field("extra", "extra", TypeRef.Primitive(PrimitiveKind.JSON_OBJECT), nullable = true, default = DefaultValue.Null),
+            Field(
+                "opensAt", "apertura", TypeRef.Primitive(PrimitiveKind.LOCAL_TIME), nullable = true, default = DefaultValue.Null,
+                codec = Codec.Temporal("HH:mm", blankAsNull = false),
+            ),
+            Field("payload", "payload", TypeRef.Primitive(PrimitiveKind.JSON_VALUE), nullable = true, default = DefaultValue.Null),
+            Field("kind", "tipo", TypeRef.Named(kind.name), nullable = false, default = DefaultValue.Literal("book")),
+            Field("rating", "voto", TypeRef.Primitive(PrimitiveKind.FLOAT64), nullable = false, default = DefaultValue.Literal("2.5")),
             Field("default", "default", STRING, nullable = true, default = DefaultValue.Null, description = "A field named like a keyword."),
         ),
     )
@@ -146,6 +157,42 @@ object SampleSpecs {
         ),
     )
 
+    private val search = ApiModule(
+        name = "Search",
+        basePath = "",
+        records = emptyList(),
+        operations = listOf(
+            Operation(
+                name = "searchItems",
+                method = HttpMethod.GET,
+                path = "/search",
+                parameters = listOf(
+                    Parameter("query", "q", ParameterLocation.QUERY, STRING, required = true),
+                    Parameter("page", "page", ParameterLocation.QUERY, INT32, required = false, default = DefaultValue.Literal("0")),
+                    Parameter(
+                        "timeZone", "X-TIMEZONE", ParameterLocation.HEADER, STRING, required = false,
+                        default = DefaultValue.Literal("Europe/Rome"), description = "Zone the results are localised to.",
+                    ),
+                ),
+                body = null,
+                response = ResponseBody.Json(TypeRef.ListOf(TypeRef.Named(item.name)), envelope = listOf("data", "items")),
+                server = "Search",
+                headers = mapOf("x-client" to "sdk"),
+                auth = AuthRequirement(listOf("Token", "Key"), required = false),
+            ),
+            Operation(
+                name = "touch",
+                method = HttpMethod.POST,
+                path = "/touch",
+                parameters = emptyList(),
+                body = RequestBody.EmptyObject,
+                response = ResponseBody.Json(TypeRef.Primitive(PrimitiveKind.JSON_VALUE)),
+                server = "Main",
+                auth = AuthRequirement(listOf("Key"), required = true),
+            ),
+        ),
+    )
+
     private val typesOnly = ApiModule(
         name = "Shared",
         basePath = "/",
@@ -165,7 +212,16 @@ object SampleSpecs {
     val demo = ApiSpec(
         id = "demo",
         prefix = "Demo",
-        modules = listOf(items, typesOnly),
+        modules = listOf(items, search, typesOnly),
         enums = listOf(kind, priority, status),
+        servers = listOf(Server("Main", "https://api.example.com/v1"), Server("Search", "https://search.example.com")),
+        authSchemes = listOf(
+            AuthScheme("Token", listOf(AuthParameter("token")), mapOf("Authorization" to "Bearer {token}"), "A user's bearer token."),
+            AuthScheme(
+                "Key",
+                listOf(AuthParameter("apiKey"), AuthParameter("secret")),
+                mapOf("x-api-key" to "{apiKey}", "x-signature" to "{apiKey}:{secret}"),
+            ),
+        ),
     )
 }

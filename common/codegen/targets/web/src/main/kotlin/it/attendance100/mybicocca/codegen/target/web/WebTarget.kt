@@ -48,10 +48,57 @@ class WebTarget : CodeTarget {
             if (spec.enums.isNotEmpty()) {
                 add(file(layout.enumsFile) { file -> file.body.separated(spec.enums) { enums.emit(it, file) } })
             }
+            if (spec.authSchemes.isNotEmpty()) {
+                add(file(layout.authFile) { authTypes(spec, layout, it) })
+            }
+            if (spec.servers.isNotEmpty()) {
+                add(file(layout.serverFile) { servers(spec, layout, it) })
+            }
             add(file("${layout.facadeName}.ts") { facade(spec, layout, it) })
         }
         return files + file("index.ts") { index ->
             files.forEach { index.body.line("export * from ${TsSyntax.string(layout.moduleOf(it.path))};") }
+        }
+    }
+
+    /** A class per scheme building its headers, and the union of all of them. */
+    private fun authTypes(spec: ApiSpec, layout: TsLayout, file: TsFile) {
+        layout.importRuntime(file, "RequestAuth")
+        file.body.apply {
+            for (scheme in spec.authSchemes) {
+                scheme.description?.let { line("/** ${TsSyntax.docText(it)} */") }
+                block("export class ${layout.authClass(scheme.name)} implements RequestAuth {") {
+                    val parameters = scheme.parameters.map { "readonly ${TsSyntax.variable(it.name)}: string" }
+                    commaListOrLine("constructor(", parameters, ") {}", MAX_LINE_LENGTH, trailingComma = true)
+                    line()
+                    block("get headers(): Readonly<Record<string, string>> {") {
+                        block("return {", "};") {
+                            for ((name, template) in scheme.headers) line("${TsSyntax.string(name)}: ${headerTemplate(template)},")
+                        }
+                    }
+                }
+                line()
+            }
+            line("/** Credentials accepted by ${spec.prefix} operations. */")
+            line("export type ${layout.authBase} = ${spec.authSchemes.joinToString(" | ") { layout.authClass(it.name) }};")
+        }
+    }
+
+    /** A header value template (`Bearer {token}`) as a template literal over `this`. */
+    private fun headerTemplate(template: String): String {
+        val literals = PLACEHOLDER.split(template).map(TsSyntax::templateContent)
+        val placeholders = PLACEHOLDER.findAll(template).map { "\${this.${TsSyntax.variable(it.groupValues[1])}}" }.toList()
+        return "`" + literals.zip(placeholders + "").joinToString("") { (literal, placeholder) -> literal + placeholder } + "`"
+    }
+
+    private fun servers(spec: ApiSpec, layout: TsLayout, file: TsFile) {
+        file.body.apply {
+            line("/** Base URLs of the ${spec.prefix} API. */")
+            block("export const ${layout.server} = {", "} as const;") {
+                for (server in spec.servers) line("${TsSyntax.propertyKey(server.name)}: ${TsSyntax.string(server.url)},")
+            }
+            line()
+            line("export type ${layout.server} = (typeof ${layout.server})[keyof typeof ${layout.server}];")
         }
     }
 
@@ -73,5 +120,10 @@ class WebTarget : CodeTarget {
                 }
             }
         }
+    }
+
+    private companion object {
+        const val MAX_LINE_LENGTH = 100
+        val PLACEHOLDER = Regex("""\{([^}]+)}""")
     }
 }

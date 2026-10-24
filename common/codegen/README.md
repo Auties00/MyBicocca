@@ -33,7 +33,7 @@ specs/<api>/  ──reader──▶  ApiSpec (model)  ──validator──▶  
 |-------------|--------------------------------------------------------------------------------------------|
 | `model`     | The language-neutral description of an API: modules, records, enums, operations, codecs.  |
 | `core`      | Plugin interfaces (`SpecReader`, `CodeTarget`), `CodeWriter`, config, output sync, pipeline. |
-| `readers/*` | One per spec format. `esse3` reads the Swagger specs scraped from Esse3 plus its overlays. |
+| `readers/*` | One per spec format. `esse3` reads the Swagger specs scraped from Esse3 plus its overlays; `openapi` reads hand-written OpenAPI 3.0 with the `x-mb-*` extensions listed in its `Extensions.kt` (used by Affluences). |
 | `targets/*` | One per platform: `kotlin`, `swift`, `web`.                                                |
 | `cli`       | The command line, wiring the plugins found on the classpath.                               |
 | `testing`   | A sample API covering every model feature, and golden-file assertions.                     |
@@ -58,7 +58,10 @@ targets only map the model to their language. Every name in the model is final: 
 are PascalCase and members camelCase, and targets only escape reserved words.
 
 Decoding follows what lenient servers need: a field's `default` applies when its key is missing
-or unusable, and non-standard wire formats are named by a `Codec`. Codecs are a closed sealed
+or unusable, and non-standard wire formats are named by a `Codec`. Operations can also target
+one of several `servers`, unwrap their response from an `envelope` (`{"data": …}`), send fixed
+`headers` and header parameters, and accept credentials from `authSchemes`, which targets turn
+into one type per scheme so a caller can only pass one valid set. Codecs are a closed sealed
 set, implemented once per language in the runtime, so adding one fails to compile in each
 target until that target handles it.
 

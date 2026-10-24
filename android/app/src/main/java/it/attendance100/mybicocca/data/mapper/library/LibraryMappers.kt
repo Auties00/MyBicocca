@@ -110,9 +110,9 @@ fun AffluencesLiveData.toLiveStatus(): LibraryLiveStatus = LibraryLiveStatus(
                 time = start,
                 occupancyPercentage = occupancy,
                 rising = when (slot.occupancyEvolution) {
-                    AffluencesEvolution.INCREASE -> true
-                    AffluencesEvolution.DECREASE -> false
-                    null -> null
+                    AffluencesEvolution.Increase -> true
+                    AffluencesEvolution.Decrease -> false
+                    is AffluencesEvolution.Unknown, null -> null
                 },
             )
         },
@@ -204,7 +204,7 @@ fun AffluencesMyReservation.toEntity(): LibraryReservationEntity = LibraryReserv
     note = note?.trim()?.takeIf { it.isNotBlank() },
     reservationCode = reservationToken?.trim()?.takeIf { it.isNotBlank() },
     cancellationToken = cancellationToken,
-    state = state.toDomainState().name,
+    state = (state?.toDomainState() ?: LibraryReservationState.Other).name,
 )
 
 /**
@@ -229,18 +229,20 @@ private fun parseInstantSeconds(iso: String?): Long? =
     iso?.let { runCatching { Instant.parse(it).epochSecond }.getOrNull() }
 
 private fun AffluencesReservationState.toDomainState(): LibraryReservationState = when (this) {
-    AffluencesReservationState.UPCOMING -> LibraryReservationState.Upcoming
-    AffluencesReservationState.AWAITING_CONFIRMATION -> LibraryReservationState.AwaitingConfirmation
-    AffluencesReservationState.ONGOING -> LibraryReservationState.Ongoing
-    AffluencesReservationState.PAST -> LibraryReservationState.Past
-    AffluencesReservationState.CANCELLED -> LibraryReservationState.Cancelled
-    AffluencesReservationState.UNKNOWN -> LibraryReservationState.Other
+    AffluencesReservationState.Upcoming -> LibraryReservationState.Upcoming
+    AffluencesReservationState.AwaitingConfirmation -> LibraryReservationState.AwaitingConfirmation
+    AffluencesReservationState.Ongoing -> LibraryReservationState.Ongoing
+    AffluencesReservationState.Past -> LibraryReservationState.Past
+    AffluencesReservationState.Cancelled -> LibraryReservationState.Cancelled
+    is AffluencesReservationState.Unknown -> LibraryReservationState.Other
 }
 
-private fun AffluencesCrowdLevel.toCrowd(): LibraryCrowd = when (this) {
-    AffluencesCrowdLevel.FLUID -> LibraryCrowd.Fluid
-    AffluencesCrowdLevel.MODERATE -> LibraryCrowd.Moderate
-    AffluencesCrowdLevel.DENSE -> LibraryCrowd.Dense
+/** A crowd level this app doesn't know yet maps to none. */
+private fun AffluencesCrowdLevel.toCrowd(): LibraryCrowd? = when (this) {
+    AffluencesCrowdLevel.Fluid -> LibraryCrowd.Fluid
+    AffluencesCrowdLevel.Moderate -> LibraryCrowd.Moderate
+    AffluencesCrowdLevel.Dense -> LibraryCrowd.Dense
+    is AffluencesCrowdLevel.Unknown -> null
 }
 
 private fun zoneColorOf(description: String): LibraryZoneColor {

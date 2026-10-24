@@ -35,19 +35,21 @@ internal class TsServiceEmitter(
     private fun CodeWriter.method(module: ApiModule, operation: Operation, file: TsFile) {
         val nonPath = operation.parameters.filter { it.location != ParameterLocation.PATH }
         val optional = nonPath.filterNot { it.required }
+        val auth = operation.auth
         val positional = buildList {
             operation.pathParameters.forEach { add("${TsSyntax.variable(it.name)}: ${layout.render(it.type, file)}") }
             when (val body = operation.body) {
                 is RequestBody.Json -> add("$BODY: ${layout.render(body.type, file)}")
-                null -> Unit
+                RequestBody.EmptyObject, null -> Unit
             }
             nonPath.filter { it.required }.forEach { add("${TsSyntax.variable(it.name)}: ${layout.render(it.type, file)}") }
+            if (auth != null && auth.required) add("$AUTH: ${layout.authType(auth, file)}")
         }
-        val options = optional.takeIf { it.isNotEmpty() }?.let { parameters ->
-            nested {
-                block("$OPTIONS: {", "} = {}") {
-                    parameters.forEach { line("${TsSyntax.propertyKey(it.name)}?: ${layout.render(it.type, file)} | null;") }
-                }
+        val optionalAuth = auth?.takeUnless { it.required }
+        val options = if (optional.isEmpty() && optionalAuth == null) null else nested {
+            block("$OPTIONS: {", "} = {}") {
+                optional.forEach { line("${TsSyntax.propertyKey(it.name)}?: ${layout.render(it.type, file)} | null;") }
+                optionalAuth?.let { line("$AUTH?: ${layout.authType(it, file)} | null;") }
             }
         }
 
@@ -70,7 +72,8 @@ internal class TsServiceEmitter(
                 }
             }
             val request = nested { block("{", "}") { requestFields(module, operation, optional.toSet(), file) } }
-            commaList("$call(", listOfNotNull(request, roles(operation), decoder), ");", trailingComma = true)
+            val roles = if (spec.usesRoles) roles(operation) else null
+            commaList("$call(", listOfNotNull(request, roles, decoder), ");", trailingComma = true)
         }
         line("}")
     }
@@ -80,20 +83,36 @@ internal class TsServiceEmitter(
         line("path: ${path(module, operation, file)},")
         operation.queryParameters.takeIf { it.isNotEmpty() }?.let { lines("query: ${pairs(it, optional)},") }
         operation.formParameters.takeIf { it.isNotEmpty() }?.let { lines("form: ${pairs(it, optional)},") }
+        val headers = operation.headers.map { (name, value) -> "[${TsSyntax.string(name)}, ${TsSyntax.string(value)}]" } +
+            operation.headerParameters.map { "[${TsSyntax.string(it.wireName)}, ${valueOf(it, optional)}]" }
+        if (headers.isNotEmpty()) lines("headers: ${array(headers)},")
         when (val body = operation.body) {
             is RequestBody.Json -> line("body: ${codecs.encode(BODY, body.type, null, false, file)},")
+            RequestBody.EmptyObject -> line("body: {},")
             null -> Unit
         }
+        operation.auth?.let { line(if (it.required) "auth: $AUTH," else "auth: $OPTIONS.$AUTH,") }
+        operation.server?.let { server ->
+            file.import(layout.server, layout.moduleOf(layout.serverFile))
+            line("server: ${layout.server}.$server,")
+        }
+        val envelope = (operation.response as? ResponseBody.Json)?.envelope.orEmpty()
+        if (envelope.isNotEmpty()) line("envelope: ${envelope.joinToString(", ", "[", "]") { TsSyntax.string(it) }},")
     }
 
     /** Name/value pairs as an array literal, wrapped one per line when there are several. */
-    private fun CodeWriter.pairs(parameters: List<Parameter>, optional: Set<Parameter>): String {
-        val pairs = parameters.map { "[${TsSyntax.string(it.wireName)}, ${valueOf(it, optional)}]" }
-        return if (pairs.size <= INLINE_ITEMS) pairs.joinToString(", ", "[", "]") else nested { commaList("[", pairs, "]", trailingComma = true) }
-    }
+    private fun CodeWriter.pairs(parameters: List<Parameter>, optional: Set<Parameter>): String =
+        array(parameters.map { "[${TsSyntax.string(it.wireName)}, ${valueOf(it, optional)}]" })
 
-    private fun valueOf(parameter: Parameter, optional: Set<Parameter>): String =
-        if (parameter in optional) "$OPTIONS.${parameter.name}" else TsSyntax.variable(parameter.name)
+    private fun CodeWriter.array(items: List<String>): String =
+        if (items.size <= INLINE_ITEMS) items.joinToString(", ", "[", "]") else nested { commaList("[", items, "]", trailingComma = true) }
+
+    /** The expression of a parameter's value; an optional one falls back to its default, if any. */
+    private fun valueOf(parameter: Parameter, optional: Set<Parameter>): String {
+        if (parameter !in optional) return TsSyntax.variable(parameter.name)
+        val default = parameter.default ?: return "$OPTIONS.${parameter.name}"
+        return "$OPTIONS.${parameter.name} ?? ${layout.literal(parameter.type, default)}"
+    }
 
     /** The full path as a template literal, with path parameters as encoded segments. */
     private fun path(module: ApiModule, operation: Operation, file: TsFile): String {
@@ -113,9 +132,9 @@ internal class TsServiceEmitter(
             operation.pathParameters.forEach { add(docName(it, optional) to it) }
             operation.body?.let { add(BODY to null) }
             operation.parameters.filter { it.location != ParameterLocation.PATH }.forEach { add(docName(it, optional) to it) }
-        }.filter { (_, parameter) ->
-            val description = if (parameter == null) operation.body?.description else parameter.description
-            description != null || parameter?.valueDescriptions?.isNotEmpty() == true
+            operation.auth?.let { add((if (it.required) AUTH else "$OPTIONS.$AUTH") to null) }
+        }.filter { (name, parameter) ->
+            inputDescription(operation, name, parameter) != null || parameter?.valueDescriptions?.isNotEmpty() == true
         }
         if (operation.summary == null && entries.isEmpty()) return
 
@@ -123,11 +142,17 @@ internal class TsServiceEmitter(
         operation.summary?.let { line(" * ${TsSyntax.docText(it)}") }
         if (operation.summary != null && entries.isNotEmpty()) line(" *")
         for ((name, parameter) in entries) {
-            val description = if (parameter == null) operation.body?.description else parameter.description
+            val description = inputDescription(operation, name, parameter)
             line(" * @param $name ${description?.let(TsSyntax::docText) ?: "One of the accepted values below."}")
             parameter?.let { valueDocs(it) }
         }
         line(" */")
+    }
+
+    private fun inputDescription(operation: Operation, name: String, parameter: Parameter?): String? = when {
+        parameter != null -> parameter.description
+        name.endsWith(AUTH) -> operation.auth?.let(layout::authDescription)
+        else -> operation.body?.description
     }
 
     private fun docName(parameter: Parameter, optional: Set<Parameter>): String =
@@ -147,6 +172,7 @@ internal class TsServiceEmitter(
     private companion object {
         const val BODY = "body"
         const val OPTIONS = "options"
+        const val AUTH = "auth"
         const val INLINE_ITEMS = 2
         const val MAX_LINE_LENGTH = 100
         val PLACEHOLDER = Regex("""\{([^}]+)}""")
