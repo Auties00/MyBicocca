@@ -13,7 +13,8 @@ package it.attendance100.mybicocca.codegen.model
  * @property body The request body, if the operation sends one.
  * @property roles Names of the access roles allowed to call the operation, as defined by the
  *   API's runtime. Empty when the API doesn't say.
- * @property server Name of the [Server] the operation targets; null for the API's only one.
+ * @property server Name of the [Server] the operation targets; null for the base URL the API's
+ *   runtime provides.
  * @property headers Headers sent with every call, by name. A value's `{name}` placeholders are
  *   replaced by the API parameter of that name (see [ApiSpec.parameters]).
  * @property query Query parameters sent with every call, by name, such as the function an

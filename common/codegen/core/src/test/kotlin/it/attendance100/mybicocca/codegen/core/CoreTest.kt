@@ -73,3 +73,21 @@ class OutputSyncTest {
         assertTrue(plan.deletions.isEmpty())
     }
 }
+
+class CodegenConfigTest {
+    @Test
+    fun `reads one reader or several`(@TempDir dir: Path) {
+        val single = dir.resolve("single.json").apply { writeText("""{"reader": {"type": "openapi"}, "targets": {}}""") }
+        assertEquals(listOf("openapi"), CodegenConfig.load(single).specReaders.map { it.type })
+        val several = dir.resolve("several.json").apply {
+            writeText("""{"readers": [{"type": "esse3"}, {"type": "openapi"}], "targets": {}}""")
+        }
+        assertEquals(listOf("esse3", "openapi"), CodegenConfig.load(several).specReaders.map { it.type })
+    }
+
+    @Test
+    fun `needs exactly one of reader and readers`(@TempDir dir: Path) {
+        val neither = dir.resolve("neither.json").apply { writeText("""{"targets": {}}""") }
+        assertThrows<IllegalArgumentException> { CodegenConfig.load(neither) }
+    }
+}
