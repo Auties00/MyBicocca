@@ -687,3 +687,16 @@ export const Esse3TypologyCode = {
 export function decodeEsse3TypologyCode(json: unknown): Esse3TypologyCode | undefined {
   return decodeWireEnum(json, Object.values(Esse3TypologyCode), { open: true, acceptsWrappedValue: true });
 }
+
+/** The kind of a self-declaration, by Esse3's code. */
+export type Esse3CertificateType = "I" | "L" | "TAX" | (string & {});
+
+export const Esse3CertificateType = {
+  Enrolment: "I",
+  DegreeAward: "L",
+  TuitionFees: "TAX",
+} as const;
+
+export function decodeEsse3CertificateType(json: unknown): Esse3CertificateType | undefined {
+  return decodeWireEnum(json, Object.values(Esse3CertificateType), { open: true, acceptsWrappedValue: false });
+}

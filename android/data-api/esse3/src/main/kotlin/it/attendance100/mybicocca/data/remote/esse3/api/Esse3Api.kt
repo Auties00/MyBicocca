@@ -40,6 +40,7 @@ class Esse3Api(httpClientConfig: HttpClientConfig<*>.() -> Unit = {}) : AutoClos
     val services = Esse3ServicesApi(client, json)
     val users = Esse3UsersApi(client, json)
     val appointmentsCalendar = Esse3AppointmentsCalendarApi(client, json)
+    val certificates = Esse3CertificatesApi(client, json)
 
     override fun close() {
         client.close()

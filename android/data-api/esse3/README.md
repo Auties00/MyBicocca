@@ -3,13 +3,22 @@
 Kotlin API client for [Segreterie OnLine](https://s3w.si.unimib.it/) (Esse3), powered by [CINECA](https://www.cineca.it/).
 
 > **IMPORTANT**: This module was created after discovering an undocumented ("secret") Esse3 REST API.
-> Because of that discovery, we no longer needed HTML scraping for core features.
-> The legacy scraping implementation is kept in `../esse3-scraper`.
+> Because of that discovery, we only read web pages for what it doesn't cover.
 
 ## Overview
 
-This module provides a typed Kotlin client for the Esse3 REST platform under `https://s3w.si.unimib.it/e3rest/api`.
-Unlike `esse3-scraper`, it works with structured JSON endpoints instead of parsing server-rendered HTML pages.
+This module provides a typed Kotlin client for the Esse3 REST platform under `https://s3w.si.unimib.it/e3rest/api`,
+generated from `common/specs/esse3`. It works with structured JSON endpoints, except for the
+web portal pages the REST API doesn't cover, which are read out of their HTML as modules of the
+same `Esse3Api` (`common/specs/esse3/web`):
+
+| Module         | What it is                                                                          |
+|----------------|-------------------------------------------------------------------------------------|
+| `certificates` | The self-declarations (autocertificazioni) a student can print, and their PDFs     |
+
+The portal pages need the session cookies of the university's SSO login, not the REST API's
+Basic credentials, so they are called on a client of their own carrying those cookies. When the
+session expires, the pages report it (`Esse3CertificatesPage.sessionExpired`).
 
 ## Authentication
 
