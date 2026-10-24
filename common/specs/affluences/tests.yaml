@@ -1,0 +1,5 @@
+# The live tests of Affluences, whose public data needs no account: see "Live tests" in
+# common/codegen/README.md.
+limits:
+  requestsPerSecond: 2
+  maxRequests: 400

@@ -74,6 +74,8 @@ app.*.symbols
 **/build/**
 # Web
 **/node_modules/
+# Reports and the journal of the live tests (see common/codegen/README.md)
+**/test-results/
 
 # Swift Package Manager
 **/.build/

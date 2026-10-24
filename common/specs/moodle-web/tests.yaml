@@ -1,0 +1,5 @@
+# The live tests of Moodle's public pages, which need no account: see "Live tests" in
+# common/codegen/README.md.
+limits:
+  requestsPerSecond: 1
+  maxRequests: 100

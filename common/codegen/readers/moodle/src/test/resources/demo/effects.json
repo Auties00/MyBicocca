@@ -1,0 +1,6 @@
+{
+  "Forum.viewForum": {
+    "effect": "irreversible",
+    "reason": "Logs a view, which can mark the forum complete."
+  }
+}

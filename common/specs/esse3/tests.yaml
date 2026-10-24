@@ -1,0 +1,13 @@
+# The live tests of Esse3, run with a student's account: see "Live tests" in common/codegen/README.md.
+account:
+  env: [ESSE3_USERNAME, ESSE3_PASSWORD]
+  roles: [STUDENT, AUTHENTICATED_USER, ANY]
+  headers:
+    Authorization: "Basic {base64:{env:ESSE3_USERNAME}:{env:ESSE3_PASSWORD}}"
+  anonymous: [Careers.getCareers]
+limits:
+  requestsPerSecond: 2
+  maxRequests: 2500
+operations:
+  Auth.logout:
+    skip: Ends the session the other cases use.

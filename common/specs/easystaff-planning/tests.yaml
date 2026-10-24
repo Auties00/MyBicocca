@@ -1,0 +1,9 @@
+# The live tests of Portale Planning, run on the student information desks' portal, which needs
+# no account: see "Live tests" in common/codegen/README.md.
+account:
+  parameters:
+    portalId: 2
+    portalCode: unimib-segreteria
+limits:
+  requestsPerSecond: 1
+  maxRequests: 200

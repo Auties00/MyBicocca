@@ -1,0 +1,513 @@
+import DataApiRuntime
+import Foundation
+import XCTest
+
+/// How live tests run, from the environment:
+///
+/// | Variable          | Meaning                                                                   |
+/// |-------------------|---------------------------------------------------------------------------|
+/// | `LIVE_TESTS`      | `1` to run them; otherwise every case is skipped                          |
+/// | `LIVE_WRITES`     | `1` to run the reversible cases, which change data and undo it            |
+/// | `LIVE_SEED`       | Which values cases pick; by default it changes every day                  |
+/// | `LIVE_REQUIRED`   | `1` to fail, rather than skip, the cases of an API whose account is missing |
+/// | `LIVE_REPORT_DIR` | Where the report goes (default `.build/live-reports`)                     |
+/// | `LIVE_JOURNAL`    | The journal of changes not undone yet (default `.build/live-journal.json`) |
+/// | `LIVE_FINGERPRINT_TEXT` | `1` to also report the canonical form of results, values included, to compare platforms locally |
+enum LiveSettings {
+    static var enabled: Bool { liveEnv("LIVE_TESTS") == "1" }
+    static var writes: Bool { liveEnv("LIVE_WRITES") == "1" }
+    static var required: Bool { liveEnv("LIVE_REQUIRED") == "1" }
+    static let seed: Int = liveEnv("LIVE_SEED").flatMap { Int($0) } ?? Int(Date().timeIntervalSince1970 / 86_400)
+    static var reportDir: String { liveEnv("LIVE_REPORT_DIR") ?? ".build/live-reports" }
+    static var journal: String { liveEnv("LIVE_JOURNAL") ?? ".build/live-journal.json" }
+    static let platform = "swift"
+}
+
+func liveEnv(_ name: String) -> String? {
+    guard let value = ProcessInfo.processInfo.environment[name], !value.isEmpty else { return nil }
+    return value
+}
+
+/// Thrown to skip a case: a value it needs doesn't exist, the request budget is used up, writes are off.
+struct LiveSkip: Error, CustomStringConvertible {
+    let description: String
+
+    init(_ description: String) {
+        self.description = description
+    }
+}
+
+/// Thrown to end a case that passed early: the server answered with an error the case allows.
+struct LiveEnd: Error {}
+
+/// A case's failure, with its message.
+struct LiveFailure: Error, CustomStringConvertible {
+    let description: String
+
+    init(_ description: String) {
+        self.description = description
+    }
+}
+
+/// The live tests of one API, as its generated `<Prefix>Live` describes them.
+struct LiveApi<Api: Sendable>: Sendable {
+    let id: String
+    /// The environment variables the account needs.
+    let env: [String]
+    let requestsPerSecond: Double
+    let maxRequests: Int
+    /// What the API's responses look like (see the generator's `Shapes`).
+    let shapes: String
+    /// The operations no case calls, with the reason.
+    let skips: [(String, String)]
+    /// The API, sending its requests with `observer` and `session`; `anonymous` leaves out the account's headers.
+    let create: @Sendable (_ observer: any RestObserver, _ session: URLSession, _ anonymous: Bool) -> Api
+    /// The status and error code of an error of the API, or nil for other errors.
+    let failure: @Sendable (Error) -> (status: Int, code: String?)?
+    /// Undoes the change of a write case from the values its journal entry saved; false when it can't.
+    var replay: (@Sendable (LiveCase<Api>, String, [String: String]) async throws -> Bool)? = nil
+}
+
+/// A response a case received, as the live tests record it.
+struct Observed: Sendable {
+    let status: Int
+    let contentType: String?
+    let body: String?
+}
+
+/// The state of an API's live tests during a run: its clients, sources, budget and report.
+final class LiveRun<Api: Sendable>: @unchecked Sendable {
+    let live: LiveApi<Api>
+    let report: LiveReport
+    let checker: LiveShapes
+    private let lock = NSLock()
+    private var sources: [String: Task<Any, Error>] = [:]
+    private var requests = 0
+    private var lastRequest = Date.distantPast
+    private var captured: [Observed]?
+    var journalReplayed = false
+
+    init(_ live: LiveApi<Api>) {
+        self.live = live
+        report = LiveReport(api: live.id)
+        checker = LiveShapes(catalog: live.shapes, report: report)
+        report.start(skips: live.skips)
+    }
+
+    lazy var api: Api = live.create(LiveObserver(run: self), URLSession(configuration: .ephemeral), false)
+    lazy var anonymous: Api = live.create(LiveObserver(run: self), URLSession(configuration: .ephemeral), true)
+
+    var missingEnv: [String] { live.env.filter { liveEnv($0) == nil } }
+
+    func locked<T>(_ body: () throws -> T) rethrows -> T {
+        lock.lock()
+        defer { lock.unlock() }
+        return try body()
+    }
+
+    /// Starts recording the responses of a call; returns what was recorded before.
+    func startCapture() -> [Observed]? {
+        locked {
+            let previous = captured
+            captured = []
+            return previous
+        }
+    }
+
+    /// Stops recording, restores [previous] and returns what the call received.
+    func endCapture(restoring previous: [Observed]?) -> [Observed] {
+        locked {
+            let observed = captured ?? []
+            captured = previous
+            return observed
+        }
+    }
+
+    func record(_ observed: Observed) {
+        locked { captured?.append(observed) }
+    }
+
+    /// Reserves a request in the budget, and returns how long to wait before sending it.
+    func reserve() throws -> TimeInterval {
+        try locked {
+            if requests >= live.maxRequests { throw LiveSkip("the run used up its budget of \(live.maxRequests) requests to \(live.id)") }
+            let next = max(Date(), lastRequest.addingTimeInterval(1 / live.requestsPerSecond))
+            lastRequest = next
+            requests += 1
+            return next.timeIntervalSinceNow
+        }
+    }
+
+    func source<T>(_ id: String, _ compute: @escaping @Sendable () async throws -> T) async throws -> T {
+        let task: Task<Any, Error> = locked {
+            if let existing = sources[id] { return existing }
+            let task = Task<Any, Error> { try await compute() }
+            sources[id] = task
+            return task
+        }
+        do {
+            return try await task.value as! T
+        } catch {
+            throw LiveSkip("the call providing its values (\(id)) failed: \(error)")
+        }
+    }
+
+    /// Undoes the changes earlier runs left in the journal, as far as they can be.
+    func replayJournal() async {
+        for entry in LiveJournal.entries(api: live.id) {
+            let live = LiveCase(run: self, id: entry.case, index: 0)
+            var replayed = false
+            var failure: String?
+            do {
+                replayed = try await self.live.replay?(live, entry.case, entry.values) ?? false
+            } catch {
+                failure = "\(error)"
+            }
+            if replayed {
+                LiveJournal.remove(api: entry.api, case: entry.case)
+                report.event("journal", id: entry.case, detail: "undone a change an earlier run left")
+            } else {
+                report.event("journal", id: entry.case, detail: "a change an earlier run left is still there: \(failure ?? "it can't be undone automatically")")
+            }
+        }
+    }
+}
+
+/// Paces the requests of an API's clients, counts them against the budget and records responses.
+struct LiveObserver<Api: Sendable>: RestObserver {
+    let run: LiveRun<Api>
+
+    func willSend(_ request: URLRequest) async throws {
+        let wait = try run.reserve()
+        if wait > 0 { try await Task.sleep(nanoseconds: UInt64(wait * 1_000_000_000)) }
+    }
+
+    func didReceive(_ response: RestResponse, contentType: String?) async {
+        let textual = contentType.map { type in ["json", "text", "javascript", "html", "xml"].contains { type.contains($0) } } ?? true
+        run.record(Observed(status: response.status, contentType: contentType, body: textual ? response.text : nil))
+    }
+}
+
+/// The runs of every API in this process, one each.
+final class LiveRuns: @unchecked Sendable {
+    static let shared = LiveRuns()
+    private let lock = NSLock()
+    private var runs: [String: AnyObject] = [:]
+
+    func run<Api>(for live: LiveApi<Api>) -> LiveRun<Api> {
+        lock.lock()
+        defer { lock.unlock() }
+        if let run = runs[live.id] as? LiveRun<Api> { return run }
+        let run = LiveRun(live)
+        runs[live.id] = run
+        return run
+    }
+}
+
+/// What a case's code runs in: the API, the values it picks, its calls and their checks. `index`
+/// is the case's number among its operation's combinations, which with the run's seed picks the
+/// values of ``choose(_:_:)``.
+final class LiveCase<Api: Sendable>: @unchecked Sendable {
+    let run: LiveRun<Api>
+    let id: String
+    let index: Int
+    var fingerprinted: String?
+
+    init(run: LiveRun<Api>, id: String, index: Int) {
+        self.run = run
+        self.id = id
+        self.index = index
+    }
+
+    var api: Api { run.api }
+    var anonymousApi: Api { run.anonymous }
+
+    /// One of `candidates`, which differs between cases and runs; skips the case when there is none.
+    func choose<T: Hashable>(_ name: String, _ candidates: [T?]) throws -> T {
+        var seen = Set<T>()
+        let values = candidates.compactMap { $0 }.filter { seen.insert($0).inserted }
+        if values.isEmpty { throw LiveSkip("no value for \(name)") }
+        let count = values.count
+        return values[((index + LiveSettings.seed) % count + count) % count]
+    }
+
+    /// The first of `candidates`; fails the case when there is none.
+    func first<T>(_ name: String, _ candidates: [T?]) throws -> T {
+        guard let value = candidates.compactMap({ $0 }).first else { throw LiveFailure("\(name) has no value") }
+        return value
+    }
+
+    func resolve(_ template: String) -> String {
+        LiveTemplates.resolve(template)
+    }
+
+    /// `json` decoded as `T`, which a value from `tests.yaml` must fit.
+    func decode<T: Decodable>(_ type: T.Type, json: String) throws -> T {
+        try JSONDecoder().decode(T.self, from: Data(json.utf8))
+    }
+
+    /// The result of a call other calls take values from, made once per run.
+    func source<T>(
+        _ id: String,
+        _ shape: String?,
+        envelope: [String] = [],
+        variable: String? = nil,
+        _ compute: @escaping @Sendable (LiveCase<Api>) async throws -> T
+    ) async throws -> T {
+        let run = self.run
+        return try await run.source(id) {
+            let inner = LiveCase(run: run, id: id, index: 0)
+            return try await inner.call(shape, envelope: envelope, variable: variable) { try await compute(inner) }
+        }
+    }
+
+    /// Makes the call of `block`, then checks its JSON response against `shape`: a field the spec
+    /// doesn't know, a value of another type, an enum value it doesn't list. When the server
+    /// answers with one of `errors` (statuses or error codes), the case ends, passing.
+    func call<T>(_ shape: String?, envelope: [String] = [], variable: String? = nil, errors: [String] = [], _ block: () async throws -> T) async throws -> T {
+        let previous = run.startCapture()
+        do {
+            let result = try await block()
+            let observed = run.endCapture(restoring: previous)
+            if let shape, let response = observed.last { run.checker.check(shape: shape, response: response, envelope: envelope, variable: variable) }
+            return result
+        } catch {
+            _ = run.endCapture(restoring: previous)
+            if let failure = run.live.failure(error), errors.contains(where: { $0 == String(failure.status) || $0 == failure.code }) {
+                run.report.event("expected-error", id: id, detail: "\(failure.status) \(failure.code ?? "")".trimmingCharacters(in: .whitespaces))
+                throw LiveEnd()
+            }
+            throw error
+        }
+    }
+
+    /// Makes a call the server must refuse with the API's error: with an id it doesn't know
+    /// (`acceptsEmpty`, which also accepts an empty result) or invalid credentials.
+    func refused<T>(acceptsEmpty: Bool, _ block: () async throws -> T) async throws {
+        let result: T
+        do {
+            result = try await call(nil, block)
+        } catch {
+            if run.live.failure(error) != nil { return }
+            if acceptsEmpty, error is ScrapeError { return }
+            throw error
+        }
+        if acceptsEmpty {
+            if !isEmpty(result) { run.report.finding("accepts-unknown-id", record: id, field: "", detail: "answered with data") }
+            return
+        }
+        throw LiveFailure("The server accepted the call: \(describe(result))")
+    }
+
+    private func isEmpty(_ value: Any) -> Bool {
+        if value is Void { return true }
+        if let collection = value as? any Collection { return collection.isEmpty }
+        return false
+    }
+
+    private func describe(_ value: Any) -> String {
+        if let collection = value as? any Collection { return "\(collection.count) items" }
+        return value is Void ? "no content" : "a \(type(of: value))"
+    }
+
+    /// Records the canonical form of the case's result, which every platform must agree on.
+    func fingerprint(_ write: (LiveFingerprint) -> Void) {
+        let fingerprint = LiveFingerprint()
+        write(fingerprint)
+        fingerprinted = fingerprint.hash()
+        // The canonical text holds the result's values, so only a local run asking for it gets it.
+        if liveEnv("LIVE_FINGERPRINT_TEXT") == "1" { run.report.event("fingerprint-text", id: id, detail: fingerprint.text) }
+    }
+
+    func expectNonEmpty(_ path: String, _ values: [Any?]) throws {
+        if !values.contains(where: { $0 != nil }) { throw LiveFailure("Expected a value at '\(path)'") }
+    }
+
+    func expectContains<T: Equatable>(_ path: String, _ values: [T], _ expected: T) throws {
+        if !values.contains(expected) { throw LiveFailure("Expected '\(path)' to contain the expected value, among \(values.count)") }
+    }
+
+    func expectNotContains<T: Equatable>(_ path: String, _ values: [T], _ expected: T) throws {
+        if values.contains(expected) { throw LiveFailure("Expected '\(path)' to no longer contain the value") }
+    }
+
+    func expectEquals<T: Equatable>(_ path: String, _ values: [T], _ expected: T) throws {
+        if values.isEmpty || values.contains(where: { $0 != expected }) { throw LiveFailure("Expected every value at '\(path)' to be the expected one") }
+    }
+
+    func expectMatches(_ path: String, _ values: [Any], _ regex: String) throws {
+        let pattern = try NSRegularExpression(pattern: regex)
+        let matches = values.allSatisfy { value in
+            let text = "\(value)"
+            return pattern.firstMatch(in: text, range: NSRange(text.startIndex..., in: text)) != nil
+        }
+        if values.isEmpty || !matches { throw LiveFailure("Expected every value at '\(path)' to match /\(regex)/") }
+    }
+
+    func expectCount(_ path: String, _ values: [Any], _ min: Int?, _ max: Int?) throws {
+        let count = values.count
+        if let min, count < min { throw LiveFailure("Expected at least \(min) values at '\(path)', got \(count)") }
+        if let max, count > max { throw LiveFailure("Expected at most \(max) values at '\(path)', got \(count)") }
+    }
+
+    /// Notes in the journal a change to undo, with the values its undo needs, so that a later run can undo it if this one can't.
+    func journal(_ values: [String: String]) {
+        LiveJournal.add(JournalEntry(api: run.live.id, case: id, values: values))
+    }
+
+    func unjournal() {
+        LiveJournal.remove(api: run.live.id, case: id)
+    }
+}
+
+/// Runs a case with the API's ``LiveRun``: skipped when live tests are off, the account is
+/// missing, or it changes data and writes are off; its outcome goes to the report.
+func liveCase<Api: Sendable>(
+    _ live: LiveApi<Api>,
+    _ id: String,
+    effect: String = "read",
+    index: Int = 0,
+    _ body: (LiveCase<Api>) async throws -> Void
+) async throws {
+    guard LiveSettings.enabled else { throw XCTSkip("Live tests run with LIVE_TESTS=1") }
+    let run = LiveRuns.shared.run(for: live)
+    let missing = run.missingEnv
+    if !missing.isEmpty {
+        let message = "Set \(missing.joined(separator: ", ")) to run the live tests of \(live.id)"
+        if LiveSettings.required { throw LiveFailure(message) }
+        throw XCTSkip(message)
+    }
+    if effect == "reversible" && !LiveSettings.writes { throw XCTSkip("Writes are off; set LIVE_WRITES=1") }
+    let liveCase = LiveCase(run: run, id: id, index: index)
+    let start = Date()
+    func millis() -> Int { Int(Date().timeIntervalSince(start) * 1000) }
+    do {
+        if LiveSettings.writes && !run.journalReplayed {
+            run.journalReplayed = true
+            await run.replayJournal()
+        }
+        try await body(liveCase)
+        run.report.case(id, status: "passed", reason: nil, fingerprint: liveCase.fingerprinted, ms: millis())
+    } catch is LiveEnd {
+        run.report.case(id, status: "passed", reason: nil, fingerprint: nil, ms: millis())
+    } catch let skip as LiveSkip {
+        run.report.case(id, status: "skipped", reason: skip.description, fingerprint: nil, ms: millis())
+        throw XCTSkip(skip.description)
+    } catch {
+        run.report.case(id, status: "failed", reason: "\(type(of: error)): \(error)", fingerprint: nil, ms: millis())
+        throw error
+    }
+}
+
+/// The placeholders of text values in `tests.yaml`: `{env:NAME}`, `{today}`, `{today+N}`,
+/// `{today-N}` (ISO dates, or in the pattern after a colon: `{today:yyyy}`) and `{base64:…}`,
+/// whose content may hold placeholders too.
+enum LiveTemplates {
+    static func resolve(_ template: String) -> String {
+        parse(Array(template), 0, nested: false).0
+    }
+
+    private static func parse(_ text: [Character], _ start: Int, nested: Bool) -> (String, Int) {
+        var out = ""
+        var index = start
+        while index < text.count {
+            let char = text[index]
+            if char == "{" {
+                let (value, next) = placeholder(text, index + 1)
+                out += value
+                index = next
+            } else if char == "}" && nested {
+                return (out, index + 1)
+            } else {
+                out.append(char)
+                index += 1
+            }
+        }
+        return (out, index)
+    }
+
+    private static func placeholder(_ text: [Character], _ start: Int) -> (String, Int) {
+        let rest = String(text[start...])
+        if rest.hasPrefix("base64:") {
+            let (inner, next) = parse(text, start + "base64:".count, nested: true)
+            return (Data(inner.utf8).base64EncodedString(), next)
+        }
+        let end = text[start...].firstIndex(of: "}") ?? text.count
+        let content = String(text[start..<end])
+        if content.hasPrefix("env:") { return (liveEnv(String(content.dropFirst(4))) ?? "", end + 1) }
+        var body = content.dropFirst("today".count)
+        var pattern = "yyyy-MM-dd"
+        if let colon = body.firstIndex(of: ":") {
+            pattern = String(body[body.index(after: colon)...])
+            body = body[..<colon]
+        }
+        let days = Int(body.hasPrefix("+") ? String(body.dropFirst()) : String(body)) ?? 0
+        let date = Calendar.current.date(byAdding: .day, value: days, to: Date()) ?? Date()
+        let parts = Calendar.current.dateComponents([.year, .month, .day], from: date)
+        let fields = [
+            "yyyy": String(format: "%04d", parts.year ?? 0),
+            "MM": String(format: "%02d", parts.month ?? 0),
+            "dd": String(format: "%02d", parts.day ?? 0),
+        ]
+        var result = ""
+        var index = pattern.startIndex
+        while index < pattern.endIndex {
+            if let (letters, value) = fields.first(where: { pattern[index...].hasPrefix($0.key) }) {
+                result += value
+                index = pattern.index(index, offsetBy: letters.count)
+            } else {
+                result.append(pattern[index])
+                index = pattern.index(after: index)
+            }
+        }
+        return (result, end + 1)
+    }
+}
+
+/// Converts the text values of `tests.yaml` to the types of the inputs they fill.
+enum LiveText {
+    static func int(_ text: String) throws -> Int {
+        guard let value = Int(text.trimmingCharacters(in: .whitespaces)) else { throw LiveFailure("'\(text)' isn't an integer") }
+        return value
+    }
+
+    static func int64(_ text: String) throws -> Int64 {
+        guard let value = Int64(text.trimmingCharacters(in: .whitespaces)) else { throw LiveFailure("'\(text)' isn't an integer") }
+        return value
+    }
+
+    static func double(_ text: String) throws -> Double {
+        guard let value = Double(text) else { throw LiveFailure("'\(text)' isn't a number") }
+        return value
+    }
+
+    static func float(_ text: String) throws -> Float {
+        guard let value = Float(text) else { throw LiveFailure("'\(text)' isn't a number") }
+        return value
+    }
+
+    static func bool(_ text: String) -> Bool {
+        text == "true"
+    }
+
+    static func wire<E: WireEnum>(_ type: E.Type, _ text: String) throws -> E {
+        guard let value = E(wireValue: text) else { throw LiveFailure("'\(text)' isn't a value of \(E.self)") }
+        return value
+    }
+
+    static func date(_ text: String) throws -> LocalDate {
+        guard let value = LocalDate.parse(text, pattern: .isoDate) else { throw LiveFailure("'\(text)' isn't a date") }
+        return value
+    }
+
+    /// A date and time; a date stands for its midnight.
+    static func dateTime(_ text: String) throws -> LocalDateTime {
+        guard let value = LocalDateTime.parse(text.contains("T") ? text : text + "T00:00:00", pattern: .isoDateTime) else { throw LiveFailure("'\(text)' isn't a date and time") }
+        return value
+    }
+
+    static func time(_ text: String) throws -> LocalTime {
+        guard let value = LocalTime.parse(text, pattern: .isoTime) else { throw LiveFailure("'\(text)' isn't a time") }
+        return value
+    }
+}
