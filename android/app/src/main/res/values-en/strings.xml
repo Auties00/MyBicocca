@@ -1399,6 +1399,7 @@
     <string name="elearning_video_course_videos">Course videos</string>
     <string name="elearning_video_section">Section %1$d</string>
     <string name="elearning_video_load_failed">Couldn\'t load the video</string>
+    <string name="elearning_video_unavailable">This video is no longer available</string>
     <string name="elearning_video_completed_count">%1$d / %2$d completed</string>
     <string name="elearning_video_quality">Quality</string>
     <string name="elearning_video_quality_auto">Automatic</string>

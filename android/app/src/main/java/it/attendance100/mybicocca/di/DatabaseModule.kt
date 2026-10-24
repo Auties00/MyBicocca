@@ -26,6 +26,7 @@ import it.attendance100.mybicocca.data.local.elearning.forum.ForumDao
 import it.attendance100.mybicocca.data.local.elearning.grade.GradeDao
 import it.attendance100.mybicocca.data.local.elearning.quiz.QuizDao
 import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncStateDao
+import it.attendance100.mybicocca.data.local.elearning.video.KalturaEntryDao
 import it.attendance100.mybicocca.data.local.elearning.video.VideoProgressDao
 import it.attendance100.mybicocca.data.local.library.LibraryReservationDao
 import it.attendance100.mybicocca.data.local.map.MapBuildingDao
@@ -89,6 +90,10 @@ object DatabaseModule {
     @Provides
     fun provideElearningVideoProgressDao(db: MyBicoccaDatabase): VideoProgressDao =
         db.elearningVideoProgressDao()
+
+    @Provides
+    fun provideElearningKalturaEntryDao(db: MyBicoccaDatabase): KalturaEntryDao =
+        db.elearningKalturaEntryDao()
 
     @Provides
     fun provideTranscriptDao(db: MyBicoccaDatabase): TranscriptDao = db.transcriptDao()
