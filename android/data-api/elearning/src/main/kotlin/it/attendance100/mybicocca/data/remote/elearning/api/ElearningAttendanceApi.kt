@@ -1,14 +1,20 @@
 package it.attendance100.mybicocca.data.remote.elearning.api
 
 import io.ktor.client.*
+import io.ktor.client.request.get
+import io.ktor.client.statement.bodyAsText
+import io.ktor.client.statement.request
+import io.ktor.http.HttpStatusCode
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceMarkResult
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceMarkableSession
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceStatusOption
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceSummary
+import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceViewResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningCourseModule
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningGetFilteredCourseModulesRequest
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningGetMobileContentRequest
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningGetMobileContentResponse
+import it.attendance100.mybicocca.data.remote.elearning.exception.ElearningException
 import kotlinx.serialization.json.Json
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
@@ -17,11 +23,11 @@ import org.jsoup.nodes.Document
  * API for attendance-related operations (`mod_attendance`).
  *
  * The UniMiB Moodle instance does not expose the `mod_attendance_*` web
- * service functions to the mobile service, so this API reads attendance data
- * the same way the official Moodle app does: through the site-plugins bridge
- * (`tool_mobile_get_content`), which renders the plugin's mobile view
- * server-side. The rendered template is then parsed into a structured
- * [ElearningAttendanceSummary].
+ * service functions to the mobile service. The summary and the sessions open
+ * for marking are read from the module's `view.php` page; the take form and the
+ * marking itself go through the site-plugins bridge (`tool_mobile_get_content`)
+ * the official Moodle app uses. The plugin's mobile view is not used for reading,
+ * because rendering it records the student's presence in open sessions.
  *
  * @param client The shared [HttpClient] instance
  * @param json The shared [Json] instance
@@ -37,20 +43,26 @@ class ElearningAttendanceApi(
         private const val MOBILE_USER_FORM_METHOD = "mobile_user_form"
         private const val MOBILE_COMPONENT = "mod_attendance"
 
+        /** Path of the module page, which Moodle leaves when the browser session expired. */
+        private const val VIEW_PAGE_PATH = "/mod/attendance/view.php"
+
+        /** `view` value that shows every session (`ATT_VIEW_ALL`), and the full summary. */
+        private const val VIEW_ALL_SESSIONS = "5"
+
         /** Selects the "latest" (Ionic 5+) Angular templates the modern app expects. */
         private const val APP_VERSION_CODE = "45000"
 
         /**
-         * Matches the translate placeholder of a summary row, capturing the
-         * string key (e.g. "sessionscompleted").
+         * Matches the translate placeholder of a mobile template message, capturing the
+         * string key (e.g. "incorrectpasswordshort").
          */
         private val TRANSLATE_KEY_REGEX = Regex("plugin\\.mod_attendance\\.(\\w+)")
 
         /**
-         * Captures every `sessid` a mobile view button exposes as a mark action;
-         * the plugin renders one only for sessions open for student self-marking.
+         * Captures the `sessid` of an `attendance.php` link, or of a mobile view mark
+         * action (`sessid: 123`).
          */
-        private val SESSID_REGEX = Regex("sessid:\\s*(\\d+)")
+        private val SESSID_REGEX = Regex("sessid[=:]\\s*(\\d+)")
 
         /**
          * Plugin message key signaling a marking attempt did not record; see
@@ -86,120 +98,137 @@ class ElearningAttendanceApi(
     }
 
     /**
-     * Gets the current user's attendance summary for an attendance module.
+     * Reads the current user's attendance summary for an attendance module, together with the
+     * sessions open for self-marking, from the module's `view.php` page.
      *
-     * @param wsToken The web service token (32 characters)
-     * @param courseId The course the module belongs to
+     * Unlike the plugin's mobile view, which records the student's presence in every open
+     * session that auto-assigns a status whenever it renders, `view.php` only reads: marking
+     * happens on the page its "Submit attendance" links lead to. The page needs the
+     * `MoodleSession` browser cookie installed through the [ElearningApi] constructor.
+     *
      * @param moduleId The course module ID (cmid) of the attendance module
-     * @return The parsed summary, or null if the plugin view exposed no statistics
-     * @throws IllegalArgumentException If the token is invalid
-     * @throws ElearningException If the request fails
+     * @return [ElearningAttendanceViewResponse.Success] with the parsed page, or
+     *   [ElearningAttendanceViewResponse.RequiresReauth] if Moodle redirected away from it
+     * @throws ElearningException If the page returns a non-OK HTTP status
      */
-    suspend fun getAttendanceSummary(
-        wsToken: String,
-        courseId: Int,
-        moduleId: Int
-    ): ElearningAttendanceSummary? {
-        val response = executeAuthenticatedRequest(
-            wsToken,
-            ElearningGetMobileContentRequest(
-                component = MOBILE_COMPONENT,
-                method = MOBILE_VIEW_METHOD,
-                args = mapOf(
-                    "cmid" to moduleId.toString(),
-                    "courseid" to courseId.toString()
-                )
+    suspend fun getAttendanceSummary(moduleId: Int): ElearningAttendanceViewResponse {
+        val response = client.get("${BASE_URL}mod/attendance/view.php") {
+            url.parameters.append("id", moduleId.toString())
+            url.parameters.append("view", VIEW_ALL_SESSIONS)
+        }
+        if (response.status != HttpStatusCode.OK) {
+            throw ElearningException(
+                errorCode = null,
+                errorMessage = "view.php returned ${response.status} for moduleId=$moduleId"
             )
+        }
+        if (response.request.url.encodedPath != VIEW_PAGE_PATH) {
+            return ElearningAttendanceViewResponse.RequiresReauth
+        }
+        val document = Jsoup.parse(response.bodyAsText())
+        return ElearningAttendanceViewResponse.Success(
+            summary = parseSummaryTable(document),
+            submittableSessionIds = parseSubmittableSessionIds(document)
         )
-        val html = response.templates.firstOrNull()?.html ?: return null
-        return parseSummaryTemplate(html)
     }
 
     /**
-     * Parses the rendered mobile view template into a summary.
-     *
-     * The template lays the statistics out as `ion-row` elements whose first
-     * column holds a `{{ 'plugin.mod_attendance.<key>' | translate }}`
-     * placeholder and whose second column holds the value, for example:
+     * Parses the `attlist` summary table. Its rows carry localized labels, but
+     * `construct_user_data_stat` always emits them in the same order when all sessions are
+     * shown, so the values are read by position:
      *
      * ```
-     * <ion-row>
-     *   <ion-col>{{ 'plugin.mod_attendance.sessionscompleted' | translate }}</ion-col>
-     *   <ion-col>9</ion-col>
-     * </ion-row>
+     * Sessioni frequentate:                        10
+     * Punteggio sulle sessione già registrate:     10 / 10
+     * Percentuale sulle sessioni già registrate:   100,0%
+     * Numero totale delle sessioni:                82
+     * Punteggio su tutte le sessioni:              10 / 82
+     * Percentuale su tutte le sessioni:            12,2%
+     * Punteggio massimo possibile:                 82 / 82
+     * Percentuale massima possibile:               100,0%
      * ```
      *
-     * @param html The template markup
-     * @return The parsed summary, or null when no known statistic was found
+     * @param document The `view.php` page
+     * @return The parsed summary, or null when the page has no summary table
      */
-    private fun parseSummaryTemplate(html: String): ElearningAttendanceSummary? {
-        val document = Jsoup.parse(html)
-        val values = mutableMapOf<String, String>()
-        for (row in document.select("ion-row")) {
-            val columns = row.select("ion-col")
-            if (columns.size < 2) {
-                continue
-            }
-
-            val key = TRANSLATE_KEY_REGEX.find(columns[0].text())?.groupValues?.get(1) ?: continue
-            values[key] = columns[1].text().trim()
-        }
+    private fun parseSummaryTable(document: Document): ElearningAttendanceSummary? {
+        val values = document.select("table.attlist tr")
+            .mapNotNull { row -> row.select("td").getOrNull(1)?.text()?.trim() }
         if (values.isEmpty()) {
             return null
         }
 
         return ElearningAttendanceSummary(
-            attendedSessions = values["sessionscompleted"]?.toIntOrNull(),
-            takenSessionsPercentage = values["percentagesessionscompleted"]?.parsePercentage(),
-            totalSessions = values["sessionstotal"]?.toIntOrNull(),
-            allSessionsPercentage = values["percentageallsessions"]?.parsePercentage(),
-            pointsTakenLabel = values["pointssessionscompleted"]?.takeIf { it.isNotBlank() },
-            maxPossiblePointsLabel = values["maxpossiblepoints"]?.takeIf { it.isNotBlank() },
-            maxPossiblePercentage = values["maxpossiblepercentage"]?.parsePercentage()
+            attendedSessions = values.getOrNull(0)?.toIntOrNull(),
+            pointsTakenLabel = values.getOrNull(1)?.takeIf { it.isNotBlank() },
+            takenSessionsPercentage = values.getOrNull(2)?.parsePercentage(),
+            totalSessions = values.getOrNull(3)?.toIntOrNull(),
+            pointsAllSessionsLabel = values.getOrNull(4)?.takeIf { it.isNotBlank() },
+            allSessionsPercentage = values.getOrNull(5)?.parsePercentage(),
+            maxPossiblePointsLabel = values.getOrNull(6)?.takeIf { it.isNotBlank() },
+            maxPossiblePercentage = values.getOrNull(7)?.parsePercentage()
         )
     }
 
     /**
-     * Lists the `mod_attendance` sessions of a module the student may self-mark
-     * right now.
+     * Collects the sessions the session log offers to submit attendance for. Such a session's
+     * status, points and remarks cells are merged into one cell holding either a link to
+     * `attendance.php?sessid=…` or, for rotating QR sessions, a form with a `sessid` field.
+     * Sessions that already have a status are left out, even when their status can still be
+     * updated.
+     */
+    private fun parseSubmittableSessionIds(document: Document): List<String> =
+        document.select("table.generaltable td[colspan=3]")
+            .mapNotNull { cell ->
+                cell.selectFirst("a[href*=attendance.php]")
+                    ?.attr("href")
+                    ?.let { SESSID_REGEX.find(it)?.groupValues?.get(1) }
+                    ?: cell.selectFirst("input[name=sessid]")?.attr("value")?.takeIf { it.isNotBlank() }
+            }
+            .distinct()
+
+    /**
+     * Describes the sessions of a module the student may self-mark right now.
      *
-     * Reads the plugin's mobile view through the site-plugins bridge and collects
-     * the sessions for which it rendered a mark action, then loads each one's take
-     * form to learn whether a student password / QR pass is required and which
-     * statuses are selectable. An empty result means no session is open for marking
-     * at the moment, which is the normal state outside lesson hours.
+     * Loads each candidate's take form from the plugin's mobile bridge (`mobile_user_form`,
+     * which never records anything) to learn whether the session is still open, whether a
+     * student password / QR pass is required and which statuses are selectable. A session the
+     * form refuses (closed, wrong network, no status available) is left out; one that
+     * auto-assigns its status without a password comes back with no statuses.
      *
      * @param wsToken The web service token (32 characters)
      * @param courseId The course the module belongs to
      * @param moduleId The course module ID (cmid) of the attendance module
+     * @param sessionIds The candidate sessions, from
+     *   [ElearningAttendanceViewResponse.Success.submittableSessionIds]
      * @return The markable sessions, possibly empty
      * @throws IllegalArgumentException If the token is invalid
-     * @throws ElearningException If the bridge request fails
      */
     suspend fun getMarkableSessions(
         wsToken: String,
         courseId: Int,
-        moduleId: Int
-    ): List<ElearningAttendanceMarkableSession> {
-        val viewHtml = requestMobileTemplate(
-            wsToken, MOBILE_VIEW_METHOD,
-            mapOf("cmid" to moduleId.toString(), "courseid" to courseId.toString())
-        ) ?: return emptyList()
-
-        val sessionIds = SESSID_REGEX.findAll(viewHtml).map { it.groupValues[1] }.distinct().toList()
-        return sessionIds.mapNotNull { sessionId ->
+        moduleId: Int,
+        sessionIds: List<String>
+    ): List<ElearningAttendanceMarkableSession> =
+        sessionIds.mapNotNull { sessionId ->
             val formHtml = runCatching {
                 requestMobileTemplate(
                     wsToken, MOBILE_USER_FORM_METHOD,
                     mapOf(
                         "cmid" to moduleId.toString(),
                         "courseid" to courseId.toString(),
-                        "sessid" to sessionId
+                        "sessid" to sessionId,
+                        // Below 44000 the plugin serves its "ionic5" form, which puts each
+                        // status label beside its ion-radio instead of inside it.
+                        "appversioncode" to APP_VERSION_CODE
                     )
                 )
             }.getOrNull() ?: return@mapNotNull null
 
             val form = Jsoup.parse(formHtml)
+            if (form.selectFirst("span.messages") != null) {
+                return@mapNotNull null
+            }
             ElearningAttendanceMarkableSession(
                 sessionId = sessionId,
                 requiresPassword = form.selectFirst("[name=studentpass]") != null,
@@ -209,16 +238,19 @@ class ElearningAttendanceApi(
                 }
             )
         }
-    }
 
     /**
      * Records the current student's presence for an open attendance session
      * through the official mobile bridge — the same `tool_mobile_get_content` ->
      * `mobile_view_activity` call the Moodle app makes when a student taps "submit
-     * attendance". No browser session or web scraping is involved.
+     * attendance". Rendering that view also records the student's presence in every other
+     * session of the module open right now that auto-assigns a status without a password,
+     * as the Moodle app does.
      *
-     * This covers both ways a student marks: scanning the session QR (whose pass
-     * is passed as [studentPass]) and typing the session password. Sessions that
+     * This covers typing the session password and scanning a static session QR, whose
+     * pass is that same password; both go in [studentPass]. Rotating QR codes are not
+     * supported: the plugin's mobile handler only compares against the session's fixed
+     * password, not the rotating ones. Sessions that
      * auto-assign a status accept any non-empty [statusId]; otherwise pass one of
      * the ids from [getMarkableSessions].
      *

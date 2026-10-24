@@ -119,7 +119,7 @@ data class ElearningMobileContentOtherData(
 
 /**
  * Attendance statistics of the current user for a single attendance module,
- * parsed from the `mod_attendance` mobile view template.
+ * parsed from the summary table of the module's `view.php` page.
  *
  * "Taken" refers to the sessions whose attendance has already been recorded
  * by the teacher; "all" includes sessions not yet recorded. Percentages are
@@ -132,6 +132,7 @@ data class ElearningMobileContentOtherData(
  * @property totalSessions The total number of sessions of the module.
  * @property allSessionsPercentage The attendance percentage over all sessions.
  * @property pointsTakenLabel The "earned / available" points over the recorded sessions (e.g. "10 / 10").
+ * @property pointsAllSessionsLabel The "earned / available" points over every session (e.g. "10 / 82").
  * @property maxPossiblePointsLabel The "earned / maximum" points achievable over every session (e.g. "82 / 82").
  * @property maxPossiblePercentage The best attendance percentage still reachable if every remaining session is attended.
  */
@@ -156,8 +157,36 @@ data class ElearningAttendanceSummary(
     val maxPossiblePointsLabel: String? = null,
 
     @SerialName("maxPossiblePercentage")
-    val maxPossiblePercentage: Double? = null
+    val maxPossiblePercentage: Double? = null,
+
+    @SerialName("pointsAllSessionsLabel")
+    val pointsAllSessionsLabel: String? = null
 )
+
+/**
+ * Result of reading an attendance module's `view.php` page.
+ */
+sealed interface ElearningAttendanceViewResponse {
+    /**
+     * The page was read.
+     *
+     * @property summary The user's statistics, or null if the page showed none.
+     * @property submittableSessionIds The sessions the page offers to submit attendance for,
+     *   to pass to
+     *   [it.attendance100.mybicocca.data.remote.elearning.api.ElearningAttendanceApi.getMarkableSessions].
+     */
+    data class Success(
+        val summary: ElearningAttendanceSummary?,
+        val submittableSessionIds: List<String>,
+    ) : ElearningAttendanceViewResponse
+
+    /**
+     * Moodle redirected away from `view.php`, typically because the `MoodleSession` cookie
+     * expired. The caller should mint a new browser session and retry; if the retry fails too,
+     * the user most likely isn't enrolled in the course.
+     */
+    data object RequiresReauth : ElearningAttendanceViewResponse
+}
 
 /**
  * A self-markable attendance status the student may pick for a session
@@ -173,12 +202,11 @@ data class ElearningAttendanceStatusOption(
 
 /**
  * A `mod_attendance` session the current student is currently allowed to
- * self-mark, discovered through the mobile view bridge.
+ * self-mark, as reported by the plugin's mobile take form.
  *
- * Only sessions that are open for student marking right now appear here: the
- * plugin renders a mark action (carrying the [sessionId]) exclusively for
- * those. An empty list therefore means "no session to register at the moment",
- * which is the normal state outside lesson hours.
+ * Only sessions open for student marking right now appear here. An empty list
+ * therefore means "no session to register at the moment", which is the normal
+ * state outside lesson hours.
  *
  * @property sessionId The `attendance_sessions` id, used as the `sessid` when marking.
  * @property requiresPassword Whether the teacher protected the session with a student password / QR pass.

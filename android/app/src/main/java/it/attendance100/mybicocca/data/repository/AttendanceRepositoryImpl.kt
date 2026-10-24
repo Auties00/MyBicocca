@@ -12,6 +12,7 @@ import it.attendance100.mybicocca.data.mapper.attendance.toOutcome
 import it.attendance100.mybicocca.data.mapper.calendar.normalizeSubjectName
 import it.attendance100.mybicocca.data.remote.easystaff.api.EasyStaffApi
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffAttendanceRecord
+import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceViewResponse
 import it.attendance100.mybicocca.domain.model.attendance.AttendanceModuleRef
 import it.attendance100.mybicocca.domain.model.attendance.ClassroomAttendance
 import it.attendance100.mybicocca.domain.model.attendance.CourseAttendance
@@ -258,8 +259,9 @@ class AttendanceRepositoryImpl @Inject constructor(
             val modules = api.attendance.getAttendanceModules(token, edition.id.value)
             val refs = modules.map { AttendanceModuleRef(edition.id.value, it.id, it.name) }
             val sessions = modules.mapNotNull { module ->
-                runCatching { api.attendance.getAttendanceSummary(token, edition.id.value, module.id) }
+                runCatching { readAttendanceView(module.id) }
                     .getOrNull()
+                    ?.summary
                     ?.toDomain(module.name)
             }
             EditionAttendance(refs, sessions)
@@ -270,13 +272,27 @@ class AttendanceRepositoryImpl @Inject constructor(
         modules: List<AttendanceModuleRef>,
     ): List<OpenAttendanceSession> {
         if (modules.isEmpty()) return emptyList()
-        val (api, token) = sessionManager.elearning()
         return modules.flatMap { module ->
             runCatching {
-                api.attendance.getMarkableSessions(token, module.courseId, module.courseModuleId)
+                val candidates = readAttendanceView(module.courseModuleId)?.submittableSessionIds.orEmpty()
+                if (candidates.isEmpty()) return@runCatching emptyList()
+                val (api, token) = sessionManager.elearning()
+                api.attendance.getMarkableSessions(token, module.courseId, module.courseModuleId, candidates)
                     .map { it.toDomain(module) }
             }.getOrDefault(emptyList())
         }
+    }
+
+    /**
+     * Reads an attendance module's page, which (unlike the plugin's mobile view) never records
+     * a presence. An expired Moodle browser session is renewed once; null when the page still
+     * can't be read, which means the user can't access the course.
+     */
+    private suspend fun readAttendanceView(moduleId: Int): ElearningAttendanceViewResponse.Success? {
+        val response = sessionManager.elearning().api.attendance.getAttendanceSummary(moduleId)
+        if (response is ElearningAttendanceViewResponse.Success) return response
+        return sessionManager.reauthElearning().api.attendance.getAttendanceSummary(moduleId)
+            as? ElearningAttendanceViewResponse.Success
     }
 
     override suspend fun markSession(
