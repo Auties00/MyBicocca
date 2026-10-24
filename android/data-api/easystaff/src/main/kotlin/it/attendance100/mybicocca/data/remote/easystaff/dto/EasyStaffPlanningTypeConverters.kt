@@ -473,32 +473,36 @@ object EasyStaffPlanningFieldTypeSerializer : KSerializer<EasyStaffPlanningField
 }
 
 /**
- * Serializes [EasyStaffPlanningFieldPosition] from the backend numeric code, mapping unknown
- * codes to [EasyStaffPlanningFieldPosition.Other].
+ * Serializes [EasyStaffPlanningFieldPosition] from the backend code: a number (sent as a JSON
+ * string) or the literal `"backoffice"`. Unknown codes map to
+ * [EasyStaffPlanningFieldPosition.Other].
  */
 object EasyStaffPlanningFieldPositionSerializer : KSerializer<EasyStaffPlanningFieldPosition> {
     private const val CODE_USER = 1
     private const val CODE_SERVICE = 2
     private const val CODE_GDPR = 100
+    private const val CODE_BACKOFFICE = "backoffice"
 
-    override val descriptor = PrimitiveSerialDescriptor("EasyStaffPlanningFieldPosition", PrimitiveKind.INT)
+    override val descriptor = PrimitiveSerialDescriptor("EasyStaffPlanningFieldPosition", PrimitiveKind.STRING)
 
     override fun serialize(encoder: Encoder, value: EasyStaffPlanningFieldPosition) {
-        val intValue = when (value) {
-            is EasyStaffPlanningFieldPosition.User -> CODE_USER
-            is EasyStaffPlanningFieldPosition.Service -> CODE_SERVICE
-            is EasyStaffPlanningFieldPosition.Gdpr -> CODE_GDPR
-            is EasyStaffPlanningFieldPosition.Other -> value.value
+        when (value) {
+            is EasyStaffPlanningFieldPosition.User -> encoder.encodeInt(CODE_USER)
+            is EasyStaffPlanningFieldPosition.Service -> encoder.encodeInt(CODE_SERVICE)
+            is EasyStaffPlanningFieldPosition.Gdpr -> encoder.encodeInt(CODE_GDPR)
+            is EasyStaffPlanningFieldPosition.Backoffice -> encoder.encodeString(CODE_BACKOFFICE)
+            is EasyStaffPlanningFieldPosition.Other -> encoder.encodeString(value.value)
         }
-        encoder.encodeInt(intValue)
     }
 
     override fun deserialize(decoder: Decoder): EasyStaffPlanningFieldPosition {
-        return when (val intValue = decoder.decodeInt()) {
-            CODE_USER -> EasyStaffPlanningFieldPosition.User
-            CODE_SERVICE -> EasyStaffPlanningFieldPosition.Service
-            CODE_GDPR -> EasyStaffPlanningFieldPosition.Gdpr
-            else -> EasyStaffPlanningFieldPosition.Other(intValue)
+        val code = decoder.decodeString()
+        return when {
+            code == CODE_BACKOFFICE -> EasyStaffPlanningFieldPosition.Backoffice
+            code.toIntOrNull() == CODE_USER -> EasyStaffPlanningFieldPosition.User
+            code.toIntOrNull() == CODE_SERVICE -> EasyStaffPlanningFieldPosition.Service
+            code.toIntOrNull() == CODE_GDPR -> EasyStaffPlanningFieldPosition.Gdpr
+            else -> EasyStaffPlanningFieldPosition.Other(code)
         }
     }
 }

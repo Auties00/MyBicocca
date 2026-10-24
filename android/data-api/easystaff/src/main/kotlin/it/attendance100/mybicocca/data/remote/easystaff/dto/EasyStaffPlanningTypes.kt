@@ -754,12 +754,19 @@ sealed interface EasyStaffPlanningFieldPosition {
     data object Gdpr : EasyStaffPlanningFieldPosition
 
     /**
-     * A position not known to this client.
+     * The field is meant for the desk staff (position `"backoffice"`) and is sent in the
+     * `backoffice` map of the booking request. No Bicocca form uses it at the moment.
+     */
+    @Serializable
+    data object Backoffice : EasyStaffPlanningFieldPosition
+
+    /**
+     * A position not known to this client. The web front-end doesn't submit these fields.
      *
      * @property value The raw position code returned by the backend.
      */
     @Serializable
-    data class Other(val value: Int) : EasyStaffPlanningFieldPosition
+    data class Other(val value: String) : EasyStaffPlanningFieldPosition
 }
 
 /**
@@ -1037,6 +1044,8 @@ data class EasyStaffPlanningResourceAvailability(
  * manage the reservation).
  * @property userFields The user form fields, keyed by field code.
  * @property serviceFields The appointment form fields, keyed by field code.
+ * @property backofficeFields The staff form fields, keyed by field code. The web front-end
+ * always sends this map, empty when the form has no such fields.
  * @property resourceId The specific resource to book, or null to let the backend assign one.
  * @property recaptchaToken The reCAPTCHA token, or null when the portal does not require one.
  * @property timeZone The IANA time zone the appointment times are expressed in.
@@ -1072,6 +1081,9 @@ data class EasyStaffPlanningReservationRequest(
 
     @SerialName("servizio")
     val serviceFields: Map<String, String>,
+
+    @SerialName("backoffice")
+    val backofficeFields: Map<String, String>,
 
     @SerialName("risorsa")
     val resourceId: Int?,
