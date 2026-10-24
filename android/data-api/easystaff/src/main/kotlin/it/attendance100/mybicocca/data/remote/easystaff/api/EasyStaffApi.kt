@@ -125,7 +125,6 @@ class EasyStaffApi(httpClientConfig: HttpClientConfig<*>.() -> Unit = {}) : Auto
      * - Universal event search across all types
      * - Filtering by building, room, event type, status, date range
      * - Keyword search
-     * - Today/week convenience methods
      */
     val events: EasyStaffEventsApi = EasyStaffEventsApi(client, json)
 
