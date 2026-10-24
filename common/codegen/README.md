@@ -44,7 +44,7 @@ Each API's `specs/<api>/codegen.json` names its reader and the targets to run:
 {
   "reader": { "type": "esse3" },
   "targets": {
-    "kotlin": { "outputDir": "../../../android/data-api/esse3/src/main/kotlin", "options": { "packageName": "…" } },
+    "kotlin": { "outputDir": "../../../android/data-api/src/main/kotlin", "options": { "packageName": "…" } },
     "swift": { "outputDir": "../../../ios/DataApi/Sources/Esse3/Generated" },
     "web": { "outputDir": "../../../web/packages/esse3/src/generated" }
   }

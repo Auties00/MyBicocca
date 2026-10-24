@@ -24,7 +24,7 @@ import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningFie
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningFormField
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningGeneralSettings
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningIdReference
-import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningPortal
+import it.attendance100.mybicocca.data.easystaff.EasyStaffPlanningPortal
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningPortalConfig
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningPortalSettings
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningReservationDeletion
