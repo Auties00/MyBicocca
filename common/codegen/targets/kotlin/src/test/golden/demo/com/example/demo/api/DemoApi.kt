@@ -6,15 +6,21 @@ import io.ktor.client.HttpClientConfig
 /**
  * Entry point of the Demo API: one property per module, all sharing one HTTP client.
  *
+ * @param tenant Tenant every call acts for.
  * @param httpClientConfig Additional configuration of the HTTP client, such as authentication.
  */
-class DemoApi(httpClientConfig: HttpClientConfig<*>.() -> Unit = {}) : AutoCloseable {
+class DemoApi(
+    tenant: String,
+    region: String,
+    httpClientConfig: HttpClientConfig<*>.() -> Unit = {}
+) : AutoCloseable {
     private val json = DemoRuntime.json
     private val client = DemoRuntime.createHttpClient(json, httpClientConfig)
 
-    val items = DemoItemsApi(client, json)
-    val search = DemoSearchApi(client, json)
-    val shared = DemoSharedApi(client, json)
+    val items = DemoItemsApi(client, json, tenant)
+    val search = DemoSearchApi(client, json, tenant)
+    val calendar = DemoCalendarApi(client, json, tenant, region)
+    val shared = DemoSharedApi(client, json, tenant)
 
     override fun close() {
         client.close()

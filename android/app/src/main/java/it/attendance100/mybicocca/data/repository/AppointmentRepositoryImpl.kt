@@ -12,7 +12,13 @@ import it.attendance100.mybicocca.data.mapper.appointment.toAppointmentSlots
 import it.attendance100.mybicocca.data.mapper.appointment.toDomain
 import it.attendance100.mybicocca.data.mapper.appointment.toEntity
 import it.attendance100.mybicocca.data.mapper.appointment.toMonthAvailability
+import it.attendance100.mybicocca.data.mapper.appointment.toReservationRequest
 import it.attendance100.mybicocca.data.remote.easystaff.api.EasyStaffApi
+import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningEntryFilters
+import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningIdReference
+import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningPortal
+import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningReservationDeletion
+import it.attendance100.mybicocca.data.remote.easystaff.dto.entryId
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentForm
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentMonthAvailability
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentOffering
@@ -20,10 +26,13 @@ import it.attendance100.mybicocca.domain.model.appointment.AppointmentReservatio
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentService
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentSlot
 import it.attendance100.mybicocca.domain.repository.AppointmentRepository
+import io.ktor.utils.io.jvm.javaio.toInputStream
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.YearMonth
@@ -42,10 +51,10 @@ class AppointmentRepositoryImpl @Inject constructor(
     private val reservationDao: AppointmentReservationDao,
 ) : AppointmentRepository {
 
-    private val desks get() = easyStaffApi.planning.informationDesks
+    private val desks get() = easyStaffApi.planning
 
     override suspend fun getServices(): List<AppointmentService> =
-        desks.getServices().map { it.toAppointmentService() }
+        desks.catalog.getServices().map { it.toAppointmentService() }
 
     /**
      * Lists the publicly visible areas offering the service. The filtered area listing embeds
@@ -53,7 +62,7 @@ class AppointmentRepositoryImpl @Inject constructor(
      * is picked out of it.
      */
     override suspend fun getOfferings(serviceId: Int): List<AppointmentOffering> =
-        desks.getAreas(serviceId)
+        desks.catalog.getAreas(EasyStaffPlanningEntryFilters(service = EasyStaffPlanningIdReference(serviceId)))
             .filterNot { it.publicHidden }
             .mapNotNull { area ->
                 area.services.firstOrNull { it.id == serviceId }
@@ -66,7 +75,12 @@ class AppointmentRepositoryImpl @Inject constructor(
         month: YearMonth,
         durationSeconds: Int,
     ): AppointmentMonthAvailability =
-        desks.getMonthSchedule(serviceId, areaId, month, durationSeconds).toMonthAvailability()
+        desks.availability.getMonthSchedule(
+            serviceId = serviceId,
+            month = month.toString(),
+            areaId = areaId,
+            durationSeconds = durationSeconds,
+        ).toMonthAvailability()
 
     override suspend fun getDaySlots(
         serviceId: Int,
@@ -74,18 +88,24 @@ class AppointmentRepositoryImpl @Inject constructor(
         date: LocalDate,
         durationSeconds: Int,
     ): List<AppointmentSlot> =
-        desks.getDaySchedule(serviceId, areaId, date, durationSeconds).toAppointmentSlots()
+        desks.availability.getDaySchedule(
+            serviceId = serviceId,
+            date = date,
+            areaId = areaId,
+            durationSeconds = durationSeconds,
+        ).toAppointmentSlots()
 
     override suspend fun getBookingForm(serviceId: Int): AppointmentForm =
-        desks.getServiceForm(serviceId).toAppointmentForm()
+        desks.portals.getServiceForm(serviceId).toAppointmentForm()
 
     /**
      * Books in two steps with hold semantics: the create call places a provisional hold, the
-     * confirm call finalizes it. The request is built by the data API from the service's
-     * current form, which the portal splits by field position; portals that require a
-     * reCAPTCHA are refused up front, since the app can't produce one. The user already reviewed everything in-app, so the hold is
-     * confirmed immediately; if confirming fails the hold is force-deleted so the slot is not
-     * left blocked. The finalized reservation is then persisted in the device-local store.
+     * confirm call finalizes it. The request is built from the service's current form, which
+     * splits the values by field position; portals that require a reCAPTCHA are refused up
+     * front, since the app can't produce one. The user already reviewed everything in-app, so
+     * the hold is confirmed immediately; if confirming fails the hold is force-deleted so the
+     * slot is not left blocked. The finalized reservation is then persisted in the device-local
+     * store.
      */
     override suspend fun bookAppointment(
         service: AppointmentService,
@@ -97,21 +117,21 @@ class AppointmentRepositoryImpl @Inject constructor(
         val email = form.primaryField?.code?.let { values[it] }
         require(!email.isNullOrBlank()) { stringResolver.getString(it.attendance100.mybicocca.R.string.appointment_booking_email_required) }
 
-        val (formFields, portalConfig) = coroutineScope {
-            val formFields = async { desks.getServiceForm(service.id) }
-            val portalConfig = async { desks.getPortal() }
-            formFields.await() to portalConfig.await()
+        val (formFields, portal) = coroutineScope {
+            val formFields = async { desks.portals.getServiceForm(service.id) }
+            val portal = async { desks.portals.getPortal() }
+            formFields.await() to portal.await()
         }
-        check(!portalConfig.settings.general.captchaRequired) {
+        check(portal.settings?.general?.captchaRequired != true) {
             stringResolver.getString(it.attendance100.mybicocca.R.string.appointment_booking_captcha_required)
         }
-        val result = desks.createReservation(
-            desks.buildReservationRequest(
+        val result = desks.reservations.createReservation(
+            formFields.toReservationRequest(
+                portal = EasyStaffPlanningPortal.INFORMATION_DESKS,
                 serviceId = service.id,
                 areaId = offering.area.id,
                 slotStart = slotStart,
                 durationSeconds = offering.durationSeconds,
-                formFields = formFields,
                 values = values,
             )
         )
@@ -119,10 +139,16 @@ class AppointmentRepositoryImpl @Inject constructor(
         val entryId = result.entryId
         if (entryId != null) {
             try {
-                desks.confirmReservation(entryId)
+                desks.reservations.confirmReservation(entryId)
             } catch (cause: Exception) {
                 result.reservationCode?.let { code ->
-                    runCatching { desks.deleteReservation(code, email, force = true) }
+                    runCatching {
+                        desks.reservations.deleteReservation(
+                            reservationCode = code,
+                            body = EasyStaffPlanningReservationDeletion(force = true),
+                            primaryValue = email,
+                        )
+                    }
                 }
                 throw cause
             }
@@ -158,7 +184,7 @@ class AppointmentRepositoryImpl @Inject constructor(
                 continue
             }
             try {
-                desks.getReservation(reservation.code, reservation.email)
+                desks.reservations.getReservation(reservation.code, reservation.email)
             } catch (cause: Exception) {
                 if (!cause.isReservationGone()) throw cause
                 reservationDao.delete(reservation.code)
@@ -172,15 +198,21 @@ class AppointmentRepositoryImpl @Inject constructor(
      */
     override suspend fun cancelReservation(reservation: AppointmentReservation) {
         try {
-            desks.deleteReservation(reservation.code, reservation.email)
+            desks.reservations.deleteReservation(
+                reservationCode = reservation.code,
+                body = EasyStaffPlanningReservationDeletion(),
+                primaryValue = reservation.email,
+            )
         } catch (cause: Exception) {
             if (!cause.isReservationGone()) throw cause
         }
         reservationDao.delete(reservation.code)
     }
 
-    override suspend fun getReservationPdf(entryId: Int): ByteArray =
-        desks.getReservationPdf(entryId)
+    override suspend fun getReservationPdf(entryId: Int): ByteArray {
+        val channel = desks.reservations.getReservationPdf(entryId)
+        return withContext(Dispatchers.IO) { channel.toInputStream().use { it.readBytes() } }
+    }
 
     /**
      * Detects "this reservation does not exist on the portal". The data-api exception types
@@ -193,4 +225,8 @@ class AppointmentRepositoryImpl @Inject constructor(
         val message = message?.lowercase().orEmpty()
         return "not_found" in message
     }
-}
+
+    /**
+     * Collects the non-blank values of one form section, keyed by field code. The GDPR consent
+     * is validated client-side but never submitted.
+     */}

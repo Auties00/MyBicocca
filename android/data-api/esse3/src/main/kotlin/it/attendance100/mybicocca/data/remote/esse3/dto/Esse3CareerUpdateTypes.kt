@@ -7,18 +7,22 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class Esse3AttendanceProcedureParameters(
     /** flag che indica se assegnare la frequenza anche per studenti cessati */
+    @Serializable(with = Esse3BooleanSerializer::class)
     @SerialName("forzaStudentiX")
     val forceStudentsX: Boolean = false,
 
     /** flag che indica se assegnare la data di frequenza */
+    @Serializable(with = Esse3BooleanSerializer::class)
     @SerialName("forzaDataFreq")
     val forceAttendanceDate: Boolean = false,
 
     /** flag che indica se assegnare la frequenza anche alle AD già frequentate */
+    @Serializable(with = Esse3BooleanSerializer::class)
     @SerialName("forzaStatoF")
     val forceStateFFlag: Boolean = false,
 
     /** flag che indica se assegnare la frequenza anche se non previsto dalla frequenza automatica */
+    @Serializable(with = Esse3BooleanSerializer::class)
     @SerialName("forzaNonPreviste")
     val forceUnplanned: Boolean = false,
 
@@ -60,6 +64,7 @@ data class Esse3SubstitutionProcedureParameters(
     val activityCodeToReplace: String? = null,
 
     /** flag che indica se sostituire l'attività didattica anche se superata */
+    @Serializable(with = Esse3BooleanSerializer::class)
     @SerialName("forzaStatoS")
     val forceStateSFlag: Boolean = false,
 
@@ -184,14 +189,17 @@ data class Esse3CareerUpdateRow(
 @Serializable
 data class Esse3SegmentProcedureParameters(
     /** flag che indica se ricalcolare i segmenti anche per le attività didattiche in stato Frequentato o superato */
+    @Serializable(with = Esse3BooleanSerializer::class)
     @SerialName("forzaStatoFS")
     val forceStateFSFlag: Boolean = false,
 
     /** flag che indica ricalcolare i segmenti anche per studenti cessati */
+    @Serializable(with = Esse3BooleanSerializer::class)
     @SerialName("forzaStudentiX")
     val forceStudentsX: Boolean = false,
 
     /** flag che indica se calcolare i segmenti anche per attività didattiche libere */
+    @Serializable(with = Esse3BooleanSerializer::class)
     @SerialName("forzaADLibereFlg")
     val forceFreeTeachingActivitiesFlag: Boolean = false,
 
@@ -240,6 +248,7 @@ data class Esse3ProcedureUpdateActivityOfferParameters(
     val commonFilters: Esse3FilterParameters? = null,
 
     /** flag che indica se calcolare i segmenti anche per attività didattiche libere */
+    @Serializable(with = Esse3BooleanSerializer::class)
     @SerialName("forzaADLibereFlg")
     val forceFreeTeachingActivitiesFlag: Boolean = false,
 
@@ -367,6 +376,7 @@ data class Esse3FilterParameters(
 @Serializable
 data class Esse3RemoveAttendanceProcedureParameters(
     /** flag che indica se rimuovere la frequenza anche per studenti cessati */
+    @Serializable(with = Esse3BooleanSerializer::class)
     @SerialName("forzaStudentiX")
     val forceStudentsX: Boolean = false,
 

@@ -17,6 +17,10 @@ package it.attendance100.mybicocca.codegen.model
  * @property servers Base URLs operations can target (see [Operation.server]). Empty when the
  *   API has a single base URL, which its runtime then provides.
  * @property authSchemes Ways a caller can authenticate, used by [Operation.auth].
+ * @property parameters Values the caller gives once, when creating the API, rather than to
+ *   each operation: path parameters fill the placeholders of every operation whose path names
+ *   them, and query, header and cookie parameters are sent by every operation. They are
+ *   required and plainly encoded.
  */
 data class ApiSpec(
     val id: String,
@@ -25,6 +29,7 @@ data class ApiSpec(
     val enums: List<EnumType>,
     val servers: List<Server> = emptyList(),
     val authSchemes: List<AuthScheme> = emptyList(),
+    val parameters: List<Parameter> = emptyList(),
 ) {
     /** Whether any operation declares roles, in which case targets pass them to the runtime. */
     val usesRoles: Boolean by lazy { modules.any { module -> module.operations.any { it.roles.isNotEmpty() } } }
@@ -34,9 +39,37 @@ data class ApiSpec(
         (modules.flatMap { it.records } + enums).associateBy { it.name }
     }
 
+    /**
+     * The API [parameters] [module] uses: those every operation sends, the path ones its
+     * operations' paths name, and those its operations' headers name.
+     */
+    fun parametersOf(module: ApiModule): List<Parameter> = parameters.filter { parameter ->
+        parameter.location != ParameterLocation.PATH || module.operations.any { operation ->
+            "{${parameter.wireName}}" in operation.path || operation.headers.values.any { "{${parameter.name}}" in it }
+        }
+    }
+
     /** Resolves a [TypeRef.Named] to its declaration. */
     fun resolve(ref: TypeRef.Named): TypeDeclaration =
         declarations[ref.name] ?: error("Unknown type '${ref.name}' in API '$id'")
+
+    /**
+     * Whether [type] can key a [TypeRef.MapOf]: a type whose values have one string form,
+     * namely strings, integers, ISO dates, enums and delimited records.
+     */
+    fun isMapKey(type: TypeRef): Boolean = when (type) {
+        is TypeRef.Primitive -> type.kind in MAP_KEY_KINDS
+        is TypeRef.Named -> when (val declaration = declarations[type.name]) {
+            is EnumType -> true
+            is RecordType -> declaration.encoding is RecordEncoding.Delimited
+            null -> false
+        }
+        is TypeRef.ListOf, is TypeRef.MapOf -> false
+    }
+
+    private companion object {
+        val MAP_KEY_KINDS = setOf(PrimitiveKind.STRING, PrimitiveKind.INT32, PrimitiveKind.INT64, PrimitiveKind.LOCAL_DATE)
+    }
 }
 
 /**

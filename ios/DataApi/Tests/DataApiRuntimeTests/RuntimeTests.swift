@@ -70,4 +70,86 @@ final class WireEnumTests: XCTestCase {
         let decoded = try JSONDecoder().decode([Status].self, from: Data(#"["A", {"value": "A"}, "Z"]"#.utf8))
         XCTAssertEqual(decoded, [.active, .active, .unknown("Z")])
     }
+
+    private enum Position: WireEnum {
+        case user
+        case unknown(String)
+
+        static let isInteger = true
+
+        init(wireValue: String) {
+            self = wireValue == "1" ? .user : .unknown(wireValue)
+        }
+
+        var wireValue: String {
+            switch self {
+            case .user: return "1"
+            case .unknown(let value): return value
+            }
+        }
+    }
+
+    func testReadsAndWritesIntegerValues() throws {
+        let decoded = try JSONDecoder().decode([Position].self, from: Data(#"[1, "1", 100]"#.utf8))
+        XCTAssertEqual(decoded, [.user, .user, .unknown("100")])
+        XCTAssertEqual(String(decoding: try JSONEncoder().encode([Position.user]), as: UTF8.self), "[1]")
+    }
+}
+
+final class WireMapTests: XCTestCase {
+    func testReadsObjectsEmptyArraysAndArraysOfObjects() throws {
+        let maps = try JSONDecoder().decode(
+            [WireMap<LocalDate, Int>].self,
+            from: Data(#"[{"2025-03-05": 1}, [], [{"2025-03-05": 1}, {"2025-03-06": 2}]]"#.utf8)
+        )
+        let day = LocalDate(year: 2025, month: 3, day: 5)
+        XCTAssertEqual(maps[0][day], 1)
+        XCTAssertTrue(maps[1].isEmpty)
+        XCTAssertEqual(maps[2].count, 2)
+    }
+
+    func testWritesKeysInTheirStringForm() throws {
+        let map: WireMap<LocalDate, Int> = [LocalDate(year: 2025, month: 3, day: 5): 1]
+        XCTAssertEqual(String(decoding: try JSONEncoder().encode(map), as: UTF8.self), #"{"2025-03-05":1}"#)
+    }
+}
+
+final class CodecTests: XCTestCase {
+    private struct Settings: Codable, Hashable {
+        var enabled: Bool
+    }
+
+    private struct Sample: Decodable {
+        var note: String?
+        var folded: Settings?
+        var embedded: Settings?
+        var flag: Bool?
+
+        private enum CodingKeys: String, CodingKey {
+            case note, folded, embedded, flag
+        }
+
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            note = container.decodeBlankAsNull(forKey: .note, alsoNull: ["0"])
+            folded = container.decodeFolded(Settings.self, forKey: .folded)
+            embedded = container.decodeEmbedded(Settings.self, forKey: .embedded)
+            flag = container.decodeLenient(Bool.self, forKey: .flag)
+        }
+    }
+
+    func testDecodesLaravelShapes() throws {
+        let json = #"{"note": "0", "folded": [{"enabled": true}], "embedded": "{\"enabled\": true}", "flag": "1"}"#
+        let sample = try JSONDecoder().decode(Sample.self, from: Data(json.utf8))
+        XCTAssertNil(sample.note)
+        XCTAssertEqual(sample.folded, Settings(enabled: true))
+        XCTAssertEqual(sample.embedded, Settings(enabled: true))
+        XCTAssertEqual(sample.flag, true)
+    }
+
+    func testTreatsBlankEmbeddedDocumentsAsNoValue() throws {
+        let sample = try JSONDecoder().decode(Sample.self, from: Data(#"{"note": " ", "embedded": ""}"#.utf8))
+        XCTAssertNil(sample.note)
+        XCTAssertNil(sample.embedded)
+    }
 }

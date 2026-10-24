@@ -100,11 +100,20 @@ class SwiftTarget : CodeTarget {
                 line("public let ${SwiftSyntax.identifier(module.name.decapitalized())}: ${layout.serviceName(module)}")
             }
             line()
-            block("public init(client: ${layout.client}) {") {
+            val documented = spec.parameters.filter { it.description != null }
+            if (documented.isNotEmpty()) {
+                line("/// - Parameters:")
+                for (parameter in documented) line("///   - ${parameter.name}: ${SwiftSyntax.docText(parameter.description!!)}")
+            }
+            val parameters = listOf("client: ${layout.client}") + spec.parameters.map { "${SwiftSyntax.identifier(it.name)}: ${layout.render(it.type)}" }
+            commaListOrLine("public init(", parameters, ") {", MAX_LINE_LENGTH)
+            indent {
                 for (module in modules) {
-                    line("self.${SwiftSyntax.identifier(module.name.decapitalized())} = ${layout.serviceName(module)}(client: client)")
+                    val arguments = listOf("client: client") + spec.parametersOf(module).map { "${it.name}: ${SwiftSyntax.identifier(it.name)}" }
+                    line("self.${SwiftSyntax.identifier(module.name.decapitalized())} = ${layout.serviceName(module)}(${arguments.joinToString(", ")})")
                 }
             }
+            line("}")
         }
     }
 

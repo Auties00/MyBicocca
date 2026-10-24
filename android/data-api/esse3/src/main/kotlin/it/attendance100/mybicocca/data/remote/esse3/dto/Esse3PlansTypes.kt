@@ -93,6 +93,7 @@ data class Esse3PostPhDPlanActivity(
 @Serializable
 data class Esse3PutInteruniversityPlanOptionalLocation(
     /** indica se attuare il piano una volta sincronizzato */
+    @Serializable(with = Esse3BooleanSerializer::class)
     @SerialName("attuaPiano")
     val implementPlan: Boolean? = null,
 
@@ -528,6 +529,7 @@ data class Esse3StudyPlanActivity(
 @Serializable
 data class Esse3PutInteruniversityPlanAdmissionLocation(
     /** indica se attuare il piano una volta inserito (valido solo se lo stato è A) */
+    @Serializable(with = Esse3BooleanSerializer::class)
     @SerialName("attuaFlg")
     val implementationFlag: Boolean? = null,
 
@@ -583,10 +585,12 @@ data class Esse3PostPlanBody(
     val state: String = "",
 
     /** indica se attuare il piano una volta inserito (valido solo se lo stato è A) */
+    @Serializable(with = Esse3BooleanSerializer::class)
     @SerialName("attuaFlg")
     val implementationFlag: Boolean = false,
 
     /** indica se annullare il piano precedente valido prima di inserire il nuovo piano */
+    @Serializable(with = Esse3BooleanSerializer::class)
     @SerialName("annullaPianoValidoFlg")
     val cancelValidPlanFlag: Boolean = false,
 
@@ -1484,6 +1488,7 @@ data class Esse3PostInteruniversityPlanSegment(
 @Serializable
 data class Esse3PutInteruniversityRecognitionPlanBody(
     /** indica se attuare il piano una volta inserito (valido solo se lo stato è A) */
+    @Serializable(with = Esse3BooleanSerializer::class)
     @SerialName("attuaFlg")
     val implementationFlag: Boolean = false,
 

@@ -3,9 +3,9 @@ package it.attendance100.mybicocca.data.remote.easystaff.api
 import io.ktor.client.*
 import io.ktor.client.plugins.*
 import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.client.plugins.cookies.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
+import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningPortal
 import kotlinx.serialization.json.Json
 
 /**
@@ -58,13 +58,11 @@ class EasyStaffApi(httpClientConfig: HttpClientConfig<*>.() -> Unit = {}) : Auto
      * Shared HTTP client for all API requests.
      *
      * Configured with:
-     * - Cookie storage, which carries the Portale Planning guest token (`jwt_public`)
      * - Extended timeouts for slow university servers
      * - Automatic redirect following
      */
     private val client = HttpClient {
         httpClientConfig()
-        install(HttpCookies)
         install(HttpTimeout) {
             requestTimeoutMillis = TIMEOUT
             connectTimeoutMillis = TIMEOUT
@@ -141,15 +139,11 @@ class EasyStaffApi(httpClientConfig: HttpClientConfig<*>.() -> Unit = {}) : Auto
     val attendance: EasyStaffAttendanceApi = EasyStaffAttendanceApi(client, json)
 
     /**
-     * API for appointment booking operations (Portale Planning).
-     *
-     * Provides access to:
-     * - Booking portal discovery and configuration
-     * - The information desks portal, with service/area listings, availability schedules,
-     *   and the full anonymous reservation lifecycle: create, confirm, manage, edit, cancel
-     * - The legacy study rooms portal, limited to configuration and discovery
+     * API for appointment booking at the student information desks (Portale Planning): service
+     * and area listings, availability schedules, and the anonymous reservation lifecycle. It
+     * has its own HTTP client, whose cookies carry the portal's guest token.
      */
-    val planning: EasyStaffPlanningApi = EasyStaffPlanningApi(client, json)
+    val planning: EasyStaffPlanningApi = EasyStaffPlanningApi(EasyStaffPlanningPortal.INFORMATION_DESKS, httpClientConfig)
 
     /**
      * Closes the underlying HTTP client and releases resources.
@@ -161,5 +155,6 @@ class EasyStaffApi(httpClientConfig: HttpClientConfig<*>.() -> Unit = {}) : Auto
      */
     override fun close() {
         client.close()
+        planning.close()
     }
 }

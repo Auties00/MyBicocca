@@ -1008,6 +1008,7 @@ data class Esse3ResultRecordImport(
     val imageId: Long? = null,
 
     /** indica se l'import è andato a buon fine */
+    @Serializable(with = Esse3BooleanSerializer::class)
     @SerialName("risultatoImport")
     val importResult: Boolean? = null,
 
@@ -1246,6 +1247,7 @@ data class Esse3RecordImportRoot(
 @Serializable
 data class Esse3RecordsImportResponse(
     /** esito dell'operazione di import */
+    @Serializable(with = Esse3BooleanSerializer::class)
     @SerialName("esito")
     val outcome: Boolean? = null,
 

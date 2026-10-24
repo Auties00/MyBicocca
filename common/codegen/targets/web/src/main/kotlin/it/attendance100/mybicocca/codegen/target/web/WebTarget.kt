@@ -54,6 +54,9 @@ class WebTarget : CodeTarget {
             if (spec.servers.isNotEmpty()) {
                 add(file(layout.serverFile) { servers(spec, layout, it) })
             }
+            if (spec.parameters.isNotEmpty()) {
+                add(file(layout.parametersFile) { parameters(spec, layout, it) })
+            }
             add(file("${layout.facadeName}.ts") { facade(spec, layout, it) })
         }
         return files + file("index.ts") { index ->
@@ -102,10 +105,23 @@ class WebTarget : CodeTarget {
         }
     }
 
+    private fun parameters(spec: ApiSpec, layout: TsLayout, file: TsFile) {
+        file.body.apply {
+            line("/** Values every ${spec.prefix} operation uses, given once when creating the API. */")
+            block("export interface ${layout.parameters} {") {
+                for (parameter in spec.parameters) {
+                    parameter.description?.let { line("/** ${TsSyntax.docText(it)} */") }
+                    line("${TsSyntax.propertyKey(parameter.name)}: ${layout.render(parameter.type, file)};")
+                }
+            }
+        }
+    }
+
     private fun facade(spec: ApiSpec, layout: TsLayout, file: TsFile) {
         val modules = spec.modules.filter { it.operations.isNotEmpty() }
         file.import(layout.client, layout.clientModule)
         modules.forEach { file.import(layout.serviceName(it), layout.moduleOf("${layout.serviceName(it)}.ts")) }
+        if (spec.parameters.isNotEmpty()) file.import(layout.parameters, layout.moduleOf(layout.parametersFile))
         file.body.apply {
             line("/** Entry point of the ${spec.prefix} API: one property per module, all sharing one client. */")
             block("export class ${layout.facadeName} {") {
@@ -113,9 +129,14 @@ class WebTarget : CodeTarget {
                     line("readonly ${TsSyntax.propertyKey(module.name.decapitalized())}: ${layout.serviceName(module)};")
                 }
                 line()
-                block("constructor(readonly client: ${layout.client}) {") {
+                val (parameters, arguments) = if (spec.parameters.isEmpty()) {
+                    "readonly client: ${layout.client}" to "client"
+                } else {
+                    "readonly client: ${layout.client}, readonly parameters: ${layout.parameters}" to "client, parameters"
+                }
+                block("constructor($parameters) {") {
                     for (module in modules) {
-                        line("this.${module.name.decapitalized()} = new ${layout.serviceName(module)}(client);")
+                        line("this.${module.name.decapitalized()} = new ${layout.serviceName(module)}($arguments);")
                     }
                 }
             }

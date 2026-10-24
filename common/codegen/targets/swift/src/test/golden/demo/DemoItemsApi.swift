@@ -5,9 +5,11 @@ import Foundation
 
 public struct DemoItemsApi: Sendable {
     private let client: DemoClient
+    private let tenant: String
 
-    public init(client: DemoClient) {
+    public init(client: DemoClient, tenant: String) {
         self.client = client
+        self.tenant = tenant
     }
 
     /// Lists the items of an owner.
@@ -31,7 +33,8 @@ public struct DemoItemsApi: Sendable {
                     ("stato", status),
                     ("ids", ids),
                     ("limit", limit)
-                ]
+                ],
+                headers: [("X-TENANT", tenant)]
             ),
             roles: [.student, .technicalUser]
         )
@@ -45,6 +48,7 @@ public struct DemoItemsApi: Sendable {
                 method: .post,
                 path: "/items-service-v1/items",
                 query: [("notifica", notify)],
+                headers: [("X-TENANT", tenant)],
                 body: body
             ),
             roles: []
@@ -65,7 +69,8 @@ public struct DemoItemsApi: Sendable {
                     ("nome", name),
                     ("num", count),
                     ("stato", status)
-                ]
+                ],
+                headers: [("X-TENANT", tenant)]
             ),
             roles: []
         )
@@ -75,7 +80,8 @@ public struct DemoItemsApi: Sendable {
         try await client.send(
             RestRequest(
                 method: .delete,
-                path: "/items-service-v1/items/\(RestRequest.pathSegment(itemId))"
+                path: "/items-service-v1/items/\(RestRequest.pathSegment(itemId))",
+                headers: [("X-TENANT", tenant)]
             ),
             roles: []
         )
@@ -86,7 +92,8 @@ public struct DemoItemsApi: Sendable {
             RestRequest(
                 method: .get,
                 path: "/items-service-v1/items/\(RestRequest.pathSegment(itemId))/pdf",
-                query: [("priority", priority)]
+                query: [("priority", priority)],
+                headers: [("X-TENANT", tenant)]
             ),
             roles: []
         )

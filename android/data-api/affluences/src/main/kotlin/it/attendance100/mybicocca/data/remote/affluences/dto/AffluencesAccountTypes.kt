@@ -31,6 +31,7 @@ data class AffluencesCheckin(
     @SerialName("latestVersion")
     val latestVersion: String? = null,
 
+    @Serializable(with = AffluencesBooleanSerializer::class)
     @SerialName("buildExpired")
     val buildExpired: Boolean = false
 )
@@ -115,12 +116,15 @@ data class AffluencesMyReservation(
     @SerialName("state")
     val state: AffluencesReservationState? = null,
 
+    @Serializable(with = AffluencesBooleanSerializer::class)
     @SerialName("validated")
     val validated: Boolean = false,
 
+    @Serializable(with = AffluencesBooleanSerializer::class)
     @SerialName("confirmation_mandatory")
     val confirmationMandatory: Boolean = false,
 
+    @Serializable(with = AffluencesBooleanSerializer::class)
     @SerialName("user_validation")
     val userValidation: Boolean = false,
 

@@ -24,7 +24,7 @@ import it.attendance100.mybicocca.codegen.model.TypeRef
  *
  * The hand-written runtime:
  * - The shared runtime module ([runtimeModule]): `LocalDate`, `LocalDateTime`, `JSONObject`,
- *   `WireEnum`, `RestRequest` and the lenient `Codable` helpers.
+ *   `WireEnum`, `WireMap`, `RestRequest` and the lenient `Codable` helpers.
  * - `Esse3Client`: sends `RestRequest`s and decodes responses and errors, through
  *   `json(_:roles:)`, `jsonList(_:roles:)` (empty on HTTP 404), `data(_:roles:)` and
  *   `send(_:roles:)`.
@@ -57,7 +57,7 @@ internal class SwiftLayout(private val spec: ApiSpec, val runtimeModule: String)
             ".${SwiftSyntax.identifier(caseNames(enum).getValue(enum.values.first { it.wireValue == literal.value }.name))}"
         }
         is TypeRef.Primitive -> if (type.kind == PrimitiveKind.STRING) SwiftSyntax.string(literal.value) else literal.value
-        is TypeRef.ListOf -> error("Lists can't have a literal default")
+        is TypeRef.ListOf, is TypeRef.MapOf -> error("Collections can't have a literal default")
     }
 
     fun recordsFileName(module: ApiModule): String = "${spec.prefix}${module.name}Types.swift"
@@ -69,6 +69,7 @@ internal class SwiftLayout(private val spec: ApiSpec, val runtimeModule: String)
     fun render(type: TypeRef): String = when (type) {
         is TypeRef.Named -> type.name
         is TypeRef.ListOf -> "[${render(type.element)}]"
+        is TypeRef.MapOf -> "WireMap<${render(type.key)}, ${render(type.value)}>"
         is TypeRef.Primitive -> when (type.kind) {
             PrimitiveKind.STRING -> "String"
             PrimitiveKind.INT32 -> "Int"

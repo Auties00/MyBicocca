@@ -57,12 +57,15 @@ data class AffluencesAvailableResource(
     @SerialName("time_slot_count")
     val timeSlotCount: Int? = null,
 
+    @Serializable(with = AffluencesBooleanSerializer::class)
     @SerialName("static_time_slot")
     val staticTimeSlot: Boolean = false,
 
+    @Serializable(with = AffluencesBooleanSerializer::class)
     @SerialName("note_available")
     val noteAvailable: Boolean = false,
 
+    @Serializable(with = AffluencesBooleanSerializer::class)
     @SerialName("note_required")
     val noteRequired: Boolean = false,
 
@@ -81,15 +84,19 @@ data class AffluencesAvailableResource(
     @SerialName("site_timezone")
     val siteTimeZone: String? = null,
 
+    @Serializable(with = AffluencesBooleanSerializer::class)
     @SerialName("user_name_required")
     val userNameRequired: Boolean = false,
 
+    @Serializable(with = AffluencesBooleanSerializer::class)
     @SerialName("user_phone_required")
     val userPhoneRequired: Boolean = false,
 
+    @Serializable(with = AffluencesBooleanSerializer::class)
     @SerialName("user_name_available")
     val userNameAvailable: Boolean = false,
 
+    @Serializable(with = AffluencesBooleanSerializer::class)
     @SerialName("user_phone_available")
     val userPhoneAvailable: Boolean = false,
 
@@ -181,6 +188,7 @@ data class AffluencesAgreement(
     @SerialName("url")
     val url: String? = null,
 
+    @Serializable(with = AffluencesBooleanSerializer::class)
     @SerialName("mandatory_consent")
     val mandatoryConsent: Boolean = false
 )
@@ -259,6 +267,7 @@ data class AffluencesResourceDetail(
     @SerialName("time_slot_count")
     val timeSlotCount: Int? = null,
 
+    @Serializable(with = AffluencesBooleanSerializer::class)
     @SerialName("reservation_mandatory")
     val reservationMandatory: Boolean = false,
 
@@ -344,6 +353,7 @@ data class AffluencesReservationResult(
     @SerialName("auth_token")
     val authToken: String? = null,
 
+    @Serializable(with = AffluencesBooleanSerializer::class)
     @SerialName("user_validation")
     val userValidation: Boolean? = null,
 
@@ -414,24 +424,30 @@ data class AffluencesReservationToCancel(
     @SerialName("state")
     val state: String? = null,
 
+    @Serializable(with = AffluencesBooleanSerializer::class)
     @SerialName("cancellable")
     val cancellable: Boolean = false,
 
+    @Serializable(with = AffluencesBooleanSerializer::class)
     @SerialName("static_time_slot")
     val staticTimeSlot: Boolean = false
 )
 
 @Serializable
 data class AffluencesEmailConfirmation(
+    @Serializable(with = AffluencesBooleanSerializer::class)
     @SerialName("redirect")
     val redirect: Boolean = false,
 
+    @Serializable(with = AffluencesBooleanSerializer::class)
     @SerialName("confirmFailed")
     val confirmFailed: Boolean = false,
 
+    @Serializable(with = AffluencesBooleanSerializer::class)
     @SerialName("not_found")
     val notFound: Boolean = false,
 
+    @Serializable(with = AffluencesBooleanSerializer::class)
     @SerialName("already_confirmed")
     val alreadyConfirmed: Boolean = false
 )

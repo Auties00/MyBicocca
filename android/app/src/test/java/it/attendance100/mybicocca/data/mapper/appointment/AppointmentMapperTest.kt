@@ -4,15 +4,18 @@ import com.google.common.truth.Truth.assertThat
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningArea
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningDaySchedule
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningDetailedService
-import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningFieldOption
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningFieldPosition
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningFieldType
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningFormField
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningMonthSchedule
+import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningPortal
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningReservationResult
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningService
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningSlotAvailability
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningTimeRange
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentArea
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentFormField
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentOffering
@@ -183,9 +186,11 @@ class AppointmentMapperTest {
             formField(
                 code = "area",
                 type = EasyStaffPlanningFieldType.Select,
-                values = listOf(
-                    EasyStaffPlanningFieldOption(value = "PSI", label = "Area Psicologica"),
-                    EasyStaffPlanningFieldOption(value = "MED", label = "Area Medica"),
+                values = JsonObject(
+                    mapOf(
+                        "PSI" to JsonPrimitive("Area Psicologica"),
+                        "MED" to JsonPrimitive("Area Medica"),
+                    ),
                 ),
             ),
         ).toAppointmentForm().fields.first()
@@ -197,7 +202,7 @@ class AppointmentMapperTest {
 
     @Test
     fun `unknown input type degrades to a plain text field`() {
-        val field = listOf(formField(code = "x", type = EasyStaffPlanningFieldType.Other("captcha")))
+        val field = listOf(formField(code = "x", type = EasyStaffPlanningFieldType.Unknown("captcha")))
             .toAppointmentForm().fields.first()
         assertThat(field).isInstanceOf(AppointmentFormField.Text::class.java)
     }
@@ -209,7 +214,7 @@ class AppointmentMapperTest {
                 code = "gdpr",
                 type = EasyStaffPlanningFieldType.Text,
                 position = EasyStaffPlanningFieldPosition.Gdpr,
-                values = listOf(EasyStaffPlanningFieldOption(value = "privacy/policy.pdf", label = "Privacy")),
+                values = JsonPrimitive("privacy/policy.pdf"),
             ),
         ).toAppointmentForm().fields.first()
         assertThat(field).isInstanceOf(AppointmentFormField.Consent::class.java)
@@ -225,7 +230,7 @@ class AppointmentMapperTest {
             formField(
                 code = "consent",
                 type = EasyStaffPlanningFieldType.Checkbox,
-                values = listOf(EasyStaffPlanningFieldOption(value = "https://privacy.example", label = "P")),
+                values = JsonPrimitive("https://privacy.example"),
             ),
         ).toAppointmentForm().fields.first()
         assertThat(field).isInstanceOf(AppointmentFormField.Consent::class.java)
@@ -234,10 +239,61 @@ class AppointmentMapperTest {
     }
 
     @Test
+    fun `reservation request splits values by position like the web front-end`() {
+        val form = listOf(
+            formField("email", primary = true),
+            formField("cognome_nome"),
+            formField("matricola", position = EasyStaffPlanningFieldPosition.Service),
+            formField("note_aggiuntive", position = EasyStaffPlanningFieldPosition.Service),
+            formField("staff_note", position = EasyStaffPlanningFieldPosition.Backoffice),
+            formField("gdpr", position = EasyStaffPlanningFieldPosition.Gdpr),
+            formField("legacy", position = EasyStaffPlanningFieldPosition.Unknown("7")),
+        )
+
+        val request = form.toReservationRequest(
+            portal = EasyStaffPlanningPortal.INFORMATION_DESKS,
+            serviceId = 37,
+            areaId = 81,
+            slotStart = LocalDateTime.of(2026, 10, 21, 11, 0),
+            durationSeconds = 900,
+            values = mapOf(
+                "email" to "a@b.it",
+                "cognome_nome" to "ROSSI MARIO",
+                "matricola" to "123456",
+                "note_aggiuntive" to " ",
+                "staff_note" to "x",
+                "gdpr" to "true",
+                "legacy" to "y",
+            ),
+        )
+
+        assertThat(request.primaryValue).isEqualTo("a@b.it")
+        assertThat(request.portalCode).isEqualTo(EasyStaffPlanningPortal.INFORMATION_DESKS.code)
+        assertThat(request.userFields).containsExactly("email", "a@b.it", "cognome_nome", "ROSSI MARIO")
+        assertThat(request.serviceFields).containsExactly("matricola", "123456")
+        assertThat(request.backofficeFields).containsExactly("staff_note", "x")
+        assertThat(request.endTimeEpochSeconds - request.startTimeEpochSeconds).isEqualTo(900L)
+    }
+
+    @Test
+    fun `reservation request requires the primary value`() {
+        assertThrows(IllegalArgumentException::class.java) {
+            listOf(formField("email", primary = true)).toReservationRequest(
+                portal = EasyStaffPlanningPortal.INFORMATION_DESKS,
+                serviceId = 37,
+                areaId = 81,
+                slotStart = LocalDateTime.of(2026, 10, 21, 11, 0),
+                durationSeconds = 900,
+                values = mapOf("email" to " "),
+            )
+        }
+    }
+
+    @Test
     fun `reservation prefers the backend echoed times`() {
         val result = EasyStaffPlanningReservationResult(
             reservationCode = "RC1",
-            entryId = 99,
+            entry = JsonPrimitive(99),
             startTimeEpochSeconds = LocalDateTime.of(2024, 6, 5, 10, 0).atZone(CampusZone).toEpochSecond(),
             endTimeEpochSeconds = LocalDateTime.of(2024, 6, 5, 10, 30).atZone(CampusZone).toEpochSecond(),
             qrCode = "data:image/png;base64,AAA",
@@ -307,7 +363,7 @@ class AppointmentMapperTest {
     @Test
     fun `reservation round-trips through the cache entity`() {
         val reservation = toAppointmentReservation(
-            result = EasyStaffPlanningReservationResult(reservationCode = "RC4", entryId = 5),
+            result = EasyStaffPlanningReservationResult(reservationCode = "RC4", entry = JsonPrimitive(5)),
             service = service(),
             offering = offering(),
             slotStart = LocalDateTime.of(2024, 6, 5, 9, 0),
@@ -347,7 +403,7 @@ class AppointmentMapperTest {
         primary: Boolean = false,
         required: Boolean = false,
         position: EasyStaffPlanningFieldPosition = EasyStaffPlanningFieldPosition.User,
-        values: List<EasyStaffPlanningFieldOption>? = null,
+        values: JsonElement? = null,
         placeholder: String? = null,
     ) = EasyStaffPlanningFormField(
         id = 1,
