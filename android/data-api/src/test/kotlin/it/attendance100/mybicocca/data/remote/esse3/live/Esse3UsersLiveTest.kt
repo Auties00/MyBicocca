@@ -21,9 +21,10 @@ class Esse3UsersLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Users.getExtendedCareer#2")
     fun getExtendedCareer2() = case("Users.getExtendedCareer#2", index = 1) {
-        val userId = choose("userId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.userId })
-        val studentStatusCode = choose("studentStatusCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studentStatusCode })
-        val fiscalCode = choose("fiscalCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.fiscalCode })
+        val row = chooseRow("userId, studentStatusCode", listOf(personalDataGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.userId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.studentStatusCode }.firstOrNull()?.toString()) }
+        val userId = choose("userId", listOf(row).mapNotNull { it.userId })
+        val studentStatusCode = choose("studentStatusCode", listOf(row).mapNotNull { it.studentStatusCode })
+        val fiscalCode = choose("fiscalCode", listOf(careersGetCareers()).flatten().mapNotNull { it.fiscalCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExtendedCareerPortion\"}}") {
             api.users.getExtendedCareer(userId = userId, studentStatusCode = studentStatusCode, fiscalCode = fiscalCode)
         } ?: return@case
@@ -33,9 +34,10 @@ class Esse3UsersLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Users.getExtendedCareer#3")
     fun getExtendedCareer3() = case("Users.getExtendedCareer#3", index = 2) {
-        val userId = choose("userId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.userId })
-        val statusReasonCode = choose("statusReasonCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.statusReasonCode })
-        val fiscalCode = choose("fiscalCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.fiscalCode })
+        val row = chooseRow("userId, statusReasonCode", listOf(personalDataGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.userId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.statusReasonCode }.firstOrNull()?.toString()) }
+        val userId = choose("userId", listOf(row).mapNotNull { it.userId })
+        val statusReasonCode = choose("statusReasonCode", listOf(row).mapNotNull { it.statusReasonCode })
+        val fiscalCode = choose("fiscalCode", listOf(careersGetCareers()).flatten().mapNotNull { it.fiscalCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExtendedCareerPortion\"}}") {
             api.users.getExtendedCareer(userId = userId, statusReasonCode = statusReasonCode, fiscalCode = fiscalCode)
         } ?: return@case
@@ -45,9 +47,10 @@ class Esse3UsersLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Users.getExtendedCareer#4")
     fun getExtendedCareer4() = case("Users.getExtendedCareer#4", index = 3) {
-        val userId = choose("userId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.userId })
-        val studentStatusCode = choose("studentStatusCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studentStatusCode })
-        val statusReasonCode = choose("statusReasonCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.statusReasonCode })
+        val row = chooseRow("userId, studentStatusCode, statusReasonCode", listOf(personalDataGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.userId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.studentStatusCode }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.statusReasonCode }.firstOrNull()?.toString()) }
+        val userId = choose("userId", listOf(row).mapNotNull { it.userId })
+        val studentStatusCode = choose("studentStatusCode", listOf(row).mapNotNull { it.studentStatusCode })
+        val statusReasonCode = choose("statusReasonCode", listOf(row).mapNotNull { it.statusReasonCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExtendedCareerPortion\"}}") {
             api.users.getExtendedCareer(userId = userId, studentStatusCode = studentStatusCode, statusReasonCode = statusReasonCode)
         } ?: return@case
@@ -75,9 +78,10 @@ class Esse3UsersLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Users.getCareerSegments#2")
     fun getCareerSegments2() = case("Users.getCareerSegments#2", index = 1) {
-        val userId = choose("userId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.userId })
-        val studentStatusCode = choose("studentStatusCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studentStatusCode })
-        val statusReasonCode = choose("statusReasonCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.statusReasonCode })
+        val row = chooseRow("userId, studentStatusCode, statusReasonCode", listOf(personalDataGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.userId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.studentStatusCode }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.statusReasonCode }.firstOrNull()?.toString()) }
+        val userId = choose("userId", listOf(row).mapNotNull { it.userId })
+        val studentStatusCode = choose("studentStatusCode", listOf(row).mapNotNull { it.studentStatusCode })
+        val statusReasonCode = choose("statusReasonCode", listOf(row).mapNotNull { it.statusReasonCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}}") {
             api.users.getCareerSegments(userId = userId, studentStatusCode = studentStatusCode, statusReasonCode = statusReasonCode)
         } ?: return@case
@@ -87,9 +91,10 @@ class Esse3UsersLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Users.getCareerSegments#3")
     fun getCareerSegments3() = case("Users.getCareerSegments#3", index = 2) {
-        val userId = choose("userId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.userId })
-        val studentStatusCode = choose("studentStatusCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studentStatusCode })
-        val fiscalCode = choose("fiscalCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.fiscalCode })
+        val row = chooseRow("userId, studentStatusCode", listOf(personalDataGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.userId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.studentStatusCode }.firstOrNull()?.toString()) }
+        val userId = choose("userId", listOf(row).mapNotNull { it.userId })
+        val studentStatusCode = choose("studentStatusCode", listOf(row).mapNotNull { it.studentStatusCode })
+        val fiscalCode = choose("fiscalCode", listOf(careersGetCareers()).flatten().mapNotNull { it.fiscalCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}}") {
             api.users.getCareerSegments(userId = userId, studentStatusCode = studentStatusCode, fiscalCode = fiscalCode)
         } ?: return@case
@@ -99,9 +104,10 @@ class Esse3UsersLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Users.getCareerSegments#4")
     fun getCareerSegments4() = case("Users.getCareerSegments#4", index = 3) {
-        val userId = choose("userId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.userId })
-        val statusReasonCode = choose("statusReasonCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.statusReasonCode })
-        val fiscalCode = choose("fiscalCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.fiscalCode })
+        val row = chooseRow("userId, statusReasonCode", listOf(personalDataGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.userId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.statusReasonCode }.firstOrNull()?.toString()) }
+        val userId = choose("userId", listOf(row).mapNotNull { it.userId })
+        val statusReasonCode = choose("statusReasonCode", listOf(row).mapNotNull { it.statusReasonCode })
+        val fiscalCode = choose("fiscalCode", listOf(careersGetCareers()).flatten().mapNotNull { it.fiscalCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}}") {
             api.users.getCareerSegments(userId = userId, statusReasonCode = statusReasonCode, fiscalCode = fiscalCode)
         } ?: return@case

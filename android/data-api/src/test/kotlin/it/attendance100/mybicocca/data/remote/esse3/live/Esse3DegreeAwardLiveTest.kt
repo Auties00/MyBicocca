@@ -9,46 +9,6 @@ import org.junit.jupiter.api.Test
 /** The live tests of the Esse3 DegreeAward module, planned from `common/specs/esse3/tests.yaml`. */
 class Esse3DegreeAwardLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
-    @DisplayName("DegreeAward.getExamCalls#1")
-    fun getExamCalls1() = case("DegreeAward.getExamCalls#1") {
-        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSession\"}}") {
-            api.degreeAward.getExamCalls()
-        } ?: return@case
-        fingerprint { list(result) { writeEsse3ExamSession(it) } }
-    }
-
-    @Test
-    @DisplayName("DegreeAward.getExamCalls#2")
-    fun getExamCalls2() = case("DegreeAward.getExamCalls#2", index = 1) {
-        val courseOfStudyCode = choose("courseOfStudyCode", listOf(structureGetCoursesOfStudy()).flatten().mapNotNull { it.courseOfStudyCode })
-        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSession\"}}") {
-            api.degreeAward.getExamCalls(courseOfStudyCode = courseOfStudyCode)
-        } ?: return@case
-        fingerprint { list(result) { writeEsse3ExamSession(it) } }
-    }
-
-    @Test
-    @DisplayName("DegreeAward.getExamCalls#3")
-    fun getExamCalls3() = case("DegreeAward.getExamCalls#3", index = 2) {
-        val courseTypeCode = choose("courseTypeCode", listOf(personalDataGetPhdCareersData()).flatten().mapNotNull { it.courseTypeCode })
-        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSession\"}}") {
-            api.degreeAward.getExamCalls(courseTypeCode = courseTypeCode)
-        } ?: return@case
-        fingerprint { list(result) { writeEsse3ExamSession(it) } }
-    }
-
-    @Test
-    @DisplayName("DegreeAward.getExamCalls#4")
-    fun getExamCalls4() = case("DegreeAward.getExamCalls#4", index = 3) {
-        val courseTypeCode = choose("courseTypeCode", listOf(personalDataGetPhdCareersData()).flatten().mapNotNull { it.courseTypeCode })
-        val courseOfStudyCode = choose("courseOfStudyCode", listOf(structureGetCoursesOfStudy()).flatten().mapNotNull { it.courseOfStudyCode })
-        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSession\"}}") {
-            api.degreeAward.getExamCalls(courseTypeCode = courseTypeCode, courseOfStudyCode = courseOfStudyCode)
-        } ?: return@case
-        fingerprint { list(result) { writeEsse3ExamSession(it) } }
-    }
-
-    @Test
     @DisplayName("DegreeAward.getCommitteeCall#1")
     fun getCommitteeCall1() = case("DegreeAward.getCommitteeCall#1") {
         val callCommitteeId = choose("callCommitteeId", listOf(degreeAwardGetTheses()).mapNotNull { it.callCommitteeId }.map { it.toLong() })
@@ -69,7 +29,7 @@ class Esse3DegreeAwardLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("DegreeAward.getCommitteeApplicationByMatId#1")
     fun getCommitteeApplicationByMatId1() = case("DegreeAward.getCommitteeApplicationByMatId#1") {
-        val matId = choose("matId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.matId })
+        val matId = choose("matId", listOf(careersGetCareers()).flatten().mapNotNull { it.matId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TeachingDomainSummary\"}}") {
             api.degreeAward.getCommitteeApplicationByMatId(matId = matId)
         } ?: return@case
@@ -87,7 +47,7 @@ class Esse3DegreeAwardLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("DegreeAward.getCommitteeApplicationByStudentId#1")
     fun getCommitteeApplicationByStudentId1() = case("DegreeAward.getCommitteeApplicationByStudentId#1") {
-        val studentId = choose("studentId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studentId })
+        val studentId = choose("studentId", listOf(careersGetCareers()).flatten().mapNotNull { it.studentId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TeachingDomainSummary\"}}") {
             api.degreeAward.getCommitteeApplicationByStudentId(studentId = studentId)
         } ?: return@case

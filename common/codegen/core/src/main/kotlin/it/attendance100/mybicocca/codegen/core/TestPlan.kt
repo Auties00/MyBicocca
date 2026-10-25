@@ -100,7 +100,35 @@ class Source(val id: String, val call: Call) {
  *
  * @property anonymous Whether the call is sent without the account's headers.
  */
-class Call(val operation: OperationRef, val args: Map<String, Arg>, val anonymous: Boolean = false)
+class Call(val operation: OperationRef, val args: Map<String, Arg>, val anonymous: Boolean = false) {
+    /**
+     * The picks of [args] that take values from the same elements of the same source's result,
+     * such as a course's id and its code, in the order of their first input: the runtime chooses
+     * one element for each, so that the values belong together. Picks share elements when their
+     * paths match up to their last [Path.Step.Each], and at least two do.
+     */
+    val rowPicks: List<RowPick>
+        get() {
+            val groups = linkedMapOf<String, MutableList<Pair<String, Arg.Pick>>>()
+            for ((name, arg) in args) {
+                if (arg !is Arg.Pick) continue
+                val each = arg.path.steps.lastIndexOf(Path.Step.Each)
+                if (each < 0) continue
+                groups.getOrPut("${arg.source.id} ${arg.path.prefix(each + 1)}") { mutableListOf() } += name to arg
+            }
+            return groups.values.filter { it.size > 1 }.map { picks ->
+                val (_, first) = picks.first()
+                val each = first.path.steps.lastIndexOf(Path.Step.Each)
+                RowPick(first.source, first.path.prefix(each + 1), picks.associate { (name, pick) -> name to pick.path.suffix(each + 1) })
+            }
+        }
+}
+
+/**
+ * Inputs of a call that take their values from one element of [rows], a path into [source]'s
+ * result; [fields] walks an element to each input's value, by input name.
+ */
+class RowPick(val source: Source, val rows: Path, val fields: Map<String, Path>)
 
 /** The value of an input of a call. */
 sealed interface Arg {
@@ -175,6 +203,21 @@ class Path(val root: TypeRef, val steps: List<Step>, val type: TypeRef) {
             is Step.Where -> "[${step.field.name}=${step.value.content}]"
         }
     }.removePrefix(".")
+
+    /** The path of the first [count] steps. */
+    fun prefix(count: Int): Path = Path(root, steps.take(count), typeAfter(count))
+
+    /** The path of the steps after the first [count], from the values the prefix reaches. */
+    fun suffix(count: Int): Path = Path(typeAfter(count), steps.drop(count), type)
+
+    private fun typeAfter(count: Int): TypeRef = steps.take(count).fold(root) { type, step ->
+        when (step) {
+            is Step.Get -> step.field.type
+            Step.Each -> (type as? TypeRef.ListOf)?.element ?: (type as TypeRef.MapOf).value
+            is Step.At -> (type as TypeRef.ListOf).element
+            is Step.Where -> type
+        }
+    }
 
     companion object {
         /** The path reaching the value itself. */

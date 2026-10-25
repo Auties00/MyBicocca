@@ -137,6 +137,9 @@ public struct RestClient: Sendable {
     ///     error; other bodies are only when they are JSON.
     ///   - allowEmpty: Whether to return nil for one of the policy's empty statuses.
     public func execute(_ request: RestRequest, readsJSON: Bool, allowEmpty: Bool = false) async throws -> RestResponse? {
+        var request = request
+        // Downloads, text and pages take whatever the server sends, which a JSON Accept would refuse.
+        if !readsJSON { request.headers.insert(QueryItem(name: "Accept", value: "*/*"), at: 0) }
         var response = try await configuration.send(request)
         for rule in policy.retries {
             guard !response.isSuccess else { break }

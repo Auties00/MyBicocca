@@ -80,6 +80,8 @@ export class RestClient {
    * @param allowEmpty Whether to return `undefined` for one of the policy's empty statuses.
    */
   async execute(request: RestRequest, readsJson: boolean, allowEmpty = false): Promise<Response | undefined> {
+    // Downloads, text and pages take whatever the server sends, which a JSON Accept would refuse.
+    if (!readsJson) request = { ...request, headers: [["Accept", "*/*"], ...(request.headers ?? [])] };
     let response = await sendRequest(this.configuration, request);
     for (const rule of this.policy.retries ?? []) {
       if (response.status < 400) break;

@@ -8,8 +8,9 @@ import { EasyStaffLive, coreGetStudyPrograms, coreGetTeachers, writeEasyStaffExa
 // The live tests of the EasyStaff Exams module, planned from common/specs/easystaff-agenda/tests.yaml.
 describe("EasyStaff Exams", () => {
   liveCase(EasyStaffLive, "Exams.getExamsByProgram#1", {}, async (live) => {
-    const teachingArea = live.choose("teachingArea", [await coreGetStudyPrograms(live)].flat().map((it) => it.teachingAreaCode).filter(isPresent));
-    const program = live.choose("program", [await coreGetStudyPrograms(live)].flat().map((it) => it.code).filter(isPresent));
+    const row = live.chooseRow("teachingArea, program", [await coreGetStudyPrograms(live)].flat(), (element) => [[element].map((it) => it.teachingAreaCode).filter(isPresent)[0], [element].map((it) => it.code).filter(isPresent)[0]]);
+    const teachingArea = live.choose("teachingArea", [row].map((it) => it.teachingAreaCode).filter(isPresent));
+    const program = live.choose("program", [row].map((it) => it.code).filter(isPresent));
     const years = [live.choose("years", [await coreGetStudyPrograms(live)].flat().map((it) => it.years).filter(isPresent).flat().map((it) => it.code).filter(isPresent))];
     const from = LocalDate.parse(LiveTemplates.resolve("{today}"))!;
     const to = LocalDate.parse(LiveTemplates.resolve("{today+30}"))!;
@@ -18,8 +19,9 @@ describe("EasyStaff Exams", () => {
   });
 
   liveCase(EasyStaffLive, "Exams.getExamsByProgram#2", { index: 1 }, async (live) => {
-    const teachingArea = live.choose("teachingArea", [await coreGetStudyPrograms(live)].flat().map((it) => it.teachingAreaCode).filter(isPresent));
-    const program = live.choose("program", [await coreGetStudyPrograms(live)].flat().map((it) => it.code).filter(isPresent));
+    const row = live.chooseRow("teachingArea, program", [await coreGetStudyPrograms(live)].flat(), (element) => [[element].map((it) => it.teachingAreaCode).filter(isPresent)[0], [element].map((it) => it.code).filter(isPresent)[0]]);
+    const teachingArea = live.choose("teachingArea", [row].map((it) => it.teachingAreaCode).filter(isPresent));
+    const program = live.choose("program", [row].map((it) => it.code).filter(isPresent));
     const years = [live.choose("years", [await coreGetStudyPrograms(live)].flat().map((it) => it.years).filter(isPresent).flat().map((it) => it.code).filter(isPresent))];
     const from = LocalDate.parse(LiveTemplates.resolve("{today}"))!;
     const to = LocalDate.parse(LiveTemplates.resolve("{today+30}"))!;
@@ -28,8 +30,9 @@ describe("EasyStaff Exams", () => {
   });
 
   liveCase(EasyStaffLive, "Exams.getExamsByProgram#3", { index: 2 }, async (live) => {
-    const teachingArea = live.choose("teachingArea", [await coreGetStudyPrograms(live)].flat().map((it) => it.teachingAreaCode).filter(isPresent));
-    const program = live.choose("program", [await coreGetStudyPrograms(live)].flat().map((it) => it.code).filter(isPresent));
+    const row = live.chooseRow("teachingArea, program", [await coreGetStudyPrograms(live)].flat(), (element) => [[element].map((it) => it.teachingAreaCode).filter(isPresent)[0], [element].map((it) => it.code).filter(isPresent)[0]]);
+    const teachingArea = live.choose("teachingArea", [row].map((it) => it.teachingAreaCode).filter(isPresent));
+    const program = live.choose("program", [row].map((it) => it.code).filter(isPresent));
     const years = [live.choose("years", [await coreGetStudyPrograms(live)].flat().map((it) => it.years).filter(isPresent).flat().map((it) => it.code).filter(isPresent))];
     const from = LocalDate.parse(LiveTemplates.resolve("{today}"))!;
     const to = LocalDate.parse(LiveTemplates.resolve("{today+30}"))!;
@@ -38,8 +41,9 @@ describe("EasyStaff Exams", () => {
   });
 
   liveCase(EasyStaffLive, "Exams.getExamsByProgram#4", { index: 3 }, async (live) => {
-    const teachingArea = live.choose("teachingArea", [await coreGetStudyPrograms(live)].flat().map((it) => it.teachingAreaCode).filter(isPresent));
-    const program = live.choose("program", [await coreGetStudyPrograms(live)].flat().map((it) => it.code).filter(isPresent));
+    const row = live.chooseRow("teachingArea, program", [await coreGetStudyPrograms(live)].flat(), (element) => [[element].map((it) => it.teachingAreaCode).filter(isPresent)[0], [element].map((it) => it.code).filter(isPresent)[0]]);
+    const teachingArea = live.choose("teachingArea", [row].map((it) => it.teachingAreaCode).filter(isPresent));
+    const program = live.choose("program", [row].map((it) => it.code).filter(isPresent));
     const years = [live.choose("years", [await coreGetStudyPrograms(live)].flat().map((it) => it.years).filter(isPresent).flat().map((it) => it.code).filter(isPresent))];
     const from = LocalDate.parse(LiveTemplates.resolve("{today}"))!;
     const to = LocalDate.parse(LiveTemplates.resolve("{today+30}"))!;
@@ -48,8 +52,9 @@ describe("EasyStaff Exams", () => {
   });
 
   liveCase(EasyStaffLive, "Exams.getExamsByProgram#5", { index: 4 }, async (live) => {
-    const teachingArea = live.choose("teachingArea", [await coreGetStudyPrograms(live)].flat().map((it) => it.teachingAreaCode).filter(isPresent));
-    const program = live.choose("program", [await coreGetStudyPrograms(live)].flat().map((it) => it.code).filter(isPresent));
+    const row = live.chooseRow("teachingArea, program", [await coreGetStudyPrograms(live)].flat(), (element) => [[element].map((it) => it.teachingAreaCode).filter(isPresent)[0], [element].map((it) => it.code).filter(isPresent)[0]]);
+    const teachingArea = live.choose("teachingArea", [row].map((it) => it.teachingAreaCode).filter(isPresent));
+    const program = live.choose("program", [row].map((it) => it.code).filter(isPresent));
     const years = [live.choose("years", [await coreGetStudyPrograms(live)].flat().map((it) => it.years).filter(isPresent).flat().map((it) => it.code).filter(isPresent))];
     const from = LocalDate.parse(LiveTemplates.resolve("{today}"))!;
     const to = LocalDate.parse(LiveTemplates.resolve("{today+30}"))!;

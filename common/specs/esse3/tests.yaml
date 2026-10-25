@@ -8,15 +8,33 @@ account:
 limits:
   requestsPerSecond: 2
   maxRequests: 2500
+defaults:
+  # The student's own records: Esse3 refuses a student anyone else's.
+  personId: &personId { from: Careers.getCareers, pick: "[*].personId" }
+  studentId: &studentId { from: Careers.getCareers, pick: "[*].studentId" }
+  matId: { from: Careers.getCareers, pick: "[*].matId" }
+  fiscalCode: &fiscalCode { from: Careers.getCareers, pick: "[*].fiscalCode" }
+  # The student's course of study, whose id and code Esse3 checks against each other.
+  courseOfStudyId: &courseOfStudyId { from: Careers.getCareers, pick: "[*].courseOfStudyId" }
+  courseOfStudyCode: &courseOfStudyCode { from: Careers.getCareers, pick: "[*].p06CourseOfStudyCode" }
 operations:
   Auth.logout:
     skip: Ends the session the other cases use.
+  Auth.refreshJWT:
+    skip: "Esse3 can't refresh the tokens it hands out: it answers 500, Unknown algorithm."
+  Auth.setLanguageCode:
+    # The language the session speaks anyway.
+    inputs: { sessionLanguageCode: ita }
   PersonalData.putMobilePhone:
+    skip: >-
+      Esse3 can answer a read with the number from before a write, so the number to restore may
+      be stale; disabled until that is understood.
     # Sets a placeholder number on the student's record for a moment, then puts the old one back.
     # A student with no number on record is skipped: there would be nothing to restore.
     inputs:
       personId: { from: PersonalData.getPersonTitles, pick: personId }
-      body: { cellulare: "3330000000" }
+      # Esse3 refuses a number without its international prefix.
+      body: { cellulare: "+393330000000" }
     undo:
       restore:
         read: PersonalData.getPerson
@@ -27,3 +45,130 @@ operations:
       call: PersonalData.getPerson
       with: { personId: $args.personId }
       contains: { path: mobilePhone, value: $args.body.mobilePhone }
+
+  # Esse3 refuses a student these without a filter naming the student's own records.
+  PersonalData.getPersonTitles:
+    inputs: { personId: *personId }
+  Badge.getNewBadges:
+    inputs: { studentId: *studentId }
+  TuitionFees.getInvoicesList:
+    # Their additional information needs an invoice's id.
+    inputs: { personId: *personId, retrieveAdditionalInfo: null }
+  TuitionFees.getStudentChargesList:
+    inputs: { studentId: *studentId }
+  TuitionFees.getPagoPATransactions:
+    # By fiscal code, Esse3 also wants a final state or an academic year.
+    inputs:
+      fiscalCode: *fiscalCode
+      academicYearId: { from: TuitionFees.getInvoicesList, pick: "[*].academicYearId" }
+  Records.findMinutes:
+    # Esse3 refuses a student any filter but their own fiscal code.
+    inputs:
+      studentFiscalCode: *fiscalCode
+      lecturerFiscalCode: null
+      activityCode: null
+      courseOfStudyCode: null
+      studentActivityCode: null
+      courseOfStudyStudentCode: null
+  PersonalData.getPersonCompensatoryMeasures:
+    # Measures for a booking need the start of its call too.
+    inputs: { q: null }
+
+  # Esse3 wants at least one filter for these.
+  Logistics.getCancellableCoverage:
+    inputs: { courseOfStudyCode: *courseOfStudyCode }
+  Offer.getCancellableOfferTeachingActivity:
+    inputs: { courseOfStudyCode: *courseOfStudyCode }
+  RuleProperties.getPropaedeuticityRegulations:
+    inputs: { courseOfStudyId: *courseOfStudyId }
+  Logistics.getLogistics:
+    # Without one, it lists every course's activities, which takes too long.
+    inputs: { courseOfStudyCode: *courseOfStudyCode }
+
+  # A call of an exam the student booked, its course, activity and call taken from the same booking.
+  ExamsCalendar.getExamCall:
+    inputs: &call
+      courseOfStudyId: { from: Transcript.getBookingsByMatId, pick: "[*].courseOfStudyId" }
+      activityId: { from: Transcript.getBookingsByMatId, pick: "[*].activityId" }
+      callId: { from: Transcript.getBookingsByMatId, pick: "[*].callId" }
+  ExamsCalendar.getCommonExamsExamCall:
+    inputs: *call
+  ExamsCalendar.getExamCallTypes:
+    inputs: *call
+  ExamsCalendar.getExamCallShifts:
+    inputs: *call
+  ExamsCalendar.getExamCallShift:
+    inputs: *call
+  ExamsCalendar.getExamCallSession:
+    inputs: *call
+  ExamsCalendar.getExamCallEnrolledList:
+    inputs: *call
+  ExamsCalendar.getLecturersShift:
+    inputs: *call
+  ExamsCalendar.getLecturerShift:
+    inputs: *call
+  ExamsCalendar.getLecturerExamCall:
+    inputs: *call
+  ExamsCalendar.getTagsByBooking:
+    inputs: *call
+  ExamsCalendar.getEnrolledExamCall:
+    inputs: &booking
+      <<: *call
+      studentId: { from: Transcript.getBookingsByMatId, pick: "[*].studentId" }
+  ExamsCalendar.getBookingStatino:
+    inputs: *booking
+  ExamsCalendar.getExamCalls:
+    # The calls a student can book, of a booked exam's calendar year, as the app asks for them:
+    # Esse3 refuses a student the others, or takes too long gathering them.
+    inputs:
+      courseOfStudyId: { from: Transcript.getBookingsByMatId, pick: "[*].courseOfStudyId" }
+      activityId: { from: Transcript.getBookingsByMatId, pick: "[*].activityId" }
+      academicYearCalendarId: { from: Transcript.getBookingsByMatId, pick: "[*].academicYearCalendarId" }
+      q: { oneOf: [APPELLI_PRENOTABILI, APPELLI_PRENOTABILI_E_FUTURI] }
+      actorCode: null
+  ExamsCalendar.getPresenceCertificate:
+    inputs: *booking
+    # Only an exam already held has one.
+    errors: [422]
+  Transcript.getPresenceCertificateByApplicationListId:
+    # Bicocca's Esse3 isn't set up to print them.
+    errors: [422]
+  Transcript.getRecordBookExamCalls:
+    # Without a filter, Esse3 gathers every call of every activity, which takes too long.
+    inputs: { q: { oneOf: [APPELLI_PRENOTABILI, APPELLI_PRENOTABILI_E_FUTURI] } }
+  Transcript.getExamCallsByRecordBookRow:
+    inputs: { q: { oneOf: [APPELLI_PRENOTABILI, APPELLI_PRENOTABILI_E_FUTURI] } }
+  Transcript.getCheckProposalRecordBookRow:
+    # Esse3 only checks the prerequisites of activities not passed yet.
+    inputs:
+      activityChoiceId: { from: Transcript.getRecordBookRows, pick: "[*].activityChoiceId", where: { state: P } }
+
+  # They show when the student's record last changed, which the phone number write moves on.
+  PersonalData.getPersons:
+    volatile: true
+  PersonalData.getGdprPerson:
+    volatile: true
+  PersonalData.getGdprPersons:
+    volatile: true
+  Services.getVersionInfo:
+    # Each of Esse3's servers answers with its own start time.
+    volatile: true
+  Services.getMaritalStatusTypes:
+    # Bicocca's Esse3 has no marital statuses, and answers 403 rather than an empty list.
+    errors: [403]
+  Structure.getSites:
+    # The departments other operations return make Esse3 fail with 500.
+    inputs: { departmentId: null }
+
+  DegreeAward.getExamCalls:
+    skip: Esse3 refuses it to students, whatever the filters.
+  Logistics.getEasystaffLogistics:
+    skip: Esse3 refuses it to students.
+  Logistics.getEasystaffStructure:
+    skip: Esse3 refuses it to students.
+  Offer.getLecturersByTeachingUnit:
+    skip: Esse3 refuses it to students, though its spec lets them call it.
+  Logging.getTlogText:
+    skip: Needs the id of a session or transaction of the server's log, which nothing a student can call hands out.
+  Logging.getTlogTransactions:
+    skip: Needs the id of a session or transaction of the server's log, which nothing a student can call hands out.

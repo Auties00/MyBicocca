@@ -52,7 +52,7 @@ class MoodleForumLiveTest : LiveTest<MoodleApi>(MoodleLive) {
     @Test
     @DisplayName("Forum.getDiscussionPosts#1")
     fun getDiscussionPosts1() = case("Forum.getDiscussionPosts#1") {
-        val discussionId = choose("discussionId", listOf(forumGetForumDiscussions()).mapNotNull { it.discussions }.flatten().mapNotNull { it.id })
+        val discussionId = choose("discussionId", listOf(forumGetForumDiscussions()).mapNotNull { it.discussions }.flatten().mapNotNull { it.discussion })
         val result = call("{\"k\":\"record\",\"n\":\"MoodleDiscussionPostsResponse\"}", errors = listOf("requireloginerror")) {
             api.forum.getDiscussionPosts(discussionId = discussionId, auth = tokenCredentials())
         } ?: return@case
@@ -62,7 +62,7 @@ class MoodleForumLiveTest : LiveTest<MoodleApi>(MoodleLive) {
     @Test
     @DisplayName("Forum.getDiscussionPosts#2")
     fun getDiscussionPosts2() = case("Forum.getDiscussionPosts#2", index = 1) {
-        val discussionId = choose("discussionId", listOf(forumGetForumDiscussions()).mapNotNull { it.discussions }.flatten().mapNotNull { it.id })
+        val discussionId = choose("discussionId", listOf(forumGetForumDiscussions()).mapNotNull { it.discussions }.flatten().mapNotNull { it.discussion })
         val result = call("{\"k\":\"record\",\"n\":\"MoodleDiscussionPostsResponse\"}", errors = listOf("requireloginerror")) {
             api.forum.getDiscussionPosts(discussionId = discussionId, includeInlineAttachments = true, auth = tokenCredentials())
         } ?: return@case
@@ -72,7 +72,7 @@ class MoodleForumLiveTest : LiveTest<MoodleApi>(MoodleLive) {
     @Test
     @DisplayName("Forum.getDiscussionPosts#3")
     fun getDiscussionPosts3() = case("Forum.getDiscussionPosts#3", index = 2) {
-        val discussionId = choose("discussionId", listOf(forumGetForumDiscussions()).mapNotNull { it.discussions }.flatten().mapNotNull { it.id })
+        val discussionId = choose("discussionId", listOf(forumGetForumDiscussions()).mapNotNull { it.discussions }.flatten().mapNotNull { it.discussion })
         val result = call("{\"k\":\"record\",\"n\":\"MoodleDiscussionPostsResponse\"}", errors = listOf("requireloginerror")) {
             api.forum.getDiscussionPosts(discussionId = discussionId, includeInlineAttachments = false, auth = tokenCredentials())
         } ?: return@case

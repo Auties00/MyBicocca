@@ -15,10 +15,6 @@ describe("Esse3 Auth", () => {
     live.fingerprint((f) => writeEsse3JWKModel(f, result));
   });
 
-  liveCase(Esse3Live, "Auth.refreshJWT#1", { effect: "benign" }, async (live) => {
-    await live.call("{\"k\":\"record\",\"n\":\"Esse3JWTModel\"}", {}, async () => live.api.auth.refreshJWT());
-  });
-
   liveCase(Esse3Live, "Auth.login#1", { effect: "benign" }, async (live) => {
     await live.call("{\"k\":\"record\",\"n\":\"Esse3UserSession\"}", {}, async () => live.api.auth.login());
   });
@@ -38,6 +34,6 @@ describe("Esse3 Auth", () => {
   });
 
   liveCase(Esse3Live, "Auth.setLanguageCode#1", { effect: "benign" }, async (live) => {
-    await live.call("{\"k\":\"record\",\"n\":\"Esse3SessionLanguage\"}", {}, async () => live.api.auth.setLanguageCode());
+    await live.call("{\"k\":\"record\",\"n\":\"Esse3SessionLanguage\"}", {}, async () => live.api.auth.setLanguageCode({ sessionLanguageCode: "ita" }));
   });
 });

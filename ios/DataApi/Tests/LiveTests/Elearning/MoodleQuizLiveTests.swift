@@ -11,8 +11,7 @@ final class MoodleQuizLiveTests: XCTestCase {
         try await liveCase(MoodleLive.api, "Quiz.getAttemptReview#1") { live in
             let attemptId = try live.choose("attemptId", [try await MoodleLive.quizGetUserAttempts(live)].compactMap { $0.attempts }.flatMap { $0 }.compactMap { $0.id })
             let auth = try await MoodleLive.tokenCredentials(live)
-            let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleAttemptReviewResponse\"}") { try await live.api.quiz.getAttemptReview(attemptId: attemptId, auth: auth) }
-            live.fingerprint { f in MoodleLive.writeMoodleAttemptReviewResponse(f, result) }
+            _ = try await live.call("{\"k\":\"record\",\"n\":\"MoodleAttemptReviewResponse\"}") { try await live.api.quiz.getAttemptReview(attemptId: attemptId, auth: auth) }
         }
     }
 

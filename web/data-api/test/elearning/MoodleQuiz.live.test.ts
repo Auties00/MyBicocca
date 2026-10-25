@@ -3,15 +3,14 @@
 import { describe } from "vitest";
 import { MoodleTokenAuth } from "../../src/elearning/models/index.js";
 import { isPresent, liveCase } from "../runtime/live.js";
-import { MoodleLive, quizGetQuizzesByCourses, quizGetUserAttempts, siteGetSiteInfo, tokenCredentials, writeMoodleAttemptReviewResponse, writeMoodleQuizAccessInformation, writeMoodleQuizzesResponse, writeMoodleUserAttemptsResponse, writeMoodleUserBestGradeResponse } from "./MoodleLive.js";
+import { MoodleLive, quizGetQuizzesByCourses, quizGetUserAttempts, siteGetSiteInfo, tokenCredentials, writeMoodleQuizAccessInformation, writeMoodleQuizzesResponse, writeMoodleUserAttemptsResponse, writeMoodleUserBestGradeResponse } from "./MoodleLive.js";
 
 // The live tests of the Moodle Quiz module, planned from common/specs/moodle/tests.yaml.
 describe("Moodle Quiz", () => {
   liveCase(MoodleLive, "Quiz.getAttemptReview#1", {}, async (live) => {
     const attemptId = live.choose("attemptId", [await quizGetUserAttempts(live)].map((it) => it.attempts).filter(isPresent).flat().map((it) => it.id).filter(isPresent));
     const auth = await tokenCredentials(live);
-    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleAttemptReviewResponse\"}", {}, async () => live.api.quiz.getAttemptReview(attemptId, auth));
-    live.fingerprint((f) => writeMoodleAttemptReviewResponse(f, result));
+    await live.call("{\"k\":\"record\",\"n\":\"MoodleAttemptReviewResponse\"}", {}, async () => live.api.quiz.getAttemptReview(attemptId, auth));
   });
 
   liveCase(MoodleLive, "Quiz.getAttemptReview#invalid-credentials", {}, async (live) => {

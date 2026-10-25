@@ -21,7 +21,7 @@ class AffluencesReservationsLiveTest : LiveTest<AffluencesApi>(AffluencesLive) {
     @Test
     @DisplayName("Reservations.getAvailableResources#1")
     fun getAvailableResources1() = case("Reservations.getAvailableResources#1") {
-        val date = LocalDate.parse(LiveTemplates.resolve("{today}"))
+        val date = LocalDate.parse(LiveTemplates.resolve("{today+1}"))
         val resourceTypeId = choose("resourceTypeId", listOf(reservationsGetReservationInfo()).mapNotNull { it.types }.flatten().mapNotNull { it.resourceTypeId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"AffluencesAvailableResource\"}}") {
             api.reservations.getAvailableResources(siteIdentifier = "4912615d-501b-4c4e-a2a7-ccaec81c5429", date = date, resourceTypeId = resourceTypeId)
@@ -32,7 +32,7 @@ class AffluencesReservationsLiveTest : LiveTest<AffluencesApi>(AffluencesLive) {
     @Test
     @DisplayName("Reservations.getAvailableResources#2")
     fun getAvailableResources2() = case("Reservations.getAvailableResources#2", index = 1) {
-        val date = LocalDate.parse(LiveTemplates.resolve("{today}"))
+        val date = LocalDate.parse(LiveTemplates.resolve("{today+1}"))
         val resourceTypeId = choose("resourceTypeId", listOf(reservationsGetReservationInfo()).mapNotNull { it.types }.flatten().mapNotNull { it.resourceTypeId })
         val resourceId = choose("resourceId", listOf(reservationsGetResourceStatus()).mapNotNull { it.resource }.mapNotNull { it.resourceId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"AffluencesAvailableResource\"}}") {

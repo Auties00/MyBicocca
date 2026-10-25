@@ -15,7 +15,7 @@ final class AffluencesReservationsLiveTests: XCTestCase {
 
     func test_getAvailableResources1() async throws {
         try await liveCase(AffluencesLive.api, "Reservations.getAvailableResources#1") { live in
-            let date = try LiveText.date(LiveTemplates.resolve("{today}"))
+            let date = try LiveText.date(LiveTemplates.resolve("{today+1}"))
             let resourceTypeId = try live.choose("resourceTypeId", [try await AffluencesLive.reservationsGetReservationInfo(live)].compactMap { $0.types }.flatMap { $0 }.compactMap { $0.resourceTypeId })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"AffluencesAvailableResource\"}}") { try await live.api.reservations.getAvailableResources(siteIdentifier: "4912615d-501b-4c4e-a2a7-ccaec81c5429", date: date, resourceTypeId: resourceTypeId) }
             live.fingerprint { f in f.list(result) { item0 in AffluencesLive.writeAffluencesAvailableResource(f, item0) } }
@@ -24,7 +24,7 @@ final class AffluencesReservationsLiveTests: XCTestCase {
 
     func test_getAvailableResources2() async throws {
         try await liveCase(AffluencesLive.api, "Reservations.getAvailableResources#2", index: 1) { live in
-            let date = try LiveText.date(LiveTemplates.resolve("{today}"))
+            let date = try LiveText.date(LiveTemplates.resolve("{today+1}"))
             let resourceTypeId = try live.choose("resourceTypeId", [try await AffluencesLive.reservationsGetReservationInfo(live)].compactMap { $0.types }.flatMap { $0 }.compactMap { $0.resourceTypeId })
             let resourceId = try live.choose("resourceId", [try await AffluencesLive.reservationsGetResourceStatus(live)].compactMap { $0.resource }.compactMap { $0.resourceId })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"AffluencesAvailableResource\"}}") { try await live.api.reservations.getAvailableResources(siteIdentifier: "4912615d-501b-4c4e-a2a7-ccaec81c5429", date: date, resourceTypeId: resourceTypeId, resourceId: resourceId) }

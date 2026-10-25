@@ -2,7 +2,7 @@
 
 import { describe } from "vitest";
 import { isPresent, liveCase } from "../runtime/live.js";
-import { Esse3Live, choiceRulesGetChoiceRegulations, degreeAwardGetThesisRelatedDocuments, personalDataGetCareers, personalDataGetPersonTitles, structureGetCourseOfStudy, structureGetCourseTypes, structureGetCoursesOfStudy, structureGetDidacticStructures, structureGetDisciplinaryAreas, structureGetSites, writeEsse3AdmissionTitlesWithCode, writeEsse3CourseTypes, writeEsse3DeletedStudyCourse, writeEsse3DisciplinaryArea, writeEsse3ExternalEntity, writeEsse3Location, writeEsse3RegulationWithPhDSectors, writeEsse3StructureWithLocations, writeEsse3StudyCourseWithStructure, writeEsse3StudyPath } from "./Esse3Live.js";
+import { Esse3Live, careersGetCareers, personalDataGetCareers, personalDataGetPersonTitles, structureGetCourseOfStudy, structureGetCourseTypes, structureGetCoursesOfStudy, structureGetDidacticStructures, structureGetDisciplinaryAreas, structureGetSites, writeEsse3AdmissionTitlesWithCode, writeEsse3CourseTypes, writeEsse3DeletedStudyCourse, writeEsse3DisciplinaryArea, writeEsse3ExternalEntity, writeEsse3Location, writeEsse3RegulationWithPhDSectors, writeEsse3StructureWithLocations, writeEsse3StudyCourseWithStructure, writeEsse3StudyPath } from "./Esse3Live.js";
 
 // The live tests of the Esse3 Structure module, planned from common/specs/esse3/tests.yaml.
 describe("Esse3 Structure", () => {
@@ -27,7 +27,7 @@ describe("Esse3 Structure", () => {
   });
 
   liveCase(Esse3Live, "Structure.getCoursesOfStudy#2", { index: 1 }, async (live) => {
-    const courseOfStudyCode = live.choose("courseOfStudyCode", [await choiceRulesGetChoiceRegulations(live)].flat().map((it) => it.courseOfStudyCode).filter(isPresent));
+    const courseOfStudyCode = live.choose("courseOfStudyCode", [await careersGetCareers(live)].flat().map((it) => it.p06CourseOfStudyCode).filter(isPresent));
     const catalogTypeCode = live.choose("catalogTypeCode", [await structureGetCourseOfStudy(live)].map((it) => it.catalogTypeCode).filter(isPresent));
     const trainingCycleTypeCode = live.choose("trainingCycleTypeCode", [await structureGetCourseOfStudy(live)].map((it) => it.trainingCycleTypeCode).filter(isPresent));
     const facultyId = live.choose("facultyId", [await structureGetDidacticStructures(live)].flat().map((it) => it.facultyId).filter(isPresent));
@@ -36,7 +36,7 @@ describe("Esse3 Structure", () => {
   });
 
   liveCase(Esse3Live, "Structure.getCoursesOfStudy#3", { index: 2 }, async (live) => {
-    const courseOfStudyCode = live.choose("courseOfStudyCode", [await choiceRulesGetChoiceRegulations(live)].flat().map((it) => it.courseOfStudyCode).filter(isPresent));
+    const courseOfStudyCode = live.choose("courseOfStudyCode", [await careersGetCareers(live)].flat().map((it) => it.p06CourseOfStudyCode).filter(isPresent));
     const courseTypeCode = live.choose("courseTypeCode", [await structureGetCourseTypes(live)].flat().map((it) => it.courseTypeCode).filter(isPresent));
     const catalogTypeCode = live.choose("catalogTypeCode", [await structureGetCourseOfStudy(live)].map((it) => it.catalogTypeCode).filter(isPresent));
     const facultyId = live.choose("facultyId", [await structureGetDidacticStructures(live)].flat().map((it) => it.facultyId).filter(isPresent));
@@ -66,37 +66,37 @@ describe("Esse3 Structure", () => {
   });
 
   liveCase(Esse3Live, "Structure.getCourseAccessTitles#1", {}, async (live) => {
-    const courseOfStudyCode = live.choose("courseOfStudyCode", [await structureGetCoursesOfStudy(live)].flat().map((it) => it.courseOfStudyCode).filter(isPresent));
+    const courseOfStudyCode = live.choose("courseOfStudyCode", [await careersGetCareers(live)].flat().map((it) => it.p06CourseOfStudyCode).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3AdmissionTitlesWithCode\"}}", {}, async () => live.api.structure.getCourseAccessTitles(courseOfStudyCode, "AMM"));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3AdmissionTitlesWithCode(f, it)));
   });
 
   liveCase(Esse3Live, "Structure.getCourseAccessTitles#2", { index: 1 }, async (live) => {
-    const courseOfStudyCode = live.choose("courseOfStudyCode", [await structureGetCoursesOfStudy(live)].flat().map((it) => it.courseOfStudyCode).filter(isPresent));
+    const courseOfStudyCode = live.choose("courseOfStudyCode", [await careersGetCareers(live)].flat().map((it) => it.p06CourseOfStudyCode).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3AdmissionTitlesWithCode\"}}", {}, async () => live.api.structure.getCourseAccessTitles(courseOfStudyCode, "IMM"));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3AdmissionTitlesWithCode(f, it)));
   });
 
   liveCase(Esse3Live, "Structure.getCourseAccessTitles#3", { index: 2 }, async (live) => {
-    const courseOfStudyCode = live.choose("courseOfStudyCode", [await structureGetCoursesOfStudy(live)].flat().map((it) => it.courseOfStudyCode).filter(isPresent));
+    const courseOfStudyCode = live.choose("courseOfStudyCode", [await careersGetCareers(live)].flat().map((it) => it.p06CourseOfStudyCode).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3AdmissionTitlesWithCode\"}}", {}, async () => live.api.structure.getCourseAccessTitles(courseOfStudyCode, "ABBR"));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3AdmissionTitlesWithCode(f, it)));
   });
 
   liveCase(Esse3Live, "Structure.getCourseAccessTitles#4", { index: 3 }, async (live) => {
-    const courseOfStudyCode = live.choose("courseOfStudyCode", [await structureGetCoursesOfStudy(live)].flat().map((it) => it.courseOfStudyCode).filter(isPresent));
+    const courseOfStudyCode = live.choose("courseOfStudyCode", [await careersGetCareers(live)].flat().map((it) => it.p06CourseOfStudyCode).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3AdmissionTitlesWithCode\"}}", {}, async () => live.api.structure.getCourseAccessTitles(courseOfStudyCode, "EQUI"));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3AdmissionTitlesWithCode(f, it)));
   });
 
   liveCase(Esse3Live, "Structure.getCourseOfStudy#1", {}, async (live) => {
-    const courseOfStudyId = live.choose("courseOfStudyId", [await structureGetCoursesOfStudy(live)].flat().map((it) => it.courseOfStudyId).filter(isPresent));
+    const courseOfStudyId = live.choose("courseOfStudyId", [await careersGetCareers(live)].flat().map((it) => it.courseOfStudyId).filter(isPresent));
     const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3StudyCourseWithStructure\"}", {}, async () => live.api.structure.getCourseOfStudy(courseOfStudyId));
     live.fingerprint((f) => writeEsse3StudyCourseWithStructure(f, result));
   });
 
   liveCase(Esse3Live, "Structure.getCourseOfStudy#2", { index: 1 }, async (live) => {
-    const courseOfStudyId = live.choose("courseOfStudyId", [await structureGetCoursesOfStudy(live)].flat().map((it) => it.courseOfStudyId).filter(isPresent));
+    const courseOfStudyId = live.choose("courseOfStudyId", [await careersGetCareers(live)].flat().map((it) => it.courseOfStudyId).filter(isPresent));
     const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3StudyCourseWithStructure\"}", {}, async () => live.api.structure.getCourseOfStudy(courseOfStudyId, { q: "STRUTTURE_DEF_AMM" }));
     live.fingerprint((f) => writeEsse3StudyCourseWithStructure(f, result));
   });
@@ -106,7 +106,7 @@ describe("Esse3 Structure", () => {
   });
 
   liveCase(Esse3Live, "Structure.getStudyOrders#1", {}, async (live) => {
-    const courseOfStudyId = live.choose("courseOfStudyId", [await structureGetCoursesOfStudy(live)].flat().map((it) => it.courseOfStudyId).filter(isPresent));
+    const courseOfStudyId = live.choose("courseOfStudyId", [await careersGetCareers(live)].flat().map((it) => it.courseOfStudyId).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3RegulationWithPhDSectors\"}}", {}, async () => live.api.structure.getStudyOrders(courseOfStudyId));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3RegulationWithPhDSectors(f, it)));
   });
@@ -116,7 +116,7 @@ describe("Esse3 Structure", () => {
   });
 
   liveCase(Esse3Live, "Structure.getStudyOrder#1", {}, async (live) => {
-    const courseOfStudyId = live.choose("courseOfStudyId", [await structureGetCoursesOfStudy(live)].flat().map((it) => it.courseOfStudyId).filter(isPresent));
+    const courseOfStudyId = live.choose("courseOfStudyId", [await careersGetCareers(live)].flat().map((it) => it.courseOfStudyId).filter(isPresent));
     const academicYearOrderId = live.choose("academicYearOrderId", [await personalDataGetCareers(live)].flat().map((it) => it.academicYearOrderId).filter(isPresent));
     const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3RegulationWithPhDSectors\"}", {}, async () => live.api.structure.getStudyOrder(courseOfStudyId, academicYearOrderId));
     live.fingerprint((f) => writeEsse3RegulationWithPhDSectors(f, result));
@@ -128,7 +128,7 @@ describe("Esse3 Structure", () => {
   });
 
   liveCase(Esse3Live, "Structure.getPaths#1", {}, async (live) => {
-    const courseOfStudyId = live.choose("courseOfStudyId", [await structureGetCoursesOfStudy(live)].flat().map((it) => it.courseOfStudyId).filter(isPresent));
+    const courseOfStudyId = live.choose("courseOfStudyId", [await careersGetCareers(live)].flat().map((it) => it.courseOfStudyId).filter(isPresent));
     const academicYearOrderId = live.choose("academicYearOrderId", [await personalDataGetCareers(live)].flat().map((it) => it.academicYearOrderId).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3StudyPath\"}}", {}, async () => live.api.structure.getPaths(courseOfStudyId, academicYearOrderId));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3StudyPath(f, it)));
@@ -140,16 +140,18 @@ describe("Esse3 Structure", () => {
   });
 
   liveCase(Esse3Live, "Structure.getPath#1", {}, async (live) => {
-    const courseOfStudyId = live.choose("courseOfStudyId", [await structureGetCoursesOfStudy(live)].flat().map((it) => it.courseOfStudyId).filter(isPresent));
-    const academicYearOrderId = live.choose("academicYearOrderId", [await personalDataGetCareers(live)].flat().map((it) => it.academicYearOrderId).filter(isPresent));
-    const studyPlanId = live.choose("studyPlanId", [await personalDataGetCareers(live)].flat().map((it) => it.studyPlanId).filter(isPresent));
+    const row = live.chooseRow("academicYearOrderId, studyPlanId", [await personalDataGetCareers(live)].flat(), (element) => [[element].map((it) => it.academicYearOrderId).filter(isPresent)[0], [element].map((it) => it.studyPlanId).filter(isPresent)[0]]);
+    const courseOfStudyId = live.choose("courseOfStudyId", [await careersGetCareers(live)].flat().map((it) => it.courseOfStudyId).filter(isPresent));
+    const academicYearOrderId = live.choose("academicYearOrderId", [row].map((it) => it.academicYearOrderId).filter(isPresent));
+    const studyPlanId = live.choose("studyPlanId", [row].map((it) => it.studyPlanId).filter(isPresent));
     const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3StudyPath\"}", {}, async () => live.api.structure.getPath(courseOfStudyId, academicYearOrderId, studyPlanId));
     live.fingerprint((f) => writeEsse3StudyPath(f, result));
   });
 
   liveCase(Esse3Live, "Structure.getPath#unknown-id", {}, async (live) => {
-    const academicYearOrderId = live.choose("academicYearOrderId", [await personalDataGetCareers(live)].flat().map((it) => it.academicYearOrderId).filter(isPresent));
-    const studyPlanId = live.choose("studyPlanId", [await personalDataGetCareers(live)].flat().map((it) => it.studyPlanId).filter(isPresent));
+    const row = live.chooseRow("academicYearOrderId, studyPlanId", [await personalDataGetCareers(live)].flat(), (element) => [[element].map((it) => it.academicYearOrderId).filter(isPresent)[0], [element].map((it) => it.studyPlanId).filter(isPresent)[0]]);
+    const academicYearOrderId = live.choose("academicYearOrderId", [row].map((it) => it.academicYearOrderId).filter(isPresent));
+    const studyPlanId = live.choose("studyPlanId", [row].map((it) => it.studyPlanId).filter(isPresent));
     await live.refused(true, async () => live.api.structure.getPath(987654321, academicYearOrderId, studyPlanId));
   });
 
@@ -197,23 +199,21 @@ describe("Esse3 Structure", () => {
   });
 
   liveCase(Esse3Live, "Structure.getSites#2", { index: 1 }, async (live) => {
-    const facultyId = live.choose("facultyId", [await structureGetDidacticStructures(live)].flat().map((it) => it.facultyId).filter(isPresent));
-    const courseOfStudyId = live.choose("courseOfStudyId", [await structureGetCoursesOfStudy(live)].flat().map((it) => it.courseOfStudyId).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Location\"}}", {}, async () => live.api.structure.getSites({ facultyId: facultyId, courseOfStudyId: courseOfStudyId }));
+    const courseOfStudyId = live.choose("courseOfStudyId", [await careersGetCareers(live)].flat().map((it) => it.courseOfStudyId).filter(isPresent));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Location\"}}", {}, async () => live.api.structure.getSites({ courseOfStudyId: courseOfStudyId }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3Location(f, it)));
   });
 
   liveCase(Esse3Live, "Structure.getSites#3", { index: 2 }, async (live) => {
-    const courseOfStudyId = live.choose("courseOfStudyId", [await structureGetCoursesOfStudy(live)].flat().map((it) => it.courseOfStudyId).filter(isPresent));
-    const departmentId = live.choose("departmentId", [await degreeAwardGetThesisRelatedDocuments(live)].flat().map((it) => it.departmentId).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Location\"}}", {}, async () => live.api.structure.getSites({ courseOfStudyId: courseOfStudyId, departmentId: departmentId }));
+    const facultyId = live.choose("facultyId", [await structureGetDidacticStructures(live)].flat().map((it) => it.facultyId).filter(isPresent));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Location\"}}", {}, async () => live.api.structure.getSites({ facultyId: facultyId }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3Location(f, it)));
   });
 
   liveCase(Esse3Live, "Structure.getSites#4", { index: 3 }, async (live) => {
     const facultyId = live.choose("facultyId", [await structureGetDidacticStructures(live)].flat().map((it) => it.facultyId).filter(isPresent));
-    const departmentId = live.choose("departmentId", [await degreeAwardGetThesisRelatedDocuments(live)].flat().map((it) => it.departmentId).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Location\"}}", {}, async () => live.api.structure.getSites({ facultyId: facultyId, departmentId: departmentId }));
+    const courseOfStudyId = live.choose("courseOfStudyId", [await careersGetCareers(live)].flat().map((it) => it.courseOfStudyId).filter(isPresent));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Location\"}}", {}, async () => live.api.structure.getSites({ facultyId: facultyId, courseOfStudyId: courseOfStudyId }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3Location(f, it)));
   });
 
@@ -233,7 +233,7 @@ describe("Esse3 Structure", () => {
   });
 
   liveCase(Esse3Live, "Structure.getDidacticStructures#2", { index: 1 }, async (live) => {
-    const courseOfStudyCode = live.choose("courseOfStudyCode", [await structureGetCoursesOfStudy(live)].flat().map((it) => it.courseOfStudyCode).filter(isPresent));
+    const courseOfStudyCode = live.choose("courseOfStudyCode", [await careersGetCareers(live)].flat().map((it) => it.p06CourseOfStudyCode).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3StructureWithLocations\"}}", {}, async () => live.api.structure.getDidacticStructures({ courseOfStudyCode: courseOfStudyCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3StructureWithLocations(f, it)));
   });
@@ -246,7 +246,7 @@ describe("Esse3 Structure", () => {
 
   liveCase(Esse3Live, "Structure.getDidacticStructures#4", { index: 3 }, async (live) => {
     const facultyCode = live.choose("facultyCode", [await structureGetCoursesOfStudy(live)].flat().map((it) => it.courseStructures).filter(isPresent).flat().map((it) => it.facultyCode).filter(isPresent));
-    const courseOfStudyCode = live.choose("courseOfStudyCode", [await structureGetCoursesOfStudy(live)].flat().map((it) => it.courseOfStudyCode).filter(isPresent));
+    const courseOfStudyCode = live.choose("courseOfStudyCode", [await careersGetCareers(live)].flat().map((it) => it.p06CourseOfStudyCode).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3StructureWithLocations\"}}", {}, async () => live.api.structure.getDidacticStructures({ facultyCode: facultyCode, courseOfStudyCode: courseOfStudyCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3StructureWithLocations(f, it)));
   });
@@ -267,9 +267,10 @@ describe("Esse3 Structure", () => {
   });
 
   liveCase(Esse3Live, "Structure.getCourseTypes#2", { index: 1 }, async (live) => {
-    const courseTypeCode = live.choose("courseTypeCode", [await structureGetCoursesOfStudy(live)].flat().map((it) => it.courseTypeCode).filter(isPresent));
+    const row = live.chooseRow("courseTypeCode, tcGroupCode", [await structureGetCoursesOfStudy(live)].flat(), (element) => [[element].map((it) => it.courseTypeCode).filter(isPresent)[0], [element].map((it) => it.tcGroupCode).filter(isPresent)[0]]);
+    const courseTypeCode = live.choose("courseTypeCode", [row].map((it) => it.courseTypeCode).filter(isPresent));
     const facultyId = live.choose("facultyId", [await structureGetDidacticStructures(live)].flat().map((it) => it.facultyId).filter(isPresent));
-    const tcGroupCode = live.choose("tcGroupCode", [await structureGetCoursesOfStudy(live)].flat().map((it) => it.tcGroupCode).filter(isPresent));
+    const tcGroupCode = live.choose("tcGroupCode", [row].map((it) => it.tcGroupCode).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CourseTypes\"}}", {}, async () => live.api.structure.getCourseTypes({ courseTypeCode: courseTypeCode, facultyId: facultyId, tcGroupCode: tcGroupCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3CourseTypes(f, it)));
   });

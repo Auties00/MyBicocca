@@ -40,10 +40,11 @@ class Esse3CountriesLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Countries.getPostalCode#2")
     fun getPostalCode2() = case("Countries.getPostalCode#2", index = 1) {
+        val row = chooseRow("municipalityId, municipalityCode", listOf(structureGetExternalEntities()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.municipalityId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.municipalityCode }.firstOrNull()?.toString()) }
         val nationId = choose("nationId", listOf(countriesGetNations()).flatten().mapNotNull { it.nationId })
         val regionCode = choose("regionCode", listOf(countriesGetMunicipalities()).flatten().mapNotNull { it.regionCode })
-        val municipalityId = choose("municipalityId", listOf(structureGetExternalEntities()).flatten().mapNotNull { it.municipalityId })
-        val municipalityCode = choose("municipalityCode", listOf(structureGetExternalEntities()).flatten().mapNotNull { it.municipalityCode })
+        val municipalityId = choose("municipalityId", listOf(row).mapNotNull { it.municipalityId })
+        val municipalityCode = choose("municipalityCode", listOf(row).mapNotNull { it.municipalityCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PostalCode\"}}") {
             api.countries.getPostalCode(nationId = nationId, regionCode = regionCode, municipalityId = municipalityId, municipalityCode = municipalityCode)
         } ?: return@case
@@ -53,10 +54,11 @@ class Esse3CountriesLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Countries.getPostalCode#3")
     fun getPostalCode3() = case("Countries.getPostalCode#3", index = 2) {
+        val row = chooseRow("nationFiscalCode, municipalityCode", listOf(structureGetExternalEntities()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.nationFiscalCode }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.municipalityCode }.firstOrNull()?.toString()) }
         val nationId = choose("nationId", listOf(countriesGetNations()).flatten().mapNotNull { it.nationId })
-        val nationFiscalCode = choose("nationFiscalCode", listOf(structureGetExternalEntities()).flatten().mapNotNull { it.nationFiscalCode })
+        val nationFiscalCode = choose("nationFiscalCode", listOf(row).mapNotNull { it.nationFiscalCode })
         val regionCode = choose("regionCode", listOf(countriesGetMunicipalities()).flatten().mapNotNull { it.regionCode })
-        val municipalityCode = choose("municipalityCode", listOf(structureGetExternalEntities()).flatten().mapNotNull { it.municipalityCode })
+        val municipalityCode = choose("municipalityCode", listOf(row).mapNotNull { it.municipalityCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PostalCode\"}}") {
             api.countries.getPostalCode(nationId = nationId, nationFiscalCode = nationFiscalCode, regionCode = regionCode, municipalityCode = municipalityCode)
         } ?: return@case
@@ -66,9 +68,10 @@ class Esse3CountriesLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Countries.getPostalCode#4")
     fun getPostalCode4() = case("Countries.getPostalCode#4", index = 3) {
+        val row = chooseRow("nationFiscalCode, municipalityId", listOf(structureGetExternalEntities()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.nationFiscalCode }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.municipalityId }.firstOrNull()?.toString()) }
         val nationId = choose("nationId", listOf(countriesGetNations()).flatten().mapNotNull { it.nationId })
-        val nationFiscalCode = choose("nationFiscalCode", listOf(structureGetExternalEntities()).flatten().mapNotNull { it.nationFiscalCode })
-        val municipalityId = choose("municipalityId", listOf(structureGetExternalEntities()).flatten().mapNotNull { it.municipalityId })
+        val nationFiscalCode = choose("nationFiscalCode", listOf(row).mapNotNull { it.nationFiscalCode })
+        val municipalityId = choose("municipalityId", listOf(row).mapNotNull { it.municipalityId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PostalCode\"}}") {
             api.countries.getPostalCode(nationId = nationId, nationFiscalCode = nationFiscalCode, municipalityId = municipalityId)
         } ?: return@case
@@ -78,10 +81,11 @@ class Esse3CountriesLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Countries.getPostalCode#5")
     fun getPostalCode5() = case("Countries.getPostalCode#5", index = 4) {
+        val row = chooseRow("nationFiscalCode, municipalityId", listOf(structureGetExternalEntities()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.nationFiscalCode }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.municipalityId }.firstOrNull()?.toString()) }
         val nationId = choose("nationId", listOf(countriesGetNations()).flatten().mapNotNull { it.nationId })
-        val nationFiscalCode = choose("nationFiscalCode", listOf(structureGetExternalEntities()).flatten().mapNotNull { it.nationFiscalCode })
+        val nationFiscalCode = choose("nationFiscalCode", listOf(row).mapNotNull { it.nationFiscalCode })
         val regionCode = choose("regionCode", listOf(countriesGetMunicipalities()).flatten().mapNotNull { it.regionCode })
-        val municipalityId = choose("municipalityId", listOf(structureGetExternalEntities()).flatten().mapNotNull { it.municipalityId })
+        val municipalityId = choose("municipalityId", listOf(row).mapNotNull { it.municipalityId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PostalCode\"}}") {
             api.countries.getPostalCode(nationId = nationId, nationFiscalCode = nationFiscalCode, regionCode = regionCode, municipalityId = municipalityId)
         } ?: return@case
@@ -91,9 +95,10 @@ class Esse3CountriesLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Countries.getPostalCode#6")
     fun getPostalCode6() = case("Countries.getPostalCode#6", index = 5) {
+        val row = chooseRow("municipalityId, municipalityCode", listOf(structureGetExternalEntities()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.municipalityId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.municipalityCode }.firstOrNull()?.toString()) }
         val nationId = choose("nationId", listOf(countriesGetNations()).flatten().mapNotNull { it.nationId })
-        val municipalityId = choose("municipalityId", listOf(structureGetExternalEntities()).flatten().mapNotNull { it.municipalityId })
-        val municipalityCode = choose("municipalityCode", listOf(structureGetExternalEntities()).flatten().mapNotNull { it.municipalityCode })
+        val municipalityId = choose("municipalityId", listOf(row).mapNotNull { it.municipalityId })
+        val municipalityCode = choose("municipalityCode", listOf(row).mapNotNull { it.municipalityCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PostalCode\"}}") {
             api.countries.getPostalCode(nationId = nationId, municipalityId = municipalityId, municipalityCode = municipalityCode)
         } ?: return@case
@@ -121,10 +126,11 @@ class Esse3CountriesLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Countries.getMunicipalities#2")
     fun getMunicipalities2() = case("Countries.getMunicipalities#2", index = 1) {
+        val row = chooseRow("nationFiscalCode, municipalityCode", listOf(structureGetExternalEntities()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.nationFiscalCode }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.municipalityCode }.firstOrNull()?.toString()) }
         val nationId = choose("nationId", listOf(countriesGetNations()).flatten().mapNotNull { it.nationId })
         val iso6392Code = choose("iso6392Code", listOf(servicesGetLanguages()).flatten().mapNotNull { it.iso6392Code })
-        val nationFiscalCode = choose("nationFiscalCode", listOf(structureGetExternalEntities()).flatten().mapNotNull { it.nationFiscalCode })
-        val municipalityCode = choose("municipalityCode", listOf(structureGetExternalEntities()).flatten().mapNotNull { it.municipalityCode })
+        val nationFiscalCode = choose("nationFiscalCode", listOf(row).mapNotNull { it.nationFiscalCode })
+        val municipalityCode = choose("municipalityCode", listOf(row).mapNotNull { it.municipalityCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Municipality\"}}") {
             api.countries.getMunicipalities(nationId = nationId, iso6392Code = iso6392Code, nationFiscalCode = nationFiscalCode, municipalityCode = municipalityCode)
         } ?: return@case
@@ -146,10 +152,11 @@ class Esse3CountriesLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Countries.getMunicipalities#4")
     fun getMunicipalities4() = case("Countries.getMunicipalities#4", index = 3) {
+        val row = chooseRow("nationFiscalCode, municipalityCode", listOf(structureGetExternalEntities()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.nationFiscalCode }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.municipalityCode }.firstOrNull()?.toString()) }
         val nationId = choose("nationId", listOf(countriesGetNations()).flatten().mapNotNull { it.nationId })
-        val nationFiscalCode = choose("nationFiscalCode", listOf(structureGetExternalEntities()).flatten().mapNotNull { it.nationFiscalCode })
+        val nationFiscalCode = choose("nationFiscalCode", listOf(row).mapNotNull { it.nationFiscalCode })
         val regionCode = choose("regionCode", listOf(countriesGetPostalCode()).flatten().mapNotNull { it.regionCode })
-        val municipalityCode = choose("municipalityCode", listOf(structureGetExternalEntities()).flatten().mapNotNull { it.municipalityCode })
+        val municipalityCode = choose("municipalityCode", listOf(row).mapNotNull { it.municipalityCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Municipality\"}}") {
             api.countries.getMunicipalities(nationId = nationId, nationFiscalCode = nationFiscalCode, regionCode = regionCode, municipalityCode = municipalityCode)
         } ?: return@case

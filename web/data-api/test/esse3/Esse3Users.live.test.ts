@@ -2,7 +2,7 @@
 
 import { describe } from "vitest";
 import { isPresent, liveCase } from "../runtime/live.js";
-import { Esse3Live, personalDataGetCareers, writeEsse3CareerPortion, writeEsse3ExtendedCareerPortion } from "./Esse3Live.js";
+import { Esse3Live, careersGetCareers, personalDataGetCareers, writeEsse3CareerPortion, writeEsse3ExtendedCareerPortion } from "./Esse3Live.js";
 
 // The live tests of the Esse3 Users module, planned from common/specs/esse3/tests.yaml.
 describe("Esse3 Users", () => {
@@ -13,25 +13,28 @@ describe("Esse3 Users", () => {
   });
 
   liveCase(Esse3Live, "Users.getExtendedCareer#2", { index: 1 }, async (live) => {
-    const userId = live.choose("userId", [await personalDataGetCareers(live)].flat().map((it) => it.userId).filter(isPresent));
-    const studentStatusCode = live.choose("studentStatusCode", [await personalDataGetCareers(live)].flat().map((it) => it.studentStatusCode).filter(isPresent));
-    const fiscalCode = live.choose("fiscalCode", [await personalDataGetCareers(live)].flat().map((it) => it.fiscalCode).filter(isPresent));
+    const row = live.chooseRow("userId, studentStatusCode", [await personalDataGetCareers(live)].flat(), (element) => [[element].map((it) => it.userId).filter(isPresent)[0], [element].map((it) => it.studentStatusCode).filter(isPresent)[0]]);
+    const userId = live.choose("userId", [row].map((it) => it.userId).filter(isPresent));
+    const studentStatusCode = live.choose("studentStatusCode", [row].map((it) => it.studentStatusCode).filter(isPresent));
+    const fiscalCode = live.choose("fiscalCode", [await careersGetCareers(live)].flat().map((it) => it.fiscalCode).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExtendedCareerPortion\"}}", {}, async () => live.api.users.getExtendedCareer(userId, { studentStatusCode: studentStatusCode, fiscalCode: fiscalCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3ExtendedCareerPortion(f, it)));
   });
 
   liveCase(Esse3Live, "Users.getExtendedCareer#3", { index: 2 }, async (live) => {
-    const userId = live.choose("userId", [await personalDataGetCareers(live)].flat().map((it) => it.userId).filter(isPresent));
-    const statusReasonCode = live.choose("statusReasonCode", [await personalDataGetCareers(live)].flat().map((it) => it.statusReasonCode).filter(isPresent));
-    const fiscalCode = live.choose("fiscalCode", [await personalDataGetCareers(live)].flat().map((it) => it.fiscalCode).filter(isPresent));
+    const row = live.chooseRow("userId, statusReasonCode", [await personalDataGetCareers(live)].flat(), (element) => [[element].map((it) => it.userId).filter(isPresent)[0], [element].map((it) => it.statusReasonCode).filter(isPresent)[0]]);
+    const userId = live.choose("userId", [row].map((it) => it.userId).filter(isPresent));
+    const statusReasonCode = live.choose("statusReasonCode", [row].map((it) => it.statusReasonCode).filter(isPresent));
+    const fiscalCode = live.choose("fiscalCode", [await careersGetCareers(live)].flat().map((it) => it.fiscalCode).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExtendedCareerPortion\"}}", {}, async () => live.api.users.getExtendedCareer(userId, { statusReasonCode: statusReasonCode, fiscalCode: fiscalCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3ExtendedCareerPortion(f, it)));
   });
 
   liveCase(Esse3Live, "Users.getExtendedCareer#4", { index: 3 }, async (live) => {
-    const userId = live.choose("userId", [await personalDataGetCareers(live)].flat().map((it) => it.userId).filter(isPresent));
-    const studentStatusCode = live.choose("studentStatusCode", [await personalDataGetCareers(live)].flat().map((it) => it.studentStatusCode).filter(isPresent));
-    const statusReasonCode = live.choose("statusReasonCode", [await personalDataGetCareers(live)].flat().map((it) => it.statusReasonCode).filter(isPresent));
+    const row = live.chooseRow("userId, studentStatusCode, statusReasonCode", [await personalDataGetCareers(live)].flat(), (element) => [[element].map((it) => it.userId).filter(isPresent)[0], [element].map((it) => it.studentStatusCode).filter(isPresent)[0], [element].map((it) => it.statusReasonCode).filter(isPresent)[0]]);
+    const userId = live.choose("userId", [row].map((it) => it.userId).filter(isPresent));
+    const studentStatusCode = live.choose("studentStatusCode", [row].map((it) => it.studentStatusCode).filter(isPresent));
+    const statusReasonCode = live.choose("statusReasonCode", [row].map((it) => it.statusReasonCode).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExtendedCareerPortion\"}}", {}, async () => live.api.users.getExtendedCareer(userId, { studentStatusCode: studentStatusCode, statusReasonCode: statusReasonCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3ExtendedCareerPortion(f, it)));
   });
@@ -47,25 +50,28 @@ describe("Esse3 Users", () => {
   });
 
   liveCase(Esse3Live, "Users.getCareerSegments#2", { index: 1 }, async (live) => {
-    const userId = live.choose("userId", [await personalDataGetCareers(live)].flat().map((it) => it.userId).filter(isPresent));
-    const studentStatusCode = live.choose("studentStatusCode", [await personalDataGetCareers(live)].flat().map((it) => it.studentStatusCode).filter(isPresent));
-    const statusReasonCode = live.choose("statusReasonCode", [await personalDataGetCareers(live)].flat().map((it) => it.statusReasonCode).filter(isPresent));
+    const row = live.chooseRow("userId, studentStatusCode, statusReasonCode", [await personalDataGetCareers(live)].flat(), (element) => [[element].map((it) => it.userId).filter(isPresent)[0], [element].map((it) => it.studentStatusCode).filter(isPresent)[0], [element].map((it) => it.statusReasonCode).filter(isPresent)[0]]);
+    const userId = live.choose("userId", [row].map((it) => it.userId).filter(isPresent));
+    const studentStatusCode = live.choose("studentStatusCode", [row].map((it) => it.studentStatusCode).filter(isPresent));
+    const statusReasonCode = live.choose("statusReasonCode", [row].map((it) => it.statusReasonCode).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}}", {}, async () => live.api.users.getCareerSegments(userId, { studentStatusCode: studentStatusCode, statusReasonCode: statusReasonCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3CareerPortion(f, it)));
   });
 
   liveCase(Esse3Live, "Users.getCareerSegments#3", { index: 2 }, async (live) => {
-    const userId = live.choose("userId", [await personalDataGetCareers(live)].flat().map((it) => it.userId).filter(isPresent));
-    const studentStatusCode = live.choose("studentStatusCode", [await personalDataGetCareers(live)].flat().map((it) => it.studentStatusCode).filter(isPresent));
-    const fiscalCode = live.choose("fiscalCode", [await personalDataGetCareers(live)].flat().map((it) => it.fiscalCode).filter(isPresent));
+    const row = live.chooseRow("userId, studentStatusCode", [await personalDataGetCareers(live)].flat(), (element) => [[element].map((it) => it.userId).filter(isPresent)[0], [element].map((it) => it.studentStatusCode).filter(isPresent)[0]]);
+    const userId = live.choose("userId", [row].map((it) => it.userId).filter(isPresent));
+    const studentStatusCode = live.choose("studentStatusCode", [row].map((it) => it.studentStatusCode).filter(isPresent));
+    const fiscalCode = live.choose("fiscalCode", [await careersGetCareers(live)].flat().map((it) => it.fiscalCode).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}}", {}, async () => live.api.users.getCareerSegments(userId, { studentStatusCode: studentStatusCode, fiscalCode: fiscalCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3CareerPortion(f, it)));
   });
 
   liveCase(Esse3Live, "Users.getCareerSegments#4", { index: 3 }, async (live) => {
-    const userId = live.choose("userId", [await personalDataGetCareers(live)].flat().map((it) => it.userId).filter(isPresent));
-    const statusReasonCode = live.choose("statusReasonCode", [await personalDataGetCareers(live)].flat().map((it) => it.statusReasonCode).filter(isPresent));
-    const fiscalCode = live.choose("fiscalCode", [await personalDataGetCareers(live)].flat().map((it) => it.fiscalCode).filter(isPresent));
+    const row = live.chooseRow("userId, statusReasonCode", [await personalDataGetCareers(live)].flat(), (element) => [[element].map((it) => it.userId).filter(isPresent)[0], [element].map((it) => it.statusReasonCode).filter(isPresent)[0]]);
+    const userId = live.choose("userId", [row].map((it) => it.userId).filter(isPresent));
+    const statusReasonCode = live.choose("statusReasonCode", [row].map((it) => it.statusReasonCode).filter(isPresent));
+    const fiscalCode = live.choose("fiscalCode", [await careersGetCareers(live)].flat().map((it) => it.fiscalCode).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}}", {}, async () => live.api.users.getCareerSegments(userId, { statusReasonCode: statusReasonCode, fiscalCode: fiscalCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3CareerPortion(f, it)));
   });

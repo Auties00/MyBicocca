@@ -2,7 +2,7 @@
 
 import { describe } from "vitest";
 import { isPresent, liveCase } from "../runtime/live.js";
-import { Esse3Live, degreeAwardGetThesisRelatedDocuments, examsCalendarGetActivitiesForExamCalls, logisticsGetLogistics, logisticsGetTeachingUnitLogWithDetails, offerGetGenericTeachingActivities, offerGetInvoicePartial, offerGetOffers, offerGetPartialDomicile, personalDataGetCareers, recordsFindMinutes, structureGetCoursesOfStudy, transcriptGetCareerSegments, writeEsse3ActivityDeletable, writeEsse3ContextualizedActivity, writeEsse3ContextualizedSegment, writeEsse3ContextualizedTeachingUnit, writeEsse3DeletedOffer, writeEsse3FullPartitions, writeEsse3GenericActivity, writeEsse3Offer, writeEsse3OfferActivityDeletable, writeEsse3OfferTeachingUnitDeletable, writeEsse3PartitionFactor, writeEsse3TeachersPerTeachingUnit } from "./Esse3Live.js";
+import { Esse3Live, careersGetCareers, degreeAwardGetThesisRelatedDocuments, examsCalendarGetActivitiesForExamCalls, logisticsGetLogistics, logisticsGetTeachingUnitLogWithDetails, offerGetGenericTeachingActivities, offerGetInvoicePartial, offerGetOffers, offerGetPartialDomicile, personalDataGetCareers, recordsFindMinutes, transcriptGetCareerSegments, writeEsse3ActivityDeletable, writeEsse3ContextualizedActivity, writeEsse3ContextualizedSegment, writeEsse3ContextualizedTeachingUnit, writeEsse3DeletedOffer, writeEsse3FullPartitions, writeEsse3GenericActivity, writeEsse3Offer, writeEsse3OfferActivityDeletable, writeEsse3OfferTeachingUnitDeletable, writeEsse3PartitionFactor } from "./Esse3Live.js";
 
 // The live tests of the Esse3 Offer module, planned from common/specs/esse3/tests.yaml.
 describe("Esse3 Offer", () => {
@@ -58,7 +58,7 @@ describe("Esse3 Offer", () => {
   });
 
   liveCase(Esse3Live, "Offer.getOffers#2", { index: 1 }, async (live) => {
-    const courseOfStudyCode = live.choose("courseOfStudyCode", [await structureGetCoursesOfStudy(live)].flat().map((it) => it.courseOfStudyCode).filter(isPresent));
+    const courseOfStudyCode = live.choose("courseOfStudyCode", [await careersGetCareers(live)].flat().map((it) => it.p06CourseOfStudyCode).filter(isPresent));
     const departmentCode = live.choose("departmentCode", [await degreeAwardGetThesisRelatedDocuments(live)].flat().map((it) => it.departmentCode).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Offer\"}}", {}, async () => live.api.offer.getOffers({ courseOfStudyCode: courseOfStudyCode, departmentCode: departmentCode, activityStateCode: "A" }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3Offer(f, it)));
@@ -66,7 +66,7 @@ describe("Esse3 Offer", () => {
 
   liveCase(Esse3Live, "Offer.getOffers#3", { index: 2 }, async (live) => {
     const academicYearOfferId = live.choose("academicYearOfferId", [await examsCalendarGetActivitiesForExamCalls(live)].flat().map((it) => it.academicYearOfferId).filter(isPresent));
-    const courseOfStudyCode = live.choose("courseOfStudyCode", [await structureGetCoursesOfStudy(live)].flat().map((it) => it.courseOfStudyCode).filter(isPresent));
+    const courseOfStudyCode = live.choose("courseOfStudyCode", [await careersGetCareers(live)].flat().map((it) => it.p06CourseOfStudyCode).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Offer\"}}", {}, async () => live.api.offer.getOffers({ academicYearOfferId: academicYearOfferId, courseOfStudyCode: courseOfStudyCode, activityStateCode: "B" }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3Offer(f, it)));
   });
@@ -86,75 +86,82 @@ describe("Esse3 Offer", () => {
 
   liveCase(Esse3Live, "Offer.getOffers#6", { index: 5 }, async (live) => {
     const academicYearOfferId = live.choose("academicYearOfferId", [await examsCalendarGetActivitiesForExamCalls(live)].flat().map((it) => it.academicYearOfferId).filter(isPresent));
-    const courseOfStudyCode = live.choose("courseOfStudyCode", [await structureGetCoursesOfStudy(live)].flat().map((it) => it.courseOfStudyCode).filter(isPresent));
+    const courseOfStudyCode = live.choose("courseOfStudyCode", [await careersGetCareers(live)].flat().map((it) => it.p06CourseOfStudyCode).filter(isPresent));
     const departmentCode = live.choose("departmentCode", [await degreeAwardGetThesisRelatedDocuments(live)].flat().map((it) => it.departmentCode).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Offer\"}}", {}, async () => live.api.offer.getOffers({ academicYearOfferId: academicYearOfferId, courseOfStudyCode: courseOfStudyCode, departmentCode: departmentCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3Offer(f, it)));
   });
 
   liveCase(Esse3Live, "Offer.getCancellableOfferTeachingActivity#1", {}, async (live) => {
-    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3ActivityDeletable\"}", {}, async () => live.api.offer.getCancellableOfferTeachingActivity());
+    const courseOfStudyCode = live.choose("courseOfStudyCode", [await careersGetCareers(live)].flat().map((it) => it.p06CourseOfStudyCode).filter(isPresent));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3ActivityDeletable\"}", {}, async () => live.api.offer.getCancellableOfferTeachingActivity({ courseOfStudyCode: courseOfStudyCode }));
     live.fingerprint((f) => writeEsse3ActivityDeletable(f, result));
   });
 
   liveCase(Esse3Live, "Offer.getCancellableOfferTeachingActivity#2", { index: 1 }, async (live) => {
+    const courseOfStudyCode = live.choose("courseOfStudyCode", [await careersGetCareers(live)].flat().map((it) => it.p06CourseOfStudyCode).filter(isPresent));
     const activityFunctionId = live.choose("activityFunctionId", [await logisticsGetLogistics(live)].flat().map((it) => it.physicalTeachingActivityKey).filter(isPresent).map((it) => it.activityFunctionId).filter(isPresent));
     const academicYearOfferId = live.choose("academicYearOfferId", [await offerGetOffers(live)].flat().map((it) => it.academicYearOfferId).filter(isPresent));
-    const courseOfStudyCode = live.choose("courseOfStudyCode", [await offerGetOffers(live)].flat().map((it) => it.courseOfStudyCode).filter(isPresent));
     const academicYearOrderId = live.choose("academicYearOrderId", [await personalDataGetCareers(live)].flat().map((it) => it.academicYearOrderId).filter(isPresent));
     const studyPlanCode = live.choose("studyPlanCode", [await transcriptGetCareerSegments(live)].flat().map((it) => it.studyPlanCode).filter(isPresent));
-    const activityCode = live.choose("activityCode", [await offerGetGenericTeachingActivities(live)].flat().map((it) => it.activityCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3ActivityDeletable\"}", {}, async () => live.api.offer.getCancellableOfferTeachingActivity({ activityFunctionId: activityFunctionId, academicYearOfferId: academicYearOfferId, courseOfStudyCode: courseOfStudyCode, academicYearOrderId: academicYearOrderId, studyPlanCode: studyPlanCode, activityCode: activityCode }));
+    const teachingUnitCode = live.choose("teachingUnitCode", [await logisticsGetTeachingUnitLogWithDetails(live)].flat().map((it) => it.masterTeachingUnitKey).filter(isPresent).map((it) => it.teachingUnitCode).filter(isPresent));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3ActivityDeletable\"}", {}, async () => live.api.offer.getCancellableOfferTeachingActivity({ activityFunctionId: activityFunctionId, academicYearOfferId: academicYearOfferId, courseOfStudyCode: courseOfStudyCode, academicYearOrderId: academicYearOrderId, studyPlanCode: studyPlanCode, teachingUnitCode: teachingUnitCode }));
     live.fingerprint((f) => writeEsse3ActivityDeletable(f, result));
   });
 
   liveCase(Esse3Live, "Offer.getCancellableOfferTeachingActivity#3", { index: 2 }, async (live) => {
-    const activityFunctionId = live.choose("activityFunctionId", [await logisticsGetLogistics(live)].flat().map((it) => it.physicalTeachingActivityKey).filter(isPresent).map((it) => it.activityFunctionId).filter(isPresent));
+    const courseOfStudyCode = live.choose("courseOfStudyCode", [await careersGetCareers(live)].flat().map((it) => it.p06CourseOfStudyCode).filter(isPresent));
     const academicYearOfferId = live.choose("academicYearOfferId", [await offerGetOffers(live)].flat().map((it) => it.academicYearOfferId).filter(isPresent));
-    const courseOfStudyCode = live.choose("courseOfStudyCode", [await offerGetOffers(live)].flat().map((it) => it.courseOfStudyCode).filter(isPresent));
-    const teachingUnitCode = live.choose("teachingUnitCode", [await logisticsGetTeachingUnitLogWithDetails(live)].flat().map((it) => it.masterTeachingUnitKey).filter(isPresent).map((it) => it.teachingUnitCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3ActivityDeletable\"}", {}, async () => live.api.offer.getCancellableOfferTeachingActivity({ activityFunctionId: activityFunctionId, academicYearOfferId: academicYearOfferId, courseOfStudyCode: courseOfStudyCode, teachingUnitCode: teachingUnitCode }));
+    const studyPlanCode = live.choose("studyPlanCode", [await transcriptGetCareerSegments(live)].flat().map((it) => it.studyPlanCode).filter(isPresent));
+    const activityCode = live.choose("activityCode", [await offerGetGenericTeachingActivities(live)].flat().map((it) => it.activityCode).filter(isPresent));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3ActivityDeletable\"}", {}, async () => live.api.offer.getCancellableOfferTeachingActivity({ academicYearOfferId: academicYearOfferId, courseOfStudyCode: courseOfStudyCode, studyPlanCode: studyPlanCode, activityCode: activityCode }));
     live.fingerprint((f) => writeEsse3ActivityDeletable(f, result));
   });
 
   liveCase(Esse3Live, "Offer.getCancellableOfferTeachingActivity#4", { index: 3 }, async (live) => {
+    const courseOfStudyCode = live.choose("courseOfStudyCode", [await careersGetCareers(live)].flat().map((it) => it.p06CourseOfStudyCode).filter(isPresent));
+    const activityFunctionId = live.choose("activityFunctionId", [await logisticsGetLogistics(live)].flat().map((it) => it.physicalTeachingActivityKey).filter(isPresent).map((it) => it.activityFunctionId).filter(isPresent));
     const academicYearOrderId = live.choose("academicYearOrderId", [await personalDataGetCareers(live)].flat().map((it) => it.academicYearOrderId).filter(isPresent));
-    const studyPlanCode = live.choose("studyPlanCode", [await transcriptGetCareerSegments(live)].flat().map((it) => it.studyPlanCode).filter(isPresent));
     const activityCode = live.choose("activityCode", [await offerGetGenericTeachingActivities(live)].flat().map((it) => it.activityCode).filter(isPresent));
     const teachingUnitCode = live.choose("teachingUnitCode", [await logisticsGetTeachingUnitLogWithDetails(live)].flat().map((it) => it.masterTeachingUnitKey).filter(isPresent).map((it) => it.teachingUnitCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3ActivityDeletable\"}", {}, async () => live.api.offer.getCancellableOfferTeachingActivity({ academicYearOrderId: academicYearOrderId, studyPlanCode: studyPlanCode, activityCode: activityCode, teachingUnitCode: teachingUnitCode }));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3ActivityDeletable\"}", {}, async () => live.api.offer.getCancellableOfferTeachingActivity({ activityFunctionId: activityFunctionId, courseOfStudyCode: courseOfStudyCode, academicYearOrderId: academicYearOrderId, activityCode: activityCode, teachingUnitCode: teachingUnitCode }));
     live.fingerprint((f) => writeEsse3ActivityDeletable(f, result));
   });
 
   liveCase(Esse3Live, "Offer.getCancellableOfferTeachingActivity#5", { index: 4 }, async (live) => {
-    const courseOfStudyCode = live.choose("courseOfStudyCode", [await offerGetOffers(live)].flat().map((it) => it.courseOfStudyCode).filter(isPresent));
-    const studyPlanCode = live.choose("studyPlanCode", [await transcriptGetCareerSegments(live)].flat().map((it) => it.studyPlanCode).filter(isPresent));
+    const courseOfStudyCode = live.choose("courseOfStudyCode", [await careersGetCareers(live)].flat().map((it) => it.p06CourseOfStudyCode).filter(isPresent));
+    const academicYearOfferId = live.choose("academicYearOfferId", [await offerGetOffers(live)].flat().map((it) => it.academicYearOfferId).filter(isPresent));
+    const academicYearOrderId = live.choose("academicYearOrderId", [await personalDataGetCareers(live)].flat().map((it) => it.academicYearOrderId).filter(isPresent));
     const activityCode = live.choose("activityCode", [await offerGetGenericTeachingActivities(live)].flat().map((it) => it.activityCode).filter(isPresent));
-    const teachingUnitCode = live.choose("teachingUnitCode", [await logisticsGetTeachingUnitLogWithDetails(live)].flat().map((it) => it.masterTeachingUnitKey).filter(isPresent).map((it) => it.teachingUnitCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3ActivityDeletable\"}", {}, async () => live.api.offer.getCancellableOfferTeachingActivity({ courseOfStudyCode: courseOfStudyCode, studyPlanCode: studyPlanCode, activityCode: activityCode, teachingUnitCode: teachingUnitCode }));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3ActivityDeletable\"}", {}, async () => live.api.offer.getCancellableOfferTeachingActivity({ academicYearOfferId: academicYearOfferId, courseOfStudyCode: courseOfStudyCode, academicYearOrderId: academicYearOrderId, activityCode: activityCode }));
     live.fingerprint((f) => writeEsse3ActivityDeletable(f, result));
   });
 
   liveCase(Esse3Live, "Offer.getCancellableOfferTeachingActivity#6", { index: 5 }, async (live) => {
-    const academicYearOfferId = live.choose("academicYearOfferId", [await offerGetOffers(live)].flat().map((it) => it.academicYearOfferId).filter(isPresent));
-    const academicYearOrderId = live.choose("academicYearOrderId", [await personalDataGetCareers(live)].flat().map((it) => it.academicYearOrderId).filter(isPresent));
+    const courseOfStudyCode = live.choose("courseOfStudyCode", [await careersGetCareers(live)].flat().map((it) => it.p06CourseOfStudyCode).filter(isPresent));
+    const activityFunctionId = live.choose("activityFunctionId", [await logisticsGetLogistics(live)].flat().map((it) => it.physicalTeachingActivityKey).filter(isPresent).map((it) => it.activityFunctionId).filter(isPresent));
     const studyPlanCode = live.choose("studyPlanCode", [await transcriptGetCareerSegments(live)].flat().map((it) => it.studyPlanCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3ActivityDeletable\"}", {}, async () => live.api.offer.getCancellableOfferTeachingActivity({ academicYearOfferId: academicYearOfferId, academicYearOrderId: academicYearOrderId, studyPlanCode: studyPlanCode }));
+    const activityCode = live.choose("activityCode", [await offerGetGenericTeachingActivities(live)].flat().map((it) => it.activityCode).filter(isPresent));
+    const teachingUnitCode = live.choose("teachingUnitCode", [await logisticsGetTeachingUnitLogWithDetails(live)].flat().map((it) => it.masterTeachingUnitKey).filter(isPresent).map((it) => it.teachingUnitCode).filter(isPresent));
+    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3ActivityDeletable\"}", {}, async () => live.api.offer.getCancellableOfferTeachingActivity({ activityFunctionId: activityFunctionId, courseOfStudyCode: courseOfStudyCode, studyPlanCode: studyPlanCode, activityCode: activityCode, teachingUnitCode: teachingUnitCode }));
     live.fingerprint((f) => writeEsse3ActivityDeletable(f, result));
   });
 
   liveCase(Esse3Live, "Offer.getTeachingActivityOffers#1", {}, async (live) => {
-    const academicYearOfferId = live.choose("academicYearOfferId", [await offerGetOffers(live)].flat().map((it) => it.academicYearOfferId).filter(isPresent));
-    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [await offerGetOffers(live)].flat().map((it) => it.courseOfStudyOfferId).filter(isPresent));
+    const row = live.chooseRow("academicYearOfferId, courseOfStudyOfferId", [await offerGetOffers(live)].flat(), (element) => [[element].map((it) => it.academicYearOfferId).filter(isPresent)[0], [element].map((it) => it.courseOfStudyOfferId).filter(isPresent)[0]]);
+    const academicYearOfferId = live.choose("academicYearOfferId", [row].map((it) => it.academicYearOfferId).filter(isPresent));
+    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [row].map((it) => it.courseOfStudyOfferId).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ContextualizedActivity\"}}", {}, async () => live.api.offer.getTeachingActivityOffers(academicYearOfferId, courseOfStudyOfferId));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3ContextualizedActivity(f, it)));
   });
 
   liveCase(Esse3Live, "Offer.getTeachingActivityOffers#2", { index: 1 }, async (live) => {
-    const academicYearOfferId = live.choose("academicYearOfferId", [await offerGetOffers(live)].flat().map((it) => it.academicYearOfferId).filter(isPresent));
-    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [await offerGetOffers(live)].flat().map((it) => it.courseOfStudyOfferId).filter(isPresent));
-    const academicYearOrderId = live.choose("academicYearOrderId", [await personalDataGetCareers(live)].flat().map((it) => it.academicYearOrderId).filter(isPresent));
-    const studyPlanId = live.choose("studyPlanId", [await personalDataGetCareers(live)].flat().map((it) => it.studyPlanId).filter(isPresent));
+    const row = live.chooseRow("academicYearOfferId, courseOfStudyOfferId", [await offerGetOffers(live)].flat(), (element) => [[element].map((it) => it.academicYearOfferId).filter(isPresent)[0], [element].map((it) => it.courseOfStudyOfferId).filter(isPresent)[0]]);
+    const row2 = live.chooseRow("academicYearOrderId, studyPlanId", [await personalDataGetCareers(live)].flat(), (element) => [[element].map((it) => it.academicYearOrderId).filter(isPresent)[0], [element].map((it) => it.studyPlanId).filter(isPresent)[0]]);
+    const academicYearOfferId = live.choose("academicYearOfferId", [row].map((it) => it.academicYearOfferId).filter(isPresent));
+    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [row].map((it) => it.courseOfStudyOfferId).filter(isPresent));
+    const academicYearOrderId = live.choose("academicYearOrderId", [row2].map((it) => it.academicYearOrderId).filter(isPresent));
+    const studyPlanId = live.choose("studyPlanId", [row2].map((it) => it.studyPlanId).filter(isPresent));
     const studyPlanCode = live.choose("studyPlanCode", [await transcriptGetCareerSegments(live)].flat().map((it) => it.studyPlanCode).filter(isPresent));
     const activityCode = live.choose("activityCode", [await offerGetGenericTeachingActivities(live)].flat().map((it) => it.activityCode).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ContextualizedActivity\"}}", {}, async () => live.api.offer.getTeachingActivityOffers(academicYearOfferId, courseOfStudyOfferId, { academicYearOrderId: academicYearOrderId, studyPlanId: studyPlanId, studyPlanCode: studyPlanCode, activityCode: activityCode }));
@@ -162,8 +169,9 @@ describe("Esse3 Offer", () => {
   });
 
   liveCase(Esse3Live, "Offer.getTeachingActivityOffers#3", { index: 2 }, async (live) => {
-    const academicYearOfferId = live.choose("academicYearOfferId", [await offerGetOffers(live)].flat().map((it) => it.academicYearOfferId).filter(isPresent));
-    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [await offerGetOffers(live)].flat().map((it) => it.courseOfStudyOfferId).filter(isPresent));
+    const row = live.chooseRow("academicYearOfferId, courseOfStudyOfferId", [await offerGetOffers(live)].flat(), (element) => [[element].map((it) => it.academicYearOfferId).filter(isPresent)[0], [element].map((it) => it.courseOfStudyOfferId).filter(isPresent)[0]]);
+    const academicYearOfferId = live.choose("academicYearOfferId", [row].map((it) => it.academicYearOfferId).filter(isPresent));
+    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [row].map((it) => it.courseOfStudyOfferId).filter(isPresent));
     const studyPlanId = live.choose("studyPlanId", [await personalDataGetCareers(live)].flat().map((it) => it.studyPlanId).filter(isPresent));
     const studyPlanCode = live.choose("studyPlanCode", [await transcriptGetCareerSegments(live)].flat().map((it) => it.studyPlanCode).filter(isPresent));
     const activityId = live.choose("activityId", [await offerGetGenericTeachingActivities(live)].flat().map((it) => it.activityId).filter(isPresent));
@@ -172,30 +180,36 @@ describe("Esse3 Offer", () => {
   });
 
   liveCase(Esse3Live, "Offer.getTeachingActivityOffers#4", { index: 3 }, async (live) => {
-    const academicYearOfferId = live.choose("academicYearOfferId", [await offerGetOffers(live)].flat().map((it) => it.academicYearOfferId).filter(isPresent));
-    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [await offerGetOffers(live)].flat().map((it) => it.courseOfStudyOfferId).filter(isPresent));
+    const row = live.chooseRow("academicYearOfferId, courseOfStudyOfferId", [await offerGetOffers(live)].flat(), (element) => [[element].map((it) => it.academicYearOfferId).filter(isPresent)[0], [element].map((it) => it.courseOfStudyOfferId).filter(isPresent)[0]]);
+    const row2 = live.chooseRow("activityId, activityCode", [await offerGetGenericTeachingActivities(live)].flat(), (element) => [[element].map((it) => it.activityId).filter(isPresent)[0], [element].map((it) => it.activityCode).filter(isPresent)[0]]);
+    const academicYearOfferId = live.choose("academicYearOfferId", [row].map((it) => it.academicYearOfferId).filter(isPresent));
+    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [row].map((it) => it.courseOfStudyOfferId).filter(isPresent));
     const academicYearOrderId = live.choose("academicYearOrderId", [await personalDataGetCareers(live)].flat().map((it) => it.academicYearOrderId).filter(isPresent));
-    const activityId = live.choose("activityId", [await offerGetGenericTeachingActivities(live)].flat().map((it) => it.activityId).filter(isPresent));
-    const activityCode = live.choose("activityCode", [await offerGetGenericTeachingActivities(live)].flat().map((it) => it.activityCode).filter(isPresent));
+    const activityId = live.choose("activityId", [row2].map((it) => it.activityId).filter(isPresent));
+    const activityCode = live.choose("activityCode", [row2].map((it) => it.activityCode).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ContextualizedActivity\"}}", {}, async () => live.api.offer.getTeachingActivityOffers(academicYearOfferId, courseOfStudyOfferId, { academicYearOrderId: academicYearOrderId, activityId: activityId, activityCode: activityCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3ContextualizedActivity(f, it)));
   });
 
   liveCase(Esse3Live, "Offer.getTeachingActivityOffers#5", { index: 4 }, async (live) => {
-    const academicYearOfferId = live.choose("academicYearOfferId", [await offerGetOffers(live)].flat().map((it) => it.academicYearOfferId).filter(isPresent));
-    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [await offerGetOffers(live)].flat().map((it) => it.courseOfStudyOfferId).filter(isPresent));
+    const row = live.chooseRow("academicYearOfferId, courseOfStudyOfferId", [await offerGetOffers(live)].flat(), (element) => [[element].map((it) => it.academicYearOfferId).filter(isPresent)[0], [element].map((it) => it.courseOfStudyOfferId).filter(isPresent)[0]]);
+    const row2 = live.chooseRow("activityId, activityCode", [await offerGetGenericTeachingActivities(live)].flat(), (element) => [[element].map((it) => it.activityId).filter(isPresent)[0], [element].map((it) => it.activityCode).filter(isPresent)[0]]);
+    const academicYearOfferId = live.choose("academicYearOfferId", [row].map((it) => it.academicYearOfferId).filter(isPresent));
+    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [row].map((it) => it.courseOfStudyOfferId).filter(isPresent));
     const studyPlanCode = live.choose("studyPlanCode", [await transcriptGetCareerSegments(live)].flat().map((it) => it.studyPlanCode).filter(isPresent));
-    const activityId = live.choose("activityId", [await offerGetGenericTeachingActivities(live)].flat().map((it) => it.activityId).filter(isPresent));
-    const activityCode = live.choose("activityCode", [await offerGetGenericTeachingActivities(live)].flat().map((it) => it.activityCode).filter(isPresent));
+    const activityId = live.choose("activityId", [row2].map((it) => it.activityId).filter(isPresent));
+    const activityCode = live.choose("activityCode", [row2].map((it) => it.activityCode).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ContextualizedActivity\"}}", {}, async () => live.api.offer.getTeachingActivityOffers(academicYearOfferId, courseOfStudyOfferId, { studyPlanCode: studyPlanCode, activityId: activityId, activityCode: activityCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3ContextualizedActivity(f, it)));
   });
 
   liveCase(Esse3Live, "Offer.getTeachingActivityOffers#6", { index: 5 }, async (live) => {
-    const academicYearOfferId = live.choose("academicYearOfferId", [await offerGetOffers(live)].flat().map((it) => it.academicYearOfferId).filter(isPresent));
-    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [await offerGetOffers(live)].flat().map((it) => it.courseOfStudyOfferId).filter(isPresent));
-    const academicYearOrderId = live.choose("academicYearOrderId", [await personalDataGetCareers(live)].flat().map((it) => it.academicYearOrderId).filter(isPresent));
-    const studyPlanId = live.choose("studyPlanId", [await personalDataGetCareers(live)].flat().map((it) => it.studyPlanId).filter(isPresent));
+    const row = live.chooseRow("academicYearOfferId, courseOfStudyOfferId", [await offerGetOffers(live)].flat(), (element) => [[element].map((it) => it.academicYearOfferId).filter(isPresent)[0], [element].map((it) => it.courseOfStudyOfferId).filter(isPresent)[0]]);
+    const row2 = live.chooseRow("academicYearOrderId, studyPlanId", [await personalDataGetCareers(live)].flat(), (element) => [[element].map((it) => it.academicYearOrderId).filter(isPresent)[0], [element].map((it) => it.studyPlanId).filter(isPresent)[0]]);
+    const academicYearOfferId = live.choose("academicYearOfferId", [row].map((it) => it.academicYearOfferId).filter(isPresent));
+    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [row].map((it) => it.courseOfStudyOfferId).filter(isPresent));
+    const academicYearOrderId = live.choose("academicYearOrderId", [row2].map((it) => it.academicYearOrderId).filter(isPresent));
+    const studyPlanId = live.choose("studyPlanId", [row2].map((it) => it.studyPlanId).filter(isPresent));
     const activityId = live.choose("activityId", [await offerGetGenericTeachingActivities(live)].flat().map((it) => it.activityId).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ContextualizedActivity\"}}", {}, async () => live.api.offer.getTeachingActivityOffers(academicYearOfferId, courseOfStudyOfferId, { academicYearOrderId: academicYearOrderId, studyPlanId: studyPlanId, activityId: activityId }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3ContextualizedActivity(f, it)));
@@ -207,17 +221,20 @@ describe("Esse3 Offer", () => {
   });
 
   liveCase(Esse3Live, "Offer.getCancellableTeachingActivity#1", {}, async (live) => {
-    const academicYearOfferId = live.choose("academicYearOfferId", [await offerGetOffers(live)].flat().map((it) => it.academicYearOfferId).filter(isPresent));
-    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [await offerGetOffers(live)].flat().map((it) => it.courseOfStudyOfferId).filter(isPresent));
+    const row = live.chooseRow("academicYearOfferId, courseOfStudyOfferId", [await offerGetOffers(live)].flat(), (element) => [[element].map((it) => it.academicYearOfferId).filter(isPresent)[0], [element].map((it) => it.courseOfStudyOfferId).filter(isPresent)[0]]);
+    const academicYearOfferId = live.choose("academicYearOfferId", [row].map((it) => it.academicYearOfferId).filter(isPresent));
+    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [row].map((it) => it.courseOfStudyOfferId).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3OfferActivityDeletable\"}}", {}, async () => live.api.offer.getCancellableTeachingActivity(academicYearOfferId, courseOfStudyOfferId));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3OfferActivityDeletable(f, it)));
   });
 
   liveCase(Esse3Live, "Offer.getCancellableTeachingActivity#2", { index: 1 }, async (live) => {
-    const academicYearOfferId = live.choose("academicYearOfferId", [await offerGetOffers(live)].flat().map((it) => it.academicYearOfferId).filter(isPresent));
-    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [await offerGetOffers(live)].flat().map((it) => it.courseOfStudyOfferId).filter(isPresent));
-    const academicYearOrderId = live.choose("academicYearOrderId", [await personalDataGetCareers(live)].flat().map((it) => it.academicYearOrderId).filter(isPresent));
-    const studyPlanId = live.choose("studyPlanId", [await personalDataGetCareers(live)].flat().map((it) => it.studyPlanId).filter(isPresent));
+    const row = live.chooseRow("academicYearOfferId, courseOfStudyOfferId", [await offerGetOffers(live)].flat(), (element) => [[element].map((it) => it.academicYearOfferId).filter(isPresent)[0], [element].map((it) => it.courseOfStudyOfferId).filter(isPresent)[0]]);
+    const row2 = live.chooseRow("academicYearOrderId, studyPlanId", [await personalDataGetCareers(live)].flat(), (element) => [[element].map((it) => it.academicYearOrderId).filter(isPresent)[0], [element].map((it) => it.studyPlanId).filter(isPresent)[0]]);
+    const academicYearOfferId = live.choose("academicYearOfferId", [row].map((it) => it.academicYearOfferId).filter(isPresent));
+    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [row].map((it) => it.courseOfStudyOfferId).filter(isPresent));
+    const academicYearOrderId = live.choose("academicYearOrderId", [row2].map((it) => it.academicYearOrderId).filter(isPresent));
+    const studyPlanId = live.choose("studyPlanId", [row2].map((it) => it.studyPlanId).filter(isPresent));
     const studyPlanCode = live.choose("studyPlanCode", [await transcriptGetCareerSegments(live)].flat().map((it) => it.studyPlanCode).filter(isPresent));
     const activityCode = live.choose("activityCode", [await offerGetGenericTeachingActivities(live)].flat().map((it) => it.activityCode).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3OfferActivityDeletable\"}}", {}, async () => live.api.offer.getCancellableTeachingActivity(academicYearOfferId, courseOfStudyOfferId, { academicYearOrderId: academicYearOrderId, studyPlanId: studyPlanId, studyPlanCode: studyPlanCode, activityCode: activityCode }));
@@ -225,18 +242,21 @@ describe("Esse3 Offer", () => {
   });
 
   liveCase(Esse3Live, "Offer.getCancellableTeachingActivity#3", { index: 2 }, async (live) => {
-    const academicYearOfferId = live.choose("academicYearOfferId", [await offerGetOffers(live)].flat().map((it) => it.academicYearOfferId).filter(isPresent));
-    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [await offerGetOffers(live)].flat().map((it) => it.courseOfStudyOfferId).filter(isPresent));
+    const row = live.chooseRow("academicYearOfferId, courseOfStudyOfferId", [await offerGetOffers(live)].flat(), (element) => [[element].map((it) => it.academicYearOfferId).filter(isPresent)[0], [element].map((it) => it.courseOfStudyOfferId).filter(isPresent)[0]]);
+    const row2 = live.chooseRow("activityId, activityCode", [await offerGetGenericTeachingActivities(live)].flat(), (element) => [[element].map((it) => it.activityId).filter(isPresent)[0], [element].map((it) => it.activityCode).filter(isPresent)[0]]);
+    const academicYearOfferId = live.choose("academicYearOfferId", [row].map((it) => it.academicYearOfferId).filter(isPresent));
+    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [row].map((it) => it.courseOfStudyOfferId).filter(isPresent));
     const academicYearOrderId = live.choose("academicYearOrderId", [await personalDataGetCareers(live)].flat().map((it) => it.academicYearOrderId).filter(isPresent));
-    const activityId = live.choose("activityId", [await offerGetGenericTeachingActivities(live)].flat().map((it) => it.activityId).filter(isPresent));
-    const activityCode = live.choose("activityCode", [await offerGetGenericTeachingActivities(live)].flat().map((it) => it.activityCode).filter(isPresent));
+    const activityId = live.choose("activityId", [row2].map((it) => it.activityId).filter(isPresent));
+    const activityCode = live.choose("activityCode", [row2].map((it) => it.activityCode).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3OfferActivityDeletable\"}}", {}, async () => live.api.offer.getCancellableTeachingActivity(academicYearOfferId, courseOfStudyOfferId, { academicYearOrderId: academicYearOrderId, activityId: activityId, activityCode: activityCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3OfferActivityDeletable(f, it)));
   });
 
   liveCase(Esse3Live, "Offer.getCancellableTeachingActivity#4", { index: 3 }, async (live) => {
-    const academicYearOfferId = live.choose("academicYearOfferId", [await offerGetOffers(live)].flat().map((it) => it.academicYearOfferId).filter(isPresent));
-    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [await offerGetOffers(live)].flat().map((it) => it.courseOfStudyOfferId).filter(isPresent));
+    const row = live.chooseRow("academicYearOfferId, courseOfStudyOfferId", [await offerGetOffers(live)].flat(), (element) => [[element].map((it) => it.academicYearOfferId).filter(isPresent)[0], [element].map((it) => it.courseOfStudyOfferId).filter(isPresent)[0]]);
+    const academicYearOfferId = live.choose("academicYearOfferId", [row].map((it) => it.academicYearOfferId).filter(isPresent));
+    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [row].map((it) => it.courseOfStudyOfferId).filter(isPresent));
     const studyPlanId = live.choose("studyPlanId", [await personalDataGetCareers(live)].flat().map((it) => it.studyPlanId).filter(isPresent));
     const studyPlanCode = live.choose("studyPlanCode", [await transcriptGetCareerSegments(live)].flat().map((it) => it.studyPlanCode).filter(isPresent));
     const activityId = live.choose("activityId", [await offerGetGenericTeachingActivities(live)].flat().map((it) => it.activityId).filter(isPresent));
@@ -245,8 +265,9 @@ describe("Esse3 Offer", () => {
   });
 
   liveCase(Esse3Live, "Offer.getCancellableTeachingActivity#5", { index: 4 }, async (live) => {
-    const academicYearOfferId = live.choose("academicYearOfferId", [await offerGetOffers(live)].flat().map((it) => it.academicYearOfferId).filter(isPresent));
-    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [await offerGetOffers(live)].flat().map((it) => it.courseOfStudyOfferId).filter(isPresent));
+    const row = live.chooseRow("academicYearOfferId, courseOfStudyOfferId", [await offerGetOffers(live)].flat(), (element) => [[element].map((it) => it.academicYearOfferId).filter(isPresent)[0], [element].map((it) => it.courseOfStudyOfferId).filter(isPresent)[0]]);
+    const academicYearOfferId = live.choose("academicYearOfferId", [row].map((it) => it.academicYearOfferId).filter(isPresent));
+    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [row].map((it) => it.courseOfStudyOfferId).filter(isPresent));
     const academicYearOrderId = live.choose("academicYearOrderId", [await personalDataGetCareers(live)].flat().map((it) => it.academicYearOrderId).filter(isPresent));
     const studyPlanCode = live.choose("studyPlanCode", [await transcriptGetCareerSegments(live)].flat().map((it) => it.studyPlanCode).filter(isPresent));
     const activityId = live.choose("activityId", [await offerGetGenericTeachingActivities(live)].flat().map((it) => it.activityId).filter(isPresent));
@@ -255,8 +276,9 @@ describe("Esse3 Offer", () => {
   });
 
   liveCase(Esse3Live, "Offer.getCancellableTeachingActivity#6", { index: 5 }, async (live) => {
-    const academicYearOfferId = live.choose("academicYearOfferId", [await offerGetOffers(live)].flat().map((it) => it.academicYearOfferId).filter(isPresent));
-    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [await offerGetOffers(live)].flat().map((it) => it.courseOfStudyOfferId).filter(isPresent));
+    const row = live.chooseRow("academicYearOfferId, courseOfStudyOfferId", [await offerGetOffers(live)].flat(), (element) => [[element].map((it) => it.academicYearOfferId).filter(isPresent)[0], [element].map((it) => it.courseOfStudyOfferId).filter(isPresent)[0]]);
+    const academicYearOfferId = live.choose("academicYearOfferId", [row].map((it) => it.academicYearOfferId).filter(isPresent));
+    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [row].map((it) => it.courseOfStudyOfferId).filter(isPresent));
     const studyPlanId = live.choose("studyPlanId", [await personalDataGetCareers(live)].flat().map((it) => it.studyPlanId).filter(isPresent));
     const activityCode = live.choose("activityCode", [await offerGetGenericTeachingActivities(live)].flat().map((it) => it.activityCode).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3OfferActivityDeletable\"}}", {}, async () => live.api.offer.getCancellableTeachingActivity(academicYearOfferId, courseOfStudyOfferId, { studyPlanId: studyPlanId, activityCode: activityCode }));
@@ -268,80 +290,21 @@ describe("Esse3 Offer", () => {
     await live.refused(true, async () => live.api.offer.getCancellableTeachingActivity(987654321, courseOfStudyOfferId));
   });
 
-  liveCase(Esse3Live, "Offer.getLecturersByTeachingUnit#1", {}, async (live) => {
-    const academicYearOfferId = live.choose("academicYearOfferId", [await offerGetOffers(live)].flat().map((it) => it.academicYearOfferId).filter(isPresent));
-    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [await offerGetOffers(live)].flat().map((it) => it.courseOfStudyOfferId).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TeachersPerTeachingUnit\"}}", {}, async () => live.api.offer.getLecturersByTeachingUnit(academicYearOfferId, courseOfStudyOfferId));
-    live.fingerprint((f) => f.list(result, (it) => writeEsse3TeachersPerTeachingUnit(f, it)));
-  });
-
-  liveCase(Esse3Live, "Offer.getLecturersByTeachingUnit#2", { index: 1 }, async (live) => {
-    const academicYearOfferId = live.choose("academicYearOfferId", [await offerGetOffers(live)].flat().map((it) => it.academicYearOfferId).filter(isPresent));
-    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [await offerGetOffers(live)].flat().map((it) => it.courseOfStudyOfferId).filter(isPresent));
-    const academicYearOrderId = live.choose("academicYearOrderId", [await personalDataGetCareers(live)].flat().map((it) => it.academicYearOrderId).filter(isPresent));
-    const studyPlanId = live.choose("studyPlanId", [await personalDataGetCareers(live)].flat().map((it) => it.studyPlanId).filter(isPresent));
-    const studyPlanCode = live.choose("studyPlanCode", [await transcriptGetCareerSegments(live)].flat().map((it) => it.studyPlanCode).filter(isPresent));
-    const teachingUnitCode = live.choose("teachingUnitCode", [await logisticsGetTeachingUnitLogWithDetails(live)].flat().map((it) => it.masterTeachingUnitKey).filter(isPresent).map((it) => it.teachingUnitCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TeachersPerTeachingUnit\"}}", {}, async () => live.api.offer.getLecturersByTeachingUnit(academicYearOfferId, courseOfStudyOfferId, { academicYearOrderId: academicYearOrderId, studyPlanId: studyPlanId, studyPlanCode: studyPlanCode, teachingUnitCode: teachingUnitCode }));
-    live.fingerprint((f) => f.list(result, (it) => writeEsse3TeachersPerTeachingUnit(f, it)));
-  });
-
-  liveCase(Esse3Live, "Offer.getLecturersByTeachingUnit#3", { index: 2 }, async (live) => {
-    const academicYearOfferId = live.choose("academicYearOfferId", [await offerGetOffers(live)].flat().map((it) => it.academicYearOfferId).filter(isPresent));
-    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [await offerGetOffers(live)].flat().map((it) => it.courseOfStudyOfferId).filter(isPresent));
-    const academicYearOrderId = live.choose("academicYearOrderId", [await personalDataGetCareers(live)].flat().map((it) => it.academicYearOrderId).filter(isPresent));
-    const activityCode = live.choose("activityCode", [await offerGetGenericTeachingActivities(live)].flat().map((it) => it.activityCode).filter(isPresent));
-    const teachingUnitCode = live.choose("teachingUnitCode", [await logisticsGetTeachingUnitLogWithDetails(live)].flat().map((it) => it.masterTeachingUnitKey).filter(isPresent).map((it) => it.teachingUnitCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TeachersPerTeachingUnit\"}}", {}, async () => live.api.offer.getLecturersByTeachingUnit(academicYearOfferId, courseOfStudyOfferId, { academicYearOrderId: academicYearOrderId, activityCode: activityCode, teachingUnitCode: teachingUnitCode }));
-    live.fingerprint((f) => f.list(result, (it) => writeEsse3TeachersPerTeachingUnit(f, it)));
-  });
-
-  liveCase(Esse3Live, "Offer.getLecturersByTeachingUnit#4", { index: 3 }, async (live) => {
-    const academicYearOfferId = live.choose("academicYearOfferId", [await offerGetOffers(live)].flat().map((it) => it.academicYearOfferId).filter(isPresent));
-    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [await offerGetOffers(live)].flat().map((it) => it.courseOfStudyOfferId).filter(isPresent));
-    const studyPlanId = live.choose("studyPlanId", [await personalDataGetCareers(live)].flat().map((it) => it.studyPlanId).filter(isPresent));
-    const studyPlanCode = live.choose("studyPlanCode", [await transcriptGetCareerSegments(live)].flat().map((it) => it.studyPlanCode).filter(isPresent));
-    const activityCode = live.choose("activityCode", [await offerGetGenericTeachingActivities(live)].flat().map((it) => it.activityCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TeachersPerTeachingUnit\"}}", {}, async () => live.api.offer.getLecturersByTeachingUnit(academicYearOfferId, courseOfStudyOfferId, { studyPlanId: studyPlanId, studyPlanCode: studyPlanCode, activityCode: activityCode }));
-    live.fingerprint((f) => f.list(result, (it) => writeEsse3TeachersPerTeachingUnit(f, it)));
-  });
-
-  liveCase(Esse3Live, "Offer.getLecturersByTeachingUnit#5", { index: 4 }, async (live) => {
-    const academicYearOfferId = live.choose("academicYearOfferId", [await offerGetOffers(live)].flat().map((it) => it.academicYearOfferId).filter(isPresent));
-    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [await offerGetOffers(live)].flat().map((it) => it.courseOfStudyOfferId).filter(isPresent));
-    const studyPlanCode = live.choose("studyPlanCode", [await transcriptGetCareerSegments(live)].flat().map((it) => it.studyPlanCode).filter(isPresent));
-    const activityCode = live.choose("activityCode", [await offerGetGenericTeachingActivities(live)].flat().map((it) => it.activityCode).filter(isPresent));
-    const teachingUnitCode = live.choose("teachingUnitCode", [await logisticsGetTeachingUnitLogWithDetails(live)].flat().map((it) => it.masterTeachingUnitKey).filter(isPresent).map((it) => it.teachingUnitCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TeachersPerTeachingUnit\"}}", {}, async () => live.api.offer.getLecturersByTeachingUnit(academicYearOfferId, courseOfStudyOfferId, { studyPlanCode: studyPlanCode, activityCode: activityCode, teachingUnitCode: teachingUnitCode }));
-    live.fingerprint((f) => f.list(result, (it) => writeEsse3TeachersPerTeachingUnit(f, it)));
-  });
-
-  liveCase(Esse3Live, "Offer.getLecturersByTeachingUnit#6", { index: 5 }, async (live) => {
-    const academicYearOfferId = live.choose("academicYearOfferId", [await offerGetOffers(live)].flat().map((it) => it.academicYearOfferId).filter(isPresent));
-    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [await offerGetOffers(live)].flat().map((it) => it.courseOfStudyOfferId).filter(isPresent));
-    const academicYearOrderId = live.choose("academicYearOrderId", [await personalDataGetCareers(live)].flat().map((it) => it.academicYearOrderId).filter(isPresent));
-    const studyPlanId = live.choose("studyPlanId", [await personalDataGetCareers(live)].flat().map((it) => it.studyPlanId).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TeachersPerTeachingUnit\"}}", {}, async () => live.api.offer.getLecturersByTeachingUnit(academicYearOfferId, courseOfStudyOfferId, { academicYearOrderId: academicYearOrderId, studyPlanId: studyPlanId }));
-    live.fingerprint((f) => f.list(result, (it) => writeEsse3TeachersPerTeachingUnit(f, it)));
-  });
-
-  liveCase(Esse3Live, "Offer.getLecturersByTeachingUnit#unknown-id", {}, async (live) => {
-    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [await offerGetOffers(live)].flat().map((it) => it.courseOfStudyOfferId).filter(isPresent));
-    await live.refused(true, async () => live.api.offer.getLecturersByTeachingUnit(987654321, courseOfStudyOfferId));
-  });
-
   liveCase(Esse3Live, "Offer.getTeachingUnitOffers#1", {}, async (live) => {
-    const academicYearOfferId = live.choose("academicYearOfferId", [await offerGetOffers(live)].flat().map((it) => it.academicYearOfferId).filter(isPresent));
-    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [await offerGetOffers(live)].flat().map((it) => it.courseOfStudyOfferId).filter(isPresent));
+    const row = live.chooseRow("academicYearOfferId, courseOfStudyOfferId", [await offerGetOffers(live)].flat(), (element) => [[element].map((it) => it.academicYearOfferId).filter(isPresent)[0], [element].map((it) => it.courseOfStudyOfferId).filter(isPresent)[0]]);
+    const academicYearOfferId = live.choose("academicYearOfferId", [row].map((it) => it.academicYearOfferId).filter(isPresent));
+    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [row].map((it) => it.courseOfStudyOfferId).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ContextualizedTeachingUnit\"}}", {}, async () => live.api.offer.getTeachingUnitOffers(academicYearOfferId, courseOfStudyOfferId));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3ContextualizedTeachingUnit(f, it)));
   });
 
   liveCase(Esse3Live, "Offer.getTeachingUnitOffers#2", { index: 1 }, async (live) => {
-    const academicYearOfferId = live.choose("academicYearOfferId", [await offerGetOffers(live)].flat().map((it) => it.academicYearOfferId).filter(isPresent));
-    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [await offerGetOffers(live)].flat().map((it) => it.courseOfStudyOfferId).filter(isPresent));
-    const academicYearOrderId = live.choose("academicYearOrderId", [await personalDataGetCareers(live)].flat().map((it) => it.academicYearOrderId).filter(isPresent));
-    const studyPlanId = live.choose("studyPlanId", [await personalDataGetCareers(live)].flat().map((it) => it.studyPlanId).filter(isPresent));
+    const row = live.chooseRow("academicYearOfferId, courseOfStudyOfferId", [await offerGetOffers(live)].flat(), (element) => [[element].map((it) => it.academicYearOfferId).filter(isPresent)[0], [element].map((it) => it.courseOfStudyOfferId).filter(isPresent)[0]]);
+    const row2 = live.chooseRow("academicYearOrderId, studyPlanId", [await personalDataGetCareers(live)].flat(), (element) => [[element].map((it) => it.academicYearOrderId).filter(isPresent)[0], [element].map((it) => it.studyPlanId).filter(isPresent)[0]]);
+    const academicYearOfferId = live.choose("academicYearOfferId", [row].map((it) => it.academicYearOfferId).filter(isPresent));
+    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [row].map((it) => it.courseOfStudyOfferId).filter(isPresent));
+    const academicYearOrderId = live.choose("academicYearOrderId", [row2].map((it) => it.academicYearOrderId).filter(isPresent));
+    const studyPlanId = live.choose("studyPlanId", [row2].map((it) => it.studyPlanId).filter(isPresent));
     const studyPlanCode = live.choose("studyPlanCode", [await transcriptGetCareerSegments(live)].flat().map((it) => it.studyPlanCode).filter(isPresent));
     const activityId = live.choose("activityId", [await offerGetGenericTeachingActivities(live)].flat().map((it) => it.activityId).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ContextualizedTeachingUnit\"}}", {}, async () => live.api.offer.getTeachingUnitOffers(academicYearOfferId, courseOfStudyOfferId, { academicYearOrderId: academicYearOrderId, studyPlanId: studyPlanId, studyPlanCode: studyPlanCode, activityId: activityId }));
@@ -349,8 +312,9 @@ describe("Esse3 Offer", () => {
   });
 
   liveCase(Esse3Live, "Offer.getTeachingUnitOffers#3", { index: 2 }, async (live) => {
-    const academicYearOfferId = live.choose("academicYearOfferId", [await offerGetOffers(live)].flat().map((it) => it.academicYearOfferId).filter(isPresent));
-    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [await offerGetOffers(live)].flat().map((it) => it.courseOfStudyOfferId).filter(isPresent));
+    const row = live.chooseRow("academicYearOfferId, courseOfStudyOfferId", [await offerGetOffers(live)].flat(), (element) => [[element].map((it) => it.academicYearOfferId).filter(isPresent)[0], [element].map((it) => it.courseOfStudyOfferId).filter(isPresent)[0]]);
+    const academicYearOfferId = live.choose("academicYearOfferId", [row].map((it) => it.academicYearOfferId).filter(isPresent));
+    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [row].map((it) => it.courseOfStudyOfferId).filter(isPresent));
     const studyPlanId = live.choose("studyPlanId", [await personalDataGetCareers(live)].flat().map((it) => it.studyPlanId).filter(isPresent));
     const studyPlanCode = live.choose("studyPlanCode", [await transcriptGetCareerSegments(live)].flat().map((it) => it.studyPlanCode).filter(isPresent));
     const activityCode = live.choose("activityCode", [await offerGetGenericTeachingActivities(live)].flat().map((it) => it.activityCode).filter(isPresent));
@@ -359,27 +323,32 @@ describe("Esse3 Offer", () => {
   });
 
   liveCase(Esse3Live, "Offer.getTeachingUnitOffers#4", { index: 3 }, async (live) => {
-    const academicYearOfferId = live.choose("academicYearOfferId", [await offerGetOffers(live)].flat().map((it) => it.academicYearOfferId).filter(isPresent));
-    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [await offerGetOffers(live)].flat().map((it) => it.courseOfStudyOfferId).filter(isPresent));
+    const row = live.chooseRow("academicYearOfferId, courseOfStudyOfferId", [await offerGetOffers(live)].flat(), (element) => [[element].map((it) => it.academicYearOfferId).filter(isPresent)[0], [element].map((it) => it.courseOfStudyOfferId).filter(isPresent)[0]]);
+    const row2 = live.chooseRow("activityId, activityCode", [await offerGetGenericTeachingActivities(live)].flat(), (element) => [[element].map((it) => it.activityId).filter(isPresent)[0], [element].map((it) => it.activityCode).filter(isPresent)[0]]);
+    const academicYearOfferId = live.choose("academicYearOfferId", [row].map((it) => it.academicYearOfferId).filter(isPresent));
+    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [row].map((it) => it.courseOfStudyOfferId).filter(isPresent));
     const academicYearOrderId = live.choose("academicYearOrderId", [await personalDataGetCareers(live)].flat().map((it) => it.academicYearOrderId).filter(isPresent));
-    const activityId = live.choose("activityId", [await offerGetGenericTeachingActivities(live)].flat().map((it) => it.activityId).filter(isPresent));
-    const activityCode = live.choose("activityCode", [await offerGetGenericTeachingActivities(live)].flat().map((it) => it.activityCode).filter(isPresent));
+    const activityId = live.choose("activityId", [row2].map((it) => it.activityId).filter(isPresent));
+    const activityCode = live.choose("activityCode", [row2].map((it) => it.activityCode).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ContextualizedTeachingUnit\"}}", {}, async () => live.api.offer.getTeachingUnitOffers(academicYearOfferId, courseOfStudyOfferId, { academicYearOrderId: academicYearOrderId, activityId: activityId, activityCode: activityCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3ContextualizedTeachingUnit(f, it)));
   });
 
   liveCase(Esse3Live, "Offer.getTeachingUnitOffers#5", { index: 4 }, async (live) => {
-    const academicYearOfferId = live.choose("academicYearOfferId", [await offerGetOffers(live)].flat().map((it) => it.academicYearOfferId).filter(isPresent));
-    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [await offerGetOffers(live)].flat().map((it) => it.courseOfStudyOfferId).filter(isPresent));
-    const academicYearOrderId = live.choose("academicYearOrderId", [await personalDataGetCareers(live)].flat().map((it) => it.academicYearOrderId).filter(isPresent));
-    const studyPlanId = live.choose("studyPlanId", [await personalDataGetCareers(live)].flat().map((it) => it.studyPlanId).filter(isPresent));
+    const row = live.chooseRow("academicYearOfferId, courseOfStudyOfferId", [await offerGetOffers(live)].flat(), (element) => [[element].map((it) => it.academicYearOfferId).filter(isPresent)[0], [element].map((it) => it.courseOfStudyOfferId).filter(isPresent)[0]]);
+    const row2 = live.chooseRow("academicYearOrderId, studyPlanId", [await personalDataGetCareers(live)].flat(), (element) => [[element].map((it) => it.academicYearOrderId).filter(isPresent)[0], [element].map((it) => it.studyPlanId).filter(isPresent)[0]]);
+    const academicYearOfferId = live.choose("academicYearOfferId", [row].map((it) => it.academicYearOfferId).filter(isPresent));
+    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [row].map((it) => it.courseOfStudyOfferId).filter(isPresent));
+    const academicYearOrderId = live.choose("academicYearOrderId", [row2].map((it) => it.academicYearOrderId).filter(isPresent));
+    const studyPlanId = live.choose("studyPlanId", [row2].map((it) => it.studyPlanId).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ContextualizedTeachingUnit\"}}", {}, async () => live.api.offer.getTeachingUnitOffers(academicYearOfferId, courseOfStudyOfferId, { academicYearOrderId: academicYearOrderId, studyPlanId: studyPlanId }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3ContextualizedTeachingUnit(f, it)));
   });
 
   liveCase(Esse3Live, "Offer.getTeachingUnitOffers#6", { index: 5 }, async (live) => {
-    const academicYearOfferId = live.choose("academicYearOfferId", [await offerGetOffers(live)].flat().map((it) => it.academicYearOfferId).filter(isPresent));
-    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [await offerGetOffers(live)].flat().map((it) => it.courseOfStudyOfferId).filter(isPresent));
+    const row = live.chooseRow("academicYearOfferId, courseOfStudyOfferId", [await offerGetOffers(live)].flat(), (element) => [[element].map((it) => it.academicYearOfferId).filter(isPresent)[0], [element].map((it) => it.courseOfStudyOfferId).filter(isPresent)[0]]);
+    const academicYearOfferId = live.choose("academicYearOfferId", [row].map((it) => it.academicYearOfferId).filter(isPresent));
+    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [row].map((it) => it.courseOfStudyOfferId).filter(isPresent));
     const studyPlanCode = live.choose("studyPlanCode", [await transcriptGetCareerSegments(live)].flat().map((it) => it.studyPlanCode).filter(isPresent));
     const activityId = live.choose("activityId", [await offerGetGenericTeachingActivities(live)].flat().map((it) => it.activityId).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ContextualizedTeachingUnit\"}}", {}, async () => live.api.offer.getTeachingUnitOffers(academicYearOfferId, courseOfStudyOfferId, { studyPlanCode: studyPlanCode, activityId: activityId }));
@@ -392,41 +361,49 @@ describe("Esse3 Offer", () => {
   });
 
   liveCase(Esse3Live, "Offer.getCancellableTeachingUnit#1", {}, async (live) => {
-    const academicYearOfferId = live.choose("academicYearOfferId", [await offerGetOffers(live)].flat().map((it) => it.academicYearOfferId).filter(isPresent));
-    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [await offerGetOffers(live)].flat().map((it) => it.courseOfStudyOfferId).filter(isPresent));
+    const row = live.chooseRow("academicYearOfferId, courseOfStudyOfferId", [await offerGetOffers(live)].flat(), (element) => [[element].map((it) => it.academicYearOfferId).filter(isPresent)[0], [element].map((it) => it.courseOfStudyOfferId).filter(isPresent)[0]]);
+    const academicYearOfferId = live.choose("academicYearOfferId", [row].map((it) => it.academicYearOfferId).filter(isPresent));
+    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [row].map((it) => it.courseOfStudyOfferId).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3OfferTeachingUnitDeletable\"}}", {}, async () => live.api.offer.getCancellableTeachingUnit(academicYearOfferId, courseOfStudyOfferId));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3OfferTeachingUnitDeletable(f, it)));
   });
 
   liveCase(Esse3Live, "Offer.getCancellableTeachingUnit#2", { index: 1 }, async (live) => {
-    const academicYearOfferId = live.choose("academicYearOfferId", [await offerGetOffers(live)].flat().map((it) => it.academicYearOfferId).filter(isPresent));
-    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [await offerGetOffers(live)].flat().map((it) => it.courseOfStudyOfferId).filter(isPresent));
-    const academicYearOrderId = live.choose("academicYearOrderId", [await personalDataGetCareers(live)].flat().map((it) => it.academicYearOrderId).filter(isPresent));
-    const studyPlanId = live.choose("studyPlanId", [await personalDataGetCareers(live)].flat().map((it) => it.studyPlanId).filter(isPresent));
+    const row = live.chooseRow("academicYearOfferId, courseOfStudyOfferId", [await offerGetOffers(live)].flat(), (element) => [[element].map((it) => it.academicYearOfferId).filter(isPresent)[0], [element].map((it) => it.courseOfStudyOfferId).filter(isPresent)[0]]);
+    const row2 = live.chooseRow("academicYearOrderId, studyPlanId", [await personalDataGetCareers(live)].flat(), (element) => [[element].map((it) => it.academicYearOrderId).filter(isPresent)[0], [element].map((it) => it.studyPlanId).filter(isPresent)[0]]);
+    const row3 = live.chooseRow("teachingUnitId, teachingUnitCode", [await logisticsGetTeachingUnitLogWithDetails(live)].flat(), (element) => [[element].map((it) => it.masterTeachingUnitKey).filter(isPresent).map((it) => it.teachingUnitId).filter(isPresent)[0], [element].map((it) => it.masterTeachingUnitKey).filter(isPresent).map((it) => it.teachingUnitCode).filter(isPresent)[0]]);
+    const academicYearOfferId = live.choose("academicYearOfferId", [row].map((it) => it.academicYearOfferId).filter(isPresent));
+    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [row].map((it) => it.courseOfStudyOfferId).filter(isPresent));
+    const academicYearOrderId = live.choose("academicYearOrderId", [row2].map((it) => it.academicYearOrderId).filter(isPresent));
+    const studyPlanId = live.choose("studyPlanId", [row2].map((it) => it.studyPlanId).filter(isPresent));
     const studyPlanCode = live.choose("studyPlanCode", [await transcriptGetCareerSegments(live)].flat().map((it) => it.studyPlanCode).filter(isPresent));
     const activityCode = live.choose("activityCode", [await offerGetGenericTeachingActivities(live)].flat().map((it) => it.activityCode).filter(isPresent));
-    const teachingUnitId = live.choose("teachingUnitId", [await logisticsGetTeachingUnitLogWithDetails(live)].flat().map((it) => it.masterTeachingUnitKey).filter(isPresent).map((it) => it.teachingUnitId).filter(isPresent));
-    const teachingUnitCode = live.choose("teachingUnitCode", [await logisticsGetTeachingUnitLogWithDetails(live)].flat().map((it) => it.masterTeachingUnitKey).filter(isPresent).map((it) => it.teachingUnitCode).filter(isPresent));
+    const teachingUnitId = live.choose("teachingUnitId", [row3].map((it) => it.masterTeachingUnitKey).filter(isPresent).map((it) => it.teachingUnitId).filter(isPresent));
+    const teachingUnitCode = live.choose("teachingUnitCode", [row3].map((it) => it.masterTeachingUnitKey).filter(isPresent).map((it) => it.teachingUnitCode).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3OfferTeachingUnitDeletable\"}}", {}, async () => live.api.offer.getCancellableTeachingUnit(academicYearOfferId, courseOfStudyOfferId, { academicYearOrderId: academicYearOrderId, studyPlanId: studyPlanId, studyPlanCode: studyPlanCode, activityCode: activityCode, teachingUnitId: teachingUnitId, teachingUnitCode: teachingUnitCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3OfferTeachingUnitDeletable(f, it)));
   });
 
   liveCase(Esse3Live, "Offer.getCancellableTeachingUnit#3", { index: 2 }, async (live) => {
-    const academicYearOfferId = live.choose("academicYearOfferId", [await offerGetOffers(live)].flat().map((it) => it.academicYearOfferId).filter(isPresent));
-    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [await offerGetOffers(live)].flat().map((it) => it.courseOfStudyOfferId).filter(isPresent));
+    const row = live.chooseRow("academicYearOfferId, courseOfStudyOfferId", [await offerGetOffers(live)].flat(), (element) => [[element].map((it) => it.academicYearOfferId).filter(isPresent)[0], [element].map((it) => it.courseOfStudyOfferId).filter(isPresent)[0]]);
+    const row2 = live.chooseRow("activityId, activityCode", [await offerGetGenericTeachingActivities(live)].flat(), (element) => [[element].map((it) => it.activityId).filter(isPresent)[0], [element].map((it) => it.activityCode).filter(isPresent)[0]]);
+    const academicYearOfferId = live.choose("academicYearOfferId", [row].map((it) => it.academicYearOfferId).filter(isPresent));
+    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [row].map((it) => it.courseOfStudyOfferId).filter(isPresent));
     const studyPlanCode = live.choose("studyPlanCode", [await transcriptGetCareerSegments(live)].flat().map((it) => it.studyPlanCode).filter(isPresent));
-    const activityId = live.choose("activityId", [await offerGetGenericTeachingActivities(live)].flat().map((it) => it.activityId).filter(isPresent));
-    const activityCode = live.choose("activityCode", [await offerGetGenericTeachingActivities(live)].flat().map((it) => it.activityCode).filter(isPresent));
+    const activityId = live.choose("activityId", [row2].map((it) => it.activityId).filter(isPresent));
+    const activityCode = live.choose("activityCode", [row2].map((it) => it.activityCode).filter(isPresent));
     const teachingUnitCode = live.choose("teachingUnitCode", [await logisticsGetTeachingUnitLogWithDetails(live)].flat().map((it) => it.masterTeachingUnitKey).filter(isPresent).map((it) => it.teachingUnitCode).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3OfferTeachingUnitDeletable\"}}", {}, async () => live.api.offer.getCancellableTeachingUnit(academicYearOfferId, courseOfStudyOfferId, { studyPlanCode: studyPlanCode, activityId: activityId, activityCode: activityCode, teachingUnitCode: teachingUnitCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3OfferTeachingUnitDeletable(f, it)));
   });
 
   liveCase(Esse3Live, "Offer.getCancellableTeachingUnit#4", { index: 3 }, async (live) => {
-    const academicYearOfferId = live.choose("academicYearOfferId", [await offerGetOffers(live)].flat().map((it) => it.academicYearOfferId).filter(isPresent));
-    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [await offerGetOffers(live)].flat().map((it) => it.courseOfStudyOfferId).filter(isPresent));
-    const academicYearOrderId = live.choose("academicYearOrderId", [await personalDataGetCareers(live)].flat().map((it) => it.academicYearOrderId).filter(isPresent));
-    const studyPlanId = live.choose("studyPlanId", [await personalDataGetCareers(live)].flat().map((it) => it.studyPlanId).filter(isPresent));
+    const row = live.chooseRow("academicYearOfferId, courseOfStudyOfferId", [await offerGetOffers(live)].flat(), (element) => [[element].map((it) => it.academicYearOfferId).filter(isPresent)[0], [element].map((it) => it.courseOfStudyOfferId).filter(isPresent)[0]]);
+    const row2 = live.chooseRow("academicYearOrderId, studyPlanId", [await personalDataGetCareers(live)].flat(), (element) => [[element].map((it) => it.academicYearOrderId).filter(isPresent)[0], [element].map((it) => it.studyPlanId).filter(isPresent)[0]]);
+    const academicYearOfferId = live.choose("academicYearOfferId", [row].map((it) => it.academicYearOfferId).filter(isPresent));
+    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [row].map((it) => it.courseOfStudyOfferId).filter(isPresent));
+    const academicYearOrderId = live.choose("academicYearOrderId", [row2].map((it) => it.academicYearOrderId).filter(isPresent));
+    const studyPlanId = live.choose("studyPlanId", [row2].map((it) => it.studyPlanId).filter(isPresent));
     const activityId = live.choose("activityId", [await offerGetGenericTeachingActivities(live)].flat().map((it) => it.activityId).filter(isPresent));
     const teachingUnitId = live.choose("teachingUnitId", [await logisticsGetTeachingUnitLogWithDetails(live)].flat().map((it) => it.masterTeachingUnitKey).filter(isPresent).map((it) => it.teachingUnitId).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3OfferTeachingUnitDeletable\"}}", {}, async () => live.api.offer.getCancellableTeachingUnit(academicYearOfferId, courseOfStudyOfferId, { academicYearOrderId: academicYearOrderId, studyPlanId: studyPlanId, activityId: activityId, teachingUnitId: teachingUnitId }));
@@ -434,18 +411,21 @@ describe("Esse3 Offer", () => {
   });
 
   liveCase(Esse3Live, "Offer.getCancellableTeachingUnit#5", { index: 4 }, async (live) => {
-    const academicYearOfferId = live.choose("academicYearOfferId", [await offerGetOffers(live)].flat().map((it) => it.academicYearOfferId).filter(isPresent));
-    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [await offerGetOffers(live)].flat().map((it) => it.courseOfStudyOfferId).filter(isPresent));
+    const row = live.chooseRow("academicYearOfferId, courseOfStudyOfferId", [await offerGetOffers(live)].flat(), (element) => [[element].map((it) => it.academicYearOfferId).filter(isPresent)[0], [element].map((it) => it.courseOfStudyOfferId).filter(isPresent)[0]]);
+    const row2 = live.chooseRow("teachingUnitId, teachingUnitCode", [await logisticsGetTeachingUnitLogWithDetails(live)].flat(), (element) => [[element].map((it) => it.masterTeachingUnitKey).filter(isPresent).map((it) => it.teachingUnitId).filter(isPresent)[0], [element].map((it) => it.masterTeachingUnitKey).filter(isPresent).map((it) => it.teachingUnitCode).filter(isPresent)[0]]);
+    const academicYearOfferId = live.choose("academicYearOfferId", [row].map((it) => it.academicYearOfferId).filter(isPresent));
+    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [row].map((it) => it.courseOfStudyOfferId).filter(isPresent));
     const academicYearOrderId = live.choose("academicYearOrderId", [await personalDataGetCareers(live)].flat().map((it) => it.academicYearOrderId).filter(isPresent));
-    const teachingUnitId = live.choose("teachingUnitId", [await logisticsGetTeachingUnitLogWithDetails(live)].flat().map((it) => it.masterTeachingUnitKey).filter(isPresent).map((it) => it.teachingUnitId).filter(isPresent));
-    const teachingUnitCode = live.choose("teachingUnitCode", [await logisticsGetTeachingUnitLogWithDetails(live)].flat().map((it) => it.masterTeachingUnitKey).filter(isPresent).map((it) => it.teachingUnitCode).filter(isPresent));
+    const teachingUnitId = live.choose("teachingUnitId", [row2].map((it) => it.masterTeachingUnitKey).filter(isPresent).map((it) => it.teachingUnitId).filter(isPresent));
+    const teachingUnitCode = live.choose("teachingUnitCode", [row2].map((it) => it.masterTeachingUnitKey).filter(isPresent).map((it) => it.teachingUnitCode).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3OfferTeachingUnitDeletable\"}}", {}, async () => live.api.offer.getCancellableTeachingUnit(academicYearOfferId, courseOfStudyOfferId, { academicYearOrderId: academicYearOrderId, teachingUnitId: teachingUnitId, teachingUnitCode: teachingUnitCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3OfferTeachingUnitDeletable(f, it)));
   });
 
   liveCase(Esse3Live, "Offer.getCancellableTeachingUnit#6", { index: 5 }, async (live) => {
-    const academicYearOfferId = live.choose("academicYearOfferId", [await offerGetOffers(live)].flat().map((it) => it.academicYearOfferId).filter(isPresent));
-    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [await offerGetOffers(live)].flat().map((it) => it.courseOfStudyOfferId).filter(isPresent));
+    const row = live.chooseRow("academicYearOfferId, courseOfStudyOfferId", [await offerGetOffers(live)].flat(), (element) => [[element].map((it) => it.academicYearOfferId).filter(isPresent)[0], [element].map((it) => it.courseOfStudyOfferId).filter(isPresent)[0]]);
+    const academicYearOfferId = live.choose("academicYearOfferId", [row].map((it) => it.academicYearOfferId).filter(isPresent));
+    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [row].map((it) => it.courseOfStudyOfferId).filter(isPresent));
     const studyPlanId = live.choose("studyPlanId", [await personalDataGetCareers(live)].flat().map((it) => it.studyPlanId).filter(isPresent));
     const studyPlanCode = live.choose("studyPlanCode", [await transcriptGetCareerSegments(live)].flat().map((it) => it.studyPlanCode).filter(isPresent));
     const activityId = live.choose("activityId", [await offerGetGenericTeachingActivities(live)].flat().map((it) => it.activityId).filter(isPresent));
@@ -460,30 +440,36 @@ describe("Esse3 Offer", () => {
   });
 
   liveCase(Esse3Live, "Offer.getOfferedSEG#1", {}, async (live) => {
-    const academicYearOfferId = live.choose("academicYearOfferId", [await offerGetOffers(live)].flat().map((it) => it.academicYearOfferId).filter(isPresent));
-    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [await offerGetOffers(live)].flat().map((it) => it.courseOfStudyOfferId).filter(isPresent));
+    const row = live.chooseRow("academicYearOfferId, courseOfStudyOfferId", [await offerGetOffers(live)].flat(), (element) => [[element].map((it) => it.academicYearOfferId).filter(isPresent)[0], [element].map((it) => it.courseOfStudyOfferId).filter(isPresent)[0]]);
+    const academicYearOfferId = live.choose("academicYearOfferId", [row].map((it) => it.academicYearOfferId).filter(isPresent));
+    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [row].map((it) => it.courseOfStudyOfferId).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ContextualizedSegment\"}}", {}, async () => live.api.offer.getOfferedSEG(academicYearOfferId, courseOfStudyOfferId));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3ContextualizedSegment(f, it)));
   });
 
   liveCase(Esse3Live, "Offer.getOfferedSEG#2", { index: 1 }, async (live) => {
-    const academicYearOfferId = live.choose("academicYearOfferId", [await offerGetOffers(live)].flat().map((it) => it.academicYearOfferId).filter(isPresent));
-    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [await offerGetOffers(live)].flat().map((it) => it.courseOfStudyOfferId).filter(isPresent));
-    const academicYearOrderId = live.choose("academicYearOrderId", [await personalDataGetCareers(live)].flat().map((it) => it.academicYearOrderId).filter(isPresent));
-    const studyPlanId = live.choose("studyPlanId", [await personalDataGetCareers(live)].flat().map((it) => it.studyPlanId).filter(isPresent));
+    const row = live.chooseRow("academicYearOfferId, courseOfStudyOfferId", [await offerGetOffers(live)].flat(), (element) => [[element].map((it) => it.academicYearOfferId).filter(isPresent)[0], [element].map((it) => it.courseOfStudyOfferId).filter(isPresent)[0]]);
+    const row2 = live.chooseRow("academicYearOrderId, studyPlanId", [await personalDataGetCareers(live)].flat(), (element) => [[element].map((it) => it.academicYearOrderId).filter(isPresent)[0], [element].map((it) => it.studyPlanId).filter(isPresent)[0]]);
+    const row3 = live.chooseRow("activityId, activityCode", [await offerGetGenericTeachingActivities(live)].flat(), (element) => [[element].map((it) => it.activityId).filter(isPresent)[0], [element].map((it) => it.activityCode).filter(isPresent)[0]]);
+    const academicYearOfferId = live.choose("academicYearOfferId", [row].map((it) => it.academicYearOfferId).filter(isPresent));
+    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [row].map((it) => it.courseOfStudyOfferId).filter(isPresent));
+    const academicYearOrderId = live.choose("academicYearOrderId", [row2].map((it) => it.academicYearOrderId).filter(isPresent));
+    const studyPlanId = live.choose("studyPlanId", [row2].map((it) => it.studyPlanId).filter(isPresent));
     const studyPlanCode = live.choose("studyPlanCode", [await transcriptGetCareerSegments(live)].flat().map((it) => it.studyPlanCode).filter(isPresent));
-    const activityId = live.choose("activityId", [await offerGetGenericTeachingActivities(live)].flat().map((it) => it.activityId).filter(isPresent));
-    const activityCode = live.choose("activityCode", [await offerGetGenericTeachingActivities(live)].flat().map((it) => it.activityCode).filter(isPresent));
+    const activityId = live.choose("activityId", [row3].map((it) => it.activityId).filter(isPresent));
+    const activityCode = live.choose("activityCode", [row3].map((it) => it.activityCode).filter(isPresent));
     const teachingUnitId = live.choose("teachingUnitId", [await logisticsGetTeachingUnitLogWithDetails(live)].flat().map((it) => it.masterTeachingUnitKey).filter(isPresent).map((it) => it.teachingUnitId).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ContextualizedSegment\"}}", {}, async () => live.api.offer.getOfferedSEG(academicYearOfferId, courseOfStudyOfferId, { academicYearOrderId: academicYearOrderId, studyPlanId: studyPlanId, studyPlanCode: studyPlanCode, activityId: activityId, activityCode: activityCode, teachingUnitId: teachingUnitId }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3ContextualizedSegment(f, it)));
   });
 
   liveCase(Esse3Live, "Offer.getOfferedSEG#3", { index: 2 }, async (live) => {
-    const academicYearOfferId = live.choose("academicYearOfferId", [await offerGetOffers(live)].flat().map((it) => it.academicYearOfferId).filter(isPresent));
-    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [await offerGetOffers(live)].flat().map((it) => it.courseOfStudyOfferId).filter(isPresent));
-    const academicYearOrderId = live.choose("academicYearOrderId", [await personalDataGetCareers(live)].flat().map((it) => it.academicYearOrderId).filter(isPresent));
-    const studyPlanId = live.choose("studyPlanId", [await personalDataGetCareers(live)].flat().map((it) => it.studyPlanId).filter(isPresent));
+    const row = live.chooseRow("academicYearOfferId, courseOfStudyOfferId", [await offerGetOffers(live)].flat(), (element) => [[element].map((it) => it.academicYearOfferId).filter(isPresent)[0], [element].map((it) => it.courseOfStudyOfferId).filter(isPresent)[0]]);
+    const row2 = live.chooseRow("academicYearOrderId, studyPlanId", [await personalDataGetCareers(live)].flat(), (element) => [[element].map((it) => it.academicYearOrderId).filter(isPresent)[0], [element].map((it) => it.studyPlanId).filter(isPresent)[0]]);
+    const academicYearOfferId = live.choose("academicYearOfferId", [row].map((it) => it.academicYearOfferId).filter(isPresent));
+    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [row].map((it) => it.courseOfStudyOfferId).filter(isPresent));
+    const academicYearOrderId = live.choose("academicYearOrderId", [row2].map((it) => it.academicYearOrderId).filter(isPresent));
+    const studyPlanId = live.choose("studyPlanId", [row2].map((it) => it.studyPlanId).filter(isPresent));
     const studyPlanCode = live.choose("studyPlanCode", [await transcriptGetCareerSegments(live)].flat().map((it) => it.studyPlanCode).filter(isPresent));
     const teachingUnitCode = live.choose("teachingUnitCode", [await logisticsGetTeachingUnitLogWithDetails(live)].flat().map((it) => it.masterTeachingUnitKey).filter(isPresent).map((it) => it.teachingUnitCode).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ContextualizedSegment\"}}", {}, async () => live.api.offer.getOfferedSEG(academicYearOfferId, courseOfStudyOfferId, { academicYearOrderId: academicYearOrderId, studyPlanId: studyPlanId, studyPlanCode: studyPlanCode, teachingUnitCode: teachingUnitCode }));
@@ -491,19 +477,23 @@ describe("Esse3 Offer", () => {
   });
 
   liveCase(Esse3Live, "Offer.getOfferedSEG#4", { index: 3 }, async (live) => {
-    const academicYearOfferId = live.choose("academicYearOfferId", [await offerGetOffers(live)].flat().map((it) => it.academicYearOfferId).filter(isPresent));
-    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [await offerGetOffers(live)].flat().map((it) => it.courseOfStudyOfferId).filter(isPresent));
-    const activityId = live.choose("activityId", [await offerGetGenericTeachingActivities(live)].flat().map((it) => it.activityId).filter(isPresent));
-    const activityCode = live.choose("activityCode", [await offerGetGenericTeachingActivities(live)].flat().map((it) => it.activityCode).filter(isPresent));
-    const teachingUnitId = live.choose("teachingUnitId", [await logisticsGetTeachingUnitLogWithDetails(live)].flat().map((it) => it.masterTeachingUnitKey).filter(isPresent).map((it) => it.teachingUnitId).filter(isPresent));
-    const teachingUnitCode = live.choose("teachingUnitCode", [await logisticsGetTeachingUnitLogWithDetails(live)].flat().map((it) => it.masterTeachingUnitKey).filter(isPresent).map((it) => it.teachingUnitCode).filter(isPresent));
+    const row = live.chooseRow("academicYearOfferId, courseOfStudyOfferId", [await offerGetOffers(live)].flat(), (element) => [[element].map((it) => it.academicYearOfferId).filter(isPresent)[0], [element].map((it) => it.courseOfStudyOfferId).filter(isPresent)[0]]);
+    const row2 = live.chooseRow("activityId, activityCode", [await offerGetGenericTeachingActivities(live)].flat(), (element) => [[element].map((it) => it.activityId).filter(isPresent)[0], [element].map((it) => it.activityCode).filter(isPresent)[0]]);
+    const row3 = live.chooseRow("teachingUnitId, teachingUnitCode", [await logisticsGetTeachingUnitLogWithDetails(live)].flat(), (element) => [[element].map((it) => it.masterTeachingUnitKey).filter(isPresent).map((it) => it.teachingUnitId).filter(isPresent)[0], [element].map((it) => it.masterTeachingUnitKey).filter(isPresent).map((it) => it.teachingUnitCode).filter(isPresent)[0]]);
+    const academicYearOfferId = live.choose("academicYearOfferId", [row].map((it) => it.academicYearOfferId).filter(isPresent));
+    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [row].map((it) => it.courseOfStudyOfferId).filter(isPresent));
+    const activityId = live.choose("activityId", [row2].map((it) => it.activityId).filter(isPresent));
+    const activityCode = live.choose("activityCode", [row2].map((it) => it.activityCode).filter(isPresent));
+    const teachingUnitId = live.choose("teachingUnitId", [row3].map((it) => it.masterTeachingUnitKey).filter(isPresent).map((it) => it.teachingUnitId).filter(isPresent));
+    const teachingUnitCode = live.choose("teachingUnitCode", [row3].map((it) => it.masterTeachingUnitKey).filter(isPresent).map((it) => it.teachingUnitCode).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ContextualizedSegment\"}}", {}, async () => live.api.offer.getOfferedSEG(academicYearOfferId, courseOfStudyOfferId, { activityId: activityId, activityCode: activityCode, teachingUnitId: teachingUnitId, teachingUnitCode: teachingUnitCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3ContextualizedSegment(f, it)));
   });
 
   liveCase(Esse3Live, "Offer.getOfferedSEG#5", { index: 4 }, async (live) => {
-    const academicYearOfferId = live.choose("academicYearOfferId", [await offerGetOffers(live)].flat().map((it) => it.academicYearOfferId).filter(isPresent));
-    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [await offerGetOffers(live)].flat().map((it) => it.courseOfStudyOfferId).filter(isPresent));
+    const row = live.chooseRow("academicYearOfferId, courseOfStudyOfferId", [await offerGetOffers(live)].flat(), (element) => [[element].map((it) => it.academicYearOfferId).filter(isPresent)[0], [element].map((it) => it.courseOfStudyOfferId).filter(isPresent)[0]]);
+    const academicYearOfferId = live.choose("academicYearOfferId", [row].map((it) => it.academicYearOfferId).filter(isPresent));
+    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [row].map((it) => it.courseOfStudyOfferId).filter(isPresent));
     const studyPlanId = live.choose("studyPlanId", [await personalDataGetCareers(live)].flat().map((it) => it.studyPlanId).filter(isPresent));
     const studyPlanCode = live.choose("studyPlanCode", [await transcriptGetCareerSegments(live)].flat().map((it) => it.studyPlanCode).filter(isPresent));
     const activityId = live.choose("activityId", [await offerGetGenericTeachingActivities(live)].flat().map((it) => it.activityId).filter(isPresent));
@@ -513,12 +503,14 @@ describe("Esse3 Offer", () => {
   });
 
   liveCase(Esse3Live, "Offer.getOfferedSEG#6", { index: 5 }, async (live) => {
-    const academicYearOfferId = live.choose("academicYearOfferId", [await offerGetOffers(live)].flat().map((it) => it.academicYearOfferId).filter(isPresent));
-    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [await offerGetOffers(live)].flat().map((it) => it.courseOfStudyOfferId).filter(isPresent));
+    const row = live.chooseRow("academicYearOfferId, courseOfStudyOfferId", [await offerGetOffers(live)].flat(), (element) => [[element].map((it) => it.academicYearOfferId).filter(isPresent)[0], [element].map((it) => it.courseOfStudyOfferId).filter(isPresent)[0]]);
+    const row2 = live.chooseRow("teachingUnitId, teachingUnitCode", [await logisticsGetTeachingUnitLogWithDetails(live)].flat(), (element) => [[element].map((it) => it.masterTeachingUnitKey).filter(isPresent).map((it) => it.teachingUnitId).filter(isPresent)[0], [element].map((it) => it.masterTeachingUnitKey).filter(isPresent).map((it) => it.teachingUnitCode).filter(isPresent)[0]]);
+    const academicYearOfferId = live.choose("academicYearOfferId", [row].map((it) => it.academicYearOfferId).filter(isPresent));
+    const courseOfStudyOfferId = live.choose("courseOfStudyOfferId", [row].map((it) => it.courseOfStudyOfferId).filter(isPresent));
     const academicYearOrderId = live.choose("academicYearOrderId", [await personalDataGetCareers(live)].flat().map((it) => it.academicYearOrderId).filter(isPresent));
     const activityCode = live.choose("activityCode", [await offerGetGenericTeachingActivities(live)].flat().map((it) => it.activityCode).filter(isPresent));
-    const teachingUnitId = live.choose("teachingUnitId", [await logisticsGetTeachingUnitLogWithDetails(live)].flat().map((it) => it.masterTeachingUnitKey).filter(isPresent).map((it) => it.teachingUnitId).filter(isPresent));
-    const teachingUnitCode = live.choose("teachingUnitCode", [await logisticsGetTeachingUnitLogWithDetails(live)].flat().map((it) => it.masterTeachingUnitKey).filter(isPresent).map((it) => it.teachingUnitCode).filter(isPresent));
+    const teachingUnitId = live.choose("teachingUnitId", [row2].map((it) => it.masterTeachingUnitKey).filter(isPresent).map((it) => it.teachingUnitId).filter(isPresent));
+    const teachingUnitCode = live.choose("teachingUnitCode", [row2].map((it) => it.masterTeachingUnitKey).filter(isPresent).map((it) => it.teachingUnitCode).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ContextualizedSegment\"}}", {}, async () => live.api.offer.getOfferedSEG(academicYearOfferId, courseOfStudyOfferId, { academicYearOrderId: academicYearOrderId, activityCode: activityCode, teachingUnitId: teachingUnitId, teachingUnitCode: teachingUnitCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3ContextualizedSegment(f, it)));
   });

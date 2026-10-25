@@ -14,8 +14,9 @@ class EasyStaffExamsLiveTest : LiveTest<EasyStaffApi>(EasyStaffLive) {
     @Test
     @DisplayName("Exams.getExamsByProgram#1")
     fun getExamsByProgram1() = case("Exams.getExamsByProgram#1") {
-        val teachingArea = choose("teachingArea", listOf(coreGetStudyPrograms()).flatten().mapNotNull { it.teachingAreaCode })
-        val program = choose("program", listOf(coreGetStudyPrograms()).flatten().mapNotNull { it.code })
+        val row = chooseRow("teachingArea, program", listOf(coreGetStudyPrograms()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.teachingAreaCode }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.code }.firstOrNull()?.toString()) }
+        val teachingArea = choose("teachingArea", listOf(row).mapNotNull { it.teachingAreaCode })
+        val program = choose("program", listOf(row).mapNotNull { it.code })
         val years = listOf(choose("years", listOf(coreGetStudyPrograms()).flatten().mapNotNull { it.years }.flatten().mapNotNull { it.code }))
         val from = LocalDate.parse(LiveTemplates.resolve("{today}"))
         val to = LocalDate.parse(LiveTemplates.resolve("{today+30}"))
@@ -28,8 +29,9 @@ class EasyStaffExamsLiveTest : LiveTest<EasyStaffApi>(EasyStaffLive) {
     @Test
     @DisplayName("Exams.getExamsByProgram#2")
     fun getExamsByProgram2() = case("Exams.getExamsByProgram#2", index = 1) {
-        val teachingArea = choose("teachingArea", listOf(coreGetStudyPrograms()).flatten().mapNotNull { it.teachingAreaCode })
-        val program = choose("program", listOf(coreGetStudyPrograms()).flatten().mapNotNull { it.code })
+        val row = chooseRow("teachingArea, program", listOf(coreGetStudyPrograms()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.teachingAreaCode }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.code }.firstOrNull()?.toString()) }
+        val teachingArea = choose("teachingArea", listOf(row).mapNotNull { it.teachingAreaCode })
+        val program = choose("program", listOf(row).mapNotNull { it.code })
         val years = listOf(choose("years", listOf(coreGetStudyPrograms()).flatten().mapNotNull { it.years }.flatten().mapNotNull { it.code }))
         val from = LocalDate.parse(LiveTemplates.resolve("{today}"))
         val to = LocalDate.parse(LiveTemplates.resolve("{today+30}"))
@@ -42,8 +44,9 @@ class EasyStaffExamsLiveTest : LiveTest<EasyStaffApi>(EasyStaffLive) {
     @Test
     @DisplayName("Exams.getExamsByProgram#3")
     fun getExamsByProgram3() = case("Exams.getExamsByProgram#3", index = 2) {
-        val teachingArea = choose("teachingArea", listOf(coreGetStudyPrograms()).flatten().mapNotNull { it.teachingAreaCode })
-        val program = choose("program", listOf(coreGetStudyPrograms()).flatten().mapNotNull { it.code })
+        val row = chooseRow("teachingArea, program", listOf(coreGetStudyPrograms()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.teachingAreaCode }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.code }.firstOrNull()?.toString()) }
+        val teachingArea = choose("teachingArea", listOf(row).mapNotNull { it.teachingAreaCode })
+        val program = choose("program", listOf(row).mapNotNull { it.code })
         val years = listOf(choose("years", listOf(coreGetStudyPrograms()).flatten().mapNotNull { it.years }.flatten().mapNotNull { it.code }))
         val from = LocalDate.parse(LiveTemplates.resolve("{today}"))
         val to = LocalDate.parse(LiveTemplates.resolve("{today+30}"))
@@ -56,8 +59,9 @@ class EasyStaffExamsLiveTest : LiveTest<EasyStaffApi>(EasyStaffLive) {
     @Test
     @DisplayName("Exams.getExamsByProgram#4")
     fun getExamsByProgram4() = case("Exams.getExamsByProgram#4", index = 3) {
-        val teachingArea = choose("teachingArea", listOf(coreGetStudyPrograms()).flatten().mapNotNull { it.teachingAreaCode })
-        val program = choose("program", listOf(coreGetStudyPrograms()).flatten().mapNotNull { it.code })
+        val row = chooseRow("teachingArea, program", listOf(coreGetStudyPrograms()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.teachingAreaCode }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.code }.firstOrNull()?.toString()) }
+        val teachingArea = choose("teachingArea", listOf(row).mapNotNull { it.teachingAreaCode })
+        val program = choose("program", listOf(row).mapNotNull { it.code })
         val years = listOf(choose("years", listOf(coreGetStudyPrograms()).flatten().mapNotNull { it.years }.flatten().mapNotNull { it.code }))
         val from = LocalDate.parse(LiveTemplates.resolve("{today}"))
         val to = LocalDate.parse(LiveTemplates.resolve("{today+30}"))
@@ -70,8 +74,9 @@ class EasyStaffExamsLiveTest : LiveTest<EasyStaffApi>(EasyStaffLive) {
     @Test
     @DisplayName("Exams.getExamsByProgram#5")
     fun getExamsByProgram5() = case("Exams.getExamsByProgram#5", index = 4) {
-        val teachingArea = choose("teachingArea", listOf(coreGetStudyPrograms()).flatten().mapNotNull { it.teachingAreaCode })
-        val program = choose("program", listOf(coreGetStudyPrograms()).flatten().mapNotNull { it.code })
+        val row = chooseRow("teachingArea, program", listOf(coreGetStudyPrograms()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.teachingAreaCode }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.code }.firstOrNull()?.toString()) }
+        val teachingArea = choose("teachingArea", listOf(row).mapNotNull { it.teachingAreaCode })
+        val program = choose("program", listOf(row).mapNotNull { it.code })
         val years = listOf(choose("years", listOf(coreGetStudyPrograms()).flatten().mapNotNull { it.years }.flatten().mapNotNull { it.code }))
         val from = LocalDate.parse(LiveTemplates.resolve("{today}"))
         val to = LocalDate.parse(LiveTemplates.resolve("{today+30}"))

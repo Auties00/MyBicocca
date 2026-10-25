@@ -9,6 +9,9 @@ x-mb-id: esse3
 x-mb-prefix: Esse3
 x-mb-client:
   baseUrl: https://s3w.si.unimib.it/e3rest/api
+  # Some services, such as the record book's exam calls, take longer than 30 seconds to answer
+  # when Esse3 hasn't worked them out recently.
+  timeoutSeconds: 60
   # The web portal's pages need the session cookies its SSO login leaves.
   keepsCookies: true
   caches: true

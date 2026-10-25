@@ -7,175 +7,145 @@ import XCTest
 
 /// The live tests of the Esse3 Logistics module, planned from `common/specs/esse3/tests.yaml`.
 final class Esse3LogisticsLiveTests: XCTestCase {
-    func test_getEasystaffLogistics1() async throws {
-        try await liveCase(Esse3Live.api, "Logistics.getEasystaffLogistics#1") { live in
-            let academicYearOfferId = try live.choose("academicYearOfferId", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOfferId }.compactMap { Int($0) })
-            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3EasystaffActivityLogWithDetails\"}}") { try await live.api.logistics.getEasystaffLogistics(academicYearOfferId: academicYearOfferId) }
-            live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3EasystaffActivityLogWithDetails(f, item0) } }
-        }
-    }
-
-    func test_getEasystaffLogistics2() async throws {
-        try await liveCase(Esse3Live.api, "Logistics.getEasystaffLogistics#2", index: 1) { live in
-            let academicYearOfferId = try live.choose("academicYearOfferId", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOfferId }.compactMap { Int($0) })
-            let departmentCode = try live.choose("departmentCode", [try await Esse3Live.offerGetOffers(live)].flatMap { $0 }.compactMap { $0.departmentCode })
-            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3EasystaffActivityLogWithDetails\"}}") { try await live.api.logistics.getEasystaffLogistics(academicYearOfferId: academicYearOfferId, departmentCode: departmentCode) }
-            live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3EasystaffActivityLogWithDetails(f, item0) } }
-        }
-    }
-
-    func test_getEasystaffLogisticsUnknownId() async throws {
-        try await liveCase(Esse3Live.api, "Logistics.getEasystaffLogistics#unknown-id") { live in
-            try await live.refused(acceptsEmpty: true) { try await live.api.logistics.getEasystaffLogistics(academicYearOfferId: 987654321) }
-        }
-    }
-
-    func test_getEasystaffStructure1() async throws {
-        try await liveCase(Esse3Live.api, "Logistics.getEasystaffStructure#1") { live in
-            let academicYearOfferId = try live.choose("academicYearOfferId", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOfferId }.compactMap { Int($0) })
-            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3EasystaffCourseOrderWithDetails\"}}") { try await live.api.logistics.getEasystaffStructure(academicYearOfferId: academicYearOfferId) }
-            live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3EasystaffCourseOrderWithDetails(f, item0) } }
-        }
-    }
-
-    func test_getEasystaffStructure2() async throws {
-        try await liveCase(Esse3Live.api, "Logistics.getEasystaffStructure#2", index: 1) { live in
-            let academicYearOfferId = try live.choose("academicYearOfferId", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOfferId }.compactMap { Int($0) })
-            let departmentCode = try live.choose("departmentCode", [try await Esse3Live.offerGetOffers(live)].flatMap { $0 }.compactMap { $0.departmentCode })
-            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3EasystaffCourseOrderWithDetails\"}}") { try await live.api.logistics.getEasystaffStructure(academicYearOfferId: academicYearOfferId, departmentCode: departmentCode) }
-            live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3EasystaffCourseOrderWithDetails(f, item0) } }
-        }
-    }
-
-    func test_getEasystaffStructureUnknownId() async throws {
-        try await liveCase(Esse3Live.api, "Logistics.getEasystaffStructure#unknown-id") { live in
-            try await live.refused(acceptsEmpty: true) { try await live.api.logistics.getEasystaffStructure(academicYearOfferId: 987654321) }
-        }
-    }
-
     func test_getLogistics1() async throws {
         try await liveCase(Esse3Live.api, "Logistics.getLogistics#1") { live in
-            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ActivityLog\"}}") { try await live.api.logistics.getLogistics() }
+            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.p06CourseOfStudyCode })
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ActivityLog\"}}") { try await live.api.logistics.getLogistics(courseOfStudyCode: courseOfStudyCode) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3ActivityLog(f, item0) } }
         }
     }
 
     func test_getLogistics2() async throws {
         try await liveCase(Esse3Live.api, "Logistics.getLogistics#2", index: 1) { live in
+            let row = try live.chooseRow("academicYearOrderId, studyPlanId", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.academicYearOrderId }); let key1: String? = live.firstText([element].compactMap { $0.studyPlanId }); return [key0, key1] }
+            let row2 = try live.chooseRow("activityId, activityCode", [try await Esse3Live.offerGetGenericTeachingActivities(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.activityId }); let key1: String? = live.firstText([element].compactMap { $0.activityCode }); return [key0, key1] }
+            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.p06CourseOfStudyCode })
             let academicYearOfferId = try live.choose("academicYearOfferId", [try await Esse3Live.offerGetOffers(live)].flatMap { $0 }.compactMap { $0.academicYearOfferId })
-            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.structureGetCoursesOfStudy(live)].flatMap { $0 }.compactMap { $0.courseOfStudyCode })
-            let academicYearOrderId = try live.choose("academicYearOrderId", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }.compactMap { $0.academicYearOrderId }.compactMap { Int($0) })
-            let studyPlanId = try live.choose("studyPlanId", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }.compactMap { $0.studyPlanId })
+            let academicYearOrderId = try live.choose("academicYearOrderId", [row].compactMap { $0.academicYearOrderId }.compactMap { Int($0) })
+            let studyPlanId = try live.choose("studyPlanId", [row].compactMap { $0.studyPlanId })
             let studyPlanCode = try live.choose("studyPlanCode", [try await Esse3Live.transcriptGetCareerSegments(live)].flatMap { $0 }.compactMap { $0.studyPlanCode })
-            let activityId = try live.choose("activityId", [try await Esse3Live.offerGetGenericTeachingActivities(live)].flatMap { $0 }.compactMap { $0.activityId })
-            let teachingLanguageCode = try live.choose("teachingLanguageCode", [try await Esse3Live.logisticsGetTeachingActivityLogWithSyllabus(live)].flatMap { $0 }.compactMap { $0.teachingLanguageCode })
-            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ActivityLog\"}}") { try await live.api.logistics.getLogistics(academicYearOfferId: academicYearOfferId, courseOfStudyCode: courseOfStudyCode, academicYearOrderId: academicYearOrderId, studyPlanId: studyPlanId, studyPlanCode: studyPlanCode, activityId: activityId, teachingLanguageCode: teachingLanguageCode) }
+            let activityId = try live.choose("activityId", [row2].compactMap { $0.activityId })
+            let activityCode = try live.choose("activityCode", [row2].compactMap { $0.activityCode })
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ActivityLog\"}}") { try await live.api.logistics.getLogistics(academicYearOfferId: academicYearOfferId, courseOfStudyCode: courseOfStudyCode, academicYearOrderId: academicYearOrderId, studyPlanId: studyPlanId, studyPlanCode: studyPlanCode, activityId: activityId, activityCode: activityCode) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3ActivityLog(f, item0) } }
         }
     }
 
     func test_getLogistics3() async throws {
         try await liveCase(Esse3Live.api, "Logistics.getLogistics#3", index: 2) { live in
-            let academicYearOrderId = try live.choose("academicYearOrderId", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }.compactMap { $0.academicYearOrderId }.compactMap { Int($0) })
-            let studyPlanId = try live.choose("studyPlanId", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }.compactMap { $0.studyPlanId })
-            let activityId = try live.choose("activityId", [try await Esse3Live.offerGetGenericTeachingActivities(live)].flatMap { $0 }.compactMap { $0.activityId })
-            let activityCode = try live.choose("activityCode", [try await Esse3Live.offerGetGenericTeachingActivities(live)].flatMap { $0 }.compactMap { $0.activityCode })
-            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ActivityLog\"}}") { try await live.api.logistics.getLogistics(academicYearOrderId: academicYearOrderId, studyPlanId: studyPlanId, activityId: activityId, activityCode: activityCode) }
+            let row = try live.chooseRow("academicYearOrderId, studyPlanId", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.academicYearOrderId }); let key1: String? = live.firstText([element].compactMap { $0.studyPlanId }); return [key0, key1] }
+            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.p06CourseOfStudyCode })
+            let academicYearOfferId = try live.choose("academicYearOfferId", [try await Esse3Live.offerGetOffers(live)].flatMap { $0 }.compactMap { $0.academicYearOfferId })
+            let academicYearOrderId = try live.choose("academicYearOrderId", [row].compactMap { $0.academicYearOrderId }.compactMap { Int($0) })
+            let studyPlanId = try live.choose("studyPlanId", [row].compactMap { $0.studyPlanId })
+            let teachingLanguageCode = try live.choose("teachingLanguageCode", [try await Esse3Live.logisticsGetTeachingActivityLogWithSyllabus(live)].flatMap { $0 }.compactMap { $0.teachingLanguageCode })
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ActivityLog\"}}") { try await live.api.logistics.getLogistics(academicYearOfferId: academicYearOfferId, courseOfStudyCode: courseOfStudyCode, academicYearOrderId: academicYearOrderId, studyPlanId: studyPlanId, teachingLanguageCode: teachingLanguageCode) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3ActivityLog(f, item0) } }
         }
     }
 
     func test_getLogistics4() async throws {
         try await liveCase(Esse3Live.api, "Logistics.getLogistics#4", index: 3) { live in
-            let academicYearOfferId = try live.choose("academicYearOfferId", [try await Esse3Live.offerGetOffers(live)].flatMap { $0 }.compactMap { $0.academicYearOfferId })
-            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.structureGetCoursesOfStudy(live)].flatMap { $0 }.compactMap { $0.courseOfStudyCode })
+            let row = try live.chooseRow("activityId, activityCode", [try await Esse3Live.offerGetGenericTeachingActivities(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.activityId }); let key1: String? = live.firstText([element].compactMap { $0.activityCode }); return [key0, key1] }
+            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.p06CourseOfStudyCode })
             let studyPlanCode = try live.choose("studyPlanCode", [try await Esse3Live.transcriptGetCareerSegments(live)].flatMap { $0 }.compactMap { $0.studyPlanCode })
-            let activityCode = try live.choose("activityCode", [try await Esse3Live.offerGetGenericTeachingActivities(live)].flatMap { $0 }.compactMap { $0.activityCode })
+            let activityId = try live.choose("activityId", [row].compactMap { $0.activityId })
+            let activityCode = try live.choose("activityCode", [row].compactMap { $0.activityCode })
             let teachingLanguageCode = try live.choose("teachingLanguageCode", [try await Esse3Live.logisticsGetTeachingActivityLogWithSyllabus(live)].flatMap { $0 }.compactMap { $0.teachingLanguageCode })
-            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ActivityLog\"}}") { try await live.api.logistics.getLogistics(academicYearOfferId: academicYearOfferId, courseOfStudyCode: courseOfStudyCode, studyPlanCode: studyPlanCode, activityCode: activityCode, teachingLanguageCode: teachingLanguageCode) }
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ActivityLog\"}}") { try await live.api.logistics.getLogistics(courseOfStudyCode: courseOfStudyCode, studyPlanCode: studyPlanCode, activityId: activityId, activityCode: activityCode, teachingLanguageCode: teachingLanguageCode) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3ActivityLog(f, item0) } }
         }
     }
 
     func test_getLogistics5() async throws {
         try await liveCase(Esse3Live.api, "Logistics.getLogistics#5", index: 4) { live in
+            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.p06CourseOfStudyCode })
             let academicYearOfferId = try live.choose("academicYearOfferId", [try await Esse3Live.offerGetOffers(live)].flatMap { $0 }.compactMap { $0.academicYearOfferId })
-            let academicYearOrderId = try live.choose("academicYearOrderId", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }.compactMap { $0.academicYearOrderId }.compactMap { Int($0) })
-            let studyPlanId = try live.choose("studyPlanId", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }.compactMap { $0.studyPlanId })
+            let activityId = try live.choose("activityId", [try await Esse3Live.offerGetGenericTeachingActivities(live)].flatMap { $0 }.compactMap { $0.activityId })
             let teachingLanguageCode = try live.choose("teachingLanguageCode", [try await Esse3Live.logisticsGetTeachingActivityLogWithSyllabus(live)].flatMap { $0 }.compactMap { $0.teachingLanguageCode })
-            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ActivityLog\"}}") { try await live.api.logistics.getLogistics(academicYearOfferId: academicYearOfferId, academicYearOrderId: academicYearOrderId, studyPlanId: studyPlanId, teachingLanguageCode: teachingLanguageCode) }
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ActivityLog\"}}") { try await live.api.logistics.getLogistics(academicYearOfferId: academicYearOfferId, courseOfStudyCode: courseOfStudyCode, activityId: activityId, teachingLanguageCode: teachingLanguageCode) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3ActivityLog(f, item0) } }
         }
     }
 
     func test_getLogistics6() async throws {
         try await liveCase(Esse3Live.api, "Logistics.getLogistics#6", index: 5) { live in
-            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.structureGetCoursesOfStudy(live)].flatMap { $0 }.compactMap { $0.courseOfStudyCode })
-            let academicYearOrderId = try live.choose("academicYearOrderId", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }.compactMap { $0.academicYearOrderId }.compactMap { Int($0) })
-            let studyPlanCode = try live.choose("studyPlanCode", [try await Esse3Live.transcriptGetCareerSegments(live)].flatMap { $0 }.compactMap { $0.studyPlanCode })
-            let activityId = try live.choose("activityId", [try await Esse3Live.offerGetGenericTeachingActivities(live)].flatMap { $0 }.compactMap { $0.activityId })
-            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ActivityLog\"}}") { try await live.api.logistics.getLogistics(courseOfStudyCode: courseOfStudyCode, academicYearOrderId: academicYearOrderId, studyPlanCode: studyPlanCode, activityId: activityId) }
+            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.p06CourseOfStudyCode })
+            let studyPlanId = try live.choose("studyPlanId", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }.compactMap { $0.studyPlanId })
+            let activityCode = try live.choose("activityCode", [try await Esse3Live.offerGetGenericTeachingActivities(live)].flatMap { $0 }.compactMap { $0.activityCode })
+            let teachingLanguageCode = try live.choose("teachingLanguageCode", [try await Esse3Live.logisticsGetTeachingActivityLogWithSyllabus(live)].flatMap { $0 }.compactMap { $0.teachingLanguageCode })
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ActivityLog\"}}") { try await live.api.logistics.getLogistics(courseOfStudyCode: courseOfStudyCode, studyPlanId: studyPlanId, activityCode: activityCode, teachingLanguageCode: teachingLanguageCode) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3ActivityLog(f, item0) } }
         }
     }
 
     func test_getCancellableCoverage1() async throws {
         try await liveCase(Esse3Live.api, "Logistics.getCancellableCoverage#1") { live in
-            let result = try await live.call("{\"k\":\"record\",\"n\":\"Esse3CoverageDeletable\"}") { try await live.api.logistics.getCancellableCoverage() }
+            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.p06CourseOfStudyCode })
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"Esse3CoverageDeletable\"}") { try await live.api.logistics.getCancellableCoverage(courseOfStudyCode: courseOfStudyCode) }
             live.fingerprint { f in Esse3Live.writeEsse3CoverageDeletable(f, result) }
         }
     }
 
     func test_getCancellableCoverage2() async throws {
         try await liveCase(Esse3Live.api, "Logistics.getCancellableCoverage#2", index: 1) { live in
-            let academicYearOfferId = try live.choose("academicYearOfferId", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOfferId }.compactMap { Int($0) })
-            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.courseOfStudyCode })
-            let studyPlanCode = try live.choose("studyPlanCode", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.studyPlanCode })
-            let activityCode = try live.choose("activityCode", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.activityCode })
+            let row = try live.chooseRow("academicYearOrderId, studyPlanCode, activityCode, domicilePartialCode", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOrderId }); let key1: String? = live.firstText([element].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.studyPlanCode }); let key2: String? = live.firstText([element].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.activityCode }); let key3: String? = live.firstText([element].compactMap { $0.partitionKey }.compactMap { $0.domicilePartialCode }); return [key0, key1, key2, key3] }
+            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.p06CourseOfStudyCode })
+            let academicYearOrderId = try live.choose("academicYearOrderId", [row].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOrderId })
+            let studyPlanCode = try live.choose("studyPlanCode", [row].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.studyPlanCode })
+            let activityCode = try live.choose("activityCode", [row].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.activityCode })
             let teachingUnitCode = try live.choose("teachingUnitCode", [try await Esse3Live.logisticsGetTeachingUnitLogWithDetails(live)].flatMap { $0 }.compactMap { $0.masterTeachingUnitKey }.compactMap { $0.teachingUnitCode })
-            let domicilePartialCode = try live.choose("domicilePartialCode", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.partitionKey }.compactMap { $0.domicilePartialCode })
-            let result = try await live.call("{\"k\":\"record\",\"n\":\"Esse3CoverageDeletable\"}") { try await live.api.logistics.getCancellableCoverage(academicYearOfferId: academicYearOfferId, courseOfStudyCode: courseOfStudyCode, studyPlanCode: studyPlanCode, activityCode: activityCode, teachingUnitCode: teachingUnitCode, domicilePartialCode: domicilePartialCode) }
+            let domicilePartialCode = try live.choose("domicilePartialCode", [row].compactMap { $0.partitionKey }.compactMap { $0.domicilePartialCode })
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"Esse3CoverageDeletable\"}") { try await live.api.logistics.getCancellableCoverage(courseOfStudyCode: courseOfStudyCode, academicYearOrderId: academicYearOrderId, studyPlanCode: studyPlanCode, activityCode: activityCode, teachingUnitCode: teachingUnitCode, domicilePartialCode: domicilePartialCode) }
             live.fingerprint { f in Esse3Live.writeEsse3CoverageDeletable(f, result) }
         }
     }
 
     func test_getCancellableCoverage3() async throws {
         try await liveCase(Esse3Live.api, "Logistics.getCancellableCoverage#3", index: 2) { live in
-            let academicYearOfferId = try live.choose("academicYearOfferId", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOfferId }.compactMap { Int($0) })
-            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.courseOfStudyCode })
-            let academicYearOrderId = try live.choose("academicYearOrderId", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOrderId })
-            let activityCode = try live.choose("activityCode", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.activityCode })
-            let result = try await live.call("{\"k\":\"record\",\"n\":\"Esse3CoverageDeletable\"}") { try await live.api.logistics.getCancellableCoverage(academicYearOfferId: academicYearOfferId, courseOfStudyCode: courseOfStudyCode, academicYearOrderId: academicYearOrderId, activityCode: activityCode) }
+            let row = try live.chooseRow("academicYearOfferId, studyPlanCode, activityCode, domicilePartialCode", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOfferId }); let key1: String? = live.firstText([element].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.studyPlanCode }); let key2: String? = live.firstText([element].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.activityCode }); let key3: String? = live.firstText([element].compactMap { $0.partitionKey }.compactMap { $0.domicilePartialCode }); return [key0, key1, key2, key3] }
+            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.p06CourseOfStudyCode })
+            let academicYearOfferId = try live.choose("academicYearOfferId", [row].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOfferId }.compactMap { Int($0) })
+            let studyPlanCode = try live.choose("studyPlanCode", [row].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.studyPlanCode })
+            let activityCode = try live.choose("activityCode", [row].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.activityCode })
+            let domicilePartialCode = try live.choose("domicilePartialCode", [row].compactMap { $0.partitionKey }.compactMap { $0.domicilePartialCode })
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"Esse3CoverageDeletable\"}") { try await live.api.logistics.getCancellableCoverage(academicYearOfferId: academicYearOfferId, courseOfStudyCode: courseOfStudyCode, studyPlanCode: studyPlanCode, activityCode: activityCode, domicilePartialCode: domicilePartialCode) }
             live.fingerprint { f in Esse3Live.writeEsse3CoverageDeletable(f, result) }
         }
     }
 
     func test_getCancellableCoverage4() async throws {
         try await liveCase(Esse3Live.api, "Logistics.getCancellableCoverage#4", index: 3) { live in
-            let academicYearOrderId = try live.choose("academicYearOrderId", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOrderId })
-            let studyPlanCode = try live.choose("studyPlanCode", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.studyPlanCode })
+            let row = try live.chooseRow("academicYearOfferId, academicYearOrderId", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOfferId }); let key1: String? = live.firstText([element].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOrderId }); return [key0, key1] }
+            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.p06CourseOfStudyCode })
+            let academicYearOfferId = try live.choose("academicYearOfferId", [row].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOfferId }.compactMap { Int($0) })
+            let academicYearOrderId = try live.choose("academicYearOrderId", [row].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOrderId })
             let teachingUnitCode = try live.choose("teachingUnitCode", [try await Esse3Live.logisticsGetTeachingUnitLogWithDetails(live)].flatMap { $0 }.compactMap { $0.masterTeachingUnitKey }.compactMap { $0.teachingUnitCode })
-            let domicilePartialCode = try live.choose("domicilePartialCode", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.partitionKey }.compactMap { $0.domicilePartialCode })
-            let result = try await live.call("{\"k\":\"record\",\"n\":\"Esse3CoverageDeletable\"}") { try await live.api.logistics.getCancellableCoverage(academicYearOrderId: academicYearOrderId, studyPlanCode: studyPlanCode, teachingUnitCode: teachingUnitCode, domicilePartialCode: domicilePartialCode) }
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"Esse3CoverageDeletable\"}") { try await live.api.logistics.getCancellableCoverage(academicYearOfferId: academicYearOfferId, courseOfStudyCode: courseOfStudyCode, academicYearOrderId: academicYearOrderId, teachingUnitCode: teachingUnitCode) }
             live.fingerprint { f in Esse3Live.writeEsse3CoverageDeletable(f, result) }
         }
     }
 
     func test_getCancellableCoverage5() async throws {
         try await liveCase(Esse3Live.api, "Logistics.getCancellableCoverage#5", index: 4) { live in
-            let studyPlanCode = try live.choose("studyPlanCode", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.studyPlanCode })
-            let activityCode = try live.choose("activityCode", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.activityCode })
-            let result = try await live.call("{\"k\":\"record\",\"n\":\"Esse3CoverageDeletable\"}") { try await live.api.logistics.getCancellableCoverage(studyPlanCode: studyPlanCode, activityCode: activityCode) }
+            let row = try live.chooseRow("academicYearOfferId, academicYearOrderId, studyPlanCode", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOfferId }); let key1: String? = live.firstText([element].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOrderId }); let key2: String? = live.firstText([element].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.studyPlanCode }); return [key0, key1, key2] }
+            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.p06CourseOfStudyCode })
+            let academicYearOfferId = try live.choose("academicYearOfferId", [row].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOfferId }.compactMap { Int($0) })
+            let academicYearOrderId = try live.choose("academicYearOrderId", [row].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOrderId })
+            let studyPlanCode = try live.choose("studyPlanCode", [row].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.studyPlanCode })
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"Esse3CoverageDeletable\"}") { try await live.api.logistics.getCancellableCoverage(academicYearOfferId: academicYearOfferId, courseOfStudyCode: courseOfStudyCode, academicYearOrderId: academicYearOrderId, studyPlanCode: studyPlanCode) }
             live.fingerprint { f in Esse3Live.writeEsse3CoverageDeletable(f, result) }
         }
     }
 
     func test_getCancellableCoverage6() async throws {
         try await liveCase(Esse3Live.api, "Logistics.getCancellableCoverage#6", index: 5) { live in
-            let academicYearOfferId = try live.choose("academicYearOfferId", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOfferId }.compactMap { Int($0) })
-            let academicYearOrderId = try live.choose("academicYearOrderId", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOrderId })
-            let domicilePartialCode = try live.choose("domicilePartialCode", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.partitionKey }.compactMap { $0.domicilePartialCode })
-            let result = try await live.call("{\"k\":\"record\",\"n\":\"Esse3CoverageDeletable\"}") { try await live.api.logistics.getCancellableCoverage(academicYearOfferId: academicYearOfferId, academicYearOrderId: academicYearOrderId, domicilePartialCode: domicilePartialCode) }
+            let row = try live.chooseRow("academicYearOfferId, activityCode", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOfferId }); let key1: String? = live.firstText([element].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.activityCode }); return [key0, key1] }
+            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.p06CourseOfStudyCode })
+            let academicYearOfferId = try live.choose("academicYearOfferId", [row].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOfferId }.compactMap { Int($0) })
+            let activityCode = try live.choose("activityCode", [row].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.activityCode })
+            let teachingUnitCode = try live.choose("teachingUnitCode", [try await Esse3Live.logisticsGetTeachingUnitLogWithDetails(live)].flatMap { $0 }.compactMap { $0.masterTeachingUnitKey }.compactMap { $0.teachingUnitCode })
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"Esse3CoverageDeletable\"}") { try await live.api.logistics.getCancellableCoverage(academicYearOfferId: academicYearOfferId, courseOfStudyCode: courseOfStudyCode, activityCode: activityCode, teachingUnitCode: teachingUnitCode) }
             live.fingerprint { f in Esse3Live.writeEsse3CoverageDeletable(f, result) }
         }
     }
@@ -190,12 +160,13 @@ final class Esse3LogisticsLiveTests: XCTestCase {
 
     func test_getTeachingActivityLogWithSyllabus2() async throws {
         try await liveCase(Esse3Live.api, "Logistics.getTeachingActivityLogWithSyllabus#2", index: 1) { live in
+            let row = try live.chooseRow("academicYearOfferId, academicYearOrderId, studyPlanCode, activityCode", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOfferId }); let key1: String? = live.firstText([element].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOrderId }); let key2: String? = live.firstText([element].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.studyPlanCode }); let key3: String? = live.firstText([element].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.activityCode }); return [key0, key1, key2, key3] }
             let activityLogId = try live.choose("activityLogId", [try await Esse3Live.logisticsGetDeletedLogistics(live)].flatMap { $0 }.compactMap { $0.activityLogId })
-            let academicYearOfferId = try live.choose("academicYearOfferId", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOfferId }.compactMap { Int($0) })
-            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.courseOfStudyCode })
-            let academicYearOrderId = try live.choose("academicYearOrderId", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOrderId })
-            let studyPlanCode = try live.choose("studyPlanCode", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.studyPlanCode })
-            let activityCode = try live.choose("activityCode", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.activityCode })
+            let academicYearOfferId = try live.choose("academicYearOfferId", [row].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOfferId }.compactMap { Int($0) })
+            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.p06CourseOfStudyCode })
+            let academicYearOrderId = try live.choose("academicYearOrderId", [row].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOrderId })
+            let studyPlanCode = try live.choose("studyPlanCode", [row].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.studyPlanCode })
+            let activityCode = try live.choose("activityCode", [row].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.activityCode })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ActivityLogWithSyllabus\"}}") { try await live.api.logistics.getTeachingActivityLogWithSyllabus(activityLogId: activityLogId, academicYearOfferId: academicYearOfferId, courseOfStudyCode: courseOfStudyCode, academicYearOrderId: academicYearOrderId, studyPlanCode: studyPlanCode, activityCode: activityCode) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3ActivityLogWithSyllabus(f, item0) } }
         }
@@ -203,11 +174,12 @@ final class Esse3LogisticsLiveTests: XCTestCase {
 
     func test_getTeachingActivityLogWithSyllabus3() async throws {
         try await liveCase(Esse3Live.api, "Logistics.getTeachingActivityLogWithSyllabus#3", index: 2) { live in
+            let row = try live.chooseRow("academicYearOfferId, academicYearOrderId, studyPlanId", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOfferId }); let key1: String? = live.firstText([element].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOrderId }); let key2: String? = live.firstText([element].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.studyPlanId }); return [key0, key1, key2] }
             let activityLogId = try live.choose("activityLogId", [try await Esse3Live.logisticsGetDeletedLogistics(live)].flatMap { $0 }.compactMap { $0.activityLogId })
-            let academicYearOfferId = try live.choose("academicYearOfferId", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOfferId }.compactMap { Int($0) })
-            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.courseOfStudyCode })
-            let academicYearOrderId = try live.choose("academicYearOrderId", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOrderId })
-            let studyPlanId = try live.choose("studyPlanId", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.studyPlanId })
+            let academicYearOfferId = try live.choose("academicYearOfferId", [row].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOfferId }.compactMap { Int($0) })
+            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.p06CourseOfStudyCode })
+            let academicYearOrderId = try live.choose("academicYearOrderId", [row].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOrderId })
+            let studyPlanId = try live.choose("studyPlanId", [row].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.studyPlanId })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ActivityLogWithSyllabus\"}}") { try await live.api.logistics.getTeachingActivityLogWithSyllabus(activityLogId: activityLogId, academicYearOfferId: academicYearOfferId, courseOfStudyCode: courseOfStudyCode, academicYearOrderId: academicYearOrderId, studyPlanId: studyPlanId) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3ActivityLogWithSyllabus(f, item0) } }
         }
@@ -215,10 +187,11 @@ final class Esse3LogisticsLiveTests: XCTestCase {
 
     func test_getTeachingActivityLogWithSyllabus4() async throws {
         try await liveCase(Esse3Live.api, "Logistics.getTeachingActivityLogWithSyllabus#4", index: 3) { live in
+            let row = try live.chooseRow("studyPlanId, studyPlanCode, activityCode", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.studyPlanId }); let key1: String? = live.firstText([element].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.studyPlanCode }); let key2: String? = live.firstText([element].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.activityCode }); return [key0, key1, key2] }
             let activityLogId = try live.choose("activityLogId", [try await Esse3Live.logisticsGetDeletedLogistics(live)].flatMap { $0 }.compactMap { $0.activityLogId })
-            let studyPlanId = try live.choose("studyPlanId", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.studyPlanId })
-            let studyPlanCode = try live.choose("studyPlanCode", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.studyPlanCode })
-            let activityCode = try live.choose("activityCode", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.activityCode })
+            let studyPlanId = try live.choose("studyPlanId", [row].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.studyPlanId })
+            let studyPlanCode = try live.choose("studyPlanCode", [row].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.studyPlanCode })
+            let activityCode = try live.choose("activityCode", [row].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.activityCode })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ActivityLogWithSyllabus\"}}") { try await live.api.logistics.getTeachingActivityLogWithSyllabus(activityLogId: activityLogId, studyPlanId: studyPlanId, studyPlanCode: studyPlanCode, activityCode: activityCode) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3ActivityLogWithSyllabus(f, item0) } }
         }
@@ -227,7 +200,7 @@ final class Esse3LogisticsLiveTests: XCTestCase {
     func test_getTeachingActivityLogWithSyllabus5() async throws {
         try await liveCase(Esse3Live.api, "Logistics.getTeachingActivityLogWithSyllabus#5", index: 4) { live in
             let activityLogId = try live.choose("activityLogId", [try await Esse3Live.logisticsGetDeletedLogistics(live)].flatMap { $0 }.compactMap { $0.activityLogId })
-            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.courseOfStudyCode })
+            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.p06CourseOfStudyCode })
             let activityCode = try live.choose("activityCode", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.activityCode })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ActivityLogWithSyllabus\"}}") { try await live.api.logistics.getTeachingActivityLogWithSyllabus(activityLogId: activityLogId, courseOfStudyCode: courseOfStudyCode, activityCode: activityCode) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3ActivityLogWithSyllabus(f, item0) } }
@@ -236,10 +209,11 @@ final class Esse3LogisticsLiveTests: XCTestCase {
 
     func test_getTeachingActivityLogWithSyllabus6() async throws {
         try await liveCase(Esse3Live.api, "Logistics.getTeachingActivityLogWithSyllabus#6", index: 5) { live in
+            let row = try live.chooseRow("academicYearOfferId, studyPlanId, studyPlanCode", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOfferId }); let key1: String? = live.firstText([element].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.studyPlanId }); let key2: String? = live.firstText([element].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.studyPlanCode }); return [key0, key1, key2] }
             let activityLogId = try live.choose("activityLogId", [try await Esse3Live.logisticsGetDeletedLogistics(live)].flatMap { $0 }.compactMap { $0.activityLogId })
-            let academicYearOfferId = try live.choose("academicYearOfferId", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOfferId }.compactMap { Int($0) })
-            let studyPlanId = try live.choose("studyPlanId", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.studyPlanId })
-            let studyPlanCode = try live.choose("studyPlanCode", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.studyPlanCode })
+            let academicYearOfferId = try live.choose("academicYearOfferId", [row].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOfferId }.compactMap { Int($0) })
+            let studyPlanId = try live.choose("studyPlanId", [row].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.studyPlanId })
+            let studyPlanCode = try live.choose("studyPlanCode", [row].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.studyPlanCode })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ActivityLogWithSyllabus\"}}") { try await live.api.logistics.getTeachingActivityLogWithSyllabus(activityLogId: activityLogId, academicYearOfferId: academicYearOfferId, studyPlanId: studyPlanId, studyPlanCode: studyPlanCode) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3ActivityLogWithSyllabus(f, item0) } }
         }
@@ -261,13 +235,14 @@ final class Esse3LogisticsLiveTests: XCTestCase {
 
     func test_getTeachingUnitLogWithDetails2() async throws {
         try await liveCase(Esse3Live.api, "Logistics.getTeachingUnitLogWithDetails#2", index: 1) { live in
+            let row = try live.chooseRow("academicYearOfferId, academicYearOrderId, studyPlanCode, activityCode", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOfferId }); let key1: String? = live.firstText([element].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOrderId }); let key2: String? = live.firstText([element].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.studyPlanCode }); let key3: String? = live.firstText([element].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.activityCode }); return [key0, key1, key2, key3] }
             let activityLogId = try live.choose("activityLogId", [try await Esse3Live.logisticsGetDeletedLogistics(live)].flatMap { $0 }.compactMap { $0.activityLogId })
-            let academicYearOfferId = try live.choose("academicYearOfferId", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOfferId }.compactMap { Int($0) })
-            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.courseOfStudyCode })
-            let academicYearOrderId = try live.choose("academicYearOrderId", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOrderId })
-            let studyPlanCode = try live.choose("studyPlanCode", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.studyPlanCode })
-            let activityCode = try live.choose("activityCode", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.activityCode })
-            let teachingUnitCode = try live.choose("teachingUnitCode", [try await Esse3Live.logisticsGetEasystaffLogistics(live)].flatMap { $0 }.compactMap { $0.activity }.flatMap { $0 }.compactMap { $0.modules }.flatMap { $0 }.compactMap { $0.teachingUnitCode })
+            let academicYearOfferId = try live.choose("academicYearOfferId", [row].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOfferId }.compactMap { Int($0) })
+            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.p06CourseOfStudyCode })
+            let academicYearOrderId = try live.choose("academicYearOrderId", [row].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOrderId })
+            let studyPlanCode = try live.choose("studyPlanCode", [row].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.studyPlanCode })
+            let activityCode = try live.choose("activityCode", [row].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.activityCode })
+            let teachingUnitCode = try live.choose("teachingUnitCode", [try await Esse3Live.transcriptGetRecordBookSegments(live)].flatMap { $0 }.compactMap { $0.attributes }.compactMap { $0.teachingUnitCode })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TeachingUnitLogWithDetails\"}}") { try await live.api.logistics.getTeachingUnitLogWithDetails(activityLogId: activityLogId, academicYearOfferId: academicYearOfferId, courseOfStudyCode: courseOfStudyCode, academicYearOrderId: academicYearOrderId, studyPlanCode: studyPlanCode, activityCode: activityCode, teachingUnitCode: teachingUnitCode) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3TeachingUnitLogWithDetails(f, item0) } }
         }
@@ -275,11 +250,12 @@ final class Esse3LogisticsLiveTests: XCTestCase {
 
     func test_getTeachingUnitLogWithDetails3() async throws {
         try await liveCase(Esse3Live.api, "Logistics.getTeachingUnitLogWithDetails#3", index: 2) { live in
+            let row = try live.chooseRow("academicYearOfferId, academicYearOrderId, studyPlanId", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOfferId }); let key1: String? = live.firstText([element].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOrderId }); let key2: String? = live.firstText([element].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.studyPlanId }); return [key0, key1, key2] }
             let activityLogId = try live.choose("activityLogId", [try await Esse3Live.logisticsGetDeletedLogistics(live)].flatMap { $0 }.compactMap { $0.activityLogId })
-            let academicYearOfferId = try live.choose("academicYearOfferId", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOfferId }.compactMap { Int($0) })
-            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.courseOfStudyCode })
-            let academicYearOrderId = try live.choose("academicYearOrderId", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOrderId })
-            let studyPlanId = try live.choose("studyPlanId", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.studyPlanId })
+            let academicYearOfferId = try live.choose("academicYearOfferId", [row].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOfferId }.compactMap { Int($0) })
+            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.p06CourseOfStudyCode })
+            let academicYearOrderId = try live.choose("academicYearOrderId", [row].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOrderId })
+            let studyPlanId = try live.choose("studyPlanId", [row].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.studyPlanId })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TeachingUnitLogWithDetails\"}}") { try await live.api.logistics.getTeachingUnitLogWithDetails(activityLogId: activityLogId, academicYearOfferId: academicYearOfferId, courseOfStudyCode: courseOfStudyCode, academicYearOrderId: academicYearOrderId, studyPlanId: studyPlanId) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3TeachingUnitLogWithDetails(f, item0) } }
         }
@@ -287,11 +263,12 @@ final class Esse3LogisticsLiveTests: XCTestCase {
 
     func test_getTeachingUnitLogWithDetails4() async throws {
         try await liveCase(Esse3Live.api, "Logistics.getTeachingUnitLogWithDetails#4", index: 3) { live in
+            let row = try live.chooseRow("studyPlanId, studyPlanCode, activityCode", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.studyPlanId }); let key1: String? = live.firstText([element].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.studyPlanCode }); let key2: String? = live.firstText([element].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.activityCode }); return [key0, key1, key2] }
             let activityLogId = try live.choose("activityLogId", [try await Esse3Live.logisticsGetDeletedLogistics(live)].flatMap { $0 }.compactMap { $0.activityLogId })
-            let studyPlanId = try live.choose("studyPlanId", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.studyPlanId })
-            let studyPlanCode = try live.choose("studyPlanCode", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.studyPlanCode })
-            let activityCode = try live.choose("activityCode", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.activityCode })
-            let teachingUnitCode = try live.choose("teachingUnitCode", [try await Esse3Live.logisticsGetEasystaffLogistics(live)].flatMap { $0 }.compactMap { $0.activity }.flatMap { $0 }.compactMap { $0.modules }.flatMap { $0 }.compactMap { $0.teachingUnitCode })
+            let studyPlanId = try live.choose("studyPlanId", [row].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.studyPlanId })
+            let studyPlanCode = try live.choose("studyPlanCode", [row].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.studyPlanCode })
+            let activityCode = try live.choose("activityCode", [row].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.activityCode })
+            let teachingUnitCode = try live.choose("teachingUnitCode", [try await Esse3Live.transcriptGetRecordBookSegments(live)].flatMap { $0 }.compactMap { $0.attributes }.compactMap { $0.teachingUnitCode })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TeachingUnitLogWithDetails\"}}") { try await live.api.logistics.getTeachingUnitLogWithDetails(activityLogId: activityLogId, studyPlanId: studyPlanId, studyPlanCode: studyPlanCode, activityCode: activityCode, teachingUnitCode: teachingUnitCode) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3TeachingUnitLogWithDetails(f, item0) } }
         }
@@ -299,11 +276,12 @@ final class Esse3LogisticsLiveTests: XCTestCase {
 
     func test_getTeachingUnitLogWithDetails5() async throws {
         try await liveCase(Esse3Live.api, "Logistics.getTeachingUnitLogWithDetails#5", index: 4) { live in
+            let row = try live.chooseRow("academicYearOrderId, studyPlanId, activityCode", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOrderId }); let key1: String? = live.firstText([element].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.studyPlanId }); let key2: String? = live.firstText([element].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.activityCode }); return [key0, key1, key2] }
             let activityLogId = try live.choose("activityLogId", [try await Esse3Live.logisticsGetDeletedLogistics(live)].flatMap { $0 }.compactMap { $0.activityLogId })
-            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.courseOfStudyCode })
-            let academicYearOrderId = try live.choose("academicYearOrderId", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOrderId })
-            let studyPlanId = try live.choose("studyPlanId", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.studyPlanId })
-            let activityCode = try live.choose("activityCode", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.activityCode })
+            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.p06CourseOfStudyCode })
+            let academicYearOrderId = try live.choose("academicYearOrderId", [row].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOrderId })
+            let studyPlanId = try live.choose("studyPlanId", [row].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.studyPlanId })
+            let activityCode = try live.choose("activityCode", [row].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.activityCode })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TeachingUnitLogWithDetails\"}}") { try await live.api.logistics.getTeachingUnitLogWithDetails(activityLogId: activityLogId, courseOfStudyCode: courseOfStudyCode, academicYearOrderId: academicYearOrderId, studyPlanId: studyPlanId, activityCode: activityCode) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3TeachingUnitLogWithDetails(f, item0) } }
         }
@@ -311,10 +289,11 @@ final class Esse3LogisticsLiveTests: XCTestCase {
 
     func test_getTeachingUnitLogWithDetails6() async throws {
         try await liveCase(Esse3Live.api, "Logistics.getTeachingUnitLogWithDetails#6", index: 5) { live in
+            let row = try live.chooseRow("academicYearOfferId, studyPlanId", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOfferId }); let key1: String? = live.firstText([element].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.studyPlanId }); return [key0, key1] }
             let activityLogId = try live.choose("activityLogId", [try await Esse3Live.logisticsGetDeletedLogistics(live)].flatMap { $0 }.compactMap { $0.activityLogId })
-            let academicYearOfferId = try live.choose("academicYearOfferId", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOfferId }.compactMap { Int($0) })
-            let studyPlanId = try live.choose("studyPlanId", [try await Esse3Live.logisticsGetLogistics(live)].flatMap { $0 }.compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.studyPlanId })
-            let teachingUnitCode = try live.choose("teachingUnitCode", [try await Esse3Live.logisticsGetEasystaffLogistics(live)].flatMap { $0 }.compactMap { $0.activity }.flatMap { $0 }.compactMap { $0.modules }.flatMap { $0 }.compactMap { $0.teachingUnitCode })
+            let academicYearOfferId = try live.choose("academicYearOfferId", [row].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.academicYearOfferId }.compactMap { Int($0) })
+            let studyPlanId = try live.choose("studyPlanId", [row].compactMap { $0.physicalTeachingActivityKey }.compactMap { $0.studyPlanId })
+            let teachingUnitCode = try live.choose("teachingUnitCode", [try await Esse3Live.transcriptGetRecordBookSegments(live)].flatMap { $0 }.compactMap { $0.attributes }.compactMap { $0.teachingUnitCode })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TeachingUnitLogWithDetails\"}}") { try await live.api.logistics.getTeachingUnitLogWithDetails(activityLogId: activityLogId, academicYearOfferId: academicYearOfferId, studyPlanId: studyPlanId, teachingUnitCode: teachingUnitCode) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3TeachingUnitLogWithDetails(f, item0) } }
         }
@@ -358,8 +337,9 @@ final class Esse3LogisticsLiveTests: XCTestCase {
 
     func test_getAllClassrooms4() async throws {
         try await liveCase(Esse3Live.api, "Logistics.getAllClassrooms#4", index: 3) { live in
-            let classroomCode = try live.choose("classroomCode", [try await Esse3Live.logisticsGetClassrooms(live)].flatMap { $0 }.compactMap { $0.classroomCode })
-            let externalClassroomCode = try live.choose("externalClassroomCode", [try await Esse3Live.logisticsGetClassrooms(live)].flatMap { $0 }.compactMap { $0.externalClassroomCode })
+            let row = try live.chooseRow("classroomCode, externalClassroomCode", [try await Esse3Live.logisticsGetClassrooms(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.classroomCode }); let key1: String? = live.firstText([element].compactMap { $0.externalClassroomCode }); return [key0, key1] }
+            let classroomCode = try live.choose("classroomCode", [row].compactMap { $0.classroomCode })
+            let externalClassroomCode = try live.choose("externalClassroomCode", [row].compactMap { $0.externalClassroomCode })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Classroom\"}}") { try await live.api.logistics.getAllClassrooms(classroomCode: classroomCode, externalClassroomCode: externalClassroomCode) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3Classroom(f, item0) } }
         }
@@ -402,8 +382,9 @@ final class Esse3LogisticsLiveTests: XCTestCase {
 
     func test_getClassroom1() async throws {
         try await liveCase(Esse3Live.api, "Logistics.getClassroom#1") { live in
-            let classroomId = try live.choose("classroomId", [try await Esse3Live.logisticsGetAllClassrooms(live)].flatMap { $0 }.compactMap { $0.classroomId })
-            let buildingId = try live.choose("buildingId", [try await Esse3Live.logisticsGetAllClassrooms(live)].flatMap { $0 }.compactMap { $0.buildingId })
+            let row = try live.chooseRow("classroomId, buildingId", [try await Esse3Live.logisticsGetAllClassrooms(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.classroomId }); let key1: String? = live.firstText([element].compactMap { $0.buildingId }); return [key0, key1] }
+            let classroomId = try live.choose("classroomId", [row].compactMap { $0.classroomId })
+            let buildingId = try live.choose("buildingId", [row].compactMap { $0.buildingId })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Classroom\"}}") { try await live.api.logistics.getClassroom(classroomId: classroomId, buildingId: buildingId) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3Classroom(f, item0) } }
         }

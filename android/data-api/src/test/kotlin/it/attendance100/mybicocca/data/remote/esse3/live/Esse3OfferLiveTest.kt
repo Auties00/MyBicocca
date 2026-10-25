@@ -99,7 +99,7 @@ class Esse3OfferLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Offer.getOffers#2")
     fun getOffers2() = case("Offer.getOffers#2", index = 1) {
-        val courseOfStudyCode = choose("courseOfStudyCode", listOf(structureGetCoursesOfStudy()).flatten().mapNotNull { it.courseOfStudyCode })
+        val courseOfStudyCode = choose("courseOfStudyCode", listOf(careersGetCareers()).flatten().mapNotNull { it.p06CourseOfStudyCode })
         val departmentCode = choose("departmentCode", listOf(degreeAwardGetThesisRelatedDocuments()).flatten().mapNotNull { it.departmentCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Offer\"}}") {
             api.offer.getOffers(courseOfStudyCode = courseOfStudyCode, departmentCode = departmentCode, activityStateCode = Esse3QuestionStateCode.Active)
@@ -111,7 +111,7 @@ class Esse3OfferLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @DisplayName("Offer.getOffers#3")
     fun getOffers3() = case("Offer.getOffers#3", index = 2) {
         val academicYearOfferId = choose("academicYearOfferId", listOf(examsCalendarGetActivitiesForExamCalls()).flatten().mapNotNull { it.academicYearOfferId })
-        val courseOfStudyCode = choose("courseOfStudyCode", listOf(structureGetCoursesOfStudy()).flatten().mapNotNull { it.courseOfStudyCode })
+        val courseOfStudyCode = choose("courseOfStudyCode", listOf(careersGetCareers()).flatten().mapNotNull { it.p06CourseOfStudyCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Offer\"}}") {
             api.offer.getOffers(academicYearOfferId = academicYearOfferId, courseOfStudyCode = courseOfStudyCode, activityStateCode = Esse3QuestionStateCode.Draft)
         } ?: return@case
@@ -143,7 +143,7 @@ class Esse3OfferLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @DisplayName("Offer.getOffers#6")
     fun getOffers6() = case("Offer.getOffers#6", index = 5) {
         val academicYearOfferId = choose("academicYearOfferId", listOf(examsCalendarGetActivitiesForExamCalls()).flatten().mapNotNull { it.academicYearOfferId })
-        val courseOfStudyCode = choose("courseOfStudyCode", listOf(structureGetCoursesOfStudy()).flatten().mapNotNull { it.courseOfStudyCode })
+        val courseOfStudyCode = choose("courseOfStudyCode", listOf(careersGetCareers()).flatten().mapNotNull { it.p06CourseOfStudyCode })
         val departmentCode = choose("departmentCode", listOf(degreeAwardGetThesisRelatedDocuments()).flatten().mapNotNull { it.departmentCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Offer\"}}") {
             api.offer.getOffers(academicYearOfferId = academicYearOfferId, courseOfStudyCode = courseOfStudyCode, departmentCode = departmentCode)
@@ -154,8 +154,9 @@ class Esse3OfferLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Offer.getCancellableOfferTeachingActivity#1")
     fun getCancellableOfferTeachingActivity1() = case("Offer.getCancellableOfferTeachingActivity#1") {
+        val courseOfStudyCode = choose("courseOfStudyCode", listOf(careersGetCareers()).flatten().mapNotNull { it.p06CourseOfStudyCode })
         val result = call("{\"k\":\"record\",\"n\":\"Esse3ActivityDeletable\"}") {
-            api.offer.getCancellableOfferTeachingActivity()
+            api.offer.getCancellableOfferTeachingActivity(courseOfStudyCode = courseOfStudyCode)
         } ?: return@case
         fingerprint { writeEsse3ActivityDeletable(result) }
     }
@@ -163,14 +164,14 @@ class Esse3OfferLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Offer.getCancellableOfferTeachingActivity#2")
     fun getCancellableOfferTeachingActivity2() = case("Offer.getCancellableOfferTeachingActivity#2", index = 1) {
+        val courseOfStudyCode = choose("courseOfStudyCode", listOf(careersGetCareers()).flatten().mapNotNull { it.p06CourseOfStudyCode })
         val activityFunctionId = choose("activityFunctionId", listOf(logisticsGetLogistics()).flatten().mapNotNull { it.physicalTeachingActivityKey }.mapNotNull { it.activityFunctionId })
         val academicYearOfferId = choose("academicYearOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.academicYearOfferId })
-        val courseOfStudyCode = choose("courseOfStudyCode", listOf(offerGetOffers()).flatten().mapNotNull { it.courseOfStudyCode })
         val academicYearOrderId = choose("academicYearOrderId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.academicYearOrderId }.map { it.toInt() })
         val studyPlanCode = choose("studyPlanCode", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.studyPlanCode })
-        val activityCode = choose("activityCode", listOf(offerGetGenericTeachingActivities()).flatten().mapNotNull { it.activityCode })
+        val teachingUnitCode = choose("teachingUnitCode", listOf(logisticsGetTeachingUnitLogWithDetails()).flatten().mapNotNull { it.masterTeachingUnitKey }.mapNotNull { it.teachingUnitCode })
         val result = call("{\"k\":\"record\",\"n\":\"Esse3ActivityDeletable\"}") {
-            api.offer.getCancellableOfferTeachingActivity(activityFunctionId = activityFunctionId, academicYearOfferId = academicYearOfferId, courseOfStudyCode = courseOfStudyCode, academicYearOrderId = academicYearOrderId, studyPlanCode = studyPlanCode, activityCode = activityCode)
+            api.offer.getCancellableOfferTeachingActivity(courseOfStudyCode = courseOfStudyCode, activityFunctionId = activityFunctionId, academicYearOfferId = academicYearOfferId, academicYearOrderId = academicYearOrderId, studyPlanCode = studyPlanCode, teachingUnitCode = teachingUnitCode)
         } ?: return@case
         fingerprint { writeEsse3ActivityDeletable(result) }
     }
@@ -178,12 +179,12 @@ class Esse3OfferLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Offer.getCancellableOfferTeachingActivity#3")
     fun getCancellableOfferTeachingActivity3() = case("Offer.getCancellableOfferTeachingActivity#3", index = 2) {
-        val activityFunctionId = choose("activityFunctionId", listOf(logisticsGetLogistics()).flatten().mapNotNull { it.physicalTeachingActivityKey }.mapNotNull { it.activityFunctionId })
+        val courseOfStudyCode = choose("courseOfStudyCode", listOf(careersGetCareers()).flatten().mapNotNull { it.p06CourseOfStudyCode })
         val academicYearOfferId = choose("academicYearOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.academicYearOfferId })
-        val courseOfStudyCode = choose("courseOfStudyCode", listOf(offerGetOffers()).flatten().mapNotNull { it.courseOfStudyCode })
-        val teachingUnitCode = choose("teachingUnitCode", listOf(logisticsGetTeachingUnitLogWithDetails()).flatten().mapNotNull { it.masterTeachingUnitKey }.mapNotNull { it.teachingUnitCode })
+        val studyPlanCode = choose("studyPlanCode", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.studyPlanCode })
+        val activityCode = choose("activityCode", listOf(offerGetGenericTeachingActivities()).flatten().mapNotNull { it.activityCode })
         val result = call("{\"k\":\"record\",\"n\":\"Esse3ActivityDeletable\"}") {
-            api.offer.getCancellableOfferTeachingActivity(activityFunctionId = activityFunctionId, academicYearOfferId = academicYearOfferId, courseOfStudyCode = courseOfStudyCode, teachingUnitCode = teachingUnitCode)
+            api.offer.getCancellableOfferTeachingActivity(courseOfStudyCode = courseOfStudyCode, academicYearOfferId = academicYearOfferId, studyPlanCode = studyPlanCode, activityCode = activityCode)
         } ?: return@case
         fingerprint { writeEsse3ActivityDeletable(result) }
     }
@@ -191,12 +192,13 @@ class Esse3OfferLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Offer.getCancellableOfferTeachingActivity#4")
     fun getCancellableOfferTeachingActivity4() = case("Offer.getCancellableOfferTeachingActivity#4", index = 3) {
+        val courseOfStudyCode = choose("courseOfStudyCode", listOf(careersGetCareers()).flatten().mapNotNull { it.p06CourseOfStudyCode })
+        val activityFunctionId = choose("activityFunctionId", listOf(logisticsGetLogistics()).flatten().mapNotNull { it.physicalTeachingActivityKey }.mapNotNull { it.activityFunctionId })
         val academicYearOrderId = choose("academicYearOrderId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.academicYearOrderId }.map { it.toInt() })
-        val studyPlanCode = choose("studyPlanCode", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.studyPlanCode })
         val activityCode = choose("activityCode", listOf(offerGetGenericTeachingActivities()).flatten().mapNotNull { it.activityCode })
         val teachingUnitCode = choose("teachingUnitCode", listOf(logisticsGetTeachingUnitLogWithDetails()).flatten().mapNotNull { it.masterTeachingUnitKey }.mapNotNull { it.teachingUnitCode })
         val result = call("{\"k\":\"record\",\"n\":\"Esse3ActivityDeletable\"}") {
-            api.offer.getCancellableOfferTeachingActivity(academicYearOrderId = academicYearOrderId, studyPlanCode = studyPlanCode, activityCode = activityCode, teachingUnitCode = teachingUnitCode)
+            api.offer.getCancellableOfferTeachingActivity(courseOfStudyCode = courseOfStudyCode, activityFunctionId = activityFunctionId, academicYearOrderId = academicYearOrderId, activityCode = activityCode, teachingUnitCode = teachingUnitCode)
         } ?: return@case
         fingerprint { writeEsse3ActivityDeletable(result) }
     }
@@ -204,12 +206,12 @@ class Esse3OfferLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Offer.getCancellableOfferTeachingActivity#5")
     fun getCancellableOfferTeachingActivity5() = case("Offer.getCancellableOfferTeachingActivity#5", index = 4) {
-        val courseOfStudyCode = choose("courseOfStudyCode", listOf(offerGetOffers()).flatten().mapNotNull { it.courseOfStudyCode })
-        val studyPlanCode = choose("studyPlanCode", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.studyPlanCode })
+        val courseOfStudyCode = choose("courseOfStudyCode", listOf(careersGetCareers()).flatten().mapNotNull { it.p06CourseOfStudyCode })
+        val academicYearOfferId = choose("academicYearOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.academicYearOfferId })
+        val academicYearOrderId = choose("academicYearOrderId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.academicYearOrderId }.map { it.toInt() })
         val activityCode = choose("activityCode", listOf(offerGetGenericTeachingActivities()).flatten().mapNotNull { it.activityCode })
-        val teachingUnitCode = choose("teachingUnitCode", listOf(logisticsGetTeachingUnitLogWithDetails()).flatten().mapNotNull { it.masterTeachingUnitKey }.mapNotNull { it.teachingUnitCode })
         val result = call("{\"k\":\"record\",\"n\":\"Esse3ActivityDeletable\"}") {
-            api.offer.getCancellableOfferTeachingActivity(courseOfStudyCode = courseOfStudyCode, studyPlanCode = studyPlanCode, activityCode = activityCode, teachingUnitCode = teachingUnitCode)
+            api.offer.getCancellableOfferTeachingActivity(courseOfStudyCode = courseOfStudyCode, academicYearOfferId = academicYearOfferId, academicYearOrderId = academicYearOrderId, activityCode = activityCode)
         } ?: return@case
         fingerprint { writeEsse3ActivityDeletable(result) }
     }
@@ -217,11 +219,13 @@ class Esse3OfferLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Offer.getCancellableOfferTeachingActivity#6")
     fun getCancellableOfferTeachingActivity6() = case("Offer.getCancellableOfferTeachingActivity#6", index = 5) {
-        val academicYearOfferId = choose("academicYearOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.academicYearOfferId })
-        val academicYearOrderId = choose("academicYearOrderId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.academicYearOrderId }.map { it.toInt() })
+        val courseOfStudyCode = choose("courseOfStudyCode", listOf(careersGetCareers()).flatten().mapNotNull { it.p06CourseOfStudyCode })
+        val activityFunctionId = choose("activityFunctionId", listOf(logisticsGetLogistics()).flatten().mapNotNull { it.physicalTeachingActivityKey }.mapNotNull { it.activityFunctionId })
         val studyPlanCode = choose("studyPlanCode", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.studyPlanCode })
+        val activityCode = choose("activityCode", listOf(offerGetGenericTeachingActivities()).flatten().mapNotNull { it.activityCode })
+        val teachingUnitCode = choose("teachingUnitCode", listOf(logisticsGetTeachingUnitLogWithDetails()).flatten().mapNotNull { it.masterTeachingUnitKey }.mapNotNull { it.teachingUnitCode })
         val result = call("{\"k\":\"record\",\"n\":\"Esse3ActivityDeletable\"}") {
-            api.offer.getCancellableOfferTeachingActivity(academicYearOfferId = academicYearOfferId, academicYearOrderId = academicYearOrderId, studyPlanCode = studyPlanCode)
+            api.offer.getCancellableOfferTeachingActivity(courseOfStudyCode = courseOfStudyCode, activityFunctionId = activityFunctionId, studyPlanCode = studyPlanCode, activityCode = activityCode, teachingUnitCode = teachingUnitCode)
         } ?: return@case
         fingerprint { writeEsse3ActivityDeletable(result) }
     }
@@ -229,8 +233,9 @@ class Esse3OfferLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Offer.getTeachingActivityOffers#1")
     fun getTeachingActivityOffers1() = case("Offer.getTeachingActivityOffers#1") {
-        val academicYearOfferId = choose("academicYearOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.academicYearOfferId })
-        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.courseOfStudyOfferId })
+        val row = chooseRow("academicYearOfferId, courseOfStudyOfferId", listOf(offerGetOffers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.academicYearOfferId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.courseOfStudyOfferId }.firstOrNull()?.toString()) }
+        val academicYearOfferId = choose("academicYearOfferId", listOf(row).mapNotNull { it.academicYearOfferId })
+        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(row).mapNotNull { it.courseOfStudyOfferId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ContextualizedActivity\"}}") {
             api.offer.getTeachingActivityOffers(academicYearOfferId = academicYearOfferId, courseOfStudyOfferId = courseOfStudyOfferId)
         } ?: return@case
@@ -240,10 +245,12 @@ class Esse3OfferLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Offer.getTeachingActivityOffers#2")
     fun getTeachingActivityOffers2() = case("Offer.getTeachingActivityOffers#2", index = 1) {
-        val academicYearOfferId = choose("academicYearOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.academicYearOfferId })
-        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.courseOfStudyOfferId })
-        val academicYearOrderId = choose("academicYearOrderId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.academicYearOrderId }.map { it.toInt() })
-        val studyPlanId = choose("studyPlanId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studyPlanId })
+        val row = chooseRow("academicYearOfferId, courseOfStudyOfferId", listOf(offerGetOffers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.academicYearOfferId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.courseOfStudyOfferId }.firstOrNull()?.toString()) }
+        val row2 = chooseRow("academicYearOrderId, studyPlanId", listOf(personalDataGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.academicYearOrderId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.studyPlanId }.firstOrNull()?.toString()) }
+        val academicYearOfferId = choose("academicYearOfferId", listOf(row).mapNotNull { it.academicYearOfferId })
+        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(row).mapNotNull { it.courseOfStudyOfferId })
+        val academicYearOrderId = choose("academicYearOrderId", listOf(row2).mapNotNull { it.academicYearOrderId }.map { it.toInt() })
+        val studyPlanId = choose("studyPlanId", listOf(row2).mapNotNull { it.studyPlanId })
         val studyPlanCode = choose("studyPlanCode", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.studyPlanCode })
         val activityCode = choose("activityCode", listOf(offerGetGenericTeachingActivities()).flatten().mapNotNull { it.activityCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ContextualizedActivity\"}}") {
@@ -255,8 +262,9 @@ class Esse3OfferLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Offer.getTeachingActivityOffers#3")
     fun getTeachingActivityOffers3() = case("Offer.getTeachingActivityOffers#3", index = 2) {
-        val academicYearOfferId = choose("academicYearOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.academicYearOfferId })
-        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.courseOfStudyOfferId })
+        val row = chooseRow("academicYearOfferId, courseOfStudyOfferId", listOf(offerGetOffers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.academicYearOfferId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.courseOfStudyOfferId }.firstOrNull()?.toString()) }
+        val academicYearOfferId = choose("academicYearOfferId", listOf(row).mapNotNull { it.academicYearOfferId })
+        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(row).mapNotNull { it.courseOfStudyOfferId })
         val studyPlanId = choose("studyPlanId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studyPlanId })
         val studyPlanCode = choose("studyPlanCode", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.studyPlanCode })
         val activityId = choose("activityId", listOf(offerGetGenericTeachingActivities()).flatten().mapNotNull { it.activityId })
@@ -269,11 +277,13 @@ class Esse3OfferLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Offer.getTeachingActivityOffers#4")
     fun getTeachingActivityOffers4() = case("Offer.getTeachingActivityOffers#4", index = 3) {
-        val academicYearOfferId = choose("academicYearOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.academicYearOfferId })
-        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.courseOfStudyOfferId })
+        val row = chooseRow("academicYearOfferId, courseOfStudyOfferId", listOf(offerGetOffers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.academicYearOfferId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.courseOfStudyOfferId }.firstOrNull()?.toString()) }
+        val row2 = chooseRow("activityId, activityCode", listOf(offerGetGenericTeachingActivities()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.activityId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.activityCode }.firstOrNull()?.toString()) }
+        val academicYearOfferId = choose("academicYearOfferId", listOf(row).mapNotNull { it.academicYearOfferId })
+        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(row).mapNotNull { it.courseOfStudyOfferId })
         val academicYearOrderId = choose("academicYearOrderId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.academicYearOrderId }.map { it.toInt() })
-        val activityId = choose("activityId", listOf(offerGetGenericTeachingActivities()).flatten().mapNotNull { it.activityId })
-        val activityCode = choose("activityCode", listOf(offerGetGenericTeachingActivities()).flatten().mapNotNull { it.activityCode })
+        val activityId = choose("activityId", listOf(row2).mapNotNull { it.activityId })
+        val activityCode = choose("activityCode", listOf(row2).mapNotNull { it.activityCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ContextualizedActivity\"}}") {
             api.offer.getTeachingActivityOffers(academicYearOfferId = academicYearOfferId, courseOfStudyOfferId = courseOfStudyOfferId, academicYearOrderId = academicYearOrderId, activityId = activityId, activityCode = activityCode)
         } ?: return@case
@@ -283,11 +293,13 @@ class Esse3OfferLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Offer.getTeachingActivityOffers#5")
     fun getTeachingActivityOffers5() = case("Offer.getTeachingActivityOffers#5", index = 4) {
-        val academicYearOfferId = choose("academicYearOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.academicYearOfferId })
-        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.courseOfStudyOfferId })
+        val row = chooseRow("academicYearOfferId, courseOfStudyOfferId", listOf(offerGetOffers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.academicYearOfferId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.courseOfStudyOfferId }.firstOrNull()?.toString()) }
+        val row2 = chooseRow("activityId, activityCode", listOf(offerGetGenericTeachingActivities()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.activityId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.activityCode }.firstOrNull()?.toString()) }
+        val academicYearOfferId = choose("academicYearOfferId", listOf(row).mapNotNull { it.academicYearOfferId })
+        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(row).mapNotNull { it.courseOfStudyOfferId })
         val studyPlanCode = choose("studyPlanCode", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.studyPlanCode })
-        val activityId = choose("activityId", listOf(offerGetGenericTeachingActivities()).flatten().mapNotNull { it.activityId })
-        val activityCode = choose("activityCode", listOf(offerGetGenericTeachingActivities()).flatten().mapNotNull { it.activityCode })
+        val activityId = choose("activityId", listOf(row2).mapNotNull { it.activityId })
+        val activityCode = choose("activityCode", listOf(row2).mapNotNull { it.activityCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ContextualizedActivity\"}}") {
             api.offer.getTeachingActivityOffers(academicYearOfferId = academicYearOfferId, courseOfStudyOfferId = courseOfStudyOfferId, studyPlanCode = studyPlanCode, activityId = activityId, activityCode = activityCode)
         } ?: return@case
@@ -297,10 +309,12 @@ class Esse3OfferLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Offer.getTeachingActivityOffers#6")
     fun getTeachingActivityOffers6() = case("Offer.getTeachingActivityOffers#6", index = 5) {
-        val academicYearOfferId = choose("academicYearOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.academicYearOfferId })
-        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.courseOfStudyOfferId })
-        val academicYearOrderId = choose("academicYearOrderId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.academicYearOrderId }.map { it.toInt() })
-        val studyPlanId = choose("studyPlanId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studyPlanId })
+        val row = chooseRow("academicYearOfferId, courseOfStudyOfferId", listOf(offerGetOffers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.academicYearOfferId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.courseOfStudyOfferId }.firstOrNull()?.toString()) }
+        val row2 = chooseRow("academicYearOrderId, studyPlanId", listOf(personalDataGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.academicYearOrderId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.studyPlanId }.firstOrNull()?.toString()) }
+        val academicYearOfferId = choose("academicYearOfferId", listOf(row).mapNotNull { it.academicYearOfferId })
+        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(row).mapNotNull { it.courseOfStudyOfferId })
+        val academicYearOrderId = choose("academicYearOrderId", listOf(row2).mapNotNull { it.academicYearOrderId }.map { it.toInt() })
+        val studyPlanId = choose("studyPlanId", listOf(row2).mapNotNull { it.studyPlanId })
         val activityId = choose("activityId", listOf(offerGetGenericTeachingActivities()).flatten().mapNotNull { it.activityId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ContextualizedActivity\"}}") {
             api.offer.getTeachingActivityOffers(academicYearOfferId = academicYearOfferId, courseOfStudyOfferId = courseOfStudyOfferId, academicYearOrderId = academicYearOrderId, studyPlanId = studyPlanId, activityId = activityId)
@@ -320,8 +334,9 @@ class Esse3OfferLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Offer.getCancellableTeachingActivity#1")
     fun getCancellableTeachingActivity1() = case("Offer.getCancellableTeachingActivity#1") {
-        val academicYearOfferId = choose("academicYearOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.academicYearOfferId })
-        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.courseOfStudyOfferId })
+        val row = chooseRow("academicYearOfferId, courseOfStudyOfferId", listOf(offerGetOffers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.academicYearOfferId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.courseOfStudyOfferId }.firstOrNull()?.toString()) }
+        val academicYearOfferId = choose("academicYearOfferId", listOf(row).mapNotNull { it.academicYearOfferId })
+        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(row).mapNotNull { it.courseOfStudyOfferId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3OfferActivityDeletable\"}}") {
             api.offer.getCancellableTeachingActivity(academicYearOfferId = academicYearOfferId, courseOfStudyOfferId = courseOfStudyOfferId)
         } ?: return@case
@@ -331,10 +346,12 @@ class Esse3OfferLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Offer.getCancellableTeachingActivity#2")
     fun getCancellableTeachingActivity2() = case("Offer.getCancellableTeachingActivity#2", index = 1) {
-        val academicYearOfferId = choose("academicYearOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.academicYearOfferId })
-        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.courseOfStudyOfferId })
-        val academicYearOrderId = choose("academicYearOrderId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.academicYearOrderId }.map { it.toInt() })
-        val studyPlanId = choose("studyPlanId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studyPlanId })
+        val row = chooseRow("academicYearOfferId, courseOfStudyOfferId", listOf(offerGetOffers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.academicYearOfferId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.courseOfStudyOfferId }.firstOrNull()?.toString()) }
+        val row2 = chooseRow("academicYearOrderId, studyPlanId", listOf(personalDataGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.academicYearOrderId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.studyPlanId }.firstOrNull()?.toString()) }
+        val academicYearOfferId = choose("academicYearOfferId", listOf(row).mapNotNull { it.academicYearOfferId })
+        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(row).mapNotNull { it.courseOfStudyOfferId })
+        val academicYearOrderId = choose("academicYearOrderId", listOf(row2).mapNotNull { it.academicYearOrderId }.map { it.toInt() })
+        val studyPlanId = choose("studyPlanId", listOf(row2).mapNotNull { it.studyPlanId })
         val studyPlanCode = choose("studyPlanCode", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.studyPlanCode })
         val activityCode = choose("activityCode", listOf(offerGetGenericTeachingActivities()).flatten().mapNotNull { it.activityCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3OfferActivityDeletable\"}}") {
@@ -346,11 +363,13 @@ class Esse3OfferLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Offer.getCancellableTeachingActivity#3")
     fun getCancellableTeachingActivity3() = case("Offer.getCancellableTeachingActivity#3", index = 2) {
-        val academicYearOfferId = choose("academicYearOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.academicYearOfferId })
-        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.courseOfStudyOfferId })
+        val row = chooseRow("academicYearOfferId, courseOfStudyOfferId", listOf(offerGetOffers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.academicYearOfferId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.courseOfStudyOfferId }.firstOrNull()?.toString()) }
+        val row2 = chooseRow("activityId, activityCode", listOf(offerGetGenericTeachingActivities()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.activityId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.activityCode }.firstOrNull()?.toString()) }
+        val academicYearOfferId = choose("academicYearOfferId", listOf(row).mapNotNull { it.academicYearOfferId })
+        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(row).mapNotNull { it.courseOfStudyOfferId })
         val academicYearOrderId = choose("academicYearOrderId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.academicYearOrderId }.map { it.toInt() })
-        val activityId = choose("activityId", listOf(offerGetGenericTeachingActivities()).flatten().mapNotNull { it.activityId })
-        val activityCode = choose("activityCode", listOf(offerGetGenericTeachingActivities()).flatten().mapNotNull { it.activityCode })
+        val activityId = choose("activityId", listOf(row2).mapNotNull { it.activityId })
+        val activityCode = choose("activityCode", listOf(row2).mapNotNull { it.activityCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3OfferActivityDeletable\"}}") {
             api.offer.getCancellableTeachingActivity(academicYearOfferId = academicYearOfferId, courseOfStudyOfferId = courseOfStudyOfferId, academicYearOrderId = academicYearOrderId, activityId = activityId, activityCode = activityCode)
         } ?: return@case
@@ -360,8 +379,9 @@ class Esse3OfferLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Offer.getCancellableTeachingActivity#4")
     fun getCancellableTeachingActivity4() = case("Offer.getCancellableTeachingActivity#4", index = 3) {
-        val academicYearOfferId = choose("academicYearOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.academicYearOfferId })
-        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.courseOfStudyOfferId })
+        val row = chooseRow("academicYearOfferId, courseOfStudyOfferId", listOf(offerGetOffers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.academicYearOfferId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.courseOfStudyOfferId }.firstOrNull()?.toString()) }
+        val academicYearOfferId = choose("academicYearOfferId", listOf(row).mapNotNull { it.academicYearOfferId })
+        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(row).mapNotNull { it.courseOfStudyOfferId })
         val studyPlanId = choose("studyPlanId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studyPlanId })
         val studyPlanCode = choose("studyPlanCode", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.studyPlanCode })
         val activityId = choose("activityId", listOf(offerGetGenericTeachingActivities()).flatten().mapNotNull { it.activityId })
@@ -374,8 +394,9 @@ class Esse3OfferLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Offer.getCancellableTeachingActivity#5")
     fun getCancellableTeachingActivity5() = case("Offer.getCancellableTeachingActivity#5", index = 4) {
-        val academicYearOfferId = choose("academicYearOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.academicYearOfferId })
-        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.courseOfStudyOfferId })
+        val row = chooseRow("academicYearOfferId, courseOfStudyOfferId", listOf(offerGetOffers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.academicYearOfferId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.courseOfStudyOfferId }.firstOrNull()?.toString()) }
+        val academicYearOfferId = choose("academicYearOfferId", listOf(row).mapNotNull { it.academicYearOfferId })
+        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(row).mapNotNull { it.courseOfStudyOfferId })
         val academicYearOrderId = choose("academicYearOrderId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.academicYearOrderId }.map { it.toInt() })
         val studyPlanCode = choose("studyPlanCode", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.studyPlanCode })
         val activityId = choose("activityId", listOf(offerGetGenericTeachingActivities()).flatten().mapNotNull { it.activityId })
@@ -388,8 +409,9 @@ class Esse3OfferLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Offer.getCancellableTeachingActivity#6")
     fun getCancellableTeachingActivity6() = case("Offer.getCancellableTeachingActivity#6", index = 5) {
-        val academicYearOfferId = choose("academicYearOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.academicYearOfferId })
-        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.courseOfStudyOfferId })
+        val row = chooseRow("academicYearOfferId, courseOfStudyOfferId", listOf(offerGetOffers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.academicYearOfferId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.courseOfStudyOfferId }.firstOrNull()?.toString()) }
+        val academicYearOfferId = choose("academicYearOfferId", listOf(row).mapNotNull { it.academicYearOfferId })
+        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(row).mapNotNull { it.courseOfStudyOfferId })
         val studyPlanId = choose("studyPlanId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studyPlanId })
         val activityCode = choose("activityCode", listOf(offerGetGenericTeachingActivities()).flatten().mapNotNull { it.activityCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3OfferActivityDeletable\"}}") {
@@ -408,100 +430,11 @@ class Esse3OfferLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     }
 
     @Test
-    @DisplayName("Offer.getLecturersByTeachingUnit#1")
-    fun getLecturersByTeachingUnit1() = case("Offer.getLecturersByTeachingUnit#1") {
-        val academicYearOfferId = choose("academicYearOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.academicYearOfferId })
-        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.courseOfStudyOfferId })
-        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TeachersPerTeachingUnit\"}}") {
-            api.offer.getLecturersByTeachingUnit(academicYearOfferId = academicYearOfferId, courseOfStudyOfferId = courseOfStudyOfferId)
-        } ?: return@case
-        fingerprint { list(result) { writeEsse3TeachersPerTeachingUnit(it) } }
-    }
-
-    @Test
-    @DisplayName("Offer.getLecturersByTeachingUnit#2")
-    fun getLecturersByTeachingUnit2() = case("Offer.getLecturersByTeachingUnit#2", index = 1) {
-        val academicYearOfferId = choose("academicYearOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.academicYearOfferId })
-        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.courseOfStudyOfferId })
-        val academicYearOrderId = choose("academicYearOrderId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.academicYearOrderId }.map { it.toInt() })
-        val studyPlanId = choose("studyPlanId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studyPlanId })
-        val studyPlanCode = choose("studyPlanCode", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.studyPlanCode })
-        val teachingUnitCode = choose("teachingUnitCode", listOf(logisticsGetTeachingUnitLogWithDetails()).flatten().mapNotNull { it.masterTeachingUnitKey }.mapNotNull { it.teachingUnitCode })
-        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TeachersPerTeachingUnit\"}}") {
-            api.offer.getLecturersByTeachingUnit(academicYearOfferId = academicYearOfferId, courseOfStudyOfferId = courseOfStudyOfferId, academicYearOrderId = academicYearOrderId, studyPlanId = studyPlanId, studyPlanCode = studyPlanCode, teachingUnitCode = teachingUnitCode)
-        } ?: return@case
-        fingerprint { list(result) { writeEsse3TeachersPerTeachingUnit(it) } }
-    }
-
-    @Test
-    @DisplayName("Offer.getLecturersByTeachingUnit#3")
-    fun getLecturersByTeachingUnit3() = case("Offer.getLecturersByTeachingUnit#3", index = 2) {
-        val academicYearOfferId = choose("academicYearOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.academicYearOfferId })
-        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.courseOfStudyOfferId })
-        val academicYearOrderId = choose("academicYearOrderId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.academicYearOrderId }.map { it.toInt() })
-        val activityCode = choose("activityCode", listOf(offerGetGenericTeachingActivities()).flatten().mapNotNull { it.activityCode })
-        val teachingUnitCode = choose("teachingUnitCode", listOf(logisticsGetTeachingUnitLogWithDetails()).flatten().mapNotNull { it.masterTeachingUnitKey }.mapNotNull { it.teachingUnitCode })
-        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TeachersPerTeachingUnit\"}}") {
-            api.offer.getLecturersByTeachingUnit(academicYearOfferId = academicYearOfferId, courseOfStudyOfferId = courseOfStudyOfferId, academicYearOrderId = academicYearOrderId, activityCode = activityCode, teachingUnitCode = teachingUnitCode)
-        } ?: return@case
-        fingerprint { list(result) { writeEsse3TeachersPerTeachingUnit(it) } }
-    }
-
-    @Test
-    @DisplayName("Offer.getLecturersByTeachingUnit#4")
-    fun getLecturersByTeachingUnit4() = case("Offer.getLecturersByTeachingUnit#4", index = 3) {
-        val academicYearOfferId = choose("academicYearOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.academicYearOfferId })
-        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.courseOfStudyOfferId })
-        val studyPlanId = choose("studyPlanId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studyPlanId })
-        val studyPlanCode = choose("studyPlanCode", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.studyPlanCode })
-        val activityCode = choose("activityCode", listOf(offerGetGenericTeachingActivities()).flatten().mapNotNull { it.activityCode })
-        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TeachersPerTeachingUnit\"}}") {
-            api.offer.getLecturersByTeachingUnit(academicYearOfferId = academicYearOfferId, courseOfStudyOfferId = courseOfStudyOfferId, studyPlanId = studyPlanId, studyPlanCode = studyPlanCode, activityCode = activityCode)
-        } ?: return@case
-        fingerprint { list(result) { writeEsse3TeachersPerTeachingUnit(it) } }
-    }
-
-    @Test
-    @DisplayName("Offer.getLecturersByTeachingUnit#5")
-    fun getLecturersByTeachingUnit5() = case("Offer.getLecturersByTeachingUnit#5", index = 4) {
-        val academicYearOfferId = choose("academicYearOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.academicYearOfferId })
-        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.courseOfStudyOfferId })
-        val studyPlanCode = choose("studyPlanCode", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.studyPlanCode })
-        val activityCode = choose("activityCode", listOf(offerGetGenericTeachingActivities()).flatten().mapNotNull { it.activityCode })
-        val teachingUnitCode = choose("teachingUnitCode", listOf(logisticsGetTeachingUnitLogWithDetails()).flatten().mapNotNull { it.masterTeachingUnitKey }.mapNotNull { it.teachingUnitCode })
-        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TeachersPerTeachingUnit\"}}") {
-            api.offer.getLecturersByTeachingUnit(academicYearOfferId = academicYearOfferId, courseOfStudyOfferId = courseOfStudyOfferId, studyPlanCode = studyPlanCode, activityCode = activityCode, teachingUnitCode = teachingUnitCode)
-        } ?: return@case
-        fingerprint { list(result) { writeEsse3TeachersPerTeachingUnit(it) } }
-    }
-
-    @Test
-    @DisplayName("Offer.getLecturersByTeachingUnit#6")
-    fun getLecturersByTeachingUnit6() = case("Offer.getLecturersByTeachingUnit#6", index = 5) {
-        val academicYearOfferId = choose("academicYearOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.academicYearOfferId })
-        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.courseOfStudyOfferId })
-        val academicYearOrderId = choose("academicYearOrderId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.academicYearOrderId }.map { it.toInt() })
-        val studyPlanId = choose("studyPlanId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studyPlanId })
-        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TeachersPerTeachingUnit\"}}") {
-            api.offer.getLecturersByTeachingUnit(academicYearOfferId = academicYearOfferId, courseOfStudyOfferId = courseOfStudyOfferId, academicYearOrderId = academicYearOrderId, studyPlanId = studyPlanId)
-        } ?: return@case
-        fingerprint { list(result) { writeEsse3TeachersPerTeachingUnit(it) } }
-    }
-
-    @Test
-    @DisplayName("Offer.getLecturersByTeachingUnit#unknown-id")
-    fun getLecturersByTeachingUnitUnknownId() = case("Offer.getLecturersByTeachingUnit#unknown-id") {
-        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.courseOfStudyOfferId })
-        refused(acceptsEmpty = true) {
-            api.offer.getLecturersByTeachingUnit(academicYearOfferId = 987654321, courseOfStudyOfferId = courseOfStudyOfferId)
-        }
-    }
-
-    @Test
     @DisplayName("Offer.getTeachingUnitOffers#1")
     fun getTeachingUnitOffers1() = case("Offer.getTeachingUnitOffers#1") {
-        val academicYearOfferId = choose("academicYearOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.academicYearOfferId })
-        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.courseOfStudyOfferId })
+        val row = chooseRow("academicYearOfferId, courseOfStudyOfferId", listOf(offerGetOffers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.academicYearOfferId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.courseOfStudyOfferId }.firstOrNull()?.toString()) }
+        val academicYearOfferId = choose("academicYearOfferId", listOf(row).mapNotNull { it.academicYearOfferId })
+        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(row).mapNotNull { it.courseOfStudyOfferId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ContextualizedTeachingUnit\"}}") {
             api.offer.getTeachingUnitOffers(academicYearOfferId = academicYearOfferId, courseOfStudyOfferId = courseOfStudyOfferId)
         } ?: return@case
@@ -511,10 +444,12 @@ class Esse3OfferLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Offer.getTeachingUnitOffers#2")
     fun getTeachingUnitOffers2() = case("Offer.getTeachingUnitOffers#2", index = 1) {
-        val academicYearOfferId = choose("academicYearOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.academicYearOfferId })
-        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.courseOfStudyOfferId })
-        val academicYearOrderId = choose("academicYearOrderId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.academicYearOrderId }.map { it.toInt() })
-        val studyPlanId = choose("studyPlanId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studyPlanId })
+        val row = chooseRow("academicYearOfferId, courseOfStudyOfferId", listOf(offerGetOffers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.academicYearOfferId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.courseOfStudyOfferId }.firstOrNull()?.toString()) }
+        val row2 = chooseRow("academicYearOrderId, studyPlanId", listOf(personalDataGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.academicYearOrderId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.studyPlanId }.firstOrNull()?.toString()) }
+        val academicYearOfferId = choose("academicYearOfferId", listOf(row).mapNotNull { it.academicYearOfferId })
+        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(row).mapNotNull { it.courseOfStudyOfferId })
+        val academicYearOrderId = choose("academicYearOrderId", listOf(row2).mapNotNull { it.academicYearOrderId }.map { it.toInt() })
+        val studyPlanId = choose("studyPlanId", listOf(row2).mapNotNull { it.studyPlanId })
         val studyPlanCode = choose("studyPlanCode", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.studyPlanCode })
         val activityId = choose("activityId", listOf(offerGetGenericTeachingActivities()).flatten().mapNotNull { it.activityId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ContextualizedTeachingUnit\"}}") {
@@ -526,8 +461,9 @@ class Esse3OfferLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Offer.getTeachingUnitOffers#3")
     fun getTeachingUnitOffers3() = case("Offer.getTeachingUnitOffers#3", index = 2) {
-        val academicYearOfferId = choose("academicYearOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.academicYearOfferId })
-        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.courseOfStudyOfferId })
+        val row = chooseRow("academicYearOfferId, courseOfStudyOfferId", listOf(offerGetOffers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.academicYearOfferId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.courseOfStudyOfferId }.firstOrNull()?.toString()) }
+        val academicYearOfferId = choose("academicYearOfferId", listOf(row).mapNotNull { it.academicYearOfferId })
+        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(row).mapNotNull { it.courseOfStudyOfferId })
         val studyPlanId = choose("studyPlanId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studyPlanId })
         val studyPlanCode = choose("studyPlanCode", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.studyPlanCode })
         val activityCode = choose("activityCode", listOf(offerGetGenericTeachingActivities()).flatten().mapNotNull { it.activityCode })
@@ -540,11 +476,13 @@ class Esse3OfferLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Offer.getTeachingUnitOffers#4")
     fun getTeachingUnitOffers4() = case("Offer.getTeachingUnitOffers#4", index = 3) {
-        val academicYearOfferId = choose("academicYearOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.academicYearOfferId })
-        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.courseOfStudyOfferId })
+        val row = chooseRow("academicYearOfferId, courseOfStudyOfferId", listOf(offerGetOffers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.academicYearOfferId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.courseOfStudyOfferId }.firstOrNull()?.toString()) }
+        val row2 = chooseRow("activityId, activityCode", listOf(offerGetGenericTeachingActivities()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.activityId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.activityCode }.firstOrNull()?.toString()) }
+        val academicYearOfferId = choose("academicYearOfferId", listOf(row).mapNotNull { it.academicYearOfferId })
+        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(row).mapNotNull { it.courseOfStudyOfferId })
         val academicYearOrderId = choose("academicYearOrderId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.academicYearOrderId }.map { it.toInt() })
-        val activityId = choose("activityId", listOf(offerGetGenericTeachingActivities()).flatten().mapNotNull { it.activityId })
-        val activityCode = choose("activityCode", listOf(offerGetGenericTeachingActivities()).flatten().mapNotNull { it.activityCode })
+        val activityId = choose("activityId", listOf(row2).mapNotNull { it.activityId })
+        val activityCode = choose("activityCode", listOf(row2).mapNotNull { it.activityCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ContextualizedTeachingUnit\"}}") {
             api.offer.getTeachingUnitOffers(academicYearOfferId = academicYearOfferId, courseOfStudyOfferId = courseOfStudyOfferId, academicYearOrderId = academicYearOrderId, activityId = activityId, activityCode = activityCode)
         } ?: return@case
@@ -554,10 +492,12 @@ class Esse3OfferLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Offer.getTeachingUnitOffers#5")
     fun getTeachingUnitOffers5() = case("Offer.getTeachingUnitOffers#5", index = 4) {
-        val academicYearOfferId = choose("academicYearOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.academicYearOfferId })
-        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.courseOfStudyOfferId })
-        val academicYearOrderId = choose("academicYearOrderId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.academicYearOrderId }.map { it.toInt() })
-        val studyPlanId = choose("studyPlanId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studyPlanId })
+        val row = chooseRow("academicYearOfferId, courseOfStudyOfferId", listOf(offerGetOffers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.academicYearOfferId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.courseOfStudyOfferId }.firstOrNull()?.toString()) }
+        val row2 = chooseRow("academicYearOrderId, studyPlanId", listOf(personalDataGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.academicYearOrderId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.studyPlanId }.firstOrNull()?.toString()) }
+        val academicYearOfferId = choose("academicYearOfferId", listOf(row).mapNotNull { it.academicYearOfferId })
+        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(row).mapNotNull { it.courseOfStudyOfferId })
+        val academicYearOrderId = choose("academicYearOrderId", listOf(row2).mapNotNull { it.academicYearOrderId }.map { it.toInt() })
+        val studyPlanId = choose("studyPlanId", listOf(row2).mapNotNull { it.studyPlanId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ContextualizedTeachingUnit\"}}") {
             api.offer.getTeachingUnitOffers(academicYearOfferId = academicYearOfferId, courseOfStudyOfferId = courseOfStudyOfferId, academicYearOrderId = academicYearOrderId, studyPlanId = studyPlanId)
         } ?: return@case
@@ -567,8 +507,9 @@ class Esse3OfferLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Offer.getTeachingUnitOffers#6")
     fun getTeachingUnitOffers6() = case("Offer.getTeachingUnitOffers#6", index = 5) {
-        val academicYearOfferId = choose("academicYearOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.academicYearOfferId })
-        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.courseOfStudyOfferId })
+        val row = chooseRow("academicYearOfferId, courseOfStudyOfferId", listOf(offerGetOffers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.academicYearOfferId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.courseOfStudyOfferId }.firstOrNull()?.toString()) }
+        val academicYearOfferId = choose("academicYearOfferId", listOf(row).mapNotNull { it.academicYearOfferId })
+        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(row).mapNotNull { it.courseOfStudyOfferId })
         val studyPlanCode = choose("studyPlanCode", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.studyPlanCode })
         val activityId = choose("activityId", listOf(offerGetGenericTeachingActivities()).flatten().mapNotNull { it.activityId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ContextualizedTeachingUnit\"}}") {
@@ -589,8 +530,9 @@ class Esse3OfferLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Offer.getCancellableTeachingUnit#1")
     fun getCancellableTeachingUnit1() = case("Offer.getCancellableTeachingUnit#1") {
-        val academicYearOfferId = choose("academicYearOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.academicYearOfferId })
-        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.courseOfStudyOfferId })
+        val row = chooseRow("academicYearOfferId, courseOfStudyOfferId", listOf(offerGetOffers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.academicYearOfferId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.courseOfStudyOfferId }.firstOrNull()?.toString()) }
+        val academicYearOfferId = choose("academicYearOfferId", listOf(row).mapNotNull { it.academicYearOfferId })
+        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(row).mapNotNull { it.courseOfStudyOfferId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3OfferTeachingUnitDeletable\"}}") {
             api.offer.getCancellableTeachingUnit(academicYearOfferId = academicYearOfferId, courseOfStudyOfferId = courseOfStudyOfferId)
         } ?: return@case
@@ -600,14 +542,17 @@ class Esse3OfferLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Offer.getCancellableTeachingUnit#2")
     fun getCancellableTeachingUnit2() = case("Offer.getCancellableTeachingUnit#2", index = 1) {
-        val academicYearOfferId = choose("academicYearOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.academicYearOfferId })
-        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.courseOfStudyOfferId })
-        val academicYearOrderId = choose("academicYearOrderId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.academicYearOrderId }.map { it.toInt() })
-        val studyPlanId = choose("studyPlanId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studyPlanId })
+        val row = chooseRow("academicYearOfferId, courseOfStudyOfferId", listOf(offerGetOffers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.academicYearOfferId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.courseOfStudyOfferId }.firstOrNull()?.toString()) }
+        val row2 = chooseRow("academicYearOrderId, studyPlanId", listOf(personalDataGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.academicYearOrderId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.studyPlanId }.firstOrNull()?.toString()) }
+        val row3 = chooseRow("teachingUnitId, teachingUnitCode", listOf(logisticsGetTeachingUnitLogWithDetails()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.masterTeachingUnitKey }.mapNotNull { it.teachingUnitId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.masterTeachingUnitKey }.mapNotNull { it.teachingUnitCode }.firstOrNull()?.toString()) }
+        val academicYearOfferId = choose("academicYearOfferId", listOf(row).mapNotNull { it.academicYearOfferId })
+        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(row).mapNotNull { it.courseOfStudyOfferId })
+        val academicYearOrderId = choose("academicYearOrderId", listOf(row2).mapNotNull { it.academicYearOrderId }.map { it.toInt() })
+        val studyPlanId = choose("studyPlanId", listOf(row2).mapNotNull { it.studyPlanId })
         val studyPlanCode = choose("studyPlanCode", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.studyPlanCode })
         val activityCode = choose("activityCode", listOf(offerGetGenericTeachingActivities()).flatten().mapNotNull { it.activityCode })
-        val teachingUnitId = choose("teachingUnitId", listOf(logisticsGetTeachingUnitLogWithDetails()).flatten().mapNotNull { it.masterTeachingUnitKey }.mapNotNull { it.teachingUnitId })
-        val teachingUnitCode = choose("teachingUnitCode", listOf(logisticsGetTeachingUnitLogWithDetails()).flatten().mapNotNull { it.masterTeachingUnitKey }.mapNotNull { it.teachingUnitCode })
+        val teachingUnitId = choose("teachingUnitId", listOf(row3).mapNotNull { it.masterTeachingUnitKey }.mapNotNull { it.teachingUnitId })
+        val teachingUnitCode = choose("teachingUnitCode", listOf(row3).mapNotNull { it.masterTeachingUnitKey }.mapNotNull { it.teachingUnitCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3OfferTeachingUnitDeletable\"}}") {
             api.offer.getCancellableTeachingUnit(academicYearOfferId = academicYearOfferId, courseOfStudyOfferId = courseOfStudyOfferId, academicYearOrderId = academicYearOrderId, studyPlanId = studyPlanId, studyPlanCode = studyPlanCode, activityCode = activityCode, teachingUnitId = teachingUnitId, teachingUnitCode = teachingUnitCode)
         } ?: return@case
@@ -617,11 +562,13 @@ class Esse3OfferLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Offer.getCancellableTeachingUnit#3")
     fun getCancellableTeachingUnit3() = case("Offer.getCancellableTeachingUnit#3", index = 2) {
-        val academicYearOfferId = choose("academicYearOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.academicYearOfferId })
-        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.courseOfStudyOfferId })
+        val row = chooseRow("academicYearOfferId, courseOfStudyOfferId", listOf(offerGetOffers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.academicYearOfferId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.courseOfStudyOfferId }.firstOrNull()?.toString()) }
+        val row2 = chooseRow("activityId, activityCode", listOf(offerGetGenericTeachingActivities()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.activityId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.activityCode }.firstOrNull()?.toString()) }
+        val academicYearOfferId = choose("academicYearOfferId", listOf(row).mapNotNull { it.academicYearOfferId })
+        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(row).mapNotNull { it.courseOfStudyOfferId })
         val studyPlanCode = choose("studyPlanCode", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.studyPlanCode })
-        val activityId = choose("activityId", listOf(offerGetGenericTeachingActivities()).flatten().mapNotNull { it.activityId })
-        val activityCode = choose("activityCode", listOf(offerGetGenericTeachingActivities()).flatten().mapNotNull { it.activityCode })
+        val activityId = choose("activityId", listOf(row2).mapNotNull { it.activityId })
+        val activityCode = choose("activityCode", listOf(row2).mapNotNull { it.activityCode })
         val teachingUnitCode = choose("teachingUnitCode", listOf(logisticsGetTeachingUnitLogWithDetails()).flatten().mapNotNull { it.masterTeachingUnitKey }.mapNotNull { it.teachingUnitCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3OfferTeachingUnitDeletable\"}}") {
             api.offer.getCancellableTeachingUnit(academicYearOfferId = academicYearOfferId, courseOfStudyOfferId = courseOfStudyOfferId, studyPlanCode = studyPlanCode, activityId = activityId, activityCode = activityCode, teachingUnitCode = teachingUnitCode)
@@ -632,10 +579,12 @@ class Esse3OfferLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Offer.getCancellableTeachingUnit#4")
     fun getCancellableTeachingUnit4() = case("Offer.getCancellableTeachingUnit#4", index = 3) {
-        val academicYearOfferId = choose("academicYearOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.academicYearOfferId })
-        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.courseOfStudyOfferId })
-        val academicYearOrderId = choose("academicYearOrderId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.academicYearOrderId }.map { it.toInt() })
-        val studyPlanId = choose("studyPlanId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studyPlanId })
+        val row = chooseRow("academicYearOfferId, courseOfStudyOfferId", listOf(offerGetOffers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.academicYearOfferId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.courseOfStudyOfferId }.firstOrNull()?.toString()) }
+        val row2 = chooseRow("academicYearOrderId, studyPlanId", listOf(personalDataGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.academicYearOrderId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.studyPlanId }.firstOrNull()?.toString()) }
+        val academicYearOfferId = choose("academicYearOfferId", listOf(row).mapNotNull { it.academicYearOfferId })
+        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(row).mapNotNull { it.courseOfStudyOfferId })
+        val academicYearOrderId = choose("academicYearOrderId", listOf(row2).mapNotNull { it.academicYearOrderId }.map { it.toInt() })
+        val studyPlanId = choose("studyPlanId", listOf(row2).mapNotNull { it.studyPlanId })
         val activityId = choose("activityId", listOf(offerGetGenericTeachingActivities()).flatten().mapNotNull { it.activityId })
         val teachingUnitId = choose("teachingUnitId", listOf(logisticsGetTeachingUnitLogWithDetails()).flatten().mapNotNull { it.masterTeachingUnitKey }.mapNotNull { it.teachingUnitId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3OfferTeachingUnitDeletable\"}}") {
@@ -647,11 +596,13 @@ class Esse3OfferLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Offer.getCancellableTeachingUnit#5")
     fun getCancellableTeachingUnit5() = case("Offer.getCancellableTeachingUnit#5", index = 4) {
-        val academicYearOfferId = choose("academicYearOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.academicYearOfferId })
-        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.courseOfStudyOfferId })
+        val row = chooseRow("academicYearOfferId, courseOfStudyOfferId", listOf(offerGetOffers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.academicYearOfferId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.courseOfStudyOfferId }.firstOrNull()?.toString()) }
+        val row2 = chooseRow("teachingUnitId, teachingUnitCode", listOf(logisticsGetTeachingUnitLogWithDetails()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.masterTeachingUnitKey }.mapNotNull { it.teachingUnitId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.masterTeachingUnitKey }.mapNotNull { it.teachingUnitCode }.firstOrNull()?.toString()) }
+        val academicYearOfferId = choose("academicYearOfferId", listOf(row).mapNotNull { it.academicYearOfferId })
+        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(row).mapNotNull { it.courseOfStudyOfferId })
         val academicYearOrderId = choose("academicYearOrderId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.academicYearOrderId }.map { it.toInt() })
-        val teachingUnitId = choose("teachingUnitId", listOf(logisticsGetTeachingUnitLogWithDetails()).flatten().mapNotNull { it.masterTeachingUnitKey }.mapNotNull { it.teachingUnitId })
-        val teachingUnitCode = choose("teachingUnitCode", listOf(logisticsGetTeachingUnitLogWithDetails()).flatten().mapNotNull { it.masterTeachingUnitKey }.mapNotNull { it.teachingUnitCode })
+        val teachingUnitId = choose("teachingUnitId", listOf(row2).mapNotNull { it.masterTeachingUnitKey }.mapNotNull { it.teachingUnitId })
+        val teachingUnitCode = choose("teachingUnitCode", listOf(row2).mapNotNull { it.masterTeachingUnitKey }.mapNotNull { it.teachingUnitCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3OfferTeachingUnitDeletable\"}}") {
             api.offer.getCancellableTeachingUnit(academicYearOfferId = academicYearOfferId, courseOfStudyOfferId = courseOfStudyOfferId, academicYearOrderId = academicYearOrderId, teachingUnitId = teachingUnitId, teachingUnitCode = teachingUnitCode)
         } ?: return@case
@@ -661,8 +612,9 @@ class Esse3OfferLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Offer.getCancellableTeachingUnit#6")
     fun getCancellableTeachingUnit6() = case("Offer.getCancellableTeachingUnit#6", index = 5) {
-        val academicYearOfferId = choose("academicYearOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.academicYearOfferId })
-        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.courseOfStudyOfferId })
+        val row = chooseRow("academicYearOfferId, courseOfStudyOfferId", listOf(offerGetOffers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.academicYearOfferId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.courseOfStudyOfferId }.firstOrNull()?.toString()) }
+        val academicYearOfferId = choose("academicYearOfferId", listOf(row).mapNotNull { it.academicYearOfferId })
+        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(row).mapNotNull { it.courseOfStudyOfferId })
         val studyPlanId = choose("studyPlanId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studyPlanId })
         val studyPlanCode = choose("studyPlanCode", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.studyPlanCode })
         val activityId = choose("activityId", listOf(offerGetGenericTeachingActivities()).flatten().mapNotNull { it.activityId })
@@ -685,8 +637,9 @@ class Esse3OfferLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Offer.getOfferedSEG#1")
     fun getOfferedSEG1() = case("Offer.getOfferedSEG#1") {
-        val academicYearOfferId = choose("academicYearOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.academicYearOfferId })
-        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.courseOfStudyOfferId })
+        val row = chooseRow("academicYearOfferId, courseOfStudyOfferId", listOf(offerGetOffers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.academicYearOfferId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.courseOfStudyOfferId }.firstOrNull()?.toString()) }
+        val academicYearOfferId = choose("academicYearOfferId", listOf(row).mapNotNull { it.academicYearOfferId })
+        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(row).mapNotNull { it.courseOfStudyOfferId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ContextualizedSegment\"}}") {
             api.offer.getOfferedSEG(academicYearOfferId = academicYearOfferId, courseOfStudyOfferId = courseOfStudyOfferId)
         } ?: return@case
@@ -696,13 +649,16 @@ class Esse3OfferLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Offer.getOfferedSEG#2")
     fun getOfferedSEG2() = case("Offer.getOfferedSEG#2", index = 1) {
-        val academicYearOfferId = choose("academicYearOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.academicYearOfferId })
-        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.courseOfStudyOfferId })
-        val academicYearOrderId = choose("academicYearOrderId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.academicYearOrderId }.map { it.toInt() })
-        val studyPlanId = choose("studyPlanId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studyPlanId })
+        val row = chooseRow("academicYearOfferId, courseOfStudyOfferId", listOf(offerGetOffers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.academicYearOfferId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.courseOfStudyOfferId }.firstOrNull()?.toString()) }
+        val row2 = chooseRow("academicYearOrderId, studyPlanId", listOf(personalDataGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.academicYearOrderId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.studyPlanId }.firstOrNull()?.toString()) }
+        val row3 = chooseRow("activityId, activityCode", listOf(offerGetGenericTeachingActivities()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.activityId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.activityCode }.firstOrNull()?.toString()) }
+        val academicYearOfferId = choose("academicYearOfferId", listOf(row).mapNotNull { it.academicYearOfferId })
+        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(row).mapNotNull { it.courseOfStudyOfferId })
+        val academicYearOrderId = choose("academicYearOrderId", listOf(row2).mapNotNull { it.academicYearOrderId }.map { it.toInt() })
+        val studyPlanId = choose("studyPlanId", listOf(row2).mapNotNull { it.studyPlanId })
         val studyPlanCode = choose("studyPlanCode", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.studyPlanCode })
-        val activityId = choose("activityId", listOf(offerGetGenericTeachingActivities()).flatten().mapNotNull { it.activityId })
-        val activityCode = choose("activityCode", listOf(offerGetGenericTeachingActivities()).flatten().mapNotNull { it.activityCode })
+        val activityId = choose("activityId", listOf(row3).mapNotNull { it.activityId })
+        val activityCode = choose("activityCode", listOf(row3).mapNotNull { it.activityCode })
         val teachingUnitId = choose("teachingUnitId", listOf(logisticsGetTeachingUnitLogWithDetails()).flatten().mapNotNull { it.masterTeachingUnitKey }.mapNotNull { it.teachingUnitId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ContextualizedSegment\"}}") {
             api.offer.getOfferedSEG(academicYearOfferId = academicYearOfferId, courseOfStudyOfferId = courseOfStudyOfferId, academicYearOrderId = academicYearOrderId, studyPlanId = studyPlanId, studyPlanCode = studyPlanCode, activityId = activityId, activityCode = activityCode, teachingUnitId = teachingUnitId)
@@ -713,10 +669,12 @@ class Esse3OfferLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Offer.getOfferedSEG#3")
     fun getOfferedSEG3() = case("Offer.getOfferedSEG#3", index = 2) {
-        val academicYearOfferId = choose("academicYearOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.academicYearOfferId })
-        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.courseOfStudyOfferId })
-        val academicYearOrderId = choose("academicYearOrderId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.academicYearOrderId }.map { it.toInt() })
-        val studyPlanId = choose("studyPlanId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studyPlanId })
+        val row = chooseRow("academicYearOfferId, courseOfStudyOfferId", listOf(offerGetOffers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.academicYearOfferId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.courseOfStudyOfferId }.firstOrNull()?.toString()) }
+        val row2 = chooseRow("academicYearOrderId, studyPlanId", listOf(personalDataGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.academicYearOrderId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.studyPlanId }.firstOrNull()?.toString()) }
+        val academicYearOfferId = choose("academicYearOfferId", listOf(row).mapNotNull { it.academicYearOfferId })
+        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(row).mapNotNull { it.courseOfStudyOfferId })
+        val academicYearOrderId = choose("academicYearOrderId", listOf(row2).mapNotNull { it.academicYearOrderId }.map { it.toInt() })
+        val studyPlanId = choose("studyPlanId", listOf(row2).mapNotNull { it.studyPlanId })
         val studyPlanCode = choose("studyPlanCode", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.studyPlanCode })
         val teachingUnitCode = choose("teachingUnitCode", listOf(logisticsGetTeachingUnitLogWithDetails()).flatten().mapNotNull { it.masterTeachingUnitKey }.mapNotNull { it.teachingUnitCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ContextualizedSegment\"}}") {
@@ -728,12 +686,15 @@ class Esse3OfferLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Offer.getOfferedSEG#4")
     fun getOfferedSEG4() = case("Offer.getOfferedSEG#4", index = 3) {
-        val academicYearOfferId = choose("academicYearOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.academicYearOfferId })
-        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.courseOfStudyOfferId })
-        val activityId = choose("activityId", listOf(offerGetGenericTeachingActivities()).flatten().mapNotNull { it.activityId })
-        val activityCode = choose("activityCode", listOf(offerGetGenericTeachingActivities()).flatten().mapNotNull { it.activityCode })
-        val teachingUnitId = choose("teachingUnitId", listOf(logisticsGetTeachingUnitLogWithDetails()).flatten().mapNotNull { it.masterTeachingUnitKey }.mapNotNull { it.teachingUnitId })
-        val teachingUnitCode = choose("teachingUnitCode", listOf(logisticsGetTeachingUnitLogWithDetails()).flatten().mapNotNull { it.masterTeachingUnitKey }.mapNotNull { it.teachingUnitCode })
+        val row = chooseRow("academicYearOfferId, courseOfStudyOfferId", listOf(offerGetOffers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.academicYearOfferId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.courseOfStudyOfferId }.firstOrNull()?.toString()) }
+        val row2 = chooseRow("activityId, activityCode", listOf(offerGetGenericTeachingActivities()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.activityId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.activityCode }.firstOrNull()?.toString()) }
+        val row3 = chooseRow("teachingUnitId, teachingUnitCode", listOf(logisticsGetTeachingUnitLogWithDetails()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.masterTeachingUnitKey }.mapNotNull { it.teachingUnitId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.masterTeachingUnitKey }.mapNotNull { it.teachingUnitCode }.firstOrNull()?.toString()) }
+        val academicYearOfferId = choose("academicYearOfferId", listOf(row).mapNotNull { it.academicYearOfferId })
+        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(row).mapNotNull { it.courseOfStudyOfferId })
+        val activityId = choose("activityId", listOf(row2).mapNotNull { it.activityId })
+        val activityCode = choose("activityCode", listOf(row2).mapNotNull { it.activityCode })
+        val teachingUnitId = choose("teachingUnitId", listOf(row3).mapNotNull { it.masterTeachingUnitKey }.mapNotNull { it.teachingUnitId })
+        val teachingUnitCode = choose("teachingUnitCode", listOf(row3).mapNotNull { it.masterTeachingUnitKey }.mapNotNull { it.teachingUnitCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ContextualizedSegment\"}}") {
             api.offer.getOfferedSEG(academicYearOfferId = academicYearOfferId, courseOfStudyOfferId = courseOfStudyOfferId, activityId = activityId, activityCode = activityCode, teachingUnitId = teachingUnitId, teachingUnitCode = teachingUnitCode)
         } ?: return@case
@@ -743,8 +704,9 @@ class Esse3OfferLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Offer.getOfferedSEG#5")
     fun getOfferedSEG5() = case("Offer.getOfferedSEG#5", index = 4) {
-        val academicYearOfferId = choose("academicYearOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.academicYearOfferId })
-        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.courseOfStudyOfferId })
+        val row = chooseRow("academicYearOfferId, courseOfStudyOfferId", listOf(offerGetOffers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.academicYearOfferId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.courseOfStudyOfferId }.firstOrNull()?.toString()) }
+        val academicYearOfferId = choose("academicYearOfferId", listOf(row).mapNotNull { it.academicYearOfferId })
+        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(row).mapNotNull { it.courseOfStudyOfferId })
         val studyPlanId = choose("studyPlanId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studyPlanId })
         val studyPlanCode = choose("studyPlanCode", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.studyPlanCode })
         val activityId = choose("activityId", listOf(offerGetGenericTeachingActivities()).flatten().mapNotNull { it.activityId })
@@ -758,12 +720,14 @@ class Esse3OfferLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Offer.getOfferedSEG#6")
     fun getOfferedSEG6() = case("Offer.getOfferedSEG#6", index = 5) {
-        val academicYearOfferId = choose("academicYearOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.academicYearOfferId })
-        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(offerGetOffers()).flatten().mapNotNull { it.courseOfStudyOfferId })
+        val row = chooseRow("academicYearOfferId, courseOfStudyOfferId", listOf(offerGetOffers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.academicYearOfferId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.courseOfStudyOfferId }.firstOrNull()?.toString()) }
+        val row2 = chooseRow("teachingUnitId, teachingUnitCode", listOf(logisticsGetTeachingUnitLogWithDetails()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.masterTeachingUnitKey }.mapNotNull { it.teachingUnitId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.masterTeachingUnitKey }.mapNotNull { it.teachingUnitCode }.firstOrNull()?.toString()) }
+        val academicYearOfferId = choose("academicYearOfferId", listOf(row).mapNotNull { it.academicYearOfferId })
+        val courseOfStudyOfferId = choose("courseOfStudyOfferId", listOf(row).mapNotNull { it.courseOfStudyOfferId })
         val academicYearOrderId = choose("academicYearOrderId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.academicYearOrderId }.map { it.toInt() })
         val activityCode = choose("activityCode", listOf(offerGetGenericTeachingActivities()).flatten().mapNotNull { it.activityCode })
-        val teachingUnitId = choose("teachingUnitId", listOf(logisticsGetTeachingUnitLogWithDetails()).flatten().mapNotNull { it.masterTeachingUnitKey }.mapNotNull { it.teachingUnitId })
-        val teachingUnitCode = choose("teachingUnitCode", listOf(logisticsGetTeachingUnitLogWithDetails()).flatten().mapNotNull { it.masterTeachingUnitKey }.mapNotNull { it.teachingUnitCode })
+        val teachingUnitId = choose("teachingUnitId", listOf(row2).mapNotNull { it.masterTeachingUnitKey }.mapNotNull { it.teachingUnitId })
+        val teachingUnitCode = choose("teachingUnitCode", listOf(row2).mapNotNull { it.masterTeachingUnitKey }.mapNotNull { it.teachingUnitCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ContextualizedSegment\"}}") {
             api.offer.getOfferedSEG(academicYearOfferId = academicYearOfferId, courseOfStudyOfferId = courseOfStudyOfferId, academicYearOrderId = academicYearOrderId, activityCode = activityCode, teachingUnitId = teachingUnitId, teachingUnitCode = teachingUnitCode)
         } ?: return@case

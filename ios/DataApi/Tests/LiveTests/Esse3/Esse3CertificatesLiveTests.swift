@@ -16,8 +16,9 @@ final class Esse3CertificatesLiveTests: XCTestCase {
 
     func test_getCertificatePdf1() async throws {
         try await liveCase(Esse3Live.api, "Certificates.getCertificatePdf#1") { live in
-            let configurationId = try live.choose("configurationId", [try await Esse3Live.certificatesGetCertificates(live)].compactMap { $0.certificates }.flatMap { $0 }.compactMap { $0.configurationId })
-            let documentId = try live.choose("documentId", [try await Esse3Live.certificatesGetCertificates(live)].compactMap { $0.certificates }.flatMap { $0 }.compactMap { $0.documentId })
+            let row = try live.chooseRow("configurationId, documentId", [try await Esse3Live.certificatesGetCertificates(live)].compactMap { $0.certificates }.flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.configurationId }); let key1: String? = live.firstText([element].compactMap { $0.documentId }); return [key0, key1] }
+            let configurationId = try live.choose("configurationId", [row].compactMap { $0.configurationId })
+            let documentId = try live.choose("documentId", [row].compactMap { $0.documentId })
             _ = try await live.call(nil) { try await live.api.certificates.getCertificatePdf(configurationId: configurationId, documentId: documentId) }
         }
     }

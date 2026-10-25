@@ -50,7 +50,7 @@ class Esse3StructureLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Structure.getCoursesOfStudy#2")
     fun getCoursesOfStudy2() = case("Structure.getCoursesOfStudy#2", index = 1) {
-        val courseOfStudyCode = choose("courseOfStudyCode", listOf(choiceRulesGetChoiceRegulations()).flatten().mapNotNull { it.courseOfStudyCode })
+        val courseOfStudyCode = choose("courseOfStudyCode", listOf(careersGetCareers()).flatten().mapNotNull { it.p06CourseOfStudyCode })
         val catalogTypeCode = choose("catalogTypeCode", listOf(structureGetCourseOfStudy()).mapNotNull { it.catalogTypeCode })
         val trainingCycleTypeCode = choose("trainingCycleTypeCode", listOf(structureGetCourseOfStudy()).mapNotNull { it.trainingCycleTypeCode })
         val facultyId = choose("facultyId", listOf(structureGetDidacticStructures()).flatten().mapNotNull { it.facultyId }.map { it.toInt() })
@@ -63,7 +63,7 @@ class Esse3StructureLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Structure.getCoursesOfStudy#3")
     fun getCoursesOfStudy3() = case("Structure.getCoursesOfStudy#3", index = 2) {
-        val courseOfStudyCode = choose("courseOfStudyCode", listOf(choiceRulesGetChoiceRegulations()).flatten().mapNotNull { it.courseOfStudyCode })
+        val courseOfStudyCode = choose("courseOfStudyCode", listOf(careersGetCareers()).flatten().mapNotNull { it.p06CourseOfStudyCode })
         val courseTypeCode = choose("courseTypeCode", listOf(structureGetCourseTypes()).flatten().mapNotNull { it.courseTypeCode })
         val catalogTypeCode = choose("catalogTypeCode", listOf(structureGetCourseOfStudy()).mapNotNull { it.catalogTypeCode })
         val facultyId = choose("facultyId", listOf(structureGetDidacticStructures()).flatten().mapNotNull { it.facultyId }.map { it.toInt() })
@@ -109,7 +109,7 @@ class Esse3StructureLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Structure.getCourseAccessTitles#1")
     fun getCourseAccessTitles1() = case("Structure.getCourseAccessTitles#1") {
-        val courseOfStudyCode = choose("courseOfStudyCode", listOf(structureGetCoursesOfStudy()).flatten().mapNotNull { it.courseOfStudyCode })
+        val courseOfStudyCode = choose("courseOfStudyCode", listOf(careersGetCareers()).flatten().mapNotNull { it.p06CourseOfStudyCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3AdmissionTitlesWithCode\"}}") {
             api.structure.getCourseAccessTitles(courseOfStudyCode = courseOfStudyCode, typologyCode = Esse3TypologyCode.AdmissionTitle)
         } ?: return@case
@@ -119,7 +119,7 @@ class Esse3StructureLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Structure.getCourseAccessTitles#2")
     fun getCourseAccessTitles2() = case("Structure.getCourseAccessTitles#2", index = 1) {
-        val courseOfStudyCode = choose("courseOfStudyCode", listOf(structureGetCoursesOfStudy()).flatten().mapNotNull { it.courseOfStudyCode })
+        val courseOfStudyCode = choose("courseOfStudyCode", listOf(careersGetCareers()).flatten().mapNotNull { it.p06CourseOfStudyCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3AdmissionTitlesWithCode\"}}") {
             api.structure.getCourseAccessTitles(courseOfStudyCode = courseOfStudyCode, typologyCode = Esse3TypologyCode.EnrollmentTitle)
         } ?: return@case
@@ -129,7 +129,7 @@ class Esse3StructureLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Structure.getCourseAccessTitles#3")
     fun getCourseAccessTitles3() = case("Structure.getCourseAccessTitles#3", index = 2) {
-        val courseOfStudyCode = choose("courseOfStudyCode", listOf(structureGetCoursesOfStudy()).flatten().mapNotNull { it.courseOfStudyCode })
+        val courseOfStudyCode = choose("courseOfStudyCode", listOf(careersGetCareers()).flatten().mapNotNull { it.p06CourseOfStudyCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3AdmissionTitlesWithCode\"}}") {
             api.structure.getCourseAccessTitles(courseOfStudyCode = courseOfStudyCode, typologyCode = Esse3TypologyCode.AbbreviationTitle)
         } ?: return@case
@@ -139,7 +139,7 @@ class Esse3StructureLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Structure.getCourseAccessTitles#4")
     fun getCourseAccessTitles4() = case("Structure.getCourseAccessTitles#4", index = 3) {
-        val courseOfStudyCode = choose("courseOfStudyCode", listOf(structureGetCoursesOfStudy()).flatten().mapNotNull { it.courseOfStudyCode })
+        val courseOfStudyCode = choose("courseOfStudyCode", listOf(careersGetCareers()).flatten().mapNotNull { it.p06CourseOfStudyCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3AdmissionTitlesWithCode\"}}") {
             api.structure.getCourseAccessTitles(courseOfStudyCode = courseOfStudyCode, typologyCode = Esse3TypologyCode.EquivalentTitle)
         } ?: return@case
@@ -149,7 +149,7 @@ class Esse3StructureLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Structure.getCourseOfStudy#1")
     fun getCourseOfStudy1() = case("Structure.getCourseOfStudy#1") {
-        val courseOfStudyId = choose("courseOfStudyId", listOf(structureGetCoursesOfStudy()).flatten().mapNotNull { it.courseOfStudyId })
+        val courseOfStudyId = choose("courseOfStudyId", listOf(careersGetCareers()).flatten().mapNotNull { it.courseOfStudyId })
         val result = call("{\"k\":\"record\",\"n\":\"Esse3StudyCourseWithStructure\"}") {
             api.structure.getCourseOfStudy(courseOfStudyId = courseOfStudyId)
         } ?: return@case
@@ -159,7 +159,7 @@ class Esse3StructureLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Structure.getCourseOfStudy#2")
     fun getCourseOfStudy2() = case("Structure.getCourseOfStudy#2", index = 1) {
-        val courseOfStudyId = choose("courseOfStudyId", listOf(structureGetCoursesOfStudy()).flatten().mapNotNull { it.courseOfStudyId })
+        val courseOfStudyId = choose("courseOfStudyId", listOf(careersGetCareers()).flatten().mapNotNull { it.courseOfStudyId })
         val result = call("{\"k\":\"record\",\"n\":\"Esse3StudyCourseWithStructure\"}") {
             api.structure.getCourseOfStudy(courseOfStudyId = courseOfStudyId, q = Esse3CourseOfStudySearchFilter.StruttureDefAmm)
         } ?: return@case
@@ -177,7 +177,7 @@ class Esse3StructureLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Structure.getStudyOrders#1")
     fun getStudyOrders1() = case("Structure.getStudyOrders#1") {
-        val courseOfStudyId = choose("courseOfStudyId", listOf(structureGetCoursesOfStudy()).flatten().mapNotNull { it.courseOfStudyId })
+        val courseOfStudyId = choose("courseOfStudyId", listOf(careersGetCareers()).flatten().mapNotNull { it.courseOfStudyId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3RegulationWithPhDSectors\"}}") {
             api.structure.getStudyOrders(courseOfStudyId = courseOfStudyId)
         } ?: return@case
@@ -195,7 +195,7 @@ class Esse3StructureLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Structure.getStudyOrder#1")
     fun getStudyOrder1() = case("Structure.getStudyOrder#1") {
-        val courseOfStudyId = choose("courseOfStudyId", listOf(structureGetCoursesOfStudy()).flatten().mapNotNull { it.courseOfStudyId })
+        val courseOfStudyId = choose("courseOfStudyId", listOf(careersGetCareers()).flatten().mapNotNull { it.courseOfStudyId })
         val academicYearOrderId = choose("academicYearOrderId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.academicYearOrderId }.map { it.toInt() })
         val result = call("{\"k\":\"record\",\"n\":\"Esse3RegulationWithPhDSectors\"}") {
             api.structure.getStudyOrder(courseOfStudyId = courseOfStudyId, academicYearOrderId = academicYearOrderId)
@@ -215,7 +215,7 @@ class Esse3StructureLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Structure.getPaths#1")
     fun getPaths1() = case("Structure.getPaths#1") {
-        val courseOfStudyId = choose("courseOfStudyId", listOf(structureGetCoursesOfStudy()).flatten().mapNotNull { it.courseOfStudyId })
+        val courseOfStudyId = choose("courseOfStudyId", listOf(careersGetCareers()).flatten().mapNotNull { it.courseOfStudyId })
         val academicYearOrderId = choose("academicYearOrderId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.academicYearOrderId }.map { it.toInt() })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3StudyPath\"}}") {
             api.structure.getPaths(courseOfStudyId = courseOfStudyId, academicYearOrderId = academicYearOrderId)
@@ -235,9 +235,10 @@ class Esse3StructureLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Structure.getPath#1")
     fun getPath1() = case("Structure.getPath#1") {
-        val courseOfStudyId = choose("courseOfStudyId", listOf(structureGetCoursesOfStudy()).flatten().mapNotNull { it.courseOfStudyId })
-        val academicYearOrderId = choose("academicYearOrderId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.academicYearOrderId }.map { it.toInt() })
-        val studyPlanId = choose("studyPlanId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studyPlanId })
+        val row = chooseRow("academicYearOrderId, studyPlanId", listOf(personalDataGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.academicYearOrderId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.studyPlanId }.firstOrNull()?.toString()) }
+        val courseOfStudyId = choose("courseOfStudyId", listOf(careersGetCareers()).flatten().mapNotNull { it.courseOfStudyId })
+        val academicYearOrderId = choose("academicYearOrderId", listOf(row).mapNotNull { it.academicYearOrderId }.map { it.toInt() })
+        val studyPlanId = choose("studyPlanId", listOf(row).mapNotNull { it.studyPlanId })
         val result = call("{\"k\":\"record\",\"n\":\"Esse3StudyPath\"}") {
             api.structure.getPath(courseOfStudyId = courseOfStudyId, academicYearOrderId = academicYearOrderId, studyPlanId = studyPlanId)
         } ?: return@case
@@ -247,8 +248,9 @@ class Esse3StructureLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Structure.getPath#unknown-id")
     fun getPathUnknownId() = case("Structure.getPath#unknown-id") {
-        val academicYearOrderId = choose("academicYearOrderId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.academicYearOrderId }.map { it.toInt() })
-        val studyPlanId = choose("studyPlanId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studyPlanId })
+        val row = chooseRow("academicYearOrderId, studyPlanId", listOf(personalDataGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.academicYearOrderId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.studyPlanId }.firstOrNull()?.toString()) }
+        val academicYearOrderId = choose("academicYearOrderId", listOf(row).mapNotNull { it.academicYearOrderId }.map { it.toInt() })
+        val studyPlanId = choose("studyPlanId", listOf(row).mapNotNull { it.studyPlanId })
         refused(acceptsEmpty = true) {
             api.structure.getPath(courseOfStudyId = 987654321L, academicYearOrderId = academicYearOrderId, studyPlanId = studyPlanId)
         }
@@ -332,10 +334,9 @@ class Esse3StructureLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Structure.getSites#2")
     fun getSites2() = case("Structure.getSites#2", index = 1) {
-        val facultyId = choose("facultyId", listOf(structureGetDidacticStructures()).flatten().mapNotNull { it.facultyId })
-        val courseOfStudyId = choose("courseOfStudyId", listOf(structureGetCoursesOfStudy()).flatten().mapNotNull { it.courseOfStudyId })
+        val courseOfStudyId = choose("courseOfStudyId", listOf(careersGetCareers()).flatten().mapNotNull { it.courseOfStudyId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Location\"}}") {
-            api.structure.getSites(facultyId = facultyId, courseOfStudyId = courseOfStudyId)
+            api.structure.getSites(courseOfStudyId = courseOfStudyId)
         } ?: return@case
         fingerprint { list(result) { writeEsse3Location(it) } }
     }
@@ -343,10 +344,9 @@ class Esse3StructureLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Structure.getSites#3")
     fun getSites3() = case("Structure.getSites#3", index = 2) {
-        val courseOfStudyId = choose("courseOfStudyId", listOf(structureGetCoursesOfStudy()).flatten().mapNotNull { it.courseOfStudyId })
-        val departmentId = choose("departmentId", listOf(degreeAwardGetThesisRelatedDocuments()).flatten().mapNotNull { it.departmentId })
+        val facultyId = choose("facultyId", listOf(structureGetDidacticStructures()).flatten().mapNotNull { it.facultyId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Location\"}}") {
-            api.structure.getSites(courseOfStudyId = courseOfStudyId, departmentId = departmentId)
+            api.structure.getSites(facultyId = facultyId)
         } ?: return@case
         fingerprint { list(result) { writeEsse3Location(it) } }
     }
@@ -355,9 +355,9 @@ class Esse3StructureLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @DisplayName("Structure.getSites#4")
     fun getSites4() = case("Structure.getSites#4", index = 3) {
         val facultyId = choose("facultyId", listOf(structureGetDidacticStructures()).flatten().mapNotNull { it.facultyId })
-        val departmentId = choose("departmentId", listOf(degreeAwardGetThesisRelatedDocuments()).flatten().mapNotNull { it.departmentId })
+        val courseOfStudyId = choose("courseOfStudyId", listOf(careersGetCareers()).flatten().mapNotNull { it.courseOfStudyId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Location\"}}") {
-            api.structure.getSites(facultyId = facultyId, departmentId = departmentId)
+            api.structure.getSites(facultyId = facultyId, courseOfStudyId = courseOfStudyId)
         } ?: return@case
         fingerprint { list(result) { writeEsse3Location(it) } }
     }
@@ -392,7 +392,7 @@ class Esse3StructureLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Structure.getDidacticStructures#2")
     fun getDidacticStructures2() = case("Structure.getDidacticStructures#2", index = 1) {
-        val courseOfStudyCode = choose("courseOfStudyCode", listOf(structureGetCoursesOfStudy()).flatten().mapNotNull { it.courseOfStudyCode })
+        val courseOfStudyCode = choose("courseOfStudyCode", listOf(careersGetCareers()).flatten().mapNotNull { it.p06CourseOfStudyCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3StructureWithLocations\"}}") {
             api.structure.getDidacticStructures(courseOfStudyCode = courseOfStudyCode)
         } ?: return@case
@@ -413,7 +413,7 @@ class Esse3StructureLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @DisplayName("Structure.getDidacticStructures#4")
     fun getDidacticStructures4() = case("Structure.getDidacticStructures#4", index = 3) {
         val facultyCode = choose("facultyCode", listOf(structureGetCoursesOfStudy()).flatten().mapNotNull { it.courseStructures }.flatten().mapNotNull { it.facultyCode })
-        val courseOfStudyCode = choose("courseOfStudyCode", listOf(structureGetCoursesOfStudy()).flatten().mapNotNull { it.courseOfStudyCode })
+        val courseOfStudyCode = choose("courseOfStudyCode", listOf(careersGetCareers()).flatten().mapNotNull { it.p06CourseOfStudyCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3StructureWithLocations\"}}") {
             api.structure.getDidacticStructures(facultyCode = facultyCode, courseOfStudyCode = courseOfStudyCode)
         } ?: return@case
@@ -450,9 +450,10 @@ class Esse3StructureLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Structure.getCourseTypes#2")
     fun getCourseTypes2() = case("Structure.getCourseTypes#2", index = 1) {
-        val courseTypeCode = choose("courseTypeCode", listOf(structureGetCoursesOfStudy()).flatten().mapNotNull { it.courseTypeCode })
+        val row = chooseRow("courseTypeCode, tcGroupCode", listOf(structureGetCoursesOfStudy()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.courseTypeCode }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.tcGroupCode }.firstOrNull()?.toString()) }
+        val courseTypeCode = choose("courseTypeCode", listOf(row).mapNotNull { it.courseTypeCode })
         val facultyId = choose("facultyId", listOf(structureGetDidacticStructures()).flatten().mapNotNull { it.facultyId }.map { it.toInt() })
-        val tcGroupCode = choose("tcGroupCode", listOf(structureGetCoursesOfStudy()).flatten().mapNotNull { it.tcGroupCode })
+        val tcGroupCode = choose("tcGroupCode", listOf(row).mapNotNull { it.tcGroupCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CourseTypes\"}}") {
             api.structure.getCourseTypes(courseTypeCode = courseTypeCode, facultyId = facultyId, tcGroupCode = tcGroupCode)
         } ?: return@case

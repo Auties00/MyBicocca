@@ -350,7 +350,10 @@ class TestPlanner(private val spec: ApiSpec, private val config: LiveTestsConfig
             val explicit = tests.inputs[input.name] ?: config.defaults[input.name]
             if (explicit != null) {
                 val values = (explicit as? ValueSpec.OneOf)?.values ?: listOf(explicit)
-                val resolved = values.map { value(it, input.type, where, null, stack = setOf(operation.id)) }
+                val all = values.map { value(it, input.type, where, null, stack = setOf(operation.id)) }
+                // An optional input goes without the default values nothing provides, such as
+                // those taken from the operation itself.
+                val resolved = if (input.name !in tests.inputs && !input.required) all.filterIsInstance<Resolved.Value>() else all
                 resolved.filterIsInstance<Resolved.Missing>().firstOrNull()?.let { return Dimensions.Missing("${input.name}: ${it.reason}") }
                 val given = resolved.map { (it as Resolved.Value).arg }
                 require(!input.required || given.none { it == null }) { "$where can't be left out: the operation needs it" }
@@ -535,10 +538,12 @@ class TestPlanner(private val spec: ApiSpec, private val config: LiveTestsConfig
         val args = linkedMapOf<String, Arg>()
         for (input in inputs) {
             val given = with[input.name] ?: (tests.inputs[input.name] ?: config.defaults[input.name])?.let { (it as? ValueSpec.OneOf)?.values?.first() ?: it }
+            val byDefault = input.name !in with && input.name !in tests.inputs
             val arg = when {
                 given != null -> when (val resolved = value(given, input.type, "$where.with.${input.name}", null, inner)) {
                     is Resolved.Value -> resolved.arg
-                    is Resolved.Missing -> return null.also { sources[key] = null }
+                    // As for cases, an optional input goes without a default nothing provides.
+                    is Resolved.Missing -> if (byDefault && !input.required) null else return null.also { sources[key] = null }
                 }
                 input.required -> infer(operation, input, inner) ?: return null.also { sources[key] = null }
                 else -> null

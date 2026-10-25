@@ -215,14 +215,35 @@ export class LiveCase<A> {
    * response kept.
    */
   choose<T>(name: string, candidates: readonly (T | null | undefined)[]): T {
-    const key = (value: T) => (typeof value === "object" ? JSON.stringify(value) : String(value));
     const values = distinct(candidates.filter((value): value is T => value !== null && value !== undefined && !Number.isNaN(value)))
-      .map((value) => [key(value), value] as const)
-      .sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0))
+      .map((value) => [sortKey(value), value] as const)
+      .sort(byKey)
       .map(([, value]) => value);
     if (values.length === 0) throw new LiveSkip(`no value for ${name}`);
-    const index = (((this.index + LiveSettings.seed) % values.length) + values.length) % values.length;
-    return values[index]!;
+    return values[this.position(values.length)]!;
+  }
+
+  /**
+   * One of `rows`, for inputs that take their values from the same one, chosen as
+   * {@link choose} does: `values` are the values they take from a row, and a row lacking one is
+   * left out. Rows sort by those values, so that every platform picks the same.
+   */
+  chooseRow<T>(name: string, rows: readonly (T | null | undefined)[], values: (row: T) => readonly unknown[]): T {
+    const keyed = new Map<string, T>();
+    for (const row of rows) {
+      if (row === null || row === undefined) continue;
+      const taken = values(row);
+      if (taken.some((value) => value === null || value === undefined)) continue;
+      const key = taken.map(sortKey).join("\u0000");
+      if (!keyed.has(key)) keyed.set(key, row);
+    }
+    const sorted = [...keyed.entries()].sort(byKey);
+    if (sorted.length === 0) throw new LiveSkip(`no value for ${name}`);
+    return sorted[this.position(sorted.length)]![1];
+  }
+
+  private position(size: number): number {
+    return (((this.index + LiveSettings.seed) % size) + size) % size;
   }
 
   /** The first of `candidates`; fails the case when there is none. */
@@ -460,6 +481,15 @@ function apiFailure(error: unknown): { status: number; code: string | undefined 
   if (cause instanceof ApiFailure) return cause;
   const status = (error as { status?: unknown } | null)?.status;
   return typeof status === "number" ? { status, code: (error as { code?: string }).code } : undefined;
+}
+
+/** The text a value sorts by, the same on every platform for scalars. */
+function sortKey(value: unknown): string {
+  return typeof value === "object" ? JSON.stringify(value) : String(value);
+}
+
+function byKey(a: readonly [string, unknown], b: readonly [string, unknown]): number {
+  return a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0;
 }
 
 function distinct<T>(values: readonly T[]): T[] {

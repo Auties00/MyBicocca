@@ -132,6 +132,25 @@ class TestPlannerTest {
     }
 
     @Test
+    fun `takes values from the same element of a result together`() {
+        val rowPick = cases("Calendar.runQuery").first().call.rowPicks.single()
+        assertEquals("Search.searchItems", rowPick.source.operation.id)
+        assertEquals("[*]", rowPick.rows.toString())
+        assertEquals(mapOf("ids" to "owner.id", "tags" to "name"), rowPick.fields.mapValues { it.value.toString() })
+        assertTrue(cases("Items.getItems").all { it.call.rowPicks.isEmpty() }, "Values from different calls aren't tied")
+    }
+
+    @Test
+    fun `leaves out an optional input whose default nothing provides`() {
+        // The call of Search.searchItems the page comes from can't take it from its own result.
+        val page = "  page: { from: Search.searchItems, with: { query: lamp }, pick: \"[*].count\" }\n"
+        val plan = TestPlanner(SampleSpecs.demo, LiveTestsConfig.parse(SampleTests.yaml.replace("defaults:\n", "defaults:\n$page"))).plan()
+        val source = plan.sources.single { it.operation.id == "Search.searchItems" }
+        assertEquals(setOf("query"), source.call.args.keys - Input.AUTH)
+        assertTrue(plan.cases.any { it.operation.id == "Search.searchItems" && "page" in it.call.args })
+    }
+
+    @Test
     fun `tries pairs of values up to the limit, the first sending only what is needed`() {
         val getItems = cases("Items.getItems").filter { it.kind == CaseKind.SMOKE || it.kind == CaseKind.COMBINATION }
         assertEquals(4, getItems.size)

@@ -2201,7 +2201,7 @@ export interface Esse3TranscriptSegment {
   activityChoiceId: number;
   /** id univoco che consente di individuare il libretto dello studente */
   matId: number;
-  attributes: Esse3TranscriptSegmentAttributes;
+  attributes: Esse3TranscriptSegmentAttributes | null;
 }
 
 /** Decodes a {@link Esse3TranscriptSegment}; `undefined` when `json` isn't an object. */
@@ -2212,7 +2212,7 @@ export function decodeEsse3TranscriptSegment(json: unknown): Esse3TranscriptSegm
     segmentChoiceId: decodeInteger(object["segsceId"]) ?? 0,
     activityChoiceId: decodeInteger(object["adsceId"]) ?? 0,
     matId: decodeInteger(object["matId"]) ?? 0,
-    attributes: required(decodeEsse3TranscriptSegmentAttributes(object["attributi"]), "Esse3TranscriptSegment.attributes"),
+    attributes: decodeEsse3TranscriptSegmentAttributes(object["attributi"]) ?? null,
   };
 }
 
@@ -2221,7 +2221,7 @@ export function encodeEsse3TranscriptSegment(value: Esse3TranscriptSegment): Jso
     "segsceId": value.segmentChoiceId,
     "adsceId": value.activityChoiceId,
     "matId": value.matId,
-    "attributi": encodeEsse3TranscriptSegmentAttributes(value.attributes),
+    "attributi": value.attributes === null ? null : encodeEsse3TranscriptSegmentAttributes(value.attributes),
   };
 }
 

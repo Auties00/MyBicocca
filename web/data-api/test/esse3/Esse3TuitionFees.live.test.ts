@@ -2,34 +2,35 @@
 
 import { describe } from "vitest";
 import { isPresent, liveCase } from "../runtime/live.js";
-import { Esse3Live, personalDataGetCareers, tuitionFeesGetInvoicesList, tuitionFeesGetPagoPATransactions, tuitionFeesGetPersonChargesList, tuitionFeesGetStudentChargesList, writeEsse3EnrollmentForTuition, writeEsse3Invoices, writeEsse3PersonDebit, writeEsse3Refunds, writeEsse3StudentDebit, writeEsse3TrafficLight, writeEsse3Transaction } from "./Esse3Live.js";
+import { Esse3Live, careersGetCareers, personalDataGetCareers, tuitionFeesGetInvoicesList, tuitionFeesGetPagoPATransactions, tuitionFeesGetPersonChargesList, tuitionFeesGetStudentChargesList, writeEsse3EnrollmentForTuition, writeEsse3Invoices, writeEsse3PersonDebit, writeEsse3Refunds, writeEsse3StudentDebit, writeEsse3TrafficLight, writeEsse3Transaction } from "./Esse3Live.js";
 
 // The live tests of the Esse3 TuitionFees module, planned from common/specs/esse3/tests.yaml.
 describe("Esse3 TuitionFees", () => {
   liveCase(Esse3Live, "TuitionFees.getPersonChargesList#1", {}, async (live) => {
-    const personId = live.choose("personId", [await tuitionFeesGetStudentChargesList(live)].flat().map((it) => it.personId).filter(isPresent));
+    const personId = live.choose("personId", [await careersGetCareers(live)].flat().map((it) => it.personId).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PersonDebit\"}}", {}, async () => live.api.tuitionFees.getPersonChargesList(personId));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3PersonDebit(f, it)));
   });
 
   liveCase(Esse3Live, "TuitionFees.getPersonChargesList#2", { index: 1 }, async (live) => {
-    const personId = live.choose("personId", [await tuitionFeesGetStudentChargesList(live)].flat().map((it) => it.personId).filter(isPresent));
+    const personId = live.choose("personId", [await careersGetCareers(live)].flat().map((it) => it.personId).filter(isPresent));
     const invoiceId = live.choose("invoiceId", [await tuitionFeesGetStudentChargesList(live)].flat().map((it) => it.invoiceId).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PersonDebit\"}}", {}, async () => live.api.tuitionFees.getPersonChargesList(personId, { invoiceId: invoiceId }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3PersonDebit(f, it)));
   });
 
   liveCase(Esse3Live, "TuitionFees.getPersonChargesList#3", { index: 2 }, async (live) => {
-    const personId = live.choose("personId", [await tuitionFeesGetStudentChargesList(live)].flat().map((it) => it.personId).filter(isPresent));
+    const personId = live.choose("personId", [await careersGetCareers(live)].flat().map((it) => it.personId).filter(isPresent));
     const academicYearId = live.choose("academicYearId", [await tuitionFeesGetStudentChargesList(live)].flat().map((it) => it.academicYearId).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PersonDebit\"}}", {}, async () => live.api.tuitionFees.getPersonChargesList(personId, { academicYearId: academicYearId }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3PersonDebit(f, it)));
   });
 
   liveCase(Esse3Live, "TuitionFees.getPersonChargesList#4", { index: 3 }, async (live) => {
-    const personId = live.choose("personId", [await tuitionFeesGetStudentChargesList(live)].flat().map((it) => it.personId).filter(isPresent));
-    const academicYearId = live.choose("academicYearId", [await tuitionFeesGetStudentChargesList(live)].flat().map((it) => it.academicYearId).filter(isPresent));
-    const invoiceId = live.choose("invoiceId", [await tuitionFeesGetStudentChargesList(live)].flat().map((it) => it.invoiceId).filter(isPresent));
+    const row = live.chooseRow("academicYearId, invoiceId", [await tuitionFeesGetStudentChargesList(live)].flat(), (element) => [[element].map((it) => it.academicYearId).filter(isPresent)[0], [element].map((it) => it.invoiceId).filter(isPresent)[0]]);
+    const personId = live.choose("personId", [await careersGetCareers(live)].flat().map((it) => it.personId).filter(isPresent));
+    const academicYearId = live.choose("academicYearId", [row].map((it) => it.academicYearId).filter(isPresent));
+    const invoiceId = live.choose("invoiceId", [row].map((it) => it.invoiceId).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PersonDebit\"}}", {}, async () => live.api.tuitionFees.getPersonChargesList(personId, { academicYearId: academicYearId, invoiceId: invoiceId }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3PersonDebit(f, it)));
   });
@@ -39,100 +40,102 @@ describe("Esse3 TuitionFees", () => {
   });
 
   liveCase(Esse3Live, "TuitionFees.getStudentChargesList#1", {}, async (live) => {
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3StudentDebit\"}}", {}, async () => live.api.tuitionFees.getStudentChargesList());
+    const studentId = live.choose("studentId", [await careersGetCareers(live)].flat().map((it) => it.studentId).filter(isPresent));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3StudentDebit\"}}", {}, async () => live.api.tuitionFees.getStudentChargesList({ studentId: studentId }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3StudentDebit(f, it)));
   });
 
   liveCase(Esse3Live, "TuitionFees.getStudentChargesList#2", { index: 1 }, async (live) => {
-    const studentId = live.choose("studentId", [await personalDataGetCareers(live)].flat().map((it) => it.studentId).filter(isPresent));
+    const row = live.chooseRow("academicYearId, invoiceId", [await tuitionFeesGetInvoicesList(live)].flat(), (element) => [[element].map((it) => it.academicYearId).filter(isPresent)[0], [element].map((it) => it.invoiceId).filter(isPresent)[0]]);
+    const row2 = live.chooseRow("taxTypeCode, taxCode", [await tuitionFeesGetPersonChargesList(live)].flat(), (element) => [[element].map((it) => it.taxTypeCode).filter(isPresent)[0], [element].map((it) => it.taxCode).filter(isPresent)[0]]);
+    const studentId = live.choose("studentId", [await careersGetCareers(live)].flat().map((it) => it.studentId).filter(isPresent));
     const externalStudentCode = live.choose("externalStudentCode", [await personalDataGetCareers(live)].flat().map((it) => it.externalStudentCode).filter(isPresent));
-    const academicYearId = live.choose("academicYearId", [await tuitionFeesGetInvoicesList(live)].flat().map((it) => it.academicYearId).filter(isPresent));
-    const invoiceId = live.choose("invoiceId", [await tuitionFeesGetInvoicesList(live)].flat().map((it) => it.invoiceId).filter(isPresent));
-    const taxTypeCode = live.choose("taxTypeCode", [await tuitionFeesGetPersonChargesList(live)].flat().map((it) => it.taxTypeCode).filter(isPresent));
-    const taxCode = live.choose("taxCode", [await tuitionFeesGetPersonChargesList(live)].flat().map((it) => it.taxCode).filter(isPresent));
+    const academicYearId = live.choose("academicYearId", [row].map((it) => it.academicYearId).filter(isPresent));
+    const invoiceId = live.choose("invoiceId", [row].map((it) => it.invoiceId).filter(isPresent));
+    const taxTypeCode = live.choose("taxTypeCode", [row2].map((it) => it.taxTypeCode).filter(isPresent));
+    const taxCode = live.choose("taxCode", [row2].map((it) => it.taxCode).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3StudentDebit\"}}", {}, async () => live.api.tuitionFees.getStudentChargesList({ studentId: studentId, externalStudentCode: externalStudentCode, academicYearId: academicYearId, invoiceId: invoiceId, taxTypeCode: taxTypeCode, taxCode: taxCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3StudentDebit(f, it)));
   });
 
   liveCase(Esse3Live, "TuitionFees.getStudentChargesList#3", { index: 2 }, async (live) => {
-    const studentId = live.choose("studentId", [await personalDataGetCareers(live)].flat().map((it) => it.studentId).filter(isPresent));
-    const academicYearId = live.choose("academicYearId", [await tuitionFeesGetInvoicesList(live)].flat().map((it) => it.academicYearId).filter(isPresent));
-    const installmentId = live.choose("installmentId", [await tuitionFeesGetPersonChargesList(live)].flat().map((it) => it.installmentId).filter(isPresent));
-    const taxCode = live.choose("taxCode", [await tuitionFeesGetPersonChargesList(live)].flat().map((it) => it.taxCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3StudentDebit\"}}", {}, async () => live.api.tuitionFees.getStudentChargesList({ studentId: studentId, academicYearId: academicYearId, installmentId: installmentId, taxCode: taxCode }));
+    const row = live.chooseRow("installmentId, taxTypeCode", [await tuitionFeesGetPersonChargesList(live)].flat(), (element) => [[element].map((it) => it.installmentId).filter(isPresent)[0], [element].map((it) => it.taxTypeCode).filter(isPresent)[0]]);
+    const studentId = live.choose("studentId", [await careersGetCareers(live)].flat().map((it) => it.studentId).filter(isPresent));
+    const externalStudentCode = live.choose("externalStudentCode", [await personalDataGetCareers(live)].flat().map((it) => it.externalStudentCode).filter(isPresent));
+    const invoiceId = live.choose("invoiceId", [await tuitionFeesGetInvoicesList(live)].flat().map((it) => it.invoiceId).filter(isPresent));
+    const installmentId = live.choose("installmentId", [row].map((it) => it.installmentId).filter(isPresent));
+    const taxTypeCode = live.choose("taxTypeCode", [row].map((it) => it.taxTypeCode).filter(isPresent));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3StudentDebit\"}}", {}, async () => live.api.tuitionFees.getStudentChargesList({ studentId: studentId, externalStudentCode: externalStudentCode, invoiceId: invoiceId, installmentId: installmentId, taxTypeCode: taxTypeCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3StudentDebit(f, it)));
   });
 
   liveCase(Esse3Live, "TuitionFees.getStudentChargesList#4", { index: 3 }, async (live) => {
-    const externalStudentCode = live.choose("externalStudentCode", [await personalDataGetCareers(live)].flat().map((it) => it.externalStudentCode).filter(isPresent));
-    const invoiceId = live.choose("invoiceId", [await tuitionFeesGetInvoicesList(live)].flat().map((it) => it.invoiceId).filter(isPresent));
-    const installmentId = live.choose("installmentId", [await tuitionFeesGetPersonChargesList(live)].flat().map((it) => it.installmentId).filter(isPresent));
-    const taxTypeCode = live.choose("taxTypeCode", [await tuitionFeesGetPersonChargesList(live)].flat().map((it) => it.taxTypeCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3StudentDebit\"}}", {}, async () => live.api.tuitionFees.getStudentChargesList({ externalStudentCode: externalStudentCode, invoiceId: invoiceId, installmentId: installmentId, taxTypeCode: taxTypeCode }));
+    const row = live.chooseRow("installmentId, taxCode", [await tuitionFeesGetPersonChargesList(live)].flat(), (element) => [[element].map((it) => it.installmentId).filter(isPresent)[0], [element].map((it) => it.taxCode).filter(isPresent)[0]]);
+    const studentId = live.choose("studentId", [await careersGetCareers(live)].flat().map((it) => it.studentId).filter(isPresent));
+    const academicYearId = live.choose("academicYearId", [await tuitionFeesGetInvoicesList(live)].flat().map((it) => it.academicYearId).filter(isPresent));
+    const installmentId = live.choose("installmentId", [row].map((it) => it.installmentId).filter(isPresent));
+    const taxCode = live.choose("taxCode", [row].map((it) => it.taxCode).filter(isPresent));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3StudentDebit\"}}", {}, async () => live.api.tuitionFees.getStudentChargesList({ studentId: studentId, academicYearId: academicYearId, installmentId: installmentId, taxCode: taxCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3StudentDebit(f, it)));
   });
 
   liveCase(Esse3Live, "TuitionFees.getStudentChargesList#5", { index: 4 }, async (live) => {
-    const externalStudentCode = live.choose("externalStudentCode", [await personalDataGetCareers(live)].flat().map((it) => it.externalStudentCode).filter(isPresent));
+    const row = live.chooseRow("installmentId, taxTypeCode, taxCode", [await tuitionFeesGetPersonChargesList(live)].flat(), (element) => [[element].map((it) => it.installmentId).filter(isPresent)[0], [element].map((it) => it.taxTypeCode).filter(isPresent)[0], [element].map((it) => it.taxCode).filter(isPresent)[0]]);
+    const studentId = live.choose("studentId", [await careersGetCareers(live)].flat().map((it) => it.studentId).filter(isPresent));
     const invoiceId = live.choose("invoiceId", [await tuitionFeesGetInvoicesList(live)].flat().map((it) => it.invoiceId).filter(isPresent));
-    const taxCode = live.choose("taxCode", [await tuitionFeesGetPersonChargesList(live)].flat().map((it) => it.taxCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3StudentDebit\"}}", {}, async () => live.api.tuitionFees.getStudentChargesList({ externalStudentCode: externalStudentCode, invoiceId: invoiceId, taxCode: taxCode }));
+    const installmentId = live.choose("installmentId", [row].map((it) => it.installmentId).filter(isPresent));
+    const taxTypeCode = live.choose("taxTypeCode", [row].map((it) => it.taxTypeCode).filter(isPresent));
+    const taxCode = live.choose("taxCode", [row].map((it) => it.taxCode).filter(isPresent));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3StudentDebit\"}}", {}, async () => live.api.tuitionFees.getStudentChargesList({ studentId: studentId, invoiceId: invoiceId, installmentId: installmentId, taxTypeCode: taxTypeCode, taxCode: taxCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3StudentDebit(f, it)));
   });
 
   liveCase(Esse3Live, "TuitionFees.getStudentChargesList#6", { index: 5 }, async (live) => {
-    const studentId = live.choose("studentId", [await personalDataGetCareers(live)].flat().map((it) => it.studentId).filter(isPresent));
+    const row = live.chooseRow("installmentId, taxTypeCode", [await tuitionFeesGetPersonChargesList(live)].flat(), (element) => [[element].map((it) => it.installmentId).filter(isPresent)[0], [element].map((it) => it.taxTypeCode).filter(isPresent)[0]]);
+    const studentId = live.choose("studentId", [await careersGetCareers(live)].flat().map((it) => it.studentId).filter(isPresent));
     const externalStudentCode = live.choose("externalStudentCode", [await personalDataGetCareers(live)].flat().map((it) => it.externalStudentCode).filter(isPresent));
-    const taxTypeCode = live.choose("taxTypeCode", [await tuitionFeesGetPersonChargesList(live)].flat().map((it) => it.taxTypeCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3StudentDebit\"}}", {}, async () => live.api.tuitionFees.getStudentChargesList({ studentId: studentId, externalStudentCode: externalStudentCode, taxTypeCode: taxTypeCode }));
+    const academicYearId = live.choose("academicYearId", [await tuitionFeesGetInvoicesList(live)].flat().map((it) => it.academicYearId).filter(isPresent));
+    const installmentId = live.choose("installmentId", [row].map((it) => it.installmentId).filter(isPresent));
+    const taxTypeCode = live.choose("taxTypeCode", [row].map((it) => it.taxTypeCode).filter(isPresent));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3StudentDebit\"}}", {}, async () => live.api.tuitionFees.getStudentChargesList({ studentId: studentId, externalStudentCode: externalStudentCode, academicYearId: academicYearId, installmentId: installmentId, taxTypeCode: taxTypeCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3StudentDebit(f, it)));
   });
 
   liveCase(Esse3Live, "TuitionFees.getInvoicesList#1", {}, async (live) => {
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Invoices\"}}", {}, async () => live.api.tuitionFees.getInvoicesList());
+    const personId = live.choose("personId", [await careersGetCareers(live)].flat().map((it) => it.personId).filter(isPresent));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Invoices\"}}", {}, async () => live.api.tuitionFees.getInvoicesList({ personId: personId }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3Invoices(f, it)));
   });
 
   liveCase(Esse3Live, "TuitionFees.getInvoicesList#2", { index: 1 }, async (live) => {
-    const personId = live.choose("personId", [await tuitionFeesGetStudentChargesList(live)].flat().map((it) => it.personId).filter(isPresent));
-    const invoiceId = live.choose("invoiceId", [await tuitionFeesGetStudentChargesList(live)].flat().map((it) => it.invoiceId).filter(isPresent));
-    const academicYearId = live.choose("academicYearId", [await tuitionFeesGetStudentChargesList(live)].flat().map((it) => it.academicYearId).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Invoices\"}}", {}, async () => live.api.tuitionFees.getInvoicesList({ personId: personId, invoiceId: invoiceId, academicYearId: academicYearId, retrieveAdditionalInfo: false }));
+    const row = live.chooseRow("invoiceId, academicYearId", [await tuitionFeesGetStudentChargesList(live)].flat(), (element) => [[element].map((it) => it.invoiceId).filter(isPresent)[0], [element].map((it) => it.academicYearId).filter(isPresent)[0]]);
+    const personId = live.choose("personId", [await careersGetCareers(live)].flat().map((it) => it.personId).filter(isPresent));
+    const invoiceId = live.choose("invoiceId", [row].map((it) => it.invoiceId).filter(isPresent));
+    const academicYearId = live.choose("academicYearId", [row].map((it) => it.academicYearId).filter(isPresent));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Invoices\"}}", {}, async () => live.api.tuitionFees.getInvoicesList({ personId: personId, invoiceId: invoiceId, academicYearId: academicYearId }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3Invoices(f, it)));
   });
 
   liveCase(Esse3Live, "TuitionFees.getInvoicesList#3", { index: 2 }, async (live) => {
-    const noticeCode = live.choose("noticeCode", [await tuitionFeesGetStudentChargesList(live)].flat().map((it) => it.noticeCode).filter(isPresent));
-    const academicYearId = live.choose("academicYearId", [await tuitionFeesGetStudentChargesList(live)].flat().map((it) => it.academicYearId).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Invoices\"}}", {}, async () => live.api.tuitionFees.getInvoicesList({ noticeCode: noticeCode, academicYearId: academicYearId, retrieveAdditionalInfo: true }));
+    const row = live.chooseRow("noticeCode, academicYearId", [await tuitionFeesGetStudentChargesList(live)].flat(), (element) => [[element].map((it) => it.noticeCode).filter(isPresent)[0], [element].map((it) => it.academicYearId).filter(isPresent)[0]]);
+    const personId = live.choose("personId", [await careersGetCareers(live)].flat().map((it) => it.personId).filter(isPresent));
+    const noticeCode = live.choose("noticeCode", [row].map((it) => it.noticeCode).filter(isPresent));
+    const academicYearId = live.choose("academicYearId", [row].map((it) => it.academicYearId).filter(isPresent));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Invoices\"}}", {}, async () => live.api.tuitionFees.getInvoicesList({ personId: personId, noticeCode: noticeCode, academicYearId: academicYearId }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3Invoices(f, it)));
   });
 
   liveCase(Esse3Live, "TuitionFees.getInvoicesList#4", { index: 3 }, async (live) => {
-    const personId = live.choose("personId", [await tuitionFeesGetStudentChargesList(live)].flat().map((it) => it.personId).filter(isPresent));
-    const invoiceId = live.choose("invoiceId", [await tuitionFeesGetStudentChargesList(live)].flat().map((it) => it.invoiceId).filter(isPresent));
-    const noticeCode = live.choose("noticeCode", [await tuitionFeesGetStudentChargesList(live)].flat().map((it) => it.noticeCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Invoices\"}}", {}, async () => live.api.tuitionFees.getInvoicesList({ personId: personId, invoiceId: invoiceId, noticeCode: noticeCode, retrieveAdditionalInfo: true }));
-    live.fingerprint((f) => f.list(result, (it) => writeEsse3Invoices(f, it)));
-  });
-
-  liveCase(Esse3Live, "TuitionFees.getInvoicesList#5", { index: 4 }, async (live) => {
-    const noticeCode = live.choose("noticeCode", [await tuitionFeesGetStudentChargesList(live)].flat().map((it) => it.noticeCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Invoices\"}}", {}, async () => live.api.tuitionFees.getInvoicesList({ noticeCode: noticeCode, retrieveAdditionalInfo: false }));
-    live.fingerprint((f) => f.list(result, (it) => writeEsse3Invoices(f, it)));
-  });
-
-  liveCase(Esse3Live, "TuitionFees.getInvoicesList#6", { index: 5 }, async (live) => {
-    const personId = live.choose("personId", [await tuitionFeesGetStudentChargesList(live)].flat().map((it) => it.personId).filter(isPresent));
-    const invoiceId = live.choose("invoiceId", [await tuitionFeesGetStudentChargesList(live)].flat().map((it) => it.invoiceId).filter(isPresent));
-    const noticeCode = live.choose("noticeCode", [await tuitionFeesGetStudentChargesList(live)].flat().map((it) => it.noticeCode).filter(isPresent));
-    const academicYearId = live.choose("academicYearId", [await tuitionFeesGetStudentChargesList(live)].flat().map((it) => it.academicYearId).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Invoices\"}}", {}, async () => live.api.tuitionFees.getInvoicesList({ personId: personId, invoiceId: invoiceId, noticeCode: noticeCode, academicYearId: academicYearId }));
+    const row = live.chooseRow("invoiceId, noticeCode", [await tuitionFeesGetStudentChargesList(live)].flat(), (element) => [[element].map((it) => it.invoiceId).filter(isPresent)[0], [element].map((it) => it.noticeCode).filter(isPresent)[0]]);
+    const personId = live.choose("personId", [await careersGetCareers(live)].flat().map((it) => it.personId).filter(isPresent));
+    const invoiceId = live.choose("invoiceId", [row].map((it) => it.invoiceId).filter(isPresent));
+    const noticeCode = live.choose("noticeCode", [row].map((it) => it.noticeCode).filter(isPresent));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Invoices\"}}", {}, async () => live.api.tuitionFees.getInvoicesList({ personId: personId, invoiceId: invoiceId, noticeCode: noticeCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3Invoices(f, it)));
   });
 
   liveCase(Esse3Live, "TuitionFees.getRefundsList#1", {}, async (live) => {
-    const personId = live.choose("personId", [await tuitionFeesGetStudentChargesList(live)].flat().map((it) => it.personId).filter(isPresent));
+    const personId = live.choose("personId", [await careersGetCareers(live)].flat().map((it) => it.personId).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Refunds\"}}", {}, async () => live.api.tuitionFees.getRefundsList(personId));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3Refunds(f, it)));
   });
@@ -153,39 +156,28 @@ describe("Esse3 TuitionFees", () => {
   });
 
   liveCase(Esse3Live, "TuitionFees.getPagoPATransactions#1", {}, async (live) => {
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Transaction\"}}", {}, async () => live.api.tuitionFees.getPagoPATransactions());
-    live.fingerprint((f) => f.list(result, (it) => writeEsse3Transaction(f, it)));
-  });
-
-  liveCase(Esse3Live, "TuitionFees.getPagoPATransactions#2", { index: 1 }, async (live) => {
-    const invoiceId = live.choose("invoiceId", [await tuitionFeesGetStudentChargesList(live)].flat().map((it) => it.invoiceId).filter(isPresent));
-    const fiscalCode = live.choose("fiscalCode", [await tuitionFeesGetStudentChargesList(live)].flat().map((it) => it.fiscalCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Transaction\"}}", {}, async () => live.api.tuitionFees.getPagoPATransactions({ invoiceId: invoiceId, fiscalCode: fiscalCode }));
-    live.fingerprint((f) => f.list(result, (it) => writeEsse3Transaction(f, it)));
-  });
-
-  liveCase(Esse3Live, "TuitionFees.getPagoPATransactions#3", { index: 2 }, async (live) => {
-    const invoiceId = live.choose("invoiceId", [await tuitionFeesGetStudentChargesList(live)].flat().map((it) => it.invoiceId).filter(isPresent));
-    const academicYearId = live.choose("academicYearId", [await tuitionFeesGetStudentChargesList(live)].flat().map((it) => it.academicYearId).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Transaction\"}}", {}, async () => live.api.tuitionFees.getPagoPATransactions({ invoiceId: invoiceId, academicYearId: academicYearId }));
-    live.fingerprint((f) => f.list(result, (it) => writeEsse3Transaction(f, it)));
-  });
-
-  liveCase(Esse3Live, "TuitionFees.getPagoPATransactions#4", { index: 3 }, async (live) => {
-    const academicYearId = live.choose("academicYearId", [await tuitionFeesGetStudentChargesList(live)].flat().map((it) => it.academicYearId).filter(isPresent));
-    const fiscalCode = live.choose("fiscalCode", [await tuitionFeesGetStudentChargesList(live)].flat().map((it) => it.fiscalCode).filter(isPresent));
+    const academicYearId = live.choose("academicYearId", [await tuitionFeesGetInvoicesList(live)].flat().map((it) => it.academicYearId).filter(isPresent));
+    const fiscalCode = live.choose("fiscalCode", [await careersGetCareers(live)].flat().map((it) => it.fiscalCode).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Transaction\"}}", {}, async () => live.api.tuitionFees.getPagoPATransactions({ academicYearId: academicYearId, fiscalCode: fiscalCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3Transaction(f, it)));
   });
 
+  liveCase(Esse3Live, "TuitionFees.getPagoPATransactions#2", { index: 1 }, async (live) => {
+    const academicYearId = live.choose("academicYearId", [await tuitionFeesGetInvoicesList(live)].flat().map((it) => it.academicYearId).filter(isPresent));
+    const fiscalCode = live.choose("fiscalCode", [await careersGetCareers(live)].flat().map((it) => it.fiscalCode).filter(isPresent));
+    const invoiceId = live.choose("invoiceId", [await tuitionFeesGetStudentChargesList(live)].flat().map((it) => it.invoiceId).filter(isPresent));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Transaction\"}}", {}, async () => live.api.tuitionFees.getPagoPATransactions({ invoiceId: invoiceId, academicYearId: academicYearId, fiscalCode: fiscalCode }));
+    live.fingerprint((f) => f.list(result, (it) => writeEsse3Transaction(f, it)));
+  });
+
   liveCase(Esse3Live, "TuitionFees.getEnrollmentsForTaxes#1", {}, async (live) => {
-    const studentId = live.choose("studentId", [await tuitionFeesGetStudentChargesList(live)].flat().map((it) => it.studentId).filter(isPresent));
+    const studentId = live.choose("studentId", [await careersGetCareers(live)].flat().map((it) => it.studentId).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3EnrollmentForTuition\"}}", {}, async () => live.api.tuitionFees.getEnrollmentsForTaxes(studentId));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3EnrollmentForTuition(f, it)));
   });
 
   liveCase(Esse3Live, "TuitionFees.getEnrollmentsForTaxes#2", { index: 1 }, async (live) => {
-    const studentId = live.choose("studentId", [await tuitionFeesGetStudentChargesList(live)].flat().map((it) => it.studentId).filter(isPresent));
+    const studentId = live.choose("studentId", [await careersGetCareers(live)].flat().map((it) => it.studentId).filter(isPresent));
     const academicYearEnrollmentId = live.choose("academicYearEnrollmentId", [await personalDataGetCareers(live)].flat().map((it) => it.academicYearEnrollmentId).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3EnrollmentForTuition\"}}", {}, async () => live.api.tuitionFees.getEnrollmentsForTaxes(studentId, { academicYearEnrollmentId: academicYearEnrollmentId }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3EnrollmentForTuition(f, it)));
@@ -196,13 +188,13 @@ describe("Esse3 TuitionFees", () => {
   });
 
   liveCase(Esse3Live, "TuitionFees.getTrafficLightParameters#1", {}, async (live) => {
-    const studentId = live.choose("studentId", [await tuitionFeesGetStudentChargesList(live)].flat().map((it) => it.studentId).filter(isPresent));
+    const studentId = live.choose("studentId", [await careersGetCareers(live)].flat().map((it) => it.studentId).filter(isPresent));
     const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3TrafficLight\"}", {}, async () => live.api.tuitionFees.getTrafficLightParameters(studentId));
     live.fingerprint((f) => writeEsse3TrafficLight(f, result));
   });
 
   liveCase(Esse3Live, "TuitionFees.getTrafficLightParameters#2", { index: 1 }, async (live) => {
-    const studentId = live.choose("studentId", [await tuitionFeesGetStudentChargesList(live)].flat().map((it) => it.studentId).filter(isPresent));
+    const studentId = live.choose("studentId", [await careersGetCareers(live)].flat().map((it) => it.studentId).filter(isPresent));
     const academicYearId = live.choose("academicYearId", [await tuitionFeesGetStudentChargesList(live)].flat().map((it) => it.academicYearId).filter(isPresent));
     const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3TrafficLight\"}", {}, async () => live.api.tuitionFees.getTrafficLightParameters(studentId, { academicYearId: academicYearId }));
     live.fingerprint((f) => writeEsse3TrafficLight(f, result));

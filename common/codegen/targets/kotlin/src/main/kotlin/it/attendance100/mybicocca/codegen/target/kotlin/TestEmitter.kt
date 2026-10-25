@@ -341,10 +341,12 @@ internal class TestEmitter(private val plan: TestPlan, private val layout: Kotli
      * Writes the statements choosing [call]'s arguments into [writer], and returns the expression
      * of each argument by input name: the variable holding it, or a constant.
      */
-    private fun arguments(call: Call, writer: CodeWriter, file: KotlinFile, names: Names = Names()): Map<String, String> =
-        call.args.mapValues { (name, arg) ->
+    private fun arguments(call: Call, writer: CodeWriter, file: KotlinFile, names: Names = Names()): Map<String, String> {
+        val rows = rows(call, writer, file, names)
+        return call.args.mapValues { (name, arg) ->
             val type = call.operation.inputType(name)
-            val value = valueOf(arg, type, name, writer, file)
+            val value = rows[name]?.let { (row, path) -> pick(row, path, (arg as Arg.Pick).wrap, type!!, name, file) }
+                ?: valueOf(arg, type, name, writer, file)
             if (arg is Arg.Pick || arg is Arg.Text) {
                 val reserved = name in RESERVED_LOCALS || KotlinSyntax.identifier(name) != name
                 val variable = names.argument(if (reserved) "${name}Value" else name)
@@ -354,6 +356,24 @@ internal class TestEmitter(private val plan: TestPlan, private val layout: Kotli
                 value
             }
         }
+    }
+
+    /**
+     * Writes the statements choosing the element each of [call]'s [Call.rowPicks] takes values
+     * from, and returns the variable holding it and the path from it, by input name.
+     */
+    private fun rows(call: Call, writer: CodeWriter, file: KotlinFile, names: Names): Map<String, Pair<String, Path>> =
+        call.rowPicks.flatMap { rowPick ->
+            val variable = names.local("row")
+            // Enums sort by their wire value, as on every platform.
+            val keys = rowPick.fields.values.joinToString(", ") { field ->
+                val key = if (TestTypes.enum(spec, field.type) != null) "value" else "toString()"
+                "${path("element", field, file)}.firstOrNull()?.$key"
+            }
+            val candidates = path("${rowPick.source.id}()", rowPick.rows, file)
+            writer.line("val $variable = chooseRow(${KotlinSyntax.string(rowPick.fields.keys.joinToString())}, $candidates) { element -> listOf($keys) }")
+            rowPick.fields.map { (name, field) -> name to (variable to field) }
+        }.toMap()
 
     /** The arguments of an undo, verify or snapshot call, whose refs name the case's values. */
     private fun refArguments(call: Call, refs: Refs, file: KotlinFile): Map<String, String> =
@@ -375,15 +395,18 @@ internal class TestEmitter(private val plan: TestPlan, private val layout: Kotli
 
     /** The expression of a value with no refs, writing what it needs to choose into [writer]. */
     private fun valueOf(arg: Arg, type: TypeRef?, name: String, writer: CodeWriter, file: KotlinFile): String = when (arg) {
-        is Arg.Pick -> {
-            val target = if (arg.wrap) (type as TypeRef.ListOf).element else type!!
-            val candidates = convertAll(path("${arg.source.id}()", arg.path, file), arg.path.type, target, file)
-            // Enums sort by their wire value, as on every platform.
-            val key = if (TestTypes.enum(spec, target) != null) " { it.value }" else ""
-            val chosen = "choose(${KotlinSyntax.string(name)}, $candidates)$key"
-            if (arg.wrap) "listOf($chosen)" else chosen
-        }
+        is Arg.Pick -> pick("${arg.source.id}()", arg.path, arg.wrap, type!!, name, file)
         else -> argument(arg, type, file)
+    }
+
+    /** One of the values [path] reaches from [root], of an input of type [type], in a list when [wrap]. */
+    private fun pick(root: String, path: Path, wrap: Boolean, type: TypeRef, name: String, file: KotlinFile): String {
+        val target = if (wrap) (type as TypeRef.ListOf).element else type
+        val candidates = convertAll(path(root, path, file), path.type, target, file)
+        // Enums sort by their wire value, as on every platform.
+        val key = if (TestTypes.enum(spec, target) != null) " { it.value }" else ""
+        val chosen = "choose(${KotlinSyntax.string(name)}, $candidates)$key"
+        return if (wrap) "listOf($chosen)" else chosen
     }
 
     /** The expression of a value that needs no statements. */

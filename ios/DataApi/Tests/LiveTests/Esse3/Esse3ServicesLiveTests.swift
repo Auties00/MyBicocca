@@ -53,7 +53,7 @@ final class Esse3ServicesLiveTests: XCTestCase {
 
     func test_getMaritalStatusTypes1() async throws {
         try await liveCase(Esse3Live.api, "Services.getMaritalStatusTypes#1") { live in
-            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3MaritalStatusType\"}}") { try await live.api.services.getMaritalStatusTypes() }
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3MaritalStatusType\"}}", errors: ["403"]) { try await live.api.services.getMaritalStatusTypes() }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3MaritalStatusType(f, item0) } }
         }
     }
@@ -61,15 +61,14 @@ final class Esse3ServicesLiveTests: XCTestCase {
     func test_getMaritalStatusTypes2() async throws {
         try await liveCase(Esse3Live.api, "Services.getMaritalStatusTypes#2", index: 1) { live in
             let iso6392Code = try live.choose("iso6392Code", [try await Esse3Live.servicesGetLanguages(live)].flatMap { $0 }.compactMap { $0.iso6392Code })
-            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3MaritalStatusType\"}}") { try await live.api.services.getMaritalStatusTypes(iso6392Code: iso6392Code) }
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3MaritalStatusType\"}}", errors: ["403"]) { try await live.api.services.getMaritalStatusTypes(iso6392Code: iso6392Code) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3MaritalStatusType(f, item0) } }
         }
     }
 
     func test_getVersionInfo1() async throws {
         try await liveCase(Esse3Live.api, "Services.getVersionInfo#1") { live in
-            let result = try await live.call("{\"k\":\"record\",\"n\":\"Esse3VersionInfo\"}") { try await live.api.services.getVersionInfo() }
-            live.fingerprint { f in Esse3Live.writeEsse3VersionInfo(f, result) }
+            _ = try await live.call("{\"k\":\"record\",\"n\":\"Esse3VersionInfo\"}") { try await live.api.services.getVersionInfo() }
         }
     }
 }

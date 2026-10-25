@@ -330,9 +330,12 @@ internal class TsTestEmitter(private val plan: TestPlan, private val layout: TsL
 
     private class Refs(val args: Map<String, String>, var result: String?, var before: String?)
 
-    private fun arguments(call: Call, writer: CodeWriter, file: TsFile, names: Names = Names()): Map<String, String> =
-        call.args.mapValues { (name, arg) ->
-            val value = valueOf(arg, call.operation.inputType(name), name, writer, file)
+    private fun arguments(call: Call, writer: CodeWriter, file: TsFile, names: Names = Names()): Map<String, String> {
+        val rows = rows(call, writer, file, names)
+        return call.args.mapValues { (name, arg) ->
+            val type = call.operation.inputType(name)
+            val value = rows[name]?.let { (row, path) -> pick(row, path, (arg as Arg.Pick).wrap, type!!, name, file) }
+                ?: valueOf(arg, type, name, writer, file)
             if (arg is Arg.Pick || arg is Arg.Text || arg is Arg.AccountCredentials) {
                 val variable = names.local(TsSyntax.variable(if (name in RESERVED_LOCALS) "${name}Value" else name))
                 writer.line("const $variable = $value;")
@@ -341,6 +344,21 @@ internal class TsTestEmitter(private val plan: TestPlan, private val layout: TsL
                 value
             }
         }
+    }
+
+    /**
+     * Writes the statements choosing the element each of [call]'s [Call.rowPicks] takes values
+     * from, and returns the variable holding it and the path from it, by input name.
+     */
+    private fun rows(call: Call, writer: CodeWriter, file: TsFile, names: Names): Map<String, Pair<String, Path>> =
+        call.rowPicks.flatMap { rowPick ->
+            val variable = names.local("row")
+            file.importFile(rowPick.source.id, supportFile)
+            val values = rowPick.fields.values.joinToString(", ") { field -> "${path("element", field, file)}[0]" }
+            val candidates = path("await ${rowPick.source.id}(live)", rowPick.rows, file)
+            writer.line("const $variable = live.chooseRow(${TsSyntax.string(rowPick.fields.keys.joinToString())}, $candidates, (element) => [$values]);")
+            rowPick.fields.map { (name, field) -> name to (variable to field) }
+        }.toMap()
 
     private fun refArguments(call: Call, refs: Refs, file: TsFile): Map<String, String> =
         call.args.mapValues { (name, arg) -> refValue(arg, call.operation.inputType(name), refs, file) }
@@ -362,14 +380,19 @@ internal class TsTestEmitter(private val plan: TestPlan, private val layout: TsL
 
     private fun valueOf(arg: Arg, type: TypeRef?, name: String, writer: CodeWriter, file: TsFile): String = when (arg) {
         is Arg.Pick -> {
-            val target = if (arg.wrap) (type as TypeRef.ListOf).element else type!!
             file.importFile(arg.source.id, supportFile)
-            val candidates = convertAll(path("await ${arg.source.id}(live)", arg.path, file), arg.path.type, target, file)
-            val chosen = "live.choose(${TsSyntax.string(name)}, $candidates)"
-            if (arg.wrap) "[$chosen]" else chosen
+            pick("await ${arg.source.id}(live)", arg.path, arg.wrap, type!!, name, file)
         }
         is Arg.AccountCredentials -> credentials(arg, file)
         else -> argument(arg, type, file)
+    }
+
+    /** One of the values [path] reaches from [root], of an input of type [type], in a list when [wrap]. */
+    private fun pick(root: String, path: Path, wrap: Boolean, type: TypeRef, name: String, file: TsFile): String {
+        val target = if (wrap) (type as TypeRef.ListOf).element else type
+        val candidates = convertAll(path(root, path, file), path.type, target, file)
+        val chosen = "live.choose(${TsSyntax.string(name)}, $candidates)"
+        return if (wrap) "[$chosen]" else chosen
     }
 
     private fun credentials(arg: Arg.AccountCredentials, file: TsFile): String {
@@ -592,7 +615,8 @@ internal class TsTestEmitter(private val plan: TestPlan, private val layout: TsL
             is TypeRef.Primitive -> when (type.kind) {
                 PrimitiveKind.STRING -> "$receiver.str($value)"
                 PrimitiveKind.INT32, PrimitiveKind.INT64 -> "$receiver.int($value)"
-                PrimitiveKind.FLOAT32, PrimitiveKind.FLOAT64 -> "$receiver.num($value)"
+                PrimitiveKind.FLOAT32 -> "$receiver.float($value)"
+                PrimitiveKind.FLOAT64 -> "$receiver.num($value)"
                 PrimitiveKind.BOOLEAN -> "$receiver.bool($value)"
                 PrimitiveKind.LOCAL_DATE -> "$receiver.date($value)"
                 PrimitiveKind.LOCAL_DATE_TIME -> "$receiver.dateTime($value)"

@@ -24,44 +24,49 @@ describe("Esse3 Countries", () => {
   });
 
   liveCase(Esse3Live, "Countries.getPostalCode#2", { index: 1 }, async (live) => {
+    const row = live.chooseRow("municipalityId, municipalityCode", [await structureGetExternalEntities(live)].flat(), (element) => [[element].map((it) => it.municipalityId).filter(isPresent)[0], [element].map((it) => it.municipalityCode).filter(isPresent)[0]]);
     const nationId = live.choose("nationId", [await countriesGetNations(live)].flat().map((it) => it.nationId).filter(isPresent));
     const regionCode = live.choose("regionCode", [await countriesGetMunicipalities(live)].flat().map((it) => it.regionCode).filter(isPresent));
-    const municipalityId = live.choose("municipalityId", [await structureGetExternalEntities(live)].flat().map((it) => it.municipalityId).filter(isPresent));
-    const municipalityCode = live.choose("municipalityCode", [await structureGetExternalEntities(live)].flat().map((it) => it.municipalityCode).filter(isPresent));
+    const municipalityId = live.choose("municipalityId", [row].map((it) => it.municipalityId).filter(isPresent));
+    const municipalityCode = live.choose("municipalityCode", [row].map((it) => it.municipalityCode).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PostalCode\"}}", {}, async () => live.api.countries.getPostalCode(nationId, { regionCode: regionCode, municipalityId: municipalityId, municipalityCode: municipalityCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3PostalCode(f, it)));
   });
 
   liveCase(Esse3Live, "Countries.getPostalCode#3", { index: 2 }, async (live) => {
+    const row = live.chooseRow("nationFiscalCode, municipalityCode", [await structureGetExternalEntities(live)].flat(), (element) => [[element].map((it) => it.nationFiscalCode).filter(isPresent)[0], [element].map((it) => it.municipalityCode).filter(isPresent)[0]]);
     const nationId = live.choose("nationId", [await countriesGetNations(live)].flat().map((it) => it.nationId).filter(isPresent));
-    const nationFiscalCode = live.choose("nationFiscalCode", [await structureGetExternalEntities(live)].flat().map((it) => it.nationFiscalCode).filter(isPresent));
+    const nationFiscalCode = live.choose("nationFiscalCode", [row].map((it) => it.nationFiscalCode).filter(isPresent));
     const regionCode = live.choose("regionCode", [await countriesGetMunicipalities(live)].flat().map((it) => it.regionCode).filter(isPresent));
-    const municipalityCode = live.choose("municipalityCode", [await structureGetExternalEntities(live)].flat().map((it) => it.municipalityCode).filter(isPresent));
+    const municipalityCode = live.choose("municipalityCode", [row].map((it) => it.municipalityCode).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PostalCode\"}}", {}, async () => live.api.countries.getPostalCode(nationId, { nationFiscalCode: nationFiscalCode, regionCode: regionCode, municipalityCode: municipalityCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3PostalCode(f, it)));
   });
 
   liveCase(Esse3Live, "Countries.getPostalCode#4", { index: 3 }, async (live) => {
+    const row = live.chooseRow("nationFiscalCode, municipalityId", [await structureGetExternalEntities(live)].flat(), (element) => [[element].map((it) => it.nationFiscalCode).filter(isPresent)[0], [element].map((it) => it.municipalityId).filter(isPresent)[0]]);
     const nationId = live.choose("nationId", [await countriesGetNations(live)].flat().map((it) => it.nationId).filter(isPresent));
-    const nationFiscalCode = live.choose("nationFiscalCode", [await structureGetExternalEntities(live)].flat().map((it) => it.nationFiscalCode).filter(isPresent));
-    const municipalityId = live.choose("municipalityId", [await structureGetExternalEntities(live)].flat().map((it) => it.municipalityId).filter(isPresent));
+    const nationFiscalCode = live.choose("nationFiscalCode", [row].map((it) => it.nationFiscalCode).filter(isPresent));
+    const municipalityId = live.choose("municipalityId", [row].map((it) => it.municipalityId).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PostalCode\"}}", {}, async () => live.api.countries.getPostalCode(nationId, { nationFiscalCode: nationFiscalCode, municipalityId: municipalityId }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3PostalCode(f, it)));
   });
 
   liveCase(Esse3Live, "Countries.getPostalCode#5", { index: 4 }, async (live) => {
+    const row = live.chooseRow("nationFiscalCode, municipalityId", [await structureGetExternalEntities(live)].flat(), (element) => [[element].map((it) => it.nationFiscalCode).filter(isPresent)[0], [element].map((it) => it.municipalityId).filter(isPresent)[0]]);
     const nationId = live.choose("nationId", [await countriesGetNations(live)].flat().map((it) => it.nationId).filter(isPresent));
-    const nationFiscalCode = live.choose("nationFiscalCode", [await structureGetExternalEntities(live)].flat().map((it) => it.nationFiscalCode).filter(isPresent));
+    const nationFiscalCode = live.choose("nationFiscalCode", [row].map((it) => it.nationFiscalCode).filter(isPresent));
     const regionCode = live.choose("regionCode", [await countriesGetMunicipalities(live)].flat().map((it) => it.regionCode).filter(isPresent));
-    const municipalityId = live.choose("municipalityId", [await structureGetExternalEntities(live)].flat().map((it) => it.municipalityId).filter(isPresent));
+    const municipalityId = live.choose("municipalityId", [row].map((it) => it.municipalityId).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PostalCode\"}}", {}, async () => live.api.countries.getPostalCode(nationId, { nationFiscalCode: nationFiscalCode, regionCode: regionCode, municipalityId: municipalityId }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3PostalCode(f, it)));
   });
 
   liveCase(Esse3Live, "Countries.getPostalCode#6", { index: 5 }, async (live) => {
+    const row = live.chooseRow("municipalityId, municipalityCode", [await structureGetExternalEntities(live)].flat(), (element) => [[element].map((it) => it.municipalityId).filter(isPresent)[0], [element].map((it) => it.municipalityCode).filter(isPresent)[0]]);
     const nationId = live.choose("nationId", [await countriesGetNations(live)].flat().map((it) => it.nationId).filter(isPresent));
-    const municipalityId = live.choose("municipalityId", [await structureGetExternalEntities(live)].flat().map((it) => it.municipalityId).filter(isPresent));
-    const municipalityCode = live.choose("municipalityCode", [await structureGetExternalEntities(live)].flat().map((it) => it.municipalityCode).filter(isPresent));
+    const municipalityId = live.choose("municipalityId", [row].map((it) => it.municipalityId).filter(isPresent));
+    const municipalityCode = live.choose("municipalityCode", [row].map((it) => it.municipalityCode).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PostalCode\"}}", {}, async () => live.api.countries.getPostalCode(nationId, { municipalityId: municipalityId, municipalityCode: municipalityCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3PostalCode(f, it)));
   });
@@ -77,10 +82,11 @@ describe("Esse3 Countries", () => {
   });
 
   liveCase(Esse3Live, "Countries.getMunicipalities#2", { index: 1 }, async (live) => {
+    const row = live.chooseRow("nationFiscalCode, municipalityCode", [await structureGetExternalEntities(live)].flat(), (element) => [[element].map((it) => it.nationFiscalCode).filter(isPresent)[0], [element].map((it) => it.municipalityCode).filter(isPresent)[0]]);
     const nationId = live.choose("nationId", [await countriesGetNations(live)].flat().map((it) => it.nationId).filter(isPresent));
     const iso6392Code = live.choose("iso6392Code", [await servicesGetLanguages(live)].flat().map((it) => it.iso6392Code).filter(isPresent));
-    const nationFiscalCode = live.choose("nationFiscalCode", [await structureGetExternalEntities(live)].flat().map((it) => it.nationFiscalCode).filter(isPresent));
-    const municipalityCode = live.choose("municipalityCode", [await structureGetExternalEntities(live)].flat().map((it) => it.municipalityCode).filter(isPresent));
+    const nationFiscalCode = live.choose("nationFiscalCode", [row].map((it) => it.nationFiscalCode).filter(isPresent));
+    const municipalityCode = live.choose("municipalityCode", [row].map((it) => it.municipalityCode).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Municipality\"}}", {}, async () => live.api.countries.getMunicipalities(nationId, { iso6392Code: iso6392Code, nationFiscalCode: nationFiscalCode, municipalityCode: municipalityCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3Municipality(f, it)));
   });
@@ -94,10 +100,11 @@ describe("Esse3 Countries", () => {
   });
 
   liveCase(Esse3Live, "Countries.getMunicipalities#4", { index: 3 }, async (live) => {
+    const row = live.chooseRow("nationFiscalCode, municipalityCode", [await structureGetExternalEntities(live)].flat(), (element) => [[element].map((it) => it.nationFiscalCode).filter(isPresent)[0], [element].map((it) => it.municipalityCode).filter(isPresent)[0]]);
     const nationId = live.choose("nationId", [await countriesGetNations(live)].flat().map((it) => it.nationId).filter(isPresent));
-    const nationFiscalCode = live.choose("nationFiscalCode", [await structureGetExternalEntities(live)].flat().map((it) => it.nationFiscalCode).filter(isPresent));
+    const nationFiscalCode = live.choose("nationFiscalCode", [row].map((it) => it.nationFiscalCode).filter(isPresent));
     const regionCode = live.choose("regionCode", [await countriesGetPostalCode(live)].flat().map((it) => it.regionCode).filter(isPresent));
-    const municipalityCode = live.choose("municipalityCode", [await structureGetExternalEntities(live)].flat().map((it) => it.municipalityCode).filter(isPresent));
+    const municipalityCode = live.choose("municipalityCode", [row].map((it) => it.municipalityCode).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Municipality\"}}", {}, async () => live.api.countries.getMunicipalities(nationId, { nationFiscalCode: nationFiscalCode, regionCode: regionCode, municipalityCode: municipalityCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3Municipality(f, it)));
   });

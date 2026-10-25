@@ -20,8 +20,9 @@ class Esse3CertificatesLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Certificates.getCertificatePdf#1")
     fun getCertificatePdf1() = case("Certificates.getCertificatePdf#1") {
-        val configurationId = choose("configurationId", listOf(certificatesGetCertificates()).mapNotNull { it.certificates }.flatten().mapNotNull { it.configurationId })
-        val documentId = choose("documentId", listOf(certificatesGetCertificates()).mapNotNull { it.certificates }.flatten().mapNotNull { it.documentId })
+        val row = chooseRow("configurationId, documentId", listOf(certificatesGetCertificates()).mapNotNull { it.certificates }.flatten()) { element -> listOf(listOf(element).mapNotNull { it.configurationId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.documentId }.firstOrNull()?.toString()) }
+        val configurationId = choose("configurationId", listOf(row).mapNotNull { it.configurationId })
+        val documentId = choose("documentId", listOf(row).mapNotNull { it.documentId })
         call(null) {
             api.certificates.getCertificatePdf(configurationId = configurationId, documentId = documentId)
         }

@@ -21,11 +21,13 @@ class Esse3PlansLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Plans.getCareerSegments#2")
     fun getCareerSegments2() = case("Plans.getCareerSegments#2", index = 1) {
-        val courseOfStudyStudentId = choose("courseOfStudyStudentId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.courseOfStudyStudentId })
-        val courseOfStudyStudentCode = choose("courseOfStudyStudentCode", listOf(recordsFindMinutes()).flatten().mapNotNull { it.courseOfStudyStudentCode })
-        val academicYearOrderStudentId = choose("academicYearOrderStudentId", listOf(plansGetStudentPlanHeaders()).flatten().mapNotNull { it.academicYearOrderStudentId }.map { it.toInt() })
-        val studyPlanStudentId = choose("studyPlanStudentId", listOf(plansGetStudentPlanHeaders()).flatten().mapNotNull { it.studyPlanStudentId })
-        val fiscalCode = choose("fiscalCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.fiscalCode })
+        val row = chooseRow("courseOfStudyStudentId, courseOfStudyStudentCode", listOf(recordsFindMinutes()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.courseOfStudyStudentId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.courseOfStudyStudentCode }.firstOrNull()?.toString()) }
+        val row2 = chooseRow("academicYearOrderStudentId, studyPlanStudentId", listOf(plansGetStudentPlanHeaders()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.academicYearOrderStudentId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.studyPlanStudentId }.firstOrNull()?.toString()) }
+        val courseOfStudyStudentId = choose("courseOfStudyStudentId", listOf(row).mapNotNull { it.courseOfStudyStudentId })
+        val courseOfStudyStudentCode = choose("courseOfStudyStudentCode", listOf(row).mapNotNull { it.courseOfStudyStudentCode })
+        val academicYearOrderStudentId = choose("academicYearOrderStudentId", listOf(row2).mapNotNull { it.academicYearOrderStudentId }.map { it.toInt() })
+        val studyPlanStudentId = choose("studyPlanStudentId", listOf(row2).mapNotNull { it.studyPlanStudentId })
+        val fiscalCode = choose("fiscalCode", listOf(careersGetCareers()).flatten().mapNotNull { it.fiscalCode })
         val studentStatusCode = choose("studentStatusCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studentStatusCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}}") {
             api.plans.getCareerSegments(courseOfStudyStudentId = courseOfStudyStudentId, courseOfStudyStudentCode = courseOfStudyStudentCode, academicYearOrderStudentId = academicYearOrderStudentId, studyPlanStudentId = studyPlanStudentId, fiscalCode = fiscalCode, studentStatusCode = studentStatusCode)
@@ -36,10 +38,11 @@ class Esse3PlansLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Plans.getCareerSegments#3")
     fun getCareerSegments3() = case("Plans.getCareerSegments#3", index = 2) {
-        val academicYearOrderStudentId = choose("academicYearOrderStudentId", listOf(plansGetStudentPlanHeaders()).flatten().mapNotNull { it.academicYearOrderStudentId }.map { it.toInt() })
-        val studyPlanStudentId = choose("studyPlanStudentId", listOf(plansGetStudentPlanHeaders()).flatten().mapNotNull { it.studyPlanStudentId })
-        val studyPlanStudentCode = choose("studyPlanStudentCode", listOf(plansGetStudentPlanHeaders()).flatten().mapNotNull { it.studyPlanStudentCode })
-        val fiscalCode = choose("fiscalCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.fiscalCode })
+        val row = chooseRow("academicYearOrderStudentId, studyPlanStudentId, studyPlanStudentCode", listOf(plansGetStudentPlanHeaders()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.academicYearOrderStudentId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.studyPlanStudentId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.studyPlanStudentCode }.firstOrNull()?.toString()) }
+        val academicYearOrderStudentId = choose("academicYearOrderStudentId", listOf(row).mapNotNull { it.academicYearOrderStudentId }.map { it.toInt() })
+        val studyPlanStudentId = choose("studyPlanStudentId", listOf(row).mapNotNull { it.studyPlanStudentId })
+        val studyPlanStudentCode = choose("studyPlanStudentCode", listOf(row).mapNotNull { it.studyPlanStudentCode })
+        val fiscalCode = choose("fiscalCode", listOf(careersGetCareers()).flatten().mapNotNull { it.fiscalCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}}") {
             api.plans.getCareerSegments(academicYearOrderStudentId = academicYearOrderStudentId, studyPlanStudentId = studyPlanStudentId, studyPlanStudentCode = studyPlanStudentCode, fiscalCode = fiscalCode)
         } ?: return@case
@@ -49,8 +52,9 @@ class Esse3PlansLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Plans.getCareerSegments#4")
     fun getCareerSegments4() = case("Plans.getCareerSegments#4", index = 3) {
-        val courseOfStudyStudentId = choose("courseOfStudyStudentId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.courseOfStudyStudentId })
-        val courseOfStudyStudentCode = choose("courseOfStudyStudentCode", listOf(recordsFindMinutes()).flatten().mapNotNull { it.courseOfStudyStudentCode })
+        val row = chooseRow("courseOfStudyStudentId, courseOfStudyStudentCode", listOf(recordsFindMinutes()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.courseOfStudyStudentId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.courseOfStudyStudentCode }.firstOrNull()?.toString()) }
+        val courseOfStudyStudentId = choose("courseOfStudyStudentId", listOf(row).mapNotNull { it.courseOfStudyStudentId })
+        val courseOfStudyStudentCode = choose("courseOfStudyStudentCode", listOf(row).mapNotNull { it.courseOfStudyStudentCode })
         val studyPlanStudentCode = choose("studyPlanStudentCode", listOf(plansGetStudentPlanHeaders()).flatten().mapNotNull { it.studyPlanStudentCode })
         val studentStatusCode = choose("studentStatusCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studentStatusCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}}") {
@@ -64,7 +68,7 @@ class Esse3PlansLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     fun getCareerSegments5() = case("Plans.getCareerSegments#5", index = 4) {
         val courseOfStudyStudentId = choose("courseOfStudyStudentId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.courseOfStudyStudentId })
         val studyPlanStudentCode = choose("studyPlanStudentCode", listOf(plansGetStudentPlanHeaders()).flatten().mapNotNull { it.studyPlanStudentCode })
-        val fiscalCode = choose("fiscalCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.fiscalCode })
+        val fiscalCode = choose("fiscalCode", listOf(careersGetCareers()).flatten().mapNotNull { it.fiscalCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}}") {
             api.plans.getCareerSegments(courseOfStudyStudentId = courseOfStudyStudentId, studyPlanStudentCode = studyPlanStudentCode, fiscalCode = fiscalCode)
         } ?: return@case
@@ -85,7 +89,7 @@ class Esse3PlansLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Plans.getStudentPlanHeaders#1")
     fun getStudentPlanHeaders1() = case("Plans.getStudentPlanHeaders#1") {
-        val studentId = choose("studentId", listOf(plansGetCareerSegments()).flatten().mapNotNull { it.studentId })
+        val studentId = choose("studentId", listOf(careersGetCareers()).flatten().mapNotNull { it.studentId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3StudyPlanHeader\"}}") {
             api.plans.getStudentPlanHeaders(studentId = studentId)
         } ?: return@case
@@ -95,7 +99,7 @@ class Esse3PlansLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Plans.getStudentPlanHeaders#2")
     fun getStudentPlanHeaders2() = case("Plans.getStudentPlanHeaders#2", index = 1) {
-        val studentId = choose("studentId", listOf(plansGetCareerSegments()).flatten().mapNotNull { it.studentId })
+        val studentId = choose("studentId", listOf(careersGetCareers()).flatten().mapNotNull { it.studentId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3StudyPlanHeader\"}}") {
             api.plans.getStudentPlanHeaders(studentId = studentId, planState = Esse3StudyPlanStateFilter.B)
         } ?: return@case
@@ -105,7 +109,7 @@ class Esse3PlansLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Plans.getStudentPlanHeaders#3")
     fun getStudentPlanHeaders3() = case("Plans.getStudentPlanHeaders#3", index = 2) {
-        val studentId = choose("studentId", listOf(plansGetCareerSegments()).flatten().mapNotNull { it.studentId })
+        val studentId = choose("studentId", listOf(careersGetCareers()).flatten().mapNotNull { it.studentId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3StudyPlanHeader\"}}") {
             api.plans.getStudentPlanHeaders(studentId = studentId, planState = Esse3StudyPlanStateFilter.P)
         } ?: return@case
@@ -115,7 +119,7 @@ class Esse3PlansLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Plans.getStudentPlanHeaders#4")
     fun getStudentPlanHeaders4() = case("Plans.getStudentPlanHeaders#4", index = 3) {
-        val studentId = choose("studentId", listOf(plansGetCareerSegments()).flatten().mapNotNull { it.studentId })
+        val studentId = choose("studentId", listOf(careersGetCareers()).flatten().mapNotNull { it.studentId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3StudyPlanHeader\"}}") {
             api.plans.getStudentPlanHeaders(studentId = studentId, planState = Esse3StudyPlanStateFilter.V)
         } ?: return@case
@@ -125,7 +129,7 @@ class Esse3PlansLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Plans.getStudentPlanHeaders#5")
     fun getStudentPlanHeaders5() = case("Plans.getStudentPlanHeaders#5", index = 4) {
-        val studentId = choose("studentId", listOf(plansGetCareerSegments()).flatten().mapNotNull { it.studentId })
+        val studentId = choose("studentId", listOf(careersGetCareers()).flatten().mapNotNull { it.studentId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3StudyPlanHeader\"}}") {
             api.plans.getStudentPlanHeaders(studentId = studentId, planState = Esse3StudyPlanStateFilter.A)
         } ?: return@case
@@ -135,7 +139,7 @@ class Esse3PlansLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Plans.getStudentPlanHeaders#6")
     fun getStudentPlanHeaders6() = case("Plans.getStudentPlanHeaders#6", index = 5) {
-        val studentId = choose("studentId", listOf(plansGetCareerSegments()).flatten().mapNotNull { it.studentId })
+        val studentId = choose("studentId", listOf(careersGetCareers()).flatten().mapNotNull { it.studentId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3StudyPlanHeader\"}}") {
             api.plans.getStudentPlanHeaders(studentId = studentId, planState = Esse3StudyPlanStateFilter.R)
         } ?: return@case
@@ -153,7 +157,7 @@ class Esse3PlansLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Plans.getStudentPlan#1")
     fun getStudentPlan1() = case("Plans.getStudentPlan#1") {
-        val studentId = choose("studentId", listOf(plansGetCareerSegments()).flatten().mapNotNull { it.studentId })
+        val studentId = choose("studentId", listOf(careersGetCareers()).flatten().mapNotNull { it.studentId })
         val planId = choose("planId", listOf(plansGetStudentPlanHeaders()).flatten().mapNotNull { it.planId }.map { it.toLong() })
         val result = call("{\"k\":\"record\",\"n\":\"Esse3StudyPlan\"}") {
             api.plans.getStudentPlan(studentId = studentId, planId = planId)
@@ -173,7 +177,7 @@ class Esse3PlansLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Plans.getPlanPrint#1")
     fun getPlanPrint1() = case("Plans.getPlanPrint#1") {
-        val studentId = choose("studentId", listOf(plansGetCareerSegments()).flatten().mapNotNull { it.studentId })
+        val studentId = choose("studentId", listOf(careersGetCareers()).flatten().mapNotNull { it.studentId })
         val planId = choose("planId", listOf(plansGetStudentPlanHeaders()).flatten().mapNotNull { it.planId }.map { it.toLong() })
         call(null) {
             api.plans.getPlanPrint(studentId = studentId, planId = planId)

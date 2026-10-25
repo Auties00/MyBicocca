@@ -3,6 +3,7 @@ package it.attendance100.mybicocca.data.remote.runtime
 
 import io.ktor.client.HttpClient
 import io.ktor.client.request.HttpRequestBuilder
+import io.ktor.client.request.accept
 import io.ktor.client.request.header
 import io.ktor.client.request.request
 import io.ktor.client.statement.HttpResponse
@@ -165,6 +166,8 @@ abstract class RestApi(
         val attempt: suspend () -> HttpResponse = {
             client.request(root + basePath + endpoint) {
                 this.method = method
+                // Downloads, text and pages take whatever the server sends, which a JSON Accept would refuse.
+                if (!readsJson) accept(ContentType.Any)
                 block()
             }
         }

@@ -2,7 +2,7 @@
 
 import { describe } from "vitest";
 import { isPresent, liveCase } from "../runtime/live.js";
-import { Esse3Live, servicesGetLanguages, writeEsse3AddressType, writeEsse3IdentityDocumentType, writeEsse3Languages, writeEsse3MaritalStatusType, writeEsse3PaymentRefundType, writeEsse3VersionInfo } from "./Esse3Live.js";
+import { Esse3Live, servicesGetLanguages, writeEsse3AddressType, writeEsse3IdentityDocumentType, writeEsse3Languages, writeEsse3MaritalStatusType, writeEsse3PaymentRefundType } from "./Esse3Live.js";
 
 // The live tests of the Esse3 Services module, planned from common/specs/esse3/tests.yaml.
 describe("Esse3 Services", () => {
@@ -39,18 +39,17 @@ describe("Esse3 Services", () => {
   });
 
   liveCase(Esse3Live, "Services.getMaritalStatusTypes#1", {}, async (live) => {
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3MaritalStatusType\"}}", {}, async () => live.api.services.getMaritalStatusTypes());
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3MaritalStatusType\"}}", { errors: ["403"] }, async () => live.api.services.getMaritalStatusTypes());
     live.fingerprint((f) => f.list(result, (it) => writeEsse3MaritalStatusType(f, it)));
   });
 
   liveCase(Esse3Live, "Services.getMaritalStatusTypes#2", { index: 1 }, async (live) => {
     const iso6392Code = live.choose("iso6392Code", [await servicesGetLanguages(live)].flat().map((it) => it.iso6392Code).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3MaritalStatusType\"}}", {}, async () => live.api.services.getMaritalStatusTypes({ iso6392Code: iso6392Code }));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3MaritalStatusType\"}}", { errors: ["403"] }, async () => live.api.services.getMaritalStatusTypes({ iso6392Code: iso6392Code }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3MaritalStatusType(f, it)));
   });
 
   liveCase(Esse3Live, "Services.getVersionInfo#1", {}, async (live) => {
-    const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3VersionInfo\"}", {}, async () => live.api.services.getVersionInfo());
-    live.fingerprint((f) => writeEsse3VersionInfo(f, result));
+    await live.call("{\"k\":\"record\",\"n\":\"Esse3VersionInfo\"}", {}, async () => live.api.services.getVersionInfo());
   });
 });

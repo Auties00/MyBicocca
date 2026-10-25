@@ -2,7 +2,7 @@
 
 import { describe } from "vitest";
 import { isPresent, liveCase } from "../runtime/live.js";
-import { Esse3Live, careersGetCareers, careersGetMinimalGdprCareersData, careersGetPhdCareersData, structureGetCoursesOfStudy, writeEsse3AnnualEnrollment, writeEsse3Career, writeEsse3CareerGDPR, writeEsse3CareerMinimalData, writeEsse3CareerMinimalDataGDPR, writeEsse3EnrollmentClasses, writeEsse3PhDProgramCareer } from "./Esse3Live.js";
+import { Esse3Live, careersGetCareers, careersGetMinimalGdprCareersData, careersGetPhdCareersData, writeEsse3AnnualEnrollment, writeEsse3Career, writeEsse3CareerGDPR, writeEsse3CareerMinimalData, writeEsse3CareerMinimalDataGDPR, writeEsse3EnrollmentClasses, writeEsse3PhDProgramCareer } from "./Esse3Live.js";
 
 // The live tests of the Esse3 Careers module, planned from common/specs/esse3/tests.yaml.
 describe("Esse3 Careers", () => {
@@ -12,51 +12,59 @@ describe("Esse3 Careers", () => {
   });
 
   liveCase(Esse3Live, "Careers.getCareers#2", { index: 1 }, async (live) => {
-    const userId = live.choose("userId", [await careersGetMinimalGdprCareersData(live)].flat().map((it) => it.userId).filter(isPresent));
-    const fiscalCode = live.choose("fiscalCode", [await careersGetMinimalGdprCareersData(live)].flat().map((it) => it.fiscalCode).filter(isPresent));
-    const academicYearId = live.choose("academicYearId", [await careersGetMinimalGdprCareersData(live)].flat().map((it) => it.academicYearId).filter(isPresent).map((it) => String(it)));
-    const courseOfStudyId = live.choose("courseOfStudyId", [await careersGetMinimalGdprCareersData(live)].flat().map((it) => it.courseOfStudyId).filter(isPresent));
-    const courseOfStudyCode = live.choose("courseOfStudyCode", [await structureGetCoursesOfStudy(live)].flat().map((it) => it.courseOfStudyCode).filter(isPresent));
-    const courseTypeCode = live.choose("courseTypeCode", [await careersGetMinimalGdprCareersData(live)].flat().map((it) => it.courseTypeCode).filter(isPresent));
-    const academicYearEnrollmentId = live.choose("academicYearEnrollmentId", [await careersGetMinimalGdprCareersData(live)].flat().map((it) => it.academicYearEnrollmentId).filter(isPresent));
+    const row = live.chooseRow("userId, academicYearId, courseTypeCode, academicYearEnrollmentId", [await careersGetMinimalGdprCareersData(live)].flat(), (element) => [[element].map((it) => it.userId).filter(isPresent)[0], [element].map((it) => it.academicYearId).filter(isPresent)[0], [element].map((it) => it.courseTypeCode).filter(isPresent)[0], [element].map((it) => it.academicYearEnrollmentId).filter(isPresent)[0]]);
+    const row2 = live.chooseRow("fiscalCode, courseOfStudyId, courseOfStudyCode", [await careersGetCareers(live)].flat(), (element) => [[element].map((it) => it.fiscalCode).filter(isPresent)[0], [element].map((it) => it.courseOfStudyId).filter(isPresent)[0], [element].map((it) => it.p06CourseOfStudyCode).filter(isPresent)[0]]);
+    const userId = live.choose("userId", [row].map((it) => it.userId).filter(isPresent));
+    const fiscalCode = live.choose("fiscalCode", [row2].map((it) => it.fiscalCode).filter(isPresent));
+    const academicYearId = live.choose("academicYearId", [row].map((it) => it.academicYearId).filter(isPresent).map((it) => String(it)));
+    const courseOfStudyId = live.choose("courseOfStudyId", [row2].map((it) => it.courseOfStudyId).filter(isPresent));
+    const courseOfStudyCode = live.choose("courseOfStudyCode", [row2].map((it) => it.p06CourseOfStudyCode).filter(isPresent));
+    const courseTypeCode = live.choose("courseTypeCode", [row].map((it) => it.courseTypeCode).filter(isPresent));
+    const academicYearEnrollmentId = live.choose("academicYearEnrollmentId", [row].map((it) => it.academicYearEnrollmentId).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Career\"}}", {}, async () => live.api.careers.getCareers({ userId: userId, fiscalCode: fiscalCode, academicYearId: academicYearId, courseOfStudyId: courseOfStudyId, courseOfStudyCode: courseOfStudyCode, courseTypeCode: courseTypeCode, academicYearEnrollmentId: academicYearEnrollmentId }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3Career(f, it)));
   });
 
   liveCase(Esse3Live, "Careers.getCareers#3", { index: 2 }, async (live) => {
-    const userId = live.choose("userId", [await careersGetMinimalGdprCareersData(live)].flat().map((it) => it.userId).filter(isPresent));
-    const fiscalCode = live.choose("fiscalCode", [await careersGetMinimalGdprCareersData(live)].flat().map((it) => it.fiscalCode).filter(isPresent));
-    const studentStatusCode = live.choose("studentStatusCode", [await careersGetMinimalGdprCareersData(live)].flat().map((it) => it.studentStatusCode).filter(isPresent));
-    const academicYearId = live.choose("academicYearId", [await careersGetMinimalGdprCareersData(live)].flat().map((it) => it.academicYearId).filter(isPresent).map((it) => String(it)));
-    const courseTypeCode = live.choose("courseTypeCode", [await careersGetMinimalGdprCareersData(live)].flat().map((it) => it.courseTypeCode).filter(isPresent));
+    const row = live.chooseRow("userId, studentStatusCode, academicYearId, courseTypeCode", [await careersGetMinimalGdprCareersData(live)].flat(), (element) => [[element].map((it) => it.userId).filter(isPresent)[0], [element].map((it) => it.studentStatusCode).filter(isPresent)[0], [element].map((it) => it.academicYearId).filter(isPresent)[0], [element].map((it) => it.courseTypeCode).filter(isPresent)[0]]);
+    const userId = live.choose("userId", [row].map((it) => it.userId).filter(isPresent));
+    const fiscalCode = live.choose("fiscalCode", [await careersGetCareers(live)].flat().map((it) => it.fiscalCode).filter(isPresent));
+    const studentStatusCode = live.choose("studentStatusCode", [row].map((it) => it.studentStatusCode).filter(isPresent));
+    const academicYearId = live.choose("academicYearId", [row].map((it) => it.academicYearId).filter(isPresent).map((it) => String(it)));
+    const courseTypeCode = live.choose("courseTypeCode", [row].map((it) => it.courseTypeCode).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Career\"}}", {}, async () => live.api.careers.getCareers({ userId: userId, fiscalCode: fiscalCode, studentStatusCode: studentStatusCode, academicYearId: academicYearId, courseTypeCode: courseTypeCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3Career(f, it)));
   });
 
   liveCase(Esse3Live, "Careers.getCareers#4", { index: 3 }, async (live) => {
-    const studentStatusCode = live.choose("studentStatusCode", [await careersGetMinimalGdprCareersData(live)].flat().map((it) => it.studentStatusCode).filter(isPresent));
-    const courseOfStudyId = live.choose("courseOfStudyId", [await careersGetMinimalGdprCareersData(live)].flat().map((it) => it.courseOfStudyId).filter(isPresent));
-    const courseOfStudyCode = live.choose("courseOfStudyCode", [await structureGetCoursesOfStudy(live)].flat().map((it) => it.courseOfStudyCode).filter(isPresent));
-    const academicYearEnrollmentId = live.choose("academicYearEnrollmentId", [await careersGetMinimalGdprCareersData(live)].flat().map((it) => it.academicYearEnrollmentId).filter(isPresent));
+    const row = live.chooseRow("studentStatusCode, academicYearEnrollmentId", [await careersGetMinimalGdprCareersData(live)].flat(), (element) => [[element].map((it) => it.studentStatusCode).filter(isPresent)[0], [element].map((it) => it.academicYearEnrollmentId).filter(isPresent)[0]]);
+    const row2 = live.chooseRow("courseOfStudyId, courseOfStudyCode", [await careersGetCareers(live)].flat(), (element) => [[element].map((it) => it.courseOfStudyId).filter(isPresent)[0], [element].map((it) => it.p06CourseOfStudyCode).filter(isPresent)[0]]);
+    const studentStatusCode = live.choose("studentStatusCode", [row].map((it) => it.studentStatusCode).filter(isPresent));
+    const courseOfStudyId = live.choose("courseOfStudyId", [row2].map((it) => it.courseOfStudyId).filter(isPresent));
+    const courseOfStudyCode = live.choose("courseOfStudyCode", [row2].map((it) => it.p06CourseOfStudyCode).filter(isPresent));
+    const academicYearEnrollmentId = live.choose("academicYearEnrollmentId", [row].map((it) => it.academicYearEnrollmentId).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Career\"}}", {}, async () => live.api.careers.getCareers({ studentStatusCode: studentStatusCode, courseOfStudyId: courseOfStudyId, courseOfStudyCode: courseOfStudyCode, academicYearEnrollmentId: academicYearEnrollmentId }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3Career(f, it)));
   });
 
   liveCase(Esse3Live, "Careers.getCareers#5", { index: 4 }, async (live) => {
-    const userId = live.choose("userId", [await careersGetMinimalGdprCareersData(live)].flat().map((it) => it.userId).filter(isPresent));
-    const academicYearId = live.choose("academicYearId", [await careersGetMinimalGdprCareersData(live)].flat().map((it) => it.academicYearId).filter(isPresent).map((it) => String(it)));
-    const courseOfStudyId = live.choose("courseOfStudyId", [await careersGetMinimalGdprCareersData(live)].flat().map((it) => it.courseOfStudyId).filter(isPresent));
-    const academicYearEnrollmentId = live.choose("academicYearEnrollmentId", [await careersGetMinimalGdprCareersData(live)].flat().map((it) => it.academicYearEnrollmentId).filter(isPresent));
+    const row = live.chooseRow("userId, academicYearId, academicYearEnrollmentId", [await careersGetMinimalGdprCareersData(live)].flat(), (element) => [[element].map((it) => it.userId).filter(isPresent)[0], [element].map((it) => it.academicYearId).filter(isPresent)[0], [element].map((it) => it.academicYearEnrollmentId).filter(isPresent)[0]]);
+    const userId = live.choose("userId", [row].map((it) => it.userId).filter(isPresent));
+    const academicYearId = live.choose("academicYearId", [row].map((it) => it.academicYearId).filter(isPresent).map((it) => String(it)));
+    const courseOfStudyId = live.choose("courseOfStudyId", [await careersGetCareers(live)].flat().map((it) => it.courseOfStudyId).filter(isPresent));
+    const academicYearEnrollmentId = live.choose("academicYearEnrollmentId", [row].map((it) => it.academicYearEnrollmentId).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Career\"}}", {}, async () => live.api.careers.getCareers({ userId: userId, academicYearId: academicYearId, courseOfStudyId: courseOfStudyId, academicYearEnrollmentId: academicYearEnrollmentId }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3Career(f, it)));
   });
 
   liveCase(Esse3Live, "Careers.getCareers#6", { index: 5 }, async (live) => {
-    const fiscalCode = live.choose("fiscalCode", [await careersGetMinimalGdprCareersData(live)].flat().map((it) => it.fiscalCode).filter(isPresent));
-    const studentStatusCode = live.choose("studentStatusCode", [await careersGetMinimalGdprCareersData(live)].flat().map((it) => it.studentStatusCode).filter(isPresent));
-    const courseOfStudyId = live.choose("courseOfStudyId", [await careersGetMinimalGdprCareersData(live)].flat().map((it) => it.courseOfStudyId).filter(isPresent));
-    const courseOfStudyCode = live.choose("courseOfStudyCode", [await structureGetCoursesOfStudy(live)].flat().map((it) => it.courseOfStudyCode).filter(isPresent));
-    const courseTypeCode = live.choose("courseTypeCode", [await careersGetMinimalGdprCareersData(live)].flat().map((it) => it.courseTypeCode).filter(isPresent));
+    const row = live.chooseRow("fiscalCode, courseOfStudyId, courseOfStudyCode", [await careersGetCareers(live)].flat(), (element) => [[element].map((it) => it.fiscalCode).filter(isPresent)[0], [element].map((it) => it.courseOfStudyId).filter(isPresent)[0], [element].map((it) => it.p06CourseOfStudyCode).filter(isPresent)[0]]);
+    const row2 = live.chooseRow("studentStatusCode, courseTypeCode", [await careersGetMinimalGdprCareersData(live)].flat(), (element) => [[element].map((it) => it.studentStatusCode).filter(isPresent)[0], [element].map((it) => it.courseTypeCode).filter(isPresent)[0]]);
+    const fiscalCode = live.choose("fiscalCode", [row].map((it) => it.fiscalCode).filter(isPresent));
+    const studentStatusCode = live.choose("studentStatusCode", [row2].map((it) => it.studentStatusCode).filter(isPresent));
+    const courseOfStudyId = live.choose("courseOfStudyId", [row].map((it) => it.courseOfStudyId).filter(isPresent));
+    const courseOfStudyCode = live.choose("courseOfStudyCode", [row].map((it) => it.p06CourseOfStudyCode).filter(isPresent));
+    const courseTypeCode = live.choose("courseTypeCode", [row2].map((it) => it.courseTypeCode).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Career\"}}", {}, async () => live.api.careers.getCareers({ fiscalCode: fiscalCode, studentStatusCode: studentStatusCode, courseOfStudyId: courseOfStudyId, courseOfStudyCode: courseOfStudyCode, courseTypeCode: courseTypeCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3Career(f, it)));
   });
@@ -71,51 +79,56 @@ describe("Esse3 Careers", () => {
   });
 
   liveCase(Esse3Live, "Careers.getMinimalGdprCareersData#2", { index: 1 }, async (live) => {
-    const userId = live.choose("userId", [await careersGetCareers(live)].flat().map((it) => it.userId).filter(isPresent));
-    const studentStatusCode = live.choose("studentStatusCode", [await careersGetCareers(live)].flat().map((it) => it.studentStatusCode).filter(isPresent));
-    const academicYearId = live.choose("academicYearId", [await careersGetCareers(live)].flat().map((it) => it.academicYearId).filter(isPresent).map((it) => String(it)));
-    const courseOfStudyId = live.choose("courseOfStudyId", [await careersGetCareers(live)].flat().map((it) => it.courseOfStudyId).filter(isPresent));
-    const courseOfStudyCode = live.choose("courseOfStudyCode", [await structureGetCoursesOfStudy(live)].flat().map((it) => it.courseOfStudyCode).filter(isPresent));
+    const row = live.chooseRow("userId, studentStatusCode, academicYearId, courseOfStudyId, courseOfStudyCode, academicYearEnrollmentId", [await careersGetCareers(live)].flat(), (element) => [[element].map((it) => it.userId).filter(isPresent)[0], [element].map((it) => it.studentStatusCode).filter(isPresent)[0], [element].map((it) => it.academicYearId).filter(isPresent)[0], [element].map((it) => it.courseOfStudyId).filter(isPresent)[0], [element].map((it) => it.p06CourseOfStudyCode).filter(isPresent)[0], [element].map((it) => it.academicYearEnrollmentId).filter(isPresent)[0]]);
+    const userId = live.choose("userId", [row].map((it) => it.userId).filter(isPresent));
+    const studentStatusCode = live.choose("studentStatusCode", [row].map((it) => it.studentStatusCode).filter(isPresent));
+    const academicYearId = live.choose("academicYearId", [row].map((it) => it.academicYearId).filter(isPresent).map((it) => String(it)));
+    const courseOfStudyId = live.choose("courseOfStudyId", [row].map((it) => it.courseOfStudyId).filter(isPresent));
+    const courseOfStudyCode = live.choose("courseOfStudyCode", [row].map((it) => it.p06CourseOfStudyCode).filter(isPresent));
     const courseTypeCode = live.choose("courseTypeCode", [await careersGetPhdCareersData(live)].flat().map((it) => it.courseTypeCode).filter(isPresent));
-    const academicYearEnrollmentId = live.choose("academicYearEnrollmentId", [await careersGetCareers(live)].flat().map((it) => it.academicYearEnrollmentId).filter(isPresent));
+    const academicYearEnrollmentId = live.choose("academicYearEnrollmentId", [row].map((it) => it.academicYearEnrollmentId).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerMinimalDataGDPR\"}}", {}, async () => live.api.careers.getMinimalGdprCareersData({ userId: userId, studentStatusCode: studentStatusCode, academicYearId: academicYearId, courseOfStudyId: courseOfStudyId, courseOfStudyCode: courseOfStudyCode, courseTypeCode: courseTypeCode, academicYearEnrollmentId: academicYearEnrollmentId }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3CareerMinimalDataGDPR(f, it)));
   });
 
   liveCase(Esse3Live, "Careers.getMinimalGdprCareersData#3", { index: 2 }, async (live) => {
-    const fiscalCode = live.choose("fiscalCode", [await careersGetCareers(live)].flat().map((it) => it.fiscalCode).filter(isPresent));
-    const studentStatusCode = live.choose("studentStatusCode", [await careersGetCareers(live)].flat().map((it) => it.studentStatusCode).filter(isPresent));
-    const academicYearId = live.choose("academicYearId", [await careersGetCareers(live)].flat().map((it) => it.academicYearId).filter(isPresent).map((it) => String(it)));
+    const row = live.chooseRow("fiscalCode, studentStatusCode, academicYearId, academicYearEnrollmentId", [await careersGetCareers(live)].flat(), (element) => [[element].map((it) => it.fiscalCode).filter(isPresent)[0], [element].map((it) => it.studentStatusCode).filter(isPresent)[0], [element].map((it) => it.academicYearId).filter(isPresent)[0], [element].map((it) => it.academicYearEnrollmentId).filter(isPresent)[0]]);
+    const fiscalCode = live.choose("fiscalCode", [row].map((it) => it.fiscalCode).filter(isPresent));
+    const studentStatusCode = live.choose("studentStatusCode", [row].map((it) => it.studentStatusCode).filter(isPresent));
+    const academicYearId = live.choose("academicYearId", [row].map((it) => it.academicYearId).filter(isPresent).map((it) => String(it)));
     const courseTypeCode = live.choose("courseTypeCode", [await careersGetPhdCareersData(live)].flat().map((it) => it.courseTypeCode).filter(isPresent));
-    const academicYearEnrollmentId = live.choose("academicYearEnrollmentId", [await careersGetCareers(live)].flat().map((it) => it.academicYearEnrollmentId).filter(isPresent));
+    const academicYearEnrollmentId = live.choose("academicYearEnrollmentId", [row].map((it) => it.academicYearEnrollmentId).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerMinimalDataGDPR\"}}", {}, async () => live.api.careers.getMinimalGdprCareersData({ fiscalCode: fiscalCode, studentStatusCode: studentStatusCode, academicYearId: academicYearId, courseTypeCode: courseTypeCode, academicYearEnrollmentId: academicYearEnrollmentId }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3CareerMinimalDataGDPR(f, it)));
   });
 
   liveCase(Esse3Live, "Careers.getMinimalGdprCareersData#4", { index: 3 }, async (live) => {
-    const userId = live.choose("userId", [await careersGetCareers(live)].flat().map((it) => it.userId).filter(isPresent));
-    const fiscalCode = live.choose("fiscalCode", [await careersGetCareers(live)].flat().map((it) => it.fiscalCode).filter(isPresent));
-    const courseOfStudyId = live.choose("courseOfStudyId", [await careersGetCareers(live)].flat().map((it) => it.courseOfStudyId).filter(isPresent));
-    const courseOfStudyCode = live.choose("courseOfStudyCode", [await structureGetCoursesOfStudy(live)].flat().map((it) => it.courseOfStudyCode).filter(isPresent));
+    const row = live.chooseRow("userId, fiscalCode, courseOfStudyId, courseOfStudyCode", [await careersGetCareers(live)].flat(), (element) => [[element].map((it) => it.userId).filter(isPresent)[0], [element].map((it) => it.fiscalCode).filter(isPresent)[0], [element].map((it) => it.courseOfStudyId).filter(isPresent)[0], [element].map((it) => it.p06CourseOfStudyCode).filter(isPresent)[0]]);
+    const userId = live.choose("userId", [row].map((it) => it.userId).filter(isPresent));
+    const fiscalCode = live.choose("fiscalCode", [row].map((it) => it.fiscalCode).filter(isPresent));
+    const courseOfStudyId = live.choose("courseOfStudyId", [row].map((it) => it.courseOfStudyId).filter(isPresent));
+    const courseOfStudyCode = live.choose("courseOfStudyCode", [row].map((it) => it.p06CourseOfStudyCode).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerMinimalDataGDPR\"}}", {}, async () => live.api.careers.getMinimalGdprCareersData({ userId: userId, fiscalCode: fiscalCode, courseOfStudyId: courseOfStudyId, courseOfStudyCode: courseOfStudyCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3CareerMinimalDataGDPR(f, it)));
   });
 
   liveCase(Esse3Live, "Careers.getMinimalGdprCareersData#5", { index: 4 }, async (live) => {
-    const userId = live.choose("userId", [await careersGetCareers(live)].flat().map((it) => it.userId).filter(isPresent));
-    const fiscalCode = live.choose("fiscalCode", [await careersGetCareers(live)].flat().map((it) => it.fiscalCode).filter(isPresent));
-    const studentStatusCode = live.choose("studentStatusCode", [await careersGetCareers(live)].flat().map((it) => it.studentStatusCode).filter(isPresent));
-    const courseOfStudyCode = live.choose("courseOfStudyCode", [await structureGetCoursesOfStudy(live)].flat().map((it) => it.courseOfStudyCode).filter(isPresent));
-    const academicYearEnrollmentId = live.choose("academicYearEnrollmentId", [await careersGetCareers(live)].flat().map((it) => it.academicYearEnrollmentId).filter(isPresent));
+    const row = live.chooseRow("userId, fiscalCode, studentStatusCode, courseOfStudyCode, academicYearEnrollmentId", [await careersGetCareers(live)].flat(), (element) => [[element].map((it) => it.userId).filter(isPresent)[0], [element].map((it) => it.fiscalCode).filter(isPresent)[0], [element].map((it) => it.studentStatusCode).filter(isPresent)[0], [element].map((it) => it.p06CourseOfStudyCode).filter(isPresent)[0], [element].map((it) => it.academicYearEnrollmentId).filter(isPresent)[0]]);
+    const userId = live.choose("userId", [row].map((it) => it.userId).filter(isPresent));
+    const fiscalCode = live.choose("fiscalCode", [row].map((it) => it.fiscalCode).filter(isPresent));
+    const studentStatusCode = live.choose("studentStatusCode", [row].map((it) => it.studentStatusCode).filter(isPresent));
+    const courseOfStudyCode = live.choose("courseOfStudyCode", [row].map((it) => it.p06CourseOfStudyCode).filter(isPresent));
+    const academicYearEnrollmentId = live.choose("academicYearEnrollmentId", [row].map((it) => it.academicYearEnrollmentId).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerMinimalDataGDPR\"}}", {}, async () => live.api.careers.getMinimalGdprCareersData({ userId: userId, fiscalCode: fiscalCode, studentStatusCode: studentStatusCode, courseOfStudyCode: courseOfStudyCode, academicYearEnrollmentId: academicYearEnrollmentId }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3CareerMinimalDataGDPR(f, it)));
   });
 
   liveCase(Esse3Live, "Careers.getMinimalGdprCareersData#6", { index: 5 }, async (live) => {
-    const fiscalCode = live.choose("fiscalCode", [await careersGetCareers(live)].flat().map((it) => it.fiscalCode).filter(isPresent));
-    const academicYearId = live.choose("academicYearId", [await careersGetCareers(live)].flat().map((it) => it.academicYearId).filter(isPresent).map((it) => String(it)));
-    const courseOfStudyId = live.choose("courseOfStudyId", [await careersGetCareers(live)].flat().map((it) => it.courseOfStudyId).filter(isPresent));
-    const courseOfStudyCode = live.choose("courseOfStudyCode", [await structureGetCoursesOfStudy(live)].flat().map((it) => it.courseOfStudyCode).filter(isPresent));
+    const row = live.chooseRow("fiscalCode, academicYearId, courseOfStudyId, courseOfStudyCode", [await careersGetCareers(live)].flat(), (element) => [[element].map((it) => it.fiscalCode).filter(isPresent)[0], [element].map((it) => it.academicYearId).filter(isPresent)[0], [element].map((it) => it.courseOfStudyId).filter(isPresent)[0], [element].map((it) => it.p06CourseOfStudyCode).filter(isPresent)[0]]);
+    const fiscalCode = live.choose("fiscalCode", [row].map((it) => it.fiscalCode).filter(isPresent));
+    const academicYearId = live.choose("academicYearId", [row].map((it) => it.academicYearId).filter(isPresent).map((it) => String(it)));
+    const courseOfStudyId = live.choose("courseOfStudyId", [row].map((it) => it.courseOfStudyId).filter(isPresent));
+    const courseOfStudyCode = live.choose("courseOfStudyCode", [row].map((it) => it.p06CourseOfStudyCode).filter(isPresent));
     const courseTypeCode = live.choose("courseTypeCode", [await careersGetPhdCareersData(live)].flat().map((it) => it.courseTypeCode).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerMinimalDataGDPR\"}}", {}, async () => live.api.careers.getMinimalGdprCareersData({ fiscalCode: fiscalCode, academicYearId: academicYearId, courseOfStudyId: courseOfStudyId, courseOfStudyCode: courseOfStudyCode, courseTypeCode: courseTypeCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3CareerMinimalDataGDPR(f, it)));
@@ -137,52 +150,57 @@ describe("Esse3 Careers", () => {
   });
 
   liveCase(Esse3Live, "Careers.getPhdCareersData#2", { index: 1 }, async (live) => {
-    const userId = live.choose("userId", [await careersGetCareers(live)].flat().map((it) => it.userId).filter(isPresent));
-    const studentId = live.choose("studentId", [await careersGetCareers(live)].flat().map((it) => it.studentId).filter(isPresent));
-    const fiscalCode = live.choose("fiscalCode", [await careersGetCareers(live)].flat().map((it) => it.fiscalCode).filter(isPresent));
-    const studentStatusCode = live.choose("studentStatusCode", [await careersGetCareers(live)].flat().map((it) => it.studentStatusCode).filter(isPresent));
-    const academicYearId = live.choose("academicYearId", [await careersGetCareers(live)].flat().map((it) => it.academicYearId).filter(isPresent).map((it) => String(it)));
-    const courseOfStudyCode = live.choose("courseOfStudyCode", [await structureGetCoursesOfStudy(live)].flat().map((it) => it.courseOfStudyCode).filter(isPresent));
+    const row = live.chooseRow("userId, studentId, fiscalCode, studentStatusCode, academicYearId, courseOfStudyCode, academicYearEnrollmentId", [await careersGetCareers(live)].flat(), (element) => [[element].map((it) => it.userId).filter(isPresent)[0], [element].map((it) => it.studentId).filter(isPresent)[0], [element].map((it) => it.fiscalCode).filter(isPresent)[0], [element].map((it) => it.studentStatusCode).filter(isPresent)[0], [element].map((it) => it.academicYearId).filter(isPresent)[0], [element].map((it) => it.p06CourseOfStudyCode).filter(isPresent)[0], [element].map((it) => it.academicYearEnrollmentId).filter(isPresent)[0]]);
+    const userId = live.choose("userId", [row].map((it) => it.userId).filter(isPresent));
+    const studentId = live.choose("studentId", [row].map((it) => it.studentId).filter(isPresent));
+    const fiscalCode = live.choose("fiscalCode", [row].map((it) => it.fiscalCode).filter(isPresent));
+    const studentStatusCode = live.choose("studentStatusCode", [row].map((it) => it.studentStatusCode).filter(isPresent));
+    const academicYearId = live.choose("academicYearId", [row].map((it) => it.academicYearId).filter(isPresent).map((it) => String(it)));
+    const courseOfStudyCode = live.choose("courseOfStudyCode", [row].map((it) => it.p06CourseOfStudyCode).filter(isPresent));
     const courseTypeCode = live.choose("courseTypeCode", [await careersGetMinimalGdprCareersData(live)].flat().map((it) => it.courseTypeCode).filter(isPresent));
-    const academicYearEnrollmentId = live.choose("academicYearEnrollmentId", [await careersGetCareers(live)].flat().map((it) => it.academicYearEnrollmentId).filter(isPresent));
+    const academicYearEnrollmentId = live.choose("academicYearEnrollmentId", [row].map((it) => it.academicYearEnrollmentId).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PhDProgramCareer\"}}", {}, async () => live.api.careers.getPhdCareersData({ userId: userId, studentId: studentId, fiscalCode: fiscalCode, studentStatusCode: studentStatusCode, academicYearId: academicYearId, courseOfStudyCode: courseOfStudyCode, courseTypeCode: courseTypeCode, academicYearEnrollmentId: academicYearEnrollmentId }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3PhDProgramCareer(f, it)));
   });
 
   liveCase(Esse3Live, "Careers.getPhdCareersData#3", { index: 2 }, async (live) => {
-    const userId = live.choose("userId", [await careersGetCareers(live)].flat().map((it) => it.userId).filter(isPresent));
-    const studentStatusCode = live.choose("studentStatusCode", [await careersGetCareers(live)].flat().map((it) => it.studentStatusCode).filter(isPresent));
-    const courseOfStudyId = live.choose("courseOfStudyId", [await careersGetCareers(live)].flat().map((it) => it.courseOfStudyId).filter(isPresent));
-    const courseOfStudyCode = live.choose("courseOfStudyCode", [await structureGetCoursesOfStudy(live)].flat().map((it) => it.courseOfStudyCode).filter(isPresent));
-    const academicYearEnrollmentId = live.choose("academicYearEnrollmentId", [await careersGetCareers(live)].flat().map((it) => it.academicYearEnrollmentId).filter(isPresent));
+    const row = live.chooseRow("userId, studentStatusCode, courseOfStudyId, courseOfStudyCode, academicYearEnrollmentId", [await careersGetCareers(live)].flat(), (element) => [[element].map((it) => it.userId).filter(isPresent)[0], [element].map((it) => it.studentStatusCode).filter(isPresent)[0], [element].map((it) => it.courseOfStudyId).filter(isPresent)[0], [element].map((it) => it.p06CourseOfStudyCode).filter(isPresent)[0], [element].map((it) => it.academicYearEnrollmentId).filter(isPresent)[0]]);
+    const userId = live.choose("userId", [row].map((it) => it.userId).filter(isPresent));
+    const studentStatusCode = live.choose("studentStatusCode", [row].map((it) => it.studentStatusCode).filter(isPresent));
+    const courseOfStudyId = live.choose("courseOfStudyId", [row].map((it) => it.courseOfStudyId).filter(isPresent));
+    const courseOfStudyCode = live.choose("courseOfStudyCode", [row].map((it) => it.p06CourseOfStudyCode).filter(isPresent));
+    const academicYearEnrollmentId = live.choose("academicYearEnrollmentId", [row].map((it) => it.academicYearEnrollmentId).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PhDProgramCareer\"}}", {}, async () => live.api.careers.getPhdCareersData({ userId: userId, studentStatusCode: studentStatusCode, courseOfStudyId: courseOfStudyId, courseOfStudyCode: courseOfStudyCode, academicYearEnrollmentId: academicYearEnrollmentId }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3PhDProgramCareer(f, it)));
   });
 
   liveCase(Esse3Live, "Careers.getPhdCareersData#4", { index: 3 }, async (live) => {
-    const studentId = live.choose("studentId", [await careersGetCareers(live)].flat().map((it) => it.studentId).filter(isPresent));
-    const fiscalCode = live.choose("fiscalCode", [await careersGetCareers(live)].flat().map((it) => it.fiscalCode).filter(isPresent));
-    const academicYearId = live.choose("academicYearId", [await careersGetCareers(live)].flat().map((it) => it.academicYearId).filter(isPresent).map((it) => String(it)));
-    const courseOfStudyId = live.choose("courseOfStudyId", [await careersGetCareers(live)].flat().map((it) => it.courseOfStudyId).filter(isPresent));
+    const row = live.chooseRow("studentId, fiscalCode, academicYearId, courseOfStudyId", [await careersGetCareers(live)].flat(), (element) => [[element].map((it) => it.studentId).filter(isPresent)[0], [element].map((it) => it.fiscalCode).filter(isPresent)[0], [element].map((it) => it.academicYearId).filter(isPresent)[0], [element].map((it) => it.courseOfStudyId).filter(isPresent)[0]]);
+    const studentId = live.choose("studentId", [row].map((it) => it.studentId).filter(isPresent));
+    const fiscalCode = live.choose("fiscalCode", [row].map((it) => it.fiscalCode).filter(isPresent));
+    const academicYearId = live.choose("academicYearId", [row].map((it) => it.academicYearId).filter(isPresent).map((it) => String(it)));
+    const courseOfStudyId = live.choose("courseOfStudyId", [row].map((it) => it.courseOfStudyId).filter(isPresent));
     const courseTypeCode = live.choose("courseTypeCode", [await careersGetMinimalGdprCareersData(live)].flat().map((it) => it.courseTypeCode).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PhDProgramCareer\"}}", {}, async () => live.api.careers.getPhdCareersData({ studentId: studentId, fiscalCode: fiscalCode, academicYearId: academicYearId, courseOfStudyId: courseOfStudyId, courseTypeCode: courseTypeCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3PhDProgramCareer(f, it)));
   });
 
   liveCase(Esse3Live, "Careers.getPhdCareersData#5", { index: 4 }, async (live) => {
-    const fiscalCode = live.choose("fiscalCode", [await careersGetCareers(live)].flat().map((it) => it.fiscalCode).filter(isPresent));
-    const academicYearId = live.choose("academicYearId", [await careersGetCareers(live)].flat().map((it) => it.academicYearId).filter(isPresent).map((it) => String(it)));
-    const courseOfStudyCode = live.choose("courseOfStudyCode", [await structureGetCoursesOfStudy(live)].flat().map((it) => it.courseOfStudyCode).filter(isPresent));
-    const academicYearEnrollmentId = live.choose("academicYearEnrollmentId", [await careersGetCareers(live)].flat().map((it) => it.academicYearEnrollmentId).filter(isPresent));
+    const row = live.chooseRow("fiscalCode, academicYearId, courseOfStudyCode, academicYearEnrollmentId", [await careersGetCareers(live)].flat(), (element) => [[element].map((it) => it.fiscalCode).filter(isPresent)[0], [element].map((it) => it.academicYearId).filter(isPresent)[0], [element].map((it) => it.p06CourseOfStudyCode).filter(isPresent)[0], [element].map((it) => it.academicYearEnrollmentId).filter(isPresent)[0]]);
+    const fiscalCode = live.choose("fiscalCode", [row].map((it) => it.fiscalCode).filter(isPresent));
+    const academicYearId = live.choose("academicYearId", [row].map((it) => it.academicYearId).filter(isPresent).map((it) => String(it)));
+    const courseOfStudyCode = live.choose("courseOfStudyCode", [row].map((it) => it.p06CourseOfStudyCode).filter(isPresent));
+    const academicYearEnrollmentId = live.choose("academicYearEnrollmentId", [row].map((it) => it.academicYearEnrollmentId).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PhDProgramCareer\"}}", {}, async () => live.api.careers.getPhdCareersData({ fiscalCode: fiscalCode, academicYearId: academicYearId, courseOfStudyCode: courseOfStudyCode, academicYearEnrollmentId: academicYearEnrollmentId }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3PhDProgramCareer(f, it)));
   });
 
   liveCase(Esse3Live, "Careers.getPhdCareersData#6", { index: 5 }, async (live) => {
-    const userId = live.choose("userId", [await careersGetCareers(live)].flat().map((it) => it.userId).filter(isPresent));
-    const studentId = live.choose("studentId", [await careersGetCareers(live)].flat().map((it) => it.studentId).filter(isPresent));
-    const studentStatusCode = live.choose("studentStatusCode", [await careersGetCareers(live)].flat().map((it) => it.studentStatusCode).filter(isPresent));
-    const courseOfStudyId = live.choose("courseOfStudyId", [await careersGetCareers(live)].flat().map((it) => it.courseOfStudyId).filter(isPresent));
+    const row = live.chooseRow("userId, studentId, studentStatusCode, courseOfStudyId", [await careersGetCareers(live)].flat(), (element) => [[element].map((it) => it.userId).filter(isPresent)[0], [element].map((it) => it.studentId).filter(isPresent)[0], [element].map((it) => it.studentStatusCode).filter(isPresent)[0], [element].map((it) => it.courseOfStudyId).filter(isPresent)[0]]);
+    const userId = live.choose("userId", [row].map((it) => it.userId).filter(isPresent));
+    const studentId = live.choose("studentId", [row].map((it) => it.studentId).filter(isPresent));
+    const studentStatusCode = live.choose("studentStatusCode", [row].map((it) => it.studentStatusCode).filter(isPresent));
+    const courseOfStudyId = live.choose("courseOfStudyId", [row].map((it) => it.courseOfStudyId).filter(isPresent));
     const courseTypeCode = live.choose("courseTypeCode", [await careersGetMinimalGdprCareersData(live)].flat().map((it) => it.courseTypeCode).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PhDProgramCareer\"}}", {}, async () => live.api.careers.getPhdCareersData({ userId: userId, studentId: studentId, studentStatusCode: studentStatusCode, courseOfStudyId: courseOfStudyId, courseTypeCode: courseTypeCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3PhDProgramCareer(f, it)));
@@ -194,50 +212,55 @@ describe("Esse3 Careers", () => {
   });
 
   liveCase(Esse3Live, "Careers.getMinimalCareersData#2", { index: 1 }, async (live) => {
-    const userId = live.choose("userId", [await careersGetCareers(live)].flat().map((it) => it.userId).filter(isPresent));
-    const fiscalCode = live.choose("fiscalCode", [await careersGetCareers(live)].flat().map((it) => it.fiscalCode).filter(isPresent));
-    const academicYearId = live.choose("academicYearId", [await careersGetCareers(live)].flat().map((it) => it.academicYearId).filter(isPresent).map((it) => String(it)));
-    const courseOfStudyId = live.choose("courseOfStudyId", [await careersGetCareers(live)].flat().map((it) => it.courseOfStudyId).filter(isPresent));
-    const courseOfStudyCode = live.choose("courseOfStudyCode", [await structureGetCoursesOfStudy(live)].flat().map((it) => it.courseOfStudyCode).filter(isPresent));
+    const row = live.chooseRow("userId, fiscalCode, academicYearId, courseOfStudyId, courseOfStudyCode, academicYearEnrollmentId", [await careersGetCareers(live)].flat(), (element) => [[element].map((it) => it.userId).filter(isPresent)[0], [element].map((it) => it.fiscalCode).filter(isPresent)[0], [element].map((it) => it.academicYearId).filter(isPresent)[0], [element].map((it) => it.courseOfStudyId).filter(isPresent)[0], [element].map((it) => it.p06CourseOfStudyCode).filter(isPresent)[0], [element].map((it) => it.academicYearEnrollmentId).filter(isPresent)[0]]);
+    const userId = live.choose("userId", [row].map((it) => it.userId).filter(isPresent));
+    const fiscalCode = live.choose("fiscalCode", [row].map((it) => it.fiscalCode).filter(isPresent));
+    const academicYearId = live.choose("academicYearId", [row].map((it) => it.academicYearId).filter(isPresent).map((it) => String(it)));
+    const courseOfStudyId = live.choose("courseOfStudyId", [row].map((it) => it.courseOfStudyId).filter(isPresent));
+    const courseOfStudyCode = live.choose("courseOfStudyCode", [row].map((it) => it.p06CourseOfStudyCode).filter(isPresent));
     const courseTypeCode = live.choose("courseTypeCode", [await careersGetMinimalGdprCareersData(live)].flat().map((it) => it.courseTypeCode).filter(isPresent));
-    const academicYearEnrollmentId = live.choose("academicYearEnrollmentId", [await careersGetCareers(live)].flat().map((it) => it.academicYearEnrollmentId).filter(isPresent));
+    const academicYearEnrollmentId = live.choose("academicYearEnrollmentId", [row].map((it) => it.academicYearEnrollmentId).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerMinimalData\"}}", {}, async () => live.api.careers.getMinimalCareersData({ userId: userId, fiscalCode: fiscalCode, academicYearId: academicYearId, courseOfStudyId: courseOfStudyId, courseOfStudyCode: courseOfStudyCode, courseTypeCode: courseTypeCode, academicYearEnrollmentId: academicYearEnrollmentId }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3CareerMinimalData(f, it)));
   });
 
   liveCase(Esse3Live, "Careers.getMinimalCareersData#3", { index: 2 }, async (live) => {
-    const userId = live.choose("userId", [await careersGetCareers(live)].flat().map((it) => it.userId).filter(isPresent));
-    const studentStatusCode = live.choose("studentStatusCode", [await careersGetCareers(live)].flat().map((it) => it.studentStatusCode).filter(isPresent));
-    const academicYearId = live.choose("academicYearId", [await careersGetCareers(live)].flat().map((it) => it.academicYearId).filter(isPresent).map((it) => String(it)));
-    const courseOfStudyId = live.choose("courseOfStudyId", [await careersGetCareers(live)].flat().map((it) => it.courseOfStudyId).filter(isPresent));
-    const courseOfStudyCode = live.choose("courseOfStudyCode", [await structureGetCoursesOfStudy(live)].flat().map((it) => it.courseOfStudyCode).filter(isPresent));
+    const row = live.chooseRow("userId, studentStatusCode, academicYearId, courseOfStudyId, courseOfStudyCode", [await careersGetCareers(live)].flat(), (element) => [[element].map((it) => it.userId).filter(isPresent)[0], [element].map((it) => it.studentStatusCode).filter(isPresent)[0], [element].map((it) => it.academicYearId).filter(isPresent)[0], [element].map((it) => it.courseOfStudyId).filter(isPresent)[0], [element].map((it) => it.p06CourseOfStudyCode).filter(isPresent)[0]]);
+    const userId = live.choose("userId", [row].map((it) => it.userId).filter(isPresent));
+    const studentStatusCode = live.choose("studentStatusCode", [row].map((it) => it.studentStatusCode).filter(isPresent));
+    const academicYearId = live.choose("academicYearId", [row].map((it) => it.academicYearId).filter(isPresent).map((it) => String(it)));
+    const courseOfStudyId = live.choose("courseOfStudyId", [row].map((it) => it.courseOfStudyId).filter(isPresent));
+    const courseOfStudyCode = live.choose("courseOfStudyCode", [row].map((it) => it.p06CourseOfStudyCode).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerMinimalData\"}}", {}, async () => live.api.careers.getMinimalCareersData({ userId: userId, studentStatusCode: studentStatusCode, academicYearId: academicYearId, courseOfStudyId: courseOfStudyId, courseOfStudyCode: courseOfStudyCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3CareerMinimalData(f, it)));
   });
 
   liveCase(Esse3Live, "Careers.getMinimalCareersData#4", { index: 3 }, async (live) => {
-    const fiscalCode = live.choose("fiscalCode", [await careersGetCareers(live)].flat().map((it) => it.fiscalCode).filter(isPresent));
-    const studentStatusCode = live.choose("studentStatusCode", [await careersGetCareers(live)].flat().map((it) => it.studentStatusCode).filter(isPresent));
+    const row = live.chooseRow("fiscalCode, studentStatusCode, academicYearEnrollmentId", [await careersGetCareers(live)].flat(), (element) => [[element].map((it) => it.fiscalCode).filter(isPresent)[0], [element].map((it) => it.studentStatusCode).filter(isPresent)[0], [element].map((it) => it.academicYearEnrollmentId).filter(isPresent)[0]]);
+    const fiscalCode = live.choose("fiscalCode", [row].map((it) => it.fiscalCode).filter(isPresent));
+    const studentStatusCode = live.choose("studentStatusCode", [row].map((it) => it.studentStatusCode).filter(isPresent));
     const courseTypeCode = live.choose("courseTypeCode", [await careersGetMinimalGdprCareersData(live)].flat().map((it) => it.courseTypeCode).filter(isPresent));
-    const academicYearEnrollmentId = live.choose("academicYearEnrollmentId", [await careersGetCareers(live)].flat().map((it) => it.academicYearEnrollmentId).filter(isPresent));
+    const academicYearEnrollmentId = live.choose("academicYearEnrollmentId", [row].map((it) => it.academicYearEnrollmentId).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerMinimalData\"}}", {}, async () => live.api.careers.getMinimalCareersData({ fiscalCode: fiscalCode, studentStatusCode: studentStatusCode, courseTypeCode: courseTypeCode, academicYearEnrollmentId: academicYearEnrollmentId }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3CareerMinimalData(f, it)));
   });
 
   liveCase(Esse3Live, "Careers.getMinimalCareersData#5", { index: 4 }, async (live) => {
-    const userId = live.choose("userId", [await careersGetCareers(live)].flat().map((it) => it.userId).filter(isPresent));
-    const fiscalCode = live.choose("fiscalCode", [await careersGetCareers(live)].flat().map((it) => it.fiscalCode).filter(isPresent));
-    const studentStatusCode = live.choose("studentStatusCode", [await careersGetCareers(live)].flat().map((it) => it.studentStatusCode).filter(isPresent));
-    const courseOfStudyId = live.choose("courseOfStudyId", [await careersGetCareers(live)].flat().map((it) => it.courseOfStudyId).filter(isPresent));
+    const row = live.chooseRow("userId, fiscalCode, studentStatusCode, courseOfStudyId", [await careersGetCareers(live)].flat(), (element) => [[element].map((it) => it.userId).filter(isPresent)[0], [element].map((it) => it.fiscalCode).filter(isPresent)[0], [element].map((it) => it.studentStatusCode).filter(isPresent)[0], [element].map((it) => it.courseOfStudyId).filter(isPresent)[0]]);
+    const userId = live.choose("userId", [row].map((it) => it.userId).filter(isPresent));
+    const fiscalCode = live.choose("fiscalCode", [row].map((it) => it.fiscalCode).filter(isPresent));
+    const studentStatusCode = live.choose("studentStatusCode", [row].map((it) => it.studentStatusCode).filter(isPresent));
+    const courseOfStudyId = live.choose("courseOfStudyId", [row].map((it) => it.courseOfStudyId).filter(isPresent));
     const courseTypeCode = live.choose("courseTypeCode", [await careersGetMinimalGdprCareersData(live)].flat().map((it) => it.courseTypeCode).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerMinimalData\"}}", {}, async () => live.api.careers.getMinimalCareersData({ userId: userId, fiscalCode: fiscalCode, studentStatusCode: studentStatusCode, courseOfStudyId: courseOfStudyId, courseTypeCode: courseTypeCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3CareerMinimalData(f, it)));
   });
 
   liveCase(Esse3Live, "Careers.getMinimalCareersData#6", { index: 5 }, async (live) => {
-    const academicYearId = live.choose("academicYearId", [await careersGetCareers(live)].flat().map((it) => it.academicYearId).filter(isPresent).map((it) => String(it)));
-    const courseOfStudyCode = live.choose("courseOfStudyCode", [await structureGetCoursesOfStudy(live)].flat().map((it) => it.courseOfStudyCode).filter(isPresent));
-    const academicYearEnrollmentId = live.choose("academicYearEnrollmentId", [await careersGetCareers(live)].flat().map((it) => it.academicYearEnrollmentId).filter(isPresent));
+    const row = live.chooseRow("academicYearId, courseOfStudyCode, academicYearEnrollmentId", [await careersGetCareers(live)].flat(), (element) => [[element].map((it) => it.academicYearId).filter(isPresent)[0], [element].map((it) => it.p06CourseOfStudyCode).filter(isPresent)[0], [element].map((it) => it.academicYearEnrollmentId).filter(isPresent)[0]]);
+    const academicYearId = live.choose("academicYearId", [row].map((it) => it.academicYearId).filter(isPresent).map((it) => String(it)));
+    const courseOfStudyCode = live.choose("courseOfStudyCode", [row].map((it) => it.p06CourseOfStudyCode).filter(isPresent));
+    const academicYearEnrollmentId = live.choose("academicYearEnrollmentId", [row].map((it) => it.academicYearEnrollmentId).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerMinimalData\"}}", {}, async () => live.api.careers.getMinimalCareersData({ academicYearId: academicYearId, courseOfStudyCode: courseOfStudyCode, academicYearEnrollmentId: academicYearEnrollmentId }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3CareerMinimalData(f, it)));
   });
@@ -263,8 +286,9 @@ describe("Esse3 Careers", () => {
   });
 
   liveCase(Esse3Live, "Careers.getEnrollmentClasses#1", {}, async (live) => {
-    const academicYearEnrollmentId = live.choose("academicYearEnrollmentId", [await careersGetCareers(live)].flat().map((it) => it.academicYearEnrollmentId).filter(isPresent));
-    const studentId = live.choose("studentId", [await careersGetCareers(live)].flat().map((it) => it.studentId).filter(isPresent));
+    const row = live.chooseRow("academicYearEnrollmentId, studentId", [await careersGetCareers(live)].flat(), (element) => [[element].map((it) => it.academicYearEnrollmentId).filter(isPresent)[0], [element].map((it) => it.studentId).filter(isPresent)[0]]);
+    const academicYearEnrollmentId = live.choose("academicYearEnrollmentId", [row].map((it) => it.academicYearEnrollmentId).filter(isPresent));
+    const studentId = live.choose("studentId", [row].map((it) => it.studentId).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3EnrollmentClasses\"}}", {}, async () => live.api.careers.getEnrollmentClasses(academicYearEnrollmentId, studentId));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3EnrollmentClasses(f, it)));
   });

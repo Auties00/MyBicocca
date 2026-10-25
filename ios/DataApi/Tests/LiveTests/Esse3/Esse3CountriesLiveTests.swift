@@ -32,10 +32,11 @@ final class Esse3CountriesLiveTests: XCTestCase {
 
     func test_getPostalCode2() async throws {
         try await liveCase(Esse3Live.api, "Countries.getPostalCode#2", index: 1) { live in
+            let row = try live.chooseRow("municipalityId, municipalityCode", [try await Esse3Live.structureGetExternalEntities(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.municipalityId }); let key1: String? = live.firstText([element].compactMap { $0.municipalityCode }); return [key0, key1] }
             let nationId = try live.choose("nationId", [try await Esse3Live.countriesGetNations(live)].flatMap { $0 }.compactMap { $0.nationId })
             let regionCode = try live.choose("regionCode", [try await Esse3Live.countriesGetMunicipalities(live)].flatMap { $0 }.compactMap { $0.regionCode })
-            let municipalityId = try live.choose("municipalityId", [try await Esse3Live.structureGetExternalEntities(live)].flatMap { $0 }.compactMap { $0.municipalityId })
-            let municipalityCode = try live.choose("municipalityCode", [try await Esse3Live.structureGetExternalEntities(live)].flatMap { $0 }.compactMap { $0.municipalityCode })
+            let municipalityId = try live.choose("municipalityId", [row].compactMap { $0.municipalityId })
+            let municipalityCode = try live.choose("municipalityCode", [row].compactMap { $0.municipalityCode })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PostalCode\"}}") { try await live.api.countries.getPostalCode(nationId: nationId, regionCode: regionCode, municipalityId: municipalityId, municipalityCode: municipalityCode) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3PostalCode(f, item0) } }
         }
@@ -43,10 +44,11 @@ final class Esse3CountriesLiveTests: XCTestCase {
 
     func test_getPostalCode3() async throws {
         try await liveCase(Esse3Live.api, "Countries.getPostalCode#3", index: 2) { live in
+            let row = try live.chooseRow("nationFiscalCode, municipalityCode", [try await Esse3Live.structureGetExternalEntities(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.nationFiscalCode }); let key1: String? = live.firstText([element].compactMap { $0.municipalityCode }); return [key0, key1] }
             let nationId = try live.choose("nationId", [try await Esse3Live.countriesGetNations(live)].flatMap { $0 }.compactMap { $0.nationId })
-            let nationFiscalCode = try live.choose("nationFiscalCode", [try await Esse3Live.structureGetExternalEntities(live)].flatMap { $0 }.compactMap { $0.nationFiscalCode })
+            let nationFiscalCode = try live.choose("nationFiscalCode", [row].compactMap { $0.nationFiscalCode })
             let regionCode = try live.choose("regionCode", [try await Esse3Live.countriesGetMunicipalities(live)].flatMap { $0 }.compactMap { $0.regionCode })
-            let municipalityCode = try live.choose("municipalityCode", [try await Esse3Live.structureGetExternalEntities(live)].flatMap { $0 }.compactMap { $0.municipalityCode })
+            let municipalityCode = try live.choose("municipalityCode", [row].compactMap { $0.municipalityCode })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PostalCode\"}}") { try await live.api.countries.getPostalCode(nationId: nationId, nationFiscalCode: nationFiscalCode, regionCode: regionCode, municipalityCode: municipalityCode) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3PostalCode(f, item0) } }
         }
@@ -54,9 +56,10 @@ final class Esse3CountriesLiveTests: XCTestCase {
 
     func test_getPostalCode4() async throws {
         try await liveCase(Esse3Live.api, "Countries.getPostalCode#4", index: 3) { live in
+            let row = try live.chooseRow("nationFiscalCode, municipalityId", [try await Esse3Live.structureGetExternalEntities(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.nationFiscalCode }); let key1: String? = live.firstText([element].compactMap { $0.municipalityId }); return [key0, key1] }
             let nationId = try live.choose("nationId", [try await Esse3Live.countriesGetNations(live)].flatMap { $0 }.compactMap { $0.nationId })
-            let nationFiscalCode = try live.choose("nationFiscalCode", [try await Esse3Live.structureGetExternalEntities(live)].flatMap { $0 }.compactMap { $0.nationFiscalCode })
-            let municipalityId = try live.choose("municipalityId", [try await Esse3Live.structureGetExternalEntities(live)].flatMap { $0 }.compactMap { $0.municipalityId })
+            let nationFiscalCode = try live.choose("nationFiscalCode", [row].compactMap { $0.nationFiscalCode })
+            let municipalityId = try live.choose("municipalityId", [row].compactMap { $0.municipalityId })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PostalCode\"}}") { try await live.api.countries.getPostalCode(nationId: nationId, nationFiscalCode: nationFiscalCode, municipalityId: municipalityId) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3PostalCode(f, item0) } }
         }
@@ -64,10 +67,11 @@ final class Esse3CountriesLiveTests: XCTestCase {
 
     func test_getPostalCode5() async throws {
         try await liveCase(Esse3Live.api, "Countries.getPostalCode#5", index: 4) { live in
+            let row = try live.chooseRow("nationFiscalCode, municipalityId", [try await Esse3Live.structureGetExternalEntities(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.nationFiscalCode }); let key1: String? = live.firstText([element].compactMap { $0.municipalityId }); return [key0, key1] }
             let nationId = try live.choose("nationId", [try await Esse3Live.countriesGetNations(live)].flatMap { $0 }.compactMap { $0.nationId })
-            let nationFiscalCode = try live.choose("nationFiscalCode", [try await Esse3Live.structureGetExternalEntities(live)].flatMap { $0 }.compactMap { $0.nationFiscalCode })
+            let nationFiscalCode = try live.choose("nationFiscalCode", [row].compactMap { $0.nationFiscalCode })
             let regionCode = try live.choose("regionCode", [try await Esse3Live.countriesGetMunicipalities(live)].flatMap { $0 }.compactMap { $0.regionCode })
-            let municipalityId = try live.choose("municipalityId", [try await Esse3Live.structureGetExternalEntities(live)].flatMap { $0 }.compactMap { $0.municipalityId })
+            let municipalityId = try live.choose("municipalityId", [row].compactMap { $0.municipalityId })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PostalCode\"}}") { try await live.api.countries.getPostalCode(nationId: nationId, nationFiscalCode: nationFiscalCode, regionCode: regionCode, municipalityId: municipalityId) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3PostalCode(f, item0) } }
         }
@@ -75,9 +79,10 @@ final class Esse3CountriesLiveTests: XCTestCase {
 
     func test_getPostalCode6() async throws {
         try await liveCase(Esse3Live.api, "Countries.getPostalCode#6", index: 5) { live in
+            let row = try live.chooseRow("municipalityId, municipalityCode", [try await Esse3Live.structureGetExternalEntities(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.municipalityId }); let key1: String? = live.firstText([element].compactMap { $0.municipalityCode }); return [key0, key1] }
             let nationId = try live.choose("nationId", [try await Esse3Live.countriesGetNations(live)].flatMap { $0 }.compactMap { $0.nationId })
-            let municipalityId = try live.choose("municipalityId", [try await Esse3Live.structureGetExternalEntities(live)].flatMap { $0 }.compactMap { $0.municipalityId })
-            let municipalityCode = try live.choose("municipalityCode", [try await Esse3Live.structureGetExternalEntities(live)].flatMap { $0 }.compactMap { $0.municipalityCode })
+            let municipalityId = try live.choose("municipalityId", [row].compactMap { $0.municipalityId })
+            let municipalityCode = try live.choose("municipalityCode", [row].compactMap { $0.municipalityCode })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PostalCode\"}}") { try await live.api.countries.getPostalCode(nationId: nationId, municipalityId: municipalityId, municipalityCode: municipalityCode) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3PostalCode(f, item0) } }
         }
@@ -99,10 +104,11 @@ final class Esse3CountriesLiveTests: XCTestCase {
 
     func test_getMunicipalities2() async throws {
         try await liveCase(Esse3Live.api, "Countries.getMunicipalities#2", index: 1) { live in
+            let row = try live.chooseRow("nationFiscalCode, municipalityCode", [try await Esse3Live.structureGetExternalEntities(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.nationFiscalCode }); let key1: String? = live.firstText([element].compactMap { $0.municipalityCode }); return [key0, key1] }
             let nationId = try live.choose("nationId", [try await Esse3Live.countriesGetNations(live)].flatMap { $0 }.compactMap { $0.nationId })
             let iso6392Code = try live.choose("iso6392Code", [try await Esse3Live.servicesGetLanguages(live)].flatMap { $0 }.compactMap { $0.iso6392Code })
-            let nationFiscalCode = try live.choose("nationFiscalCode", [try await Esse3Live.structureGetExternalEntities(live)].flatMap { $0 }.compactMap { $0.nationFiscalCode })
-            let municipalityCode = try live.choose("municipalityCode", [try await Esse3Live.structureGetExternalEntities(live)].flatMap { $0 }.compactMap { $0.municipalityCode })
+            let nationFiscalCode = try live.choose("nationFiscalCode", [row].compactMap { $0.nationFiscalCode })
+            let municipalityCode = try live.choose("municipalityCode", [row].compactMap { $0.municipalityCode })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Municipality\"}}") { try await live.api.countries.getMunicipalities(nationId: nationId, iso6392Code: iso6392Code, nationFiscalCode: nationFiscalCode, municipalityCode: municipalityCode) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3Municipality(f, item0) } }
         }
@@ -120,10 +126,11 @@ final class Esse3CountriesLiveTests: XCTestCase {
 
     func test_getMunicipalities4() async throws {
         try await liveCase(Esse3Live.api, "Countries.getMunicipalities#4", index: 3) { live in
+            let row = try live.chooseRow("nationFiscalCode, municipalityCode", [try await Esse3Live.structureGetExternalEntities(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.nationFiscalCode }); let key1: String? = live.firstText([element].compactMap { $0.municipalityCode }); return [key0, key1] }
             let nationId = try live.choose("nationId", [try await Esse3Live.countriesGetNations(live)].flatMap { $0 }.compactMap { $0.nationId })
-            let nationFiscalCode = try live.choose("nationFiscalCode", [try await Esse3Live.structureGetExternalEntities(live)].flatMap { $0 }.compactMap { $0.nationFiscalCode })
+            let nationFiscalCode = try live.choose("nationFiscalCode", [row].compactMap { $0.nationFiscalCode })
             let regionCode = try live.choose("regionCode", [try await Esse3Live.countriesGetPostalCode(live)].flatMap { $0 }.compactMap { $0.regionCode })
-            let municipalityCode = try live.choose("municipalityCode", [try await Esse3Live.structureGetExternalEntities(live)].flatMap { $0 }.compactMap { $0.municipalityCode })
+            let municipalityCode = try live.choose("municipalityCode", [row].compactMap { $0.municipalityCode })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Municipality\"}}") { try await live.api.countries.getMunicipalities(nationId: nationId, nationFiscalCode: nationFiscalCode, regionCode: regionCode, municipalityCode: municipalityCode) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3Municipality(f, item0) } }
         }

@@ -16,13 +16,15 @@ final class Esse3CareersLiveTests: XCTestCase {
 
     func test_getCareers2() async throws {
         try await liveCase(Esse3Live.api, "Careers.getCareers#2", index: 1) { live in
-            let userId = try live.choose("userId", [try await Esse3Live.careersGetMinimalGdprCareersData(live)].flatMap { $0 }.compactMap { $0.userId })
-            let fiscalCode = try live.choose("fiscalCode", [try await Esse3Live.careersGetMinimalGdprCareersData(live)].flatMap { $0 }.compactMap { $0.fiscalCode })
-            let academicYearId = try live.choose("academicYearId", [try await Esse3Live.careersGetMinimalGdprCareersData(live)].flatMap { $0 }.compactMap { $0.academicYearId }.compactMap { String($0) })
-            let courseOfStudyId = try live.choose("courseOfStudyId", [try await Esse3Live.careersGetMinimalGdprCareersData(live)].flatMap { $0 }.compactMap { $0.courseOfStudyId }.compactMap { Int64($0) })
-            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.structureGetCoursesOfStudy(live)].flatMap { $0 }.compactMap { $0.courseOfStudyCode })
-            let courseTypeCode = try live.choose("courseTypeCode", [try await Esse3Live.careersGetMinimalGdprCareersData(live)].flatMap { $0 }.compactMap { $0.courseTypeCode })
-            let academicYearEnrollmentId = try live.choose("academicYearEnrollmentId", [try await Esse3Live.careersGetMinimalGdprCareersData(live)].flatMap { $0 }.compactMap { $0.academicYearEnrollmentId }.compactMap { Int64($0) })
+            let row = try live.chooseRow("userId, academicYearId, courseTypeCode, academicYearEnrollmentId", [try await Esse3Live.careersGetMinimalGdprCareersData(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.userId }); let key1: String? = live.firstText([element].compactMap { $0.academicYearId }); let key2: String? = live.firstText([element].compactMap { $0.courseTypeCode }); let key3: String? = live.firstText([element].compactMap { $0.academicYearEnrollmentId }); return [key0, key1, key2, key3] }
+            let row2 = try live.chooseRow("fiscalCode, courseOfStudyId, courseOfStudyCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.fiscalCode }); let key1: String? = live.firstText([element].compactMap { $0.courseOfStudyId }); let key2: String? = live.firstText([element].compactMap { $0.p06CourseOfStudyCode }); return [key0, key1, key2] }
+            let userId = try live.choose("userId", [row].compactMap { $0.userId })
+            let fiscalCode = try live.choose("fiscalCode", [row2].compactMap { $0.fiscalCode })
+            let academicYearId = try live.choose("academicYearId", [row].compactMap { $0.academicYearId }.compactMap { String($0) })
+            let courseOfStudyId = try live.choose("courseOfStudyId", [row2].compactMap { $0.courseOfStudyId })
+            let courseOfStudyCode = try live.choose("courseOfStudyCode", [row2].compactMap { $0.p06CourseOfStudyCode })
+            let courseTypeCode = try live.choose("courseTypeCode", [row].compactMap { $0.courseTypeCode })
+            let academicYearEnrollmentId = try live.choose("academicYearEnrollmentId", [row].compactMap { $0.academicYearEnrollmentId }.compactMap { Int64($0) })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Career\"}}") { try await live.api.careers.getCareers(userId: userId, fiscalCode: fiscalCode, academicYearId: academicYearId, courseOfStudyId: courseOfStudyId, courseOfStudyCode: courseOfStudyCode, courseTypeCode: courseTypeCode, academicYearEnrollmentId: academicYearEnrollmentId) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3Career(f, item0) } }
         }
@@ -30,11 +32,12 @@ final class Esse3CareersLiveTests: XCTestCase {
 
     func test_getCareers3() async throws {
         try await liveCase(Esse3Live.api, "Careers.getCareers#3", index: 2) { live in
-            let userId = try live.choose("userId", [try await Esse3Live.careersGetMinimalGdprCareersData(live)].flatMap { $0 }.compactMap { $0.userId })
-            let fiscalCode = try live.choose("fiscalCode", [try await Esse3Live.careersGetMinimalGdprCareersData(live)].flatMap { $0 }.compactMap { $0.fiscalCode })
-            let studentStatusCode = try live.choose("studentStatusCode", [try await Esse3Live.careersGetMinimalGdprCareersData(live)].flatMap { $0 }.compactMap { $0.studentStatusCode })
-            let academicYearId = try live.choose("academicYearId", [try await Esse3Live.careersGetMinimalGdprCareersData(live)].flatMap { $0 }.compactMap { $0.academicYearId }.compactMap { String($0) })
-            let courseTypeCode = try live.choose("courseTypeCode", [try await Esse3Live.careersGetMinimalGdprCareersData(live)].flatMap { $0 }.compactMap { $0.courseTypeCode })
+            let row = try live.chooseRow("userId, studentStatusCode, academicYearId, courseTypeCode", [try await Esse3Live.careersGetMinimalGdprCareersData(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.userId }); let key1: String? = live.firstText([element].compactMap { $0.studentStatusCode }); let key2: String? = live.firstText([element].compactMap { $0.academicYearId }); let key3: String? = live.firstText([element].compactMap { $0.courseTypeCode }); return [key0, key1, key2, key3] }
+            let userId = try live.choose("userId", [row].compactMap { $0.userId })
+            let fiscalCode = try live.choose("fiscalCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.fiscalCode })
+            let studentStatusCode = try live.choose("studentStatusCode", [row].compactMap { $0.studentStatusCode })
+            let academicYearId = try live.choose("academicYearId", [row].compactMap { $0.academicYearId }.compactMap { String($0) })
+            let courseTypeCode = try live.choose("courseTypeCode", [row].compactMap { $0.courseTypeCode })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Career\"}}") { try await live.api.careers.getCareers(userId: userId, fiscalCode: fiscalCode, studentStatusCode: studentStatusCode, academicYearId: academicYearId, courseTypeCode: courseTypeCode) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3Career(f, item0) } }
         }
@@ -42,10 +45,12 @@ final class Esse3CareersLiveTests: XCTestCase {
 
     func test_getCareers4() async throws {
         try await liveCase(Esse3Live.api, "Careers.getCareers#4", index: 3) { live in
-            let studentStatusCode = try live.choose("studentStatusCode", [try await Esse3Live.careersGetMinimalGdprCareersData(live)].flatMap { $0 }.compactMap { $0.studentStatusCode })
-            let courseOfStudyId = try live.choose("courseOfStudyId", [try await Esse3Live.careersGetMinimalGdprCareersData(live)].flatMap { $0 }.compactMap { $0.courseOfStudyId }.compactMap { Int64($0) })
-            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.structureGetCoursesOfStudy(live)].flatMap { $0 }.compactMap { $0.courseOfStudyCode })
-            let academicYearEnrollmentId = try live.choose("academicYearEnrollmentId", [try await Esse3Live.careersGetMinimalGdprCareersData(live)].flatMap { $0 }.compactMap { $0.academicYearEnrollmentId }.compactMap { Int64($0) })
+            let row = try live.chooseRow("studentStatusCode, academicYearEnrollmentId", [try await Esse3Live.careersGetMinimalGdprCareersData(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.studentStatusCode }); let key1: String? = live.firstText([element].compactMap { $0.academicYearEnrollmentId }); return [key0, key1] }
+            let row2 = try live.chooseRow("courseOfStudyId, courseOfStudyCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.courseOfStudyId }); let key1: String? = live.firstText([element].compactMap { $0.p06CourseOfStudyCode }); return [key0, key1] }
+            let studentStatusCode = try live.choose("studentStatusCode", [row].compactMap { $0.studentStatusCode })
+            let courseOfStudyId = try live.choose("courseOfStudyId", [row2].compactMap { $0.courseOfStudyId })
+            let courseOfStudyCode = try live.choose("courseOfStudyCode", [row2].compactMap { $0.p06CourseOfStudyCode })
+            let academicYearEnrollmentId = try live.choose("academicYearEnrollmentId", [row].compactMap { $0.academicYearEnrollmentId }.compactMap { Int64($0) })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Career\"}}") { try await live.api.careers.getCareers(studentStatusCode: studentStatusCode, courseOfStudyId: courseOfStudyId, courseOfStudyCode: courseOfStudyCode, academicYearEnrollmentId: academicYearEnrollmentId) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3Career(f, item0) } }
         }
@@ -53,10 +58,11 @@ final class Esse3CareersLiveTests: XCTestCase {
 
     func test_getCareers5() async throws {
         try await liveCase(Esse3Live.api, "Careers.getCareers#5", index: 4) { live in
-            let userId = try live.choose("userId", [try await Esse3Live.careersGetMinimalGdprCareersData(live)].flatMap { $0 }.compactMap { $0.userId })
-            let academicYearId = try live.choose("academicYearId", [try await Esse3Live.careersGetMinimalGdprCareersData(live)].flatMap { $0 }.compactMap { $0.academicYearId }.compactMap { String($0) })
-            let courseOfStudyId = try live.choose("courseOfStudyId", [try await Esse3Live.careersGetMinimalGdprCareersData(live)].flatMap { $0 }.compactMap { $0.courseOfStudyId }.compactMap { Int64($0) })
-            let academicYearEnrollmentId = try live.choose("academicYearEnrollmentId", [try await Esse3Live.careersGetMinimalGdprCareersData(live)].flatMap { $0 }.compactMap { $0.academicYearEnrollmentId }.compactMap { Int64($0) })
+            let row = try live.chooseRow("userId, academicYearId, academicYearEnrollmentId", [try await Esse3Live.careersGetMinimalGdprCareersData(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.userId }); let key1: String? = live.firstText([element].compactMap { $0.academicYearId }); let key2: String? = live.firstText([element].compactMap { $0.academicYearEnrollmentId }); return [key0, key1, key2] }
+            let userId = try live.choose("userId", [row].compactMap { $0.userId })
+            let academicYearId = try live.choose("academicYearId", [row].compactMap { $0.academicYearId }.compactMap { String($0) })
+            let courseOfStudyId = try live.choose("courseOfStudyId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.courseOfStudyId })
+            let academicYearEnrollmentId = try live.choose("academicYearEnrollmentId", [row].compactMap { $0.academicYearEnrollmentId }.compactMap { Int64($0) })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Career\"}}") { try await live.api.careers.getCareers(userId: userId, academicYearId: academicYearId, courseOfStudyId: courseOfStudyId, academicYearEnrollmentId: academicYearEnrollmentId) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3Career(f, item0) } }
         }
@@ -64,11 +70,13 @@ final class Esse3CareersLiveTests: XCTestCase {
 
     func test_getCareers6() async throws {
         try await liveCase(Esse3Live.api, "Careers.getCareers#6", index: 5) { live in
-            let fiscalCode = try live.choose("fiscalCode", [try await Esse3Live.careersGetMinimalGdprCareersData(live)].flatMap { $0 }.compactMap { $0.fiscalCode })
-            let studentStatusCode = try live.choose("studentStatusCode", [try await Esse3Live.careersGetMinimalGdprCareersData(live)].flatMap { $0 }.compactMap { $0.studentStatusCode })
-            let courseOfStudyId = try live.choose("courseOfStudyId", [try await Esse3Live.careersGetMinimalGdprCareersData(live)].flatMap { $0 }.compactMap { $0.courseOfStudyId }.compactMap { Int64($0) })
-            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.structureGetCoursesOfStudy(live)].flatMap { $0 }.compactMap { $0.courseOfStudyCode })
-            let courseTypeCode = try live.choose("courseTypeCode", [try await Esse3Live.careersGetMinimalGdprCareersData(live)].flatMap { $0 }.compactMap { $0.courseTypeCode })
+            let row = try live.chooseRow("fiscalCode, courseOfStudyId, courseOfStudyCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.fiscalCode }); let key1: String? = live.firstText([element].compactMap { $0.courseOfStudyId }); let key2: String? = live.firstText([element].compactMap { $0.p06CourseOfStudyCode }); return [key0, key1, key2] }
+            let row2 = try live.chooseRow("studentStatusCode, courseTypeCode", [try await Esse3Live.careersGetMinimalGdprCareersData(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.studentStatusCode }); let key1: String? = live.firstText([element].compactMap { $0.courseTypeCode }); return [key0, key1] }
+            let fiscalCode = try live.choose("fiscalCode", [row].compactMap { $0.fiscalCode })
+            let studentStatusCode = try live.choose("studentStatusCode", [row2].compactMap { $0.studentStatusCode })
+            let courseOfStudyId = try live.choose("courseOfStudyId", [row].compactMap { $0.courseOfStudyId })
+            let courseOfStudyCode = try live.choose("courseOfStudyCode", [row].compactMap { $0.p06CourseOfStudyCode })
+            let courseTypeCode = try live.choose("courseTypeCode", [row2].compactMap { $0.courseTypeCode })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Career\"}}") { try await live.api.careers.getCareers(fiscalCode: fiscalCode, studentStatusCode: studentStatusCode, courseOfStudyId: courseOfStudyId, courseOfStudyCode: courseOfStudyCode, courseTypeCode: courseTypeCode) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3Career(f, item0) } }
         }
@@ -89,13 +97,14 @@ final class Esse3CareersLiveTests: XCTestCase {
 
     func test_getMinimalGdprCareersData2() async throws {
         try await liveCase(Esse3Live.api, "Careers.getMinimalGdprCareersData#2", index: 1) { live in
-            let userId = try live.choose("userId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.userId })
-            let studentStatusCode = try live.choose("studentStatusCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.studentStatusCode })
-            let academicYearId = try live.choose("academicYearId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.academicYearId }.compactMap { String($0) })
-            let courseOfStudyId = try live.choose("courseOfStudyId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.courseOfStudyId })
-            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.structureGetCoursesOfStudy(live)].flatMap { $0 }.compactMap { $0.courseOfStudyCode })
+            let row = try live.chooseRow("userId, studentStatusCode, academicYearId, courseOfStudyId, courseOfStudyCode, academicYearEnrollmentId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.userId }); let key1: String? = live.firstText([element].compactMap { $0.studentStatusCode }); let key2: String? = live.firstText([element].compactMap { $0.academicYearId }); let key3: String? = live.firstText([element].compactMap { $0.courseOfStudyId }); let key4: String? = live.firstText([element].compactMap { $0.p06CourseOfStudyCode }); let key5: String? = live.firstText([element].compactMap { $0.academicYearEnrollmentId }); return [key0, key1, key2, key3, key4, key5] }
+            let userId = try live.choose("userId", [row].compactMap { $0.userId })
+            let studentStatusCode = try live.choose("studentStatusCode", [row].compactMap { $0.studentStatusCode })
+            let academicYearId = try live.choose("academicYearId", [row].compactMap { $0.academicYearId }.compactMap { String($0) })
+            let courseOfStudyId = try live.choose("courseOfStudyId", [row].compactMap { $0.courseOfStudyId })
+            let courseOfStudyCode = try live.choose("courseOfStudyCode", [row].compactMap { $0.p06CourseOfStudyCode })
             let courseTypeCode = try live.choose("courseTypeCode", [try await Esse3Live.careersGetPhdCareersData(live)].flatMap { $0 }.compactMap { $0.courseTypeCode })
-            let academicYearEnrollmentId = try live.choose("academicYearEnrollmentId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.academicYearEnrollmentId }.compactMap { Int64($0) })
+            let academicYearEnrollmentId = try live.choose("academicYearEnrollmentId", [row].compactMap { $0.academicYearEnrollmentId }.compactMap { Int64($0) })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerMinimalDataGDPR\"}}") { try await live.api.careers.getMinimalGdprCareersData(userId: userId, studentStatusCode: studentStatusCode, academicYearId: academicYearId, courseOfStudyId: courseOfStudyId, courseOfStudyCode: courseOfStudyCode, courseTypeCode: courseTypeCode, academicYearEnrollmentId: academicYearEnrollmentId) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3CareerMinimalDataGDPR(f, item0) } }
         }
@@ -103,11 +112,12 @@ final class Esse3CareersLiveTests: XCTestCase {
 
     func test_getMinimalGdprCareersData3() async throws {
         try await liveCase(Esse3Live.api, "Careers.getMinimalGdprCareersData#3", index: 2) { live in
-            let fiscalCode = try live.choose("fiscalCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.fiscalCode })
-            let studentStatusCode = try live.choose("studentStatusCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.studentStatusCode })
-            let academicYearId = try live.choose("academicYearId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.academicYearId }.compactMap { String($0) })
+            let row = try live.chooseRow("fiscalCode, studentStatusCode, academicYearId, academicYearEnrollmentId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.fiscalCode }); let key1: String? = live.firstText([element].compactMap { $0.studentStatusCode }); let key2: String? = live.firstText([element].compactMap { $0.academicYearId }); let key3: String? = live.firstText([element].compactMap { $0.academicYearEnrollmentId }); return [key0, key1, key2, key3] }
+            let fiscalCode = try live.choose("fiscalCode", [row].compactMap { $0.fiscalCode })
+            let studentStatusCode = try live.choose("studentStatusCode", [row].compactMap { $0.studentStatusCode })
+            let academicYearId = try live.choose("academicYearId", [row].compactMap { $0.academicYearId }.compactMap { String($0) })
             let courseTypeCode = try live.choose("courseTypeCode", [try await Esse3Live.careersGetPhdCareersData(live)].flatMap { $0 }.compactMap { $0.courseTypeCode })
-            let academicYearEnrollmentId = try live.choose("academicYearEnrollmentId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.academicYearEnrollmentId }.compactMap { Int64($0) })
+            let academicYearEnrollmentId = try live.choose("academicYearEnrollmentId", [row].compactMap { $0.academicYearEnrollmentId }.compactMap { Int64($0) })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerMinimalDataGDPR\"}}") { try await live.api.careers.getMinimalGdprCareersData(fiscalCode: fiscalCode, studentStatusCode: studentStatusCode, academicYearId: academicYearId, courseTypeCode: courseTypeCode, academicYearEnrollmentId: academicYearEnrollmentId) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3CareerMinimalDataGDPR(f, item0) } }
         }
@@ -115,10 +125,11 @@ final class Esse3CareersLiveTests: XCTestCase {
 
     func test_getMinimalGdprCareersData4() async throws {
         try await liveCase(Esse3Live.api, "Careers.getMinimalGdprCareersData#4", index: 3) { live in
-            let userId = try live.choose("userId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.userId })
-            let fiscalCode = try live.choose("fiscalCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.fiscalCode })
-            let courseOfStudyId = try live.choose("courseOfStudyId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.courseOfStudyId })
-            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.structureGetCoursesOfStudy(live)].flatMap { $0 }.compactMap { $0.courseOfStudyCode })
+            let row = try live.chooseRow("userId, fiscalCode, courseOfStudyId, courseOfStudyCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.userId }); let key1: String? = live.firstText([element].compactMap { $0.fiscalCode }); let key2: String? = live.firstText([element].compactMap { $0.courseOfStudyId }); let key3: String? = live.firstText([element].compactMap { $0.p06CourseOfStudyCode }); return [key0, key1, key2, key3] }
+            let userId = try live.choose("userId", [row].compactMap { $0.userId })
+            let fiscalCode = try live.choose("fiscalCode", [row].compactMap { $0.fiscalCode })
+            let courseOfStudyId = try live.choose("courseOfStudyId", [row].compactMap { $0.courseOfStudyId })
+            let courseOfStudyCode = try live.choose("courseOfStudyCode", [row].compactMap { $0.p06CourseOfStudyCode })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerMinimalDataGDPR\"}}") { try await live.api.careers.getMinimalGdprCareersData(userId: userId, fiscalCode: fiscalCode, courseOfStudyId: courseOfStudyId, courseOfStudyCode: courseOfStudyCode) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3CareerMinimalDataGDPR(f, item0) } }
         }
@@ -126,11 +137,12 @@ final class Esse3CareersLiveTests: XCTestCase {
 
     func test_getMinimalGdprCareersData5() async throws {
         try await liveCase(Esse3Live.api, "Careers.getMinimalGdprCareersData#5", index: 4) { live in
-            let userId = try live.choose("userId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.userId })
-            let fiscalCode = try live.choose("fiscalCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.fiscalCode })
-            let studentStatusCode = try live.choose("studentStatusCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.studentStatusCode })
-            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.structureGetCoursesOfStudy(live)].flatMap { $0 }.compactMap { $0.courseOfStudyCode })
-            let academicYearEnrollmentId = try live.choose("academicYearEnrollmentId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.academicYearEnrollmentId }.compactMap { Int64($0) })
+            let row = try live.chooseRow("userId, fiscalCode, studentStatusCode, courseOfStudyCode, academicYearEnrollmentId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.userId }); let key1: String? = live.firstText([element].compactMap { $0.fiscalCode }); let key2: String? = live.firstText([element].compactMap { $0.studentStatusCode }); let key3: String? = live.firstText([element].compactMap { $0.p06CourseOfStudyCode }); let key4: String? = live.firstText([element].compactMap { $0.academicYearEnrollmentId }); return [key0, key1, key2, key3, key4] }
+            let userId = try live.choose("userId", [row].compactMap { $0.userId })
+            let fiscalCode = try live.choose("fiscalCode", [row].compactMap { $0.fiscalCode })
+            let studentStatusCode = try live.choose("studentStatusCode", [row].compactMap { $0.studentStatusCode })
+            let courseOfStudyCode = try live.choose("courseOfStudyCode", [row].compactMap { $0.p06CourseOfStudyCode })
+            let academicYearEnrollmentId = try live.choose("academicYearEnrollmentId", [row].compactMap { $0.academicYearEnrollmentId }.compactMap { Int64($0) })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerMinimalDataGDPR\"}}") { try await live.api.careers.getMinimalGdprCareersData(userId: userId, fiscalCode: fiscalCode, studentStatusCode: studentStatusCode, courseOfStudyCode: courseOfStudyCode, academicYearEnrollmentId: academicYearEnrollmentId) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3CareerMinimalDataGDPR(f, item0) } }
         }
@@ -138,10 +150,11 @@ final class Esse3CareersLiveTests: XCTestCase {
 
     func test_getMinimalGdprCareersData6() async throws {
         try await liveCase(Esse3Live.api, "Careers.getMinimalGdprCareersData#6", index: 5) { live in
-            let fiscalCode = try live.choose("fiscalCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.fiscalCode })
-            let academicYearId = try live.choose("academicYearId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.academicYearId }.compactMap { String($0) })
-            let courseOfStudyId = try live.choose("courseOfStudyId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.courseOfStudyId })
-            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.structureGetCoursesOfStudy(live)].flatMap { $0 }.compactMap { $0.courseOfStudyCode })
+            let row = try live.chooseRow("fiscalCode, academicYearId, courseOfStudyId, courseOfStudyCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.fiscalCode }); let key1: String? = live.firstText([element].compactMap { $0.academicYearId }); let key2: String? = live.firstText([element].compactMap { $0.courseOfStudyId }); let key3: String? = live.firstText([element].compactMap { $0.p06CourseOfStudyCode }); return [key0, key1, key2, key3] }
+            let fiscalCode = try live.choose("fiscalCode", [row].compactMap { $0.fiscalCode })
+            let academicYearId = try live.choose("academicYearId", [row].compactMap { $0.academicYearId }.compactMap { String($0) })
+            let courseOfStudyId = try live.choose("courseOfStudyId", [row].compactMap { $0.courseOfStudyId })
+            let courseOfStudyCode = try live.choose("courseOfStudyCode", [row].compactMap { $0.p06CourseOfStudyCode })
             let courseTypeCode = try live.choose("courseTypeCode", [try await Esse3Live.careersGetPhdCareersData(live)].flatMap { $0 }.compactMap { $0.courseTypeCode })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerMinimalDataGDPR\"}}") { try await live.api.careers.getMinimalGdprCareersData(fiscalCode: fiscalCode, academicYearId: academicYearId, courseOfStudyId: courseOfStudyId, courseOfStudyCode: courseOfStudyCode, courseTypeCode: courseTypeCode) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3CareerMinimalDataGDPR(f, item0) } }
@@ -171,14 +184,15 @@ final class Esse3CareersLiveTests: XCTestCase {
 
     func test_getPhdCareersData2() async throws {
         try await liveCase(Esse3Live.api, "Careers.getPhdCareersData#2", index: 1) { live in
-            let userId = try live.choose("userId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.userId })
-            let studentId = try live.choose("studentId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.studentId })
-            let fiscalCode = try live.choose("fiscalCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.fiscalCode })
-            let studentStatusCode = try live.choose("studentStatusCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.studentStatusCode })
-            let academicYearId = try live.choose("academicYearId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.academicYearId }.compactMap { String($0) })
-            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.structureGetCoursesOfStudy(live)].flatMap { $0 }.compactMap { $0.courseOfStudyCode })
+            let row = try live.chooseRow("userId, studentId, fiscalCode, studentStatusCode, academicYearId, courseOfStudyCode, academicYearEnrollmentId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.userId }); let key1: String? = live.firstText([element].compactMap { $0.studentId }); let key2: String? = live.firstText([element].compactMap { $0.fiscalCode }); let key3: String? = live.firstText([element].compactMap { $0.studentStatusCode }); let key4: String? = live.firstText([element].compactMap { $0.academicYearId }); let key5: String? = live.firstText([element].compactMap { $0.p06CourseOfStudyCode }); let key6: String? = live.firstText([element].compactMap { $0.academicYearEnrollmentId }); return [key0, key1, key2, key3, key4, key5, key6] }
+            let userId = try live.choose("userId", [row].compactMap { $0.userId })
+            let studentId = try live.choose("studentId", [row].compactMap { $0.studentId })
+            let fiscalCode = try live.choose("fiscalCode", [row].compactMap { $0.fiscalCode })
+            let studentStatusCode = try live.choose("studentStatusCode", [row].compactMap { $0.studentStatusCode })
+            let academicYearId = try live.choose("academicYearId", [row].compactMap { $0.academicYearId }.compactMap { String($0) })
+            let courseOfStudyCode = try live.choose("courseOfStudyCode", [row].compactMap { $0.p06CourseOfStudyCode })
             let courseTypeCode = try live.choose("courseTypeCode", [try await Esse3Live.careersGetMinimalGdprCareersData(live)].flatMap { $0 }.compactMap { $0.courseTypeCode })
-            let academicYearEnrollmentId = try live.choose("academicYearEnrollmentId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.academicYearEnrollmentId }.compactMap { Int64($0) })
+            let academicYearEnrollmentId = try live.choose("academicYearEnrollmentId", [row].compactMap { $0.academicYearEnrollmentId }.compactMap { Int64($0) })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PhDProgramCareer\"}}") { try await live.api.careers.getPhdCareersData(userId: userId, studentId: studentId, fiscalCode: fiscalCode, studentStatusCode: studentStatusCode, academicYearId: academicYearId, courseOfStudyCode: courseOfStudyCode, courseTypeCode: courseTypeCode, academicYearEnrollmentId: academicYearEnrollmentId) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3PhDProgramCareer(f, item0) } }
         }
@@ -186,11 +200,12 @@ final class Esse3CareersLiveTests: XCTestCase {
 
     func test_getPhdCareersData3() async throws {
         try await liveCase(Esse3Live.api, "Careers.getPhdCareersData#3", index: 2) { live in
-            let userId = try live.choose("userId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.userId })
-            let studentStatusCode = try live.choose("studentStatusCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.studentStatusCode })
-            let courseOfStudyId = try live.choose("courseOfStudyId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.courseOfStudyId })
-            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.structureGetCoursesOfStudy(live)].flatMap { $0 }.compactMap { $0.courseOfStudyCode })
-            let academicYearEnrollmentId = try live.choose("academicYearEnrollmentId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.academicYearEnrollmentId }.compactMap { Int64($0) })
+            let row = try live.chooseRow("userId, studentStatusCode, courseOfStudyId, courseOfStudyCode, academicYearEnrollmentId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.userId }); let key1: String? = live.firstText([element].compactMap { $0.studentStatusCode }); let key2: String? = live.firstText([element].compactMap { $0.courseOfStudyId }); let key3: String? = live.firstText([element].compactMap { $0.p06CourseOfStudyCode }); let key4: String? = live.firstText([element].compactMap { $0.academicYearEnrollmentId }); return [key0, key1, key2, key3, key4] }
+            let userId = try live.choose("userId", [row].compactMap { $0.userId })
+            let studentStatusCode = try live.choose("studentStatusCode", [row].compactMap { $0.studentStatusCode })
+            let courseOfStudyId = try live.choose("courseOfStudyId", [row].compactMap { $0.courseOfStudyId })
+            let courseOfStudyCode = try live.choose("courseOfStudyCode", [row].compactMap { $0.p06CourseOfStudyCode })
+            let academicYearEnrollmentId = try live.choose("academicYearEnrollmentId", [row].compactMap { $0.academicYearEnrollmentId }.compactMap { Int64($0) })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PhDProgramCareer\"}}") { try await live.api.careers.getPhdCareersData(userId: userId, studentStatusCode: studentStatusCode, courseOfStudyId: courseOfStudyId, courseOfStudyCode: courseOfStudyCode, academicYearEnrollmentId: academicYearEnrollmentId) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3PhDProgramCareer(f, item0) } }
         }
@@ -198,10 +213,11 @@ final class Esse3CareersLiveTests: XCTestCase {
 
     func test_getPhdCareersData4() async throws {
         try await liveCase(Esse3Live.api, "Careers.getPhdCareersData#4", index: 3) { live in
-            let studentId = try live.choose("studentId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.studentId })
-            let fiscalCode = try live.choose("fiscalCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.fiscalCode })
-            let academicYearId = try live.choose("academicYearId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.academicYearId }.compactMap { String($0) })
-            let courseOfStudyId = try live.choose("courseOfStudyId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.courseOfStudyId })
+            let row = try live.chooseRow("studentId, fiscalCode, academicYearId, courseOfStudyId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.studentId }); let key1: String? = live.firstText([element].compactMap { $0.fiscalCode }); let key2: String? = live.firstText([element].compactMap { $0.academicYearId }); let key3: String? = live.firstText([element].compactMap { $0.courseOfStudyId }); return [key0, key1, key2, key3] }
+            let studentId = try live.choose("studentId", [row].compactMap { $0.studentId })
+            let fiscalCode = try live.choose("fiscalCode", [row].compactMap { $0.fiscalCode })
+            let academicYearId = try live.choose("academicYearId", [row].compactMap { $0.academicYearId }.compactMap { String($0) })
+            let courseOfStudyId = try live.choose("courseOfStudyId", [row].compactMap { $0.courseOfStudyId })
             let courseTypeCode = try live.choose("courseTypeCode", [try await Esse3Live.careersGetMinimalGdprCareersData(live)].flatMap { $0 }.compactMap { $0.courseTypeCode })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PhDProgramCareer\"}}") { try await live.api.careers.getPhdCareersData(studentId: studentId, fiscalCode: fiscalCode, academicYearId: academicYearId, courseOfStudyId: courseOfStudyId, courseTypeCode: courseTypeCode) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3PhDProgramCareer(f, item0) } }
@@ -210,10 +226,11 @@ final class Esse3CareersLiveTests: XCTestCase {
 
     func test_getPhdCareersData5() async throws {
         try await liveCase(Esse3Live.api, "Careers.getPhdCareersData#5", index: 4) { live in
-            let fiscalCode = try live.choose("fiscalCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.fiscalCode })
-            let academicYearId = try live.choose("academicYearId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.academicYearId }.compactMap { String($0) })
-            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.structureGetCoursesOfStudy(live)].flatMap { $0 }.compactMap { $0.courseOfStudyCode })
-            let academicYearEnrollmentId = try live.choose("academicYearEnrollmentId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.academicYearEnrollmentId }.compactMap { Int64($0) })
+            let row = try live.chooseRow("fiscalCode, academicYearId, courseOfStudyCode, academicYearEnrollmentId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.fiscalCode }); let key1: String? = live.firstText([element].compactMap { $0.academicYearId }); let key2: String? = live.firstText([element].compactMap { $0.p06CourseOfStudyCode }); let key3: String? = live.firstText([element].compactMap { $0.academicYearEnrollmentId }); return [key0, key1, key2, key3] }
+            let fiscalCode = try live.choose("fiscalCode", [row].compactMap { $0.fiscalCode })
+            let academicYearId = try live.choose("academicYearId", [row].compactMap { $0.academicYearId }.compactMap { String($0) })
+            let courseOfStudyCode = try live.choose("courseOfStudyCode", [row].compactMap { $0.p06CourseOfStudyCode })
+            let academicYearEnrollmentId = try live.choose("academicYearEnrollmentId", [row].compactMap { $0.academicYearEnrollmentId }.compactMap { Int64($0) })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PhDProgramCareer\"}}") { try await live.api.careers.getPhdCareersData(fiscalCode: fiscalCode, academicYearId: academicYearId, courseOfStudyCode: courseOfStudyCode, academicYearEnrollmentId: academicYearEnrollmentId) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3PhDProgramCareer(f, item0) } }
         }
@@ -221,10 +238,11 @@ final class Esse3CareersLiveTests: XCTestCase {
 
     func test_getPhdCareersData6() async throws {
         try await liveCase(Esse3Live.api, "Careers.getPhdCareersData#6", index: 5) { live in
-            let userId = try live.choose("userId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.userId })
-            let studentId = try live.choose("studentId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.studentId })
-            let studentStatusCode = try live.choose("studentStatusCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.studentStatusCode })
-            let courseOfStudyId = try live.choose("courseOfStudyId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.courseOfStudyId })
+            let row = try live.chooseRow("userId, studentId, studentStatusCode, courseOfStudyId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.userId }); let key1: String? = live.firstText([element].compactMap { $0.studentId }); let key2: String? = live.firstText([element].compactMap { $0.studentStatusCode }); let key3: String? = live.firstText([element].compactMap { $0.courseOfStudyId }); return [key0, key1, key2, key3] }
+            let userId = try live.choose("userId", [row].compactMap { $0.userId })
+            let studentId = try live.choose("studentId", [row].compactMap { $0.studentId })
+            let studentStatusCode = try live.choose("studentStatusCode", [row].compactMap { $0.studentStatusCode })
+            let courseOfStudyId = try live.choose("courseOfStudyId", [row].compactMap { $0.courseOfStudyId })
             let courseTypeCode = try live.choose("courseTypeCode", [try await Esse3Live.careersGetMinimalGdprCareersData(live)].flatMap { $0 }.compactMap { $0.courseTypeCode })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PhDProgramCareer\"}}") { try await live.api.careers.getPhdCareersData(userId: userId, studentId: studentId, studentStatusCode: studentStatusCode, courseOfStudyId: courseOfStudyId, courseTypeCode: courseTypeCode) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3PhDProgramCareer(f, item0) } }
@@ -240,13 +258,14 @@ final class Esse3CareersLiveTests: XCTestCase {
 
     func test_getMinimalCareersData2() async throws {
         try await liveCase(Esse3Live.api, "Careers.getMinimalCareersData#2", index: 1) { live in
-            let userId = try live.choose("userId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.userId })
-            let fiscalCode = try live.choose("fiscalCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.fiscalCode })
-            let academicYearId = try live.choose("academicYearId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.academicYearId }.compactMap { String($0) })
-            let courseOfStudyId = try live.choose("courseOfStudyId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.courseOfStudyId })
-            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.structureGetCoursesOfStudy(live)].flatMap { $0 }.compactMap { $0.courseOfStudyCode })
+            let row = try live.chooseRow("userId, fiscalCode, academicYearId, courseOfStudyId, courseOfStudyCode, academicYearEnrollmentId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.userId }); let key1: String? = live.firstText([element].compactMap { $0.fiscalCode }); let key2: String? = live.firstText([element].compactMap { $0.academicYearId }); let key3: String? = live.firstText([element].compactMap { $0.courseOfStudyId }); let key4: String? = live.firstText([element].compactMap { $0.p06CourseOfStudyCode }); let key5: String? = live.firstText([element].compactMap { $0.academicYearEnrollmentId }); return [key0, key1, key2, key3, key4, key5] }
+            let userId = try live.choose("userId", [row].compactMap { $0.userId })
+            let fiscalCode = try live.choose("fiscalCode", [row].compactMap { $0.fiscalCode })
+            let academicYearId = try live.choose("academicYearId", [row].compactMap { $0.academicYearId }.compactMap { String($0) })
+            let courseOfStudyId = try live.choose("courseOfStudyId", [row].compactMap { $0.courseOfStudyId })
+            let courseOfStudyCode = try live.choose("courseOfStudyCode", [row].compactMap { $0.p06CourseOfStudyCode })
             let courseTypeCode = try live.choose("courseTypeCode", [try await Esse3Live.careersGetMinimalGdprCareersData(live)].flatMap { $0 }.compactMap { $0.courseTypeCode })
-            let academicYearEnrollmentId = try live.choose("academicYearEnrollmentId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.academicYearEnrollmentId }.compactMap { Int64($0) })
+            let academicYearEnrollmentId = try live.choose("academicYearEnrollmentId", [row].compactMap { $0.academicYearEnrollmentId }.compactMap { Int64($0) })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerMinimalData\"}}") { try await live.api.careers.getMinimalCareersData(userId: userId, fiscalCode: fiscalCode, academicYearId: academicYearId, courseOfStudyId: courseOfStudyId, courseOfStudyCode: courseOfStudyCode, courseTypeCode: courseTypeCode, academicYearEnrollmentId: academicYearEnrollmentId) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3CareerMinimalData(f, item0) } }
         }
@@ -254,11 +273,12 @@ final class Esse3CareersLiveTests: XCTestCase {
 
     func test_getMinimalCareersData3() async throws {
         try await liveCase(Esse3Live.api, "Careers.getMinimalCareersData#3", index: 2) { live in
-            let userId = try live.choose("userId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.userId })
-            let studentStatusCode = try live.choose("studentStatusCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.studentStatusCode })
-            let academicYearId = try live.choose("academicYearId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.academicYearId }.compactMap { String($0) })
-            let courseOfStudyId = try live.choose("courseOfStudyId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.courseOfStudyId })
-            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.structureGetCoursesOfStudy(live)].flatMap { $0 }.compactMap { $0.courseOfStudyCode })
+            let row = try live.chooseRow("userId, studentStatusCode, academicYearId, courseOfStudyId, courseOfStudyCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.userId }); let key1: String? = live.firstText([element].compactMap { $0.studentStatusCode }); let key2: String? = live.firstText([element].compactMap { $0.academicYearId }); let key3: String? = live.firstText([element].compactMap { $0.courseOfStudyId }); let key4: String? = live.firstText([element].compactMap { $0.p06CourseOfStudyCode }); return [key0, key1, key2, key3, key4] }
+            let userId = try live.choose("userId", [row].compactMap { $0.userId })
+            let studentStatusCode = try live.choose("studentStatusCode", [row].compactMap { $0.studentStatusCode })
+            let academicYearId = try live.choose("academicYearId", [row].compactMap { $0.academicYearId }.compactMap { String($0) })
+            let courseOfStudyId = try live.choose("courseOfStudyId", [row].compactMap { $0.courseOfStudyId })
+            let courseOfStudyCode = try live.choose("courseOfStudyCode", [row].compactMap { $0.p06CourseOfStudyCode })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerMinimalData\"}}") { try await live.api.careers.getMinimalCareersData(userId: userId, studentStatusCode: studentStatusCode, academicYearId: academicYearId, courseOfStudyId: courseOfStudyId, courseOfStudyCode: courseOfStudyCode) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3CareerMinimalData(f, item0) } }
         }
@@ -266,10 +286,11 @@ final class Esse3CareersLiveTests: XCTestCase {
 
     func test_getMinimalCareersData4() async throws {
         try await liveCase(Esse3Live.api, "Careers.getMinimalCareersData#4", index: 3) { live in
-            let fiscalCode = try live.choose("fiscalCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.fiscalCode })
-            let studentStatusCode = try live.choose("studentStatusCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.studentStatusCode })
+            let row = try live.chooseRow("fiscalCode, studentStatusCode, academicYearEnrollmentId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.fiscalCode }); let key1: String? = live.firstText([element].compactMap { $0.studentStatusCode }); let key2: String? = live.firstText([element].compactMap { $0.academicYearEnrollmentId }); return [key0, key1, key2] }
+            let fiscalCode = try live.choose("fiscalCode", [row].compactMap { $0.fiscalCode })
+            let studentStatusCode = try live.choose("studentStatusCode", [row].compactMap { $0.studentStatusCode })
             let courseTypeCode = try live.choose("courseTypeCode", [try await Esse3Live.careersGetMinimalGdprCareersData(live)].flatMap { $0 }.compactMap { $0.courseTypeCode })
-            let academicYearEnrollmentId = try live.choose("academicYearEnrollmentId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.academicYearEnrollmentId }.compactMap { Int64($0) })
+            let academicYearEnrollmentId = try live.choose("academicYearEnrollmentId", [row].compactMap { $0.academicYearEnrollmentId }.compactMap { Int64($0) })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerMinimalData\"}}") { try await live.api.careers.getMinimalCareersData(fiscalCode: fiscalCode, studentStatusCode: studentStatusCode, courseTypeCode: courseTypeCode, academicYearEnrollmentId: academicYearEnrollmentId) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3CareerMinimalData(f, item0) } }
         }
@@ -277,10 +298,11 @@ final class Esse3CareersLiveTests: XCTestCase {
 
     func test_getMinimalCareersData5() async throws {
         try await liveCase(Esse3Live.api, "Careers.getMinimalCareersData#5", index: 4) { live in
-            let userId = try live.choose("userId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.userId })
-            let fiscalCode = try live.choose("fiscalCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.fiscalCode })
-            let studentStatusCode = try live.choose("studentStatusCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.studentStatusCode })
-            let courseOfStudyId = try live.choose("courseOfStudyId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.courseOfStudyId })
+            let row = try live.chooseRow("userId, fiscalCode, studentStatusCode, courseOfStudyId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.userId }); let key1: String? = live.firstText([element].compactMap { $0.fiscalCode }); let key2: String? = live.firstText([element].compactMap { $0.studentStatusCode }); let key3: String? = live.firstText([element].compactMap { $0.courseOfStudyId }); return [key0, key1, key2, key3] }
+            let userId = try live.choose("userId", [row].compactMap { $0.userId })
+            let fiscalCode = try live.choose("fiscalCode", [row].compactMap { $0.fiscalCode })
+            let studentStatusCode = try live.choose("studentStatusCode", [row].compactMap { $0.studentStatusCode })
+            let courseOfStudyId = try live.choose("courseOfStudyId", [row].compactMap { $0.courseOfStudyId })
             let courseTypeCode = try live.choose("courseTypeCode", [try await Esse3Live.careersGetMinimalGdprCareersData(live)].flatMap { $0 }.compactMap { $0.courseTypeCode })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerMinimalData\"}}") { try await live.api.careers.getMinimalCareersData(userId: userId, fiscalCode: fiscalCode, studentStatusCode: studentStatusCode, courseOfStudyId: courseOfStudyId, courseTypeCode: courseTypeCode) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3CareerMinimalData(f, item0) } }
@@ -289,9 +311,10 @@ final class Esse3CareersLiveTests: XCTestCase {
 
     func test_getMinimalCareersData6() async throws {
         try await liveCase(Esse3Live.api, "Careers.getMinimalCareersData#6", index: 5) { live in
-            let academicYearId = try live.choose("academicYearId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.academicYearId }.compactMap { String($0) })
-            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.structureGetCoursesOfStudy(live)].flatMap { $0 }.compactMap { $0.courseOfStudyCode })
-            let academicYearEnrollmentId = try live.choose("academicYearEnrollmentId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.academicYearEnrollmentId }.compactMap { Int64($0) })
+            let row = try live.chooseRow("academicYearId, courseOfStudyCode, academicYearEnrollmentId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.academicYearId }); let key1: String? = live.firstText([element].compactMap { $0.p06CourseOfStudyCode }); let key2: String? = live.firstText([element].compactMap { $0.academicYearEnrollmentId }); return [key0, key1, key2] }
+            let academicYearId = try live.choose("academicYearId", [row].compactMap { $0.academicYearId }.compactMap { String($0) })
+            let courseOfStudyCode = try live.choose("courseOfStudyCode", [row].compactMap { $0.p06CourseOfStudyCode })
+            let academicYearEnrollmentId = try live.choose("academicYearEnrollmentId", [row].compactMap { $0.academicYearEnrollmentId }.compactMap { Int64($0) })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerMinimalData\"}}") { try await live.api.careers.getMinimalCareersData(academicYearId: academicYearId, courseOfStudyCode: courseOfStudyCode, academicYearEnrollmentId: academicYearEnrollmentId) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3CareerMinimalData(f, item0) } }
         }
@@ -327,8 +350,9 @@ final class Esse3CareersLiveTests: XCTestCase {
 
     func test_getEnrollmentClasses1() async throws {
         try await liveCase(Esse3Live.api, "Careers.getEnrollmentClasses#1") { live in
-            let academicYearEnrollmentId = try live.choose("academicYearEnrollmentId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.academicYearEnrollmentId }.compactMap { Int64($0) })
-            let studentId = try live.choose("studentId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.studentId })
+            let row = try live.chooseRow("academicYearEnrollmentId, studentId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.academicYearEnrollmentId }); let key1: String? = live.firstText([element].compactMap { $0.studentId }); return [key0, key1] }
+            let academicYearEnrollmentId = try live.choose("academicYearEnrollmentId", [row].compactMap { $0.academicYearEnrollmentId }.compactMap { Int64($0) })
+            let studentId = try live.choose("studentId", [row].compactMap { $0.studentId })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3EnrollmentClasses\"}}") { try await live.api.careers.getEnrollmentClasses(academicYearEnrollmentId: academicYearEnrollmentId, studentId: studentId) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3EnrollmentClasses(f, item0) } }
         }

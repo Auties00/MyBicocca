@@ -6,6 +6,7 @@ import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3BookableExamFilter
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3BookingFilter
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3RecordBookStatsDataOriginFilter
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3RecordBookStatsRuleFilter
+import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3State
 import it.attendance100.mybicocca.data.remote.runtime.live.LiveTest
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -24,12 +25,14 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Transcript.getCareerSegments#2")
     fun getCareerSegments2() = case("Transcript.getCareerSegments#2", index = 1) {
-        val courseOfStudyStudentId = choose("courseOfStudyStudentId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.courseOfStudyStudentId })
-        val courseOfStudyStudentCode = choose("courseOfStudyStudentCode", listOf(recordsFindMinutes()).flatten().mapNotNull { it.courseOfStudyStudentCode })
-        val academicYearOrderStudentId = choose("academicYearOrderStudentId", listOf(transcriptGetBookingsByMatId()).flatten().mapNotNull { it.academicYearOrderStudentId })
+        val row = chooseRow("courseOfStudyStudentId, courseOfStudyStudentCode", listOf(recordsFindMinutes()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.courseOfStudyStudentId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.courseOfStudyStudentCode }.firstOrNull()?.toString()) }
+        val row2 = chooseRow("academicYearOrderStudentId, studyPlanStudentCode", listOf(transcriptGetBookingsByMatId()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.academicYearOrderStudentId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.studyPlanStudentCode }.firstOrNull()?.toString()) }
+        val courseOfStudyStudentId = choose("courseOfStudyStudentId", listOf(row).mapNotNull { it.courseOfStudyStudentId })
+        val courseOfStudyStudentCode = choose("courseOfStudyStudentCode", listOf(row).mapNotNull { it.courseOfStudyStudentCode })
+        val academicYearOrderStudentId = choose("academicYearOrderStudentId", listOf(row2).mapNotNull { it.academicYearOrderStudentId })
         val studyPlanStudentId = choose("studyPlanStudentId", listOf(plansGetStudentPlanHeaders()).flatten().mapNotNull { it.studyPlanStudentId })
-        val studyPlanStudentCode = choose("studyPlanStudentCode", listOf(transcriptGetBookingsByMatId()).flatten().mapNotNull { it.studyPlanStudentCode })
-        val fiscalCode = choose("fiscalCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.fiscalCode })
+        val studyPlanStudentCode = choose("studyPlanStudentCode", listOf(row2).mapNotNull { it.studyPlanStudentCode })
+        val fiscalCode = choose("fiscalCode", listOf(careersGetCareers()).flatten().mapNotNull { it.fiscalCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}}") {
             api.transcript.getCareerSegments(courseOfStudyStudentId = courseOfStudyStudentId, courseOfStudyStudentCode = courseOfStudyStudentCode, academicYearOrderStudentId = academicYearOrderStudentId, studyPlanStudentId = studyPlanStudentId, studyPlanStudentCode = studyPlanStudentCode, fiscalCode = fiscalCode)
         } ?: return@case
@@ -39,8 +42,9 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Transcript.getCareerSegments#3")
     fun getCareerSegments3() = case("Transcript.getCareerSegments#3", index = 2) {
-        val courseOfStudyStudentId = choose("courseOfStudyStudentId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.courseOfStudyStudentId })
-        val courseOfStudyStudentCode = choose("courseOfStudyStudentCode", listOf(recordsFindMinutes()).flatten().mapNotNull { it.courseOfStudyStudentCode })
+        val row = chooseRow("courseOfStudyStudentId, courseOfStudyStudentCode", listOf(recordsFindMinutes()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.courseOfStudyStudentId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.courseOfStudyStudentCode }.firstOrNull()?.toString()) }
+        val courseOfStudyStudentId = choose("courseOfStudyStudentId", listOf(row).mapNotNull { it.courseOfStudyStudentId })
+        val courseOfStudyStudentCode = choose("courseOfStudyStudentCode", listOf(row).mapNotNull { it.courseOfStudyStudentCode })
         val studyPlanStudentId = choose("studyPlanStudentId", listOf(plansGetStudentPlanHeaders()).flatten().mapNotNull { it.studyPlanStudentId })
         val studentStatusCode = choose("studentStatusCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studentStatusCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}}") {
@@ -52,9 +56,10 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Transcript.getCareerSegments#4")
     fun getCareerSegments4() = case("Transcript.getCareerSegments#4", index = 3) {
-        val academicYearOrderStudentId = choose("academicYearOrderStudentId", listOf(transcriptGetBookingsByMatId()).flatten().mapNotNull { it.academicYearOrderStudentId })
-        val studyPlanStudentCode = choose("studyPlanStudentCode", listOf(transcriptGetBookingsByMatId()).flatten().mapNotNull { it.studyPlanStudentCode })
-        val fiscalCode = choose("fiscalCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.fiscalCode })
+        val row = chooseRow("academicYearOrderStudentId, studyPlanStudentCode", listOf(transcriptGetBookingsByMatId()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.academicYearOrderStudentId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.studyPlanStudentCode }.firstOrNull()?.toString()) }
+        val academicYearOrderStudentId = choose("academicYearOrderStudentId", listOf(row).mapNotNull { it.academicYearOrderStudentId })
+        val studyPlanStudentCode = choose("studyPlanStudentCode", listOf(row).mapNotNull { it.studyPlanStudentCode })
+        val fiscalCode = choose("fiscalCode", listOf(careersGetCareers()).flatten().mapNotNull { it.fiscalCode })
         val studentStatusCode = choose("studentStatusCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studentStatusCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}}") {
             api.transcript.getCareerSegments(academicYearOrderStudentId = academicYearOrderStudentId, studyPlanStudentCode = studyPlanStudentCode, fiscalCode = fiscalCode, studentStatusCode = studentStatusCode)
@@ -65,10 +70,11 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Transcript.getCareerSegments#5")
     fun getCareerSegments5() = case("Transcript.getCareerSegments#5", index = 4) {
-        val courseOfStudyStudentId = choose("courseOfStudyStudentId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.courseOfStudyStudentId })
-        val courseOfStudyStudentCode = choose("courseOfStudyStudentCode", listOf(recordsFindMinutes()).flatten().mapNotNull { it.courseOfStudyStudentCode })
+        val row = chooseRow("courseOfStudyStudentId, courseOfStudyStudentCode", listOf(recordsFindMinutes()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.courseOfStudyStudentId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.courseOfStudyStudentCode }.firstOrNull()?.toString()) }
+        val courseOfStudyStudentId = choose("courseOfStudyStudentId", listOf(row).mapNotNull { it.courseOfStudyStudentId })
+        val courseOfStudyStudentCode = choose("courseOfStudyStudentCode", listOf(row).mapNotNull { it.courseOfStudyStudentCode })
         val studyPlanStudentCode = choose("studyPlanStudentCode", listOf(transcriptGetBookingsByMatId()).flatten().mapNotNull { it.studyPlanStudentCode })
-        val fiscalCode = choose("fiscalCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.fiscalCode })
+        val fiscalCode = choose("fiscalCode", listOf(careersGetCareers()).flatten().mapNotNull { it.fiscalCode })
         val studentStatusCode = choose("studentStatusCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studentStatusCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}}") {
             api.transcript.getCareerSegments(courseOfStudyStudentId = courseOfStudyStudentId, courseOfStudyStudentCode = courseOfStudyStudentCode, studyPlanStudentCode = studyPlanStudentCode, fiscalCode = fiscalCode, studentStatusCode = studentStatusCode)
@@ -79,10 +85,11 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Transcript.getCareerSegments#6")
     fun getCareerSegments6() = case("Transcript.getCareerSegments#6", index = 5) {
+        val row = chooseRow("academicYearOrderStudentId, studyPlanStudentCode", listOf(transcriptGetBookingsByMatId()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.academicYearOrderStudentId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.studyPlanStudentCode }.firstOrNull()?.toString()) }
         val courseOfStudyStudentId = choose("courseOfStudyStudentId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.courseOfStudyStudentId })
-        val academicYearOrderStudentId = choose("academicYearOrderStudentId", listOf(transcriptGetBookingsByMatId()).flatten().mapNotNull { it.academicYearOrderStudentId })
+        val academicYearOrderStudentId = choose("academicYearOrderStudentId", listOf(row).mapNotNull { it.academicYearOrderStudentId })
         val studyPlanStudentId = choose("studyPlanStudentId", listOf(plansGetStudentPlanHeaders()).flatten().mapNotNull { it.studyPlanStudentId })
-        val studyPlanStudentCode = choose("studyPlanStudentCode", listOf(transcriptGetBookingsByMatId()).flatten().mapNotNull { it.studyPlanStudentCode })
+        val studyPlanStudentCode = choose("studyPlanStudentCode", listOf(row).mapNotNull { it.studyPlanStudentCode })
         val studentStatusCode = choose("studentStatusCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studentStatusCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}}") {
             api.transcript.getCareerSegments(courseOfStudyStudentId = courseOfStudyStudentId, academicYearOrderStudentId = academicYearOrderStudentId, studyPlanStudentId = studyPlanStudentId, studyPlanStudentCode = studyPlanStudentCode, studentStatusCode = studentStatusCode)
@@ -93,7 +100,7 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Transcript.getCareerSegment#1")
     fun getCareerSegment1() = case("Transcript.getCareerSegment#1") {
-        val matId = choose("matId", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.matId })
+        val matId = choose("matId", listOf(careersGetCareers()).flatten().mapNotNull { it.matId })
         val result = call("{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}") {
             api.transcript.getCareerSegment(matId = matId)
         } ?: return@case
@@ -111,17 +118,7 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Transcript.getRecordBookExamCalls#1")
     fun getRecordBookExamCalls1() = case("Transcript.getRecordBookExamCalls#1") {
-        val matId = choose("matId", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.matId })
-        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionTranscript\"}}") {
-            api.transcript.getRecordBookExamCalls(matId = matId)
-        } ?: return@case
-        fingerprint { list(result) { writeEsse3ExamSessionTranscript(it) } }
-    }
-
-    @Test
-    @DisplayName("Transcript.getRecordBookExamCalls#2")
-    fun getRecordBookExamCalls2() = case("Transcript.getRecordBookExamCalls#2", index = 1) {
-        val matId = choose("matId", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.matId })
+        val matId = choose("matId", listOf(careersGetCareers()).flatten().mapNotNull { it.matId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionTranscript\"}}") {
             api.transcript.getRecordBookExamCalls(matId = matId, q = Esse3BookableExamFilter.AppelliPrenotabili)
         } ?: return@case
@@ -129,9 +126,9 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     }
 
     @Test
-    @DisplayName("Transcript.getRecordBookExamCalls#3")
-    fun getRecordBookExamCalls3() = case("Transcript.getRecordBookExamCalls#3", index = 2) {
-        val matId = choose("matId", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.matId })
+    @DisplayName("Transcript.getRecordBookExamCalls#2")
+    fun getRecordBookExamCalls2() = case("Transcript.getRecordBookExamCalls#2", index = 1) {
+        val matId = choose("matId", listOf(careersGetCareers()).flatten().mapNotNull { it.matId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionTranscript\"}}") {
             api.transcript.getRecordBookExamCalls(matId = matId, q = Esse3BookableExamFilter.AppelliPrenotabiliEFuturi)
         } ?: return@case
@@ -139,20 +136,9 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     }
 
     @Test
-    @DisplayName("Transcript.getRecordBookExamCalls#4")
-    fun getRecordBookExamCalls4() = case("Transcript.getRecordBookExamCalls#4", index = 3) {
-        val matId = choose("matId", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.matId })
-        val actorCode = choose("actorCode", listOf(examsCalendarGetExamCallTypes()).flatten().mapNotNull { it.actorCode })
-        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionTranscript\"}}") {
-            api.transcript.getRecordBookExamCalls(matId = matId, actorCode = actorCode)
-        } ?: return@case
-        fingerprint { list(result) { writeEsse3ExamSessionTranscript(it) } }
-    }
-
-    @Test
-    @DisplayName("Transcript.getRecordBookExamCalls#5")
-    fun getRecordBookExamCalls5() = case("Transcript.getRecordBookExamCalls#5", index = 4) {
-        val matId = choose("matId", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.matId })
+    @DisplayName("Transcript.getRecordBookExamCalls#3")
+    fun getRecordBookExamCalls3() = case("Transcript.getRecordBookExamCalls#3", index = 2) {
+        val matId = choose("matId", listOf(careersGetCareers()).flatten().mapNotNull { it.matId })
         val actorCode = choose("actorCode", listOf(examsCalendarGetExamCallTypes()).flatten().mapNotNull { it.actorCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionTranscript\"}}") {
             api.transcript.getRecordBookExamCalls(matId = matId, actorCode = actorCode, q = Esse3BookableExamFilter.AppelliPrenotabili)
@@ -161,9 +147,9 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     }
 
     @Test
-    @DisplayName("Transcript.getRecordBookExamCalls#6")
-    fun getRecordBookExamCalls6() = case("Transcript.getRecordBookExamCalls#6", index = 5) {
-        val matId = choose("matId", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.matId })
+    @DisplayName("Transcript.getRecordBookExamCalls#4")
+    fun getRecordBookExamCalls4() = case("Transcript.getRecordBookExamCalls#4", index = 3) {
+        val matId = choose("matId", listOf(careersGetCareers()).flatten().mapNotNull { it.matId })
         val actorCode = choose("actorCode", listOf(examsCalendarGetExamCallTypes()).flatten().mapNotNull { it.actorCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionTranscript\"}}") {
             api.transcript.getRecordBookExamCalls(matId = matId, actorCode = actorCode, q = Esse3BookableExamFilter.AppelliPrenotabiliEFuturi)
@@ -175,14 +161,14 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @DisplayName("Transcript.getRecordBookExamCalls#unknown-id")
     fun getRecordBookExamCallsUnknownId() = case("Transcript.getRecordBookExamCalls#unknown-id") {
         refused(acceptsEmpty = true) {
-            api.transcript.getRecordBookExamCalls(matId = 987654321L)
+            api.transcript.getRecordBookExamCalls(matId = 987654321L, q = Esse3BookableExamFilter.AppelliPrenotabili)
         }
     }
 
     @Test
     @DisplayName("Transcript.getRecordBookAverages#1")
     fun getRecordBookAverages1() = case("Transcript.getRecordBookAverages#1") {
-        val matId = choose("matId", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.matId })
+        val matId = choose("matId", listOf(careersGetCareers()).flatten().mapNotNull { it.matId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TranscriptAverage\"}}") {
             api.transcript.getRecordBookAverages(matId = matId)
         } ?: return@case
@@ -200,7 +186,7 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Transcript.getRecordBookAverage#1")
     fun getRecordBookAverage1() = case("Transcript.getRecordBookAverage#1") {
-        val matId = choose("matId", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.matId })
+        val matId = choose("matId", listOf(careersGetCareers()).flatten().mapNotNull { it.matId })
         val base = choose("base", listOf(transcriptGetRecordBookAverages()).flatten().mapNotNull { it.base }.map { it.toString() })
         val type = choose("type", listOf(certificatesGetCertificates()).mapNotNull { it.certificates }.flatten().mapNotNull { it.type }.map { it.value })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TranscriptAverage\"}}") {
@@ -222,7 +208,7 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Transcript.getRecordBookPartitions#1")
     fun getRecordBookPartitions1() = case("Transcript.getRecordBookPartitions#1") {
-        val matId = choose("matId", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.matId })
+        val matId = choose("matId", listOf(careersGetCareers()).flatten().mapNotNull { it.matId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TranscriptPartition\"}}") {
             api.transcript.getRecordBookPartitions(matId = matId)
         } ?: return@case
@@ -240,7 +226,7 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Transcript.getBookingsByMatId#1")
     fun getBookingsByMatId1() = case("Transcript.getBookingsByMatId#1") {
-        val matId = choose("matId", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.matId })
+        val matId = choose("matId", listOf(careersGetCareers()).flatten().mapNotNull { it.matId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionEnrollment\"}}") {
             api.transcript.getBookingsByMatId(matId = matId)
         } ?: return@case
@@ -250,7 +236,7 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Transcript.getBookingsByMatId#2")
     fun getBookingsByMatId2() = case("Transcript.getBookingsByMatId#2", index = 1) {
-        val matId = choose("matId", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.matId })
+        val matId = choose("matId", listOf(careersGetCareers()).flatten().mapNotNull { it.matId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionEnrollment\"}}") {
             api.transcript.getBookingsByMatId(matId = matId, q = Esse3BookingFilter.BachecaEsiti)
         } ?: return@case
@@ -260,7 +246,7 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Transcript.getBookingsByMatId#3")
     fun getBookingsByMatId3() = case("Transcript.getBookingsByMatId#3", index = 2) {
-        val matId = choose("matId", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.matId })
+        val matId = choose("matId", listOf(careersGetCareers()).flatten().mapNotNull { it.matId })
         val actorCode = choose("actorCode", listOf(examsCalendarGetExamCallTypes()).flatten().mapNotNull { it.actorCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionEnrollment\"}}") {
             api.transcript.getBookingsByMatId(matId = matId, actorCode = actorCode)
@@ -271,7 +257,7 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Transcript.getBookingsByMatId#4")
     fun getBookingsByMatId4() = case("Transcript.getBookingsByMatId#4", index = 3) {
-        val matId = choose("matId", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.matId })
+        val matId = choose("matId", listOf(careersGetCareers()).flatten().mapNotNull { it.matId })
         val actorCode = choose("actorCode", listOf(examsCalendarGetExamCallTypes()).flatten().mapNotNull { it.actorCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionEnrollment\"}}") {
             api.transcript.getBookingsByMatId(matId = matId, actorCode = actorCode, q = Esse3BookingFilter.BachecaEsiti)
@@ -290,7 +276,7 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Transcript.getRecordBookTests#1")
     fun getRecordBookTests1() = case("Transcript.getRecordBookTests#1") {
-        val matId = choose("matId", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.matId })
+        val matId = choose("matId", listOf(careersGetCareers()).flatten().mapNotNull { it.matId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TranscriptTest\"}}") {
             api.transcript.getRecordBookTests(matId = matId)
         } ?: return@case
@@ -308,7 +294,7 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Transcript.getRecordBookRows#1")
     fun getRecordBookRows1() = case("Transcript.getRecordBookRows#1") {
-        val matId = choose("matId", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.matId })
+        val matId = choose("matId", listOf(careersGetCareers()).flatten().mapNotNull { it.matId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TranscriptRow\"}}") {
             api.transcript.getRecordBookRows(matId = matId)
         } ?: return@case
@@ -318,7 +304,7 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Transcript.getRecordBookRows#2")
     fun getRecordBookRows2() = case("Transcript.getRecordBookRows#2", index = 1) {
-        val matId = choose("matId", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.matId })
+        val matId = choose("matId", listOf(careersGetCareers()).flatten().mapNotNull { it.matId })
         val activityCode = choose("activityCode", listOf(offerGetGenericTeachingActivities()).flatten().mapNotNull { it.activityCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TranscriptRow\"}}") {
             api.transcript.getRecordBookRows(matId = matId, activityCode = activityCode)
@@ -337,7 +323,7 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Transcript.getRecordBookRow#1")
     fun getRecordBookRow1() = case("Transcript.getRecordBookRow#1") {
-        val matId = choose("matId", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.matId })
+        val matId = choose("matId", listOf(careersGetCareers()).flatten().mapNotNull { it.matId })
         val activityChoiceId = choose("activityChoiceId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.activityChoiceId })
         val result = call("{\"k\":\"record\",\"n\":\"Esse3TranscriptRow\"}") {
             api.transcript.getRecordBookRow(matId = matId, activityChoiceId = activityChoiceId)
@@ -357,18 +343,7 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Transcript.getExamCallsByRecordBookRow#1")
     fun getExamCallsByRecordBookRow1() = case("Transcript.getExamCallsByRecordBookRow#1") {
-        val matId = choose("matId", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.matId })
-        val activityChoiceId = choose("activityChoiceId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.activityChoiceId })
-        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionTranscript\"}}") {
-            api.transcript.getExamCallsByRecordBookRow(matId = matId, activityChoiceId = activityChoiceId)
-        } ?: return@case
-        fingerprint { list(result) { writeEsse3ExamSessionTranscript(it) } }
-    }
-
-    @Test
-    @DisplayName("Transcript.getExamCallsByRecordBookRow#2")
-    fun getExamCallsByRecordBookRow2() = case("Transcript.getExamCallsByRecordBookRow#2", index = 1) {
-        val matId = choose("matId", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.matId })
+        val matId = choose("matId", listOf(careersGetCareers()).flatten().mapNotNull { it.matId })
         val activityChoiceId = choose("activityChoiceId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.activityChoiceId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionTranscript\"}}") {
             api.transcript.getExamCallsByRecordBookRow(matId = matId, activityChoiceId = activityChoiceId, q = Esse3BookableExamFilter.AppelliPrenotabili)
@@ -377,9 +352,9 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     }
 
     @Test
-    @DisplayName("Transcript.getExamCallsByRecordBookRow#3")
-    fun getExamCallsByRecordBookRow3() = case("Transcript.getExamCallsByRecordBookRow#3", index = 2) {
-        val matId = choose("matId", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.matId })
+    @DisplayName("Transcript.getExamCallsByRecordBookRow#2")
+    fun getExamCallsByRecordBookRow2() = case("Transcript.getExamCallsByRecordBookRow#2", index = 1) {
+        val matId = choose("matId", listOf(careersGetCareers()).flatten().mapNotNull { it.matId })
         val activityChoiceId = choose("activityChoiceId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.activityChoiceId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionTranscript\"}}") {
             api.transcript.getExamCallsByRecordBookRow(matId = matId, activityChoiceId = activityChoiceId, q = Esse3BookableExamFilter.AppelliPrenotabiliEFuturi)
@@ -388,21 +363,9 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     }
 
     @Test
-    @DisplayName("Transcript.getExamCallsByRecordBookRow#4")
-    fun getExamCallsByRecordBookRow4() = case("Transcript.getExamCallsByRecordBookRow#4", index = 3) {
-        val matId = choose("matId", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.matId })
-        val activityChoiceId = choose("activityChoiceId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.activityChoiceId })
-        val actorCode = choose("actorCode", listOf(examsCalendarGetExamCallTypes()).flatten().mapNotNull { it.actorCode })
-        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionTranscript\"}}") {
-            api.transcript.getExamCallsByRecordBookRow(matId = matId, activityChoiceId = activityChoiceId, actorCode = actorCode)
-        } ?: return@case
-        fingerprint { list(result) { writeEsse3ExamSessionTranscript(it) } }
-    }
-
-    @Test
-    @DisplayName("Transcript.getExamCallsByRecordBookRow#5")
-    fun getExamCallsByRecordBookRow5() = case("Transcript.getExamCallsByRecordBookRow#5", index = 4) {
-        val matId = choose("matId", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.matId })
+    @DisplayName("Transcript.getExamCallsByRecordBookRow#3")
+    fun getExamCallsByRecordBookRow3() = case("Transcript.getExamCallsByRecordBookRow#3", index = 2) {
+        val matId = choose("matId", listOf(careersGetCareers()).flatten().mapNotNull { it.matId })
         val activityChoiceId = choose("activityChoiceId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.activityChoiceId })
         val actorCode = choose("actorCode", listOf(examsCalendarGetExamCallTypes()).flatten().mapNotNull { it.actorCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionTranscript\"}}") {
@@ -412,9 +375,9 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     }
 
     @Test
-    @DisplayName("Transcript.getExamCallsByRecordBookRow#6")
-    fun getExamCallsByRecordBookRow6() = case("Transcript.getExamCallsByRecordBookRow#6", index = 5) {
-        val matId = choose("matId", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.matId })
+    @DisplayName("Transcript.getExamCallsByRecordBookRow#4")
+    fun getExamCallsByRecordBookRow4() = case("Transcript.getExamCallsByRecordBookRow#4", index = 3) {
+        val matId = choose("matId", listOf(careersGetCareers()).flatten().mapNotNull { it.matId })
         val activityChoiceId = choose("activityChoiceId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.activityChoiceId })
         val actorCode = choose("actorCode", listOf(examsCalendarGetExamCallTypes()).flatten().mapNotNull { it.actorCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionTranscript\"}}") {
@@ -428,14 +391,14 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     fun getExamCallsByRecordBookRowUnknownId() = case("Transcript.getExamCallsByRecordBookRow#unknown-id") {
         val activityChoiceId = choose("activityChoiceId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.activityChoiceId })
         refused(acceptsEmpty = true) {
-            api.transcript.getExamCallsByRecordBookRow(matId = 987654321L, activityChoiceId = activityChoiceId)
+            api.transcript.getExamCallsByRecordBookRow(matId = 987654321L, activityChoiceId = activityChoiceId, q = Esse3BookableExamFilter.AppelliPrenotabili)
         }
     }
 
     @Test
     @DisplayName("Transcript.getRecordBookRowPartitions#1")
     fun getRecordBookRowPartitions1() = case("Transcript.getRecordBookRowPartitions#1") {
-        val matId = choose("matId", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.matId })
+        val matId = choose("matId", listOf(careersGetCareers()).flatten().mapNotNull { it.matId })
         val activityChoiceId = choose("activityChoiceId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.activityChoiceId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TranscriptPartition\"}}") {
             api.transcript.getRecordBookRowPartitions(matId = matId, activityChoiceId = activityChoiceId)
@@ -455,7 +418,7 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Transcript.getRecordBookRowPartition#1")
     fun getRecordBookRowPartition1() = case("Transcript.getRecordBookRowPartition#1") {
-        val matId = choose("matId", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.matId })
+        val matId = choose("matId", listOf(careersGetCareers()).flatten().mapNotNull { it.matId })
         val activityChoiceId = choose("activityChoiceId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.activityChoiceId })
         val activityPartitionId = choose("activityPartitionId", listOf(transcriptGetRecordBookPartitions()).flatten().mapNotNull { it.activityPartitionId })
         val result = call("{\"k\":\"record\",\"n\":\"Esse3TranscriptPartition\"}") {
@@ -477,7 +440,7 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Transcript.getBookingsByTeachingActivityChoiceId#1")
     fun getBookingsByTeachingActivityChoiceId1() = case("Transcript.getBookingsByTeachingActivityChoiceId#1") {
-        val matId = choose("matId", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.matId })
+        val matId = choose("matId", listOf(careersGetCareers()).flatten().mapNotNull { it.matId })
         val activityChoiceId = choose("activityChoiceId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.activityChoiceId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionEnrollment\"}}") {
             api.transcript.getBookingsByTeachingActivityChoiceId(matId = matId, activityChoiceId = activityChoiceId)
@@ -488,7 +451,7 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Transcript.getBookingsByTeachingActivityChoiceId#2")
     fun getBookingsByTeachingActivityChoiceId2() = case("Transcript.getBookingsByTeachingActivityChoiceId#2", index = 1) {
-        val matId = choose("matId", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.matId })
+        val matId = choose("matId", listOf(careersGetCareers()).flatten().mapNotNull { it.matId })
         val activityChoiceId = choose("activityChoiceId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.activityChoiceId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionEnrollment\"}}") {
             api.transcript.getBookingsByTeachingActivityChoiceId(matId = matId, activityChoiceId = activityChoiceId, q = Esse3BookingFilter.BachecaEsiti)
@@ -499,7 +462,7 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Transcript.getBookingsByTeachingActivityChoiceId#3")
     fun getBookingsByTeachingActivityChoiceId3() = case("Transcript.getBookingsByTeachingActivityChoiceId#3", index = 2) {
-        val matId = choose("matId", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.matId })
+        val matId = choose("matId", listOf(careersGetCareers()).flatten().mapNotNull { it.matId })
         val activityChoiceId = choose("activityChoiceId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.activityChoiceId })
         val actorCode = choose("actorCode", listOf(examsCalendarGetExamCallTypes()).flatten().mapNotNull { it.actorCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionEnrollment\"}}") {
@@ -511,7 +474,7 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Transcript.getBookingsByTeachingActivityChoiceId#4")
     fun getBookingsByTeachingActivityChoiceId4() = case("Transcript.getBookingsByTeachingActivityChoiceId#4", index = 3) {
-        val matId = choose("matId", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.matId })
+        val matId = choose("matId", listOf(careersGetCareers()).flatten().mapNotNull { it.matId })
         val activityChoiceId = choose("activityChoiceId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.activityChoiceId })
         val actorCode = choose("actorCode", listOf(examsCalendarGetExamCallTypes()).flatten().mapNotNull { it.actorCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSessionEnrollment\"}}") {
@@ -532,9 +495,10 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Transcript.getBookingByTeachingActivityChoiceId#1")
     fun getBookingByTeachingActivityChoiceId1() = case("Transcript.getBookingByTeachingActivityChoiceId#1") {
-        val matId = choose("matId", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.matId })
-        val activityChoiceId = choose("activityChoiceId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.activityChoiceId })
-        val applicationListId = choose("applicationListId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.applicationListId })
+        val row = chooseRow("activityChoiceId, applicationListId", listOf(recordsFindMinutes()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.activityChoiceId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.applicationListId }.firstOrNull()?.toString()) }
+        val matId = choose("matId", listOf(careersGetCareers()).flatten().mapNotNull { it.matId })
+        val activityChoiceId = choose("activityChoiceId", listOf(row).mapNotNull { it.activityChoiceId })
+        val applicationListId = choose("applicationListId", listOf(row).mapNotNull { it.applicationListId })
         val result = call("{\"k\":\"record\",\"n\":\"Esse3ExamSessionEnrollment\"}") {
             api.transcript.getBookingByTeachingActivityChoiceId(matId = matId, activityChoiceId = activityChoiceId, applicationListId = applicationListId)
         } ?: return@case
@@ -544,9 +508,10 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Transcript.getBookingByTeachingActivityChoiceId#2")
     fun getBookingByTeachingActivityChoiceId2() = case("Transcript.getBookingByTeachingActivityChoiceId#2", index = 1) {
-        val matId = choose("matId", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.matId })
-        val activityChoiceId = choose("activityChoiceId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.activityChoiceId })
-        val applicationListId = choose("applicationListId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.applicationListId })
+        val row = chooseRow("activityChoiceId, applicationListId", listOf(recordsFindMinutes()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.activityChoiceId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.applicationListId }.firstOrNull()?.toString()) }
+        val matId = choose("matId", listOf(careersGetCareers()).flatten().mapNotNull { it.matId })
+        val activityChoiceId = choose("activityChoiceId", listOf(row).mapNotNull { it.activityChoiceId })
+        val applicationListId = choose("applicationListId", listOf(row).mapNotNull { it.applicationListId })
         val result = call("{\"k\":\"record\",\"n\":\"Esse3ExamSessionEnrollment\"}") {
             api.transcript.getBookingByTeachingActivityChoiceId(matId = matId, activityChoiceId = activityChoiceId, applicationListId = applicationListId, q = Esse3BookingFilter.BachecaEsiti)
         } ?: return@case
@@ -556,9 +521,10 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Transcript.getBookingByTeachingActivityChoiceId#3")
     fun getBookingByTeachingActivityChoiceId3() = case("Transcript.getBookingByTeachingActivityChoiceId#3", index = 2) {
-        val matId = choose("matId", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.matId })
-        val activityChoiceId = choose("activityChoiceId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.activityChoiceId })
-        val applicationListId = choose("applicationListId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.applicationListId })
+        val row = chooseRow("activityChoiceId, applicationListId", listOf(recordsFindMinutes()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.activityChoiceId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.applicationListId }.firstOrNull()?.toString()) }
+        val matId = choose("matId", listOf(careersGetCareers()).flatten().mapNotNull { it.matId })
+        val activityChoiceId = choose("activityChoiceId", listOf(row).mapNotNull { it.activityChoiceId })
+        val applicationListId = choose("applicationListId", listOf(row).mapNotNull { it.applicationListId })
         val actorCode = choose("actorCode", listOf(examsCalendarGetExamCallTypes()).flatten().mapNotNull { it.actorCode })
         val result = call("{\"k\":\"record\",\"n\":\"Esse3ExamSessionEnrollment\"}") {
             api.transcript.getBookingByTeachingActivityChoiceId(matId = matId, activityChoiceId = activityChoiceId, applicationListId = applicationListId, actorCode = actorCode)
@@ -569,9 +535,10 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Transcript.getBookingByTeachingActivityChoiceId#4")
     fun getBookingByTeachingActivityChoiceId4() = case("Transcript.getBookingByTeachingActivityChoiceId#4", index = 3) {
-        val matId = choose("matId", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.matId })
-        val activityChoiceId = choose("activityChoiceId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.activityChoiceId })
-        val applicationListId = choose("applicationListId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.applicationListId })
+        val row = chooseRow("activityChoiceId, applicationListId", listOf(recordsFindMinutes()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.activityChoiceId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.applicationListId }.firstOrNull()?.toString()) }
+        val matId = choose("matId", listOf(careersGetCareers()).flatten().mapNotNull { it.matId })
+        val activityChoiceId = choose("activityChoiceId", listOf(row).mapNotNull { it.activityChoiceId })
+        val applicationListId = choose("applicationListId", listOf(row).mapNotNull { it.applicationListId })
         val actorCode = choose("actorCode", listOf(examsCalendarGetExamCallTypes()).flatten().mapNotNull { it.actorCode })
         val result = call("{\"k\":\"record\",\"n\":\"Esse3ExamSessionEnrollment\"}") {
             api.transcript.getBookingByTeachingActivityChoiceId(matId = matId, activityChoiceId = activityChoiceId, applicationListId = applicationListId, actorCode = actorCode, q = Esse3BookingFilter.BachecaEsiti)
@@ -582,8 +549,9 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Transcript.getBookingByTeachingActivityChoiceId#unknown-id")
     fun getBookingByTeachingActivityChoiceIdUnknownId() = case("Transcript.getBookingByTeachingActivityChoiceId#unknown-id") {
-        val activityChoiceId = choose("activityChoiceId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.activityChoiceId })
-        val applicationListId = choose("applicationListId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.applicationListId })
+        val row = chooseRow("activityChoiceId, applicationListId", listOf(recordsFindMinutes()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.activityChoiceId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.applicationListId }.firstOrNull()?.toString()) }
+        val activityChoiceId = choose("activityChoiceId", listOf(row).mapNotNull { it.activityChoiceId })
+        val applicationListId = choose("applicationListId", listOf(row).mapNotNull { it.applicationListId })
         refused(acceptsEmpty = true) {
             api.transcript.getBookingByTeachingActivityChoiceId(matId = 987654321L, activityChoiceId = activityChoiceId, applicationListId = applicationListId)
         }
@@ -592,10 +560,11 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Transcript.getPresenceCertificateByApplicationListId#1")
     fun getPresenceCertificateByApplicationListId1() = case("Transcript.getPresenceCertificateByApplicationListId#1") {
-        val matId = choose("matId", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.matId })
-        val activityChoiceId = choose("activityChoiceId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.activityChoiceId })
-        val applicationListId = choose("applicationListId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.applicationListId })
-        call(null) {
+        val row = chooseRow("activityChoiceId, applicationListId", listOf(recordsFindMinutes()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.activityChoiceId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.applicationListId }.firstOrNull()?.toString()) }
+        val matId = choose("matId", listOf(careersGetCareers()).flatten().mapNotNull { it.matId })
+        val activityChoiceId = choose("activityChoiceId", listOf(row).mapNotNull { it.activityChoiceId })
+        val applicationListId = choose("applicationListId", listOf(row).mapNotNull { it.applicationListId })
+        call(null, errors = listOf("422")) {
             api.transcript.getPresenceCertificateByApplicationListId(matId = matId, activityChoiceId = activityChoiceId, applicationListId = applicationListId)
         }
     }
@@ -603,8 +572,9 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Transcript.getPresenceCertificateByApplicationListId#unknown-id")
     fun getPresenceCertificateByApplicationListIdUnknownId() = case("Transcript.getPresenceCertificateByApplicationListId#unknown-id") {
-        val activityChoiceId = choose("activityChoiceId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.activityChoiceId })
-        val applicationListId = choose("applicationListId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.applicationListId })
+        val row = chooseRow("activityChoiceId, applicationListId", listOf(recordsFindMinutes()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.activityChoiceId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.applicationListId }.firstOrNull()?.toString()) }
+        val activityChoiceId = choose("activityChoiceId", listOf(row).mapNotNull { it.activityChoiceId })
+        val applicationListId = choose("applicationListId", listOf(row).mapNotNull { it.applicationListId })
         refused(acceptsEmpty = true) {
             api.transcript.getPresenceCertificateByApplicationListId(matId = 987654321L, activityChoiceId = activityChoiceId, applicationListId = applicationListId)
         }
@@ -613,9 +583,10 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Transcript.getBookingStatinoByApplicationListId#1")
     fun getBookingStatinoByApplicationListId1() = case("Transcript.getBookingStatinoByApplicationListId#1") {
-        val matId = choose("matId", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.matId })
-        val activityChoiceId = choose("activityChoiceId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.activityChoiceId })
-        val applicationListId = choose("applicationListId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.applicationListId })
+        val row = chooseRow("activityChoiceId, applicationListId", listOf(recordsFindMinutes()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.activityChoiceId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.applicationListId }.firstOrNull()?.toString()) }
+        val matId = choose("matId", listOf(careersGetCareers()).flatten().mapNotNull { it.matId })
+        val activityChoiceId = choose("activityChoiceId", listOf(row).mapNotNull { it.activityChoiceId })
+        val applicationListId = choose("applicationListId", listOf(row).mapNotNull { it.applicationListId })
         call(null) {
             api.transcript.getBookingStatinoByApplicationListId(matId = matId, activityChoiceId = activityChoiceId, applicationListId = applicationListId)
         }
@@ -624,8 +595,9 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Transcript.getBookingStatinoByApplicationListId#unknown-id")
     fun getBookingStatinoByApplicationListIdUnknownId() = case("Transcript.getBookingStatinoByApplicationListId#unknown-id") {
-        val activityChoiceId = choose("activityChoiceId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.activityChoiceId })
-        val applicationListId = choose("applicationListId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.applicationListId })
+        val row = chooseRow("activityChoiceId, applicationListId", listOf(recordsFindMinutes()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.activityChoiceId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.applicationListId }.firstOrNull()?.toString()) }
+        val activityChoiceId = choose("activityChoiceId", listOf(row).mapNotNull { it.activityChoiceId })
+        val applicationListId = choose("applicationListId", listOf(row).mapNotNull { it.applicationListId })
         refused(acceptsEmpty = true) {
             api.transcript.getBookingStatinoByApplicationListId(matId = 987654321L, activityChoiceId = activityChoiceId, applicationListId = applicationListId)
         }
@@ -634,8 +606,8 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Transcript.getCheckProposalRecordBookRow#1")
     fun getCheckProposalRecordBookRow1() = case("Transcript.getCheckProposalRecordBookRow#1") {
-        val matId = choose("matId", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.matId })
-        val activityChoiceId = choose("activityChoiceId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.activityChoiceId })
+        val matId = choose("matId", listOf(careersGetCareers()).flatten().mapNotNull { it.matId })
+        val activityChoiceId = choose("activityChoiceId", listOf(transcriptGetRecordBookRows()).flatten().filter { it.state == Esse3State.Planned }.mapNotNull { it.activityChoiceId })
         val result = call("{\"k\":\"record\",\"n\":\"Esse3PrerequisitesCheck\"}") {
             api.transcript.getCheckProposalRecordBookRow(matId = matId, activityChoiceId = activityChoiceId)
         } ?: return@case
@@ -645,7 +617,7 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Transcript.getCheckProposalRecordBookRow#unknown-id")
     fun getCheckProposalRecordBookRowUnknownId() = case("Transcript.getCheckProposalRecordBookRow#unknown-id") {
-        val activityChoiceId = choose("activityChoiceId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.activityChoiceId })
+        val activityChoiceId = choose("activityChoiceId", listOf(transcriptGetRecordBookRows()).flatten().filter { it.state == Esse3State.Planned }.mapNotNull { it.activityChoiceId })
         refused(acceptsEmpty = true) {
             api.transcript.getCheckProposalRecordBookRow(matId = 987654321L, activityChoiceId = activityChoiceId)
         }
@@ -654,7 +626,7 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Transcript.getRecordBookRowTests#1")
     fun getRecordBookRowTests1() = case("Transcript.getRecordBookRowTests#1") {
-        val matId = choose("matId", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.matId })
+        val matId = choose("matId", listOf(careersGetCareers()).flatten().mapNotNull { it.matId })
         val activityChoiceId = choose("activityChoiceId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.activityChoiceId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TranscriptTest\"}}") {
             api.transcript.getRecordBookRowTests(matId = matId, activityChoiceId = activityChoiceId)
@@ -674,9 +646,10 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Transcript.getRecordBookRowTest#1")
     fun getRecordBookRowTest1() = case("Transcript.getRecordBookRowTest#1") {
-        val matId = choose("matId", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.matId })
-        val activityChoiceId = choose("activityChoiceId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.activityChoiceId })
-        val activityRegulationId = choose("activityRegulationId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.activityRegulationId })
+        val row = chooseRow("activityChoiceId, activityRegulationId", listOf(recordsFindMinutes()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.activityChoiceId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.activityRegulationId }.firstOrNull()?.toString()) }
+        val matId = choose("matId", listOf(careersGetCareers()).flatten().mapNotNull { it.matId })
+        val activityChoiceId = choose("activityChoiceId", listOf(row).mapNotNull { it.activityChoiceId })
+        val activityRegulationId = choose("activityRegulationId", listOf(row).mapNotNull { it.activityRegulationId })
         val result = call("{\"k\":\"record\",\"n\":\"Esse3TranscriptTest\"}") {
             api.transcript.getRecordBookRowTest(matId = matId, activityChoiceId = activityChoiceId, activityRegulationId = activityRegulationId)
         } ?: return@case
@@ -686,8 +659,9 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Transcript.getRecordBookRowTest#unknown-id")
     fun getRecordBookRowTestUnknownId() = case("Transcript.getRecordBookRowTest#unknown-id") {
-        val activityChoiceId = choose("activityChoiceId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.activityChoiceId })
-        val activityRegulationId = choose("activityRegulationId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.activityRegulationId })
+        val row = chooseRow("activityChoiceId, activityRegulationId", listOf(recordsFindMinutes()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.activityChoiceId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.activityRegulationId }.firstOrNull()?.toString()) }
+        val activityChoiceId = choose("activityChoiceId", listOf(row).mapNotNull { it.activityChoiceId })
+        val activityRegulationId = choose("activityRegulationId", listOf(row).mapNotNull { it.activityRegulationId })
         refused(acceptsEmpty = true) {
             api.transcript.getRecordBookRowTest(matId = 987654321L, activityChoiceId = activityChoiceId, activityRegulationId = activityRegulationId)
         }
@@ -696,7 +670,7 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Transcript.getRecordBookRowDetections#1")
     fun getRecordBookRowDetections1() = case("Transcript.getRecordBookRowDetections#1") {
-        val matId = choose("matId", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.matId })
+        val matId = choose("matId", listOf(careersGetCareers()).flatten().mapNotNull { it.matId })
         val activityChoiceId = choose("activityChoiceId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.activityChoiceId })
         val choiceReleaseId = choose("choiceReleaseId", listOf(transcriptGetRecordBookRows()).flatten().mapNotNull { it.attendanceRelease }.flatten().mapNotNull { it.choiceReleaseId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3AttendanceReleaseDetail\"}}") {
@@ -718,7 +692,7 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Transcript.getRecordBookRowSegments#1")
     fun getRecordBookRowSegments1() = case("Transcript.getRecordBookRowSegments#1") {
-        val matId = choose("matId", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.matId })
+        val matId = choose("matId", listOf(careersGetCareers()).flatten().mapNotNull { it.matId })
         val activityChoiceId = choose("activityChoiceId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.activityChoiceId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TranscriptSegment\"}}") {
             api.transcript.getRecordBookRowSegments(matId = matId, activityChoiceId = activityChoiceId)
@@ -738,7 +712,7 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Transcript.getRecordBookRowSegment#1")
     fun getRecordBookRowSegment1() = case("Transcript.getRecordBookRowSegment#1") {
-        val matId = choose("matId", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.matId })
+        val matId = choose("matId", listOf(careersGetCareers()).flatten().mapNotNull { it.matId })
         val activityChoiceId = choose("activityChoiceId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.activityChoiceId })
         val segmentChoiceId = choose("segmentChoiceId", listOf(transcriptGetRecordBookSegments()).flatten().mapNotNull { it.segmentChoiceId })
         val result = call("{\"k\":\"record\",\"n\":\"Esse3TranscriptSegment\"}") {
@@ -760,7 +734,7 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Transcript.getSyllabusTeachingActivityRecordBookRow#1")
     fun getSyllabusTeachingActivityRecordBookRow1() = case("Transcript.getSyllabusTeachingActivityRecordBookRow#1") {
-        val matId = choose("matId", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.matId })
+        val matId = choose("matId", listOf(careersGetCareers()).flatten().mapNotNull { it.matId })
         val activityChoiceId = choose("activityChoiceId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.activityChoiceId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3SyllabusActivityTranscript\"}}") {
             api.transcript.getSyllabusTeachingActivityRecordBookRow(matId = matId, activityChoiceId = activityChoiceId)
@@ -780,7 +754,7 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Transcript.getSyllabusTeachingUnitRecordBookRow#1")
     fun getSyllabusTeachingUnitRecordBookRow1() = case("Transcript.getSyllabusTeachingUnitRecordBookRow#1") {
-        val matId = choose("matId", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.matId })
+        val matId = choose("matId", listOf(careersGetCareers()).flatten().mapNotNull { it.matId })
         val activityChoiceId = choose("activityChoiceId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.activityChoiceId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3SyllabusTeachingUnitTranscript\"}}") {
             api.transcript.getSyllabusTeachingUnitRecordBookRow(matId = matId, activityChoiceId = activityChoiceId)
@@ -800,7 +774,7 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Transcript.getRecordBookSegments#1")
     fun getRecordBookSegments1() = case("Transcript.getRecordBookSegments#1") {
-        val matId = choose("matId", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.matId })
+        val matId = choose("matId", listOf(careersGetCareers()).flatten().mapNotNull { it.matId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TranscriptSegment\"}}") {
             api.transcript.getRecordBookSegments(matId = matId)
         } ?: return@case
@@ -818,7 +792,7 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Transcript.getRecordBookStats#1")
     fun getRecordBookStats1() = case("Transcript.getRecordBookStats#1") {
-        val matId = choose("matId", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.matId })
+        val matId = choose("matId", listOf(careersGetCareers()).flatten().mapNotNull { it.matId })
         val result = call("{\"k\":\"record\",\"n\":\"Esse3TranscriptStats\"}") {
             api.transcript.getRecordBookStats(matId = matId)
         } ?: return@case
@@ -828,7 +802,7 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Transcript.getRecordBookStats#2")
     fun getRecordBookStats2() = case("Transcript.getRecordBookStats#2", index = 1) {
-        val matId = choose("matId", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.matId })
+        val matId = choose("matId", listOf(careersGetCareers()).flatten().mapNotNull { it.matId })
         val result = call("{\"k\":\"record\",\"n\":\"Esse3TranscriptStats\"}") {
             api.transcript.getRecordBookStats(matId = matId, pathRulesReason = Esse3RecordBookStatsRuleFilter.Offf, dataOriginReason = Esse3RecordBookStatsDataOriginFilter.LibrettoAdSuperate)
         } ?: return@case
@@ -838,7 +812,7 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Transcript.getRecordBookStats#3")
     fun getRecordBookStats3() = case("Transcript.getRecordBookStats#3", index = 2) {
-        val matId = choose("matId", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.matId })
+        val matId = choose("matId", listOf(careersGetCareers()).flatten().mapNotNull { it.matId })
         val result = call("{\"k\":\"record\",\"n\":\"Esse3TranscriptStats\"}") {
             api.transcript.getRecordBookStats(matId = matId, pathRulesReason = Esse3RecordBookStatsRuleFilter.Offf)
         } ?: return@case
@@ -848,7 +822,7 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Transcript.getRecordBookStats#4")
     fun getRecordBookStats4() = case("Transcript.getRecordBookStats#4", index = 3) {
-        val matId = choose("matId", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.matId })
+        val matId = choose("matId", listOf(careersGetCareers()).flatten().mapNotNull { it.matId })
         val result = call("{\"k\":\"record\",\"n\":\"Esse3TranscriptStats\"}") {
             api.transcript.getRecordBookStats(matId = matId, dataOriginReason = Esse3RecordBookStatsDataOriginFilter.LibrettoTutteAd)
         } ?: return@case
@@ -858,7 +832,7 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Transcript.getRecordBookStats#5")
     fun getRecordBookStats5() = case("Transcript.getRecordBookStats#5", index = 4) {
-        val matId = choose("matId", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.matId })
+        val matId = choose("matId", listOf(careersGetCareers()).flatten().mapNotNull { it.matId })
         val result = call("{\"k\":\"record\",\"n\":\"Esse3TranscriptStats\"}") {
             api.transcript.getRecordBookStats(matId = matId, pathRulesReason = Esse3RecordBookStatsRuleFilter.Offf, dataOriginReason = Esse3RecordBookStatsDataOriginFilter.LibrettoTutteAd)
         } ?: return@case
@@ -868,7 +842,7 @@ class Esse3TranscriptLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Transcript.getRecordBookStats#6")
     fun getRecordBookStats6() = case("Transcript.getRecordBookStats#6", index = 5) {
-        val matId = choose("matId", listOf(transcriptGetCareerSegments()).flatten().mapNotNull { it.matId })
+        val matId = choose("matId", listOf(careersGetCareers()).flatten().mapNotNull { it.matId })
         val result = call("{\"k\":\"record\",\"n\":\"Esse3TranscriptStats\"}") {
             api.transcript.getRecordBookStats(matId = matId, pathRulesReason = Esse3RecordBookStatsRuleFilter.Offf, dataOriginReason = Esse3RecordBookStatsDataOriginFilter.Piano)
         } ?: return@case

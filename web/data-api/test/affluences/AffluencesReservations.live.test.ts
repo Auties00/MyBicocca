@@ -12,14 +12,14 @@ describe("Affluences Reservations", () => {
   });
 
   liveCase(AffluencesLive, "Reservations.getAvailableResources#1", {}, async (live) => {
-    const date = LocalDate.parse(LiveTemplates.resolve("{today}"))!;
+    const date = LocalDate.parse(LiveTemplates.resolve("{today+1}"))!;
     const resourceTypeId = live.choose("resourceTypeId", [await reservationsGetReservationInfo(live)].map((it) => it.types).filter(isPresent).flat().map((it) => it.resourceTypeId).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"AffluencesAvailableResource\"}}", {}, async () => live.api.reservations.getAvailableResources("4912615d-501b-4c4e-a2a7-ccaec81c5429", date, resourceTypeId));
     live.fingerprint((f) => f.list(result, (it) => writeAffluencesAvailableResource(f, it)));
   });
 
   liveCase(AffluencesLive, "Reservations.getAvailableResources#2", { index: 1 }, async (live) => {
-    const date = LocalDate.parse(LiveTemplates.resolve("{today}"))!;
+    const date = LocalDate.parse(LiveTemplates.resolve("{today+1}"))!;
     const resourceTypeId = live.choose("resourceTypeId", [await reservationsGetReservationInfo(live)].map((it) => it.types).filter(isPresent).flat().map((it) => it.resourceTypeId).filter(isPresent));
     const resourceId = live.choose("resourceId", [await reservationsGetResourceStatus(live)].map((it) => it.resource).filter(isPresent).map((it) => it.resourceId).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"AffluencesAvailableResource\"}}", {}, async () => live.api.reservations.getAvailableResources("4912615d-501b-4c4e-a2a7-ccaec81c5429", date, resourceTypeId, { resourceId: resourceId }));
