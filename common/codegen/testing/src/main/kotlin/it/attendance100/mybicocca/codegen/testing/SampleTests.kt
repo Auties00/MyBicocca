@@ -6,9 +6,9 @@ import it.attendance100.mybicocca.codegen.core.TestPlanner
 
 /**
  * A `tests.yaml` for the [SampleSpecs.demo] API using every feature of the live tests: an account
- * with headers, credentials, API parameters and settings, defaults, values from other calls,
- * combinations, expectations, allowed errors, volatile results, and writes undone by a call or a
- * restore.
+ * with headers, credentials, API parameters and settings, defaults, values from other calls (some
+ * from the same element), combinations, expectations, allowed errors, volatile results, and writes
+ * undone by a call or a restore.
  */
 object SampleTests {
     val yaml = """
@@ -54,7 +54,10 @@ object SampleTests {
             inputs: { day: "{today+1}" }
             volatile: true
           Calendar.runQuery:
-            inputs: { ids: [1, 2] }
+            # The owner and name of the same item.
+            inputs:
+              ids: { from: Search.searchItems, with: { query: lamp }, pick: "[*].owner.id" }
+              tags: { from: Search.searchItems, with: { query: lamp }, pick: "[*].name" }
           Pages.getRooms:
             inputs: { buildings: { oneOf: [[U6], [U6, U7]] }, day: "{today}" }
           Pages.getRoom:

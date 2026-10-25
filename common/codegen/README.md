@@ -303,7 +303,7 @@ operations:
 | `account.settings`         | Values of the client settings                                       |
 | `account.anonymous`        | Operations also called without the headers, which must be refused   |
 | `limits`                   | `requestsPerSecond`, `maxRequests`, `casesPerOperation`, and `negative: false` to drop the error cases |
-| `defaults`                 | Values of every input of a name; optional inputs are also left out  |
+| `defaults`                 | Values of every input of a name; optional inputs are also left out, and go without a value nothing provides |
 | `operations.<op>.skip`     | Why the operation isn't tested                                      |
 | `operations.<op>.inputs`   | Values of its inputs, by name (`body` for the body)                 |
 | `operations.<op>.expect`   | Checks of every result: `nonEmpty`, `contains`, `equals`, `matches`, `count` |
@@ -326,8 +326,9 @@ Values are written like this:
 | `$args.<input>`, `$result.<path>`, `$before`   | In `undo` and `verify`: the call's arguments, its result, the saved value |
 
 Paths walk fields by name; `[*]` is every element of a list or value of a map, and `[2]` one
-element. Mistakes, such as an unknown operation or field or a value of the wrong type, fail
-generation. `--plan` prints the cases an API's `tests.yaml` leads to, and why operations are
+element. Inputs of a call that pick from the same list of the same call take their values from
+one element of it, so that a course's id and its code belong together. Mistakes, such as an
+unknown operation or field or a value of the wrong type, fail generation. `--plan` prints the cases an API's `tests.yaml` leads to, and why operations are
 skipped.
 
 ### Running them

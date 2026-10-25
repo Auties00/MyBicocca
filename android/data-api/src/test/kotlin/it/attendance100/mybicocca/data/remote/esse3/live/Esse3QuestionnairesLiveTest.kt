@@ -11,7 +11,7 @@ class Esse3QuestionnairesLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Questionnaires.getRecordBookQuestionnaires#1")
     fun getRecordBookQuestionnaires1() = case("Questionnaires.getRecordBookQuestionnaires#1") {
-        val matId = choose("matId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.matId })
+        val matId = choose("matId", listOf(careersGetCareers()).flatten().mapNotNull { it.matId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TranscriptRowWithQuestionnaireStatus\"}}") {
             api.questionnaires.getRecordBookQuestionnaires(matId = matId)
         } ?: return@case
@@ -29,7 +29,7 @@ class Esse3QuestionnairesLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Questionnaires.getRecordBookRow#1")
     fun getRecordBookRow1() = case("Questionnaires.getRecordBookRow#1") {
-        val matId = choose("matId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.matId })
+        val matId = choose("matId", listOf(careersGetCareers()).flatten().mapNotNull { it.matId })
         val activityChoiceId = choose("activityChoiceId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.activityChoiceId })
         val result = call("{\"k\":\"record\",\"n\":\"Esse3TranscriptRowWithQuestionnaireStatus\"}") {
             api.questionnaires.getRecordBookRow(matId = matId, activityChoiceId = activityChoiceId)

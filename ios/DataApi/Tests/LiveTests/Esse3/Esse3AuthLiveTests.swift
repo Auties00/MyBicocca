@@ -20,12 +20,6 @@ final class Esse3AuthLiveTests: XCTestCase {
         }
     }
 
-    func test_refreshJWT1() async throws {
-        try await liveCase(Esse3Live.api, "Auth.refreshJWT#1", effect: "benign") { live in
-            _ = try await live.call("{\"k\":\"record\",\"n\":\"Esse3JWTModel\"}") { try await live.api.auth.refreshJWT() }
-        }
-    }
-
     func test_login1() async throws {
         try await liveCase(Esse3Live.api, "Auth.login#1", effect: "benign") { live in
             _ = try await live.call("{\"k\":\"record\",\"n\":\"Esse3UserSession\"}") { try await live.api.auth.login() }
@@ -54,7 +48,7 @@ final class Esse3AuthLiveTests: XCTestCase {
 
     func test_setLanguageCode1() async throws {
         try await liveCase(Esse3Live.api, "Auth.setLanguageCode#1", effect: "benign") { live in
-            _ = try await live.call("{\"k\":\"record\",\"n\":\"Esse3SessionLanguage\"}") { try await live.api.auth.setLanguageCode() }
+            _ = try await live.call("{\"k\":\"record\",\"n\":\"Esse3SessionLanguage\"}") { try await live.api.auth.setLanguageCode(sessionLanguageCode: "ita") }
         }
     }
 }

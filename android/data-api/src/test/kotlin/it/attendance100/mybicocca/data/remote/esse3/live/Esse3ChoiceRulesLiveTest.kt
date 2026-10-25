@@ -21,10 +21,12 @@ class Esse3ChoiceRulesLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("ChoiceRules.getChoiceRegulations#2")
     fun getChoiceRegulations2() = case("ChoiceRules.getChoiceRegulations#2", index = 1) {
-        val facultyCode = choose("facultyCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.facultyCode })
-        val courseOfStudyId = choose("courseOfStudyId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.courseOfStudyId })
-        val courseOfStudyCode = choose("courseOfStudyCode", listOf(structureGetCoursesOfStudy()).flatten().mapNotNull { it.courseOfStudyCode })
-        val academicYearOrderId = choose("academicYearOrderId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.academicYearOrderId })
+        val row = chooseRow("facultyCode, academicYearOrderId", listOf(personalDataGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.facultyCode }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.academicYearOrderId }.firstOrNull()?.toString()) }
+        val row2 = chooseRow("courseOfStudyId, courseOfStudyCode", listOf(careersGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.courseOfStudyId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.p06CourseOfStudyCode }.firstOrNull()?.toString()) }
+        val facultyCode = choose("facultyCode", listOf(row).mapNotNull { it.facultyCode })
+        val courseOfStudyId = choose("courseOfStudyId", listOf(row2).mapNotNull { it.courseOfStudyId })
+        val courseOfStudyCode = choose("courseOfStudyCode", listOf(row2).mapNotNull { it.p06CourseOfStudyCode })
+        val academicYearOrderId = choose("academicYearOrderId", listOf(row).mapNotNull { it.academicYearOrderId })
         val academicYearRevisionId = choose("academicYearRevisionId", listOf(rulePropertiesGetPropaedeuticityRegulations()).flatten().mapNotNull { it.academicYearRevisionId }.map { it.toLong() })
         val courseTypeCode = choose("courseTypeCode", listOf(personalDataGetPhdCareersData()).flatten().mapNotNull { it.courseTypeCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ChoiceRegulation\"}}") {
@@ -38,7 +40,7 @@ class Esse3ChoiceRulesLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     fun getChoiceRegulations3() = case("ChoiceRules.getChoiceRegulations#3", index = 2) {
         val facultyId = choose("facultyId", listOf(structureGetDidacticStructures()).flatten().mapNotNull { it.facultyId })
         val facultyCode = choose("facultyCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.facultyCode })
-        val courseOfStudyId = choose("courseOfStudyId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.courseOfStudyId })
+        val courseOfStudyId = choose("courseOfStudyId", listOf(careersGetCareers()).flatten().mapNotNull { it.courseOfStudyId })
         val courseTypeCode = choose("courseTypeCode", listOf(personalDataGetPhdCareersData()).flatten().mapNotNull { it.courseTypeCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ChoiceRegulation\"}}") {
             api.choiceRules.getChoiceRegulations(choiceRegulationState = Esse3ChoiceRulesStateFilter.X, facultyId = facultyId, facultyCode = facultyCode, courseOfStudyId = courseOfStudyId, courseTypeCode = courseTypeCode)
@@ -50,7 +52,7 @@ class Esse3ChoiceRulesLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @DisplayName("ChoiceRules.getChoiceRegulations#4")
     fun getChoiceRegulations4() = case("ChoiceRules.getChoiceRegulations#4", index = 3) {
         val facultyId = choose("facultyId", listOf(structureGetDidacticStructures()).flatten().mapNotNull { it.facultyId })
-        val courseOfStudyCode = choose("courseOfStudyCode", listOf(structureGetCoursesOfStudy()).flatten().mapNotNull { it.courseOfStudyCode })
+        val courseOfStudyCode = choose("courseOfStudyCode", listOf(careersGetCareers()).flatten().mapNotNull { it.p06CourseOfStudyCode })
         val academicYearOrderId = choose("academicYearOrderId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.academicYearOrderId })
         val academicYearRevisionId = choose("academicYearRevisionId", listOf(rulePropertiesGetPropaedeuticityRegulations()).flatten().mapNotNull { it.academicYearRevisionId }.map { it.toLong() })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ChoiceRegulation\"}}") {
@@ -62,9 +64,10 @@ class Esse3ChoiceRulesLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("ChoiceRules.getChoiceRegulations#5")
     fun getChoiceRegulations5() = case("ChoiceRules.getChoiceRegulations#5", index = 4) {
-        val facultyCode = choose("facultyCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.facultyCode })
-        val courseOfStudyId = choose("courseOfStudyId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.courseOfStudyId })
-        val academicYearOrderId = choose("academicYearOrderId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.academicYearOrderId })
+        val row = chooseRow("facultyCode, academicYearOrderId", listOf(personalDataGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.facultyCode }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.academicYearOrderId }.firstOrNull()?.toString()) }
+        val facultyCode = choose("facultyCode", listOf(row).mapNotNull { it.facultyCode })
+        val courseOfStudyId = choose("courseOfStudyId", listOf(careersGetCareers()).flatten().mapNotNull { it.courseOfStudyId })
+        val academicYearOrderId = choose("academicYearOrderId", listOf(row).mapNotNull { it.academicYearOrderId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ChoiceRegulation\"}}") {
             api.choiceRules.getChoiceRegulations(choiceRegulationState = Esse3ChoiceRulesStateFilter.A, facultyCode = facultyCode, courseOfStudyId = courseOfStudyId, academicYearOrderId = academicYearOrderId)
         } ?: return@case

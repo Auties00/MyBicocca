@@ -95,8 +95,16 @@ final class LiveRun<Api: Sendable>: @unchecked Sendable {
         report.start(skips: live.skips, declared: checker.fields)
     }
 
-    lazy var api: Api = live.create(LiveObserver(run: self), URLSession(configuration: .ephemeral), false)
-    lazy var anonymous: Api = live.create(LiveObserver(run: self), URLSession(configuration: .ephemeral), true)
+    lazy var api: Api = live.create(LiveObserver(run: self), Self.session(), false)
+    lazy var anonymous: Api = live.create(LiveObserver(run: self), Self.session(), true)
+
+    /// A session that always asks the server: a cached response would hide what a write changed.
+    private static func session() -> URLSession {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.urlCache = nil
+        configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
+        return URLSession(configuration: configuration)
+    }
 
     var missingEnv: [String] { live.env.filter { liveEnv($0) == nil } }
 
@@ -233,8 +241,34 @@ final class LiveCase<Api: Sendable>: @unchecked Sendable {
             .sorted { Array($0.0.utf16).lexicographicallyPrecedes(Array($1.0.utf16)) }
             .map { $0.1 }
         if values.isEmpty { throw LiveSkip("no value for \(name)") }
-        let count = values.count
-        return values[((index + LiveSettings.seed) % count + count) % count]
+        return values[position(values.count)]
+    }
+
+    /// One of `rows`, for inputs that take their values from the same one, chosen as
+    /// ``choose(_:_:key:)`` does: `keys` are the values they take from a row, as text, nil for one
+    /// the row lacks, which leaves the row out. Rows sort by those values, so that every platform
+    /// picks the same.
+    func chooseRow<T>(_ name: String, _ rows: [T?], keys: (T) -> [String?]) throws -> T {
+        var seen = Set<String>()
+        let values = rows.compactMap { $0 }
+            .compactMap { row -> (String, T)? in
+                let taken = keys(row)
+                let present = taken.compactMap { $0 }
+                return present.count == taken.count ? (present.joined(separator: "\u{0}"), row) : nil
+            }
+            .filter { seen.insert($0.0).inserted }
+            .sorted { Array($0.0.utf16).lexicographicallyPrecedes(Array($1.0.utf16)) }
+        if values.isEmpty { throw LiveSkip("no value for \(name)") }
+        return values[position(values.count)].1
+    }
+
+    /// The first of `values` as text, as ``choose(_:_:key:)`` sorts it by default; nil when there is none.
+    func firstText<T>(_ values: [T]) -> String? {
+        values.first.map { "\($0)" }
+    }
+
+    private func position(_ count: Int) -> Int {
+        ((index + LiveSettings.seed) % count + count) % count
     }
 
     /// The first of `candidates`; fails the case when there is none.

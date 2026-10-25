@@ -2,46 +2,54 @@
 
 import { describe } from "vitest";
 import { isPresent, liveCase } from "../runtime/live.js";
-import { Esse3Live, badgeGetNewBadges, personalDataGetCareers, structureGetCoursesOfStudy, writeEsse3BadgeData } from "./Esse3Live.js";
+import { Esse3Live, badgeGetNewBadges, careersGetCareers, writeEsse3BadgeData } from "./Esse3Live.js";
 
 // The live tests of the Esse3 Badge module, planned from common/specs/esse3/tests.yaml.
 describe("Esse3 Badge", () => {
   liveCase(Esse3Live, "Badge.getNewBadges#1", {}, async (live) => {
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3BadgeData\"}}", {}, async () => live.api.badge.getNewBadges());
+    const studentId = live.choose("studentId", [await careersGetCareers(live)].flat().map((it) => it.studentId).filter(isPresent));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3BadgeData\"}}", {}, async () => live.api.badge.getNewBadges({ studentId: studentId }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3BadgeData(f, it)));
   });
 
   liveCase(Esse3Live, "Badge.getNewBadges#2", { index: 1 }, async (live) => {
-    const studentId = live.choose("studentId", [await personalDataGetCareers(live)].flat().map((it) => it.studentId).filter(isPresent));
-    const courseOfStudyCode = live.choose("courseOfStudyCode", [await structureGetCoursesOfStudy(live)].flat().map((it) => it.courseOfStudyCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3BadgeData\"}}", {}, async () => live.api.badge.getNewBadges({ studentId: studentId, courseOfStudyCode: courseOfStudyCode, studentStatusCode: "I", matStatusCode: "I" }));
+    const row = live.chooseRow("studentId, fiscalCode", [await careersGetCareers(live)].flat(), (element) => [[element].map((it) => it.studentId).filter(isPresent)[0], [element].map((it) => it.fiscalCode).filter(isPresent)[0]]);
+    const studentId = live.choose("studentId", [row].map((it) => it.studentId).filter(isPresent));
+    const fiscalCode = live.choose("fiscalCode", [row].map((it) => it.fiscalCode).filter(isPresent));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3BadgeData\"}}", {}, async () => live.api.badge.getNewBadges({ studentId: studentId, fiscalCode: fiscalCode, studentStatusCode: "A", matStatusCode: "I" }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3BadgeData(f, it)));
   });
 
   liveCase(Esse3Live, "Badge.getNewBadges#3", { index: 2 }, async (live) => {
-    const fiscalCode = live.choose("fiscalCode", [await personalDataGetCareers(live)].flat().map((it) => it.fiscalCode).filter(isPresent));
-    const courseOfStudyCode = live.choose("courseOfStudyCode", [await structureGetCoursesOfStudy(live)].flat().map((it) => it.courseOfStudyCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3BadgeData\"}}", {}, async () => live.api.badge.getNewBadges({ fiscalCode: fiscalCode, courseOfStudyCode: courseOfStudyCode, studentStatusCode: "A", matStatusCode: "S" }));
+    const row = live.chooseRow("studentId, courseOfStudyCode", [await careersGetCareers(live)].flat(), (element) => [[element].map((it) => it.studentId).filter(isPresent)[0], [element].map((it) => it.p06CourseOfStudyCode).filter(isPresent)[0]]);
+    const studentId = live.choose("studentId", [row].map((it) => it.studentId).filter(isPresent));
+    const courseOfStudyCode = live.choose("courseOfStudyCode", [row].map((it) => it.p06CourseOfStudyCode).filter(isPresent));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3BadgeData\"}}", {}, async () => live.api.badge.getNewBadges({ studentId: studentId, courseOfStudyCode: courseOfStudyCode, studentStatusCode: "X", matStatusCode: "S" }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3BadgeData(f, it)));
   });
 
   liveCase(Esse3Live, "Badge.getNewBadges#4", { index: 3 }, async (live) => {
-    const studentId = live.choose("studentId", [await personalDataGetCareers(live)].flat().map((it) => it.studentId).filter(isPresent));
-    const fiscalCode = live.choose("fiscalCode", [await personalDataGetCareers(live)].flat().map((it) => it.fiscalCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3BadgeData\"}}", {}, async () => live.api.badge.getNewBadges({ studentId: studentId, fiscalCode: fiscalCode, studentStatusCode: "X", matStatusCode: "A" }));
+    const row = live.chooseRow("studentId, fiscalCode, courseOfStudyCode", [await careersGetCareers(live)].flat(), (element) => [[element].map((it) => it.studentId).filter(isPresent)[0], [element].map((it) => it.fiscalCode).filter(isPresent)[0], [element].map((it) => it.p06CourseOfStudyCode).filter(isPresent)[0]]);
+    const studentId = live.choose("studentId", [row].map((it) => it.studentId).filter(isPresent));
+    const fiscalCode = live.choose("fiscalCode", [row].map((it) => it.fiscalCode).filter(isPresent));
+    const courseOfStudyCode = live.choose("courseOfStudyCode", [row].map((it) => it.p06CourseOfStudyCode).filter(isPresent));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3BadgeData\"}}", {}, async () => live.api.badge.getNewBadges({ studentId: studentId, fiscalCode: fiscalCode, courseOfStudyCode: courseOfStudyCode, studentStatusCode: "I" }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3BadgeData(f, it)));
   });
 
   liveCase(Esse3Live, "Badge.getNewBadges#5", { index: 4 }, async (live) => {
-    const studentId = live.choose("studentId", [await personalDataGetCareers(live)].flat().map((it) => it.studentId).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3BadgeData\"}}", {}, async () => live.api.badge.getNewBadges({ studentId: studentId, studentStatusCode: "S", matStatusCode: "S" }));
+    const row = live.chooseRow("studentId, fiscalCode", [await careersGetCareers(live)].flat(), (element) => [[element].map((it) => it.studentId).filter(isPresent)[0], [element].map((it) => it.fiscalCode).filter(isPresent)[0]]);
+    const studentId = live.choose("studentId", [row].map((it) => it.studentId).filter(isPresent));
+    const fiscalCode = live.choose("fiscalCode", [row].map((it) => it.fiscalCode).filter(isPresent));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3BadgeData\"}}", {}, async () => live.api.badge.getNewBadges({ studentId: studentId, fiscalCode: fiscalCode, studentStatusCode: "S", matStatusCode: "S" }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3BadgeData(f, it)));
   });
 
   liveCase(Esse3Live, "Badge.getNewBadges#6", { index: 5 }, async (live) => {
-    const fiscalCode = live.choose("fiscalCode", [await personalDataGetCareers(live)].flat().map((it) => it.fiscalCode).filter(isPresent));
-    const courseOfStudyCode = live.choose("courseOfStudyCode", [await structureGetCoursesOfStudy(live)].flat().map((it) => it.courseOfStudyCode).filter(isPresent));
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3BadgeData\"}}", {}, async () => live.api.badge.getNewBadges({ fiscalCode: fiscalCode, courseOfStudyCode: courseOfStudyCode, studentStatusCode: "S" }));
+    const row = live.chooseRow("studentId, courseOfStudyCode", [await careersGetCareers(live)].flat(), (element) => [[element].map((it) => it.studentId).filter(isPresent)[0], [element].map((it) => it.p06CourseOfStudyCode).filter(isPresent)[0]]);
+    const studentId = live.choose("studentId", [row].map((it) => it.studentId).filter(isPresent));
+    const courseOfStudyCode = live.choose("courseOfStudyCode", [row].map((it) => it.p06CourseOfStudyCode).filter(isPresent));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3BadgeData\"}}", {}, async () => live.api.badge.getNewBadges({ studentId: studentId, courseOfStudyCode: courseOfStudyCode, studentStatusCode: "A", matStatusCode: "A" }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3BadgeData(f, it)));
   });
 

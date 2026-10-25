@@ -16,10 +16,12 @@ final class Esse3ChoiceRulesLiveTests: XCTestCase {
 
     func test_getChoiceRegulations2() async throws {
         try await liveCase(Esse3Live.api, "ChoiceRules.getChoiceRegulations#2", index: 1) { live in
-            let facultyCode = try live.choose("facultyCode", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }.compactMap { $0.facultyCode })
-            let courseOfStudyId = try live.choose("courseOfStudyId", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }.compactMap { $0.courseOfStudyId })
-            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.structureGetCoursesOfStudy(live)].flatMap { $0 }.compactMap { $0.courseOfStudyCode })
-            let academicYearOrderId = try live.choose("academicYearOrderId", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }.compactMap { $0.academicYearOrderId })
+            let row = try live.chooseRow("facultyCode, academicYearOrderId", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.facultyCode }); let key1: String? = live.firstText([element].compactMap { $0.academicYearOrderId }); return [key0, key1] }
+            let row2 = try live.chooseRow("courseOfStudyId, courseOfStudyCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.courseOfStudyId }); let key1: String? = live.firstText([element].compactMap { $0.p06CourseOfStudyCode }); return [key0, key1] }
+            let facultyCode = try live.choose("facultyCode", [row].compactMap { $0.facultyCode })
+            let courseOfStudyId = try live.choose("courseOfStudyId", [row2].compactMap { $0.courseOfStudyId })
+            let courseOfStudyCode = try live.choose("courseOfStudyCode", [row2].compactMap { $0.p06CourseOfStudyCode })
+            let academicYearOrderId = try live.choose("academicYearOrderId", [row].compactMap { $0.academicYearOrderId })
             let academicYearRevisionId = try live.choose("academicYearRevisionId", [try await Esse3Live.rulePropertiesGetPropaedeuticityRegulations(live)].flatMap { $0 }.compactMap { $0.academicYearRevisionId }.compactMap { Int64($0) })
             let courseTypeCode = try live.choose("courseTypeCode", [try await Esse3Live.personalDataGetPhdCareersData(live)].flatMap { $0 }.compactMap { $0.courseTypeCode })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ChoiceRegulation\"}}") { try await live.api.choiceRules.getChoiceRegulations(choiceRegulationState: Esse3ChoiceRulesStateFilter.b, facultyCode: facultyCode, courseOfStudyId: courseOfStudyId, courseOfStudyCode: courseOfStudyCode, academicYearOrderId: academicYearOrderId, academicYearRevisionId: academicYearRevisionId, courseTypeCode: courseTypeCode) }
@@ -31,7 +33,7 @@ final class Esse3ChoiceRulesLiveTests: XCTestCase {
         try await liveCase(Esse3Live.api, "ChoiceRules.getChoiceRegulations#3", index: 2) { live in
             let facultyId = try live.choose("facultyId", [try await Esse3Live.structureGetDidacticStructures(live)].flatMap { $0 }.compactMap { $0.facultyId })
             let facultyCode = try live.choose("facultyCode", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }.compactMap { $0.facultyCode })
-            let courseOfStudyId = try live.choose("courseOfStudyId", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }.compactMap { $0.courseOfStudyId })
+            let courseOfStudyId = try live.choose("courseOfStudyId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.courseOfStudyId })
             let courseTypeCode = try live.choose("courseTypeCode", [try await Esse3Live.personalDataGetPhdCareersData(live)].flatMap { $0 }.compactMap { $0.courseTypeCode })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ChoiceRegulation\"}}") { try await live.api.choiceRules.getChoiceRegulations(choiceRegulationState: Esse3ChoiceRulesStateFilter.x, facultyId: facultyId, facultyCode: facultyCode, courseOfStudyId: courseOfStudyId, courseTypeCode: courseTypeCode) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3ChoiceRegulation(f, item0) } }
@@ -41,7 +43,7 @@ final class Esse3ChoiceRulesLiveTests: XCTestCase {
     func test_getChoiceRegulations4() async throws {
         try await liveCase(Esse3Live.api, "ChoiceRules.getChoiceRegulations#4", index: 3) { live in
             let facultyId = try live.choose("facultyId", [try await Esse3Live.structureGetDidacticStructures(live)].flatMap { $0 }.compactMap { $0.facultyId })
-            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.structureGetCoursesOfStudy(live)].flatMap { $0 }.compactMap { $0.courseOfStudyCode })
+            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.p06CourseOfStudyCode })
             let academicYearOrderId = try live.choose("academicYearOrderId", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }.compactMap { $0.academicYearOrderId })
             let academicYearRevisionId = try live.choose("academicYearRevisionId", [try await Esse3Live.rulePropertiesGetPropaedeuticityRegulations(live)].flatMap { $0 }.compactMap { $0.academicYearRevisionId }.compactMap { Int64($0) })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ChoiceRegulation\"}}") { try await live.api.choiceRules.getChoiceRegulations(choiceRegulationState: Esse3ChoiceRulesStateFilter.a, facultyId: facultyId, courseOfStudyCode: courseOfStudyCode, academicYearOrderId: academicYearOrderId, academicYearRevisionId: academicYearRevisionId) }
@@ -51,9 +53,10 @@ final class Esse3ChoiceRulesLiveTests: XCTestCase {
 
     func test_getChoiceRegulations5() async throws {
         try await liveCase(Esse3Live.api, "ChoiceRules.getChoiceRegulations#5", index: 4) { live in
-            let facultyCode = try live.choose("facultyCode", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }.compactMap { $0.facultyCode })
-            let courseOfStudyId = try live.choose("courseOfStudyId", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }.compactMap { $0.courseOfStudyId })
-            let academicYearOrderId = try live.choose("academicYearOrderId", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }.compactMap { $0.academicYearOrderId })
+            let row = try live.chooseRow("facultyCode, academicYearOrderId", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.facultyCode }); let key1: String? = live.firstText([element].compactMap { $0.academicYearOrderId }); return [key0, key1] }
+            let facultyCode = try live.choose("facultyCode", [row].compactMap { $0.facultyCode })
+            let courseOfStudyId = try live.choose("courseOfStudyId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.courseOfStudyId })
+            let academicYearOrderId = try live.choose("academicYearOrderId", [row].compactMap { $0.academicYearOrderId })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ChoiceRegulation\"}}") { try await live.api.choiceRules.getChoiceRegulations(choiceRegulationState: Esse3ChoiceRulesStateFilter.a, facultyCode: facultyCode, courseOfStudyId: courseOfStudyId, academicYearOrderId: academicYearOrderId) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3ChoiceRegulation(f, item0) } }
         }

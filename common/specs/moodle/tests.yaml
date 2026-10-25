@@ -41,6 +41,9 @@ operations:
     # Moodle refuses its own response for courses with some kinds of events.
     errors: [invalidresponse]
   Forum.getDiscussionPosts:
+    # A discussion's id is its first post's; the discussion's own is "discussion".
+    inputs:
+      discussionId: { from: Forum.getForumDiscussions, pick: "discussions[*].discussion" }
     # Forums of hidden courses are listed, but their discussions can't be read.
     errors: [requireloginerror]
   Forum.getDiscussionPost:
@@ -49,6 +52,9 @@ operations:
     errors: [requireloginerror]
   Forum.canAddDiscussion:
     errors: [requireloginerror]
+  Quiz.getAttemptReview:
+    # Its questions' HTML carries the session's key.
+    volatile: true
   Message.blockUser:
     skip: Needs a user nobody minds being blocked for a moment; set one before enabling it.
   Message.unblockUser:

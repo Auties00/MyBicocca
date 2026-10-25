@@ -2,12 +2,12 @@
 
 import { describe } from "vitest";
 import { isPresent, liveCase } from "../runtime/live.js";
-import { Esse3Live, personalDataGetCareers, recordsFindMinutes, writeEsse3TranscriptRowWithQuestionnaireStatus } from "./Esse3Live.js";
+import { Esse3Live, careersGetCareers, recordsFindMinutes, writeEsse3TranscriptRowWithQuestionnaireStatus } from "./Esse3Live.js";
 
 // The live tests of the Esse3 Questionnaires module, planned from common/specs/esse3/tests.yaml.
 describe("Esse3 Questionnaires", () => {
   liveCase(Esse3Live, "Questionnaires.getRecordBookQuestionnaires#1", {}, async (live) => {
-    const matId = live.choose("matId", [await personalDataGetCareers(live)].flat().map((it) => it.matId).filter(isPresent));
+    const matId = live.choose("matId", [await careersGetCareers(live)].flat().map((it) => it.matId).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TranscriptRowWithQuestionnaireStatus\"}}", {}, async () => live.api.questionnaires.getRecordBookQuestionnaires(matId));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3TranscriptRowWithQuestionnaireStatus(f, it)));
   });
@@ -17,7 +17,7 @@ describe("Esse3 Questionnaires", () => {
   });
 
   liveCase(Esse3Live, "Questionnaires.getRecordBookRow#1", {}, async (live) => {
-    const matId = live.choose("matId", [await personalDataGetCareers(live)].flat().map((it) => it.matId).filter(isPresent));
+    const matId = live.choose("matId", [await careersGetCareers(live)].flat().map((it) => it.matId).filter(isPresent));
     const activityChoiceId = live.choose("activityChoiceId", [await recordsFindMinutes(live)].flat().map((it) => it.activityChoiceId).filter(isPresent));
     const result = await live.call("{\"k\":\"record\",\"n\":\"Esse3TranscriptRowWithQuestionnaireStatus\"}", {}, async () => live.api.questionnaires.getRecordBookRow(matId, activityChoiceId));
     live.fingerprint((f) => writeEsse3TranscriptRowWithQuestionnaireStatus(f, result));

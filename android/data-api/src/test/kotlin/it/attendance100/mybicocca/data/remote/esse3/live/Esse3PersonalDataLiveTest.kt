@@ -2,11 +2,7 @@
 package it.attendance100.mybicocca.data.remote.esse3.live
 
 import it.attendance100.mybicocca.data.remote.esse3.api.Esse3Api
-import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3CompensatoryMeasureFilter
-import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3MobileParameter
-import it.attendance100.mybicocca.data.remote.runtime.live.LiveJson
 import it.attendance100.mybicocca.data.remote.runtime.live.LiveTest
-import kotlinx.serialization.decodeFromString
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 
@@ -24,13 +20,15 @@ class Esse3PersonalDataLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("PersonalData.getCareers#2")
     fun getCareers2() = case("PersonalData.getCareers#2", index = 1) {
-        val userId = choose("userId", listOf(personalDataGetPhdCareersData()).flatten().mapNotNull { it.userId })
-        val studentStatusCode = choose("studentStatusCode", listOf(personalDataGetPhdCareersData()).flatten().mapNotNull { it.studentStatusCode })
-        val academicYearId = choose("academicYearId", listOf(personalDataGetPhdCareersData()).flatten().mapNotNull { it.academicYearId }.map { it.toString() })
-        val courseOfStudyId = choose("courseOfStudyId", listOf(personalDataGetPhdCareersData()).flatten().mapNotNull { it.courseOfStudyId })
-        val courseOfStudyCode = choose("courseOfStudyCode", listOf(personalDataGetPersons()).flatten().mapNotNull { it.italianTitle }.flatten().mapNotNull { it.courseOfStudyCode })
-        val courseTypeCode = choose("courseTypeCode", listOf(personalDataGetPhdCareersData()).flatten().mapNotNull { it.courseTypeCode })
-        val academicYearEnrollmentId = choose("academicYearEnrollmentId", listOf(personalDataGetPhdCareersData()).flatten().mapNotNull { it.academicYearEnrollmentId }.map { it.toLong() })
+        val row = chooseRow("userId, studentStatusCode, academicYearId, courseTypeCode, academicYearEnrollmentId", listOf(personalDataGetPhdCareersData()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.userId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.studentStatusCode }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.academicYearId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.courseTypeCode }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.academicYearEnrollmentId }.firstOrNull()?.toString()) }
+        val row2 = chooseRow("courseOfStudyId, courseOfStudyCode", listOf(careersGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.courseOfStudyId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.p06CourseOfStudyCode }.firstOrNull()?.toString()) }
+        val userId = choose("userId", listOf(row).mapNotNull { it.userId })
+        val studentStatusCode = choose("studentStatusCode", listOf(row).mapNotNull { it.studentStatusCode })
+        val academicYearId = choose("academicYearId", listOf(row).mapNotNull { it.academicYearId }.map { it.toString() })
+        val courseOfStudyId = choose("courseOfStudyId", listOf(row2).mapNotNull { it.courseOfStudyId })
+        val courseOfStudyCode = choose("courseOfStudyCode", listOf(row2).mapNotNull { it.p06CourseOfStudyCode })
+        val courseTypeCode = choose("courseTypeCode", listOf(row).mapNotNull { it.courseTypeCode })
+        val academicYearEnrollmentId = choose("academicYearEnrollmentId", listOf(row).mapNotNull { it.academicYearEnrollmentId }.map { it.toLong() })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Career\"}}") {
             api.personalData.getCareers(userId = userId, studentStatusCode = studentStatusCode, academicYearId = academicYearId, courseOfStudyId = courseOfStudyId, courseOfStudyCode = courseOfStudyCode, courseTypeCode = courseTypeCode, academicYearEnrollmentId = academicYearEnrollmentId)
         } ?: return@case
@@ -40,11 +38,13 @@ class Esse3PersonalDataLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("PersonalData.getCareers#3")
     fun getCareers3() = case("PersonalData.getCareers#3", index = 2) {
-        val fiscalCode = choose("fiscalCode", listOf(personalDataGetPhdCareersData()).flatten().mapNotNull { it.fiscalCode })
-        val academicYearId = choose("academicYearId", listOf(personalDataGetPhdCareersData()).flatten().mapNotNull { it.academicYearId }.map { it.toString() })
-        val courseOfStudyId = choose("courseOfStudyId", listOf(personalDataGetPhdCareersData()).flatten().mapNotNull { it.courseOfStudyId })
-        val courseTypeCode = choose("courseTypeCode", listOf(personalDataGetPhdCareersData()).flatten().mapNotNull { it.courseTypeCode })
-        val academicYearEnrollmentId = choose("academicYearEnrollmentId", listOf(personalDataGetPhdCareersData()).flatten().mapNotNull { it.academicYearEnrollmentId }.map { it.toLong() })
+        val row = chooseRow("fiscalCode, courseOfStudyId", listOf(careersGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.fiscalCode }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.courseOfStudyId }.firstOrNull()?.toString()) }
+        val row2 = chooseRow("academicYearId, courseTypeCode, academicYearEnrollmentId", listOf(personalDataGetPhdCareersData()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.academicYearId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.courseTypeCode }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.academicYearEnrollmentId }.firstOrNull()?.toString()) }
+        val fiscalCode = choose("fiscalCode", listOf(row).mapNotNull { it.fiscalCode })
+        val academicYearId = choose("academicYearId", listOf(row2).mapNotNull { it.academicYearId }.map { it.toString() })
+        val courseOfStudyId = choose("courseOfStudyId", listOf(row).mapNotNull { it.courseOfStudyId })
+        val courseTypeCode = choose("courseTypeCode", listOf(row2).mapNotNull { it.courseTypeCode })
+        val academicYearEnrollmentId = choose("academicYearEnrollmentId", listOf(row2).mapNotNull { it.academicYearEnrollmentId }.map { it.toLong() })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Career\"}}") {
             api.personalData.getCareers(fiscalCode = fiscalCode, academicYearId = academicYearId, courseOfStudyId = courseOfStudyId, courseTypeCode = courseTypeCode, academicYearEnrollmentId = academicYearEnrollmentId)
         } ?: return@case
@@ -54,10 +54,12 @@ class Esse3PersonalDataLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("PersonalData.getCareers#4")
     fun getCareers4() = case("PersonalData.getCareers#4", index = 3) {
-        val userId = choose("userId", listOf(personalDataGetPhdCareersData()).flatten().mapNotNull { it.userId })
-        val fiscalCode = choose("fiscalCode", listOf(personalDataGetPhdCareersData()).flatten().mapNotNull { it.fiscalCode })
-        val studentStatusCode = choose("studentStatusCode", listOf(personalDataGetPhdCareersData()).flatten().mapNotNull { it.studentStatusCode })
-        val courseOfStudyCode = choose("courseOfStudyCode", listOf(personalDataGetPersons()).flatten().mapNotNull { it.italianTitle }.flatten().mapNotNull { it.courseOfStudyCode })
+        val row = chooseRow("userId, studentStatusCode", listOf(personalDataGetPhdCareersData()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.userId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.studentStatusCode }.firstOrNull()?.toString()) }
+        val row2 = chooseRow("fiscalCode, courseOfStudyCode", listOf(careersGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.fiscalCode }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.p06CourseOfStudyCode }.firstOrNull()?.toString()) }
+        val userId = choose("userId", listOf(row).mapNotNull { it.userId })
+        val fiscalCode = choose("fiscalCode", listOf(row2).mapNotNull { it.fiscalCode })
+        val studentStatusCode = choose("studentStatusCode", listOf(row).mapNotNull { it.studentStatusCode })
+        val courseOfStudyCode = choose("courseOfStudyCode", listOf(row2).mapNotNull { it.p06CourseOfStudyCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Career\"}}") {
             api.personalData.getCareers(userId = userId, fiscalCode = fiscalCode, studentStatusCode = studentStatusCode, courseOfStudyCode = courseOfStudyCode)
         } ?: return@case
@@ -67,11 +69,13 @@ class Esse3PersonalDataLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("PersonalData.getCareers#5")
     fun getCareers5() = case("PersonalData.getCareers#5", index = 4) {
-        val fiscalCode = choose("fiscalCode", listOf(personalDataGetPhdCareersData()).flatten().mapNotNull { it.fiscalCode })
-        val studentStatusCode = choose("studentStatusCode", listOf(personalDataGetPhdCareersData()).flatten().mapNotNull { it.studentStatusCode })
-        val academicYearId = choose("academicYearId", listOf(personalDataGetPhdCareersData()).flatten().mapNotNull { it.academicYearId }.map { it.toString() })
-        val courseOfStudyCode = choose("courseOfStudyCode", listOf(personalDataGetPersons()).flatten().mapNotNull { it.italianTitle }.flatten().mapNotNull { it.courseOfStudyCode })
-        val courseTypeCode = choose("courseTypeCode", listOf(personalDataGetPhdCareersData()).flatten().mapNotNull { it.courseTypeCode })
+        val row = chooseRow("fiscalCode, courseOfStudyCode", listOf(careersGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.fiscalCode }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.p06CourseOfStudyCode }.firstOrNull()?.toString()) }
+        val row2 = chooseRow("studentStatusCode, academicYearId, courseTypeCode", listOf(personalDataGetPhdCareersData()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.studentStatusCode }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.academicYearId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.courseTypeCode }.firstOrNull()?.toString()) }
+        val fiscalCode = choose("fiscalCode", listOf(row).mapNotNull { it.fiscalCode })
+        val studentStatusCode = choose("studentStatusCode", listOf(row2).mapNotNull { it.studentStatusCode })
+        val academicYearId = choose("academicYearId", listOf(row2).mapNotNull { it.academicYearId }.map { it.toString() })
+        val courseOfStudyCode = choose("courseOfStudyCode", listOf(row).mapNotNull { it.p06CourseOfStudyCode })
+        val courseTypeCode = choose("courseTypeCode", listOf(row2).mapNotNull { it.courseTypeCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Career\"}}") {
             api.personalData.getCareers(fiscalCode = fiscalCode, studentStatusCode = studentStatusCode, academicYearId = academicYearId, courseOfStudyCode = courseOfStudyCode, courseTypeCode = courseTypeCode)
         } ?: return@case
@@ -81,9 +85,10 @@ class Esse3PersonalDataLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("PersonalData.getCareers#6")
     fun getCareers6() = case("PersonalData.getCareers#6", index = 5) {
-        val userId = choose("userId", listOf(personalDataGetPhdCareersData()).flatten().mapNotNull { it.userId })
-        val courseOfStudyId = choose("courseOfStudyId", listOf(personalDataGetPhdCareersData()).flatten().mapNotNull { it.courseOfStudyId })
-        val academicYearEnrollmentId = choose("academicYearEnrollmentId", listOf(personalDataGetPhdCareersData()).flatten().mapNotNull { it.academicYearEnrollmentId }.map { it.toLong() })
+        val row = chooseRow("userId, academicYearEnrollmentId", listOf(personalDataGetPhdCareersData()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.userId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.academicYearEnrollmentId }.firstOrNull()?.toString()) }
+        val userId = choose("userId", listOf(row).mapNotNull { it.userId })
+        val courseOfStudyId = choose("courseOfStudyId", listOf(careersGetCareers()).flatten().mapNotNull { it.courseOfStudyId })
+        val academicYearEnrollmentId = choose("academicYearEnrollmentId", listOf(row).mapNotNull { it.academicYearEnrollmentId }.map { it.toLong() })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Career\"}}") {
             api.personalData.getCareers(userId = userId, courseOfStudyId = courseOfStudyId, academicYearEnrollmentId = academicYearEnrollmentId)
         } ?: return@case
@@ -93,7 +98,7 @@ class Esse3PersonalDataLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("PersonalData.getGdprCareerByStudent#1")
     fun getGdprCareerByStudent1() = case("PersonalData.getGdprCareerByStudent#1") {
-        val studentId = choose("studentId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studentId })
+        val studentId = choose("studentId", listOf(careersGetCareers()).flatten().mapNotNull { it.studentId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerGDPR\"}}") {
             api.personalData.getGdprCareerByStudent(studentId = studentId)
         } ?: return@case
@@ -120,14 +125,16 @@ class Esse3PersonalDataLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("PersonalData.getPhdCareersData#2")
     fun getPhdCareersData2() = case("PersonalData.getPhdCareersData#2", index = 1) {
-        val studentId = choose("studentId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studentId })
-        val fiscalCode = choose("fiscalCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.fiscalCode })
-        val studentStatusCode = choose("studentStatusCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studentStatusCode })
-        val academicYearId = choose("academicYearId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.academicYearId }.map { it.toString() })
-        val courseOfStudyId = choose("courseOfStudyId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.courseOfStudyId })
-        val courseOfStudyCode = choose("courseOfStudyCode", listOf(personalDataGetPersons()).flatten().mapNotNull { it.italianTitle }.flatten().mapNotNull { it.courseOfStudyCode })
+        val row = chooseRow("studentId, fiscalCode, courseOfStudyId, courseOfStudyCode", listOf(careersGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.studentId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.fiscalCode }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.courseOfStudyId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.p06CourseOfStudyCode }.firstOrNull()?.toString()) }
+        val row2 = chooseRow("studentStatusCode, academicYearId, academicYearEnrollmentId", listOf(personalDataGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.studentStatusCode }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.academicYearId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.academicYearEnrollmentId }.firstOrNull()?.toString()) }
+        val studentId = choose("studentId", listOf(row).mapNotNull { it.studentId })
+        val fiscalCode = choose("fiscalCode", listOf(row).mapNotNull { it.fiscalCode })
+        val studentStatusCode = choose("studentStatusCode", listOf(row2).mapNotNull { it.studentStatusCode })
+        val academicYearId = choose("academicYearId", listOf(row2).mapNotNull { it.academicYearId }.map { it.toString() })
+        val courseOfStudyId = choose("courseOfStudyId", listOf(row).mapNotNull { it.courseOfStudyId })
+        val courseOfStudyCode = choose("courseOfStudyCode", listOf(row).mapNotNull { it.p06CourseOfStudyCode })
         val courseTypeCode = choose("courseTypeCode", listOf(personalDataGetMinimalCareersData()).flatten().mapNotNull { it.courseTypeCode })
-        val academicYearEnrollmentId = choose("academicYearEnrollmentId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.academicYearEnrollmentId }.map { it.toLong() })
+        val academicYearEnrollmentId = choose("academicYearEnrollmentId", listOf(row2).mapNotNull { it.academicYearEnrollmentId }.map { it.toLong() })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PhDProgramCareer\"}}") {
             api.personalData.getPhdCareersData(studentId = studentId, fiscalCode = fiscalCode, studentStatusCode = studentStatusCode, academicYearId = academicYearId, courseOfStudyId = courseOfStudyId, courseOfStudyCode = courseOfStudyCode, courseTypeCode = courseTypeCode, academicYearEnrollmentId = academicYearEnrollmentId)
         } ?: return@case
@@ -137,11 +144,13 @@ class Esse3PersonalDataLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("PersonalData.getPhdCareersData#3")
     fun getPhdCareersData3() = case("PersonalData.getPhdCareersData#3", index = 2) {
-        val userId = choose("userId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.userId })
-        val courseOfStudyId = choose("courseOfStudyId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.courseOfStudyId })
-        val courseOfStudyCode = choose("courseOfStudyCode", listOf(personalDataGetPersons()).flatten().mapNotNull { it.italianTitle }.flatten().mapNotNull { it.courseOfStudyCode })
+        val row = chooseRow("userId, academicYearEnrollmentId", listOf(personalDataGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.userId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.academicYearEnrollmentId }.firstOrNull()?.toString()) }
+        val row2 = chooseRow("courseOfStudyId, courseOfStudyCode", listOf(careersGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.courseOfStudyId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.p06CourseOfStudyCode }.firstOrNull()?.toString()) }
+        val userId = choose("userId", listOf(row).mapNotNull { it.userId })
+        val courseOfStudyId = choose("courseOfStudyId", listOf(row2).mapNotNull { it.courseOfStudyId })
+        val courseOfStudyCode = choose("courseOfStudyCode", listOf(row2).mapNotNull { it.p06CourseOfStudyCode })
         val courseTypeCode = choose("courseTypeCode", listOf(personalDataGetMinimalCareersData()).flatten().mapNotNull { it.courseTypeCode })
-        val academicYearEnrollmentId = choose("academicYearEnrollmentId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.academicYearEnrollmentId }.map { it.toLong() })
+        val academicYearEnrollmentId = choose("academicYearEnrollmentId", listOf(row).mapNotNull { it.academicYearEnrollmentId }.map { it.toLong() })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PhDProgramCareer\"}}") {
             api.personalData.getPhdCareersData(userId = userId, courseOfStudyId = courseOfStudyId, courseOfStudyCode = courseOfStudyCode, courseTypeCode = courseTypeCode, academicYearEnrollmentId = academicYearEnrollmentId)
         } ?: return@case
@@ -151,11 +160,13 @@ class Esse3PersonalDataLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("PersonalData.getPhdCareersData#4")
     fun getPhdCareersData4() = case("PersonalData.getPhdCareersData#4", index = 3) {
-        val userId = choose("userId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.userId })
-        val studentId = choose("studentId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studentId })
-        val fiscalCode = choose("fiscalCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.fiscalCode })
-        val studentStatusCode = choose("studentStatusCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studentStatusCode })
-        val academicYearId = choose("academicYearId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.academicYearId }.map { it.toString() })
+        val row = chooseRow("userId, studentStatusCode, academicYearId", listOf(personalDataGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.userId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.studentStatusCode }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.academicYearId }.firstOrNull()?.toString()) }
+        val row2 = chooseRow("studentId, fiscalCode", listOf(careersGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.studentId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.fiscalCode }.firstOrNull()?.toString()) }
+        val userId = choose("userId", listOf(row).mapNotNull { it.userId })
+        val studentId = choose("studentId", listOf(row2).mapNotNull { it.studentId })
+        val fiscalCode = choose("fiscalCode", listOf(row2).mapNotNull { it.fiscalCode })
+        val studentStatusCode = choose("studentStatusCode", listOf(row).mapNotNull { it.studentStatusCode })
+        val academicYearId = choose("academicYearId", listOf(row).mapNotNull { it.academicYearId }.map { it.toString() })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PhDProgramCareer\"}}") {
             api.personalData.getPhdCareersData(userId = userId, studentId = studentId, fiscalCode = fiscalCode, studentStatusCode = studentStatusCode, academicYearId = academicYearId)
         } ?: return@case
@@ -165,10 +176,12 @@ class Esse3PersonalDataLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("PersonalData.getPhdCareersData#5")
     fun getPhdCareersData5() = case("PersonalData.getPhdCareersData#5", index = 4) {
-        val studentId = choose("studentId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studentId })
-        val academicYearId = choose("academicYearId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.academicYearId }.map { it.toString() })
-        val courseOfStudyCode = choose("courseOfStudyCode", listOf(personalDataGetPersons()).flatten().mapNotNull { it.italianTitle }.flatten().mapNotNull { it.courseOfStudyCode })
-        val academicYearEnrollmentId = choose("academicYearEnrollmentId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.academicYearEnrollmentId }.map { it.toLong() })
+        val row = chooseRow("studentId, courseOfStudyCode", listOf(careersGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.studentId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.p06CourseOfStudyCode }.firstOrNull()?.toString()) }
+        val row2 = chooseRow("academicYearId, academicYearEnrollmentId", listOf(personalDataGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.academicYearId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.academicYearEnrollmentId }.firstOrNull()?.toString()) }
+        val studentId = choose("studentId", listOf(row).mapNotNull { it.studentId })
+        val academicYearId = choose("academicYearId", listOf(row2).mapNotNull { it.academicYearId }.map { it.toString() })
+        val courseOfStudyCode = choose("courseOfStudyCode", listOf(row).mapNotNull { it.p06CourseOfStudyCode })
+        val academicYearEnrollmentId = choose("academicYearEnrollmentId", listOf(row2).mapNotNull { it.academicYearEnrollmentId }.map { it.toLong() })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PhDProgramCareer\"}}") {
             api.personalData.getPhdCareersData(studentId = studentId, academicYearId = academicYearId, courseOfStudyCode = courseOfStudyCode, academicYearEnrollmentId = academicYearEnrollmentId)
         } ?: return@case
@@ -178,10 +191,12 @@ class Esse3PersonalDataLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("PersonalData.getPhdCareersData#6")
     fun getPhdCareersData6() = case("PersonalData.getPhdCareersData#6", index = 5) {
-        val userId = choose("userId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.userId })
-        val fiscalCode = choose("fiscalCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.fiscalCode })
-        val studentStatusCode = choose("studentStatusCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studentStatusCode })
-        val courseOfStudyId = choose("courseOfStudyId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.courseOfStudyId })
+        val row = chooseRow("userId, studentStatusCode", listOf(personalDataGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.userId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.studentStatusCode }.firstOrNull()?.toString()) }
+        val row2 = chooseRow("fiscalCode, courseOfStudyId", listOf(careersGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.fiscalCode }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.courseOfStudyId }.firstOrNull()?.toString()) }
+        val userId = choose("userId", listOf(row).mapNotNull { it.userId })
+        val fiscalCode = choose("fiscalCode", listOf(row2).mapNotNull { it.fiscalCode })
+        val studentStatusCode = choose("studentStatusCode", listOf(row).mapNotNull { it.studentStatusCode })
+        val courseOfStudyId = choose("courseOfStudyId", listOf(row2).mapNotNull { it.courseOfStudyId })
         val courseTypeCode = choose("courseTypeCode", listOf(personalDataGetMinimalCareersData()).flatten().mapNotNull { it.courseTypeCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PhDProgramCareer\"}}") {
             api.personalData.getPhdCareersData(userId = userId, fiscalCode = fiscalCode, studentStatusCode = studentStatusCode, courseOfStudyId = courseOfStudyId, courseTypeCode = courseTypeCode)
@@ -201,12 +216,14 @@ class Esse3PersonalDataLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("PersonalData.getMinimalCareersData#2")
     fun getMinimalCareersData2() = case("PersonalData.getMinimalCareersData#2", index = 1) {
-        val userId = choose("userId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.userId })
-        val fiscalCode = choose("fiscalCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.fiscalCode })
-        val studentStatusCode = choose("studentStatusCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studentStatusCode })
-        val academicYearId = choose("academicYearId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.academicYearId }.map { it.toString() })
-        val courseOfStudyId = choose("courseOfStudyId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.courseOfStudyId })
-        val courseOfStudyCode = choose("courseOfStudyCode", listOf(personalDataGetPersons()).flatten().mapNotNull { it.italianTitle }.flatten().mapNotNull { it.courseOfStudyCode })
+        val row = chooseRow("userId, studentStatusCode, academicYearId", listOf(personalDataGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.userId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.studentStatusCode }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.academicYearId }.firstOrNull()?.toString()) }
+        val row2 = chooseRow("fiscalCode, courseOfStudyId, courseOfStudyCode", listOf(careersGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.fiscalCode }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.courseOfStudyId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.p06CourseOfStudyCode }.firstOrNull()?.toString()) }
+        val userId = choose("userId", listOf(row).mapNotNull { it.userId })
+        val fiscalCode = choose("fiscalCode", listOf(row2).mapNotNull { it.fiscalCode })
+        val studentStatusCode = choose("studentStatusCode", listOf(row).mapNotNull { it.studentStatusCode })
+        val academicYearId = choose("academicYearId", listOf(row).mapNotNull { it.academicYearId }.map { it.toString() })
+        val courseOfStudyId = choose("courseOfStudyId", listOf(row2).mapNotNull { it.courseOfStudyId })
+        val courseOfStudyCode = choose("courseOfStudyCode", listOf(row2).mapNotNull { it.p06CourseOfStudyCode })
         val courseTypeCode = choose("courseTypeCode", listOf(personalDataGetPhdCareersData()).flatten().mapNotNull { it.courseTypeCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerMinimalData\"}}") {
             api.personalData.getMinimalCareersData(userId = userId, fiscalCode = fiscalCode, studentStatusCode = studentStatusCode, academicYearId = academicYearId, courseOfStudyId = courseOfStudyId, courseOfStudyCode = courseOfStudyCode, courseTypeCode = courseTypeCode)
@@ -217,11 +234,13 @@ class Esse3PersonalDataLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("PersonalData.getMinimalCareersData#3")
     fun getMinimalCareersData3() = case("PersonalData.getMinimalCareersData#3", index = 2) {
-        val userId = choose("userId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.userId })
-        val studentStatusCode = choose("studentStatusCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studentStatusCode })
-        val courseOfStudyId = choose("courseOfStudyId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.courseOfStudyId })
-        val courseOfStudyCode = choose("courseOfStudyCode", listOf(personalDataGetPersons()).flatten().mapNotNull { it.italianTitle }.flatten().mapNotNull { it.courseOfStudyCode })
-        val academicYearEnrollmentId = choose("academicYearEnrollmentId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.academicYearEnrollmentId }.map { it.toLong() })
+        val row = chooseRow("userId, studentStatusCode, academicYearEnrollmentId", listOf(personalDataGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.userId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.studentStatusCode }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.academicYearEnrollmentId }.firstOrNull()?.toString()) }
+        val row2 = chooseRow("courseOfStudyId, courseOfStudyCode", listOf(careersGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.courseOfStudyId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.p06CourseOfStudyCode }.firstOrNull()?.toString()) }
+        val userId = choose("userId", listOf(row).mapNotNull { it.userId })
+        val studentStatusCode = choose("studentStatusCode", listOf(row).mapNotNull { it.studentStatusCode })
+        val courseOfStudyId = choose("courseOfStudyId", listOf(row2).mapNotNull { it.courseOfStudyId })
+        val courseOfStudyCode = choose("courseOfStudyCode", listOf(row2).mapNotNull { it.p06CourseOfStudyCode })
+        val academicYearEnrollmentId = choose("academicYearEnrollmentId", listOf(row).mapNotNull { it.academicYearEnrollmentId }.map { it.toLong() })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerMinimalData\"}}") {
             api.personalData.getMinimalCareersData(userId = userId, studentStatusCode = studentStatusCode, courseOfStudyId = courseOfStudyId, courseOfStudyCode = courseOfStudyCode, academicYearEnrollmentId = academicYearEnrollmentId)
         } ?: return@case
@@ -231,10 +250,11 @@ class Esse3PersonalDataLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("PersonalData.getMinimalCareersData#4")
     fun getMinimalCareersData4() = case("PersonalData.getMinimalCareersData#4", index = 3) {
-        val fiscalCode = choose("fiscalCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.fiscalCode })
-        val academicYearId = choose("academicYearId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.academicYearId }.map { it.toString() })
+        val row = chooseRow("academicYearId, academicYearEnrollmentId", listOf(personalDataGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.academicYearId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.academicYearEnrollmentId }.firstOrNull()?.toString()) }
+        val fiscalCode = choose("fiscalCode", listOf(careersGetCareers()).flatten().mapNotNull { it.fiscalCode })
+        val academicYearId = choose("academicYearId", listOf(row).mapNotNull { it.academicYearId }.map { it.toString() })
         val courseTypeCode = choose("courseTypeCode", listOf(personalDataGetPhdCareersData()).flatten().mapNotNull { it.courseTypeCode })
-        val academicYearEnrollmentId = choose("academicYearEnrollmentId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.academicYearEnrollmentId }.map { it.toLong() })
+        val academicYearEnrollmentId = choose("academicYearEnrollmentId", listOf(row).mapNotNull { it.academicYearEnrollmentId }.map { it.toLong() })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerMinimalData\"}}") {
             api.personalData.getMinimalCareersData(fiscalCode = fiscalCode, academicYearId = academicYearId, courseTypeCode = courseTypeCode, academicYearEnrollmentId = academicYearEnrollmentId)
         } ?: return@case
@@ -244,10 +264,12 @@ class Esse3PersonalDataLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("PersonalData.getMinimalCareersData#5")
     fun getMinimalCareersData5() = case("PersonalData.getMinimalCareersData#5", index = 4) {
-        val userId = choose("userId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.userId })
-        val fiscalCode = choose("fiscalCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.fiscalCode })
-        val academicYearId = choose("academicYearId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.academicYearId }.map { it.toString() })
-        val courseOfStudyCode = choose("courseOfStudyCode", listOf(personalDataGetPersons()).flatten().mapNotNull { it.italianTitle }.flatten().mapNotNull { it.courseOfStudyCode })
+        val row = chooseRow("userId, academicYearId", listOf(personalDataGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.userId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.academicYearId }.firstOrNull()?.toString()) }
+        val row2 = chooseRow("fiscalCode, courseOfStudyCode", listOf(careersGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.fiscalCode }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.p06CourseOfStudyCode }.firstOrNull()?.toString()) }
+        val userId = choose("userId", listOf(row).mapNotNull { it.userId })
+        val fiscalCode = choose("fiscalCode", listOf(row2).mapNotNull { it.fiscalCode })
+        val academicYearId = choose("academicYearId", listOf(row).mapNotNull { it.academicYearId }.map { it.toString() })
+        val courseOfStudyCode = choose("courseOfStudyCode", listOf(row2).mapNotNull { it.p06CourseOfStudyCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerMinimalData\"}}") {
             api.personalData.getMinimalCareersData(userId = userId, fiscalCode = fiscalCode, academicYearId = academicYearId, courseOfStudyCode = courseOfStudyCode)
         } ?: return@case
@@ -257,9 +279,10 @@ class Esse3PersonalDataLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("PersonalData.getMinimalCareersData#6")
     fun getMinimalCareersData6() = case("PersonalData.getMinimalCareersData#6", index = 5) {
-        val fiscalCode = choose("fiscalCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.fiscalCode })
+        val row = chooseRow("fiscalCode, courseOfStudyId", listOf(careersGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.fiscalCode }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.courseOfStudyId }.firstOrNull()?.toString()) }
+        val fiscalCode = choose("fiscalCode", listOf(row).mapNotNull { it.fiscalCode })
         val studentStatusCode = choose("studentStatusCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studentStatusCode })
-        val courseOfStudyId = choose("courseOfStudyId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.courseOfStudyId })
+        val courseOfStudyId = choose("courseOfStudyId", listOf(row).mapNotNull { it.courseOfStudyId })
         val courseTypeCode = choose("courseTypeCode", listOf(personalDataGetPhdCareersData()).flatten().mapNotNull { it.courseTypeCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerMinimalData\"}}") {
             api.personalData.getMinimalCareersData(fiscalCode = fiscalCode, studentStatusCode = studentStatusCode, courseOfStudyId = courseOfStudyId, courseTypeCode = courseTypeCode)
@@ -270,7 +293,7 @@ class Esse3PersonalDataLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("PersonalData.getCareerByStudent#1")
     fun getCareerByStudent1() = case("PersonalData.getCareerByStudent#1") {
-        val studentId = choose("studentId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studentId })
+        val studentId = choose("studentId", listOf(careersGetCareers()).flatten().mapNotNull { it.studentId })
         val result = call("{\"k\":\"record\",\"n\":\"Esse3Career\"}") {
             api.personalData.getCareerByStudent(studentId = studentId)
         } ?: return@case
@@ -288,7 +311,7 @@ class Esse3PersonalDataLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("PersonalData.getAnnualEnrollment#1")
     fun getAnnualEnrollment1() = case("PersonalData.getAnnualEnrollment#1") {
-        val studentId = choose("studentId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studentId })
+        val studentId = choose("studentId", listOf(careersGetCareers()).flatten().mapNotNull { it.studentId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3AnnualEnrollment\"}}") {
             api.personalData.getAnnualEnrollment(studentId = studentId)
         } ?: return@case
@@ -315,70 +338,64 @@ class Esse3PersonalDataLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("PersonalData.getPersons#1")
     fun getPersons1() = case("PersonalData.getPersons#1") {
-        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PersonCommonRegistry\"}}") {
+        call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PersonCommonRegistry\"}}") {
             api.personalData.getPersons()
-        } ?: return@case
-        fingerprint { list(result) { writeEsse3PersonCommonRegistry(it) } }
+        }
     }
 
     @Test
     @DisplayName("PersonalData.getPersons#2")
     fun getPersons2() = case("PersonalData.getPersons#2", index = 1) {
-        val personId = choose("personId", listOf(personalDataGetPersonTitles()).mapNotNull { it.personId }.map { it.toLongOrNull() })
-        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PersonCommonRegistry\"}}") {
+        val personId = choose("personId", listOf(careersGetCareers()).flatten().mapNotNull { it.personId })
+        call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PersonCommonRegistry\"}}") {
             api.personalData.getPersons(personId = personId)
-        } ?: return@case
-        fingerprint { list(result) { writeEsse3PersonCommonRegistry(it) } }
+        }
     }
 
     @Test
     @DisplayName("PersonalData.getPersons#3")
     fun getPersons3() = case("PersonalData.getPersons#3", index = 2) {
-        val fiscalCode = choose("fiscalCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.fiscalCode })
-        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PersonCommonRegistry\"}}") {
+        val fiscalCode = choose("fiscalCode", listOf(careersGetCareers()).flatten().mapNotNull { it.fiscalCode })
+        call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PersonCommonRegistry\"}}") {
             api.personalData.getPersons(fiscalCode = fiscalCode)
-        } ?: return@case
-        fingerprint { list(result) { writeEsse3PersonCommonRegistry(it) } }
+        }
     }
 
     @Test
     @DisplayName("PersonalData.getPersons#4")
     fun getPersons4() = case("PersonalData.getPersons#4", index = 3) {
-        val fiscalCode = choose("fiscalCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.fiscalCode })
-        val personId = choose("personId", listOf(personalDataGetPersonTitles()).mapNotNull { it.personId }.map { it.toLongOrNull() })
-        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PersonCommonRegistry\"}}") {
+        val row = chooseRow("fiscalCode, personId", listOf(careersGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.fiscalCode }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.personId }.firstOrNull()?.toString()) }
+        val fiscalCode = choose("fiscalCode", listOf(row).mapNotNull { it.fiscalCode })
+        val personId = choose("personId", listOf(row).mapNotNull { it.personId })
+        call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PersonCommonRegistry\"}}") {
             api.personalData.getPersons(fiscalCode = fiscalCode, personId = personId)
-        } ?: return@case
-        fingerprint { list(result) { writeEsse3PersonCommonRegistry(it) } }
+        }
     }
 
     @Test
     @DisplayName("PersonalData.getGdprPersons#1")
     fun getGdprPersons1() = case("PersonalData.getGdprPersons#1") {
-        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PersonGDPR\"}}") {
+        call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PersonGDPR\"}}") {
             api.personalData.getGdprPersons()
-        } ?: return@case
-        fingerprint { list(result) { writeEsse3PersonGDPR(it) } }
+        }
     }
 
     @Test
     @DisplayName("PersonalData.getGdprPersons#2")
     fun getGdprPersons2() = case("PersonalData.getGdprPersons#2", index = 1) {
-        val fiscalCode = choose("fiscalCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.fiscalCode })
-        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PersonGDPR\"}}") {
+        val fiscalCode = choose("fiscalCode", listOf(careersGetCareers()).flatten().mapNotNull { it.fiscalCode })
+        call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PersonGDPR\"}}") {
             api.personalData.getGdprPersons(fiscalCode = fiscalCode)
-        } ?: return@case
-        fingerprint { list(result) { writeEsse3PersonGDPR(it) } }
+        }
     }
 
     @Test
     @DisplayName("PersonalData.getGdprPerson#1")
     fun getGdprPerson1() = case("PersonalData.getGdprPerson#1") {
-        val personId = choose("personId", listOf(personalDataGetPersonTitles()).mapNotNull { it.personId }.map { it.toLongOrNull() })
-        val result = call("{\"k\":\"record\",\"n\":\"Esse3PersonGDPR\"}") {
+        val personId = choose("personId", listOf(careersGetCareers()).flatten().mapNotNull { it.personId })
+        call("{\"k\":\"record\",\"n\":\"Esse3PersonGDPR\"}") {
             api.personalData.getGdprPerson(personId = personId)
-        } ?: return@case
-        fingerprint { writeEsse3PersonGDPR(result) }
+        }
     }
 
     @Test
@@ -392,7 +409,7 @@ class Esse3PersonalDataLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("PersonalData.getPerson#1")
     fun getPerson1() = case("PersonalData.getPerson#1") {
-        val personId = choose("personId", listOf(personalDataGetPersonTitles()).mapNotNull { it.personId }.map { it.toLongOrNull() })
+        val personId = choose("personId", listOf(careersGetCareers()).flatten().mapNotNull { it.personId })
         val result = call("{\"k\":\"record\",\"n\":\"Esse3Person\"}") {
             api.personalData.getPerson(personId = personId)
         } ?: return@case
@@ -410,8 +427,9 @@ class Esse3PersonalDataLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("PersonalData.getCareerByStudentPerson#1")
     fun getCareerByStudentPerson1() = case("PersonalData.getCareerByStudentPerson#1") {
-        val personId = choose("personId", listOf(personalDataGetPersonTitles()).mapNotNull { it.personId }.map { it.toLongOrNull() })
-        val studentId = choose("studentId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studentId })
+        val row = chooseRow("personId, studentId", listOf(careersGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.personId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.studentId }.firstOrNull()?.toString()) }
+        val personId = choose("personId", listOf(row).mapNotNull { it.personId })
+        val studentId = choose("studentId", listOf(row).mapNotNull { it.studentId })
         val result = call("{\"k\":\"record\",\"n\":\"Esse3Career\"}") {
             api.personalData.getCareerByStudentPerson(personId = personId, studentId = studentId)
         } ?: return@case
@@ -421,43 +439,16 @@ class Esse3PersonalDataLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("PersonalData.getCareerByStudentPerson#unknown-id")
     fun getCareerByStudentPersonUnknownId() = case("PersonalData.getCareerByStudentPerson#unknown-id") {
-        val studentId = choose("studentId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studentId })
+        val studentId = choose("studentId", listOf(careersGetCareers()).flatten().mapNotNull { it.studentId })
         refused(acceptsEmpty = true) {
             api.personalData.getCareerByStudentPerson(personId = 987654321L, studentId = studentId)
         }
     }
 
     @Test
-    @DisplayName("PersonalData.putMobilePhone#write")
-    fun putMobilePhoneWrite() = case("PersonalData.putMobilePhone#write", effect = "reversible") {
-        val personId = choose("personId", listOf(personalDataGetPersonTitles()).mapNotNull { it.personId }.map { it.toLongOrNull() })
-        val snapshot = call("{\"k\":\"record\",\"n\":\"Esse3Person\"}") {
-            api.personalData.getPerson(personId = personId)
-        } ?: return@case
-        val before = choose("the value to restore", listOf(snapshot).mapNotNull { it.mobilePhone })
-        call("{\"k\":\"record\",\"n\":\"Esse3MobileParameter\"}") {
-            api.personalData.putMobilePhone(personId = personId, body = LiveJson.decodeFromString<Esse3MobileParameter>("{\"cellulare\":\"3330000000\"}"))
-        }
-        try {
-            val verified = call("{\"k\":\"record\",\"n\":\"Esse3Person\"}") {
-                api.personalData.getPerson(personId = personId)
-            } ?: return@case
-            expectContains("mobilePhone", listOf(verified).mapNotNull { it.mobilePhone }, first("mobilePhone", listOf(LiveJson.decodeFromString<Esse3MobileParameter>("{\"cellulare\":\"3330000000\"}")).mapNotNull { it.mobilePhone }))
-        } finally {
-            call("{\"k\":\"record\",\"n\":\"Esse3MobileParameter\"}") {
-                api.personalData.putMobilePhone(personId = personId, body = LiveJson.decodeFromString<Esse3MobileParameter>("{\"cellulare\":\"3330000000\"}").copy(mobilePhone = before))
-            }
-        }
-        val restored = call("{\"k\":\"record\",\"n\":\"Esse3Person\"}") {
-            api.personalData.getPerson(personId = personId)
-        } ?: return@case
-        expectContains("mobilePhone", listOf(restored).mapNotNull { it.mobilePhone }, before)
-    }
-
-    @Test
     @DisplayName("PersonalData.getPersonPhoto#1")
     fun getPersonPhoto1() = case("PersonalData.getPersonPhoto#1") {
-        val personId = choose("personId", listOf(personalDataGetPersonTitles()).mapNotNull { it.personId }.map { it.toLongOrNull() })
+        val personId = choose("personId", listOf(careersGetCareers()).flatten().mapNotNull { it.personId })
         call(null) {
             api.personalData.getPersonPhoto(personId = personId)
         }
@@ -474,19 +465,9 @@ class Esse3PersonalDataLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("PersonalData.getPersonCompensatoryMeasures#1")
     fun getPersonCompensatoryMeasures1() = case("PersonalData.getPersonCompensatoryMeasures#1") {
-        val personId = choose("personId", listOf(personalDataGetPersonTitles()).mapNotNull { it.personId }.map { it.toLongOrNull() })
+        val personId = choose("personId", listOf(careersGetCareers()).flatten().mapNotNull { it.personId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PersonCompensatoryMeasures\"}}") {
             api.personalData.getPersonCompensatoryMeasures(personId = personId)
-        } ?: return@case
-        fingerprint { list(result) { writeEsse3PersonCompensatoryMeasures(it) } }
-    }
-
-    @Test
-    @DisplayName("PersonalData.getPersonCompensatoryMeasures#2")
-    fun getPersonCompensatoryMeasures2() = case("PersonalData.getPersonCompensatoryMeasures#2", index = 1) {
-        val personId = choose("personId", listOf(personalDataGetPersonTitles()).mapNotNull { it.personId }.map { it.toLongOrNull() })
-        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PersonCompensatoryMeasures\"}}") {
-            api.personalData.getPersonCompensatoryMeasures(personId = personId, q = Esse3CompensatoryMeasureFilter.Prenotazione)
         } ?: return@case
         fingerprint { list(result) { writeEsse3PersonCompensatoryMeasures(it) } }
     }
@@ -502,7 +483,7 @@ class Esse3PersonalDataLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("PersonalData.getPhotoValidationFlag#1")
     fun getPhotoValidationFlag1() = case("PersonalData.getPhotoValidationFlag#1") {
-        val personId = choose("personId", listOf(personalDataGetPersonTitles()).mapNotNull { it.personId }.map { it.toLongOrNull() })
+        val personId = choose("personId", listOf(careersGetCareers()).flatten().mapNotNull { it.personId })
         val result = call("{\"k\":\"record\",\"n\":\"Esse3ValidationFlag\"}") {
             api.personalData.getPhotoValidationFlag(personId = personId)
         } ?: return@case
@@ -520,7 +501,7 @@ class Esse3PersonalDataLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("PersonalData.getTitles#1")
     fun getTitles1() = case("PersonalData.getTitles#1") {
-        val personId = choose("personId", listOf(personalDataGetPersonTitles()).mapNotNull { it.personId }.map { it.toLongOrNull() })
+        val personId = choose("personId", listOf(careersGetCareers()).flatten().mapNotNull { it.personId })
         val result = call("{\"k\":\"record\",\"n\":\"Esse3PersonTitles\"}") {
             api.personalData.getTitles(personId = personId)
         } ?: return@case
@@ -530,8 +511,9 @@ class Esse3PersonalDataLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("PersonalData.getTitles#2")
     fun getTitles2() = case("PersonalData.getTitles#2", index = 1) {
-        val personId = choose("personId", listOf(personalDataGetPersonTitles()).mapNotNull { it.personId }.map { it.toLongOrNull() })
-        val studentId = choose("studentId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studentId })
+        val row = chooseRow("personId, studentId", listOf(careersGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.personId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.studentId }.firstOrNull()?.toString()) }
+        val personId = choose("personId", listOf(row).mapNotNull { it.personId })
+        val studentId = choose("studentId", listOf(row).mapNotNull { it.studentId })
         val result = call("{\"k\":\"record\",\"n\":\"Esse3PersonTitles\"}") {
             api.personalData.getTitles(personId = personId, studentId = studentId)
         } ?: return@case
@@ -549,39 +531,7 @@ class Esse3PersonalDataLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("PersonalData.getPersonTitles#1")
     fun getPersonTitles1() = case("PersonalData.getPersonTitles#1") {
-        val result = call("{\"k\":\"record\",\"n\":\"Esse3PersonTitles\"}") {
-            api.personalData.getPersonTitles()
-        } ?: return@case
-        fingerprint { writeEsse3PersonTitles(result) }
-    }
-
-    @Test
-    @DisplayName("PersonalData.getPersonTitles#2")
-    fun getPersonTitles2() = case("PersonalData.getPersonTitles#2", index = 1) {
-        val personId = choose("personId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.personId })
-        val studentId = choose("studentId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studentId })
-        val fiscalCode = choose("fiscalCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.fiscalCode })
-        val result = call("{\"k\":\"record\",\"n\":\"Esse3PersonTitles\"}") {
-            api.personalData.getPersonTitles(personId = personId, studentId = studentId, fiscalCode = fiscalCode)
-        } ?: return@case
-        fingerprint { writeEsse3PersonTitles(result) }
-    }
-
-    @Test
-    @DisplayName("PersonalData.getPersonTitles#3")
-    fun getPersonTitles3() = case("PersonalData.getPersonTitles#3", index = 2) {
-        val studentId = choose("studentId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studentId })
-        val fiscalCode = choose("fiscalCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.fiscalCode })
-        val result = call("{\"k\":\"record\",\"n\":\"Esse3PersonTitles\"}") {
-            api.personalData.getPersonTitles(studentId = studentId, fiscalCode = fiscalCode)
-        } ?: return@case
-        fingerprint { writeEsse3PersonTitles(result) }
-    }
-
-    @Test
-    @DisplayName("PersonalData.getPersonTitles#4")
-    fun getPersonTitles4() = case("PersonalData.getPersonTitles#4", index = 3) {
-        val personId = choose("personId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.personId })
+        val personId = choose("personId", listOf(careersGetCareers()).flatten().mapNotNull { it.personId })
         val result = call("{\"k\":\"record\",\"n\":\"Esse3PersonTitles\"}") {
             api.personalData.getPersonTitles(personId = personId)
         } ?: return@case
@@ -589,21 +539,38 @@ class Esse3PersonalDataLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     }
 
     @Test
-    @DisplayName("PersonalData.getPersonTitles#5")
-    fun getPersonTitles5() = case("PersonalData.getPersonTitles#5", index = 4) {
-        val studentId = choose("studentId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studentId })
+    @DisplayName("PersonalData.getPersonTitles#2")
+    fun getPersonTitles2() = case("PersonalData.getPersonTitles#2", index = 1) {
+        val row = chooseRow("personId, fiscalCode", listOf(careersGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.personId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.fiscalCode }.firstOrNull()?.toString()) }
+        val personId = choose("personId", listOf(row).mapNotNull { it.personId })
+        val fiscalCode = choose("fiscalCode", listOf(row).mapNotNull { it.fiscalCode })
         val result = call("{\"k\":\"record\",\"n\":\"Esse3PersonTitles\"}") {
-            api.personalData.getPersonTitles(studentId = studentId)
+            api.personalData.getPersonTitles(personId = personId, fiscalCode = fiscalCode)
         } ?: return@case
         fingerprint { writeEsse3PersonTitles(result) }
     }
 
     @Test
-    @DisplayName("PersonalData.getPersonTitles#6")
-    fun getPersonTitles6() = case("PersonalData.getPersonTitles#6", index = 5) {
-        val fiscalCode = choose("fiscalCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.fiscalCode })
+    @DisplayName("PersonalData.getPersonTitles#3")
+    fun getPersonTitles3() = case("PersonalData.getPersonTitles#3", index = 2) {
+        val row = chooseRow("personId, studentId", listOf(careersGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.personId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.studentId }.firstOrNull()?.toString()) }
+        val personId = choose("personId", listOf(row).mapNotNull { it.personId })
+        val studentId = choose("studentId", listOf(row).mapNotNull { it.studentId })
         val result = call("{\"k\":\"record\",\"n\":\"Esse3PersonTitles\"}") {
-            api.personalData.getPersonTitles(fiscalCode = fiscalCode)
+            api.personalData.getPersonTitles(personId = personId, studentId = studentId)
+        } ?: return@case
+        fingerprint { writeEsse3PersonTitles(result) }
+    }
+
+    @Test
+    @DisplayName("PersonalData.getPersonTitles#4")
+    fun getPersonTitles4() = case("PersonalData.getPersonTitles#4", index = 3) {
+        val row = chooseRow("personId, studentId, fiscalCode", listOf(careersGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.personId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.studentId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.fiscalCode }.firstOrNull()?.toString()) }
+        val personId = choose("personId", listOf(row).mapNotNull { it.personId })
+        val studentId = choose("studentId", listOf(row).mapNotNull { it.studentId })
+        val fiscalCode = choose("fiscalCode", listOf(row).mapNotNull { it.fiscalCode })
+        val result = call("{\"k\":\"record\",\"n\":\"Esse3PersonTitles\"}") {
+            api.personalData.getPersonTitles(personId = personId, studentId = studentId, fiscalCode = fiscalCode)
         } ?: return@case
         fingerprint { writeEsse3PersonTitles(result) }
     }

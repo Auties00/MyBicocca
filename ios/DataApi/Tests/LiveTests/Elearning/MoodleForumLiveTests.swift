@@ -44,7 +44,7 @@ final class MoodleForumLiveTests: XCTestCase {
 
     func test_getDiscussionPosts1() async throws {
         try await liveCase(MoodleLive.api, "Forum.getDiscussionPosts#1") { live in
-            let discussionId = try live.choose("discussionId", [try await MoodleLive.forumGetForumDiscussions(live)].compactMap { $0.discussions }.flatMap { $0 }.compactMap { $0.id })
+            let discussionId = try live.choose("discussionId", [try await MoodleLive.forumGetForumDiscussions(live)].compactMap { $0.discussions }.flatMap { $0 }.compactMap { $0.discussion })
             let auth = try await MoodleLive.tokenCredentials(live)
             let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleDiscussionPostsResponse\"}", errors: ["requireloginerror"]) { try await live.api.forum.getDiscussionPosts(discussionId: discussionId, auth: auth) }
             live.fingerprint { f in MoodleLive.writeMoodleDiscussionPostsResponse(f, result) }
@@ -53,7 +53,7 @@ final class MoodleForumLiveTests: XCTestCase {
 
     func test_getDiscussionPosts2() async throws {
         try await liveCase(MoodleLive.api, "Forum.getDiscussionPosts#2", index: 1) { live in
-            let discussionId = try live.choose("discussionId", [try await MoodleLive.forumGetForumDiscussions(live)].compactMap { $0.discussions }.flatMap { $0 }.compactMap { $0.id })
+            let discussionId = try live.choose("discussionId", [try await MoodleLive.forumGetForumDiscussions(live)].compactMap { $0.discussions }.flatMap { $0 }.compactMap { $0.discussion })
             let auth = try await MoodleLive.tokenCredentials(live)
             let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleDiscussionPostsResponse\"}", errors: ["requireloginerror"]) { try await live.api.forum.getDiscussionPosts(discussionId: discussionId, includeInlineAttachments: true, auth: auth) }
             live.fingerprint { f in MoodleLive.writeMoodleDiscussionPostsResponse(f, result) }
@@ -62,7 +62,7 @@ final class MoodleForumLiveTests: XCTestCase {
 
     func test_getDiscussionPosts3() async throws {
         try await liveCase(MoodleLive.api, "Forum.getDiscussionPosts#3", index: 2) { live in
-            let discussionId = try live.choose("discussionId", [try await MoodleLive.forumGetForumDiscussions(live)].compactMap { $0.discussions }.flatMap { $0 }.compactMap { $0.id })
+            let discussionId = try live.choose("discussionId", [try await MoodleLive.forumGetForumDiscussions(live)].compactMap { $0.discussions }.flatMap { $0 }.compactMap { $0.discussion })
             let auth = try await MoodleLive.tokenCredentials(live)
             let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleDiscussionPostsResponse\"}", errors: ["requireloginerror"]) { try await live.api.forum.getDiscussionPosts(discussionId: discussionId, includeInlineAttachments: false, auth: auth) }
             live.fingerprint { f in MoodleLive.writeMoodleDiscussionPostsResponse(f, result) }

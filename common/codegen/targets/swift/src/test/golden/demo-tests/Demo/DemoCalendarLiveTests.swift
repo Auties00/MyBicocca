@@ -30,17 +30,21 @@ final class DemoCalendarLiveTests: XCTestCase {
 
     func test_runQuery1() async throws {
         try await liveCase(DemoLive.api, "Calendar.runQuery#1") { live in
-            let ids = try live.decode([Int64].self, json: "[1,2]")
+            let row = try live.chooseRow("ids, tags", [try await DemoLive.searchSearchItems(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.owner }.compactMap { $0.id }); let key1: String? = live.firstText([element].compactMap { $0.name }); return [key0, key1] }
+            let ids = [try live.choose("ids", [row].compactMap { $0.owner }.compactMap { $0.id })]
+            let tags = [try live.choose("tags", [row].compactMap { $0.name })]
             let auth = try await DemoLive.sessionCredentials(live)
-            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"string\"}}") { try await live.api.calendar.runQuery(ids: ids, auth: auth) }
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"string\"}}") { try await live.api.calendar.runQuery(ids: ids, tags: tags, auth: auth) }
             live.fingerprint { f in f.list(result) { item0 in DemoLive.writeDemoSlot(f, item0) } }
         }
     }
 
     func test_runQueryInvalidCredentials() async throws {
         try await liveCase(DemoLive.api, "Calendar.runQuery#invalid-credentials") { live in
-            let ids = try live.decode([Int64].self, json: "[1,2]")
-            try await live.refused(acceptsEmpty: false) { try await live.api.calendar.runQuery(ids: ids, auth: DemoSessionAuth(token: "mybicocca-invalid-credential")) }
+            let row = try live.chooseRow("ids, tags", [try await DemoLive.searchSearchItems(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.owner }.compactMap { $0.id }); let key1: String? = live.firstText([element].compactMap { $0.name }); return [key0, key1] }
+            let ids = [try live.choose("ids", [row].compactMap { $0.owner }.compactMap { $0.id })]
+            let tags = [try live.choose("tags", [row].compactMap { $0.name })]
+            try await live.refused(acceptsEmpty: false) { try await live.api.calendar.runQuery(ids: ids, tags: tags, auth: DemoSessionAuth(token: "mybicocca-invalid-credential")) }
         }
     }
 }

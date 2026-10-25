@@ -11,8 +11,6 @@ import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAdvancedFeatur
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAssignment
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAssignmentConfig
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAssignmentsResponse
-import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAttemptReviewData
-import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAttemptReviewResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleBadgeAlignment
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleBadgeEndorsement
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCalendarEvent
@@ -80,14 +78,12 @@ import it.attendance100.mybicocca.data.remote.elearning.dto.MoodlePrivateFilesIn
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleQuiz
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleQuizAccessInformation
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleQuizAttempt
-import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleQuizQuestion
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleQuizzesResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleRating
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleRatingInfo
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleRatingScale
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleRatingScaleItem
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleRelatedBadge
-import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleResponseFileArea
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleSiteFunction
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleSiteInfo
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
@@ -205,7 +201,7 @@ internal suspend fun LiveCase<MoodleApi>.forumGetForumDiscussions(): MoodleForum
 
 internal suspend fun LiveCase<MoodleApi>.forumGetDiscussionPosts(): MoodleDiscussionPostsResponse =
     source("forumGetDiscussionPosts", "{\"k\":\"record\",\"n\":\"MoodleDiscussionPostsResponse\"}") {
-        val discussionId = choose("discussionId", listOf(forumGetForumDiscussions()).mapNotNull { it.discussions }.flatten().mapNotNull { it.id })
+        val discussionId = choose("discussionId", listOf(forumGetForumDiscussions()).mapNotNull { it.discussions }.flatten().mapNotNull { it.discussion })
         api.forum.getDiscussionPosts(discussionId = discussionId, auth = tokenCredentials())
     }
 
@@ -334,26 +330,6 @@ internal fun LiveFingerprint.writeMoodleAssignmentsResponse(value: MoodleAssignm
     if (value == null) return nil()
     obj(value) {
         list(value.courses) { writeMoodleCourseAssignments(it) }
-        list(value.warnings) { writeMoodleWarning(it) }
-    }
-}
-
-internal fun LiveFingerprint.writeMoodleAttemptReviewData(value: MoodleAttemptReviewData?) {
-    if (value == null) return nil()
-    obj(value) {
-        str(value.id)
-        str(value.title)
-        str(value.content)
-    }
-}
-
-internal fun LiveFingerprint.writeMoodleAttemptReviewResponse(value: MoodleAttemptReviewResponse?) {
-    if (value == null) return nil()
-    obj(value) {
-        str(value.grade)
-        writeMoodleQuizAttempt(value.attempt)
-        list(value.additionalData) { writeMoodleAttemptReviewData(it) }
-        list(value.questions) { writeMoodleQuizQuestion(it) }
         list(value.warnings) { writeMoodleWarning(it) }
     }
 }
@@ -1424,30 +1400,6 @@ internal fun LiveFingerprint.writeMoodleQuizAttempt(value: MoodleQuizAttempt?) {
     }
 }
 
-internal fun LiveFingerprint.writeMoodleQuizQuestion(value: MoodleQuizQuestion?) {
-    if (value == null) return nil()
-    obj(value) {
-        int(value.slot.toLong())
-        str(value.type)
-        int(value.page.toLong())
-        str(value.questionNumber)
-        int(value.number?.toLong())
-        str(value.html)
-        list(value.responseFileAreas) { writeMoodleResponseFileArea(it) }
-        int(value.sequenceCheck?.toLong())
-        int(value.lastActionTime)
-        bool(value.hasAutoSavedStep)
-        bool(value.flagged)
-        str(value.state)
-        str(value.stateClass)
-        str(value.status)
-        bool(value.blockedByPrevious)
-        str(value.mark)
-        num(value.maxMark)
-        str(value.settings)
-    }
-}
-
 internal fun LiveFingerprint.writeMoodleQuizzesResponse(value: MoodleQuizzesResponse?) {
     if (value == null) return nil()
     obj(value) {
@@ -1513,14 +1465,6 @@ internal fun LiveFingerprint.writeMoodleRelatedBadge(value: MoodleRelatedBadge?)
         str(value.version)
         str(value.language)
         int(value.type?.toLong())
-    }
-}
-
-internal fun LiveFingerprint.writeMoodleResponseFileArea(value: MoodleResponseFileArea?) {
-    if (value == null) return nil()
-    obj(value) {
-        str(value.area)
-        list(value.files) { writeMoodleFile(it) }
     }
 }
 

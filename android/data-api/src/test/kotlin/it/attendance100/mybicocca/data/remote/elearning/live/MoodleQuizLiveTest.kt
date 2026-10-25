@@ -13,10 +13,9 @@ class MoodleQuizLiveTest : LiveTest<MoodleApi>(MoodleLive) {
     @DisplayName("Quiz.getAttemptReview#1")
     fun getAttemptReview1() = case("Quiz.getAttemptReview#1") {
         val attemptId = choose("attemptId", listOf(quizGetUserAttempts()).mapNotNull { it.attempts }.flatten().mapNotNull { it.id })
-        val result = call("{\"k\":\"record\",\"n\":\"MoodleAttemptReviewResponse\"}") {
+        call("{\"k\":\"record\",\"n\":\"MoodleAttemptReviewResponse\"}") {
             api.quiz.getAttemptReview(attemptId = attemptId, auth = tokenCredentials())
-        } ?: return@case
-        fingerprint { writeMoodleAttemptReviewResponse(result) }
+        }
     }
 
     @Test

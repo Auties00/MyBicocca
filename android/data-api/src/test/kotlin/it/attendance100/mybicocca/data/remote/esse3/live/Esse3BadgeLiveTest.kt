@@ -13,8 +13,9 @@ class Esse3BadgeLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Badge.getNewBadges#1")
     fun getNewBadges1() = case("Badge.getNewBadges#1") {
+        val studentId = choose("studentId", listOf(careersGetCareers()).flatten().mapNotNull { it.studentId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3BadgeData\"}}") {
-            api.badge.getNewBadges()
+            api.badge.getNewBadges(studentId = studentId)
         } ?: return@case
         fingerprint { list(result) { writeEsse3BadgeData(it) } }
     }
@@ -22,10 +23,11 @@ class Esse3BadgeLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Badge.getNewBadges#2")
     fun getNewBadges2() = case("Badge.getNewBadges#2", index = 1) {
-        val studentId = choose("studentId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studentId })
-        val courseOfStudyCode = choose("courseOfStudyCode", listOf(structureGetCoursesOfStudy()).flatten().mapNotNull { it.courseOfStudyCode })
+        val row = chooseRow("studentId, fiscalCode", listOf(careersGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.studentId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.fiscalCode }.firstOrNull()?.toString()) }
+        val studentId = choose("studentId", listOf(row).mapNotNull { it.studentId })
+        val fiscalCode = choose("fiscalCode", listOf(row).mapNotNull { it.fiscalCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3BadgeData\"}}") {
-            api.badge.getNewBadges(studentId = studentId, courseOfStudyCode = courseOfStudyCode, studentStatusCode = Esse3BadgeStudentStateFilter.I, matStatusCode = Esse3BadgeMatriculationStateFilter.I)
+            api.badge.getNewBadges(studentId = studentId, fiscalCode = fiscalCode, studentStatusCode = Esse3BadgeStudentStateFilter.A, matStatusCode = Esse3BadgeMatriculationStateFilter.I)
         } ?: return@case
         fingerprint { list(result) { writeEsse3BadgeData(it) } }
     }
@@ -33,10 +35,11 @@ class Esse3BadgeLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Badge.getNewBadges#3")
     fun getNewBadges3() = case("Badge.getNewBadges#3", index = 2) {
-        val fiscalCode = choose("fiscalCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.fiscalCode })
-        val courseOfStudyCode = choose("courseOfStudyCode", listOf(structureGetCoursesOfStudy()).flatten().mapNotNull { it.courseOfStudyCode })
+        val row = chooseRow("studentId, courseOfStudyCode", listOf(careersGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.studentId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.p06CourseOfStudyCode }.firstOrNull()?.toString()) }
+        val studentId = choose("studentId", listOf(row).mapNotNull { it.studentId })
+        val courseOfStudyCode = choose("courseOfStudyCode", listOf(row).mapNotNull { it.p06CourseOfStudyCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3BadgeData\"}}") {
-            api.badge.getNewBadges(fiscalCode = fiscalCode, courseOfStudyCode = courseOfStudyCode, studentStatusCode = Esse3BadgeStudentStateFilter.A, matStatusCode = Esse3BadgeMatriculationStateFilter.S)
+            api.badge.getNewBadges(studentId = studentId, courseOfStudyCode = courseOfStudyCode, studentStatusCode = Esse3BadgeStudentStateFilter.X, matStatusCode = Esse3BadgeMatriculationStateFilter.S)
         } ?: return@case
         fingerprint { list(result) { writeEsse3BadgeData(it) } }
     }
@@ -44,10 +47,12 @@ class Esse3BadgeLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Badge.getNewBadges#4")
     fun getNewBadges4() = case("Badge.getNewBadges#4", index = 3) {
-        val studentId = choose("studentId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studentId })
-        val fiscalCode = choose("fiscalCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.fiscalCode })
+        val row = chooseRow("studentId, fiscalCode, courseOfStudyCode", listOf(careersGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.studentId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.fiscalCode }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.p06CourseOfStudyCode }.firstOrNull()?.toString()) }
+        val studentId = choose("studentId", listOf(row).mapNotNull { it.studentId })
+        val fiscalCode = choose("fiscalCode", listOf(row).mapNotNull { it.fiscalCode })
+        val courseOfStudyCode = choose("courseOfStudyCode", listOf(row).mapNotNull { it.p06CourseOfStudyCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3BadgeData\"}}") {
-            api.badge.getNewBadges(studentId = studentId, fiscalCode = fiscalCode, studentStatusCode = Esse3BadgeStudentStateFilter.X, matStatusCode = Esse3BadgeMatriculationStateFilter.A)
+            api.badge.getNewBadges(studentId = studentId, fiscalCode = fiscalCode, courseOfStudyCode = courseOfStudyCode, studentStatusCode = Esse3BadgeStudentStateFilter.I)
         } ?: return@case
         fingerprint { list(result) { writeEsse3BadgeData(it) } }
     }
@@ -55,9 +60,11 @@ class Esse3BadgeLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Badge.getNewBadges#5")
     fun getNewBadges5() = case("Badge.getNewBadges#5", index = 4) {
-        val studentId = choose("studentId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studentId })
+        val row = chooseRow("studentId, fiscalCode", listOf(careersGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.studentId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.fiscalCode }.firstOrNull()?.toString()) }
+        val studentId = choose("studentId", listOf(row).mapNotNull { it.studentId })
+        val fiscalCode = choose("fiscalCode", listOf(row).mapNotNull { it.fiscalCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3BadgeData\"}}") {
-            api.badge.getNewBadges(studentId = studentId, studentStatusCode = Esse3BadgeStudentStateFilter.S, matStatusCode = Esse3BadgeMatriculationStateFilter.S)
+            api.badge.getNewBadges(studentId = studentId, fiscalCode = fiscalCode, studentStatusCode = Esse3BadgeStudentStateFilter.S, matStatusCode = Esse3BadgeMatriculationStateFilter.S)
         } ?: return@case
         fingerprint { list(result) { writeEsse3BadgeData(it) } }
     }
@@ -65,10 +72,11 @@ class Esse3BadgeLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Badge.getNewBadges#6")
     fun getNewBadges6() = case("Badge.getNewBadges#6", index = 5) {
-        val fiscalCode = choose("fiscalCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.fiscalCode })
-        val courseOfStudyCode = choose("courseOfStudyCode", listOf(structureGetCoursesOfStudy()).flatten().mapNotNull { it.courseOfStudyCode })
+        val row = chooseRow("studentId, courseOfStudyCode", listOf(careersGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.studentId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.p06CourseOfStudyCode }.firstOrNull()?.toString()) }
+        val studentId = choose("studentId", listOf(row).mapNotNull { it.studentId })
+        val courseOfStudyCode = choose("courseOfStudyCode", listOf(row).mapNotNull { it.p06CourseOfStudyCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3BadgeData\"}}") {
-            api.badge.getNewBadges(fiscalCode = fiscalCode, courseOfStudyCode = courseOfStudyCode, studentStatusCode = Esse3BadgeStudentStateFilter.S)
+            api.badge.getNewBadges(studentId = studentId, courseOfStudyCode = courseOfStudyCode, studentStatusCode = Esse3BadgeStudentStateFilter.A, matStatusCode = Esse3BadgeMatriculationStateFilter.A)
         } ?: return@case
         fingerprint { list(result) { writeEsse3BadgeData(it) } }
     }

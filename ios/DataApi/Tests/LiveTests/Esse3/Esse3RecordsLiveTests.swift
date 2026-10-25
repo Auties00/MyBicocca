@@ -9,8 +9,9 @@ import XCTest
 final class Esse3RecordsLiveTests: XCTestCase {
     func test_getMinutes1() async throws {
         try await liveCase(Esse3Live.api, "Records.getMinutes#1") { live in
-            let lotBatchId = try live.choose("lotBatchId", [try await Esse3Live.recordsFindMinutes(live)].flatMap { $0 }.compactMap { $0.lotBatchId })
-            let minutesId = try live.choose("minutesId", [try await Esse3Live.recordsFindMinutes(live)].flatMap { $0 }.compactMap { $0.minutesId })
+            let row = try live.chooseRow("lotBatchId, minutesId", [try await Esse3Live.recordsFindMinutes(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.lotBatchId }); let key1: String? = live.firstText([element].compactMap { $0.minutesId }); return [key0, key1] }
+            let lotBatchId = try live.choose("lotBatchId", [row].compactMap { $0.lotBatchId })
+            let minutesId = try live.choose("minutesId", [row].compactMap { $0.minutesId })
             let result = try await live.call("{\"k\":\"record\",\"n\":\"Esse3RecordWithDetails\"}") { try await live.api.records.getMinutes(lotBatchId: lotBatchId, minutesId: minutesId) }
             live.fingerprint { f in Esse3Live.writeEsse3RecordWithDetails(f, result) }
         }
@@ -25,59 +26,8 @@ final class Esse3RecordsLiveTests: XCTestCase {
 
     func test_findMinutes1() async throws {
         try await liveCase(Esse3Live.api, "Records.findMinutes#1") { live in
-            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Record\"}}") { try await live.api.records.findMinutes() }
-            live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3Record(f, item0) } }
-        }
-    }
-
-    func test_findMinutes2() async throws {
-        try await liveCase(Esse3Live.api, "Records.findMinutes#2", index: 1) { live in
-            let studentFiscalCode = try live.choose("studentFiscalCode", [try await Esse3Live.examsCalendarGetBookingsByMatId(live)].flatMap { $0 }.compactMap { $0.studentFiscalCode })
-            let lecturerFiscalCode = try live.choose("lecturerFiscalCode", [try await Esse3Live.logisticsGetEasystaffLogistics(live)].flatMap { $0 }.compactMap { $0.lecturers }.flatMap { $0 }.compactMap { $0.lecturerFiscalCode })
-            let activityCode = try live.choose("activityCode", [try await Esse3Live.offerGetGenericTeachingActivities(live)].flatMap { $0 }.compactMap { $0.activityCode })
-            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.structureGetCoursesOfStudy(live)].flatMap { $0 }.compactMap { $0.courseOfStudyCode })
-            let studentActivityCode = try live.choose("studentActivityCode", [try await Esse3Live.examsCalendarGetBookingsByMatId(live)].flatMap { $0 }.compactMap { $0.studentActivityCode })
-            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Record\"}}") { try await live.api.records.findMinutes(studentFiscalCode: studentFiscalCode, lecturerFiscalCode: lecturerFiscalCode, activityCode: activityCode, courseOfStudyCode: courseOfStudyCode, studentActivityCode: studentActivityCode) }
-            live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3Record(f, item0) } }
-        }
-    }
-
-    func test_findMinutes3() async throws {
-        try await liveCase(Esse3Live.api, "Records.findMinutes#3", index: 2) { live in
-            let studentFiscalCode = try live.choose("studentFiscalCode", [try await Esse3Live.examsCalendarGetBookingsByMatId(live)].flatMap { $0 }.compactMap { $0.studentFiscalCode })
-            let lecturerFiscalCode = try live.choose("lecturerFiscalCode", [try await Esse3Live.logisticsGetEasystaffLogistics(live)].flatMap { $0 }.compactMap { $0.lecturers }.flatMap { $0 }.compactMap { $0.lecturerFiscalCode })
-            let studentActivityCode = try live.choose("studentActivityCode", [try await Esse3Live.examsCalendarGetBookingsByMatId(live)].flatMap { $0 }.compactMap { $0.studentActivityCode })
-            let courseOfStudyStudentCode = try live.choose("courseOfStudyStudentCode", [try await Esse3Live.examsCalendarGetBookingsByMatId(live)].flatMap { $0 }.compactMap { $0.courseOfStudyStudentCode })
-            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Record\"}}") { try await live.api.records.findMinutes(studentFiscalCode: studentFiscalCode, lecturerFiscalCode: lecturerFiscalCode, studentActivityCode: studentActivityCode, courseOfStudyStudentCode: courseOfStudyStudentCode) }
-            live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3Record(f, item0) } }
-        }
-    }
-
-    func test_findMinutes4() async throws {
-        try await liveCase(Esse3Live.api, "Records.findMinutes#4", index: 3) { live in
-            let activityCode = try live.choose("activityCode", [try await Esse3Live.offerGetGenericTeachingActivities(live)].flatMap { $0 }.compactMap { $0.activityCode })
-            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.structureGetCoursesOfStudy(live)].flatMap { $0 }.compactMap { $0.courseOfStudyCode })
-            let courseOfStudyStudentCode = try live.choose("courseOfStudyStudentCode", [try await Esse3Live.examsCalendarGetBookingsByMatId(live)].flatMap { $0 }.compactMap { $0.courseOfStudyStudentCode })
-            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Record\"}}") { try await live.api.records.findMinutes(activityCode: activityCode, courseOfStudyCode: courseOfStudyCode, courseOfStudyStudentCode: courseOfStudyStudentCode) }
-            live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3Record(f, item0) } }
-        }
-    }
-
-    func test_findMinutes5() async throws {
-        try await liveCase(Esse3Live.api, "Records.findMinutes#5", index: 4) { live in
-            let studentFiscalCode = try live.choose("studentFiscalCode", [try await Esse3Live.examsCalendarGetBookingsByMatId(live)].flatMap { $0 }.compactMap { $0.studentFiscalCode })
-            let activityCode = try live.choose("activityCode", [try await Esse3Live.offerGetGenericTeachingActivities(live)].flatMap { $0 }.compactMap { $0.activityCode })
-            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Record\"}}") { try await live.api.records.findMinutes(studentFiscalCode: studentFiscalCode, activityCode: activityCode) }
-            live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3Record(f, item0) } }
-        }
-    }
-
-    func test_findMinutes6() async throws {
-        try await liveCase(Esse3Live.api, "Records.findMinutes#6", index: 5) { live in
-            let lecturerFiscalCode = try live.choose("lecturerFiscalCode", [try await Esse3Live.logisticsGetEasystaffLogistics(live)].flatMap { $0 }.compactMap { $0.lecturers }.flatMap { $0 }.compactMap { $0.lecturerFiscalCode })
-            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.structureGetCoursesOfStudy(live)].flatMap { $0 }.compactMap { $0.courseOfStudyCode })
-            let studentActivityCode = try live.choose("studentActivityCode", [try await Esse3Live.examsCalendarGetBookingsByMatId(live)].flatMap { $0 }.compactMap { $0.studentActivityCode })
-            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Record\"}}") { try await live.api.records.findMinutes(lecturerFiscalCode: lecturerFiscalCode, courseOfStudyCode: courseOfStudyCode, studentActivityCode: studentActivityCode) }
+            let studentFiscalCode = try live.choose("studentFiscalCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.fiscalCode })
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Record\"}}") { try await live.api.records.findMinutes(studentFiscalCode: studentFiscalCode) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3Record(f, item0) } }
         }
     }

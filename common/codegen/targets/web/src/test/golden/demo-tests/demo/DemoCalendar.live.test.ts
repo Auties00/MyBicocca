@@ -2,9 +2,9 @@
 
 import { describe } from "vitest";
 import { DemoSessionAuth } from "../../src/demo/models/index.js";
-import { LocalDate, decodeInteger, decodeList } from "../../src/runtime/index.js";
-import { LiveTemplates, liveCase } from "../runtime/live.js";
-import { DemoLive, sessionCredentials, writeDemoSlot } from "./DemoLive.js";
+import { LocalDate } from "../../src/runtime/index.js";
+import { LiveTemplates, isPresent, liveCase } from "../runtime/live.js";
+import { DemoLive, searchSearchItems, sessionCredentials, writeDemoSlot } from "./DemoLive.js";
 
 // The live tests of the Demo Calendar module, planned from common/specs/demo/tests.yaml.
 describe("Demo Calendar", () => {
@@ -24,12 +24,18 @@ describe("Demo Calendar", () => {
   });
 
   liveCase(DemoLive, "Calendar.runQuery#1", {}, async (live) => {
+    const row = live.chooseRow("ids, tags", [await searchSearchItems(live)].flat(), (element) => [[element].map((it) => it.owner).filter(isPresent).map((it) => it.id).filter(isPresent)[0], [element].map((it) => it.name).filter(isPresent)[0]]);
+    const ids = [live.choose("ids", [row].map((it) => it.owner).filter(isPresent).map((it) => it.id).filter(isPresent))];
+    const tags = [live.choose("tags", [row].map((it) => it.name).filter(isPresent))];
     const auth = await sessionCredentials(live);
-    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"string\"}}", {}, async () => live.api.calendar.runQuery(live.decode((json: unknown) => decodeList(json, decodeInteger), "[1,2]"), auth));
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"string\"}}", {}, async () => live.api.calendar.runQuery(ids, auth, { tags: tags }));
     live.fingerprint((f) => f.list(result, (it) => writeDemoSlot(f, it)));
   });
 
   liveCase(DemoLive, "Calendar.runQuery#invalid-credentials", {}, async (live) => {
-    await live.refused(false, async () => live.api.calendar.runQuery(live.decode((json: unknown) => decodeList(json, decodeInteger), "[1,2]"), new DemoSessionAuth("mybicocca-invalid-credential")));
+    const row = live.chooseRow("ids, tags", [await searchSearchItems(live)].flat(), (element) => [[element].map((it) => it.owner).filter(isPresent).map((it) => it.id).filter(isPresent)[0], [element].map((it) => it.name).filter(isPresent)[0]]);
+    const ids = [live.choose("ids", [row].map((it) => it.owner).filter(isPresent).map((it) => it.id).filter(isPresent))];
+    const tags = [live.choose("tags", [row].map((it) => it.name).filter(isPresent))];
+    await live.refused(false, async () => live.api.calendar.runQuery(ids, new DemoSessionAuth("mybicocca-invalid-credential"), { tags: tags }));
   });
 });

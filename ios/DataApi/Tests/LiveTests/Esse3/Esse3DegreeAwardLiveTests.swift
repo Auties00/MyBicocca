@@ -7,38 +7,6 @@ import XCTest
 
 /// The live tests of the Esse3 DegreeAward module, planned from `common/specs/esse3/tests.yaml`.
 final class Esse3DegreeAwardLiveTests: XCTestCase {
-    func test_getExamCalls1() async throws {
-        try await liveCase(Esse3Live.api, "DegreeAward.getExamCalls#1") { live in
-            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSession\"}}") { try await live.api.degreeAward.getExamCalls() }
-            live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3ExamSession(f, item0) } }
-        }
-    }
-
-    func test_getExamCalls2() async throws {
-        try await liveCase(Esse3Live.api, "DegreeAward.getExamCalls#2", index: 1) { live in
-            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.structureGetCoursesOfStudy(live)].flatMap { $0 }.compactMap { $0.courseOfStudyCode })
-            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSession\"}}") { try await live.api.degreeAward.getExamCalls(courseOfStudyCode: courseOfStudyCode) }
-            live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3ExamSession(f, item0) } }
-        }
-    }
-
-    func test_getExamCalls3() async throws {
-        try await liveCase(Esse3Live.api, "DegreeAward.getExamCalls#3", index: 2) { live in
-            let courseTypeCode = try live.choose("courseTypeCode", [try await Esse3Live.personalDataGetPhdCareersData(live)].flatMap { $0 }.compactMap { $0.courseTypeCode })
-            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSession\"}}") { try await live.api.degreeAward.getExamCalls(courseTypeCode: courseTypeCode) }
-            live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3ExamSession(f, item0) } }
-        }
-    }
-
-    func test_getExamCalls4() async throws {
-        try await liveCase(Esse3Live.api, "DegreeAward.getExamCalls#4", index: 3) { live in
-            let courseTypeCode = try live.choose("courseTypeCode", [try await Esse3Live.personalDataGetPhdCareersData(live)].flatMap { $0 }.compactMap { $0.courseTypeCode })
-            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.structureGetCoursesOfStudy(live)].flatMap { $0 }.compactMap { $0.courseOfStudyCode })
-            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExamSession\"}}") { try await live.api.degreeAward.getExamCalls(courseTypeCode: courseTypeCode, courseOfStudyCode: courseOfStudyCode) }
-            live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3ExamSession(f, item0) } }
-        }
-    }
-
     func test_getCommitteeCall1() async throws {
         try await liveCase(Esse3Live.api, "DegreeAward.getCommitteeCall#1") { live in
             let callCommitteeId = try live.choose("callCommitteeId", [try await Esse3Live.degreeAwardGetTheses(live)].compactMap { $0.callCommitteeId }.compactMap { Int64($0) })
@@ -55,7 +23,7 @@ final class Esse3DegreeAwardLiveTests: XCTestCase {
 
     func test_getCommitteeApplicationByMatId1() async throws {
         try await liveCase(Esse3Live.api, "DegreeAward.getCommitteeApplicationByMatId#1") { live in
-            let matId = try live.choose("matId", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }.compactMap { $0.matId })
+            let matId = try live.choose("matId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.matId })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TeachingDomainSummary\"}}") { try await live.api.degreeAward.getCommitteeApplicationByMatId(matId: matId) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3TeachingDomainSummary(f, item0) } }
         }
@@ -69,7 +37,7 @@ final class Esse3DegreeAwardLiveTests: XCTestCase {
 
     func test_getCommitteeApplicationByStudentId1() async throws {
         try await liveCase(Esse3Live.api, "DegreeAward.getCommitteeApplicationByStudentId#1") { live in
-            let studentId = try live.choose("studentId", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }.compactMap { $0.studentId })
+            let studentId = try live.choose("studentId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.studentId })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TeachingDomainSummary\"}}") { try await live.api.degreeAward.getCommitteeApplicationByStudentId(studentId: studentId) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3TeachingDomainSummary(f, item0) } }
         }

@@ -293,9 +293,12 @@ internal class SwiftTestEmitter(private val plan: TestPlan, private val layout: 
 
     private class Refs(val args: Map<String, String>, var result: String?, var before: String?)
 
-    private fun arguments(call: Call, writer: CodeWriter, names: Names = Names()): Map<String, String> =
-        call.args.mapValues { (name, arg) ->
-            val value = valueOf(arg, call.operation.inputType(name), name, writer)
+    private fun arguments(call: Call, writer: CodeWriter, names: Names = Names()): Map<String, String> {
+        val rows = rows(call, writer, names)
+        return call.args.mapValues { (name, arg) ->
+            val type = call.operation.inputType(name)
+            val value = rows[name]?.let { (row, path) -> pick(row, path, (arg as Arg.Pick).wrap, type!!, name) }
+                ?: valueOf(arg, type, name, writer)
             if (arg is Arg.Pick || arg is Arg.Text || arg is Arg.AccountCredentials || arg is Arg.Json) {
                 val reserved = name in RESERVED_LOCALS || SwiftSyntax.identifier(name) != name
                 val variable = names.local(if (reserved) "${name}Value" else name)
@@ -305,6 +308,27 @@ internal class SwiftTestEmitter(private val plan: TestPlan, private val layout: 
                 value
             }
         }
+    }
+
+    /**
+     * Writes the statements choosing the element each of [call]'s [Call.rowPicks] takes values
+     * from, and returns the variable holding it and the path from it, by input name.
+     */
+    private fun rows(call: Call, writer: CodeWriter, names: Names): Map<String, Pair<String, Path>> =
+        call.rowPicks.flatMap { rowPick ->
+            val variable = names.local("row")
+            // Enums sort by their wire value, as on every platform.
+            val keys = rowPick.fields.values.mapIndexed { index, field ->
+                val values = path("element", field)
+                val key = if (TestTypes.enum(spec, field.type) != null) "$values.first?.wireValue" else "live.firstText($values)"
+                "let key$index: String? = $key"
+            }
+            val candidates = path("try await $support.${rowPick.source.id}(live)", rowPick.rows)
+            // Typed statements spare the compiler from inferring one expression, which takes too long with several values.
+            val body = keys.joinToString("; ") + "; return [${keys.indices.joinToString(", ") { "key$it" }}]"
+            writer.line("let $variable = try live.chooseRow(${SwiftSyntax.string(rowPick.fields.keys.joinToString())}, $candidates) { (element) -> [String?] in $body }")
+            rowPick.fields.map { (name, field) -> name to (variable to field) }
+        }.toMap()
 
     private fun refArguments(call: Call, refs: Refs): Map<String, String> =
         call.args.mapValues { (name, arg) -> refValue(arg, call.operation.inputType(name), refs) }
@@ -328,16 +352,19 @@ internal class SwiftTestEmitter(private val plan: TestPlan, private val layout: 
     }
 
     private fun valueOf(arg: Arg, type: TypeRef?, name: String, writer: CodeWriter): String = when (arg) {
-        is Arg.Pick -> {
-            val target = if (arg.wrap) (type as TypeRef.ListOf).element else type!!
-            val candidates = convertAll(path("try await $support.${arg.source.id}(live)", arg.path), arg.path.type, target)
-            // Enums sort by their wire value, as on every platform.
-            val key = if (TestTypes.enum(spec, target) != null) ", key: { \$0.wireValue }" else ""
-            val chosen = "try live.choose(${SwiftSyntax.string(name)}, $candidates$key)"
-            if (arg.wrap) "[$chosen]" else chosen
-        }
+        is Arg.Pick -> pick("try await $support.${arg.source.id}(live)", arg.path, arg.wrap, type!!, name)
         is Arg.AccountCredentials -> credentials(arg)
         else -> argument(arg, type)
+    }
+
+    /** One of the values [path] reaches from [root], of an input of type [type], in a list when [wrap]. */
+    private fun pick(root: String, path: Path, wrap: Boolean, type: TypeRef, name: String): String {
+        val target = if (wrap) (type as TypeRef.ListOf).element else type
+        val candidates = convertAll(path(root, path), path.type, target)
+        // Enums sort by their wire value, as on every platform.
+        val key = if (TestTypes.enum(spec, target) != null) ", key: { \$0.wireValue }" else ""
+        val chosen = "try live.choose(${SwiftSyntax.string(name)}, $candidates$key)"
+        return if (wrap) "[$chosen]" else chosen
     }
 
     private fun argument(arg: Arg, type: TypeRef?): String = when (arg) {

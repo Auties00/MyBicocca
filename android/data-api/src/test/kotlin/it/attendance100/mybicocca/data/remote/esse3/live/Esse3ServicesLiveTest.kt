@@ -67,7 +67,7 @@ class Esse3ServicesLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Services.getMaritalStatusTypes#1")
     fun getMaritalStatusTypes1() = case("Services.getMaritalStatusTypes#1") {
-        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3MaritalStatusType\"}}") {
+        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3MaritalStatusType\"}}", errors = listOf("403")) {
             api.services.getMaritalStatusTypes()
         } ?: return@case
         fingerprint { list(result) { writeEsse3MaritalStatusType(it) } }
@@ -77,7 +77,7 @@ class Esse3ServicesLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @DisplayName("Services.getMaritalStatusTypes#2")
     fun getMaritalStatusTypes2() = case("Services.getMaritalStatusTypes#2", index = 1) {
         val iso6392Code = choose("iso6392Code", listOf(servicesGetLanguages()).flatten().mapNotNull { it.iso6392Code })
-        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3MaritalStatusType\"}}") {
+        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3MaritalStatusType\"}}", errors = listOf("403")) {
             api.services.getMaritalStatusTypes(iso6392Code = iso6392Code)
         } ?: return@case
         fingerprint { list(result) { writeEsse3MaritalStatusType(it) } }
@@ -86,9 +86,8 @@ class Esse3ServicesLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Services.getVersionInfo#1")
     fun getVersionInfo1() = case("Services.getVersionInfo#1") {
-        val result = call("{\"k\":\"record\",\"n\":\"Esse3VersionInfo\"}") {
+        call("{\"k\":\"record\",\"n\":\"Esse3VersionInfo\"}") {
             api.services.getVersionInfo()
-        } ?: return@case
-        fingerprint { writeEsse3VersionInfo(result) }
+        }
     }
 }

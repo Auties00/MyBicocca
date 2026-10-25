@@ -11,7 +11,7 @@ class Esse3TuitionFeesLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("TuitionFees.getPersonChargesList#1")
     fun getPersonChargesList1() = case("TuitionFees.getPersonChargesList#1") {
-        val personId = choose("personId", listOf(tuitionFeesGetStudentChargesList()).flatten().mapNotNull { it.personId })
+        val personId = choose("personId", listOf(careersGetCareers()).flatten().mapNotNull { it.personId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PersonDebit\"}}") {
             api.tuitionFees.getPersonChargesList(personId = personId)
         } ?: return@case
@@ -21,7 +21,7 @@ class Esse3TuitionFeesLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("TuitionFees.getPersonChargesList#2")
     fun getPersonChargesList2() = case("TuitionFees.getPersonChargesList#2", index = 1) {
-        val personId = choose("personId", listOf(tuitionFeesGetStudentChargesList()).flatten().mapNotNull { it.personId })
+        val personId = choose("personId", listOf(careersGetCareers()).flatten().mapNotNull { it.personId })
         val invoiceId = choose("invoiceId", listOf(tuitionFeesGetStudentChargesList()).flatten().mapNotNull { it.invoiceId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PersonDebit\"}}") {
             api.tuitionFees.getPersonChargesList(personId = personId, invoiceId = invoiceId)
@@ -32,7 +32,7 @@ class Esse3TuitionFeesLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("TuitionFees.getPersonChargesList#3")
     fun getPersonChargesList3() = case("TuitionFees.getPersonChargesList#3", index = 2) {
-        val personId = choose("personId", listOf(tuitionFeesGetStudentChargesList()).flatten().mapNotNull { it.personId })
+        val personId = choose("personId", listOf(careersGetCareers()).flatten().mapNotNull { it.personId })
         val academicYearId = choose("academicYearId", listOf(tuitionFeesGetStudentChargesList()).flatten().mapNotNull { it.academicYearId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PersonDebit\"}}") {
             api.tuitionFees.getPersonChargesList(personId = personId, academicYearId = academicYearId)
@@ -43,9 +43,10 @@ class Esse3TuitionFeesLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("TuitionFees.getPersonChargesList#4")
     fun getPersonChargesList4() = case("TuitionFees.getPersonChargesList#4", index = 3) {
-        val personId = choose("personId", listOf(tuitionFeesGetStudentChargesList()).flatten().mapNotNull { it.personId })
-        val academicYearId = choose("academicYearId", listOf(tuitionFeesGetStudentChargesList()).flatten().mapNotNull { it.academicYearId })
-        val invoiceId = choose("invoiceId", listOf(tuitionFeesGetStudentChargesList()).flatten().mapNotNull { it.invoiceId })
+        val row = chooseRow("academicYearId, invoiceId", listOf(tuitionFeesGetStudentChargesList()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.academicYearId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.invoiceId }.firstOrNull()?.toString()) }
+        val personId = choose("personId", listOf(careersGetCareers()).flatten().mapNotNull { it.personId })
+        val academicYearId = choose("academicYearId", listOf(row).mapNotNull { it.academicYearId })
+        val invoiceId = choose("invoiceId", listOf(row).mapNotNull { it.invoiceId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PersonDebit\"}}") {
             api.tuitionFees.getPersonChargesList(personId = personId, academicYearId = academicYearId, invoiceId = invoiceId)
         } ?: return@case
@@ -63,8 +64,9 @@ class Esse3TuitionFeesLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("TuitionFees.getStudentChargesList#1")
     fun getStudentChargesList1() = case("TuitionFees.getStudentChargesList#1") {
+        val studentId = choose("studentId", listOf(careersGetCareers()).flatten().mapNotNull { it.studentId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3StudentDebit\"}}") {
-            api.tuitionFees.getStudentChargesList()
+            api.tuitionFees.getStudentChargesList(studentId = studentId)
         } ?: return@case
         fingerprint { list(result) { writeEsse3StudentDebit(it) } }
     }
@@ -72,12 +74,14 @@ class Esse3TuitionFeesLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("TuitionFees.getStudentChargesList#2")
     fun getStudentChargesList2() = case("TuitionFees.getStudentChargesList#2", index = 1) {
-        val studentId = choose("studentId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studentId })
+        val row = chooseRow("academicYearId, invoiceId", listOf(tuitionFeesGetInvoicesList()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.academicYearId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.invoiceId }.firstOrNull()?.toString()) }
+        val row2 = chooseRow("taxTypeCode, taxCode", listOf(tuitionFeesGetPersonChargesList()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.taxTypeCode }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.taxCode }.firstOrNull()?.toString()) }
+        val studentId = choose("studentId", listOf(careersGetCareers()).flatten().mapNotNull { it.studentId })
         val externalStudentCode = choose("externalStudentCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.externalStudentCode })
-        val academicYearId = choose("academicYearId", listOf(tuitionFeesGetInvoicesList()).flatten().mapNotNull { it.academicYearId })
-        val invoiceId = choose("invoiceId", listOf(tuitionFeesGetInvoicesList()).flatten().mapNotNull { it.invoiceId })
-        val taxTypeCode = choose("taxTypeCode", listOf(tuitionFeesGetPersonChargesList()).flatten().mapNotNull { it.taxTypeCode })
-        val taxCode = choose("taxCode", listOf(tuitionFeesGetPersonChargesList()).flatten().mapNotNull { it.taxCode })
+        val academicYearId = choose("academicYearId", listOf(row).mapNotNull { it.academicYearId })
+        val invoiceId = choose("invoiceId", listOf(row).mapNotNull { it.invoiceId })
+        val taxTypeCode = choose("taxTypeCode", listOf(row2).mapNotNull { it.taxTypeCode })
+        val taxCode = choose("taxCode", listOf(row2).mapNotNull { it.taxCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3StudentDebit\"}}") {
             api.tuitionFees.getStudentChargesList(studentId = studentId, externalStudentCode = externalStudentCode, academicYearId = academicYearId, invoiceId = invoiceId, taxTypeCode = taxTypeCode, taxCode = taxCode)
         } ?: return@case
@@ -87,12 +91,14 @@ class Esse3TuitionFeesLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("TuitionFees.getStudentChargesList#3")
     fun getStudentChargesList3() = case("TuitionFees.getStudentChargesList#3", index = 2) {
-        val studentId = choose("studentId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studentId })
-        val academicYearId = choose("academicYearId", listOf(tuitionFeesGetInvoicesList()).flatten().mapNotNull { it.academicYearId })
-        val installmentId = choose("installmentId", listOf(tuitionFeesGetPersonChargesList()).flatten().mapNotNull { it.installmentId })
-        val taxCode = choose("taxCode", listOf(tuitionFeesGetPersonChargesList()).flatten().mapNotNull { it.taxCode })
+        val row = chooseRow("installmentId, taxTypeCode", listOf(tuitionFeesGetPersonChargesList()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.installmentId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.taxTypeCode }.firstOrNull()?.toString()) }
+        val studentId = choose("studentId", listOf(careersGetCareers()).flatten().mapNotNull { it.studentId })
+        val externalStudentCode = choose("externalStudentCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.externalStudentCode })
+        val invoiceId = choose("invoiceId", listOf(tuitionFeesGetInvoicesList()).flatten().mapNotNull { it.invoiceId })
+        val installmentId = choose("installmentId", listOf(row).mapNotNull { it.installmentId })
+        val taxTypeCode = choose("taxTypeCode", listOf(row).mapNotNull { it.taxTypeCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3StudentDebit\"}}") {
-            api.tuitionFees.getStudentChargesList(studentId = studentId, academicYearId = academicYearId, installmentId = installmentId, taxCode = taxCode)
+            api.tuitionFees.getStudentChargesList(studentId = studentId, externalStudentCode = externalStudentCode, invoiceId = invoiceId, installmentId = installmentId, taxTypeCode = taxTypeCode)
         } ?: return@case
         fingerprint { list(result) { writeEsse3StudentDebit(it) } }
     }
@@ -100,12 +106,13 @@ class Esse3TuitionFeesLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("TuitionFees.getStudentChargesList#4")
     fun getStudentChargesList4() = case("TuitionFees.getStudentChargesList#4", index = 3) {
-        val externalStudentCode = choose("externalStudentCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.externalStudentCode })
-        val invoiceId = choose("invoiceId", listOf(tuitionFeesGetInvoicesList()).flatten().mapNotNull { it.invoiceId })
-        val installmentId = choose("installmentId", listOf(tuitionFeesGetPersonChargesList()).flatten().mapNotNull { it.installmentId })
-        val taxTypeCode = choose("taxTypeCode", listOf(tuitionFeesGetPersonChargesList()).flatten().mapNotNull { it.taxTypeCode })
+        val row = chooseRow("installmentId, taxCode", listOf(tuitionFeesGetPersonChargesList()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.installmentId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.taxCode }.firstOrNull()?.toString()) }
+        val studentId = choose("studentId", listOf(careersGetCareers()).flatten().mapNotNull { it.studentId })
+        val academicYearId = choose("academicYearId", listOf(tuitionFeesGetInvoicesList()).flatten().mapNotNull { it.academicYearId })
+        val installmentId = choose("installmentId", listOf(row).mapNotNull { it.installmentId })
+        val taxCode = choose("taxCode", listOf(row).mapNotNull { it.taxCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3StudentDebit\"}}") {
-            api.tuitionFees.getStudentChargesList(externalStudentCode = externalStudentCode, invoiceId = invoiceId, installmentId = installmentId, taxTypeCode = taxTypeCode)
+            api.tuitionFees.getStudentChargesList(studentId = studentId, academicYearId = academicYearId, installmentId = installmentId, taxCode = taxCode)
         } ?: return@case
         fingerprint { list(result) { writeEsse3StudentDebit(it) } }
     }
@@ -113,11 +120,14 @@ class Esse3TuitionFeesLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("TuitionFees.getStudentChargesList#5")
     fun getStudentChargesList5() = case("TuitionFees.getStudentChargesList#5", index = 4) {
-        val externalStudentCode = choose("externalStudentCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.externalStudentCode })
+        val row = chooseRow("installmentId, taxTypeCode, taxCode", listOf(tuitionFeesGetPersonChargesList()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.installmentId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.taxTypeCode }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.taxCode }.firstOrNull()?.toString()) }
+        val studentId = choose("studentId", listOf(careersGetCareers()).flatten().mapNotNull { it.studentId })
         val invoiceId = choose("invoiceId", listOf(tuitionFeesGetInvoicesList()).flatten().mapNotNull { it.invoiceId })
-        val taxCode = choose("taxCode", listOf(tuitionFeesGetPersonChargesList()).flatten().mapNotNull { it.taxCode })
+        val installmentId = choose("installmentId", listOf(row).mapNotNull { it.installmentId })
+        val taxTypeCode = choose("taxTypeCode", listOf(row).mapNotNull { it.taxTypeCode })
+        val taxCode = choose("taxCode", listOf(row).mapNotNull { it.taxCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3StudentDebit\"}}") {
-            api.tuitionFees.getStudentChargesList(externalStudentCode = externalStudentCode, invoiceId = invoiceId, taxCode = taxCode)
+            api.tuitionFees.getStudentChargesList(studentId = studentId, invoiceId = invoiceId, installmentId = installmentId, taxTypeCode = taxTypeCode, taxCode = taxCode)
         } ?: return@case
         fingerprint { list(result) { writeEsse3StudentDebit(it) } }
     }
@@ -125,11 +135,14 @@ class Esse3TuitionFeesLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("TuitionFees.getStudentChargesList#6")
     fun getStudentChargesList6() = case("TuitionFees.getStudentChargesList#6", index = 5) {
-        val studentId = choose("studentId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.studentId })
+        val row = chooseRow("installmentId, taxTypeCode", listOf(tuitionFeesGetPersonChargesList()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.installmentId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.taxTypeCode }.firstOrNull()?.toString()) }
+        val studentId = choose("studentId", listOf(careersGetCareers()).flatten().mapNotNull { it.studentId })
         val externalStudentCode = choose("externalStudentCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.externalStudentCode })
-        val taxTypeCode = choose("taxTypeCode", listOf(tuitionFeesGetPersonChargesList()).flatten().mapNotNull { it.taxTypeCode })
+        val academicYearId = choose("academicYearId", listOf(tuitionFeesGetInvoicesList()).flatten().mapNotNull { it.academicYearId })
+        val installmentId = choose("installmentId", listOf(row).mapNotNull { it.installmentId })
+        val taxTypeCode = choose("taxTypeCode", listOf(row).mapNotNull { it.taxTypeCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3StudentDebit\"}}") {
-            api.tuitionFees.getStudentChargesList(studentId = studentId, externalStudentCode = externalStudentCode, taxTypeCode = taxTypeCode)
+            api.tuitionFees.getStudentChargesList(studentId = studentId, externalStudentCode = externalStudentCode, academicYearId = academicYearId, installmentId = installmentId, taxTypeCode = taxTypeCode)
         } ?: return@case
         fingerprint { list(result) { writeEsse3StudentDebit(it) } }
     }
@@ -137,8 +150,9 @@ class Esse3TuitionFeesLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("TuitionFees.getInvoicesList#1")
     fun getInvoicesList1() = case("TuitionFees.getInvoicesList#1") {
+        val personId = choose("personId", listOf(careersGetCareers()).flatten().mapNotNull { it.personId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Invoices\"}}") {
-            api.tuitionFees.getInvoicesList()
+            api.tuitionFees.getInvoicesList(personId = personId)
         } ?: return@case
         fingerprint { list(result) { writeEsse3Invoices(it) } }
     }
@@ -146,11 +160,12 @@ class Esse3TuitionFeesLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("TuitionFees.getInvoicesList#2")
     fun getInvoicesList2() = case("TuitionFees.getInvoicesList#2", index = 1) {
-        val personId = choose("personId", listOf(tuitionFeesGetStudentChargesList()).flatten().mapNotNull { it.personId })
-        val invoiceId = choose("invoiceId", listOf(tuitionFeesGetStudentChargesList()).flatten().mapNotNull { it.invoiceId })
-        val academicYearId = choose("academicYearId", listOf(tuitionFeesGetStudentChargesList()).flatten().mapNotNull { it.academicYearId })
+        val row = chooseRow("invoiceId, academicYearId", listOf(tuitionFeesGetStudentChargesList()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.invoiceId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.academicYearId }.firstOrNull()?.toString()) }
+        val personId = choose("personId", listOf(careersGetCareers()).flatten().mapNotNull { it.personId })
+        val invoiceId = choose("invoiceId", listOf(row).mapNotNull { it.invoiceId })
+        val academicYearId = choose("academicYearId", listOf(row).mapNotNull { it.academicYearId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Invoices\"}}") {
-            api.tuitionFees.getInvoicesList(personId = personId, invoiceId = invoiceId, academicYearId = academicYearId, retrieveAdditionalInfo = false)
+            api.tuitionFees.getInvoicesList(personId = personId, invoiceId = invoiceId, academicYearId = academicYearId)
         } ?: return@case
         fingerprint { list(result) { writeEsse3Invoices(it) } }
     }
@@ -158,10 +173,12 @@ class Esse3TuitionFeesLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("TuitionFees.getInvoicesList#3")
     fun getInvoicesList3() = case("TuitionFees.getInvoicesList#3", index = 2) {
-        val noticeCode = choose("noticeCode", listOf(tuitionFeesGetStudentChargesList()).flatten().mapNotNull { it.noticeCode })
-        val academicYearId = choose("academicYearId", listOf(tuitionFeesGetStudentChargesList()).flatten().mapNotNull { it.academicYearId })
+        val row = chooseRow("noticeCode, academicYearId", listOf(tuitionFeesGetStudentChargesList()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.noticeCode }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.academicYearId }.firstOrNull()?.toString()) }
+        val personId = choose("personId", listOf(careersGetCareers()).flatten().mapNotNull { it.personId })
+        val noticeCode = choose("noticeCode", listOf(row).mapNotNull { it.noticeCode })
+        val academicYearId = choose("academicYearId", listOf(row).mapNotNull { it.academicYearId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Invoices\"}}") {
-            api.tuitionFees.getInvoicesList(noticeCode = noticeCode, academicYearId = academicYearId, retrieveAdditionalInfo = true)
+            api.tuitionFees.getInvoicesList(personId = personId, noticeCode = noticeCode, academicYearId = academicYearId)
         } ?: return@case
         fingerprint { list(result) { writeEsse3Invoices(it) } }
     }
@@ -169,34 +186,12 @@ class Esse3TuitionFeesLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("TuitionFees.getInvoicesList#4")
     fun getInvoicesList4() = case("TuitionFees.getInvoicesList#4", index = 3) {
-        val personId = choose("personId", listOf(tuitionFeesGetStudentChargesList()).flatten().mapNotNull { it.personId })
-        val invoiceId = choose("invoiceId", listOf(tuitionFeesGetStudentChargesList()).flatten().mapNotNull { it.invoiceId })
-        val noticeCode = choose("noticeCode", listOf(tuitionFeesGetStudentChargesList()).flatten().mapNotNull { it.noticeCode })
+        val row = chooseRow("invoiceId, noticeCode", listOf(tuitionFeesGetStudentChargesList()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.invoiceId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.noticeCode }.firstOrNull()?.toString()) }
+        val personId = choose("personId", listOf(careersGetCareers()).flatten().mapNotNull { it.personId })
+        val invoiceId = choose("invoiceId", listOf(row).mapNotNull { it.invoiceId })
+        val noticeCode = choose("noticeCode", listOf(row).mapNotNull { it.noticeCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Invoices\"}}") {
-            api.tuitionFees.getInvoicesList(personId = personId, invoiceId = invoiceId, noticeCode = noticeCode, retrieveAdditionalInfo = true)
-        } ?: return@case
-        fingerprint { list(result) { writeEsse3Invoices(it) } }
-    }
-
-    @Test
-    @DisplayName("TuitionFees.getInvoicesList#5")
-    fun getInvoicesList5() = case("TuitionFees.getInvoicesList#5", index = 4) {
-        val noticeCode = choose("noticeCode", listOf(tuitionFeesGetStudentChargesList()).flatten().mapNotNull { it.noticeCode })
-        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Invoices\"}}") {
-            api.tuitionFees.getInvoicesList(noticeCode = noticeCode, retrieveAdditionalInfo = false)
-        } ?: return@case
-        fingerprint { list(result) { writeEsse3Invoices(it) } }
-    }
-
-    @Test
-    @DisplayName("TuitionFees.getInvoicesList#6")
-    fun getInvoicesList6() = case("TuitionFees.getInvoicesList#6", index = 5) {
-        val personId = choose("personId", listOf(tuitionFeesGetStudentChargesList()).flatten().mapNotNull { it.personId })
-        val invoiceId = choose("invoiceId", listOf(tuitionFeesGetStudentChargesList()).flatten().mapNotNull { it.invoiceId })
-        val noticeCode = choose("noticeCode", listOf(tuitionFeesGetStudentChargesList()).flatten().mapNotNull { it.noticeCode })
-        val academicYearId = choose("academicYearId", listOf(tuitionFeesGetStudentChargesList()).flatten().mapNotNull { it.academicYearId })
-        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Invoices\"}}") {
-            api.tuitionFees.getInvoicesList(personId = personId, invoiceId = invoiceId, noticeCode = noticeCode, academicYearId = academicYearId)
+            api.tuitionFees.getInvoicesList(personId = personId, invoiceId = invoiceId, noticeCode = noticeCode)
         } ?: return@case
         fingerprint { list(result) { writeEsse3Invoices(it) } }
     }
@@ -204,7 +199,7 @@ class Esse3TuitionFeesLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("TuitionFees.getRefundsList#1")
     fun getRefundsList1() = case("TuitionFees.getRefundsList#1") {
-        val personId = choose("personId", listOf(tuitionFeesGetStudentChargesList()).flatten().mapNotNull { it.personId })
+        val personId = choose("personId", listOf(careersGetCareers()).flatten().mapNotNull { it.personId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Refunds\"}}") {
             api.tuitionFees.getRefundsList(personId = personId)
         } ?: return@case
@@ -241,39 +236,8 @@ class Esse3TuitionFeesLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("TuitionFees.getPagoPATransactions#1")
     fun getPagoPATransactions1() = case("TuitionFees.getPagoPATransactions#1") {
-        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Transaction\"}}") {
-            api.tuitionFees.getPagoPATransactions()
-        } ?: return@case
-        fingerprint { list(result) { writeEsse3Transaction(it) } }
-    }
-
-    @Test
-    @DisplayName("TuitionFees.getPagoPATransactions#2")
-    fun getPagoPATransactions2() = case("TuitionFees.getPagoPATransactions#2", index = 1) {
-        val invoiceId = choose("invoiceId", listOf(tuitionFeesGetStudentChargesList()).flatten().mapNotNull { it.invoiceId })
-        val fiscalCode = choose("fiscalCode", listOf(tuitionFeesGetStudentChargesList()).flatten().mapNotNull { it.fiscalCode })
-        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Transaction\"}}") {
-            api.tuitionFees.getPagoPATransactions(invoiceId = invoiceId, fiscalCode = fiscalCode)
-        } ?: return@case
-        fingerprint { list(result) { writeEsse3Transaction(it) } }
-    }
-
-    @Test
-    @DisplayName("TuitionFees.getPagoPATransactions#3")
-    fun getPagoPATransactions3() = case("TuitionFees.getPagoPATransactions#3", index = 2) {
-        val invoiceId = choose("invoiceId", listOf(tuitionFeesGetStudentChargesList()).flatten().mapNotNull { it.invoiceId })
-        val academicYearId = choose("academicYearId", listOf(tuitionFeesGetStudentChargesList()).flatten().mapNotNull { it.academicYearId })
-        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Transaction\"}}") {
-            api.tuitionFees.getPagoPATransactions(invoiceId = invoiceId, academicYearId = academicYearId)
-        } ?: return@case
-        fingerprint { list(result) { writeEsse3Transaction(it) } }
-    }
-
-    @Test
-    @DisplayName("TuitionFees.getPagoPATransactions#4")
-    fun getPagoPATransactions4() = case("TuitionFees.getPagoPATransactions#4", index = 3) {
-        val academicYearId = choose("academicYearId", listOf(tuitionFeesGetStudentChargesList()).flatten().mapNotNull { it.academicYearId })
-        val fiscalCode = choose("fiscalCode", listOf(tuitionFeesGetStudentChargesList()).flatten().mapNotNull { it.fiscalCode })
+        val academicYearId = choose("academicYearId", listOf(tuitionFeesGetInvoicesList()).flatten().mapNotNull { it.academicYearId })
+        val fiscalCode = choose("fiscalCode", listOf(careersGetCareers()).flatten().mapNotNull { it.fiscalCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Transaction\"}}") {
             api.tuitionFees.getPagoPATransactions(academicYearId = academicYearId, fiscalCode = fiscalCode)
         } ?: return@case
@@ -281,9 +245,21 @@ class Esse3TuitionFeesLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     }
 
     @Test
+    @DisplayName("TuitionFees.getPagoPATransactions#2")
+    fun getPagoPATransactions2() = case("TuitionFees.getPagoPATransactions#2", index = 1) {
+        val academicYearId = choose("academicYearId", listOf(tuitionFeesGetInvoicesList()).flatten().mapNotNull { it.academicYearId })
+        val fiscalCode = choose("fiscalCode", listOf(careersGetCareers()).flatten().mapNotNull { it.fiscalCode })
+        val invoiceId = choose("invoiceId", listOf(tuitionFeesGetStudentChargesList()).flatten().mapNotNull { it.invoiceId })
+        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Transaction\"}}") {
+            api.tuitionFees.getPagoPATransactions(academicYearId = academicYearId, fiscalCode = fiscalCode, invoiceId = invoiceId)
+        } ?: return@case
+        fingerprint { list(result) { writeEsse3Transaction(it) } }
+    }
+
+    @Test
     @DisplayName("TuitionFees.getEnrollmentsForTaxes#1")
     fun getEnrollmentsForTaxes1() = case("TuitionFees.getEnrollmentsForTaxes#1") {
-        val studentId = choose("studentId", listOf(tuitionFeesGetStudentChargesList()).flatten().mapNotNull { it.studentId })
+        val studentId = choose("studentId", listOf(careersGetCareers()).flatten().mapNotNull { it.studentId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3EnrollmentForTuition\"}}") {
             api.tuitionFees.getEnrollmentsForTaxes(studentId = studentId)
         } ?: return@case
@@ -293,7 +269,7 @@ class Esse3TuitionFeesLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("TuitionFees.getEnrollmentsForTaxes#2")
     fun getEnrollmentsForTaxes2() = case("TuitionFees.getEnrollmentsForTaxes#2", index = 1) {
-        val studentId = choose("studentId", listOf(tuitionFeesGetStudentChargesList()).flatten().mapNotNull { it.studentId })
+        val studentId = choose("studentId", listOf(careersGetCareers()).flatten().mapNotNull { it.studentId })
         val academicYearEnrollmentId = choose("academicYearEnrollmentId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.academicYearEnrollmentId }.map { it.toLong() })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3EnrollmentForTuition\"}}") {
             api.tuitionFees.getEnrollmentsForTaxes(studentId = studentId, academicYearEnrollmentId = academicYearEnrollmentId)
@@ -312,7 +288,7 @@ class Esse3TuitionFeesLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("TuitionFees.getTrafficLightParameters#1")
     fun getTrafficLightParameters1() = case("TuitionFees.getTrafficLightParameters#1") {
-        val studentId = choose("studentId", listOf(tuitionFeesGetStudentChargesList()).flatten().mapNotNull { it.studentId })
+        val studentId = choose("studentId", listOf(careersGetCareers()).flatten().mapNotNull { it.studentId })
         val result = call("{\"k\":\"record\",\"n\":\"Esse3TrafficLight\"}") {
             api.tuitionFees.getTrafficLightParameters(studentId = studentId)
         } ?: return@case
@@ -322,7 +298,7 @@ class Esse3TuitionFeesLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("TuitionFees.getTrafficLightParameters#2")
     fun getTrafficLightParameters2() = case("TuitionFees.getTrafficLightParameters#2", index = 1) {
-        val studentId = choose("studentId", listOf(tuitionFeesGetStudentChargesList()).flatten().mapNotNull { it.studentId })
+        val studentId = choose("studentId", listOf(careersGetCareers()).flatten().mapNotNull { it.studentId })
         val academicYearId = choose("academicYearId", listOf(tuitionFeesGetStudentChargesList()).flatten().mapNotNull { it.academicYearId })
         val result = call("{\"k\":\"record\",\"n\":\"Esse3TrafficLight\"}") {
             api.tuitionFees.getTrafficLightParameters(studentId = studentId, academicYearId = academicYearId)

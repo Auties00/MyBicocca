@@ -4,11 +4,9 @@ package com.example.demo.live
 import com.example.demo.api.DemoApi
 import com.example.demo.dto.DemoLevel
 import com.example.demo.dto.DemoSessionAuth
-import com.example.runtime.live.LiveJson
 import com.example.runtime.live.LiveTemplates
 import com.example.runtime.live.LiveTest
 import java.time.LocalDate
-import kotlinx.serialization.decodeFromString
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 
@@ -44,8 +42,11 @@ class DemoCalendarLiveTest : LiveTest<DemoApi>(DemoLive) {
     @Test
     @DisplayName("Calendar.runQuery#1")
     fun runQuery1() = case("Calendar.runQuery#1") {
+        val row = chooseRow("ids, tags", listOf(searchSearchItems()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.owner }.mapNotNull { it.id }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.name }.firstOrNull()?.toString()) }
+        val ids = listOf(choose("ids", listOf(row).mapNotNull { it.owner }.mapNotNull { it.id }))
+        val tags = listOf(choose("tags", listOf(row).mapNotNull { it.name }))
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"string\"}}") {
-            api.calendar.runQuery(ids = LiveJson.decodeFromString<List<Long>>("[1,2]"), auth = sessionCredentials())
+            api.calendar.runQuery(ids = ids, tags = tags, auth = sessionCredentials())
         } ?: return@case
         fingerprint { list(result) { writeDemoSlot(it) } }
     }
@@ -53,8 +54,11 @@ class DemoCalendarLiveTest : LiveTest<DemoApi>(DemoLive) {
     @Test
     @DisplayName("Calendar.runQuery#invalid-credentials")
     fun runQueryInvalidCredentials() = case("Calendar.runQuery#invalid-credentials") {
+        val row = chooseRow("ids, tags", listOf(searchSearchItems()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.owner }.mapNotNull { it.id }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.name }.firstOrNull()?.toString()) }
+        val ids = listOf(choose("ids", listOf(row).mapNotNull { it.owner }.mapNotNull { it.id }))
+        val tags = listOf(choose("tags", listOf(row).mapNotNull { it.name }))
         refused(acceptsEmpty = false) {
-            api.calendar.runQuery(ids = LiveJson.decodeFromString<List<Long>>("[1,2]"), auth = DemoSessionAuth(token = "mybicocca-invalid-credential"))
+            api.calendar.runQuery(ids = ids, tags = tags, auth = DemoSessionAuth(token = "mybicocca-invalid-credential"))
         }
     }
 }

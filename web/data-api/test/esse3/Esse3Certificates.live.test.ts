@@ -12,8 +12,9 @@ describe("Esse3 Certificates", () => {
   });
 
   liveCase(Esse3Live, "Certificates.getCertificatePdf#1", {}, async (live) => {
-    const configurationId = live.choose("configurationId", [await certificatesGetCertificates(live)].map((it) => it.certificates).filter(isPresent).flat().map((it) => it.configurationId).filter(isPresent));
-    const documentId = live.choose("documentId", [await certificatesGetCertificates(live)].map((it) => it.certificates).filter(isPresent).flat().map((it) => it.documentId).filter(isPresent));
+    const row = live.chooseRow("configurationId, documentId", [await certificatesGetCertificates(live)].map((it) => it.certificates).filter(isPresent).flat(), (element) => [[element].map((it) => it.configurationId).filter(isPresent)[0], [element].map((it) => it.documentId).filter(isPresent)[0]]);
+    const configurationId = live.choose("configurationId", [row].map((it) => it.configurationId).filter(isPresent));
+    const documentId = live.choose("documentId", [row].map((it) => it.documentId).filter(isPresent));
     await live.call(undefined, {}, async () => live.api.certificates.getCertificatePdf(configurationId, documentId));
   });
 });

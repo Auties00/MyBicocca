@@ -102,7 +102,7 @@ internal suspend fun LiveCase<AffluencesApi>.reservationsGetResourceStatus(): Af
 
 internal suspend fun LiveCase<AffluencesApi>.reservationsGetAvailableResources(): List<AffluencesAvailableResource> =
     source("reservationsGetAvailableResources", "{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"AffluencesAvailableResource\"}}") {
-        val date = LocalDate.parse(LiveTemplates.resolve("{today}"))
+        val date = LocalDate.parse(LiveTemplates.resolve("{today+1}"))
         val resourceTypeId = choose("resourceTypeId", listOf(reservationsGetReservationInfo()).mapNotNull { it.types }.flatten().mapNotNull { it.resourceTypeId })
         api.reservations.getAvailableResources(siteIdentifier = "4912615d-501b-4c4e-a2a7-ccaec81c5429", date = date, resourceTypeId = resourceTypeId)
     }

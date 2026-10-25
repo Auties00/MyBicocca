@@ -9,56 +9,63 @@ import XCTest
 final class Esse3RulePropertiesLiveTests: XCTestCase {
     func test_getPropaedeuticityRegulations1() async throws {
         try await liveCase(Esse3Live.api, "RuleProperties.getPropaedeuticityRegulations#1") { live in
-            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PrerequisitesRegulation\"}}") { try await live.api.ruleProperties.getPropaedeuticityRegulations() }
+            let courseOfStudyId = try live.choose("courseOfStudyId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.courseOfStudyId })
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PrerequisitesRegulation\"}}") { try await live.api.ruleProperties.getPropaedeuticityRegulations(courseOfStudyId: courseOfStudyId) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3PrerequisitesRegulation(f, item0) } }
         }
     }
 
     func test_getPropaedeuticityRegulations2() async throws {
         try await liveCase(Esse3Live.api, "RuleProperties.getPropaedeuticityRegulations#2", index: 1) { live in
+            let row = try live.chooseRow("courseOfStudyId, courseOfStudyCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.courseOfStudyId }); let key1: String? = live.firstText([element].compactMap { $0.p06CourseOfStudyCode }); return [key0, key1] }
+            let courseOfStudyId = try live.choose("courseOfStudyId", [row].compactMap { $0.courseOfStudyId })
             let facultyId = try live.choose("facultyId", [try await Esse3Live.structureGetDidacticStructures(live)].flatMap { $0 }.compactMap { $0.facultyId })
             let facultyCode = try live.choose("facultyCode", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }.compactMap { $0.facultyCode })
-            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.structureGetCoursesOfStudy(live)].flatMap { $0 }.compactMap { $0.courseOfStudyCode })
-            let courseTypeCode = try live.choose("courseTypeCode", [try await Esse3Live.personalDataGetPhdCareersData(live)].flatMap { $0 }.compactMap { $0.courseTypeCode })
-            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PrerequisitesRegulation\"}}") { try await live.api.ruleProperties.getPropaedeuticityRegulations(proposalRuleState: Esse3ChoiceRulesStateFilter.a, facultyId: facultyId, facultyCode: facultyCode, courseOfStudyCode: courseOfStudyCode, courseTypeCode: courseTypeCode) }
+            let courseOfStudyCode = try live.choose("courseOfStudyCode", [row].compactMap { $0.p06CourseOfStudyCode })
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PrerequisitesRegulation\"}}") { try await live.api.ruleProperties.getPropaedeuticityRegulations(proposalRuleState: Esse3ChoiceRulesStateFilter.a, facultyId: facultyId, facultyCode: facultyCode, courseOfStudyId: courseOfStudyId, courseOfStudyCode: courseOfStudyCode) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3PrerequisitesRegulation(f, item0) } }
         }
     }
 
     func test_getPropaedeuticityRegulations3() async throws {
         try await liveCase(Esse3Live.api, "RuleProperties.getPropaedeuticityRegulations#3", index: 2) { live in
+            let courseOfStudyId = try live.choose("courseOfStudyId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.courseOfStudyId })
             let facultyId = try live.choose("facultyId", [try await Esse3Live.structureGetDidacticStructures(live)].flatMap { $0 }.compactMap { $0.facultyId })
-            let courseOfStudyId = try live.choose("courseOfStudyId", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }.compactMap { $0.courseOfStudyId })
-            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.structureGetCoursesOfStudy(live)].flatMap { $0 }.compactMap { $0.courseOfStudyCode })
-            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PrerequisitesRegulation\"}}") { try await live.api.ruleProperties.getPropaedeuticityRegulations(proposalRuleState: Esse3ChoiceRulesStateFilter.b, facultyId: facultyId, courseOfStudyId: courseOfStudyId, courseOfStudyCode: courseOfStudyCode) }
+            let courseTypeCode = try live.choose("courseTypeCode", [try await Esse3Live.personalDataGetPhdCareersData(live)].flatMap { $0 }.compactMap { $0.courseTypeCode })
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PrerequisitesRegulation\"}}") { try await live.api.ruleProperties.getPropaedeuticityRegulations(proposalRuleState: Esse3ChoiceRulesStateFilter.x, facultyId: facultyId, courseOfStudyId: courseOfStudyId, courseTypeCode: courseTypeCode) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3PrerequisitesRegulation(f, item0) } }
         }
     }
 
     func test_getPropaedeuticityRegulations4() async throws {
         try await liveCase(Esse3Live.api, "RuleProperties.getPropaedeuticityRegulations#4", index: 3) { live in
+            let row = try live.chooseRow("courseOfStudyId, courseOfStudyCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.courseOfStudyId }); let key1: String? = live.firstText([element].compactMap { $0.p06CourseOfStudyCode }); return [key0, key1] }
+            let courseOfStudyId = try live.choose("courseOfStudyId", [row].compactMap { $0.courseOfStudyId })
             let facultyCode = try live.choose("facultyCode", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }.compactMap { $0.facultyCode })
-            let courseOfStudyId = try live.choose("courseOfStudyId", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }.compactMap { $0.courseOfStudyId })
+            let courseOfStudyCode = try live.choose("courseOfStudyCode", [row].compactMap { $0.p06CourseOfStudyCode })
             let courseTypeCode = try live.choose("courseTypeCode", [try await Esse3Live.personalDataGetPhdCareersData(live)].flatMap { $0 }.compactMap { $0.courseTypeCode })
-            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PrerequisitesRegulation\"}}") { try await live.api.ruleProperties.getPropaedeuticityRegulations(proposalRuleState: Esse3ChoiceRulesStateFilter.x, facultyCode: facultyCode, courseOfStudyId: courseOfStudyId, courseTypeCode: courseTypeCode) }
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PrerequisitesRegulation\"}}") { try await live.api.ruleProperties.getPropaedeuticityRegulations(proposalRuleState: Esse3ChoiceRulesStateFilter.b, facultyCode: facultyCode, courseOfStudyId: courseOfStudyId, courseOfStudyCode: courseOfStudyCode, courseTypeCode: courseTypeCode) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3PrerequisitesRegulation(f, item0) } }
         }
     }
 
     func test_getPropaedeuticityRegulations5() async throws {
         try await liveCase(Esse3Live.api, "RuleProperties.getPropaedeuticityRegulations#5", index: 4) { live in
+            let courseOfStudyId = try live.choose("courseOfStudyId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.courseOfStudyId })
+            let facultyId = try live.choose("facultyId", [try await Esse3Live.structureGetDidacticStructures(live)].flatMap { $0 }.compactMap { $0.facultyId })
             let facultyCode = try live.choose("facultyCode", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }.compactMap { $0.facultyCode })
-            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.structureGetCoursesOfStudy(live)].flatMap { $0 }.compactMap { $0.courseOfStudyCode })
-            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PrerequisitesRegulation\"}}") { try await live.api.ruleProperties.getPropaedeuticityRegulations(proposalRuleState: Esse3ChoiceRulesStateFilter.b, facultyCode: facultyCode, courseOfStudyCode: courseOfStudyCode) }
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PrerequisitesRegulation\"}}") { try await live.api.ruleProperties.getPropaedeuticityRegulations(proposalRuleState: Esse3ChoiceRulesStateFilter.b, facultyId: facultyId, facultyCode: facultyCode, courseOfStudyId: courseOfStudyId) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3PrerequisitesRegulation(f, item0) } }
         }
     }
 
     func test_getPropaedeuticityRegulations6() async throws {
         try await liveCase(Esse3Live.api, "RuleProperties.getPropaedeuticityRegulations#6", index: 5) { live in
-            let facultyId = try live.choose("facultyId", [try await Esse3Live.structureGetDidacticStructures(live)].flatMap { $0 }.compactMap { $0.facultyId })
-            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.structureGetCoursesOfStudy(live)].flatMap { $0 }.compactMap { $0.courseOfStudyCode })
-            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PrerequisitesRegulation\"}}") { try await live.api.ruleProperties.getPropaedeuticityRegulations(proposalRuleState: Esse3ChoiceRulesStateFilter.x, facultyId: facultyId, courseOfStudyCode: courseOfStudyCode) }
+            let row = try live.chooseRow("courseOfStudyId, courseOfStudyCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.courseOfStudyId }); let key1: String? = live.firstText([element].compactMap { $0.p06CourseOfStudyCode }); return [key0, key1] }
+            let courseOfStudyId = try live.choose("courseOfStudyId", [row].compactMap { $0.courseOfStudyId })
+            let facultyCode = try live.choose("facultyCode", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }.compactMap { $0.facultyCode })
+            let courseOfStudyCode = try live.choose("courseOfStudyCode", [row].compactMap { $0.p06CourseOfStudyCode })
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PrerequisitesRegulation\"}}") { try await live.api.ruleProperties.getPropaedeuticityRegulations(proposalRuleState: Esse3ChoiceRulesStateFilter.x, facultyCode: facultyCode, courseOfStudyId: courseOfStudyId, courseOfStudyCode: courseOfStudyCode) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3PrerequisitesRegulation(f, item0) } }
         }
     }

@@ -11,8 +11,9 @@ class Esse3RecordsLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Records.getMinutes#1")
     fun getMinutes1() = case("Records.getMinutes#1") {
-        val lotBatchId = choose("lotBatchId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.lotBatchId })
-        val minutesId = choose("minutesId", listOf(recordsFindMinutes()).flatten().mapNotNull { it.minutesId })
+        val row = chooseRow("lotBatchId, minutesId", listOf(recordsFindMinutes()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.lotBatchId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.minutesId }.firstOrNull()?.toString()) }
+        val lotBatchId = choose("lotBatchId", listOf(row).mapNotNull { it.lotBatchId })
+        val minutesId = choose("minutesId", listOf(row).mapNotNull { it.minutesId })
         val result = call("{\"k\":\"record\",\"n\":\"Esse3RecordWithDetails\"}") {
             api.records.getMinutes(lotBatchId = lotBatchId, minutesId = minutesId)
         } ?: return@case
@@ -31,70 +32,9 @@ class Esse3RecordsLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("Records.findMinutes#1")
     fun findMinutes1() = case("Records.findMinutes#1") {
+        val studentFiscalCode = choose("studentFiscalCode", listOf(careersGetCareers()).flatten().mapNotNull { it.fiscalCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Record\"}}") {
-            api.records.findMinutes()
-        } ?: return@case
-        fingerprint { list(result) { writeEsse3Record(it) } }
-    }
-
-    @Test
-    @DisplayName("Records.findMinutes#2")
-    fun findMinutes2() = case("Records.findMinutes#2", index = 1) {
-        val studentFiscalCode = choose("studentFiscalCode", listOf(examsCalendarGetBookingsByMatId()).flatten().mapNotNull { it.studentFiscalCode })
-        val lecturerFiscalCode = choose("lecturerFiscalCode", listOf(logisticsGetEasystaffLogistics()).flatten().mapNotNull { it.lecturers }.flatten().mapNotNull { it.lecturerFiscalCode })
-        val activityCode = choose("activityCode", listOf(offerGetGenericTeachingActivities()).flatten().mapNotNull { it.activityCode })
-        val courseOfStudyCode = choose("courseOfStudyCode", listOf(structureGetCoursesOfStudy()).flatten().mapNotNull { it.courseOfStudyCode })
-        val studentActivityCode = choose("studentActivityCode", listOf(examsCalendarGetBookingsByMatId()).flatten().mapNotNull { it.studentActivityCode })
-        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Record\"}}") {
-            api.records.findMinutes(studentFiscalCode = studentFiscalCode, lecturerFiscalCode = lecturerFiscalCode, activityCode = activityCode, courseOfStudyCode = courseOfStudyCode, studentActivityCode = studentActivityCode)
-        } ?: return@case
-        fingerprint { list(result) { writeEsse3Record(it) } }
-    }
-
-    @Test
-    @DisplayName("Records.findMinutes#3")
-    fun findMinutes3() = case("Records.findMinutes#3", index = 2) {
-        val studentFiscalCode = choose("studentFiscalCode", listOf(examsCalendarGetBookingsByMatId()).flatten().mapNotNull { it.studentFiscalCode })
-        val lecturerFiscalCode = choose("lecturerFiscalCode", listOf(logisticsGetEasystaffLogistics()).flatten().mapNotNull { it.lecturers }.flatten().mapNotNull { it.lecturerFiscalCode })
-        val studentActivityCode = choose("studentActivityCode", listOf(examsCalendarGetBookingsByMatId()).flatten().mapNotNull { it.studentActivityCode })
-        val courseOfStudyStudentCode = choose("courseOfStudyStudentCode", listOf(examsCalendarGetBookingsByMatId()).flatten().mapNotNull { it.courseOfStudyStudentCode })
-        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Record\"}}") {
-            api.records.findMinutes(studentFiscalCode = studentFiscalCode, lecturerFiscalCode = lecturerFiscalCode, studentActivityCode = studentActivityCode, courseOfStudyStudentCode = courseOfStudyStudentCode)
-        } ?: return@case
-        fingerprint { list(result) { writeEsse3Record(it) } }
-    }
-
-    @Test
-    @DisplayName("Records.findMinutes#4")
-    fun findMinutes4() = case("Records.findMinutes#4", index = 3) {
-        val activityCode = choose("activityCode", listOf(offerGetGenericTeachingActivities()).flatten().mapNotNull { it.activityCode })
-        val courseOfStudyCode = choose("courseOfStudyCode", listOf(structureGetCoursesOfStudy()).flatten().mapNotNull { it.courseOfStudyCode })
-        val courseOfStudyStudentCode = choose("courseOfStudyStudentCode", listOf(examsCalendarGetBookingsByMatId()).flatten().mapNotNull { it.courseOfStudyStudentCode })
-        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Record\"}}") {
-            api.records.findMinutes(activityCode = activityCode, courseOfStudyCode = courseOfStudyCode, courseOfStudyStudentCode = courseOfStudyStudentCode)
-        } ?: return@case
-        fingerprint { list(result) { writeEsse3Record(it) } }
-    }
-
-    @Test
-    @DisplayName("Records.findMinutes#5")
-    fun findMinutes5() = case("Records.findMinutes#5", index = 4) {
-        val studentFiscalCode = choose("studentFiscalCode", listOf(examsCalendarGetBookingsByMatId()).flatten().mapNotNull { it.studentFiscalCode })
-        val activityCode = choose("activityCode", listOf(offerGetGenericTeachingActivities()).flatten().mapNotNull { it.activityCode })
-        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Record\"}}") {
-            api.records.findMinutes(studentFiscalCode = studentFiscalCode, activityCode = activityCode)
-        } ?: return@case
-        fingerprint { list(result) { writeEsse3Record(it) } }
-    }
-
-    @Test
-    @DisplayName("Records.findMinutes#6")
-    fun findMinutes6() = case("Records.findMinutes#6", index = 5) {
-        val lecturerFiscalCode = choose("lecturerFiscalCode", listOf(logisticsGetEasystaffLogistics()).flatten().mapNotNull { it.lecturers }.flatten().mapNotNull { it.lecturerFiscalCode })
-        val courseOfStudyCode = choose("courseOfStudyCode", listOf(structureGetCoursesOfStudy()).flatten().mapNotNull { it.courseOfStudyCode })
-        val studentActivityCode = choose("studentActivityCode", listOf(examsCalendarGetBookingsByMatId()).flatten().mapNotNull { it.studentActivityCode })
-        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3Record\"}}") {
-            api.records.findMinutes(lecturerFiscalCode = lecturerFiscalCode, courseOfStudyCode = courseOfStudyCode, studentActivityCode = studentActivityCode)
+            api.records.findMinutes(studentFiscalCode = studentFiscalCode)
         } ?: return@case
         fingerprint { list(result) { writeEsse3Record(it) } }
     }

@@ -325,6 +325,11 @@ export class LiveFingerprint {
     this.atom(value, millionths);
   }
 
+  /** A 32-bit float, at the precision the other platforms decode it with. */
+  float(value: number | null | undefined): void {
+    this.atom(value, (number) => millionths(Math.fround(number)));
+  }
+
   bool(value: boolean | null | undefined): void {
     this.atom(value, (flag) => (flag ? "t" : "f"));
   }

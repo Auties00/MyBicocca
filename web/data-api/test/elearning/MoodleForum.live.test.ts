@@ -35,21 +35,21 @@ describe("Moodle Forum", () => {
   });
 
   liveCase(MoodleLive, "Forum.getDiscussionPosts#1", {}, async (live) => {
-    const discussionId = live.choose("discussionId", [await forumGetForumDiscussions(live)].map((it) => it.discussions).filter(isPresent).flat().map((it) => it.id).filter(isPresent));
+    const discussionId = live.choose("discussionId", [await forumGetForumDiscussions(live)].map((it) => it.discussions).filter(isPresent).flat().map((it) => it.discussion).filter(isPresent));
     const auth = await tokenCredentials(live);
     const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleDiscussionPostsResponse\"}", { errors: ["requireloginerror"] }, async () => live.api.forum.getDiscussionPosts(discussionId, auth));
     live.fingerprint((f) => writeMoodleDiscussionPostsResponse(f, result));
   });
 
   liveCase(MoodleLive, "Forum.getDiscussionPosts#2", { index: 1 }, async (live) => {
-    const discussionId = live.choose("discussionId", [await forumGetForumDiscussions(live)].map((it) => it.discussions).filter(isPresent).flat().map((it) => it.id).filter(isPresent));
+    const discussionId = live.choose("discussionId", [await forumGetForumDiscussions(live)].map((it) => it.discussions).filter(isPresent).flat().map((it) => it.discussion).filter(isPresent));
     const auth = await tokenCredentials(live);
     const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleDiscussionPostsResponse\"}", { errors: ["requireloginerror"] }, async () => live.api.forum.getDiscussionPosts(discussionId, auth, { includeInlineAttachments: true }));
     live.fingerprint((f) => writeMoodleDiscussionPostsResponse(f, result));
   });
 
   liveCase(MoodleLive, "Forum.getDiscussionPosts#3", { index: 2 }, async (live) => {
-    const discussionId = live.choose("discussionId", [await forumGetForumDiscussions(live)].map((it) => it.discussions).filter(isPresent).flat().map((it) => it.id).filter(isPresent));
+    const discussionId = live.choose("discussionId", [await forumGetForumDiscussions(live)].map((it) => it.discussions).filter(isPresent).flat().map((it) => it.discussion).filter(isPresent));
     const auth = await tokenCredentials(live);
     const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleDiscussionPostsResponse\"}", { errors: ["requireloginerror"] }, async () => live.api.forum.getDiscussionPosts(discussionId, auth, { includeInlineAttachments: false }));
     live.fingerprint((f) => writeMoodleDiscussionPostsResponse(f, result));

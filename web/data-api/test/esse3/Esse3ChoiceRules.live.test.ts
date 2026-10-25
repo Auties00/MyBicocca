@@ -2,7 +2,7 @@
 
 import { describe } from "vitest";
 import { isPresent, liveCase } from "../runtime/live.js";
-import { Esse3Live, choiceRulesGetChoiceRegulationWindows, choiceRulesGetChoiceRegulations, choiceRulesGetChoiceRules, choiceRulesGetStudyPlanSchemas, personalDataGetCareers, personalDataGetPhdCareersData, rulePropertiesGetPropaedeuticityRegulations, structureGetCoursesOfStudy, structureGetDidacticStructures, writeEsse3ChoiceRegulation, writeEsse3ChoiceRegulationWindow, writeEsse3ChoiceRegulationWithSchemas, writeEsse3ChoiceRuleWithDetails, writeEsse3ChoiceRuleWithSchemas, writeEsse3PlanSchema, writeEsse3PlanSchemaWithDetails } from "./Esse3Live.js";
+import { Esse3Live, careersGetCareers, choiceRulesGetChoiceRegulationWindows, choiceRulesGetChoiceRegulations, choiceRulesGetChoiceRules, choiceRulesGetStudyPlanSchemas, personalDataGetCareers, personalDataGetPhdCareersData, rulePropertiesGetPropaedeuticityRegulations, structureGetDidacticStructures, writeEsse3ChoiceRegulation, writeEsse3ChoiceRegulationWindow, writeEsse3ChoiceRegulationWithSchemas, writeEsse3ChoiceRuleWithDetails, writeEsse3ChoiceRuleWithSchemas, writeEsse3PlanSchema, writeEsse3PlanSchemaWithDetails } from "./Esse3Live.js";
 
 // The live tests of the Esse3 ChoiceRules module, planned from common/specs/esse3/tests.yaml.
 describe("Esse3 ChoiceRules", () => {
@@ -12,10 +12,12 @@ describe("Esse3 ChoiceRules", () => {
   });
 
   liveCase(Esse3Live, "ChoiceRules.getChoiceRegulations#2", { index: 1 }, async (live) => {
-    const facultyCode = live.choose("facultyCode", [await personalDataGetCareers(live)].flat().map((it) => it.facultyCode).filter(isPresent));
-    const courseOfStudyId = live.choose("courseOfStudyId", [await personalDataGetCareers(live)].flat().map((it) => it.courseOfStudyId).filter(isPresent));
-    const courseOfStudyCode = live.choose("courseOfStudyCode", [await structureGetCoursesOfStudy(live)].flat().map((it) => it.courseOfStudyCode).filter(isPresent));
-    const academicYearOrderId = live.choose("academicYearOrderId", [await personalDataGetCareers(live)].flat().map((it) => it.academicYearOrderId).filter(isPresent));
+    const row = live.chooseRow("facultyCode, academicYearOrderId", [await personalDataGetCareers(live)].flat(), (element) => [[element].map((it) => it.facultyCode).filter(isPresent)[0], [element].map((it) => it.academicYearOrderId).filter(isPresent)[0]]);
+    const row2 = live.chooseRow("courseOfStudyId, courseOfStudyCode", [await careersGetCareers(live)].flat(), (element) => [[element].map((it) => it.courseOfStudyId).filter(isPresent)[0], [element].map((it) => it.p06CourseOfStudyCode).filter(isPresent)[0]]);
+    const facultyCode = live.choose("facultyCode", [row].map((it) => it.facultyCode).filter(isPresent));
+    const courseOfStudyId = live.choose("courseOfStudyId", [row2].map((it) => it.courseOfStudyId).filter(isPresent));
+    const courseOfStudyCode = live.choose("courseOfStudyCode", [row2].map((it) => it.p06CourseOfStudyCode).filter(isPresent));
+    const academicYearOrderId = live.choose("academicYearOrderId", [row].map((it) => it.academicYearOrderId).filter(isPresent));
     const academicYearRevisionId = live.choose("academicYearRevisionId", [await rulePropertiesGetPropaedeuticityRegulations(live)].flat().map((it) => it.academicYearRevisionId).filter(isPresent));
     const courseTypeCode = live.choose("courseTypeCode", [await personalDataGetPhdCareersData(live)].flat().map((it) => it.courseTypeCode).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ChoiceRegulation\"}}", {}, async () => live.api.choiceRules.getChoiceRegulations({ choiceRegulationState: "B", facultyCode: facultyCode, courseOfStudyId: courseOfStudyId, courseOfStudyCode: courseOfStudyCode, academicYearOrderId: academicYearOrderId, academicYearRevisionId: academicYearRevisionId, courseTypeCode: courseTypeCode }));
@@ -25,7 +27,7 @@ describe("Esse3 ChoiceRules", () => {
   liveCase(Esse3Live, "ChoiceRules.getChoiceRegulations#3", { index: 2 }, async (live) => {
     const facultyId = live.choose("facultyId", [await structureGetDidacticStructures(live)].flat().map((it) => it.facultyId).filter(isPresent));
     const facultyCode = live.choose("facultyCode", [await personalDataGetCareers(live)].flat().map((it) => it.facultyCode).filter(isPresent));
-    const courseOfStudyId = live.choose("courseOfStudyId", [await personalDataGetCareers(live)].flat().map((it) => it.courseOfStudyId).filter(isPresent));
+    const courseOfStudyId = live.choose("courseOfStudyId", [await careersGetCareers(live)].flat().map((it) => it.courseOfStudyId).filter(isPresent));
     const courseTypeCode = live.choose("courseTypeCode", [await personalDataGetPhdCareersData(live)].flat().map((it) => it.courseTypeCode).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ChoiceRegulation\"}}", {}, async () => live.api.choiceRules.getChoiceRegulations({ choiceRegulationState: "X", facultyId: facultyId, facultyCode: facultyCode, courseOfStudyId: courseOfStudyId, courseTypeCode: courseTypeCode }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3ChoiceRegulation(f, it)));
@@ -33,7 +35,7 @@ describe("Esse3 ChoiceRules", () => {
 
   liveCase(Esse3Live, "ChoiceRules.getChoiceRegulations#4", { index: 3 }, async (live) => {
     const facultyId = live.choose("facultyId", [await structureGetDidacticStructures(live)].flat().map((it) => it.facultyId).filter(isPresent));
-    const courseOfStudyCode = live.choose("courseOfStudyCode", [await structureGetCoursesOfStudy(live)].flat().map((it) => it.courseOfStudyCode).filter(isPresent));
+    const courseOfStudyCode = live.choose("courseOfStudyCode", [await careersGetCareers(live)].flat().map((it) => it.p06CourseOfStudyCode).filter(isPresent));
     const academicYearOrderId = live.choose("academicYearOrderId", [await personalDataGetCareers(live)].flat().map((it) => it.academicYearOrderId).filter(isPresent));
     const academicYearRevisionId = live.choose("academicYearRevisionId", [await rulePropertiesGetPropaedeuticityRegulations(live)].flat().map((it) => it.academicYearRevisionId).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ChoiceRegulation\"}}", {}, async () => live.api.choiceRules.getChoiceRegulations({ choiceRegulationState: "A", facultyId: facultyId, courseOfStudyCode: courseOfStudyCode, academicYearOrderId: academicYearOrderId, academicYearRevisionId: academicYearRevisionId }));
@@ -41,9 +43,10 @@ describe("Esse3 ChoiceRules", () => {
   });
 
   liveCase(Esse3Live, "ChoiceRules.getChoiceRegulations#5", { index: 4 }, async (live) => {
-    const facultyCode = live.choose("facultyCode", [await personalDataGetCareers(live)].flat().map((it) => it.facultyCode).filter(isPresent));
-    const courseOfStudyId = live.choose("courseOfStudyId", [await personalDataGetCareers(live)].flat().map((it) => it.courseOfStudyId).filter(isPresent));
-    const academicYearOrderId = live.choose("academicYearOrderId", [await personalDataGetCareers(live)].flat().map((it) => it.academicYearOrderId).filter(isPresent));
+    const row = live.chooseRow("facultyCode, academicYearOrderId", [await personalDataGetCareers(live)].flat(), (element) => [[element].map((it) => it.facultyCode).filter(isPresent)[0], [element].map((it) => it.academicYearOrderId).filter(isPresent)[0]]);
+    const facultyCode = live.choose("facultyCode", [row].map((it) => it.facultyCode).filter(isPresent));
+    const courseOfStudyId = live.choose("courseOfStudyId", [await careersGetCareers(live)].flat().map((it) => it.courseOfStudyId).filter(isPresent));
+    const academicYearOrderId = live.choose("academicYearOrderId", [row].map((it) => it.academicYearOrderId).filter(isPresent));
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ChoiceRegulation\"}}", {}, async () => live.api.choiceRules.getChoiceRegulations({ choiceRegulationState: "A", facultyCode: facultyCode, courseOfStudyId: courseOfStudyId, academicYearOrderId: academicYearOrderId }));
     live.fingerprint((f) => f.list(result, (it) => writeEsse3ChoiceRegulation(f, it)));
   });

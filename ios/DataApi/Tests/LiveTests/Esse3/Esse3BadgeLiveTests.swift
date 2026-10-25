@@ -9,51 +9,59 @@ import XCTest
 final class Esse3BadgeLiveTests: XCTestCase {
     func test_getNewBadges1() async throws {
         try await liveCase(Esse3Live.api, "Badge.getNewBadges#1") { live in
-            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3BadgeData\"}}") { try await live.api.badge.getNewBadges() }
+            let studentId = try live.choose("studentId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.studentId })
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3BadgeData\"}}") { try await live.api.badge.getNewBadges(studentId: studentId) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3BadgeData(f, item0) } }
         }
     }
 
     func test_getNewBadges2() async throws {
         try await liveCase(Esse3Live.api, "Badge.getNewBadges#2", index: 1) { live in
-            let studentId = try live.choose("studentId", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }.compactMap { $0.studentId })
-            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.structureGetCoursesOfStudy(live)].flatMap { $0 }.compactMap { $0.courseOfStudyCode })
-            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3BadgeData\"}}") { try await live.api.badge.getNewBadges(studentId: studentId, courseOfStudyCode: courseOfStudyCode, studentStatusCode: Esse3BadgeStudentStateFilter.i, matStatusCode: Esse3BadgeMatriculationStateFilter.i) }
+            let row = try live.chooseRow("studentId, fiscalCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.studentId }); let key1: String? = live.firstText([element].compactMap { $0.fiscalCode }); return [key0, key1] }
+            let studentId = try live.choose("studentId", [row].compactMap { $0.studentId })
+            let fiscalCode = try live.choose("fiscalCode", [row].compactMap { $0.fiscalCode })
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3BadgeData\"}}") { try await live.api.badge.getNewBadges(studentId: studentId, fiscalCode: fiscalCode, studentStatusCode: Esse3BadgeStudentStateFilter.a, matStatusCode: Esse3BadgeMatriculationStateFilter.i) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3BadgeData(f, item0) } }
         }
     }
 
     func test_getNewBadges3() async throws {
         try await liveCase(Esse3Live.api, "Badge.getNewBadges#3", index: 2) { live in
-            let fiscalCode = try live.choose("fiscalCode", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }.compactMap { $0.fiscalCode })
-            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.structureGetCoursesOfStudy(live)].flatMap { $0 }.compactMap { $0.courseOfStudyCode })
-            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3BadgeData\"}}") { try await live.api.badge.getNewBadges(fiscalCode: fiscalCode, courseOfStudyCode: courseOfStudyCode, studentStatusCode: Esse3BadgeStudentStateFilter.a, matStatusCode: Esse3BadgeMatriculationStateFilter.s) }
+            let row = try live.chooseRow("studentId, courseOfStudyCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.studentId }); let key1: String? = live.firstText([element].compactMap { $0.p06CourseOfStudyCode }); return [key0, key1] }
+            let studentId = try live.choose("studentId", [row].compactMap { $0.studentId })
+            let courseOfStudyCode = try live.choose("courseOfStudyCode", [row].compactMap { $0.p06CourseOfStudyCode })
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3BadgeData\"}}") { try await live.api.badge.getNewBadges(studentId: studentId, courseOfStudyCode: courseOfStudyCode, studentStatusCode: Esse3BadgeStudentStateFilter.x, matStatusCode: Esse3BadgeMatriculationStateFilter.s) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3BadgeData(f, item0) } }
         }
     }
 
     func test_getNewBadges4() async throws {
         try await liveCase(Esse3Live.api, "Badge.getNewBadges#4", index: 3) { live in
-            let studentId = try live.choose("studentId", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }.compactMap { $0.studentId })
-            let fiscalCode = try live.choose("fiscalCode", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }.compactMap { $0.fiscalCode })
-            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3BadgeData\"}}") { try await live.api.badge.getNewBadges(studentId: studentId, fiscalCode: fiscalCode, studentStatusCode: Esse3BadgeStudentStateFilter.x, matStatusCode: Esse3BadgeMatriculationStateFilter.a) }
+            let row = try live.chooseRow("studentId, fiscalCode, courseOfStudyCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.studentId }); let key1: String? = live.firstText([element].compactMap { $0.fiscalCode }); let key2: String? = live.firstText([element].compactMap { $0.p06CourseOfStudyCode }); return [key0, key1, key2] }
+            let studentId = try live.choose("studentId", [row].compactMap { $0.studentId })
+            let fiscalCode = try live.choose("fiscalCode", [row].compactMap { $0.fiscalCode })
+            let courseOfStudyCode = try live.choose("courseOfStudyCode", [row].compactMap { $0.p06CourseOfStudyCode })
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3BadgeData\"}}") { try await live.api.badge.getNewBadges(studentId: studentId, fiscalCode: fiscalCode, courseOfStudyCode: courseOfStudyCode, studentStatusCode: Esse3BadgeStudentStateFilter.i) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3BadgeData(f, item0) } }
         }
     }
 
     func test_getNewBadges5() async throws {
         try await liveCase(Esse3Live.api, "Badge.getNewBadges#5", index: 4) { live in
-            let studentId = try live.choose("studentId", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }.compactMap { $0.studentId })
-            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3BadgeData\"}}") { try await live.api.badge.getNewBadges(studentId: studentId, studentStatusCode: Esse3BadgeStudentStateFilter.s, matStatusCode: Esse3BadgeMatriculationStateFilter.s) }
+            let row = try live.chooseRow("studentId, fiscalCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.studentId }); let key1: String? = live.firstText([element].compactMap { $0.fiscalCode }); return [key0, key1] }
+            let studentId = try live.choose("studentId", [row].compactMap { $0.studentId })
+            let fiscalCode = try live.choose("fiscalCode", [row].compactMap { $0.fiscalCode })
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3BadgeData\"}}") { try await live.api.badge.getNewBadges(studentId: studentId, fiscalCode: fiscalCode, studentStatusCode: Esse3BadgeStudentStateFilter.s, matStatusCode: Esse3BadgeMatriculationStateFilter.s) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3BadgeData(f, item0) } }
         }
     }
 
     func test_getNewBadges6() async throws {
         try await liveCase(Esse3Live.api, "Badge.getNewBadges#6", index: 5) { live in
-            let fiscalCode = try live.choose("fiscalCode", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }.compactMap { $0.fiscalCode })
-            let courseOfStudyCode = try live.choose("courseOfStudyCode", [try await Esse3Live.structureGetCoursesOfStudy(live)].flatMap { $0 }.compactMap { $0.courseOfStudyCode })
-            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3BadgeData\"}}") { try await live.api.badge.getNewBadges(fiscalCode: fiscalCode, courseOfStudyCode: courseOfStudyCode, studentStatusCode: Esse3BadgeStudentStateFilter.s) }
+            let row = try live.chooseRow("studentId, courseOfStudyCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.studentId }); let key1: String? = live.firstText([element].compactMap { $0.p06CourseOfStudyCode }); return [key0, key1] }
+            let studentId = try live.choose("studentId", [row].compactMap { $0.studentId })
+            let courseOfStudyCode = try live.choose("courseOfStudyCode", [row].compactMap { $0.p06CourseOfStudyCode })
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3BadgeData\"}}") { try await live.api.badge.getNewBadges(studentId: studentId, courseOfStudyCode: courseOfStudyCode, studentStatusCode: Esse3BadgeStudentStateFilter.a, matStatusCode: Esse3BadgeMatriculationStateFilter.a) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3BadgeData(f, item0) } }
         }
     }

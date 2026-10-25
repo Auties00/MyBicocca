@@ -12,8 +12,9 @@ class Esse3RulePropertiesLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("RuleProperties.getPropaedeuticityRegulations#1")
     fun getPropaedeuticityRegulations1() = case("RuleProperties.getPropaedeuticityRegulations#1") {
+        val courseOfStudyId = choose("courseOfStudyId", listOf(careersGetCareers()).flatten().mapNotNull { it.courseOfStudyId })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PrerequisitesRegulation\"}}") {
-            api.ruleProperties.getPropaedeuticityRegulations()
+            api.ruleProperties.getPropaedeuticityRegulations(courseOfStudyId = courseOfStudyId)
         } ?: return@case
         fingerprint { list(result) { writeEsse3PrerequisitesRegulation(it) } }
     }
@@ -21,12 +22,13 @@ class Esse3RulePropertiesLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("RuleProperties.getPropaedeuticityRegulations#2")
     fun getPropaedeuticityRegulations2() = case("RuleProperties.getPropaedeuticityRegulations#2", index = 1) {
+        val row = chooseRow("courseOfStudyId, courseOfStudyCode", listOf(careersGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.courseOfStudyId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.p06CourseOfStudyCode }.firstOrNull()?.toString()) }
+        val courseOfStudyId = choose("courseOfStudyId", listOf(row).mapNotNull { it.courseOfStudyId })
         val facultyId = choose("facultyId", listOf(structureGetDidacticStructures()).flatten().mapNotNull { it.facultyId })
         val facultyCode = choose("facultyCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.facultyCode })
-        val courseOfStudyCode = choose("courseOfStudyCode", listOf(structureGetCoursesOfStudy()).flatten().mapNotNull { it.courseOfStudyCode })
-        val courseTypeCode = choose("courseTypeCode", listOf(personalDataGetPhdCareersData()).flatten().mapNotNull { it.courseTypeCode })
+        val courseOfStudyCode = choose("courseOfStudyCode", listOf(row).mapNotNull { it.p06CourseOfStudyCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PrerequisitesRegulation\"}}") {
-            api.ruleProperties.getPropaedeuticityRegulations(proposalRuleState = Esse3ChoiceRulesStateFilter.A, facultyId = facultyId, facultyCode = facultyCode, courseOfStudyCode = courseOfStudyCode, courseTypeCode = courseTypeCode)
+            api.ruleProperties.getPropaedeuticityRegulations(courseOfStudyId = courseOfStudyId, proposalRuleState = Esse3ChoiceRulesStateFilter.A, facultyId = facultyId, facultyCode = facultyCode, courseOfStudyCode = courseOfStudyCode)
         } ?: return@case
         fingerprint { list(result) { writeEsse3PrerequisitesRegulation(it) } }
     }
@@ -34,11 +36,11 @@ class Esse3RulePropertiesLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("RuleProperties.getPropaedeuticityRegulations#3")
     fun getPropaedeuticityRegulations3() = case("RuleProperties.getPropaedeuticityRegulations#3", index = 2) {
+        val courseOfStudyId = choose("courseOfStudyId", listOf(careersGetCareers()).flatten().mapNotNull { it.courseOfStudyId })
         val facultyId = choose("facultyId", listOf(structureGetDidacticStructures()).flatten().mapNotNull { it.facultyId })
-        val courseOfStudyId = choose("courseOfStudyId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.courseOfStudyId })
-        val courseOfStudyCode = choose("courseOfStudyCode", listOf(structureGetCoursesOfStudy()).flatten().mapNotNull { it.courseOfStudyCode })
+        val courseTypeCode = choose("courseTypeCode", listOf(personalDataGetPhdCareersData()).flatten().mapNotNull { it.courseTypeCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PrerequisitesRegulation\"}}") {
-            api.ruleProperties.getPropaedeuticityRegulations(proposalRuleState = Esse3ChoiceRulesStateFilter.B, facultyId = facultyId, courseOfStudyId = courseOfStudyId, courseOfStudyCode = courseOfStudyCode)
+            api.ruleProperties.getPropaedeuticityRegulations(courseOfStudyId = courseOfStudyId, proposalRuleState = Esse3ChoiceRulesStateFilter.X, facultyId = facultyId, courseTypeCode = courseTypeCode)
         } ?: return@case
         fingerprint { list(result) { writeEsse3PrerequisitesRegulation(it) } }
     }
@@ -46,11 +48,13 @@ class Esse3RulePropertiesLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("RuleProperties.getPropaedeuticityRegulations#4")
     fun getPropaedeuticityRegulations4() = case("RuleProperties.getPropaedeuticityRegulations#4", index = 3) {
+        val row = chooseRow("courseOfStudyId, courseOfStudyCode", listOf(careersGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.courseOfStudyId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.p06CourseOfStudyCode }.firstOrNull()?.toString()) }
+        val courseOfStudyId = choose("courseOfStudyId", listOf(row).mapNotNull { it.courseOfStudyId })
         val facultyCode = choose("facultyCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.facultyCode })
-        val courseOfStudyId = choose("courseOfStudyId", listOf(personalDataGetCareers()).flatten().mapNotNull { it.courseOfStudyId })
+        val courseOfStudyCode = choose("courseOfStudyCode", listOf(row).mapNotNull { it.p06CourseOfStudyCode })
         val courseTypeCode = choose("courseTypeCode", listOf(personalDataGetPhdCareersData()).flatten().mapNotNull { it.courseTypeCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PrerequisitesRegulation\"}}") {
-            api.ruleProperties.getPropaedeuticityRegulations(proposalRuleState = Esse3ChoiceRulesStateFilter.X, facultyCode = facultyCode, courseOfStudyId = courseOfStudyId, courseTypeCode = courseTypeCode)
+            api.ruleProperties.getPropaedeuticityRegulations(courseOfStudyId = courseOfStudyId, proposalRuleState = Esse3ChoiceRulesStateFilter.B, facultyCode = facultyCode, courseOfStudyCode = courseOfStudyCode, courseTypeCode = courseTypeCode)
         } ?: return@case
         fingerprint { list(result) { writeEsse3PrerequisitesRegulation(it) } }
     }
@@ -58,10 +62,11 @@ class Esse3RulePropertiesLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("RuleProperties.getPropaedeuticityRegulations#5")
     fun getPropaedeuticityRegulations5() = case("RuleProperties.getPropaedeuticityRegulations#5", index = 4) {
+        val courseOfStudyId = choose("courseOfStudyId", listOf(careersGetCareers()).flatten().mapNotNull { it.courseOfStudyId })
+        val facultyId = choose("facultyId", listOf(structureGetDidacticStructures()).flatten().mapNotNull { it.facultyId })
         val facultyCode = choose("facultyCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.facultyCode })
-        val courseOfStudyCode = choose("courseOfStudyCode", listOf(structureGetCoursesOfStudy()).flatten().mapNotNull { it.courseOfStudyCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PrerequisitesRegulation\"}}") {
-            api.ruleProperties.getPropaedeuticityRegulations(proposalRuleState = Esse3ChoiceRulesStateFilter.B, facultyCode = facultyCode, courseOfStudyCode = courseOfStudyCode)
+            api.ruleProperties.getPropaedeuticityRegulations(courseOfStudyId = courseOfStudyId, proposalRuleState = Esse3ChoiceRulesStateFilter.B, facultyId = facultyId, facultyCode = facultyCode)
         } ?: return@case
         fingerprint { list(result) { writeEsse3PrerequisitesRegulation(it) } }
     }
@@ -69,10 +74,12 @@ class Esse3RulePropertiesLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @Test
     @DisplayName("RuleProperties.getPropaedeuticityRegulations#6")
     fun getPropaedeuticityRegulations6() = case("RuleProperties.getPropaedeuticityRegulations#6", index = 5) {
-        val facultyId = choose("facultyId", listOf(structureGetDidacticStructures()).flatten().mapNotNull { it.facultyId })
-        val courseOfStudyCode = choose("courseOfStudyCode", listOf(structureGetCoursesOfStudy()).flatten().mapNotNull { it.courseOfStudyCode })
+        val row = chooseRow("courseOfStudyId, courseOfStudyCode", listOf(careersGetCareers()).flatten()) { element -> listOf(listOf(element).mapNotNull { it.courseOfStudyId }.firstOrNull()?.toString(), listOf(element).mapNotNull { it.p06CourseOfStudyCode }.firstOrNull()?.toString()) }
+        val courseOfStudyId = choose("courseOfStudyId", listOf(row).mapNotNull { it.courseOfStudyId })
+        val facultyCode = choose("facultyCode", listOf(personalDataGetCareers()).flatten().mapNotNull { it.facultyCode })
+        val courseOfStudyCode = choose("courseOfStudyCode", listOf(row).mapNotNull { it.p06CourseOfStudyCode })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3PrerequisitesRegulation\"}}") {
-            api.ruleProperties.getPropaedeuticityRegulations(proposalRuleState = Esse3ChoiceRulesStateFilter.X, facultyId = facultyId, courseOfStudyCode = courseOfStudyCode)
+            api.ruleProperties.getPropaedeuticityRegulations(courseOfStudyId = courseOfStudyId, proposalRuleState = Esse3ChoiceRulesStateFilter.X, facultyCode = facultyCode, courseOfStudyCode = courseOfStudyCode)
         } ?: return@case
         fingerprint { list(result) { writeEsse3PrerequisitesRegulation(it) } }
     }

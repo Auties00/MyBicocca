@@ -62,7 +62,7 @@ enum AffluencesLive {
 
     static func reservationsGetAvailableResources(_ live: LiveCase<AffluencesApi>) async throws -> [AffluencesAvailableResource] {
         try await live.source("reservationsGetAvailableResources", "{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"AffluencesAvailableResource\"}}") { live in
-            let date = try LiveText.date(LiveTemplates.resolve("{today}"))
+            let date = try LiveText.date(LiveTemplates.resolve("{today+1}"))
             let resourceTypeId = try live.choose("resourceTypeId", [try await AffluencesLive.reservationsGetReservationInfo(live)].compactMap { $0.types }.flatMap { $0 }.compactMap { $0.resourceTypeId })
             return try await live.api.reservations.getAvailableResources(siteIdentifier: "4912615d-501b-4c4e-a2a7-ccaec81c5429", date: date, resourceTypeId: resourceTypeId)
         }

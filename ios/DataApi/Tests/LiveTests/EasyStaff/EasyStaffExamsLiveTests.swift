@@ -9,8 +9,9 @@ import XCTest
 final class EasyStaffExamsLiveTests: XCTestCase {
     func test_getExamsByProgram1() async throws {
         try await liveCase(EasyStaffLive.api, "Exams.getExamsByProgram#1") { live in
-            let teachingArea = try live.choose("teachingArea", [try await EasyStaffLive.coreGetStudyPrograms(live)].flatMap { $0 }.compactMap { $0.teachingAreaCode })
-            let program = try live.choose("program", [try await EasyStaffLive.coreGetStudyPrograms(live)].flatMap { $0 }.compactMap { $0.code })
+            let row = try live.chooseRow("teachingArea, program", [try await EasyStaffLive.coreGetStudyPrograms(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.teachingAreaCode }); let key1: String? = live.firstText([element].compactMap { $0.code }); return [key0, key1] }
+            let teachingArea = try live.choose("teachingArea", [row].compactMap { $0.teachingAreaCode })
+            let program = try live.choose("program", [row].compactMap { $0.code })
             let years = [try live.choose("years", [try await EasyStaffLive.coreGetStudyPrograms(live)].flatMap { $0 }.compactMap { $0.years }.flatMap { $0 }.compactMap { $0.code })]
             let from = try LiveText.date(LiveTemplates.resolve("{today}"))
             let to = try LiveText.date(LiveTemplates.resolve("{today+30}"))
@@ -21,8 +22,9 @@ final class EasyStaffExamsLiveTests: XCTestCase {
 
     func test_getExamsByProgram2() async throws {
         try await liveCase(EasyStaffLive.api, "Exams.getExamsByProgram#2", index: 1) { live in
-            let teachingArea = try live.choose("teachingArea", [try await EasyStaffLive.coreGetStudyPrograms(live)].flatMap { $0 }.compactMap { $0.teachingAreaCode })
-            let program = try live.choose("program", [try await EasyStaffLive.coreGetStudyPrograms(live)].flatMap { $0 }.compactMap { $0.code })
+            let row = try live.chooseRow("teachingArea, program", [try await EasyStaffLive.coreGetStudyPrograms(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.teachingAreaCode }); let key1: String? = live.firstText([element].compactMap { $0.code }); return [key0, key1] }
+            let teachingArea = try live.choose("teachingArea", [row].compactMap { $0.teachingAreaCode })
+            let program = try live.choose("program", [row].compactMap { $0.code })
             let years = [try live.choose("years", [try await EasyStaffLive.coreGetStudyPrograms(live)].flatMap { $0 }.compactMap { $0.years }.flatMap { $0 }.compactMap { $0.code })]
             let from = try LiveText.date(LiveTemplates.resolve("{today}"))
             let to = try LiveText.date(LiveTemplates.resolve("{today+30}"))
@@ -33,8 +35,9 @@ final class EasyStaffExamsLiveTests: XCTestCase {
 
     func test_getExamsByProgram3() async throws {
         try await liveCase(EasyStaffLive.api, "Exams.getExamsByProgram#3", index: 2) { live in
-            let teachingArea = try live.choose("teachingArea", [try await EasyStaffLive.coreGetStudyPrograms(live)].flatMap { $0 }.compactMap { $0.teachingAreaCode })
-            let program = try live.choose("program", [try await EasyStaffLive.coreGetStudyPrograms(live)].flatMap { $0 }.compactMap { $0.code })
+            let row = try live.chooseRow("teachingArea, program", [try await EasyStaffLive.coreGetStudyPrograms(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.teachingAreaCode }); let key1: String? = live.firstText([element].compactMap { $0.code }); return [key0, key1] }
+            let teachingArea = try live.choose("teachingArea", [row].compactMap { $0.teachingAreaCode })
+            let program = try live.choose("program", [row].compactMap { $0.code })
             let years = [try live.choose("years", [try await EasyStaffLive.coreGetStudyPrograms(live)].flatMap { $0 }.compactMap { $0.years }.flatMap { $0 }.compactMap { $0.code })]
             let from = try LiveText.date(LiveTemplates.resolve("{today}"))
             let to = try LiveText.date(LiveTemplates.resolve("{today+30}"))
@@ -45,8 +48,9 @@ final class EasyStaffExamsLiveTests: XCTestCase {
 
     func test_getExamsByProgram4() async throws {
         try await liveCase(EasyStaffLive.api, "Exams.getExamsByProgram#4", index: 3) { live in
-            let teachingArea = try live.choose("teachingArea", [try await EasyStaffLive.coreGetStudyPrograms(live)].flatMap { $0 }.compactMap { $0.teachingAreaCode })
-            let program = try live.choose("program", [try await EasyStaffLive.coreGetStudyPrograms(live)].flatMap { $0 }.compactMap { $0.code })
+            let row = try live.chooseRow("teachingArea, program", [try await EasyStaffLive.coreGetStudyPrograms(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.teachingAreaCode }); let key1: String? = live.firstText([element].compactMap { $0.code }); return [key0, key1] }
+            let teachingArea = try live.choose("teachingArea", [row].compactMap { $0.teachingAreaCode })
+            let program = try live.choose("program", [row].compactMap { $0.code })
             let years = [try live.choose("years", [try await EasyStaffLive.coreGetStudyPrograms(live)].flatMap { $0 }.compactMap { $0.years }.flatMap { $0 }.compactMap { $0.code })]
             let from = try LiveText.date(LiveTemplates.resolve("{today}"))
             let to = try LiveText.date(LiveTemplates.resolve("{today+30}"))
@@ -57,8 +61,9 @@ final class EasyStaffExamsLiveTests: XCTestCase {
 
     func test_getExamsByProgram5() async throws {
         try await liveCase(EasyStaffLive.api, "Exams.getExamsByProgram#5", index: 4) { live in
-            let teachingArea = try live.choose("teachingArea", [try await EasyStaffLive.coreGetStudyPrograms(live)].flatMap { $0 }.compactMap { $0.teachingAreaCode })
-            let program = try live.choose("program", [try await EasyStaffLive.coreGetStudyPrograms(live)].flatMap { $0 }.compactMap { $0.code })
+            let row = try live.chooseRow("teachingArea, program", [try await EasyStaffLive.coreGetStudyPrograms(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.teachingAreaCode }); let key1: String? = live.firstText([element].compactMap { $0.code }); return [key0, key1] }
+            let teachingArea = try live.choose("teachingArea", [row].compactMap { $0.teachingAreaCode })
+            let program = try live.choose("program", [row].compactMap { $0.code })
             let years = [try live.choose("years", [try await EasyStaffLive.coreGetStudyPrograms(live)].flatMap { $0 }.compactMap { $0.years }.flatMap { $0 }.compactMap { $0.code })]
             let from = try LiveText.date(LiveTemplates.resolve("{today}"))
             let to = try LiveText.date(LiveTemplates.resolve("{today+30}"))

@@ -124,7 +124,7 @@ enum MoodleLive {
 
     static func forumGetDiscussionPosts(_ live: LiveCase<MoodleApi>) async throws -> MoodleDiscussionPostsResponse {
         try await live.source("forumGetDiscussionPosts", "{\"k\":\"record\",\"n\":\"MoodleDiscussionPostsResponse\"}") { live in
-            let discussionId = try live.choose("discussionId", [try await MoodleLive.forumGetForumDiscussions(live)].compactMap { $0.discussions }.flatMap { $0 }.compactMap { $0.id })
+            let discussionId = try live.choose("discussionId", [try await MoodleLive.forumGetForumDiscussions(live)].compactMap { $0.discussions }.flatMap { $0 }.compactMap { $0.discussion })
             let auth = try await MoodleLive.tokenCredentials(live)
             return try await live.api.forum.getDiscussionPosts(discussionId: discussionId, auth: auth)
         }
@@ -257,26 +257,6 @@ enum MoodleLive {
         guard let value else { return f.nil() }
         f.obj {
             f.list(value.courses) { item0 in MoodleLive.writeMoodleCourseAssignments(f, item0) }
-            f.list(value.warnings) { item0 in MoodleLive.writeMoodleWarning(f, item0) }
-        }
-    }
-
-    static func writeMoodleAttemptReviewData(_ f: LiveFingerprint, _ value: MoodleAttemptReviewData?) {
-        guard let value else { return f.nil() }
-        f.obj {
-            f.str(value.id)
-            f.str(value.title)
-            f.str(value.content)
-        }
-    }
-
-    static func writeMoodleAttemptReviewResponse(_ f: LiveFingerprint, _ value: MoodleAttemptReviewResponse?) {
-        guard let value else { return f.nil() }
-        f.obj {
-            f.str(value.grade)
-            MoodleLive.writeMoodleQuizAttempt(f, value.attempt)
-            f.list(value.additionalData) { item0 in MoodleLive.writeMoodleAttemptReviewData(f, item0) }
-            f.list(value.questions) { item0 in MoodleLive.writeMoodleQuizQuestion(f, item0) }
             f.list(value.warnings) { item0 in MoodleLive.writeMoodleWarning(f, item0) }
         }
     }
@@ -1347,30 +1327,6 @@ enum MoodleLive {
         }
     }
 
-    static func writeMoodleQuizQuestion(_ f: LiveFingerprint, _ value: MoodleQuizQuestion?) {
-        guard let value else { return f.nil() }
-        f.obj {
-            f.int(value.slot)
-            f.str(value.type)
-            f.int(value.page)
-            f.str(value.questionNumber)
-            f.int(value.number)
-            f.str(value.html)
-            f.list(value.responseFileAreas) { item0 in MoodleLive.writeMoodleResponseFileArea(f, item0) }
-            f.int(value.sequenceCheck)
-            f.int(value.lastActionTime)
-            f.bool(value.hasAutoSavedStep)
-            f.bool(value.flagged)
-            f.str(value.state)
-            f.str(value.stateClass)
-            f.str(value.status)
-            f.bool(value.blockedByPrevious)
-            f.str(value.mark)
-            f.num(value.maxMark)
-            f.str(value.settings)
-        }
-    }
-
     static func writeMoodleQuizzesResponse(_ f: LiveFingerprint, _ value: MoodleQuizzesResponse?) {
         guard let value else { return f.nil() }
         f.obj {
@@ -1436,14 +1392,6 @@ enum MoodleLive {
             f.str(value.version)
             f.str(value.language)
             f.int(value.type)
-        }
-    }
-
-    static func writeMoodleResponseFileArea(_ f: LiveFingerprint, _ value: MoodleResponseFileArea?) {
-        guard let value else { return f.nil() }
-        f.obj {
-            f.str(value.area)
-            f.list(value.files) { item0 in MoodleLive.writeMoodleFile(f, item0) }
         }
     }
 

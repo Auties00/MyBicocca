@@ -5,6 +5,8 @@ import it.attendance100.mybicocca.data.remote.runtime.ApiException
 import it.attendance100.mybicocca.data.remote.runtime.HtmlParsingException
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.plugins.api.createClientPlugin
+import io.ktor.client.plugins.cache.HttpCache
+import io.ktor.client.plugins.cache.storage.CacheStorage
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.contentType
@@ -101,6 +103,11 @@ class LiveRun<A : AutoCloseable>(val live: LiveApi<A>) {
     }
 
     private fun HttpClientConfig<*>.observe() {
+        // The SDK's cache would answer reads, such as the one checking a write, with what the server said before.
+        install(HttpCache) {
+            publicStorage(CacheStorage.Disabled)
+            privateStorage(CacheStorage.Disabled)
+        }
         install(createClientPlugin("LiveTests") {
             onRequest { _, _ -> beforeRequest() }
             onResponse { response -> capture?.add(observed(response)) }
@@ -157,8 +164,24 @@ class LiveCase<A : AutoCloseable>(val run: LiveRun<A>, val id: String, val index
     fun <T> choose(name: String, candidates: List<T?>, key: (T) -> String = { it.toString() }): T {
         val values = candidates.filterNotNull().distinct().sortedBy(key)
         if (values.isEmpty()) throw LiveSkip("no value for $name")
-        return values[((index + LiveSettings.seed) % values.size).toInt().let { if (it < 0) it + values.size else it }]
+        return values[position(values.size)]
     }
+
+    /**
+     * One of [rows], for inputs that take their values from the same one, chosen as [choose]
+     * does: [keys] are the values they take from a row, as text, null for one the row lacks,
+     * which leaves the row out. Rows sort by those values, so that every platform picks the same.
+     */
+    fun <T> chooseRow(name: String, rows: List<T?>, keys: (T) -> List<String?>): T {
+        val values = rows.filterNotNull()
+            .mapNotNull { row -> keys(row).takeIf { null !in it }?.let { it.joinToString("\u0000") to row } }
+            .distinctBy { it.first }
+            .sortedBy { it.first }
+        if (values.isEmpty()) throw LiveSkip("no value for $name")
+        return values[position(values.size)].second
+    }
+
+    private fun position(size: Int): Int = ((index + LiveSettings.seed) % size).toInt().let { if (it < 0) it + size else it }
 
     /** The first of [candidates]; fails the case when there is none. */
     fun <T> first(name: String, candidates: List<T?>): T =

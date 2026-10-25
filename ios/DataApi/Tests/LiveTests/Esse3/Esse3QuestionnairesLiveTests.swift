@@ -9,7 +9,7 @@ import XCTest
 final class Esse3QuestionnairesLiveTests: XCTestCase {
     func test_getRecordBookQuestionnaires1() async throws {
         try await liveCase(Esse3Live.api, "Questionnaires.getRecordBookQuestionnaires#1") { live in
-            let matId = try live.choose("matId", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }.compactMap { $0.matId })
+            let matId = try live.choose("matId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.matId })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3TranscriptRowWithQuestionnaireStatus\"}}") { try await live.api.questionnaires.getRecordBookQuestionnaires(matId: matId) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3TranscriptRowWithQuestionnaireStatus(f, item0) } }
         }
@@ -23,7 +23,7 @@ final class Esse3QuestionnairesLiveTests: XCTestCase {
 
     func test_getRecordBookRow1() async throws {
         try await liveCase(Esse3Live.api, "Questionnaires.getRecordBookRow#1") { live in
-            let matId = try live.choose("matId", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }.compactMap { $0.matId })
+            let matId = try live.choose("matId", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.matId })
             let activityChoiceId = try live.choose("activityChoiceId", [try await Esse3Live.recordsFindMinutes(live)].flatMap { $0 }.compactMap { $0.activityChoiceId })
             let result = try await live.call("{\"k\":\"record\",\"n\":\"Esse3TranscriptRowWithQuestionnaireStatus\"}") { try await live.api.questionnaires.getRecordBookRow(matId: matId, activityChoiceId: activityChoiceId) }
             live.fingerprint { f in Esse3Live.writeEsse3TranscriptRowWithQuestionnaireStatus(f, result) }

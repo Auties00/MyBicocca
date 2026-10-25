@@ -26,14 +26,6 @@ class Esse3AuthLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     }
 
     @Test
-    @DisplayName("Auth.refreshJWT#1")
-    fun refreshJWT1() = case("Auth.refreshJWT#1", effect = "benign") {
-        call("{\"k\":\"record\",\"n\":\"Esse3JWTModel\"}") {
-            api.auth.refreshJWT()
-        }
-    }
-
-    @Test
     @DisplayName("Auth.login#1")
     fun login1() = case("Auth.login#1", effect = "benign") {
         call("{\"k\":\"record\",\"n\":\"Esse3UserSession\"}") {
@@ -71,7 +63,7 @@ class Esse3AuthLiveTest : LiveTest<Esse3Api>(Esse3Live) {
     @DisplayName("Auth.setLanguageCode#1")
     fun setLanguageCode1() = case("Auth.setLanguageCode#1", effect = "benign") {
         call("{\"k\":\"record\",\"n\":\"Esse3SessionLanguage\"}") {
-            api.auth.setLanguageCode()
+            api.auth.setLanguageCode(sessionLanguageCode = "ita")
         }
     }
 }

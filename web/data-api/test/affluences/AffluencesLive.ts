@@ -63,7 +63,7 @@ export function reservationsGetResourceStatus(live: LiveCase<AffluencesApi>): Pr
 
 export function reservationsGetAvailableResources(live: LiveCase<AffluencesApi>): Promise<AffluencesAvailableResource[]> {
   return live.source("reservationsGetAvailableResources", "{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"AffluencesAvailableResource\"}}", {}, async (live) => {
-    const date = LocalDate.parse(LiveTemplates.resolve("{today}"))!;
+    const date = LocalDate.parse(LiveTemplates.resolve("{today+1}"))!;
     const resourceTypeId = live.choose("resourceTypeId", [await reservationsGetReservationInfo(live)].map((it) => it.types).filter(isPresent).flat().map((it) => it.resourceTypeId).filter(isPresent));
     return live.api.reservations.getAvailableResources("4912615d-501b-4c4e-a2a7-ccaec81c5429", date, resourceTypeId);
   });

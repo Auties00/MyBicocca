@@ -17,9 +17,10 @@ final class Esse3UsersLiveTests: XCTestCase {
 
     func test_getExtendedCareer2() async throws {
         try await liveCase(Esse3Live.api, "Users.getExtendedCareer#2", index: 1) { live in
-            let userId = try live.choose("userId", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }.compactMap { $0.userId })
-            let studentStatusCode = try live.choose("studentStatusCode", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }.compactMap { $0.studentStatusCode })
-            let fiscalCode = try live.choose("fiscalCode", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }.compactMap { $0.fiscalCode })
+            let row = try live.chooseRow("userId, studentStatusCode", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.userId }); let key1: String? = live.firstText([element].compactMap { $0.studentStatusCode }); return [key0, key1] }
+            let userId = try live.choose("userId", [row].compactMap { $0.userId })
+            let studentStatusCode = try live.choose("studentStatusCode", [row].compactMap { $0.studentStatusCode })
+            let fiscalCode = try live.choose("fiscalCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.fiscalCode })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExtendedCareerPortion\"}}") { try await live.api.users.getExtendedCareer(userId: userId, studentStatusCode: studentStatusCode, fiscalCode: fiscalCode) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3ExtendedCareerPortion(f, item0) } }
         }
@@ -27,9 +28,10 @@ final class Esse3UsersLiveTests: XCTestCase {
 
     func test_getExtendedCareer3() async throws {
         try await liveCase(Esse3Live.api, "Users.getExtendedCareer#3", index: 2) { live in
-            let userId = try live.choose("userId", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }.compactMap { $0.userId })
-            let statusReasonCode = try live.choose("statusReasonCode", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }.compactMap { $0.statusReasonCode })
-            let fiscalCode = try live.choose("fiscalCode", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }.compactMap { $0.fiscalCode })
+            let row = try live.chooseRow("userId, statusReasonCode", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.userId }); let key1: String? = live.firstText([element].compactMap { $0.statusReasonCode }); return [key0, key1] }
+            let userId = try live.choose("userId", [row].compactMap { $0.userId })
+            let statusReasonCode = try live.choose("statusReasonCode", [row].compactMap { $0.statusReasonCode })
+            let fiscalCode = try live.choose("fiscalCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.fiscalCode })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExtendedCareerPortion\"}}") { try await live.api.users.getExtendedCareer(userId: userId, statusReasonCode: statusReasonCode, fiscalCode: fiscalCode) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3ExtendedCareerPortion(f, item0) } }
         }
@@ -37,9 +39,10 @@ final class Esse3UsersLiveTests: XCTestCase {
 
     func test_getExtendedCareer4() async throws {
         try await liveCase(Esse3Live.api, "Users.getExtendedCareer#4", index: 3) { live in
-            let userId = try live.choose("userId", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }.compactMap { $0.userId })
-            let studentStatusCode = try live.choose("studentStatusCode", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }.compactMap { $0.studentStatusCode })
-            let statusReasonCode = try live.choose("statusReasonCode", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }.compactMap { $0.statusReasonCode })
+            let row = try live.chooseRow("userId, studentStatusCode, statusReasonCode", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.userId }); let key1: String? = live.firstText([element].compactMap { $0.studentStatusCode }); let key2: String? = live.firstText([element].compactMap { $0.statusReasonCode }); return [key0, key1, key2] }
+            let userId = try live.choose("userId", [row].compactMap { $0.userId })
+            let studentStatusCode = try live.choose("studentStatusCode", [row].compactMap { $0.studentStatusCode })
+            let statusReasonCode = try live.choose("statusReasonCode", [row].compactMap { $0.statusReasonCode })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3ExtendedCareerPortion\"}}") { try await live.api.users.getExtendedCareer(userId: userId, studentStatusCode: studentStatusCode, statusReasonCode: statusReasonCode) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3ExtendedCareerPortion(f, item0) } }
         }
@@ -61,9 +64,10 @@ final class Esse3UsersLiveTests: XCTestCase {
 
     func test_getCareerSegments2() async throws {
         try await liveCase(Esse3Live.api, "Users.getCareerSegments#2", index: 1) { live in
-            let userId = try live.choose("userId", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }.compactMap { $0.userId })
-            let studentStatusCode = try live.choose("studentStatusCode", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }.compactMap { $0.studentStatusCode })
-            let statusReasonCode = try live.choose("statusReasonCode", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }.compactMap { $0.statusReasonCode })
+            let row = try live.chooseRow("userId, studentStatusCode, statusReasonCode", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.userId }); let key1: String? = live.firstText([element].compactMap { $0.studentStatusCode }); let key2: String? = live.firstText([element].compactMap { $0.statusReasonCode }); return [key0, key1, key2] }
+            let userId = try live.choose("userId", [row].compactMap { $0.userId })
+            let studentStatusCode = try live.choose("studentStatusCode", [row].compactMap { $0.studentStatusCode })
+            let statusReasonCode = try live.choose("statusReasonCode", [row].compactMap { $0.statusReasonCode })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}}") { try await live.api.users.getCareerSegments(userId: userId, studentStatusCode: studentStatusCode, statusReasonCode: statusReasonCode) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3CareerPortion(f, item0) } }
         }
@@ -71,9 +75,10 @@ final class Esse3UsersLiveTests: XCTestCase {
 
     func test_getCareerSegments3() async throws {
         try await liveCase(Esse3Live.api, "Users.getCareerSegments#3", index: 2) { live in
-            let userId = try live.choose("userId", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }.compactMap { $0.userId })
-            let studentStatusCode = try live.choose("studentStatusCode", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }.compactMap { $0.studentStatusCode })
-            let fiscalCode = try live.choose("fiscalCode", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }.compactMap { $0.fiscalCode })
+            let row = try live.chooseRow("userId, studentStatusCode", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.userId }); let key1: String? = live.firstText([element].compactMap { $0.studentStatusCode }); return [key0, key1] }
+            let userId = try live.choose("userId", [row].compactMap { $0.userId })
+            let studentStatusCode = try live.choose("studentStatusCode", [row].compactMap { $0.studentStatusCode })
+            let fiscalCode = try live.choose("fiscalCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.fiscalCode })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}}") { try await live.api.users.getCareerSegments(userId: userId, studentStatusCode: studentStatusCode, fiscalCode: fiscalCode) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3CareerPortion(f, item0) } }
         }
@@ -81,9 +86,10 @@ final class Esse3UsersLiveTests: XCTestCase {
 
     func test_getCareerSegments4() async throws {
         try await liveCase(Esse3Live.api, "Users.getCareerSegments#4", index: 3) { live in
-            let userId = try live.choose("userId", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }.compactMap { $0.userId })
-            let statusReasonCode = try live.choose("statusReasonCode", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }.compactMap { $0.statusReasonCode })
-            let fiscalCode = try live.choose("fiscalCode", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }.compactMap { $0.fiscalCode })
+            let row = try live.chooseRow("userId, statusReasonCode", [try await Esse3Live.personalDataGetCareers(live)].flatMap { $0 }) { (element) -> [String?] in let key0: String? = live.firstText([element].compactMap { $0.userId }); let key1: String? = live.firstText([element].compactMap { $0.statusReasonCode }); return [key0, key1] }
+            let userId = try live.choose("userId", [row].compactMap { $0.userId })
+            let statusReasonCode = try live.choose("statusReasonCode", [row].compactMap { $0.statusReasonCode })
+            let fiscalCode = try live.choose("fiscalCode", [try await Esse3Live.careersGetCareers(live)].flatMap { $0 }.compactMap { $0.fiscalCode })
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"Esse3CareerPortion\"}}") { try await live.api.users.getCareerSegments(userId: userId, statusReasonCode: statusReasonCode, fiscalCode: fiscalCode) }
             live.fingerprint { f in f.list(result) { item0 in Esse3Live.writeEsse3CareerPortion(f, item0) } }
         }
