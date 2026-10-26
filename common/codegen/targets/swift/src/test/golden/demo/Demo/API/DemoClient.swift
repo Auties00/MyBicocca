@@ -44,7 +44,7 @@ public final class DemoClient: Sendable {
     }
 
     public func data(_ request: RestRequest, roles: Set<DemoPermissionLevel>) async throws -> Data {
-        try await execute(request, roles: roles, readsJSON: false)!.body
+        try await execute(request, roles: roles, readsJSON: false, stores: false)!.body
     }
 
     public func text(_ request: RestRequest, roles: Set<DemoPermissionLevel>) async throws -> String {
@@ -65,14 +65,14 @@ public final class DemoClient: Sendable {
         _ = try await execute(request, roles: roles, readsJSON: true)
     }
 
-    private func execute(_ request: RestRequest, roles: Set<DemoPermissionLevel>, readsJSON: Bool, allowEmpty: Bool = false) async throws -> RestResponse? {
+    private func execute(_ request: RestRequest, roles: Set<DemoPermissionLevel>, readsJSON: Bool, allowEmpty: Bool = false, stores: Bool = true) async throws -> RestResponse? {
         var request = request
         request.query += [
             QueryItem(name: "format", value: "json"),
             QueryItem(name: "lang", value: language)
         ]
         do {
-            return try await rest.execute(request, readsJSON: readsJSON, allowEmpty: allowEmpty)
+            return try await rest.execute(request, readsJSON: readsJSON, allowEmpty: allowEmpty, stores: stores)
         } catch let failure as ApiFailure {
             throw DemoError(failure: failure, expectedRoles: roles)
         }

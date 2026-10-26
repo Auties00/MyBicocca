@@ -118,14 +118,30 @@ public struct EasyStaffEvent: Codable, Hashable, Sendable {
         try container.encode(date, forKey: .date)
         try container.encodeEpochSeconds(startDateTime, forKey: .startDateTime)
         try container.encodeEpochSeconds(endDateTime, forKey: .endDateTime)
-        try container.encode(roomName, forKey: .roomName)
-        try container.encode(facultyId, forKey: .facultyId)
-        try container.encode(status, forKey: .status)
-        try container.encode(eventType, forKey: .eventType)
-        try container.encode(isPast, forKey: .isPast)
-        try container.encode(isUniversityEvent, forKey: .isUniversityEvent)
-        try container.encode(teachers, forKey: .teachers)
-        try container.encode(activities, forKey: .activities)
+        if roomName != "" {
+            try container.encode(roomName, forKey: .roomName)
+        }
+        if facultyId != "" {
+            try container.encode(facultyId, forKey: .facultyId)
+        }
+        if status != nil {
+            try container.encode(status, forKey: .status)
+        }
+        if eventType != "" {
+            try container.encode(eventType, forKey: .eventType)
+        }
+        if isPast != false {
+            try container.encode(isPast, forKey: .isPast)
+        }
+        if isUniversityEvent != false {
+            try container.encode(isUniversityEvent, forKey: .isUniversityEvent)
+        }
+        if !teachers.isEmpty {
+            try container.encode(teachers, forKey: .teachers)
+        }
+        if !activities.isEmpty {
+            try container.encode(activities, forKey: .activities)
+        }
     }
 }
 
@@ -159,8 +175,14 @@ public struct EasyStaffEventActivity: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(id, forKey: .id)
-        try container.encode(code, forKey: .code)
-        try container.encode(name, forKey: .name)
+        if id != "" {
+            try container.encode(id, forKey: .id)
+        }
+        if code != "" {
+            try container.encode(code, forKey: .code)
+        }
+        if name != "" {
+            try container.encode(name, forKey: .name)
+        }
     }
 }

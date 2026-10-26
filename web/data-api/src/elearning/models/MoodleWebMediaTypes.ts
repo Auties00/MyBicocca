@@ -19,6 +19,6 @@ export function decodeMoodleWebKalturaPlayer(json: unknown): MoodleWebKalturaPla
 
 export function encodeMoodleWebKalturaPlayer(value: MoodleWebKalturaPlayer): JsonObject {
   return {
-    "entryId": value.entryId,
+    ...(value.entryId !== null ? { "entryId": value.entryId } : {}),
   };
 }

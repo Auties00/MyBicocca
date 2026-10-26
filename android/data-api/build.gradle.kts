@@ -44,10 +44,22 @@ java {
 }
 
 tasks.test {
-    // Suites tagged `live` call the real services; run them with -PincludeLive.
     useJUnitPlatform {
-        if (!project.hasProperty("includeLive")) {
-            excludeTags("live")
-        }
+        excludeTags("live")
     }
+}
+
+// The live tests, generated from each API's tests.yaml, call the real services: see "Live tests"
+// in common/codegen/README.md. Pick an API's with --tests, e.g. --tests '*.esse3.live.*'.
+val liveTest by tasks.registering(Test::class) {
+    description = "Runs the live tests against the real services."
+    group = "verification"
+    testClassesDirs = sourceSets.test.get().output.classesDirs
+    classpath = sourceSets.test.get().runtimeClasspath
+    useJUnitPlatform {
+        includeTags("live")
+    }
+    environment("LIVE_TESTS", "1")
+    // Every run talks to the servers again, whatever changed.
+    outputs.upToDateWhen { false }
 }

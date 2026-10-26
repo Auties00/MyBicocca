@@ -138,27 +138,71 @@ public struct EasyStaffScheduleCell: Codable, Hashable, Sendable {
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(type, forKey: .type)
-        try container.encode(name, forKey: .name)
-        try container.encode(subjectName, forKey: .subjectName)
-        try container.encode(subjectCode, forKey: .subjectCode)
-        try container.encode(id, forKey: .id)
-        try container.encodeEpochSeconds(dateTime, forKey: .dateTime)
-        try container.encodeTemporal(date, forKey: .date, pattern: "dd-MM-yyyy")
-        try container.encodeTemporal(startTime, forKey: .startTime, pattern: "HH:mm")
-        try container.encodeTemporal(endTime, forKey: .endTime, pattern: "HH:mm")
-        try container.encode(roomCode, forKey: .roomCode)
-        try container.encode(buildingCode, forKey: .buildingCode)
-        try container.encode(roomName, forKey: .roomName)
-        try container.encode(showRoom, forKey: .showRoom)
-        try container.encode(status, forKey: .status)
-        try container.encode(teacherCodes.joined(separator: ","), forKey: .teacherCodes)
-        try container.encode(teacherNames.joined(separator: ","), forKey: .teacherNames)
-        try container.encode(teacherEmails.joined(separator: ","), forKey: .teacherEmails)
-        try container.encode(teacherPhones.joined(separator: ","), forKey: .teacherPhones)
-        try container.encode(curriculumPath, forKey: .curriculumPath)
-        try container.encode(subjectTypes, forKey: .subjectTypes)
-        try container.encode("", forKey: .mapsUrl)
-        try container.encode(isHighlighted, forKey: .isHighlighted)
-        try container.encode(isExternal, forKey: .isExternal)
+        if name != nil {
+            try container.encode(name, forKey: .name)
+        }
+        if subjectName != nil {
+            try container.encode(subjectName, forKey: .subjectName)
+        }
+        if subjectCode != nil {
+            try container.encode(subjectCode, forKey: .subjectCode)
+        }
+        if id != nil {
+            try container.encode(id, forKey: .id)
+        }
+        if dateTime != nil {
+            try container.encodeEpochSeconds(dateTime, forKey: .dateTime)
+        }
+        if date != nil {
+            try container.encodeTemporal(date, forKey: .date, pattern: "dd-MM-yyyy")
+        }
+        if startTime != nil {
+            try container.encodeTemporal(startTime, forKey: .startTime, pattern: "HH:mm")
+        }
+        if endTime != nil {
+            try container.encodeTemporal(endTime, forKey: .endTime, pattern: "HH:mm")
+        }
+        if roomCode != nil {
+            try container.encode(roomCode, forKey: .roomCode)
+        }
+        if buildingCode != nil {
+            try container.encode(buildingCode, forKey: .buildingCode)
+        }
+        if roomName != nil {
+            try container.encode(roomName, forKey: .roomName)
+        }
+        if showRoom != true {
+            try container.encode(showRoom, forKey: .showRoom)
+        }
+        if status != nil {
+            try container.encode(status, forKey: .status)
+        }
+        if !teacherCodes.isEmpty {
+            try container.encode(teacherCodes.joined(separator: ","), forKey: .teacherCodes)
+        }
+        if !teacherNames.isEmpty {
+            try container.encode(teacherNames.joined(separator: ","), forKey: .teacherNames)
+        }
+        if !teacherEmails.isEmpty {
+            try container.encode(teacherEmails.joined(separator: ","), forKey: .teacherEmails)
+        }
+        if !teacherPhones.isEmpty {
+            try container.encode(teacherPhones.joined(separator: ","), forKey: .teacherPhones)
+        }
+        if curriculumPath != "" {
+            try container.encode(curriculumPath, forKey: .curriculumPath)
+        }
+        if !subjectTypes.isEmpty {
+            try container.encode(subjectTypes, forKey: .subjectTypes)
+        }
+        if mapsUrl != nil {
+            try container.encode("", forKey: .mapsUrl)
+        }
+        if isHighlighted != false {
+            try container.encode(isHighlighted, forKey: .isHighlighted)
+        }
+        if isExternal != false {
+            try container.encode(isExternal, forKey: .isExternal)
+        }
     }
 }

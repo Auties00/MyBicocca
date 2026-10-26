@@ -10,8 +10,9 @@ import it.attendance100.mybicocca.codegen.model.ParameterLocation
  * the API's error with a constant per known error code, the union of the roles operations
  * declare, and `create<Prefix>Api`, which builds the facade with its own client.
  *
- * `fetch` keeps cookies, caches and times out on its own, so the client ignores those settings;
- * client settings are constructor parameters.
+ * `fetch` keeps cookies and times out on its own, so the client ignores those settings; with
+ * `caches`, the runtime's `ResponseCache` keeps responses as on every platform. Client settings
+ * are constructor parameters.
  */
 internal class TsClientEmitter(private val spec: ApiSpec, private val layout: TsLayout) {
     private val client = spec.client
@@ -98,6 +99,7 @@ internal class TsClientEmitter(private val spec: ApiSpec, private val layout: Ts
                 }
                 add("retries: [\n${rules.joinToString(",\n") { it.prependIndent("  ") }},\n]")
             }
+            if (client.caches) add("caches: true")
         }
         if (entries.isEmpty()) out.line("const policy: RestPolicy = {};") else out.commaList("const policy: RestPolicy = {", entries, "};", trailingComma = true)
     }
@@ -149,7 +151,7 @@ internal class TsClientEmitter(private val spec: ApiSpec, private val layout: Ts
             }
             line()
             block("async bytes(request: RestRequest${if (spec.usesRoles) ", roles: readonly ${layout.roles}[]" else ""}): Promise<Uint8Array> {") {
-                line("return new Uint8Array(await (await this.execute(request, ${rolesArgument}false))!.arrayBuffer());")
+                line("return new Uint8Array(await (await this.execute(request, ${rolesArgument}false, false, false))!.arrayBuffer());")
             }
             line()
             block("async text(request: RestRequest${if (spec.usesRoles) ", roles: readonly ${layout.roles}[]" else ""}): Promise<string> {") {
@@ -170,7 +172,7 @@ internal class TsClientEmitter(private val spec: ApiSpec, private val layout: Ts
                 line("await this.execute(request, ${rolesArgument}true);")
             }
             line()
-            block("private async execute(request: RestRequest, ${rolesParameter}readsJson: boolean, allowEmpty = false): Promise<Response | undefined> {") {
+            block("private async execute(request: RestRequest, ${rolesParameter}readsJson: boolean, allowEmpty = false, stores = true): Promise<Response | undefined> {") {
                 val query = client.query.map { (name, value) -> "[${TsSyntax.string(name)}, ${TsSyntax.string(value)}]" } +
                     client.settings.filter { it.location == ParameterLocation.QUERY }.map { "[${TsSyntax.string(it.wireName)}, this.${TsSyntax.variable(it.name)}]" }
                 val headers = client.settings.filter { it.location == ParameterLocation.HEADER }.map { "[${TsSyntax.string(it.wireName)}, this.${TsSyntax.variable(it.name)}]" }
@@ -183,7 +185,7 @@ internal class TsClientEmitter(private val spec: ApiSpec, private val layout: Ts
                     "sent"
                 }
                 line("try {")
-                indent { line("return await this.rest.execute($sent, readsJson, allowEmpty);") }
+                indent { line("return await this.rest.execute($sent, readsJson, allowEmpty, stores);") }
                 block("} catch (error) {") {
                     line("if (error instanceof ApiFailure) throw new $errorName(error${if (spec.usesRoles) ", roles" else ""});")
                     line("throw error;")

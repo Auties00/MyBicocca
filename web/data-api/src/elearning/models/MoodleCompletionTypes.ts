@@ -22,8 +22,8 @@ export function decodeMoodleActivitiesCompletionResponse(json: unknown): MoodleA
 
 export function encodeMoodleActivitiesCompletionResponse(value: MoodleActivitiesCompletionResponse): JsonObject {
   return {
-    "statuses": value.statuses.map((item) => encodeMoodleActivityCompletionStatus(item)),
-    "warnings": value.warnings.map((item) => encodeMoodleWarning(item)),
+    ...(value.statuses.length > 0 ? { "statuses": value.statuses.map((item) => encodeMoodleActivityCompletionStatus(item)) } : {}),
+    ...(value.warnings.length > 0 ? { "warnings": value.warnings.map((item) => encodeMoodleWarning(item)) } : {}),
   };
 }
 
@@ -83,20 +83,20 @@ export function decodeMoodleActivityCompletionStatus(json: unknown): MoodleActiv
 
 export function encodeMoodleActivityCompletionStatus(value: MoodleActivityCompletionStatus): JsonObject {
   return {
-    "cmid": value.cmId,
-    "modname": value.modName,
-    "instance": value.instance,
-    "state": value.state,
-    "timecompleted": value.timeCompleted,
-    "tracking": value.tracking,
-    "overrideby": value.overrideBy,
-    "valueused": value.valueUsed,
-    "hascompletion": value.hasCompletion,
-    "isautomatic": value.isAutomatic,
-    "istrackeduser": value.isTrackedUser,
-    "uservisible": value.userVisible,
-    "details": value.details.map((item) => encodeMoodleCompletionRule(item)),
-    "isoverallcomplete": value.isOverallComplete,
+    ...(value.cmId !== 0 ? { "cmid": value.cmId } : {}),
+    ...(value.modName !== "" ? { "modname": value.modName } : {}),
+    ...(value.instance !== 0 ? { "instance": value.instance } : {}),
+    ...(value.state !== 0 ? { "state": value.state } : {}),
+    ...(value.timeCompleted !== 0 ? { "timecompleted": value.timeCompleted } : {}),
+    ...(value.tracking !== 0 ? { "tracking": value.tracking } : {}),
+    ...(value.overrideBy !== null ? { "overrideby": value.overrideBy } : {}),
+    ...(value.valueUsed !== null ? { "valueused": value.valueUsed } : {}),
+    ...(value.hasCompletion !== null ? { "hascompletion": value.hasCompletion } : {}),
+    ...(value.isAutomatic !== null ? { "isautomatic": value.isAutomatic } : {}),
+    ...(value.isTrackedUser !== null ? { "istrackeduser": value.isTrackedUser } : {}),
+    ...(value.userVisible !== null ? { "uservisible": value.userVisible } : {}),
+    ...(value.details.length > 0 ? { "details": value.details.map((item) => encodeMoodleCompletionRule(item)) } : {}),
+    ...(value.isOverallComplete !== null ? { "isoverallcomplete": value.isOverallComplete } : {}),
   };
 }
 
@@ -118,7 +118,7 @@ export function decodeMoodleCompletionRule(json: unknown): MoodleCompletionRule 
 
 export function encodeMoodleCompletionRule(value: MoodleCompletionRule): JsonObject {
   return {
-    "rulename": value.ruleName,
+    ...(value.ruleName !== "" ? { "rulename": value.ruleName } : {}),
     "rulevalue": encodeMoodleCompletionRuleValue(value.ruleValue),
   };
 }
@@ -142,8 +142,8 @@ export function decodeMoodleCompletionRuleValue(json: unknown): MoodleCompletion
 
 export function encodeMoodleCompletionRuleValue(value: MoodleCompletionRuleValue): JsonObject {
   return {
-    "status": value.status,
-    "description": value.description,
+    ...(value.status !== 0 ? { "status": value.status } : {}),
+    ...(value.description !== "" ? { "description": value.description } : {}),
   };
 }
 
@@ -166,7 +166,7 @@ export function decodeMoodleStatusResponse(json: unknown): MoodleStatusResponse 
 
 export function encodeMoodleStatusResponse(value: MoodleStatusResponse): JsonObject {
   return {
-    "status": value.status,
-    "warnings": value.warnings.map((item) => encodeMoodleWarning(item)),
+    ...(value.status !== false ? { "status": value.status } : {}),
+    ...(value.warnings.length > 0 ? { "warnings": value.warnings.map((item) => encodeMoodleWarning(item)) } : {}),
   };
 }

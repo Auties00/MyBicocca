@@ -96,21 +96,49 @@ public struct DemoItem: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(name, forKey: .name)
-        try container.encode(count, forKey: .count)
-        try container.encode(active, forKey: .active)
-        try container.encode(tags, forKey: .tags)
-        try container.encodeTemporal(startDate, forKey: .startDate, pattern: "dd/MM/yyyy")
-        try container.encode(updatedAt, forKey: .updatedAt)
-        try container.encode(status, forKey: .status)
+        if name != "" {
+            try container.encode(name, forKey: .name)
+        }
+        if count != nil {
+            try container.encode(count, forKey: .count)
+        }
+        if active != false {
+            try container.encode(active, forKey: .active)
+        }
+        if !tags.isEmpty {
+            try container.encode(tags, forKey: .tags)
+        }
+        if startDate != nil {
+            try container.encodeTemporal(startDate, forKey: .startDate, pattern: "dd/MM/yyyy")
+        }
+        if updatedAt != nil {
+            try container.encode(updatedAt, forKey: .updatedAt)
+        }
+        if status != nil {
+            try container.encode(status, forKey: .status)
+        }
         try container.encode(owner, forKey: .owner)
-        try container.encode(previousOwners, forKey: .previousOwners)
-        try container.encode(extra, forKey: .extra)
-        try container.encodeTemporal(opensAt, forKey: .opensAt, pattern: "HH:mm")
-        try container.encode(payload, forKey: .payload)
-        try container.encode(kind, forKey: .kind)
-        try container.encode(rating, forKey: .rating)
-        try container.encode(`default`, forKey: .`default`)
+        if !previousOwners.isEmpty {
+            try container.encode(previousOwners, forKey: .previousOwners)
+        }
+        if extra != nil {
+            try container.encode(extra, forKey: .extra)
+        }
+        if opensAt != nil {
+            try container.encodeTemporal(opensAt, forKey: .opensAt, pattern: "HH:mm")
+        }
+        if payload != nil {
+            try container.encode(payload, forKey: .payload)
+        }
+        if kind != .book {
+            try container.encode(kind, forKey: .kind)
+        }
+        if rating != 2.5 {
+            try container.encode(rating, forKey: .rating)
+        }
+        if `default` != nil {
+            try container.encode(`default`, forKey: .`default`)
+        }
     }
 }
 

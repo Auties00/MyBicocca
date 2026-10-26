@@ -34,9 +34,15 @@ public struct MoodleConversationMessages: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(id, forKey: .id)
-        try container.encode(members, forKey: .members)
-        try container.encode(messages, forKey: .messages)
+        if id != 0 {
+            try container.encode(id, forKey: .id)
+        }
+        if !members.isEmpty {
+            try container.encode(members, forKey: .members)
+        }
+        if !messages.isEmpty {
+            try container.encode(messages, forKey: .messages)
+        }
     }
 }
 
@@ -151,22 +157,54 @@ public struct MoodleConversationMember: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(id, forKey: .id)
-        try container.encode(fullName, forKey: .fullName)
-        try container.encode(profileUrl, forKey: .profileUrl)
-        try container.encode(profileImageUrl, forKey: .profileImageUrl)
-        try container.encode(profileImageUrlSmall, forKey: .profileImageUrlSmall)
-        try container.encode(isOnline, forKey: .isOnline)
-        try container.encode(showOnlineStatus, forKey: .showOnlineStatus)
-        try container.encode(isBlocked, forKey: .isBlocked)
-        try container.encode(isContact, forKey: .isContact)
-        try container.encode(isDeleted, forKey: .isDeleted)
-        try container.encode(canMessageEvenIfBlocked, forKey: .canMessageEvenIfBlocked)
-        try container.encode(canMessage, forKey: .canMessage)
-        try container.encode(requiresContact, forKey: .requiresContact)
-        try container.encode(canCreateContact, forKey: .canCreateContact)
-        try container.encode(contactRequests, forKey: .contactRequests)
-        try container.encode(conversations, forKey: .conversations)
+        if id != 0 {
+            try container.encode(id, forKey: .id)
+        }
+        if fullName != "" {
+            try container.encode(fullName, forKey: .fullName)
+        }
+        if profileUrl != "" {
+            try container.encode(profileUrl, forKey: .profileUrl)
+        }
+        if profileImageUrl != "" {
+            try container.encode(profileImageUrl, forKey: .profileImageUrl)
+        }
+        if profileImageUrlSmall != "" {
+            try container.encode(profileImageUrlSmall, forKey: .profileImageUrlSmall)
+        }
+        if isOnline != false {
+            try container.encode(isOnline, forKey: .isOnline)
+        }
+        if showOnlineStatus != false {
+            try container.encode(showOnlineStatus, forKey: .showOnlineStatus)
+        }
+        if isBlocked != false {
+            try container.encode(isBlocked, forKey: .isBlocked)
+        }
+        if isContact != false {
+            try container.encode(isContact, forKey: .isContact)
+        }
+        if isDeleted != false {
+            try container.encode(isDeleted, forKey: .isDeleted)
+        }
+        if canMessageEvenIfBlocked != false {
+            try container.encode(canMessageEvenIfBlocked, forKey: .canMessageEvenIfBlocked)
+        }
+        if canMessage != false {
+            try container.encode(canMessage, forKey: .canMessage)
+        }
+        if requiresContact != false {
+            try container.encode(requiresContact, forKey: .requiresContact)
+        }
+        if canCreateContact != false {
+            try container.encode(canCreateContact, forKey: .canCreateContact)
+        }
+        if !contactRequests.isEmpty {
+            try container.encode(contactRequests, forKey: .contactRequests)
+        }
+        if !conversations.isEmpty {
+            try container.encode(conversations, forKey: .conversations)
+        }
     }
 }
 
@@ -209,10 +247,18 @@ public struct MoodleContactRequest: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(id, forKey: .id)
-        try container.encode(userId, forKey: .userId)
-        try container.encode(requestedUserId, forKey: .requestedUserId)
-        try container.encode(timeCreated, forKey: .timeCreated)
+        if id != 0 {
+            try container.encode(id, forKey: .id)
+        }
+        if userId != 0 {
+            try container.encode(userId, forKey: .userId)
+        }
+        if requestedUserId != 0 {
+            try container.encode(requestedUserId, forKey: .requestedUserId)
+        }
+        if timeCreated != 0 {
+            try container.encode(timeCreated, forKey: .timeCreated)
+        }
     }
 }
 
@@ -256,10 +302,18 @@ public struct MoodleMemberConversation: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(id, forKey: .id)
-        try container.encode(type, forKey: .type)
-        try container.encode(name, forKey: .name)
-        try container.encode(timeCreated, forKey: .timeCreated)
+        if id != 0 {
+            try container.encode(id, forKey: .id)
+        }
+        if type != 0 {
+            try container.encode(type, forKey: .type)
+        }
+        if name != "" {
+            try container.encode(name, forKey: .name)
+        }
+        if timeCreated != 0 {
+            try container.encode(timeCreated, forKey: .timeCreated)
+        }
     }
 }
 
@@ -302,10 +356,18 @@ public struct MoodleConversationMessage: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(id, forKey: .id)
-        try container.encode(userIdFrom, forKey: .userIdFrom)
-        try container.encode(text, forKey: .text)
-        try container.encode(timeCreated, forKey: .timeCreated)
+        if id != 0 {
+            try container.encode(id, forKey: .id)
+        }
+        if userIdFrom != 0 {
+            try container.encode(userIdFrom, forKey: .userIdFrom)
+        }
+        if text != "" {
+            try container.encode(text, forKey: .text)
+        }
+        if timeCreated != 0 {
+            try container.encode(timeCreated, forKey: .timeCreated)
+        }
     }
 }
 
@@ -329,7 +391,9 @@ public struct MoodleConversationsResponse: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(conversations, forKey: .conversations)
+        if !conversations.isEmpty {
+            try container.encode(conversations, forKey: .conversations)
+        }
     }
 }
 
@@ -424,19 +488,45 @@ public struct MoodleConversation: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(id, forKey: .id)
-        try container.encode(name, forKey: .name)
-        try container.encode(subname, forKey: .subname)
-        try container.encode(imageUrl, forKey: .imageUrl)
-        try container.encode(type, forKey: .type)
-        try container.encode(memberCount, forKey: .memberCount)
-        try container.encode(isMuted, forKey: .isMuted)
-        try container.encode(isFavourite, forKey: .isFavourite)
-        try container.encode(isRead, forKey: .isRead)
-        try container.encode(unreadCount, forKey: .unreadCount)
-        try container.encode(members, forKey: .members)
-        try container.encode(messages, forKey: .messages)
-        try container.encode(canDeleteMessagesForAllUsers, forKey: .canDeleteMessagesForAllUsers)
+        if id != 0 {
+            try container.encode(id, forKey: .id)
+        }
+        if name != nil {
+            try container.encode(name, forKey: .name)
+        }
+        if subname != nil {
+            try container.encode(subname, forKey: .subname)
+        }
+        if imageUrl != nil {
+            try container.encode(imageUrl, forKey: .imageUrl)
+        }
+        if type != 0 {
+            try container.encode(type, forKey: .type)
+        }
+        if memberCount != 0 {
+            try container.encode(memberCount, forKey: .memberCount)
+        }
+        if isMuted != false {
+            try container.encode(isMuted, forKey: .isMuted)
+        }
+        if isFavourite != false {
+            try container.encode(isFavourite, forKey: .isFavourite)
+        }
+        if isRead != false {
+            try container.encode(isRead, forKey: .isRead)
+        }
+        if unreadCount != nil {
+            try container.encode(unreadCount, forKey: .unreadCount)
+        }
+        if !members.isEmpty {
+            try container.encode(members, forKey: .members)
+        }
+        if !messages.isEmpty {
+            try container.encode(messages, forKey: .messages)
+        }
+        if canDeleteMessagesForAllUsers != false {
+            try container.encode(canDeleteMessagesForAllUsers, forKey: .canDeleteMessagesForAllUsers)
+        }
     }
 }
 
@@ -466,7 +556,9 @@ public struct MoodleUnreadConversationCounts: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(favourites, forKey: .favourites)
+        if favourites != 0 {
+            try container.encode(favourites, forKey: .favourites)
+        }
         try container.encode(types, forKey: .types)
     }
 }
@@ -504,9 +596,15 @@ public struct MoodleUnreadCountsByType: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(individualConversations, forKey: .individualConversations)
-        try container.encode(groupConversations, forKey: .groupConversations)
-        try container.encode(selfConversations, forKey: .selfConversations)
+        if individualConversations != 0 {
+            try container.encode(individualConversations, forKey: .individualConversations)
+        }
+        if groupConversations != 0 {
+            try container.encode(groupConversations, forKey: .groupConversations)
+        }
+        if selfConversations != 0 {
+            try container.encode(selfConversations, forKey: .selfConversations)
+        }
     }
 }
 
@@ -549,10 +647,18 @@ public struct MoodleOutgoingMessage: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(toUserId, forKey: .toUserId)
-        try container.encode(text, forKey: .text)
-        try container.encode(textFormat, forKey: .textFormat)
-        try container.encode(clientMessageId, forKey: .clientMessageId)
+        if toUserId != 0 {
+            try container.encode(toUserId, forKey: .toUserId)
+        }
+        if text != "" {
+            try container.encode(text, forKey: .text)
+        }
+        if textFormat != 0 {
+            try container.encode(textFormat, forKey: .textFormat)
+        }
+        if clientMessageId != nil {
+            try container.encode(clientMessageId, forKey: .clientMessageId)
+        }
     }
 }
 
@@ -619,13 +725,29 @@ public struct MoodleSentMessage: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(messageId, forKey: .messageId)
-        try container.encode(clientMessageId, forKey: .clientMessageId)
-        try container.encode(errorMessage, forKey: .errorMessage)
-        try container.encode(text, forKey: .text)
-        try container.encode(timeCreated, forKey: .timeCreated)
-        try container.encode(conversationId, forKey: .conversationId)
-        try container.encode(userIdFrom, forKey: .userIdFrom)
-        try container.encode(canDeleteMessagesForAllUsers, forKey: .canDeleteMessagesForAllUsers)
+        if messageId != 0 {
+            try container.encode(messageId, forKey: .messageId)
+        }
+        if clientMessageId != nil {
+            try container.encode(clientMessageId, forKey: .clientMessageId)
+        }
+        if errorMessage != nil {
+            try container.encode(errorMessage, forKey: .errorMessage)
+        }
+        if text != nil {
+            try container.encode(text, forKey: .text)
+        }
+        if timeCreated != nil {
+            try container.encode(timeCreated, forKey: .timeCreated)
+        }
+        if conversationId != nil {
+            try container.encode(conversationId, forKey: .conversationId)
+        }
+        if userIdFrom != nil {
+            try container.encode(userIdFrom, forKey: .userIdFrom)
+        }
+        if canDeleteMessagesForAllUsers != false {
+            try container.encode(canDeleteMessagesForAllUsers, forKey: .canDeleteMessagesForAllUsers)
+        }
     }
 }

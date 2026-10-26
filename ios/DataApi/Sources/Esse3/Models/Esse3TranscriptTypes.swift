@@ -3523,13 +3523,13 @@ public struct Esse3TranscriptSegment: Codable, Hashable, Sendable {
     public var activityChoiceId: Int64
     /// id univoco che consente di individuare il libretto dello studente
     public var matId: Int64
-    public var attributes: Esse3TranscriptSegmentAttributes
+    public var attributes: Esse3TranscriptSegmentAttributes?
 
     public init(
         segmentChoiceId: Int64 = 0,
         activityChoiceId: Int64 = 0,
         matId: Int64 = 0,
-        attributes: Esse3TranscriptSegmentAttributes
+        attributes: Esse3TranscriptSegmentAttributes? = nil
     ) {
         self.segmentChoiceId = segmentChoiceId
         self.activityChoiceId = activityChoiceId
@@ -3549,7 +3549,7 @@ public struct Esse3TranscriptSegment: Codable, Hashable, Sendable {
         self.segmentChoiceId = container.decodeLenient(Int64.self, forKey: .segmentChoiceId) ?? 0
         self.activityChoiceId = container.decodeLenient(Int64.self, forKey: .activityChoiceId) ?? 0
         self.matId = container.decodeLenient(Int64.self, forKey: .matId) ?? 0
-        self.attributes = try container.decodeRequired(Esse3TranscriptSegmentAttributes.self, forKey: .attributes)
+        self.attributes = container.decodeLenient(Esse3TranscriptSegmentAttributes.self, forKey: .attributes)
     }
 
     public func encode(to encoder: Encoder) throws {

@@ -95,14 +95,27 @@ class GeneratorTest {
                 listOf(file("Runtime.txt", SHARED_FILES_OWNER, sharedBody(context.options.getValue("api").toString())))
             override fun indexFiles(paths: Set<String>, context: TargetContext) =
                 listOf(file("Index.txt", SHARED_FILES_OWNER, paths.sorted().joinToString(" ")))
+            override fun generateTests(plan: TestPlan, context: TargetContext) =
+                listOf(file("${plan.spec.id}Test.txt", plan.spec.id, "${plan.limits.maxRequests} requests"))
+            override fun sharedTestFiles(context: TargetContext) = listOf(file("TestRuntime.txt", SHARED_FILES_OWNER))
         }
     }
 
-    private fun api(root: Path, id: String): Path = root.resolve(id).apply {
+    private fun api(root: Path, id: String, tests: String? = null): Path = root.resolve(id).apply {
         createDirectories()
         resolve(CodegenConfig.FILE_NAME).writeText(
-            """{"reader": {"type": "fake"}, "targets": {"fake": {"outputDir": "../out", "options": {"api": "$id"}}}}"""
+            """{"reader": {"type": "fake"}, "targets": {"fake": {"outputDir": "../out", "testOutputDir": "../tests", "options": {"api": "$id"}}}}"""
         )
+        tests?.let { resolve(LiveTestsConfig.FILE_NAME).writeText(it) }
+    }
+
+    @Test
+    fun `writes the live tests of the APIs that have a tests yaml, and their runtime`(@TempDir root: Path) {
+        Generator(registry(), log = {}).run(listOf(api(root, "a", tests = "limits: { maxRequests: 7 }"), api(root, "b")))
+        val tests = root.resolve("tests")
+        assertContains(tests.resolve("aTest.txt").readText(), "7 requests")
+        assertTrue(tests.resolve("TestRuntime.txt").exists())
+        assertTrue(!tests.resolve("bTest.txt").exists())
     }
 
     @Test

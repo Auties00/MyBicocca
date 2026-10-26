@@ -4,6 +4,7 @@ import it.attendance100.mybicocca.codegen.core.CodeTarget
 import it.attendance100.mybicocca.codegen.core.CodeWriter
 import it.attendance100.mybicocca.codegen.core.GeneratedFile
 import it.attendance100.mybicocca.codegen.core.TargetContext
+import it.attendance100.mybicocca.codegen.core.TestPlan
 import it.attendance100.mybicocca.codegen.core.decapitalized
 import it.attendance100.mybicocca.codegen.core.decodeOptions
 import it.attendance100.mybicocca.codegen.core.resourceFiles
@@ -32,7 +33,7 @@ class SwiftTarget : CodeTarget {
     override fun generate(spec: ApiSpec, context: TargetContext): List<GeneratedFile> {
         val options = context.options.decodeOptions<Options>()
         val layout = SwiftLayout(spec, options.module ?: spec.prefix, options.runtimeModule)
-        val records = SwiftRecordEmitter(layout)
+        val records = SwiftRecordEmitter(layout, spec.client)
         val enums = SwiftEnumEmitter(layout)
         val scrapers = SwiftScrapeEmitter(spec, layout, records)
         val services = SwiftServiceEmitter(spec, layout, scrapers)
@@ -74,6 +75,21 @@ class SwiftTarget : CodeTarget {
     /** The runtime module, from this module's `swift-runtime` resources. */
     override fun sharedFiles(context: TargetContext): List<GeneratedFile> =
         resourceFiles(javaClass, "swift-runtime", RUNTIME_FILES, context.options.decodeOptions<Options>().runtimeModule)
+
+    /**
+     * The live tests of the API, in the test output directory's folder of its module (see
+     * [SwiftTestEmitter]).
+     */
+    override fun generateTests(plan: TestPlan, context: TargetContext): List<GeneratedFile> {
+        val options = context.options.decodeOptions<Options>()
+        return SwiftTestEmitter(plan, SwiftLayout(plan.spec, options.module ?: plan.spec.prefix, options.runtimeModule)).files()
+    }
+
+    /** The live test runtime, from this module's `swift-live` resources, in the test output directory's `Runtime` folder. */
+    override fun sharedTestFiles(context: TargetContext): List<GeneratedFile> {
+        val runtimeModule = context.options.decodeOptions<Options>().runtimeModule
+        return resourceFiles(javaClass, "swift-live", LIVE_FILES, "Runtime") { it.replace("import DataApiRuntime", "import $runtimeModule") }
+    }
 
     /**
      * A protocol every scheme's credentials conform to, so operations accepting several
@@ -148,6 +164,7 @@ class SwiftTarget : CodeTarget {
     private companion object {
         const val MAX_LINE_LENGTH = 100
         val RUNTIME_FILES = listOf("Coding.swift", "Maps.swift", "Rest.swift", "RestClient.swift", "Scrape.swift", "Temporal.swift")
+        val LIVE_FILES = listOf("Live.swift", "LiveSupport.swift")
         val PLACEHOLDER = Regex("""\{([^}]+)}""")
     }
 }

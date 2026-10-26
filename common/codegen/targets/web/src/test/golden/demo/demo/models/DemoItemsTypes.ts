@@ -49,21 +49,21 @@ export function decodeDemoItem(json: unknown): DemoItem | undefined {
 
 export function encodeDemoItem(value: DemoItem): JsonObject {
   return {
-    "nome": value.name,
-    "num": value.count,
-    "attivo": value.active,
-    "tag": value.tags,
-    "dataInizio": encodeTemporal(value.startDate, "dd/MM/yyyy"),
-    "aggiornato": value.updatedAt === null ? null : encodeIsoTemporal(value.updatedAt),
-    "stato": value.status,
+    ...(value.name !== "" ? { "nome": value.name } : {}),
+    ...(value.count !== null ? { "num": value.count } : {}),
+    ...(value.active !== false ? { "attivo": value.active } : {}),
+    ...(value.tags.length > 0 ? { "tag": value.tags } : {}),
+    ...(value.startDate !== null ? { "dataInizio": encodeTemporal(value.startDate, "dd/MM/yyyy") } : {}),
+    ...(value.updatedAt !== null ? { "aggiornato": value.updatedAt === null ? null : encodeIsoTemporal(value.updatedAt) } : {}),
+    ...(value.status !== null ? { "stato": value.status } : {}),
     "proprietario": encodeDemoOwner(value.owner),
-    "storico": value.previousOwners.map((item) => encodeDemoOwner(item)),
-    "extra": value.extra,
-    "apertura": encodeTemporal(value.opensAt, "HH:mm"),
-    "payload": value.payload,
-    "tipo": value.kind,
-    "voto": value.rating,
-    "default": value.default,
+    ...(value.previousOwners.length > 0 ? { "storico": value.previousOwners.map((item) => encodeDemoOwner(item)) } : {}),
+    ...(value.extra !== null ? { "extra": value.extra } : {}),
+    ...(value.opensAt !== null ? { "apertura": encodeTemporal(value.opensAt, "HH:mm") } : {}),
+    ...(value.payload !== null ? { "payload": value.payload } : {}),
+    ...(value.kind !== "book" ? { "tipo": value.kind } : {}),
+    ...(value.rating !== 2.5 ? { "voto": value.rating } : {}),
+    ...(value.default !== null ? { "default": value.default } : {}),
   };
 }
 

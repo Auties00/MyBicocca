@@ -1,0 +1,44 @@
+# The live tests of Affluences, whose public data needs no account: see "Live tests" in
+# common/codegen/README.md.
+limits:
+  requestsPerSecond: 2
+  maxRequests: 400
+defaults:
+  siteIdentifier:
+    oneOf:
+      # The university library system, by slug, and its central library, by id.
+      - universita-bicocca-biblioteca-di-ateneo
+      - 4912615d-501b-4c4e-a2a7-ccaec81c5429
+  resourceTypeId:
+    from: Reservations.getReservationInfo
+    with: { siteIdentifier: 4912615d-501b-4c4e-a2a7-ccaec81c5429 }
+    pick: "types[*].resourceTypeId"
+  date: "{today}"
+operations:
+  Search.searchSites:
+    inputs: { query: bicocca }
+  Search.searchSitesFiltered:
+    inputs: { body: { search_query: bicocca, page: 0 } }
+  Search.searchSitesOnMap:
+    inputs: { body: { latitude: 45.518, longitude: 9.21375 } }
+    # Sites carry their live occupancy.
+    volatile: true
+  Reservations.getReservationInfo:
+    # Only the central library takes bookings.
+    inputs: { siteIdentifier: 4912615d-501b-4c4e-a2a7-ccaec81c5429 }
+    # Resource types carry the time of the request.
+    volatile: true
+  Reservations.getResourceTypeFilters:
+    inputs: { siteIdentifier: 4912615d-501b-4c4e-a2a7-ccaec81c5429 }
+  Reservations.getAvailableResources:
+    # Just after midnight in Italy, today in UTC is still yesterday there, which the server
+    # refuses as a date in the past; tomorrow never is.
+    inputs: { siteIdentifier: 4912615d-501b-4c4e-a2a7-ccaec81c5429, date: "{today+1}" }
+  Reservations.getAgreements:
+    inputs: { siteIdentifier: 4912615d-501b-4c4e-a2a7-ccaec81c5429 }
+  Account.checkIn:
+    # Registers a device of the tests' own, as the app does at its first start.
+    inputs: { body: { deviceId: mybicocca-live-tests, deviceLang: it } }
+  Sites.getLiveData:
+    # Occupancy changes from minute to minute.
+    volatile: true

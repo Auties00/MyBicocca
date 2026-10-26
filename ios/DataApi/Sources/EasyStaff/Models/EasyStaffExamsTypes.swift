@@ -23,7 +23,9 @@ public struct EasyStaffExamCalendar: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(subjects, forKey: .subjects)
+        if !subjects.isEmpty {
+            try container.encode(subjects, forKey: .subjects)
+        }
     }
 }
 
@@ -53,7 +55,9 @@ public struct EasyStaffExamSubject: Codable, Hashable, Sendable {
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(subjectData, forKey: .subjectData)
-        try container.encode(exams, forKey: .exams)
+        if !exams.isEmpty {
+            try container.encode(exams, forKey: .exams)
+        }
     }
 }
 
@@ -88,7 +92,9 @@ public struct EasyStaffExamSubjectData: Codable, Hashable, Sendable {
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(code, forKey: .code)
-        try container.encode(generalCode, forKey: .generalCode)
+        if generalCode != "" {
+            try container.encode(generalCode, forKey: .generalCode)
+        }
         try container.encode(name, forKey: .name)
     }
 }
@@ -167,13 +173,27 @@ public struct EasyStaffScheduledExam: Codable, Hashable, Sendable {
         try container.encodeTemporal(date, forKey: .date, pattern: "dd-MM-yyyy")
         try container.encodeTemporal(startTime, forKey: .startTime, pattern: "HH:mm")
         try container.encodeTemporal(endTime, forKey: .endTime, pattern: "HH:mm")
-        try container.encode(room, forKey: .room)
-        try container.encode(building, forKey: .building)
-        try container.encode(examiners, forKey: .examiners)
-        try container.encode(notes, forKey: .notes)
-        try container.encode(examType, forKey: .examType)
-        try container.encode(isCancelled, forKey: .isCancelled)
-        try container.encode(eventId, forKey: .eventId)
+        if room != "" {
+            try container.encode(room, forKey: .room)
+        }
+        if building != nil {
+            try container.encode(building, forKey: .building)
+        }
+        if !examiners.isEmpty {
+            try container.encode(examiners, forKey: .examiners)
+        }
+        if notes != "" {
+            try container.encode(notes, forKey: .notes)
+        }
+        if examType != nil {
+            try container.encode(examType, forKey: .examType)
+        }
+        if isCancelled != false {
+            try container.encode(isCancelled, forKey: .isCancelled)
+        }
+        if eventId != "" {
+            try container.encode(eventId, forKey: .eventId)
+        }
     }
 }
 
@@ -217,10 +237,20 @@ public struct EasyStaffExamExaminer: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(name, forKey: .name)
-        try container.encode(lastName, forKey: .lastName)
-        try container.encode(code, forKey: .code)
-        try container.encode(email, forKey: .email)
-        try container.encode(fallbackEmail, forKey: .fallbackEmail)
+        if name != "" {
+            try container.encode(name, forKey: .name)
+        }
+        if lastName != "" {
+            try container.encode(lastName, forKey: .lastName)
+        }
+        if code != nil {
+            try container.encode(code, forKey: .code)
+        }
+        if email != nil {
+            try container.encode(email, forKey: .email)
+        }
+        if fallbackEmail != nil {
+            try container.encode(fallbackEmail, forKey: .fallbackEmail)
+        }
     }
 }

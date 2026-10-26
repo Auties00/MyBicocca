@@ -1,10 +1,12 @@
 package it.attendance100.mybicocca.codegen.reader.moodle
 
+import it.attendance100.mybicocca.codegen.core.EffectsOverlay
 import it.attendance100.mybicocca.codegen.core.ReaderContext
 import it.attendance100.mybicocca.codegen.model.ApiSpec
 import it.attendance100.mybicocca.codegen.model.AuthRequirement
 import it.attendance100.mybicocca.codegen.model.Codec
 import it.attendance100.mybicocca.codegen.model.DefaultValue
+import it.attendance100.mybicocca.codegen.model.Effect
 import it.attendance100.mybicocca.codegen.model.ParameterEncoding
 import it.attendance100.mybicocca.codegen.model.ParameterLocation
 import it.attendance100.mybicocca.codegen.model.PrimitiveKind
@@ -26,7 +28,9 @@ class MoodleReaderTest {
 
     @Test
     fun `reads a valid spec with a module per component`() {
-        assertTrue(SpecValidator.validate(spec).isEmpty(), SpecValidator.validate(spec).toString())
+        // Write functions are classified by the effects overlay.
+        val classified = EffectsOverlay.apply(spec, Path("src/test/resources/demo"))
+        assertTrue(SpecValidator.validate(classified).isEmpty(), SpecValidator.validate(classified).toString())
         assertEquals(listOf("Course", "Forum"), spec.modules.map { it.name })
         assertEquals(mapOf("wstoken" to "{token}"), spec.authSchemes.single().form)
     }
@@ -38,6 +42,8 @@ class MoodleReaderTest {
         assertEquals("/webservice/rest/server.php", operation.path)
         assertEquals(mapOf("wsfunction" to "core_course_get_contents", "moodlewsrestformat" to "json"), operation.query)
         assertEquals(AuthRequirement(listOf("Token"), required = true), operation.auth)
+        assertEquals(Effect.READ, operation.effect)
+        assertEquals(null, spec.modules.last().operations.single().effect)
         assertEquals(ResponseBody.Json(TypeRef.ListOf(TypeRef.Named("MoodleCourseSection"))), operation.response)
     }
 

@@ -34,15 +34,15 @@ export function decodeMoodleWebCourseInfo(json: unknown): MoodleWebCourseInfo | 
 
 export function encodeMoodleWebCourseInfo(value: MoodleWebCourseInfo): JsonObject {
   return {
-    "id": value.id,
-    "name": value.name,
-    "code": value.code,
-    "viewUrl": value.viewUrl,
-    "syllabus": value.syllabus.map((item) => encodeMoodleWebSyllabus(item)),
-    "staff": value.staff.map((item) => encodeMoodleWebStaffGroup(item)),
-    "enrolmentMethods": value.enrolmentMethods,
-    "studentOpinionUrl": value.studentOpinionUrl,
-    "bibliographyUrl": value.bibliographyUrl,
+    ...(value.id !== null ? { "id": value.id } : {}),
+    ...(value.name !== "" ? { "name": value.name } : {}),
+    ...(value.code !== "" ? { "code": value.code } : {}),
+    ...(value.viewUrl !== "" ? { "viewUrl": value.viewUrl } : {}),
+    ...(value.syllabus.length > 0 ? { "syllabus": value.syllabus.map((item) => encodeMoodleWebSyllabus(item)) } : {}),
+    ...(value.staff.length > 0 ? { "staff": value.staff.map((item) => encodeMoodleWebStaffGroup(item)) } : {}),
+    ...(value.enrolmentMethods.length > 0 ? { "enrolmentMethods": value.enrolmentMethods } : {}),
+    ...(value.studentOpinionUrl !== null ? { "studentOpinionUrl": value.studentOpinionUrl } : {}),
+    ...(value.bibliographyUrl !== null ? { "bibliographyUrl": value.bibliographyUrl } : {}),
   };
 }
 
@@ -66,9 +66,9 @@ export function decodeMoodleWebSyllabus(json: unknown): MoodleWebSyllabus | unde
 
 export function encodeMoodleWebSyllabus(value: MoodleWebSyllabus): JsonObject {
   return {
-    "language": value.language,
-    "exportPdfUrl": value.exportPdfUrl,
-    "fields": value.fields.map((item) => encodeMoodleWebSyllabusField(item)),
+    ...(value.language !== "unknown" ? { "language": value.language } : {}),
+    ...(value.exportPdfUrl !== null ? { "exportPdfUrl": value.exportPdfUrl } : {}),
+    ...(value.fields.length > 0 ? { "fields": value.fields.map((item) => encodeMoodleWebSyllabusField(item)) } : {}),
   };
 }
 
@@ -89,8 +89,8 @@ export function decodeMoodleWebSyllabusField(json: unknown): MoodleWebSyllabusFi
 
 export function encodeMoodleWebSyllabusField(value: MoodleWebSyllabusField): JsonObject {
   return {
-    "title": value.title,
-    "htmlContent": value.htmlContent,
+    ...(value.title !== "" ? { "title": value.title } : {}),
+    ...(value.htmlContent !== "" ? { "htmlContent": value.htmlContent } : {}),
   };
 }
 
@@ -112,7 +112,7 @@ export function decodeMoodleWebStaffGroup(json: unknown): MoodleWebStaffGroup | 
 export function encodeMoodleWebStaffGroup(value: MoodleWebStaffGroup): JsonObject {
   return {
     "role": value.role,
-    "members": value.members.map((item) => encodeMoodleWebStaffMember(item)),
+    ...(value.members.length > 0 ? { "members": value.members.map((item) => encodeMoodleWebStaffMember(item)) } : {}),
   };
 }
 
@@ -140,10 +140,10 @@ export function decodeMoodleWebStaffMember(json: unknown): MoodleWebStaffMember 
 
 export function encodeMoodleWebStaffMember(value: MoodleWebStaffMember): JsonObject {
   return {
-    "name": value.name,
-    "profileUrl": value.profileUrl,
-    "userId": value.userId,
-    "initials": value.initials,
-    "email": value.email,
+    ...(value.name !== "" ? { "name": value.name } : {}),
+    ...(value.profileUrl !== "" ? { "profileUrl": value.profileUrl } : {}),
+    ...(value.userId !== null ? { "userId": value.userId } : {}),
+    ...(value.initials !== null ? { "initials": value.initials } : {}),
+    ...(value.email !== null ? { "email": value.email } : {}),
   };
 }

@@ -14,11 +14,20 @@ class SpecValidatorTest {
     ) = ApiSpec("demo", "Demo", listOf(ApiModule("Items", "/", records, operations)), enums)
 
     private fun operation(path: String, vararg parameters: Parameter) =
-        Operation("get", HttpMethod.GET, path, parameters.toList(), body = null, response = ResponseBody.None)
+        Operation("get", HttpMethod.GET, path, parameters.toList(), body = null, response = ResponseBody.None, effect = Effect.READ)
 
     @Test
     fun `accepts a consistent spec`() {
         assertTrue(SpecValidator.validate(spec()).isEmpty())
+    }
+
+    @Test
+    fun `reports operations without an effect`() {
+        val unclassified = operation("/a").copy(effect = null)
+        assertEquals(
+            listOf("Operation 'Items.get' declares no effect (read, benign, reversible or irreversible)"),
+            SpecValidator.validate(spec(operations = listOf(unclassified))),
+        )
     }
 
     @Test
@@ -66,7 +75,7 @@ class SpecValidatorTest {
         val operation = Operation(
             "post", HttpMethod.POST, "/a",
             listOf(Parameter("flag", "flag", ParameterLocation.FORM, TypeRef.STRING, required = true)),
-            body = RequestBody.Json(TypeRef.STRING), response = ResponseBody.None,
+            body = RequestBody.Json(TypeRef.STRING), response = ResponseBody.None, effect = Effect.IRREVERSIBLE,
         )
         assertEquals(listOf("Operation 'Items.post' sends both a JSON body and form fields"), SpecValidator.validate(spec(operations = listOf(operation))))
     }
@@ -162,7 +171,7 @@ class SpecValidatorTest {
         val upload = Operation(
             "upload", HttpMethod.POST, "/upload",
             listOf(Parameter("file", "file", ParameterLocation.FORM, file, required = true), Parameter("id", "id", ParameterLocation.QUERY, TypeRef.STRING, required = true, raw = true)),
-            body = null, response = ResponseBody.None,
+            body = null, response = ResponseBody.None, effect = Effect.IRREVERSIBLE,
         )
         assertEquals(
             listOf(

@@ -45,8 +45,8 @@ export function decodeEasyStaffPlanningMonthSchedule(json: unknown): EasyStaffPl
 
 export function encodeEasyStaffPlanningMonthSchedule(value: EasyStaffPlanningMonthSchedule): JsonObject {
   return {
-    "prima_disp": encodeTemporal(value.firstAvailable, "yyyy-MM-dd HH:mm"),
-    "schedule": encodeWireMap(value.days, (item) => item.map((item) => encodeEasyStaffPlanningTimeRange(item))),
+    ...(value.firstAvailable !== null ? { "prima_disp": encodeTemporal(value.firstAvailable, "yyyy-MM-dd HH:mm") } : {}),
+    ...(value.days.size > 0 ? { "schedule": encodeWireMap(value.days, (item) => item.map((item) => encodeEasyStaffPlanningTimeRange(item))) } : {}),
   };
 }
 
@@ -69,9 +69,9 @@ export function decodeEasyStaffPlanningSlotAvailability(json: unknown): EasyStaf
 
 export function encodeEasyStaffPlanningSlotAvailability(value: EasyStaffPlanningSlotAvailability): JsonObject {
   return {
-    "disponibili": value.availableCount,
-    "su": value.totalCount,
-    "reserved": value.reserved,
+    ...(value.availableCount !== 0 ? { "disponibili": value.availableCount } : {}),
+    ...(value.totalCount !== 0 ? { "su": value.totalCount } : {}),
+    ...(value.reserved !== false ? { "reserved": value.reserved } : {}),
   };
 }
 
@@ -92,7 +92,7 @@ export function decodeEasyStaffPlanningDaySchedule(json: unknown): EasyStaffPlan
 
 export function encodeEasyStaffPlanningDaySchedule(value: EasyStaffPlanningDaySchedule): JsonObject {
   return {
-    "schedule": encodeWireMap(value.days, (item) => encodeWireMap(item, (item) => encodeEasyStaffPlanningSlotAvailability(item))),
+    ...(value.days.size > 0 ? { "schedule": encodeWireMap(value.days, (item) => encodeWireMap(item, (item) => encodeEasyStaffPlanningSlotAvailability(item))) } : {}),
   };
 }
 
@@ -134,12 +134,12 @@ export function encodeEasyStaffPlanningResource(value: EasyStaffPlanningResource
     "area_id": value.areaId,
     "resource_code": value.code,
     "resource_name": value.name,
-    "description": value.description,
-    "type": value.type,
-    "order_number": value.orderNumber,
-    "visible": value.visible,
-    "disabled": value.disabled,
-    "virtuale": value.virtual,
+    ...(value.description !== null ? { "description": value.description } : {}),
+    ...(value.type !== 0 ? { "type": value.type } : {}),
+    ...(value.orderNumber !== null ? { "order_number": value.orderNumber } : {}),
+    ...(value.visible !== true ? { "visible": value.visible } : {}),
+    ...(value.disabled !== false ? { "disabled": value.disabled } : {}),
+    ...(value.virtual !== false ? { "virtuale": value.virtual } : {}),
   };
 }
 
@@ -165,9 +165,9 @@ export function decodeEasyStaffPlanningResourceAvailability(json: unknown): Easy
 export function encodeEasyStaffPlanningResourceAvailability(value: EasyStaffPlanningResourceAvailability): JsonObject {
   return {
     "risorsa": encodeEasyStaffPlanningResource(value.resource),
-    "schedule": encodeWireMap(value.openWindows, (item) => item.map((item) => encodeEasyStaffPlanningTimeRange(item))),
-    "exceptions": encodeWireMap(value.exceptions, (item) => item.map((item) => encodeEasyStaffPlanningTimeRange(item))),
-    "periods": encodeWireMap(value.occupiedSlots, (item) => item.map((item) => encodeEasyStaffPlanningTimeRange(item))),
+    ...(value.openWindows.size > 0 ? { "schedule": encodeWireMap(value.openWindows, (item) => item.map((item) => encodeEasyStaffPlanningTimeRange(item))) } : {}),
+    ...(value.exceptions.size > 0 ? { "exceptions": encodeWireMap(value.exceptions, (item) => item.map((item) => encodeEasyStaffPlanningTimeRange(item))) } : {}),
+    ...(value.occupiedSlots.size > 0 ? { "periods": encodeWireMap(value.occupiedSlots, (item) => item.map((item) => encodeEasyStaffPlanningTimeRange(item))) } : {}),
   };
 }
 
@@ -187,6 +187,6 @@ export function decodeEasyStaffPlanningResult(json: unknown): EasyStaffPlanningR
 
 export function encodeEasyStaffPlanningResult(value: EasyStaffPlanningResult): JsonObject {
   return {
-    "success": value.success,
+    ...(value.success !== true ? { "success": value.success } : {}),
   };
 }

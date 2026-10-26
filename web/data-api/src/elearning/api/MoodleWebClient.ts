@@ -43,7 +43,7 @@ export class MoodleWebClient {
   }
 
   async bytes(request: RestRequest): Promise<Uint8Array> {
-    return new Uint8Array(await (await this.execute(request, false))!.arrayBuffer());
+    return new Uint8Array(await (await this.execute(request, false, false, false))!.arrayBuffer());
   }
 
   async text(request: RestRequest): Promise<string> {
@@ -64,9 +64,9 @@ export class MoodleWebClient {
     await this.execute(request, true);
   }
 
-  private async execute(request: RestRequest, readsJson: boolean, allowEmpty = false): Promise<Response | undefined> {
+  private async execute(request: RestRequest, readsJson: boolean, allowEmpty = false, stores = true): Promise<Response | undefined> {
     try {
-      return await this.rest.execute(request, readsJson, allowEmpty);
+      return await this.rest.execute(request, readsJson, allowEmpty, stores);
     } catch (error) {
       if (error instanceof ApiFailure) throw new MoodleWebError(error);
       throw error;

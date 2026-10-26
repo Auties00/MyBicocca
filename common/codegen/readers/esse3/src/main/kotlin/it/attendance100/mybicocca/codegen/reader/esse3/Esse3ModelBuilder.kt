@@ -6,9 +6,11 @@ import it.attendance100.mybicocca.codegen.model.ApiModule
 import it.attendance100.mybicocca.codegen.model.ApiSpec
 import it.attendance100.mybicocca.codegen.model.Codec
 import it.attendance100.mybicocca.codegen.model.DefaultValue
+import it.attendance100.mybicocca.codegen.model.Effect
 import it.attendance100.mybicocca.codegen.model.EnumType
 import it.attendance100.mybicocca.codegen.model.EnumValue
 import it.attendance100.mybicocca.codegen.model.Field
+import it.attendance100.mybicocca.codegen.model.HttpMethod
 import it.attendance100.mybicocca.codegen.model.Operation
 import it.attendance100.mybicocca.codegen.model.Parameter
 import it.attendance100.mybicocca.codegen.model.ParameterLocation
@@ -130,6 +132,8 @@ internal class Esse3ModelBuilder(
             },
             roles = operation.roles.toSet(),
             summary = operation.summary,
+            // Other methods are classified in the `effects.json` overlay.
+            effect = Effect.READ.takeIf { operation.method == HttpMethod.GET },
         )
     }
 

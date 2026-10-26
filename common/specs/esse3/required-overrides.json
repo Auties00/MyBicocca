@@ -627,7 +627,7 @@
     "SediStruttura.facId": true,
     "SediStruttura.sedeId": true,
     "SegmentoLibretto.adsceId": true,
-    "SegmentoLibretto.attributi": true,
+    "SegmentoLibretto.attributi": false,
     "SegmentoLibretto.matId": true,
     "SegmentoLibretto.segsceId": true,
     "SegmentoLibrettoClasseStu.adsceId": true,

@@ -5,10 +5,10 @@ import io.ktor.client.HttpClientConfig
 import io.ktor.client.plugins.DefaultRequest
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.api.createClientPlugin
-import io.ktor.client.plugins.cache.HttpCache
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.cookies.HttpCookies
 import io.ktor.serialization.kotlinx.json.json
+import io.ktor.util.AttributeKey
 import kotlinx.serialization.json.Json
 import kotlin.reflect.KProperty
 
@@ -17,9 +17,9 @@ import kotlin.reflect.KProperty
  *
  * @property timeoutMillis How long a request may take; null for Ktor's default.
  * @property keepsCookies Whether the client stores the cookies servers set and sends them back.
- * @property caches Whether the client caches responses as their headers allow.
+ * @property caches Whether the client keeps responses in a [ResponseCache].
  * @property headers Headers sent with every request, unless the request sets them.
- * @property query Query parameters sent with every request.
+ * @property query Query parameters sent with every request, unless the request sets them.
  */
 class RestClientOptions(
     val timeoutMillis: Long? = null,
@@ -56,12 +56,23 @@ internal fun HttpClientConfig<*>.configure(json: Json, options: RestClientOption
         json(json)
     }
     if (options.keepsCookies) install(HttpCookies)
-    if (options.caches) install(HttpCache)
-    if (options.headers.isNotEmpty() || options.query.isNotEmpty()) {
+    if (options.caches) {
+        install(createClientPlugin("ResponseCache") {
+            client.attributes.put(ResponseCache.KEY, ResponseCache())
+        })
+    }
+    if (options.headers.isNotEmpty()) {
         install(DefaultRequest) {
             options.headers.forEach { (name, value) -> headers.append(name, value) }
-            options.query.forEach { (name, value) -> url.parameters.append(name, value) }
         }
+    }
+    // DefaultRequest ignores its query parameters for absolute URLs, which every request uses.
+    if (options.query.isNotEmpty()) {
+        install(createClientPlugin("DefaultQuery") {
+            onRequest { request, _ ->
+                options.query.forEach { (name, value) -> if (name !in request.url.parameters) request.url.parameters.append(name, value) }
+            }
+        })
     }
     if (settings.definitions.isNotEmpty()) {
         install(createClientPlugin("ClientSettings") {
@@ -77,6 +88,56 @@ internal fun HttpClientConfig<*>.configure(json: Json, options: RestClientOption
         })
     }
     followRedirects = true
+}
+
+/** A response read whole: its body as text, and the URL that answered, after redirects. */
+class Received(val url: String, val text: String)
+
+/**
+ * The responses a client keeps when its API's spec says `caches`, the same on every platform:
+ * - a successful GET read whole, not a download, is kept when its `Cache-Control` has
+ *   `max-age=N` and neither `no-store` nor `no-cache`, and answers the same URL for N seconds;
+ * - any request other than a GET empties it once answered, whatever the answer, since it may
+ *   have changed what the kept responses show;
+ * - it keeps at most [capacity] responses, dropping the oldest first.
+ *
+ * The platform's own HTTP cache isn't used, since each platform's follows other rules.
+ */
+class ResponseCache(private val capacity: Int = 200, private val now: () -> Long = System::currentTimeMillis) {
+    private class Entry(val received: Received, val expires: Long)
+
+    private val entries = LinkedHashMap<String, Entry>()
+
+    /** The response kept for [url], if it is still fresh. */
+    fun get(url: String): Received? = synchronized(entries) {
+        val entry = entries[url] ?: return null
+        if (entry.expires > now()) return entry.received
+        entries.remove(url)
+        null
+    }
+
+    /** Keeps [received] for [url], if [cacheControl] allows it. */
+    fun put(url: String, received: Received, cacheControl: String?) {
+        val seconds = maxAge(cacheControl) ?: return
+        synchronized(entries) {
+            entries.remove(url)
+            entries[url] = Entry(received, now() + seconds * 1000)
+            while (entries.size > capacity) entries.remove(entries.keys.first())
+        }
+    }
+
+    fun clear() = synchronized(entries) { entries.clear() }
+
+    companion object {
+        val KEY = AttributeKey<ResponseCache>("ResponseCache")
+
+        /** How many seconds `Cache-Control` lets a response be kept: its `max-age`, unless it forbids keeping it. */
+        fun maxAge(cacheControl: String?): Long? {
+            val directives = cacheControl?.split(',')?.map { it.trim().lowercase() } ?: return null
+            if ("no-store" in directives || "no-cache" in directives) return null
+            return directives.firstOrNull { it.startsWith("max-age=") }?.removePrefix("max-age=")?.toLongOrNull()?.takeIf { it > 0 }
+        }
+    }
 }
 
 /**

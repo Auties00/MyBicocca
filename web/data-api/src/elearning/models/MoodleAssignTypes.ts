@@ -23,8 +23,8 @@ export function decodeMoodleAssignmentsResponse(json: unknown): MoodleAssignment
 
 export function encodeMoodleAssignmentsResponse(value: MoodleAssignmentsResponse): JsonObject {
   return {
-    "courses": value.courses.map((item) => encodeMoodleCourseAssignments(item)),
-    "warnings": value.warnings.map((item) => encodeMoodleWarning(item)),
+    ...(value.courses.length > 0 ? { "courses": value.courses.map((item) => encodeMoodleCourseAssignments(item)) } : {}),
+    ...(value.warnings.length > 0 ? { "warnings": value.warnings.map((item) => encodeMoodleWarning(item)) } : {}),
   };
 }
 
@@ -57,11 +57,11 @@ export function decodeMoodleCourseAssignments(json: unknown): MoodleCourseAssign
 
 export function encodeMoodleCourseAssignments(value: MoodleCourseAssignments): JsonObject {
   return {
-    "id": value.id,
-    "fullname": value.fullName,
-    "shortname": value.shortName,
-    "timemodified": value.timeModified,
-    "assignments": value.assignments.map((item) => encodeMoodleAssignment(item)),
+    ...(value.id !== 0 ? { "id": value.id } : {}),
+    ...(value.fullName !== "" ? { "fullname": value.fullName } : {}),
+    ...(value.shortName !== "" ? { "shortname": value.shortName } : {}),
+    ...(value.timeModified !== 0 ? { "timemodified": value.timeModified } : {}),
+    ...(value.assignments.length > 0 ? { "assignments": value.assignments.map((item) => encodeMoodleAssignment(item)) } : {}),
   };
 }
 
@@ -202,47 +202,47 @@ export function decodeMoodleAssignment(json: unknown): MoodleAssignment | undefi
 
 export function encodeMoodleAssignment(value: MoodleAssignment): JsonObject {
   return {
-    "id": value.id,
-    "cmid": value.cmId,
-    "course": value.course,
-    "name": value.name,
-    "nosubmissions": value.noSubmissions,
-    "submissiondrafts": value.submissionDrafts,
-    "sendnotifications": value.sendNotifications,
-    "sendlatenotifications": value.sendLateNotifications,
-    "sendstudentnotifications": value.sendStudentNotifications,
-    "duedate": value.dueDate,
-    "allowsubmissionsfromdate": value.allowSubmissionsFromDate,
-    "grade": value.grade,
-    "timemodified": value.timeModified,
-    "completionsubmit": value.completionSubmit,
-    "cutoffdate": value.cutoffDate,
-    "gradingduedate": value.gradingDueDate,
-    "teamsubmission": value.teamSubmission,
-    "requireallteammemberssubmit": value.requireAllTeamMembersSubmit,
-    "teamsubmissiongroupingid": value.teamSubmissionGroupingId,
-    "blindmarking": value.blindMarking,
-    "hidegrader": value.hideGrader,
-    "revealidentities": value.revealIdentities,
-    "attemptreopenmethod": value.attemptReopenMethod,
-    "maxattempts": value.maxAttempts,
-    "markingworkflow": value.markingWorkflow,
-    "markingallocation": value.markingAllocation,
-    "markinganonymous": value.markingAnonymous,
-    "requiresubmissionstatement": value.requireSubmissionStatement,
-    "preventsubmissionnotingroup": value.preventSubmissionNotInGroup,
-    "submissionstatement": value.submissionStatement,
-    "submissionstatementformat": value.submissionStatementFormat,
-    "configs": value.configs.map((item) => encodeMoodleAssignmentConfig(item)),
-    "intro": value.intro,
-    "introformat": value.introFormat,
-    "introfiles": value.introFiles.map((item) => encodeMoodleFile(item)),
-    "introattachments": value.introAttachments.map((item) => encodeMoodleFile(item)),
-    "activity": value.activity,
-    "activityformat": value.activityFormat,
-    "activityattachments": value.activityAttachments.map((item) => encodeMoodleFile(item)),
-    "timelimit": value.timeLimit,
-    "submissionattachments": value.submissionAttachments,
+    ...(value.id !== 0 ? { "id": value.id } : {}),
+    ...(value.cmId !== 0 ? { "cmid": value.cmId } : {}),
+    ...(value.course !== 0 ? { "course": value.course } : {}),
+    ...(value.name !== "" ? { "name": value.name } : {}),
+    ...(value.noSubmissions !== 0 ? { "nosubmissions": value.noSubmissions } : {}),
+    ...(value.submissionDrafts !== 0 ? { "submissiondrafts": value.submissionDrafts } : {}),
+    ...(value.sendNotifications !== 0 ? { "sendnotifications": value.sendNotifications } : {}),
+    ...(value.sendLateNotifications !== 0 ? { "sendlatenotifications": value.sendLateNotifications } : {}),
+    ...(value.sendStudentNotifications !== 0 ? { "sendstudentnotifications": value.sendStudentNotifications } : {}),
+    ...(value.dueDate !== 0 ? { "duedate": value.dueDate } : {}),
+    ...(value.allowSubmissionsFromDate !== 0 ? { "allowsubmissionsfromdate": value.allowSubmissionsFromDate } : {}),
+    ...(value.grade !== 0 ? { "grade": value.grade } : {}),
+    ...(value.timeModified !== 0 ? { "timemodified": value.timeModified } : {}),
+    ...(value.completionSubmit !== 0 ? { "completionsubmit": value.completionSubmit } : {}),
+    ...(value.cutoffDate !== 0 ? { "cutoffdate": value.cutoffDate } : {}),
+    ...(value.gradingDueDate !== 0 ? { "gradingduedate": value.gradingDueDate } : {}),
+    ...(value.teamSubmission !== 0 ? { "teamsubmission": value.teamSubmission } : {}),
+    ...(value.requireAllTeamMembersSubmit !== 0 ? { "requireallteammemberssubmit": value.requireAllTeamMembersSubmit } : {}),
+    ...(value.teamSubmissionGroupingId !== 0 ? { "teamsubmissiongroupingid": value.teamSubmissionGroupingId } : {}),
+    ...(value.blindMarking !== 0 ? { "blindmarking": value.blindMarking } : {}),
+    ...(value.hideGrader !== 0 ? { "hidegrader": value.hideGrader } : {}),
+    ...(value.revealIdentities !== 0 ? { "revealidentities": value.revealIdentities } : {}),
+    ...(value.attemptReopenMethod !== "" ? { "attemptreopenmethod": value.attemptReopenMethod } : {}),
+    ...(value.maxAttempts !== 0 ? { "maxattempts": value.maxAttempts } : {}),
+    ...(value.markingWorkflow !== 0 ? { "markingworkflow": value.markingWorkflow } : {}),
+    ...(value.markingAllocation !== 0 ? { "markingallocation": value.markingAllocation } : {}),
+    ...(value.markingAnonymous !== 0 ? { "markinganonymous": value.markingAnonymous } : {}),
+    ...(value.requireSubmissionStatement !== 0 ? { "requiresubmissionstatement": value.requireSubmissionStatement } : {}),
+    ...(value.preventSubmissionNotInGroup !== null ? { "preventsubmissionnotingroup": value.preventSubmissionNotInGroup } : {}),
+    ...(value.submissionStatement !== null ? { "submissionstatement": value.submissionStatement } : {}),
+    ...(value.submissionStatementFormat !== null ? { "submissionstatementformat": value.submissionStatementFormat } : {}),
+    ...(value.configs.length > 0 ? { "configs": value.configs.map((item) => encodeMoodleAssignmentConfig(item)) } : {}),
+    ...(value.intro !== null ? { "intro": value.intro } : {}),
+    ...(value.introFormat !== null ? { "introformat": value.introFormat } : {}),
+    ...(value.introFiles.length > 0 ? { "introfiles": value.introFiles.map((item) => encodeMoodleFile(item)) } : {}),
+    ...(value.introAttachments.length > 0 ? { "introattachments": value.introAttachments.map((item) => encodeMoodleFile(item)) } : {}),
+    ...(value.activity !== null ? { "activity": value.activity } : {}),
+    ...(value.activityFormat !== null ? { "activityformat": value.activityFormat } : {}),
+    ...(value.activityAttachments.length > 0 ? { "activityattachments": value.activityAttachments.map((item) => encodeMoodleFile(item)) } : {}),
+    ...(value.timeLimit !== null ? { "timelimit": value.timeLimit } : {}),
+    ...(value.submissionAttachments !== null ? { "submissionattachments": value.submissionAttachments } : {}),
   };
 }
 
@@ -278,12 +278,12 @@ export function decodeMoodleAssignmentConfig(json: unknown): MoodleAssignmentCon
 
 export function encodeMoodleAssignmentConfig(value: MoodleAssignmentConfig): JsonObject {
   return {
-    "id": value.id,
-    "assignment": value.assignment,
-    "plugin": value.plugin,
-    "subtype": value.subtype,
-    "name": value.name,
-    "value": value.value,
+    ...(value.id !== null ? { "id": value.id } : {}),
+    ...(value.assignment !== null ? { "assignment": value.assignment } : {}),
+    ...(value.plugin !== "" ? { "plugin": value.plugin } : {}),
+    ...(value.subtype !== "" ? { "subtype": value.subtype } : {}),
+    ...(value.name !== "" ? { "name": value.name } : {}),
+    ...(value.value !== "" ? { "value": value.value } : {}),
   };
 }
 
@@ -318,12 +318,12 @@ export function decodeMoodleSubmissionStatus(json: unknown): MoodleSubmissionSta
 
 export function encodeMoodleSubmissionStatus(value: MoodleSubmissionStatus): JsonObject {
   return {
-    "gradingsummary": value.gradingSummary === null ? null : encodeMoodleGradingSummary(value.gradingSummary),
-    "lastattempt": value.lastAttempt === null ? null : encodeMoodleLastAttempt(value.lastAttempt),
-    "feedback": value.feedback === null ? null : encodeMoodleFeedback(value.feedback),
-    "previousattempts": value.previousAttempts.map((item) => encodeMoodlePreviousAttempt(item)),
-    "assignmentdata": value.assignmentData === null ? null : encodeMoodleAssignmentData(value.assignmentData),
-    "warnings": value.warnings.map((item) => encodeMoodleWarning(item)),
+    ...(value.gradingSummary !== null ? { "gradingsummary": value.gradingSummary === null ? null : encodeMoodleGradingSummary(value.gradingSummary) } : {}),
+    ...(value.lastAttempt !== null ? { "lastattempt": value.lastAttempt === null ? null : encodeMoodleLastAttempt(value.lastAttempt) } : {}),
+    ...(value.feedback !== null ? { "feedback": value.feedback === null ? null : encodeMoodleFeedback(value.feedback) } : {}),
+    ...(value.previousAttempts.length > 0 ? { "previousattempts": value.previousAttempts.map((item) => encodeMoodlePreviousAttempt(item)) } : {}),
+    ...(value.assignmentData !== null ? { "assignmentdata": value.assignmentData === null ? null : encodeMoodleAssignmentData(value.assignmentData) } : {}),
+    ...(value.warnings.length > 0 ? { "warnings": value.warnings.map((item) => encodeMoodleWarning(item)) } : {}),
   };
 }
 
@@ -359,12 +359,12 @@ export function decodeMoodleGradingSummary(json: unknown): MoodleGradingSummary 
 
 export function encodeMoodleGradingSummary(value: MoodleGradingSummary): JsonObject {
   return {
-    "participantcount": value.participantCount,
-    "submissiondraftscount": value.submissionDraftsCount,
-    "submissionsenabled": value.submissionsEnabled,
-    "submissionssubmittedcount": value.submissionsSubmittedCount,
-    "submissionsneedgradingcount": value.submissionsNeedGradingCount,
-    "warnofungroupedusers": value.warnOfUngroupedUsers,
+    ...(value.participantCount !== 0 ? { "participantcount": value.participantCount } : {}),
+    ...(value.submissionDraftsCount !== 0 ? { "submissiondraftscount": value.submissionDraftsCount } : {}),
+    ...(value.submissionsEnabled !== false ? { "submissionsenabled": value.submissionsEnabled } : {}),
+    ...(value.submissionsSubmittedCount !== 0 ? { "submissionssubmittedcount": value.submissionsSubmittedCount } : {}),
+    ...(value.submissionsNeedGradingCount !== 0 ? { "submissionsneedgradingcount": value.submissionsNeedGradingCount } : {}),
+    ...(value.warnOfUngroupedUsers !== "" ? { "warnofungroupedusers": value.warnOfUngroupedUsers } : {}),
   };
 }
 
@@ -427,21 +427,21 @@ export function decodeMoodleLastAttempt(json: unknown): MoodleLastAttempt | unde
 
 export function encodeMoodleLastAttempt(value: MoodleLastAttempt): JsonObject {
   return {
-    "submission": value.submission === null ? null : encodeMoodleSubmission(value.submission),
-    "teamsubmission": value.teamSubmission === null ? null : encodeMoodleSubmission(value.teamSubmission),
-    "submissiongroup": value.submissionGroup,
-    "submissiongroupmemberswhoneedtosubmit": value.submissionGroupMembersWhoNeedToSubmit,
-    "submissionsenabled": value.submissionsEnabled,
-    "locked": value.locked,
-    "graded": value.graded,
-    "canedit": value.canEdit,
-    "caneditowner": value.canEditOwner,
-    "cansubmit": value.canSubmit,
-    "extensionduedate": value.extensionDueDate,
-    "timelimit": value.timeLimit,
-    "blindmarking": value.blindMarking,
-    "gradingstatus": value.gradingStatus,
-    "usergroups": value.userGroups,
+    ...(value.submission !== null ? { "submission": value.submission === null ? null : encodeMoodleSubmission(value.submission) } : {}),
+    ...(value.teamSubmission !== null ? { "teamsubmission": value.teamSubmission === null ? null : encodeMoodleSubmission(value.teamSubmission) } : {}),
+    ...(value.submissionGroup !== null ? { "submissiongroup": value.submissionGroup } : {}),
+    ...(value.submissionGroupMembersWhoNeedToSubmit.length > 0 ? { "submissiongroupmemberswhoneedtosubmit": value.submissionGroupMembersWhoNeedToSubmit } : {}),
+    ...(value.submissionsEnabled !== false ? { "submissionsenabled": value.submissionsEnabled } : {}),
+    ...(value.locked !== false ? { "locked": value.locked } : {}),
+    ...(value.graded !== false ? { "graded": value.graded } : {}),
+    ...(value.canEdit !== false ? { "canedit": value.canEdit } : {}),
+    ...(value.canEditOwner !== false ? { "caneditowner": value.canEditOwner } : {}),
+    ...(value.canSubmit !== false ? { "cansubmit": value.canSubmit } : {}),
+    ...(value.extensionDueDate !== 0 ? { "extensionduedate": value.extensionDueDate } : {}),
+    ...(value.timeLimit !== null ? { "timelimit": value.timeLimit } : {}),
+    ...(value.blindMarking !== false ? { "blindmarking": value.blindMarking } : {}),
+    ...(value.gradingStatus !== "" ? { "gradingstatus": value.gradingStatus } : {}),
+    ...(value.userGroups.length > 0 ? { "usergroups": value.userGroups } : {}),
   };
 }
 
@@ -495,18 +495,18 @@ export function decodeMoodleSubmission(json: unknown): MoodleSubmission | undefi
 
 export function encodeMoodleSubmission(value: MoodleSubmission): JsonObject {
   return {
-    "id": value.id,
-    "userid": value.userId,
-    "attemptnumber": value.attemptNumber,
-    "timecreated": value.timeCreated,
-    "timemodified": value.timeModified,
-    "timestarted": value.timeStarted,
-    "status": value.status,
-    "groupid": value.groupId,
-    "assignment": value.assignment,
-    "latest": value.latest,
-    "plugins": value.plugins.map((item) => encodeMoodleSubmissionPlugin(item)),
-    "gradingstatus": value.gradingStatus,
+    ...(value.id !== 0 ? { "id": value.id } : {}),
+    ...(value.userId !== 0 ? { "userid": value.userId } : {}),
+    ...(value.attemptNumber !== 0 ? { "attemptnumber": value.attemptNumber } : {}),
+    ...(value.timeCreated !== 0 ? { "timecreated": value.timeCreated } : {}),
+    ...(value.timeModified !== 0 ? { "timemodified": value.timeModified } : {}),
+    ...(value.timeStarted !== null ? { "timestarted": value.timeStarted } : {}),
+    ...(value.status !== "" ? { "status": value.status } : {}),
+    ...(value.groupId !== 0 ? { "groupid": value.groupId } : {}),
+    ...(value.assignment !== null ? { "assignment": value.assignment } : {}),
+    ...(value.latest !== null ? { "latest": value.latest } : {}),
+    ...(value.plugins.length > 0 ? { "plugins": value.plugins.map((item) => encodeMoodleSubmissionPlugin(item)) } : {}),
+    ...(value.gradingStatus !== null ? { "gradingstatus": value.gradingStatus } : {}),
   };
 }
 
@@ -535,10 +535,10 @@ export function decodeMoodleSubmissionPlugin(json: unknown): MoodleSubmissionPlu
 
 export function encodeMoodleSubmissionPlugin(value: MoodleSubmissionPlugin): JsonObject {
   return {
-    "type": value.type,
-    "name": value.name,
-    "fileareas": value.fileAreas.map((item) => encodeMoodleFileArea(item)),
-    "editorfields": value.editorFields.map((item) => encodeMoodleEditorField(item)),
+    ...(value.type !== "" ? { "type": value.type } : {}),
+    ...(value.name !== "" ? { "name": value.name } : {}),
+    ...(value.fileAreas.length > 0 ? { "fileareas": value.fileAreas.map((item) => encodeMoodleFileArea(item)) } : {}),
+    ...(value.editorFields.length > 0 ? { "editorfields": value.editorFields.map((item) => encodeMoodleEditorField(item)) } : {}),
   };
 }
 
@@ -561,8 +561,8 @@ export function decodeMoodleFileArea(json: unknown): MoodleFileArea | undefined 
 
 export function encodeMoodleFileArea(value: MoodleFileArea): JsonObject {
   return {
-    "area": value.area,
-    "files": value.files.map((item) => encodeMoodleFile(item)),
+    ...(value.area !== "" ? { "area": value.area } : {}),
+    ...(value.files.length > 0 ? { "files": value.files.map((item) => encodeMoodleFile(item)) } : {}),
   };
 }
 
@@ -591,10 +591,10 @@ export function decodeMoodleEditorField(json: unknown): MoodleEditorField | unde
 
 export function encodeMoodleEditorField(value: MoodleEditorField): JsonObject {
   return {
-    "name": value.name,
-    "description": value.description,
-    "text": value.text,
-    "format": value.format,
+    ...(value.name !== "" ? { "name": value.name } : {}),
+    ...(value.description !== "" ? { "description": value.description } : {}),
+    ...(value.text !== "" ? { "text": value.text } : {}),
+    ...(value.format !== 0 ? { "format": value.format } : {}),
   };
 }
 
@@ -624,10 +624,10 @@ export function decodeMoodleFeedback(json: unknown): MoodleFeedback | undefined 
 
 export function encodeMoodleFeedback(value: MoodleFeedback): JsonObject {
   return {
-    "grade": value.grade === null ? null : encodeMoodleAssignmentGrade(value.grade),
-    "gradefordisplay": value.gradeForDisplay,
-    "gradeddate": value.gradedDate,
-    "plugins": value.plugins.map((item) => encodeMoodleSubmissionPlugin(item)),
+    ...(value.grade !== null ? { "grade": value.grade === null ? null : encodeMoodleAssignmentGrade(value.grade) } : {}),
+    ...(value.gradeForDisplay !== "" ? { "gradefordisplay": value.gradeForDisplay } : {}),
+    ...(value.gradedDate !== 0 ? { "gradeddate": value.gradedDate } : {}),
+    ...(value.plugins.length > 0 ? { "plugins": value.plugins.map((item) => encodeMoodleSubmissionPlugin(item)) } : {}),
   };
 }
 
@@ -672,15 +672,15 @@ export function decodeMoodleAssignmentGrade(json: unknown): MoodleAssignmentGrad
 
 export function encodeMoodleAssignmentGrade(value: MoodleAssignmentGrade): JsonObject {
   return {
-    "id": value.id,
-    "assignment": value.assignment,
-    "userid": value.userId,
-    "attemptnumber": value.attemptNumber,
-    "timecreated": value.timeCreated,
-    "timemodified": value.timeModified,
-    "grader": value.grader,
-    "grade": value.grade,
-    "gradefordisplay": value.gradeForDisplay,
+    ...(value.id !== 0 ? { "id": value.id } : {}),
+    ...(value.assignment !== null ? { "assignment": value.assignment } : {}),
+    ...(value.userId !== 0 ? { "userid": value.userId } : {}),
+    ...(value.attemptNumber !== 0 ? { "attemptnumber": value.attemptNumber } : {}),
+    ...(value.timeCreated !== 0 ? { "timecreated": value.timeCreated } : {}),
+    ...(value.timeModified !== 0 ? { "timemodified": value.timeModified } : {}),
+    ...(value.grader !== 0 ? { "grader": value.grader } : {}),
+    ...(value.grade !== "" ? { "grade": value.grade } : {}),
+    ...(value.gradeForDisplay !== null ? { "gradefordisplay": value.gradeForDisplay } : {}),
   };
 }
 
@@ -709,10 +709,10 @@ export function decodeMoodlePreviousAttempt(json: unknown): MoodlePreviousAttemp
 
 export function encodeMoodlePreviousAttempt(value: MoodlePreviousAttempt): JsonObject {
   return {
-    "attemptnumber": value.attemptNumber,
-    "submission": value.submission === null ? null : encodeMoodleSubmission(value.submission),
-    "grade": value.grade === null ? null : encodeMoodleAssignmentGrade(value.grade),
-    "feedbackplugins": value.feedbackPlugins.map((item) => encodeMoodleSubmissionPlugin(item)),
+    ...(value.attemptNumber !== 0 ? { "attemptnumber": value.attemptNumber } : {}),
+    ...(value.submission !== null ? { "submission": value.submission === null ? null : encodeMoodleSubmission(value.submission) } : {}),
+    ...(value.grade !== null ? { "grade": value.grade === null ? null : encodeMoodleAssignmentGrade(value.grade) } : {}),
+    ...(value.feedbackPlugins.length > 0 ? { "feedbackplugins": value.feedbackPlugins.map((item) => encodeMoodleSubmissionPlugin(item)) } : {}),
   };
 }
 
@@ -739,9 +739,9 @@ export function decodeMoodleAssignmentData(json: unknown): MoodleAssignmentData 
 
 export function encodeMoodleAssignmentData(value: MoodleAssignmentData): JsonObject {
   return {
-    "attachments": value.attachments === null ? null : encodeMoodleAssignmentAttachments(value.attachments),
-    "activity": value.activity,
-    "activityformat": value.activityFormat,
+    ...(value.attachments !== null ? { "attachments": value.attachments === null ? null : encodeMoodleAssignmentAttachments(value.attachments) } : {}),
+    ...(value.activity !== null ? { "activity": value.activity } : {}),
+    ...(value.activityFormat !== null ? { "activityformat": value.activityFormat } : {}),
   };
 }
 
@@ -765,8 +765,8 @@ export function decodeMoodleAssignmentAttachments(json: unknown): MoodleAssignme
 
 export function encodeMoodleAssignmentAttachments(value: MoodleAssignmentAttachments): JsonObject {
   return {
-    "intro": value.intro.map((item) => encodeMoodleFile(item)),
-    "activity": value.activity.map((item) => encodeMoodleFile(item)),
+    ...(value.intro.length > 0 ? { "intro": value.intro.map((item) => encodeMoodleFile(item)) } : {}),
+    ...(value.activity.length > 0 ? { "activity": value.activity.map((item) => encodeMoodleFile(item)) } : {}),
   };
 }
 
@@ -789,8 +789,8 @@ export function decodeMoodleSubmissionPluginData(json: unknown): MoodleSubmissio
 
 export function encodeMoodleSubmissionPluginData(value: MoodleSubmissionPluginData): JsonObject {
   return {
-    "files_filemanager": value.filesFilemanager,
-    "onlinetext_editor": value.onlinetextEditor === null ? null : encodeMoodleOnlineTextEditor(value.onlinetextEditor),
+    ...(value.filesFilemanager !== null ? { "files_filemanager": value.filesFilemanager } : {}),
+    ...(value.onlinetextEditor !== null ? { "onlinetext_editor": value.onlinetextEditor === null ? null : encodeMoodleOnlineTextEditor(value.onlinetextEditor) } : {}),
   };
 }
 
@@ -817,8 +817,8 @@ export function decodeMoodleOnlineTextEditor(json: unknown): MoodleOnlineTextEdi
 
 export function encodeMoodleOnlineTextEditor(value: MoodleOnlineTextEditor): JsonObject {
   return {
-    "text": value.text,
-    "format": value.format,
-    "itemid": value.itemId,
+    ...(value.text !== "" ? { "text": value.text } : {}),
+    ...(value.format !== 0 ? { "format": value.format } : {}),
+    ...(value.itemId !== 0 ? { "itemid": value.itemId } : {}),
   };
 }

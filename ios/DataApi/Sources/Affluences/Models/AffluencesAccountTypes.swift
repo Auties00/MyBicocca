@@ -45,9 +45,15 @@ public struct AffluencesCheckinRequest: Codable, Hashable, Sendable {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(deviceId, forKey: .deviceId)
         try container.encode(deviceLang, forKey: .deviceLang)
-        try container.encode(lastCheckin, forKey: .lastCheckin)
-        try container.encode(lastCheckinAdvertPopup, forKey: .lastCheckinAdvertPopup)
-        try container.encode(firebaseToken, forKey: .firebaseToken)
+        if lastCheckin != nil {
+            try container.encode(lastCheckin, forKey: .lastCheckin)
+        }
+        if lastCheckinAdvertPopup != nil {
+            try container.encode(lastCheckinAdvertPopup, forKey: .lastCheckinAdvertPopup)
+        }
+        if firebaseToken != nil {
+            try container.encode(firebaseToken, forKey: .firebaseToken)
+        }
     }
 }
 
@@ -81,9 +87,15 @@ public struct AffluencesCheckin: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(apiKey, forKey: .apiKey)
-        try container.encode(latestVersion, forKey: .latestVersion)
-        try container.encode(buildExpired, forKey: .buildExpired)
+        if apiKey != nil {
+            try container.encode(apiKey, forKey: .apiKey)
+        }
+        if latestVersion != nil {
+            try container.encode(latestVersion, forKey: .latestVersion)
+        }
+        if buildExpired != false {
+            try container.encode(buildExpired, forKey: .buildExpired)
+        }
     }
 }
 
@@ -136,8 +148,12 @@ public struct AffluencesEmailLinkRequest: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(message, forKey: .message)
-        try container.encode(requestUuid, forKey: .requestUuid)
+        if message != nil {
+            try container.encode(message, forKey: .message)
+        }
+        if requestUuid != nil {
+            try container.encode(requestUuid, forKey: .requestUuid)
+        }
     }
 }
 
@@ -166,8 +182,12 @@ public struct AffluencesEmailValidation: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(authToken, forKey: .authToken)
-        try container.encode(message, forKey: .message)
+        if authToken != nil {
+            try container.encode(authToken, forKey: .authToken)
+        }
+        if message != nil {
+            try container.encode(message, forKey: .message)
+        }
     }
 }
 
@@ -196,8 +216,12 @@ public struct AffluencesMyReservations: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(email, forKey: .email)
-        try container.encode(results, forKey: .results)
+        if email != nil {
+            try container.encode(email, forKey: .email)
+        }
+        if !results.isEmpty {
+            try container.encode(results, forKey: .results)
+        }
     }
 }
 
@@ -310,22 +334,56 @@ public struct AffluencesMyReservation: Codable, Hashable, Sendable {
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(reservationId, forKey: .reservationId)
-        try container.encode(resourceId, forKey: .resourceId)
-        try container.encode(resourceName, forKey: .resourceName)
-        try container.encode(siteName, forKey: .siteName)
-        try container.encode(siteSecondaryName, forKey: .siteSecondaryName)
-        try container.encode(siteTimeZone, forKey: .siteTimeZone)
-        try container.encode(reservationToken, forKey: .reservationToken)
-        try container.encode(cancellationToken, forKey: .cancellationToken)
-        try container.encode(personCount, forKey: .personCount)
-        try container.encode(note, forKey: .note)
-        try container.encode(startDateTime, forKey: .startDateTime)
-        try container.encode(endDateTime, forKey: .endDateTime)
-        try container.encode(requestDateTime, forKey: .requestDateTime)
-        try container.encode(state, forKey: .state)
-        try container.encode(validated, forKey: .validated)
-        try container.encode(confirmationMandatory, forKey: .confirmationMandatory)
-        try container.encode(userValidation, forKey: .userValidation)
-        try container.encode(ticketPayload, forKey: .ticketPayload)
+        if resourceId != nil {
+            try container.encode(resourceId, forKey: .resourceId)
+        }
+        if resourceName != nil {
+            try container.encode(resourceName, forKey: .resourceName)
+        }
+        if siteName != nil {
+            try container.encode(siteName, forKey: .siteName)
+        }
+        if siteSecondaryName != nil {
+            try container.encode(siteSecondaryName, forKey: .siteSecondaryName)
+        }
+        if siteTimeZone != nil {
+            try container.encode(siteTimeZone, forKey: .siteTimeZone)
+        }
+        if reservationToken != nil {
+            try container.encode(reservationToken, forKey: .reservationToken)
+        }
+        if cancellationToken != nil {
+            try container.encode(cancellationToken, forKey: .cancellationToken)
+        }
+        if personCount != 1 {
+            try container.encode(personCount, forKey: .personCount)
+        }
+        if note != nil {
+            try container.encode(note, forKey: .note)
+        }
+        if startDateTime != nil {
+            try container.encode(startDateTime, forKey: .startDateTime)
+        }
+        if endDateTime != nil {
+            try container.encode(endDateTime, forKey: .endDateTime)
+        }
+        if requestDateTime != nil {
+            try container.encode(requestDateTime, forKey: .requestDateTime)
+        }
+        if state != nil {
+            try container.encode(state, forKey: .state)
+        }
+        if validated != false {
+            try container.encode(validated, forKey: .validated)
+        }
+        if confirmationMandatory != false {
+            try container.encode(confirmationMandatory, forKey: .confirmationMandatory)
+        }
+        if userValidation != false {
+            try container.encode(userValidation, forKey: .userValidation)
+        }
+        if ticketPayload != nil {
+            try container.encode(ticketPayload, forKey: .ticketPayload)
+        }
     }
 }

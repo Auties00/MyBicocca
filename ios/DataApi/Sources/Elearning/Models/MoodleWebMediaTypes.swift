@@ -25,6 +25,8 @@ public struct MoodleWebKalturaPlayer: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(entryId, forKey: .entryId)
+        if entryId != nil {
+            try container.encode(entryId, forKey: .entryId)
+        }
     }
 }

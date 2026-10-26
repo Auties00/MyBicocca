@@ -104,36 +104,36 @@ export function decodeMoodleSiteInfo(json: unknown): MoodleSiteInfo | undefined 
 
 export function encodeMoodleSiteInfo(value: MoodleSiteInfo): JsonObject {
   return {
-    "sitename": value.siteName,
-    "username": value.username,
-    "firstname": value.firstName,
-    "lastname": value.lastName,
-    "fullname": value.fullName,
-    "lang": value.lang,
-    "userid": value.userId,
-    "siteurl": value.siteUrl,
-    "userpictureurl": value.userPictureUrl,
-    "functions": value.functions.map((item) => encodeMoodleSiteFunction(item)),
-    "downloadfiles": value.downloadFiles,
-    "uploadfiles": value.uploadFiles,
-    "release": value.release,
-    "version": value.version,
-    "mobilecssurl": value.mobileCssUrl,
-    "advancedfeatures": value.advancedFeatures.map((item) => encodeMoodleAdvancedFeature(item)),
-    "usercanmanageownfiles": value.userCanManageOwnFiles,
-    "userquota": value.userQuota,
-    "usermaxuploadfilesize": value.userMaxUploadFileSize,
-    "userhomepage": value.userHomePage,
-    "userhomepageurl": value.userHomePageUrl,
-    "userprivateaccesskey": value.userPrivateAccessKey,
-    "siteid": value.siteId,
-    "sitecalendartype": value.siteCalendarType,
-    "usercalendartype": value.userCalendarType,
-    "userissiteadmin": value.userIsSiteAdmin,
-    "theme": value.theme,
-    "limitconcurrentlogins": value.limitConcurrentLogins,
-    "usersessionscount": value.userSessionsCount,
-    "policyagreed": value.policyAgreed,
+    ...(value.siteName !== "" ? { "sitename": value.siteName } : {}),
+    ...(value.username !== "" ? { "username": value.username } : {}),
+    ...(value.firstName !== "" ? { "firstname": value.firstName } : {}),
+    ...(value.lastName !== "" ? { "lastname": value.lastName } : {}),
+    ...(value.fullName !== "" ? { "fullname": value.fullName } : {}),
+    ...(value.lang !== "" ? { "lang": value.lang } : {}),
+    ...(value.userId !== 0 ? { "userid": value.userId } : {}),
+    ...(value.siteUrl !== "" ? { "siteurl": value.siteUrl } : {}),
+    ...(value.userPictureUrl !== "" ? { "userpictureurl": value.userPictureUrl } : {}),
+    ...(value.functions.length > 0 ? { "functions": value.functions.map((item) => encodeMoodleSiteFunction(item)) } : {}),
+    ...(value.downloadFiles !== null ? { "downloadfiles": value.downloadFiles } : {}),
+    ...(value.uploadFiles !== null ? { "uploadfiles": value.uploadFiles } : {}),
+    ...(value.release !== null ? { "release": value.release } : {}),
+    ...(value.version !== null ? { "version": value.version } : {}),
+    ...(value.mobileCssUrl !== null ? { "mobilecssurl": value.mobileCssUrl } : {}),
+    ...(value.advancedFeatures.length > 0 ? { "advancedfeatures": value.advancedFeatures.map((item) => encodeMoodleAdvancedFeature(item)) } : {}),
+    ...(value.userCanManageOwnFiles !== null ? { "usercanmanageownfiles": value.userCanManageOwnFiles } : {}),
+    ...(value.userQuota !== null ? { "userquota": value.userQuota } : {}),
+    ...(value.userMaxUploadFileSize !== null ? { "usermaxuploadfilesize": value.userMaxUploadFileSize } : {}),
+    ...(value.userHomePage !== null ? { "userhomepage": value.userHomePage } : {}),
+    ...(value.userHomePageUrl !== null ? { "userhomepageurl": value.userHomePageUrl } : {}),
+    ...(value.userPrivateAccessKey !== null ? { "userprivateaccesskey": value.userPrivateAccessKey } : {}),
+    ...(value.siteId !== null ? { "siteid": value.siteId } : {}),
+    ...(value.siteCalendarType !== null ? { "sitecalendartype": value.siteCalendarType } : {}),
+    ...(value.userCalendarType !== null ? { "usercalendartype": value.userCalendarType } : {}),
+    ...(value.userIsSiteAdmin !== null ? { "userissiteadmin": value.userIsSiteAdmin } : {}),
+    ...(value.theme !== null ? { "theme": value.theme } : {}),
+    ...(value.limitConcurrentLogins !== null ? { "limitconcurrentlogins": value.limitConcurrentLogins } : {}),
+    ...(value.userSessionsCount !== null ? { "usersessionscount": value.userSessionsCount } : {}),
+    ...(value.policyAgreed !== null ? { "policyagreed": value.policyAgreed } : {}),
   };
 }
 
@@ -157,8 +157,8 @@ export function decodeMoodleSiteFunction(json: unknown): MoodleSiteFunction | un
 
 export function encodeMoodleSiteFunction(value: MoodleSiteFunction): JsonObject {
   return {
-    "name": value.name,
-    "version": value.version,
+    ...(value.name !== "" ? { "name": value.name } : {}),
+    ...(value.version !== "" ? { "version": value.version } : {}),
   };
 }
 
@@ -182,7 +182,7 @@ export function decodeMoodleAdvancedFeature(json: unknown): MoodleAdvancedFeatur
 
 export function encodeMoodleAdvancedFeature(value: MoodleAdvancedFeature): JsonObject {
   return {
-    "name": value.name,
-    "value": value.value,
+    ...(value.name !== "" ? { "name": value.name } : {}),
+    ...(value.value !== 0 ? { "value": value.value } : {}),
   };
 }
