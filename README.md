@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="screenshots/MyBicoccaSplash.png" width="400" alt="MyBicocca logo" />
+<img src="common/screenshots/MyBicoccaSplash.png" width="400" alt="MyBicocca logo" />
 
 # MyBicocca
 
@@ -20,11 +20,11 @@ fast, offline‑first Android app built with Jetpack Compose and Material 3 Expr
 
 <table>
   <tr>
-    <td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="screenshots/demo/en/dark/Screenshot_Calendar1.png" /><img src="screenshots/demo/en/light/Screenshot_Calendar1.png" width="158" /></picture></td>
-    <td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="screenshots/demo/en/dark/Screenshot_Elearning.png" /><img src="screenshots/demo/en/light/Screenshot_Elearning.png" width="158" /></picture></td>
-    <td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="screenshots/demo/en/dark/Screenshot_Map.png" /><img src="screenshots/demo/en/light/Screenshot_Map.png" width="158" /></picture></td>
-    <td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="screenshots/demo/en/dark/Screenshot_Services.png" /><img src="screenshots/demo/en/light/Screenshot_Services.png" width="158" /></picture></td>
-    <td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="screenshots/demo/en/dark/Screenshot_Profile.png" /><img src="screenshots/demo/en/light/Screenshot_Profile.png" width="158" /></picture></td>
+    <td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_Calendar1.png" /><img src="android/tools/screenshots/en/light/Screenshot_Calendar1.png" width="158" /></picture></td>
+    <td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_Elearning.png" /><img src="android/tools/screenshots/en/light/Screenshot_Elearning.png" width="158" /></picture></td>
+    <td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_Map.png" /><img src="android/tools/screenshots/en/light/Screenshot_Map.png" width="158" /></picture></td>
+    <td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_Services.png" /><img src="android/tools/screenshots/en/light/Screenshot_Services.png" width="158" /></picture></td>
+    <td align="center"><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_Profile.png" /><img src="android/tools/screenshots/en/light/Screenshot_Profile.png" width="158" /></picture></td>
   </tr>
 </table>
 
@@ -78,7 +78,7 @@ land on the same timeline, colour‑coded by source and pinch‑zoomable.
 
 <table>
 <tr>
-<td><picture><source media="(prefers-color-scheme: dark)" srcset="screenshots/demo/en/dark/Screenshot_Calendar1.png" /><img src="screenshots/demo/en/light/Screenshot_Calendar1.png" width="230" /></picture></td>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_Calendar1.png" /><img src="android/tools/screenshots/en/light/Screenshot_Calendar1.png" width="230" /></picture></td>
 <td>
 
 #### Day
@@ -88,7 +88,7 @@ A pinch‑zoomable hourly timeline. Tap any block for the full detail and a deep
 </td>
 </tr>
 <tr>
-<td><picture><source media="(prefers-color-scheme: dark)" srcset="screenshots/demo/en/dark/Screenshot_Calendar2.png" /><img src="screenshots/demo/en/light/Screenshot_Calendar2.png" width="230" /></picture></td>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_Calendar2.png" /><img src="android/tools/screenshots/en/light/Screenshot_Calendar2.png" width="230" /></picture></td>
 <td>
 
 #### Week
@@ -98,7 +98,7 @@ Seven days at a glance. The zoom level is shared with the Day view, so the densi
 </td>
 </tr>
 <tr>
-<td><picture><source media="(prefers-color-scheme: dark)" srcset="screenshots/demo/en/dark/Screenshot_Calendar3.png" /><img src="screenshots/demo/en/light/Screenshot_Calendar3.png" width="230" /></picture></td>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_Calendar3.png" /><img src="android/tools/screenshots/en/light/Screenshot_Calendar3.png" width="230" /></picture></td>
 <td>
 
 #### Month
@@ -119,7 +119,7 @@ recordings, all inside the app.
 
 <table>
 <tr>
-<td><picture><source media="(prefers-color-scheme: dark)" srcset="screenshots/demo/en/dark/Screenshot_Elearning.png" /><img src="screenshots/demo/en/light/Screenshot_Elearning.png" width="230" /></picture></td>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_Elearning.png" /><img src="android/tools/screenshots/en/light/Screenshot_Elearning.png" width="230" /></picture></td>
 <td>
 
 #### Your courses
@@ -129,7 +129,7 @@ Every enrolled course, grouped by academic period and filterable by year or favo
 </td>
 </tr>
 <tr>
-<td><picture><source media="(prefers-color-scheme: dark)" srcset="screenshots/demo/en/dark/Screenshot_ElearningCourse.png" /><img src="screenshots/demo/en/light/Screenshot_ElearningCourse.png" width="230" /></picture></td>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_ElearningCourse.png" /><img src="android/tools/screenshots/en/light/Screenshot_ElearningCourse.png" width="230" /></picture></td>
 <td>
 
 #### Course detail
@@ -139,7 +139,7 @@ A collapsing header opens onto tabs for info, content, quizzes, assignments and 
 </td>
 </tr>
 <tr>
-<td><picture><source media="(prefers-color-scheme: dark)" srcset="screenshots/demo/en/dark/Screenshot_ElearningCourseContent.png" /><img src="screenshots/demo/en/light/Screenshot_ElearningCourseContent.png" width="230" /></picture></td>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_ElearningCourseContent.png" /><img src="android/tools/screenshots/en/light/Screenshot_ElearningCourseContent.png" width="230" /></picture></td>
 <td>
 
 #### Materials
@@ -149,7 +149,7 @@ Sections and folders expand inline, and an in‑app viewer opens PDFs, images an
 </td>
 </tr>
 <tr>
-<td><picture><source media="(prefers-color-scheme: dark)" srcset="screenshots/demo/en/dark/Screenshot_ElearningCourseQuiz.png" /><img src="screenshots/demo/en/light/Screenshot_ElearningCourseQuiz.png" width="230" /></picture></td>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_ElearningCourseQuiz.png" /><img src="android/tools/screenshots/en/light/Screenshot_ElearningCourseQuiz.png" width="230" /></picture></td>
 <td>
 
 #### Quizzes
@@ -159,7 +159,7 @@ Review past attempts, resume one in progress, and read your results and feedback
 </td>
 </tr>
 <tr>
-<td><picture><source media="(prefers-color-scheme: dark)" srcset="screenshots/demo/en/dark/Screenshot_ElearningCourseForum.png" /><img src="screenshots/demo/en/light/Screenshot_ElearningCourseForum.png" width="230" /></picture></td>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_ElearningCourseForum.png" /><img src="android/tools/screenshots/en/light/Screenshot_ElearningCourseForum.png" width="230" /></picture></td>
 <td>
 
 #### Forums
@@ -169,7 +169,7 @@ Read announcements and discussions, reply, attach files and manage your subscrip
 </td>
 </tr>
 <tr>
-<td><picture><source media="(prefers-color-scheme: dark)" srcset="screenshots/demo/en/dark/Screenshot_ElearningCourseAssignment.png" /><img src="screenshots/demo/en/light/Screenshot_ElearningCourseAssignment.png" width="230" /></picture></td>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_ElearningCourseAssignment.png" /><img src="android/tools/screenshots/en/light/Screenshot_ElearningCourseAssignment.png" width="230" /></picture></td>
 <td>
 
 #### Assignments
@@ -192,7 +192,7 @@ recolours itself to match your chosen theme.
 
 <table>
 <tr>
-<td><picture><source media="(prefers-color-scheme: dark)" srcset="screenshots/demo/en/dark/Screenshot_Map.png" /><img src="screenshots/demo/en/light/Screenshot_Map.png" width="230" /></picture></td>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_Map.png" /><img src="android/tools/screenshots/en/light/Screenshot_Map.png" width="230" /></picture></td>
 <td>
 
 #### Offline campus map
@@ -202,7 +202,7 @@ Tappable pins for every building, rendered from a bundled vector tileset. No Goo
 </td>
 </tr>
 <tr>
-<td><picture><source media="(prefers-color-scheme: dark)" srcset="screenshots/demo/en/dark/Screenshot_MapBuildings.png" /><img src="screenshots/demo/en/light/Screenshot_MapBuildings.png" width="230" /></picture></td>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_MapBuildings.png" /><img src="android/tools/screenshots/en/light/Screenshot_MapBuildings.png" width="230" /></picture></td>
 <td>
 
 #### Building directory
@@ -212,7 +212,7 @@ Search the whole campus, filter by category, and get one‑tap directions to any
 </td>
 </tr>
 <tr>
-<td><picture><source media="(prefers-color-scheme: dark)" srcset="screenshots/demo/en/dark/Screenshot_MapBuildingU1.png" /><img src="screenshots/demo/en/light/Screenshot_MapBuildingU1.png" width="230" /></picture></td>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_MapBuildingU1.png" /><img src="android/tools/screenshots/en/light/Screenshot_MapBuildingU1.png" width="230" /></picture></td>
 <td>
 
 #### Inside a building
@@ -233,7 +233,7 @@ and topped by a deadlines banner that always shows what's next.
 
 <table>
 <tr>
-<td><picture><source media="(prefers-color-scheme: dark)" srcset="screenshots/demo/en/dark/Screenshot_Services.png" /><img src="screenshots/demo/en/light/Screenshot_Services.png" width="230" /></picture></td>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_Services.png" /><img src="android/tools/screenshots/en/light/Screenshot_Services.png" width="230" /></picture></td>
 <td>
 
 #### The services hub
@@ -243,7 +243,7 @@ Home to everything administrative, grouped into Teaching, Bookings, Documents an
 </td>
 </tr>
 <tr>
-<td><picture><source media="(prefers-color-scheme: dark)" srcset="screenshots/demo/en/dark/Screenshot_BookableExams.png" /><img src="screenshots/demo/en/light/Screenshot_BookableExams.png" width="230" /></picture></td>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_BookableExams.png" /><img src="android/tools/screenshots/en/light/Screenshot_BookableExams.png" width="230" /></picture></td>
 <td>
 
 #### Exam sessions
@@ -253,7 +253,7 @@ Browse every open exam call (appello) and book your seat in a single tap, with a
 </td>
 </tr>
 <tr>
-<td><picture><source media="(prefers-color-scheme: dark)" srcset="screenshots/demo/en/dark/Screenshot_ExamResults.png" /><img src="screenshots/demo/en/light/Screenshot_ExamResults.png" width="230" /></picture></td>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_ExamResults.png" /><img src="android/tools/screenshots/en/light/Screenshot_ExamResults.png" width="230" /></picture></td>
 <td>
 
 #### Results
@@ -263,7 +263,7 @@ Published grades appear the moment they land, and you can accept or reject each 
 </td>
 </tr>
 <tr>
-<td><picture><source media="(prefers-color-scheme: dark)" srcset="screenshots/demo/en/dark/Screenshot_Library.png" /><img src="screenshots/demo/en/light/Screenshot_Library.png" width="230" /></picture></td>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_Library.png" /><img src="android/tools/screenshots/en/light/Screenshot_Library.png" width="230" /></picture></td>
 <td>
 
 #### Library seats
@@ -273,7 +273,7 @@ Reserve a study seat in the campus libraries, powered by Affluences, and manage 
 </td>
 </tr>
 <tr>
-<td><picture><source media="(prefers-color-scheme: dark)" srcset="screenshots/demo/en/dark/Screenshot_AttendanceOpt.png" /><img src="screenshots/demo/en/light/Screenshot_AttendanceOpt.png" width="230" /></picture></td>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_AttendanceOpt.png" /><img src="android/tools/screenshots/en/light/Screenshot_AttendanceOpt.png" width="230" /></picture></td>
 <td>
 
 #### Attendance
@@ -283,7 +283,7 @@ Mark yourself present by scanning the lecture's QR code. No paper sheet to chase
 </td>
 </tr>
 <tr>
-<td><picture><source media="(prefers-color-scheme: dark)" srcset="screenshots/demo/en/dark/Screenshot_ServicesScadenze.png" /><img src="screenshots/demo/en/light/Screenshot_ServicesScadenze.png" width="230" /></picture></td>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_ServicesScadenze.png" /><img src="android/tools/screenshots/en/light/Screenshot_ServicesScadenze.png" width="230" /></picture></td>
 <td>
 
 #### Deadlines
@@ -306,7 +306,7 @@ stats, a grade‑trend chart, and a simulator that answers _"what grade do I nee
 
 <table>
 <tr>
-<td><picture><source media="(prefers-color-scheme: dark)" srcset="screenshots/demo/en/dark/Screenshot_Profile.png" /><img src="screenshots/demo/en/light/Screenshot_Profile.png" width="230" /></picture></td>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_Profile.png" /><img src="android/tools/screenshots/en/light/Screenshot_Profile.png" width="230" /></picture></td>
 <td>
 
 #### Student card & stats
@@ -316,7 +316,7 @@ A flippable student card up top, then your headline numbers: arithmetic and weig
 </td>
 </tr>
 <tr>
-<td><picture><source media="(prefers-color-scheme: dark)" srcset="screenshots/demo/en/dark/Screenshot_Average.png" /><img src="screenshots/demo/en/light/Screenshot_Average.png" width="230" /></picture></td>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_Average.png" /><img src="android/tools/screenshots/en/light/Screenshot_Average.png" width="230" /></picture></td>
 <td>
 
 #### Grade simulator
@@ -326,7 +326,7 @@ A "what‑if" calculator that shows how the next exam moves your average, in bot
 </td>
 </tr>
 <tr>
-<td><picture><source media="(prefers-color-scheme: dark)" srcset="screenshots/demo/en/dark/Screenshot_Career.png" /><img src="screenshots/demo/en/light/Screenshot_Career.png" width="230" /></picture></td>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_Career.png" /><img src="android/tools/screenshots/en/light/Screenshot_Career.png" width="230" /></picture></td>
 <td>
 
 #### Career

@@ -189,4 +189,4 @@ jobs:
 
       # Fails when a case failed on some platform, or the platforms decoded a result differently.
       - name: Summarize
-        run: python3 tools/live/report.py live-reports | tee -a "$GITHUB_STEP_SUMMARY"; exit "${PIPESTATUS[0]}"
+        run: python3 common/codegen/testing/report.py live-reports | tee -a "$GITHUB_STEP_SUMMARY"; exit "${PIPESTATUS[0]}"

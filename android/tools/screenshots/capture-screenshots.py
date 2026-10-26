@@ -5,12 +5,12 @@ Builds and installs the demo variant, pins the status bar, then walks the catalo
 android/app/src/demo/assets/screenshots.json and saves one PNG per shot, per language, per
 palette and per light/dark mode.
 
-    python tools/repo/capture-screenshots.py
-    python tools/repo/capture-screenshots.py --modes dark --only Screenshot_Fees
-    python tools/repo/capture-screenshots.py --palettes Default Oceano Bosco
-    python tools/repo/capture-screenshots.py --languages en
+    python android/tools/screenshots/capture-screenshots.py
+    python android/tools/screenshots/capture-screenshots.py --modes dark --only Screenshot_Fees
+    python android/tools/screenshots/capture-screenshots.py --palettes Default Oceano Bosco
+    python android/tools/screenshots/capture-screenshots.py --languages en
 
-Output goes to screenshots/demo/<language>/<light|dark>/, with other palettes in
+Output goes to android/tools/screenshots/<language>/<light|dark>/, next to this script, with other palettes in
 <language>/<palette>-<mode>/. Languages default to every one the app declares.
 
 The demo build shares the real app's application id, so it is only ever installed on an
@@ -26,8 +26,7 @@ import sys
 import time
 from pathlib import Path
 
-REPO = Path(__file__).resolve().parents[2]
-ANDROID = REPO / "android"
+ANDROID = Path(__file__).resolve().parents[2]
 CATALOG = ANDROID / "app/src/demo/assets/screenshots.json"
 APK_DIR = ANDROID / "app/build/outputs/apk/demo"
 RES = ANDROID / "app/src/main/res"
@@ -198,7 +197,7 @@ def capture(device, shot, folder, where, strings, args, problems):
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--serial", help="emulator to use when more than one is running")
-    parser.add_argument("--out", type=Path, default=REPO / "screenshots" / "demo", help="output folder")
+    parser.add_argument("--out", type=Path, default=Path(__file__).resolve().parent, help="output folder")
     parser.add_argument("--languages", nargs="+", default=app_languages(), help="app languages to capture (default: all)")
     parser.add_argument("--modes", nargs="+", choices=["light", "dark"], default=["light", "dark"])
     parser.add_argument("--palettes", nargs="+", default=["Default"], help="app colour palettes to capture")
