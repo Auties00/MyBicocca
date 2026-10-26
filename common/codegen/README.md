@@ -7,7 +7,7 @@ once in `common/specs`, and it generates a client for each platform:
 |----------|-----------|----------------------------------|-----------------------------|
 | Android  | `kotlin`  | `android/data-api` (Gradle)      | Ktor, kotlinx.serialization |
 | iOS      | `swift`   | `ios/DataApi` (Swift package)    | `URLSession`, `Codable`     |
-| Web      | `web`     | `web/data-api` (npm package)     | `fetch`, TypeScript         |
+| Web      | `web`     | `web/web-app/data-api` (npm package) | `fetch`, TypeScript         |
 
 The three packages are laid out the same way. APIs of the same service are grouped together, and
 each group is split into the API itself, its data types and its errors:
@@ -103,7 +103,7 @@ writes:
       "options": { "packageName": "…esse3" }
     },
     "swift": { "outputDir": "../../../ios/DataApi/Sources", "options": { "module": "Esse3" } },
-    "web": { "outputDir": "../../../web/data-api/src", "options": { "packageName": "esse3" } }
+    "web": { "outputDir": "../../../web/web-app/data-api/src", "options": { "packageName": "esse3" } }
   }
 }
 ```
@@ -258,7 +258,7 @@ the generator, as resources of each target, and the targets copy them into the p
 |------------|-----------------------------------|--------------------------------------------|
 | Kotlin     | `kotlin/src/main/resources/kotlin-runtime` | the `runtime` package of `android/data-api` |
 | Swift      | `swift/src/main/resources/swift-runtime`   | the `DataApiRuntime` module of `ios/DataApi` |
-| TypeScript | `web/src/main/resources/web-runtime`       | `web/data-api/src/runtime`                 |
+| TypeScript | `web/src/main/resources/web-runtime`       | `web/web-app/data-api/src/runtime`         |
 
 To change a runtime, edit it here and regenerate. The Swift runtime's tests stay in
 `ios/DataApi/Tests` and run against the copy.
@@ -375,7 +375,7 @@ skipped.
 | Platform   | Command                                                    | Reports                               |
 |------------|------------------------------------------------------------|---------------------------------------|
 | Kotlin     | `./gradlew -p data-api liveTest` (from `android/`)          | `android/data-api/build/live-reports` |
-| TypeScript | `npm run test:live` (from `web/`)                          | `web/data-api/test-results/live`      |
+| TypeScript | `npm run test:live` (from `web/web-app/`)                  | `web/web-app/data-api/test-results/live` |
 | Swift      | `LIVE_TESTS=1 swift test --filter LiveTests` (from `ios/DataApi`) | `ios/DataApi/.build/live-reports` |
 
 Pick one API with `--tests '*.esse3.live.*'` (Kotlin), a folder such as `test/esse3` (vitest) or
