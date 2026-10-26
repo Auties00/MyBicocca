@@ -43,6 +43,25 @@ components:
           type: object
           description: The courses, by their code (such as `E0201Q005`).
           additionalProperties: { $ref: "#/components/schemas/Esse3CourseRating" }
+        gaps:
+          type: array
+          description: >-
+            The pages the site kept serving with parts missing, kept as last served: the courses
+            under each may be missing, or lack some teachers. Later crawls fetch them again.
+          items: { $ref: "#/components/schemas/Esse3RatingsGap" }
+    Esse3RatingsGap:
+      x-mb-module: Ratings
+      type: object
+      required: [level, url]
+      properties:
+        level:
+          type: string
+          description: Whose page it is, `year`, `department`, `study_course` or `course`, the last listing a course's teachers.
+        url: { type: string }
+        questionnaires:
+          type: integer
+          format: int32
+          description: The questionnaires the page should cover.
     Esse3CourseRating:
       x-mb-module: Ratings
       type: object

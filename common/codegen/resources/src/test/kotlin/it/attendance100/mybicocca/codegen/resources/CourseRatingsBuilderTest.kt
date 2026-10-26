@@ -1,5 +1,7 @@
 package it.attendance100.mybicocca.codegen.resources
 
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.buildJsonObject
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
@@ -30,6 +32,13 @@ class CourseRatingsBuilderTest {
     fun `keeps a series served blank in its place`() {
         val series = CourseRatingsBuilder.chartSeries(page(rated, rated, "[ ]", rated, "[ ]"))
         assertEquals(listOf(3, 3, 0, 3, 0), series.map { it.size })
+    }
+
+    @Test
+    fun `reads ratings published empty as no values`() {
+        val empty = "[ [null, 'Soddisfazione Complessiva'] , [null, 'Efficacia Didattica'] , [null, 'Aspetti organizzativi'] , ]"
+        val series = CourseRatingsBuilder.chartSeries(page(rated, rated, rated, rated, empty))
+        assertEquals(listOf<Double?>(null, null, null), series.last().map { it.second })
     }
 
     @Test
@@ -73,16 +82,29 @@ class CourseRatingsBuilderTest {
 
     @Test
     fun `refuses a listing served with parts missing`() {
-        // No rows, a row missing, no header, or a header that isn't its parent's.
+        // No rows, a row missing, a header that isn't its parent's, or nothing to add up to.
         assertFalse(CourseRatingsBuilder.isWhole(listing("1,500"), 1500))
         assertFalse(CourseRatingsBuilder.isWhole(listing("1,500", "A" to 1000), 1500))
-        assertFalse(CourseRatingsBuilder.isWhole(listing(null, "A" to 1000, "B" to 500), 1500))
         assertFalse(CourseRatingsBuilder.isWhole(listing("1,400", "A" to 1000, "B" to 400), 1500))
+        assertFalse(CourseRatingsBuilder.isWhole(listing(null, "A" to 1000, "B" to 500), null))
+    }
+
+    @Test
+    fun `takes a listing without a header whose rows add up to its parent's row`() {
+        // A course page with no teacher's ratings published has no header.
+        assertTrue(CourseRatingsBuilder.isWhole(listing(null, "A" to 3), 3))
     }
 
     @Test
     fun `takes an empty listing that says it covers nothing`() {
         assertTrue(CourseRatingsBuilder.isWhole(listing("0"), 0))
+    }
+
+    @Test
+    fun `reads a year's gaps`() {
+        val gap = CourseRatingsBuilder.Gap(CourseRatingsBuilder.Gap.COURSE, "${CourseRatingsBuilder.BASE_URL}opinioniAD.vm?idAD=A", 16)
+        val year = buildJsonObject { put("gaps", JsonArray(listOf(gap.toJson()))) }
+        assertEquals(listOf(gap), CourseRatingsBuilder.gaps(year))
     }
 
     @Test

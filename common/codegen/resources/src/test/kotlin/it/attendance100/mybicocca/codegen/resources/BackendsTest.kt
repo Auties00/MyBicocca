@@ -62,4 +62,15 @@ class BackendsTest {
         backends.release(first, null, 120.0, ok = false)
         assertEquals(setOf("a", "b").minus(first).single(), next(backends))
     }
+
+    @Test
+    fun `sends a page to a server that hasn't failed it, and to one that has when none is left`() = runBlocking {
+        val backends = backends()
+        next(backends)
+        backends.release(null, "a", 0.2, ok = true)
+        backends.release(null, "b", 0.2, ok = true)
+        assertEquals("b", withTimeoutOrNull(200) { backends.acquire(avoid = setOf("a")) })
+        backends.release("b", null, 0.2, ok = true)
+        assertEquals("a", withTimeoutOrNull(200) { backends.acquire(avoid = setOf("a", "b")) })
+    }
 }

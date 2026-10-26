@@ -24,7 +24,8 @@ internal class Page(val url: String, val html: String) {
     val document: Document by lazy { Jsoup.parse(html, url) }
 }
 
-internal class FetchException(message: String) : Exception(message)
+/** A page that kept failing: [last] is how it was last served, when it was served at all. */
+internal class FetchException(message: String, val last: Page? = null) : Exception(message)
 
 /**
  * Fetches pages of a website, at most [concurrency] at a time, trying each again with growing
@@ -35,7 +36,8 @@ internal class FetchException(message: String) : Exception(message)
  *   had one.
  * @param timeoutSeconds How long a request may wait for its response before it is tried again.
  * @param backends The servers behind the website's load balancer, when requests should go to
- *   each as fast as it answers rather than as the balancer chooses.
+ *   each as fast as it answers rather than as the balancer chooses. A page is then tried again on
+ *   a server that hasn't failed it yet, when one is free.
  */
 internal class Fetcher(
     concurrency: Int,
@@ -68,19 +70,24 @@ internal class Fetcher(
      */
     suspend fun get(url: String, lacking: String? = null, complete: (Page) -> Boolean = { true }): Page {
         val problems = mutableListOf<String>()
+        val failedBy = mutableSetOf<String>()
+        var last: Page? = null
         for (attempt in 1..attempts) {
+            var server: String? = null
             try {
                 val page = permits.withPermit {
                     requests.incrementAndGet()
-                    fetch(url)
+                    fetch(url, failedBy) { server = it }
                 }
                 if (complete(page)) return page
+                last = page
                 incomplete.incrementAndGet()
                 problems += "the page lacks ${lacking ?: "its content"} (${page.html.length} characters)"
             } catch (e: Exception) {
                 errors.incrementAndGet()
                 problems += "${e::class.simpleName}: ${e.message}"
             }
+            server?.let(failedBy::add)
             if (attempt < attempts) {
                 // Pauses outside the permit, so that other requests go on meanwhile.
                 val pause = minOf(backoffSeconds * (1 shl minOf(attempt - 1, 16)), maxPauseSeconds)
@@ -88,11 +95,12 @@ internal class Fetcher(
             }
         }
         failed += url
-        throw FetchException("failed after $attempts attempts: $url\n" + problems.distinct().joinToString("\n") { "    $it" })
+        throw FetchException("failed after $attempts attempts: $url\n" + problems.distinct().joinToString("\n") { "    $it" }, last)
     }
 
-    private suspend fun fetch(url: String): Page {
-        val backend = backends?.acquire()
+    /** The page at [url], from a server not in [avoid] when one is free; [served] learns the server that answered, when known. */
+    private suspend fun fetch(url: String, avoid: Set<String>, served: (String) -> Unit): Page {
+        val backend = backends?.acquire(avoid)
         val started = System.nanoTime()
         var answeredBy: String? = null
         var ok = false
@@ -101,6 +109,7 @@ internal class Fetcher(
         } finally {
             // Even for a request cancelled halfway, so that its server gets its room back.
             withContext(NonCancellable) { backends?.release(backend, answeredBy, (System.nanoTime() - started) / 1e9, ok) }
+            (answeredBy ?: backend)?.let(served)
         }
     }
 
