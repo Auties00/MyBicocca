@@ -352,7 +352,7 @@ these:
 | `LIVE_REPORT_DIR`, `LIVE_JOURNAL` | Where the report and the journal go                        |
 | `LIVE_FINGERPRINT_TEXT` | `1` to also report the canonical form of results, values included, to compare platforms by hand |
 
-`tools/live/report.py <reports>` summarizes the reports of every platform as Markdown.
+`common/codegen/testing/report.py <reports>` summarizes the reports of every platform as Markdown.
 
 The `Live tests` workflow runs Kotlin, then TypeScript, then Swift every night with the same
 seed, with the accounts in the `ESSE3_USERNAME`, `ESSE3_PASSWORD` and `MOODLE_TOKEN` secrets,
