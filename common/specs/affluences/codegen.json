@@ -37,8 +37,8 @@
       }
     },
     "web": {
-      "outputDir": "../../../web/data-api/src",
-      "testOutputDir": "../../../web/data-api/test",
+      "outputDir": "../../../web/web-app/data-api/src",
+      "testOutputDir": "../../../web/web-app/data-api/test",
       "options": {
         "packageName": "affluences"
       }

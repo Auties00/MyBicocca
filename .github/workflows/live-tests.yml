@@ -115,7 +115,7 @@ jobs:
           restore-keys: live-journal-
 
       - name: Run the live tests
-        working-directory: web
+        working-directory: web/web-app
         run: |
           npm ci
           npm run test:live

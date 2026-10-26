@@ -58,7 +58,7 @@ jobs:
 
       # The SDK, and its live tests, which need vitest's and Node's types.
       - name: Type-check the web SDK and its live tests
-        working-directory: web
+        working-directory: web/web-app
         run: |
           npm ci
           npm run typecheck

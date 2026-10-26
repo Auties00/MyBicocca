@@ -43,7 +43,7 @@ class WebTargetTest {
 
     @Test
     fun `imports the SDK from the live tests through the output directories`() {
-        val dirs = TargetContext(JsonObject(emptyMap()), Path("web/data-api/src"), Path("web/data-api/test")) {}
+        val dirs = TargetContext(JsonObject(emptyMap()), Path("web/web-app/data-api/src"), Path("web/web-app/data-api/test")) {}
         val runtime = WebTarget().sharedTestFiles(dirs).single { it.path == "runtime/live.ts" }
         assertTrue("from \"../../src/runtime/index.js\"" in runtime.content)
     }
