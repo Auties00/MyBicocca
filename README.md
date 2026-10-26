@@ -59,7 +59,9 @@ results on your phone, nowhere else.
 
 - 🔑 &nbsp;**Credentials encrypted on‑device**, never sent anywhere but the platforms they belong to
 - 🔒 &nbsp;**HTTPS everywhere**, every request and every response
-- 🙅 &nbsp;**Zero third‑party sharing**: no trackers, no analytics, no selling your data
+- 🙅 &nbsp;**Your university data is never shared**: no ads, nothing sold
+- 🩺 &nbsp;**Anonymous crash reports** go to Firebase Crashlytics to help fix bugs; turn them off in Settings › Security
+- 📈 &nbsp;**Anonymous usage and speed statistics** go to Firebase Analytics and Performance Monitoring; request timings carry only the address's host and path, never your tokens or what you asked for
 
 ---
 
@@ -226,16 +228,6 @@ recolours itself to match your chosen theme.
 #### Offline campus map
 
 Tappable pins for every building, rendered from a bundled vector tileset. No Google Maps key, no network needed.
-
-</td>
-</tr>
-<tr>
-<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_MapFilter.png" /><img src="android/tools/screenshots/en/light/Screenshot_MapFilter.png" width="230" /></picture></td>
-<td>
-
-#### Filter by category
-
-Show only what you are looking for: teaching buildings, libraries, canteens, offices, sports facilities and more.
 
 </td>
 </tr>
