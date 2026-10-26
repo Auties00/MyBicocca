@@ -14,7 +14,7 @@ fast, offline‑first Android app built with Jetpack Compose and Material 3 Expr
 [![Platform](https://img.shields.io/badge/Android-7.1%2B-9C0C35?style=for-the-badge&logo=android&logoColor=white)](#-installation)
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.3.0-9C0C35?style=for-the-badge&logo=kotlin&logoColor=white)
 ![Jetpack Compose](https://img.shields.io/badge/Compose-Material%203%20Expressive-9C0C35?style=for-the-badge&logo=jetpackcompose&logoColor=white)
-[![License](https://img.shields.io/badge/License-MIT-9C0C35?style=for-the-badge)](LICENSE)
+[![License](https://img.shields.io/badge/License-AGPL--3.0-9C0C35?style=for-the-badge)](LICENSE)
 
 <br />
 
@@ -351,7 +351,13 @@ Your full libretto with a grade‑trend chart across the whole degree, broken do
 
 ## 📄 License
 
-Released under the [MIT License](LICENSE) © 2025 Alessandro Autiero, Federico Giarrusso, Lorenzo Angelo Lupi, Alessandro Ferrari.
+© 2025 Alessandro Autiero, Federico Giarrusso, Lorenzo Angelo Lupi, Alessandro Ferrari Pagini.
+
+MyBicocca is free software under the [GNU Affero General Public License v3.0](LICENSE): anyone
+who distributes it, changes it or offers it as a service must publish their complete source
+code under the same license. For any other use, such as a closed‑source product, the copyright
+holders grant commercial licenses. Contributions are accepted under the
+[Contributor License Agreement](CLA.md). See [`LICENSING.md`](LICENSING.md) for the details.
 
 <div align="center">
 <br />
