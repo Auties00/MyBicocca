@@ -16,25 +16,6 @@ fast, offline‑first Android app built with Jetpack Compose and Material 3 Expr
 ![Jetpack Compose](https://img.shields.io/badge/Compose-Material%203%20Expressive-9C0C35?style=for-the-badge&logo=jetpackcompose&logoColor=white)
 [![License](https://img.shields.io/badge/License-MIT-9C0C35?style=for-the-badge)](LICENSE)
 
-<br />
-
-<table>
-  <tr>
-    <td align="center"><img src="android/tools/screenshots/en/light/Screenshot_Calendar1.png" width="158" alt="Calendar1, light theme" /></td>
-    <td align="center"><img src="android/tools/screenshots/en/light/Screenshot_Elearning.png" width="158" alt="Elearning, light theme" /></td>
-    <td align="center"><img src="android/tools/screenshots/en/light/Screenshot_Map.png" width="158" alt="Map, light theme" /></td>
-    <td align="center"><img src="android/tools/screenshots/en/light/Screenshot_Services.png" width="158" alt="Services, light theme" /></td>
-    <td align="center"><img src="android/tools/screenshots/en/light/Screenshot_Profile.png" width="158" alt="Profile, light theme" /></td>
-  </tr>
-  <tr>
-    <td align="center"><img src="android/tools/screenshots/en/dark/Screenshot_Calendar1.png" width="158" alt="Calendar1, dark theme" /></td>
-    <td align="center"><img src="android/tools/screenshots/en/dark/Screenshot_Elearning.png" width="158" alt="Elearning, dark theme" /></td>
-    <td align="center"><img src="android/tools/screenshots/en/dark/Screenshot_Map.png" width="158" alt="Map, dark theme" /></td>
-    <td align="center"><img src="android/tools/screenshots/en/dark/Screenshot_Services.png" width="158" alt="Services, dark theme" /></td>
-    <td align="center"><img src="android/tools/screenshots/en/dark/Screenshot_Profile.png" width="158" alt="Profile, dark theme" /></td>
-  </tr>
-</table>
-
 </div>
 
 ---
