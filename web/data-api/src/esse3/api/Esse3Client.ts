@@ -8,6 +8,7 @@ import { Esse3Api } from "./Esse3Api.js";
 const policy: RestPolicy = {
   emptyStatuses: [404],
   errors: { code: ["/retCode"], message: ["/retErrMsg"] },
+  caches: true,
 };
 
 /** Sends the generated Esse3 operations' requests and reads their responses and errors. */
@@ -47,7 +48,7 @@ export class Esse3Client {
   }
 
   async bytes(request: RestRequest, roles: readonly Esse3PermissionLevel[]): Promise<Uint8Array> {
-    return new Uint8Array(await (await this.execute(request, roles, false))!.arrayBuffer());
+    return new Uint8Array(await (await this.execute(request, roles, false, false, false))!.arrayBuffer());
   }
 
   async text(request: RestRequest, roles: readonly Esse3PermissionLevel[]): Promise<string> {
@@ -68,9 +69,9 @@ export class Esse3Client {
     await this.execute(request, roles, true);
   }
 
-  private async execute(request: RestRequest, roles: readonly Esse3PermissionLevel[], readsJson: boolean, allowEmpty = false): Promise<Response | undefined> {
+  private async execute(request: RestRequest, roles: readonly Esse3PermissionLevel[], readsJson: boolean, allowEmpty = false, stores = true): Promise<Response | undefined> {
     try {
-      return await this.rest.execute(request, readsJson, allowEmpty);
+      return await this.rest.execute(request, readsJson, allowEmpty, stores);
     } catch (error) {
       if (error instanceof ApiFailure) throw new Esse3Error(error, roles);
       throw error;

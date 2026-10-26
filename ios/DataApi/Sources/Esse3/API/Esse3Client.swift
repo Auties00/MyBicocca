@@ -9,7 +9,8 @@ public final class Esse3Client: Sendable {
 
     static let policy = RestPolicy(
         emptyStatuses: [404],
-        errors: ErrorFormat(code: ["/retCode"], message: ["/retErrMsg"])
+        errors: ErrorFormat(code: ["/retCode"], message: ["/retErrMsg"]),
+        caches: true
     )
 
     public let configuration: RestConfiguration
@@ -32,7 +33,7 @@ public final class Esse3Client: Sendable {
     }
 
     public func data(_ request: RestRequest, roles: Set<Esse3PermissionLevel>) async throws -> Data {
-        try await execute(request, roles: roles, readsJSON: false)!.body
+        try await execute(request, roles: roles, readsJSON: false, stores: false)!.body
     }
 
     public func text(_ request: RestRequest, roles: Set<Esse3PermissionLevel>) async throws -> String {
@@ -53,9 +54,9 @@ public final class Esse3Client: Sendable {
         _ = try await execute(request, roles: roles, readsJSON: true)
     }
 
-    private func execute(_ request: RestRequest, roles: Set<Esse3PermissionLevel>, readsJSON: Bool, allowEmpty: Bool = false) async throws -> RestResponse? {
+    private func execute(_ request: RestRequest, roles: Set<Esse3PermissionLevel>, readsJSON: Bool, allowEmpty: Bool = false, stores: Bool = true) async throws -> RestResponse? {
         do {
-            return try await rest.execute(request, readsJSON: readsJSON, allowEmpty: allowEmpty)
+            return try await rest.execute(request, readsJSON: readsJSON, allowEmpty: allowEmpty, stores: stores)
         } catch let failure as ApiFailure {
             throw Esse3Error(failure: failure, expectedRoles: roles)
         }

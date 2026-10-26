@@ -182,11 +182,14 @@ public struct RestResponse: Sendable {
     public let body: Data
     /// The URL that answered, after redirects; relative links of an HTML body resolve against it.
     public let url: URL?
+    /// The `Cache-Control` header, which says whether a ``ResponseCache`` may keep the response.
+    public let cacheControl: String?
 
-    public init(status: Int, body: Data, url: URL? = nil) {
+    public init(status: Int, body: Data, url: URL? = nil, cacheControl: String? = nil) {
         self.status = status
         self.body = body
         self.url = url
+        self.cacheControl = cacheControl
     }
 
     public var isSuccess: Bool { (200..<400).contains(status) }
@@ -263,7 +266,7 @@ public struct RestConfiguration: Sendable {
         guard let http = response as? HTTPURLResponse else {
             throw URLError(.badServerResponse)
         }
-        let result = RestResponse(status: http.statusCode, body: data, url: http.url)
+        let result = RestResponse(status: http.statusCode, body: data, url: http.url, cacheControl: http.value(forHTTPHeaderField: "Cache-Control"))
         await observer?.didReceive(result, contentType: http.value(forHTTPHeaderField: "Content-Type"))
         return result
     }
@@ -282,6 +285,8 @@ public struct RestConfiguration: Sendable {
         }
 
         var urlRequest = URLRequest(url: url)
+        // The client keeps responses itself, by the same rules on every platform: see ResponseCache.
+        urlRequest.cachePolicy = .reloadIgnoringLocalCacheData
         urlRequest.httpMethod = request.method.rawValue
         urlRequest.setValue("application/json", forHTTPHeaderField: "Accept")
         for (name, value) in headers {

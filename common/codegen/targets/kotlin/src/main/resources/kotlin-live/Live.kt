@@ -4,8 +4,6 @@ import __RUNTIME__.ApiException
 import __RUNTIME__.HtmlParsingException
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.plugins.api.createClientPlugin
-import io.ktor.client.plugins.cache.HttpCache
-import io.ktor.client.plugins.cache.storage.CacheStorage
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.contentType
@@ -102,11 +100,6 @@ class LiveRun<A : AutoCloseable>(val live: LiveApi<A>) {
     }
 
     private fun HttpClientConfig<*>.observe() {
-        // The SDK's cache would answer reads, such as the one checking a write, with what the server said before.
-        install(HttpCache) {
-            publicStorage(CacheStorage.Disabled)
-            privateStorage(CacheStorage.Disabled)
-        }
         install(createClientPlugin("LiveTests") {
             onRequest { _, _ -> beforeRequest() }
             onResponse { response -> capture?.add(observed(response)) }
