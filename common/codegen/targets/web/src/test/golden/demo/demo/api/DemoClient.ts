@@ -56,7 +56,7 @@ export class DemoClient {
   }
 
   async bytes(request: RestRequest, roles: readonly DemoPermissionLevel[]): Promise<Uint8Array> {
-    return new Uint8Array(await (await this.execute(request, roles, false))!.arrayBuffer());
+    return new Uint8Array(await (await this.execute(request, roles, false, false, false))!.arrayBuffer());
   }
 
   async text(request: RestRequest, roles: readonly DemoPermissionLevel[]): Promise<string> {
@@ -77,10 +77,10 @@ export class DemoClient {
     await this.execute(request, roles, true);
   }
 
-  private async execute(request: RestRequest, roles: readonly DemoPermissionLevel[], readsJson: boolean, allowEmpty = false): Promise<Response | undefined> {
+  private async execute(request: RestRequest, roles: readonly DemoPermissionLevel[], readsJson: boolean, allowEmpty = false, stores = true): Promise<Response | undefined> {
     const sent: RestRequest = { ...request, query: [...(request.query ?? []), ["format", "json"], ["lang", this.language]] };
     try {
-      return await this.rest.execute(sent, readsJson, allowEmpty);
+      return await this.rest.execute(sent, readsJson, allowEmpty, stores);
     } catch (error) {
       if (error instanceof ApiFailure) throw new DemoError(error, roles);
       throw error;

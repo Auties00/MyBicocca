@@ -95,16 +95,8 @@ final class LiveRun<Api: Sendable>: @unchecked Sendable {
         report.start(skips: live.skips, declared: checker.fields)
     }
 
-    lazy var api: Api = live.create(LiveObserver(run: self), Self.session(), false)
-    lazy var anonymous: Api = live.create(LiveObserver(run: self), Self.session(), true)
-
-    /// A session that always asks the server: a cached response would hide what a write changed.
-    private static func session() -> URLSession {
-        let configuration = URLSessionConfiguration.ephemeral
-        configuration.urlCache = nil
-        configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
-        return URLSession(configuration: configuration)
-    }
+    lazy var api: Api = live.create(LiveObserver(run: self), URLSession(configuration: .ephemeral), false)
+    lazy var anonymous: Api = live.create(LiveObserver(run: self), URLSession(configuration: .ephemeral), true)
 
     var missingEnv: [String] { live.env.filter { liveEnv($0) == nil } }
 

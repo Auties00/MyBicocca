@@ -14,6 +14,8 @@ x-mb-client:
   timeoutSeconds: 60
   # The web portal's pages need the session cookies its SSO login leaves.
   keepsCookies: true
+  # Some reads are slow, and Esse3 says for how long each may be kept once a session sets
+  # httpCacheEnable: from 5 seconds for bookings to an hour for fees.
   caches: true
   # Esse3 reads fields left at their defaults as the defaults it documents only when they're sent.
   sendsDefaults: true

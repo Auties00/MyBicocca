@@ -3,6 +3,7 @@ package __PACKAGE__
 import io.ktor.client.HttpClient
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.accept
+import io.ktor.client.request.url
 import io.ktor.client.request.header
 import io.ktor.client.request.request
 import io.ktor.client.statement.HttpResponse
@@ -10,6 +11,7 @@ import io.ktor.client.statement.bodyAsChannel
 import io.ktor.client.statement.bodyAsText
 import io.ktor.client.statement.request
 import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.contentType
 import io.ktor.utils.io.ByteReadChannel
@@ -62,7 +64,7 @@ abstract class RestApi(
         envelope: List<String> = emptyList(),
         roles: Set<Enum<*>> = emptySet(),
         block: HttpRequestBuilder.() -> Unit = {},
-    ): T = decode(execute(method, endpoint, server, roles, readsJson = true, allowEmpty = false, block)!!, envelope, deserializer)
+    ): T = decode(read(method, endpoint, server, roles, readsJson = true, allowEmpty = false, block)!!, envelope, deserializer)
 
     /** Like [json] for a list, which is empty when the status is one of the policy's empty ones. */
     protected suspend fun <T> jsonList(
@@ -74,8 +76,8 @@ abstract class RestApi(
         roles: Set<Enum<*>> = emptySet(),
         block: HttpRequestBuilder.() -> Unit = {},
     ): List<T> {
-        val response = execute(method, endpoint, server, roles, readsJson = true, allowEmpty = true, block) ?: return emptyList()
-        return decode(response, envelope, deserializer)
+        val received = read(method, endpoint, server, roles, readsJson = true, allowEmpty = true, block) ?: return emptyList()
+        return decode(received, envelope, deserializer)
     }
 
     /** Sends a request and returns its body as bytes. */
@@ -94,7 +96,7 @@ abstract class RestApi(
         server: String? = null,
         roles: Set<Enum<*>> = emptySet(),
         block: HttpRequestBuilder.() -> Unit = {},
-    ): String = execute(method, endpoint, server, roles, readsJson = false, allowEmpty = false, block)!!.bodyAsText()
+    ): String = read(method, endpoint, server, roles, readsJson = false, allowEmpty = false, block)!!.text
 
     /**
      * Sends a request for a script and decodes the JSON it assigns to [variable], on a line of
@@ -111,12 +113,12 @@ abstract class RestApi(
         roles: Set<Enum<*>> = emptySet(),
         block: HttpRequestBuilder.() -> Unit = {},
     ): T {
-        val response = execute(method, endpoint, server, roles, readsJson = false, allowEmpty = false, block)!!
+        val received = read(method, endpoint, server, roles, readsJson = false, allowEmpty = false, block)!!
         val prefix = "$variable ="
-        val assignment = response.bodyAsText().lineSequence()
+        val assignment = received.text.lineSequence()
             .map { line -> DECLARATION_KEYWORDS.fold(line.trim()) { statement, keyword -> statement.removePrefix(keyword) } }
             .firstOrNull { it.startsWith(prefix) }
-            ?: throw HtmlParsingException("${response.request.url} assigns no '$variable'")
+            ?: throw HtmlParsingException("${received.url} assigns no '$variable'")
         return json.decodeFromJsonElement(deserializer, json.parseToJsonElement(assignment.removePrefix(prefix).trim().removeSuffix(";")))
     }
 
@@ -134,17 +136,42 @@ abstract class RestApi(
         roles: Set<Enum<*>> = emptySet(),
         block: HttpRequestBuilder.() -> Unit = {},
     ): T {
-        val response = execute(method, endpoint, server, roles, readsJson = false, allowEmpty = false, block)!!
-        val url = response.request.url.toString()
-        return scrape(Jsoup.parse(response.bodyAsText(), url))
+        val received = read(method, endpoint, server, roles, readsJson = false, allowEmpty = false, block)!!
+        val url = received.url
+        return scrape(Jsoup.parse(received.text, url))
             ?: throw HtmlParsingException("$url doesn't hold what was expected; the page may have changed")
     }
 
-    private suspend fun <T> decode(response: HttpResponse, envelope: List<String>, deserializer: DeserializationStrategy<T>): T {
-        val body = json.parseToJsonElement(response.bodyAsText().ifBlank { "null" })
+    private fun <T> decode(received: Received, envelope: List<String>, deserializer: DeserializationStrategy<T>): T {
+        val body = json.parseToJsonElement(received.text.ifBlank { "null" })
         val element = envelope.fold(body) { value, key -> value.jsonObject[key] ?: JsonObject(emptyMap()) }
         return json.decodeFromJsonElement(deserializer, element)
     }
+
+    /**
+     * [execute], reading the body whole. A GET is answered from the client's [ResponseCache],
+     * when it has one, if it keeps a fresh response for the URL, and leaves its response there.
+     */
+    private suspend fun read(
+        method: HttpMethod,
+        endpoint: String,
+        server: String?,
+        roles: Set<Enum<*>>,
+        readsJson: Boolean,
+        allowEmpty: Boolean,
+        block: HttpRequestBuilder.() -> Unit,
+    ): Received? {
+        val cache = client.attributes.getOrNull(ResponseCache.KEY)?.takeIf { method == HttpMethod.Get }
+        val url = cache?.let { HttpRequestBuilder().apply { url(root(server) + basePath + endpoint); block() }.url.buildString() }
+        if (cache != null && url != null) cache.get(url)?.let { return it }
+        val response = execute(method, endpoint, server, roles, readsJson, allowEmpty, block) ?: return null
+        val received = Received(response.request.url.toString(), response.bodyAsText())
+        if (cache != null && url != null) cache.put(url, received, response.headers[HttpHeaders.CacheControl])
+        return received
+    }
+
+    private fun root(server: String?): String =
+        (server ?: policy.baseUrl ?: error("The operation names no server and the API has no base URL")).trimEnd('/')
 
     /**
      * Sends the request, recovering from the failures the policy's retry rules match, and
@@ -161,7 +188,7 @@ abstract class RestApi(
         allowEmpty: Boolean,
         block: HttpRequestBuilder.() -> Unit,
     ): HttpResponse? {
-        val root = (server ?: policy.baseUrl ?: error("The operation names no server and the API has no base URL")).trimEnd('/')
+        val root = root(server)
         val attempt: suspend () -> HttpResponse = {
             client.request(root + basePath + endpoint) {
                 this.method = method
@@ -184,6 +211,8 @@ abstract class RestApi(
             rule.delay?.let { delay(it) }
             response = attempt()
         }
+        // What the request changed may show in the kept responses.
+        if (method != HttpMethod.Get) client.attributes.getOrNull(ResponseCache.KEY)?.clear()
         if (allowEmpty && response.status.value in policy.emptyStatuses) return null
         if (response.failed()) throw failure(response, roles)
         val inspects = policy.errors.detect.isNotEmpty() &&

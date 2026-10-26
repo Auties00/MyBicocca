@@ -90,12 +90,18 @@ export interface RestConfiguration {
   fetch?: typeof fetch;
 }
 
-/** Sends `request` and returns the response whatever its status. */
-export function sendRequest(configuration: RestConfiguration, request: RestRequest): Promise<Response> {
+/** The URL `request` is sent to, its query included. */
+export function requestUrl(configuration: RestConfiguration, request: RestRequest): URL {
   const url = new URL((request.server ?? configuration.baseUrl).replace(/\/$/, "") + request.path);
   for (const [name, value] of request.query ?? []) {
     if (value !== null && value !== undefined) url.searchParams.append(name, formatQueryValue(value));
   }
+  return url;
+}
+
+/** Sends `request` and returns the response whatever its status. */
+export function sendRequest(configuration: RestConfiguration, request: RestRequest): Promise<Response> {
+  const url = requestUrl(configuration, request);
 
   const headers = new Headers({ Accept: "application/json", ...configuration.headers, ...request.auth?.headers });
   for (const [name, value] of request.headers ?? []) {
@@ -129,5 +135,6 @@ export function sendRequest(configuration: RestConfiguration, request: RestReque
   }
 
   const send = configuration.fetch ?? fetch;
-  return send(url, { method: request.method, headers, body });
+  // The client keeps responses itself, by the same rules on every platform: see ResponseCache.
+  return send(url, { method: request.method, headers, body, cache: "no-store" });
 }

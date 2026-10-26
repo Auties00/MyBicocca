@@ -29,7 +29,7 @@ public final class EasyStaffClient: Sendable {
     }
 
     public func data(_ request: RestRequest) async throws -> Data {
-        try await execute(request, readsJSON: false)!.body
+        try await execute(request, readsJSON: false, stores: false)!.body
     }
 
     public func text(_ request: RestRequest) async throws -> String {
@@ -50,9 +50,9 @@ public final class EasyStaffClient: Sendable {
         _ = try await execute(request, readsJSON: true)
     }
 
-    private func execute(_ request: RestRequest, readsJSON: Bool, allowEmpty: Bool = false) async throws -> RestResponse? {
+    private func execute(_ request: RestRequest, readsJSON: Bool, allowEmpty: Bool = false, stores: Bool = true) async throws -> RestResponse? {
         do {
-            return try await rest.execute(request, readsJSON: readsJSON, allowEmpty: allowEmpty)
+            return try await rest.execute(request, readsJSON: readsJSON, allowEmpty: allowEmpty, stores: stores)
         } catch let failure as ApiFailure {
             throw EasyStaffError(failure: failure)
         }
