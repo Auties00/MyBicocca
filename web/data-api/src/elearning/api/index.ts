@@ -24,4 +24,5 @@ export * from "./MoodleWebAttendanceApi.js";
 export * from "./MoodleWebCatalogApi.js";
 export * from "./MoodleWebClient.js";
 export * from "./MoodleWebMediaApi.js";
+export * from "./MoodleWebResources.js";
 export * from "./MoodleWebServer.js";

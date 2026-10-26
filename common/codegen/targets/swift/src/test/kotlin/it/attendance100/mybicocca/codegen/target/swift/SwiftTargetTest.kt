@@ -20,6 +20,11 @@ class SwiftTargetTest {
     }
 
     @Test
+    fun `writes the sample API's resources`() {
+        Golden.assertMatches("demo-resources", SwiftTarget().generateResources(SampleSpecs.demo, SampleSpecs.demoResources, context))
+    }
+
+    @Test
     fun `generates the live tests of the sample API`() {
         Golden.assertMatches("demo-tests", SwiftTarget().generateTests(SampleTests.plan, context))
     }

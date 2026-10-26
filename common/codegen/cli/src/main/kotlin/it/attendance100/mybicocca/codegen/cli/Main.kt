@@ -39,6 +39,11 @@ private class Codegen : CoreCliktCommand(name = "codegen") {
     private val plan by option("--plan", help = "Write nothing; print the live tests each API's tests.yaml plans, and the operations they skip.")
         .flag()
 
+    private val resources by option(
+        "--resources",
+        help = "Fetch the data of the APIs' resources again before generating, with their builders: slow, since they crawl websites.",
+    ).flag()
+
     private val targets by option("--target", metavar = "<id>", help = "Only run this target (repeatable). Default: every configured target.")
         .choice(*PluginRegistry.targets.keys.sorted().toTypedArray())
         .multiple()
@@ -51,13 +56,14 @@ private class Codegen : CoreCliktCommand(name = "codegen") {
         "Generates the SDKs of the APIs whose spec directories are given, or of every API under ./$DEFAULT_SPECS_ROOT when none is."
 
     override fun run() {
+        if (resources && (check || plan)) throw UsageError("--resources writes the resources' data; it can't go with --check or --plan")
         if (plan) {
             for (specDir in specDirs.ifEmpty { allSpecDirs() }) {
                 Generator(log = {}).plan(specDir)?.let { echo(TestPlanReport.text(it)) }
             }
             return
         }
-        val plans = Generator().run(specDirs.ifEmpty { allSpecDirs() }, targets.toSet().ifEmpty { null }, check)
+        val plans = Generator().run(specDirs.ifEmpty { allSpecDirs() }, targets.toSet().ifEmpty { null }, check, refreshResources = resources)
         if (!check) return
 
         val stale = plans.filterNot(SyncPlan::isUpToDate)

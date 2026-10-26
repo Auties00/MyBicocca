@@ -40,6 +40,7 @@ Run these from `common/codegen`, using the Android Gradle wrapper:
 ../../android/gradlew :cli:run --args="--target web specs/esse3"  # one API, one platform
 ../../android/gradlew :cli:run --args="--check"                   # only check nothing is out of date
 ../../android/gradlew :cli:run --args="--plan specs/esse3"        # list the live tests and what they skip
+../../android/gradlew :cli:run --args="--resources specs/esse3"   # fetch its resources' data again (slow)
 ../../android/gradlew :cli:run --args="--help"                    # all the options
 ```
 
@@ -108,7 +109,8 @@ writes:
 ```
 
 `testOutputDir` is where the target writes the API's live tests; there are none without it, or
-without a `tests.yaml`.
+without a `tests.yaml`. `resourceOutputDir` is where it writes the API's
+[resources](#resources), when not next to the code: Kotlin's go in `src/main/resources`.
 
 An API can also be described by more than one spec. Esse3 does this for the pages of its web
 portal that the REST API doesn't cover:
@@ -208,6 +210,43 @@ Each target compiles the steps to native code for its HTML parser (Jsoup, SwiftS
 browser's DOM). The validator checks every step gets the kind of input it expects, and selectors
 are limited to the CSS all three parsers support. New steps are added only when a page needs
 them.
+
+## Resources
+
+Besides code, an SDK can ship data: the catalog of the e-learning courses, the students' ratings
+of each course. A spec declares each resource and its type, built from ordinary schemas:
+
+```yaml
+x-mb-resources:
+  catalog:
+    type: MoodleWebCatalog        # a record the data decodes as
+    builder: elearning-catalog    # what fetches the data again
+    description: The courses on the university's Moodle.
+```
+
+The data lives next to the spec, in `specs/<api>/resources/<name>.json`, and generating never
+touches the network: every target writes the same minified JSON into its platform's resources,
+with a typed loader.
+
+| Platform   | Data                                                  | Loader                                |
+|------------|-------------------------------------------------------|---------------------------------------|
+| Kotlin     | `src/main/resources/<package>/api/<api>/<name>.json`  | `MoodleWebResources.catalog()`        |
+| Swift      | `Sources/<Module>/Resources/<api>/<name>.json`, copied into the module's bundle | `try MoodleWebResources.catalog()` |
+| TypeScript | `src/<package>/resources/<api>/<name>.json`, imported on demand | `await MoodleWebResources.catalog()` |
+
+A loader decodes the data on every call, so callers keep the result. JSON has no comments, so the
+files carry their generated marker as their first key, `_generated`, which decoders ignore.
+
+`--resources` fetches the data again with each resource's builder, checks it against its type and
+saves it, before generating as usual. The builders, in `resources/`, crawl websites:
+
+| Builder             | Data                                                                   | Takes |
+|---------------------|------------------------------------------------------------------------|-------|
+| `elearning-catalog` | Every category and course on elearning.unimib.it                       | Minutes |
+| `course-ratings`    | The students' ratings of every course and teacher on opinionistudenti.unimib.it, by academic year | Hours the first time; then only the last two years are fetched again |
+
+The `Resources` workflow runs `--resources` every week and opens a pull request when the data
+changed.
 
 ## Runtimes
 
@@ -378,6 +417,9 @@ and posts the summary. It fails when a case fails, or the platforms decode a res
   its live tests (`generateTests` and `sharedTestFiles`) on a live test runtime of its own.
   Copying an existing target is the easiest start: they all share the same structure.
 - **New spec format:** same thing, with a `SpecReader` under `readers/<id>`.
+- **New resource:** declare it in the spec (see [Resources](#resources)), and add its builder to
+  `resources/` as a `ResourceBuilder` listed in
+  `META-INF/services/it.attendance100.mybicocca.codegen.core.ResourceBuilder`.
 - **New codec:** add it to `Codec` in the model, then implement it in every target and runtime.
 
 ## Testing

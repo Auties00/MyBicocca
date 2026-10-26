@@ -21,6 +21,11 @@ class WebTargetTest {
     }
 
     @Test
+    fun `writes the sample API's resources`() {
+        Golden.assertMatches("demo-resources", WebTarget().generateResources(SampleSpecs.demo, SampleSpecs.demoResources, context))
+    }
+
+    @Test
     fun `indexes every folder of the APIs' modules but the root`() {
         val paths = setOf("elearning/api/MoodleApi.ts", "elearning/api/KalturaApi.ts", "elearning/models/MoodleCourseTypes.ts", "esse3/api/Esse3Api.ts")
         val indexes = WebTarget().indexFiles(paths, context).associate { it.path to it.content }

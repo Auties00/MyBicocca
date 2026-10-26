@@ -23,6 +23,7 @@ package it.attendance100.mybicocca.codegen.model
  *   them, and query, header and cookie parameters are sent by every operation. They are
  *   required and plainly encoded.
  * @property client How the API's client sends requests and reads failures.
+ * @property resources Data the SDK ships along with its code.
  */
 data class ApiSpec(
     val id: String,
@@ -33,6 +34,7 @@ data class ApiSpec(
     val authSchemes: List<AuthScheme> = emptyList(),
     val parameters: List<Parameter> = emptyList(),
     val client: ClientSpec = ClientSpec.DEFAULT,
+    val resources: List<Resource> = emptyList(),
 ) {
     /** Whether any operation declares roles, in which case targets pass them to the runtime. */
     val usesRoles: Boolean by lazy { modules.any { module -> module.operations.any { it.roles.isNotEmpty() } } }
@@ -114,6 +116,7 @@ data class ApiSpec(
                     require(clients.size <= 1) { "Only one spec of API '${first.id}' may describe its client" }
                     clients.singleOrNull() ?: ClientSpec.DEFAULT
                 },
+                resources = union(parts.flatMap { it.resources }, "Resource") { it.name },
             )
         }
 
