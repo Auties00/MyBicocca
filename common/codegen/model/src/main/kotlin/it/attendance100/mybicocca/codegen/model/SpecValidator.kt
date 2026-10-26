@@ -11,6 +11,7 @@ object SpecValidator {
         checkDeclarations(spec)
         checkApiParameters(spec)
         checkClient(spec)
+        checkResources(spec)
         for (module in spec.modules) {
             checkModule(spec, module)
         }
@@ -21,6 +22,14 @@ object SpecValidator {
         val problems = validate(spec)
         require(problems.isEmpty()) {
             "Invalid API spec '${spec.id}':\n" + problems.joinToString("\n") { "  - $it" }
+        }
+    }
+
+    private fun MutableList<String>.checkResources(spec: ApiSpec) {
+        checkUnique(spec.resources.map { it.name }) { "Resource '$it' is declared more than once" }
+        for (resource in spec.resources) {
+            if (!Regex("[a-z][A-Za-z0-9]*").matches(resource.name)) add("Resource '${resource.name}' needs a camelCase name")
+            if (spec.declarations[resource.type.name] !is RecordType) add("Resource '${resource.name}' is of '${resource.type.name}', which is no record")
         }
     }
 

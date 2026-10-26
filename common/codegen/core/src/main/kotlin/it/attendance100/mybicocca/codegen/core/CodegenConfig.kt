@@ -52,10 +52,13 @@ data class ReaderConfig(
 /**
  * @property testOutputDir Where the target writes the API's live tests, relative to the file;
  *   none are written without it, or when the API has no `tests.yaml`.
+ * @property resourceOutputDir Where the target writes the API's resources, relative to the file;
+ *   the [outputDir] when not set.
  */
 @Serializable
 data class TargetConfig(
     val outputDir: String,
     val options: JsonObject = JsonObject(emptyMap()),
     val testOutputDir: String? = null,
+    val resourceOutputDir: String? = null,
 )

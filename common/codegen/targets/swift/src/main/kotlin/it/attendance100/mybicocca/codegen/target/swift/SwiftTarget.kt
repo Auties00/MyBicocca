@@ -8,8 +8,11 @@ import it.attendance100.mybicocca.codegen.core.TestPlan
 import it.attendance100.mybicocca.codegen.core.decapitalized
 import it.attendance100.mybicocca.codegen.core.decodeOptions
 import it.attendance100.mybicocca.codegen.core.resourceFiles
+import it.attendance100.mybicocca.codegen.core.resourceJson
 import it.attendance100.mybicocca.codegen.model.ApiSpec
+import it.attendance100.mybicocca.codegen.model.Resource
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonObject
 
 /**
  * Generates a Swift SDK built on `URLSession` and `Codable`: the API's sources in the folder of
@@ -68,6 +71,40 @@ class SwiftTarget : CodeTarget {
             add(file(layout.errors("${layout.error}.swift")) { client.emitError(it) })
             if (spec.usesRoles) {
                 add(file(layout.models("${layout.roles}.swift")) { client.emitRoles(it) })
+            }
+            if (spec.resources.isNotEmpty()) {
+                add(file(layout.api("${layout.resourcesName}.swift")) { resources(spec, layout, it) })
+            }
+        }
+    }
+
+    /**
+     * Each resource, in the module's `Resources` folder: the package must copy that folder into the
+     * module's bundle (`resources: [.copy("Resources")]`), where `<Prefix>Resources` reads it.
+     */
+    override fun generateResources(spec: ApiSpec, data: Map<Resource, JsonObject>, context: TargetContext): List<GeneratedFile> {
+        val options = context.options.decodeOptions<Options>()
+        val layout = SwiftLayout(spec, options.module ?: spec.prefix, options.runtimeModule)
+        return data.map { (resource, value) -> GeneratedFile("${layout.module}/${layout.resources}/${resource.name}.json", resourceJson(spec.id, value)) }
+    }
+
+    /** `<Prefix>Resources`, whose functions decode each resource out of the module's bundle. */
+    private fun resources(spec: ApiSpec, layout: SwiftLayout, out: CodeWriter) {
+        out.line("/// The data the SDK ships along with its code, read out of its module's bundle.")
+        out.block("public enum ${layout.resourcesName} {") {
+            for (resource in spec.resources) {
+                val description = resource.description?.let { "${SwiftSyntax.docText(it)} " }.orEmpty()
+                line("/// ${description}Decoded on every call: keep the result.")
+                block("public static func ${SwiftSyntax.identifier(resource.name)}() throws -> ${layout.render(resource.type)} {") {
+                    line("try read(${SwiftSyntax.string(resource.name)})")
+                }
+                line()
+            }
+            block("private static func read<T: Decodable>(_ name: String) throws -> T {") {
+                block("guard let url = Bundle.module.url(forResource: name, withExtension: \"json\", subdirectory: ${SwiftSyntax.string(layout.resources)}) else {") {
+                    line("throw CocoaError(.fileNoSuchFile)")
+                }
+                line("return try JSONDecoder().decode(T.self, from: Data(contentsOf: url))")
             }
         }
     }

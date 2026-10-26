@@ -4,6 +4,59 @@ package it.attendance100.mybicocca.data.remote.elearning.dto
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
+/** The courses on the university's Moodle, by area and then category, as the site nests them. */
+@Serializable
+data class MoodleWebCatalog(
+    /** When the catalog was crawled, in ISO 8601 (UTC). */
+    @SerialName("fetched_at")
+    val fetchedAt: String,
+
+    @SerialName("areas")
+    val areas: List<MoodleWebCatalogArea>
+)
+
+/** A section of the homepage, such as "Didattica online". */
+@Serializable
+data class MoodleWebCatalogArea(
+    @SerialName("name")
+    val name: String,
+
+    @SerialName("categories")
+    val categories: List<MoodleWebCatalogCategory>
+)
+
+/** A category, such as a study course or one of its years. One reached again through another parent is listed there with neither subcategories nor courses. */
+@Serializable
+data class MoodleWebCatalogCategory(
+    @SerialName("name")
+    val name: String,
+
+    @SerialName("url")
+    val url: String? = null,
+
+    @SerialName("categories")
+    val categories: List<MoodleWebCatalogCategory>,
+
+    @SerialName("courses")
+    val courses: List<MoodleWebCatalogCourse>
+)
+
+@Serializable
+data class MoodleWebCatalogCourse(
+    @SerialName("id")
+    val id: Int,
+
+    @SerialName("name")
+    val name: String,
+
+    /** The course's short name, such as "CDS-E1805M-DOC"; blank when it has none. */
+    @SerialName("code")
+    val code: String,
+
+    @SerialName("url")
+    val url: String
+)
+
 @Serializable
 data class MoodleWebCourseInfo(
     @SerialName("id")

@@ -56,6 +56,11 @@ internal class SwiftLayout(private val spec: ApiSpec, val module: String, val ru
     /** The file of the API's declaration [name] in the module's `Errors` folder. */
     fun errors(name: String): String = "$module/Errors/$name"
 
+    /** The folder of the API's resources in the module's `Resources` folder, which the package copies into the module's bundle. */
+    val resources = "Resources/${spec.id}"
+
+    val resourcesName = "${spec.prefix}Resources"
+
     fun authClass(name: String): String = "${spec.prefix}${name}Auth"
 
     fun serverCase(name: String): String = SwiftSyntax.identifier(Text.lowerCamel(name))

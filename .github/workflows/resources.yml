@@ -1,0 +1,70 @@
+name: Resources
+
+# Fetches the data of the APIs' resources again (the e-learning catalog, the course ratings) with
+# their builders, regenerates what the SDKs ship, and opens a pull request when it changed: see
+# "Resources" in common/codegen/README.md.
+on:
+  # Temporary: the first full crawl of the ratings, from this branch.
+  push:
+    branches: [feat/generated-resources]
+  schedule:
+    # Every Monday night.
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: resources
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    # The ratings fetch only their last two academic years again; the catalog takes minutes.
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up the Gradle daemon JDK (JetBrains 21)
+        uses: actions/setup-java@v4
+        with:
+          distribution: jetbrains
+          java-version: '21'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Fetch the resources and regenerate
+        working-directory: common/codegen
+        run: |
+          chmod +x ../../android/gradlew
+          ../../android/gradlew :cli:run --args="--resources" --stacktrace
+
+      # Temporary: what the run changed, to commit by hand, even when a resource stopped halfway.
+      - name: Save the changes
+        if: always()
+        run: |
+          git add -A
+          git diff --cached --binary > resources.patch
+          ls -la resources.patch
+
+      - name: Upload the changes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: resources-patch
+          path: resources.patch
+
+      - name: Open a pull request
+        if: github.event_name != 'push'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: chore/refresh-resources
+          delete-branch: true
+          commit-message: 'chore(resources): refresh the data the SDKs ship'
+          title: 'chore(resources): refresh the data the SDKs ship'
+          body: >-
+            The Resources workflow fetched the data of the APIs' resources again and regenerated
+            what the SDKs ship. Review the changes to `common/specs/*/resources` before merging.

@@ -90,6 +90,7 @@ internal class OpenApiModelBuilder(private val api: OpenAPI) {
                 parameter("the API", api.components?.parameters?.get(name) ?: error("Unknown API parameter $name"))
             },
             client = ClientSyntax.read(api.extensions?.get(Extensions.CLIENT)),
+            resources = Extensions.resources(api.extensions?.get(Extensions.RESOURCES)),
         )
     }
 

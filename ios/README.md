@@ -27,6 +27,7 @@ Inside each module:
 | `API`     | `api`          | The entry point, one service per module, the client |
 | `Models`  | `dto`          | Records, enums, credentials and scrapers         |
 | `Errors`  | `exception`    | The error each API throws                        |
+| `Resources` | `resources`  | Data the module ships, such as the course catalog, which `<Prefix>Resources` decodes |
 
 Add the `DataApi` product to the app and import the modules it needs:
 

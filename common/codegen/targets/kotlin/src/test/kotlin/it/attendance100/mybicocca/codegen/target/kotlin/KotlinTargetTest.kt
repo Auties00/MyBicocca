@@ -34,6 +34,11 @@ class KotlinTargetTest {
     }
 
     @Test
+    fun `writes the sample API's resources`() {
+        Golden.assertMatches("demo-resources", KotlinTarget().generateResources(SampleSpecs.demo, SampleSpecs.demoResources, TargetContext(options) {}))
+    }
+
+    @Test
     fun `generates the live tests of the sample API`() {
         Golden.assertMatches("demo-tests", KotlinTarget().generateTests(SampleTests.plan, TargetContext(options) {}))
     }

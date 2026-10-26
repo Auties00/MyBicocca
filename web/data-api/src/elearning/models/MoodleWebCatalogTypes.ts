@@ -2,6 +2,111 @@
 
 import { JsonObject, asJsonObject, decodeInteger, decodeList, decodeString, required } from "../../runtime/index.js";
 
+/** The courses on the university's Moodle, by area and then category, as the site nests them. */
+export interface MoodleWebCatalog {
+  /** When the catalog was crawled, in ISO 8601 (UTC). */
+  fetchedAt: string;
+  areas: MoodleWebCatalogArea[];
+}
+
+/** Decodes a {@link MoodleWebCatalog}; `undefined` when `json` isn't an object. */
+export function decodeMoodleWebCatalog(json: unknown): MoodleWebCatalog | undefined {
+  const object = asJsonObject(json);
+  if (object === undefined) return undefined;
+  return {
+    fetchedAt: required(decodeString(object["fetched_at"]), "MoodleWebCatalog.fetchedAt"),
+    areas: required(decodeList(object["areas"], decodeMoodleWebCatalogArea), "MoodleWebCatalog.areas"),
+  };
+}
+
+export function encodeMoodleWebCatalog(value: MoodleWebCatalog): JsonObject {
+  return {
+    "fetched_at": value.fetchedAt,
+    "areas": value.areas.map((item) => encodeMoodleWebCatalogArea(item)),
+  };
+}
+
+/** A section of the homepage, such as "Didattica online". */
+export interface MoodleWebCatalogArea {
+  name: string;
+  categories: MoodleWebCatalogCategory[];
+}
+
+/** Decodes a {@link MoodleWebCatalogArea}; `undefined` when `json` isn't an object. */
+export function decodeMoodleWebCatalogArea(json: unknown): MoodleWebCatalogArea | undefined {
+  const object = asJsonObject(json);
+  if (object === undefined) return undefined;
+  return {
+    name: required(decodeString(object["name"]), "MoodleWebCatalogArea.name"),
+    categories: required(decodeList(object["categories"], decodeMoodleWebCatalogCategory), "MoodleWebCatalogArea.categories"),
+  };
+}
+
+export function encodeMoodleWebCatalogArea(value: MoodleWebCatalogArea): JsonObject {
+  return {
+    "name": value.name,
+    "categories": value.categories.map((item) => encodeMoodleWebCatalogCategory(item)),
+  };
+}
+
+/** A category, such as a study course or one of its years. One reached again through another parent is listed there with neither subcategories nor courses. */
+export interface MoodleWebCatalogCategory {
+  name: string;
+  url: string | null;
+  categories: MoodleWebCatalogCategory[];
+  courses: MoodleWebCatalogCourse[];
+}
+
+/** Decodes a {@link MoodleWebCatalogCategory}; `undefined` when `json` isn't an object. */
+export function decodeMoodleWebCatalogCategory(json: unknown): MoodleWebCatalogCategory | undefined {
+  const object = asJsonObject(json);
+  if (object === undefined) return undefined;
+  return {
+    name: required(decodeString(object["name"]), "MoodleWebCatalogCategory.name"),
+    url: decodeString(object["url"]) ?? null,
+    categories: required(decodeList(object["categories"], decodeMoodleWebCatalogCategory), "MoodleWebCatalogCategory.categories"),
+    courses: required(decodeList(object["courses"], decodeMoodleWebCatalogCourse), "MoodleWebCatalogCategory.courses"),
+  };
+}
+
+export function encodeMoodleWebCatalogCategory(value: MoodleWebCatalogCategory): JsonObject {
+  return {
+    "name": value.name,
+    ...(value.url !== null ? { "url": value.url } : {}),
+    "categories": value.categories.map((item) => encodeMoodleWebCatalogCategory(item)),
+    "courses": value.courses.map((item) => encodeMoodleWebCatalogCourse(item)),
+  };
+}
+
+export interface MoodleWebCatalogCourse {
+  id: number;
+  name: string;
+  /** The course's short name, such as "CDS-E1805M-DOC"; blank when it has none. */
+  code: string;
+  url: string;
+}
+
+/** Decodes a {@link MoodleWebCatalogCourse}; `undefined` when `json` isn't an object. */
+export function decodeMoodleWebCatalogCourse(json: unknown): MoodleWebCatalogCourse | undefined {
+  const object = asJsonObject(json);
+  if (object === undefined) return undefined;
+  return {
+    id: required(decodeInteger(object["id"]), "MoodleWebCatalogCourse.id"),
+    name: required(decodeString(object["name"]), "MoodleWebCatalogCourse.name"),
+    code: required(decodeString(object["code"]), "MoodleWebCatalogCourse.code"),
+    url: required(decodeString(object["url"]), "MoodleWebCatalogCourse.url"),
+  };
+}
+
+export function encodeMoodleWebCatalogCourse(value: MoodleWebCatalogCourse): JsonObject {
+  return {
+    "id": value.id,
+    "name": value.name,
+    "code": value.code,
+    "url": value.url,
+  };
+}
+
 export interface MoodleWebCourseInfo {
   id: number | null;
   name: string;

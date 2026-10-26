@@ -3,6 +3,157 @@
 import DataApiRuntime
 import Foundation
 
+/// The courses on the university's Moodle, by area and then category, as the site nests them.
+public struct MoodleWebCatalog: Codable, Hashable, Sendable {
+    /// When the catalog was crawled, in ISO 8601 (UTC).
+    public var fetchedAt: String
+    public var areas: [MoodleWebCatalogArea]
+
+    public init(
+        fetchedAt: String,
+        areas: [MoodleWebCatalogArea]
+    ) {
+        self.fetchedAt = fetchedAt
+        self.areas = areas
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case fetchedAt = "fetched_at"
+        case areas = "areas"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.fetchedAt = try container.decodeRequired(String.self, forKey: .fetchedAt)
+        self.areas = try container.decodeRequired([MoodleWebCatalogArea].self, forKey: .areas)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(fetchedAt, forKey: .fetchedAt)
+        try container.encode(areas, forKey: .areas)
+    }
+}
+
+/// A section of the homepage, such as "Didattica online".
+public struct MoodleWebCatalogArea: Codable, Hashable, Sendable {
+    public var name: String
+    public var categories: [MoodleWebCatalogCategory]
+
+    public init(
+        name: String,
+        categories: [MoodleWebCatalogCategory]
+    ) {
+        self.name = name
+        self.categories = categories
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case name = "name"
+        case categories = "categories"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.name = try container.decodeRequired(String.self, forKey: .name)
+        self.categories = try container.decodeRequired([MoodleWebCatalogCategory].self, forKey: .categories)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(name, forKey: .name)
+        try container.encode(categories, forKey: .categories)
+    }
+}
+
+/// A category, such as a study course or one of its years. One reached again through another parent is listed there with neither subcategories nor courses.
+public struct MoodleWebCatalogCategory: Codable, Hashable, Sendable {
+    public var name: String
+    public var url: String?
+    public var categories: [MoodleWebCatalogCategory]
+    public var courses: [MoodleWebCatalogCourse]
+
+    public init(
+        name: String,
+        url: String? = nil,
+        categories: [MoodleWebCatalogCategory],
+        courses: [MoodleWebCatalogCourse]
+    ) {
+        self.name = name
+        self.url = url
+        self.categories = categories
+        self.courses = courses
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case name = "name"
+        case url = "url"
+        case categories = "categories"
+        case courses = "courses"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.name = try container.decodeRequired(String.self, forKey: .name)
+        self.url = container.decodeLenient(String.self, forKey: .url)
+        self.categories = try container.decodeRequired([MoodleWebCatalogCategory].self, forKey: .categories)
+        self.courses = try container.decodeRequired([MoodleWebCatalogCourse].self, forKey: .courses)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(name, forKey: .name)
+        if url != nil {
+            try container.encode(url, forKey: .url)
+        }
+        try container.encode(categories, forKey: .categories)
+        try container.encode(courses, forKey: .courses)
+    }
+}
+
+public struct MoodleWebCatalogCourse: Codable, Hashable, Sendable {
+    public var id: Int
+    public var name: String
+    /// The course's short name, such as "CDS-E1805M-DOC"; blank when it has none.
+    public var code: String
+    public var url: String
+
+    public init(
+        id: Int,
+        name: String,
+        code: String,
+        url: String
+    ) {
+        self.id = id
+        self.name = name
+        self.code = code
+        self.url = url
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id = "id"
+        case name = "name"
+        case code = "code"
+        case url = "url"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = try container.decodeRequired(Int.self, forKey: .id)
+        self.name = try container.decodeRequired(String.self, forKey: .name)
+        self.code = try container.decodeRequired(String.self, forKey: .code)
+        self.url = try container.decodeRequired(String.self, forKey: .url)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(name, forKey: .name)
+        try container.encode(code, forKey: .code)
+        try container.encode(url, forKey: .url)
+    }
+}
+
 public struct MoodleWebCourseInfo: Codable, Hashable, Sendable {
     public var id: Int?
     public var name: String

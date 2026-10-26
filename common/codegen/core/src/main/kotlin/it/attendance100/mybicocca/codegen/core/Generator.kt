@@ -10,7 +10,8 @@ import kotlin.io.path.relativeTo
 /**
  * Runs the pipeline for a set of APIs: for each, read its specs, merge them, apply the effects
  * overlay and validate the model, then generate and sync each requested target, and its live
- * tests when the API has a `tests.yaml` and the target a test output directory; finally sync
+ * tests when the API has a `tests.yaml` and the target a test output directory, and its
+ * resources when it declares some (see [ResourceData]); finally sync
  * the files the targets share in each output directory they wrote to, and the files derived from
  * the APIs' files there (see [CodeTarget.sharedFiles], [CodeTarget.indexFiles] and
  * [CodeTarget.sharedTestFiles]).
@@ -23,12 +24,14 @@ class Generator(
      * @param specDirs Directories each holding an API's `codegen.json`.
      * @param targetIds Targets to run; all configured targets when null.
      * @param check When true, nothing is written: the returned plans describe what would change.
+     * @param refreshResources When true, the data of the APIs' resources is fetched again first,
+     *   with their builders, and saved in their spec directories; never when [check].
      * @return One plan per API and target run, then one per output directory with shared files.
      */
-    fun run(specDirs: List<Path>, targetIds: Set<String>? = null, check: Boolean = false): List<SyncPlan> {
+    fun run(specDirs: List<Path>, targetIds: Set<String>? = null, check: Boolean = false, refreshResources: Boolean = false): List<SyncPlan> {
         val directories = mutableMapOf<Path, Directory>()
         val plans = specDirs.flatMap { specDir ->
-            runApi(specDir, targetIds, check) { outputDir, run -> directories.getOrPut(outputDir) { Directory() }.add(run) }
+            runApi(specDir, targetIds, check, refreshResources && !check) { outputDir, run -> directories.getOrPut(outputDir) { Directory() }.add(run) }
         }
         return plans + directories.mapNotNull { (outputDir, directory) -> syncShared(outputDir, directory, check) }
     }
@@ -101,6 +104,7 @@ class Generator(
         specDir: Path,
         targetIds: Set<String>?,
         check: Boolean,
+        refreshResources: Boolean,
         record: (outputDir: Path, run: TargetRun) -> Unit,
     ): List<SyncPlan> {
         val config = CodegenConfig.load(specDir.resolve(CodegenConfig.FILE_NAME))
@@ -109,13 +113,15 @@ class Generator(
         val spec = read(specDir, config, check)
         val tests = LiveTestsConfig.load(specDir)?.let { TestPlanner(spec, it).plan() }
         tests?.let { log("Planned the live tests of '${spec.id}': ${it.cases.size} cases, ${it.skips.size} operations skipped") }
+        val resources = ResourceData.load(specDir, spec, refreshResources, registry, log)
 
         return config.targets
             .filterKeys { targetIds == null || it in targetIds }
             .flatMap { (id, targetConfig) ->
                 val target = registry.target(id)
                 fun resolve(dir: String) = specDir.resolve(dir).absolute().normalize()
-                val context = TargetContext(targetConfig.options, resolve(targetConfig.outputDir), targetConfig.testOutputDir?.let(::resolve), log)
+                val resourceDir = targetConfig.resourceOutputDir ?: targetConfig.outputDir
+                val context = TargetContext(targetConfig.options, resolve(targetConfig.outputDir), targetConfig.testOutputDir?.let(::resolve), resolve(resourceDir), log)
                 fun sync(files: List<GeneratedFile>, dir: String, shared: List<GeneratedFile>, index: (Set<String>) -> List<GeneratedFile>, what: String): SyncPlan {
                     val outputDir = resolve(dir)
                     val plan = OutputSync.plan(outputDir, files, spec.id)
@@ -124,8 +130,12 @@ class Generator(
                     log("  $what: ${files.size} files, ${plan.writes.size} to write, ${plan.deletions.size} to delete ($outputDir)")
                     return plan
                 }
+                val resourceFiles = if (resources.isEmpty()) emptyList() else target.generateResources(spec, resources, context)
+                // Resources written next to the code are synced with it, so that neither sync deletes the other's files.
+                val besideCode = resolve(resourceDir) == resolve(targetConfig.outputDir)
                 listOfNotNull(
-                    sync(target.generate(spec, context), targetConfig.outputDir, target.sharedFiles(context), { target.indexFiles(it, context) }, id),
+                    sync(target.generate(spec, context) + resourceFiles.takeIf { besideCode }.orEmpty(), targetConfig.outputDir, target.sharedFiles(context), { target.indexFiles(it, context) }, id),
+                    resourceFiles.takeIf { !besideCode && it.isNotEmpty() }?.let { sync(it, resourceDir, emptyList(), { emptyList() }, "$id resources") },
                     tests?.let { plan ->
                         targetConfig.testOutputDir?.let { dir -> sync(target.generateTests(plan, context), dir, target.sharedTestFiles(context), { emptyList() }, "$id tests") }
                     },

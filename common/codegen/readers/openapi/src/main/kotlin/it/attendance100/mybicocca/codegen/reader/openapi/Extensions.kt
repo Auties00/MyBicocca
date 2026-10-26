@@ -5,6 +5,8 @@ import it.attendance100.mybicocca.codegen.model.AuthRequirement
 import it.attendance100.mybicocca.codegen.model.AuthScheme
 import it.attendance100.mybicocca.codegen.model.Effect
 import it.attendance100.mybicocca.codegen.model.HttpMethod
+import it.attendance100.mybicocca.codegen.model.Resource
+import it.attendance100.mybicocca.codegen.model.TypeRef
 
 /**
  * The `x-mb-*` extensions the reader understands, by where they appear:
@@ -16,6 +18,7 @@ import it.attendance100.mybicocca.codegen.model.HttpMethod
  * | root                  | `x-mb-parameters`    | API parameters, as `$ref`s to component parameters. Operations reference the path ones as usual; the reader drops those references. |
  * | root                  | `x-mb-headers`       | Headers every operation sends, before its own.                   |
  * | root                  | `x-mb-client`        | How the client sends requests and reads failures (see [ClientSyntax]). |
+ * | root                  | `x-mb-resources`     | Data the SDK ships: `{name: {type: Schema, builder: id, description}}`; the data is the spec directory's `resources/<name>.json`. |
  * | server                | `x-mb-name`          | PascalCase name of the server.                                    |
  * | components            | `x-mb-auth-schemes`  | Auth schemes: `{Name: {description, parameters: [{name, description}], headers: {Header: "Bearer {param}"}}}`. |
  * | operation             | `x-mb-auth`          | `{schemes: [Name, …], required: true}`.                          |
@@ -91,6 +94,20 @@ internal object Extensions {
     const val JOINED = "x-mb-joined"
     const val OBJECT_VALUES = "x-mb-object-values"
     const val HTML = "x-mb-html"
+    const val RESOURCES = "x-mb-resources"
+
+    fun resources(raw: Any?): List<Resource> {
+        val resources = raw as? Map<*, *> ?: return emptyList()
+        return resources.map { (name, definition) ->
+            val resource = definition as? Map<*, *> ?: error("Resource '$name' must be an object")
+            Resource(
+                name = name.toString(),
+                type = TypeRef.Named(resource["type"]?.toString() ?: error("Resource '$name' needs a type")),
+                builder = resource["builder"]?.toString() ?: error("Resource '$name' needs a builder"),
+                description = resource["description"]?.toString(),
+            )
+        }
+    }
 
     fun authSchemes(raw: Any?): List<AuthScheme> {
         val schemes = raw as? Map<*, *> ?: return emptyList()

@@ -1,7 +1,8 @@
 # The pages of the university's Moodle (elearning.unimib.it) that no web service exposes, read
 # out of their HTML: the public course pages, the Kaltura player of a video resource, and the
-# pages and mobile app templates of the attendance plugin. The web service functions are in
-# specs/moodle. See common/codegen/readers/openapi for the x-mb-* extensions.
+# pages and mobile app templates of the attendance plugin; and the catalog of every course,
+# which the SDKs ship as a resource. The web service functions are in specs/moodle. See
+# common/codegen/readers/openapi for the x-mb-* extensions.
 openapi: 3.0.3
 info:
   title: Moodle web pages
@@ -11,6 +12,13 @@ x-mb-prefix: MoodleWeb
 # Whether pages are fetched as the user or as an anonymous visitor is up to the cookies of the
 # client the caller configures.
 x-mb-client: {}
+x-mb-resources:
+  catalog:
+    type: MoodleWebCatalog
+    builder: elearning-catalog
+    description: >-
+      The catalog of the courses on the university's Moodle, as its category pages list them,
+      crawled ahead of time: searching it needs no network or account.
 
 servers:
   - url: https://elearning.unimib.it
@@ -105,6 +113,55 @@ paths:
 
 components:
   schemas:
+    MoodleWebCatalog:
+      x-mb-module: Catalog
+      description: The courses on the university's Moodle, by area and then category, as the site nests them.
+      type: object
+      required: [fetched_at, areas]
+      properties:
+        fetched_at:
+          type: string
+          description: When the catalog was crawled, in ISO 8601 (UTC).
+        areas:
+          type: array
+          items: { $ref: "#/components/schemas/MoodleWebCatalogArea" }
+    MoodleWebCatalogArea:
+      x-mb-module: Catalog
+      description: A section of the homepage, such as "Didattica online".
+      type: object
+      required: [name, categories]
+      properties:
+        name: { type: string }
+        categories:
+          type: array
+          items: { $ref: "#/components/schemas/MoodleWebCatalogCategory" }
+    MoodleWebCatalogCategory:
+      x-mb-module: Catalog
+      description: >-
+        A category, such as a study course or one of its years. One reached again through another
+        parent is listed there with neither subcategories nor courses.
+      type: object
+      required: [name, categories, courses]
+      properties:
+        name: { type: string }
+        url: { type: string }
+        categories:
+          type: array
+          items: { $ref: "#/components/schemas/MoodleWebCatalogCategory" }
+        courses:
+          type: array
+          items: { $ref: "#/components/schemas/MoodleWebCatalogCourse" }
+    MoodleWebCatalogCourse:
+      x-mb-module: Catalog
+      type: object
+      required: [id, name, code, url]
+      properties:
+        id: { type: integer, format: int32 }
+        name: { type: string }
+        code:
+          type: string
+          description: The course's short name, such as "CDS-E1805M-DOC"; blank when it has none.
+        url: { type: string }
     MoodleWebCourseInfo:
       type: object
       x-mb-scrape: {}

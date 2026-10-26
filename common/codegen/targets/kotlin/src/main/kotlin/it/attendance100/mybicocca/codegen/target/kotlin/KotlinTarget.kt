@@ -5,8 +5,11 @@ import it.attendance100.mybicocca.codegen.core.GeneratedFile
 import it.attendance100.mybicocca.codegen.core.TargetContext
 import it.attendance100.mybicocca.codegen.core.TestPlan
 import it.attendance100.mybicocca.codegen.core.decodeOptions
+import it.attendance100.mybicocca.codegen.core.resourceJson
 import it.attendance100.mybicocca.codegen.model.ApiSpec
+import it.attendance100.mybicocca.codegen.model.Resource
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonObject
 
 /**
  * Generates a Kotlin/JVM SDK built on Ktor and kotlinx.serialization, on top of the
@@ -70,7 +73,18 @@ class KotlinTarget : CodeTarget {
             if (spec.usesRoles) {
                 add(file(layout.dtoPackage, layout.rolesFileName) { client.emitRoles(it) })
             }
+            if (spec.resources.isNotEmpty()) {
+                val resources = ResourceEmitter(spec, layout)
+                add(file(layout.apiPackage, "${resources.name}.kt") { resources.emit(it) })
+            }
         }
+    }
+
+    /** Each resource, in the resources' package path of the API, read by `<Prefix>Resources` (see [ResourceEmitter]). */
+    override fun generateResources(spec: ApiSpec, data: Map<Resource, JsonObject>, context: TargetContext): List<GeneratedFile> {
+        val options = context.options.decodeOptions<Options>()
+        val resources = ResourceEmitter(spec, KotlinLayout(spec, options.packageName, options.runtimePackage))
+        return data.map { (resource, value) -> GeneratedFile(resources.path(resource), resourceJson(spec.id, value)) }
     }
 
     /** The live tests of the API, in the `live` package next to its own (see [TestEmitter]). */

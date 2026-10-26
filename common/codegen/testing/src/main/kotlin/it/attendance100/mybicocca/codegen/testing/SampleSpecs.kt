@@ -25,12 +25,15 @@ import it.attendance100.mybicocca.codegen.model.RecordEncoding
 import it.attendance100.mybicocca.codegen.model.RecordScrape
 import it.attendance100.mybicocca.codegen.model.RecordType
 import it.attendance100.mybicocca.codegen.model.RequestBody
+import it.attendance100.mybicocca.codegen.model.Resource
 import it.attendance100.mybicocca.codegen.model.ResponseBody
 import it.attendance100.mybicocca.codegen.model.RetryRequest
 import it.attendance100.mybicocca.codegen.model.RetryRule
 import it.attendance100.mybicocca.codegen.model.ScrapeStep
 import it.attendance100.mybicocca.codegen.model.Server
 import it.attendance100.mybicocca.codegen.model.TypeRef
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 
 /**
  * A small API that exercises every feature of the model, so that each target's golden output
@@ -554,5 +557,9 @@ object SampleSpecs {
                 RetryRule(status = 429, delaySeconds = 5),
             ),
         ),
+        resources = listOf(Resource("owners", TypeRef.Named(owner.name), "demo-owners", "The item owners, fetched ahead of time.")),
     )
+
+    /** The data of [demo]'s resources. */
+    val demoResources: Map<Resource, JsonObject> = mapOf(demo.resources.single() to JsonObject(mapOf("ownerId" to JsonPrimitive(7))))
 }

@@ -1,0 +1,88 @@
+# The students' opinions of the courses, published at https://opinionistudenti.unimib.it/valdid/
+# from the teaching questionnaires, which the SDKs ship as a resource keyed by the courses' Esse3
+# codes. See common/codegen/readers/openapi for the x-mb-* extensions.
+openapi: 3.0.3
+info:
+  title: Esse3 course ratings
+  version: "1"
+x-mb-id: esse3
+x-mb-prefix: Esse3
+x-mb-resources:
+  courseRatings:
+    type: Esse3CourseRatings
+    builder: course-ratings
+    description: >-
+      The students' opinions of every course since the academic year 2013/2014, crawled ahead of
+      time from the published questionnaires' results.
+paths: {}
+
+components:
+  schemas:
+    Esse3CourseRatings:
+      x-mb-module: Ratings
+      type: object
+      required: [fetched_at, academic_years]
+      properties:
+        fetched_at:
+          type: string
+          description: When the ratings were crawled, in ISO 8601 (UTC).
+        academic_years:
+          type: object
+          description: The academic years with published opinions, by the year they start in (`2024` for 2024/2025).
+          additionalProperties: { $ref: "#/components/schemas/Esse3RatingsYear" }
+    Esse3RatingsYear:
+      x-mb-module: Ratings
+      type: object
+      required: [id, courses]
+      properties:
+        id:
+          type: integer
+          format: int32
+          description: The year the academic year starts in.
+        courses:
+          type: object
+          description: The courses, by their code (such as `E0201Q005`).
+          additionalProperties: { $ref: "#/components/schemas/Esse3CourseRating" }
+    Esse3CourseRating:
+      x-mb-module: Ratings
+      type: object
+      required: [id, url, teachers]
+      properties:
+        id:
+          type: string
+          description: The course's code.
+        url: { type: string }
+        questionnaires:
+          type: integer
+          format: int32
+          description: How many questionnaires the students filled in.
+        ratings:
+          description: The teachers' ratings, weighted by their questionnaires; none when no teacher's are published.
+          allOf: [$ref: "#/components/schemas/Esse3Ratings"]
+        teachers:
+          type: array
+          items: { $ref: "#/components/schemas/Esse3TeacherRating" }
+    Esse3TeacherRating:
+      x-mb-module: Ratings
+      type: object
+      required: [id, url]
+      properties:
+        id:
+          type: string
+          description: The teacher's id on the site.
+        url: { type: string }
+        questionnaires:
+          type: integer
+          format: int32
+        ratings:
+          description: None when the teacher's aren't published.
+          allOf: [$ref: "#/components/schemas/Esse3Ratings"]
+    Esse3Ratings:
+      x-mb-module: Ratings
+      description: Ratings on a 1-10 scale; those of academic years before 2019/2020, on a 0-3 scale, are rescaled as 1 + 3 × rating.
+      type: object
+      required: [overall_satisfaction, teaching_effectiveness, organizational_aspects]
+      properties:
+        overall_satisfaction: { type: number, format: double }
+        teaching_effectiveness: { type: number, format: double }
+        organizational_aspects: { type: number, format: double }

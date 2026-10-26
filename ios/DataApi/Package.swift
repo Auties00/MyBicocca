@@ -18,8 +18,9 @@ let package = Package(
         .target(name: "DataApiRuntime", dependencies: ["SwiftSoup"]),
         .target(name: "Affluences", dependencies: ["DataApiRuntime"]),
         .target(name: "EasyStaff", dependencies: ["DataApiRuntime"]),
-        .target(name: "Elearning", dependencies: ["DataApiRuntime"]),
-        .target(name: "Esse3", dependencies: ["DataApiRuntime"]),
+        // Their Resources folders hold the data codegen generates from the APIs' resources.
+        .target(name: "Elearning", dependencies: ["DataApiRuntime"], resources: [.copy("Resources")]),
+        .target(name: "Esse3", dependencies: ["DataApiRuntime"], resources: [.copy("Resources")]),
         .testTarget(name: "DataApiRuntimeTests", dependencies: ["DataApiRuntime"]),
         // Generated from each API's tests.yaml: they call the real services, and skip unless LIVE_TESTS=1.
         .testTarget(name: "LiveTests", dependencies: ["Affluences", "EasyStaff", "Elearning", "Esse3", "DataApiRuntime"]),

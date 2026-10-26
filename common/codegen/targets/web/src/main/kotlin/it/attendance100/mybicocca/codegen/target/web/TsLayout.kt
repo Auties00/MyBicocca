@@ -117,6 +117,12 @@ internal class TsLayout(private val spec: ApiSpec, val packageName: String, val 
 
     fun importRuntime(file: TsFile, name: String) = file.importFile(name, "$runtimePath/index.ts")
 
+    val resourcesName = "${spec.prefix}Resources"
+    val resourcesFile = api("$resourcesName.ts")
+
+    /** The file of the API's resource [name], in the subpackage's `resources` folder. */
+    fun resource(name: String): String = "$packageName/resources/${spec.id}/$name.json"
+
     fun declaration(type: TypeRef.Named) = spec.resolve(type)
 
     fun isEnum(type: TypeRef.Named): Boolean = spec.resolve(type) is EnumType

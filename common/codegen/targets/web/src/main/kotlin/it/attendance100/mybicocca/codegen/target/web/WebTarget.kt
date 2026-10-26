@@ -8,8 +8,11 @@ import it.attendance100.mybicocca.codegen.core.decapitalized
 import it.attendance100.mybicocca.codegen.core.SHARED_FILES_OWNER
 import it.attendance100.mybicocca.codegen.core.decodeOptions
 import it.attendance100.mybicocca.codegen.core.resourceFiles
+import it.attendance100.mybicocca.codegen.core.resourceJson
 import it.attendance100.mybicocca.codegen.model.ApiSpec
+import it.attendance100.mybicocca.codegen.model.Resource
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonObject
 
 /**
  * Generates a TypeScript SDK for the web app, built on `fetch` and usable in browsers and Node:
@@ -72,6 +75,45 @@ class WebTarget : CodeTarget {
             add(file(layout.errorFile) { client.emitError(it) })
             if (spec.usesRoles) {
                 add(file(layout.rolesFile) { client.emitRoles(it) })
+            }
+            if (spec.resources.isNotEmpty()) {
+                add(file(layout.resourcesFile) { resources(spec, layout, it) })
+            }
+        }
+    }
+
+    /** Each resource, in the subpackage's `resources` folder, which `<Prefix>Resources` imports as JSON. */
+    override fun generateResources(spec: ApiSpec, data: Map<Resource, JsonObject>, context: TargetContext): List<GeneratedFile> {
+        val options = context.options.decodeOptions<Options>()
+        val layout = TsLayout(spec, options.packageName ?: spec.id, options.runtimePath)
+        return data.map { (resource, value) -> GeneratedFile(layout.resource(resource.name), resourceJson(spec.id, value)) }
+    }
+
+    /**
+     * `<Prefix>Resources`, whose functions decode each resource, imported on demand so that
+     * bundlers keep it out of the code that doesn't use it.
+     */
+    private fun resources(spec: ApiSpec, layout: TsLayout, file: TsFile) {
+        layout.importRuntime(file, "DecodeError")
+        file.body.apply {
+            line("/** The data the SDK ships along with its code, read out of its resources. */")
+            block("export const ${layout.resourcesName} = {", "};") {
+                for (resource in spec.resources) {
+                    val type = layout.render(resource.type, file)
+                    layout.importDeclaration(file, resource.type.name, layout.decoderName(resource.type.name))
+                    val description = resource.description?.let { "${TsSyntax.docText(it)} " }.orEmpty()
+                    line("/** ${description}Decoded on every call: keep the result. */")
+                    block("async ${TsSyntax.variable(resource.name)}(): Promise<$type> {", "},") {
+                        val path = "../" + layout.resource(resource.name).substringAfter('/')
+                        line("const { default: json } = await import(${TsSyntax.string(path)}, { with: { type: \"json\" } });")
+                        line("return decoded(${layout.decoderName(resource.type.name)}(json), ${TsSyntax.string(resource.name)});")
+                    }
+                }
+            }
+            line()
+            block("function decoded<T>(value: T | undefined, name: string): T {") {
+                line("if (value === undefined) throw new DecodeError(`The SDK's resource \${name} doesn't decode`);")
+                line("return value;")
             }
         }
     }

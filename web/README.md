@@ -27,6 +27,7 @@ Inside each subpackage:
 | `api`     | `api`          | The entry point, one service per module, the client |
 | `models`  | `dto`          | Records, enums, credentials and scrapers         |
 | `errors`  | `exception`    | The error each API throws                        |
+| `resources` | `resources`  | Data the subpackage ships, such as the course catalog, which `<Prefix>Resources` decodes |
 
 Each folder has an `index.ts` that re-exports it, so you import from the subpackage:
 

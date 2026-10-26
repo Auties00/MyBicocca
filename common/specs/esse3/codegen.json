@@ -14,12 +14,19 @@
       "options": {
         "spec": "client.yaml"
       }
+    },
+    {
+      "type": "openapi",
+      "options": {
+        "spec": "ratings.yaml"
+      }
     }
   ],
   "targets": {
     "kotlin": {
       "outputDir": "../../../android/data-api/src/main/kotlin",
       "testOutputDir": "../../../android/data-api/src/test/kotlin",
+      "resourceOutputDir": "../../../android/data-api/src/main/resources",
       "options": {
         "packageName": "it.attendance100.mybicocca.data.remote.esse3",
         "temporalSerializers": [
