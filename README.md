@@ -83,7 +83,17 @@ land on the same timeline, colour‑coded by source and pinch‑zoomable.
 
 #### Day
 
-A pinch‑zoomable hourly timeline. Tap any block for the full detail and a deep link straight to the related course, assignment or library booking.
+A pinch‑zoomable hourly timeline of everything on your day, each block coloured by where it comes from.
+
+</td>
+</tr>
+<tr>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_CalendarEvent.png" /><img src="android/tools/screenshots/en/light/Screenshot_CalendarEvent.png" width="230" /></picture></td>
+<td>
+
+#### Event details
+
+Tap any block for its time, room and teacher, then get directions on the campus map or jump straight to the course.
 
 </td>
 </tr>
@@ -110,7 +120,6 @@ A heatmap tints each date by how busy it is, with a draggable agenda sheet for t
 </table>
 
 ---
-
 ## 🎓 E‑learning
 
 A complete, native Moodle client, not a webview. Browse your courses, dive into
@@ -124,7 +133,17 @@ recordings, all inside the app.
 
 #### Your courses
 
-Every enrolled course, grouped by academic period and filterable by year or favourites. An in‑app catalog browser lets you enrol in new ones on the spot.
+Every enrolled course, grouped by academic period and filterable by year or favourites.
+
+</td>
+</tr>
+<tr>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_ElearningAddCourse.png" /><img src="android/tools/screenshots/en/light/Screenshot_ElearningAddCourse.png" width="230" /></picture></td>
+<td>
+
+#### Course catalog
+
+Browse every teaching area on the university's Moodle, or search by course name or code, and enrol on the spot. The catalog ships with the app, so browsing it needs no network.
 
 </td>
 </tr>
@@ -144,7 +163,17 @@ A collapsing header opens onto tabs for info, content, quizzes, assignments and 
 
 #### Materials
 
-Sections and folders expand inline, and an in‑app viewer opens PDFs, images and text without leaving the app. Office files hand off with a single tap.
+Sections and folders expand inline, with every file one tap away.
+
+</td>
+</tr>
+<tr>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_ElearningFile.png" /><img src="android/tools/screenshots/en/light/Screenshot_ElearningFile.png" width="230" /></picture></td>
+<td>
+
+#### File viewer
+
+PDFs, images and text open in an in‑app viewer, page by page, ready to share or download. Office files hand off to the app of your choice.
 
 </td>
 </tr>
@@ -183,7 +212,6 @@ Read the brief, upload your files and submit, then track submission status, teac
 Lecture recordings stream in‑app (Kaltura / HLS), alongside grades and module deadlines.
 
 ---
-
 ## 🗺️ Maps
 
 The whole campus, offline. Buildings and rooms render from a bundled Protomaps vector
@@ -202,12 +230,22 @@ Tappable pins for every building, rendered from a bundled vector tileset. No Goo
 </td>
 </tr>
 <tr>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_MapFilter.png" /><img src="android/tools/screenshots/en/light/Screenshot_MapFilter.png" width="230" /></picture></td>
+<td>
+
+#### Filter by category
+
+Show only what you are looking for: teaching buildings, libraries, canteens, offices, sports facilities and more.
+
+</td>
+</tr>
+<tr>
 <td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_MapBuildings.png" /><img src="android/tools/screenshots/en/light/Screenshot_MapBuildings.png" width="230" /></picture></td>
 <td>
 
 #### Building directory
 
-Search the whole campus, filter by category, and get one‑tap directions to anywhere.
+Search the whole campus and get one‑tap directions to anywhere.
 
 </td>
 </tr>
@@ -217,19 +255,17 @@ Search the whole campus, filter by category, and get one‑tap directions to any
 
 #### Inside a building
 
-Drill into rooms and their details, with live EasyBadge occupancy schedules. The map recolours itself to match your theme.
+Drill into rooms and their details, with live EasyBadge occupancy schedules.
 
 </td>
 </tr>
 </table>
 
 ---
-
 ## 🗂️ Services
 
 The registry tab fans out into the full Esse3 toolbox: every student service you'd
-otherwise hunt for online, grouped into Teaching, Bookings, Documents and Payments,
-and topped by a deadlines banner that always shows what's next.
+otherwise hunt for online, grouped into Teaching, Bookings, Documents and Payments.
 
 <table>
 <tr>
@@ -238,17 +274,52 @@ and topped by a deadlines banner that always shows what's next.
 
 #### The services hub
 
-Home to everything administrative, grouped into Teaching, Bookings, Documents and Payments, and topped by a live deadlines banner.
+Home to everything administrative, in four groups, topped by a live deadlines banner.
 
 </td>
 </tr>
 <tr>
-<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_BookableExams.png" /><img src="android/tools/screenshots/en/light/Screenshot_BookableExams.png" width="230" /></picture></td>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_ServicesScadenze.png" /><img src="android/tools/screenshots/en/light/Screenshot_ServicesScadenze.png" width="230" /></picture></td>
 <td>
 
-#### Exam sessions
+#### Deadlines
 
-Browse every open exam call (appello) and book your seat in a single tap, with a confirmation you can show on the day.
+The banner counts what's urgent and expands into a full chronological timeline of tuition, enrolment and exam dates.
+
+</td>
+</tr>
+</table>
+
+### Teaching
+
+<table>
+<tr>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_Career.png" /><img src="android/tools/screenshots/en/light/Screenshot_Career.png" width="230" /></picture></td>
+<td>
+
+#### Study plan
+
+Your programme year by year, with the activities and credits of each, ready to print.
+
+</td>
+</tr>
+<tr>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_Attendance.png" /><img src="android/tools/screenshots/en/light/Screenshot_Attendance.png" width="230" /></picture></td>
+<td>
+
+#### Attendance
+
+How much of each course you have attended so far, and whether you are on track.
+
+</td>
+</tr>
+<tr>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_AttendanceOpt.png" /><img src="android/tools/screenshots/en/light/Screenshot_AttendanceOpt.png" width="230" /></picture></td>
+<td>
+
+#### Check in
+
+Record your presence at a lecture, or at another activity, in a couple of taps. No paper sheet to chase.
 
 </td>
 </tr>
@@ -263,6 +334,51 @@ Published grades appear the moment they land, and you can accept or reject each 
 </td>
 </tr>
 <tr>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_Questionnaires.png" /><img src="android/tools/screenshots/en/light/Screenshot_Questionnaires.png" width="230" /></picture></td>
+<td>
+
+#### Questionnaires
+
+The teaching evaluations still to fill in, and the ones you have already sent.
+
+</td>
+</tr>
+</table>
+
+### Bookings
+
+<table>
+<tr>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_BookableExams.png" /><img src="android/tools/screenshots/en/light/Screenshot_BookableExams.png" width="230" /></picture></td>
+<td>
+
+#### Book an exam
+
+Every open exam call (appello) of your courses, grouped by course, bookable in a single tap.
+
+</td>
+</tr>
+<tr>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_BookedExams.png" /><img src="android/tools/screenshots/en/light/Screenshot_BookedExams.png" width="230" /></picture></td>
+<td>
+
+#### Your exams
+
+The exams you've booked, with their date, time and room, and a confirmation you can show on the day.
+
+</td>
+</tr>
+<tr>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_BookAppointment.png" /><img src="android/tools/screenshots/en/light/Screenshot_BookAppointment.png" width="230" /></picture></td>
+<td>
+
+#### Offices
+
+Book an appointment at the student offices (segreteria) and keep track of the ones coming up.
+
+</td>
+</tr>
+<tr>
 <td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_Library.png" /><img src="android/tools/screenshots/en/light/Screenshot_Library.png" width="230" /></picture></td>
 <td>
 
@@ -272,33 +388,81 @@ Reserve a study seat in the campus libraries, powered by Affluences, and manage 
 
 </td>
 </tr>
+</table>
+
+### Documents
+
+<table>
 <tr>
-<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_AttendanceOpt.png" /><img src="android/tools/screenshots/en/light/Screenshot_AttendanceOpt.png" width="230" /></picture></td>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_Enrollments.png" /><img src="android/tools/screenshots/en/light/Screenshot_Enrollments.png" width="150" /></picture><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_EnrollmentDetail.png" /><img src="android/tools/screenshots/en/light/Screenshot_EnrollmentDetail.png" width="150" /></picture></td>
 <td>
 
-#### Attendance
+#### Enrolments
 
-Mark yourself present by scanning the lecture's QR code. No paper sheet to chase.
+Each academic year you enrolled in, and for each its enrolment type, fee exemptions and bands, and degree programme.
 
 </td>
 </tr>
 <tr>
-<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_ServicesScadenze.png" /><img src="android/tools/screenshots/en/light/Screenshot_ServicesScadenze.png" width="230" /></picture></td>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_Titles.png" /><img src="android/tools/screenshots/en/light/Screenshot_Titles.png" width="150" /></picture><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_TitleDetail.png" /><img src="android/tools/screenshots/en/light/Screenshot_TitleDetail.png" width="150" /></picture></td>
 <td>
 
-#### Deadlines
+#### Degrees
 
-A banner counts what's urgent and expands into a full chronological timeline of tuition, enrolment and exam dates.
+The qualifications on your record, such as your high school diploma, with grade, year and institution.
+
+</td>
+</tr>
+<tr>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_Documents.png" /><img src="android/tools/screenshots/en/light/Screenshot_Documents.png" width="230" /></picture></td>
+<td>
+
+#### Certificates
+
+Digitally signed self‑certifications, such as enrolment with exams or the tuition you paid each year, downloaded as PDFs.
 
 </td>
 </tr>
 </table>
 
-And the rest of the registry too: tuition and MAV/PagoPA payments, ISEE, refunds, certificates,
-academic titles, enrolment records, study‑plan editing, questionnaires and segreteria appointments.
+### Payments
+
+<table>
+<tr>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_Fees.png" /><img src="android/tools/screenshots/en/light/Screenshot_Fees.png" width="230" /></picture></td>
+<td>
+
+#### Fees
+
+The tuition instalments still to pay and the ones already paid, with amounts and deadlines.
+
+</td>
+</tr>
+<tr>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_Isee.png" /><img src="android/tools/screenshots/en/light/Screenshot_Isee.png" width="150" /></picture><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_IseeDetail.png" /><img src="android/tools/screenshots/en/light/Screenshot_IseeDetail.png" width="150" /></picture></td>
+<td>
+
+#### ISEE
+
+Your ISEE indicator for each academic year, against the threshold for benefits and the exemption it earns you.
+
+</td>
+</tr>
+<tr>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_Refunds.png" /><img src="android/tools/screenshots/en/light/Screenshot_Refunds.png" width="150" /></picture><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_RefundDetail.png" /><img src="android/tools/screenshots/en/light/Screenshot_RefundDetail.png" width="150" /></picture></td>
+<td>
+
+#### Refunds
+
+What the university has paid back, and for each refund its reason, mandate and credit date.
+
+</td>
+</tr>
+</table>
+
+And the rest of the registry too: MAV and PagoPA payments, study‑plan editing and more.
 
 ---
-
 ## 👤 Profile & career
 
 A live dashboard of your academic standing: a flippable student card, your headline
@@ -316,6 +480,16 @@ A flippable student card up top, then your headline numbers: arithmetic and weig
 </td>
 </tr>
 <tr>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_ExamsTaken.png" /><img src="android/tools/screenshots/en/light/Screenshot_ExamsTaken.png" width="150" /></picture><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_Credits.png" /><img src="android/tools/screenshots/en/light/Screenshot_Credits.png" width="150" /></picture></td>
+<td>
+
+#### Exams and credits
+
+Every exam you passed, year by year, with its grade, and the credits each one earned you towards your degree.
+
+</td>
+</tr>
+<tr>
 <td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_Average.png" /><img src="android/tools/screenshots/en/light/Screenshot_Average.png" width="230" /></picture></td>
 <td>
 
@@ -326,19 +500,86 @@ A "what‑if" calculator that shows how the next exam moves your average, in bot
 </td>
 </tr>
 <tr>
-<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_Career.png" /><img src="android/tools/screenshots/en/light/Screenshot_Career.png" width="230" /></picture></td>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_AccountSwitcher.png" /><img src="android/tools/screenshots/en/light/Screenshot_AccountSwitcher.png" width="230" /></picture></td>
 <td>
 
-#### Career
+#### Accounts
 
-Your full libretto with a grade‑trend chart across the whole degree, broken down year by year.
+Sign in with more than one account, and switch between them and between your careers.
 
 </td>
 </tr>
 </table>
 
 ---
+## ⚙️ Settings
 
+Make the app yours: its look, its language, how it opens files and how it protects your data.
+
+<table>
+<tr>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_Settings.png" /><img src="android/tools/screenshots/en/light/Screenshot_Settings.png" width="230" /></picture></td>
+<td>
+
+#### Preferences
+
+Appearance, language, security, file opening and haptics, plus everything about the app.
+
+</td>
+</tr>
+<tr>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_SettingsAppearance.png" /><img src="android/tools/screenshots/en/light/Screenshot_SettingsAppearance.png" width="230" /></picture></td>
+<td>
+
+#### Appearance
+
+Four palettes (MyBicocca, Material You, Oceano and Bosco), each in light, dark or following the system.
+
+</td>
+</tr>
+<tr>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_SettingsLanguage.png" /><img src="android/tools/screenshots/en/light/Screenshot_SettingsLanguage.png" width="150" /></picture><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_SettingsHaptic.png" /><img src="android/tools/screenshots/en/light/Screenshot_SettingsHaptic.png" width="150" /></picture></td>
+<td>
+
+#### Language and haptics
+
+Use the app in Italian or English, or follow the system, and choose whether it vibrates as you tap.
+
+</td>
+</tr>
+<tr>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_SettingsSecurity.png" /><img src="android/tools/screenshots/en/light/Screenshot_SettingsSecurity.png" width="230" /></picture></td>
+<td>
+
+#### Security
+
+Lock the app behind your fingerprint or your device password, and choose whether anonymous crash reports are sent.
+
+</td>
+</tr>
+<tr>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_SettingsFileAssociation.png" /><img src="android/tools/screenshots/en/light/Screenshot_SettingsFileAssociation.png" width="230" /></picture></td>
+<td>
+
+#### File opening
+
+Pick the app that opens each kind of file, from PDFs and images to videos, audio and archives, or be asked every time.
+
+</td>
+</tr>
+<tr>
+<td><picture><source media="(prefers-color-scheme: dark)" srcset="android/tools/screenshots/en/dark/Screenshot_SettingsAppInfo.png" /><img src="android/tools/screenshots/en/light/Screenshot_SettingsAppInfo.png" width="230" /></picture></td>
+<td>
+
+#### About
+
+The app's version, what's new in it, its updates, including beta releases, and the people behind it.
+
+</td>
+</tr>
+</table>
+
+---
 ## 🙏 Acknowledgments
 
 - [University of Milano‑Bicocca](https://www.unimib.it/) for the digital services
