@@ -351,7 +351,7 @@ Your full libretto with a grade‑trend chart across the whole degree, broken do
 
 ## 📄 License
 
-© 2025 Alessandro Autiero, Federico Giarrusso, Lorenzo Angelo Lupi, Alessandro Ferrari Pagini.
+© 2025 Alessandro Autiero, Lorenzo Angelo Lupi, Federico Giarrusso, Alessandro Ferrari Pagini.
 
 MyBicocca is free software under the [GNU Affero General Public License v3.0](LICENSE): anyone
 who distributes it, changes it or offers it as a service must publish their complete source

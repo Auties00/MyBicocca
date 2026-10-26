@@ -1,6 +1,6 @@
 # Licensing
 
-Copyright © 2025 Alessandro Autiero, Federico Giarrusso, Lorenzo Angelo Lupi, Alessandro Ferrari Pagini.
+Copyright © 2025 Alessandro Autiero, Lorenzo Angelo Lupi, Federico Giarrusso, Alessandro Ferrari Pagini.
 
 MyBicocca is dual licensed. You can use it under either of these licenses:
 
