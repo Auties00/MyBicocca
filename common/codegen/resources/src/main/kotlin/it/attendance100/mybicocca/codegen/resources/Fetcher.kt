@@ -1,11 +1,11 @@
 package it.attendance100.mybicocca.codegen.resources
 
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.future.await
-import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.Semaphore
-import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.sync.withPermit
+import kotlinx.coroutines.withContext
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
@@ -34,8 +34,8 @@ internal class FetchException(message: String) : Exception(message)
  *   only across its own redirects: some servers serve a stripped page to a session that already
  *   had one.
  * @param timeoutSeconds How long a request may wait for its response before it is tried again.
- * @param requestsPerSecond How many requests may start each second, for a server that answers
- *   a burst quickly but slows down for everyone when it lasts; no limit when null.
+ * @param backends The servers behind the website's load balancer, when requests should go to
+ *   each as fast as it answers rather than as the balancer chooses.
  */
 internal class Fetcher(
     concurrency: Int,
@@ -45,16 +45,13 @@ internal class Fetcher(
     private val backoffSeconds: Double = 1.5,
     private val maxPauseSeconds: Double = 30.0,
     private val timeoutSeconds: Long = 30,
-    requestsPerSecond: Double? = null,
+    private val backends: Backends? = null,
 ) {
     private val client = HttpClient.newBuilder()
         .connectTimeout(Duration.ofSeconds(minOf(timeoutSeconds, 15)))
         .followRedirects(if (freshSessions) HttpClient.Redirect.NEVER else HttpClient.Redirect.NORMAL)
         .build()
     private val permits = Semaphore(concurrency)
-    private val interval = requestsPerSecond?.let { (1_000_000_000 / it).toLong() } ?: 0L
-    private val pacing = Mutex()
-    private var nextStart = 0L
     private val requests = AtomicInteger()
     private val incomplete = AtomicInteger()
     private val errors = AtomicInteger()
@@ -74,7 +71,6 @@ internal class Fetcher(
         for (attempt in 1..attempts) {
             try {
                 val page = permits.withPermit {
-                    pace()
                     requests.incrementAndGet()
                     fetch(url)
                 }
@@ -95,21 +91,24 @@ internal class Fetcher(
         throw FetchException("failed after $attempts attempts: $url\n" + problems.distinct().joinToString("\n") { "    $it" })
     }
 
-    /** Waits for the next request's turn, when requests are limited per second. */
-    private suspend fun pace() {
-        if (interval == 0L) return
-        val wait = pacing.withLock {
-            val now = System.nanoTime()
-            val start = maxOf(now, nextStart)
-            nextStart = start + interval
-            start - now
+    private suspend fun fetch(url: String): Page {
+        val backend = backends?.acquire()
+        val started = System.nanoTime()
+        var answeredBy: String? = null
+        var ok = false
+        try {
+            return exchange(url, backend) { answeredBy = it }.also { ok = true }
+        } finally {
+            // Even for a request cancelled halfway, so that its server gets its room back.
+            withContext(NonCancellable) { backends?.release(backend, answeredBy, (System.nanoTime() - started) / 1e9, ok) }
         }
-        if (wait > 0) delay(wait / 1_000_000)
     }
 
-    private suspend fun fetch(url: String): Page {
+    /** The page at [url], from the server [backend] when one is given; [answeredBy] learns the server that answered, when the balancer says. */
+    private suspend fun exchange(url: String, backend: String?, answeredBy: (String) -> Unit): Page {
         var target = URI(url)
         val cookies = linkedMapOf<String, String>()
+        if (backend != null) cookies[backends!!.cookie] = backend
         repeat(MAX_REDIRECTS) {
             val request = HttpRequest.newBuilder(target).timeout(Duration.ofSeconds(timeoutSeconds)).GET().apply {
                 headers.forEach { (name, value) -> header(name, value) }
@@ -117,6 +116,11 @@ internal class Fetcher(
             }.build()
             val response = client.sendAsync(request, HttpResponse.BodyHandlers.ofString()).await()
             val status = response.statusCode()
+            if (backends != null) {
+                response.headers().allValues("Set-Cookie").map { it.substringBefore(';') }
+                    .firstOrNull { it.substringBefore('=').trim() == backends.cookie }
+                    ?.let { answeredBy(it.substringAfter('=').trim()) }
+            }
             if (freshSessions && status in 300..399) {
                 for (setCookie in response.headers().allValues("Set-Cookie")) {
                     val pair = setCookie.substringBefore(';')

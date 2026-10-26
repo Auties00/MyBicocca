@@ -24,7 +24,6 @@ import org.jsoup.nodes.TextNode
 import java.math.BigDecimal
 import java.math.RoundingMode
 import java.time.Instant
-import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -37,31 +36,36 @@ import java.util.concurrent.atomic.AtomicInteger
  * scale, become `1 + 3 × rating`, which maps the bands' boundaries exactly. A teacher whose
  * ratings aren't published has none, and a course none when none of its teachers has.
  *
- * The site now and then serves a page with some of its sections blank: a page counts as
- * fetched only once it has every section the crawl reads, and is asked for again until then.
- * It also slows down for everyone when asked too much, so the crawl keeps to a few requests
- * at a time, at a steady pace, and waits for each.
+ * The site now and then serves a page with some of its sections blank, or some of a listing's
+ * rows missing, and sometimes keeps doing so for a while. Every page says how many
+ * questionnaires it covers, and every listing's row how many its page does, so a page counts
+ * as fetched only once it agrees with the row that led to it and its own rows add up to it; a
+ * teacher's page, once it has every series of its chart. A year with a page that never does
+ * isn't saved, and the build fails, so the data never misses what the site has.
  *
- * Past academic years don't change, so only the last two the resource has are fetched again,
- * along with any later or missing one. Years are fetched one at a time, the latest first, and
- * each is saved once fetched, so that a crawl stopped halfway resumes from the years it finished.
+ * Past academic years don't change, so only the site's last two are fetched again, along with
+ * any the resource lacks. Years are fetched one at a time, the latest first, and each is saved
+ * once fetched, so that a crawl stopped halfway resumes from the years it finished.
  */
 class CourseRatingsBuilder : ResourceBuilder {
     override val id: String = "course-ratings"
 
     override fun build(context: ResourceContext): JsonObject = runBlocking {
         // A session that has served one page gets the next stripped of its data, so every request has its own.
+        val backends = Backends(AFFINITY_COOKIE, PER_BACKEND, SLOW_SECONDS, REST_SECONDS)
         val fetcher = Fetcher(
             CONCURRENCY, HEADERS, freshSessions = true,
-            attempts = ATTEMPTS, backoffSeconds = 1.0, maxPauseSeconds = 15.0, timeoutSeconds = TIMEOUT_SECONDS,
-            requestsPerSecond = REQUESTS_PER_SECOND,
+            attempts = ATTEMPTS, backoffSeconds = 1.0, maxPauseSeconds = 30.0, timeoutSeconds = TIMEOUT_SECONDS, backends = backends,
         )
         val previous = context.previous?.get("academic_years")?.jsonObject.orEmpty()
             .mapKeys { it.key.toInt() }.mapValues { it.value.jsonObject }
-        // The last two years the resource has, and any later, are fetched again.
-        val lastKept = previous.keys.sortedDescending().take(2).minOrNull() ?: Int.MAX_VALUE
+        // Years don't leave the site, so a list without one the resource has is a list served short.
+        val years = fetcher.get(BASE_URL, "the academic years, ${previous.keys.sorted()} among them") { page ->
+            years(page.document).let { it.isNotEmpty() && it.containsAll(previous.keys) }
+        }.let { years(it.document) }.sortedDescending()
         val fetched = AtomicInteger()
         val done = sortedMapOf<Int, JsonObject>().apply { putAll(previous) }
+        val failed = mutableListOf<Int>()
         fun data() = buildJsonObject {
             put("fetched_at", Instant.now().truncatedTo(ChronoUnit.SECONDS).toString())
             put("academic_years", JsonObject(done.mapKeys { it.key.toString() }))
@@ -70,33 +74,33 @@ class CourseRatingsBuilder : ResourceBuilder {
         val progress = launch {
             while (true) {
                 delay(PROGRESS_INTERVAL)
-                context.log("  ${fetched.get()} courses fetched, ${fetcher.stats()}")
+                context.log("  ${fetched.get()} courses fetched, ${fetcher.stats()}; ${backends.describe()}")
             }
         }
-        for (year in LocalDate.now().year downTo FIRST_YEAR) {
-            if (year < lastKept && year in previous) continue
-            // A year that fails now keeps what it had.
-            val data = Crawl(fetcher, year, context, fetched).yearOrNull() ?: continue
+        for (year in years) {
+            if (year in previous && year !in years.take(2)) continue
+            val data = try {
+                Crawl(fetcher, year, context, fetched).year()
+            } catch (e: FetchException) {
+                // The year keeps what it had, and the others go on.
+                context.log("AA $year: not saved, as a page never came whole: ${e.message}")
+                failed += year
+                continue
+            }
             done[year] = data
             context.checkpoint(data())
         }
         progress.cancel()
         context.log("Requests: ${fetcher.stats()}")
-        if (fetcher.failed.isNotEmpty()) context.log("  ! ${fetcher.failed.size} pages kept failing")
+        check(failed.isEmpty()) { "The academic years $failed kept serving pages with parts missing; the others are saved, and a later run fetches these again" }
         data()
     }
 
     private class Crawl(val fetcher: Fetcher, val year: Int, val context: ResourceContext, val fetched: AtomicInteger) {
-        /** The year's courses, by id; null when the year has none published. */
-        suspend fun yearOrNull(): JsonObject? {
-            val url = "${BASE_URL}opinioniAA.vm?idAA=$year"
+        /** The year's courses, by id. */
+        suspend fun year(): JsonObject {
             context.log("AA $year: fetching the departments")
-            // A year not published yet lists no departments, which looks like a page served blank: both end the same way.
-            val page = tryGet(url, "its departments", log = false) { rows(it.document).isNotEmpty() }
-            if (page == null) {
-                context.log("AA $year: no departments listed")
-                return null
-            }
+            val page = listing("${BASE_URL}opinioniAA.vm?idAA=$year", null)
             val departments = rows(page.document)
             val courses = coroutineScope { departments.map { async { department(it) } }.awaitAll() }.flatten()
             // A course shared by study courses is listed under each: the first, by address, stands for all.
@@ -111,70 +115,56 @@ class CourseRatingsBuilder : ResourceBuilder {
             }
         }
 
-        private suspend fun department(url: String): List<JsonObject> {
-            val page = tryGet(url, "its study courses") { rows(it.document).isNotEmpty() } ?: return emptyList()
+        private suspend fun department(row: Row): List<JsonObject> {
+            val page = listing(row.url, row.questionnaires)
             return coroutineScope { rows(page.document).map { async { studyCourse(it) } }.awaitAll() }.flatten()
         }
 
-        private suspend fun studyCourse(url: String): List<JsonObject> {
-            val page = tryGet(url, "its courses") { rows(it.document).isNotEmpty() } ?: return emptyList()
+        private suspend fun studyCourse(row: Row): List<JsonObject> {
+            val page = listing(row.url, row.questionnaires)
             return coroutineScope { rows(page.document).map { async { course(it) } }.awaitAll() }.filterNotNull()
         }
 
-        private suspend fun course(url: String): JsonObject? {
-            val id = queryParameter(url, "idAD") ?: return null
-            val page = tryGet(url, "its header or its teachers") {
-                header(it.document, "Numero di questionari") != null && rows(it.document).isNotEmpty()
-            } ?: return null
-            val questionnaires = header(page.document, "Numero di questionari")?.let(::parseCount)
+        private suspend fun course(row: Row): JsonObject? {
+            val id = queryParameter(row.url, "idAD") ?: return null
+            val page = listing(row.url, row.questionnaires)
             // Each row: course code, course name, teacher, published (SI/NO), reason, questionnaires.
-            val stubs = page.document.select("table tbody tr").mapNotNull { row ->
-                val href = row.attr("data-href").ifEmpty { return@mapNotNull null }
-                val teacher = queryParameter(href, "idDOC") ?: return@mapNotNull null
-                val cells = row.select("td").map { strippedText(it) }
-                Stub(teacher, row.absUrl("data-href"), cells.getOrNull(5)?.let(::parseCount), cells.getOrNull(3)?.uppercase() == "SI")
+            val stubs = rows(page.document).mapNotNull { teacher ->
+                val teacherId = queryParameter(teacher.url, "idDOC") ?: return@mapNotNull null
+                Stub(teacherId, teacher.url, teacher.questionnaires, teacher.cells.getOrNull(3)?.uppercase() == "SI")
             }
             val teachers = coroutineScope { stubs.map { async { teacher(it) } }.awaitAll() }
             fetched.incrementAndGet()
             return buildJsonObject {
                 put("id", id)
-                put("url", url)
-                put("questionnaires", questionnaires.toJson())
+                put("url", row.url)
+                put("questionnaires", row.questionnaires.toJson())
                 put("ratings", weighted(teachers))
                 put("teachers", JsonArray(teachers))
             }
         }
 
         private suspend fun teacher(stub: Stub): JsonObject {
-            fun unpublished() = buildJsonObject {
-                put("id", stub.id)
-                put("url", stub.url)
-                put("questionnaires", stub.questionnaires.toJson())
-                put("ratings", JsonNull)
+            val ratings = if (stub.published && (stub.questionnaires ?: 0) > 0) {
+                val page = fetcher.get(stub.url, "the ${stub.questionnaires} questionnaires of its course's row, and every series of its chart") { page ->
+                    header(page.document) == stub.questionnaires && chartSeries(page.html).let { it.size == SERIES && it.all(List<*>::isNotEmpty) }
+                }
+                // The chart's series: university, department, course type, study course, then the teacher's.
+                ratings(chartSeries(page.html).last(), "DOC ${stub.id} / AA $year")
+            } else {
+                JsonNull
             }
-            if (!stub.published) return unpublished()
-            // The chart's series: university, department, course type, study course, then the
-            // teacher's, any of which a page can come with blank. Some teachers marked as
-            // published never have theirs, which retries can't tell from a page served blank:
-            // they count as unpublished.
-            val page = tryGet(stub.url, "the teacher's ratings") { page ->
-                chartSeries(page.html).let { it.size == SERIES && it.last().isNotEmpty() }
-            } ?: return unpublished()
-            val series = chartSeries(page.html)
             return buildJsonObject {
                 put("id", stub.id)
                 put("url", stub.url)
-                put("questionnaires", (header(page.document, "Numero di questionari")?.let(::parseCount) ?: stub.questionnaires).toJson())
-                put("ratings", ratings(series.last(), "DOC ${stub.id} / AA $year"))
+                put("questionnaires", stub.questionnaires.toJson())
+                put("ratings", ratings)
             }
         }
 
-        private suspend fun tryGet(url: String, lacking: String, log: Boolean = true, complete: (Page) -> Boolean): Page? = try {
-            fetcher.get(url, lacking, complete)
-        } catch (e: FetchException) {
-            if (log) context.log("  ! ${e.message}")
-            null
-        }
+        /** The listing at [url], once it covers the [expected] questionnaires and its rows add up to them. */
+        private suspend fun listing(url: String, expected: Int?): Page =
+            fetcher.get(url, "rows adding up to ${expected ?: "its"} questionnaires") { isWhole(it.document, expected) }
 
         /** The ratings of a chart's series, rescaled to 1-10; it must hold the three known ones exactly. */
         private fun ratings(pairs: List<Pair<String, Double>>, where: String): JsonObject {
@@ -207,24 +197,44 @@ class CourseRatingsBuilder : ResourceBuilder {
 
     private class Stub(val id: String, val url: String, val questionnaires: Int?, val published: Boolean)
 
+    /** A listing's row: the page it leads to, how many questionnaires that page covers, and its cells' text. */
+    internal class Row(val url: String, val questionnaires: Int?, val cells: List<String>)
+
     internal companion object {
         const val BASE_URL = "https://opinionistudenti.unimib.it/valdid/"
+
         /**
-         * The requests in flight. Once its database is busy the site answers late, or seems not
-         * to answer at all, and it goes on working on a request its client gave up on: a few
-         * requests, each waited for, keep it answering everyone.
+         * The site's servers sit behind an Azure Application Gateway, which keeps a client on one
+         * of them by this cookie. Each server slows down on its own once asked too much, until
+         * its data pages take minutes while the others still answer at once; a request given up
+         * on goes on loading it. So requests go to each server as fast as it answers.
          */
-        const val CONCURRENCY = 3
+        const val AFFINITY_COOKIE = "ApplicationGatewayAffinity"
 
-        /** Long enough for a busy site to answer, since a request given up on still loads it. */
-        const val TIMEOUT_SECONDS = 90L
+        /**
+         * The requests in flight to a server. Measured on 2026-10-26: 4 in all, spread by the
+         * gateway, choked one server within 4 minutes, and 2 to each choked them all within 2,
+         * on pages fetched the first time in a while; 1 at a time kept up for minutes.
+         */
+        const val PER_BACKEND = 1
 
-        /** A page served with a section blank is asked for again, until it comes with them all. */
-        const val ATTEMPTS = 15
+        /** A data page usually takes a fraction of a second; one slower than this means its server is getting busy. */
+        const val SLOW_SECONDS = 3.0
 
-        /** A burst of requests slows the site down for a while, so they start at this pace at most. */
-        const val REQUESTS_PER_SECOND = 3.0
-        const val FIRST_YEAR = 2013
+        /** How long a busy server is left alone: they got over it in 3 to 5 minutes. */
+        const val REST_SECONDS = 180.0
+
+        /** The requests in flight in all: the site has had three servers. */
+        const val CONCURRENCY = 3 * PER_BACKEND
+
+        /**
+         * Long enough for the heaviest pages, an old year's, which can take tens of seconds the
+         * first time: a request given up on still loads the site.
+         */
+        const val TIMEOUT_SECONDS = 120L
+
+        /** A page served with parts missing usually comes whole on the next attempt; these wait up to a few minutes in all. */
+        const val ATTEMPTS = 10
 
         /** The series of a teacher's chart. */
         const val SERIES = 5
@@ -259,9 +269,34 @@ class CourseRatingsBuilder : ResourceBuilder {
 
         val PAIR = Regex("""\[\s*['"]([^'"]+)['"]\s*,\s*([0-9.]+)\s*]|\[\s*([0-9.]+)\s*,\s*['"]([^'"]+)['"]\s*]""")
 
-        /** The links of a listing's rows, resolved. */
-        fun rows(document: Document): List<String> =
-            document.select("table tbody tr").filter { it.hasAttr("data-href") }.map { it.absUrl("data-href") }.filter { it.isNotEmpty() }
+        /** The script that writes a row's numbers into its cells: the first is its questionnaires. */
+        val FORMATTED = Regex("""formatta\(\s*([0-9.]+)\s*\)""")
+        val YEAR_LINK = Regex("""opinioniAA\.vm\?idAA=(\d{4})""")
+
+        /** The academic years the site links to. */
+        fun years(document: Document): Set<Int> =
+            document.select("a[href]").mapNotNull { YEAR_LINK.find(it.attr("href"))?.groupValues?.get(1)?.toInt() }.toSet()
+
+        /** A listing's rows, each once: a page can list the same row twice. */
+        fun rows(document: Document): List<Row> =
+            document.select("table tbody tr").filter { it.hasAttr("data-href") }.mapNotNull { row ->
+                val url = row.absUrl("data-href").ifEmpty { return@mapNotNull null }
+                val questionnaires = FORMATTED.find(row.html())?.groupValues?.get(1)?.toIntOrNull()
+                Row(url, questionnaires, row.select("td").map { strippedText(it) })
+            }.distinctBy { it.url }
+
+        /**
+         * Whether a listing came whole: it says how many questionnaires it covers, as many as
+         * [expected] when known, and its rows add up to them.
+         */
+        fun isWhole(document: Document, expected: Int?): Boolean {
+            val total = header(document) ?: return false
+            if (expected != null && total != expected) return false
+            return rows(document).sumOf { it.questionnaires ?: 0 } == total
+        }
+
+        /** The questionnaires a page says it covers, in its header. */
+        fun header(document: Document): Int? = header(document, "Numero di questionari")?.let(::parseCount)
 
         /** The value after `Label :` in the page's header, where each field is a bold label followed by its value. */
         fun header(document: Document, label: String): String? {

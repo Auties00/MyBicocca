@@ -243,7 +243,7 @@ saves it, before generating as usual. The builders, in `resources/`, crawl websi
 | Builder             | Data                                                                   | Takes |
 |---------------------|------------------------------------------------------------------------|-------|
 | `elearning-catalog` | Every category and course on elearning.unimib.it                       | Minutes |
-| `course-ratings`    | The students' ratings of every course and teacher on opinionistudenti.unimib.it, by academic year | Hours the first time, and a run that stops keeps the years it finished; then only its last two years are fetched again. It keeps to a few requests a second, which the site needs |
+| `course-ratings`    | The students' ratings of every course and teacher on opinionistudenti.unimib.it, by academic year | Hours the first time, and a run that stops keeps the years it finished; then only the site's last two years are fetched again. Every page is checked against the questionnaire counts of the page that led to it, and a year that never comes whole isn't saved and fails the run. It sends each of the site's servers one request at a time, and leaves one that slows down alone for a few minutes |
 
 The `Resources` workflow runs `--resources` every week and opens a pull request when the data
 changed.
