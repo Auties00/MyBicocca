@@ -5,6 +5,8 @@ import it.attendance100.mybicocca.codegen.core.ResourceContext
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -35,34 +37,51 @@ import java.util.concurrent.atomic.AtomicInteger
  * scale, become `1 + 3 × rating`, which maps the bands' boundaries exactly. A teacher whose
  * ratings aren't published has none, and a course none when none of its teachers has.
  *
- * Past academic years don't change, so only the last two are fetched again when the resource
- * already has the others. Each year is saved once fetched, so that a crawl stopped halfway
- * resumes from the years it finished.
+ * The site now and then serves a page with some of its sections blank: a page counts as
+ * fetched only once it has every section the crawl reads, and is asked for again until then.
+ * It also slows down for everyone when asked too much, so the crawl keeps to a few requests
+ * at a time, at a steady pace, and waits for each.
+ *
+ * Past academic years don't change, so only the last two the resource has are fetched again,
+ * along with any later or missing one. Years are fetched one at a time, the latest first, and
+ * each is saved once fetched, so that a crawl stopped halfway resumes from the years it finished.
  */
 class CourseRatingsBuilder : ResourceBuilder {
     override val id: String = "course-ratings"
 
     override fun build(context: ResourceContext): JsonObject = runBlocking {
         // A session that has served one page gets the next stripped of its data, so every request has its own.
-        val fetcher = Fetcher(CONCURRENCY, HEADERS, freshSessions = true)
+        val fetcher = Fetcher(
+            CONCURRENCY, HEADERS, freshSessions = true,
+            attempts = ATTEMPTS, backoffSeconds = 1.0, maxPauseSeconds = 15.0, timeoutSeconds = TIMEOUT_SECONDS,
+            requestsPerSecond = REQUESTS_PER_SECOND,
+        )
         val previous = context.previous?.get("academic_years")?.jsonObject.orEmpty()
-        val lastYear = LocalDate.now().year
+            .mapKeys { it.key.toInt() }.mapValues { it.value.jsonObject }
+        // The last two years the resource has, and any later, are fetched again.
+        val lastKept = previous.keys.sortedDescending().take(2).minOrNull() ?: Int.MAX_VALUE
         val fetched = AtomicInteger()
-        val done = java.util.concurrent.ConcurrentSkipListMap<Int, JsonObject>()
+        val done = sortedMapOf<Int, JsonObject>().apply { putAll(previous) }
         fun data() = buildJsonObject {
             put("fetched_at", Instant.now().truncatedTo(ChronoUnit.SECONDS).toString())
             put("academic_years", JsonObject(done.mapKeys { it.key.toString() }))
         }
-        (FIRST_YEAR..lastYear).map { year ->
-            async {
-                val kept = previous[year.toString()]?.jsonObject
-                val data = if (kept != null && year < lastYear - 1) kept else Crawl(fetcher, year, context, fetched).yearOrNull()
-                if (data != null) {
-                    done[year] = data
-                    synchronized(done) { context.checkpoint(data()) }
-                }
+        // A course counts once its teachers are fetched, which comes after its year's other courses: the requests show the way meanwhile.
+        val progress = launch {
+            while (true) {
+                delay(PROGRESS_INTERVAL)
+                context.log("  ${fetched.get()} courses fetched, ${fetcher.stats()}")
             }
-        }.awaitAll()
+        }
+        for (year in LocalDate.now().year downTo FIRST_YEAR) {
+            if (year < lastKept && year in previous) continue
+            // A year that fails now keeps what it had.
+            val data = Crawl(fetcher, year, context, fetched).yearOrNull() ?: continue
+            done[year] = data
+            context.checkpoint(data())
+        }
+        progress.cancel()
+        context.log("Requests: ${fetcher.stats()}")
         if (fetcher.failed.isNotEmpty()) context.log("  ! ${fetcher.failed.size} pages kept failing")
         data()
     }
@@ -72,25 +91,20 @@ class CourseRatingsBuilder : ResourceBuilder {
         suspend fun yearOrNull(): JsonObject? {
             val url = "${BASE_URL}opinioniAA.vm?idAA=$year"
             context.log("AA $year: fetching the departments")
-            val page = try {
-                fetcher.get(url)
-            } catch (e: FetchException) {
-                context.log("  ! ${e.message}")
+            // A year not published yet lists no departments, which looks like a page served blank: both end the same way.
+            val page = tryGet(url, "its departments", log = false) { rows(it.document).isNotEmpty() }
+            if (page == null) {
+                context.log("AA $year: no departments listed")
                 return null
             }
             val departments = rows(page.document)
-            if (departments.isEmpty()) {
-                context.log("AA $year: no departments published")
-                return null
-            }
             val courses = coroutineScope { departments.map { async { department(it) } }.awaitAll() }.flatten()
+            // A course shared by study courses is listed under each: the first, by address, stands for all.
             val byId = sortedMapOf<String, JsonObject>()
-            for (course in courses) {
-                val id = course.getValue("id").jsonPrimitive.content
-                val existing = byId.put(id, course)
-                require(existing == null) { "Course $id is listed twice in AA $year: at ${existing!!["url"]} and ${course["url"]}" }
+            for (course in courses.sortedBy { it.getValue("url").jsonPrimitive.content }) {
+                byId.putIfAbsent(course.getValue("id").jsonPrimitive.content, course)
             }
-            context.log("AA $year: ${byId.size} courses")
+            context.log("AA $year: ${byId.size} courses, ${courses.size - byId.size} of them listed more than once (${fetcher.stats()})")
             return buildJsonObject {
                 put("id", year)
                 put("courses", JsonObject(byId))
@@ -98,33 +112,34 @@ class CourseRatingsBuilder : ResourceBuilder {
         }
 
         private suspend fun department(url: String): List<JsonObject> {
-            val page = tryGet(url, "opinioniCDS.vm") ?: return emptyList()
+            val page = tryGet(url, "its study courses") { rows(it.document).isNotEmpty() } ?: return emptyList()
             return coroutineScope { rows(page.document).map { async { studyCourse(it) } }.awaitAll() }.flatten()
         }
 
         private suspend fun studyCourse(url: String): List<JsonObject> {
-            val page = tryGet(url, "opinioniAD.vm") ?: return emptyList()
+            val page = tryGet(url, "its courses") { rows(it.document).isNotEmpty() } ?: return emptyList()
             return coroutineScope { rows(page.document).map { async { course(it) } }.awaitAll() }.filterNotNull()
         }
 
         private suspend fun course(url: String): JsonObject? {
             val id = queryParameter(url, "idAD") ?: return null
-            val page = tryGet(url, "opinioniDOC.vm") ?: return null
-            val document = page.document
+            val page = tryGet(url, "its header or its teachers") {
+                header(it.document, "Numero di questionari") != null && rows(it.document).isNotEmpty()
+            } ?: return null
+            val questionnaires = header(page.document, "Numero di questionari")?.let(::parseCount)
             // Each row: course code, course name, teacher, published (SI/NO), reason, questionnaires.
-            val stubs = document.select("table tbody tr").mapNotNull { row ->
+            val stubs = page.document.select("table tbody tr").mapNotNull { row ->
                 val href = row.attr("data-href").ifEmpty { return@mapNotNull null }
                 val teacher = queryParameter(href, "idDOC") ?: return@mapNotNull null
                 val cells = row.select("td").map { strippedText(it) }
                 Stub(teacher, row.absUrl("data-href"), cells.getOrNull(5)?.let(::parseCount), cells.getOrNull(3)?.uppercase() == "SI")
             }
             val teachers = coroutineScope { stubs.map { async { teacher(it) } }.awaitAll() }
-            val done = fetched.incrementAndGet()
-            if (done % 100 == 0) context.log("$done courses fetched")
+            fetched.incrementAndGet()
             return buildJsonObject {
                 put("id", id)
                 put("url", url)
-                put("questionnaires", header(document, "Numero di questionari")?.let(::parseCount).toJson())
+                put("questionnaires", questionnaires.toJson())
                 put("ratings", weighted(teachers))
                 put("teachers", JsonArray(teachers))
             }
@@ -138,12 +153,14 @@ class CourseRatingsBuilder : ResourceBuilder {
                 put("ratings", JsonNull)
             }
             if (!stub.published) return unpublished()
-            // Some teachers marked as published have no chart on their page, which retries can't
-            // tell from a stripped page: they count as unpublished.
-            val page = tryGet(stub.url, "jqplot(") ?: return unpublished()
-            // The chart's series: university, department, course type, study course, then the teacher's.
+            // The chart's series: university, department, course type, study course, then the
+            // teacher's, any of which a page can come with blank. Some teachers marked as
+            // published never have theirs, which retries can't tell from a page served blank:
+            // they count as unpublished.
+            val page = tryGet(stub.url, "the teacher's ratings") { page ->
+                chartSeries(page.html).let { it.size == SERIES && it.last().isNotEmpty() }
+            } ?: return unpublished()
             val series = chartSeries(page.html)
-            require(series.isNotEmpty()) { "No chart series on ${stub.url}" }
             return buildJsonObject {
                 put("id", stub.id)
                 put("url", stub.url)
@@ -152,10 +169,10 @@ class CourseRatingsBuilder : ResourceBuilder {
             }
         }
 
-        private suspend fun tryGet(url: String, mustContain: String): Page? = try {
-            fetcher.get(url, mustContain)
+        private suspend fun tryGet(url: String, lacking: String, log: Boolean = true, complete: (Page) -> Boolean): Page? = try {
+            fetcher.get(url, lacking, complete)
         } catch (e: FetchException) {
-            context.log("  ! ${e.message}")
+            if (log) context.log("  ! ${e.message}")
             null
         }
 
@@ -190,10 +207,30 @@ class CourseRatingsBuilder : ResourceBuilder {
 
     private class Stub(val id: String, val url: String, val questionnaires: Int?, val published: Boolean)
 
-    private companion object {
+    internal companion object {
         const val BASE_URL = "https://opinionistudenti.unimib.it/valdid/"
-        const val CONCURRENCY = 4
+        /**
+         * The requests in flight. Once its database is busy the site answers late, or seems not
+         * to answer at all, and it goes on working on a request its client gave up on: a few
+         * requests, each waited for, keep it answering everyone.
+         */
+        const val CONCURRENCY = 3
+
+        /** Long enough for a busy site to answer, since a request given up on still loads it. */
+        const val TIMEOUT_SECONDS = 90L
+
+        /** A page served with a section blank is asked for again, until it comes with them all. */
+        const val ATTEMPTS = 15
+
+        /** A burst of requests slows the site down for a while, so they start at this pace at most. */
+        const val REQUESTS_PER_SECOND = 3.0
         const val FIRST_YEAR = 2013
+
+        /** The series of a teacher's chart. */
+        const val SERIES = 5
+
+        /** How often the crawl says how far it got, in milliseconds. */
+        const val PROGRESS_INTERVAL = 60_000L
 
         /** Academic years up to this one rate on a 0-3 scale; later ones on 1-10. */
         const val LAST_LEGACY_YEAR = 2018

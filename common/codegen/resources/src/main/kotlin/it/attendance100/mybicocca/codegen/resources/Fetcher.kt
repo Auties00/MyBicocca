@@ -2,7 +2,9 @@ package it.attendance100.mybicocca.codegen.resources
 
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.future.await
+import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.sync.withPermit
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
@@ -14,6 +16,7 @@ import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 import java.time.Duration
 import java.util.concurrent.ConcurrentLinkedQueue
+import java.util.concurrent.atomic.AtomicInteger
 import kotlin.random.Random
 
 /** A page as fetched: its HTML, and the URL that answered, after redirects, which its links resolve against. */
@@ -24,12 +27,15 @@ internal class Page(val url: String, val html: String) {
 internal class FetchException(message: String) : Exception(message)
 
 /**
- * Fetches pages of a website, at most [concurrency] at a time, trying each again a few times
- * with growing pauses when it fails.
+ * Fetches pages of a website, at most [concurrency] at a time, trying each again with growing
+ * pauses when it fails.
  *
  * @param freshSessions Whether every request starts a session of its own, carrying the cookies
  *   only across its own redirects: some servers serve a stripped page to a session that already
  *   had one.
+ * @param timeoutSeconds How long a request may wait for its response before it is tried again.
+ * @param requestsPerSecond How many requests may start each second, for a server that answers
+ *   a burst quickly but slows down for everyone when it lasts; no limit when null.
  */
 internal class Fetcher(
     concurrency: Int,
@@ -37,42 +43,75 @@ internal class Fetcher(
     private val freshSessions: Boolean = false,
     private val attempts: Int = 4,
     private val backoffSeconds: Double = 1.5,
+    private val maxPauseSeconds: Double = 30.0,
+    private val timeoutSeconds: Long = 30,
+    requestsPerSecond: Double? = null,
 ) {
     private val client = HttpClient.newBuilder()
-        .connectTimeout(Duration.ofSeconds(15))
+        .connectTimeout(Duration.ofSeconds(minOf(timeoutSeconds, 15)))
         .followRedirects(if (freshSessions) HttpClient.Redirect.NEVER else HttpClient.Redirect.NORMAL)
         .build()
     private val permits = Semaphore(concurrency)
+    private val interval = requestsPerSecond?.let { (1_000_000_000 / it).toLong() } ?: 0L
+    private val pacing = Mutex()
+    private var nextStart = 0L
+    private val requests = AtomicInteger()
+    private val incomplete = AtomicInteger()
+    private val errors = AtomicInteger()
 
     /** The pages that kept failing. */
     val failed = ConcurrentLinkedQueue<String>()
 
-    /** The page at [url]; with [mustContain], a page without that text counts as a failure. */
-    suspend fun get(url: String, mustContain: String? = null): Page {
-        val errors = mutableListOf<String>()
+    /** How the requests went so far. */
+    fun stats(): String = "${requests.get()} requests, ${incomplete.get()} incomplete, ${errors.get()} failed"
+
+    /**
+     * The page at [url]. A page that isn't [complete] counts as a failure: [lacking] says what
+     * such a page lacks.
+     */
+    suspend fun get(url: String, lacking: String? = null, complete: (Page) -> Boolean = { true }): Page {
+        val problems = mutableListOf<String>()
         for (attempt in 1..attempts) {
             try {
-                val page = permits.withPermit { fetch(url) }
-                if (mustContain == null || mustContain in page.html) return page
-                errors += "the page lacks '$mustContain' (${page.html.length} characters)"
+                val page = permits.withPermit {
+                    pace()
+                    requests.incrementAndGet()
+                    fetch(url)
+                }
+                if (complete(page)) return page
+                incomplete.incrementAndGet()
+                problems += "the page lacks ${lacking ?: "its content"} (${page.html.length} characters)"
             } catch (e: Exception) {
-                errors += "${e::class.simpleName}: ${e.message}"
+                errors.incrementAndGet()
+                problems += "${e::class.simpleName}: ${e.message}"
             }
             if (attempt < attempts) {
                 // Pauses outside the permit, so that other requests go on meanwhile.
-                val pause = backoffSeconds * (1 shl (attempt - 1))
+                val pause = minOf(backoffSeconds * (1 shl minOf(attempt - 1, 16)), maxPauseSeconds)
                 delay(((pause + Random.nextDouble(0.0, pause * 0.25)) * 1000).toLong())
             }
         }
         failed += url
-        throw FetchException("failed after $attempts attempts: $url\n" + errors.withIndex().joinToString("\n") { (i, e) -> "    [${i + 1}] $e" })
+        throw FetchException("failed after $attempts attempts: $url\n" + problems.distinct().joinToString("\n") { "    $it" })
+    }
+
+    /** Waits for the next request's turn, when requests are limited per second. */
+    private suspend fun pace() {
+        if (interval == 0L) return
+        val wait = pacing.withLock {
+            val now = System.nanoTime()
+            val start = maxOf(now, nextStart)
+            nextStart = start + interval
+            start - now
+        }
+        if (wait > 0) delay(wait / 1_000_000)
     }
 
     private suspend fun fetch(url: String): Page {
         var target = URI(url)
         val cookies = linkedMapOf<String, String>()
         repeat(MAX_REDIRECTS) {
-            val request = HttpRequest.newBuilder(target).timeout(Duration.ofSeconds(30)).GET().apply {
+            val request = HttpRequest.newBuilder(target).timeout(Duration.ofSeconds(timeoutSeconds)).GET().apply {
                 headers.forEach { (name, value) -> header(name, value) }
                 if (cookies.isNotEmpty()) header("Cookie", cookies.entries.joinToString("; ") { (name, value) -> "$name=$value" })
             }.build()
