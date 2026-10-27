@@ -21,8 +21,10 @@ permissions:
   pull-requests: write
 
 # One run per target at a time, and the newest wins: an older run would only push stale images.
+# The label is part of the group because every label added to a pull request starts a run of this
+# workflow, skipped or not, and a skipped one in the same group would cancel the real one.
 concurrency:
-  group: screenshots-${{ github.event.pull_request.number || 'main' }}
+  group: screenshots-${{ github.event.pull_request.number || 'main' }}-${{ github.event.label.name }}
   cancel-in-progress: true
 
 jobs:
