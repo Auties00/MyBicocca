@@ -46,8 +46,9 @@ components:
         gaps:
           type: array
           description: >-
-            The pages the site kept serving with parts missing, kept as last served: the courses
-            under each may be missing, or lack some teachers. Later crawls fetch them again.
+            The pages the site kept serving with parts missing, even looking for the pages their
+            listings leave out, kept as served: the courses under each may be missing, or lack
+            some teachers. Later crawls fetch them again.
           items: { $ref: "#/components/schemas/Esse3RatingsGap" }
     Esse3RatingsGap:
       x-mb-module: Ratings
@@ -78,6 +79,12 @@ components:
         ratings:
           description: The teachers' ratings, weighted by their questionnaires; none when no teacher's are published.
           allOf: [$ref: "#/components/schemas/Esse3Ratings"]
+        unattributed_questionnaires:
+          type: integer
+          format: int32
+          description: >-
+            The questionnaires the site counts for the course but attributes to none of the
+            teachers it lists, which the ratings therefore leave out; none when they all add up.
         teachers:
           type: array
           items: { $ref: "#/components/schemas/Esse3TeacherRating" }
