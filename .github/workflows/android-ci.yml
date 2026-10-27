@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: write
 
 concurrency:
   group: android-ci-${{ github.ref }}
@@ -75,9 +76,47 @@ jobs:
         working-directory: android
         run: ./gradlew :app:testDebugUnitTest --stacktrace
 
+      - name: Demo build and screenshot catalogue check
+        working-directory: android
+        run: ./gradlew :app:demoCheck --stacktrace
+
       - name: data-api library tests (live suites excluded)
         working-directory: android
         run: ./gradlew -p data-api test --stacktrace
+
+      # Warns when a shot in screenshots.json has no PNGs on disk yet, and leaves (or refreshes) one
+      # reminder comment on the pull request so the author knows to add the "screenshots" label.
+      - name: Check for missing screenshots
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          MARKER="<!-- missing-screenshots-reminder -->"
+          if MISSING=$(python3 scripts/capture-screenshots.py --check-missing); then
+            if [ "$HEAD_REPO" = "$REPO" ]; then
+              COMMENT_ID=$(gh api "repos/$REPO/issues/$PR/comments" --paginate --jq ".[] | select(.body | contains(\"$MARKER\")) | .id" | head -n 1 || true)
+              if [ -n "$COMMENT_ID" ]; then
+                gh api -X DELETE "repos/$REPO/issues/comments/$COMMENT_ID" || true
+              fi
+            fi
+            exit 0
+          fi
+
+          LIST=$(printf '%s\n' "$MISSING" | sed 's/^/- `/;s/$/`/')
+          echo "::warning::Missing screenshots in screenshots/demo/: $(echo "$MISSING" | tr '\n' ' ')"
+
+          if [ "$HEAD_REPO" = "$REPO" ]; then
+            BODY=$(printf '%s\nSome shots in `screenshots.json` do not have committed images under `screenshots/demo/` yet:\n\n%s\n\nAdd the **`screenshots`** label to capture the missing or changed shots on this branch, or **`screenshots:full`** to retake all of them.' "$MARKER" "$LIST")
+            COMMENT_ID=$(gh api "repos/$REPO/issues/$PR/comments" --paginate --jq ".[] | select(.body | contains(\"$MARKER\")) | .id" | head -n 1 || true)
+            if [ -n "$COMMENT_ID" ]; then
+              gh api -X PATCH "repos/$REPO/issues/comments/$COMMENT_ID" -f body="$BODY"
+            else
+              gh pr comment "$PR" --body "$BODY"
+            fi
+          fi
 
       - name: Upload test reports
         if: ${{ always() }}
