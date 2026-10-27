@@ -1,5 +1,6 @@
 package it.attendance100.mybicocca.data.auth
 
+import android.util.Log
 import io.ktor.utils.io.ByteReadChannel
 import it.attendance100.mybicocca.data.local.account.AccountDao
 import it.attendance100.mybicocca.data.local.account.AccountWithCareers
@@ -176,12 +177,13 @@ class SessionManager @Inject constructor(
         if (esse3Result.isFailure || elearningResult.isFailure) {
             esse3.close()
             freshElearningApi.close()
-            return@coroutineScope SignInResult.Failure(
-                classifySignInFailure(
-                    esse3Result.exceptionOrNull(),
-                    elearningResult.exceptionOrNull(),
-                ),
+            val failure = classifySignInFailure(
+                esse3Result.exceptionOrNull(),
+                elearningResult.exceptionOrNull(),
             )
+            esse3Result.exceptionOrNull()?.let { Log.w(TAG, "Esse3 sign-in failed ($failure)", it) }
+            elearningResult.exceptionOrNull()?.let { Log.w(TAG, "Elearning sign-in failed ($failure)", it) }
+            return@coroutineScope SignInResult.Failure(failure)
         }
 
         val (esse3Session, esse3Careers, esse3CourseTypes) = esse3Result.getOrThrow()
@@ -551,6 +553,7 @@ class SessionManager @Inject constructor(
     )
 
     private companion object {
+        const val TAG = "SessionManager"
         const val STATE_KEEP_ALIVE_MS = 5_000L
         const val DEFAULT_USERNAME_DOMAIN = "campus.unimib.it"
         const val COURSE_TYPE_FIELD = "tipoCorsoCod"

@@ -1,6 +1,7 @@
 package it.attendance100.mybicocca.data.auth
 
 import io.ktor.client.plugins.HttpTimeout
+import it.attendance100.mybicocca.data.observability.HttpDiagnostics
 import it.attendance100.mybicocca.data.observability.HttpMetrics
 import it.attendance100.mybicocca.data.remote.elearning.api.ElearningApi
 import java.util.Locale
@@ -25,6 +26,7 @@ class ElearningApiFactory @Inject constructor() {
                 requestTimeoutMillis = HTTP_TIMEOUT_MS
             }
             install(HttpMetrics)
+            install(HttpDiagnostics)
         }
 
     /**
