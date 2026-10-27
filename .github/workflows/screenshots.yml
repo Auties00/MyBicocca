@@ -1,0 +1,219 @@
+name: Update Screenshots
+
+on:
+  push:
+    branches: [main]
+    # Only changes that can alter what a screen looks like. The screenshots themselves are not
+    # listed, so merging the PR this workflow opens does not start another run.
+    paths:
+      - 'android/app/src/main/java/**'
+      - 'android/app/src/main/res/**'
+      - 'android/app/src/demo/**'
+      - 'scripts/capture-screenshots.py'
+  # Adding "screenshots" to a pull request captures only the new, changed or missing images on
+  # that PR's branch; "screenshots:full" retakes every image. The label is removed afterwards, so
+  # adding it again runs it again.
+  pull_request:
+    types: [labeled]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+# One run per target at a time, and the newest wins: an older run would only push stale images.
+# The label is part of the group because every label added to a pull request starts a run of this
+# workflow, skipped or not, and a skipped one in the same group would cancel the real one.
+concurrency:
+  group: screenshots-${{ github.event.pull_request.number || 'main' }}-${{ github.event.label.name }}
+  cancel-in-progress: true
+
+jobs:
+  screenshots:
+    name: Retake screenshots (demo build, emulator)
+    # A pull request runs only for the "screenshots" or "screenshots:full" label, and only when its
+    # branch lives in this repository: a fork's token cannot push, and its code should not run with
+    # write access.
+    if: >-
+      github.event_name != 'pull_request' ||
+      ((github.event.label.name == 'screenshots' || github.event.label.name == 'screenshots:full') &&
+       github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      # For a labelled pull request, the branch itself rather than the merge commit GitHub would
+      # check out, so the new images can be committed straight onto it. Full history is fetched so
+      # diff mode can compare against the PR's base branch.
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref || github.ref }}
+          fetch-depth: 0
+
+      - name: Resolve target screenshots
+        id: target
+        env:
+          EVENT: ${{ github.event_name }}
+          LABEL: ${{ github.event.label.name }}
+          BASE: ${{ github.event.pull_request.base.ref }}
+        run: |
+          if [ "$EVENT" = "pull_request" ] && [ "$LABEL" = "screenshots" ]; then
+            CHANGED=$(python3 scripts/capture-screenshots.py --list-changed "origin/$BASE")
+            if [ -z "$CHANGED" ]; then
+              echo "No new, changed or missing screenshots relative to origin/$BASE."
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            echo "Target screenshots:"
+            echo "$CHANGED"
+            echo "flags=--changed origin/$BASE" >> "$GITHUB_OUTPUT"
+          else
+            echo "flags=" >> "$GITHUB_OUTPUT"
+          fi
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+
+      - name: Set up JDK 17
+        if: steps.target.outputs.skip != 'true'
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      # gradle/gradle-daemon-jvm.properties pins the Gradle daemon to a JetBrains JDK 21. Installed
+      # here (and left as JAVA_HOME) so Gradle finds it instead of downloading it: the download links
+      # pinned in that file no longer resolve.
+      - name: Set up the Gradle daemon JDK (JetBrains 21)
+        if: steps.target.outputs.skip != 'true'
+        uses: actions/setup-java@v4
+        with:
+          distribution: jetbrains
+          java-version: '21'
+
+      - name: Set up Android SDK
+        if: steps.target.outputs.skip != 'true'
+        uses: android-actions/setup-android@v4
+        with:
+          packages: platform-tools
+
+      - name: Install the compileSdk platform
+        if: steps.target.outputs.skip != 'true'
+        run: |
+          sdkmanager --channel=3 "platforms;android-37.0"
+          sdk_root="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+          if [ -d "$sdk_root/platforms/android-37.0" ] && [ ! -e "$sdk_root/platforms/android-37" ]; then
+            ln -s android-37.0 "$sdk_root/platforms/android-37"
+          fi
+
+      - name: Set up Gradle
+        if: steps.target.outputs.skip != 'true'
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Raise Gradle heap for CI
+        if: steps.target.outputs.skip != 'true'
+        run: |
+          mkdir -p "$HOME/.gradle"
+          echo "org.gradle.jvmargs=-Xmx5g -Dfile.encoding=UTF-8" >> "$HOME/.gradle/gradle.properties"
+
+      - name: Make gradlew executable
+        if: steps.target.outputs.skip != 'true'
+        run: chmod +x android/gradlew
+
+      # Checked and built before the emulator boots so a compile or catalogue error fails fast and
+      # the emulator's time is spent on screenshots only. The script then runs with --skip-build.
+      - name: Check and build the demo APK
+        if: steps.target.outputs.skip != 'true'
+        working-directory: android
+        run: ./gradlew :app:demoCheck --stacktrace
+
+      - name: Enable KVM
+        if: steps.target.outputs.skip != 'true'
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      # The committed images are 1440x3120, which is the Pixel 7 Pro; the same profile keeps a rerun
+      # from differing in size and so from rewriting every file.
+      - name: Capture screenshots on an emulator
+        if: steps.target.outputs.skip != 'true'
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_7_pro
+          script: python3 scripts/capture-screenshots.py --skip-build ${{ steps.target.outputs.flags }}
+
+      - name: Upload the captured screenshots
+        if: ${{ always() && steps.target.outputs.skip != 'true' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: screenshots/demo/
+          retention-days: 14
+          if-no-files-found: ignore
+
+      # The same branch every time: the action force-updates it and keeps one open PR, so reruns
+      # refresh that PR instead of piling up new ones. No diff, no PR. Only screenshots/demo is
+      # added, so nothing else the build touched can end up in the commit.
+      - name: Open or update the screenshots PR
+        if: ${{ github.event_name != 'pull_request' }}
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: automation/update-screenshots
+          base: main
+          add-paths: screenshots/demo/
+          commit-message: 'chore(screenshots): retake demo screenshots'
+          title: 'chore(screenshots): retake demo screenshots'
+          body: |
+            Retaken from the demo build on an emulator by the **Update Screenshots** workflow,
+            from commit ${{ github.sha }}.
+
+            Check the changed images before merging. Where nothing on screen should have changed, a
+            diff is a regression or rendering noise.
+          delete-branch: true
+
+      # A labelled pull request gets the images on its own branch. The push is made with the default
+      # token, which does not start other workflows, so this cannot loop back into this one.
+      - name: Commit the screenshots to the pull request
+        if: ${{ github.event_name == 'pull_request' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          BRANCH: ${{ github.event.pull_request.head.ref }}
+          BASE: ${{ github.event.pull_request.base.ref }}
+          PR: ${{ github.event.pull_request.number }}
+          SKIP: ${{ steps.target.outputs.skip }}
+        run: |
+          if [ "$SKIP" = "true" ]; then
+            gh pr comment "$PR" --body "No new, changed or missing screenshots found relative to \`$BASE\`. Add \`screenshots:full\` to retake every screenshot."
+            exit 0
+          fi
+          git add screenshots/demo/
+          if git diff --cached --quiet; then
+            gh pr comment "$PR" --body "Retook the screenshots: nothing changed."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "chore(screenshots): retake demo screenshots"
+            git pull --rebase origin "$BRANCH"
+            git push origin "HEAD:$BRANCH"
+            gh pr comment "$PR" --body "Retook the screenshots and pushed them to this branch. Check the changed images before merging."
+          fi
+          if python3 scripts/capture-screenshots.py --check-missing >/dev/null 2>&1; then
+            MARKER="<!-- missing-screenshots-reminder -->"
+            COMMENT_ID=$(gh api "repos/$REPO/issues/$PR/comments" --paginate --jq ".[] | select(.body | contains(\"$MARKER\")) | .id" | head -n 1 || true)
+            if [ -n "$COMMENT_ID" ]; then
+              gh api -X DELETE "repos/$REPO/issues/comments/$COMMENT_ID" || true
+            fi
+          fi
+
+      # Taken off even when the run fails, so the label works as a button: adding it again retries.
+      # The REST call, because `gh pr edit` can fail on a deprecated GraphQL field.
+      - name: Remove the label
+        if: ${{ always() && github.event_name == 'pull_request' }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.number }}
+          LABEL: ${{ github.event.label.name }}
+        run: gh api -X DELETE "repos/${{ github.repository }}/issues/$PR/labels/$LABEL"
