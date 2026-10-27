@@ -24,8 +24,8 @@ internal class Page(val url: String, val html: String) {
     val document: Document by lazy { Jsoup.parse(html, url) }
 }
 
-/** A page that kept failing: [last] is how it was last served, when it was served at all. */
-internal class FetchException(message: String, val last: Page? = null) : Exception(message)
+/** A page that kept failing: [served] are the times it was served all the same, if any. */
+internal class FetchException(message: String, val served: List<Page> = emptyList()) : Exception(message)
 
 /**
  * Fetches pages of a website, at most [concurrency] at a time, trying each again with growing
@@ -65,13 +65,13 @@ internal class Fetcher(
     fun stats(): String = "${requests.get()} requests, ${incomplete.get()} incomplete, ${errors.get()} failed"
 
     /**
-     * The page at [url]. A page that isn't [complete] counts as a failure: [lacking] says what
-     * such a page lacks.
+     * The page at [url], in up to [attempts]. A page that isn't [complete] counts as a failure:
+     * [lacking] says what such a page lacks.
      */
-    suspend fun get(url: String, lacking: String? = null, complete: (Page) -> Boolean = { true }): Page {
+    suspend fun get(url: String, lacking: String? = null, attempts: Int = this.attempts, complete: (Page) -> Boolean = { true }): Page {
         val problems = mutableListOf<String>()
         val failedBy = mutableSetOf<String>()
-        var last: Page? = null
+        val served = mutableListOf<Page>()
         for (attempt in 1..attempts) {
             var server: String? = null
             try {
@@ -80,7 +80,7 @@ internal class Fetcher(
                     fetch(url, failedBy) { server = it }
                 }
                 if (complete(page)) return page
-                last = page
+                served += page
                 incomplete.incrementAndGet()
                 problems += "the page lacks ${lacking ?: "its content"} (${page.html.length} characters)"
             } catch (e: Exception) {
@@ -95,7 +95,7 @@ internal class Fetcher(
             }
         }
         failed += url
-        throw FetchException("failed after $attempts attempts: $url\n" + problems.distinct().joinToString("\n") { "    $it" }, last)
+        throw FetchException("failed after $attempts attempts: $url\n" + problems.distinct().joinToString("\n") { "    $it" }, served)
     }
 
     /** The page at [url], from a server not in [avoid] when one is free; [served] learns the server that answered, when known. */

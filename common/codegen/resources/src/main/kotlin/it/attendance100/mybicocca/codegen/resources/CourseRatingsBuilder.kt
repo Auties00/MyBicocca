@@ -39,14 +39,21 @@ import java.util.concurrent.atomic.AtomicInteger
  * ratings aren't published, or are published empty, has none, and a course none when none of
  * its teachers has.
  *
- * The site now and then serves a page with some of its sections blank, or some of a listing's
- * rows missing; one of its servers can keep doing so for a while, while the others serve it
- * whole. Every page says how many questionnaires it covers, and every listing's row how many
- * its page does, so a page counts as fetched only once it agrees with the row that led to it
- * and its own rows add up to it; a teacher's page, once it has every series of its chart. A
- * page is tried again on the other servers, and one that never comes whole is kept as last
- * served and listed in its year's gaps, which later crawls fetch again: the data says what it
- * may miss rather than miss it unseen.
+ * Every page says how many questionnaires it covers, and every listing's row how many its page
+ * does, so a page counts as fetched only once it agrees with the row that led to it and its own
+ * rows add up to it; a teacher's page, once it has every series of its chart. The site gets it
+ * wrong in three ways:
+ * - it now and then serves a page with some of its sections blank, and one of its servers can
+ *   keep doing so for a while while the others serve it whole: a page is tried again, on the
+ *   other servers;
+ * - it leaves some study courses out of their department's listing, and some courses out of
+ *   their study course's, for good, while their pages are there: once every year is fetched,
+ *   the pages a listing lacks are looked for among the codes of every year, and taken when they
+ *   make up what it lacks exactly ([RatingsDirectory]);
+ * - it counts some questionnaires of a course for none of the teachers it lists: these are kept
+ *   as the course's `unattributed_questionnaires`.
+ * A page none of these explains is kept as last served and listed in its year's gaps, which
+ * later crawls fetch again: the data says what it may miss rather than miss it unseen.
  *
  * Past academic years don't change, so only the site's last two are fetched again, along with
  * any the resource lacks and the gaps of the others. Years are fetched one at a time, the
@@ -83,14 +90,15 @@ class CourseRatingsBuilder : ResourceBuilder {
             }
         }
         for (year in years) {
-            val saved = previous[year]
-            val crawl = Crawl(fetcher, year, context, fetched)
-            val data = when {
-                saved == null || year in years.take(2) -> crawl.year()
-                gaps(saved).isNotEmpty() -> crawl.fill(saved)
-                else -> continue
-            }
-            done[year] = data
+            if (year in previous && year !in years.take(2)) continue
+            done[year] = Crawl(fetcher, year, context, fetched).year()
+            context.checkpoint(data())
+        }
+        // The pages a listing leaves out can have their codes in any year, so they are looked for once every year is in.
+        val directory = RatingsDirectory(done)
+        for (year in years) {
+            val saved = done[year]?.takeIf { gaps(it).isNotEmpty() } ?: continue
+            done[year] = Crawl(fetcher, year, context, fetched).repair(saved, directory)
             context.checkpoint(data())
         }
         progress.cancel()
@@ -107,29 +115,134 @@ class CourseRatingsBuilder : ResourceBuilder {
         /** The year's courses, by id. */
         suspend fun year(): JsonObject {
             context.log("AA $year: fetching the departments")
-            val departments = listing(Row("${BASE_URL}opinioniAA.vm?idAA=$year", null, emptyList()), Gap.YEAR)
-            val courses = coroutineScope { departments.map { async { department(it) } }.awaitAll() }.flatten()
-            return data(emptyMap(), courses)
+            val row = Row("${BASE_URL}opinioniAA.vm?idAA=$year", null, emptyList())
+            return data(emptyMap(), children(Gap.YEAR, row, listing(row, Gap.YEAR)))
         }
 
-        /** The year [saved] with its gaps fetched again: the courses under each replace those it had. */
-        suspend fun fill(saved: JsonObject): JsonObject {
+        /**
+         * The year [saved] with its gaps fetched again, and the pages their listings leave out
+         * looked for in [directory]: the courses under each replace those it had.
+         */
+        suspend fun repair(saved: JsonObject, directory: RatingsDirectory): JsonObject {
             val gaps = gaps(saved)
-            if (gaps.any { it.level == Gap.YEAR }) return year()
             context.log("AA $year: fetching again the ${gaps.size} pages kept with parts missing")
-            val courses = coroutineScope {
-                gaps.map { gap ->
-                    async {
-                        val row = Row(gap.url, gap.questionnaires, emptyList())
-                        when (gap.level) {
-                            Gap.DEPARTMENT -> department(row)
-                            Gap.STUDY_COURSE -> studyCourse(row)
-                            else -> listOfNotNull(course(row))
-                        }
+            val kept = saved.getValue("courses").jsonObject.mapValues { it.value.jsonObject }
+            val urls = kept.values.mapNotNull { it["url"]?.jsonPrimitive?.content }
+            // What the year's first crawl reached, which stays as it is: a listing's rows were followed even when it never came whole.
+            val reached = mapOf(
+                Gap.YEAR to urls.mapNotNull { queryParameter(it, "idDIP") }.toSet(),
+                Gap.DEPARTMENT to urls.mapNotNull { queryParameter(it, "idCDS") }.toSet(),
+                Gap.STUDY_COURSE to kept.keys,
+            )
+            val courses = coroutineScope { gaps.map { async { recover(it, directory, reached) } }.awaitAll() }.flatten()
+            return data(kept, courses)
+        }
+
+        /**
+         * The courses under [gap] that the year's first crawl didn't reach, by [reached] code of
+         * each level, with the pages its listing leaves out when they make up what it lacks; a
+         * course's, with all of its teachers.
+         */
+        private suspend fun recover(gap: Gap, directory: RatingsDirectory, reached: Map<String, Set<String>>): List<JsonObject> {
+            val row = Row(gap.url, gap.questionnaires, emptyList())
+            val listing = served(row)
+            var found = emptyList<Row>()
+            var unattributed: Int? = null
+            if (!listing.whole) {
+                val expected = gap.questionnaires ?: listing.page?.let { header(it.document) }
+                val missing = expected?.minus(listing.rows.sumOf { it.questionnaires ?: 0 })?.takeIf { it > 0 }
+                val orphans = missing?.let { orphans(gap, listing.rows, it, directory) }
+                when {
+                    orphans != null -> {
+                        context.log("AA $year: found the $missing questionnaires ${gap.url} lacks in ${orphans.size} pages it doesn't list")
+                        found = orphans
                     }
-                }.awaitAll()
-            }.flatten()
-            return data(saved.getValue("courses").jsonObject.mapValues { it.value.jsonObject }, courses)
+                    // A course page that says how many questionnaires it covers, and lists teachers covering fewer, is the site's own count.
+                    missing != null && gap.level == Gap.COURSE && listing.page?.let { header(it.document) } == expected -> {
+                        context.log("AA $year: the site attributes $missing of the $expected questionnaires of ${gap.url} to none of its teachers")
+                        unattributed = missing
+                    }
+                    missing != null -> keep(gap, "no page it doesn't list makes up the $missing questionnaires it lacks")
+                    else -> keep(gap, listing.problem)
+                }
+            }
+            val rows = listing.rows + found
+            if (gap.level == Gap.COURSE) return listOfNotNull(course(row, rows, unattributed))
+            val param = CHILD_PARAMETERS.getValue(gap.level)
+            return children(gap.level, row, rows.filterNot { queryParameter(it.url, param) in reached.getValue(gap.level) })
+        }
+
+        /**
+         * The pages the listing of [gap] leaves out that make up the [missing] questionnaires:
+         * first among the codes [directory] has for it, then among the gaps in their numbering.
+         * Null when none, or more than one choice of them, does.
+         */
+        private suspend fun orphans(gap: Gap, listed: List<Row>, missing: Int, directory: RatingsDirectory): List<Row>? {
+            val probed = mutableListOf<Row>()
+            val tried = mutableSetOf<String>()
+            for (candidates in candidates(gap, listed, directory)) {
+                val urls = candidates.filter { tried.add(it) }.take(MAX_PROBES - probed.size).takeIf { it.isNotEmpty() } ?: continue
+                probed += coroutineScope { urls.map { async { probe(it, gap.level) } }.awaitAll() }.filterNotNull()
+                RatingsDirectory.closing(probed.map { it.questionnaires ?: 0 }, missing)?.let { chosen -> return chosen.map(probed::get) }
+            }
+            return null
+        }
+
+        /** The pages [gap] may lead to that its listing leaves out: the codes of other years, then the gaps in their numbering. */
+        private fun candidates(gap: Gap, listed: List<Row>, directory: RatingsDirectory): List<List<String>> {
+            fun parameter(name: String) = queryParameter(gap.url, name).orEmpty()
+            val department = parameter("idDIP")
+            val studyCourse = parameter("idCDS")
+            val type = parameter("idTC")
+            val course = parameter("idAD")
+            return when (gap.level) {
+                Gap.YEAR -> {
+                    val have = listed.mapNotNull { queryParameter(it.url, "idDIP") }.toSet()
+                    listOf((directory.departments - have).map { "${BASE_URL}opinioniDIP.vm?idDIP=$it&idAA=$year" })
+                }
+                Gap.DEPARTMENT -> {
+                    val have = listed.mapNotNull { row -> queryParameter(row.url, "idCDS")?.let { it to queryParameter(row.url, "idTC").orEmpty() } }.toMap()
+                    // A study course the year lists under another department isn't this one's: its page loads under any.
+                    val elsewhere = directory.listedStudyCourses[year].orEmpty()
+                    val known = directory.studyCourses[department].orEmpty()
+                    fun urls(codes: Map<String, String>) = codes.filterKeys { it !in have && it !in elsewhere }
+                        .map { (code, codeType) -> "${BASE_URL}opinioniCDS.vm?idCDS=$code&idAA=$year&idDIP=$department&idTC=$codeType" }
+                    listOf(urls(known), urls(RatingsDirectory.studyCourseHoles(known + have)))
+                }
+                Gap.STUDY_COURSE -> {
+                    val have = listed.mapNotNull { queryParameter(it.url, "idAD") }.toSet()
+                    val known = directory.courses[studyCourse].orEmpty()
+                    fun urls(codes: Set<String>) = (codes - have).map { "${BASE_URL}opinioniAD.vm?idAD=$it&idAA=$year&idDIP=$department&idCDS=$studyCourse&idTC=$type" }
+                    listOf(urls(known), urls(RatingsDirectory.courseHoles(known + have)))
+                }
+                else -> {
+                    val have = listed.mapNotNull { queryParameter(it.url, "idDOC") }.toSet()
+                    val known = directory.teachers[course].orEmpty() + directory.studyCourseTeachers[studyCourse to year].orEmpty()
+                    listOf((known - have).map { "${BASE_URL}opinioniDOC.vm?idDOC=$it&idDIP=$department&idCDS=$studyCourse&idTC=$type&idAD=$course&idAA=$year" })
+                }
+            }
+        }
+
+        /**
+         * The page at [url], one that a listing at [level] leaves out, as that listing's row would
+         * have it: null when it has nothing for the year.
+         */
+        private suspend fun probe(url: String, level: String): Row? {
+            // A page with nothing may be one served blank: it gets another attempt, on another server.
+            val page = try {
+                fetcher.get(url, "questionnaires for $year", attempts = PROBE_ATTEMPTS) { questionnaires(it, level) > 0 }
+            } catch (e: FetchException) {
+                return null
+            }
+            // A teacher's page has a chart only when its ratings are published, though the chart may come blank.
+            return Row(url, questionnaires(page, level), emptyList(), published = page.html.contains(CHART))
+        }
+
+        /** The questionnaires of a page a listing at [level] leads to: a teacher's, in its header; others, there or in their rows. */
+        private fun questionnaires(page: Page, level: String): Int = when (level) {
+            Gap.COURSE -> header(page.document) ?: 0
+            // A page the listing leaves out says nothing in its header: the link that's missing is what fills it.
+            else -> header(page.document) ?: rows(page.document).sumOf { it.questionnaires ?: 0 }
         }
 
         /** The year's data: the [kept] courses, by id, with [courses] added, and the gaps this crawl left. */
@@ -150,27 +263,44 @@ class CourseRatingsBuilder : ResourceBuilder {
             }
         }
 
-        private suspend fun department(row: Row): List<JsonObject> =
-            coroutineScope { listing(row, Gap.DEPARTMENT).map { async { studyCourse(it) } }.awaitAll() }.flatten()
+        /** The courses under the page [row] leads to, at [level], whose listing has [rows]. */
+        private suspend fun children(level: String, row: Row, rows: List<Row>): List<JsonObject> = coroutineScope {
+            when (level) {
+                Gap.YEAR -> rows.map { async { department(it) } }.awaitAll().flatten()
+                Gap.DEPARTMENT -> rows.map { async { studyCourse(it) } }.awaitAll().flatten()
+                Gap.STUDY_COURSE -> rows.map { async { course(it) } }.awaitAll().filterNotNull()
+                else -> listOfNotNull(course(row, rows))
+            }
+        }
 
-        private suspend fun studyCourse(row: Row): List<JsonObject> =
-            coroutineScope { listing(row, Gap.STUDY_COURSE).map { async { course(it) } }.awaitAll() }.filterNotNull()
+        private suspend fun department(row: Row): List<JsonObject> = children(Gap.DEPARTMENT, row, listing(row, Gap.DEPARTMENT))
+
+        private suspend fun studyCourse(row: Row): List<JsonObject> = children(Gap.STUDY_COURSE, row, listing(row, Gap.STUDY_COURSE))
 
         private suspend fun course(row: Row): JsonObject? {
+            if (queryParameter(row.url, "idAD") == null) return null
+            return course(row, listing(row, Gap.COURSE))
+        }
+
+        /**
+         * The course [row] leads to, whose listing has the [teachers]' rows, and the questionnaires
+         * the site attributes to none of them, when [unattributed].
+         */
+        private suspend fun course(row: Row, teachers: List<Row>, unattributed: Int? = null): JsonObject? {
             val id = queryParameter(row.url, "idAD") ?: return null
-            // Each row: course code, course name, teacher, published (SI/NO), reason, questionnaires.
-            val stubs = listing(row, Gap.COURSE).mapNotNull { teacher ->
+            val stubs = teachers.mapNotNull { teacher ->
                 val teacherId = queryParameter(teacher.url, "idDOC") ?: return@mapNotNull null
-                Stub(teacherId, teacher.url, teacher.questionnaires, teacher.cells.getOrNull(3)?.uppercase() == "SI")
+                Stub(teacherId, teacher.url, teacher.questionnaires, teacher.published)
             }
-            val teachers = coroutineScope { stubs.map { async { teacher(it, row) } }.awaitAll() }
+            val fetchedTeachers = coroutineScope { stubs.map { async { teacher(it, row) } }.awaitAll() }
             fetched.incrementAndGet()
             return buildJsonObject {
                 put("id", id)
                 put("url", row.url)
                 put("questionnaires", row.questionnaires.toJson())
-                put("ratings", weighted(teachers))
-                put("teachers", JsonArray(teachers))
+                put("ratings", weighted(fetchedTeachers))
+                put("teachers", JsonArray(fetchedTeachers))
+                unattributed?.let { put("unattributed_questionnaires", it) }
             }
         }
 
@@ -185,7 +315,7 @@ class CourseRatingsBuilder : ResourceBuilder {
                     ratings(chartSeries(page.html).last(), "DOC ${stub.id} / AA $year")
                 } catch (e: FetchException) {
                     // Its course is fetched again, teachers and all.
-                    keep(Gap(Gap.COURSE, course.url, course.questionnaires), e)
+                    keep(Gap(Gap.COURSE, course.url, course.questionnaires), e.message)
                     JsonNull
                 }
             } else {
@@ -199,21 +329,33 @@ class CourseRatingsBuilder : ResourceBuilder {
             }
         }
 
-        /**
-         * The rows of the listing [row] leads to, once they add up to its questionnaires; when
-         * they never do, those it was last served with, and the listing goes in the year's gaps
-         * at [level].
-         */
-        private suspend fun listing(row: Row, level: String): List<Row> = try {
-            rows(fetcher.get(row.url, "rows adding up to ${row.questionnaires ?: "its"} questionnaires") { isWhole(it.document, row.questionnaires) }.document)
-        } catch (e: FetchException) {
-            keep(Gap(level, row.url, row.questionnaires), e)
-            e.last?.let { rows(it.document) }.orEmpty()
+        /** A listing as served: whole, or else the fullest it came, and what it lacked. */
+        private class Listing(val page: Page?, val whole: Boolean, val problem: String? = null) {
+            val rows = page?.let { rows(it.document) }.orEmpty()
         }
 
-        private fun keep(gap: Gap, e: FetchException) {
+        /** The listing [row] leads to, once its rows add up to the row's questionnaires. */
+        private suspend fun served(row: Row): Listing = try {
+            Listing(fetcher.get(row.url, "rows adding up to ${row.questionnaires ?: "its"} questionnaires") { isWhole(it.document, row.questionnaires) }, whole = true)
+        } catch (e: FetchException) {
+            // Blanks only take parts away, so the fullest is the closest to the page.
+            Listing(e.served.maxByOrNull { page -> rows(page.document).sumOf { it.questionnaires ?: 0 } }, whole = false, e.message)
+        }
+
+        /**
+         * The rows of the listing [row] leads to, once they add up to its questionnaires; when
+         * they never do, the fullest it was served with, and the listing goes in the year's gaps
+         * at [level].
+         */
+        private suspend fun listing(row: Row, level: String): List<Row> {
+            val listing = served(row)
+            if (!listing.whole) keep(Gap(level, row.url, row.questionnaires), listing.problem)
+            return listing.rows
+        }
+
+        private fun keep(gap: Gap, problem: String?) {
             gaps += gap
-            context.log("AA $year: kept with parts missing, for a later run to fetch again: ${e.message}")
+            context.log("AA $year: kept with parts missing, for a later run to fetch again: ${gap.url}${problem?.let { "\n    $it" }.orEmpty()}")
         }
 
         /**
@@ -252,8 +394,17 @@ class CourseRatingsBuilder : ResourceBuilder {
 
     private class Stub(val id: String, val url: String, val questionnaires: Int?, val published: Boolean)
 
-    /** A listing's row: the page it leads to, how many questionnaires that page covers, and its cells' text. */
-    internal class Row(val url: String, val questionnaires: Int?, val cells: List<String>)
+    /**
+     * A listing's row: the page it leads to, how many questionnaires that page covers, and its
+     * cells' text; for a teacher's, whether its ratings are published.
+     */
+    internal class Row(
+        val url: String,
+        val questionnaires: Int?,
+        val cells: List<String>,
+        // Each teacher's row: course code, course name, teacher, published (SI/NO), reason, questionnaires.
+        val published: Boolean = cells.getOrNull(3)?.uppercase() == "SI",
+    )
 
     /** A page that never came whole: the listing at [url], of a [level], meant to cover [questionnaires]. */
     internal data class Gap(val level: String, val url: String, val questionnaires: Int?) {
@@ -314,6 +465,12 @@ class CourseRatingsBuilder : ResourceBuilder {
          */
         const val ATTEMPTS = 9
 
+        /** The attempts at a page a listing may leave out, most of which have nothing for the year. */
+        const val PROBE_ATTEMPTS = 2
+
+        /** The pages looked for at most for one listing: the codes of a study course's courses, and the gaps in their numbering, are a few dozen. */
+        const val MAX_PROBES = 150
+
         /** The series of a teacher's chart. */
         const val SERIES = 5
 
@@ -345,6 +502,12 @@ class CourseRatingsBuilder : ResourceBuilder {
             "Sec-Fetch-User" to "?1",
         )
 
+        /** The query parameter of the pages a listing at each level leads to: a year's to departments, and so on. */
+        val CHILD_PARAMETERS = mapOf(Gap.YEAR to "idDIP", Gap.DEPARTMENT to "idCDS", Gap.STUDY_COURSE to "idAD", Gap.COURSE to "idDOC")
+
+        /** The call that draws a page's chart. */
+        const val CHART = "\$.jqplot('chart'"
+
         val PAIR = Regex("""\[\s*['"]([^'"]+)['"]\s*,\s*([0-9.]+|null)\s*]|\[\s*([0-9.]+|null)\s*,\s*['"]([^'"]+)['"]\s*]""")
 
         /** The script that writes a row's numbers into its cells: the first is its questionnaires. */
@@ -373,7 +536,7 @@ class CourseRatingsBuilder : ResourceBuilder {
          * Whether a listing came whole: its rows add up to the questionnaires it covers, the
          * [expected] of the row that led to it, or else those its header says. A header that
          * says otherwise is a page served wrong; none at all is how a course page with no
-         * teacher's ratings published comes.
+         * teacher's ratings published comes, and a page its parent's listing leaves out.
          */
         fun isWhole(document: Document, expected: Int?): Boolean {
             val total = header(document)
@@ -400,7 +563,7 @@ class CourseRatingsBuilder : ResourceBuilder {
          * other calls.
          */
         fun chartSeries(html: String): List<List<Pair<String, Double?>>> {
-            val call = html.indexOf("\$.jqplot('chart'").takeIf { it >= 0 } ?: return emptyList()
+            val call = html.indexOf(CHART).takeIf { it >= 0 } ?: return emptyList()
             val start = html.indexOf('[', call).takeIf { it >= 0 } ?: return emptyList()
             var depth = 0
             var end = -1
