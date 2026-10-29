@@ -1,7 +1,64 @@
 # MyBicocca web app
 
-The web app will live here. For now this folder holds [`data-api`](data-api), the TypeScript
-package (`@mybicocca/data-api`) the app will use to talk to the university's services.
+The web port of MyBicocca: a single-page app in SvelteKit 3 and Svelte 5, with its own design
+language (Carta) for every screen from phones to wide desktops. It talks to the university's
+services through [`data-api`](data-api), the SDK generated from the same specs as the Android one.
+
+```sh
+npm install
+npm run dev        # http://localhost:5173
+npm run check      # messages, types (svelte-check) and the service worker
+npm run lint       # prettier and eslint
+npm test           # unit tests (vitest)
+npm run build      # static site in build/, served by `npm run preview`
+npm run dev:demo   # the demo build: no sign-in, every service answered by fixtures
+npm run build:demo # the demo as a static site, in build-demo/
+npm run screens    # screenshots of the demo, see tools/screenshots
+```
+
+Sign in with a university account. The demo is a build of its own (`--mode demo`), which opens
+straight into the demo account; other builds contain none of it.
+
+## How it works
+
+The app is static (adapter-static, no SSR) and runs entirely in the browser. Most university
+services don't allow cross-origin requests, so those go through [`relay`](relay): a stateless proxy
+at `/relay/{host}{path}` that never follows redirects and hands cookies back to the app, which keeps
+its own cookie jars. In development a Vite plugin serves it; in production a Cloudflare Worker does
+(`wrangler.jsonc`, assets from `build/`, the worker only for `/relay/*`). Moodle's web services and
+Kaltura are called directly.
+
+The demo build runs the same SDK against fixtures in each service's wire format
+(`src/lib/demo`), so a demo page exercises the same code as a live one. In development,
+`localStorage['mybicocca:demo-scenarios']` makes any service or request slow, empty, failing or
+offline; `src/lib/demo/router.ts` documents it.
+
+## Layout
+
+| Folder               | What's in it                                                               |
+| -------------------- | -------------------------------------------------------------------------- |
+| `src/routes`         | Pages. `(app)` holds everything behind sign-in; `login` the sign-in flow   |
+| `src/lib/features`   | One folder per area (calendar, exams, map, …): queries, logic, components  |
+| `src/lib/ui`         | The design system's components; browse them at `/dev/ui`                   |
+| `src/lib/shell`      | Navigation (tab bar, rail, sidebar), top bar, command palette, theme       |
+| `src/lib/data`       | Session, accounts, the query cache (IndexedDB), errors, shared stores      |
+| `src/lib/api`        | The SDK clients: routing (direct or relay), cookie jars, sign-in flows     |
+| `src/lib/qr`         | QR scanning (camera, a decoder in a worker) for attendance and the library |
+| `src/lib/format`     | Dates, numbers, grades, names, deadlines                                   |
+| `src/lib/demo`       | Demo persona, fixtures and transport                                       |
+| `src/lib/styles`     | Tokens (OKLCH colour ramps, type, spacing), base styles, fonts             |
+| `src/service-worker` | Offline start: the app shell precached, lazy code cached on first use      |
+| `messages/{it,en}`   | Translations, one file per area (Paraglide)                                |
+| `tools/screenshots`  | The screenshot catalogue (the Android shots' names) and its capture tool   |
+
+Data goes through `query()` from `src/lib/data/query.svelte.ts`: answers are kept in memory and in
+IndexedDB (personal data encrypted), shown at once and refreshed in the background. A query that
+wraps one SDK call is named after it (`careerKey(scope, 'esse3.records.getBookings', matId)`), so
+every feature that needs the same data shares one cache entry.
+
+`npm run i18n` compiles the messages for development. Production builds compile their own,
+one module per message, so each page loads only the text it uses; run `npm run i18n` again
+after a build if the dev server is running.
 
 ## data-api
 
@@ -13,7 +70,7 @@ an API, edit its spec and regenerate; don't edit the TypeScript files.
 The package mirrors the Android SDK: one subpackage per service, each split the same way.
 
 | Import                           | Android package | What's in it                                   |
-|----------------------------------|-----------------|------------------------------------------------|
+| -------------------------------- | --------------- | ---------------------------------------------- |
 | `@mybicocca/data-api/esse3`      | `esse3`         | Esse3: careers, exams, fees, self-declarations |
 | `@mybicocca/data-api/elearning`  | `elearning`     | Moodle, Moodle's pages and Kaltura             |
 | `@mybicocca/data-api/easystaff`  | `easystaff`     | Agenda Web, EasyBadge and Portale Planning     |
@@ -22,20 +79,20 @@ The package mirrors the Android SDK: one subpackage per service, each split the 
 
 Inside each subpackage:
 
-| Folder    | Android folder | Contents                                         |
-|-----------|----------------|--------------------------------------------------|
-| `api`     | `api`          | The entry point, one service per module, the client |
-| `models`  | `dto`          | Records, enums, credentials and scrapers         |
-| `errors`  | `exception`    | The error each API throws                        |
-| `resources` | `resources`  | Data the subpackage ships, such as the course catalog, which `<Prefix>Resources` decodes |
+| Folder      | Android folder | Contents                                                                                 |
+| ----------- | -------------- | ---------------------------------------------------------------------------------------- |
+| `api`       | `api`          | The entry point, one service per module, the client                                      |
+| `models`    | `dto`          | Records, enums, credentials and scrapers                                                 |
+| `errors`    | `exception`    | The error each API throws                                                                |
+| `resources` | `resources`    | Data the subpackage ships, such as the course catalog, which `<Prefix>Resources` decodes |
 
 Each folder has an `index.ts` that re-exports it, so you import from the subpackage:
 
 ```ts
-import { createEsse3Api, Esse3Error } from "@mybicocca/data-api/esse3";
+import { createEsse3Api, Esse3Error } from '@mybicocca/data-api/esse3';
 
-const esse3 = createEsse3Api({ headers: { Authorization: "Basic …" } });
-const careers = await esse3.careers.getCareers({ userId: "…" });
+const esse3 = createEsse3Api({ headers: { Authorization: 'Basic …' } });
+const careers = await esse3.careers.getCareers({ userId: '…' });
 ```
 
 A request the service rejects throws the API's error, such as `Esse3Error`, with the status and

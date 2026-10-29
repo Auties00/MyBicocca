@@ -1,0 +1,20 @@
+# Output
+/.svelte-kit
+/build
+/build-demo
+.wrangler
+
+# Env
+.env
+.env.*
+!.env.example
+
+# Vite
+vite.config.ts.timestamp-*
+
+# Paraglide
+src/lib/paraglide
+project.inlang/cache/
+
+# Tests
+test-results/

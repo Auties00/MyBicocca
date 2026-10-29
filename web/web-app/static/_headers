@@ -1,0 +1,15 @@
+# Headers of the static assets on Cloudflare (wrangler.jsonc serves ./build).
+
+# Build files carry a content hash in their name.
+/_app/immutable/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# The basemap (style, glyphs, sprite, tiles): its path carries a content hash.
+/map-assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Protocol buffers get no type from their extension; with one, the edge compresses them.
+/map-assets/:hash/tiles/*
+  Content-Type: application/x-protobuf
+/map-assets/:hash/glyphs/*
+  Content-Type: application/x-protobuf

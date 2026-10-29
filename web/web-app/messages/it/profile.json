@@ -1,0 +1,161 @@
+{
+	"$schema": "https://inlang.com/schema/inlang-message-format",
+	"profile_title": "Profilo",
+	"profile_refresh_error": "Impossibile aggiornare i dati del libretto.",
+	"profile_load_error": "Impossibile caricare il libretto",
+	"profile_stats_error": "Non è stato possibile caricare medie e totali.",
+	"profile_statistics": "Statistiche",
+	"profile_trend": "Andamento",
+	"profile_arithmetic_average": "Media aritmetica",
+	"profile_weighted_average": "Media ponderata",
+	"profile_exams_taken": "Esami sostenuti",
+	"profile_credits_earned": "CFU acquisiti",
+	"profile_calc_hypothetical": "Calcola media ipotetica",
+	"profile_base_110": "{value} su 110",
+	"profile_tile_exams_basis": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "su 1 esame",
+				"countPlural=other": "su {count} esami"
+			}
+		}
+	],
+	"profile_tile_credits_basis": "su {credits}",
+	"profile_tile_no_grades": "Nessun voto ancora",
+	"profile_exams_passed_of": "{passed} su {total} superati",
+	"profile_credits_of": "{passed} su {total}",
+	"profile_badge_university": "Università degli Studi",
+	"profile_badge_signature": "Firma",
+	"profile_badge_email": "Email istituzionale",
+	"profile_badge_photo": "Foto profilo",
+	"profile_badge_student": "Studente",
+	"profile_card_label": "Tessera universitaria di {name}, matricola {number}. Premi per girarla.",
+	"profile_card_front": "Fronte della tessera.",
+	"profile_card_back": "Retro della tessera: firma, foto ed email istituzionale {email}.",
+	"profile_trend_min_exams": "L’andamento compare dopo almeno due esami superati.",
+	"profile_grade_label": "Voto: {grade}",
+	"profile_chart_label": "Andamento dei voti: {count} esami dal {first} al {last}. Usa le frecce per scorrerli.",
+	"profile_chart_point": "{name}, {date}: {grade}",
+	"profile_chart_average": "Media aritmetica {value}",
+	"profile_chart_caption": "Voti degli esami superati, in ordine di data",
+	"profile_chart_exam": "Esame",
+	"profile_chart_date": "Data",
+	"profile_chart_grade": "Voto",
+	"profile_libretto_title": "Libretto",
+	"profile_libretto_subtitle": "{passed} su {total} esami superati · {credits}",
+	"profile_libretto_open": "Apri il libretto",
+	"profile_view_label": "Mostra",
+	"profile_grades": "Voti",
+	"profile_credits": "Crediti",
+	"profile_year": "Anno {year}",
+	"profile_prerequisites": "Prerequisiti",
+	"profile_years_label": "Anni di corso",
+	"profile_year_exams": [
+		{
+			"declarations": ["input passed", "input total", "local totalPlural = total: plural"],
+			"selectors": ["totalPlural"],
+			"match": {
+				"totalPlural=one": "{passed} su {total} esame",
+				"totalPlural=other": "{passed} su {total} esami"
+			}
+		}
+	],
+	"profile_passed": "Superato",
+	"profile_passed_on": "Superato il {date}",
+	"profile_attending": "Frequentato, da sostenere",
+	"profile_pending": "Da sostenere",
+	"profile_course_prereq_unmet_short": "Propedeuticità non soddisfatte",
+	"profile_libretto_empty_title": "Il libretto è ancora vuoto.",
+	"profile_libretto_empty_body": "Gli insegnamenti del piano di studi compariranno qui.",
+	"profile_libretto_empty_action": "Apri il piano di studi",
+	"profile_column_course": "Insegnamento",
+	"profile_column_date": "Data",
+	"profile_column_credits": "CFU",
+	"profile_column_grade": "Voto",
+	"profile_course_label": "Insegnamento",
+	"profile_fact_credits": "Crediti",
+	"profile_fact_academic_year": "Anno accademico",
+	"profile_fact_code": "Codice",
+	"profile_course_passed": "Superato",
+	"profile_course_prereq_unmet": "Le propedeuticità per questo insegnamento non risultano soddisfatte.",
+	"profile_course_attempts": "Prove sostenute",
+	"profile_course_attempt": "Prova",
+	"profile_course_no_exams_title": "Nessuna prova registrata.",
+	"profile_course_no_exams_body": "Le prove che sosterrai compariranno qui.",
+	"profile_course_go_to_appelli": "Vai agli appelli",
+	"profile_course_bookable": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} appello prenotabile",
+				"countPlural=other": "{count} appelli prenotabili"
+			}
+		}
+	],
+	"profile_course_no_appelli": "Nessun appello disponibile",
+	"profile_course_simulate": "Simula la media con questo esame",
+	"profile_course_load_failed": "Impossibile caricare le prove.",
+	"profile_course_not_found_title": "Insegnamento non trovato.",
+	"profile_course_not_found_body": "Questo insegnamento non compare nel libretto della carriera attiva.",
+	"profile_simulator_title": "Simulatore della media",
+	"profile_simulator_subtitle": "Scopri come cambia la media con il prossimo esame.",
+	"profile_simulator_kind": "Tipo di media",
+	"profile_simulator_arithmetic": "Aritmetica",
+	"profile_simulator_weighted": "Ponderata",
+	"profile_hyp_subtitle_arithmetic": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "Su 1 esame con voto",
+				"countPlural=other": "Su {count} esami con voto"
+			}
+		}
+	],
+	"profile_hyp_subtitle_weighted": "Su {credits} di esami con voto",
+	"profile_hyp_now": "Ora:",
+	"profile_hyp_then": "Con il nuovo esame:",
+	"profile_hyp_grade_label": "Voto",
+	"profile_hyp_grade_placeholder": "18–30",
+	"profile_hyp_laude": "Con lode",
+	"profile_hyp_laude_hint": "Nella simulazione la lode vale 31, come sul grafico.",
+	"profile_hyp_grade_invalid": "Voto non valido: il minimo è 18.",
+	"profile_hyp_grade_too_high": "Voto troppo alto: al massimo 30 e lode (31).",
+	"profile_hyp_cfu_label": "CFU dell’esame",
+	"profile_hyp_cfu_placeholder": "6",
+	"profile_hyp_cfu_invalid": "I CFU devono essere almeno 1.",
+	"profile_hyp_prompt": "Inserisci un voto per vedere la nuova media.",
+	"profile_hyp_prompt_credits": "Inserisci anche i CFU dell’esame.",
+	"profile_hyp_no_average": "Serve almeno un esame con voto per simulare la media.",
+	"profile_hyp_delta_up": "Sale di {delta}",
+	"profile_hyp_delta_down": "Scende di {delta}",
+	"profile_hyp_delta_same": "Resta uguale",
+	"profile_target_title": "Che voto ti serve?",
+	"profile_target_label": "Media da raggiungere",
+	"profile_target_placeholder": "28,00",
+	"profile_target_invalid": "Inserisci una media tra 18 e 30.",
+	"profile_target_grade": "Ti serve almeno {grade}.",
+	"profile_target_grade_credits": "Ti serve almeno {grade} in un esame da {credits}.",
+	"profile_target_laude": "Ti serve 30 e lode.",
+	"profile_target_laude_credits": "Ti serve 30 e lode in un esame da {credits}.",
+	"profile_target_any": "Ti basta superarlo: anche con 18 arrivi a {target}.",
+	"profile_target_unreachable": "Con un solo esame non ci arrivi, nemmeno con 30 e lode.",
+	"profile_target_needs_credits": "Inserisci prima i CFU dell’esame.",
+	"profile_pick_title": "Da sostenere",
+	"profile_pick_hint": "Scegli quello che vuoi simulare.",
+	"profile_pick_clear": "Togli l’esame scelto",
+	"profile_graded_exams": "Esami che fanno media",
+	"profile_graded_exams_summary": [
+		{
+			"declarations": ["input count", "input credits", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "1 esame · {credits}",
+				"countPlural=other": "{count} esami · {credits}"
+			}
+		}
+	]
+}

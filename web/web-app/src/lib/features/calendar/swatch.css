@@ -1,0 +1,28 @@
+/*
+ * Event swatches: an element with the `calendar-swatch` class and `--sw-h` (hue) / `--sw-c` (chroma
+ * scale) gets its tones. Lightness is the same for every hue, as for Carta's course colours,
+ * so the fill stays quiet and the ink keeps 4.5:1 on it in both themes.
+ */
+.calendar-swatch {
+	--sw-c: 1;
+	--sw-container: light-dark(
+		oklch(93.8% calc(0.05 * var(--sw-c)) var(--sw-h)),
+		oklch(29.5% calc(0.06 * var(--sw-c)) var(--sw-h))
+	);
+	--sw-container-hover: light-dark(
+		oklch(91% calc(0.062 * var(--sw-c)) var(--sw-h)),
+		oklch(33% calc(0.07 * var(--sw-c)) var(--sw-h))
+	);
+	--sw-accent: light-dark(
+		oklch(60% calc(0.16 * var(--sw-c)) var(--sw-h)),
+		oklch(74% calc(0.14 * var(--sw-c)) var(--sw-h))
+	);
+	--sw-ink: light-dark(
+		oklch(34% calc(0.09 * var(--sw-c)) var(--sw-h)),
+		oklch(92% calc(0.045 * var(--sw-c)) var(--sw-h))
+	);
+	--sw-ink-muted: light-dark(
+		oklch(42% calc(0.08 * var(--sw-c)) var(--sw-h)),
+		oklch(82% calc(0.06 * var(--sw-c)) var(--sw-h))
+	);
+}

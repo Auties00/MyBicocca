@@ -1,0 +1,231 @@
+{
+	"$schema": "https://inlang.com/schema/inlang-message-format",
+	"forum_about": "Informazioni sul forum",
+	"forum_action_failed": "Operazione non riuscita",
+	"forum_announcements_all": "Tutti gli avvisi",
+	"forum_announcements_count": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "1 avviso dei docenti",
+				"countPlural=other": "{count} avvisi dei docenti"
+			}
+		}
+	],
+	"forum_announcements_empty": "Nessun avviso pubblicato finora",
+	"forum_announcements_eyebrow": "Bacheca avvisi",
+	"forum_announcements_failed": "Impossibile caricare gli avvisi.",
+	"forum_announcements_loading": "Caricamento degli avvisi",
+	"forum_announcements_none": "Nessun avviso",
+	"forum_attachment_downloading": "Download di {name} in corso",
+	"forum_attachment_failed": "Caricamento di {name} non riuscito",
+	"forum_attachment_remove": "Rimuovi {name}",
+	"forum_attachment_too_big": "{name} supera il limite di {size}.",
+	"forum_attachment_too_many": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "Puoi allegare un solo file.",
+				"countPlural=other": "Puoi allegare al massimo {count} file."
+			}
+		}
+	],
+	"forum_attachment_uploaded": "{name} caricato",
+	"forum_attachment_uploading": "Caricamento di {name}",
+	"forum_attachments": "Allegati",
+	"forum_attachments_count_limit": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "Un file al massimo",
+				"countPlural=other": "Fino a {count} file"
+			}
+		}
+	],
+	"forum_attachments_drop": "o trascinali qui",
+	"forum_attachments_limits": [
+		{
+			"declarations": ["input count", "input size", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "Un file al massimo, fino a {size}",
+				"countPlural=other": "Fino a {count} file, {size} ciascuno"
+			}
+		}
+	],
+	"forum_attachments_pick": "Allega file",
+	"forum_author_unknown": "Utente sconosciuto",
+	"forum_back": "Forum",
+	"forum_back_forums": "Forum",
+	"forum_back_to_forums": "Torna ai forum del corso",
+	"forum_back_to_list": "Torna alle discussioni",
+	"forum_cannot_create_body": "In questo forum scrivono solo i docenti: puoi leggere le discussioni e, dove è permesso, rispondere.",
+	"forum_cannot_create_title": "Qui non puoi aprire discussioni",
+	"forum_composer_editing": "Modifica del messaggio",
+	"forum_composer_group": "Gruppo",
+	"forum_composer_message": "Messaggio",
+	"forum_composer_message_required": "Scrivi il messaggio.",
+	"forum_composer_offline": "Sei offline: potrai pubblicare quando torni online. La bozza resta qui.",
+	"forum_composer_placeholder": "Scrivi il messaggio…",
+	"forum_composer_post": "Pubblica",
+	"forum_composer_post_failed": "Pubblicazione non riuscita",
+	"forum_composer_reply": "Rispondi",
+	"forum_composer_reply_placeholder": "Scrivi la tua risposta…",
+	"forum_composer_replying": "Risposta a {name}",
+	"forum_composer_save": "Salva",
+	"forum_composer_save_failed": "Salvataggio non riuscito",
+	"forum_composer_subject": "Oggetto",
+	"forum_composer_subject_required": "Scrivi l’oggetto.",
+	"forum_composer_subscribe": "Avvisami via e-mail delle risposte",
+	"forum_delete": "Elimina",
+	"forum_delete_discussion_alone": "La discussione verrà eliminata definitivamente.",
+	"forum_delete_discussion_body": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "Verrà eliminata l’intera discussione, con la sua risposta. Non si può annullare.",
+				"countPlural=other": "Verrà eliminata l’intera discussione, con le sue {count} risposte. Non si può annullare."
+			}
+		}
+	],
+	"forum_delete_discussion_title": "Eliminare la discussione?",
+	"forum_delete_post_body": "Il messaggio verrà eliminato definitivamente.",
+	"forum_delete_post_title": "Eliminare il messaggio?",
+	"forum_detail_label": "Discussione",
+	"forum_details_failed": "Impossibile caricare i dettagli del forum",
+	"forum_discard_body": "La bozza non pubblicata andrà persa.",
+	"forum_discard_confirm": "Scarta la bozza",
+	"forum_discard_keep": "Continua a scrivere",
+	"forum_discard_title": "Scartare la bozza?",
+	"forum_discussion_count": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "1 discussione",
+				"countPlural=other": "{count} discussioni"
+			}
+		}
+	],
+	"forum_discussion_deleted": "Discussione eliminata",
+	"forum_discussion_fallback": "Discussione",
+	"forum_discussion_posted": "Discussione pubblicata",
+	"forum_discussions_empty_can_create": "Apri tu la prima discussione di questo forum.",
+	"forum_discussions_empty_readonly": "Quando i docenti pubblicheranno qualcosa lo troverai qui.",
+	"forum_discussions_empty_title": "Nessuna discussione",
+	"forum_discussions_failed": "Impossibile caricare le discussioni",
+	"forum_discussions_label": "Discussioni",
+	"forum_discussions_loading": "Caricamento delle discussioni",
+	"forum_discussions_more": "Carica altre discussioni",
+	"forum_discussions_none": "Nessuna discussione",
+	"forum_edit": "Modifica",
+	"forum_edited": "modificato",
+	"forum_fact_attachments": "Allegati",
+	"forum_fact_kind": "Tipo",
+	"forum_fact_latest": "Ultima attività",
+	"forum_fact_subscription": "Notifiche",
+	"forum_follow": "Segui",
+	"forum_followed": "Ora segui questa discussione",
+	"forum_group_fallback": "Gruppo {id}",
+	"forum_has_attachments": "Con allegati",
+	"forum_hide_replies": "Nascondi risposte",
+	"forum_in_reply_to": "in risposta a {name}",
+	"forum_keys_new": "per aprirne una nuova",
+	"forum_keys_reply": "Rispondi al messaggio selezionato o alla discussione",
+	"forum_keys_edit": "Modifica il tuo messaggio selezionato",
+	"forum_kind_blog": "Formato blog",
+	"forum_kind_eachuser": "Una discussione per studente",
+	"forum_kind_general": "Discussione aperta",
+	"forum_kind_news": "Avvisi",
+	"forum_kind_other": "Forum",
+	"forum_kind_qanda": "Domande e risposte",
+	"forum_kind_single": "Discussione singola",
+	"forum_latest_activity": "{time} · {name}",
+	"forum_latest_by": "ultima di {name}",
+	"forum_list_count": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "1 forum",
+				"countPlural=other": "{count} forum"
+			}
+		}
+	],
+	"forum_list_empty_body": "Gli spazi di discussione del corso appariranno qui.",
+	"forum_list_empty_title": "Nessun forum",
+	"forum_list_failed": "Impossibile caricare i forum",
+	"forum_list_loading": "Caricamento dei forum",
+	"forum_list_other_title": "Altri forum",
+	"forum_list_title": "Forum del corso",
+	"forum_load_failed": "Impossibile aprire il forum",
+	"forum_loading": "Caricamento del forum…",
+	"forum_locked": "Bloccata",
+	"forum_locked_notice": "Discussione bloccata: non accetta nuove risposte.",
+	"forum_missing_body": "Potrebbe essere stato rimosso o nascosto dal docente.",
+	"forum_missing_title": "Forum non trovato",
+	"forum_new": "Nuovo",
+	"forum_new_discussion": "Nuova discussione",
+	"forum_new_in": "In {forum}",
+	"forum_no_replies": "nessuna risposta",
+	"forum_offline_tools": "Sei offline: potrai seguire la discussione e aggiungerla ai preferiti quando tornerai online.",
+	"forum_pick_discussion": "Scegli una discussione per leggerla.",
+	"forum_pinned": "In evidenza",
+	"forum_post_deleted": "Messaggio eliminato",
+	"forum_post_saved": "Modifiche salvate",
+	"forum_refresh": "Aggiorna le discussioni",
+	"forum_refresh_thread": "Aggiorna la discussione",
+	"forum_replies_to": "Risposte a {name}",
+	"forum_reply": "Rispondi",
+	"forum_reply_count": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "1 risposta",
+				"countPlural=other": "{count} risposte"
+			}
+		}
+	],
+	"forum_reply_posted": "Risposta pubblicata",
+	"forum_reply_prompt": "Scrivi una risposta…",
+	"forum_row_empty": "Ancora nessuna discussione · {kind}",
+	"forum_show_replies": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "Mostra 1 risposta",
+				"countPlural=other": "Mostra {count} risposte"
+			}
+		}
+	],
+	"forum_star": "Aggiungi ai preferiti",
+	"forum_starred": "Nei preferiti",
+	"forum_subscription_disabled": "Notifiche via e-mail disattivate",
+	"forum_subscription_forced": "Ricevi ogni messaggio per e-mail",
+	"forum_subscription_optional": "Scegli tu quali discussioni seguire",
+	"forum_thread_failed": "Impossibile caricare la discussione",
+	"forum_thread_gone_body": "Potrebbe essere stata eliminata o spostata.",
+	"forum_thread_gone_title": "Discussione non disponibile",
+	"forum_thread_loading": "Caricamento della discussione…",
+	"forum_thread_started": "Aperta da {name}",
+	"forum_title_fallback": "Forum",
+	"forum_unfollow": "Non seguire più",
+	"forum_unfollowed": "Non segui più questa discussione",
+	"forum_unread_posts": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "1 messaggio non letto",
+				"countPlural=other": "{count} messaggi non letti"
+			}
+		}
+	],
+	"forum_you": "Tu"
+}

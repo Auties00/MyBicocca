@@ -1,0 +1,277 @@
+{
+	"$schema": "https://inlang.com/schema/inlang-message-format",
+	"services_subtitle": "Teaching, bookings, documents and fees, all in one place.",
+	"services_nav_label": "All services",
+	"services_group_teaching_caption": "Programme, attendance and results",
+	"services_group_bookings_caption": "Exams, offices and study seats",
+	"services_group_documents_caption": "Enrolments, degrees and certificates",
+	"services_group_fees_caption": "Your administrative standing",
+	"services_summary_sync_failed": "Sync failed",
+	"services_summary_none": "No upcoming deadlines",
+	"services_summary_next": [
+		{
+			"declarations": ["input date", "input day"],
+			"selectors": ["day"],
+			"match": {
+				"day=*": "Next on {date}"
+			}
+		}
+	],
+	"services_summary_overdue_on": [
+		{
+			"declarations": ["input date", "input day"],
+			"selectors": ["day"],
+			"match": {
+				"day=*": "Overdue since {date}"
+			}
+		}
+	],
+	"services_summary_urgent": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} urgent",
+				"countPlural=other": "{count} urgent"
+			}
+		}
+	],
+	"services_badge_results": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} to decide",
+				"countPlural=other": "{count} to decide"
+			}
+		}
+	],
+	"services_badge_fees_overdue": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} overdue",
+				"countPlural=other": "{count} overdue"
+			}
+		}
+	],
+	"services_badge_fees_due": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} to pay",
+				"countPlural=other": "{count} to pay"
+			}
+		}
+	],
+	"services_badge_exams_booked": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} booked",
+				"countPlural=other": "{count} booked"
+			}
+		}
+	],
+	"services_badge_exams_closing": "Closing soon",
+	"services_upcoming_title": "Coming up",
+	"services_upcoming_all": "All deadlines",
+	"services_deadlines_subtitle": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} deadline in the next 30 days",
+				"countPlural=other": "{count} deadlines in the next 30 days"
+			}
+		}
+	],
+	"services_deadlines_intro": "Results to decide, fees to pay, booked exams and exam bookings about to close, from a week ago to the next 30 days.",
+	"services_deadlines_none_title": "No deadlines coming up.",
+	"services_deadlines_none_body": "Nothing to decide, pay or sit in the next 30 days.",
+	"services_deadlines_none_action": "Find an exam call",
+	"services_deadlines_filtered_none": "No deadlines of this kind.",
+	"services_deadlines_show_all": "Show all",
+	"services_deadlines_load_failed": "Couldn’t load your deadlines.",
+	"services_deadlines_refresh_failed": "Couldn’t refresh your deadlines.",
+	"services_deadlines_partial": "Some deadlines may be missing: {sources} couldn’t be loaded.",
+	"services_deadlines_filters": "Filter by kind",
+	"services_deadlines_timeline": "Deadlines by date",
+	"services_stream_results": "results",
+	"services_stream_fees": "fees",
+	"services_stream_exams": "booked exams",
+	"services_stream_bookings": "exam calls",
+	"services_kind_result": "Result",
+	"services_kind_fee": "Fees",
+	"services_kind_exam": "Exam",
+	"services_kind_booking": "Booking",
+	"services_filter_result": "Results",
+	"services_filter_fee": "Fees",
+	"services_filter_exam": "Exams",
+	"services_filter_booking": "Bookings",
+	"services_detail_grade": "Grade {grade}",
+	"services_detail_decide": "stands unless you reject it",
+	"services_detail_time": "At {time}",
+	"services_detail_booking_closes": "Booking closes",
+	"services_detail_booking_call": [
+		{
+			"declarations": ["input date", "input day"],
+			"selectors": ["day"],
+			"match": {
+				"day=*": "exam on {date}"
+			}
+		}
+	],
+	"services_detail_booking_opens": [
+		{
+			"declarations": ["input date", "input day"],
+			"selectors": ["day"],
+			"match": {
+				"day=*": "Booking opens {date}"
+			}
+		}
+	],
+	"services_fallback_result": "Exam result",
+	"services_fallback_exam": "Booked exam",
+	"services_fallback_booking": "Exam call",
+	"services_fallback_fee_year": "Fees {year}",
+	"services_fallback_fee_id": "Invoice {id}",
+	"services_section_overdue": "Overdue",
+	"services_section_week": "This week",
+	"services_section_next_week": "Next week",
+	"services_section_later": "Later",
+	"services_calendar_label": "Deadline calendar",
+	"services_legend_overdue": "Overdue",
+	"services_legend_urgent": "Within 7 days",
+	"services_legend_later": "Later",
+	"services_calendar_day": [
+		{
+			"declarations": ["input date", "input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{date}: {count} deadline",
+				"countPlural=other": "{date}: {count} deadlines"
+			}
+		}
+	],
+	"services_glance_title": "At a glance",
+	"services_tile_results": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} result to decide",
+				"countPlural=other": "{count} results to decide"
+			}
+		}
+	],
+	"services_tile_results_none": "No results to decide",
+	"services_tile_results_first": [
+		{
+			"declarations": ["input date", "input day"],
+			"selectors": ["day"],
+			"match": {
+				"day=*": "The first can be rejected until {date}"
+			}
+		}
+	],
+	"services_tile_exams": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} exam booked",
+				"countPlural=other": "{count} exams booked"
+			}
+		}
+	],
+	"services_tile_exams_none": "No exams booked",
+	"services_tile_exams_next": "Next: {date}",
+	"services_tile_closing": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} booking closing",
+				"countPlural=other": "{count} bookings closing"
+			}
+		}
+	],
+	"services_tile_fees": "{amount} to pay",
+	"services_tile_fees_none": "Nothing to pay",
+	"services_tile_fees_overdue": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} overdue invoice",
+				"countPlural=other": "{count} overdue invoices"
+			}
+		}
+	],
+	"services_tile_fees_first": [
+		{
+			"declarations": ["input date", "input day"],
+			"selectors": ["day"],
+			"match": {
+				"day=*": "The first by {date}"
+			}
+		}
+	],
+	"services_tile_due": [
+		{
+			"declarations": ["input date", "input day"],
+			"selectors": ["day"],
+			"match": {
+				"day=*": "By {date}"
+			}
+		}
+	],
+	"services_tile_unavailable": "Unavailable",
+	"services_tile_unavailable_meta": "Couldn’t check",
+	"services_deadlines_subtitle_filtered": [
+		{
+			"declarations": ["input shown", "input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{shown} of {count} deadline in the next 30 days",
+				"countPlural=other": "{shown} of {count} deadlines in the next 30 days"
+			}
+		}
+	],
+	"services_deadlines_subtitle_unknown": "Results, fees and exams over the next 30 days",
+	"services_deadlines_unchecked_title": "Couldn’t check all your deadlines.",
+	"services_deadlines_unchecked": "Couldn’t load {sources}: you may have deadlines that don’t show here.",
+	"services_summary_partial": "some couldn’t load",
+	"services_badge_unverified": "Not checked",
+	"services_card_partial": "Incomplete",
+	"services_card_stale": "Out of date",
+	"services_tile_closings_unverified": "Closings not checked",
+	"services_stale_line": "Out of date · data from {time}",
+	"services_stale_line_now": "Couldn’t refresh",
+	"services_refresh": "Refresh deadlines",
+	"services_badge_questionnaires": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} to fill in",
+				"countPlural=other": "{count} to fill in"
+			}
+		}
+	],
+	"services_badge_seat_now": "Seat now",
+	"services_badge_seat_today": "Seat at {time}",
+	"services_tile_result_due": [
+		{
+			"declarations": ["input date", "input day"],
+			"selectors": ["day"],
+			"match": {
+				"day=*": "Can be rejected until {date}"
+			}
+		}
+	]
+}

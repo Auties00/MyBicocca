@@ -1,0 +1,9 @@
+{
+	"extends": "$app/tsconfig",
+	"compilerOptions": {
+		"strict": true,
+		"types": ["$app/types", "node", "unplugin-icons/types/svelte"]
+	},
+	"include": ["src", "vite.config.ts"],
+	"exclude": ["src/service-worker"]
+}
