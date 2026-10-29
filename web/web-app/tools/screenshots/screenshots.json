@@ -1,0 +1,85 @@
+{
+	"setup": [
+		{
+			"route": "calendar?view=week",
+			"steps": [{ "click": ".choices[role='group'] button" }]
+		}
+	],
+	"shots": [
+		{ "name": "Screenshot_Calendar1", "route": "calendar?view=day" },
+		{
+			"name": "Screenshot_CalendarEvent",
+			"route": "calendar?view=day",
+			"steps": [{ "text": "Basi di Dati" }]
+		},
+
+		{ "name": "Screenshot_Elearning", "route": "elearning" },
+		{ "name": "Screenshot_ElearningAddCourse", "route": "elearning/catalog" },
+		{ "name": "Screenshot_ElearningCourse", "route": "elearning/5101" },
+		{ "name": "Screenshot_ElearningCourseContent", "route": "elearning/5101/content" },
+		{ "name": "Screenshot_ElearningCourseQuiz", "route": "elearning/5101/quiz/6201" },
+		{ "name": "Screenshot_ElearningCourseAssignment", "route": "elearning/5103/assignment/51030" },
+		{ "name": "Screenshot_ElearningCourseForum", "route": "elearning/5101/forum/7101" },
+		{
+			"name": "Screenshot_ElearningFile",
+			"route": "elearning/5101/file?cm=510110&name=slide_1.pdf"
+		},
+
+		{ "name": "Screenshot_Map", "route": "map" },
+		{ "name": "Screenshot_MapFilter", "route": "map?filter=teaching" },
+		{
+			"name": "Screenshot_MapBuildings",
+			"route": "map",
+			"steps": [{ "click": "button.handle[aria-expanded='false']", "sizes": ["mobile"] }]
+		},
+		{ "name": "Screenshot_MapBuildingU1", "route": "map/U01" },
+
+		{ "name": "Screenshot_Services", "route": "services" },
+		{ "name": "Screenshot_ServicesScadenze", "route": "services/deadlines" },
+		{ "name": "Screenshot_Career", "route": "services/study-plan" },
+		{ "name": "Screenshot_Attendance", "route": "services/attendance" },
+		{ "name": "Screenshot_ExamResults", "route": "services/results" },
+		{ "name": "Screenshot_Questionnaires", "route": "services/questionnaires" },
+		{ "name": "Screenshot_BookedExams", "route": "services/exams" },
+		{ "name": "Screenshot_BookableExams", "route": "services/exams/book" },
+		{ "name": "Screenshot_AttendanceOpt", "route": "services/attendance/check-in" },
+		{ "name": "Screenshot_BookAppointment", "route": "services/appointments/book" },
+		{ "name": "Screenshot_Library", "route": "services/library" },
+		{ "name": "Screenshot_Enrollments", "route": "services/enrollments" },
+		{ "name": "Screenshot_EnrollmentDetail", "route": "services/enrollments/2025" },
+		{ "name": "Screenshot_Titles", "route": "services/degrees" },
+		{ "name": "Screenshot_TitleDetail", "route": "services/degrees/sup-1" },
+		{ "name": "Screenshot_Documents", "route": "services/certificates" },
+		{ "name": "Screenshot_Fees", "route": "services/fees" },
+		{ "name": "Screenshot_Isee", "route": "services/isee" },
+		{ "name": "Screenshot_IseeDetail", "route": "services/isee/2025" },
+		{ "name": "Screenshot_Refunds", "route": "services/refunds" },
+		{ "name": "Screenshot_RefundDetail", "route": "services/refunds/5003" },
+
+		{
+			"name": "Screenshot_AccountSwitcher",
+			"route": "calendar?view=day",
+			"steps": [{ "click": "button.account, button.avatar, button.avatar-button" }]
+		},
+		{ "name": "Screenshot_Profile", "route": "profile" },
+		{ "name": "Screenshot_Average", "route": "profile/simulator?kind=weighted" },
+		{ "name": "Screenshot_ExamsTaken", "route": "profile/exams" },
+		{ "name": "Screenshot_Credits", "route": "profile/exams?view=credits" },
+
+		{ "name": "Screenshot_Settings", "route": "settings" },
+		{ "name": "Screenshot_SettingsAppearance", "route": "settings/appearance" },
+		{ "name": "Screenshot_SettingsLanguage", "route": "settings/language" },
+		{ "name": "Screenshot_SettingsSecurity", "route": "settings/security" },
+		{ "name": "Screenshot_SettingsFileAssociation", "route": "settings/files" },
+		{ "name": "Screenshot_SettingsAppInfo", "route": "settings/about" },
+
+		{ "name": "Screenshot_Calendar2", "route": "calendar?view=week" },
+		{ "name": "Screenshot_Calendar3", "route": "calendar?view=month" }
+	],
+	"exempt": [
+		{
+			"name": "Screenshot_SettingsHaptic",
+			"reason": "Haptics is a switch in the settings list, shown only on touch devices that can vibrate, not a page of its own."
+		}
+	]
+}

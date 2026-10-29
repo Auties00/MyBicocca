@@ -1,0 +1,258 @@
+{
+	"$schema": "https://inlang.com/schema/inlang-message-format",
+	"payments_due_subtitle": "{amount} due",
+	"payments_overdue_count": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} overdue",
+				"countPlural=other": "{count} overdue"
+			}
+		}
+	],
+	"payments_settled_subtitle": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "All settled · 1 invoice",
+				"countPlural=other": "All settled · {count} invoices"
+			}
+		}
+	],
+	"payments_fees_empty_title": "No fees.",
+	"payments_fees_empty_body": "There are no invoices for your career.",
+	"payments_fees_empty_action": "Check in Esse3",
+	"payments_fees_load_failed": "Couldn’t load your fees",
+	"payments_fees_list_label": "Invoices",
+	"payments_fees_detail_label": "Invoice details",
+	"payments_to_pay_heading": "To pay",
+	"payments_to_pay_description": "Pay online with pagoPA, or with the payment notice at a bank or a tobacconist.",
+	"payments_nothing_due_title": "No fees to pay.",
+	"payments_nothing_due_body": "You have no pending payments: new instalments will show up here.",
+	"payments_history_heading": "History",
+	"payments_history_description": "Paid and cancelled invoices, by academic year.",
+	"payments_year_paid": "{amount} paid",
+	"payments_year_unknown": "No academic year",
+	"payments_invoice_number": "Invoice #{id}",
+	"payments_invoice_fallback": "Fees {year}",
+	"payments_status_pending": "To pay",
+	"payments_status_expired": "Overdue",
+	"payments_status_paid": "Paid",
+	"payments_status_canceled": "Cancelled",
+	"payments_paid_on": [
+		{
+			"declarations": ["input date", "input day"],
+			"selectors": ["day"],
+			"match": {
+				"day=*": "Paid on {date}"
+			}
+		}
+	],
+	"payments_due_on": [
+		{
+			"declarations": ["input date", "input day"],
+			"selectors": ["day"],
+			"match": {
+				"day=*": "Due by {date}"
+			}
+		}
+	],
+	"payments_due_today": "Due today",
+	"payments_due_tomorrow": "Due tomorrow",
+	"payments_due_in": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "Due in {count} day",
+				"countPlural=other": "Due in {count} days"
+			}
+		}
+	],
+	"payments_overdue_by": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} day overdue",
+				"countPlural=other": "{count} days overdue"
+			}
+		}
+	],
+	"payments_relative_in": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "in {count} day",
+				"countPlural=other": "in {count} days"
+			}
+		}
+	],
+	"payments_relative_today": "today",
+	"payments_relative_tomorrow": "tomorrow",
+	"payments_relative_overdue": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} day overdue",
+				"countPlural=other": "{count} days overdue"
+			}
+		}
+	],
+	"payments_col_invoice": "Invoice",
+	"payments_col_description": "Description",
+	"payments_col_due": "Due date",
+	"payments_col_paid": "Payment",
+	"payments_col_amount": "Amount",
+	"payments_col_year": "Academic year",
+	"payments_col_status": "Status",
+	"payments_receipt_label": "Receipt of invoice #{id}",
+	"payments_receipt_issuer": "University of Milano-Bicocca",
+	"payments_year_short": "A.Y. {year}",
+	"payments_receipt_items": "Items",
+	"payments_item_due": "Due {date}",
+	"payments_total": "Total",
+	"payments_details": "Details",
+	"payments_fact_issued": "Issued on",
+	"payments_fact_paid": "Paid on",
+	"payments_fact_notice_code": "Notice code",
+	"payments_fact_iuv": "IUV",
+	"payments_copy": "Copy {label}",
+	"payments_copied": "{label} copied",
+	"payments_copy_failed": "{label} couldn’t be copied",
+	"payments_actions_heading": "Payment",
+	"payments_pay": "Pay with pagoPA",
+	"payments_pay_hint": "Opens the pagoPA checkout in a new tab: card, bank account or payment app.",
+	"payments_notice": "Payment notice",
+	"payments_notice_hint": "The PDF with the notice code and QR, to pay at a bank, a tobacconist or in your banking app.",
+	"payments_receipt": "Receipt",
+	"payments_receipt_hint": "The pagoPA receipt of the payment, as a PDF.",
+	"payments_check_status": "Check payment status",
+	"payments_pay_confirm_title": "Pay with pagoPA?",
+	"payments_pay_confirm_message": "We’ll open the pagoPA checkout for invoice #{id} ({amount}) in a new tab. While that session stays open, other attempts to pay this invoice may be blocked.",
+	"payments_pay_confirm": "Go to pagoPA",
+	"payments_pay_waiting": "Opening pagoPA…",
+	"payments_pay_no_link": "pagoPA didn’t return a payment link. Try again in a moment.",
+	"payments_pay_started_title": "Payment started",
+	"payments_pay_started_body": "Complete the payment in the pagoPA tab, then check its status here.",
+	"payments_pay_blocked": "The browser didn’t open a new tab.",
+	"payments_pay_continue": "Continue to pagoPA",
+	"payments_opening_pdf": "Opening the document…",
+	"payments_outcome_completed": "Payment completed",
+	"payments_outcome_pending": "Payment in progress",
+	"payments_outcome_failed": "Payment failed",
+	"payments_outcome_unknown": "Payment status unavailable",
+	"payments_outcome_none": "No pagoPA transaction",
+	"payments_outcome_none_body": "No payment has been started with pagoPA for this invoice yet.",
+	"payments_outcome_paid": [
+		{
+			"declarations": ["input amount", "input date", "input day"],
+			"selectors": ["day"],
+			"match": {
+				"day=*": "{amount} on {date}"
+			}
+		}
+	],
+	"payments_outcome_pending_body": "pagoPA hasn’t confirmed the payment yet. Check again in a few minutes.",
+	"payments_outcome_failed_body": "The payment didn’t go through: you can try again.",
+	"payments_offline_actions": "You’re offline: payments and documents come back when you reconnect.",
+	"payments_invoice_missing_title": "Invoice not found.",
+	"payments_invoice_missing_body": "It isn’t among this career’s invoices.",
+	"payments_back_to_fees": "Back to fees",
+	"payments_isee_years": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "1 academic year",
+				"countPlural=other": "{count} academic years"
+			}
+		}
+	],
+	"payments_isee_empty_title": "No ISEE declarations.",
+	"payments_isee_empty_body": "No ISEE declarations found for your career.",
+	"payments_isee_load_failed": "Couldn’t load your ISEE",
+	"payments_isee_list_label": "Years with an ISEE",
+	"payments_isee_detail_label": "ISEE details",
+	"payments_academic_year": "Academic year {year}",
+	"payments_isee_indicator": "ISEE indicator",
+	"payments_isee_threshold": "Benefits threshold",
+	"payments_isee_course": "Course",
+	"payments_isee_exemption": "Exemption",
+	"payments_isee_enrollment": "Enrolment",
+	"payments_isee_course_year": "Year of course",
+	"payments_isee_details": "Details",
+	"payments_isee_below": "{amount} below the benefits threshold",
+	"payments_isee_above": "{amount} above the benefits threshold",
+	"payments_isee_at": "Equal to the benefits threshold",
+	"payments_isee_scale_value": "{isee} of a {threshold} threshold",
+	"payments_isee_declare_title": "Submit your ISEE for {year}",
+	"payments_isee_declare_body": "Sign the DSU on the INPS website by 31 December: Bicocca picks up your ISEE automatically and sets your fees for academic year {year}.",
+	"payments_isee_declare": "Submit ISEE",
+	"payments_isee_guide": "Guide",
+	"payments_isee_missing_title": "Year not found.",
+	"payments_isee_missing_body": "There’s no ISEE on your career for this year.",
+	"payments_back_to_isee": "Back to ISEE",
+	"payments_refunds_count": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "1 refund",
+				"countPlural=other": "{count} refunds"
+			}
+		}
+	],
+	"payments_refunds_processing_count": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} processing",
+				"countPlural=other": "{count} processing"
+			}
+		}
+	],
+	"payments_refunds_empty_title": "No refunds.",
+	"payments_refunds_empty_body": "There are no refunds in your name.",
+	"payments_refunds_empty_action": "See your fees",
+	"payments_refunds_load_failed": "Couldn’t load your refunds",
+	"payments_refunds_list_label": "Refunds",
+	"payments_refunds_detail_label": "Refund details",
+	"payments_refunds_total": "Total refunded",
+	"payments_refunds_processing_total": "Processing",
+	"payments_refund_refunded": "Refunded",
+	"payments_refund_processing": "Processing",
+	"payments_refund_fallback": "Refund",
+	"payments_refund_amount": "Refund amount",
+	"payments_refund_progress": "Progress",
+	"payments_refund_step_issued": "Issued",
+	"payments_refund_step_processed": "Processed",
+	"payments_refund_step_paid": "Paid out",
+	"payments_refund_step_credited": "Credited",
+	"payments_refund_step_waiting": "Waiting",
+	"payments_refund_credited_on": [
+		{
+			"declarations": ["input date", "input day"],
+			"selectors": ["day"],
+			"match": {
+				"day=*": "Credited on {date}"
+			}
+		}
+	],
+	"payments_refund_details": "Details",
+	"payments_refund_reason": "Reason",
+	"payments_reason_isee": "ISEE recalculation",
+	"payments_reason_duplicate": "Duplicate payment",
+	"payments_refund_mandate": "Mandate",
+	"payments_refund_method": "Method",
+	"payments_refund_note": "Note",
+	"payments_refund_invoice": "Invoice",
+	"payments_refund_missing_title": "Refund not found.",
+	"payments_refund_missing_body": "It isn’t among the refunds in your name.",
+	"payments_back_to_refunds": "Back to refunds"
+}

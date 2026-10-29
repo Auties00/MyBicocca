@@ -1,0 +1,165 @@
+{
+	"$schema": "https://inlang.com/schema/inlang-message-format",
+	"questionnaires_title": "Questionari",
+	"questionnaires_pending_count": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "1 questionario in sospeso",
+				"countPlural=other": "{count} questionari in sospeso"
+			}
+		}
+	],
+	"questionnaires_none_pending": "Tutti i questionari completati",
+	"questionnaires_todo_heading": "Da compilare",
+	"questionnaires_todo_description": "Esse3 può chiederli prima di farti prenotare l’esame.",
+	"questionnaires_done_heading": "Compilati",
+	"questionnaires_all_done_title": "Hai valutato tutti gli insegnamenti.",
+	"questionnaires_all_done_body": "Quando si apre una nuova valutazione la trovi qui.",
+	"questionnaires_status_todo": "Da compilare",
+	"questionnaires_status_partial": "In parte",
+	"questionnaires_status_done": "Compilato",
+	"questionnaires_status_misconfigured": "Da verificare",
+	"questionnaires_empty_title": "Nessun questionario",
+	"questionnaires_empty_body": "Di solito la valutazione di un insegnamento si apre quando sono passati circa due terzi delle lezioni.",
+	"questionnaires_load_failed": "Impossibile caricare i questionari",
+	"questionnaires_list_label": "Insegnamenti da valutare",
+	"questionnaires_detail_label": "Insegnamento selezionato",
+	"questionnaires_rules_heading": "Come funziona",
+	"questionnaires_rule_units": "Si valuta ogni docente o modulo: un insegnamento può averne più d’uno.",
+	"questionnaires_units_subtitle": "Questionario di valutazione",
+	"questionnaires_units_heading": "Docenti e moduli",
+	"questionnaires_units_load_failed": "Impossibile caricare i docenti da valutare",
+	"questionnaires_unit_compile": "Compila",
+	"questionnaires_unit_compile_label": "Compila il questionario per {name}",
+	"questionnaires_unit_done": "Compilato",
+	"questionnaires_unit_unavailable": "Non disponibile",
+	"questionnaires_units_all_done": "Hai valutato tutti i docenti di questo insegnamento.",
+	"questionnaires_units_none": "Nessun docente da valutare per questo insegnamento.",
+	"questionnaires_window_closed": "Il periodo di valutazione di questo insegnamento non è aperto.",
+	"questionnaires_misconfigured": "Esse3 segnala un problema nella configurazione di questo questionario. Se non riesci a compilarlo, contatta la segreteria didattica.",
+	"questionnaires_summary_ready": "Pronto per l’invio",
+	"questionnaires_summary_missing": "Incompleto",
+	"questionnaires_offline_hint": "Sei offline: potrai compilare quando torni online.",
+	"questionnaires_facts_heading": "Prima di iniziare",
+	"questionnaires_fact_anonymous_title": "Anonimo",
+	"questionnaires_fact_anonymous": "Le risposte non vengono collegate al tuo nome.",
+	"questionnaires_fact_named_title": "Nominativo",
+	"questionnaires_fact_named": "Esse3 registra chi compila questo questionario.",
+	"questionnaires_fact_send_title": "Invio alla fine",
+	"questionnaires_fact_send": "Le risposte si inviano tutte insieme dal riepilogo, e poi non si possono modificare.",
+	"questionnaires_fact_draft_title": "Niente bozze",
+	"questionnaires_fact_draft": "Se esci prima dell’invio, le risposte vanno perse e si ricomincia da capo.",
+	"questionnaires_not_found_title": "Insegnamento non trovato",
+	"questionnaires_not_found_body": "Non è tra gli insegnamenti con un questionario di valutazione.",
+	"questionnaires_back_to_list": "Torna ai questionari",
+	"questionnaires_back_to_units": "Torna all’insegnamento",
+	"questionnaires_compile_title": "Compilazione questionario",
+	"questionnaires_intro_title": "Pronto a iniziare?",
+	"questionnaires_intro_body": "Bastano pochi minuti.",
+	"questionnaires_intro_start": "Inizia",
+	"questionnaires_starting": "Avvio questionario…",
+	"questionnaires_start_failed_title": "Impossibile avviare il questionario",
+	"questionnaires_page_number": "Pagina {number}",
+	"questionnaires_optional": "Facoltativa",
+	"questionnaires_missing_answer": "Rispondi per continuare",
+	"questionnaires_missing_text": "Specifica la tua risposta per continuare",
+	"questionnaires_missing_count": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "Manca 1 risposta",
+				"countPlural=other": "Mancano {count} risposte"
+			}
+		}
+	],
+	"questionnaires_answered_count": [
+		{
+			"declarations": ["input answered", "input total", "local totalPlural = total: plural"],
+			"selectors": ["totalPlural"],
+			"match": {
+				"totalPlural=one": "{answered} di 1 risposta",
+				"totalPlural=other": "{answered} di {total} risposte"
+			}
+		}
+	],
+	"questionnaires_free_text_placeholder": "Scrivi la tua risposta…",
+	"questionnaires_specify_label": "{option}: specifica",
+	"questionnaires_specify_placeholder": "Si prega di specificare…",
+	"questionnaires_other_option": "Altro",
+	"questionnaires_scale_disagree": "Disaccordo",
+	"questionnaires_scale_agree": "D’accordo",
+	"questionnaires_choose_up_to": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "Puoi sceglierne al massimo una",
+				"countPlural=other": "Puoi sceglierne fino a {count}"
+			}
+		}
+	],
+	"questionnaires_choose_many": "Puoi sceglierne più di una",
+	"questionnaires_next": "Avanti",
+	"questionnaires_previous": "Pagina precedente",
+	"questionnaires_move_failed": "Pagina non salvata",
+	"questionnaires_summary_title": "Riepilogo",
+	"questionnaires_summary_complete": "Questionario completo",
+	"questionnaires_summary_incomplete": "Questionario incompleto",
+	"questionnaires_summary_help": "Controlla le tue risposte, poi invia.",
+	"questionnaires_summary_incomplete_help": "Mancano risposte obbligatorie: torna indietro per completarle.",
+	"questionnaires_review_heading": "Le tue risposte",
+	"questionnaires_review_none": "Nessuna risposta",
+	"questionnaires_send": "Invia",
+	"questionnaires_send_title": "Inviare il questionario?",
+	"questionnaires_send_body": "Le risposte per {name} verranno inviate e non potranno più essere modificate.",
+	"questionnaires_exit_title": "Uscire senza inviare?",
+	"questionnaires_exit_body": "Le risposte date finora andranno perse e questo questionario non potrà essere ripreso.",
+	"questionnaires_exit_confirm": "Esci",
+	"questionnaires_exit_cancel": "Continua a compilare",
+	"questionnaires_keys_next": "Pagina successiva, o invia dall’ultima",
+	"questionnaires_keys_leave": "Esci dal questionario",
+	"questionnaires_sent_title": "Questionario inviato",
+	"questionnaires_sent_body": "Grazie: la tua valutazione per {name} è stata registrata.",
+	"questionnaires_sent_next_unit": "Valuta {name}",
+	"questionnaires_sent_next_activity": "Prossimo: {name}",
+	"questionnaires_sent_all_done": "Hai completato tutti i questionari.",
+	"questionnaires_unit_gone_title": "Niente da compilare",
+	"questionnaires_unit_gone_body": "Questo questionario è già stato compilato o non è più disponibile.",
+	"questionnaires_empty_action": "Vai agli appelli",
+	"questionnaires_overview_next": "Prossimo",
+	"questionnaires_overview_waiting": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "1 docente da valutare",
+				"countPlural=other": "{count} docenti da valutare"
+			}
+		}
+	],
+	"questionnaires_overview_start": "Inizia",
+	"questionnaires_overview_start_label": "Inizia il questionario per {name}",
+	"questionnaires_summary_anonymous_help": "Controlla le tue risposte, poi invia. Il questionario è anonimo.",
+	"questionnaires_back_failed": "Impossibile tornare indietro",
+	"questionnaires_progress_heading": "Avanzamento",
+	"questionnaires_progress_current": "Pagina attuale",
+	"questionnaires_progress_back": "Torna a pagina {number}",
+	"questionnaires_check_count": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "1 questionario da verificare",
+				"countPlural=other": "{count} questionari da verificare"
+			}
+		}
+	],
+	"questionnaires_overview_open": "Vedi docenti",
+	"questionnaires_offline_status": "Offline",
+	"questionnaires_offline_band": "Sei offline: riconnettiti per andare avanti. Le risposte date restano qui.",
+	"questionnaires_closed_on_switch": "Questionario chiuso senza inviarlo: hai cambiato account o carriera.",
+	"questionnaires_rail_facts": "Da sapere"
+}

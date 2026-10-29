@@ -1,0 +1,81 @@
+{
+	"$schema": "https://inlang.com/schema/inlang-message-format",
+	"app_name": "MyBicocca",
+	"common_password": "Password",
+	"common_show_password": "Show password",
+	"common_hide_password": "Hide password",
+	"common_continue": "Continue",
+	"common_retry": "Retry",
+	"common_refresh": "Refresh",
+	"common_loading": "Loading…",
+	"common_sign_out": "Sign out",
+	"common_credits": [
+		{
+			"declarations": ["input count", "input value", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{value} credit",
+				"countPlural=other": "{value} credits"
+			}
+		}
+	],
+	"common_grade_passed": "Pass",
+	"common_grade_not_passed": "Fail",
+	"common_grade_withdrew": "Withdrew",
+	"common_grade_absent": "Absent",
+	"common_grade_passed_full": "Passed",
+	"common_grade_not_passed_full": "Failed",
+	"common_grade_withdrew_full": "Withdrew",
+	"common_grade_absent_full": "Absent",
+	"common_grade_cum_laude_full": "{grade} with honours",
+	"common_due_today": "Due today",
+	"common_due_tomorrow": "Due tomorrow",
+	"common_due_days": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "Due in {count} day",
+				"countPlural=other": "Due in {count} days"
+			}
+		}
+	],
+	"common_overdue": "Overdue",
+	"common_overdue_days": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} day overdue",
+				"countPlural=other": "{count} days overdue"
+			}
+		}
+	],
+	"common_error_offline": "Network unavailable. Check your connection and try again.",
+	"common_error_timeout": "Network timeout. Please try again in a moment.",
+	"common_error_network": "Network error. Please try again in a moment.",
+	"common_error_unavailable": "The service is unavailable right now. Try again later.",
+	"common_error_session_expired": "Your session has expired. Please sign in again.",
+	"common_error_forbidden": "You don’t have access to this content.",
+	"common_error_not_found": "Not found.",
+	"common_error_rejected": "The service refused the request.",
+	"common_error_rejected_reason": "E-learning refused the request: {reason}",
+	"common_error_no_file": "The service didn’t send the file. Try again later.",
+	"common_error_site_changed": "The service answered unexpectedly. Try again later.",
+	"common_error_unexpected": "An unexpected error occurred.",
+	"auth_tagline": "Sign in with your university credentials",
+	"auth_username_label": "Username or Email",
+	"auth_username_placeholder": "m.rossi1",
+	"auth_remember": "Remember on this device",
+	"auth_remember_hint": "Your password stays encrypted in this browser, so you won’t have to type it again.",
+	"auth_sign_in_button": "Sign in",
+	"auth_signing_in": "Signing in…",
+	"auth_offline": "You’re offline. Connect to the internet to sign in.",
+	"auth_error_bad_credentials": "Invalid credentials. Check your username and password.",
+	"auth_error_no_connection": "Unable to reach the server. Check your connection or try again later.",
+	"auth_error_unknown": "Sign-in failed. Please try again in a moment.",
+	"auth_career_title": "Choose a career",
+	"auth_career_instruction": "Select the career you want to start with. You can switch at any time from your account.",
+	"auth_career_details": "Student ID {number} · A.Y. {year}",
+	"auth_career_fallback": "Career {id}"
+}

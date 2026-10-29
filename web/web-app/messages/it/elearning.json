@@ -1,0 +1,144 @@
+{
+	"$schema": "https://inlang.com/schema/inlang-message-format",
+	"elearning_title": "E-learning",
+	"elearning_add_course": "Aggiungi corso",
+	"elearning_updated": "aggiornato {time}",
+	"elearning_course_count": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} corso",
+				"countPlural=other": "{count} corsi"
+			}
+		}
+	],
+	"elearning_filter_label": "Filtra i corsi",
+	"elearning_filter_all": "Tutti",
+	"elearning_filter_favourites": "Preferiti",
+	"elearning_filter_year": "{year}° anno",
+	"elearning_course_level_bachelor": "Triennale",
+	"elearning_course_level_master": "Magistrale",
+	"elearning_career_chip": "{label} {year}",
+	"elearning_period_section": "Anno accademico {year}",
+	"elearning_period_current": "In corso",
+	"elearning_period_none": "Trasversale",
+	"elearning_tab_year_stream": "{year}° anno · T{stream}",
+	"elearning_period_none_section": "Spazi trasversali",
+	"elearning_period_none_hint": "Comunicazioni, tutorato e altri spazi senza anno accademico.",
+	"elearning_editions_label": "Edizioni di {name}",
+	"elearning_add_favorite": "Aggiungi ai preferiti",
+	"elearning_remove_favorite": "Rimuovi dai preferiti",
+	"elearning_progress": "{percent} completato",
+	"elearning_deadline_assign": "Compito",
+	"elearning_deadline_quiz": "Quiz",
+	"elearning_deadlines_label": "Scadenze di {name}",
+	"elearning_deadline_extra": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "+{count} altra scadenza",
+				"countPlural=other": "+{count} altre scadenze"
+			}
+		}
+	],
+	"elearning_no_enrollment": "Non risulti iscritto a nessun corso e-learning.",
+	"elearning_no_enrollment_hint": "Cerca i tuoi insegnamenti nel catalogo e iscriviti.",
+	"elearning_filter_no_courses": "Nessun corso per questo filtro.",
+	"elearning_filter_change_hint": "Cambia filtro per vedere altri corsi.",
+	"elearning_no_favourites": "Nessun corso preferito.",
+	"elearning_no_favourites_hint": "Tocca la stella di un corso per ritrovarlo qui.",
+	"elearning_show_all": "Mostra tutti",
+	"elearning_sync_failed": "Impossibile caricare i corsi",
+	"elearning_stale": "Non è stato possibile aggiornare i corsi.",
+	"elearning_deadlines_failed": "Non è stato possibile caricare le scadenze dei corsi.",
+	"elearning_deadlines_stale": "Scadenze non aggiornate: le ultime caricate risalgono a {time}.",
+	"elearning_deadlines_stale_now": "Scadenze non aggiornate: le ultime sono state caricate poco fa.",
+	"elearning_pull_to_refresh": "Rilascia per aggiornare",
+	"elearning_catalog_title": "Aggiungi corso",
+	"elearning_select_area": "Seleziona un’area didattica",
+	"elearning_catalog_root": "Catalogo",
+	"elearning_catalog_path": "Percorso nel catalogo",
+	"elearning_catalog_search": "Cerca nel catalogo",
+	"elearning_search_placeholder_area": "Cerca area, insegnamento, codice…",
+	"elearning_search_placeholder_category": "Cerca tipo, insegnamento, codice…",
+	"elearning_search_placeholder_subcategory": "Cerca programma, insegnamento, codice…",
+	"elearning_search_placeholder_course": "Cerca insegnamento, codice…",
+	"elearning_catalog_loading": "Caricamento catalogo…",
+	"elearning_catalog_load_failed": "Caricamento non riuscito",
+	"elearning_catalog_load_error": "Impossibile caricare il catalogo dei corsi.",
+	"elearning_catalog_not_found": "Questa categoria non è più nel catalogo.",
+	"elearning_catalog_not_found_hint": "Il catalogo è stato aggiornato: riparti dalle aree didattiche.",
+	"elearning_catalog_back_root": "Torna al catalogo",
+	"elearning_catalog_as_of": "Catalogo aggiornato al {date}: i corsi aperti dopo potrebbero mancare.",
+	"elearning_categories": "Categorie",
+	"elearning_courses": "Insegnamenti",
+	"elearning_category_empty": "Nessun contenuto in questa categoria.",
+	"elearning_category_empty_hint": "Alcune categorie raccolgono corsi pubblicati altrove nel catalogo.",
+	"elearning_category_courses": [
+		{
+			"declarations": ["input count", "input shown", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "1 insegnamento",
+				"countPlural=other": "{shown} insegnamenti"
+			}
+		}
+	],
+	"elearning_results": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "1 risultato",
+				"countPlural=other": "{count} risultati"
+			}
+		}
+	],
+	"elearning_results_in": "in {place}",
+	"elearning_results_by_area": "Risultati per area",
+	"elearning_results_everywhere": "Tutto il catalogo",
+	"elearning_results_capped": "Mostrati i primi {count} risultati: aggiungi una parola per restringere la ricerca.",
+	"elearning_results_capped_code": "Mostrati i primi {count} risultati: completa il codice per restringere la ricerca.",
+	"elearning_results_more": [
+		{
+			"declarations": ["input count", "input place", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "Un altro risultato in {place}",
+				"countPlural=other": "Altri {count} risultati in {place}"
+			}
+		}
+	],
+	"elearning_editions_more": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "+1 altra edizione",
+				"countPlural=other": "+{count} altre edizioni"
+			}
+		}
+	],
+	"elearning_editions_of": "Altre edizioni di {name}",
+	"elearning_no_results": "Nessun risultato per «{query}».",
+	"elearning_no_results_hint": "Prova con il codice dell’insegnamento, come E3102Q106, o con meno parole.",
+	"elearning_search_whole_catalog": "Cerca in tutto il catalogo",
+	"elearning_enrol": "Iscriviti",
+	"elearning_enrol_course": "Iscriviti a {name}",
+	"elearning_enrol_edition": "Iscriviti a {name}, edizione {period}",
+	"elearning_enrolled": "Iscritto",
+	"elearning_enrolled_open": "Iscritto: apri {name}",
+	"elearning_open_course": "Apri il corso",
+	"elearning_show_in_courses": "Vedi tra i tuoi corsi",
+	"elearning_enrol_title": "Iscriverti al corso?",
+	"elearning_enrol_body": "Userai l’iscrizione spontanea di e-learning: il corso comparirà tra i tuoi corsi e riceverai le comunicazioni dei docenti.",
+	"elearning_enrol_key": "Chiave di iscrizione",
+	"elearning_enrol_key_hint": "Alcuni corsi la richiedono: la comunica il docente.",
+	"elearning_enrol_have_key": "Ho una chiave di iscrizione",
+	"elearning_enrol_view_on_moodle": "Vedi su e-learning",
+	"elearning_enrol_failed": "Iscrizione non riuscita",
+	"elearning_enrol_offline": "Sei offline: potrai iscriverti quando torni online.",
+	"elearning_enrolled_success": "Iscritto a {name}"
+}

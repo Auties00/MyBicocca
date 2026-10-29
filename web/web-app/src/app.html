@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="it">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+		<meta name="text-scale" content="scale" />
+		<meta name="color-scheme" content="light dark" />
+		<meta
+			name="description"
+			content="Lezioni, esami, e-learning, mappa e servizi di Milano-Bicocca."
+		/>
+		<meta name="theme-color" content="#faf7f7" media="(prefers-color-scheme: light)" />
+		<meta name="theme-color" content="#121010" media="(prefers-color-scheme: dark)" />
+		<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+		<link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+		<link rel="manifest" href="/manifest.webmanifest" />
+		<link
+			rel="preload"
+			href="/fonts/instrument-sans-latin.woff2"
+			as="font"
+			type="font/woff2"
+			crossorigin
+		/>
+		<link
+			rel="preload"
+			href="/fonts/newsreader-latin.woff2"
+			as="font"
+			type="font/woff2"
+			crossorigin
+		/>
+		<style>
+			html {
+				color-scheme: light dark;
+				background: light-dark(#faf7f7, #121010);
+			}
+			html[data-theme='light'] {
+				color-scheme: light;
+			}
+			html[data-theme='dark'] {
+				color-scheme: dark;
+			}
+		</style>
+		<script>
+			/* Applies the saved theme before first paint. Keep the key in sync with theme.svelte.ts. */
+			try {
+				var saved = JSON.parse(localStorage.getItem('mybicocca:theme') || '{}');
+				var root = document.documentElement;
+				if (saved.mode === 'light' || saved.mode === 'dark') root.dataset.theme = saved.mode;
+				if (saved.palette === 'oceano' || saved.palette === 'bosco')
+					root.dataset.palette = saved.palette;
+			} catch (e) {}
+		</script>
+		%sveltekit.head%
+	</head>
+	<body data-sveltekit-preload-data="hover">
+		<div style="display: contents">%sveltekit.body%</div>
+	</body>
+</html>

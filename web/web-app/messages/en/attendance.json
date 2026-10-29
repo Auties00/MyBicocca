@@ -1,0 +1,108 @@
+{
+	"$schema": "https://inlang.com/schema/inlang-message-format",
+	"attendance_title": "Attendance",
+	"attendance_desc": "Attendances and check-ins",
+	"attendance_to_attend": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} course to attend",
+				"countPlural=other": "{count} courses to attend"
+			}
+		}
+	],
+	"attendance_courses_label": "Courses to attend",
+	"attendance_course_label": "Course",
+	"attendance_loading": "Loading attendance…",
+	"attendance_load_failed": "Attendance unavailable",
+	"attendance_no_courses": "No courses to attend",
+	"attendance_no_courses_body": "You have passed all courses in your plan up to this semester.",
+	"attendance_check_in": "Check in",
+	"attendance_no_records": "No attendance records",
+	"attendance_status_attending": "Attending",
+	"attendance_status_in_progress": "In progress",
+	"attendance_status_not_attending": "Not attending",
+	"attendance_lessons": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} lecture",
+				"countPlural=other": "{count} lectures"
+			}
+		}
+	],
+	"attendance_year": "Year {year}",
+	"attendance_year_other": "Other courses",
+	"attendance_semester_first": "1st semester",
+	"attendance_semester_second": "2nd semester",
+	"attendance_tab_lessons": "Lectures",
+	"attendance_tab_sessions": "Sessions",
+	"attendance_source_classroom": "Classroom check-ins",
+	"attendance_source_register": "E-learning register",
+	"attendance_caption_attendance": "attendance",
+	"attendance_caption_recorded": "of those recorded",
+	"attendance_recorded_percent": "{percent} of those recorded",
+	"attendance_minimum": "minimum {percent}",
+	"attendance_presences": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} session attended",
+				"countPlural=other": "{count} sessions attended"
+			}
+		}
+	],
+	"attendance_lessons_attended": "Lectures attended",
+	"attendance_hours_attended": "Hours attended",
+	"attendance_no_classroom": "No classroom check-in",
+	"attendance_easystaff_no_records": "EasyStaff has not yet recorded attendance for this course.",
+	"attendance_register_no_records": "The register has no recorded attendance yet.",
+	"attendance_open_elearning": "E-learning course",
+	"attendance_course_missing": "Course not found",
+	"attendance_course_missing_body": "It isn’t among the courses you still have to attend.",
+	"attendance_back_to_list": "All courses",
+	"attendance_checkin_subtitle": "How would you like to record attendance?",
+	"attendance_lesson": "Lecture",
+	"attendance_classroom_presence": "Classroom attendance",
+	"attendance_other_activities": "Other activities",
+	"attendance_elearning_presence": "E-learning attendance",
+	"attendance_lesson_code": "Lesson code",
+	"attendance_lesson_code_hint": "Enter the code provided by your instructor.",
+	"attendance_scan_qr": "Scan the QR code",
+	"attendance_link_label": "QR link",
+	"attendance_link_hint": "Paste the link the instructor’s QR code opens.",
+	"attendance_link_hint_scan": "Point the camera at the instructor’s QR code, or paste the link it opens here.",
+	"attendance_record": "Record",
+	"attendance_offline": "You’re offline: you can check in once you’re back online.",
+	"attendance_qr_hint": "Scan the lecture QR code",
+	"attendance_manual_code_entry": "Enter code manually",
+	"attendance_scanner_title": "QR scanner",
+	"attendance_recording": "Recording…",
+	"attendance_progress_subtitle": "Sending…",
+	"attendance_result_time": "Today at {time}",
+	"attendance_status_label": "Status: {status}",
+	"attendance_presence_recorded": "Attendance recorded",
+	"attendance_already_recorded": "Already recorded",
+	"attendance_wrong_credential": "Invalid credential",
+	"attendance_session_unavailable": "Session unavailable",
+	"attendance_registration_failed": "Check-in failed",
+	"attendance_msg_recorded": "Attendance recorded",
+	"attendance_msg_already_recorded": "Attendance already recorded",
+	"attendance_msg_wrong_credential": "Incorrect password or code",
+	"attendance_msg_network_wrong": "You must be connected to the classroom network to record your attendance",
+	"attendance_msg_network_prevent_shared": "Attendance has already been recorded from this network",
+	"attendance_msg_session_closed": "The session is no longer available",
+	"attendance_msg_failed": "Registration failed",
+	"attendance_msg_code_unrecognized": "Unrecognized code",
+	"attendance_msg_no_register_found": "No course with attendance register found",
+	"attendance_msg_session_not_in_courses": "The session is not open or not among your courses",
+	"attendance_msg_student_number_unavailable": "Student number unavailable",
+	"attendance_done": "Done",
+	"attendance_edit_code": "Edit the code",
+	"attendance_link_not_a_link": "This isn’t a QR code link. To check in with a lesson code, use Lecture.",
+	"attendance_edit_link": "Edit the link",
+	"attendance_view_outcome": "View"
+}

@@ -1,0 +1,312 @@
+{
+	"$schema": "https://inlang.com/schema/inlang-message-format",
+	"quiz_title": "Quiz",
+	"quiz_loading": "Loading quizzes…",
+	"quiz_loading_attempt": "Loading the attempt…",
+	"quiz_count": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} quiz",
+				"countPlural=other": "{count} quizzes"
+			}
+		}
+	],
+	"quiz_progress_label": "Completed quizzes",
+	"quiz_progress_value": "{done} of {total}",
+	"quiz_group_course": "Course quizzes",
+	"quiz_group_other": "Other quizzes",
+	"quiz_section_fallback": "Section {number}",
+	"quiz_group_done": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} completed",
+				"countPlural=other": "{count} completed"
+			}
+		}
+	],
+	"quiz_expand_all": "Expand all",
+	"quiz_collapse_all": "Collapse all",
+	"quiz_filter_label": "Show",
+	"quiz_filter_all": "All",
+	"quiz_filter_todo": "To do",
+	"quiz_filter_soon": "Closing soon",
+	"quiz_filter_empty": "No quizzes match this filter.",
+	"quiz_empty_title": "No quizzes",
+	"quiz_empty_body": "Course quizzes will appear here.",
+	"quiz_load_failed": "Couldn’t load the quizzes",
+	"quiz_next_closing": "Next to close",
+	"quiz_state_completed": "Completed",
+	"quiz_state_available": "Available",
+	"quiz_state_restricted": "Not available yet",
+	"quiz_opens_on": "Opens on {date} at {time}",
+	"quiz_closed_on": "Closed on {date}",
+	"quiz_closes_today": "closes today at {time}",
+	"quiz_closes_tomorrow": "closes tomorrow at {time}",
+	"quiz_closes_in_days": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "closes in {count} day",
+				"countPlural=other": "closes in {count} days"
+			}
+		}
+	],
+	"quiz_closes_on": "closes on {date}",
+	"quiz_minutes_short": "{count} min",
+	"quiz_single_attempt": "single attempt",
+	"quiz_back_quizzes": "Quizzes",
+	"quiz_all_quizzes": "All quizzes",
+	"quiz_not_found_title": "Quiz not found.",
+	"quiz_not_found_body": "The teacher may have hidden it or removed it from the course.",
+	"quiz_load_quiz_failed": "Couldn’t load the quiz",
+	"quiz_best_grade": "Best grade",
+	"quiz_no_grade_yet": "No grade yet",
+	"quiz_pass_label": "Pass mark",
+	"quiz_grading_highest": "Your highest grade counts",
+	"quiz_grading_average": "The average of your grades counts",
+	"quiz_grading_first": "Your first attempt counts",
+	"quiz_grading_last": "Your last attempt counts",
+	"quiz_attempts_label": "Attempts",
+	"quiz_attempts_used": "{used} of {max}",
+	"quiz_attempts_unlimited": "Unlimited",
+	"quiz_attempts_used_unlimited": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} taken · unlimited",
+				"countPlural=other": "{count} taken · unlimited"
+			}
+		}
+	],
+	"quiz_time_label": "Time",
+	"quiz_minutes_long": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} minute",
+				"countPlural=other": "{count} minutes"
+			}
+		}
+	],
+	"quiz_no_time_limit": "No limit",
+	"quiz_opening_label": "Opens",
+	"quiz_closing_label": "Closes",
+	"quiz_closed_on_long": "Closed {date}",
+	"quiz_instructions": "Instructions",
+	"quiz_start": "Start attempt",
+	"quiz_resume": "Resume attempt",
+	"quiz_blocked_upcoming": "Not open yet",
+	"quiz_blocked_closed": "Quiz closed",
+	"quiz_blocked_exhausted": "No attempts left",
+	"quiz_blocked_empty": "The quiz has no questions yet",
+	"quiz_blocked_denied": "You can’t attempt it now",
+	"quiz_attempt_n": "Attempt {number}",
+	"quiz_attempt_n_of": "Attempt {number} of {max}",
+	"quiz_start_hint_timed": "{attempt} · the {minutes}-minute timer starts when you begin",
+	"quiz_resume_hint": "Attempt {number}, started {date}",
+	"quiz_resume_hint_timed": "Attempt {number} · {left} left",
+	"quiz_offline_hint": "You’re offline: you can carry on once you’re back online.",
+	"quiz_start_title": "Start the attempt?",
+	"quiz_start_message": "The attempt counts towards those you’ve used. You can leave and resume it any time until you submit it.",
+	"quiz_start_message_timed": "You’ll have {minutes} minutes from the moment you begin: time keeps running even if you leave the page, and the attempt is submitted when it runs out.",
+	"quiz_start_message_limited": "This is attempt {number} of {max}.",
+	"quiz_attempts_title": "Your attempts",
+	"quiz_attempt_number": "Attempt {number}",
+	"quiz_attempt_inprogress": "In progress",
+	"quiz_attempt_overdue": "Overdue",
+	"quiz_attempt_finished": "Submitted",
+	"quiz_attempt_abandoned": "Abandoned",
+	"quiz_attempt_unknown": "Attempt",
+	"quiz_attempt_not_graded": "To be graded",
+	"quiz_score_of": "{score} / {max}",
+	"quiz_exit": "Leave the attempt",
+	"quiz_page": "Page {page}",
+	"quiz_page_of": "Page {page} of {total}",
+	"quiz_pages_label": "Attempt pages",
+	"quiz_question": "Question {number}",
+	"quiz_information": "Information",
+	"quiz_points": [
+		{
+			"declarations": ["input count", "input value", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{value} point",
+				"countPlural=other": "{value} points"
+			}
+		}
+	],
+	"quiz_flag": "Flag",
+	"quiz_choose_one": "Choose one",
+	"quiz_choose_many": "Choose one or more",
+	"quiz_clear_choice": "Clear my choice",
+	"quiz_answer_label": "Answer",
+	"quiz_essay_label": "Your answer",
+	"quiz_essay_placeholder": "Write your answer here…",
+	"quiz_your_answer": "Your answer",
+	"quiz_no_answer_given": "No answer.",
+	"quiz_gap_label": "Answer {number}",
+	"quiz_unsupported": "This kind of question can’t be answered in the app: answer it on the e-learning site.",
+	"quiz_open_moodle": "Open on e-learning",
+	"quiz_previous": "Previous",
+	"quiz_next": "Next",
+	"quiz_finish": "Finish attempt…",
+	"quiz_saved": "Answers saved",
+	"quiz_saving": "Saving…",
+	"quiz_unsaved": "Unsaved changes",
+	"quiz_save_failed": "Couldn’t save",
+	"quiz_save_offline": "Offline: saving once you’re back",
+	"quiz_navigator": "Questions",
+	"quiz_navigator_open": "Questions, page {position}",
+	"quiz_nav_answered": "Answered",
+	"quiz_nav_partial": "Partly answered",
+	"quiz_nav_unanswered": "Not answered",
+	"quiz_nav_flagged": "Flagged",
+	"quiz_time_left": "Time left: {time}",
+	"quiz_time_warning": "5 minutes left.",
+	"quiz_time_last_minute": "Last minute: the attempt is submitted when time runs out.",
+	"quiz_time_up_title": "Time’s up",
+	"quiz_time_up_body": "Submitting your answers…",
+	"quiz_submit_title": "Submit the attempt?",
+	"quiz_submit_body": "Submission is final: the answers in this attempt can no longer be changed.",
+	"quiz_submit_checking": "Checking your answers…",
+	"quiz_submit_all_answered": "You’ve answered every question.",
+	"quiz_submit_unanswered": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} question not fully answered",
+				"countPlural=other": "{count} questions not fully answered"
+			}
+		}
+	],
+	"quiz_submit_flagged": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} flagged question",
+				"countPlural=other": "{count} flagged questions"
+			}
+		}
+	],
+	"quiz_go_to_question": "Go to question {number}",
+	"quiz_submit_confirm": "Submit",
+	"quiz_keep_working": "Keep working",
+	"quiz_leave_title": "Leave the attempt?",
+	"quiz_leave_body": "Your answers are saved: the attempt stays pending and you can resume it later.",
+	"quiz_leave_timed": "Your answers are saved, but time keeps running: {left} left. The attempt is submitted when it runs out.",
+	"quiz_leave_unsaved": "Some answers aren’t saved yet and will be lost. The attempt stays pending.",
+	"quiz_leave": "Leave",
+	"quiz_stay": "Stay",
+	"quiz_attempt_closed": "This attempt has already been submitted.",
+	"quiz_attempt_missing": "This attempt no longer exists.",
+	"quiz_overview_label": "Quiz summary",
+	"quiz_see_review": "See the review",
+	"quiz_load_attempt_failed": "Couldn’t open the attempt",
+	"quiz_back_to_quiz": "Back to the quiz",
+	"quiz_review": "Review",
+	"quiz_review_of": "Review of attempt {number}",
+	"quiz_grade": "Grade",
+	"quiz_not_graded_yet": "Awaiting grading",
+	"quiz_marks_so_far": "{marks} of {max} marks so far",
+	"quiz_count_correct": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} correct",
+				"countPlural=other": "{count} correct"
+			}
+		}
+	],
+	"quiz_count_partial": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} partly correct",
+				"countPlural=other": "{count} partly correct"
+			}
+		}
+	],
+	"quiz_count_wrong": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} wrong",
+				"countPlural=other": "{count} wrong"
+			}
+		}
+	],
+	"quiz_count_unanswered": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} not answered",
+				"countPlural=other": "{count} not answered"
+			}
+		}
+	],
+	"quiz_count_pending": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} to be graded",
+				"countPlural=other": "{count} to be graded"
+			}
+		}
+	],
+	"quiz_verdict_correct": "Correct",
+	"quiz_verdict_partial": "Partly correct",
+	"quiz_verdict_wrong": "Wrong",
+	"quiz_verdict_unanswered": "Not answered",
+	"quiz_verdict_pending": "To be graded",
+	"quiz_score": "Score {mark} of {max}",
+	"quiz_right_answer": "Correct answer",
+	"quiz_feedback": "Feedback",
+	"quiz_teacher_comment": "Teacher’s comment",
+	"quiz_started": "Started",
+	"quiz_submitted": "Submitted",
+	"quiz_duration": "Time taken",
+	"quiz_review_failed": "Couldn’t load the review",
+	"quiz_review_unavailable_title": "Review not available.",
+	"quiz_error_out_of_sequence": "The attempt was changed in another window or on another device: retry to save your answers over it.",
+	"quiz_error_closed": "This attempt is already closed.",
+	"quiz_error_in_progress": "You already have an attempt in progress: resume it from the quiz page.",
+	"quiz_error_no_review": "The teacher doesn’t show this attempt’s review yet.",
+	"quiz_error_access": "The quiz needs access the app doesn’t handle, such as a password: open it on the e-learning site.",
+	"quiz_error_overdue": "Time is up for this attempt: it only needs submitting.",
+	"quiz_error_not_finished": "The e-learning site didn’t close the attempt. Try again.",
+	"quiz_overdue_title": "Time’s up",
+	"quiz_overdue_body": "The answers you saved are kept. Submit the attempt by {deadline}, or it won’t be graded.",
+	"quiz_overdue_body_open": "The answers you saved are kept: submit the attempt to have it graded.",
+	"quiz_submit_overdue": "Submit the attempt",
+	"quiz_overdue_hint": "Attempt {number} · time’s up: submit it by {date}",
+	"quiz_overdue_hint_open": "Attempt {number} · time’s up: submit it to have it graded",
+	"quiz_save_failed_long": "Some answers aren’t saved.",
+	"quiz_save_offline_long": "You’re offline: your answers will be saved once you’re back.",
+	"quiz_flag_question": "Flag question",
+	"quiz_index_title": "Sections",
+	"quiz_index_label": "Quiz sections",
+	"quiz_index_progress": "{done} of {total} completed",
+	"quiz_count_shown": "{shown} of {count} quizzes",
+	"quiz_attempts_unknown": "Your attempts couldn’t be checked, so a new one can’t start yet.",
+	"quiz_see_on_moodle": "See this question on e-learning",
+	"quiz_overdue_confirm": "Attempt {number} will be submitted with the answers you saved, and they can no longer be changed.",
+	"quiz_overdue_confirm_unnumbered": "The attempt will be submitted with the answers you saved, and they can no longer be changed.",
+	"quiz_overall_feedback": "Overall feedback",
+	"quiz_resume_hint_expired": "Attempt {number} · time’s up: open it to hand it in",
+	"quiz_resume_hint_time_up": "Attempt {number} · time’s up",
+	"quiz_on_site_title": "Continue this attempt on the e-learning site"
+}

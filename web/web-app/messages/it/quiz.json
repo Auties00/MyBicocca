@@ -1,0 +1,312 @@
+{
+	"$schema": "https://inlang.com/schema/inlang-message-format",
+	"quiz_title": "Quiz",
+	"quiz_loading": "Caricamento dei quiz…",
+	"quiz_loading_attempt": "Caricamento del tentativo…",
+	"quiz_count": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} quiz",
+				"countPlural=other": "{count} quiz"
+			}
+		}
+	],
+	"quiz_progress_label": "Quiz completati",
+	"quiz_progress_value": "{done} di {total}",
+	"quiz_group_course": "Quiz del corso",
+	"quiz_group_other": "Altri quiz",
+	"quiz_section_fallback": "Sezione {number}",
+	"quiz_group_done": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} completato",
+				"countPlural=other": "{count} completati"
+			}
+		}
+	],
+	"quiz_expand_all": "Espandi tutto",
+	"quiz_collapse_all": "Comprimi tutto",
+	"quiz_filter_label": "Mostra",
+	"quiz_filter_all": "Tutti",
+	"quiz_filter_todo": "Da fare",
+	"quiz_filter_soon": "In scadenza",
+	"quiz_filter_empty": "Nessun quiz corrisponde al filtro.",
+	"quiz_empty_title": "Nessun quiz",
+	"quiz_empty_body": "I quiz del corso appariranno qui.",
+	"quiz_load_failed": "Impossibile caricare i quiz",
+	"quiz_next_closing": "Prossima chiusura",
+	"quiz_state_completed": "Completato",
+	"quiz_state_available": "Disponibile",
+	"quiz_state_restricted": "Non ancora disponibile",
+	"quiz_opens_on": "Apre il {date} alle {time}",
+	"quiz_closed_on": "Chiuso il {date}",
+	"quiz_closes_today": "chiude oggi alle {time}",
+	"quiz_closes_tomorrow": "chiude domani alle {time}",
+	"quiz_closes_in_days": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "chiude tra {count} giorno",
+				"countPlural=other": "chiude tra {count} giorni"
+			}
+		}
+	],
+	"quiz_closes_on": "chiude il {date}",
+	"quiz_minutes_short": "{count} min",
+	"quiz_single_attempt": "tentativo singolo",
+	"quiz_back_quizzes": "Quiz",
+	"quiz_all_quizzes": "Tutti i quiz",
+	"quiz_not_found_title": "Quiz non trovato.",
+	"quiz_not_found_body": "Il docente potrebbe averlo nascosto o rimosso dal corso.",
+	"quiz_load_quiz_failed": "Impossibile caricare il quiz",
+	"quiz_best_grade": "Voto migliore",
+	"quiz_no_grade_yet": "Ancora nessun voto",
+	"quiz_pass_label": "Sufficienza",
+	"quiz_grading_highest": "Conta il voto più alto",
+	"quiz_grading_average": "Conta la media dei voti",
+	"quiz_grading_first": "Conta il primo tentativo",
+	"quiz_grading_last": "Conta l’ultimo tentativo",
+	"quiz_attempts_label": "Tentativi",
+	"quiz_attempts_used": "{used} di {max}",
+	"quiz_attempts_unlimited": "Illimitati",
+	"quiz_attempts_used_unlimited": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} effettuato · illimitati",
+				"countPlural=other": "{count} effettuati · illimitati"
+			}
+		}
+	],
+	"quiz_time_label": "Tempo",
+	"quiz_minutes_long": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} minuto",
+				"countPlural=other": "{count} minuti"
+			}
+		}
+	],
+	"quiz_no_time_limit": "Senza limite",
+	"quiz_opening_label": "Apertura",
+	"quiz_closing_label": "Chiusura",
+	"quiz_closed_on_long": "Chiuso {date}",
+	"quiz_instructions": "Istruzioni",
+	"quiz_start": "Inizia il tentativo",
+	"quiz_resume": "Riprendi il tentativo",
+	"quiz_blocked_upcoming": "Non ancora aperto",
+	"quiz_blocked_closed": "Quiz chiuso",
+	"quiz_blocked_exhausted": "Tentativi esauriti",
+	"quiz_blocked_empty": "Il quiz non ha ancora domande",
+	"quiz_blocked_denied": "Non puoi tentarlo ora",
+	"quiz_attempt_n": "Tentativo {number}",
+	"quiz_attempt_n_of": "Tentativo {number} di {max}",
+	"quiz_start_hint_timed": "{attempt} · il timer di {minutes} min parte quando inizi",
+	"quiz_resume_hint": "Tentativo {number}, iniziato {date}",
+	"quiz_resume_hint_timed": "Tentativo {number} · restano {left}",
+	"quiz_offline_hint": "Sei offline: potrai continuare quando torni online.",
+	"quiz_start_title": "Iniziare il tentativo?",
+	"quiz_start_message": "Il tentativo conta tra quelli usati. Puoi uscire e riprenderlo quando vuoi, finché non lo consegni.",
+	"quiz_start_message_timed": "Avrai {minutes} minuti da quando inizi: il tempo scorre anche se esci dalla pagina e, allo scadere, il tentativo viene consegnato.",
+	"quiz_start_message_limited": "È il tentativo {number} di {max}.",
+	"quiz_attempts_title": "I tuoi tentativi",
+	"quiz_attempt_number": "Tentativo {number}",
+	"quiz_attempt_inprogress": "In corso",
+	"quiz_attempt_overdue": "Scaduto",
+	"quiz_attempt_finished": "Consegnato",
+	"quiz_attempt_abandoned": "Abbandonato",
+	"quiz_attempt_unknown": "Tentativo",
+	"quiz_attempt_not_graded": "Da valutare",
+	"quiz_score_of": "{score} / {max}",
+	"quiz_exit": "Esci dal tentativo",
+	"quiz_page": "Pagina {page}",
+	"quiz_page_of": "Pagina {page} di {total}",
+	"quiz_pages_label": "Pagine del tentativo",
+	"quiz_question": "Domanda {number}",
+	"quiz_information": "Informazione",
+	"quiz_points": [
+		{
+			"declarations": ["input count", "input value", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{value} punto",
+				"countPlural=other": "{value} punti"
+			}
+		}
+	],
+	"quiz_flag": "Contrassegna",
+	"quiz_choose_one": "Scegli un’alternativa",
+	"quiz_choose_many": "Scegli una o più alternative",
+	"quiz_clear_choice": "Cancella la scelta",
+	"quiz_answer_label": "Risposta",
+	"quiz_essay_label": "La tua risposta",
+	"quiz_essay_placeholder": "Scrivi qui la tua risposta…",
+	"quiz_your_answer": "La tua risposta",
+	"quiz_no_answer_given": "Nessuna risposta.",
+	"quiz_gap_label": "Risposta {number}",
+	"quiz_unsupported": "Questo tipo di domanda non si può compilare nell’app: rispondi dal sito e-learning.",
+	"quiz_open_moodle": "Apri su e-learning",
+	"quiz_previous": "Indietro",
+	"quiz_next": "Avanti",
+	"quiz_finish": "Termina il tentativo…",
+	"quiz_saved": "Risposte salvate",
+	"quiz_saving": "Salvataggio…",
+	"quiz_unsaved": "Modifiche non salvate",
+	"quiz_save_failed": "Salvataggio non riuscito",
+	"quiz_save_offline": "Offline: le risposte verranno salvate al ritorno della rete",
+	"quiz_navigator": "Domande",
+	"quiz_navigator_open": "Domande, pagina {position}",
+	"quiz_nav_answered": "Risposta data",
+	"quiz_nav_partial": "Incompleta",
+	"quiz_nav_unanswered": "Senza risposta",
+	"quiz_nav_flagged": "Contrassegnata",
+	"quiz_time_left": "Tempo rimasto: {time}",
+	"quiz_time_warning": "Restano 5 minuti.",
+	"quiz_time_last_minute": "Ultimo minuto: allo scadere il tentativo viene consegnato.",
+	"quiz_time_up_title": "Tempo scaduto",
+	"quiz_time_up_body": "Consegno le tue risposte…",
+	"quiz_submit_title": "Consegnare il tentativo?",
+	"quiz_submit_body": "La consegna è definitiva: le risposte di questo tentativo non potranno più essere modificate.",
+	"quiz_submit_checking": "Controllo le risposte…",
+	"quiz_submit_all_answered": "Hai risposto a tutte le domande.",
+	"quiz_submit_unanswered": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} domanda senza risposta completa",
+				"countPlural=other": "{count} domande senza risposta completa"
+			}
+		}
+	],
+	"quiz_submit_flagged": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} domanda contrassegnata",
+				"countPlural=other": "{count} domande contrassegnate"
+			}
+		}
+	],
+	"quiz_go_to_question": "Vai alla domanda {number}",
+	"quiz_submit_confirm": "Consegna",
+	"quiz_keep_working": "Continua il tentativo",
+	"quiz_leave_title": "Uscire dal tentativo?",
+	"quiz_leave_body": "Le risposte sono salvate: il tentativo resta in sospeso e potrai riprenderlo in seguito.",
+	"quiz_leave_timed": "Le risposte sono salvate, ma il tempo continua a scorrere: restano {left}. Allo scadere il tentativo viene consegnato.",
+	"quiz_leave_unsaved": "Alcune risposte non sono ancora salvate e andranno perse. Il tentativo resta in sospeso.",
+	"quiz_leave": "Esci",
+	"quiz_stay": "Resta",
+	"quiz_attempt_closed": "Questo tentativo è già stato consegnato.",
+	"quiz_attempt_missing": "Questo tentativo non esiste più.",
+	"quiz_overview_label": "Riepilogo del quiz",
+	"quiz_see_review": "Vedi la revisione",
+	"quiz_load_attempt_failed": "Impossibile aprire il tentativo",
+	"quiz_back_to_quiz": "Torna al quiz",
+	"quiz_review": "Revisione",
+	"quiz_review_of": "Revisione del tentativo {number}",
+	"quiz_grade": "Voto",
+	"quiz_not_graded_yet": "In attesa di valutazione",
+	"quiz_marks_so_far": "{marks} punti su {max} finora",
+	"quiz_count_correct": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} corretta",
+				"countPlural=other": "{count} corrette"
+			}
+		}
+	],
+	"quiz_count_partial": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} parziale",
+				"countPlural=other": "{count} parziali"
+			}
+		}
+	],
+	"quiz_count_wrong": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} sbagliata",
+				"countPlural=other": "{count} sbagliate"
+			}
+		}
+	],
+	"quiz_count_unanswered": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} senza risposta",
+				"countPlural=other": "{count} senza risposta"
+			}
+		}
+	],
+	"quiz_count_pending": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} da valutare",
+				"countPlural=other": "{count} da valutare"
+			}
+		}
+	],
+	"quiz_verdict_correct": "Corretta",
+	"quiz_verdict_partial": "Parziale",
+	"quiz_verdict_wrong": "Sbagliata",
+	"quiz_verdict_unanswered": "Senza risposta",
+	"quiz_verdict_pending": "Da valutare",
+	"quiz_score": "Punteggio {mark} su {max}",
+	"quiz_right_answer": "Risposta corretta",
+	"quiz_feedback": "Feedback",
+	"quiz_teacher_comment": "Commento del docente",
+	"quiz_started": "Iniziato",
+	"quiz_submitted": "Consegnato",
+	"quiz_duration": "Tempo impiegato",
+	"quiz_review_failed": "Impossibile caricare la revisione",
+	"quiz_review_unavailable_title": "Revisione non disponibile.",
+	"quiz_error_out_of_sequence": "Il tentativo è stato modificato in un’altra finestra o su un altro dispositivo: riprova per salvarci sopra le tue risposte.",
+	"quiz_error_closed": "Questo tentativo è già stato chiuso.",
+	"quiz_error_in_progress": "Hai già un tentativo in corso: riprendilo dalla pagina del quiz.",
+	"quiz_error_no_review": "Il docente non mostra ancora la revisione di questo tentativo.",
+	"quiz_error_access": "Il quiz richiede un accesso che l’app non gestisce, come una password: aprilo dal sito e-learning.",
+	"quiz_error_overdue": "Il tempo di questo tentativo è scaduto: va solo consegnato.",
+	"quiz_error_not_finished": "Il sito e-learning non ha chiuso il tentativo. Riprova.",
+	"quiz_overdue_title": "Tempo scaduto",
+	"quiz_overdue_body": "Le risposte salvate restano. Consegna il tentativo entro {deadline}, altrimenti non sarà valutato.",
+	"quiz_overdue_body_open": "Le risposte salvate restano: consegna il tentativo perché venga valutato.",
+	"quiz_submit_overdue": "Consegna il tentativo",
+	"quiz_overdue_hint": "Tentativo {number} · tempo scaduto, consegnalo entro {date}",
+	"quiz_overdue_hint_open": "Tentativo {number} · tempo scaduto, consegnalo per farlo valutare",
+	"quiz_save_failed_long": "Alcune risposte non sono salvate.",
+	"quiz_save_offline_long": "Sei offline: le risposte saranno salvate quando torni online.",
+	"quiz_flag_question": "Contrassegna la domanda",
+	"quiz_index_title": "Sezioni",
+	"quiz_index_label": "Sezioni dei quiz",
+	"quiz_index_progress": "{done} di {total} completati",
+	"quiz_count_shown": "{shown} di {count} quiz",
+	"quiz_attempts_unknown": "Non è stato possibile verificare i tuoi tentativi: per ora non puoi iniziarne uno nuovo.",
+	"quiz_see_on_moodle": "Vedi la domanda sul sito e-learning",
+	"quiz_overdue_confirm": "Il tentativo {number} verrà consegnato con le risposte salvate, che non potranno più essere modificate.",
+	"quiz_overdue_confirm_unnumbered": "Il tentativo verrà consegnato con le risposte salvate, che non potranno più essere modificate.",
+	"quiz_overall_feedback": "Feedback complessivo",
+	"quiz_resume_hint_expired": "Tentativo {number} · tempo scaduto: aprilo per consegnarlo",
+	"quiz_resume_hint_time_up": "Tentativo {number} · tempo scaduto",
+	"quiz_on_site_title": "Continua il tentativo sul sito e-learning"
+}

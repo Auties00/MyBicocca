@@ -1,0 +1,231 @@
+{
+	"$schema": "https://inlang.com/schema/inlang-message-format",
+	"forum_about": "About this forum",
+	"forum_action_failed": "Operation failed",
+	"forum_announcements_all": "All announcements",
+	"forum_announcements_count": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "1 teacher announcement",
+				"countPlural=other": "{count} teacher announcements"
+			}
+		}
+	],
+	"forum_announcements_empty": "No announcements published yet",
+	"forum_announcements_eyebrow": "Announcements",
+	"forum_announcements_failed": "Couldn’t load the announcements.",
+	"forum_announcements_loading": "Loading announcements",
+	"forum_announcements_none": "No announcements",
+	"forum_attachment_downloading": "Downloading {name}",
+	"forum_attachment_failed": "Uploading {name} failed",
+	"forum_attachment_remove": "Remove {name}",
+	"forum_attachment_too_big": "{name} is over the {size} limit.",
+	"forum_attachment_too_many": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "You can attach only one file.",
+				"countPlural=other": "You can attach up to {count} files."
+			}
+		}
+	],
+	"forum_attachment_uploaded": "{name} uploaded",
+	"forum_attachment_uploading": "Uploading {name}",
+	"forum_attachments": "Attachments",
+	"forum_attachments_count_limit": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "One file at most",
+				"countPlural=other": "Up to {count} files"
+			}
+		}
+	],
+	"forum_attachments_drop": "or drop them here",
+	"forum_attachments_limits": [
+		{
+			"declarations": ["input count", "input size", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "One file at most, up to {size}",
+				"countPlural=other": "Up to {count} files, {size} each"
+			}
+		}
+	],
+	"forum_attachments_pick": "Attach files",
+	"forum_author_unknown": "Unknown user",
+	"forum_back": "Forum",
+	"forum_back_forums": "Forums",
+	"forum_back_to_forums": "Back to the course forums",
+	"forum_back_to_list": "Back to the discussions",
+	"forum_cannot_create_body": "Only teachers write in this forum: you can read the discussions and reply where allowed.",
+	"forum_cannot_create_title": "You can’t start discussions here",
+	"forum_composer_editing": "Editing your message",
+	"forum_composer_group": "Group",
+	"forum_composer_message": "Message",
+	"forum_composer_message_required": "Write the message.",
+	"forum_composer_offline": "You’re offline: you can post once you’re back online. Your draft stays here.",
+	"forum_composer_placeholder": "Write your message…",
+	"forum_composer_post": "Post",
+	"forum_composer_post_failed": "Posting failed",
+	"forum_composer_reply": "Reply",
+	"forum_composer_reply_placeholder": "Write your reply…",
+	"forum_composer_replying": "Replying to {name}",
+	"forum_composer_save": "Save",
+	"forum_composer_save_failed": "Saving failed",
+	"forum_composer_subject": "Subject",
+	"forum_composer_subject_required": "Write a subject.",
+	"forum_composer_subscribe": "Email me when someone replies",
+	"forum_delete": "Delete",
+	"forum_delete_discussion_alone": "The discussion will be permanently deleted.",
+	"forum_delete_discussion_body": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "The whole discussion will be deleted, with its reply. This can’t be undone.",
+				"countPlural=other": "The whole discussion will be deleted, with its {count} replies. This can’t be undone."
+			}
+		}
+	],
+	"forum_delete_discussion_title": "Delete this discussion?",
+	"forum_delete_post_body": "The message will be permanently deleted.",
+	"forum_delete_post_title": "Delete this message?",
+	"forum_detail_label": "Discussion",
+	"forum_details_failed": "Couldn’t load the forum’s details",
+	"forum_discard_body": "The unpublished draft will be lost.",
+	"forum_discard_confirm": "Discard draft",
+	"forum_discard_keep": "Keep writing",
+	"forum_discard_title": "Discard draft?",
+	"forum_discussion_count": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "1 discussion",
+				"countPlural=other": "{count} discussions"
+			}
+		}
+	],
+	"forum_discussion_deleted": "Discussion deleted",
+	"forum_discussion_fallback": "Discussion",
+	"forum_discussion_posted": "Discussion posted",
+	"forum_discussions_empty_can_create": "Start the first discussion in this forum.",
+	"forum_discussions_empty_readonly": "When teachers post something, you’ll find it here.",
+	"forum_discussions_empty_title": "No discussions",
+	"forum_discussions_failed": "Couldn’t load the discussions",
+	"forum_discussions_label": "Discussions",
+	"forum_discussions_loading": "Loading discussions",
+	"forum_discussions_more": "Load more discussions",
+	"forum_discussions_none": "No discussions",
+	"forum_edit": "Edit",
+	"forum_edited": "edited",
+	"forum_fact_attachments": "Attachments",
+	"forum_fact_kind": "Type",
+	"forum_fact_latest": "Latest activity",
+	"forum_fact_subscription": "Notifications",
+	"forum_follow": "Follow",
+	"forum_followed": "You’re now following this discussion",
+	"forum_group_fallback": "Group {id}",
+	"forum_has_attachments": "Has attachments",
+	"forum_hide_replies": "Hide replies",
+	"forum_in_reply_to": "replying to {name}",
+	"forum_keys_new": "to start a new one",
+	"forum_keys_reply": "Reply to the post in focus, or to the discussion",
+	"forum_keys_edit": "Edit your post in focus",
+	"forum_kind_blog": "Blog format",
+	"forum_kind_eachuser": "One discussion per student",
+	"forum_kind_general": "Open discussion",
+	"forum_kind_news": "Announcements",
+	"forum_kind_other": "Forum",
+	"forum_kind_qanda": "Q&A",
+	"forum_kind_single": "Single discussion",
+	"forum_latest_activity": "{time} · {name}",
+	"forum_latest_by": "latest by {name}",
+	"forum_list_count": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "1 forum",
+				"countPlural=other": "{count} forums"
+			}
+		}
+	],
+	"forum_list_empty_body": "Course discussion spaces will appear here.",
+	"forum_list_empty_title": "No forums",
+	"forum_list_failed": "Couldn’t load the forums",
+	"forum_list_loading": "Loading forums",
+	"forum_list_other_title": "Other forums",
+	"forum_list_title": "Course forums",
+	"forum_load_failed": "Couldn’t open the forum",
+	"forum_loading": "Loading the forum…",
+	"forum_locked": "Locked",
+	"forum_locked_notice": "This discussion is locked: it takes no new replies.",
+	"forum_missing_body": "The teacher may have removed or hidden it.",
+	"forum_missing_title": "Forum not found",
+	"forum_new": "New",
+	"forum_new_discussion": "New discussion",
+	"forum_new_in": "In {forum}",
+	"forum_no_replies": "no replies",
+	"forum_offline_tools": "You’re offline: you can follow or star this discussion once you’re back online.",
+	"forum_pick_discussion": "Pick a discussion to read it.",
+	"forum_pinned": "Pinned",
+	"forum_post_deleted": "Message deleted",
+	"forum_post_saved": "Changes saved",
+	"forum_refresh": "Refresh discussions",
+	"forum_refresh_thread": "Refresh discussion",
+	"forum_replies_to": "Replies to {name}",
+	"forum_reply": "Reply",
+	"forum_reply_count": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "1 reply",
+				"countPlural=other": "{count} replies"
+			}
+		}
+	],
+	"forum_reply_posted": "Reply posted",
+	"forum_reply_prompt": "Write a reply…",
+	"forum_row_empty": "No discussions yet · {kind}",
+	"forum_show_replies": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "Show 1 reply",
+				"countPlural=other": "Show {count} replies"
+			}
+		}
+	],
+	"forum_star": "Star this discussion",
+	"forum_starred": "Starred",
+	"forum_subscription_disabled": "Email notifications are off",
+	"forum_subscription_forced": "Every message reaches you by email",
+	"forum_subscription_optional": "You choose which discussions to follow",
+	"forum_thread_failed": "Couldn’t load the discussion",
+	"forum_thread_gone_body": "It may have been deleted or moved.",
+	"forum_thread_gone_title": "Discussion unavailable",
+	"forum_thread_loading": "Loading discussion…",
+	"forum_thread_started": "Started by {name}",
+	"forum_title_fallback": "Forum",
+	"forum_unfollow": "Unfollow",
+	"forum_unfollowed": "You’re no longer following this discussion",
+	"forum_unread_posts": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "1 unread message",
+				"countPlural=other": "{count} unread messages"
+			}
+		}
+	],
+	"forum_you": "You"
+}

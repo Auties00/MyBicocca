@@ -1,0 +1,144 @@
+{
+	"$schema": "https://inlang.com/schema/inlang-message-format",
+	"elearning_title": "E-learning",
+	"elearning_add_course": "Add course",
+	"elearning_updated": "updated {time}",
+	"elearning_course_count": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} course",
+				"countPlural=other": "{count} courses"
+			}
+		}
+	],
+	"elearning_filter_label": "Filter courses",
+	"elearning_filter_all": "All",
+	"elearning_filter_favourites": "Favourites",
+	"elearning_filter_year": "Year {year}",
+	"elearning_course_level_bachelor": "Bachelor’s",
+	"elearning_course_level_master": "Master’s",
+	"elearning_career_chip": "{label} {year}",
+	"elearning_period_section": "Academic year {year}",
+	"elearning_period_current": "Current",
+	"elearning_period_none": "Cross-year",
+	"elearning_tab_year_stream": "Year {year} · T{stream}",
+	"elearning_period_none_section": "Cross-year spaces",
+	"elearning_period_none_hint": "Announcements, tutoring and other spaces with no academic year.",
+	"elearning_editions_label": "Editions of {name}",
+	"elearning_add_favorite": "Add to favourites",
+	"elearning_remove_favorite": "Remove from favourites",
+	"elearning_progress": "{percent} complete",
+	"elearning_deadline_assign": "Assignment",
+	"elearning_deadline_quiz": "Quiz",
+	"elearning_deadlines_label": "Deadlines of {name}",
+	"elearning_deadline_extra": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "+{count} more deadline",
+				"countPlural=other": "+{count} more deadlines"
+			}
+		}
+	],
+	"elearning_no_enrollment": "You are not enrolled in any e-learning courses.",
+	"elearning_no_enrollment_hint": "Find your courses in the catalogue and enrol.",
+	"elearning_filter_no_courses": "No courses for this filter.",
+	"elearning_filter_change_hint": "Change the filter to see other courses.",
+	"elearning_no_favourites": "No favourite courses.",
+	"elearning_no_favourites_hint": "Tap a course’s star to find it here.",
+	"elearning_show_all": "Show all",
+	"elearning_sync_failed": "Couldn’t load your courses",
+	"elearning_stale": "Your courses couldn’t be updated.",
+	"elearning_deadlines_failed": "The course deadlines couldn’t be loaded.",
+	"elearning_deadlines_stale": "Deadlines not updated: these were loaded {time}.",
+	"elearning_deadlines_stale_now": "Deadlines not updated: these were loaded moments ago.",
+	"elearning_pull_to_refresh": "Release to refresh",
+	"elearning_catalog_title": "Add course",
+	"elearning_select_area": "Select a teaching area",
+	"elearning_catalog_root": "Catalogue",
+	"elearning_catalog_path": "Path in the catalogue",
+	"elearning_catalog_search": "Search the catalogue",
+	"elearning_search_placeholder_area": "Search area, course, code…",
+	"elearning_search_placeholder_category": "Search type, course, code…",
+	"elearning_search_placeholder_subcategory": "Search programme, course, code…",
+	"elearning_search_placeholder_course": "Search course, code…",
+	"elearning_catalog_loading": "Loading catalogue…",
+	"elearning_catalog_load_failed": "Load failed",
+	"elearning_catalog_load_error": "Unable to load the course catalogue.",
+	"elearning_catalog_not_found": "This category is no longer in the catalogue.",
+	"elearning_catalog_not_found_hint": "The catalogue has changed: start again from the teaching areas.",
+	"elearning_catalog_back_root": "Back to the catalogue",
+	"elearning_catalog_as_of": "Catalogue as of {date}: courses opened since may be missing.",
+	"elearning_categories": "Categories",
+	"elearning_courses": "Courses",
+	"elearning_category_empty": "No content in this category.",
+	"elearning_category_empty_hint": "Some categories gather courses published elsewhere in the catalogue.",
+	"elearning_category_courses": [
+		{
+			"declarations": ["input count", "input shown", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "1 course",
+				"countPlural=other": "{shown} courses"
+			}
+		}
+	],
+	"elearning_results": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "1 result",
+				"countPlural=other": "{count} results"
+			}
+		}
+	],
+	"elearning_results_in": "in {place}",
+	"elearning_results_by_area": "Results by area",
+	"elearning_results_everywhere": "Whole catalogue",
+	"elearning_results_capped": "Showing the first {count} results: add a word to narrow the search.",
+	"elearning_results_capped_code": "Showing the first {count} results: complete the code to narrow the search.",
+	"elearning_results_more": [
+		{
+			"declarations": ["input count", "input place", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "One more result in {place}",
+				"countPlural=other": "{count} more results in {place}"
+			}
+		}
+	],
+	"elearning_editions_more": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "+1 other edition",
+				"countPlural=other": "+{count} other editions"
+			}
+		}
+	],
+	"elearning_editions_of": "Other editions of {name}",
+	"elearning_no_results": "No results for “{query}”.",
+	"elearning_no_results_hint": "Try the course code, such as E3102Q106, or fewer words.",
+	"elearning_search_whole_catalog": "Search the whole catalogue",
+	"elearning_enrol": "Enrol",
+	"elearning_enrol_course": "Enrol in {name}",
+	"elearning_enrol_edition": "Enrol in {name}, {period} edition",
+	"elearning_enrolled": "Enrolled",
+	"elearning_enrolled_open": "Enrolled: open {name}",
+	"elearning_open_course": "Open course",
+	"elearning_show_in_courses": "See in your courses",
+	"elearning_enrol_title": "Enrol in this course?",
+	"elearning_enrol_body": "You’ll use e-learning’s self-enrolment: the course will appear among your courses and you’ll receive the teachers’ announcements.",
+	"elearning_enrol_key": "Enrolment key",
+	"elearning_enrol_key_hint": "Some courses require one: the teacher gives it out.",
+	"elearning_enrol_have_key": "I have an enrolment key",
+	"elearning_enrol_view_on_moodle": "View on e-learning",
+	"elearning_enrol_failed": "Enrolment failed",
+	"elearning_enrol_offline": "You’re offline: you can enrol once you’re back online.",
+	"elearning_enrolled_success": "Enrolled in {name}"
+}

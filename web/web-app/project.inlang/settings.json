@@ -1,0 +1,37 @@
+{
+	"$schema": "https://inlang.com/schema/project-settings",
+	"modules": [
+		"https://cdn.jsdelivr.net/npm/@inlang/plugin-message-format@4/dist/index.js",
+		"https://cdn.jsdelivr.net/npm/@inlang/plugin-m-function-matcher@2/dist/index.js"
+	],
+	"plugin.inlang.messageFormat": {
+		"pathPattern": [
+			"./messages/{locale}/common.json",
+			"./messages/{locale}/ui.json",
+			"./messages/{locale}/shell.json",
+			"./messages/{locale}/auth.json",
+			"./messages/{locale}/search.json",
+			"./messages/{locale}/calendar.json",
+			"./messages/{locale}/elearning.json",
+			"./messages/{locale}/course.json",
+			"./messages/{locale}/quiz.json",
+			"./messages/{locale}/forum.json",
+			"./messages/{locale}/assignment.json",
+			"./messages/{locale}/map.json",
+			"./messages/{locale}/services.json",
+			"./messages/{locale}/exams.json",
+			"./messages/{locale}/results.json",
+			"./messages/{locale}/studyplan.json",
+			"./messages/{locale}/attendance.json",
+			"./messages/{locale}/questionnaires.json",
+			"./messages/{locale}/appointments.json",
+			"./messages/{locale}/library.json",
+			"./messages/{locale}/documents.json",
+			"./messages/{locale}/payments.json",
+			"./messages/{locale}/profile.json",
+			"./messages/{locale}/settings.json"
+		]
+	},
+	"baseLocale": "it",
+	"locales": ["it", "en"]
+}

@@ -1,0 +1,103 @@
+{
+	"$schema": "https://inlang.com/schema/inlang-message-format",
+	"results_title": "Results",
+	"results_summary_pending": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "1 result to decide",
+				"countPlural=other": "{count} results to decide"
+			}
+		}
+	],
+	"results_summary_archived": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "1 archived result",
+				"countPlural=other": "{count} archived results"
+			}
+		}
+	],
+	"results_summary_none": "No results to decide",
+	"results_pending_heading": "To decide",
+	"results_pending_description": "Accept or reject each grade before its deadline.",
+	"results_archive_heading": "Archive",
+	"results_archive_description": "Results you accepted, rejected or had recorded.",
+	"results_hide_absences": "Hide absences and withdrawals",
+	"results_only_absences": "The archive holds only absences and withdrawals.",
+	"results_year_undated": "Undated",
+	"results_nothing_to_decide": "Nothing to decide.",
+	"results_nothing_to_decide_body": "When a teacher publishes a grade for you to accept, it shows up here.",
+	"results_empty_title": "No results published.",
+	"results_empty_body": "When a teacher publishes the outcome of an exam call, it shows up here.",
+	"results_empty_action": "Go to exam calls",
+	"results_load_failed": "Couldn’t load your results",
+	"results_list_label": "Results list",
+	"results_detail_label": "Result details",
+	"results_decide_by": "Decide by {date}",
+	"results_taken_on": "Taken on {date}",
+	"results_choice_accepted": "Accepted",
+	"results_choice_rejected": "Rejected",
+	"results_lapsed": "Not rejected",
+	"results_exam_fallback": "Exam",
+	"results_grade": "Grade: {grade}",
+	"results_grade_label": "Grade",
+	"results_cum_laude": "with honours",
+	"results_out_of_thirty": "{grade} out of 30",
+	"results_lapsed_on": "Not rejected by {date}: the grade stands.",
+	"results_note_label": "Note from the teacher",
+	"results_status_pending": "To decide",
+	"results_decide_heading": "Your decision",
+	"results_decide_hint": "If you don’t reject it by the deadline, the grade stands.",
+	"results_offline_hint": "You’re offline: you can decide once you’re back online.",
+	"results_accept": "Accept",
+	"results_reject": "Reject",
+	"results_accept_title": "Accept this result?",
+	"results_accept_body": "You are about to accept the result of {exam}: {grade}. It will be recorded in your transcript, and the choice can’t be undone.",
+	"results_accept_confirm": "Accept grade",
+	"results_reject_title": "Reject this result?",
+	"results_reject_body": "You are about to reject the result of {exam}: {grade}. The grade will be cancelled and you will need to book a new exam call to pass the exam. The decision can’t be undone.",
+	"results_reject_confirm": "Reject grade",
+	"results_accepted_title": "Result accepted",
+	"results_accepted_body": "The grade will be recorded in your transcript.",
+	"results_rejected_title": "Result rejected",
+	"results_rejected_body": "To pass the exam, book a new exam call.",
+	"results_go_transcript": "Go to transcript",
+	"results_book_call": "Book an exam call",
+	"results_refused": "Esse3 didn’t accept the request: {reason}",
+	"results_unconfirmed_title": "Esse3 didn’t confirm your answer",
+	"results_unconfirmed_body": "The result still shows as waiting for a decision. Check again in a moment: if it stays that way, you can answer again.",
+	"results_check_again": "Check again",
+	"results_not_found_title": "Result not found.",
+	"results_not_found_body": "It may no longer be published on Esse3.",
+	"results_booking_link": "Booking details",
+	"results_attempts_heading": "Other attempts",
+	"results_back_to_list": "Back to results",
+	"results_overview_pending": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "One grade is waiting for your decision.",
+				"countPlural=other": "{count} grades are waiting for your decision."
+			}
+		}
+	],
+	"results_overview_select": "Pick a result from the list to see its details.",
+	"results_overview_decide": "Decide now",
+	"results_rules_heading": "How it works",
+	"results_rule_accept": "Accept: the grade is recorded in your transcript.",
+	"results_rule_reject": "Reject: the grade is cancelled and you retake the exam at a new call.",
+	"results_rule_deadline": "No answer: once the deadline passes, the grade stands.",
+	"results_fact_taken_on": "Exam date",
+	"results_fact_call": "Exam call",
+	"results_fact_credits": "Weight",
+	"results_fact_booked_on": "Booked on",
+	"results_archive_summary_heading": "In the archive",
+	"results_count_passed": "Passed",
+	"results_count_not_passed": "Failed or rejected",
+	"results_count_absences": "Absences and withdrawals"
+}
