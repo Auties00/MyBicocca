@@ -89,7 +89,7 @@ public enum MoodleWebScrapers {
     public static func attendanceView(_ node: ScrapeNode) -> MoodleWebAttendanceView? {
         let value0 = (Scrape.select(node, "body#page-mod-attendance-view") != nil)
         let value1 = Scrape.select(node, "table.attlist").flatMap { attendanceSummary($0) }
-        let value2 = Scrape.selectAll(node, "table.generaltable td[colspan=3]").compactMap { submittableSession($0) }
+        let value2 = Scrape.selectAll(node, "table.generaltable td[colspan='3']").compactMap { submittableSession($0) }
         return MoodleWebAttendanceView(
             shown: value0,
             summary: value1,
@@ -121,7 +121,7 @@ public enum MoodleWebScrapers {
 
     /// Reads ``MoodleWebSubmittableSession`` out of `node`, or returns nil when a value it requires is missing.
     public static func submittableSession(_ node: ScrapeNode) -> MoodleWebSubmittableSession? {
-        guard let value0 = Scrape.regex(Scrape.attribute(Scrape.select(node, "a[href*=attendance.php]"), "href", missing: []), "sessid[=:]\\s*(\\d+)") ?? Scrape.attribute(Scrape.select(node, "input[name=sessid]"), "value", missing: []) else { return nil }
+        guard let value0 = Scrape.regex(Scrape.attribute(Scrape.select(node, "a[href*='attendance.php']"), "href", missing: []), "sessid[=:]\\s*(\\d+)") ?? Scrape.attribute(Scrape.select(node, "input[name=sessid]"), "value", missing: []) else { return nil }
         return MoodleWebSubmittableSession(
             id: value0
         )

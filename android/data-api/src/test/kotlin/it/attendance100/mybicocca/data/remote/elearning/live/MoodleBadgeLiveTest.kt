@@ -10,6 +10,25 @@ import org.junit.jupiter.api.Test
 /** The live tests of the Moodle Badge module, planned from `common/specs/moodle/tests.yaml`. */
 class MoodleBadgeLiveTest : LiveTest<MoodleApi>(MoodleLive) {
     @Test
+    @DisplayName("Badge.getBadge#1")
+    fun getBadge1() = case("Badge.getBadge#1") {
+        val id = choose("id", listOf(badgeGetUserBadges()).mapNotNull { it.badges }.flatten().mapNotNull { it.id })
+        val result = call("{\"k\":\"record\",\"n\":\"MoodleBadgesGetBadgeResponse\"}") {
+            api.badge.getBadge(id = id, auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { writeMoodleBadgesGetBadgeResponse(result) }
+    }
+
+    @Test
+    @DisplayName("Badge.getBadge#invalid-credentials")
+    fun getBadgeInvalidCredentials() = case("Badge.getBadge#invalid-credentials") {
+        val id = choose("id", listOf(badgeGetUserBadges()).mapNotNull { it.badges }.flatten().mapNotNull { it.id })
+        refused(acceptsEmpty = false) {
+            api.badge.getBadge(id = id, auth = MoodleTokenAuth(token = "mybicocca-invalid-credential"))
+        }
+    }
+
+    @Test
     @DisplayName("Badge.getUserBadges#1")
     fun getUserBadges1() = case("Badge.getUserBadges#1") {
         val result = call("{\"k\":\"record\",\"n\":\"MoodleUserBadgesResponse\"}") {
@@ -67,13 +86,5 @@ class MoodleBadgeLiveTest : LiveTest<MoodleApi>(MoodleLive) {
             api.badge.getUserBadges(userId = userId, courseId = courseId, onlyPublic = false, auth = tokenCredentials())
         } ?: return@case
         fingerprint { writeMoodleUserBadgesResponse(result) }
-    }
-
-    @Test
-    @DisplayName("Badge.getUserBadges#invalid-credentials")
-    fun getUserBadgesInvalidCredentials() = case("Badge.getUserBadges#invalid-credentials") {
-        refused(acceptsEmpty = false) {
-            api.badge.getUserBadges(auth = MoodleTokenAuth(token = "mybicocca-invalid-credential"))
-        }
     }
 }

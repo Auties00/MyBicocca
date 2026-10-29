@@ -5,14 +5,28 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class MoodleNamedValue(
-    /** data name */
-    @SerialName("name")
-    val name: String = "",
+data class MoodleQuizGetAttemptAccessInformationResponse(
+    /** When the attempt must be submitted (determined by rules). */
+    @SerialName("endtime")
+    val endtime: Long? = null,
 
-    /** data value */
-    @SerialName("value")
-    val value: String = ""
+    /** Whether there is no way the user will ever be allowed to attempt. */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("isfinished")
+    val isfinished: Boolean = false,
+
+    /** whether a check is required before the user starts/continues his attempt. */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("ispreflightcheckrequired")
+    val ispreflightcheckrequired: Boolean? = null,
+
+    /** list of reasons */
+    @SerialName("preventnewattemptreasons")
+    val preventnewattemptreasons: List<String> = emptyList(),
+
+    /** list of warnings */
+    @SerialName("warnings")
+    val warnings: List<MoodleWarning> = emptyList()
 )
 
 @Serializable
@@ -265,6 +279,19 @@ data class MoodleAttemptSummaryResponse(
 )
 
 @Serializable
+data class MoodleQuizGetCombinedReviewOptionsResponse(
+    @SerialName("someoptions")
+    val someoptions: List<MoodleAdvancedFeature> = emptyList(),
+
+    @SerialName("alloptions")
+    val alloptions: List<MoodleAdvancedFeature> = emptyList(),
+
+    /** list of warnings */
+    @SerialName("warnings")
+    val warnings: List<MoodleWarning> = emptyList()
+)
+
+@Serializable
 data class MoodleQuizAccessInformation(
     /** Whether the user can do the quiz or not. */
     @Serializable(with = MoodleBooleanSerializer::class)
@@ -302,6 +329,36 @@ data class MoodleQuizAccessInformation(
     /** list of reasons */
     @SerialName("preventaccessreasons")
     val preventAccessReasons: List<String> = emptyList(),
+
+    /** list of warnings */
+    @SerialName("warnings")
+    val warnings: List<MoodleWarning> = emptyList()
+)
+
+@Serializable
+data class MoodleQuizGetQuizFeedbackForGradeResponse(
+    /** the comment that corresponds to this grade (empty for none) */
+    @SerialName("feedbacktext")
+    val feedbacktext: String = "",
+
+    /** feedbacktext format (1 = HTML, 0 = MOODLE, 2 = PLAIN, or 4 = MARKDOWN) */
+    @SerialName("feedbacktextformat")
+    val feedbacktextformat: Int? = null,
+
+    /** feedback inline files */
+    @SerialName("feedbackinlinefiles")
+    val feedbackinlinefiles: List<MoodleFile> = emptyList(),
+
+    /** list of warnings */
+    @SerialName("warnings")
+    val warnings: List<MoodleWarning> = emptyList()
+)
+
+@Serializable
+data class MoodleQuizGetQuizRequiredQtypesResponse(
+    /** list of question types used in the quiz */
+    @SerialName("questiontypes")
+    val questiontypes: List<String> = emptyList(),
 
     /** list of warnings */
     @SerialName("warnings")

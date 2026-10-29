@@ -34,6 +34,52 @@ public struct MoodleAssignApi: Sendable {
         )
     }
 
+    /// Returns grades from the assignment
+    ///
+    /// - Parameters:
+    ///   - assignmentids: 1 or more assignment ids
+    ///   - since: timestamp, only return records where timemodified >= since
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getGrades(
+        assignmentids: [Int],
+        since: Int? = nil,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleAssignGetGradesResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "mod_assign_get_grades"), ("moodlewsrestformat", "json")],
+                form: [("since", since)] + RestRequest.brackets("assignmentids", assignmentids),
+                auth: auth
+            )
+        )
+    }
+
+    /// Get a participant for an assignment, with some summary info about their submissions.
+    ///
+    /// - Parameters:
+    ///   - assignId: assign instance id
+    ///   - userId: user id
+    ///   - embeduser: user id
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getParticipant(
+        assignId: Int,
+        userId: Int,
+        embeduser: Bool? = nil,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleAssignGetParticipantResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "mod_assign_get_participant"), ("moodlewsrestformat", "json")],
+                form: [("assignid", assignId), ("userid", userId)] + RestRequest.brackets("embeduser", embeduser),
+                auth: auth
+            )
+        )
+    }
+
     /// Returns information about an assignment submission status for a given user.
     ///
     /// - Parameters:
@@ -62,6 +108,138 @@ public struct MoodleAssignApi: Sendable {
         )
     }
 
+    /// Returns the submissions for assignments
+    ///
+    /// - Parameters:
+    ///   - assignmentids: 1 or more assignment ids
+    ///   - status: status
+    ///   - since: submitted since
+    ///   - before: submitted before
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getSubmissions(
+        assignmentids: [Int],
+        status: String? = nil,
+        since: Int? = nil,
+        before: Int? = nil,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleAssignGetSubmissionsResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "mod_assign_get_submissions"), ("moodlewsrestformat", "json")],
+                form: [
+                    ("status", status),
+                    ("since", since),
+                    ("before", before)
+                ] + RestRequest.brackets("assignmentids", assignmentids),
+                auth: auth
+            )
+        )
+    }
+
+    /// Returns the user flags for assignments
+    ///
+    /// - Parameters:
+    ///   - assignmentids: 1 or more assignment ids
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getUserFlags(
+        assignmentids: [Int],
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleAssignGetUserFlagsResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "mod_assign_get_user_flags"), ("moodlewsrestformat", "json")],
+                form: RestRequest.brackets("assignmentids", assignmentids),
+                auth: auth
+            )
+        )
+    }
+
+    /// Returns the blind marking mappings for assignments
+    ///
+    /// - Parameters:
+    ///   - assignmentids: 1 or more assignment ids
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getUserMappings(
+        assignmentids: [Int],
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleAssignGetUserMappingsResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "mod_assign_get_user_mappings"), ("moodlewsrestformat", "json")],
+                form: RestRequest.brackets("assignmentids", assignmentids),
+                auth: auth
+            )
+        )
+    }
+
+    /// List the participants for a single assignment, with some summary info about their submissions.
+    ///
+    /// - Parameters:
+    ///   - assignId: assign instance id
+    ///   - groupId: group id
+    ///   - filter: search string to filter the results
+    ///   - skip: number of records to skip
+    ///   - limit: maximum number of records to return
+    ///   - onlyids: Do not return all user fields
+    ///   - includeenrolments: Do return courses where the user is enrolled
+    ///   - tablesort: Apply current user table sorting preferences.
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func listParticipants(
+        assignId: Int,
+        groupId: Int,
+        filter: String,
+        skip: Int? = nil,
+        limit: Int? = nil,
+        onlyids: Bool? = nil,
+        includeenrolments: Bool? = nil,
+        tablesort: Bool? = nil,
+        auth: MoodleTokenAuth
+    ) async throws -> [MoodleAssignListParticipantsItem] {
+        try await client.jsonList(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "mod_assign_list_participants"), ("moodlewsrestformat", "json")],
+                form: [
+                    ("assignid", assignId),
+                    ("groupid", groupId),
+                    ("filter", filter),
+                    ("skip", skip),
+                    ("limit", limit)
+                ] + RestRequest.brackets("onlyids", onlyids) + RestRequest.brackets("includeenrolments", includeenrolments) + RestRequest.brackets("tablesort", tablesort),
+                auth: auth
+            )
+        )
+    }
+
+    /// Prevent students from making changes to a list of submissions
+    ///
+    /// - Parameters:
+    ///   - assignmentId: The assignment id to operate on
+    ///   - userids: 1 or more user ids
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func lockSubmissions(
+        assignmentId: Int,
+        userids: [Int],
+        auth: MoodleTokenAuth
+    ) async throws -> [MoodleWarning] {
+        try await client.jsonList(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "mod_assign_lock_submissions"), ("moodlewsrestformat", "json")],
+                form: [("assignmentid", assignmentId)] + RestRequest.brackets("userids", userids),
+                auth: auth
+            )
+        )
+    }
+
     /// Remove submission.
     ///
     /// - Parameters:
@@ -79,6 +257,113 @@ public struct MoodleAssignApi: Sendable {
                 path: "/webservice/rest/server.php",
                 query: [("wsfunction", "mod_assign_remove_submission"), ("moodlewsrestformat", "json")],
                 form: [("userid", userId), ("assignid", assignId)],
+                auth: auth
+            )
+        )
+    }
+
+    /// Reveal the identities for a blind marking assignment
+    ///
+    /// - Parameters:
+    ///   - assignmentId: The assignment id to operate on
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func revealIdentities(
+        assignmentId: Int,
+        auth: MoodleTokenAuth
+    ) async throws -> [MoodleWarning] {
+        try await client.jsonList(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "mod_assign_reveal_identities"), ("moodlewsrestformat", "json")],
+                form: [("assignmentid", assignmentId)],
+                auth: auth
+            )
+        )
+    }
+
+    /// Reverts the list of submissions to draft status
+    ///
+    /// - Parameters:
+    ///   - assignmentId: The assignment id to operate on
+    ///   - userids: 1 or more user ids
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func revertSubmissionsToDraft(
+        assignmentId: Int,
+        userids: [Int],
+        auth: MoodleTokenAuth
+    ) async throws -> [MoodleWarning] {
+        try await client.jsonList(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "mod_assign_revert_submissions_to_draft"), ("moodlewsrestformat", "json")],
+                form: [("assignmentid", assignmentId)] + RestRequest.brackets("userids", userids),
+                auth: auth
+            )
+        )
+    }
+
+    /// Save a grade update for a single student.
+    ///
+    /// - Parameters:
+    ///   - assignmentId: The assignment id to operate on
+    ///   - userId: The student id to operate on
+    ///   - grade: The new grade for this user. Ignored if advanced grading used
+    ///   - attemptNumber: The attempt number (-1 means latest attempt)
+    ///   - addattempt: Allow another attempt if the attempt reopen method is manual
+    ///   - workflowstate: The next marking workflow state
+    ///   - applytoall: If true, this grade will be applied to all members of the group (for group assignments).
+    ///   - pluginData: plugin data
+    ///   - advancedgradingdata: advanced grading data
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func saveGrade(
+        assignmentId: Int,
+        userId: Int,
+        grade: Double,
+        attemptNumber: Int,
+        addattempt: Bool,
+        workflowstate: String,
+        applytoall: Bool,
+        pluginData: MoodlePluginData? = nil,
+        advancedgradingdata: MoodleAdvancedgradingdata? = nil,
+        auth: MoodleTokenAuth
+    ) async throws {
+        try await client.send(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "mod_assign_save_grade"), ("moodlewsrestformat", "json")],
+                form: [
+                    ("assignmentid", assignmentId),
+                    ("userid", userId),
+                    ("grade", grade),
+                    ("attemptnumber", attemptNumber),
+                    ("workflowstate", workflowstate)
+                ] + RestRequest.brackets("addattempt", addattempt) + RestRequest.brackets("applytoall", applytoall) + RestRequest.brackets("plugindata", pluginData) + RestRequest.brackets("advancedgradingdata", advancedgradingdata),
+                auth: auth
+            )
+        )
+    }
+
+    /// Save multiple grade updates for an assignment.
+    ///
+    /// - Parameters:
+    ///   - assignmentId: The assignment id to operate on
+    ///   - applytoall: If true, this grade will be applied to all members of the group (for group assignments).
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func saveGrades(
+        assignmentId: Int,
+        applytoall: Bool,
+        grades: [MoodleAssignSaveGradesGrade],
+        auth: MoodleTokenAuth
+    ) async throws {
+        try await client.send(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "mod_assign_save_grades"), ("moodlewsrestformat", "json")],
+                form: [("assignmentid", assignmentId)] + RestRequest.brackets("applytoall", applytoall) + RestRequest.brackets("grades", grades),
                 auth: auth
             )
         )
@@ -105,6 +390,71 @@ public struct MoodleAssignApi: Sendable {
         )
     }
 
+    /// Save a list of assignment extensions
+    ///
+    /// - Parameters:
+    ///   - assignmentId: The assignment id to operate on
+    ///   - userids: 1 or more user ids
+    ///   - dates: 1 or more extension dates (timestamp)
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func saveUserExtensions(
+        assignmentId: Int,
+        userids: [Int],
+        dates: [Int64],
+        auth: MoodleTokenAuth
+    ) async throws -> [MoodleWarning] {
+        try await client.jsonList(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "mod_assign_save_user_extensions"), ("moodlewsrestformat", "json")],
+                form: [("assignmentid", assignmentId)] + RestRequest.brackets("userids", userids) + RestRequest.brackets("dates", dates),
+                auth: auth
+            )
+        )
+    }
+
+    /// Creates or updates user flags
+    ///
+    /// - Parameters:
+    ///   - assignmentId: assignment id
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func setUserFlags(
+        assignmentId: Int,
+        userflags: [MoodleAssignSetUserFlagsUserflag],
+        auth: MoodleTokenAuth
+    ) async throws -> [MoodleAssignSetUserFlagsItem] {
+        try await client.jsonList(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "mod_assign_set_user_flags"), ("moodlewsrestformat", "json")],
+                form: [("assignmentid", assignmentId)] + RestRequest.brackets("userflags", userflags),
+                auth: auth
+            )
+        )
+    }
+
+    /// Start a submission for user if assignment has a time limit.
+    ///
+    /// - Parameters:
+    ///   - assignId: Assignment instance id
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func startSubmission(
+        assignId: Int,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleAssignStartSubmissionResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "mod_assign_start_submission"), ("moodlewsrestformat", "json")],
+                form: [("assignid", assignId)],
+                auth: auth
+            )
+        )
+    }
+
     /// Submit the current students assignment for grading
     ///
     /// - Parameters:
@@ -122,6 +472,113 @@ public struct MoodleAssignApi: Sendable {
                 path: "/webservice/rest/server.php",
                 query: [("wsfunction", "mod_assign_submit_for_grading"), ("moodlewsrestformat", "json")],
                 form: [("assignmentid", assignmentId)] + RestRequest.brackets("acceptsubmissionstatement", acceptSubmissionStatement),
+                auth: auth
+            )
+        )
+    }
+
+    /// Submit the grading form data via ajax
+    ///
+    /// - Parameters:
+    ///   - assignmentId: The assignment id to operate on
+    ///   - userId: The user id the submission belongs to
+    ///   - jsonformdata: The data from the grading form, encoded as a json array
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func submitGradingForm(
+        assignmentId: Int,
+        userId: Int,
+        jsonformdata: String,
+        auth: MoodleTokenAuth
+    ) async throws -> [MoodleWarning] {
+        try await client.jsonList(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "mod_assign_submit_grading_form"), ("moodlewsrestformat", "json")],
+                form: [
+                    ("assignmentid", assignmentId),
+                    ("userid", userId),
+                    ("jsonformdata", jsonformdata)
+                ],
+                auth: auth
+            )
+        )
+    }
+
+    /// Allow students to make changes to a list of submissions
+    ///
+    /// - Parameters:
+    ///   - assignmentId: The assignment id to operate on
+    ///   - userids: 1 or more user ids
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func unlockSubmissions(
+        assignmentId: Int,
+        userids: [Int],
+        auth: MoodleTokenAuth
+    ) async throws -> [MoodleWarning] {
+        try await client.jsonList(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "mod_assign_unlock_submissions"), ("moodlewsrestformat", "json")],
+                form: [("assignmentid", assignmentId)] + RestRequest.brackets("userids", userids),
+                auth: auth
+            )
+        )
+    }
+
+    /// Update the module completion status.
+    ///
+    /// - Parameters:
+    ///   - assignId: assign instance id
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func viewAssign(assignId: Int, auth: MoodleTokenAuth) async throws -> MoodleStatusResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "mod_assign_view_assign"), ("moodlewsrestformat", "json")],
+                form: [("assignid", assignId)],
+                auth: auth
+            )
+        )
+    }
+
+    /// Trigger the grading_table_viewed event.
+    ///
+    /// - Parameters:
+    ///   - assignId: assign instance id
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func viewGradingTable(
+        assignId: Int,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleStatusResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "mod_assign_view_grading_table"), ("moodlewsrestformat", "json")],
+                form: [("assignid", assignId)],
+                auth: auth
+            )
+        )
+    }
+
+    /// Trigger the submission status viewed event.
+    ///
+    /// - Parameters:
+    ///   - assignId: assign instance id
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func viewSubmissionStatus(
+        assignId: Int,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleStatusResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "mod_assign_view_submission_status"), ("moodlewsrestformat", "json")],
+                form: [("assignid", assignId)],
                 auth: auth
             )
         )

@@ -3,7 +3,7 @@
 import { describe } from "vitest";
 import { MoodleTokenAuth } from "../../src/elearning/models/index.js";
 import { isPresent, liveCase } from "../runtime/live.js";
-import { MoodleLive, calendarGetActionEventsByTimesort, forumGetDiscussionPosts, forumGetForumDiscussions, forumGetForumsByCourses, tokenCredentials, writeMoodleCanAddDiscussionResponse, writeMoodleDiscussionPostResponse, writeMoodleDiscussionPostsResponse, writeMoodleForum, writeMoodleForumDiscussionsResponse } from "./MoodleLive.js";
+import { MoodleLive, blogGetEntries, forumGetDiscussionPosts, forumGetForumDiscussions, forumGetForumsByCourses, tokenCredentials, writeMoodleCanAddDiscussionResponse, writeMoodleDiscussionPostResponse, writeMoodleDiscussionPostsResponse, writeMoodleForum, writeMoodleForumDiscussionsResponse, writeMoodleForumGetForumAccessInformationResponse } from "./MoodleLive.js";
 
 // The live tests of the Moodle Forum module, planned from common/specs/moodle/tests.yaml.
 describe("Moodle Forum", () => {
@@ -16,7 +16,7 @@ describe("Moodle Forum", () => {
 
   liveCase(MoodleLive, "Forum.canAddDiscussion#2", { index: 1 }, async (live) => {
     const forumId = live.choose("forumId", [await forumGetForumsByCourses(live)].flat().map((it) => it.id).filter(isPresent));
-    const groupId = live.choose("groupId", [await calendarGetActionEventsByTimesort(live)].map((it) => it.events).filter(isPresent).flat().map((it) => it.groupId).filter(isPresent));
+    const groupId = live.choose("groupId", [await blogGetEntries(live)].map((it) => it.entries).filter(isPresent).flat().map((it) => it.groupId).filter(isPresent));
     const auth = await tokenCredentials(live);
     const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleCanAddDiscussionResponse\"}", { errors: ["requireloginerror"] }, async () => live.api.forum.canAddDiscussion(forumId, auth, { groupId: groupId }));
     live.fingerprint((f) => writeMoodleCanAddDiscussionResponse(f, result));
@@ -55,6 +55,13 @@ describe("Moodle Forum", () => {
     live.fingerprint((f) => writeMoodleDiscussionPostsResponse(f, result));
   });
 
+  liveCase(MoodleLive, "Forum.getForumAccessInformation#1", {}, async (live) => {
+    const forumId = live.choose("forumId", [await forumGetForumsByCourses(live)].flat().map((it) => it.id).filter(isPresent));
+    const auth = await tokenCredentials(live);
+    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleForumGetForumAccessInformationResponse\"}", {}, async () => live.api.forum.getForumAccessInformation(forumId, auth));
+    live.fingerprint((f) => writeMoodleForumGetForumAccessInformationResponse(f, result));
+  });
+
   liveCase(MoodleLive, "Forum.getForumDiscussions#1", {}, async (live) => {
     const forumId = live.choose("forumId", [await forumGetForumsByCourses(live)].flat().map((it) => it.id).filter(isPresent));
     const auth = await tokenCredentials(live);
@@ -64,7 +71,7 @@ describe("Moodle Forum", () => {
 
   liveCase(MoodleLive, "Forum.getForumDiscussions#2", { index: 1 }, async (live) => {
     const forumId = live.choose("forumId", [await forumGetForumsByCourses(live)].flat().map((it) => it.id).filter(isPresent));
-    const groupId = live.choose("groupId", [await calendarGetActionEventsByTimesort(live)].map((it) => it.events).filter(isPresent).flat().map((it) => it.groupId).filter(isPresent));
+    const groupId = live.choose("groupId", [await blogGetEntries(live)].map((it) => it.entries).filter(isPresent).flat().map((it) => it.groupId).filter(isPresent));
     const auth = await tokenCredentials(live);
     const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleForumDiscussionsResponse\"}", { errors: ["requireloginerror"] }, async () => live.api.forum.getForumDiscussions(forumId, auth, { groupId: groupId }));
     live.fingerprint((f) => writeMoodleForumDiscussionsResponse(f, result));

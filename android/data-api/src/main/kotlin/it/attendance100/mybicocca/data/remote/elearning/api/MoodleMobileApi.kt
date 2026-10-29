@@ -9,7 +9,14 @@ import io.ktor.client.request.setBody
 import io.ktor.http.HttpMethod
 import io.ktor.http.parameters
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAutologinKey
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleMobileCallExternalFunctionsRequest
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleMobileCallExternalFunctionsResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleMobileContent
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleMobileGetConfigResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleMobileGetPluginsSupportingMobileResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleMobileGetPublicConfigResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleMobileGetTokensForQrLoginResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleMobileValidateSubscriptionKeyResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleNamedValue
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
 import it.attendance100.mybicocca.data.remote.elearning.dto.appendBrackets
@@ -22,6 +29,26 @@ class MoodleMobileApi(
     client: HttpClient,
     json: Json
 ) : RestApi(client, json, "", MoodleRuntime.policy) {
+
+    /**
+     * Call multiple external functions and return all responses.
+     *
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun callExternalFunctions(
+        requests: List<MoodleMobileCallExternalFunctionsRequest>,
+        auth: MoodleTokenAuth
+    ): MoodleMobileCallExternalFunctionsResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleMobileCallExternalFunctionsResponse>()) {
+            setBody(FormDataContent(parameters {
+                appendBrackets("requests", json.encodeToJsonElement(requests))
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "tool_mobile_call_external_functions")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
 
     /**
      * Creates an auto-login key for the current user. Is created only in https sites and is restricted by time, ip address and only works if the request comes from the Moodle mobile or desktop app.
@@ -39,6 +66,27 @@ class MoodleMobileApi(
                 auth.form.forEach { (name, value) -> append(name, value) }
             }))
             parameter("wsfunction", "tool_mobile_get_autologin_key")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Returns a list of the site configurations, filtering by section.
+     *
+     * @param section Settings section name.
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getConfig(
+        section: String? = null,
+        auth: MoodleTokenAuth
+    ): MoodleMobileGetConfigResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleMobileGetConfigResponse>()) {
+            setBody(FormDataContent(parameters {
+                section?.let { append("section", it) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "tool_mobile_get_config")
             parameter("moodlewsrestformat", "json")
             auth.headers.forEach { (name, value) -> header(name, value) }
         }
@@ -68,6 +116,87 @@ class MoodleMobileApi(
             parameter("wsfunction", "tool_mobile_get_content")
             parameter("moodlewsrestformat", "json")
             auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Returns a list of Moodle plugins supporting the mobile app.
+     *
+     * @param auth The credentials, if any: [MoodleTokenAuth].
+     */
+    suspend fun getPluginsSupportingMobile(
+        auth: MoodleTokenAuth? = null
+    ): MoodleMobileGetPluginsSupportingMobileResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleMobileGetPluginsSupportingMobileResponse>()) {
+            setBody(FormDataContent(parameters {
+                auth?.form?.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "tool_mobile_get_plugins_supporting_mobile")
+            parameter("moodlewsrestformat", "json")
+            auth?.headers?.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Returns a list of the site public settings, those not requiring authentication.
+     *
+     * @param auth The credentials, if any: [MoodleTokenAuth].
+     */
+    suspend fun getPublicConfig(
+        auth: MoodleTokenAuth? = null
+    ): MoodleMobileGetPublicConfigResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleMobileGetPublicConfigResponse>()) {
+            setBody(FormDataContent(parameters {
+                auth?.form?.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "tool_mobile_get_public_config")
+            parameter("moodlewsrestformat", "json")
+            auth?.headers?.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Returns a WebService token (and private token) for QR login.
+     *
+     * @param qrloginkey The user key for validating the request.
+     * @param userId The user the key belongs to.
+     * @param auth The credentials, if any: [MoodleTokenAuth].
+     */
+    suspend fun getTokensForQrLogin(
+        qrloginkey: String,
+        userId: Int,
+        auth: MoodleTokenAuth? = null
+    ): MoodleMobileGetTokensForQrLoginResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleMobileGetTokensForQrLoginResponse>()) {
+            setBody(FormDataContent(parameters {
+                append("qrloginkey", qrloginkey)
+                append("userid", userId.toString())
+                auth?.form?.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "tool_mobile_get_tokens_for_qr_login")
+            parameter("moodlewsrestformat", "json")
+            auth?.headers?.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Check if the given site subscription key is valid.
+     *
+     * @param key Site subscription temporary key.
+     * @param auth The credentials, if any: [MoodleTokenAuth].
+     */
+    suspend fun validateSubscriptionKey(
+        key: String,
+        auth: MoodleTokenAuth? = null
+    ): MoodleMobileValidateSubscriptionKeyResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleMobileValidateSubscriptionKeyResponse>()) {
+            setBody(FormDataContent(parameters {
+                append("key", key)
+                auth?.form?.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "tool_mobile_validate_subscription_key")
+            parameter("moodlewsrestformat", "json")
+            auth?.headers?.forEach { (name, value) -> header(name, value) }
         }
     }
 }

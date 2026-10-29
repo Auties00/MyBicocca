@@ -10,6 +10,28 @@ public struct MoodleQuizApi: Sendable {
         self.client = client
     }
 
+    /// Return access information for a given attempt in a quiz.
+    ///
+    /// - Parameters:
+    ///   - quizId: quiz instance id
+    ///   - attemptId: attempt id, 0 for the user last attempt if exists
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getAttemptAccessInformation(
+        quizId: Int,
+        attemptId: Int? = nil,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleQuizGetAttemptAccessInformationResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "mod_quiz_get_attempt_access_information"), ("moodlewsrestformat", "json")],
+                form: [("quizid", quizId), ("attemptid", attemptId)],
+                auth: auth
+            )
+        )
+    }
+
     /// Returns information for the given attempt page for a quiz attempt in progress.
     ///
     /// - Parameters:
@@ -78,6 +100,28 @@ public struct MoodleQuizApi: Sendable {
         )
     }
 
+    /// Combines the review options from a number of different quiz attempts.
+    ///
+    /// - Parameters:
+    ///   - quizId: quiz instance id
+    ///   - userId: user id (empty for current user)
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getCombinedReviewOptions(
+        quizId: Int,
+        userId: Int? = nil,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleQuizGetCombinedReviewOptionsResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "mod_quiz_get_combined_review_options"), ("moodlewsrestformat", "json")],
+                form: [("quizid", quizId), ("userid", userId)],
+                auth: auth
+            )
+        )
+    }
+
     /// Return access information for a given quiz.
     ///
     /// - Parameters:
@@ -92,6 +136,48 @@ public struct MoodleQuizApi: Sendable {
                 method: .post,
                 path: "/webservice/rest/server.php",
                 query: [("wsfunction", "mod_quiz_get_quiz_access_information"), ("moodlewsrestformat", "json")],
+                form: [("quizid", quizId)],
+                auth: auth
+            )
+        )
+    }
+
+    /// Get the feedback text that should be show to a student who got the given grade in the given quiz.
+    ///
+    /// - Parameters:
+    ///   - quizId: quiz instance id
+    ///   - grade: the grade to check
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getQuizFeedbackForGrade(
+        quizId: Int,
+        grade: Double,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleQuizGetQuizFeedbackForGradeResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "mod_quiz_get_quiz_feedback_for_grade"), ("moodlewsrestformat", "json")],
+                form: [("quizid", quizId), ("grade", grade)],
+                auth: auth
+            )
+        )
+    }
+
+    /// Return the potential question types that would be required for a given quiz.
+    ///
+    /// - Parameters:
+    ///   - quizId: quiz instance id
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getQuizRequiredQtypes(
+        quizId: Int,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleQuizGetQuizRequiredQtypesResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "mod_quiz_get_quiz_required_qtypes"), ("moodlewsrestformat", "json")],
                 form: [("quizid", quizId)],
                 auth: auth
             )
@@ -241,6 +327,89 @@ public struct MoodleQuizApi: Sendable {
                 path: "/webservice/rest/server.php",
                 query: [("wsfunction", "mod_quiz_start_attempt"), ("moodlewsrestformat", "json")],
                 form: [("quizid", quizId)] + RestRequest.brackets("preflightdata", preflightData) + RestRequest.brackets("forcenew", forceNew),
+                auth: auth
+            )
+        )
+    }
+
+    /// Trigger the attempt viewed event.
+    ///
+    /// - Parameters:
+    ///   - attemptId: attempt id
+    ///   - page: page number
+    ///   - preflightData: Preflight required data (like passwords)
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func viewAttempt(
+        attemptId: Int,
+        page: Int,
+        preflightData: [MoodleNamedValue]? = nil,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleStatusResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "mod_quiz_view_attempt"), ("moodlewsrestformat", "json")],
+                form: [("attemptid", attemptId), ("page", page)] + RestRequest.brackets("preflightdata", preflightData),
+                auth: auth
+            )
+        )
+    }
+
+    /// Trigger the attempt reviewed event.
+    ///
+    /// - Parameters:
+    ///   - attemptId: attempt id
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func viewAttemptReview(
+        attemptId: Int,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleStatusResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "mod_quiz_view_attempt_review"), ("moodlewsrestformat", "json")],
+                form: [("attemptid", attemptId)],
+                auth: auth
+            )
+        )
+    }
+
+    /// Trigger the attempt summary viewed event.
+    ///
+    /// - Parameters:
+    ///   - attemptId: attempt id
+    ///   - preflightData: Preflight required data (like passwords)
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func viewAttemptSummary(
+        attemptId: Int,
+        preflightData: [MoodleNamedValue]? = nil,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleStatusResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "mod_quiz_view_attempt_summary"), ("moodlewsrestformat", "json")],
+                form: [("attemptid", attemptId)] + RestRequest.brackets("preflightdata", preflightData),
+                auth: auth
+            )
+        )
+    }
+
+    /// Trigger the course module viewed event and update the module completion status.
+    ///
+    /// - Parameters:
+    ///   - quizId: quiz instance id
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func viewQuiz(quizId: Int, auth: MoodleTokenAuth) async throws -> MoodleStatusResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "mod_quiz_view_quiz"), ("moodlewsrestformat", "json")],
+                form: [("quizid", quizId)],
                 auth: auth
             )
         )

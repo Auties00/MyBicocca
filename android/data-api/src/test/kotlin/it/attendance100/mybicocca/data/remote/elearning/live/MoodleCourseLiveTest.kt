@@ -10,6 +10,41 @@ import org.junit.jupiter.api.Test
 /** The live tests of the Moodle Course module, planned from `common/specs/moodle/tests.yaml`. */
 class MoodleCourseLiveTest : LiveTest<MoodleApi>(MoodleLive) {
     @Test
+    @DisplayName("Course.getCategories#1")
+    fun getCategories1() = case("Course.getCategories#1") {
+        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCourseGetCategoriesItem\"}}") {
+            api.course.getCategories(auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { list(result) { writeMoodleCourseGetCategoriesItem(it) } }
+    }
+
+    @Test
+    @DisplayName("Course.getCategories#2")
+    fun getCategories2() = case("Course.getCategories#2", index = 1) {
+        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCourseGetCategoriesItem\"}}") {
+            api.course.getCategories(addsubcategories = true, auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { list(result) { writeMoodleCourseGetCategoriesItem(it) } }
+    }
+
+    @Test
+    @DisplayName("Course.getCategories#3")
+    fun getCategories3() = case("Course.getCategories#3", index = 2) {
+        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCourseGetCategoriesItem\"}}") {
+            api.course.getCategories(addsubcategories = false, auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { list(result) { writeMoodleCourseGetCategoriesItem(it) } }
+    }
+
+    @Test
+    @DisplayName("Course.getCategories#invalid-credentials")
+    fun getCategoriesInvalidCredentials() = case("Course.getCategories#invalid-credentials") {
+        refused(acceptsEmpty = false) {
+            api.course.getCategories(auth = MoodleTokenAuth(token = "mybicocca-invalid-credential"))
+        }
+    }
+
+    @Test
     @DisplayName("Course.getContents#1")
     fun getContents1() = case("Course.getContents#1") {
         val courseId = choose("courseId", listOf(courseGetUsersCourses()).flatten().mapNotNull { it.id })
@@ -20,12 +55,33 @@ class MoodleCourseLiveTest : LiveTest<MoodleApi>(MoodleLive) {
     }
 
     @Test
-    @DisplayName("Course.getContents#invalid-credentials")
-    fun getContentsInvalidCredentials() = case("Course.getContents#invalid-credentials") {
-        val courseId = choose("courseId", listOf(courseGetUsersCourses()).flatten().mapNotNull { it.id })
-        refused(acceptsEmpty = false) {
-            api.course.getContents(courseId = courseId, auth = MoodleTokenAuth(token = "mybicocca-invalid-credential"))
-        }
+    @DisplayName("Course.getCourseModule#1")
+    fun getCourseModule1() = case("Course.getCourseModule#1") {
+        val cmId = choose("cmId", listOf(blockRecentlyaccesseditemsGetRecentItems()).flatten().mapNotNull { it.cmId })
+        val result = call("{\"k\":\"record\",\"n\":\"MoodleCourseGetCourseModuleResponse\"}") {
+            api.course.getCourseModule(cmId = cmId, auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { writeMoodleCourseGetCourseModuleResponse(result) }
+    }
+
+    @Test
+    @DisplayName("Course.getCourseModuleByInstance#1")
+    fun getCourseModuleByInstance1() = case("Course.getCourseModuleByInstance#1") {
+        val module = choose("module", listOf(blogGetEntries()).mapNotNull { it.entries }.flatten().mapNotNull { it.module })
+        val instance = choose("instance", listOf(calendarGetActionEventsByTimesort()).mapNotNull { it.events }.flatten().mapNotNull { it.instance })
+        val result = call("{\"k\":\"record\",\"n\":\"MoodleCourseGetCourseModuleResponse\"}") {
+            api.course.getCourseModuleByInstance(module = module, instance = instance, auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { writeMoodleCourseGetCourseModuleResponse(result) }
+    }
+
+    @Test
+    @DisplayName("Course.getCourses#1")
+    fun getCourses1() = case("Course.getCourses#1") {
+        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCourseGetCoursesItem\"}}") {
+            api.course.getCourses(auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { list(result) { writeMoodleCourseGetCoursesItem(it) } }
     }
 
     @Test
@@ -36,6 +92,54 @@ class MoodleCourseLiveTest : LiveTest<MoodleApi>(MoodleLive) {
             api.course.getCoursesByField(field = "id", value = value, auth = tokenCredentials())
         } ?: return@case
         fingerprint { writeMoodleCoursesByFieldResponse(result) }
+    }
+
+    @Test
+    @DisplayName("Course.getRecentCourses#1")
+    fun getRecentCourses1() = case("Course.getRecentCourses#1") {
+        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleEventCourse\"}}") {
+            api.course.getRecentCourses(auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { list(result) { writeMoodleEventCourse(it) } }
+    }
+
+    @Test
+    @DisplayName("Course.getRecentCourses#2")
+    fun getRecentCourses2() = case("Course.getRecentCourses#2", index = 1) {
+        val userId = choose("userId", listOf(siteGetSiteInfo()).mapNotNull { it.userId })
+        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleEventCourse\"}}") {
+            api.course.getRecentCourses(userId = userId, auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { list(result) { writeMoodleEventCourse(it) } }
+    }
+
+    @Test
+    @DisplayName("Course.viewCourse#1")
+    fun viewCourse1() = case("Course.viewCourse#1", effect = "benign") {
+        val courseId = choose("courseId", listOf(courseGetUsersCourses()).flatten().mapNotNull { it.id })
+        call("{\"k\":\"record\",\"n\":\"MoodleStatusResponse\"}") {
+            api.course.viewCourse(courseId = courseId, auth = tokenCredentials())
+        }
+    }
+
+    @Test
+    @DisplayName("Course.getCourseEnrolmentMethods#1")
+    fun getCourseEnrolmentMethods1() = case("Course.getCourseEnrolmentMethods#1") {
+        val courseId = choose("courseId", listOf(courseGetUsersCourses()).flatten().mapNotNull { it.id })
+        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleEnrolGetCourseEnrolmentMethodsItem\"}}") {
+            api.course.getCourseEnrolmentMethods(courseId = courseId, auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { list(result) { writeMoodleEnrolGetCourseEnrolmentMethodsItem(it) } }
+    }
+
+    @Test
+    @DisplayName("Course.getEnrolledUsers#1")
+    fun getEnrolledUsers1() = case("Course.getEnrolledUsers#1") {
+        val courseId = choose("courseId", listOf(courseGetUsersCourses()).flatten().mapNotNull { it.id })
+        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleEnrolGetEnrolledUsersItem\"}}") {
+            api.course.getEnrolledUsers(courseId = courseId, auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { list(result) { writeMoodleEnrolGetEnrolledUsersItem(it) } }
     }
 
     @Test
@@ -69,6 +173,57 @@ class MoodleCourseLiveTest : LiveTest<MoodleApi>(MoodleLive) {
     }
 
     @Test
+    @DisplayName("Course.getActivityAllowedGroups#1")
+    fun getActivityAllowedGroups1() = case("Course.getActivityAllowedGroups#1") {
+        val cmId = choose("cmId", listOf(blockRecentlyaccesseditemsGetRecentItems()).flatten().mapNotNull { it.cmId })
+        val result = call("{\"k\":\"record\",\"n\":\"MoodleGroupGetActivityAllowedGroupsResponse\"}") {
+            api.course.getActivityAllowedGroups(cmId = cmId, auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { writeMoodleGroupGetActivityAllowedGroupsResponse(result) }
+    }
+
+    @Test
+    @DisplayName("Course.getActivityAllowedGroups#2")
+    fun getActivityAllowedGroups2() = case("Course.getActivityAllowedGroups#2", index = 1) {
+        val cmId = choose("cmId", listOf(blockRecentlyaccesseditemsGetRecentItems()).flatten().mapNotNull { it.cmId })
+        val userId = choose("userId", listOf(siteGetSiteInfo()).mapNotNull { it.userId })
+        val result = call("{\"k\":\"record\",\"n\":\"MoodleGroupGetActivityAllowedGroupsResponse\"}") {
+            api.course.getActivityAllowedGroups(cmId = cmId, userId = userId, auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { writeMoodleGroupGetActivityAllowedGroupsResponse(result) }
+    }
+
+    @Test
+    @DisplayName("Course.getActivityGroupmode#1")
+    fun getActivityGroupmode1() = case("Course.getActivityGroupmode#1") {
+        val cmId = choose("cmId", listOf(blockRecentlyaccesseditemsGetRecentItems()).flatten().mapNotNull { it.cmId })
+        val result = call("{\"k\":\"record\",\"n\":\"MoodleGroupGetActivityGroupmodeResponse\"}") {
+            api.course.getActivityGroupmode(cmId = cmId, auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { writeMoodleGroupGetActivityGroupmodeResponse(result) }
+    }
+
+    @Test
+    @DisplayName("Course.getCourseGroupings#1")
+    fun getCourseGroupings1() = case("Course.getCourseGroupings#1") {
+        val courseId = choose("courseId", listOf(courseGetUsersCourses()).flatten().mapNotNull { it.id })
+        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleGroupGetCourseGroupingsItem\"}}") {
+            api.course.getCourseGroupings(courseId = courseId, auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { list(result) { writeMoodleGroupGetCourseGroupingsItem(it) } }
+    }
+
+    @Test
+    @DisplayName("Course.getCourseGroups#1")
+    fun getCourseGroups1() = case("Course.getCourseGroups#1") {
+        val courseId = choose("courseId", listOf(courseGetUsersCourses()).flatten().mapNotNull { it.id })
+        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleGroupGetCourseGroupsItem\"}}") {
+            api.course.getCourseGroups(courseId = courseId, auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { list(result) { writeMoodleGroupGetCourseGroupsItem(it) } }
+    }
+
+    @Test
     @DisplayName("Course.getCourseUserGroups#1")
     fun getCourseUserGroups1() = case("Course.getCourseUserGroups#1") {
         val result = call("{\"k\":\"record\",\"n\":\"MoodleCourseUserGroupsResponse\"}") {
@@ -92,7 +247,7 @@ class MoodleCourseLiveTest : LiveTest<MoodleApi>(MoodleLive) {
     @DisplayName("Course.getCourseUserGroups#3")
     fun getCourseUserGroups3() = case("Course.getCourseUserGroups#3", index = 2) {
         val courseId = choose("courseId", listOf(courseGetUsersCourses()).flatten().mapNotNull { it.id })
-        val groupingId = choose("groupingId", listOf(quizGetQuizzesByCourses()).mapNotNull { it.quizzes }.flatten().mapNotNull { it.groupingId })
+        val groupingId = choose("groupingId", listOf(bigbluebuttonbnGetBigbluebuttonbnsByCourses()).mapNotNull { it.bigbluebuttonbns }.flatten().mapNotNull { it.groupingId })
         val result = call("{\"k\":\"record\",\"n\":\"MoodleCourseUserGroupsResponse\"}") {
             api.course.getCourseUserGroups(courseId = courseId, groupingId = groupingId, auth = tokenCredentials())
         } ?: return@case
@@ -103,10 +258,41 @@ class MoodleCourseLiveTest : LiveTest<MoodleApi>(MoodleLive) {
     @DisplayName("Course.getCourseUserGroups#4")
     fun getCourseUserGroups4() = case("Course.getCourseUserGroups#4", index = 3) {
         val userId = choose("userId", listOf(siteGetSiteInfo()).mapNotNull { it.userId })
-        val groupingId = choose("groupingId", listOf(quizGetQuizzesByCourses()).mapNotNull { it.quizzes }.flatten().mapNotNull { it.groupingId })
+        val groupingId = choose("groupingId", listOf(bigbluebuttonbnGetBigbluebuttonbnsByCourses()).mapNotNull { it.bigbluebuttonbns }.flatten().mapNotNull { it.groupingId })
         val result = call("{\"k\":\"record\",\"n\":\"MoodleCourseUserGroupsResponse\"}") {
             api.course.getCourseUserGroups(userId = userId, groupingId = groupingId, auth = tokenCredentials())
         } ?: return@case
         fingerprint { writeMoodleCourseUserGroupsResponse(result) }
+    }
+
+    @Test
+    @DisplayName("Course.getGroupsForSelector#1")
+    fun getGroupsForSelector1() = case("Course.getGroupsForSelector#1") {
+        val courseId = choose("courseId", listOf(courseGetUsersCourses()).flatten().mapNotNull { it.id })
+        val result = call("{\"k\":\"record\",\"n\":\"MoodleGradesGetGroupsForSearchWidgetResponse\"}") {
+            api.course.getGroupsForSelector(courseId = courseId, auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { writeMoodleGradesGetGroupsForSearchWidgetResponse(result) }
+    }
+
+    @Test
+    @DisplayName("Course.getGroupsForSelector#2")
+    fun getGroupsForSelector2() = case("Course.getGroupsForSelector#2", index = 1) {
+        val courseId = choose("courseId", listOf(courseGetUsersCourses()).flatten().mapNotNull { it.id })
+        val cmId = choose("cmId", listOf(blockRecentlyaccesseditemsGetRecentItems()).flatten().mapNotNull { it.cmId })
+        val result = call("{\"k\":\"record\",\"n\":\"MoodleGradesGetGroupsForSearchWidgetResponse\"}") {
+            api.course.getGroupsForSelector(courseId = courseId, cmId = cmId, auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { writeMoodleGradesGetGroupsForSearchWidgetResponse(result) }
+    }
+
+    @Test
+    @DisplayName("Course.getInstanceInfo#1")
+    fun getInstanceInfo1() = case("Course.getInstanceInfo#1") {
+        val instanceId = choose("instanceId", listOf(blockGetDashboardBlocks()).mapNotNull { it.blocks }.flatten().mapNotNull { it.instanceId })
+        val result = call("{\"k\":\"record\",\"n\":\"MoodleEnrolSelfGetInstanceInfoResponse\"}") {
+            api.course.getInstanceInfo(instanceId = instanceId, auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { writeMoodleEnrolSelfGetInstanceInfoResponse(result) }
     }
 }

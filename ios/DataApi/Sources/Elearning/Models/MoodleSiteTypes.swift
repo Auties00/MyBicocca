@@ -197,96 +197,36 @@ public struct MoodleSiteInfo: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if siteName != "" {
-            try container.encode(siteName, forKey: .siteName)
-        }
-        if username != "" {
-            try container.encode(username, forKey: .username)
-        }
-        if firstName != "" {
-            try container.encode(firstName, forKey: .firstName)
-        }
-        if lastName != "" {
-            try container.encode(lastName, forKey: .lastName)
-        }
-        if fullName != "" {
-            try container.encode(fullName, forKey: .fullName)
-        }
-        if lang != "" {
-            try container.encode(lang, forKey: .lang)
-        }
-        if userId != 0 {
-            try container.encode(userId, forKey: .userId)
-        }
-        if siteUrl != "" {
-            try container.encode(siteUrl, forKey: .siteUrl)
-        }
-        if userPictureUrl != "" {
-            try container.encode(userPictureUrl, forKey: .userPictureUrl)
-        }
-        if !functions.isEmpty {
-            try container.encode(functions, forKey: .functions)
-        }
-        if downloadFiles != nil {
-            try container.encode(downloadFiles, forKey: .downloadFiles)
-        }
-        if uploadFiles != nil {
-            try container.encode(uploadFiles, forKey: .uploadFiles)
-        }
-        if release != nil {
-            try container.encode(release, forKey: .release)
-        }
-        if version != nil {
-            try container.encode(version, forKey: .version)
-        }
-        if mobileCssUrl != nil {
-            try container.encode(mobileCssUrl, forKey: .mobileCssUrl)
-        }
-        if !advancedFeatures.isEmpty {
-            try container.encode(advancedFeatures, forKey: .advancedFeatures)
-        }
-        if userCanManageOwnFiles != nil {
-            try container.encode(userCanManageOwnFiles, forKey: .userCanManageOwnFiles)
-        }
-        if userQuota != nil {
-            try container.encode(userQuota, forKey: .userQuota)
-        }
-        if userMaxUploadFileSize != nil {
-            try container.encode(userMaxUploadFileSize, forKey: .userMaxUploadFileSize)
-        }
-        if userHomePage != nil {
-            try container.encode(userHomePage, forKey: .userHomePage)
-        }
-        if userHomePageUrl != nil {
-            try container.encode(userHomePageUrl, forKey: .userHomePageUrl)
-        }
-        if userPrivateAccessKey != nil {
-            try container.encode(userPrivateAccessKey, forKey: .userPrivateAccessKey)
-        }
-        if siteId != nil {
-            try container.encode(siteId, forKey: .siteId)
-        }
-        if siteCalendarType != nil {
-            try container.encode(siteCalendarType, forKey: .siteCalendarType)
-        }
-        if userCalendarType != nil {
-            try container.encode(userCalendarType, forKey: .userCalendarType)
-        }
-        if userIsSiteAdmin != nil {
-            try container.encode(userIsSiteAdmin, forKey: .userIsSiteAdmin)
-        }
-        if theme != nil {
-            try container.encode(theme, forKey: .theme)
-        }
-        if limitConcurrentLogins != nil {
-            try container.encode(limitConcurrentLogins, forKey: .limitConcurrentLogins)
-        }
-        if userSessionsCount != nil {
-            try container.encode(userSessionsCount, forKey: .userSessionsCount)
-        }
-        if policyAgreed != nil {
-            try container.encode(policyAgreed, forKey: .policyAgreed)
-        }
+        try container.encode(siteName, forKey: .siteName)
+        try container.encode(username, forKey: .username)
+        try container.encode(firstName, forKey: .firstName)
+        try container.encode(lastName, forKey: .lastName)
+        try container.encode(fullName, forKey: .fullName)
+        try container.encode(lang, forKey: .lang)
+        try container.encode(userId, forKey: .userId)
+        try container.encode(siteUrl, forKey: .siteUrl)
+        try container.encode(userPictureUrl, forKey: .userPictureUrl)
+        try container.encode(functions, forKey: .functions)
+        try container.encode(downloadFiles, forKey: .downloadFiles)
+        try container.encode(uploadFiles, forKey: .uploadFiles)
+        try container.encode(release, forKey: .release)
+        try container.encode(version, forKey: .version)
+        try container.encode(mobileCssUrl, forKey: .mobileCssUrl)
+        try container.encode(advancedFeatures, forKey: .advancedFeatures)
+        try container.encode(userCanManageOwnFiles, forKey: .userCanManageOwnFiles)
+        try container.encode(userQuota, forKey: .userQuota)
+        try container.encode(userMaxUploadFileSize, forKey: .userMaxUploadFileSize)
+        try container.encode(userHomePage, forKey: .userHomePage)
+        try container.encode(userHomePageUrl, forKey: .userHomePageUrl)
+        try container.encode(userPrivateAccessKey, forKey: .userPrivateAccessKey)
+        try container.encode(siteId, forKey: .siteId)
+        try container.encode(siteCalendarType, forKey: .siteCalendarType)
+        try container.encode(userCalendarType, forKey: .userCalendarType)
+        try container.encode(userIsSiteAdmin, forKey: .userIsSiteAdmin)
+        try container.encode(theme, forKey: .theme)
+        try container.encode(limitConcurrentLogins, forKey: .limitConcurrentLogins)
+        try container.encode(userSessionsCount, forKey: .userSessionsCount)
+        try container.encode(policyAgreed, forKey: .policyAgreed)
     }
 }
 
@@ -318,12 +258,8 @@ public struct MoodleSiteFunction: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if name != "" {
-            try container.encode(name, forKey: .name)
-        }
-        if version != "" {
-            try container.encode(version, forKey: .version)
-        }
+        try container.encode(name, forKey: .name)
+        try container.encode(version, forKey: .version)
     }
 }
 
@@ -355,11 +291,7 @@ public struct MoodleAdvancedFeature: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if name != "" {
-            try container.encode(name, forKey: .name)
-        }
-        if value != 0 {
-            try container.encode(value, forKey: .value)
-        }
+        try container.encode(name, forKey: .name)
+        try container.encode(value, forKey: .value)
     }
 }

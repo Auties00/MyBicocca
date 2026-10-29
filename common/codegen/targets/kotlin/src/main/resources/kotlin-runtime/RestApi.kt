@@ -224,8 +224,9 @@ abstract class RestApi(
     private suspend fun failure(response: HttpResponse, roles: Set<Enum<*>>): Exception {
         val body = response.jsonOrNull()
         val code = policy.errors.code(body)
-        val message = policy.errors.message(body) ?: code ?: "Request failed with status ${response.status}"
-        return policy.failure(Failure(response.status.value, code, message, roles))
+        val serverMessage = policy.errors.message(body)
+        val message = serverMessage ?: code ?: "Request failed with status ${response.status}"
+        return policy.failure(Failure(response.status.value, code, message, roles, serverMessage))
     }
 
     private fun HttpResponse.failed(): Boolean = status.value >= 400

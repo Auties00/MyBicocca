@@ -4,7 +4,7 @@ import { DemoCalendarApi } from "./DemoCalendarApi.js";
 import { DemoClient } from "./DemoClient.js";
 import { DemoItemsApi } from "./DemoItemsApi.js";
 import { DemoPagesApi } from "./DemoPagesApi.js";
-import { DemoParameters } from "./DemoParameters.js";
+import { type DemoParameters } from "./DemoParameters.js";
 import { DemoSearchApi } from "./DemoSearchApi.js";
 import { DemoSharedApi } from "./DemoSharedApi.js";
 

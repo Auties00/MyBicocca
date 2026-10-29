@@ -102,7 +102,7 @@ class ElearningGradeRepositoryImpl @Inject constructor(
         if (!force && !isStale(accountId, ElearningSyncScope.ALL_COURSE_GRADES, 0)) return
         val account = sessionManager.activeAccount.value ?: error("No active account.")
         val (api, token) = sessionManager.elearning()
-        val response = api.moodle.grade.getCourseGrades(userId = account.learning.lmsUserId, auth = MoodleTokenAuth(token))
+        val response = api.moodle.gradeOverview.getCourseGrades(userId = account.learning.lmsUserId, auth = MoodleTokenAuth(token))
         val rows = response.grades.map { it.toEntity(accountId, courseName = null) }
         gradeDao.replaceAllCourseGrades(accountId.value, rows)
         stamp(accountId, ElearningSyncScope.ALL_COURSE_GRADES, 0)

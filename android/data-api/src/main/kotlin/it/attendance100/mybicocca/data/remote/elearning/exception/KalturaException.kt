@@ -10,5 +10,6 @@ import it.attendance100.mybicocca.data.remote.runtime.ApiException
 class KalturaException(
     statusCode: Int,
     errorCode: String?,
-    errorMessage: String
-) : ApiException("Kaltura", statusCode, errorCode, errorMessage)
+    errorMessage: String,
+    serverMessage: String? = null
+) : ApiException("Kaltura", statusCode, errorCode, errorMessage, serverMessage)

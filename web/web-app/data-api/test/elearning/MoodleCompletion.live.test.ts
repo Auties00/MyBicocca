@@ -3,7 +3,7 @@
 import { describe } from "vitest";
 import { MoodleTokenAuth } from "../../src/elearning/models/index.js";
 import { isPresent, liveCase } from "../runtime/live.js";
-import { MoodleLive, courseGetUsersCourses, siteGetSiteInfo, tokenCredentials, writeMoodleActivitiesCompletionResponse } from "./MoodleLive.js";
+import { MoodleLive, courseGetUsersCourses, siteGetSiteInfo, tokenCredentials, writeMoodleActivitiesCompletionResponse, writeMoodleCompletionGetCourseCompletionStatusResponse } from "./MoodleLive.js";
 
 // The live tests of the Moodle Completion module, planned from common/specs/moodle/tests.yaml.
 describe("Moodle Completion", () => {
@@ -19,5 +19,13 @@ describe("Moodle Completion", () => {
     const courseId = live.choose("courseId", [await courseGetUsersCourses(live)].flat().map((it) => it.id).filter(isPresent));
     const userId = live.choose("userId", [await siteGetSiteInfo(live)].map((it) => it.userId).filter(isPresent));
     await live.refused(false, async () => live.api.completion.getActivitiesCompletionStatus(courseId, userId, new MoodleTokenAuth("mybicocca-invalid-credential")));
+  });
+
+  liveCase(MoodleLive, "Completion.getCourseCompletionStatus#1", {}, async (live) => {
+    const courseId = live.choose("courseId", [await courseGetUsersCourses(live)].flat().map((it) => it.id).filter(isPresent));
+    const userId = live.choose("userId", [await siteGetSiteInfo(live)].map((it) => it.userId).filter(isPresent));
+    const auth = await tokenCredentials(live);
+    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleCompletionGetCourseCompletionStatusResponse\"}", {}, async () => live.api.completion.getCourseCompletionStatus(courseId, userId, auth));
+    live.fingerprint((f) => writeMoodleCompletionGetCourseCompletionStatusResponse(f, result));
   });
 });

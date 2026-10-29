@@ -12,7 +12,7 @@ class MoodleQuizLiveTest : LiveTest<MoodleApi>(MoodleLive) {
     @Test
     @DisplayName("Quiz.getAttemptReview#1")
     fun getAttemptReview1() = case("Quiz.getAttemptReview#1") {
-        val attemptId = choose("attemptId", listOf(quizGetUserAttempts()).mapNotNull { it.attempts }.flatten().mapNotNull { it.id })
+        val attemptId = choose("attemptId", listOf(h5pactivityGetResults()).mapNotNull { it.attempts }.flatten().mapNotNull { it.results }.flatten().mapNotNull { it.attemptId })
         call("{\"k\":\"record\",\"n\":\"MoodleAttemptReviewResponse\"}") {
             api.quiz.getAttemptReview(attemptId = attemptId, auth = tokenCredentials())
         }
@@ -21,10 +21,31 @@ class MoodleQuizLiveTest : LiveTest<MoodleApi>(MoodleLive) {
     @Test
     @DisplayName("Quiz.getAttemptReview#invalid-credentials")
     fun getAttemptReviewInvalidCredentials() = case("Quiz.getAttemptReview#invalid-credentials") {
-        val attemptId = choose("attemptId", listOf(quizGetUserAttempts()).mapNotNull { it.attempts }.flatten().mapNotNull { it.id })
+        val attemptId = choose("attemptId", listOf(h5pactivityGetResults()).mapNotNull { it.attempts }.flatten().mapNotNull { it.results }.flatten().mapNotNull { it.attemptId })
         refused(acceptsEmpty = false) {
             api.quiz.getAttemptReview(attemptId = attemptId, auth = MoodleTokenAuth(token = "mybicocca-invalid-credential"))
         }
+    }
+
+    @Test
+    @DisplayName("Quiz.getCombinedReviewOptions#1")
+    fun getCombinedReviewOptions1() = case("Quiz.getCombinedReviewOptions#1") {
+        val quizId = choose("quizId", listOf(quizGetQuizzesByCourses()).mapNotNull { it.quizzes }.flatten().mapNotNull { it.id })
+        val result = call("{\"k\":\"record\",\"n\":\"MoodleQuizGetCombinedReviewOptionsResponse\"}") {
+            api.quiz.getCombinedReviewOptions(quizId = quizId, auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { writeMoodleQuizGetCombinedReviewOptionsResponse(result) }
+    }
+
+    @Test
+    @DisplayName("Quiz.getCombinedReviewOptions#2")
+    fun getCombinedReviewOptions2() = case("Quiz.getCombinedReviewOptions#2", index = 1) {
+        val quizId = choose("quizId", listOf(quizGetQuizzesByCourses()).mapNotNull { it.quizzes }.flatten().mapNotNull { it.id })
+        val userId = choose("userId", listOf(siteGetSiteInfo()).mapNotNull { it.userId })
+        val result = call("{\"k\":\"record\",\"n\":\"MoodleQuizGetCombinedReviewOptionsResponse\"}") {
+            api.quiz.getCombinedReviewOptions(quizId = quizId, userId = userId, auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { writeMoodleQuizGetCombinedReviewOptionsResponse(result) }
     }
 
     @Test
@@ -35,6 +56,16 @@ class MoodleQuizLiveTest : LiveTest<MoodleApi>(MoodleLive) {
             api.quiz.getQuizAccessInformation(quizId = quizId, auth = tokenCredentials())
         } ?: return@case
         fingerprint { writeMoodleQuizAccessInformation(result) }
+    }
+
+    @Test
+    @DisplayName("Quiz.getQuizRequiredQtypes#1")
+    fun getQuizRequiredQtypes1() = case("Quiz.getQuizRequiredQtypes#1") {
+        val quizId = choose("quizId", listOf(quizGetQuizzesByCourses()).mapNotNull { it.quizzes }.flatten().mapNotNull { it.id })
+        val result = call("{\"k\":\"record\",\"n\":\"MoodleQuizGetQuizRequiredQtypesResponse\"}") {
+            api.quiz.getQuizRequiredQtypes(quizId = quizId, auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { writeMoodleQuizGetQuizRequiredQtypesResponse(result) }
     }
 
     @Test

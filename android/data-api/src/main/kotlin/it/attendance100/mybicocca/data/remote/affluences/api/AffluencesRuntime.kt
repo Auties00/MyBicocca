@@ -23,7 +23,7 @@ internal object AffluencesRuntime {
     val policy = RestPolicy(
         baseUrl = null,
         errors = ErrorFormat(code = listOf("/error/code", "/error"), message = listOf("/error/message", "/errorMessage", "/error_message")),
-        failure = { AffluencesException(it.statusCode, it.errorCode, it.errorMessage) }
+        failure = { AffluencesException(it.statusCode, it.errorCode, it.errorMessage, serverMessage = it.serverMessage) }
     )
 
     fun settings() = ClientSettings(emptyList())

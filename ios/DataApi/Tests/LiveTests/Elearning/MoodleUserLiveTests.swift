@@ -45,6 +45,21 @@ final class MoodleUserLiveTests: XCTestCase {
         }
     }
 
+    func test_preparePrivateFilesForEdition1() async throws {
+        try await liveCase(MoodleLive.api, "User.preparePrivateFilesForEdition#1", effect: "benign") { live in
+            let auth = try await MoodleLive.tokenCredentials(live)
+            _ = try await live.call("{\"k\":\"record\",\"n\":\"MoodleUserPreparePrivateFilesForEditionResponse\"}") { try await live.api.user.preparePrivateFilesForEdition(auth: auth) }
+        }
+    }
+
+    func test_viewUserList1() async throws {
+        try await liveCase(MoodleLive.api, "User.viewUserList#1", effect: "benign") { live in
+            let courseId = try live.choose("courseId", [try await MoodleLive.courseGetUsersCourses(live)].flatMap { $0 }.compactMap { $0.id })
+            let auth = try await MoodleLive.tokenCredentials(live)
+            _ = try await live.call("{\"k\":\"record\",\"n\":\"MoodleStatusResponse\"}") { try await live.api.user.viewUserList(courseId: courseId, auth: auth) }
+        }
+    }
+
     func test_viewUserProfile1() async throws {
         try await liveCase(MoodleLive.api, "User.viewUserProfile#1", effect: "benign") { live in
             let userId = try live.choose("userId", [try await MoodleLive.siteGetSiteInfo(live)].compactMap { $0.userId })

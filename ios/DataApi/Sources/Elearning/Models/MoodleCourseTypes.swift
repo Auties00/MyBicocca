@@ -3,39 +3,299 @@
 import DataApiRuntime
 import Foundation
 
-public struct MoodleOption: Codable, Hashable, Sendable {
-    /// The expected keys (value format) are: excludemodules (bool) Do not return modules, return only the sections structure excludecontents (bool) Do not return module contents (i.e: files inside a resource) includestealthmodules (bool) Return stealth modules for students in a special section (with id -1) sectionid (int) Return only this section sectionnumber (int) Return only this section with number (order) cmid (int) Return only this module information (among the whole sections structure) modname (string) Return only modules with this name "label, forum, etc..." modid (int) Return only the module with this id (to be used with modname
+public struct MoodleTocheck: Codable, Hashable, Sendable {
+    /// The context level for the file location. Only module supported right now.
+    public var contextlevel: String
+    /// Context instance id
+    public var id: Int
+    /// Check updates since this time stamp
+    public var since: Int
+
+    public init(
+        contextlevel: String = "",
+        id: Int = 0,
+        since: Int = 0
+    ) {
+        self.contextlevel = contextlevel
+        self.id = id
+        self.since = since
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case contextlevel = "contextlevel"
+        case id = "id"
+        case since = "since"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.contextlevel = container.decodeLenient(String.self, forKey: .contextlevel) ?? ""
+        self.id = container.decodeLenient(Int.self, forKey: .id) ?? 0
+        self.since = container.decodeLenient(Int.self, forKey: .since) ?? 0
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(contextlevel, forKey: .contextlevel)
+        try container.encode(id, forKey: .id)
+        try container.encode(since, forKey: .since)
+    }
+}
+
+public struct MoodleCourseCheckUpdatesResponse: Codable, Hashable, Sendable {
+    public var instances: [MoodleInstance]
+    /// list of warnings
+    public var warnings: [MoodleWarning]
+
+    public init(
+        instances: [MoodleInstance] = [],
+        warnings: [MoodleWarning] = []
+    ) {
+        self.instances = instances
+        self.warnings = warnings
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case instances = "instances"
+        case warnings = "warnings"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.instances = container.decodeLenient([MoodleInstance].self, forKey: .instances) ?? []
+        self.warnings = container.decodeLenient([MoodleWarning].self, forKey: .warnings) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(instances, forKey: .instances)
+        try container.encode(warnings, forKey: .warnings)
+    }
+}
+
+public struct MoodleInstance: Codable, Hashable, Sendable {
+    /// The context level
+    public var contextlevel: String
+    /// Instance id
+    public var id: Int
+    public var updates: [MoodleUpdate]
+
+    public init(
+        contextlevel: String = "",
+        id: Int = 0,
+        updates: [MoodleUpdate] = []
+    ) {
+        self.contextlevel = contextlevel
+        self.id = id
+        self.updates = updates
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case contextlevel = "contextlevel"
+        case id = "id"
+        case updates = "updates"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.contextlevel = container.decodeLenient(String.self, forKey: .contextlevel) ?? ""
+        self.id = container.decodeLenient(Int.self, forKey: .id) ?? 0
+        self.updates = container.decodeLenient([MoodleUpdate].self, forKey: .updates) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(contextlevel, forKey: .contextlevel)
+        try container.encode(id, forKey: .id)
+        try container.encode(updates, forKey: .updates)
+    }
+}
+
+public struct MoodleUpdate: Codable, Hashable, Sendable {
+    /// Name of the area updated.
     public var name: String
-    /// the value of the option, this param is personaly validated in the external function.
-    public var value: String
+    /// Last time was updated
+    public var timeupdated: Int64?
+    /// The ids of the items updated
+    public var itemids: [Int]
 
     public init(
         name: String = "",
-        value: String = ""
+        timeupdated: Int64? = nil,
+        itemids: [Int] = []
     ) {
         self.name = name
-        self.value = value
+        self.timeupdated = timeupdated
+        self.itemids = itemids
     }
 
     private enum CodingKeys: String, CodingKey {
         case name = "name"
-        case value = "value"
+        case timeupdated = "timeupdated"
+        case itemids = "itemids"
     }
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.name = container.decodeLenient(String.self, forKey: .name) ?? ""
+        self.timeupdated = container.decodeLenient(Int64.self, forKey: .timeupdated)
+        self.itemids = container.decodeLenient([Int].self, forKey: .itemids) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(name, forKey: .name)
+        try container.encode(timeupdated, forKey: .timeupdated)
+        try container.encode(itemids, forKey: .itemids)
+    }
+}
+
+public struct MoodleCourseGetCategoriesCriteria: Codable, Hashable, Sendable {
+    /// The category column to search, expected keys (value format) are:"id" (int) the category id,"ids" (string) category ids separated by commas,"name" (string) the category name,"parent" (int) the parent category id,"idnumber" (string) category idnumber - user must have 'moodle/category:manage' to search on idnumber,"visible" (int) whether the returned categories must be visible or hidden. If the key is not passed, then the function return all categories that the user can see. - user must have 'moodle/category:manage' or 'moodle/category:viewhiddencategories' to search on visible,"theme" (string) only return the categories having this theme - user must have 'moodle/category:manage' to search on theme
+    public var key: String
+    /// the value to match
+    public var value: String
+
+    public init(
+        key: String = "",
+        value: String = ""
+    ) {
+        self.key = key
+        self.value = value
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case key = "key"
+        case value = "value"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.key = container.decodeLenient(String.self, forKey: .key) ?? ""
         self.value = container.decodeLenient(String.self, forKey: .value) ?? ""
     }
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if name != "" {
-            try container.encode(name, forKey: .name)
-        }
-        if value != "" {
-            try container.encode(value, forKey: .value)
-        }
+        try container.encode(key, forKey: .key)
+        try container.encode(value, forKey: .value)
+    }
+}
+
+/// List of categories
+public struct MoodleCourseGetCategoriesItem: Codable, Hashable, Sendable {
+    /// category id
+    public var id: Int
+    /// category name
+    public var name: String
+    /// category id number
+    public var idNumber: String?
+    /// category description
+    public var description: String
+    /// description format (1 = HTML, 0 = MOODLE, 2 = PLAIN, or 4 = MARKDOWN)
+    public var descriptionFormat: Int
+    /// parent category id
+    public var parent: Int
+    /// category sorting order
+    public var sortOrder: Int
+    /// number of courses in this category
+    public var courseCount: Int
+    /// 1: available, 0:not available
+    public var visible: Int?
+    /// 1: available, 0:not available
+    public var visibleold: Int?
+    /// timestamp
+    public var timeModified: Int64?
+    /// category depth
+    public var depth: Int
+    /// category path
+    public var path: String
+    /// category theme
+    public var theme: String?
+
+    public init(
+        id: Int = 0,
+        name: String = "",
+        idNumber: String? = nil,
+        description: String = "",
+        descriptionFormat: Int = 0,
+        parent: Int = 0,
+        sortOrder: Int = 0,
+        courseCount: Int = 0,
+        visible: Int? = nil,
+        visibleold: Int? = nil,
+        timeModified: Int64? = nil,
+        depth: Int = 0,
+        path: String = "",
+        theme: String? = nil
+    ) {
+        self.id = id
+        self.name = name
+        self.idNumber = idNumber
+        self.description = description
+        self.descriptionFormat = descriptionFormat
+        self.parent = parent
+        self.sortOrder = sortOrder
+        self.courseCount = courseCount
+        self.visible = visible
+        self.visibleold = visibleold
+        self.timeModified = timeModified
+        self.depth = depth
+        self.path = path
+        self.theme = theme
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id = "id"
+        case name = "name"
+        case idNumber = "idnumber"
+        case description = "description"
+        case descriptionFormat = "descriptionformat"
+        case parent = "parent"
+        case sortOrder = "sortorder"
+        case courseCount = "coursecount"
+        case visible = "visible"
+        case visibleold = "visibleold"
+        case timeModified = "timemodified"
+        case depth = "depth"
+        case path = "path"
+        case theme = "theme"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = container.decodeLenient(Int.self, forKey: .id) ?? 0
+        self.name = container.decodeLenient(String.self, forKey: .name) ?? ""
+        self.idNumber = container.decodeLenient(String.self, forKey: .idNumber)
+        self.description = container.decodeLenient(String.self, forKey: .description) ?? ""
+        self.descriptionFormat = container.decodeLenient(Int.self, forKey: .descriptionFormat) ?? 0
+        self.parent = container.decodeLenient(Int.self, forKey: .parent) ?? 0
+        self.sortOrder = container.decodeLenient(Int.self, forKey: .sortOrder) ?? 0
+        self.courseCount = container.decodeLenient(Int.self, forKey: .courseCount) ?? 0
+        self.visible = container.decodeLenient(Int.self, forKey: .visible)
+        self.visibleold = container.decodeLenient(Int.self, forKey: .visibleold)
+        self.timeModified = container.decodeLenient(Int64.self, forKey: .timeModified)
+        self.depth = container.decodeLenient(Int.self, forKey: .depth) ?? 0
+        self.path = container.decodeLenient(String.self, forKey: .path) ?? ""
+        self.theme = container.decodeLenient(String.self, forKey: .theme)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(name, forKey: .name)
+        try container.encode(idNumber, forKey: .idNumber)
+        try container.encode(description, forKey: .description)
+        try container.encode(descriptionFormat, forKey: .descriptionFormat)
+        try container.encode(parent, forKey: .parent)
+        try container.encode(sortOrder, forKey: .sortOrder)
+        try container.encode(courseCount, forKey: .courseCount)
+        try container.encode(visible, forKey: .visible)
+        try container.encode(visibleold, forKey: .visibleold)
+        try container.encode(timeModified, forKey: .timeModified)
+        try container.encode(depth, forKey: .depth)
+        try container.encode(path, forKey: .path)
+        try container.encode(theme, forKey: .theme)
     }
 }
 
@@ -126,42 +386,18 @@ public struct MoodleCourseSection: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if id != 0 {
-            try container.encode(id, forKey: .id)
-        }
-        if name != "" {
-            try container.encode(name, forKey: .name)
-        }
-        if visible != nil {
-            try container.encode(visible, forKey: .visible)
-        }
-        if summary != "" {
-            try container.encode(summary, forKey: .summary)
-        }
-        if summaryFormat != 0 {
-            try container.encode(summaryFormat, forKey: .summaryFormat)
-        }
-        if section != nil {
-            try container.encode(section, forKey: .section)
-        }
-        if hiddenByNumSections != nil {
-            try container.encode(hiddenByNumSections, forKey: .hiddenByNumSections)
-        }
-        if userVisible != nil {
-            try container.encode(userVisible, forKey: .userVisible)
-        }
-        if availabilityInfo != nil {
-            try container.encode(availabilityInfo, forKey: .availabilityInfo)
-        }
-        if component != nil {
-            try container.encode(component, forKey: .component)
-        }
-        if itemId != nil {
-            try container.encode(itemId, forKey: .itemId)
-        }
-        if !modules.isEmpty {
-            try container.encode(modules, forKey: .modules)
-        }
+        try container.encode(id, forKey: .id)
+        try container.encode(name, forKey: .name)
+        try container.encode(visible, forKey: .visible)
+        try container.encode(summary, forKey: .summary)
+        try container.encode(summaryFormat, forKey: .summaryFormat)
+        try container.encode(section, forKey: .section)
+        try container.encode(hiddenByNumSections, forKey: .hiddenByNumSections)
+        try container.encode(userVisible, forKey: .userVisible)
+        try container.encode(availabilityInfo, forKey: .availabilityInfo)
+        try container.encode(component, forKey: .component)
+        try container.encode(itemId, forKey: .itemId)
+        try container.encode(modules, forKey: .modules)
     }
 }
 
@@ -353,93 +589,35 @@ public struct MoodleCourseModule: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if id != 0 {
-            try container.encode(id, forKey: .id)
-        }
-        if url != nil {
-            try container.encode(url, forKey: .url)
-        }
-        if name != "" {
-            try container.encode(name, forKey: .name)
-        }
-        if instance != nil {
-            try container.encode(instance, forKey: .instance)
-        }
-        if contextId != nil {
-            try container.encode(contextId, forKey: .contextId)
-        }
-        if description != nil {
-            try container.encode(description, forKey: .description)
-        }
-        if visible != nil {
-            try container.encode(visible, forKey: .visible)
-        }
-        if userVisible != nil {
-            try container.encode(userVisible, forKey: .userVisible)
-        }
-        if availabilityInfo != nil {
-            try container.encode(availabilityInfo, forKey: .availabilityInfo)
-        }
-        if visibleOnCoursePage != nil {
-            try container.encode(visibleOnCoursePage, forKey: .visibleOnCoursePage)
-        }
-        if modIcon != "" {
-            try container.encode(modIcon, forKey: .modIcon)
-        }
-        if modName != "" {
-            try container.encode(modName, forKey: .modName)
-        }
-        if purpose != "" {
-            try container.encode(purpose, forKey: .purpose)
-        }
-        if branded != nil {
-            try container.encode(branded, forKey: .branded)
-        }
-        if modPlural != "" {
-            try container.encode(modPlural, forKey: .modPlural)
-        }
-        if availability != nil {
-            try container.encode(availability, forKey: .availability)
-        }
-        if indent != 0 {
-            try container.encode(indent, forKey: .indent)
-        }
-        if onclick != nil {
-            try container.encode(onclick, forKey: .onclick)
-        }
-        if afterLink != nil {
-            try container.encode(afterLink, forKey: .afterLink)
-        }
-        if activityBadge != nil {
-            try container.encode(activityBadge, forKey: .activityBadge)
-        }
-        if customData != nil {
-            try container.encode(customData, forKey: .customData)
-        }
-        if noViewLink != nil {
-            try container.encode(noViewLink, forKey: .noViewLink)
-        }
-        if completion != nil {
-            try container.encode(completion, forKey: .completion)
-        }
-        if completionData != nil {
-            try container.encode(completionData, forKey: .completionData)
-        }
-        if downloadContent != nil {
-            try container.encode(downloadContent, forKey: .downloadContent)
-        }
-        if !dates.isEmpty {
-            try container.encode(dates, forKey: .dates)
-        }
-        if groupMode != nil {
-            try container.encode(groupMode, forKey: .groupMode)
-        }
-        if !contents.isEmpty {
-            try container.encode(contents, forKey: .contents)
-        }
-        if contentsInfo != nil {
-            try container.encode(contentsInfo, forKey: .contentsInfo)
-        }
+        try container.encode(id, forKey: .id)
+        try container.encode(url, forKey: .url)
+        try container.encode(name, forKey: .name)
+        try container.encode(instance, forKey: .instance)
+        try container.encode(contextId, forKey: .contextId)
+        try container.encode(description, forKey: .description)
+        try container.encode(visible, forKey: .visible)
+        try container.encode(userVisible, forKey: .userVisible)
+        try container.encode(availabilityInfo, forKey: .availabilityInfo)
+        try container.encode(visibleOnCoursePage, forKey: .visibleOnCoursePage)
+        try container.encode(modIcon, forKey: .modIcon)
+        try container.encode(modName, forKey: .modName)
+        try container.encode(purpose, forKey: .purpose)
+        try container.encode(branded, forKey: .branded)
+        try container.encode(modPlural, forKey: .modPlural)
+        try container.encode(availability, forKey: .availability)
+        try container.encode(indent, forKey: .indent)
+        try container.encode(onclick, forKey: .onclick)
+        try container.encode(afterLink, forKey: .afterLink)
+        try container.encode(activityBadge, forKey: .activityBadge)
+        try container.encode(customData, forKey: .customData)
+        try container.encode(noViewLink, forKey: .noViewLink)
+        try container.encode(completion, forKey: .completion)
+        try container.encode(completionData, forKey: .completionData)
+        try container.encode(downloadContent, forKey: .downloadContent)
+        try container.encode(dates, forKey: .dates)
+        try container.encode(groupMode, forKey: .groupMode)
+        try container.encode(contents, forKey: .contents)
+        try container.encode(contentsInfo, forKey: .contentsInfo)
     }
 }
 
@@ -489,21 +667,11 @@ public struct MoodleActivityBadge: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if badgeContent != nil {
-            try container.encode(badgeContent, forKey: .badgeContent)
-        }
-        if badgeStyle != nil {
-            try container.encode(badgeStyle, forKey: .badgeStyle)
-        }
-        if badgeUrl != nil {
-            try container.encode(badgeUrl, forKey: .badgeUrl)
-        }
-        if badgeElementId != nil {
-            try container.encode(badgeElementId, forKey: .badgeElementId)
-        }
-        if !badgeExtraAttributes.isEmpty {
-            try container.encode(badgeExtraAttributes, forKey: .badgeExtraAttributes)
-        }
+        try container.encode(badgeContent, forKey: .badgeContent)
+        try container.encode(badgeStyle, forKey: .badgeStyle)
+        try container.encode(badgeUrl, forKey: .badgeUrl)
+        try container.encode(badgeElementId, forKey: .badgeElementId)
+        try container.encode(badgeExtraAttributes, forKey: .badgeExtraAttributes)
     }
 }
 
@@ -535,12 +703,8 @@ public struct MoodleActivityBadgeAttribute: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if name != nil {
-            try container.encode(name, forKey: .name)
-        }
-        if value != nil {
-            try container.encode(value, forKey: .value)
-        }
+        try container.encode(name, forKey: .name)
+        try container.encode(value, forKey: .value)
     }
 }
 
@@ -619,36 +783,16 @@ public struct MoodleModuleCompletion: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if state != 0 {
-            try container.encode(state, forKey: .state)
-        }
-        if timeCompleted != 0 {
-            try container.encode(timeCompleted, forKey: .timeCompleted)
-        }
-        if overrideBy != 0 {
-            try container.encode(overrideBy, forKey: .overrideBy)
-        }
-        if valueUsed != false {
-            try container.encode(valueUsed, forKey: .valueUsed)
-        }
-        if hasCompletion != false {
-            try container.encode(hasCompletion, forKey: .hasCompletion)
-        }
-        if isAutomatic != false {
-            try container.encode(isAutomatic, forKey: .isAutomatic)
-        }
-        if isTrackedUser != false {
-            try container.encode(isTrackedUser, forKey: .isTrackedUser)
-        }
-        if userVisible != false {
-            try container.encode(userVisible, forKey: .userVisible)
-        }
-        if !details.isEmpty {
-            try container.encode(details, forKey: .details)
-        }
-        if isOverallComplete != nil {
-            try container.encode(isOverallComplete, forKey: .isOverallComplete)
-        }
+        try container.encode(state, forKey: .state)
+        try container.encode(timeCompleted, forKey: .timeCompleted)
+        try container.encode(overrideBy, forKey: .overrideBy)
+        try container.encode(valueUsed, forKey: .valueUsed)
+        try container.encode(hasCompletion, forKey: .hasCompletion)
+        try container.encode(isAutomatic, forKey: .isAutomatic)
+        try container.encode(isTrackedUser, forKey: .isTrackedUser)
+        try container.encode(userVisible, forKey: .userVisible)
+        try container.encode(details, forKey: .details)
+        try container.encode(isOverallComplete, forKey: .isOverallComplete)
     }
 }
 
@@ -678,9 +822,7 @@ public struct MoodleModuleCompletionRule: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if ruleName != "" {
-            try container.encode(ruleName, forKey: .ruleName)
-        }
+        try container.encode(ruleName, forKey: .ruleName)
         try container.encode(ruleValue, forKey: .ruleValue)
     }
 }
@@ -712,12 +854,8 @@ public struct MoodleModuleCompletionRuleValue: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if status != 0 {
-            try container.encode(status, forKey: .status)
-        }
-        if description != "" {
-            try container.encode(description, forKey: .description)
-        }
+        try container.encode(status, forKey: .status)
+        try container.encode(description, forKey: .description)
     }
 }
 
@@ -760,18 +898,10 @@ public struct MoodleModuleDate: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if label != "" {
-            try container.encode(label, forKey: .label)
-        }
-        if timestamp != 0 {
-            try container.encode(timestamp, forKey: .timestamp)
-        }
-        if relativeTo != nil {
-            try container.encode(relativeTo, forKey: .relativeTo)
-        }
-        if dataId != nil {
-            try container.encode(dataId, forKey: .dataId)
-        }
+        try container.encode(label, forKey: .label)
+        try container.encode(timestamp, forKey: .timestamp)
+        try container.encode(relativeTo, forKey: .relativeTo)
+        try container.encode(dataId, forKey: .dataId)
     }
 }
 
@@ -886,171 +1016,22 @@ public struct MoodleModuleContent: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if type != "" {
-            try container.encode(type, forKey: .type)
-        }
-        if fileName != "" {
-            try container.encode(fileName, forKey: .fileName)
-        }
-        if filePath != "" {
-            try container.encode(filePath, forKey: .filePath)
-        }
-        if fileSize != 0 {
-            try container.encode(fileSize, forKey: .fileSize)
-        }
-        if fileUrl != nil {
-            try container.encode(fileUrl, forKey: .fileUrl)
-        }
-        if content != nil {
-            try container.encode(content, forKey: .content)
-        }
-        if timeCreated != 0 {
-            try container.encode(timeCreated, forKey: .timeCreated)
-        }
-        if timeModified != 0 {
-            try container.encode(timeModified, forKey: .timeModified)
-        }
-        if sortOrder != 0 {
-            try container.encode(sortOrder, forKey: .sortOrder)
-        }
-        if mimeType != nil {
-            try container.encode(mimeType, forKey: .mimeType)
-        }
-        if isExternalFile != nil {
-            try container.encode(isExternalFile, forKey: .isExternalFile)
-        }
-        if repositoryType != nil {
-            try container.encode(repositoryType, forKey: .repositoryType)
-        }
-        if userId != 0 {
-            try container.encode(userId, forKey: .userId)
-        }
-        if author != "" {
-            try container.encode(author, forKey: .author)
-        }
-        if license != "" {
-            try container.encode(license, forKey: .license)
-        }
-        if !tags.isEmpty {
-            try container.encode(tags, forKey: .tags)
-        }
-    }
-}
-
-public struct MoodleContentTag: Codable, Hashable, Sendable {
-    /// Tag id.
-    public var id: Int
-    /// Tag name.
-    public var name: String
-    /// The raw, unnormalised name for the tag as entered by users.
-    public var rawName: String
-    /// Whether this tag is standard.
-    public var isStandard: Bool
-    /// Tag collection id.
-    public var tagCollId: Int
-    /// Tag instance id.
-    public var tagInstanceId: Int
-    /// Context the tag instance belongs to.
-    public var tagInstanceContextId: Int
-    /// Id of the record tagged.
-    public var itemId: Int
-    /// Tag ordering.
-    public var ordering: Int
-    /// Whether the tag is flagged as inappropriate.
-    public var flag: Int
-    /// The url to view the tag.
-    public var viewUrl: String?
-
-    public init(
-        id: Int = 0,
-        name: String = "",
-        rawName: String = "",
-        isStandard: Bool = false,
-        tagCollId: Int = 0,
-        tagInstanceId: Int = 0,
-        tagInstanceContextId: Int = 0,
-        itemId: Int = 0,
-        ordering: Int = 0,
-        flag: Int = 0,
-        viewUrl: String? = nil
-    ) {
-        self.id = id
-        self.name = name
-        self.rawName = rawName
-        self.isStandard = isStandard
-        self.tagCollId = tagCollId
-        self.tagInstanceId = tagInstanceId
-        self.tagInstanceContextId = tagInstanceContextId
-        self.itemId = itemId
-        self.ordering = ordering
-        self.flag = flag
-        self.viewUrl = viewUrl
-    }
-
-    private enum CodingKeys: String, CodingKey {
-        case id = "id"
-        case name = "name"
-        case rawName = "rawname"
-        case isStandard = "isstandard"
-        case tagCollId = "tagcollid"
-        case tagInstanceId = "taginstanceid"
-        case tagInstanceContextId = "taginstancecontextid"
-        case itemId = "itemid"
-        case ordering = "ordering"
-        case flag = "flag"
-        case viewUrl = "viewurl"
-    }
-
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.id = container.decodeLenient(Int.self, forKey: .id) ?? 0
-        self.name = container.decodeLenient(String.self, forKey: .name) ?? ""
-        self.rawName = container.decodeLenient(String.self, forKey: .rawName) ?? ""
-        self.isStandard = container.decodeLenient(Bool.self, forKey: .isStandard) ?? false
-        self.tagCollId = container.decodeLenient(Int.self, forKey: .tagCollId) ?? 0
-        self.tagInstanceId = container.decodeLenient(Int.self, forKey: .tagInstanceId) ?? 0
-        self.tagInstanceContextId = container.decodeLenient(Int.self, forKey: .tagInstanceContextId) ?? 0
-        self.itemId = container.decodeLenient(Int.self, forKey: .itemId) ?? 0
-        self.ordering = container.decodeLenient(Int.self, forKey: .ordering) ?? 0
-        self.flag = container.decodeLenient(Int.self, forKey: .flag) ?? 0
-        self.viewUrl = container.decodeLenient(String.self, forKey: .viewUrl)
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        if id != 0 {
-            try container.encode(id, forKey: .id)
-        }
-        if name != "" {
-            try container.encode(name, forKey: .name)
-        }
-        if rawName != "" {
-            try container.encode(rawName, forKey: .rawName)
-        }
-        if isStandard != false {
-            try container.encode(isStandard, forKey: .isStandard)
-        }
-        if tagCollId != 0 {
-            try container.encode(tagCollId, forKey: .tagCollId)
-        }
-        if tagInstanceId != 0 {
-            try container.encode(tagInstanceId, forKey: .tagInstanceId)
-        }
-        if tagInstanceContextId != 0 {
-            try container.encode(tagInstanceContextId, forKey: .tagInstanceContextId)
-        }
-        if itemId != 0 {
-            try container.encode(itemId, forKey: .itemId)
-        }
-        if ordering != 0 {
-            try container.encode(ordering, forKey: .ordering)
-        }
-        if flag != 0 {
-            try container.encode(flag, forKey: .flag)
-        }
-        if viewUrl != nil {
-            try container.encode(viewUrl, forKey: .viewUrl)
-        }
+        try container.encode(type, forKey: .type)
+        try container.encode(fileName, forKey: .fileName)
+        try container.encode(filePath, forKey: .filePath)
+        try container.encode(fileSize, forKey: .fileSize)
+        try container.encode(fileUrl, forKey: .fileUrl)
+        try container.encode(content, forKey: .content)
+        try container.encode(timeCreated, forKey: .timeCreated)
+        try container.encode(timeModified, forKey: .timeModified)
+        try container.encode(sortOrder, forKey: .sortOrder)
+        try container.encode(mimeType, forKey: .mimeType)
+        try container.encode(isExternalFile, forKey: .isExternalFile)
+        try container.encode(repositoryType, forKey: .repositoryType)
+        try container.encode(userId, forKey: .userId)
+        try container.encode(author, forKey: .author)
+        try container.encode(license, forKey: .license)
+        try container.encode(tags, forKey: .tags)
     }
 }
 
@@ -1100,21 +1081,702 @@ public struct MoodleModuleContentsInfo: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if filesCount != 0 {
-            try container.encode(filesCount, forKey: .filesCount)
-        }
-        if filesSize != 0 {
-            try container.encode(filesSize, forKey: .filesSize)
-        }
-        if lastModified != 0 {
-            try container.encode(lastModified, forKey: .lastModified)
-        }
-        if !mimeTypes.isEmpty {
-            try container.encode(mimeTypes, forKey: .mimeTypes)
-        }
-        if repositoryType != nil {
-            try container.encode(repositoryType, forKey: .repositoryType)
-        }
+        try container.encode(filesCount, forKey: .filesCount)
+        try container.encode(filesSize, forKey: .filesSize)
+        try container.encode(lastModified, forKey: .lastModified)
+        try container.encode(mimeTypes, forKey: .mimeTypes)
+        try container.encode(repositoryType, forKey: .repositoryType)
+    }
+}
+
+public struct MoodleCourseGetCourseModuleResponse: Codable, Hashable, Sendable {
+    public var cm: MoodleCm
+    /// list of warnings
+    public var warnings: [MoodleWarning]
+
+    public init(
+        cm: MoodleCm,
+        warnings: [MoodleWarning] = []
+    ) {
+        self.cm = cm
+        self.warnings = warnings
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case cm = "cm"
+        case warnings = "warnings"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.cm = try container.required(container.decodeFolded(MoodleCm.self, forKey: .cm), forKey: .cm)
+        self.warnings = container.decodeLenient([MoodleWarning].self, forKey: .warnings) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(cm, forKey: .cm)
+        try container.encode(warnings, forKey: .warnings)
+    }
+}
+
+public struct MoodleCm: Codable, Hashable, Sendable {
+    /// The course module id
+    public var id: Int
+    /// The course id
+    public var course: Int
+    /// The module type id
+    public var module: Int
+    /// The activity name
+    public var name: String
+    /// The module component name (forum, assign, etc..)
+    public var modName: String
+    /// The activity instance id
+    public var instance: Int
+    /// The module section id
+    public var section: Int
+    /// The module section number
+    public var sectionnum: Int
+    /// Group mode
+    public var groupMode: Int
+    /// Grouping id
+    public var groupingId: Int
+    /// If completion is enabled
+    public var completion: Int
+    /// Module id number
+    public var idNumber: String?
+    /// Time added
+    public var added: Int?
+    /// Score
+    public var score: Int?
+    /// Indentation
+    public var indent: Int?
+    /// If visible
+    public var visible: Int?
+    /// If visible on course page
+    public var visibleOnCoursePage: Int?
+    /// Visible old
+    public var visibleold: Int?
+    /// Completion grade item
+    public var completiongradeitemnumber: Int?
+    /// Completion pass grade setting
+    public var completionpassgrade: Int?
+    /// Completion view setting
+    public var completionview: Int?
+    /// Completion time expected
+    public var completionexpected: Int?
+    /// If the description is showed
+    public var showdescription: Int?
+    /// The download content value
+    public var downloadContent: Int?
+    /// Availability settings
+    public var availability: String?
+    /// Grade (max value or scale id)
+    public var grade: Double?
+    /// Scale items (if used)
+    public var scale: String?
+    /// Grade to pass (float)
+    public var gradepass: String?
+    /// Grade category
+    public var gradecat: Int?
+    /// Advanced grading settings
+    public var advancedgrading: [MoodleAdvancedgrading]
+    /// Outcomes information
+    public var outcomes: [MoodleOutcome]
+
+    public init(
+        id: Int = 0,
+        course: Int = 0,
+        module: Int = 0,
+        name: String = "",
+        modName: String = "",
+        instance: Int = 0,
+        section: Int = 0,
+        sectionnum: Int = 0,
+        groupMode: Int = 0,
+        groupingId: Int = 0,
+        completion: Int = 0,
+        idNumber: String? = nil,
+        added: Int? = nil,
+        score: Int? = nil,
+        indent: Int? = nil,
+        visible: Int? = nil,
+        visibleOnCoursePage: Int? = nil,
+        visibleold: Int? = nil,
+        completiongradeitemnumber: Int? = nil,
+        completionpassgrade: Int? = nil,
+        completionview: Int? = nil,
+        completionexpected: Int? = nil,
+        showdescription: Int? = nil,
+        downloadContent: Int? = nil,
+        availability: String? = nil,
+        grade: Double? = nil,
+        scale: String? = nil,
+        gradepass: String? = nil,
+        gradecat: Int? = nil,
+        advancedgrading: [MoodleAdvancedgrading] = [],
+        outcomes: [MoodleOutcome] = []
+    ) {
+        self.id = id
+        self.course = course
+        self.module = module
+        self.name = name
+        self.modName = modName
+        self.instance = instance
+        self.section = section
+        self.sectionnum = sectionnum
+        self.groupMode = groupMode
+        self.groupingId = groupingId
+        self.completion = completion
+        self.idNumber = idNumber
+        self.added = added
+        self.score = score
+        self.indent = indent
+        self.visible = visible
+        self.visibleOnCoursePage = visibleOnCoursePage
+        self.visibleold = visibleold
+        self.completiongradeitemnumber = completiongradeitemnumber
+        self.completionpassgrade = completionpassgrade
+        self.completionview = completionview
+        self.completionexpected = completionexpected
+        self.showdescription = showdescription
+        self.downloadContent = downloadContent
+        self.availability = availability
+        self.grade = grade
+        self.scale = scale
+        self.gradepass = gradepass
+        self.gradecat = gradecat
+        self.advancedgrading = advancedgrading
+        self.outcomes = outcomes
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id = "id"
+        case course = "course"
+        case module = "module"
+        case name = "name"
+        case modName = "modname"
+        case instance = "instance"
+        case section = "section"
+        case sectionnum = "sectionnum"
+        case groupMode = "groupmode"
+        case groupingId = "groupingid"
+        case completion = "completion"
+        case idNumber = "idnumber"
+        case added = "added"
+        case score = "score"
+        case indent = "indent"
+        case visible = "visible"
+        case visibleOnCoursePage = "visibleoncoursepage"
+        case visibleold = "visibleold"
+        case completiongradeitemnumber = "completiongradeitemnumber"
+        case completionpassgrade = "completionpassgrade"
+        case completionview = "completionview"
+        case completionexpected = "completionexpected"
+        case showdescription = "showdescription"
+        case downloadContent = "downloadcontent"
+        case availability = "availability"
+        case grade = "grade"
+        case scale = "scale"
+        case gradepass = "gradepass"
+        case gradecat = "gradecat"
+        case advancedgrading = "advancedgrading"
+        case outcomes = "outcomes"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = container.decodeLenient(Int.self, forKey: .id) ?? 0
+        self.course = container.decodeLenient(Int.self, forKey: .course) ?? 0
+        self.module = container.decodeLenient(Int.self, forKey: .module) ?? 0
+        self.name = container.decodeLenient(String.self, forKey: .name) ?? ""
+        self.modName = container.decodeLenient(String.self, forKey: .modName) ?? ""
+        self.instance = container.decodeLenient(Int.self, forKey: .instance) ?? 0
+        self.section = container.decodeLenient(Int.self, forKey: .section) ?? 0
+        self.sectionnum = container.decodeLenient(Int.self, forKey: .sectionnum) ?? 0
+        self.groupMode = container.decodeLenient(Int.self, forKey: .groupMode) ?? 0
+        self.groupingId = container.decodeLenient(Int.self, forKey: .groupingId) ?? 0
+        self.completion = container.decodeLenient(Int.self, forKey: .completion) ?? 0
+        self.idNumber = container.decodeLenient(String.self, forKey: .idNumber)
+        self.added = container.decodeLenient(Int.self, forKey: .added)
+        self.score = container.decodeLenient(Int.self, forKey: .score)
+        self.indent = container.decodeLenient(Int.self, forKey: .indent)
+        self.visible = container.decodeLenient(Int.self, forKey: .visible)
+        self.visibleOnCoursePage = container.decodeLenient(Int.self, forKey: .visibleOnCoursePage)
+        self.visibleold = container.decodeLenient(Int.self, forKey: .visibleold)
+        self.completiongradeitemnumber = container.decodeLenient(Int.self, forKey: .completiongradeitemnumber)
+        self.completionpassgrade = container.decodeLenient(Int.self, forKey: .completionpassgrade)
+        self.completionview = container.decodeLenient(Int.self, forKey: .completionview)
+        self.completionexpected = container.decodeLenient(Int.self, forKey: .completionexpected)
+        self.showdescription = container.decodeLenient(Int.self, forKey: .showdescription)
+        self.downloadContent = container.decodeLenient(Int.self, forKey: .downloadContent)
+        self.availability = container.decodeLenient(String.self, forKey: .availability)
+        self.grade = container.decodeLenient(Double.self, forKey: .grade)
+        self.scale = container.decodeLenient(String.self, forKey: .scale)
+        self.gradepass = container.decodeLenient(String.self, forKey: .gradepass)
+        self.gradecat = container.decodeLenient(Int.self, forKey: .gradecat)
+        self.advancedgrading = container.decodeLenient([MoodleAdvancedgrading].self, forKey: .advancedgrading) ?? []
+        self.outcomes = container.decodeLenient([MoodleOutcome].self, forKey: .outcomes) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(course, forKey: .course)
+        try container.encode(module, forKey: .module)
+        try container.encode(name, forKey: .name)
+        try container.encode(modName, forKey: .modName)
+        try container.encode(instance, forKey: .instance)
+        try container.encode(section, forKey: .section)
+        try container.encode(sectionnum, forKey: .sectionnum)
+        try container.encode(groupMode, forKey: .groupMode)
+        try container.encode(groupingId, forKey: .groupingId)
+        try container.encode(completion, forKey: .completion)
+        try container.encode(idNumber, forKey: .idNumber)
+        try container.encode(added, forKey: .added)
+        try container.encode(score, forKey: .score)
+        try container.encode(indent, forKey: .indent)
+        try container.encode(visible, forKey: .visible)
+        try container.encode(visibleOnCoursePage, forKey: .visibleOnCoursePage)
+        try container.encode(visibleold, forKey: .visibleold)
+        try container.encode(completiongradeitemnumber, forKey: .completiongradeitemnumber)
+        try container.encode(completionpassgrade, forKey: .completionpassgrade)
+        try container.encode(completionview, forKey: .completionview)
+        try container.encode(completionexpected, forKey: .completionexpected)
+        try container.encode(showdescription, forKey: .showdescription)
+        try container.encode(downloadContent, forKey: .downloadContent)
+        try container.encode(availability, forKey: .availability)
+        try container.encode(grade, forKey: .grade)
+        try container.encode(scale, forKey: .scale)
+        try container.encode(gradepass, forKey: .gradepass)
+        try container.encode(gradecat, forKey: .gradecat)
+        try container.encode(advancedgrading, forKey: .advancedgrading)
+        try container.encode(outcomes, forKey: .outcomes)
+    }
+}
+
+public struct MoodleAdvancedgrading: Codable, Hashable, Sendable {
+    /// Gradable area name
+    public var area: String
+    /// Grading method
+    public var method: String
+
+    public init(
+        area: String = "",
+        method: String = ""
+    ) {
+        self.area = area
+        self.method = method
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case area = "area"
+        case method = "method"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.area = container.decodeLenient(String.self, forKey: .area) ?? ""
+        self.method = container.decodeLenient(String.self, forKey: .method) ?? ""
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(area, forKey: .area)
+        try container.encode(method, forKey: .method)
+    }
+}
+
+public struct MoodleOutcome: Codable, Hashable, Sendable {
+    /// Outcome id
+    public var id: String
+    /// Outcome full name
+    public var name: String
+    /// Scale items
+    public var scale: String
+
+    public init(
+        id: String = "",
+        name: String = "",
+        scale: String = ""
+    ) {
+        self.id = id
+        self.name = name
+        self.scale = scale
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id = "id"
+        case name = "name"
+        case scale = "scale"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = container.decodeLenient(String.self, forKey: .id) ?? ""
+        self.name = container.decodeLenient(String.self, forKey: .name) ?? ""
+        self.scale = container.decodeLenient(String.self, forKey: .scale) ?? ""
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(name, forKey: .name)
+        try container.encode(scale, forKey: .scale)
+    }
+}
+
+/// options - operator OR is used
+public struct MoodleCourseGetCoursesOption: Codable, Hashable, Sendable {
+    /// List of course id. If empty return all courses except front page course.
+    public var ids: [Int]
+
+    public init(
+        ids: [Int] = []
+    ) {
+        self.ids = ids
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case ids = "ids"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.ids = container.decodeLenient([Int].self, forKey: .ids) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(ids, forKey: .ids)
+    }
+}
+
+/// course
+public struct MoodleCourseGetCoursesItem: Codable, Hashable, Sendable {
+    /// course id
+    public var id: Int
+    /// course short name
+    public var shortName: String
+    /// category id
+    public var categoryId: Int
+    /// sort order into the category
+    public var categorysortorder: Int?
+    /// full name
+    public var fullName: String
+    /// course display name
+    public var displayName: String
+    /// id number
+    public var idNumber: String?
+    /// summary
+    public var summary: String
+    /// summary format (1 = HTML, 0 = MOODLE, 2 = PLAIN, or 4 = MARKDOWN)
+    public var summaryFormat: Int
+    /// course format: weeks, topics, social, site,..
+    public var format: String
+    /// 1 if grades are shown, otherwise 0
+    public var showGrades: Int?
+    /// number of recent items appearing on the course page
+    public var newsItems: Int?
+    /// timestamp when the course start
+    public var startDate: Int64
+    /// timestamp when the course end
+    public var endDate: Int64
+    /// (deprecated, use courseformatoptions) number of weeks/topics
+    public var numsections: Int?
+    /// largest size of file that can be uploaded into the course
+    public var maxBytes: Int64?
+    /// are activity report shown (yes = 1, no =0)
+    public var showReports: Int?
+    /// 1: available to student, 0:not available
+    public var visible: Int?
+    /// (deprecated, use courseformatoptions) How the hidden sections in the course are displayed to students
+    public var hiddensections: Int?
+    /// no group, separate, visible
+    public var groupMode: Int?
+    /// 1: yes, 0: no
+    public var groupModeForce: Int?
+    /// default grouping id
+    public var defaultGroupingId: Int?
+    /// timestamp when the course have been created
+    public var timeCreated: Int64?
+    /// timestamp when the course have been modified
+    public var timeModified: Int64?
+    /// Enabled, control via completion and activity settings. Disbaled, not shown in activity settings.
+    public var enableCompletion: Int?
+    /// 1: yes 0: no
+    public var completionNotify: Int?
+    /// forced course language
+    public var lang: String?
+    /// name of the force theme
+    public var forcetheme: String?
+    /// additional options for particular course format
+    public var courseFormatOptions: [MoodleNamedValue]
+    /// Whether the activity dates are shown or not
+    public var showActivityDates: Bool
+    /// Whether the activity completion conditions are shown or not
+    public var showCompletionConditions: Bool
+    /// Custom fields and associated values
+    public var customFields: [MoodleCourseGetCoursesItemCustomField]
+
+    public init(
+        id: Int = 0,
+        shortName: String = "",
+        categoryId: Int = 0,
+        categorysortorder: Int? = nil,
+        fullName: String = "",
+        displayName: String = "",
+        idNumber: String? = nil,
+        summary: String = "",
+        summaryFormat: Int = 0,
+        format: String = "",
+        showGrades: Int? = nil,
+        newsItems: Int? = nil,
+        startDate: Int64 = 0,
+        endDate: Int64 = 0,
+        numsections: Int? = nil,
+        maxBytes: Int64? = nil,
+        showReports: Int? = nil,
+        visible: Int? = nil,
+        hiddensections: Int? = nil,
+        groupMode: Int? = nil,
+        groupModeForce: Int? = nil,
+        defaultGroupingId: Int? = nil,
+        timeCreated: Int64? = nil,
+        timeModified: Int64? = nil,
+        enableCompletion: Int? = nil,
+        completionNotify: Int? = nil,
+        lang: String? = nil,
+        forcetheme: String? = nil,
+        courseFormatOptions: [MoodleNamedValue] = [],
+        showActivityDates: Bool = false,
+        showCompletionConditions: Bool = false,
+        customFields: [MoodleCourseGetCoursesItemCustomField] = []
+    ) {
+        self.id = id
+        self.shortName = shortName
+        self.categoryId = categoryId
+        self.categorysortorder = categorysortorder
+        self.fullName = fullName
+        self.displayName = displayName
+        self.idNumber = idNumber
+        self.summary = summary
+        self.summaryFormat = summaryFormat
+        self.format = format
+        self.showGrades = showGrades
+        self.newsItems = newsItems
+        self.startDate = startDate
+        self.endDate = endDate
+        self.numsections = numsections
+        self.maxBytes = maxBytes
+        self.showReports = showReports
+        self.visible = visible
+        self.hiddensections = hiddensections
+        self.groupMode = groupMode
+        self.groupModeForce = groupModeForce
+        self.defaultGroupingId = defaultGroupingId
+        self.timeCreated = timeCreated
+        self.timeModified = timeModified
+        self.enableCompletion = enableCompletion
+        self.completionNotify = completionNotify
+        self.lang = lang
+        self.forcetheme = forcetheme
+        self.courseFormatOptions = courseFormatOptions
+        self.showActivityDates = showActivityDates
+        self.showCompletionConditions = showCompletionConditions
+        self.customFields = customFields
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id = "id"
+        case shortName = "shortname"
+        case categoryId = "categoryid"
+        case categorysortorder = "categorysortorder"
+        case fullName = "fullname"
+        case displayName = "displayname"
+        case idNumber = "idnumber"
+        case summary = "summary"
+        case summaryFormat = "summaryformat"
+        case format = "format"
+        case showGrades = "showgrades"
+        case newsItems = "newsitems"
+        case startDate = "startdate"
+        case endDate = "enddate"
+        case numsections = "numsections"
+        case maxBytes = "maxbytes"
+        case showReports = "showreports"
+        case visible = "visible"
+        case hiddensections = "hiddensections"
+        case groupMode = "groupmode"
+        case groupModeForce = "groupmodeforce"
+        case defaultGroupingId = "defaultgroupingid"
+        case timeCreated = "timecreated"
+        case timeModified = "timemodified"
+        case enableCompletion = "enablecompletion"
+        case completionNotify = "completionnotify"
+        case lang = "lang"
+        case forcetheme = "forcetheme"
+        case courseFormatOptions = "courseformatoptions"
+        case showActivityDates = "showactivitydates"
+        case showCompletionConditions = "showcompletionconditions"
+        case customFields = "customfields"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = container.decodeLenient(Int.self, forKey: .id) ?? 0
+        self.shortName = container.decodeLenient(String.self, forKey: .shortName) ?? ""
+        self.categoryId = container.decodeLenient(Int.self, forKey: .categoryId) ?? 0
+        self.categorysortorder = container.decodeLenient(Int.self, forKey: .categorysortorder)
+        self.fullName = container.decodeLenient(String.self, forKey: .fullName) ?? ""
+        self.displayName = container.decodeLenient(String.self, forKey: .displayName) ?? ""
+        self.idNumber = container.decodeLenient(String.self, forKey: .idNumber)
+        self.summary = container.decodeLenient(String.self, forKey: .summary) ?? ""
+        self.summaryFormat = container.decodeLenient(Int.self, forKey: .summaryFormat) ?? 0
+        self.format = container.decodeLenient(String.self, forKey: .format) ?? ""
+        self.showGrades = container.decodeLenient(Int.self, forKey: .showGrades)
+        self.newsItems = container.decodeLenient(Int.self, forKey: .newsItems)
+        self.startDate = container.decodeLenient(Int64.self, forKey: .startDate) ?? 0
+        self.endDate = container.decodeLenient(Int64.self, forKey: .endDate) ?? 0
+        self.numsections = container.decodeLenient(Int.self, forKey: .numsections)
+        self.maxBytes = container.decodeLenient(Int64.self, forKey: .maxBytes)
+        self.showReports = container.decodeLenient(Int.self, forKey: .showReports)
+        self.visible = container.decodeLenient(Int.self, forKey: .visible)
+        self.hiddensections = container.decodeLenient(Int.self, forKey: .hiddensections)
+        self.groupMode = container.decodeLenient(Int.self, forKey: .groupMode)
+        self.groupModeForce = container.decodeLenient(Int.self, forKey: .groupModeForce)
+        self.defaultGroupingId = container.decodeLenient(Int.self, forKey: .defaultGroupingId)
+        self.timeCreated = container.decodeLenient(Int64.self, forKey: .timeCreated)
+        self.timeModified = container.decodeLenient(Int64.self, forKey: .timeModified)
+        self.enableCompletion = container.decodeLenient(Int.self, forKey: .enableCompletion)
+        self.completionNotify = container.decodeLenient(Int.self, forKey: .completionNotify)
+        self.lang = container.decodeLenient(String.self, forKey: .lang)
+        self.forcetheme = container.decodeLenient(String.self, forKey: .forcetheme)
+        self.courseFormatOptions = container.decodeLenient([MoodleNamedValue].self, forKey: .courseFormatOptions) ?? []
+        self.showActivityDates = container.decodeLenient(Bool.self, forKey: .showActivityDates) ?? false
+        self.showCompletionConditions = container.decodeLenient(Bool.self, forKey: .showCompletionConditions) ?? false
+        self.customFields = container.decodeLenient([MoodleCourseGetCoursesItemCustomField].self, forKey: .customFields) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(shortName, forKey: .shortName)
+        try container.encode(categoryId, forKey: .categoryId)
+        try container.encode(categorysortorder, forKey: .categorysortorder)
+        try container.encode(fullName, forKey: .fullName)
+        try container.encode(displayName, forKey: .displayName)
+        try container.encode(idNumber, forKey: .idNumber)
+        try container.encode(summary, forKey: .summary)
+        try container.encode(summaryFormat, forKey: .summaryFormat)
+        try container.encode(format, forKey: .format)
+        try container.encode(showGrades, forKey: .showGrades)
+        try container.encode(newsItems, forKey: .newsItems)
+        try container.encode(startDate, forKey: .startDate)
+        try container.encode(endDate, forKey: .endDate)
+        try container.encode(numsections, forKey: .numsections)
+        try container.encode(maxBytes, forKey: .maxBytes)
+        try container.encode(showReports, forKey: .showReports)
+        try container.encode(visible, forKey: .visible)
+        try container.encode(hiddensections, forKey: .hiddensections)
+        try container.encode(groupMode, forKey: .groupMode)
+        try container.encode(groupModeForce, forKey: .groupModeForce)
+        try container.encode(defaultGroupingId, forKey: .defaultGroupingId)
+        try container.encode(timeCreated, forKey: .timeCreated)
+        try container.encode(timeModified, forKey: .timeModified)
+        try container.encode(enableCompletion, forKey: .enableCompletion)
+        try container.encode(completionNotify, forKey: .completionNotify)
+        try container.encode(lang, forKey: .lang)
+        try container.encode(forcetheme, forKey: .forcetheme)
+        try container.encode(courseFormatOptions, forKey: .courseFormatOptions)
+        try container.encode(showActivityDates, forKey: .showActivityDates)
+        try container.encode(showCompletionConditions, forKey: .showCompletionConditions)
+        try container.encode(customFields, forKey: .customFields)
+    }
+}
+
+public struct MoodleNamedValue: Codable, Hashable, Sendable {
+    /// course format option name
+    public var name: String
+    /// course format option value
+    public var value: String
+
+    public init(
+        name: String = "",
+        value: String = ""
+    ) {
+        self.name = name
+        self.value = value
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case name = "name"
+        case value = "value"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.name = container.decodeLenient(String.self, forKey: .name) ?? ""
+        self.value = container.decodeLenient(String.self, forKey: .value) ?? ""
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(name, forKey: .name)
+        try container.encode(value, forKey: .value)
+    }
+}
+
+public struct MoodleCourseGetCoursesItemCustomField: Codable, Hashable, Sendable {
+    /// The name of the custom field
+    public var name: String
+    /// The shortname of the custom field
+    public var shortName: String
+    /// The type of the custom field - text, checkbox...
+    public var type: String
+    /// The raw value of the custom field
+    public var valueRaw: String
+    /// The value of the custom field
+    public var value: String
+
+    public init(
+        name: String = "",
+        shortName: String = "",
+        type: String = "",
+        valueRaw: String = "",
+        value: String = ""
+    ) {
+        self.name = name
+        self.shortName = shortName
+        self.type = type
+        self.valueRaw = valueRaw
+        self.value = value
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case name = "name"
+        case shortName = "shortname"
+        case type = "type"
+        case valueRaw = "valueraw"
+        case value = "value"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.name = container.decodeLenient(String.self, forKey: .name) ?? ""
+        self.shortName = container.decodeLenient(String.self, forKey: .shortName) ?? ""
+        self.type = container.decodeLenient(String.self, forKey: .type) ?? ""
+        self.valueRaw = container.decodeLenient(String.self, forKey: .valueRaw) ?? ""
+        self.value = container.decodeLenient(String.self, forKey: .value) ?? ""
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(name, forKey: .name)
+        try container.encode(shortName, forKey: .shortName)
+        try container.encode(type, forKey: .type)
+        try container.encode(valueRaw, forKey: .valueRaw)
+        try container.encode(value, forKey: .value)
     }
 }
 
@@ -1145,12 +1807,8 @@ public struct MoodleCoursesByFieldResponse: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if !courses.isEmpty {
-            try container.encode(courses, forKey: .courses)
-        }
-        if !warnings.isEmpty {
-            try container.encode(warnings, forKey: .warnings)
-        }
+        try container.encode(courses, forKey: .courses)
+        try container.encode(warnings, forKey: .warnings)
     }
 }
 
@@ -1433,238 +2091,50 @@ public struct MoodleCourse: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if id != 0 {
-            try container.encode(id, forKey: .id)
-        }
-        if fullName != "" {
-            try container.encode(fullName, forKey: .fullName)
-        }
-        if displayName != "" {
-            try container.encode(displayName, forKey: .displayName)
-        }
-        if shortName != "" {
-            try container.encode(shortName, forKey: .shortName)
-        }
-        if courseImage != nil {
-            try container.encode(courseImage, forKey: .courseImage)
-        }
-        if categoryId != 0 {
-            try container.encode(categoryId, forKey: .categoryId)
-        }
-        if categoryName != "" {
-            try container.encode(categoryName, forKey: .categoryName)
-        }
-        if sortOrder != nil {
-            try container.encode(sortOrder, forKey: .sortOrder)
-        }
-        if summary != "" {
-            try container.encode(summary, forKey: .summary)
-        }
-        if summaryFormat != 0 {
-            try container.encode(summaryFormat, forKey: .summaryFormat)
-        }
-        if !summaryFiles.isEmpty {
-            try container.encode(summaryFiles, forKey: .summaryFiles)
-        }
-        if !overviewFiles.isEmpty {
-            try container.encode(overviewFiles, forKey: .overviewFiles)
-        }
-        if showActivityDates != false {
-            try container.encode(showActivityDates, forKey: .showActivityDates)
-        }
-        if showCompletionConditions != false {
-            try container.encode(showCompletionConditions, forKey: .showCompletionConditions)
-        }
-        if !contacts.isEmpty {
-            try container.encode(contacts, forKey: .contacts)
-        }
-        if !enrollmentMethods.isEmpty {
-            try container.encode(enrollmentMethods, forKey: .enrollmentMethods)
-        }
-        if !customFields.isEmpty {
-            try container.encode(customFields, forKey: .customFields)
-        }
-        if idNumber != nil {
-            try container.encode(idNumber, forKey: .idNumber)
-        }
-        if format != nil {
-            try container.encode(format, forKey: .format)
-        }
-        if showGrades != nil {
-            try container.encode(showGrades, forKey: .showGrades)
-        }
-        if newsItems != nil {
-            try container.encode(newsItems, forKey: .newsItems)
-        }
-        if startDate != nil {
-            try container.encode(startDate, forKey: .startDate)
-        }
-        if endDate != nil {
-            try container.encode(endDate, forKey: .endDate)
-        }
-        if maxBytes != nil {
-            try container.encode(maxBytes, forKey: .maxBytes)
-        }
-        if showReports != nil {
-            try container.encode(showReports, forKey: .showReports)
-        }
-        if visible != nil {
-            try container.encode(visible, forKey: .visible)
-        }
-        if groupMode != nil {
-            try container.encode(groupMode, forKey: .groupMode)
-        }
-        if groupModeForce != nil {
-            try container.encode(groupModeForce, forKey: .groupModeForce)
-        }
-        if defaultGroupingId != nil {
-            try container.encode(defaultGroupingId, forKey: .defaultGroupingId)
-        }
-        if enableCompletion != nil {
-            try container.encode(enableCompletion, forKey: .enableCompletion)
-        }
-        if completionNotify != nil {
-            try container.encode(completionNotify, forKey: .completionNotify)
-        }
-        if lang != nil {
-            try container.encode(lang, forKey: .lang)
-        }
-        if theme != nil {
-            try container.encode(theme, forKey: .theme)
-        }
-        if marker != nil {
-            try container.encode(marker, forKey: .marker)
-        }
-        if legacyFiles != nil {
-            try container.encode(legacyFiles, forKey: .legacyFiles)
-        }
-        if calendarType != nil {
-            try container.encode(calendarType, forKey: .calendarType)
-        }
-        if timeCreated != nil {
-            try container.encode(timeCreated, forKey: .timeCreated)
-        }
-        if timeModified != nil {
-            try container.encode(timeModified, forKey: .timeModified)
-        }
-        if requested != nil {
-            try container.encode(requested, forKey: .requested)
-        }
-        if cacheRevision != nil {
-            try container.encode(cacheRevision, forKey: .cacheRevision)
-        }
-        if !filters.isEmpty {
-            try container.encode(filters, forKey: .filters)
-        }
-        if !courseFormatOptions.isEmpty {
-            try container.encode(courseFormatOptions, forKey: .courseFormatOptions)
-        }
-        if communicationRoomName != nil {
-            try container.encode(communicationRoomName, forKey: .communicationRoomName)
-        }
-        if communicationRoomUrl != nil {
-            try container.encode(communicationRoomUrl, forKey: .communicationRoomUrl)
-        }
-    }
-}
-
-/// File.
-public struct MoodleFile: Codable, Hashable, Sendable {
-    /// File name.
-    public var fileName: String?
-    /// File path.
-    public var filePath: String?
-    /// File size.
-    public var fileSize: Int64?
-    /// Downloadable file url.
-    public var fileUrl: String?
-    /// Time modified.
-    public var timeModified: Int64?
-    /// File mime type.
-    public var mimeType: String?
-    /// Whether is an external file.
-    public var isExternalFile: Bool?
-    /// The repository type for external files.
-    public var repositoryType: String?
-    /// The relative path to the relevant file type icon based on the file's mime type.
-    public var icon: String?
-
-    public init(
-        fileName: String? = nil,
-        filePath: String? = nil,
-        fileSize: Int64? = nil,
-        fileUrl: String? = nil,
-        timeModified: Int64? = nil,
-        mimeType: String? = nil,
-        isExternalFile: Bool? = nil,
-        repositoryType: String? = nil,
-        icon: String? = nil
-    ) {
-        self.fileName = fileName
-        self.filePath = filePath
-        self.fileSize = fileSize
-        self.fileUrl = fileUrl
-        self.timeModified = timeModified
-        self.mimeType = mimeType
-        self.isExternalFile = isExternalFile
-        self.repositoryType = repositoryType
-        self.icon = icon
-    }
-
-    private enum CodingKeys: String, CodingKey {
-        case fileName = "filename"
-        case filePath = "filepath"
-        case fileSize = "filesize"
-        case fileUrl = "fileurl"
-        case timeModified = "timemodified"
-        case mimeType = "mimetype"
-        case isExternalFile = "isexternalfile"
-        case repositoryType = "repositorytype"
-        case icon = "icon"
-    }
-
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.fileName = container.decodeLenient(String.self, forKey: .fileName)
-        self.filePath = container.decodeLenient(String.self, forKey: .filePath)
-        self.fileSize = container.decodeLenient(Int64.self, forKey: .fileSize)
-        self.fileUrl = container.decodeLenient(String.self, forKey: .fileUrl)
-        self.timeModified = container.decodeLenient(Int64.self, forKey: .timeModified)
-        self.mimeType = container.decodeLenient(String.self, forKey: .mimeType)
-        self.isExternalFile = container.decodeLenient(Bool.self, forKey: .isExternalFile)
-        self.repositoryType = container.decodeLenient(String.self, forKey: .repositoryType)
-        self.icon = container.decodeLenient(String.self, forKey: .icon)
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        if fileName != nil {
-            try container.encode(fileName, forKey: .fileName)
-        }
-        if filePath != nil {
-            try container.encode(filePath, forKey: .filePath)
-        }
-        if fileSize != nil {
-            try container.encode(fileSize, forKey: .fileSize)
-        }
-        if fileUrl != nil {
-            try container.encode(fileUrl, forKey: .fileUrl)
-        }
-        if timeModified != nil {
-            try container.encode(timeModified, forKey: .timeModified)
-        }
-        if mimeType != nil {
-            try container.encode(mimeType, forKey: .mimeType)
-        }
-        if isExternalFile != nil {
-            try container.encode(isExternalFile, forKey: .isExternalFile)
-        }
-        if repositoryType != nil {
-            try container.encode(repositoryType, forKey: .repositoryType)
-        }
-        if icon != nil {
-            try container.encode(icon, forKey: .icon)
-        }
+        try container.encode(id, forKey: .id)
+        try container.encode(fullName, forKey: .fullName)
+        try container.encode(displayName, forKey: .displayName)
+        try container.encode(shortName, forKey: .shortName)
+        try container.encode(courseImage, forKey: .courseImage)
+        try container.encode(categoryId, forKey: .categoryId)
+        try container.encode(categoryName, forKey: .categoryName)
+        try container.encode(sortOrder, forKey: .sortOrder)
+        try container.encode(summary, forKey: .summary)
+        try container.encode(summaryFormat, forKey: .summaryFormat)
+        try container.encode(summaryFiles, forKey: .summaryFiles)
+        try container.encode(overviewFiles, forKey: .overviewFiles)
+        try container.encode(showActivityDates, forKey: .showActivityDates)
+        try container.encode(showCompletionConditions, forKey: .showCompletionConditions)
+        try container.encode(contacts, forKey: .contacts)
+        try container.encode(enrollmentMethods, forKey: .enrollmentMethods)
+        try container.encode(customFields, forKey: .customFields)
+        try container.encode(idNumber, forKey: .idNumber)
+        try container.encode(format, forKey: .format)
+        try container.encode(showGrades, forKey: .showGrades)
+        try container.encode(newsItems, forKey: .newsItems)
+        try container.encode(startDate, forKey: .startDate)
+        try container.encode(endDate, forKey: .endDate)
+        try container.encode(maxBytes, forKey: .maxBytes)
+        try container.encode(showReports, forKey: .showReports)
+        try container.encode(visible, forKey: .visible)
+        try container.encode(groupMode, forKey: .groupMode)
+        try container.encode(groupModeForce, forKey: .groupModeForce)
+        try container.encode(defaultGroupingId, forKey: .defaultGroupingId)
+        try container.encode(enableCompletion, forKey: .enableCompletion)
+        try container.encode(completionNotify, forKey: .completionNotify)
+        try container.encode(lang, forKey: .lang)
+        try container.encode(theme, forKey: .theme)
+        try container.encode(marker, forKey: .marker)
+        try container.encode(legacyFiles, forKey: .legacyFiles)
+        try container.encode(calendarType, forKey: .calendarType)
+        try container.encode(timeCreated, forKey: .timeCreated)
+        try container.encode(timeModified, forKey: .timeModified)
+        try container.encode(requested, forKey: .requested)
+        try container.encode(cacheRevision, forKey: .cacheRevision)
+        try container.encode(filters, forKey: .filters)
+        try container.encode(courseFormatOptions, forKey: .courseFormatOptions)
+        try container.encode(communicationRoomName, forKey: .communicationRoomName)
+        try container.encode(communicationRoomUrl, forKey: .communicationRoomUrl)
     }
 }
 
@@ -1695,12 +2165,8 @@ public struct MoodleContact: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if id != 0 {
-            try container.encode(id, forKey: .id)
-        }
-        if fullName != "" {
-            try container.encode(fullName, forKey: .fullName)
-        }
+        try container.encode(id, forKey: .id)
+        try container.encode(fullName, forKey: .fullName)
     }
 }
 
@@ -1749,21 +2215,11 @@ public struct MoodleCourseCustomField: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if name != "" {
-            try container.encode(name, forKey: .name)
-        }
-        if shortName != "" {
-            try container.encode(shortName, forKey: .shortName)
-        }
-        if type != "" {
-            try container.encode(type, forKey: .type)
-        }
-        if valueRaw != "" {
-            try container.encode(valueRaw, forKey: .valueRaw)
-        }
-        if value != "" {
-            try container.encode(value, forKey: .value)
-        }
+        try container.encode(name, forKey: .name)
+        try container.encode(shortName, forKey: .shortName)
+        try container.encode(type, forKey: .type)
+        try container.encode(valueRaw, forKey: .valueRaw)
+        try container.encode(value, forKey: .value)
     }
 }
 
@@ -1800,51 +2256,852 @@ public struct MoodleFilter: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if filter != "" {
-            try container.encode(filter, forKey: .filter)
-        }
-        if localState != 0 {
-            try container.encode(localState, forKey: .localState)
-        }
-        if inheritedState != 0 {
-            try container.encode(inheritedState, forKey: .inheritedState)
-        }
+        try container.encode(filter, forKey: .filter)
+        try container.encode(localState, forKey: .localState)
+        try container.encode(inheritedState, forKey: .inheritedState)
     }
 }
 
-public struct MoodleKeyValue: Codable, Hashable, Sendable {
-    /// Course format option name.
+public struct MoodleCourseGetEnrolledCoursesByTimelineClassificationResponse: Codable, Hashable, Sendable {
+    /// Course
+    public var courses: [MoodleEventCourse]
+    /// Offset for the next request
+    public var nextoffset: Int
+
+    public init(
+        courses: [MoodleEventCourse] = [],
+        nextoffset: Int = 0
+    ) {
+        self.courses = courses
+        self.nextoffset = nextoffset
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case courses = "courses"
+        case nextoffset = "nextoffset"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.courses = container.decodeLenient([MoodleEventCourse].self, forKey: .courses) ?? []
+        self.nextoffset = container.decodeLenient(Int.self, forKey: .nextoffset) ?? 0
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(courses, forKey: .courses)
+        try container.encode(nextoffset, forKey: .nextoffset)
+    }
+}
+
+public struct MoodleCourseGetEnrolledCoursesWithActionEventsByTimelineClassificationResponse: Codable, Hashable, Sendable {
+    /// Course
+    public var courses: [MoodleEventCourse]
+    /// Offset for the next request
+    public var nextoffset: Int
+    /// Whether more courses with events exist within the provided parameters
+    public var morecoursesavailable: Bool
+
+    public init(
+        courses: [MoodleEventCourse] = [],
+        nextoffset: Int = 0,
+        morecoursesavailable: Bool = false
+    ) {
+        self.courses = courses
+        self.nextoffset = nextoffset
+        self.morecoursesavailable = morecoursesavailable
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case courses = "courses"
+        case nextoffset = "nextoffset"
+        case morecoursesavailable = "morecoursesavailable"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.courses = container.decodeLenient([MoodleEventCourse].self, forKey: .courses) ?? []
+        self.nextoffset = container.decodeLenient(Int.self, forKey: .nextoffset) ?? 0
+        self.morecoursesavailable = container.decodeLenient(Bool.self, forKey: .morecoursesavailable) ?? false
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(courses, forKey: .courses)
+        try container.encode(nextoffset, forKey: .nextoffset)
+        try container.encode(morecoursesavailable, forKey: .morecoursesavailable)
+    }
+}
+
+public struct MoodleCourseGetUserAdministrationOptionsResponse: Codable, Hashable, Sendable {
+    /// List of courses
+    public var courses: [MoodleCourseGetUserAdministrationOptionsResponseCourse]
+    /// list of warnings
+    public var warnings: [MoodleWarning]
+
+    public init(
+        courses: [MoodleCourseGetUserAdministrationOptionsResponseCourse] = [],
+        warnings: [MoodleWarning] = []
+    ) {
+        self.courses = courses
+        self.warnings = warnings
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case courses = "courses"
+        case warnings = "warnings"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.courses = container.decodeLenient([MoodleCourseGetUserAdministrationOptionsResponseCourse].self, forKey: .courses) ?? []
+        self.warnings = container.decodeLenient([MoodleWarning].self, forKey: .warnings) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(courses, forKey: .courses)
+        try container.encode(warnings, forKey: .warnings)
+    }
+}
+
+public struct MoodleCourseGetUserAdministrationOptionsResponseCourse: Codable, Hashable, Sendable {
+    /// Course id
+    public var id: Int
+    public var options: [MoodleCourseGetUserAdministrationOptionsResponseCourseOption]
+
+    public init(
+        id: Int = 0,
+        options: [MoodleCourseGetUserAdministrationOptionsResponseCourseOption] = []
+    ) {
+        self.id = id
+        self.options = options
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id = "id"
+        case options = "options"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = container.decodeLenient(Int.self, forKey: .id) ?? 0
+        self.options = container.decodeLenient([MoodleCourseGetUserAdministrationOptionsResponseCourseOption].self, forKey: .options) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(options, forKey: .options)
+    }
+}
+
+public struct MoodleCourseGetUserAdministrationOptionsResponseCourseOption: Codable, Hashable, Sendable {
+    /// Option name
     public var name: String
-    /// Course format option value.
-    public var value: String
+    /// Whether the option is available or not
+    public var available: Bool
 
     public init(
         name: String = "",
-        value: String = ""
+        available: Bool = false
     ) {
         self.name = name
-        self.value = value
+        self.available = available
     }
 
     private enum CodingKeys: String, CodingKey {
         case name = "name"
-        case value = "value"
+        case available = "available"
     }
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.name = container.decodeLenient(String.self, forKey: .name) ?? ""
-        self.value = container.decodeLenient(String.self, forKey: .value) ?? ""
+        self.available = container.decodeLenient(Bool.self, forKey: .available) ?? false
     }
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if name != "" {
-            try container.encode(name, forKey: .name)
-        }
-        if value != "" {
-            try container.encode(value, forKey: .value)
-        }
+        try container.encode(name, forKey: .name)
+        try container.encode(available, forKey: .available)
+    }
+}
+
+public struct MoodleCourseSearchCoursesResponse: Codable, Hashable, Sendable {
+    /// total course count
+    public var total: Int
+    /// course
+    public var courses: [MoodleCourseSearchCoursesResponseCourse]
+    /// list of warnings
+    public var warnings: [MoodleWarning]
+
+    public init(
+        total: Int = 0,
+        courses: [MoodleCourseSearchCoursesResponseCourse] = [],
+        warnings: [MoodleWarning] = []
+    ) {
+        self.total = total
+        self.courses = courses
+        self.warnings = warnings
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case total = "total"
+        case courses = "courses"
+        case warnings = "warnings"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.total = container.decodeLenient(Int.self, forKey: .total) ?? 0
+        self.courses = container.decodeLenient([MoodleCourseSearchCoursesResponseCourse].self, forKey: .courses) ?? []
+        self.warnings = container.decodeLenient([MoodleWarning].self, forKey: .warnings) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(total, forKey: .total)
+        try container.encode(courses, forKey: .courses)
+        try container.encode(warnings, forKey: .warnings)
+    }
+}
+
+public struct MoodleCourseSearchCoursesResponseCourse: Codable, Hashable, Sendable {
+    /// course id
+    public var id: Int
+    /// course full name
+    public var fullName: String
+    /// course display name
+    public var displayName: String
+    /// course short name
+    public var shortName: String
+    /// Course image
+    public var courseImage: String?
+    /// category id
+    public var categoryId: Int
+    /// category name
+    public var categoryName: String
+    /// Sort order in the category
+    public var sortOrder: Int?
+    /// summary
+    public var summary: String
+    /// summary format (1 = HTML, 0 = MOODLE, 2 = PLAIN, or 4 = MARKDOWN)
+    public var summaryFormat: Int
+    /// summary files in the summary field
+    public var summaryFiles: [MoodleFile]
+    /// additional overview files attached to this course
+    public var overviewFiles: [MoodleFile]
+    /// Whether the activity dates are shown or not
+    public var showActivityDates: Bool
+    /// Whether the activity completion conditions are shown or not
+    public var showCompletionConditions: Bool
+    /// contact users
+    public var contacts: [MoodleContact]
+    /// enrollment methods list
+    public var enrollmentMethods: [String]
+    /// Custom fields
+    public var customFields: [MoodleCourseCustomField]
+
+    public init(
+        id: Int = 0,
+        fullName: String = "",
+        displayName: String = "",
+        shortName: String = "",
+        courseImage: String? = nil,
+        categoryId: Int = 0,
+        categoryName: String = "",
+        sortOrder: Int? = nil,
+        summary: String = "",
+        summaryFormat: Int = 0,
+        summaryFiles: [MoodleFile] = [],
+        overviewFiles: [MoodleFile] = [],
+        showActivityDates: Bool = false,
+        showCompletionConditions: Bool = false,
+        contacts: [MoodleContact] = [],
+        enrollmentMethods: [String] = [],
+        customFields: [MoodleCourseCustomField] = []
+    ) {
+        self.id = id
+        self.fullName = fullName
+        self.displayName = displayName
+        self.shortName = shortName
+        self.courseImage = courseImage
+        self.categoryId = categoryId
+        self.categoryName = categoryName
+        self.sortOrder = sortOrder
+        self.summary = summary
+        self.summaryFormat = summaryFormat
+        self.summaryFiles = summaryFiles
+        self.overviewFiles = overviewFiles
+        self.showActivityDates = showActivityDates
+        self.showCompletionConditions = showCompletionConditions
+        self.contacts = contacts
+        self.enrollmentMethods = enrollmentMethods
+        self.customFields = customFields
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id = "id"
+        case fullName = "fullname"
+        case displayName = "displayname"
+        case shortName = "shortname"
+        case courseImage = "courseimage"
+        case categoryId = "categoryid"
+        case categoryName = "categoryname"
+        case sortOrder = "sortorder"
+        case summary = "summary"
+        case summaryFormat = "summaryformat"
+        case summaryFiles = "summaryfiles"
+        case overviewFiles = "overviewfiles"
+        case showActivityDates = "showactivitydates"
+        case showCompletionConditions = "showcompletionconditions"
+        case contacts = "contacts"
+        case enrollmentMethods = "enrollmentmethods"
+        case customFields = "customfields"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = container.decodeLenient(Int.self, forKey: .id) ?? 0
+        self.fullName = container.decodeLenient(String.self, forKey: .fullName) ?? ""
+        self.displayName = container.decodeLenient(String.self, forKey: .displayName) ?? ""
+        self.shortName = container.decodeLenient(String.self, forKey: .shortName) ?? ""
+        self.courseImage = container.decodeLenient(String.self, forKey: .courseImage)
+        self.categoryId = container.decodeLenient(Int.self, forKey: .categoryId) ?? 0
+        self.categoryName = container.decodeLenient(String.self, forKey: .categoryName) ?? ""
+        self.sortOrder = container.decodeLenient(Int.self, forKey: .sortOrder)
+        self.summary = container.decodeLenient(String.self, forKey: .summary) ?? ""
+        self.summaryFormat = container.decodeLenient(Int.self, forKey: .summaryFormat) ?? 0
+        self.summaryFiles = container.decodeLenient([MoodleFile].self, forKey: .summaryFiles) ?? []
+        self.overviewFiles = container.decodeLenient([MoodleFile].self, forKey: .overviewFiles) ?? []
+        self.showActivityDates = container.decodeLenient(Bool.self, forKey: .showActivityDates) ?? false
+        self.showCompletionConditions = container.decodeLenient(Bool.self, forKey: .showCompletionConditions) ?? false
+        self.contacts = container.decodeLenient([MoodleContact].self, forKey: .contacts) ?? []
+        self.enrollmentMethods = container.decodeLenient([String].self, forKey: .enrollmentMethods) ?? []
+        self.customFields = container.decodeLenient([MoodleCourseCustomField].self, forKey: .customFields) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(fullName, forKey: .fullName)
+        try container.encode(displayName, forKey: .displayName)
+        try container.encode(shortName, forKey: .shortName)
+        try container.encode(courseImage, forKey: .courseImage)
+        try container.encode(categoryId, forKey: .categoryId)
+        try container.encode(categoryName, forKey: .categoryName)
+        try container.encode(sortOrder, forKey: .sortOrder)
+        try container.encode(summary, forKey: .summary)
+        try container.encode(summaryFormat, forKey: .summaryFormat)
+        try container.encode(summaryFiles, forKey: .summaryFiles)
+        try container.encode(overviewFiles, forKey: .overviewFiles)
+        try container.encode(showActivityDates, forKey: .showActivityDates)
+        try container.encode(showCompletionConditions, forKey: .showCompletionConditions)
+        try container.encode(contacts, forKey: .contacts)
+        try container.encode(enrollmentMethods, forKey: .enrollmentMethods)
+        try container.encode(customFields, forKey: .customFields)
+    }
+}
+
+public struct MoodleCourseSetFavouriteCoursesCourse: Codable, Hashable, Sendable {
+    /// course ID
+    public var id: Int
+    /// favourite status
+    public var favourite: Bool
+
+    public init(
+        id: Int = 0,
+        favourite: Bool = false
+    ) {
+        self.id = id
+        self.favourite = favourite
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id = "id"
+        case favourite = "favourite"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = container.decodeLenient(Int.self, forKey: .id) ?? 0
+        self.favourite = container.decodeLenient(Bool.self, forKey: .favourite) ?? false
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(favourite, forKey: .favourite)
+    }
+}
+
+public struct MoodleCourseSetFavouriteCoursesResponse: Codable, Hashable, Sendable {
+    /// list of warnings
+    public var warnings: [MoodleWarning]
+
+    public init(
+        warnings: [MoodleWarning] = []
+    ) {
+        self.warnings = warnings
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case warnings = "warnings"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.warnings = container.decodeLenient([MoodleWarning].self, forKey: .warnings) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(warnings, forKey: .warnings)
+    }
+}
+
+public struct MoodleEnrolGetCourseEnrolmentMethodsItem: Codable, Hashable, Sendable {
+    /// id of course enrolment instance
+    public var id: Int
+    /// id of course
+    public var courseId: Int
+    /// type of enrolment plugin
+    public var type: String
+    /// name of enrolment plugin
+    public var name: String
+    /// status of enrolment plugin
+    public var status: String
+    /// webservice function to get more information
+    public var wsfunction: String?
+
+    public init(
+        id: Int = 0,
+        courseId: Int = 0,
+        type: String = "",
+        name: String = "",
+        status: String = "",
+        wsfunction: String? = nil
+    ) {
+        self.id = id
+        self.courseId = courseId
+        self.type = type
+        self.name = name
+        self.status = status
+        self.wsfunction = wsfunction
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id = "id"
+        case courseId = "courseid"
+        case type = "type"
+        case name = "name"
+        case status = "status"
+        case wsfunction = "wsfunction"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = container.decodeLenient(Int.self, forKey: .id) ?? 0
+        self.courseId = container.decodeLenient(Int.self, forKey: .courseId) ?? 0
+        self.type = container.decodeLenient(String.self, forKey: .type) ?? ""
+        self.name = container.decodeLenient(String.self, forKey: .name) ?? ""
+        self.status = container.decodeLenient(String.self, forKey: .status) ?? ""
+        self.wsfunction = container.decodeLenient(String.self, forKey: .wsfunction)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(courseId, forKey: .courseId)
+        try container.encode(type, forKey: .type)
+        try container.encode(name, forKey: .name)
+        try container.encode(status, forKey: .status)
+        try container.encode(wsfunction, forKey: .wsfunction)
+    }
+}
+
+public struct MoodleEnrolGetEnrolledUsersItem: Codable, Hashable, Sendable {
+    /// ID of the user
+    public var id: Int
+    /// Username policy is defined in Moodle security config
+    public var username: String?
+    /// The first name(s) of the user
+    public var firstName: String?
+    /// The family name of the user
+    public var lastName: String?
+    /// The fullname of the user
+    public var fullName: String
+    /// An email address - allow email as root@localhost
+    public var email: String?
+    /// Postal address
+    public var address: String?
+    /// Phone 1
+    public var phone1: String?
+    /// Phone 2
+    public var phone2: String?
+    /// department
+    public var department: String?
+    /// institution
+    public var institution: String?
+    /// An arbitrary ID code number perhaps from the institution
+    public var idNumber: String?
+    /// user interests (separated by commas)
+    public var interests: String?
+    /// first access to the site (0 if never)
+    public var firstAccess: Int64?
+    /// last access to the site (0 if never)
+    public var lastAccess: Int64?
+    /// last access to the course (0 if never)
+    public var lastcourseaccess: Int64?
+    /// User profile description
+    public var description: String?
+    /// description format (1 = HTML, 0 = MOODLE, 2 = PLAIN, or 4 = MARKDOWN)
+    public var descriptionFormat: Int?
+    /// Home city of the user
+    public var city: String?
+    /// Home country code of the user, such as AU or CZ
+    public var country: String?
+    /// User image profile URL - small version
+    public var profileImageUrlSmall: String?
+    /// User image profile URL - big version
+    public var profileImageUrl: String?
+    /// User custom fields (also known as user profil fields)
+    public var customFields: [MoodleEnrolGetEnrolledUsersItemCustomField]
+    /// user groups
+    public var groups: [MoodleUserGroup]
+    /// user roles
+    public var roles: [MoodleUserRole]
+    /// User preferences
+    public var preferences: [MoodleKeyValue]
+    /// Courses where the user is enrolled - limited by which courses the user is able to see
+    public var enrolledCourses: [MoodleUserEnrolledCourse]
+
+    public init(
+        id: Int = 0,
+        username: String? = nil,
+        firstName: String? = nil,
+        lastName: String? = nil,
+        fullName: String = "",
+        email: String? = nil,
+        address: String? = nil,
+        phone1: String? = nil,
+        phone2: String? = nil,
+        department: String? = nil,
+        institution: String? = nil,
+        idNumber: String? = nil,
+        interests: String? = nil,
+        firstAccess: Int64? = nil,
+        lastAccess: Int64? = nil,
+        lastcourseaccess: Int64? = nil,
+        description: String? = nil,
+        descriptionFormat: Int? = nil,
+        city: String? = nil,
+        country: String? = nil,
+        profileImageUrlSmall: String? = nil,
+        profileImageUrl: String? = nil,
+        customFields: [MoodleEnrolGetEnrolledUsersItemCustomField] = [],
+        groups: [MoodleUserGroup] = [],
+        roles: [MoodleUserRole] = [],
+        preferences: [MoodleKeyValue] = [],
+        enrolledCourses: [MoodleUserEnrolledCourse] = []
+    ) {
+        self.id = id
+        self.username = username
+        self.firstName = firstName
+        self.lastName = lastName
+        self.fullName = fullName
+        self.email = email
+        self.address = address
+        self.phone1 = phone1
+        self.phone2 = phone2
+        self.department = department
+        self.institution = institution
+        self.idNumber = idNumber
+        self.interests = interests
+        self.firstAccess = firstAccess
+        self.lastAccess = lastAccess
+        self.lastcourseaccess = lastcourseaccess
+        self.description = description
+        self.descriptionFormat = descriptionFormat
+        self.city = city
+        self.country = country
+        self.profileImageUrlSmall = profileImageUrlSmall
+        self.profileImageUrl = profileImageUrl
+        self.customFields = customFields
+        self.groups = groups
+        self.roles = roles
+        self.preferences = preferences
+        self.enrolledCourses = enrolledCourses
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id = "id"
+        case username = "username"
+        case firstName = "firstname"
+        case lastName = "lastname"
+        case fullName = "fullname"
+        case email = "email"
+        case address = "address"
+        case phone1 = "phone1"
+        case phone2 = "phone2"
+        case department = "department"
+        case institution = "institution"
+        case idNumber = "idnumber"
+        case interests = "interests"
+        case firstAccess = "firstaccess"
+        case lastAccess = "lastaccess"
+        case lastcourseaccess = "lastcourseaccess"
+        case description = "description"
+        case descriptionFormat = "descriptionformat"
+        case city = "city"
+        case country = "country"
+        case profileImageUrlSmall = "profileimageurlsmall"
+        case profileImageUrl = "profileimageurl"
+        case customFields = "customfields"
+        case groups = "groups"
+        case roles = "roles"
+        case preferences = "preferences"
+        case enrolledCourses = "enrolledcourses"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = container.decodeLenient(Int.self, forKey: .id) ?? 0
+        self.username = container.decodeLenient(String.self, forKey: .username)
+        self.firstName = container.decodeLenient(String.self, forKey: .firstName)
+        self.lastName = container.decodeLenient(String.self, forKey: .lastName)
+        self.fullName = container.decodeLenient(String.self, forKey: .fullName) ?? ""
+        self.email = container.decodeLenient(String.self, forKey: .email)
+        self.address = container.decodeLenient(String.self, forKey: .address)
+        self.phone1 = container.decodeLenient(String.self, forKey: .phone1)
+        self.phone2 = container.decodeLenient(String.self, forKey: .phone2)
+        self.department = container.decodeLenient(String.self, forKey: .department)
+        self.institution = container.decodeLenient(String.self, forKey: .institution)
+        self.idNumber = container.decodeLenient(String.self, forKey: .idNumber)
+        self.interests = container.decodeLenient(String.self, forKey: .interests)
+        self.firstAccess = container.decodeLenient(Int64.self, forKey: .firstAccess)
+        self.lastAccess = container.decodeLenient(Int64.self, forKey: .lastAccess)
+        self.lastcourseaccess = container.decodeLenient(Int64.self, forKey: .lastcourseaccess)
+        self.description = container.decodeLenient(String.self, forKey: .description)
+        self.descriptionFormat = container.decodeLenient(Int.self, forKey: .descriptionFormat)
+        self.city = container.decodeLenient(String.self, forKey: .city)
+        self.country = container.decodeLenient(String.self, forKey: .country)
+        self.profileImageUrlSmall = container.decodeLenient(String.self, forKey: .profileImageUrlSmall)
+        self.profileImageUrl = container.decodeLenient(String.self, forKey: .profileImageUrl)
+        self.customFields = container.decodeLenient([MoodleEnrolGetEnrolledUsersItemCustomField].self, forKey: .customFields) ?? []
+        self.groups = container.decodeLenient([MoodleUserGroup].self, forKey: .groups) ?? []
+        self.roles = container.decodeLenient([MoodleUserRole].self, forKey: .roles) ?? []
+        self.preferences = container.decodeLenient([MoodleKeyValue].self, forKey: .preferences) ?? []
+        self.enrolledCourses = container.decodeLenient([MoodleUserEnrolledCourse].self, forKey: .enrolledCourses) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(username, forKey: .username)
+        try container.encode(firstName, forKey: .firstName)
+        try container.encode(lastName, forKey: .lastName)
+        try container.encode(fullName, forKey: .fullName)
+        try container.encode(email, forKey: .email)
+        try container.encode(address, forKey: .address)
+        try container.encode(phone1, forKey: .phone1)
+        try container.encode(phone2, forKey: .phone2)
+        try container.encode(department, forKey: .department)
+        try container.encode(institution, forKey: .institution)
+        try container.encode(idNumber, forKey: .idNumber)
+        try container.encode(interests, forKey: .interests)
+        try container.encode(firstAccess, forKey: .firstAccess)
+        try container.encode(lastAccess, forKey: .lastAccess)
+        try container.encode(lastcourseaccess, forKey: .lastcourseaccess)
+        try container.encode(description, forKey: .description)
+        try container.encode(descriptionFormat, forKey: .descriptionFormat)
+        try container.encode(city, forKey: .city)
+        try container.encode(country, forKey: .country)
+        try container.encode(profileImageUrlSmall, forKey: .profileImageUrlSmall)
+        try container.encode(profileImageUrl, forKey: .profileImageUrl)
+        try container.encode(customFields, forKey: .customFields)
+        try container.encode(groups, forKey: .groups)
+        try container.encode(roles, forKey: .roles)
+        try container.encode(preferences, forKey: .preferences)
+        try container.encode(enrolledCourses, forKey: .enrolledCourses)
+    }
+}
+
+public struct MoodleEnrolGetEnrolledUsersItemCustomField: Codable, Hashable, Sendable {
+    /// The type of the custom field - text field, checkbox...
+    public var type: String
+    /// The value of the custom field
+    public var value: String
+    /// The name of the custom field
+    public var name: String
+    /// The shortname of the custom field - to be able to build the field class in the code
+    public var shortName: String
+
+    public init(
+        type: String = "",
+        value: String = "",
+        name: String = "",
+        shortName: String = ""
+    ) {
+        self.type = type
+        self.value = value
+        self.name = name
+        self.shortName = shortName
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case type = "type"
+        case value = "value"
+        case name = "name"
+        case shortName = "shortname"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.type = container.decodeLenient(String.self, forKey: .type) ?? ""
+        self.value = container.decodeLenient(String.self, forKey: .value) ?? ""
+        self.name = container.decodeLenient(String.self, forKey: .name) ?? ""
+        self.shortName = container.decodeLenient(String.self, forKey: .shortName) ?? ""
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(type, forKey: .type)
+        try container.encode(value, forKey: .value)
+        try container.encode(name, forKey: .name)
+        try container.encode(shortName, forKey: .shortName)
+    }
+}
+
+public struct MoodleUserGroup: Codable, Hashable, Sendable {
+    /// group id
+    public var id: Int
+    /// group name
+    public var name: String
+    /// group description
+    public var description: String
+    /// description format (1 = HTML, 0 = MOODLE, 2 = PLAIN, or 4 = MARKDOWN)
+    public var descriptionFormat: Int
+
+    public init(
+        id: Int = 0,
+        name: String = "",
+        description: String = "",
+        descriptionFormat: Int = 0
+    ) {
+        self.id = id
+        self.name = name
+        self.description = description
+        self.descriptionFormat = descriptionFormat
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id = "id"
+        case name = "name"
+        case description = "description"
+        case descriptionFormat = "descriptionformat"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = container.decodeLenient(Int.self, forKey: .id) ?? 0
+        self.name = container.decodeLenient(String.self, forKey: .name) ?? ""
+        self.description = container.decodeLenient(String.self, forKey: .description) ?? ""
+        self.descriptionFormat = container.decodeLenient(Int.self, forKey: .descriptionFormat) ?? 0
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(name, forKey: .name)
+        try container.encode(description, forKey: .description)
+        try container.encode(descriptionFormat, forKey: .descriptionFormat)
+    }
+}
+
+public struct MoodleUserRole: Codable, Hashable, Sendable {
+    /// role id
+    public var roleId: Int
+    /// role name
+    public var name: String
+    /// role shortname
+    public var shortName: String
+    /// role sortorder
+    public var sortOrder: Int
+
+    public init(
+        roleId: Int = 0,
+        name: String = "",
+        shortName: String = "",
+        sortOrder: Int = 0
+    ) {
+        self.roleId = roleId
+        self.name = name
+        self.shortName = shortName
+        self.sortOrder = sortOrder
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case roleId = "roleid"
+        case name = "name"
+        case shortName = "shortname"
+        case sortOrder = "sortorder"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.roleId = container.decodeLenient(Int.self, forKey: .roleId) ?? 0
+        self.name = container.decodeLenient(String.self, forKey: .name) ?? ""
+        self.shortName = container.decodeLenient(String.self, forKey: .shortName) ?? ""
+        self.sortOrder = container.decodeLenient(Int.self, forKey: .sortOrder) ?? 0
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(roleId, forKey: .roleId)
+        try container.encode(name, forKey: .name)
+        try container.encode(shortName, forKey: .shortName)
+        try container.encode(sortOrder, forKey: .sortOrder)
+    }
+}
+
+public struct MoodleUserEnrolledCourse: Codable, Hashable, Sendable {
+    /// Id of the course
+    public var id: Int
+    /// Fullname of the course
+    public var fullName: String
+    /// Shortname of the course
+    public var shortName: String
+
+    public init(
+        id: Int = 0,
+        fullName: String = "",
+        shortName: String = ""
+    ) {
+        self.id = id
+        self.fullName = fullName
+        self.shortName = shortName
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id = "id"
+        case fullName = "fullname"
+        case shortName = "shortname"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = container.decodeLenient(Int.self, forKey: .id) ?? 0
+        self.fullName = container.decodeLenient(String.self, forKey: .fullName) ?? ""
+        self.shortName = container.decodeLenient(String.self, forKey: .shortName) ?? ""
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(fullName, forKey: .fullName)
+        try container.encode(shortName, forKey: .shortName)
     }
 }
 
@@ -2037,128 +3294,368 @@ public struct MoodleEnrolledCourse: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if id != 0 {
-            try container.encode(id, forKey: .id)
-        }
-        if shortName != "" {
-            try container.encode(shortName, forKey: .shortName)
-        }
-        if fullName != "" {
-            try container.encode(fullName, forKey: .fullName)
-        }
-        if displayName != nil {
-            try container.encode(displayName, forKey: .displayName)
-        }
-        if enrolledUserCount != nil {
-            try container.encode(enrolledUserCount, forKey: .enrolledUserCount)
-        }
-        if idNumber != "" {
-            try container.encode(idNumber, forKey: .idNumber)
-        }
-        if visible != 0 {
-            try container.encode(visible, forKey: .visible)
-        }
-        if summary != nil {
-            try container.encode(summary, forKey: .summary)
-        }
-        if summaryFormat != nil {
-            try container.encode(summaryFormat, forKey: .summaryFormat)
-        }
-        if format != nil {
-            try container.encode(format, forKey: .format)
-        }
-        if courseImage != nil {
-            try container.encode(courseImage, forKey: .courseImage)
-        }
-        if showGrades != nil {
-            try container.encode(showGrades, forKey: .showGrades)
-        }
-        if lang != nil {
-            try container.encode(lang, forKey: .lang)
-        }
-        if enableCompletion != nil {
-            try container.encode(enableCompletion, forKey: .enableCompletion)
-        }
-        if completionHasCriteria != nil {
-            try container.encode(completionHasCriteria, forKey: .completionHasCriteria)
-        }
-        if completionUserTracked != nil {
-            try container.encode(completionUserTracked, forKey: .completionUserTracked)
-        }
-        if category != nil {
-            try container.encode(category, forKey: .category)
-        }
-        if progress != nil {
-            try container.encode(progress, forKey: .progress)
-        }
-        if completed != nil {
-            try container.encode(completed, forKey: .completed)
-        }
-        if startDate != nil {
-            try container.encode(startDate, forKey: .startDate)
-        }
-        if endDate != nil {
-            try container.encode(endDate, forKey: .endDate)
-        }
-        if marker != nil {
-            try container.encode(marker, forKey: .marker)
-        }
-        if lastAccess != nil {
-            try container.encode(lastAccess, forKey: .lastAccess)
-        }
-        if isFavourite != nil {
-            try container.encode(isFavourite, forKey: .isFavourite)
-        }
-        if hidden != nil {
-            try container.encode(hidden, forKey: .hidden)
-        }
-        if !overviewFiles.isEmpty {
-            try container.encode(overviewFiles, forKey: .overviewFiles)
-        }
-        if showActivityDates != false {
-            try container.encode(showActivityDates, forKey: .showActivityDates)
-        }
-        if showCompletionConditions != false {
-            try container.encode(showCompletionConditions, forKey: .showCompletionConditions)
-        }
-        if timeModified != nil {
-            try container.encode(timeModified, forKey: .timeModified)
-        }
+        try container.encode(id, forKey: .id)
+        try container.encode(shortName, forKey: .shortName)
+        try container.encode(fullName, forKey: .fullName)
+        try container.encode(displayName, forKey: .displayName)
+        try container.encode(enrolledUserCount, forKey: .enrolledUserCount)
+        try container.encode(idNumber, forKey: .idNumber)
+        try container.encode(visible, forKey: .visible)
+        try container.encode(summary, forKey: .summary)
+        try container.encode(summaryFormat, forKey: .summaryFormat)
+        try container.encode(format, forKey: .format)
+        try container.encode(courseImage, forKey: .courseImage)
+        try container.encode(showGrades, forKey: .showGrades)
+        try container.encode(lang, forKey: .lang)
+        try container.encode(enableCompletion, forKey: .enableCompletion)
+        try container.encode(completionHasCriteria, forKey: .completionHasCriteria)
+        try container.encode(completionUserTracked, forKey: .completionUserTracked)
+        try container.encode(category, forKey: .category)
+        try container.encode(progress, forKey: .progress)
+        try container.encode(completed, forKey: .completed)
+        try container.encode(startDate, forKey: .startDate)
+        try container.encode(endDate, forKey: .endDate)
+        try container.encode(marker, forKey: .marker)
+        try container.encode(lastAccess, forKey: .lastAccess)
+        try container.encode(isFavourite, forKey: .isFavourite)
+        try container.encode(hidden, forKey: .hidden)
+        try container.encode(overviewFiles, forKey: .overviewFiles)
+        try container.encode(showActivityDates, forKey: .showActivityDates)
+        try container.encode(showCompletionConditions, forKey: .showCompletionConditions)
+        try container.encode(timeModified, forKey: .timeModified)
     }
 }
 
-public struct MoodleCourseUserGroupsResponse: Codable, Hashable, Sendable {
+public struct MoodleUser: Codable, Hashable, Sendable {
+    /// ID of the user
+    public var id: Int
+    /// The username
+    public var username: String?
+    /// The first name(s) of the user
+    public var firstName: String?
+    /// The family name of the user
+    public var lastName: String?
+    /// The fullname of the user
+    public var fullName: String
+    /// An email address - allow email as root@localhost
+    public var email: String?
+    /// Postal address
+    public var address: String?
+    /// Phone 1
+    public var phone1: String?
+    /// Phone 2
+    public var phone2: String?
+    /// department
+    public var department: String?
+    /// institution
+    public var institution: String?
+    /// An arbitrary ID code number perhaps from the institution
+    public var idNumber: String?
+    /// user interests (separated by commas)
+    public var interests: String?
+    /// first access to the site (0 if never)
+    public var firstAccess: Int64?
+    /// last access to the site (0 if never)
+    public var lastAccess: Int64?
+    /// Auth plugins include manual, ldap, etc
+    public var auth: String?
+    /// Suspend user account, either false to enable user login or true to disable it
+    public var suspended: Bool?
+    /// Active user: 1 if confirmed, 0 otherwise
+    public var confirmed: Bool?
+    /// Language code such as "en", must exist on server
+    public var lang: String?
+    /// Calendar type such as "gregorian", must exist on server
+    public var calendarType: String?
+    /// Theme name such as "standard", must exist on server
+    public var theme: String?
+    /// Timezone code such as Australia/Perth, or 99 for default
+    public var timezone: String?
+    /// Mail format code is 0 for plain text, 1 for HTML etc
+    public var mailFormat: Int?
+    /// Whether the user is tracking forums.
+    public var trackForums: Int?
+    /// User profile description
+    public var description: String?
+    /// int format (1 = HTML, 0 = MOODLE, 2 = PLAIN, or 4 = MARKDOWN)
+    public var descriptionFormat: Int?
+    /// Home city of the user
+    public var city: String?
+    /// Home country code of the user, such as AU or CZ
+    public var country: String?
+    /// User image profile URL - small version
+    public var profileImageUrlSmall: String
+    /// User image profile URL - big version
+    public var profileImageUrl: String
+    /// User custom fields (also known as user profile fields)
+    public var customFields: [MoodleUserCustomField]
+    /// Users preferences
+    public var preferences: [MoodleKeyValue]
+
+    public init(
+        id: Int = 0,
+        username: String? = nil,
+        firstName: String? = nil,
+        lastName: String? = nil,
+        fullName: String = "",
+        email: String? = nil,
+        address: String? = nil,
+        phone1: String? = nil,
+        phone2: String? = nil,
+        department: String? = nil,
+        institution: String? = nil,
+        idNumber: String? = nil,
+        interests: String? = nil,
+        firstAccess: Int64? = nil,
+        lastAccess: Int64? = nil,
+        auth: String? = nil,
+        suspended: Bool? = nil,
+        confirmed: Bool? = nil,
+        lang: String? = nil,
+        calendarType: String? = nil,
+        theme: String? = nil,
+        timezone: String? = nil,
+        mailFormat: Int? = nil,
+        trackForums: Int? = nil,
+        description: String? = nil,
+        descriptionFormat: Int? = nil,
+        city: String? = nil,
+        country: String? = nil,
+        profileImageUrlSmall: String = "",
+        profileImageUrl: String = "",
+        customFields: [MoodleUserCustomField] = [],
+        preferences: [MoodleKeyValue] = []
+    ) {
+        self.id = id
+        self.username = username
+        self.firstName = firstName
+        self.lastName = lastName
+        self.fullName = fullName
+        self.email = email
+        self.address = address
+        self.phone1 = phone1
+        self.phone2 = phone2
+        self.department = department
+        self.institution = institution
+        self.idNumber = idNumber
+        self.interests = interests
+        self.firstAccess = firstAccess
+        self.lastAccess = lastAccess
+        self.auth = auth
+        self.suspended = suspended
+        self.confirmed = confirmed
+        self.lang = lang
+        self.calendarType = calendarType
+        self.theme = theme
+        self.timezone = timezone
+        self.mailFormat = mailFormat
+        self.trackForums = trackForums
+        self.description = description
+        self.descriptionFormat = descriptionFormat
+        self.city = city
+        self.country = country
+        self.profileImageUrlSmall = profileImageUrlSmall
+        self.profileImageUrl = profileImageUrl
+        self.customFields = customFields
+        self.preferences = preferences
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id = "id"
+        case username = "username"
+        case firstName = "firstname"
+        case lastName = "lastname"
+        case fullName = "fullname"
+        case email = "email"
+        case address = "address"
+        case phone1 = "phone1"
+        case phone2 = "phone2"
+        case department = "department"
+        case institution = "institution"
+        case idNumber = "idnumber"
+        case interests = "interests"
+        case firstAccess = "firstaccess"
+        case lastAccess = "lastaccess"
+        case auth = "auth"
+        case suspended = "suspended"
+        case confirmed = "confirmed"
+        case lang = "lang"
+        case calendarType = "calendartype"
+        case theme = "theme"
+        case timezone = "timezone"
+        case mailFormat = "mailformat"
+        case trackForums = "trackforums"
+        case description = "description"
+        case descriptionFormat = "descriptionformat"
+        case city = "city"
+        case country = "country"
+        case profileImageUrlSmall = "profileimageurlsmall"
+        case profileImageUrl = "profileimageurl"
+        case customFields = "customfields"
+        case preferences = "preferences"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = container.decodeLenient(Int.self, forKey: .id) ?? 0
+        self.username = container.decodeLenient(String.self, forKey: .username)
+        self.firstName = container.decodeLenient(String.self, forKey: .firstName)
+        self.lastName = container.decodeLenient(String.self, forKey: .lastName)
+        self.fullName = container.decodeLenient(String.self, forKey: .fullName) ?? ""
+        self.email = container.decodeLenient(String.self, forKey: .email)
+        self.address = container.decodeLenient(String.self, forKey: .address)
+        self.phone1 = container.decodeLenient(String.self, forKey: .phone1)
+        self.phone2 = container.decodeLenient(String.self, forKey: .phone2)
+        self.department = container.decodeLenient(String.self, forKey: .department)
+        self.institution = container.decodeLenient(String.self, forKey: .institution)
+        self.idNumber = container.decodeLenient(String.self, forKey: .idNumber)
+        self.interests = container.decodeLenient(String.self, forKey: .interests)
+        self.firstAccess = container.decodeLenient(Int64.self, forKey: .firstAccess)
+        self.lastAccess = container.decodeLenient(Int64.self, forKey: .lastAccess)
+        self.auth = container.decodeLenient(String.self, forKey: .auth)
+        self.suspended = container.decodeLenient(Bool.self, forKey: .suspended)
+        self.confirmed = container.decodeLenient(Bool.self, forKey: .confirmed)
+        self.lang = container.decodeLenient(String.self, forKey: .lang)
+        self.calendarType = container.decodeLenient(String.self, forKey: .calendarType)
+        self.theme = container.decodeLenient(String.self, forKey: .theme)
+        self.timezone = container.decodeLenient(String.self, forKey: .timezone)
+        self.mailFormat = container.decodeLenient(Int.self, forKey: .mailFormat)
+        self.trackForums = container.decodeLenient(Int.self, forKey: .trackForums)
+        self.description = container.decodeLenient(String.self, forKey: .description)
+        self.descriptionFormat = container.decodeLenient(Int.self, forKey: .descriptionFormat)
+        self.city = container.decodeLenient(String.self, forKey: .city)
+        self.country = container.decodeLenient(String.self, forKey: .country)
+        self.profileImageUrlSmall = container.decodeLenient(String.self, forKey: .profileImageUrlSmall) ?? ""
+        self.profileImageUrl = container.decodeLenient(String.self, forKey: .profileImageUrl) ?? ""
+        self.customFields = container.decodeLenient([MoodleUserCustomField].self, forKey: .customFields) ?? []
+        self.preferences = container.decodeLenient([MoodleKeyValue].self, forKey: .preferences) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(username, forKey: .username)
+        try container.encode(firstName, forKey: .firstName)
+        try container.encode(lastName, forKey: .lastName)
+        try container.encode(fullName, forKey: .fullName)
+        try container.encode(email, forKey: .email)
+        try container.encode(address, forKey: .address)
+        try container.encode(phone1, forKey: .phone1)
+        try container.encode(phone2, forKey: .phone2)
+        try container.encode(department, forKey: .department)
+        try container.encode(institution, forKey: .institution)
+        try container.encode(idNumber, forKey: .idNumber)
+        try container.encode(interests, forKey: .interests)
+        try container.encode(firstAccess, forKey: .firstAccess)
+        try container.encode(lastAccess, forKey: .lastAccess)
+        try container.encode(auth, forKey: .auth)
+        try container.encode(suspended, forKey: .suspended)
+        try container.encode(confirmed, forKey: .confirmed)
+        try container.encode(lang, forKey: .lang)
+        try container.encode(calendarType, forKey: .calendarType)
+        try container.encode(theme, forKey: .theme)
+        try container.encode(timezone, forKey: .timezone)
+        try container.encode(mailFormat, forKey: .mailFormat)
+        try container.encode(trackForums, forKey: .trackForums)
+        try container.encode(description, forKey: .description)
+        try container.encode(descriptionFormat, forKey: .descriptionFormat)
+        try container.encode(city, forKey: .city)
+        try container.encode(country, forKey: .country)
+        try container.encode(profileImageUrlSmall, forKey: .profileImageUrlSmall)
+        try container.encode(profileImageUrl, forKey: .profileImageUrl)
+        try container.encode(customFields, forKey: .customFields)
+        try container.encode(preferences, forKey: .preferences)
+    }
+}
+
+public struct MoodleUserCustomField: Codable, Hashable, Sendable {
+    /// The type of the custom field - text field, checkbox...
+    public var type: String
+    /// The value of the custom field (as stored in the database)
+    public var value: String
+    /// The value of the custom field for display
+    public var displayValue: String?
+    /// The name of the custom field
+    public var name: String
+    /// The shortname of the custom field - to be able to build the field class in the code
+    public var shortName: String
+
+    public init(
+        type: String = "",
+        value: String = "",
+        displayValue: String? = nil,
+        name: String = "",
+        shortName: String = ""
+    ) {
+        self.type = type
+        self.value = value
+        self.displayValue = displayValue
+        self.name = name
+        self.shortName = shortName
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case type = "type"
+        case value = "value"
+        case displayValue = "displayvalue"
+        case name = "name"
+        case shortName = "shortname"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.type = container.decodeLenient(String.self, forKey: .type) ?? ""
+        self.value = container.decodeLenient(String.self, forKey: .value) ?? ""
+        self.displayValue = container.decodeLenient(String.self, forKey: .displayValue)
+        self.name = container.decodeLenient(String.self, forKey: .name) ?? ""
+        self.shortName = container.decodeLenient(String.self, forKey: .shortName) ?? ""
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(type, forKey: .type)
+        try container.encode(value, forKey: .value)
+        try container.encode(displayValue, forKey: .displayValue)
+        try container.encode(name, forKey: .name)
+        try container.encode(shortName, forKey: .shortName)
+    }
+}
+
+public struct MoodleGroupGetActivityAllowedGroupsResponse: Codable, Hashable, Sendable {
     public var groups: [MoodleCourseGroup]
+    /// Whether the user will be able to access all the activity groups.
+    public var canaccessallgroups: Bool?
     /// list of warnings
     public var warnings: [MoodleWarning]
 
     public init(
         groups: [MoodleCourseGroup] = [],
+        canaccessallgroups: Bool? = nil,
         warnings: [MoodleWarning] = []
     ) {
         self.groups = groups
+        self.canaccessallgroups = canaccessallgroups
         self.warnings = warnings
     }
 
     private enum CodingKeys: String, CodingKey {
         case groups = "groups"
+        case canaccessallgroups = "canaccessallgroups"
         case warnings = "warnings"
     }
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.groups = container.decodeLenient([MoodleCourseGroup].self, forKey: .groups) ?? []
+        self.canaccessallgroups = container.decodeLenient(Bool.self, forKey: .canaccessallgroups)
         self.warnings = container.decodeLenient([MoodleWarning].self, forKey: .warnings) ?? []
     }
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if !groups.isEmpty {
-            try container.encode(groups, forKey: .groups)
-        }
-        if !warnings.isEmpty {
-            try container.encode(warnings, forKey: .warnings)
-        }
+        try container.encode(groups, forKey: .groups)
+        try container.encode(canaccessallgroups, forKey: .canaccessallgroups)
+        try container.encode(warnings, forKey: .warnings)
     }
 }
 
@@ -2213,23 +3710,275 @@ public struct MoodleCourseGroup: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if id != 0 {
-            try container.encode(id, forKey: .id)
-        }
-        if name != "" {
-            try container.encode(name, forKey: .name)
-        }
-        if description != "" {
-            try container.encode(description, forKey: .description)
-        }
-        if descriptionFormat != 0 {
-            try container.encode(descriptionFormat, forKey: .descriptionFormat)
-        }
-        if idNumber != "" {
-            try container.encode(idNumber, forKey: .idNumber)
-        }
-        if courseId != nil {
-            try container.encode(courseId, forKey: .courseId)
-        }
+        try container.encode(id, forKey: .id)
+        try container.encode(name, forKey: .name)
+        try container.encode(description, forKey: .description)
+        try container.encode(descriptionFormat, forKey: .descriptionFormat)
+        try container.encode(idNumber, forKey: .idNumber)
+        try container.encode(courseId, forKey: .courseId)
+    }
+}
+
+public struct MoodleGroupGetActivityGroupmodeResponse: Codable, Hashable, Sendable {
+    /// group mode: 0 for no groups, 1 for separate groups, 2 for visible groups
+    public var groupMode: Int
+    /// list of warnings
+    public var warnings: [MoodleWarning]
+
+    public init(
+        groupMode: Int = 0,
+        warnings: [MoodleWarning] = []
+    ) {
+        self.groupMode = groupMode
+        self.warnings = warnings
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case groupMode = "groupmode"
+        case warnings = "warnings"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.groupMode = container.decodeLenient(Int.self, forKey: .groupMode) ?? 0
+        self.warnings = container.decodeLenient([MoodleWarning].self, forKey: .warnings) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(groupMode, forKey: .groupMode)
+        try container.encode(warnings, forKey: .warnings)
+    }
+}
+
+public struct MoodleGroupGetCourseGroupingsItem: Codable, Hashable, Sendable {
+    /// grouping record id
+    public var id: Int
+    /// id of course
+    public var courseId: Int
+    /// multilang compatible name, course unique
+    public var name: String
+    /// grouping description text
+    public var description: String
+    /// description format (1 = HTML, 0 = MOODLE, 2 = PLAIN, or 4 = MARKDOWN)
+    public var descriptionFormat: Int
+    /// id number
+    public var idNumber: String
+
+    public init(
+        id: Int = 0,
+        courseId: Int = 0,
+        name: String = "",
+        description: String = "",
+        descriptionFormat: Int = 0,
+        idNumber: String = ""
+    ) {
+        self.id = id
+        self.courseId = courseId
+        self.name = name
+        self.description = description
+        self.descriptionFormat = descriptionFormat
+        self.idNumber = idNumber
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id = "id"
+        case courseId = "courseid"
+        case name = "name"
+        case description = "description"
+        case descriptionFormat = "descriptionformat"
+        case idNumber = "idnumber"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = container.decodeLenient(Int.self, forKey: .id) ?? 0
+        self.courseId = container.decodeLenient(Int.self, forKey: .courseId) ?? 0
+        self.name = container.decodeLenient(String.self, forKey: .name) ?? ""
+        self.description = container.decodeLenient(String.self, forKey: .description) ?? ""
+        self.descriptionFormat = container.decodeLenient(Int.self, forKey: .descriptionFormat) ?? 0
+        self.idNumber = container.decodeLenient(String.self, forKey: .idNumber) ?? ""
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(courseId, forKey: .courseId)
+        try container.encode(name, forKey: .name)
+        try container.encode(description, forKey: .description)
+        try container.encode(descriptionFormat, forKey: .descriptionFormat)
+        try container.encode(idNumber, forKey: .idNumber)
+    }
+}
+
+public struct MoodleGroupGetCourseGroupsItem: Codable, Hashable, Sendable {
+    /// group record id
+    public var id: Int
+    /// id of course
+    public var courseId: Int
+    /// group name
+    public var name: String
+    /// group description text
+    public var description: String
+    /// description format (1 = HTML, 0 = MOODLE, 2 = PLAIN, or 4 = MARKDOWN)
+    public var descriptionFormat: Int
+    /// group enrol secret phrase
+    public var enrolmentkey: String
+    /// id number
+    public var idNumber: String
+    /// group visibility mode. 0 = Visible to all. 1 = Visible to members. 2 = See own membership. 3 = Membership is hidden.
+    public var visibility: Int
+    /// participation mode
+    public var participation: Bool
+
+    public init(
+        id: Int = 0,
+        courseId: Int = 0,
+        name: String = "",
+        description: String = "",
+        descriptionFormat: Int = 0,
+        enrolmentkey: String = "",
+        idNumber: String = "",
+        visibility: Int = 0,
+        participation: Bool = false
+    ) {
+        self.id = id
+        self.courseId = courseId
+        self.name = name
+        self.description = description
+        self.descriptionFormat = descriptionFormat
+        self.enrolmentkey = enrolmentkey
+        self.idNumber = idNumber
+        self.visibility = visibility
+        self.participation = participation
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id = "id"
+        case courseId = "courseid"
+        case name = "name"
+        case description = "description"
+        case descriptionFormat = "descriptionformat"
+        case enrolmentkey = "enrolmentkey"
+        case idNumber = "idnumber"
+        case visibility = "visibility"
+        case participation = "participation"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = container.decodeLenient(Int.self, forKey: .id) ?? 0
+        self.courseId = container.decodeLenient(Int.self, forKey: .courseId) ?? 0
+        self.name = container.decodeLenient(String.self, forKey: .name) ?? ""
+        self.description = container.decodeLenient(String.self, forKey: .description) ?? ""
+        self.descriptionFormat = container.decodeLenient(Int.self, forKey: .descriptionFormat) ?? 0
+        self.enrolmentkey = container.decodeLenient(String.self, forKey: .enrolmentkey) ?? ""
+        self.idNumber = container.decodeLenient(String.self, forKey: .idNumber) ?? ""
+        self.visibility = container.decodeLenient(Int.self, forKey: .visibility) ?? 0
+        self.participation = container.decodeLenient(Bool.self, forKey: .participation) ?? false
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(courseId, forKey: .courseId)
+        try container.encode(name, forKey: .name)
+        try container.encode(description, forKey: .description)
+        try container.encode(descriptionFormat, forKey: .descriptionFormat)
+        try container.encode(enrolmentkey, forKey: .enrolmentkey)
+        try container.encode(idNumber, forKey: .idNumber)
+        try container.encode(visibility, forKey: .visibility)
+        try container.encode(participation, forKey: .participation)
+    }
+}
+
+public struct MoodleCourseUserGroupsResponse: Codable, Hashable, Sendable {
+    public var groups: [MoodleCourseGroup]
+    /// list of warnings
+    public var warnings: [MoodleWarning]
+
+    public init(
+        groups: [MoodleCourseGroup] = [],
+        warnings: [MoodleWarning] = []
+    ) {
+        self.groups = groups
+        self.warnings = warnings
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case groups = "groups"
+        case warnings = "warnings"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.groups = container.decodeLenient([MoodleCourseGroup].self, forKey: .groups) ?? []
+        self.warnings = container.decodeLenient([MoodleWarning].self, forKey: .warnings) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(groups, forKey: .groups)
+        try container.encode(warnings, forKey: .warnings)
+    }
+}
+
+public struct MoodleEnrolSelfGetInstanceInfoResponse: Codable, Hashable, Sendable {
+    /// id of course enrolment instance
+    public var id: Int
+    /// id of course
+    public var courseId: Int
+    /// type of enrolment plugin
+    public var type: String
+    /// name of enrolment plugin
+    public var name: String
+    /// status of enrolment plugin
+    public var status: String
+    /// password required for enrolment
+    public var enrolpassword: String?
+
+    public init(
+        id: Int = 0,
+        courseId: Int = 0,
+        type: String = "",
+        name: String = "",
+        status: String = "",
+        enrolpassword: String? = nil
+    ) {
+        self.id = id
+        self.courseId = courseId
+        self.type = type
+        self.name = name
+        self.status = status
+        self.enrolpassword = enrolpassword
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id = "id"
+        case courseId = "courseid"
+        case type = "type"
+        case name = "name"
+        case status = "status"
+        case enrolpassword = "enrolpassword"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = container.decodeLenient(Int.self, forKey: .id) ?? 0
+        self.courseId = container.decodeLenient(Int.self, forKey: .courseId) ?? 0
+        self.type = container.decodeLenient(String.self, forKey: .type) ?? ""
+        self.name = container.decodeLenient(String.self, forKey: .name) ?? ""
+        self.status = container.decodeLenient(String.self, forKey: .status) ?? ""
+        self.enrolpassword = container.decodeLenient(String.self, forKey: .enrolpassword)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(courseId, forKey: .courseId)
+        try container.encode(type, forKey: .type)
+        try container.encode(name, forKey: .name)
+        try container.encode(status, forKey: .status)
+        try container.encode(enrolpassword, forKey: .enrolpassword)
     }
 }

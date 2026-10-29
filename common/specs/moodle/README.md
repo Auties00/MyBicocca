@@ -1,11 +1,13 @@
 # Moodle web services
 
-The Moodle web service functions the apps call, read by the codegen's `moodle` reader:
+Every function of Moodle's official mobile service (the service the apps' tokens belong to), read
+by the codegen's `moodle` reader:
 
 | File             | What it holds                                                                 |
 |------------------|-------------------------------------------------------------------------------|
-| `functions.txt`  | The functions to generate, one per line.                                      |
+| `functions.txt`  | Adjustments to that set: a name adds a function, `-name` leaves one out.      |
 | `functions.json` | Their parameters and results, dumped from Moodle's source (don't edit).       |
+| `effects.json`   | What each write does, and the reads that change state anyway.                 |
 | `modules.json`   | Module names by Moodle component (`core_course` → `Course`).                  |
 | `types.json`     | Type names by the path of a structure (`core_course_get_contents/returns[]`). |
 | `names.json`     | Member names by key, since Moodle runs words together (`timemodified`).       |
@@ -27,7 +29,9 @@ php tools/dump-functions.php moodle-4.5.12 functions.txt functions.json
 
 The script needs PHP 8.1 or later with the extensions Moodle requires (`intl`, `mbstring`,
 `curl`, …), but no database or Moodle install: it reads the functions from the
-`db/services.php` files and has Moodle describe them. Then regenerate from `common/codegen`.
+`db/services.php` files and has Moodle describe them. A function the new release adds needs an
+effect in `effects.json` unless Moodle marks it as a read: generation fails until it has one. Then
+regenerate from `common/codegen`.
 
 Functions that work without a token, such as `tool_mobile_get_public_config`, are served by
 Moodle's AJAX endpoint rather than the REST server, so they stay hand-written.

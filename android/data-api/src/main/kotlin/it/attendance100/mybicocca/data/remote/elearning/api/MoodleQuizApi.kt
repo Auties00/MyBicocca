@@ -15,6 +15,10 @@ import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleKeyValue
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleNamedValue
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleProcessAttemptResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleQuizAccessInformation
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleQuizGetAttemptAccessInformationResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleQuizGetCombinedReviewOptionsResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleQuizGetQuizFeedbackForGradeResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleQuizGetQuizRequiredQtypesResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleQuizzesResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleStartAttemptResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleStatusResponse
@@ -31,6 +35,30 @@ class MoodleQuizApi(
     client: HttpClient,
     json: Json
 ) : RestApi(client, json, "", MoodleRuntime.policy) {
+
+    /**
+     * Return access information for a given attempt in a quiz.
+     *
+     * @param quizId quiz instance id
+     * @param attemptId attempt id, 0 for the user last attempt if exists
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getAttemptAccessInformation(
+        quizId: Int,
+        attemptId: Int? = null,
+        auth: MoodleTokenAuth
+    ): MoodleQuizGetAttemptAccessInformationResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleQuizGetAttemptAccessInformationResponse>()) {
+            setBody(FormDataContent(parameters {
+                append("quizid", quizId.toString())
+                attemptId?.let { append("attemptid", it.toString()) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "mod_quiz_get_attempt_access_information")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
 
     /**
      * Returns information for the given attempt page for a quiz attempt in progress.
@@ -108,6 +136,30 @@ class MoodleQuizApi(
     }
 
     /**
+     * Combines the review options from a number of different quiz attempts.
+     *
+     * @param quizId quiz instance id
+     * @param userId user id (empty for current user)
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getCombinedReviewOptions(
+        quizId: Int,
+        userId: Int? = null,
+        auth: MoodleTokenAuth
+    ): MoodleQuizGetCombinedReviewOptionsResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleQuizGetCombinedReviewOptionsResponse>()) {
+            setBody(FormDataContent(parameters {
+                append("quizid", quizId.toString())
+                userId?.let { append("userid", it.toString()) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "mod_quiz_get_combined_review_options")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
      * Return access information for a given quiz.
      *
      * @param quizId quiz instance id
@@ -123,6 +175,51 @@ class MoodleQuizApi(
                 auth.form.forEach { (name, value) -> append(name, value) }
             }))
             parameter("wsfunction", "mod_quiz_get_quiz_access_information")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Get the feedback text that should be show to a student who got the given grade in the given quiz.
+     *
+     * @param quizId quiz instance id
+     * @param grade the grade to check
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getQuizFeedbackForGrade(
+        quizId: Int,
+        grade: Double,
+        auth: MoodleTokenAuth
+    ): MoodleQuizGetQuizFeedbackForGradeResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleQuizGetQuizFeedbackForGradeResponse>()) {
+            setBody(FormDataContent(parameters {
+                append("quizid", quizId.toString())
+                append("grade", grade.toString())
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "mod_quiz_get_quiz_feedback_for_grade")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Return the potential question types that would be required for a given quiz.
+     *
+     * @param quizId quiz instance id
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getQuizRequiredQtypes(
+        quizId: Int,
+        auth: MoodleTokenAuth
+    ): MoodleQuizGetQuizRequiredQtypesResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleQuizGetQuizRequiredQtypesResponse>()) {
+            setBody(FormDataContent(parameters {
+                append("quizid", quizId.toString())
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "mod_quiz_get_quiz_required_qtypes")
             parameter("moodlewsrestformat", "json")
             auth.headers.forEach { (name, value) -> header(name, value) }
         }
@@ -285,6 +382,99 @@ class MoodleQuizApi(
                 auth.form.forEach { (name, value) -> append(name, value) }
             }))
             parameter("wsfunction", "mod_quiz_start_attempt")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Trigger the attempt viewed event.
+     *
+     * @param attemptId attempt id
+     * @param page page number
+     * @param preflightData Preflight required data (like passwords)
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun viewAttempt(
+        attemptId: Int,
+        page: Int,
+        preflightData: List<MoodleNamedValue>? = null,
+        auth: MoodleTokenAuth
+    ): MoodleStatusResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleStatusResponse>()) {
+            setBody(FormDataContent(parameters {
+                append("attemptid", attemptId.toString())
+                append("page", page.toString())
+                preflightData?.let { appendBrackets("preflightdata", json.encodeToJsonElement(it)) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "mod_quiz_view_attempt")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Trigger the attempt reviewed event.
+     *
+     * @param attemptId attempt id
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun viewAttemptReview(
+        attemptId: Int,
+        auth: MoodleTokenAuth
+    ): MoodleStatusResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleStatusResponse>()) {
+            setBody(FormDataContent(parameters {
+                append("attemptid", attemptId.toString())
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "mod_quiz_view_attempt_review")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Trigger the attempt summary viewed event.
+     *
+     * @param attemptId attempt id
+     * @param preflightData Preflight required data (like passwords)
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun viewAttemptSummary(
+        attemptId: Int,
+        preflightData: List<MoodleNamedValue>? = null,
+        auth: MoodleTokenAuth
+    ): MoodleStatusResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleStatusResponse>()) {
+            setBody(FormDataContent(parameters {
+                append("attemptid", attemptId.toString())
+                preflightData?.let { appendBrackets("preflightdata", json.encodeToJsonElement(it)) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "mod_quiz_view_attempt_summary")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Trigger the course module viewed event and update the module completion status.
+     *
+     * @param quizId quiz instance id
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun viewQuiz(
+        quizId: Int,
+        auth: MoodleTokenAuth
+    ): MoodleStatusResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleStatusResponse>()) {
+            setBody(FormDataContent(parameters {
+                append("quizid", quizId.toString())
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "mod_quiz_view_quiz")
             parameter("moodlewsrestformat", "json")
             auth.headers.forEach { (name, value) -> header(name, value) }
         }

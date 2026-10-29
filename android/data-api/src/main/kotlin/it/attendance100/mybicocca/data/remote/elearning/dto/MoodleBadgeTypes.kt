@@ -5,9 +5,114 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class MoodleUserBadgesResponse(
-    @SerialName("badges")
-    val badges: List<MoodleUserBadge> = emptyList(),
+data class MoodleBadgesGetBadgeResponse(
+    @Serializable(with = MoodleBadgeFoldedSerializer::class)
+    @SerialName("badge")
+    val badge: MoodleBadge,
+
+    /** list of warnings */
+    @SerialName("warnings")
+    val warnings: List<MoodleWarning> = emptyList()
+)
+
+@Serializable
+data class MoodleBadge(
+    /** BadgeClass */
+    @SerialName("type")
+    val type: String = "",
+
+    /** Unique identifier for this badgeclass */
+    @SerialName("id")
+    val id: String = "",
+
+    /** Unique identifier for this badgeclass */
+    @SerialName("issuer")
+    val issuer: String? = null,
+
+    /** Name of the badgeclass */
+    @SerialName("name")
+    val name: String = "",
+
+    /** URL to the image. */
+    @SerialName("image")
+    val image: String = "",
+
+    /** Description of the badge class. */
+    @SerialName("description")
+    val description: String = "",
+
+    /** Identifier of the open badge for this assertion */
+    @SerialName("hostedUrl")
+    val hostedUrl: String? = null,
+
+    /** alignment */
+    @SerialName("alignment")
+    val alignment: List<MoodleBadgeAlignment> = emptyList(),
+
+    /** criteriaUrl */
+    @SerialName("criteriaUrl")
+    val criteriaUrl: String? = null,
+
+    /** criteriaNarrative */
+    @SerialName("criteriaNarrative")
+    val criteriaNarrative: String? = null
+)
+
+@Serializable
+data class MoodleBadgeAlignment(
+    /** Alignment id */
+    @SerialName("id")
+    val id: Int? = null,
+
+    /** Badge id */
+    @SerialName("badgeid")
+    val badgeId: Int? = null,
+
+    /** Target name */
+    @SerialName("targetName")
+    val targetName: String? = null,
+
+    /** Target URL */
+    @SerialName("targetUrl")
+    val targetUrl: String? = null,
+
+    /** Target description */
+    @SerialName("targetDescription")
+    val targetDescription: String? = null,
+
+    /** Target framework */
+    @SerialName("targetFramework")
+    val targetFramework: String? = null,
+
+    /** Target code */
+    @SerialName("targetCode")
+    val targetCode: String? = null
+)
+
+/** warning */
+@Serializable
+data class MoodleWarning(
+    /** item */
+    @SerialName("item")
+    val item: String? = null,
+
+    /** item id */
+    @SerialName("itemid")
+    val itemId: Int? = null,
+
+    /** the warning code can be used by the client app to implement specific behaviour */
+    @SerialName("warningcode")
+    val warningCode: String = "",
+
+    /** untranslated english message to explain the warning */
+    @SerialName("message")
+    val message: String = ""
+)
+
+@Serializable
+data class MoodleBadgesGetUserBadgeByHashResponse(
+    @SerialName("badge")
+    val badge: List<MoodleUserBadge> = emptyList(),
 
     /** list of warnings */
     @SerialName("warnings")
@@ -205,37 +310,6 @@ data class MoodleBadgeEndorsement(
 )
 
 @Serializable
-data class MoodleBadgeAlignment(
-    /** Alignment id */
-    @SerialName("id")
-    val id: Int? = null,
-
-    /** Badge id */
-    @SerialName("badgeid")
-    val badgeId: Int? = null,
-
-    /** Target name */
-    @SerialName("targetName")
-    val targetName: String? = null,
-
-    /** Target URL */
-    @SerialName("targetUrl")
-    val targetUrl: String? = null,
-
-    /** Target description */
-    @SerialName("targetDescription")
-    val targetDescription: String? = null,
-
-    /** Target framework */
-    @SerialName("targetFramework")
-    val targetFramework: String? = null,
-
-    /** Target code */
-    @SerialName("targetCode")
-    val targetCode: String? = null
-)
-
-@Serializable
 data class MoodleRelatedBadge(
     /** Badge id */
     @SerialName("id")
@@ -258,22 +332,12 @@ data class MoodleRelatedBadge(
     val type: Int? = null
 )
 
-/** warning */
 @Serializable
-data class MoodleWarning(
-    /** item */
-    @SerialName("item")
-    val item: String? = null,
+data class MoodleUserBadgesResponse(
+    @SerialName("badges")
+    val badges: List<MoodleUserBadge> = emptyList(),
 
-    /** item id */
-    @SerialName("itemid")
-    val itemId: Int? = null,
-
-    /** the warning code can be used by the client app to implement specific behaviour */
-    @SerialName("warningcode")
-    val warningCode: String = "",
-
-    /** untranslated english message to explain the warning */
-    @SerialName("message")
-    val message: String = ""
+    /** list of warnings */
+    @SerialName("warnings")
+    val warnings: List<MoodleWarning> = emptyList()
 )

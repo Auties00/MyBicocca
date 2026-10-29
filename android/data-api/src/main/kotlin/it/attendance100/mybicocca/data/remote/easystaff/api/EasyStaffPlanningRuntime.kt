@@ -33,7 +33,7 @@ internal object EasyStaffPlanningRuntime {
             // Bookings stored with a token younger than about ten seconds are taken for automation, as always happens right after a renewal; measured live, 9 seconds are refused and 12 are not.
             RetryRule(status = 401, code = "unauthorized.too_fast", delay = 12.seconds),
         ),
-        failure = { EasyStaffPlanningException(it.statusCode, it.errorCode, it.errorMessage) }
+        failure = { EasyStaffPlanningException(it.statusCode, it.errorCode, it.errorMessage, serverMessage = it.serverMessage) }
     )
 
     fun settings() = ClientSettings(emptyList())

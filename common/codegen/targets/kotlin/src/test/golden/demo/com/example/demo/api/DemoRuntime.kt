@@ -36,7 +36,7 @@ internal object DemoRuntime {
             RetryRule(status = 401, code = "invalid_token", before = RetryRequest(HttpMethod.Get, "/{region}/token", headers = mapOf("X-TENANT" to "{tenant}"))),
             RetryRule(status = 429, delay = 5.seconds),
         ),
-        failure = { DemoException(it.statusCode, it.errorCode, it.errorMessage, it.roles.filterIsInstance<DemoPermissionLevel>().toSet()) }
+        failure = { DemoException(it.statusCode, it.errorCode, it.errorMessage, it.roles.filterIsInstance<DemoPermissionLevel>().toSet(), serverMessage = it.serverMessage) }
     )
 
     fun settings() = ClientSettings(

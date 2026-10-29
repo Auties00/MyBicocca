@@ -3,7 +3,7 @@
 import { describe } from "vitest";
 import { MoodleTokenAuth } from "../../src/elearning/models/index.js";
 import { isPresent, liveCase } from "../runtime/live.js";
-import { MoodleLive, siteGetSiteInfo, tokenCredentials, writeMoodlePrivateFilesInfo } from "./MoodleLive.js";
+import { MoodleLive, courseGetUsersCourses, siteGetSiteInfo, tokenCredentials, writeMoodlePrivateFilesInfo } from "./MoodleLive.js";
 
 // The live tests of the Moodle User module, planned from common/specs/moodle/tests.yaml.
 describe("Moodle User", () => {
@@ -33,6 +33,17 @@ describe("Moodle User", () => {
     const userId = live.choose("userId", [await siteGetSiteInfo(live)].map((it) => it.userId).filter(isPresent));
     const auth = await tokenCredentials(live);
     await live.call("{\"k\":\"record\",\"n\":\"MoodleUserPreferencesResponse\"}", {}, async () => live.api.user.getUserPreferences(auth, { userId: userId }));
+  });
+
+  liveCase(MoodleLive, "User.preparePrivateFilesForEdition#1", { effect: "benign" }, async (live) => {
+    const auth = await tokenCredentials(live);
+    await live.call("{\"k\":\"record\",\"n\":\"MoodleUserPreparePrivateFilesForEditionResponse\"}", {}, async () => live.api.user.preparePrivateFilesForEdition(auth));
+  });
+
+  liveCase(MoodleLive, "User.viewUserList#1", { effect: "benign" }, async (live) => {
+    const courseId = live.choose("courseId", [await courseGetUsersCourses(live)].flat().map((it) => it.id).filter(isPresent));
+    const auth = await tokenCredentials(live);
+    await live.call("{\"k\":\"record\",\"n\":\"MoodleStatusResponse\"}", {}, async () => live.api.user.viewUserList(courseId, auth));
   });
 
   liveCase(MoodleLive, "User.viewUserProfile#1", { effect: "benign" }, async (live) => {

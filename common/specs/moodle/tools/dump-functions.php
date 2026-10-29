@@ -5,8 +5,10 @@
 //
 // Usage: php dump-functions.php <moodle-source-dir> <functions.txt> <output.json>
 //
-// functions.txt lists one function name per line; blank lines and lines starting with # are
-// ignored. The output describes each function in that order (see dump_describe()).
+// The output describes every function Moodle's official mobile service offers, the service the
+// apps' tokens belong to, sorted by name (see dump_describe()). functions.txt adjusts that set,
+// one name per line: a name adds a function outside the service, `-name` leaves one out. Blank
+// lines and lines starting with # are ignored.
 
 if ($argc !== 4) {
     fwrite(STDERR, "Usage: php dump-functions.php <moodle-source-dir> <functions.txt> <output.json>\n");
@@ -53,6 +55,8 @@ foreach (['setuplib', 'dmllib', 'weblib', 'moodlelib', 'externallib', 'accesslib
 }
 // The front page course, which setup.php reads from the database; it is always course 1.
 define('SITEID', 1);
+// The system context, which setup.php also reads from the database; a fresh install makes it 1.
+define('SYSCONTEXTID', 1);
 
 // A few descriptions look settings up in the database, such as the custom profile fields;
 // with no database there are none, so every query finds nothing.
@@ -69,7 +73,7 @@ use core_external\external_multiple_structure;
 use core_external\external_single_structure;
 use core_external\external_value;
 
-$wanted = array_values(array_filter(array_map('trim', file($listfile)), fn($line) => $line !== '' && $line[0] !== '#'));
+$adjustments = array_values(array_filter(array_map('trim', file($listfile)), fn($line) => $line !== '' && $line[0] !== '#'));
 
 // Every function definition, by name, with the component that declares it.
 $definitions = [];
@@ -88,6 +92,12 @@ foreach ($servicefiles as $component => $file) {
         );
     }
 }
+
+$mobile = array_keys(array_filter($definitions, fn($definition) => in_array(MOODLE_OFFICIAL_MOBILE_SERVICE, $definition->services ?? [], true)));
+$added = array_filter($adjustments, fn($line) => $line[0] !== '-');
+$removed = array_map(fn($line) => substr($line, 1), array_filter($adjustments, fn($line) => $line[0] === '-'));
+$wanted = array_values(array_diff(array_unique(array_merge($mobile, $added)), $removed));
+sort($wanted);
 
 $output = [
     'moodle' => trim(explode('(', dump_release())[0]),

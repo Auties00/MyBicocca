@@ -2,7 +2,7 @@
 
 import { decodeString } from "../../runtime/index.js";
 import { DemoClient } from "./DemoClient.js";
-import { DemoParameters } from "./DemoParameters.js";
+import { type DemoParameters } from "./DemoParameters.js";
 
 export class DemoSharedApi {
   constructor(private readonly client: DemoClient, private readonly parameters: DemoParameters) {}

@@ -1,17 +1,225 @@
 {
+  "Ai.setPolicyStatus": {
+    "effect": "irreversible",
+    "reason": "Records the student's acceptance of the AI usage policy, a consent record this API has no operation to withdraw."
+  },
+  "AiplacementCourseassist.summariseText": {
+    "effect": "irreversible",
+    "reason": "Sends the given text to the site's external AI provider, which costs the university money, counts against the user's rate limit and is logged in the AI usage records administrators see.",
+    "notes": "Fails unless the site has an AI provider and the course assistance placement enabled, and the user has aiplacement/courseassist:summarise_text."
+  },
+  "AiplacementEditor.generateImage": {
+    "effect": "irreversible",
+    "reason": "Sends the prompt to the site's paid AI provider and records the action with the prompt in the AI usage log admins review; counts against the user's rate limit."
+  },
+  "AiplacementEditor.generateText": {
+    "effect": "irreversible",
+    "reason": "Sends the prompt to the site's paid AI provider and records the action with the prompt in the AI usage log admins review; counts against the user's rate limit."
+  },
+  "Assign.lockSubmissions": {
+    "effect": "reversible",
+    "reason": "Locks the listed students' submissions so they can no longer edit them, a flag the student sees that Assign.unlockSubmissions clears again.",
+    "notes": "Undo: Assign.unlockSubmissions(assignmentId = $args.assignmentId, userIds = $args.userIds). Exact only for students who were not locked before (check Assign.getUserFlags(assignmentIds = [$args.assignmentId]) assignments[*].userflags[*].locked == 0 beforehand); a missing flags row is created with locked = 0 by the unlock. Needs mod/assign:grade, so a student account gets nopermissions; both calls log submission_locked / submission_unlocked events."
+  },
   "Assign.removeSubmission": {
     "effect": "reversible",
     "reason": "Clears the content of the student's own draft submission, which can be read beforehand (getSubmissionStatus) and saved back with Assign.saveSubmission.",
     "notes": "Undo: read Assign.getSubmissionStatus(assignId) first (lastattempt.submission.plugins: online text and files), then call Assign.saveSubmission(assignmentId = $args.assignId) with the same online text and, for files, a draft area re-filled by Files.uploadFile; the restore form cannot express this nested plugin data. Exact only on an assignment with drafts enabled and a draft submission: on an assignment without drafts the re-save counts as a new submission and notifies graders. Files come back with new timestamps and the removal is logged. Use a test assignment nobody grades."
+  },
+  "Assign.revealIdentities": {
+    "effect": "irreversible",
+    "reason": "Reveals student identities on a blind-marking assignment to every grader and releases all its grades to the gradebook; Moodle offers no way to blind it again."
+  },
+  "Assign.revertSubmissionsToDraft": {
+    "effect": "irreversible",
+    "reason": "Puts students' submitted work back to draft, records the teacher as grader and resets submission completion; only the student can resubmit, which notifies graders again."
+  },
+  "Assign.saveGrade": {
+    "effect": "irreversible",
+    "reason": "Grades one student and writes it to the gradebook, where the student and staff see it and grade history keeps every change."
+  },
+  "Assign.saveGrades": {
+    "effect": "irreversible",
+    "reason": "Grades several students at once and writes them to the gradebook, where students and staff see them and grade history keeps every change."
   },
   "Assign.saveSubmission": {
     "effect": "reversible",
     "reason": "On an assignment with drafts enabled it only saves the student's draft, which Assign.removeSubmission clears again (or a re-save with the previous content restores).",
     "notes": "Undo: Assign.removeSubmission(userId = the student's id from Site.getSiteInfo, assignId = $args.assignmentId) when there was no draft before; otherwise re-save the content read from Assign.getSubmissionStatus beforehand. Verify with Assign.getSubmissionStatus(assignId = $args.assignmentId) (lastattempt.submission.status == \"draft\"). On an assignment WITHOUT drafts saving counts as submitting: it notifies graders and the student, which cannot be undone, so only configure it against a draft-enabled assignment nobody grades."
   },
+  "Assign.saveUserExtensions": {
+    "effect": "irreversible",
+    "reason": "Grants students extended due dates, which they see in the assignment and their calendar and staff rely on; logs extension_granted events for each."
+  },
+  "Assign.setUserFlags": {
+    "effect": "irreversible",
+    "reason": "Writes the grading flags staff rely on (lock, mailed, extension, marking workflow state, allocated marker); a cleared mailed flag or a released workflow state lets cron send grade notifications to students.",
+    "notes": "The old values can be read with Assign.getUserFlags and written back, which would be exact for the lock flag alone, but the marking-workflow and mailed fields can trigger notifications before any undo runs. Needs mod/assign:grade."
+  },
+  "Assign.startSubmission": {
+    "effect": "irreversible",
+    "reason": "Starts the clock of a timed assignment for the student, which keeps running and staff see; only a teacher can grant more time."
+  },
   "Assign.submitForGrading": {
     "effect": "irreversible",
     "reason": "Submits the assignment for grading and notifies graders; only a teacher can revert it to draft, and not through this API."
+  },
+  "Assign.submitGradingForm": {
+    "effect": "irreversible",
+    "reason": "Saves a grade and feedback for a student from the grading form into the gradebook, where the student and staff see them and grade history keeps them."
+  },
+  "Assign.unlockSubmissions": {
+    "effect": "reversible",
+    "reason": "Unlocks the listed students' submissions so they can edit them again, a flag the student sees that Assign.lockSubmissions sets back.",
+    "notes": "Undo: Assign.lockSubmissions(assignmentId = $args.assignmentId, userIds = $args.userIds). Exact only for students who were locked before (Assign.getUserFlags userflags[*].locked == 1); otherwise the undo locks a student a teacher never locked. Needs mod/assign:grade, so a student account gets nopermissions. Safest to run only as the undo of Assign.lockSubmissions."
+  },
+  "Assign.viewAssign": {
+    "effect": "benign",
+    "reason": "A *_view_* function: logs a course module viewed event and may mark the assignment complete on view, as the student opening it would."
+  },
+  "Assign.viewGradingTable": {
+    "effect": "benign",
+    "reason": "A *_view_* function: only logs a grading_table_viewed event; needs grading rights, so a student gets nopermissions."
+  },
+  "Assign.viewSubmissionStatus": {
+    "effect": "benign",
+    "reason": "A *_view_* function: only logs a submission_status_viewed event, as the student opening their submission page would."
+  },
+  "Bigbluebuttonbn.completionValidate": {
+    "effect": "irreversible",
+    "reason": "For a teacher, queues completion checks for every enrolled user of the room, which can mark their activity complete; a student only gets a nopermissions warning.",
+    "notes": "Requires moodle/course:update to do anything; a student account gets a warning and nothing changes, but the outcome for others cannot be undone."
+  },
+  "Bigbluebuttonbn.endMeeting": {
+    "effect": "irreversible",
+    "reason": "Ends the live BigBlueButton meeting for everyone in it, which cannot be resumed as the same session.",
+    "notes": "Only moderators may end a meeting; for a student it throws a restricted context exception. Needs the BigBlueButton server to answer."
+  },
+  "Bigbluebuttonbn.getJoinUrl": {
+    "effect": "irreversible",
+    "reason": "Creates the BigBlueButton meeting on the server if it is not running and logs the student as joining it, a join record teachers see in the room's logs and that can count towards attendance completion.",
+    "notes": "Despite the name it is not a read: meeting::join_meeting calls create_meeting and join, which writes a bigbluebuttonbn_logs join entry. Needs a reachable BigBlueButton server and a room the student can join (often only when a moderator is present)."
+  },
+  "Bigbluebuttonbn.updateRecording": {
+    "effect": "irreversible",
+    "reason": "Deletes, edits, publishes, unpublishes, protects, unprotects or imports a meeting recording that the room's participants see; deletion cannot be undone.",
+    "notes": "Requires mod/bigbluebuttonbn:managerecordings and the action's own capability, which students lack. Publish/unpublish and protect/unprotect are mutual, but delete and import are not, and they all act on the BigBlueButton server."
+  },
+  "Bigbluebuttonbn.viewBigbluebuttonbn": {
+    "effect": "benign",
+    "reason": "A *_view_* function: logs a course module viewed event and may mark the room complete on view, as the student opening it would."
+  },
+  "Blog.addEntry": {
+    "effect": "reversible",
+    "reason": "Creates a blog entry that Blog.deleteEntry removes again; blogs send no notifications.",
+    "notes": "Undo: Blog.deleteEntry(entryId = $result.entryid). Pass options [{name: publishstate, value: draft}] so only the author sees the entry while it exists; the default publish state is site, visible to every logged-in user. Fails with blogdisable when blogs are disabled on the site."
+  },
+  "Blog.deleteEntry": {
+    "effect": "irreversible",
+    "reason": "Permanently deletes a blog entry with its attachments, tags, associations and comments; re-creating it gives a new entry with a new id and time."
+  },
+  "Blog.prepareEntryForEdition": {
+    "effect": "benign",
+    "reason": "Copies an entry's files into temporary draft file areas for editing; the entry itself is not changed.",
+    "notes": "Draft areas are private scratch space cleaned up by cron. Needs an entry the student can edit, and blogs enabled."
+  },
+  "Blog.updateEntry": {
+    "effect": "reversible",
+    "reason": "Edits the student's own blog entry, whose subject and summary can be read beforehand with Blog.getEntries and written back.",
+    "notes": "Undo: read the entry with Blog.getEntries (filter entryid) first, then call Blog.updateEntry(entryId = $args.entryId) with the previous subject, summary and summaryformat; the restore form cannot express it. Pass no options so publish state, associations, tags and attachments keep their values. getEntries returns the summary formatted for display, so the restore is exact only for plain HTML without embedded files, such as a draft entry the test created with Blog.addEntry. The modified time stays updated."
+  },
+  "Blog.viewEntries": {
+    "effect": "benign",
+    "reason": "A *_view_* function: only logs a blog entries viewed event, as the student opening the blog would.",
+    "notes": "Moodle flags it as read."
+  },
+  "Book.viewBook": {
+    "effect": "benign",
+    "reason": "A *_view_* function: logs a course module (or chapter) viewed event and may mark the book complete on view, as the student opening it would."
+  },
+  "Calendar.createCalendarEvents": {
+    "effect": "reversible",
+    "reason": "Creates events in the student's own calendar (students may only add user events), which Calendar.deleteCalendarEvents removes again.",
+    "notes": "Undo: Calendar.deleteCalendarEvents(events = [{eventid: $result.events[0].id, repeat: true}]), repeat true so a repeating series goes too. Use eventtype \"user\" only: staff accounts could create course, group or site events that others see, and those are mailed in reminders. Verify with Calendar.getCalendarEventById(eventId = $result.events[0].id)."
+  },
+  "Calendar.deleteCalendarEvents": {
+    "effect": "irreversible",
+    "reason": "Deletes calendar events, or a whole repeating series; re-creating them gives new ids, and course or group events (for accounts allowed) vanish for everyone.",
+    "notes": "Safe only as the undo of Calendar.createCalendarEvents on an event the test created."
+  },
+  "Calendar.submitCreateUpdateForm": {
+    "effect": "reversible",
+    "reason": "Creates (or, with an id, edits) a calendar event from the event form; a new user event is removed again by Calendar.deleteCalendarEvents.",
+    "notes": "Undo: Calendar.deleteCalendarEvents(events = [{eventid: $result.event.id, repeat: true}]). Only configure it to create a new event of eventtype \"user\" (formdata without id): editing an existing event cannot be restored exactly through this form (the description's files and repeat settings), and course or group events reach other users."
+  },
+  "Calendar.updateEventStartDay": {
+    "effect": "reversible",
+    "reason": "Moves an event to another day keeping its time of day, which calling it again with the original day restores exactly.",
+    "notes": "Undo: read Calendar.getCalendarEventById(eventId) first (event.timestart), then call Calendar.updateEventStartDay(eventId = $args.eventId, daytimestamp = midnight of the original day); the restore form cannot compute the day. Only on a user event the test created: on an activity event (an assignment due date) a staff account would move the activity's own date, which students act on."
+  },
+  "Chat.getChatLatestMessages": {
+    "effect": "benign",
+    "reason": "Refreshes the student's presence ping in the chat room, and may remove users whose ping has expired, posting their 'exit' messages as cron would anyway.",
+    "notes": "Moodle flags it as read. Needs a chatsid from the irreversible Chat.loginUser, so tests reach it only after entering a room."
+  },
+  "Chat.getChatUsers": {
+    "effect": "benign",
+    "reason": "Lists the users in the chat room after removing those whose ping has expired, which posts their 'exit' messages as cron would anyway.",
+    "notes": "Moodle flags it as read. Needs a chatsid from the irreversible Chat.loginUser."
+  },
+  "Chat.loginUser": {
+    "effect": "irreversible",
+    "reason": "Enters the student into the chat room, posting an 'entered the chat' system message that everyone in the room sees and that stays in the session logs.",
+    "notes": "Leaving is not an API operation: when the student stops pinging, cron or the next client posts an 'exit' message, also kept in the log."
+  },
+  "Chat.sendChatMessage": {
+    "effect": "irreversible",
+    "reason": "Posts a message in the chat session, which everyone in the room sees and which stays in the session logs; there is no operation to delete it."
+  },
+  "Chat.viewChat": {
+    "effect": "benign",
+    "reason": "A *_view_* function: logs a course module viewed event and may mark the chat complete on view, as the student opening it would."
+  },
+  "Chat.viewSessions": {
+    "effect": "benign",
+    "reason": "A *_view_* function: only logs a sessions viewed event, the same as the student opening the past sessions page."
+  },
+  "Choice.deleteChoiceResponses": {
+    "effect": "irreversible",
+    "reason": "Deletes the student's choice answers, which teachers see in the responses report and published results; answering again creates new answers and may lose a place in a limited option.",
+    "notes": "Students may only delete their own answers, and only when the choice allows updating and is still open. It also resets completion on submit."
+  },
+  "Choice.submitChoiceResponse": {
+    "effect": "reversible",
+    "reason": "On a choice that allows updating, records the student's answers, which Choice.deleteChoiceResponses removes again.",
+    "notes": "Undo: Choice.deleteChoiceResponses(choiceId = $args.choiceId, responses = $result.answers[*].id), valid only when the student had no answer before; otherwise re-submit the previous options read from Choice.getChoiceOptions (options[*].checked). Verify with Choice.getChoiceOptions. Exact only on a choice with allowupdate on and no option limits: until the undo the answer counts in the results others may see, and it can set and then reset completion on submit. Use a test choice nobody relies on, never a group or slot sign-up."
+  },
+  "Choice.viewChoice": {
+    "effect": "benign",
+    "reason": "A *_view_* function: logs a course module viewed event and may mark the choice complete on view, as the student opening it would."
+  },
+  "Comment.addComments": {
+    "effect": "irreversible",
+    "reason": "Posts comments others see at once (on a submission, its graders; on a competency, the reviewer and the student are messaged straight away), so deleting them afterwards does not undo it.",
+    "notes": "Comment.deleteComments(comments = [$result[0].id]) removes the comment itself, but the competency notifications are already sent and there is no editing window as in the forum."
+  },
+  "Comment.deleteComments": {
+    "effect": "irreversible",
+    "reason": "Deletes comments permanently; posting again creates a new comment with a new id and time."
+  },
+  "Competency.deleteEvidence": {
+    "effect": "irreversible",
+    "reason": "Permanently deletes a piece of evidence from a user's competency record, which staff rely on for ratings.",
+    "notes": "Requires the capability to manage the user's evidence (moodle/competency:userevidencemanage or staff rating rights); fails when competencies are disabled."
+  },
+  "Competency.gradeCompetencyInCourse": {
+    "effect": "irreversible",
+    "reason": "Rates a user's competency in a course, adding evidence to their record and notifying them; earlier ratings remain in the evidence history.",
+    "notes": "Requires moodle/competency:competencygrade, which students lack; fails when competencies are disabled."
+  },
+  "Completion.markCourseSelfCompleted": {
+    "effect": "irreversible",
+    "reason": "Marks the course complete for the student by self-completion, which teachers see in completion reports and which can complete the course and award badges or certificates; the API has no way to unmark it."
   },
   "Completion.updateActivityCompletionStatusManually": {
     "effect": "reversible",
@@ -22,6 +230,79 @@
     "effect": "irreversible",
     "reason": "Self-enrols the student in a course, visible in the participant list, and this API has no operation to unenrol again.",
     "notes": "Moodle has no web service a student can use to self-unenrol (enrol/self/unenrolself.php is a web page; core_enrol_unenrol_user_enrolment needs the enrol/self:unenrol staff capability), so no undo exists in this API. Enrolment can also send the course welcome message and start an enrolment period."
+  },
+  "Course.setFavouriteCourses": {
+    "effect": "reversible",
+    "reason": "Stars or unstars courses for the student, a private favourite that the opposite call restores.",
+    "notes": "Moodle flags it as read. Undo: Course.setFavouriteCourses(courses = [{id: $args.courses[0].id, favourite: false}]) for a test that stars a course that was not starred; for the opposite direction undo with favourite = true. Check beforehand with Course.getEnrolledCoursesByTimelineClassification(classification = \"all\").courses[*].isfavourite. Calling it on a course already in the requested state only returns a warning."
+  },
+  "Course.viewCourse": {
+    "effect": "benign",
+    "reason": "A *_view_* function: logs a course viewed event, updates the student's recent courses and last access, and may mark activities complete, as the student opening the course would."
+  },
+  "Data.addEntry": {
+    "effect": "reversible",
+    "reason": "Adds an entry to a database activity, which other participants see; Data.deleteEntry removes it again with its contents.",
+    "notes": "Undo: Data.deleteEntry(entryId = $result.newentryid); when newentryid is 0 the fields failed validation and nothing was stored. The database module sends no notifications on new entries, and deleting recomputes completion by entry count. Other participants can see the entry until it is deleted (unless the database requires approval), so use a test database nobody reads."
+  },
+  "Data.approveEntry": {
+    "effect": "reversible",
+    "reason": "A teacher setting: approves or unapproves an entry, a flag the opposite call sets back exactly.",
+    "notes": "Undo: read Data.getEntry(entryId).entry.approved first, then call Data.approveEntry(entryId = $args.entryId, approve = the previous value). Needs mod/data:approve, which students lack, so a student account only gets an error. While approved, the entry is visible to all participants of an approval-required database."
+  },
+  "Data.deleteEntry": {
+    "effect": "irreversible",
+    "reason": "Permanently deletes a database entry with its contents, files, tags, ratings and comments; adding it again creates a new entry with a new id and time."
+  },
+  "Data.updateEntry": {
+    "effect": "reversible",
+    "reason": "Edits the student's own database entry, whose field contents can be read beforehand with Data.getEntry and written back.",
+    "notes": "Undo: read Data.getEntry(entryId, returnContents = true) first, then call Data.updateEntry(entryId = $args.entryId) with the previous contents, one data item per field (value JSON-encoded); the restore form cannot express this list. Exact only for text-like fields without files, in a database that does not require approval: a user without mod/data:approve resets the entry's approved flag on every edit, and only a teacher can approve it again. The modified time stays updated. Target a test entry (e.g. one created by Data.addEntry)."
+  },
+  "Data.viewDatabase": {
+    "effect": "benign",
+    "reason": "A *_view_* function: logs a course module viewed event and may mark the database complete on view, as the student opening it would."
+  },
+  "Dataprivacy.cancelDataRequest": {
+    "effect": "irreversible",
+    "reason": "Cancels a data request, a final status for the privacy officer's workflow; a cancelled request cannot be reopened, only a new one created."
+  },
+  "Dataprivacy.contactDpo": {
+    "effect": "irreversible",
+    "reason": "Lodges a request to the site's Data Protection Officers and emails it to them."
+  },
+  "Dataprivacy.createDataRequest": {
+    "effect": "irreversible",
+    "reason": "Creates a data export or deletion request that the Data Protection Officers are notified of and act on; a deletion request, once approved, erases the account's data."
+  },
+  "DraftArea.deleteDraftFiles": {
+    "effect": "benign",
+    "reason": "Deletes files from one of the student's temporary draft file areas, private scratch space that nothing uses until a form saves it.",
+    "notes": "Benign only for a draft the test created; deleting from a draft the app is about to save into a submission or post would drop those files from it."
+  },
+  "DraftArea.getUnusedDraftItemid": {
+    "effect": "read",
+    "reason": "Picks a random draft item id that no file of the user uses yet; nothing is stored (Moodle flags it as a write)."
+  },
+  "EnrolGuest.validatePassword": {
+    "effect": "benign",
+    "reason": "Checks a guest-access password and stores the correct one in the student's own user preferences (or clears it on a wrong one), so later calls can enter the course as a guest; nobody else sees it."
+  },
+  "Feedback.launchFeedback": {
+    "effect": "read",
+    "reason": "Only works out which page to resume the student's feedback on from their saved temporary answers; nothing is stored (Moodle flags it as a write)."
+  },
+  "Feedback.processPage": {
+    "effect": "irreversible",
+    "reason": "Saves the student's answers to a feedback page and, on its last page, submits the response, which staff see in the analysis and can't be withdrawn."
+  },
+  "Feedback.viewFeedback": {
+    "effect": "benign",
+    "reason": "A *_view_* function: logs a course module viewed event and may mark the feedback complete on view, as the student opening it would."
+  },
+  "Folder.viewFolder": {
+    "effect": "benign",
+    "reason": "A *_view_* function: logs a course module viewed event and may mark the folder complete on view, as the student opening it would."
   },
   "Forum.addDiscussion": {
     "effect": "reversible",
@@ -41,6 +322,16 @@
     "effect": "benign",
     "reason": "Copies a post's files into a temporary draft file area for editing; the post itself is not changed.",
     "notes": "Draft areas are private scratch space cleaned up by cron. Needs a post the student can edit."
+  },
+  "Forum.setLockState": {
+    "effect": "reversible",
+    "reason": "A moderator setting: locks or unlocks a discussion for everyone, which the opposite call undoes.",
+    "notes": "targetState is the discussion's current lock state (its locked timestamp, or 0): 0 locks it at the current time, a non-zero value unlocks it. Undo: Forum.setLockState(forumId = $args.forumId, discussionId = $args.discussionId, targetState = $result.locked) with the locked time the result returns. Unlocking a lock the test set restores 0 exactly; re-locking a discussion that was locked before gives it a new locked time. Needs forum management rights, which students lack. While locked nobody can reply."
+  },
+  "Forum.setPinState": {
+    "effect": "reversible",
+    "reason": "A moderator setting: pins or unpins a discussion at the top of the forum for everyone, a flag the opposite call sets back exactly.",
+    "notes": "Undo: Forum.setPinState(discussionId = $args.discussionId, targetState = 1 - $args.targetState). Read the previous state first from Forum.getForumDiscussions (discussions[].pinned) so the undo restores it rather than the opposite of what was asked. Needs mod/forum:pindiscussions, which students lack."
   },
   "Forum.setSubscriptionState": {
     "effect": "reversible",
@@ -65,29 +356,193 @@
     "effect": "benign",
     "reason": "A *_view_* function: only logs a discussion viewed event, as the student opening it would."
   },
+  "Glossary.addEntry": {
+    "effect": "reversible",
+    "reason": "Adds a glossary entry other participants see (or teachers see in the approval queue), which Glossary.deleteEntry removes again while the student may still delete it.",
+    "notes": "Undo: Glossary.deleteEntry(entryId = $result.entryid). The student may delete their own entry only within the site's maximum editing time (30 minutes by default) unless the glossary allows editing always, so the undo must run promptly. Adding may mark the activity complete (completion by number of entries); deletion sets it incomplete again. No messages are sent. Use a test glossary nobody reads."
+  },
+  "Glossary.deleteEntry": {
+    "effect": "irreversible",
+    "reason": "Deletes a glossary entry with its comments, ratings, tags and files permanently; re-adding creates a new entry with new ids, times and no comments."
+  },
+  "Glossary.prepareEntryForEdition": {
+    "effect": "benign",
+    "reason": "Copies an entry's files into temporary draft file areas for editing; the entry itself is not changed.",
+    "notes": "Moodle flags it as read. Draft areas are private scratch space cleaned up by cron. Needs an entry the student can still edit."
+  },
+  "Glossary.updateEntry": {
+    "effect": "reversible",
+    "reason": "Edits the student's own glossary entry, whose content can be read beforehand with Glossary.prepareEntryForEdition and written back.",
+    "notes": "Undo: read Glossary.prepareEntryForEdition(entryId = $args.entryId) (or Glossary.getEntryById) first, then call Glossary.updateEntry(entryId = $args.entryId) again with the previous concept, definition, definitionformat and options (aliases, categories, usedynalink, casesensitive, fullmatch). Attachments need draft areas re-filled from the prepared ones. timemodified changes and two entry_updated events are logged. Only within the editing window for a student."
+  },
+  "Glossary.viewEntry": {
+    "effect": "benign",
+    "reason": "A *_view_* function: only logs an entry viewed event, as the student opening the entry would."
+  },
+  "Glossary.viewGlossary": {
+    "effect": "benign",
+    "reason": "A *_view_* function: logs a course module viewed event and may mark the glossary complete on view, as the student opening it would."
+  },
+  "Grade.viewGradeReport": {
+    "effect": "benign",
+    "reason": "Only logs a grade report viewed event, the same as the student opening their user grade report."
+  },
+  "GradeOverview.viewGradeReport": {
+    "effect": "benign",
+    "reason": "A *_view_* function: only logs a grade report viewed event, as the student opening the overview report would."
+  },
+  "Grades.graderGradingpanelPointFetch": {
+    "effect": "benign",
+    "reason": "Returns the grade shown in the grading panel, and when there is none yet it stores an empty grade row (no value), which nobody sees.",
+    "notes": "Moodle flags it as a write because of that empty row. A student can fetch only their own grade; other users need grading rights. Only items using direct grading accept it (in core, whole-forum grading), otherwise it throws."
+  },
+  "Grades.graderGradingpanelPointStore": {
+    "effect": "irreversible",
+    "reason": "Stores a grade and feedback for a user, which the graded user sees and which go to the gradebook."
+  },
+  "Grades.graderGradingpanelScaleFetch": {
+    "effect": "benign",
+    "reason": "Returns the scale grade shown in the grading panel, and when there is none yet it stores an empty grade row (no value), which nobody sees.",
+    "notes": "Moodle flags it as a write because of that empty row. A student can fetch only their own grade; other users need grading rights. Only scale-graded items using direct grading accept it."
+  },
+  "Grades.graderGradingpanelScaleStore": {
+    "effect": "irreversible",
+    "reason": "Stores a scale grade and feedback for a user, which the graded user sees and which go to the gradebook."
+  },
+  "H5pactivity.logReportViewed": {
+    "effect": "benign",
+    "reason": "Only logs a report viewed event for the H5P activity's attempts report."
+  },
+  "H5pactivity.viewH5pactivity": {
+    "effect": "benign",
+    "reason": "A *_view_* function: logs a course module viewed event and may mark the activity complete on view, as the student opening it would."
+  },
+  "Imscp.viewImscp": {
+    "effect": "benign",
+    "reason": "A *_view_* function: logs a course module viewed event and may mark the IMS content package complete on view, as the student opening it would."
+  },
+  "Lesson.finishAttempt": {
+    "effect": "irreversible",
+    "reason": "Ends the student's lesson attempt and records its grade in the gradebook, which teachers see; a finished attempt cannot be reopened."
+  },
+  "Lesson.launchAttempt": {
+    "effect": "irreversible",
+    "reason": "Starts the lesson timer for a new attempt (lesson_timer record and a lesson_started event), which counts towards retakes and time limits and staff see in the reports."
+  },
+  "Lesson.processPage": {
+    "effect": "irreversible",
+    "reason": "Records the student's answers to a lesson page as attempts (or a content page as viewed), which count towards the grade and stay in the reports."
+  },
+  "Lesson.viewLesson": {
+    "effect": "benign",
+    "reason": "A *_view_* function: logs a course module viewed event and may mark the lesson complete on view, as the student opening it would."
+  },
+  "Lti.viewLti": {
+    "effect": "benign",
+    "reason": "A *_view_* function: logs a course module viewed event and may mark the external tool complete on view, as the student opening it would.",
+    "notes": "Moodle flags it as read."
+  },
   "Message.blockUser": {
     "effect": "reversible",
     "reason": "Adds a user to the current user's private block list; unblocking removes the record again.",
     "notes": "The undo is exact only if the target was not already blocked (otherwise blocking does nothing and the undo removes a block the student had set). The block list cannot be read without a shared conversation (members[].isBlocked of getConversationMessages), so no verify. Pick a target who is not staff: users who can message even when blocked cannot be blocked. While the block is in place the target cannot message the student."
+  },
+  "Message.confirmContactRequest": {
+    "effect": "irreversible",
+    "reason": "Accepts another user's contact request, adding a contact both users see and deleting their request; removing the contact afterwards cannot bring the request back."
+  },
+  "Message.createContactRequest": {
+    "effect": "irreversible",
+    "reason": "Sends a contact request to another user, who is notified at once (message_send of messagecontactrequests); no operation withdraws a request."
+  },
+  "Message.declineContactRequest": {
+    "effect": "irreversible",
+    "reason": "Deletes another user's pending contact request; only they can send it again, which notifies the student anew."
+  },
+  "Message.deleteContacts": {
+    "effect": "irreversible",
+    "reason": "Removes a contact for both users; getting it back needs a new contact request that the other user must accept."
   },
   "Message.deleteConversationsById": {
     "effect": "irreversible",
     "reason": "Deletes conversations from the student's view, and nothing in the API can bring back the other participants' messages.",
     "notes": "Deletion is per user (other members keep the conversation), but messages written by others cannot be recreated."
   },
+  "Message.deleteMessage": {
+    "effect": "irreversible",
+    "reason": "Hides a message from the student's own view of the conversation for good; the API has no undelete, and messages others wrote cannot be recreated."
+  },
+  "Message.deleteMessageForAllUsers": {
+    "effect": "irreversible",
+    "reason": "Deletes a message for every member of the conversation, which nothing in the API can bring back."
+  },
   "Message.markAllConversationMessagesAsRead": {
     "effect": "benign",
     "reason": "Records the student's own read markers for one conversation, exactly what the Moodle app does when the student opens it, and reaches nobody else.",
     "notes": "Moodle shows senders no read receipts and message e-mails go out at send time, so no one else sees the change. Only the student's unread badge changes: target the student's self-conversation or one with no unread messages so no real unread message is hidden from them. There is no mark-unread, which is why it is benign rather than reversible."
   },
+  "Message.markAllNotificationsAsRead": {
+    "effect": "benign",
+    "reason": "Sets the read time of the student's own notifications, what opening the notification drawer does, and reaches nobody else.",
+    "notes": "There is no mark-unread, which is why it is benign rather than reversible: real unread notifications lose their badge, so only run it when the student has none unread (Message.getUnreadNotificationCount == 0)."
+  },
+  "Message.markMessageRead": {
+    "effect": "benign",
+    "reason": "Records the student's own read marker on one message they received, as opening the conversation would; senders get no read receipt.",
+    "notes": "There is no mark-unread; pick a message that is already read or one in the self-conversation, so no real unread message is hidden from the student."
+  },
+  "Message.markNotificationRead": {
+    "effect": "benign",
+    "reason": "Sets the read time of one of the student's own notifications and logs a notification_viewed event; nobody else sees it.",
+    "notes": "There is no mark-unread; it does nothing to a notification already read (timeread set), so pick one of those."
+  },
+  "Message.messageProcessorConfigForm": {
+    "effect": "reversible",
+    "reason": "Saves the student's own settings for one message output (for email, the address notifications go to) as user preferences, which can be read first and written back.",
+    "notes": "Undo: before the call read User.getUserPreferences(name = the processor's preference, e.g. message_processor_email_email), then call Message.messageProcessorConfigForm again with formvalues holding the previous value (or User.updateUserPreferences with value null when none was set). The restore form cannot express it. While changed, the student's notifications go to the new setting, so restore at once and avoid a real address."
+  },
+  "Message.muteConversations": {
+    "effect": "reversible",
+    "reason": "Mutes conversations for the student only, a private flag that Message.unmuteConversations removes again exactly.",
+    "notes": "Undo: Message.unmuteConversations(userId = $args.userId, conversationIds = $args.conversationIds). Exact only for conversations that were not muted beforehand (Message.getConversations(...).conversations[*].ismuted == false): muting a muted one does nothing, and the undo would unmute it. Verify with ismuted == true."
+  },
   "Message.sendInstantMessages": {
     "effect": "irreversible",
     "reason": "Sends messages to other people, who are notified."
+  },
+  "Message.sendMessagesToConversation": {
+    "effect": "irreversible",
+    "reason": "Sends messages to the members of a conversation, who are notified."
+  },
+  "Message.setFavouriteConversations": {
+    "effect": "reversible",
+    "reason": "Stars conversations for the student only, a private favourite that Message.unsetFavouriteConversations removes again exactly.",
+    "notes": "Undo: Message.unsetFavouriteConversations(userId = $args.userId, conversationIds = $args.conversationIds). Exact only for conversations not starred beforehand (Message.getConversations(...).conversations[*].isfavourite == false); avoid the self-conversation, which Moodle stars on creation."
   },
   "Message.unblockUser": {
     "effect": "reversible",
     "reason": "Removes a user from the current user's private block list; blocking adds them back.",
     "notes": "The undo is exact only if the target was blocked beforehand; otherwise unblocking does nothing and the undo leaves a new block. Safest to run only as the undo of Message.blockUser."
+  },
+  "Message.unmuteConversations": {
+    "effect": "reversible",
+    "reason": "Unmutes conversations for the student only; Message.muteConversations sets the flag back.",
+    "notes": "Undo: Message.muteConversations(userId = $args.userId, conversationIds = $args.conversationIds). Exact only for conversations that were muted beforehand; safest to run only as the undo of Message.muteConversations."
+  },
+  "Message.unsetFavouriteConversations": {
+    "effect": "reversible",
+    "reason": "Unstars conversations for the student only; Message.setFavouriteConversations stars them again.",
+    "notes": "Undo: Message.setFavouriteConversations(userId = $args.userId, conversationIds = $args.conversationIds). Exact only for conversations that were starred beforehand (the favourite comes back with a new id and time, which nothing shows); safest to run only as the undo of Message.setFavouriteConversations."
+  },
+  "MessageAirnotifier.enableDevice": {
+    "effect": "benign",
+    "reason": "Enables or disables push notifications for one of the student's own registered devices.",
+    "notes": "Benign only for a device the test registered itself (User.addUserDevice); disabling the student's real phone stops its push notifications until it is enabled again (enableDevice with enable = true). Needs message/airnotifier:managedevice and the AirNotifier output configured."
+  },
+  "Mobile.callExternalFunctions": {
+    "effect": "irreversible",
+    "reason": "Runs any list of web service functions in one call, so it does whatever the functions it is given do, including irreversible ones.",
+    "notes": "Could be treated as the most severe effect of its inner calls; with only read functions it is read. Uses the request's wstoken, so it only works through the REST token endpoint."
   },
   "Mobile.getAutologinKey": {
     "effect": "benign",
@@ -98,6 +553,52 @@
     "effect": "irreversible",
     "reason": "Runs an arbitrary plugin's mobile handler, and some handlers act on their args: mod_attendance's records self-marked attendance.",
     "notes": "Moodle flags it as read, and most handlers only render content (some log views or completion on view, which is benign). The attendance handler, given a session and status in args, records attendance, an official record. Could be allowed per component and method after review (e.g. a pure view method with no status args)."
+  },
+  "Mobile.getTokensForQrLogin": {
+    "effect": "benign",
+    "reason": "Consumes the student's one-time QR login key and issues (or reuses) a mobile web service token for them, a token like the one the app requests at login.",
+    "notes": "Moodle flags it as read. Only works from the Moodle app user agent, over https, with QR login enabled and a fresh key from the QR code page; otherwise it throws qrcodedisabled or apprequired."
+  },
+  "Mobile.validateSubscriptionKey": {
+    "effect": "irreversible",
+    "reason": "Checks a key against the site's pending app subscription key and then deletes that site-wide key whatever the outcome, breaking an administrator's subscription in progress.",
+    "notes": "Does nothing when no subscription key is pending or the mobile web service is disabled, but the deletion of site config cannot be undone through the API."
+  },
+  "My.viewPage": {
+    "effect": "benign",
+    "reason": "A *_view_* function: only logs a dashboard or My courses viewed event, as the student opening the page would."
+  },
+  "Notes.createNotes": {
+    "effect": "reversible",
+    "reason": "Creates notes about users (personal ones only the author sees, course or site ones staff see), which Notes.deleteNotes removes again.",
+    "notes": "Undo: Notes.deleteNotes(notes = $result[*].noteid). Use publishstate personal so nobody else sees the note before the undo. Needs moodle/notes:manage, which students normally lack (nopermissions), and fails with notesdisabled when notes are off site-wide."
+  },
+  "Notes.deleteNotes": {
+    "effect": "irreversible",
+    "reason": "Deletes notes permanently; re-creating them gives new ids, times and author records."
+  },
+  "Notes.viewNotes": {
+    "effect": "benign",
+    "reason": "A *_view_* function: only logs a notes viewed event, as opening the notes page would."
+  },
+  "Page.viewPage": {
+    "effect": "benign",
+    "reason": "A *_view_* function: logs a course module viewed event and may mark the page complete on view, as the student opening it would."
+  },
+  "Policy.setAcceptancesStatus": {
+    "effect": "irreversible",
+    "reason": "Records the student's acceptance or refusal of site policies, consent records the site keeps and staff rely on; refusing a compulsory policy blocks the student from the site.",
+    "notes": "Accepting and declining are opposites, but each change adds an acceptance record and declining a compulsory policy resets policyagreed, after which the student can do nothing but accept; withdrawals may also be disallowed by policy settings."
+  },
+  "Question.updateFlag": {
+    "effect": "reversible",
+    "reason": "Flags or unflags a question in the student's own quiz attempt, a marker the opposite call sets back exactly.",
+    "notes": "Undo: Question.updateFlag with the same qubaId, questionId, qaId, slot and checksum and newState = the previous flag. The previous state is questions[].flagged of Quiz.getAttemptSummary (in progress) or Quiz.getAttemptReview (finished). Teachers can see flags when reviewing attempts. The checksum is not returned as a field: it sits in the question HTML (the flag toggle's hidden input), and every input comes from an attempt, which only the irreversible Quiz.startAttempt creates."
+  },
+  "Quiz.getAttemptAccessInformation": {
+    "effect": "benign",
+    "reason": "Returns what the student may do in a quiz; its only side effect is updating the time check of an unfinished attempt, or closing one whose time has already run out, as the quiz cron would anyway.",
+    "notes": "Moodle flags it as read. It calls handle_if_time_expired on the student's unfinished attempt, if any: within the time limit that only stores the next time-check time; past it the attempt goes overdue, is submitted or is abandoned per the quiz settings, exactly what the scheduled overdue-attempt task does. Without an unfinished attempt it changes nothing."
   },
   "Quiz.getAttemptData": {
     "effect": "irreversible",
@@ -121,23 +622,212 @@
     "effect": "irreversible",
     "reason": "Starts a new quiz attempt, using up an attempt and starting its timer, which staff see."
   },
+  "Quiz.viewAttempt": {
+    "effect": "irreversible",
+    "reason": "Logs an attempt viewed event and moves the in-progress attempt to the given page, which on a quiz with sequential navigation permanently skips the pages before it.",
+    "notes": "Same page move as Quiz.getAttemptData (set_currentpage). On a free-navigation quiz it would be benign. It needs an in-progress attempt, which only the irreversible Quiz.startAttempt creates."
+  },
+  "Quiz.viewAttemptReview": {
+    "effect": "benign",
+    "reason": "A *_view_* function: only logs an attempt reviewed event for a finished attempt, as the student opening its review would."
+  },
+  "Quiz.viewAttemptSummary": {
+    "effect": "benign",
+    "reason": "A *_view_* function: logs an attempt summary viewed event; the only other possible side effect is closing an already overdue attempt, which the quiz cron would do anyway.",
+    "notes": "Validation runs handle_if_time_expired on the attempt, as for Quiz.getAttemptSummary. Needs the id of an existing in-progress attempt."
+  },
+  "Quiz.viewQuiz": {
+    "effect": "benign",
+    "reason": "A *_view_* function: logs a course module viewed event and may mark the quiz complete on view, as the student opening it would."
+  },
+  "Rating.addRating": {
+    "effect": "irreversible",
+    "reason": "Rates another user's item (a forum post, glossary entry) and recalculates that user's grade in the gradebook, which they and staff see and grade history keeps.",
+    "notes": "Rating -1 (unset) deletes the rating again and recalculates the grade, but the rated user's grade has changed in between and the gradebook history keeps both changes."
+  },
+  "ReportInsights.actionExecuted": {
+    "effect": "irreversible",
+    "reason": "Records an action on analytics predictions (analytics_prediction_actions), which feeds the model's evaluation that managers see; with the fixed or notuseful action it hides the insight for good.",
+    "notes": "No operation removes a prediction action."
+  },
+  "ReportInsights.setFixedPrediction": {
+    "effect": "irreversible",
+    "reason": "Marks an analytics prediction as fixed, hiding the insight from the user and counting in the model's evaluation that managers see; no operation reverts it."
+  },
+  "ReportInsights.setNotusefulPrediction": {
+    "effect": "irreversible",
+    "reason": "Marks an analytics prediction as not useful, hiding the insight from the user and counting against the model in the evaluation managers see; no operation reverts it."
+  },
+  "Reportbuilder.viewReport": {
+    "effect": "benign",
+    "reason": "Only logs a report viewed event for a custom report, the same as the student opening it.",
+    "notes": "Needs a custom report shared with the student's audience."
+  },
+  "Resource.viewResource": {
+    "effect": "benign",
+    "reason": "A *_view_* function: logs a course module viewed event and may mark the file complete on view, as the student opening it would."
+  },
+  "Scorm.insertScormTracks": {
+    "effect": "irreversible",
+    "reason": "Writes SCORM tracking data (scores, status, time) into the student's attempt, creating the attempt if it does not exist, which feeds grades and completion that teachers see.",
+    "notes": "Existing values of the same elements are overwritten, and there is no API to delete tracks or attempts."
+  },
+  "Scorm.launchSco": {
+    "effect": "benign",
+    "reason": "Logs a SCO launched event and marks the SCORM viewed for completion, as the student opening it would; no attempt or tracking data is created."
+  },
+  "Scorm.viewScorm": {
+    "effect": "benign",
+    "reason": "A *_view_* function: only logs a course module viewed event, as the student opening the SCORM would."
+  },
+  "Search.viewResults": {
+    "effect": "benign",
+    "reason": "A *_view_* function: only logs a search results viewed event, as the student viewing the results would."
+  },
+  "Survey.submitAnswers": {
+    "effect": "irreversible",
+    "reason": "Submits the student's survey answers, which teachers see in the survey report and the student cannot change or withdraw."
+  },
+  "Survey.viewSurvey": {
+    "effect": "benign",
+    "reason": "A *_view_* function: logs a course module viewed event and may mark the survey complete on view, as the student opening it would."
+  },
+  "Url.viewUrl": {
+    "effect": "benign",
+    "reason": "A *_view_* function: logs a course module viewed event and may mark the URL complete on view, as the student opening it would."
+  },
   "User.addUserDevice": {
     "effect": "benign",
     "reason": "Registers a mobile device for push notifications.",
     "notes": "Use a made-up uuid and pushId and remove it afterwards with User.removeUserDevice(uuid = $args.uuid, appId = $args.appId). Reusing the student's real device uuid and appId would overwrite that device's push registration."
+  },
+  "User.addUserPrivateFiles": {
+    "effect": "reversible",
+    "reason": "Merges a draft area's files into the student's own private files, which only the student sees; a re-save of the private area without them removes them again.",
+    "notes": "Undo: User.preparePrivateFilesForEdition() (a draft copy of the private area, now including the added files), DraftArea.deleteDraftFiles(draftitemid = $result.draftitemid, files = the added files' filepath/filename) and then User.updatePrivateFiles(draftitemid = that same draft id). Exact only when the added files have new names: merging a file over one with the same path replaces the old one, which cannot come back. Requires moodle/user:manageownfiles and fails over the user quota."
+  },
+  "User.agreeSitePolicy": {
+    "effect": "irreversible",
+    "reason": "Records that the student has agreed to the site policy (user.policyagreed and the policy handler's acceptance records), consent the site relies on that no web service can withdraw.",
+    "notes": "Does nothing (status false, warning alreadyagreed or nositepolicy) when the student has already agreed or no site policy is configured, but that state cannot be checked safely first."
+  },
+  "User.preparePrivateFilesForEdition": {
+    "effect": "benign",
+    "reason": "Copies the student's private files into a new temporary draft file area for editing; the private files themselves are not changed.",
+    "notes": "Draft areas are private scratch space cleaned up by cron. Requires moodle/user:manageownfiles."
   },
   "User.removeUserDevice": {
     "effect": "benign",
     "reason": "Removes a push-notification device registration.",
     "notes": "Benign only for a device the test registered itself (User.addUserDevice). Removing the student's real device uuid would stop push notifications to their phone until the app registers it again on its next start."
   },
+  "User.setUserPreferences": {
+    "effect": "reversible",
+    "reason": "Sets the student's own preferences, each of which can be read first with User.getUserPreferences(name) and written back.",
+    "notes": "Undo: before the call read User.getUserPreferences(name = preferences[i].name) for every preference touched; afterwards call setUserPreferences again with the previous values, or User.updateUserPreferences with value null for a preference that had none (setUserPreferences requires a value and cannot unset). The restore form cannot express it: the read returns a name/value list. Unlike updateUserPreferences it also accepts a userid; leave it 0 (the student). Stick to harmless display preferences, not message or notification settings the student relies on."
+  },
+  "User.updatePicture": {
+    "effect": "irreversible",
+    "reason": "Replaces or deletes the student's profile picture, which everyone in their courses sees, and the previous picture cannot be put back exactly through the API.",
+    "notes": "Moodle reprocesses an uploaded image into new sizes, so re-uploading a downloaded copy of the old picture is not an exact restore; only deleting a picture added to a profile that had none would be. Fails when the site disables user images or the auth plugin forbids profile editing."
+  },
+  "User.updatePrivateFiles": {
+    "effect": "reversible",
+    "reason": "Replaces the student's own private files, seen only by the student, with a draft area's content; saving a copy of the previous content back restores them.",
+    "notes": "Undo: before the call take User.preparePrivateFilesForEdition() and keep its draftitemid untouched; afterwards call User.updatePrivateFiles(draftitemid = that saved draft id). Unchanged files keep their records, and restored ones get new ids and timestamps. The draft must be used before cron purges old drafts (days). Fails with 'Invalid draft item id' for an empty draft and returns field warnings over the quota."
+  },
+  "User.updateUserDevicePublicKey": {
+    "effect": "benign",
+    "reason": "Stores the app's public key on a push-notification device registration of the student.",
+    "notes": "Benign only for a device the test registered itself (User.addUserDevice with a made-up uuid): changing the key on the student's real device would make their phone unable to decrypt push notifications until the app registers again. Returns status false with devicedoesnotexist for an unknown uuid/appid."
+  },
   "User.updateUserPreferences": {
     "effect": "reversible",
     "reason": "Sets the student's own preferences, each of which can be read first with User.getUserPreferences(name) and written back (or unset with a null value).",
     "notes": "Undo: before the call read User.getUserPreferences(name = preferences[i].type) for every preference touched; afterwards call updateUserPreferences again with preferences = [{type, value: previous value}] (value null when the read returned none, which unsets it). The restore form cannot express it: the read returns a name/value list and the setter takes a list of type/value objects. Avoid emailStop: the API cannot read it back (its usual value is 0, which could be restored as a literal). Stick to harmless preferences (e.g. a display preference), not message-processor or notification settings the student relies on."
   },
+  "User.viewUserList": {
+    "effect": "benign",
+    "reason": "A *_view_* function: only logs a user_list_viewed event, the same as the student opening the participants page.",
+    "notes": "Requires the capability to view participants (moodle/course:viewparticipants)."
+  },
   "User.viewUserProfile": {
     "effect": "benign",
     "reason": "A *_view_* function: only logs a user_profile_viewed event, the same as the student opening the profile."
+  },
+  "Wiki.editPage": {
+    "effect": "irreversible",
+    "reason": "Saves new page content as a new version in the wiki page's history, which other participants and teachers see; restoring old text only adds another version.",
+    "notes": "Only teachers can delete history versions, and not through this API. Fails with pageislocked if someone else is editing the page."
+  },
+  "Wiki.getPageForEditing": {
+    "effect": "benign",
+    "reason": "Takes a 30-second edit lock on the page (or section) for the student and returns its content; the lock expires by itself and the page is not changed.",
+    "notes": "While the lock lasts, others trying to edit the same page or section get pageislocked. Wiki.editPage also releases it. Requires a page the student can edit."
+  },
+  "Wiki.newPage": {
+    "effect": "irreversible",
+    "reason": "Creates a new wiki page (and its subwiki, if none exists yet) that other participants and teachers see, and this API has no operation to delete a page."
+  },
+  "Wiki.viewPage": {
+    "effect": "benign",
+    "reason": "A *_view_* function: logs a page viewed event and may mark the wiki complete on view, as the student opening the page would."
+  },
+  "Wiki.viewWiki": {
+    "effect": "benign",
+    "reason": "A *_view_* function: logs a course module viewed event and may mark the wiki complete on view, as the student opening it would."
+  },
+  "Workshop.addSubmission": {
+    "effect": "irreversible",
+    "reason": "Adds the student's submission to the workshop, which teachers see and allocate for peer assessment, and hands it to any plagiarism plugin through the assessable_uploaded event.",
+    "notes": "Workshop.deleteSubmission removes the row while the submission phase is open and nobody has assessed it, but a workshop has no drafts: the submission is a real one from the moment it is saved, and a plagiarism service that already received it cannot be recalled."
+  },
+  "Workshop.deleteSubmission": {
+    "effect": "irreversible",
+    "reason": "Permanently deletes a submission with its files and any assessments of it; adding it again creates a new submission with a new id and time."
+  },
+  "Workshop.evaluateAssessment": {
+    "effect": "irreversible",
+    "reason": "A teacher's evaluation of a peer assessment: sets the reviewer's grading-grade override and feedback, which the reviewer sees and which feed their grade."
+  },
+  "Workshop.evaluateSubmission": {
+    "effect": "irreversible",
+    "reason": "A teacher's evaluation of a submission: sets the feedback and can override the author's grade and publish the submission to other participants."
+  },
+  "Workshop.updateAssessment": {
+    "effect": "irreversible",
+    "reason": "Saves the student's peer assessment of someone else's submission, with grades and feedback that set the author's grade and that the author sees."
+  },
+  "Workshop.updateSubmission": {
+    "effect": "irreversible",
+    "reason": "Rewrites the student's submission that teachers assess, recomputes its late flags and sends the new content to any plagiarism plugin again.",
+    "notes": "The title and text could be read back with Workshop.getSubmission, but saving after the deadline or in the assessment phase sets late flags the old version did not have, and the plagiarism hand-off cannot be recalled."
+  },
+  "Workshop.viewSubmission": {
+    "effect": "benign",
+    "reason": "A *_view_* function: only logs a submission viewed event, as the student opening the submission would."
+  },
+  "Workshop.viewWorkshop": {
+    "effect": "benign",
+    "reason": "A *_view_* function: logs a course module viewed event and may mark the workshop complete on view, as the student opening it would."
+  },
+  "Xapi.deleteState": {
+    "effect": "reversible",
+    "reason": "Deletes one of the student's own xAPI states (H5P resume data), which can be read beforehand with Xapi.getState and posted back with Xapi.postState.",
+    "notes": "Undo: read Xapi.getState(component, activityId, agent, stateId, registration) first, then call Xapi.postState with the same arguments and stateData = the value read. Exact up to the state's timemodified."
+  },
+  "Xapi.deleteStates": {
+    "effect": "reversible",
+    "reason": "Deletes all the student's own xAPI states for an activity, each of which can be read beforehand and posted back with Xapi.postState.",
+    "notes": "Undo: before the call list Xapi.getStates(component, activityId, agent, registration) and read each id with Xapi.getState; afterwards call Xapi.postState for each with the value read. Exact up to timemodified. Losing the state resets the student's H5P progress until restored."
+  },
+  "Xapi.postState": {
+    "effect": "reversible",
+    "reason": "Saves the student's own xAPI state (H5P resume data) for an activity, which only they see and Xapi.deleteState removes again.",
+    "notes": "Undo: when Xapi.getState(component, activityId, agent, stateId, registration) returned nothing beforehand, call Xapi.deleteState with the same arguments; otherwise re-post the previous stateData read with getState. Only components whose xAPI handler supports state (core_h5p for mod_h5pactivity with save state enabled) accept it."
+  },
+  "Xapi.statementPost": {
+    "effect": "irreversible",
+    "reason": "Records xAPI statements as activity results: for mod_h5pactivity it creates graded attempts that update the gradebook and staff see in the attempts report."
   }
 }

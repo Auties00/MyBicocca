@@ -7,6 +7,36 @@ import XCTest
 
 /// The live tests of the Moodle Course module, planned from `common/specs/moodle/tests.yaml`.
 final class MoodleCourseLiveTests: XCTestCase {
+    func test_getCategories1() async throws {
+        try await liveCase(MoodleLive.api, "Course.getCategories#1") { live in
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCourseGetCategoriesItem\"}}") { try await live.api.course.getCategories(auth: auth) }
+            live.fingerprint { f in f.list(result) { item0 in MoodleLive.writeMoodleCourseGetCategoriesItem(f, item0) } }
+        }
+    }
+
+    func test_getCategories2() async throws {
+        try await liveCase(MoodleLive.api, "Course.getCategories#2", index: 1) { live in
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCourseGetCategoriesItem\"}}") { try await live.api.course.getCategories(addsubcategories: true, auth: auth) }
+            live.fingerprint { f in f.list(result) { item0 in MoodleLive.writeMoodleCourseGetCategoriesItem(f, item0) } }
+        }
+    }
+
+    func test_getCategories3() async throws {
+        try await liveCase(MoodleLive.api, "Course.getCategories#3", index: 2) { live in
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCourseGetCategoriesItem\"}}") { try await live.api.course.getCategories(addsubcategories: false, auth: auth) }
+            live.fingerprint { f in f.list(result) { item0 in MoodleLive.writeMoodleCourseGetCategoriesItem(f, item0) } }
+        }
+    }
+
+    func test_getCategoriesInvalidCredentials() async throws {
+        try await liveCase(MoodleLive.api, "Course.getCategories#invalid-credentials") { live in
+            try await live.refused(acceptsEmpty: false) { try await live.api.course.getCategories(auth: MoodleTokenAuth(token: "mybicocca-invalid-credential")) }
+        }
+    }
+
     func test_getContents1() async throws {
         try await liveCase(MoodleLive.api, "Course.getContents#1") { live in
             let courseId = try live.choose("courseId", [try await MoodleLive.courseGetUsersCourses(live)].flatMap { $0 }.compactMap { $0.id })
@@ -16,10 +46,30 @@ final class MoodleCourseLiveTests: XCTestCase {
         }
     }
 
-    func test_getContentsInvalidCredentials() async throws {
-        try await liveCase(MoodleLive.api, "Course.getContents#invalid-credentials") { live in
-            let courseId = try live.choose("courseId", [try await MoodleLive.courseGetUsersCourses(live)].flatMap { $0 }.compactMap { $0.id })
-            try await live.refused(acceptsEmpty: false) { try await live.api.course.getContents(courseId: courseId, auth: MoodleTokenAuth(token: "mybicocca-invalid-credential")) }
+    func test_getCourseModule1() async throws {
+        try await liveCase(MoodleLive.api, "Course.getCourseModule#1") { live in
+            let cmId = try live.choose("cmId", [try await MoodleLive.blockRecentlyaccesseditemsGetRecentItems(live)].flatMap { $0 }.compactMap { $0.cmId })
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleCourseGetCourseModuleResponse\"}") { try await live.api.course.getCourseModule(cmId: cmId, auth: auth) }
+            live.fingerprint { f in MoodleLive.writeMoodleCourseGetCourseModuleResponse(f, result) }
+        }
+    }
+
+    func test_getCourseModuleByInstance1() async throws {
+        try await liveCase(MoodleLive.api, "Course.getCourseModuleByInstance#1") { live in
+            let module = try live.choose("module", [try await MoodleLive.blogGetEntries(live)].compactMap { $0.entries }.flatMap { $0 }.compactMap { $0.module })
+            let instance = try live.choose("instance", [try await MoodleLive.calendarGetActionEventsByTimesort(live)].compactMap { $0.events }.flatMap { $0 }.compactMap { $0.instance })
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleCourseGetCourseModuleResponse\"}") { try await live.api.course.getCourseModuleByInstance(module: module, instance: instance, auth: auth) }
+            live.fingerprint { f in MoodleLive.writeMoodleCourseGetCourseModuleResponse(f, result) }
+        }
+    }
+
+    func test_getCourses1() async throws {
+        try await liveCase(MoodleLive.api, "Course.getCourses#1") { live in
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCourseGetCoursesItem\"}}") { try await live.api.course.getCourses(auth: auth) }
+            live.fingerprint { f in f.list(result) { item0 in MoodleLive.writeMoodleCourseGetCoursesItem(f, item0) } }
         }
     }
 
@@ -29,6 +79,49 @@ final class MoodleCourseLiveTests: XCTestCase {
             let auth = try await MoodleLive.tokenCredentials(live)
             let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleCoursesByFieldResponse\"}") { try await live.api.course.getCoursesByField(field: "id", value: value, auth: auth) }
             live.fingerprint { f in MoodleLive.writeMoodleCoursesByFieldResponse(f, result) }
+        }
+    }
+
+    func test_getRecentCourses1() async throws {
+        try await liveCase(MoodleLive.api, "Course.getRecentCourses#1") { live in
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleEventCourse\"}}") { try await live.api.course.getRecentCourses(auth: auth) }
+            live.fingerprint { f in f.list(result) { item0 in MoodleLive.writeMoodleEventCourse(f, item0) } }
+        }
+    }
+
+    func test_getRecentCourses2() async throws {
+        try await liveCase(MoodleLive.api, "Course.getRecentCourses#2", index: 1) { live in
+            let userId = try live.choose("userId", [try await MoodleLive.siteGetSiteInfo(live)].compactMap { $0.userId })
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleEventCourse\"}}") { try await live.api.course.getRecentCourses(userId: userId, auth: auth) }
+            live.fingerprint { f in f.list(result) { item0 in MoodleLive.writeMoodleEventCourse(f, item0) } }
+        }
+    }
+
+    func test_viewCourse1() async throws {
+        try await liveCase(MoodleLive.api, "Course.viewCourse#1", effect: "benign") { live in
+            let courseId = try live.choose("courseId", [try await MoodleLive.courseGetUsersCourses(live)].flatMap { $0 }.compactMap { $0.id })
+            let auth = try await MoodleLive.tokenCredentials(live)
+            _ = try await live.call("{\"k\":\"record\",\"n\":\"MoodleStatusResponse\"}") { try await live.api.course.viewCourse(courseId: courseId, auth: auth) }
+        }
+    }
+
+    func test_getCourseEnrolmentMethods1() async throws {
+        try await liveCase(MoodleLive.api, "Course.getCourseEnrolmentMethods#1") { live in
+            let courseId = try live.choose("courseId", [try await MoodleLive.courseGetUsersCourses(live)].flatMap { $0 }.compactMap { $0.id })
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleEnrolGetCourseEnrolmentMethodsItem\"}}") { try await live.api.course.getCourseEnrolmentMethods(courseId: courseId, auth: auth) }
+            live.fingerprint { f in f.list(result) { item0 in MoodleLive.writeMoodleEnrolGetCourseEnrolmentMethodsItem(f, item0) } }
+        }
+    }
+
+    func test_getEnrolledUsers1() async throws {
+        try await liveCase(MoodleLive.api, "Course.getEnrolledUsers#1") { live in
+            let courseId = try live.choose("courseId", [try await MoodleLive.courseGetUsersCourses(live)].flatMap { $0 }.compactMap { $0.id })
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleEnrolGetEnrolledUsersItem\"}}") { try await live.api.course.getEnrolledUsers(courseId: courseId, auth: auth) }
+            live.fingerprint { f in f.list(result) { item0 in MoodleLive.writeMoodleEnrolGetEnrolledUsersItem(f, item0) } }
         }
     }
 
@@ -59,6 +152,52 @@ final class MoodleCourseLiveTests: XCTestCase {
         }
     }
 
+    func test_getActivityAllowedGroups1() async throws {
+        try await liveCase(MoodleLive.api, "Course.getActivityAllowedGroups#1") { live in
+            let cmId = try live.choose("cmId", [try await MoodleLive.blockRecentlyaccesseditemsGetRecentItems(live)].flatMap { $0 }.compactMap { $0.cmId })
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleGroupGetActivityAllowedGroupsResponse\"}") { try await live.api.course.getActivityAllowedGroups(cmId: cmId, auth: auth) }
+            live.fingerprint { f in MoodleLive.writeMoodleGroupGetActivityAllowedGroupsResponse(f, result) }
+        }
+    }
+
+    func test_getActivityAllowedGroups2() async throws {
+        try await liveCase(MoodleLive.api, "Course.getActivityAllowedGroups#2", index: 1) { live in
+            let cmId = try live.choose("cmId", [try await MoodleLive.blockRecentlyaccesseditemsGetRecentItems(live)].flatMap { $0 }.compactMap { $0.cmId })
+            let userId = try live.choose("userId", [try await MoodleLive.siteGetSiteInfo(live)].compactMap { $0.userId })
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleGroupGetActivityAllowedGroupsResponse\"}") { try await live.api.course.getActivityAllowedGroups(cmId: cmId, userId: userId, auth: auth) }
+            live.fingerprint { f in MoodleLive.writeMoodleGroupGetActivityAllowedGroupsResponse(f, result) }
+        }
+    }
+
+    func test_getActivityGroupmode1() async throws {
+        try await liveCase(MoodleLive.api, "Course.getActivityGroupmode#1") { live in
+            let cmId = try live.choose("cmId", [try await MoodleLive.blockRecentlyaccesseditemsGetRecentItems(live)].flatMap { $0 }.compactMap { $0.cmId })
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleGroupGetActivityGroupmodeResponse\"}") { try await live.api.course.getActivityGroupmode(cmId: cmId, auth: auth) }
+            live.fingerprint { f in MoodleLive.writeMoodleGroupGetActivityGroupmodeResponse(f, result) }
+        }
+    }
+
+    func test_getCourseGroupings1() async throws {
+        try await liveCase(MoodleLive.api, "Course.getCourseGroupings#1") { live in
+            let courseId = try live.choose("courseId", [try await MoodleLive.courseGetUsersCourses(live)].flatMap { $0 }.compactMap { $0.id })
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleGroupGetCourseGroupingsItem\"}}") { try await live.api.course.getCourseGroupings(courseId: courseId, auth: auth) }
+            live.fingerprint { f in f.list(result) { item0 in MoodleLive.writeMoodleGroupGetCourseGroupingsItem(f, item0) } }
+        }
+    }
+
+    func test_getCourseGroups1() async throws {
+        try await liveCase(MoodleLive.api, "Course.getCourseGroups#1") { live in
+            let courseId = try live.choose("courseId", [try await MoodleLive.courseGetUsersCourses(live)].flatMap { $0 }.compactMap { $0.id })
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleGroupGetCourseGroupsItem\"}}") { try await live.api.course.getCourseGroups(courseId: courseId, auth: auth) }
+            live.fingerprint { f in f.list(result) { item0 in MoodleLive.writeMoodleGroupGetCourseGroupsItem(f, item0) } }
+        }
+    }
+
     func test_getCourseUserGroups1() async throws {
         try await liveCase(MoodleLive.api, "Course.getCourseUserGroups#1") { live in
             let auth = try await MoodleLive.tokenCredentials(live)
@@ -80,7 +219,7 @@ final class MoodleCourseLiveTests: XCTestCase {
     func test_getCourseUserGroups3() async throws {
         try await liveCase(MoodleLive.api, "Course.getCourseUserGroups#3", index: 2) { live in
             let courseId = try live.choose("courseId", [try await MoodleLive.courseGetUsersCourses(live)].flatMap { $0 }.compactMap { $0.id })
-            let groupingId = try live.choose("groupingId", [try await MoodleLive.quizGetQuizzesByCourses(live)].compactMap { $0.quizzes }.flatMap { $0 }.compactMap { $0.groupingId })
+            let groupingId = try live.choose("groupingId", [try await MoodleLive.bigbluebuttonbnGetBigbluebuttonbnsByCourses(live)].compactMap { $0.bigbluebuttonbns }.flatMap { $0 }.compactMap { $0.groupingId })
             let auth = try await MoodleLive.tokenCredentials(live)
             let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleCourseUserGroupsResponse\"}") { try await live.api.course.getCourseUserGroups(courseId: courseId, groupingId: groupingId, auth: auth) }
             live.fingerprint { f in MoodleLive.writeMoodleCourseUserGroupsResponse(f, result) }
@@ -90,10 +229,38 @@ final class MoodleCourseLiveTests: XCTestCase {
     func test_getCourseUserGroups4() async throws {
         try await liveCase(MoodleLive.api, "Course.getCourseUserGroups#4", index: 3) { live in
             let userId = try live.choose("userId", [try await MoodleLive.siteGetSiteInfo(live)].compactMap { $0.userId })
-            let groupingId = try live.choose("groupingId", [try await MoodleLive.quizGetQuizzesByCourses(live)].compactMap { $0.quizzes }.flatMap { $0 }.compactMap { $0.groupingId })
+            let groupingId = try live.choose("groupingId", [try await MoodleLive.bigbluebuttonbnGetBigbluebuttonbnsByCourses(live)].compactMap { $0.bigbluebuttonbns }.flatMap { $0 }.compactMap { $0.groupingId })
             let auth = try await MoodleLive.tokenCredentials(live)
             let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleCourseUserGroupsResponse\"}") { try await live.api.course.getCourseUserGroups(userId: userId, groupingId: groupingId, auth: auth) }
             live.fingerprint { f in MoodleLive.writeMoodleCourseUserGroupsResponse(f, result) }
+        }
+    }
+
+    func test_getGroupsForSelector1() async throws {
+        try await liveCase(MoodleLive.api, "Course.getGroupsForSelector#1") { live in
+            let courseId = try live.choose("courseId", [try await MoodleLive.courseGetUsersCourses(live)].flatMap { $0 }.compactMap { $0.id })
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleGradesGetGroupsForSearchWidgetResponse\"}") { try await live.api.course.getGroupsForSelector(courseId: courseId, auth: auth) }
+            live.fingerprint { f in MoodleLive.writeMoodleGradesGetGroupsForSearchWidgetResponse(f, result) }
+        }
+    }
+
+    func test_getGroupsForSelector2() async throws {
+        try await liveCase(MoodleLive.api, "Course.getGroupsForSelector#2", index: 1) { live in
+            let courseId = try live.choose("courseId", [try await MoodleLive.courseGetUsersCourses(live)].flatMap { $0 }.compactMap { $0.id })
+            let cmId = try live.choose("cmId", [try await MoodleLive.blockRecentlyaccesseditemsGetRecentItems(live)].flatMap { $0 }.compactMap { $0.cmId })
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleGradesGetGroupsForSearchWidgetResponse\"}") { try await live.api.course.getGroupsForSelector(courseId: courseId, cmId: cmId, auth: auth) }
+            live.fingerprint { f in MoodleLive.writeMoodleGradesGetGroupsForSearchWidgetResponse(f, result) }
+        }
+    }
+
+    func test_getInstanceInfo1() async throws {
+        try await liveCase(MoodleLive.api, "Course.getInstanceInfo#1") { live in
+            let instanceId = try live.choose("instanceId", [try await MoodleLive.blockGetDashboardBlocks(live)].compactMap { $0.blocks }.flatMap { $0 }.compactMap { $0.instanceId })
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleEnrolSelfGetInstanceInfoResponse\"}") { try await live.api.course.getInstanceInfo(instanceId: instanceId, auth: auth) }
+            live.fingerprint { f in MoodleLive.writeMoodleEnrolSelfGetInstanceInfoResponse(f, result) }
         }
     }
 }

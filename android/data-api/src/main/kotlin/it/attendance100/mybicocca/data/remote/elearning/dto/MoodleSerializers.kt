@@ -34,8 +34,18 @@ object MoodleBooleanSerializer : KSerializer<Boolean> {
     }
 }
 
+/** [MoodleBadge], also sent as an array of single-key objects. */
+object MoodleBadgeFoldedSerializer : JsonTransformingSerializer<MoodleBadge>(MoodleBadge.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
 /** [MoodleBadgeEndorsement], also sent as an array of single-key objects. */
 object MoodleBadgeEndorsementFoldedSerializer : JsonTransformingSerializer<MoodleBadgeEndorsement>(MoodleBadgeEndorsement.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleBlockContent], also sent as an array of single-key objects. */
+object MoodleBlockContentFoldedSerializer : JsonTransformingSerializer<MoodleBlockContent>(MoodleBlockContent.serializer()) {
     override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
 }
 
@@ -69,8 +79,38 @@ object MoodleCalendarDateFoldedSerializer : JsonTransformingSerializer<MoodleCal
     override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
 }
 
+/** [MoodleCalendarEvent], also sent as an array of single-key objects. */
+object MoodleCalendarEventFoldedSerializer : JsonTransformingSerializer<MoodleCalendarEvent>(MoodleCalendarEvent.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleActionuser], also sent as an array of single-key objects. */
+object MoodleActionuserFoldedSerializer : JsonTransformingSerializer<MoodleActionuser>(MoodleActionuser.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleCompetencyListCourseCompetenciesItemCompetency], also sent as an array of single-key objects. */
+object MoodleCompetencyListCourseCompetenciesItemCompetencyFoldedSerializer : JsonTransformingSerializer<MoodleCompetencyListCourseCompetenciesItemCompetency>(MoodleCompetencyListCourseCompetenciesItemCompetency.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleCoursecompetency], also sent as an array of single-key objects. */
+object MoodleCoursecompetencyFoldedSerializer : JsonTransformingSerializer<MoodleCoursecompetency>(MoodleCoursecompetency.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
 /** [MoodleCompletionRuleValue], also sent as an array of single-key objects. */
 object MoodleCompletionRuleValueFoldedSerializer : JsonTransformingSerializer<MoodleCompletionRuleValue>(MoodleCompletionRuleValue.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleCompletionstatu], also sent as an array of single-key objects. */
+object MoodleCompletionstatuFoldedSerializer : JsonTransformingSerializer<MoodleCompletionstatu>(MoodleCompletionstatu.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleDetail], also sent as an array of single-key objects. */
+object MoodleDetailFoldedSerializer : JsonTransformingSerializer<MoodleDetail>(MoodleDetail.serializer()) {
     override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
 }
 
@@ -94,8 +134,68 @@ object MoodleModuleCompletionRuleValueFoldedSerializer : JsonTransformingSeriali
     override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
 }
 
+/** [MoodleCm], also sent as an array of single-key objects. */
+object MoodleCmFoldedSerializer : JsonTransformingSerializer<MoodleCm>(MoodleCm.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleGradesGraderGradingpanelPointFetchResponseGrade], also sent as an array of single-key objects. */
+object MoodleGradesGraderGradingpanelPointFetchResponseGradeFoldedSerializer : JsonTransformingSerializer<MoodleGradesGraderGradingpanelPointFetchResponseGrade>(MoodleGradesGraderGradingpanelPointFetchResponseGrade.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleGradesGraderGradingpanelScaleFetchResponseGrade], also sent as an array of single-key objects. */
+object MoodleGradesGraderGradingpanelScaleFetchResponseGradeFoldedSerializer : JsonTransformingSerializer<MoodleGradesGraderGradingpanelScaleFetchResponseGrade>(MoodleGradesGraderGradingpanelScaleFetchResponseGrade.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleContactRequest], also sent as an array of single-key objects. */
+object MoodleContactRequestFoldedSerializer : JsonTransformingSerializer<MoodleContactRequest>(MoodleContactRequest.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
 /** [MoodleUnreadCountsByType], also sent as an array of single-key objects. */
 object MoodleUnreadCountsByTypeFoldedSerializer : JsonTransformingSerializer<MoodleUnreadCountsByType>(MoodleUnreadCountsByType.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleMessageGetUserMessagePreferencesResponsePreference], also sent as an array of single-key objects. */
+object MoodleMessageGetUserMessagePreferencesResponsePreferenceFoldedSerializer : JsonTransformingSerializer<MoodleMessageGetUserMessagePreferencesResponsePreference>(MoodleMessageGetUserMessagePreferencesResponsePreference.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleReportbuilderListReportsResponseReport], also sent as an array of single-key objects. */
+object MoodleReportbuilderListReportsResponseReportFoldedSerializer : JsonTransformingSerializer<MoodleReportbuilderListReportsResponseReport>(MoodleReportbuilderListReportsResponseReport.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleReportbuilderRetrieveReportResponseData], also sent as an array of single-key objects. */
+object MoodleReportbuilderRetrieveReportResponseDataFoldedSerializer : JsonTransformingSerializer<MoodleReportbuilderRetrieveReportResponseData>(MoodleReportbuilderRetrieveReportResponseData.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleInstanceinfo], also sent as an array of single-key objects. */
+object MoodleInstanceinfoFoldedSerializer : JsonTransformingSerializer<MoodleInstanceinfo>(MoodleInstanceinfo.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleItemName], also sent as an array of single-key objects. */
+object MoodleItemNameFoldedSerializer : JsonTransformingSerializer<MoodleItemName>(MoodleItemName.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleLeader], also sent as an array of single-key objects. */
+object MoodleLeaderFoldedSerializer : JsonTransformingSerializer<MoodleLeader>(MoodleLeader.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleWeight], also sent as an array of single-key objects. */
+object MoodleWeightFoldedSerializer : JsonTransformingSerializer<MoodleWeight>(MoodleWeight.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleUser], also sent as an array of single-key objects. */
+object MoodleUserFoldedSerializer : JsonTransformingSerializer<MoodleUser>(MoodleUser.serializer()) {
     override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
 }
 
@@ -134,8 +234,63 @@ object MoodleAssignmentAttachmentsFoldedSerializer : JsonTransformingSerializer<
     override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
 }
 
+/** [MoodleAssignfeedbackcommentsEditor], also sent as an array of single-key objects. */
+object MoodleAssignfeedbackcommentsEditorFoldedSerializer : JsonTransformingSerializer<MoodleAssignfeedbackcommentsEditor>(MoodleAssignfeedbackcommentsEditor.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleGuide], also sent as an array of single-key objects. */
+object MoodleGuideFoldedSerializer : JsonTransformingSerializer<MoodleGuide>(MoodleGuide.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleRubric], also sent as an array of single-key objects. */
+object MoodleRubricFoldedSerializer : JsonTransformingSerializer<MoodleRubric>(MoodleRubric.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodlePluginData], also sent as an array of single-key objects. */
+object MoodlePluginDataFoldedSerializer : JsonTransformingSerializer<MoodlePluginData>(MoodlePluginData.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleAdvancedgradingdata], also sent as an array of single-key objects. */
+object MoodleAdvancedgradingdataFoldedSerializer : JsonTransformingSerializer<MoodleAdvancedgradingdata>(MoodleAdvancedgradingdata.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
 /** [MoodleOnlineTextEditor], also sent as an array of single-key objects. */
 object MoodleOnlineTextEditorFoldedSerializer : JsonTransformingSerializer<MoodleOnlineTextEditor>(MoodleOnlineTextEditor.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleBigbluebuttonbnGetRecordingsResponseTabledata], also sent as an array of single-key objects. */
+object MoodleBigbluebuttonbnGetRecordingsResponseTabledataFoldedSerializer : JsonTransformingSerializer<MoodleBigbluebuttonbnGetRecordingsResponseTabledata>(MoodleBigbluebuttonbnGetRecordingsResponseTabledata.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleDataGetEntriesResponseEntry], also sent as an array of single-key objects. */
+object MoodleDataGetEntriesResponseEntryFoldedSerializer : JsonTransformingSerializer<MoodleDataGetEntriesResponseEntry>(MoodleDataGetEntriesResponseEntry.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleRatingInfo], also sent as an array of single-key objects. */
+object MoodleRatingInfoFoldedSerializer : JsonTransformingSerializer<MoodleRatingInfo>(MoodleRatingInfo.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleItem], also sent as an array of single-key objects. */
+object MoodleItemFoldedSerializer : JsonTransformingSerializer<MoodleItem>(MoodleItem.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleFeedbackGetCurrentCompletedTmpResponseFeedback], also sent as an array of single-key objects. */
+object MoodleFeedbackGetCurrentCompletedTmpResponseFeedbackFoldedSerializer : JsonTransformingSerializer<MoodleFeedbackGetCurrentCompletedTmpResponseFeedback>(MoodleFeedbackGetCurrentCompletedTmpResponseFeedback.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleCompleted], also sent as an array of single-key objects. */
+object MoodleCompletedFoldedSerializer : JsonTransformingSerializer<MoodleCompleted>(MoodleCompleted.serializer()) {
     override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
 }
 
@@ -189,8 +344,8 @@ object MoodlePostTagUrlsFoldedSerializer : JsonTransformingSerializer<MoodlePost
     override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
 }
 
-/** [MoodleRatingInfo], also sent as an array of single-key objects. */
-object MoodleRatingInfoFoldedSerializer : JsonTransformingSerializer<MoodleRatingInfo>(MoodleRatingInfo.serializer()) {
+/** [MoodleTime], also sent as an array of single-key objects. */
+object MoodleTimeFoldedSerializer : JsonTransformingSerializer<MoodleTime>(MoodleTime.serializer()) {
     override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
 }
 
@@ -229,13 +384,183 @@ object MoodleDiscussionGroupUrlsFoldedSerializer : JsonTransformingSerializer<Mo
     override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
 }
 
+/** [MoodleGlossaryGetEntriesByAuthorResponseEntry], also sent as an array of single-key objects. */
+object MoodleGlossaryGetEntriesByAuthorResponseEntryFoldedSerializer : JsonTransformingSerializer<MoodleGlossaryGetEntriesByAuthorResponseEntry>(MoodleGlossaryGetEntriesByAuthorResponseEntry.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodlePermission], also sent as an array of single-key objects. */
+object MoodlePermissionFoldedSerializer : JsonTransformingSerializer<MoodlePermission>(MoodlePermission.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleScored], also sent as an array of single-key objects. */
+object MoodleScoredFoldedSerializer : JsonTransformingSerializer<MoodleScored>(MoodleScored.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleH5pglobalsetting], also sent as an array of single-key objects. */
+object MoodleH5pglobalsettingFoldedSerializer : JsonTransformingSerializer<MoodleH5pglobalsetting>(MoodleH5pglobalsetting.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleDeployedfile], also sent as an array of single-key objects. */
+object MoodleDeployedfileFoldedSerializer : JsonTransformingSerializer<MoodleDeployedfile>(MoodleDeployedfile.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleCorrectanswer], also sent as an array of single-key objects. */
+object MoodleCorrectanswerFoldedSerializer : JsonTransformingSerializer<MoodleCorrectanswer>(MoodleCorrectanswer.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleLessonGetAttemptsOverviewResponseData], also sent as an array of single-key objects. */
+object MoodleLessonGetAttemptsOverviewResponseDataFoldedSerializer : JsonTransformingSerializer<MoodleLessonGetAttemptsOverviewResponseData>(MoodleLessonGetAttemptsOverviewResponseData.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleLesson], also sent as an array of single-key objects. */
+object MoodleLessonFoldedSerializer : JsonTransformingSerializer<MoodleLesson>(MoodleLesson.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleLessonGetPageDataResponsePage], also sent as an array of single-key objects. */
+object MoodleLessonGetPageDataResponsePageFoldedSerializer : JsonTransformingSerializer<MoodleLessonGetPageDataResponsePage>(MoodleLessonGetPageDataResponsePage.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleUserstat], also sent as an array of single-key objects. */
+object MoodleUserstatFoldedSerializer : JsonTransformingSerializer<MoodleUserstat>(MoodleUserstat.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleAnswerdata], also sent as an array of single-key objects. */
+object MoodleAnswerdataFoldedSerializer : JsonTransformingSerializer<MoodleAnswerdata>(MoodleAnswerdata.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleGradeinfo], also sent as an array of single-key objects. */
+object MoodleGradeinfoFoldedSerializer : JsonTransformingSerializer<MoodleGradeinfo>(MoodleGradeinfo.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
 /** [MoodleQuizAttempt], also sent as an array of single-key objects. */
 object MoodleQuizAttemptFoldedSerializer : JsonTransformingSerializer<MoodleQuizAttempt>(MoodleQuizAttempt.serializer()) {
     override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
 }
 
+/** [MoodleScormGetScormScoTracksResponseData], also sent as an array of single-key objects. */
+object MoodleScormGetScormScoTracksResponseDataFoldedSerializer : JsonTransformingSerializer<MoodleScormGetScormScoTracksResponseData>(MoodleScormGetScormScoTracksResponseData.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleWikiGetPageContentsResponsePage], also sent as an array of single-key objects. */
+object MoodleWikiGetPageContentsResponsePageFoldedSerializer : JsonTransformingSerializer<MoodleWikiGetPageContentsResponsePage>(MoodleWikiGetPageContentsResponsePage.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodlePagesection], also sent as an array of single-key objects. */
+object MoodlePagesectionFoldedSerializer : JsonTransformingSerializer<MoodlePagesection>(MoodlePagesection.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleAssessment], also sent as an array of single-key objects. */
+object MoodleAssessmentFoldedSerializer : JsonTransformingSerializer<MoodleAssessment>(MoodleAssessment.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleWorkshopGetGradesReportResponseReport], also sent as an array of single-key objects. */
+object MoodleWorkshopGetGradesReportResponseReportFoldedSerializer : JsonTransformingSerializer<MoodleWorkshopGetGradesReportResponseReport>(MoodleWorkshopGetGradesReportResponseReport.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleWorkshopGetSubmissionResponseSubmission], also sent as an array of single-key objects. */
+object MoodleWorkshopGetSubmissionResponseSubmissionFoldedSerializer : JsonTransformingSerializer<MoodleWorkshopGetSubmissionResponseSubmission>(MoodleWorkshopGetSubmissionResponseSubmission.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleUserplan], also sent as an array of single-key objects. */
+object MoodleUserplanFoldedSerializer : JsonTransformingSerializer<MoodleUserplan>(MoodleUserplan.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleSetting], also sent as an array of single-key objects. */
+object MoodleSettingFoldedSerializer : JsonTransformingSerializer<MoodleSetting>(MoodleSetting.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleStatistic], also sent as an array of single-key objects. */
+object MoodleStatisticFoldedSerializer : JsonTransformingSerializer<MoodleStatistic>(MoodleStatistic.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleUsercompetencycourse], also sent as an array of single-key objects. */
+object MoodleUsercompetencycourseFoldedSerializer : JsonTransformingSerializer<MoodleUsercompetencycourse>(MoodleUsercompetencycourse.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleComppath], also sent as an array of single-key objects. */
+object MoodleComppathFoldedSerializer : JsonTransformingSerializer<MoodleComppath>(MoodleComppath.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleAncestor], also sent as an array of single-key objects. */
+object MoodleAncestorFoldedSerializer : JsonTransformingSerializer<MoodleAncestor>(MoodleAncestor.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleCommentarea], also sent as an array of single-key objects. */
+object MoodleCommentareaFoldedSerializer : JsonTransformingSerializer<MoodleCommentarea>(MoodleCommentarea.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleTemplate], also sent as an array of single-key objects. */
+object MoodleTemplateFoldedSerializer : JsonTransformingSerializer<MoodleTemplate>(MoodleTemplate.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodlePlan], also sent as an array of single-key objects. */
+object MoodlePlanFoldedSerializer : JsonTransformingSerializer<MoodlePlan>(MoodlePlan.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleLpDataForPlanPageResponseCompetencyUsercompetency], also sent as an array of single-key objects. */
+object MoodleLpDataForPlanPageResponseCompetencyUsercompetencyFoldedSerializer : JsonTransformingSerializer<MoodleLpDataForPlanPageResponseCompetencyUsercompetency>(MoodleLpDataForPlanPageResponseCompetencyUsercompetency.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleUsercompetencyplan], also sent as an array of single-key objects. */
+object MoodleUsercompetencyplanFoldedSerializer : JsonTransformingSerializer<MoodleUsercompetencyplan>(MoodleUsercompetencyplan.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleLpDataForUserCompetencySummaryResponseCompetency], also sent as an array of single-key objects. */
+object MoodleLpDataForUserCompetencySummaryResponseCompetencyFoldedSerializer : JsonTransformingSerializer<MoodleLpDataForUserCompetencySummaryResponseCompetency>(MoodleLpDataForUserCompetencySummaryResponseCompetency.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleFramework], also sent as an array of single-key objects. */
+object MoodleFrameworkFoldedSerializer : JsonTransformingSerializer<MoodleFramework>(MoodleFramework.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleLpDataForUserCompetencySummaryResponse], also sent as an array of single-key objects. */
+object MoodleLpDataForUserCompetencySummaryResponseFoldedSerializer : JsonTransformingSerializer<MoodleLpDataForUserCompetencySummaryResponse>(MoodleLpDataForUserCompetencySummaryResponse.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleEvidence], also sent as an array of single-key objects. */
+object MoodleEvidenceFoldedSerializer : JsonTransformingSerializer<MoodleEvidence>(MoodleEvidence.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
 /** [MoodleMobileContentRestriction], also sent as an array of single-key objects. */
 object MoodleMobileContentRestrictionFoldedSerializer : JsonTransformingSerializer<MoodleMobileContentRestriction>(MoodleMobileContentRestriction.serializer()) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** [MoodleAcceptance], also sent as an array of single-key objects. */
+object MoodleAcceptanceFoldedSerializer : JsonTransformingSerializer<MoodleAcceptance>(MoodleAcceptance.serializer()) {
     override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
 }
 

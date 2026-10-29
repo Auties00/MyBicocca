@@ -10,21 +10,21 @@ public struct MoodleGradeApi: Sendable {
         self.client = client
     }
 
-    /// Get the given user courses final grades
+    /// Returns user access information for the user grade report.
     ///
     /// - Parameters:
-    ///   - userId: Get grades for this user (optional, default current)
+    ///   - courseId: Course to check.
     ///   - auth: The credentials: ``MoodleTokenAuth``.
-    public func getCourseGrades(
-        userId: Int? = nil,
+    public func getAccessInformation(
+        courseId: Int,
         auth: MoodleTokenAuth
-    ) async throws -> MoodleCourseGradesResponse {
+    ) async throws -> MoodleGradereportUserGetAccessInformationResponse {
         try await client.json(
             RestRequest(
                 method: .post,
                 path: "/webservice/rest/server.php",
-                query: [("wsfunction", "gradereport_overview_get_course_grades"), ("moodlewsrestformat", "json")],
-                form: [("userid", userId)],
+                query: [("wsfunction", "gradereport_user_get_access_information"), ("moodlewsrestformat", "json")],
+                form: [("courseid", courseId)],
                 auth: auth
             )
         )
@@ -53,6 +53,56 @@ public struct MoodleGradeApi: Sendable {
                     ("userid", userId),
                     ("groupid", groupId)
                 ],
+                auth: auth
+            )
+        )
+    }
+
+    /// Get the user/s report grades table for a course
+    ///
+    /// - Parameters:
+    ///   - courseId: Course Id
+    ///   - userId: Return grades only for this user (optional)
+    ///   - groupId: Get users from this group only
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getGradesTable(
+        courseId: Int,
+        userId: Int? = nil,
+        groupId: Int? = nil,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleGradereportUserGetGradesTableResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "gradereport_user_get_grades_table"), ("moodlewsrestformat", "json")],
+                form: [
+                    ("courseid", courseId),
+                    ("userid", userId),
+                    ("groupid", groupId)
+                ],
+                auth: auth
+            )
+        )
+    }
+
+    /// Trigger the report view event
+    ///
+    /// - Parameters:
+    ///   - courseId: id of the course
+    ///   - userId: id of the user, 0 means current user
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func viewGradeReport(
+        courseId: Int,
+        userId: Int? = nil,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleStatusResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "gradereport_user_view_grade_report"), ("moodlewsrestformat", "json")],
+                form: [("courseid", courseId), ("userid", userId)],
                 auth: auth
             )
         )
