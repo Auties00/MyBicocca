@@ -10,8 +10,9 @@ import it.attendance100.mybicocca.data.remote.runtime.ApiException
 class MoodleException(
     statusCode: Int,
     errorCode: String?,
-    errorMessage: String
-) : ApiException("Moodle", statusCode, errorCode, errorMessage) {
+    errorMessage: String,
+    serverMessage: String? = null
+) : ApiException("Moodle", statusCode, errorCode, errorMessage, serverMessage) {
     companion object {
         /** The web service token is invalid or expired; the user must log in again. */
         const val INVALID_TOKEN = "invalidtoken"

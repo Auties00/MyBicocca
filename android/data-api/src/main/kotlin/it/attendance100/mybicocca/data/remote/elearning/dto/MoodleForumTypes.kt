@@ -390,87 +390,6 @@ data class MoodlePostAttachmentHtml(
 )
 
 @Serializable
-data class MoodlePostInlineFile(
-    /** contextid */
-    @SerialName("contextid")
-    val contextId: Int = 0,
-
-    /** component */
-    @SerialName("component")
-    val component: String = "",
-
-    /** filearea */
-    @SerialName("filearea")
-    val fileArea: String = "",
-
-    /** itemid */
-    @SerialName("itemid")
-    val itemId: Int = 0,
-
-    /** filepath */
-    @SerialName("filepath")
-    val filePath: String = "",
-
-    /** filename */
-    @SerialName("filename")
-    val fileName: String = "",
-
-    /** isdir */
-    @Serializable(with = MoodleBooleanSerializer::class)
-    @SerialName("isdir")
-    val isDirectory: Boolean = false,
-
-    /** isimage */
-    @Serializable(with = MoodleBooleanSerializer::class)
-    @SerialName("isimage")
-    val isImage: Boolean = false,
-
-    /** timemodified */
-    @SerialName("timemodified")
-    val timeModified: Long = 0L,
-
-    /** timecreated */
-    @SerialName("timecreated")
-    val timeCreated: Long = 0L,
-
-    /** filesize */
-    @SerialName("filesize")
-    val fileSize: Long = 0L,
-
-    /** author */
-    @SerialName("author")
-    val author: String = "",
-
-    /** license */
-    @SerialName("license")
-    val license: String = "",
-
-    /** filenameshort */
-    @SerialName("filenameshort")
-    val fileNameShort: String = "",
-
-    /** filesizeformatted */
-    @SerialName("filesizeformatted")
-    val fileSizeFormatted: String = "",
-
-    /** icon */
-    @SerialName("icon")
-    val icon: String = "",
-
-    /** timecreatedformatted */
-    @SerialName("timecreatedformatted")
-    val timeCreatedFormatted: String = "",
-
-    /** timemodifiedformatted */
-    @SerialName("timemodifiedformatted")
-    val timeModifiedFormatted: String = "",
-
-    /** url */
-    @SerialName("url")
-    val url: String = ""
-)
-
-@Serializable
 data class MoodlePostTag(
     /** The ID of the Tag */
     @SerialName("id")
@@ -589,123 +508,191 @@ data class MoodleDiscussionPostsResponse(
     val warnings: List<MoodleWarning> = emptyList()
 )
 
-/** Rating information */
 @Serializable
-data class MoodleRatingInfo(
-    /** Context id. */
-    @SerialName("contextid")
-    val contextId: Int = 0,
+data class MoodleForumGetForumAccessInformationResponse(
+    /** list of warnings */
+    @SerialName("warnings")
+    val warnings: List<MoodleWarning> = emptyList(),
 
-    /** Context name. */
-    @SerialName("component")
-    val component: String = "",
-
-    /** Rating area name. */
-    @SerialName("ratingarea")
-    val ratingArea: String = "",
-
-    /** Whether the user can view all the individual ratings. */
+    /** Whether the user has the capability mod/forum:addinstance allowed. */
     @Serializable(with = MoodleBooleanSerializer::class)
-    @SerialName("canviewall")
-    val canViewAll: Boolean? = null,
+    @SerialName("canaddinstance")
+    val canaddinstance: Boolean? = null,
 
-    /** Whether the user can view aggregate of ratings of others. */
+    /** Whether the user has the capability mod/forum:viewdiscussion allowed. */
     @Serializable(with = MoodleBooleanSerializer::class)
-    @SerialName("canviewany")
-    val canViewAny: Boolean? = null,
+    @SerialName("canviewdiscussion")
+    val canviewdiscussion: Boolean? = null,
 
-    /** Different scales used information */
-    @SerialName("scales")
-    val scales: List<MoodleRatingScale> = emptyList(),
-
-    /** The ratings */
-    @SerialName("ratings")
-    val ratings: List<MoodleRating> = emptyList()
-)
-
-/** Scale information */
-@Serializable
-data class MoodleRatingScale(
-    /** Scale id. */
-    @SerialName("id")
-    val id: Int = 0,
-
-    /** Course id. */
-    @SerialName("courseid")
-    val courseId: Int? = null,
-
-    /** Scale name (when a real scale is used). */
-    @SerialName("name")
-    val name: String? = null,
-
-    /** Max value for the scale. */
-    @SerialName("max")
-    val max: Int = 0,
-
-    /** Whether is a numeric scale. */
+    /** Whether the user has the capability mod/forum:viewhiddentimedposts allowed. */
     @Serializable(with = MoodleBooleanSerializer::class)
-    @SerialName("isnumeric")
-    val isNumeric: Boolean = false,
+    @SerialName("canviewhiddentimedposts")
+    val canviewhiddentimedposts: Boolean? = null,
 
-    /** Scale items. Only returned for not numerical scales. */
-    @SerialName("items")
-    val items: List<MoodleRatingScaleItem> = emptyList()
-)
+    /** Whether the user has the capability mod/forum:startdiscussion allowed. */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("canstartdiscussion")
+    val canstartdiscussion: Boolean? = null,
 
-@Serializable
-data class MoodleRatingScaleItem(
-    /** Scale value/option id. */
-    @SerialName("value")
-    val value: Int = 0,
+    /** Whether the user has the capability mod/forum:replypost allowed. */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("canreplypost")
+    val canreplypost: Boolean? = null,
 
-    /** Scale name. */
-    @SerialName("name")
-    val name: String = ""
-)
+    /** Whether the user has the capability mod/forum:addnews allowed. */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("canaddnews")
+    val canaddnews: Boolean? = null,
 
-@Serializable
-data class MoodleRating(
-    /** Item id. */
-    @SerialName("itemid")
-    val itemId: Int = 0,
+    /** Whether the user has the capability mod/forum:replynews allowed. */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("canreplynews")
+    val canreplynews: Boolean? = null,
 
-    /** Scale id. */
-    @SerialName("scaleid")
-    val scaleId: Int? = null,
+    /** Whether the user has the capability mod/forum:viewrating allowed. */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("canviewrating")
+    val canviewrating: Boolean? = null,
 
-    /** User who rated id. */
-    @SerialName("userid")
-    val userId: Int? = null,
+    /** Whether the user has the capability mod/forum:viewanyrating allowed. */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("canviewanyrating")
+    val canviewanyrating: Boolean? = null,
 
-    /** Aggregated ratings grade. */
-    @SerialName("aggregate")
-    val aggregate: Double? = null,
+    /** Whether the user has the capability mod/forum:viewallratings allowed. */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("canviewallratings")
+    val canviewallratings: Boolean? = null,
 
-    /** Aggregated ratings as string. */
-    @SerialName("aggregatestr")
-    val aggregateStr: String? = null,
-
-    /** The aggregation label. */
-    @SerialName("aggregatelabel")
-    val aggregateLabel: String? = null,
-
-    /** Ratings count (used when aggregating). */
-    @SerialName("count")
-    val count: Int? = null,
-
-    /** The rating the user gave. */
-    @SerialName("rating")
-    val rating: Int? = null,
-
-    /** Whether the user can rate the item. */
+    /** Whether the user has the capability mod/forum:rate allowed. */
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("canrate")
     val canRate: Boolean? = null,
 
-    /** Whether the user can view the aggregated grade. */
+    /** Whether the user has the capability mod/forum:postprivatereply allowed. */
     @Serializable(with = MoodleBooleanSerializer::class)
-    @SerialName("canviewaggregate")
-    val canViewAggregate: Boolean? = null
+    @SerialName("canpostprivatereply")
+    val canpostprivatereply: Boolean? = null,
+
+    /** Whether the user has the capability mod/forum:readprivatereplies allowed. */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("canreadprivatereplies")
+    val canreadprivatereplies: Boolean? = null,
+
+    /** Whether the user has the capability mod/forum:createattachment allowed. */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("cancreateattachment")
+    val canCreateAttachment: Boolean? = null,
+
+    /** Whether the user has the capability mod/forum:deleteownpost allowed. */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("candeleteownpost")
+    val candeleteownpost: Boolean? = null,
+
+    /** Whether the user has the capability mod/forum:deleteanypost allowed. */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("candeleteanypost")
+    val candeleteanypost: Boolean? = null,
+
+    /** Whether the user has the capability mod/forum:splitdiscussions allowed. */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("cansplitdiscussions")
+    val cansplitdiscussions: Boolean? = null,
+
+    /** Whether the user has the capability mod/forum:movediscussions allowed. */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("canmovediscussions")
+    val canmovediscussions: Boolean? = null,
+
+    /** Whether the user has the capability mod/forum:pindiscussions allowed. */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("canpindiscussions")
+    val canPinDiscussions: Boolean? = null,
+
+    /** Whether the user has the capability mod/forum:editanypost allowed. */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("caneditanypost")
+    val caneditanypost: Boolean? = null,
+
+    /** Whether the user has the capability mod/forum:viewqandawithoutposting allowed. */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("canviewqandawithoutposting")
+    val canviewqandawithoutposting: Boolean? = null,
+
+    /** Whether the user has the capability mod/forum:viewsubscribers allowed. */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("canviewsubscribers")
+    val canviewsubscribers: Boolean? = null,
+
+    /** Whether the user has the capability mod/forum:managesubscriptions allowed. */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("canmanagesubscriptions")
+    val canmanagesubscriptions: Boolean? = null,
+
+    /** Whether the user has the capability mod/forum:postwithoutthrottling allowed. */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("canpostwithoutthrottling")
+    val canpostwithoutthrottling: Boolean? = null,
+
+    /** Whether the user has the capability mod/forum:exportdiscussion allowed. */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("canexportdiscussion")
+    val canexportdiscussion: Boolean? = null,
+
+    /** Whether the user has the capability mod/forum:exportforum allowed. */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("canexportforum")
+    val canexportforum: Boolean? = null,
+
+    /** Whether the user has the capability mod/forum:exportpost allowed. */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("canexportpost")
+    val canexportpost: Boolean? = null,
+
+    /** Whether the user has the capability mod/forum:exportownpost allowed. */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("canexportownpost")
+    val canexportownpost: Boolean? = null,
+
+    /** Whether the user has the capability mod/forum:addquestion allowed. */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("canaddquestion")
+    val canaddquestion: Boolean? = null,
+
+    /** Whether the user has the capability mod/forum:allowforcesubscribe allowed. */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("canallowforcesubscribe")
+    val canallowforcesubscribe: Boolean? = null,
+
+    /** Whether the user has the capability mod/forum:canposttomygroups allowed. */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("cancanposttomygroups")
+    val cancanposttomygroups: Boolean? = null,
+
+    /** Whether the user has the capability mod/forum:canoverridediscussionlock allowed. */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("cancanoverridediscussionlock")
+    val cancanoverridediscussionlock: Boolean? = null,
+
+    /** Whether the user has the capability mod/forum:canoverridecutoff allowed. */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("cancanoverridecutoff")
+    val cancanoverridecutoff: Boolean? = null,
+
+    /** Whether the user has the capability mod/forum:cantogglefavourite allowed. */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("cancantogglefavourite")
+    val cancantogglefavourite: Boolean? = null,
+
+    /** Whether the user has the capability mod/forum:grade allowed. */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("cangrade")
+    val cangrade: Boolean? = null,
+
+    /** Whether the user has the capability mod/forum:canmailnow allowed. */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("cancanmailnow")
+    val cancanmailnow: Boolean? = null
 )
 
 @Serializable
@@ -1042,6 +1029,29 @@ data class MoodlePrepareDraftAreaResponse(
     /** list of warnings */
     @SerialName("warnings")
     val warnings: List<MoodleWarning> = emptyList()
+)
+
+@Serializable
+data class MoodleForumSetLockStateResponse(
+    /** The discussion we are locking. */
+    @SerialName("id")
+    val id: Int = 0,
+
+    /** The locked state of the discussion. */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("locked")
+    val locked: Boolean = false,
+
+    @Serializable(with = MoodleTimeFoldedSerializer::class)
+    @SerialName("times")
+    val times: MoodleTime
+)
+
+@Serializable
+data class MoodleTime(
+    /** The locked time of the discussion. */
+    @SerialName("locked")
+    val locked: Long = 0L
 )
 
 @Serializable

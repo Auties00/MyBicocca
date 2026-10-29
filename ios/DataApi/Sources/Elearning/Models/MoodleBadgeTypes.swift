@@ -3,38 +3,267 @@
 import DataApiRuntime
 import Foundation
 
-public struct MoodleUserBadgesResponse: Codable, Hashable, Sendable {
-    public var badges: [MoodleUserBadge]
+public struct MoodleBadgesGetBadgeResponse: Codable, Hashable, Sendable {
+    public var badge: MoodleBadge
     /// list of warnings
     public var warnings: [MoodleWarning]
 
     public init(
-        badges: [MoodleUserBadge] = [],
+        badge: MoodleBadge,
         warnings: [MoodleWarning] = []
     ) {
-        self.badges = badges
+        self.badge = badge
         self.warnings = warnings
     }
 
     private enum CodingKeys: String, CodingKey {
-        case badges = "badges"
+        case badge = "badge"
         case warnings = "warnings"
     }
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.badges = container.decodeLenient([MoodleUserBadge].self, forKey: .badges) ?? []
+        self.badge = try container.required(container.decodeFolded(MoodleBadge.self, forKey: .badge), forKey: .badge)
         self.warnings = container.decodeLenient([MoodleWarning].self, forKey: .warnings) ?? []
     }
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if !badges.isEmpty {
-            try container.encode(badges, forKey: .badges)
-        }
-        if !warnings.isEmpty {
-            try container.encode(warnings, forKey: .warnings)
-        }
+        try container.encode(badge, forKey: .badge)
+        try container.encode(warnings, forKey: .warnings)
+    }
+}
+
+public struct MoodleBadge: Codable, Hashable, Sendable {
+    /// BadgeClass
+    public var type: String
+    /// Unique identifier for this badgeclass
+    public var id: String
+    /// Unique identifier for this badgeclass
+    public var issuer: String?
+    /// Name of the badgeclass
+    public var name: String
+    /// URL to the image.
+    public var image: String
+    /// Description of the badge class.
+    public var description: String
+    /// Identifier of the open badge for this assertion
+    public var hostedUrl: String?
+    /// alignment
+    public var alignment: [MoodleBadgeAlignment]
+    /// criteriaUrl
+    public var criteriaUrl: String?
+    /// criteriaNarrative
+    public var criteriaNarrative: String?
+
+    public init(
+        type: String = "",
+        id: String = "",
+        issuer: String? = nil,
+        name: String = "",
+        image: String = "",
+        description: String = "",
+        hostedUrl: String? = nil,
+        alignment: [MoodleBadgeAlignment] = [],
+        criteriaUrl: String? = nil,
+        criteriaNarrative: String? = nil
+    ) {
+        self.type = type
+        self.id = id
+        self.issuer = issuer
+        self.name = name
+        self.image = image
+        self.description = description
+        self.hostedUrl = hostedUrl
+        self.alignment = alignment
+        self.criteriaUrl = criteriaUrl
+        self.criteriaNarrative = criteriaNarrative
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case type = "type"
+        case id = "id"
+        case issuer = "issuer"
+        case name = "name"
+        case image = "image"
+        case description = "description"
+        case hostedUrl = "hostedUrl"
+        case alignment = "alignment"
+        case criteriaUrl = "criteriaUrl"
+        case criteriaNarrative = "criteriaNarrative"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.type = container.decodeLenient(String.self, forKey: .type) ?? ""
+        self.id = container.decodeLenient(String.self, forKey: .id) ?? ""
+        self.issuer = container.decodeLenient(String.self, forKey: .issuer)
+        self.name = container.decodeLenient(String.self, forKey: .name) ?? ""
+        self.image = container.decodeLenient(String.self, forKey: .image) ?? ""
+        self.description = container.decodeLenient(String.self, forKey: .description) ?? ""
+        self.hostedUrl = container.decodeLenient(String.self, forKey: .hostedUrl)
+        self.alignment = container.decodeLenient([MoodleBadgeAlignment].self, forKey: .alignment) ?? []
+        self.criteriaUrl = container.decodeLenient(String.self, forKey: .criteriaUrl)
+        self.criteriaNarrative = container.decodeLenient(String.self, forKey: .criteriaNarrative)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(type, forKey: .type)
+        try container.encode(id, forKey: .id)
+        try container.encode(issuer, forKey: .issuer)
+        try container.encode(name, forKey: .name)
+        try container.encode(image, forKey: .image)
+        try container.encode(description, forKey: .description)
+        try container.encode(hostedUrl, forKey: .hostedUrl)
+        try container.encode(alignment, forKey: .alignment)
+        try container.encode(criteriaUrl, forKey: .criteriaUrl)
+        try container.encode(criteriaNarrative, forKey: .criteriaNarrative)
+    }
+}
+
+public struct MoodleBadgeAlignment: Codable, Hashable, Sendable {
+    /// Alignment id
+    public var id: Int?
+    /// Badge id
+    public var badgeId: Int?
+    /// Target name
+    public var targetName: String?
+    /// Target URL
+    public var targetUrl: String?
+    /// Target description
+    public var targetDescription: String?
+    /// Target framework
+    public var targetFramework: String?
+    /// Target code
+    public var targetCode: String?
+
+    public init(
+        id: Int? = nil,
+        badgeId: Int? = nil,
+        targetName: String? = nil,
+        targetUrl: String? = nil,
+        targetDescription: String? = nil,
+        targetFramework: String? = nil,
+        targetCode: String? = nil
+    ) {
+        self.id = id
+        self.badgeId = badgeId
+        self.targetName = targetName
+        self.targetUrl = targetUrl
+        self.targetDescription = targetDescription
+        self.targetFramework = targetFramework
+        self.targetCode = targetCode
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id = "id"
+        case badgeId = "badgeid"
+        case targetName = "targetName"
+        case targetUrl = "targetUrl"
+        case targetDescription = "targetDescription"
+        case targetFramework = "targetFramework"
+        case targetCode = "targetCode"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = container.decodeLenient(Int.self, forKey: .id)
+        self.badgeId = container.decodeLenient(Int.self, forKey: .badgeId)
+        self.targetName = container.decodeLenient(String.self, forKey: .targetName)
+        self.targetUrl = container.decodeLenient(String.self, forKey: .targetUrl)
+        self.targetDescription = container.decodeLenient(String.self, forKey: .targetDescription)
+        self.targetFramework = container.decodeLenient(String.self, forKey: .targetFramework)
+        self.targetCode = container.decodeLenient(String.self, forKey: .targetCode)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(badgeId, forKey: .badgeId)
+        try container.encode(targetName, forKey: .targetName)
+        try container.encode(targetUrl, forKey: .targetUrl)
+        try container.encode(targetDescription, forKey: .targetDescription)
+        try container.encode(targetFramework, forKey: .targetFramework)
+        try container.encode(targetCode, forKey: .targetCode)
+    }
+}
+
+/// warning
+public struct MoodleWarning: Codable, Hashable, Sendable {
+    /// item
+    public var item: String?
+    /// item id
+    public var itemId: Int?
+    /// the warning code can be used by the client app to implement specific behaviour
+    public var warningCode: String
+    /// untranslated english message to explain the warning
+    public var message: String
+
+    public init(
+        item: String? = nil,
+        itemId: Int? = nil,
+        warningCode: String = "",
+        message: String = ""
+    ) {
+        self.item = item
+        self.itemId = itemId
+        self.warningCode = warningCode
+        self.message = message
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case item = "item"
+        case itemId = "itemid"
+        case warningCode = "warningcode"
+        case message = "message"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.item = container.decodeLenient(String.self, forKey: .item)
+        self.itemId = container.decodeLenient(Int.self, forKey: .itemId)
+        self.warningCode = container.decodeLenient(String.self, forKey: .warningCode) ?? ""
+        self.message = container.decodeLenient(String.self, forKey: .message) ?? ""
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(item, forKey: .item)
+        try container.encode(itemId, forKey: .itemId)
+        try container.encode(warningCode, forKey: .warningCode)
+        try container.encode(message, forKey: .message)
+    }
+}
+
+public struct MoodleBadgesGetUserBadgeByHashResponse: Codable, Hashable, Sendable {
+    public var badge: [MoodleUserBadge]
+    /// list of warnings
+    public var warnings: [MoodleWarning]
+
+    public init(
+        badge: [MoodleUserBadge] = [],
+        warnings: [MoodleWarning] = []
+    ) {
+        self.badge = badge
+        self.warnings = warnings
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case badge = "badge"
+        case warnings = "warnings"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.badge = container.decodeLenient([MoodleUserBadge].self, forKey: .badge) ?? []
+        self.warnings = container.decodeLenient([MoodleWarning].self, forKey: .warnings) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(badge, forKey: .badge)
+        try container.encode(warnings, forKey: .warnings)
     }
 }
 
@@ -280,120 +509,44 @@ public struct MoodleUserBadge: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if id != nil {
-            try container.encode(id, forKey: .id)
-        }
-        if name != "" {
-            try container.encode(name, forKey: .name)
-        }
-        if description != "" {
-            try container.encode(description, forKey: .description)
-        }
-        if timeCreated != nil {
-            try container.encode(timeCreated, forKey: .timeCreated)
-        }
-        if timeModified != nil {
-            try container.encode(timeModified, forKey: .timeModified)
-        }
-        if userCreated != nil {
-            try container.encode(userCreated, forKey: .userCreated)
-        }
-        if userModified != nil {
-            try container.encode(userModified, forKey: .userModified)
-        }
-        if issuerName != "" {
-            try container.encode(issuerName, forKey: .issuerName)
-        }
-        if issuerUrl != "" {
-            try container.encode(issuerUrl, forKey: .issuerUrl)
-        }
-        if issuerContact != "" {
-            try container.encode(issuerContact, forKey: .issuerContact)
-        }
-        if expireDate != nil {
-            try container.encode(expireDate, forKey: .expireDate)
-        }
-        if expirePeriod != nil {
-            try container.encode(expirePeriod, forKey: .expirePeriod)
-        }
-        if type != nil {
-            try container.encode(type, forKey: .type)
-        }
-        if courseId != nil {
-            try container.encode(courseId, forKey: .courseId)
-        }
-        if message != nil {
-            try container.encode(message, forKey: .message)
-        }
-        if messageSubject != nil {
-            try container.encode(messageSubject, forKey: .messageSubject)
-        }
-        if attachment != nil {
-            try container.encode(attachment, forKey: .attachment)
-        }
-        if notification != nil {
-            try container.encode(notification, forKey: .notification)
-        }
-        if nextCron != nil {
-            try container.encode(nextCron, forKey: .nextCron)
-        }
-        if status != nil {
-            try container.encode(status, forKey: .status)
-        }
-        if issuedId != nil {
-            try container.encode(issuedId, forKey: .issuedId)
-        }
-        if uniqueHash != "" {
-            try container.encode(uniqueHash, forKey: .uniqueHash)
-        }
-        if dateIssued != 0 {
-            try container.encode(dateIssued, forKey: .dateIssued)
-        }
-        if dateExpire != 0 {
-            try container.encode(dateExpire, forKey: .dateExpire)
-        }
-        if visible != nil {
-            try container.encode(visible, forKey: .visible)
-        }
-        if recipientId != 0 {
-            try container.encode(recipientId, forKey: .recipientId)
-        }
-        if recipientFullName != "" {
-            try container.encode(recipientFullName, forKey: .recipientFullName)
-        }
-        if email != nil {
-            try container.encode(email, forKey: .email)
-        }
-        if version != nil {
-            try container.encode(version, forKey: .version)
-        }
-        if language != nil {
-            try container.encode(language, forKey: .language)
-        }
-        if imageAuthorName != nil {
-            try container.encode(imageAuthorName, forKey: .imageAuthorName)
-        }
-        if imageAuthorEmail != nil {
-            try container.encode(imageAuthorEmail, forKey: .imageAuthorEmail)
-        }
-        if imageAuthorUrl != nil {
-            try container.encode(imageAuthorUrl, forKey: .imageAuthorUrl)
-        }
-        if imageCaption != nil {
-            try container.encode(imageCaption, forKey: .imageCaption)
-        }
-        if badgeUrl != "" {
-            try container.encode(badgeUrl, forKey: .badgeUrl)
-        }
-        if endorsement != nil {
-            try container.encode(endorsement, forKey: .endorsement)
-        }
-        if !alignment.isEmpty {
-            try container.encode(alignment, forKey: .alignment)
-        }
-        if !relatedBadges.isEmpty {
-            try container.encode(relatedBadges, forKey: .relatedBadges)
-        }
+        try container.encode(id, forKey: .id)
+        try container.encode(name, forKey: .name)
+        try container.encode(description, forKey: .description)
+        try container.encode(timeCreated, forKey: .timeCreated)
+        try container.encode(timeModified, forKey: .timeModified)
+        try container.encode(userCreated, forKey: .userCreated)
+        try container.encode(userModified, forKey: .userModified)
+        try container.encode(issuerName, forKey: .issuerName)
+        try container.encode(issuerUrl, forKey: .issuerUrl)
+        try container.encode(issuerContact, forKey: .issuerContact)
+        try container.encode(expireDate, forKey: .expireDate)
+        try container.encode(expirePeriod, forKey: .expirePeriod)
+        try container.encode(type, forKey: .type)
+        try container.encode(courseId, forKey: .courseId)
+        try container.encode(message, forKey: .message)
+        try container.encode(messageSubject, forKey: .messageSubject)
+        try container.encode(attachment, forKey: .attachment)
+        try container.encode(notification, forKey: .notification)
+        try container.encode(nextCron, forKey: .nextCron)
+        try container.encode(status, forKey: .status)
+        try container.encode(issuedId, forKey: .issuedId)
+        try container.encode(uniqueHash, forKey: .uniqueHash)
+        try container.encode(dateIssued, forKey: .dateIssued)
+        try container.encode(dateExpire, forKey: .dateExpire)
+        try container.encode(visible, forKey: .visible)
+        try container.encode(recipientId, forKey: .recipientId)
+        try container.encode(recipientFullName, forKey: .recipientFullName)
+        try container.encode(email, forKey: .email)
+        try container.encode(version, forKey: .version)
+        try container.encode(language, forKey: .language)
+        try container.encode(imageAuthorName, forKey: .imageAuthorName)
+        try container.encode(imageAuthorEmail, forKey: .imageAuthorEmail)
+        try container.encode(imageAuthorUrl, forKey: .imageAuthorUrl)
+        try container.encode(imageCaption, forKey: .imageCaption)
+        try container.encode(badgeUrl, forKey: .badgeUrl)
+        try container.encode(endorsement, forKey: .endorsement)
+        try container.encode(alignment, forKey: .alignment)
+        try container.encode(relatedBadges, forKey: .relatedBadges)
     }
 }
 
@@ -460,111 +613,14 @@ public struct MoodleBadgeEndorsement: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if id != 0 {
-            try container.encode(id, forKey: .id)
-        }
-        if badgeId != 0 {
-            try container.encode(badgeId, forKey: .badgeId)
-        }
-        if issuerName != "" {
-            try container.encode(issuerName, forKey: .issuerName)
-        }
-        if issuerUrl != "" {
-            try container.encode(issuerUrl, forKey: .issuerUrl)
-        }
-        if issuerEmail != "" {
-            try container.encode(issuerEmail, forKey: .issuerEmail)
-        }
-        if claimId != "" {
-            try container.encode(claimId, forKey: .claimId)
-        }
-        if claimComment != "" {
-            try container.encode(claimComment, forKey: .claimComment)
-        }
-        if dateIssued != 0 {
-            try container.encode(dateIssued, forKey: .dateIssued)
-        }
-    }
-}
-
-public struct MoodleBadgeAlignment: Codable, Hashable, Sendable {
-    /// Alignment id
-    public var id: Int?
-    /// Badge id
-    public var badgeId: Int?
-    /// Target name
-    public var targetName: String?
-    /// Target URL
-    public var targetUrl: String?
-    /// Target description
-    public var targetDescription: String?
-    /// Target framework
-    public var targetFramework: String?
-    /// Target code
-    public var targetCode: String?
-
-    public init(
-        id: Int? = nil,
-        badgeId: Int? = nil,
-        targetName: String? = nil,
-        targetUrl: String? = nil,
-        targetDescription: String? = nil,
-        targetFramework: String? = nil,
-        targetCode: String? = nil
-    ) {
-        self.id = id
-        self.badgeId = badgeId
-        self.targetName = targetName
-        self.targetUrl = targetUrl
-        self.targetDescription = targetDescription
-        self.targetFramework = targetFramework
-        self.targetCode = targetCode
-    }
-
-    private enum CodingKeys: String, CodingKey {
-        case id = "id"
-        case badgeId = "badgeid"
-        case targetName = "targetName"
-        case targetUrl = "targetUrl"
-        case targetDescription = "targetDescription"
-        case targetFramework = "targetFramework"
-        case targetCode = "targetCode"
-    }
-
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.id = container.decodeLenient(Int.self, forKey: .id)
-        self.badgeId = container.decodeLenient(Int.self, forKey: .badgeId)
-        self.targetName = container.decodeLenient(String.self, forKey: .targetName)
-        self.targetUrl = container.decodeLenient(String.self, forKey: .targetUrl)
-        self.targetDescription = container.decodeLenient(String.self, forKey: .targetDescription)
-        self.targetFramework = container.decodeLenient(String.self, forKey: .targetFramework)
-        self.targetCode = container.decodeLenient(String.self, forKey: .targetCode)
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        if id != nil {
-            try container.encode(id, forKey: .id)
-        }
-        if badgeId != nil {
-            try container.encode(badgeId, forKey: .badgeId)
-        }
-        if targetName != nil {
-            try container.encode(targetName, forKey: .targetName)
-        }
-        if targetUrl != nil {
-            try container.encode(targetUrl, forKey: .targetUrl)
-        }
-        if targetDescription != nil {
-            try container.encode(targetDescription, forKey: .targetDescription)
-        }
-        if targetFramework != nil {
-            try container.encode(targetFramework, forKey: .targetFramework)
-        }
-        if targetCode != nil {
-            try container.encode(targetCode, forKey: .targetCode)
-        }
+        try container.encode(id, forKey: .id)
+        try container.encode(badgeId, forKey: .badgeId)
+        try container.encode(issuerName, forKey: .issuerName)
+        try container.encode(issuerUrl, forKey: .issuerUrl)
+        try container.encode(issuerEmail, forKey: .issuerEmail)
+        try container.encode(claimId, forKey: .claimId)
+        try container.encode(claimComment, forKey: .claimComment)
+        try container.encode(dateIssued, forKey: .dateIssued)
     }
 }
 
@@ -613,75 +669,41 @@ public struct MoodleRelatedBadge: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if id != 0 {
-            try container.encode(id, forKey: .id)
-        }
-        if name != "" {
-            try container.encode(name, forKey: .name)
-        }
-        if version != nil {
-            try container.encode(version, forKey: .version)
-        }
-        if language != nil {
-            try container.encode(language, forKey: .language)
-        }
-        if type != nil {
-            try container.encode(type, forKey: .type)
-        }
+        try container.encode(id, forKey: .id)
+        try container.encode(name, forKey: .name)
+        try container.encode(version, forKey: .version)
+        try container.encode(language, forKey: .language)
+        try container.encode(type, forKey: .type)
     }
 }
 
-/// warning
-public struct MoodleWarning: Codable, Hashable, Sendable {
-    /// item
-    public var item: String?
-    /// item id
-    public var itemId: Int?
-    /// the warning code can be used by the client app to implement specific behaviour
-    public var warningCode: String
-    /// untranslated english message to explain the warning
-    public var message: String
+public struct MoodleUserBadgesResponse: Codable, Hashable, Sendable {
+    public var badges: [MoodleUserBadge]
+    /// list of warnings
+    public var warnings: [MoodleWarning]
 
     public init(
-        item: String? = nil,
-        itemId: Int? = nil,
-        warningCode: String = "",
-        message: String = ""
+        badges: [MoodleUserBadge] = [],
+        warnings: [MoodleWarning] = []
     ) {
-        self.item = item
-        self.itemId = itemId
-        self.warningCode = warningCode
-        self.message = message
+        self.badges = badges
+        self.warnings = warnings
     }
 
     private enum CodingKeys: String, CodingKey {
-        case item = "item"
-        case itemId = "itemid"
-        case warningCode = "warningcode"
-        case message = "message"
+        case badges = "badges"
+        case warnings = "warnings"
     }
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.item = container.decodeLenient(String.self, forKey: .item)
-        self.itemId = container.decodeLenient(Int.self, forKey: .itemId)
-        self.warningCode = container.decodeLenient(String.self, forKey: .warningCode) ?? ""
-        self.message = container.decodeLenient(String.self, forKey: .message) ?? ""
+        self.badges = container.decodeLenient([MoodleUserBadge].self, forKey: .badges) ?? []
+        self.warnings = container.decodeLenient([MoodleWarning].self, forKey: .warnings) ?? []
     }
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if item != nil {
-            try container.encode(item, forKey: .item)
-        }
-        if itemId != nil {
-            try container.encode(itemId, forKey: .itemId)
-        }
-        if warningCode != "" {
-            try container.encode(warningCode, forKey: .warningCode)
-        }
-        if message != "" {
-            try container.encode(message, forKey: .message)
-        }
+        try container.encode(badges, forKey: .badges)
+        try container.encode(warnings, forKey: .warnings)
     }
 }

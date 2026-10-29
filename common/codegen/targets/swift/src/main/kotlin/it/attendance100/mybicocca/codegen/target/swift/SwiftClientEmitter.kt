@@ -179,6 +179,8 @@ internal class SwiftClientEmitter(private val spec: ApiSpec, private val layout:
             line("public let code: String?")
             line("/// The human-readable message the body carried, else the code, else a description of the status.")
             line("public let message: String")
+            line("/// The human-readable message the body carried, if any.")
+            line("public let serverMessage: String?")
             if (spec.usesRoles) {
                 line("/// The roles the operation requires, a hint when the status is 401 or 403.")
                 line("public let expectedRoles: Set<$roles>")
@@ -189,6 +191,7 @@ internal class SwiftClientEmitter(private val spec: ApiSpec, private val layout:
                 line("status = failure.status")
                 line("code = failure.code")
                 line("message = failure.message")
+                line("serverMessage = failure.serverMessage")
                 if (spec.usesRoles) line("self.expectedRoles = expectedRoles")
             }
             line()

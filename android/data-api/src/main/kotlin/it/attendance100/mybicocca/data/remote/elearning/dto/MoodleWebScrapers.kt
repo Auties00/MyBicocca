@@ -57,7 +57,7 @@ object MoodleWebScrapers {
     fun attendanceView(node: Node): MoodleWebAttendanceView? = MoodleWebAttendanceView(
         shown = (select(node, "body#page-mod-attendance-view") != null),
         summary = select(node, "table.attlist")?.let { attendanceSummary(it) },
-        submittableSessions = selectAll(node, "table.generaltable td[colspan=3]").mapNotNull { submittableSession(it) }
+        submittableSessions = selectAll(node, "table.generaltable td[colspan='3']").mapNotNull { submittableSession(it) }
     )
 
     /** Reads [MoodleWebAttendanceSummary] out of [node], or returns null when a value it requires is missing. */
@@ -74,7 +74,7 @@ object MoodleWebScrapers {
 
     /** Reads [MoodleWebSubmittableSession] out of [node], or returns null when a value it requires is missing. */
     fun submittableSession(node: Node): MoodleWebSubmittableSession? = MoodleWebSubmittableSession(
-        id = node.let { input3 -> regex(attribute(select(input3, "a[href*=attendance.php]"), "href", emptyList()), PATTERN_2) ?: attribute(select(input3, "input[name=sessid]"), "value", emptyList()) } ?: return null
+        id = node.let { input3 -> regex(attribute(select(input3, "a[href*='attendance.php']"), "href", emptyList()), PATTERN_2) ?: attribute(select(input3, "input[name=sessid]"), "value", emptyList()) } ?: return null
     )
 
     /** Reads [MoodleWebAttendanceSessionForm] out of [node], or returns null when a value it requires is missing. */

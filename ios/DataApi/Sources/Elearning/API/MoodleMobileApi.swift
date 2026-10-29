@@ -10,6 +10,25 @@ public struct MoodleMobileApi: Sendable {
         self.client = client
     }
 
+    /// Call multiple external functions and return all responses.
+    ///
+    /// - Parameters:
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func callExternalFunctions(
+        requests: [MoodleMobileCallExternalFunctionsRequest],
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleMobileCallExternalFunctionsResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "tool_mobile_call_external_functions"), ("moodlewsrestformat", "json")],
+                form: RestRequest.brackets("requests", requests),
+                auth: auth
+            )
+        )
+    }
+
     /// Creates an auto-login key for the current user. Is created only in https sites and is restricted by time, ip address and only works if the request comes from the Moodle mobile or desktop app.
     ///
     /// - Parameters:
@@ -25,6 +44,26 @@ public struct MoodleMobileApi: Sendable {
                 path: "/webservice/rest/server.php",
                 query: [("wsfunction", "tool_mobile_get_autologin_key"), ("moodlewsrestformat", "json")],
                 form: [("privatetoken", privateToken)],
+                auth: auth
+            )
+        )
+    }
+
+    /// Returns a list of the site configurations, filtering by section.
+    ///
+    /// - Parameters:
+    ///   - section: Settings section name.
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getConfig(
+        section: String? = nil,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleMobileGetConfigResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "tool_mobile_get_config"), ("moodlewsrestformat", "json")],
+                form: [("section", section)],
                 auth: auth
             )
         )
@@ -49,6 +88,82 @@ public struct MoodleMobileApi: Sendable {
                 path: "/webservice/rest/server.php",
                 query: [("wsfunction", "tool_mobile_get_content"), ("moodlewsrestformat", "json")],
                 form: [("component", component), ("method", method)] + RestRequest.brackets("args", args),
+                auth: auth
+            )
+        )
+    }
+
+    /// Returns a list of Moodle plugins supporting the mobile app.
+    ///
+    /// - Parameters:
+    ///   - auth: The credentials, if any: ``MoodleTokenAuth``.
+    public func getPluginsSupportingMobile(
+        auth: (MoodleTokenAuth)? = nil
+    ) async throws -> MoodleMobileGetPluginsSupportingMobileResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "tool_mobile_get_plugins_supporting_mobile"), ("moodlewsrestformat", "json")],
+                auth: auth
+            )
+        )
+    }
+
+    /// Returns a list of the site public settings, those not requiring authentication.
+    ///
+    /// - Parameters:
+    ///   - auth: The credentials, if any: ``MoodleTokenAuth``.
+    public func getPublicConfig(
+        auth: (MoodleTokenAuth)? = nil
+    ) async throws -> MoodleMobileGetPublicConfigResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "tool_mobile_get_public_config"), ("moodlewsrestformat", "json")],
+                auth: auth
+            )
+        )
+    }
+
+    /// Returns a WebService token (and private token) for QR login.
+    ///
+    /// - Parameters:
+    ///   - qrloginkey: The user key for validating the request.
+    ///   - userId: The user the key belongs to.
+    ///   - auth: The credentials, if any: ``MoodleTokenAuth``.
+    public func getTokensForQrLogin(
+        qrloginkey: String,
+        userId: Int,
+        auth: (MoodleTokenAuth)? = nil
+    ) async throws -> MoodleMobileGetTokensForQrLoginResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "tool_mobile_get_tokens_for_qr_login"), ("moodlewsrestformat", "json")],
+                form: [("qrloginkey", qrloginkey), ("userid", userId)],
+                auth: auth
+            )
+        )
+    }
+
+    /// Check if the given site subscription key is valid.
+    ///
+    /// - Parameters:
+    ///   - key: Site subscription temporary key.
+    ///   - auth: The credentials, if any: ``MoodleTokenAuth``.
+    public func validateSubscriptionKey(
+        key: String,
+        auth: (MoodleTokenAuth)? = nil
+    ) async throws -> MoodleMobileValidateSubscriptionKeyResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "tool_mobile_validate_subscription_key"), ("moodlewsrestformat", "json")],
+                form: [("key", key)],
                 auth: auth
             )
         )

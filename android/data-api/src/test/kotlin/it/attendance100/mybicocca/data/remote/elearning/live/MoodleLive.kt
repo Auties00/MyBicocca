@@ -3,22 +3,88 @@ package it.attendance100.mybicocca.data.remote.elearning.live
 
 import io.ktor.client.HttpClientConfig
 import it.attendance100.mybicocca.data.remote.elearning.api.MoodleApi
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAcceptance
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAction
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleActionuser
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleActivitiesCompletionResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleActivityBadge
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleActivityBadgeAttribute
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleActivityCompletionStatus
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAdvancedFeature
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAdvancedgrading
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAiGetPolicyStatusResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAnalyticsPotentialContextsItem
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAncestor
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAnonattempt
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAssessment
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAssignment
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAssignmentConfig
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAssignmentsResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAttemptReviewResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAuthor
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleBadge
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleBadgeAlignment
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleBadgeEndorsement
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleBadgesGetBadgeResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleBigbluebuttonbn
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleBigbluebuttonbnCanJoinResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleBigbluebuttonbnGetBigbluebuttonbnsByCoursesResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleBigbluebuttonbnGetRecordingsResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleBigbluebuttonbnGetRecordingsResponseTabledata
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleBigbluebuttonbnMeetingInfoResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleBlock
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleBlockContent
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleBlockGetCourseBlocksResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleBlockRecentlyaccesseditemsGetRecentItemsItem
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleBlogGetAccessInformationResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleBlogGetEntriesResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleBlogGetEntriesResponseEntry
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleBook
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleBookGetBooksByCoursesResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCalendarEvent
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCalendarEventsResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCalendarGetAllowedEventTypesResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCalendarGetCalendarAccessInformationResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCalendarGetCalendarEventByIdResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCalendarGetCalendarEventsResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCalendarGetCalendarEventsResponseEvent
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCalendarGetCalendarExportTokenResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCalendarUpcomingView
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCanAddDiscussionResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCategory
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleChat
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleChatGetChatsByCoursesResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleChatGetSessionMessagesResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleChatGetSessionMessagesResponseMessage
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleChatGetSessionsResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleChoice
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleChoiceGetChoiceOptionsResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleChoiceGetChoiceOptionsResponseOption
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleChoiceGetChoiceResultsResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleChoiceGetChoiceResultsResponseOption
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleChoiceGetChoicesByCoursesResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCm
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCollection
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleColumn
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCommentAddCommentsItem
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCommentGetCommentsResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCommentarea
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCompetencyCourseModule
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCompetencyGetScaleValuesItem
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCompetencyGradeCompetencyInCourseResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCompetencyListCourseCompetenciesItem
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCompetencyListCourseCompetenciesItemCompetency
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCompleted
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCompletion
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCompletionGetCourseCompletionStatusResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCompletionRule
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCompletionRuleValue
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCompletionstatu
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleComponent
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleComponentNotification
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleComponentNotificationProcessor
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleComppath
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleConfig
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleContact
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleContactRequest
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleContentTag
@@ -26,41 +92,193 @@ import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleConversation
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleConversationMember
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleConversationMessage
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleConversationsResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCorrectanswer
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseAssignments
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseCustomField
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseGetCategoriesItem
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseGetCourseModuleResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseGetCoursesItem
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseGetCoursesItemCustomField
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseGrade
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseGradesResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseGroup
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseModule
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseSection
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseUserGroupsResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCoursecompetency
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCoursesByFieldResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleDataGetDataAccessInformationResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleDataGetDatabasesByCoursesResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleDataGetEntriesResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleDataGetEntriesResponseEntry
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleDataGetEntriesResponseEntryContent
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleDataGetEntryResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleDataGetFieldsResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleDataSearchEntriesResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleDatabase
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleDataprivacyGetAccessInformationResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleDataprivacyGetDataRequestsResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleDataprivacyGetDataRequestsResponseRequest
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleDeployedfile
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleDetail
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleDiscussionPostResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleDiscussionPostsResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleEnrolGetCourseEnrolmentMethodsItem
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleEnrolGetEnrolledUsersItem
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleEnrolGetEnrolledUsersItemCustomField
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleEnrolGuestGetInstanceInfoResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleEnrolSelfGetInstanceInfoResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleEnrolledCourse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleEventAction
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleEventCategory
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleEventCourse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleEventIcon
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleEventSubscription
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleEvidence
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleEvidenceUsercompetency
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleExample
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleFeature
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleFeedbackGetAnalysisResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleFeedbackGetCurrentCompletedTmpResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleFeedbackGetCurrentCompletedTmpResponseFeedback
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleFeedbackGetFeedbackAccessInformationResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleFeedbackGetFeedbacksByCoursesResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleFeedbackGetFeedbacksByCoursesResponseFeedback
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleFeedbackGetFinishedResponsesResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleFeedbackGetFinishedResponsesResponseResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleFeedbackGetItemsResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleFeedbackGetLastCompletedResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleFeedbackGetNonRespondentsResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleFeedbackGetNonRespondentsResponseUser
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleFeedbackGetResponsesAnalysisResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleFeedbackGetResponsesAnalysisResponseAttempt
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleFeedbackGetResponsesAnalysisResponseAttemptResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleFeedbackLaunchFeedbackResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleField
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleFile
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleFilesGetFilesResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleFilesGetFilesResponseFile
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleFilesGetUnusedDraftItemidResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleFilter
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleFiltersGetAllStatesResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleFiltersGetAllStatesResponseFilter
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleFolder
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleFolderGetFoldersByCoursesResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleForum
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleForumDiscussion
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleForumDiscussionsResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleForumGetForumAccessInformationResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleForumPost
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleFramework
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleGetComponentStringsItem
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleGlossary
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleGlossaryGetAuthorsResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleGlossaryGetCategoriesResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleGlossaryGetEntriesByAuthorResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleGlossaryGetEntriesByAuthorResponseEntry
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleGlossaryGetEntriesByCategoryResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleGlossaryGetEntriesByCategoryResponseEntry
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleGlossaryGetEntryByIdResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleGlossaryGetGlossariesByCoursesResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleGradeItem
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleGradeItemMark
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleGradeItemsResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleGradereportSingleviewGetGradeItemsForSearchWidgetResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleGradereportSingleviewGetGradeItemsForSearchWidgetResponseGradeItem
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleGradereportUserGetAccessInformationResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleGradereportUserGetGradesTableResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleGradesGetEnrolledUsersForSelectorResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleGradesGetGradeitemsResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleGradesGetGradeitemsResponseGradeItem
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleGradesGetGroupsForSearchWidgetResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleGradesGetGroupsForSearchWidgetResponseGroup
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleGroupGetActivityAllowedGroupsResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleGroupGetActivityGroupmodeResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleGroupGetCourseGroupingsItem
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleGroupGetCourseGroupsItem
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleH5pGetTrustedH5pFileResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleH5pactivity
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleH5pactivityGetAttemptsResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleH5pactivityGetH5pactivitiesByCoursesResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleH5pactivityGetH5pactivityAccessInformationResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleH5pactivityGetResultsResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleH5pactivityGetResultsResponseAttempt
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleH5pactivityGetResultsResponseAttemptResult
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleH5pactivityGetResultsResponseAttemptResultOption
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleH5pglobalsetting
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleIdentityprovider
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleImscp
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleImscpGetImscpsByCoursesResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleInstanceinfo
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleItem
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleItemName
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleItemsdata
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleJump
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleKeyValue
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleLabel
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleLabelGetLabelsByCoursesResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleLeader
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleLesson
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleLessonFinishAttemptResponseMessage
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleLessonGetAttemptsOverviewResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleLessonGetAttemptsOverviewResponseData
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleLessonGetLessonAccessInformationResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleLessonGetLessonResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleLessonGetLessonsByCoursesResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleLessonGetPageDataResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleLessonGetPageDataResponseAnswer
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleLessonGetPageDataResponsePage
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleLessonGetPagesPossibleJumpsResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleLessonGetPagesResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleLessonGetPagesResponsePage
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleLessonGetQuestionsAttemptsResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleLessonGetQuestionsAttemptsResponseAttempt
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleLessonGetUserGradeResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleLessonGetUserTimersResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleLpDataForCourseCompetenciesPageResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleLpDataForCourseCompetenciesPageResponseCompetency
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleLpDataForPlanPageResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleLpDataForPlanPageResponseCompetency
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleLpDataForPlanPageResponseCompetencyUsercompetency
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleLpDataForPlansPageResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleLpDataForUserCompetencySummaryInCourseResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleLpDataForUserCompetencySummaryInPlanResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleLpDataForUserCompetencySummaryResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleLpDataForUserCompetencySummaryResponseCompetency
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleLpDataForUserEvidenceListPageResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleLpDataForUserEvidencePageResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleLti
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleLtiGetLtisByCoursesResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleMemberConversation
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleMessageGetBlockedUsersResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleMessageGetBlockedUsersResponseUser
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleMessageGetUserMessagePreferencesResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleMessageGetUserMessagePreferencesResponsePreference
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleMessageGetUserMessagePreferencesResponsePreferenceProcessor
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleMessageGetUserNotificationPreferencesResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleMobileGetConfigResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleMobileGetPluginsSupportingMobileResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleMobileGetPublicConfigResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleModuleCompletion
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleModuleCompletionRule
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleModuleCompletionRuleValue
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleModuleContent
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleModuleContentsInfo
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleModuleDate
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleMoodlenetVerifyWebfingerResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleNamedValue
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleNotesGetCourseNotesResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleOutcome
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodlePageGetPagesByCoursesResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodlePageGetPagesByCoursesResponsePage
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleParent
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodlePermission
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodlePhase
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodlePlan
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodlePlugin
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodlePolicyGetUserAcceptancesResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodlePolicyGetUserAcceptancesResponsePolicy
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodlePostAttachment
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodlePostAttachmentHtml
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodlePostAttachmentUrls
@@ -74,27 +292,110 @@ import it.attendance100.mybicocca.data.remote.elearning.dto.MoodlePostInlineFile
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodlePostTag
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodlePostTagUrls
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodlePostUrls
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodlePresentation
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodlePreventAccessReason
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodlePrivateFilesInfo
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleQuestion
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleQuiz
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleQuizAccessInformation
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleQuizAttempt
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleQuizGetCombinedReviewOptionsResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleQuizGetQuizRequiredQtypesResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleQuizzesResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleRating
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleRatingInfo
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleRatingScale
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleRatingScaleItem
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleRelatedBadge
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleReportbuilderListReportsResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleReportbuilderListReportsResponseReport
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleReportbuilderRetrieveReportResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleReportbuilderRetrieveReportResponseData
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleResource
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleResourceGetResourcesByCoursesResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleReviewedby
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleRow
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleRuleoutcomeoption
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleScoe
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleScored
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleScorm
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleScormGetScormAccessInformationResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleScormGetScormAttemptCountResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleScormGetScormScoTracksResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleScormGetScormScoTracksResponseData
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleScormGetScormScoesResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleScormGetScormUserDataResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleScormGetScormUserDataResponseData
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleScormGetScormsByCoursesResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleSearchGetSearchAreasListResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleSearchGetSearchAreasListResponseArea
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleSession
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleSessionuser
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleSetting
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleSiteFunction
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleSiteInfo
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleSitenote
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleStatistic
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleStudent
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleStudentAttempt
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleSubwiki
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleSummaryFile
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleSurvey
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleSurveyGetQuestionsResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleSurveyGetSurveysByCoursesResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTable
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTableTabledata
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTag
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTagGetTagAreasResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTagGetTagAreasResponseArea
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTagGetTagCloudResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTagGetTagCollectionsResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTask
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTemplate
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTimer
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTrack
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleUnreadConversationCounts
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleUnreadCountsByType
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleUrl
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleUrlGetUrlsByCoursesResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleUser
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleUserAttemptsResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleUserBadge
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleUserBadgesResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleUserBestGradeResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleUserCustomField
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleUserEnrolledCourse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleUserGrades
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleUserGroup
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleUserRole
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleUsercompetencycourse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleUsercompetencyplan
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleUserplan
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleUserresponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleUsersattempt
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleUsersattemptAttempt
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleWarning
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleWeight
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleWiki
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleWikiGetPageContentsResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleWikiGetPageContentsResponsePage
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleWikiGetSubwikiPagesResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleWikiGetSubwikiPagesResponsePage
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleWikiGetSubwikisResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleWikiGetWikisByCoursesResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleWorkshop
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleWorkshopGetGradesReportResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleWorkshopGetGradesReportResponseReport
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleWorkshopGetGradesReportResponseReportGrade
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleWorkshopGetGradesResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleWorkshopGetReviewerAssessmentsResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleWorkshopGetSubmissionResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleWorkshopGetSubmissionResponseSubmission
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleWorkshopGetSubmissionsResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleWorkshopGetUserPlanResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleWorkshopGetWorkshopAccessInformationResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleWorkshopGetWorkshopsByCoursesResponse
 import it.attendance100.mybicocca.data.remote.runtime.live.LiveApi
 import it.attendance100.mybicocca.data.remote.runtime.live.LiveCase
 import it.attendance100.mybicocca.data.remote.runtime.live.LiveFingerprint
@@ -108,40 +409,241 @@ internal object MoodleLive : LiveApi<MoodleApi>(
     maxRequests = 800,
     shapes = SHAPES,
     skips = mapOf(
+        "AiplacementCourseassist.summariseText" to "irreversible",
+        "AiplacementEditor.generateImage" to "irreversible",
+        "AiplacementEditor.generateText" to "irreversible",
+        "Ai.setPolicyStatus" to "irreversible",
+        "Badge.getUserBadgeByHash" to "needs inputs hash (nothing provides them)",
+        "Block.fetchAddableBlocks" to "needs inputs pagetype, pagelayout (nothing provides them)",
+        "Blog.addEntry" to "reversible, but tests.yaml doesn't say how to undo it",
+        "Blog.deleteEntry" to "irreversible",
+        "Blog.prepareEntryForEdition" to "needs inputs entryid (only takes values from tests.yaml)",
+        "Blog.updateEntry" to "reversible, but tests.yaml doesn't say how to undo it",
+        "Calendar.createCalendarEvents" to "reversible, but tests.yaml doesn't say how to undo it",
+        "Calendar.deleteCalendarEvents" to "irreversible",
+        "Calendar.getActionEventsByCourses" to "needs inputs courseIds (nothing provides them)",
+        "Calendar.getCalendarDayView" to "needs inputs day (nothing provides them)",
+        "Calendar.submitCreateUpdateForm" to "reversible, but tests.yaml doesn't say how to undo it",
+        "Calendar.updateEventStartDay" to "reversible, but tests.yaml doesn't say how to undo it",
+        "Comment.addComments" to "irreversible",
+        "Comment.deleteComments" to "irreversible",
+        "Competency.deleteEvidence" to "irreversible",
+        "Competency.gradeCompetencyInCourse" to "irreversible",
+        "Completion.markCourseSelfCompleted" to "irreversible",
         "Completion.updateActivityCompletionStatusManually" to "reversible, but tests.yaml doesn't say how to undo it",
+        "Course.checkUpdates" to "needs inputs tocheck (nothing provides them)",
+        "Course.getEnrolledCoursesByTimelineClassification" to "needs inputs classification (nothing provides them)",
+        "Course.getEnrolledCoursesWithActionEventsByTimelineClassification" to "needs inputs classification (nothing provides them)",
+        "Course.getUpdatesSince" to "needs inputs since (nothing provides them)",
+        "Course.getUserAdministrationOptions" to "needs inputs courseIds (nothing provides them)",
+        "Course.getUserNavigationOptions" to "needs inputs courseIds (nothing provides them)",
+        "Course.searchCourses" to "needs inputs criterianame, criteriavalue (nothing provides them)",
+        "Course.setFavouriteCourses" to "reversible, but tests.yaml doesn't say how to undo it",
+        "Course.searchUsers" to "needs inputs search, page, perPage (nothing provides them)",
         "Course.enrolUser" to "irreversible",
+        "DraftArea.deleteDraftFiles" to "needs inputs draftItemId, files (only takes values from tests.yaml)",
+        "Filters.getAvailableInContext" to "needs inputs contexts (nothing provides them)",
+        "Grades.getEnrolledUsersForSearchWidget" to "needs inputs actionbaseurl (nothing provides them)",
+        "Grades.graderGradingpanelPointFetch" to "needs inputs component, contextId, itemName, gradeduserid (only takes values from tests.yaml)",
+        "Grades.graderGradingpanelPointStore" to "irreversible",
+        "Grades.graderGradingpanelScaleFetch" to "needs inputs component, contextId, itemName, gradeduserid (only takes values from tests.yaml)",
+        "Grades.graderGradingpanelScaleStore" to "irreversible",
         "Message.blockUser" to "Needs a user nobody minds being blocked for a moment; set one before enabling it.",
+        "Message.confirmContactRequest" to "irreversible",
+        "Message.createContactRequest" to "irreversible",
+        "Message.dataForMessageareaSearchMessages" to "needs inputs search (nothing provides them)",
+        "Message.declineContactRequest" to "irreversible",
+        "Message.deleteContacts" to "irreversible",
         "Message.deleteConversationsById" to "irreversible",
+        "Message.deleteMessage" to "irreversible",
+        "Message.deleteMessageForAllUsers" to "irreversible",
+        "Message.getConversationBetweenUsers" to "needs inputs otheruserid (nothing provides them)",
         "Message.getConversationMessages" to "needs inputs currentUserId (nothing provides them)",
+        "Message.getMemberInfo" to "needs inputs referenceuserid, userids (nothing provides them)",
+        "Message.getMessages" to "needs inputs useridto (nothing provides them)",
+        "Message.getUnreadConversationsCount" to "needs inputs useridto (nothing provides them)",
+        "Message.getUnreadNotificationCount" to "needs inputs useridto (nothing provides them)",
         "Message.markAllConversationMessagesAsRead" to "needs inputs conversationId (only takes values from tests.yaml)",
+        "Message.markAllNotificationsAsRead" to "needs inputs useridto (only takes values from tests.yaml)",
+        "Message.markMessageRead" to "needs inputs messageid (only takes values from tests.yaml)",
+        "Message.markNotificationRead" to "needs inputs notificationid (only takes values from tests.yaml)",
+        "Message.messageProcessorConfigForm" to "reversible, but tests.yaml doesn't say how to undo it",
+        "Message.messageSearchUsers" to "needs inputs search (nothing provides them)",
+        "Message.muteConversations" to "reversible, but tests.yaml doesn't say how to undo it",
+        "Message.searchContacts" to "needs inputs searchtext (nothing provides them)",
         "Message.sendInstantMessages" to "irreversible",
+        "Message.sendMessagesToConversation" to "irreversible",
+        "Message.setFavouriteConversations" to "reversible, but tests.yaml doesn't say how to undo it",
         "Message.unblockUser" to "Only safe as the undo of Message.blockUser.",
+        "Message.unmuteConversations" to "reversible, but tests.yaml doesn't say how to undo it",
+        "Message.unsetFavouriteConversations" to "reversible, but tests.yaml doesn't say how to undo it",
+        "My.viewPage" to "needs inputs page (only takes values from tests.yaml)",
+        "Notes.createNotes" to "reversible, but tests.yaml doesn't say how to undo it",
+        "Notes.deleteNotes" to "irreversible",
+        "Question.updateFlag" to "reversible, but tests.yaml doesn't say how to undo it",
+        "Rating.addRating" to "irreversible",
+        "Rating.getItemRatings" to "needs inputs sort (nothing provides them)",
+        "Reportbuilder.canViewSystemReport" to "needs inputs context (nothing provides them)",
+        "Reportbuilder.retrieveSystemReport" to "needs inputs context (nothing provides them)",
+        "Reportbuilder.viewReport" to "needs inputs reportid (only takes values from tests.yaml)",
+        "Search.getResults" to "needs inputs query (nothing provides them)",
+        "Search.getTopResults" to "needs inputs query (nothing provides them)",
+        "Search.viewResults" to "needs inputs query (only takes values from tests.yaml)",
+        "Table.getDynamicTableContent" to "needs inputs handler, jointype, firstinitial, lastinitial, pagenumber, pagesize, hiddencolumns (nothing provides them)",
+        "Tag.getTagindex" to "needs inputs tagindex (nothing provides them)",
+        "Tag.getTagindexPerArea" to "needs inputs tagindex (nothing provides them)",
         "User.addUserDevice" to "needs inputs appId, name, model, platform, version, pushId, uuid (only takes values from tests.yaml)",
+        "User.addUserPrivateFiles" to "reversible, but tests.yaml doesn't say how to undo it",
+        "User.agreeSitePolicy" to "irreversible",
         "User.getCourseUserProfiles" to "needs inputs userList (nothing provides them)",
         "User.getUsersByField" to "needs inputs field, values (nothing provides them)",
         "User.removeUserDevice" to "needs inputs uuid (only takes values from tests.yaml)",
+        "User.setUserPreferences" to "reversible, but tests.yaml doesn't say how to undo it",
+        "User.updatePicture" to "irreversible",
+        "User.updatePrivateFiles" to "reversible, but tests.yaml doesn't say how to undo it",
+        "User.updateUserDevicePublicKey" to "needs inputs uuid, appId, publicKey (only takes values from tests.yaml)",
         "User.updateUserPreferences" to "reversible, but tests.yaml doesn't say how to undo it",
+        "Xapi.deleteState" to "reversible, but tests.yaml doesn't say how to undo it",
+        "Xapi.deleteStates" to "reversible, but tests.yaml doesn't say how to undo it",
+        "Xapi.getState" to "needs inputs agent, stateId (nothing provides them)",
+        "Xapi.getStates" to "needs inputs agent (nothing provides them)",
+        "Xapi.postState" to "reversible, but tests.yaml doesn't say how to undo it",
+        "Xapi.statementPost" to "irreversible",
+        "EnrolGuest.validatePassword" to "needs inputs instanceId, password (only takes values from tests.yaml)",
+        "MessageAirnotifier.areNotificationPreferencesConfigured" to "needs inputs userids (nothing provides them)",
+        "MessageAirnotifier.enableDevice" to "needs inputs deviceid, enable (only takes values from tests.yaml)",
+        "MessageAirnotifier.getUserDevices" to "needs inputs appId (nothing provides them)",
+        "MessagePopup.getPopupNotifications" to "needs inputs useridto (nothing provides them)",
+        "MessagePopup.getUnreadPopupNotificationCount" to "needs inputs useridto (nothing provides them)",
+        "Assign.getGrades" to "needs inputs assignmentids (nothing provides them)",
+        "Assign.getParticipant" to "needs inputs assignId (nothing provides them)",
         "Assign.getSubmissionStatus" to "needs inputs assignId (nothing provides them)",
+        "Assign.getSubmissions" to "needs inputs assignmentids (nothing provides them)",
+        "Assign.getUserFlags" to "needs inputs assignmentids (nothing provides them)",
+        "Assign.getUserMappings" to "needs inputs assignmentids (nothing provides them)",
+        "Assign.listParticipants" to "needs inputs assignId (nothing provides them)",
+        "Assign.lockSubmissions" to "reversible, but tests.yaml doesn't say how to undo it",
         "Assign.removeSubmission" to "reversible, but tests.yaml doesn't say how to undo it",
+        "Assign.revealIdentities" to "irreversible",
+        "Assign.revertSubmissionsToDraft" to "irreversible",
+        "Assign.saveGrade" to "irreversible",
+        "Assign.saveGrades" to "irreversible",
         "Assign.saveSubmission" to "reversible, but tests.yaml doesn't say how to undo it",
+        "Assign.saveUserExtensions" to "irreversible",
+        "Assign.setUserFlags" to "irreversible",
+        "Assign.startSubmission" to "irreversible",
         "Assign.submitForGrading" to "irreversible",
+        "Assign.submitGradingForm" to "irreversible",
+        "Assign.unlockSubmissions" to "reversible, but tests.yaml doesn't say how to undo it",
+        "Assign.viewAssign" to "needs inputs assignId (only takes values from tests.yaml)",
+        "Assign.viewGradingTable" to "needs inputs assignId (only takes values from tests.yaml)",
+        "Assign.viewSubmissionStatus" to "needs inputs assignId (only takes values from tests.yaml)",
+        "Bigbluebuttonbn.completionValidate" to "irreversible",
+        "Bigbluebuttonbn.endMeeting" to "irreversible",
+        "Bigbluebuttonbn.getJoinUrl" to "irreversible",
+        "Bigbluebuttonbn.getRecordingsToImport" to "needs inputs destinationinstanceid (nothing provides them)",
+        "Bigbluebuttonbn.updateRecording" to "irreversible",
+        "Bigbluebuttonbn.viewBigbluebuttonbn" to "needs inputs bigbluebuttonbnid (only takes values from tests.yaml)",
+        "Book.viewBook" to "needs inputs bookid (only takes values from tests.yaml)",
+        "Chat.getChatLatestMessages" to "needs inputs chatsid (only takes values from tests.yaml)",
+        "Chat.getChatUsers" to "needs inputs chatsid (only takes values from tests.yaml)",
+        "Chat.loginUser" to "irreversible",
+        "Chat.sendChatMessage" to "irreversible",
+        "Chat.viewChat" to "needs inputs chatid (only takes values from tests.yaml)",
+        "Chat.viewSessions" to "needs inputs cmId (only takes values from tests.yaml)",
+        "Choice.deleteChoiceResponses" to "irreversible",
+        "Choice.submitChoiceResponse" to "reversible, but tests.yaml doesn't say how to undo it",
+        "Choice.viewChoice" to "needs inputs choiceid (only takes values from tests.yaml)",
+        "Data.addEntry" to "reversible, but tests.yaml doesn't say how to undo it",
+        "Data.approveEntry" to "reversible, but tests.yaml doesn't say how to undo it",
+        "Data.deleteEntry" to "irreversible",
+        "Data.updateEntry" to "reversible, but tests.yaml doesn't say how to undo it",
+        "Data.viewDatabase" to "needs inputs databaseid (only takes values from tests.yaml)",
+        "Feedback.getPageItems" to "needs inputs page (nothing provides them)",
+        "Feedback.processPage" to "irreversible",
+        "Feedback.viewFeedback" to "needs inputs feedbackid (only takes values from tests.yaml)",
+        "Folder.viewFolder" to "needs inputs folderid (only takes values from tests.yaml)",
         "Forum.addDiscussion" to "reversible, but tests.yaml doesn't say how to undo it",
         "Forum.addDiscussionPost" to "reversible, but tests.yaml doesn't say how to undo it",
         "Forum.deletePost" to "irreversible",
         "Forum.prepareDraftAreaForPost" to "needs inputs postId, area (only takes values from tests.yaml)",
+        "Forum.setLockState" to "reversible, but tests.yaml doesn't say how to undo it",
+        "Forum.setPinState" to "reversible, but tests.yaml doesn't say how to undo it",
         "Forum.setSubscriptionState" to "reversible, but tests.yaml doesn't say how to undo it",
         "Forum.toggleFavouriteState" to "reversible, but tests.yaml doesn't say how to undo it",
         "Forum.updateDiscussionPost" to "reversible, but tests.yaml doesn't say how to undo it",
         "Forum.viewForum" to "needs inputs forumId (only takes values from tests.yaml)",
         "Forum.viewForumDiscussion" to "needs inputs discussionId (only takes values from tests.yaml)",
+        "Glossary.addEntry" to "reversible, but tests.yaml doesn't say how to undo it",
+        "Glossary.deleteEntry" to "irreversible",
+        "Glossary.getEntriesByAuthor" to "needs inputs letter (nothing provides them)",
+        "Glossary.getEntriesByLetter" to "needs inputs letter (nothing provides them)",
+        "Glossary.getEntriesBySearch" to "needs inputs query (nothing provides them)",
+        "Glossary.getEntriesByTerm" to "needs inputs term (nothing provides them)",
+        "Glossary.getEntriesToApprove" to "needs inputs letter (nothing provides them)",
+        "Glossary.prepareEntryForEdition" to "needs inputs entryid (only takes values from tests.yaml)",
+        "Glossary.updateEntry" to "reversible, but tests.yaml doesn't say how to undo it",
+        "Glossary.viewEntry" to "needs inputs id (only takes values from tests.yaml)",
+        "Glossary.viewGlossary" to "needs inputs id, mode (only takes values from tests.yaml)",
+        "H5pactivity.logReportViewed" to "needs inputs h5pactivityid (only takes values from tests.yaml)",
+        "H5pactivity.viewH5pactivity" to "needs inputs h5pactivityid (only takes values from tests.yaml)",
+        "Imscp.viewImscp" to "needs inputs imscpid (only takes values from tests.yaml)",
+        "Lesson.finishAttempt" to "irreversible",
+        "Lesson.getContentPagesViewed" to "needs inputs lessonattempt (nothing provides them)",
+        "Lesson.getUserAttempt" to "needs inputs lessonattempt (nothing provides them)",
+        "Lesson.getUserAttemptGrade" to "needs inputs lessonattempt (nothing provides them)",
+        "Lesson.launchAttempt" to "irreversible",
+        "Lesson.processPage" to "irreversible",
+        "Lesson.viewLesson" to "needs inputs lessonid (only takes values from tests.yaml)",
+        "Lti.getToolLaunchData" to "needs inputs toolid (nothing provides them)",
+        "Lti.viewLti" to "needs inputs ltiid (only takes values from tests.yaml)",
+        "Page.viewPage" to "needs inputs pageid (only takes values from tests.yaml)",
+        "Quiz.getAttemptAccessInformation" to "needs inputs quizId (only takes values from tests.yaml)",
         "Quiz.getAttemptData" to "irreversible",
         "Quiz.getAttemptSummary" to "needs inputs attemptId (only takes values from tests.yaml)",
+        "Quiz.getQuizFeedbackForGrade" to "needs inputs grade (nothing provides them)",
         "Quiz.processAttempt" to "irreversible",
         "Quiz.saveAttempt" to "irreversible",
         "Quiz.startAttempt" to "irreversible",
+        "Quiz.viewAttempt" to "irreversible",
+        "Quiz.viewAttemptReview" to "needs inputs attemptId (only takes values from tests.yaml)",
+        "Quiz.viewAttemptSummary" to "needs inputs attemptId (only takes values from tests.yaml)",
+        "Quiz.viewQuiz" to "needs inputs quizId (only takes values from tests.yaml)",
+        "Resource.viewResource" to "needs inputs resourceid (only takes values from tests.yaml)",
+        "Scorm.insertScormTracks" to "irreversible",
+        "Scorm.launchSco" to "needs inputs scormid (only takes values from tests.yaml)",
+        "Scorm.viewScorm" to "needs inputs scormid (only takes values from tests.yaml)",
+        "Survey.submitAnswers" to "irreversible",
+        "Survey.viewSurvey" to "needs inputs surveyid (only takes values from tests.yaml)",
+        "Url.viewUrl" to "needs inputs urlid (only takes values from tests.yaml)",
+        "Wiki.editPage" to "irreversible",
+        "Wiki.getPageForEditing" to "needs inputs pageid (only takes values from tests.yaml)",
+        "Wiki.newPage" to "irreversible",
+        "Wiki.viewPage" to "needs inputs pageid (only takes values from tests.yaml)",
+        "Wiki.viewWiki" to "needs inputs wikiid (only takes values from tests.yaml)",
+        "Workshop.addSubmission" to "irreversible",
+        "Workshop.deleteSubmission" to "irreversible",
+        "Workshop.evaluateAssessment" to "irreversible",
+        "Workshop.evaluateSubmission" to "irreversible",
+        "Workshop.getAssessment" to "needs inputs assessmentid (nothing provides them)",
+        "Workshop.getAssessmentFormDefinition" to "needs inputs assessmentid (nothing provides them)",
+        "Workshop.updateAssessment" to "irreversible",
+        "Workshop.updateSubmission" to "irreversible",
+        "Workshop.viewSubmission" to "needs inputs submissionid (only takes values from tests.yaml)",
+        "Workshop.viewWorkshop" to "needs inputs workshopid (only takes values from tests.yaml)",
+        "ReportInsights.actionExecuted" to "irreversible",
+        "ReportInsights.setFixedPrediction" to "irreversible",
+        "ReportInsights.setNotusefulPrediction" to "irreversible",
+        "Dataprivacy.cancelDataRequest" to "irreversible",
+        "Dataprivacy.contactDpo" to "irreversible",
+        "Dataprivacy.createDataRequest" to "irreversible",
+        "Mobile.callExternalFunctions" to "irreversible",
         "Mobile.getAutologinKey" to "Replaces the key of the student's app, and Moodle allows one every 6 minutes.",
         "Mobile.getContent" to "irreversible",
-        "Files.downloadFile" to "needs inputs path, token (nothing provides them)",
+        "Mobile.getTokensForQrLogin" to "needs inputs qrloginkey (only takes values from tests.yaml)",
+        "Mobile.validateSubscriptionKey" to "irreversible",
+        "Moodlenet.searchCourses" to "needs inputs searchValue (nothing provides them)",
+        "Policy.setAcceptancesStatus" to "irreversible",
         "Files.uploadFile" to "needs inputs token, file (only takes values from tests.yaml)",
     ),
 ) {
@@ -166,6 +668,19 @@ internal suspend fun LiveCase<MoodleApi>.courseGetUsersCourses(): List<MoodleEnr
         api.course.getUsersCourses(userId = userId, auth = tokenCredentials())
     }
 
+internal suspend fun LiveCase<MoodleApi>.badgeGetUserBadges(): MoodleUserBadgesResponse =
+    source("badgeGetUserBadges", "{\"k\":\"record\",\"n\":\"MoodleUserBadgesResponse\"}") {
+        val userId = choose("userId", listOf(siteGetSiteInfo()).mapNotNull { it.userId })
+        val courseId = choose("courseId", listOf(courseGetUsersCourses()).flatten().mapNotNull { it.id })
+        api.badge.getUserBadges(userId = userId, courseId = courseId, auth = tokenCredentials())
+    }
+
+internal suspend fun LiveCase<MoodleApi>.lpDataForCourseCompetenciesPage(): MoodleLpDataForCourseCompetenciesPageResponse =
+    source("lpDataForCourseCompetenciesPage", "{\"k\":\"record\",\"n\":\"MoodleLpDataForCourseCompetenciesPageResponse\"}") {
+        val courseId = choose("courseId", listOf(courseGetUsersCourses()).flatten().mapNotNull { it.id })
+        api.lp.dataForCourseCompetenciesPage(courseId = courseId, auth = tokenCredentials())
+    }
+
 internal suspend fun LiveCase<MoodleApi>.calendarGetCalendarUpcomingView(): MoodleCalendarUpcomingView =
     source("calendarGetCalendarUpcomingView", "{\"k\":\"record\",\"n\":\"MoodleCalendarUpcomingView\"}") {
         val courseId = choose("courseId", listOf(courseGetUsersCourses()).flatten().mapNotNull { it.id })
@@ -177,20 +692,130 @@ internal suspend fun LiveCase<MoodleApi>.calendarGetActionEventsByTimesort(): Mo
         api.calendar.getActionEventsByTimesort(auth = tokenCredentials())
     }
 
-internal suspend fun LiveCase<MoodleApi>.quizGetQuizzesByCourses(): MoodleQuizzesResponse =
-    source("quizGetQuizzesByCourses", "{\"k\":\"record\",\"n\":\"MoodleQuizzesResponse\"}") {
-        api.quiz.getQuizzesByCourses(auth = tokenCredentials())
+internal suspend fun LiveCase<MoodleApi>.filtersGetAllStates(): MoodleFiltersGetAllStatesResponse =
+    source("filtersGetAllStates", "{\"k\":\"record\",\"n\":\"MoodleFiltersGetAllStatesResponse\"}") {
+        api.filters.getAllStates(auth = tokenCredentials())
     }
 
-internal suspend fun LiveCase<MoodleApi>.messageGetConversations(): MoodleConversationsResponse =
-    source("messageGetConversations", "{\"k\":\"record\",\"n\":\"MoodleConversationsResponse\"}") {
+internal suspend fun LiveCase<MoodleApi>.blockGetDashboardBlocks(): MoodleBlockGetCourseBlocksResponse =
+    source("blockGetDashboardBlocks", "{\"k\":\"record\",\"n\":\"MoodleBlockGetCourseBlocksResponse\"}") {
         val userId = choose("userId", listOf(siteGetSiteInfo()).mapNotNull { it.userId })
-        api.message.getConversations(userId = userId, auth = tokenCredentials())
+        api.block.getDashboardBlocks(userId = userId, auth = tokenCredentials())
+    }
+
+internal suspend fun LiveCase<MoodleApi>.draftAreaGetUnusedDraftItemid(): MoodleFilesGetUnusedDraftItemidResponse =
+    source("draftAreaGetUnusedDraftItemid", "{\"k\":\"record\",\"n\":\"MoodleFilesGetUnusedDraftItemidResponse\"}") {
+        api.draftArea.getUnusedDraftItemid(auth = tokenCredentials())
+    }
+
+internal suspend fun LiveCase<MoodleApi>.blockRecentlyaccesseditemsGetRecentItems(): List<MoodleBlockRecentlyaccesseditemsGetRecentItemsItem> =
+    source("blockRecentlyaccesseditemsGetRecentItems", "{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleBlockRecentlyaccesseditemsGetRecentItemsItem\"}}") {
+        api.blockRecentlyaccesseditems.getRecentItems(auth = tokenCredentials())
+    }
+
+internal suspend fun LiveCase<MoodleApi>.competencyListCourseCompetencies(): List<MoodleCompetencyListCourseCompetenciesItem> =
+    source("competencyListCourseCompetencies", "{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCompetencyListCourseCompetenciesItem\"}}") {
+        val id = choose("id", listOf(blockRecentlyaccesseditemsGetRecentItems()).flatten().mapNotNull { it.id })
+        api.competency.listCourseCompetencies(id = id, auth = tokenCredentials())
+    }
+
+internal suspend fun LiveCase<MoodleApi>.lpDataForUserCompetencySummary(): MoodleLpDataForUserCompetencySummaryResponse =
+    source("lpDataForUserCompetencySummary", "{\"k\":\"record\",\"n\":\"MoodleLpDataForUserCompetencySummaryResponse\"}") {
+        val userId = choose("userId", listOf(siteGetSiteInfo()).mapNotNull { it.userId })
+        val competencyid = choose("competencyid", listOf(lpDataForCourseCompetenciesPage()).mapNotNull { it.competencies }.flatten().mapNotNull { it.coursecompetency }.mapNotNull { it.competencyid })
+        api.lp.dataForUserCompetencySummary(userId = userId, competencyid = competencyid, auth = tokenCredentials())
+    }
+
+internal suspend fun LiveCase<MoodleApi>.lpDataForPlanPage(): MoodleLpDataForPlanPageResponse =
+    source("lpDataForPlanPage", "{\"k\":\"record\",\"n\":\"MoodleLpDataForPlanPageResponse\"}") {
+        val planid = choose("planid", listOf(lpDataForUserCompetencySummary()).mapNotNull { it.usercompetencyplan }.mapNotNull { it.planid })
+        api.lp.dataForPlanPage(planid = planid, auth = tokenCredentials())
+    }
+
+internal suspend fun LiveCase<MoodleApi>.blogGetEntries(): MoodleBlogGetEntriesResponse =
+    source("blogGetEntries", "{\"k\":\"record\",\"n\":\"MoodleBlogGetEntriesResponse\"}") {
+        api.blog.getEntries(auth = tokenCredentials())
+    }
+
+internal suspend fun LiveCase<MoodleApi>.bigbluebuttonbnGetBigbluebuttonbnsByCourses(): MoodleBigbluebuttonbnGetBigbluebuttonbnsByCoursesResponse =
+    source("bigbluebuttonbnGetBigbluebuttonbnsByCourses", "{\"k\":\"record\",\"n\":\"MoodleBigbluebuttonbnGetBigbluebuttonbnsByCoursesResponse\"}") {
+        api.bigbluebuttonbn.getBigbluebuttonbnsByCourses(auth = tokenCredentials())
     }
 
 internal suspend fun LiveCase<MoodleApi>.forumGetForumsByCourses(): List<MoodleForum> =
     source("forumGetForumsByCourses", "{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleForum\"}}") {
         api.forum.getForumsByCourses(auth = tokenCredentials())
+    }
+
+internal suspend fun LiveCase<MoodleApi>.messageGetSelfConversation(): MoodleConversation =
+    source("messageGetSelfConversation", "{\"k\":\"record\",\"n\":\"MoodleConversation\"}") {
+        val userId = choose("userId", listOf(siteGetSiteInfo()).mapNotNull { it.userId })
+        api.message.getSelfConversation(userId = userId, auth = tokenCredentials())
+    }
+
+internal suspend fun LiveCase<MoodleApi>.dataGetEntry(): MoodleDataGetEntryResponse =
+    source("dataGetEntry", "{\"k\":\"record\",\"n\":\"MoodleDataGetEntryResponse\"}") {
+        val entryid = choose("entryid", listOf(blogGetEntries()).mapNotNull { it.entries }.flatten().mapNotNull { it.id })
+        api.data.getEntry(entryid = entryid, auth = tokenCredentials())
+    }
+
+internal suspend fun LiveCase<MoodleApi>.reportbuilderListReports(): MoodleReportbuilderListReportsResponse =
+    source("reportbuilderListReports", "{\"k\":\"record\",\"n\":\"MoodleReportbuilderListReportsResponse\"}") {
+        api.reportbuilder.listReports(auth = tokenCredentials())
+    }
+
+internal suspend fun LiveCase<MoodleApi>.h5pactivityGetH5pactivitiesByCourses(): MoodleH5pactivityGetH5pactivitiesByCoursesResponse =
+    source("h5pactivityGetH5pactivitiesByCourses", "{\"k\":\"record\",\"n\":\"MoodleH5pactivityGetH5pactivitiesByCoursesResponse\"}") {
+        api.h5pactivity.getH5pactivitiesByCourses(auth = tokenCredentials())
+    }
+
+internal suspend fun LiveCase<MoodleApi>.h5pactivityGetResults(): MoodleH5pactivityGetResultsResponse =
+    source("h5pactivityGetResults", "{\"k\":\"record\",\"n\":\"MoodleH5pactivityGetResultsResponse\"}") {
+        val h5pactivityid = choose("h5pactivityid", listOf(h5pactivityGetH5pactivitiesByCourses()).mapNotNull { it.h5pactivities }.flatten().mapNotNull { it.id })
+        api.h5pactivity.getResults(h5pactivityid = h5pactivityid, auth = tokenCredentials())
+    }
+
+internal suspend fun LiveCase<MoodleApi>.quizGetAttemptReview(): MoodleAttemptReviewResponse =
+    source("quizGetAttemptReview", "{\"k\":\"record\",\"n\":\"MoodleAttemptReviewResponse\"}") {
+        val attemptId = choose("attemptId", listOf(h5pactivityGetResults()).mapNotNull { it.attempts }.flatten().mapNotNull { it.results }.flatten().mapNotNull { it.attemptId })
+        api.quiz.getAttemptReview(attemptId = attemptId, auth = tokenCredentials())
+    }
+
+internal suspend fun LiveCase<MoodleApi>.tagGetTagAreas(): MoodleTagGetTagAreasResponse =
+    source("tagGetTagAreas", "{\"k\":\"record\",\"n\":\"MoodleTagGetTagAreasResponse\"}") {
+        api.tag.getTagAreas(auth = tokenCredentials())
+    }
+
+internal suspend fun LiveCase<MoodleApi>.h5pactivityGetAttempts(): MoodleH5pactivityGetAttemptsResponse =
+    source("h5pactivityGetAttempts", "{\"k\":\"record\",\"n\":\"MoodleH5pactivityGetAttemptsResponse\"}") {
+        val h5pactivityid = choose("h5pactivityid", listOf(h5pactivityGetH5pactivitiesByCourses()).mapNotNull { it.h5pactivities }.flatten().mapNotNull { it.id })
+        api.h5pactivity.getAttempts(h5pactivityid = h5pactivityid, auth = tokenCredentials())
+    }
+
+internal suspend fun LiveCase<MoodleApi>.chatGetChatsByCourses(): MoodleChatGetChatsByCoursesResponse =
+    source("chatGetChatsByCourses", "{\"k\":\"record\",\"n\":\"MoodleChatGetChatsByCoursesResponse\"}") {
+        api.chat.getChatsByCourses(auth = tokenCredentials())
+    }
+
+internal suspend fun LiveCase<MoodleApi>.chatGetSessions(): MoodleChatGetSessionsResponse =
+    source("chatGetSessions", "{\"k\":\"record\",\"n\":\"MoodleChatGetSessionsResponse\"}") {
+        val chatid = choose("chatid", listOf(chatGetChatsByCourses()).mapNotNull { it.chats }.flatten().mapNotNull { it.id })
+        api.chat.getSessions(chatid = chatid, auth = tokenCredentials())
+    }
+
+internal suspend fun LiveCase<MoodleApi>.choiceGetChoicesByCourses(): MoodleChoiceGetChoicesByCoursesResponse =
+    source("choiceGetChoicesByCourses", "{\"k\":\"record\",\"n\":\"MoodleChoiceGetChoicesByCoursesResponse\"}") {
+        api.choice.getChoicesByCourses(auth = tokenCredentials())
+    }
+
+internal suspend fun LiveCase<MoodleApi>.dataGetDatabasesByCourses(): MoodleDataGetDatabasesByCoursesResponse =
+    source("dataGetDatabasesByCourses", "{\"k\":\"record\",\"n\":\"MoodleDataGetDatabasesByCoursesResponse\"}") {
+        api.data.getDatabasesByCourses(auth = tokenCredentials())
+    }
+
+internal suspend fun LiveCase<MoodleApi>.feedbackGetFeedbacksByCourses(): MoodleFeedbackGetFeedbacksByCoursesResponse =
+    source("feedbackGetFeedbacksByCourses", "{\"k\":\"record\",\"n\":\"MoodleFeedbackGetFeedbacksByCoursesResponse\"}") {
+        api.feedback.getFeedbacksByCourses(auth = tokenCredentials())
     }
 
 internal suspend fun LiveCase<MoodleApi>.forumGetForumDiscussions(): MoodleForumDiscussionsResponse =
@@ -205,12 +830,114 @@ internal suspend fun LiveCase<MoodleApi>.forumGetDiscussionPosts(): MoodleDiscus
         api.forum.getDiscussionPosts(discussionId = discussionId, auth = tokenCredentials())
     }
 
-internal suspend fun LiveCase<MoodleApi>.quizGetUserAttempts(): MoodleUserAttemptsResponse =
-    source("quizGetUserAttempts", "{\"k\":\"record\",\"n\":\"MoodleUserAttemptsResponse\"}") {
-        val quizId = choose("quizId", listOf(quizGetQuizzesByCourses()).mapNotNull { it.quizzes }.flatten().mapNotNull { it.id })
-        val userId = choose("userId", listOf(siteGetSiteInfo()).mapNotNull { it.userId })
-        api.quiz.getUserAttempts(quizId = quizId, userId = userId, auth = tokenCredentials())
+internal suspend fun LiveCase<MoodleApi>.glossaryGetGlossariesByCourses(): MoodleGlossaryGetGlossariesByCoursesResponse =
+    source("glossaryGetGlossariesByCourses", "{\"k\":\"record\",\"n\":\"MoodleGlossaryGetGlossariesByCoursesResponse\"}") {
+        api.glossary.getGlossariesByCourses(auth = tokenCredentials())
     }
+
+internal suspend fun LiveCase<MoodleApi>.workshopGetWorkshopsByCourses(): MoodleWorkshopGetWorkshopsByCoursesResponse =
+    source("workshopGetWorkshopsByCourses", "{\"k\":\"record\",\"n\":\"MoodleWorkshopGetWorkshopsByCoursesResponse\"}") {
+        api.workshop.getWorkshopsByCourses(auth = tokenCredentials())
+    }
+
+internal suspend fun LiveCase<MoodleApi>.workshopGetGradesReport(): MoodleWorkshopGetGradesReportResponse =
+    source("workshopGetGradesReport", "{\"k\":\"record\",\"n\":\"MoodleWorkshopGetGradesReportResponse\"}") {
+        val workshopid = choose("workshopid", listOf(workshopGetWorkshopsByCourses()).mapNotNull { it.workshops }.flatten().mapNotNull { it.id })
+        api.workshop.getGradesReport(workshopid = workshopid, auth = tokenCredentials())
+    }
+
+internal suspend fun LiveCase<MoodleApi>.workshopGetSubmission(): MoodleWorkshopGetSubmissionResponse =
+    source("workshopGetSubmission", "{\"k\":\"record\",\"n\":\"MoodleWorkshopGetSubmissionResponse\"}") {
+        val submissionid = choose("submissionid", listOf(workshopGetGradesReport()).mapNotNull { it.report }.mapNotNull { it.grades }.flatten().mapNotNull { it.submissionid })
+        api.workshop.getSubmission(submissionid = submissionid, auth = tokenCredentials())
+    }
+
+internal suspend fun LiveCase<MoodleApi>.lessonGetLessonsByCourses(): MoodleLessonGetLessonsByCoursesResponse =
+    source("lessonGetLessonsByCourses", "{\"k\":\"record\",\"n\":\"MoodleLessonGetLessonsByCoursesResponse\"}") {
+        api.lesson.getLessonsByCourses(auth = tokenCredentials())
+    }
+
+internal suspend fun LiveCase<MoodleApi>.pageGetPagesByCourses(): MoodlePageGetPagesByCoursesResponse =
+    source("pageGetPagesByCourses", "{\"k\":\"record\",\"n\":\"MoodlePageGetPagesByCoursesResponse\"}") {
+        api.page.getPagesByCourses(auth = tokenCredentials())
+    }
+
+internal suspend fun LiveCase<MoodleApi>.quizGetQuizzesByCourses(): MoodleQuizzesResponse =
+    source("quizGetQuizzesByCourses", "{\"k\":\"record\",\"n\":\"MoodleQuizzesResponse\"}") {
+        api.quiz.getQuizzesByCourses(auth = tokenCredentials())
+    }
+
+internal suspend fun LiveCase<MoodleApi>.scormGetScormsByCourses(): MoodleScormGetScormsByCoursesResponse =
+    source("scormGetScormsByCourses", "{\"k\":\"record\",\"n\":\"MoodleScormGetScormsByCoursesResponse\"}") {
+        api.scorm.getScormsByCourses(auth = tokenCredentials())
+    }
+
+internal suspend fun LiveCase<MoodleApi>.scormGetScormUserData(): MoodleScormGetScormUserDataResponse =
+    source("scormGetScormUserData", "{\"k\":\"record\",\"n\":\"MoodleScormGetScormUserDataResponse\"}") {
+        val scormid = choose("scormid", listOf(scormGetScormsByCourses()).mapNotNull { it.scorms }.flatten().mapNotNull { it.id })
+        val attempt = choose("attempt", listOf(quizGetAttemptReview()).mapNotNull { it.attempt }.mapNotNull { it.attempt })
+        api.scorm.getScormUserData(scormid = scormid, attempt = attempt, auth = tokenCredentials())
+    }
+
+internal suspend fun LiveCase<MoodleApi>.surveyGetSurveysByCourses(): MoodleSurveyGetSurveysByCoursesResponse =
+    source("surveyGetSurveysByCourses", "{\"k\":\"record\",\"n\":\"MoodleSurveyGetSurveysByCoursesResponse\"}") {
+        api.survey.getSurveysByCourses(auth = tokenCredentials())
+    }
+
+internal suspend fun LiveCase<MoodleApi>.wikiGetWikisByCourses(): MoodleWikiGetWikisByCoursesResponse =
+    source("wikiGetWikisByCourses", "{\"k\":\"record\",\"n\":\"MoodleWikiGetWikisByCoursesResponse\"}") {
+        api.wiki.getWikisByCourses(auth = tokenCredentials())
+    }
+
+internal suspend fun LiveCase<MoodleApi>.courseGetCategories(): List<MoodleCourseGetCategoriesItem> =
+    source("courseGetCategories", "{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCourseGetCategoriesItem\"}}") {
+        api.course.getCategories(auth = tokenCredentials())
+    }
+
+internal suspend fun LiveCase<MoodleApi>.calendarGetCalendarExportToken(): MoodleCalendarGetCalendarExportTokenResponse =
+    source("calendarGetCalendarExportToken", "{\"k\":\"record\",\"n\":\"MoodleCalendarGetCalendarExportTokenResponse\"}") {
+        api.calendar.getCalendarExportToken(auth = tokenCredentials())
+    }
+
+internal fun LiveFingerprint.writeMoodleAcceptance(value: MoodleAcceptance?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.status.toLong())
+        str(value.lang)
+        int(value.timeModified)
+        int(value.userModified.toLong())
+        str(value.note)
+        str(value.modfullname)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleAction(value: MoodleAction?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.type)
+        str(value.label)
+        str(value.url)
+        str(value.method)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleActionuser(value: MoodleActionuser?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        str(value.email)
+        str(value.idNumber)
+        str(value.phone1)
+        str(value.phone2)
+        str(value.department)
+        str(value.institution)
+        str(value.fullName)
+        str(value.identity)
+        str(value.profileUrl)
+        str(value.profileImageUrl)
+        str(value.profileImageUrlSmall)
+    }
+}
 
 internal fun LiveFingerprint.writeMoodleActivitiesCompletionResponse(value: MoodleActivitiesCompletionResponse?) {
     if (value == null) return nil()
@@ -264,6 +991,73 @@ internal fun LiveFingerprint.writeMoodleAdvancedFeature(value: MoodleAdvancedFea
     obj(value) {
         str(value.name)
         int(value.value.toLong())
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleAdvancedgrading(value: MoodleAdvancedgrading?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.area)
+        str(value.method)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleAiGetPolicyStatusResponse(value: MoodleAiGetPolicyStatusResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        bool(value.status)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleAnalyticsPotentialContextsItem(value: MoodleAnalyticsPotentialContextsItem?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        str(value.name)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleAncestor(value: MoodleAncestor?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        str(value.name)
+        bool(value.first)
+        bool(value.last)
+        int(value.position.toLong())
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleAnonattempt(value: MoodleAnonattempt?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.courseId.toLong())
+        int(value.number.toLong())
+        list(value.responses) { writeMoodleFeedbackGetResponsesAnalysisResponseAttemptResponse(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleAssessment(value: MoodleAssessment?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.submissionid.toLong())
+        int(value.reviewerid.toLong())
+        int(value.weight.toLong())
+        int(value.timeCreated)
+        int(value.timeModified)
+        num(value.grade)
+        num(value.gradinggrade)
+        num(value.gradinggradeover)
+        int(value.gradinggradeoverby.toLong())
+        str(value.feedbackauthor)
+        int(value.feedbackauthorformat.toLong())
+        int(value.feedbackauthorattachment.toLong())
+        str(value.feedbackreviewer)
+        int(value.feedbackreviewerformat.toLong())
+        list(value.feedbackcontentfiles) { writeMoodleSummaryFile(it) }
+        list(value.feedbackattachmentfiles) { writeMoodleSummaryFile(it) }
     }
 }
 
@@ -334,6 +1128,31 @@ internal fun LiveFingerprint.writeMoodleAssignmentsResponse(value: MoodleAssignm
     }
 }
 
+internal fun LiveFingerprint.writeMoodleAuthor(value: MoodleAuthor?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        str(value.fullName)
+        str(value.pictureurl)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleBadge(value: MoodleBadge?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.type)
+        str(value.id)
+        str(value.issuer)
+        str(value.name)
+        str(value.image)
+        str(value.description)
+        str(value.hostedUrl)
+        list(value.alignment) { writeMoodleBadgeAlignment(it) }
+        str(value.criteriaUrl)
+        str(value.criteriaNarrative)
+    }
+}
+
 internal fun LiveFingerprint.writeMoodleBadgeAlignment(value: MoodleBadgeAlignment?) {
     if (value == null) return nil()
     obj(value) {
@@ -358,6 +1177,239 @@ internal fun LiveFingerprint.writeMoodleBadgeEndorsement(value: MoodleBadgeEndor
         str(value.claimId)
         str(value.claimComment)
         int(value.dateIssued)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleBadgesGetBadgeResponse(value: MoodleBadgesGetBadgeResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        writeMoodleBadge(value.badge)
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleBigbluebuttonbn(value: MoodleBigbluebuttonbn?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.courseModule.toLong())
+        int(value.course.toLong())
+        str(value.name)
+        str(value.intro)
+        int(value.introFormat.toLong())
+        list(value.introFiles) { writeMoodleFile(it) }
+        int(value.section?.toLong())
+        bool(value.visible)
+        int(value.groupMode?.toLong())
+        int(value.groupingId?.toLong())
+        str(value.lang)
+        str(value.meetingid)
+        int(value.timeModified)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleBigbluebuttonbnCanJoinResponse(value: MoodleBigbluebuttonbnCanJoinResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        bool(value.canJoin)
+        int(value.cmId.toLong())
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleBigbluebuttonbnGetBigbluebuttonbnsByCoursesResponse(value: MoodleBigbluebuttonbnGetBigbluebuttonbnsByCoursesResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.bigbluebuttonbns) { writeMoodleBigbluebuttonbn(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleBigbluebuttonbnGetRecordingsResponse(value: MoodleBigbluebuttonbnGetRecordingsResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        bool(value.status)
+        writeMoodleBigbluebuttonbnGetRecordingsResponseTabledata(value.tabledata)
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleBigbluebuttonbnGetRecordingsResponseTabledata(value: MoodleBigbluebuttonbnGetRecordingsResponseTabledata?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.activity)
+        int(value.pingInterval.toLong())
+        str(value.locale)
+        list(value.profileFeatures) { str(it) }
+        list(value.columns) { writeMoodleColumn(it) }
+        str(value.data)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleBigbluebuttonbnMeetingInfoResponse(value: MoodleBigbluebuttonbnMeetingInfoResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.cmId.toLong())
+        int(value.userlimit.toLong())
+        str(value.bigbluebuttonbnid)
+        int(value.groupId.toLong())
+        str(value.meetingid)
+        int(value.openingtime)
+        int(value.closingtime)
+        bool(value.statusrunning)
+        bool(value.statusclosed)
+        bool(value.statusopen)
+        str(value.statusmessage)
+        int(value.startedat?.toLong())
+        int(value.moderatorcount?.toLong())
+        int(value.participantCount?.toLong())
+        bool(value.moderatorplural)
+        bool(value.participantplural)
+        bool(value.canjoin)
+        bool(value.ismoderator)
+        list(value.presentations) { writeMoodlePresentation(it) }
+        str(value.joinurl)
+        bool(value.guestaccessenabled)
+        str(value.guestjoinurl)
+        str(value.guestpassword)
+        bool(value.showpresentations)
+        list(value.features) { writeMoodleFeature(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleBlock(value: MoodleBlock?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.instanceId.toLong())
+        str(value.name)
+        str(value.region)
+        int(value.positionid.toLong())
+        bool(value.collapsible)
+        bool(value.dockable)
+        int(value.weight?.toLong())
+        bool(value.visible)
+        writeMoodleBlockContent(value.contents)
+        list(value.configs) { writeMoodleConfig(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleBlockContent(value: MoodleBlockContent?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.title)
+        str(value.content)
+        int(value.contentformat.toLong())
+        str(value.footer)
+        list(value.files) { writeMoodleFile(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleBlockGetCourseBlocksResponse(value: MoodleBlockGetCourseBlocksResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.blocks) { writeMoodleBlock(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleBlockRecentlyaccesseditemsGetRecentItemsItem(value: MoodleBlockRecentlyaccesseditemsGetRecentItemsItem?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.courseId.toLong())
+        int(value.cmId.toLong())
+        int(value.userId.toLong())
+        str(value.modName)
+        str(value.name)
+        str(value.coursename)
+        int(value.timeAccess)
+        str(value.viewUrl)
+        str(value.courseviewurl)
+        str(value.icon)
+        str(value.purpose)
+        bool(value.branded)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleBlogGetAccessInformationResponse(value: MoodleBlogGetAccessInformationResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        bool(value.canview)
+        bool(value.cansearch)
+        bool(value.canviewdrafts)
+        bool(value.cancreate)
+        bool(value.canmanageentries)
+        bool(value.canmanageexternal)
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleBlogGetEntriesResponse(value: MoodleBlogGetEntriesResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.entries) { writeMoodleBlogGetEntriesResponseEntry(it) }
+        int(value.totalentries.toLong())
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleBlogGetEntriesResponseEntry(value: MoodleBlogGetEntriesResponseEntry?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        str(value.module)
+        int(value.userId.toLong())
+        int(value.courseId.toLong())
+        int(value.groupId.toLong())
+        int(value.moduleid.toLong())
+        int(value.coursemoduleid.toLong())
+        str(value.subject)
+        str(value.summary)
+        int(value.summaryFormat.toLong())
+        str(value.content)
+        str(value.uniqueHash)
+        int(value.rating.toLong())
+        int(value.format.toLong())
+        str(value.attachment)
+        str(value.publishstate)
+        int(value.lastModified.toLong())
+        int(value.created)
+        int(value.userModified.toLong())
+        list(value.summaryFiles) { writeMoodleSummaryFile(it) }
+        list(value.attachmentfiles) { writeMoodleSummaryFile(it) }
+        list(value.tags) { writeMoodleContentTag(it) }
+        bool(value.canEdit)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleBook(value: MoodleBook?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.courseModule.toLong())
+        int(value.course.toLong())
+        str(value.name)
+        str(value.intro)
+        int(value.introFormat.toLong())
+        list(value.introFiles) { writeMoodleFile(it) }
+        int(value.section?.toLong())
+        bool(value.visible)
+        int(value.groupMode?.toLong())
+        int(value.groupingId?.toLong())
+        str(value.lang)
+        int(value.numbering.toLong())
+        int(value.navstyle.toLong())
+        int(value.customtitles.toLong())
+        int(value.revision?.toLong())
+        int(value.timeCreated)
+        int(value.timeModified)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleBookGetBooksByCoursesResponse(value: MoodleBookGetBooksByCoursesResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.books) { writeMoodleBook(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
     }
 }
 
@@ -420,12 +1472,453 @@ internal fun LiveFingerprint.writeMoodleCalendarEventsResponse(value: MoodleCale
     }
 }
 
+internal fun LiveFingerprint.writeMoodleCalendarGetAllowedEventTypesResponse(value: MoodleCalendarGetAllowedEventTypesResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.allowedeventtypes) { str(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleCalendarGetCalendarAccessInformationResponse(value: MoodleCalendarGetCalendarAccessInformationResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        bool(value.canmanageentries)
+        bool(value.canmanageownentries)
+        bool(value.canmanagegroupentries)
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleCalendarGetCalendarEventByIdResponse(value: MoodleCalendarGetCalendarEventByIdResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        writeMoodleCalendarEvent(value.event)
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleCalendarGetCalendarEventsResponse(value: MoodleCalendarGetCalendarEventsResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.events) { writeMoodleCalendarGetCalendarEventsResponseEvent(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleCalendarGetCalendarEventsResponseEvent(value: MoodleCalendarGetCalendarEventsResponseEvent?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        str(value.name)
+        str(value.description)
+        int(value.format.toLong())
+        int(value.courseId.toLong())
+        int(value.categoryId?.toLong())
+        int(value.groupId.toLong())
+        int(value.userId.toLong())
+        int(value.repeatId.toLong())
+        str(value.moduleName)
+        int(value.instance.toLong())
+        str(value.eventType)
+        int(value.timeStart)
+        int(value.timeDuration)
+        int(value.visible.toLong())
+        str(value.uuid)
+        int(value.sequence.toLong())
+        int(value.timeModified)
+        int(value.subscriptionid?.toLong())
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleCalendarGetCalendarExportTokenResponse(value: MoodleCalendarGetCalendarExportTokenResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.token)
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
 internal fun LiveFingerprint.writeMoodleCanAddDiscussionResponse(value: MoodleCanAddDiscussionResponse?) {
     if (value == null) return nil()
     obj(value) {
         bool(value.status)
         bool(value.canPinDiscussions)
         bool(value.canCreateAttachment)
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleCategory(value: MoodleCategory?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.glossaryid.toLong())
+        str(value.name)
+        bool(value.usedynalink)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleChat(value: MoodleChat?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.courseModule.toLong())
+        int(value.course.toLong())
+        str(value.name)
+        str(value.intro)
+        int(value.introFormat.toLong())
+        list(value.introFiles) { writeMoodleFile(it) }
+        int(value.section?.toLong())
+        bool(value.visible)
+        int(value.groupMode?.toLong())
+        int(value.groupingId?.toLong())
+        str(value.lang)
+        str(value.chatmethod)
+        int(value.keepdays?.toLong())
+        int(value.studentlogs?.toLong())
+        int(value.chattime)
+        int(value.schedule?.toLong())
+        int(value.timeModified)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleChatGetChatsByCoursesResponse(value: MoodleChatGetChatsByCoursesResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.chats) { writeMoodleChat(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleChatGetSessionMessagesResponse(value: MoodleChatGetSessionMessagesResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.messages) { writeMoodleChatGetSessionMessagesResponseMessage(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleChatGetSessionMessagesResponseMessage(value: MoodleChatGetSessionMessagesResponseMessage?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.chatid.toLong())
+        int(value.userId.toLong())
+        int(value.groupId.toLong())
+        bool(value.issystem)
+        str(value.message)
+        int(value.timestamp)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleChatGetSessionsResponse(value: MoodleChatGetSessionsResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.sessions) { writeMoodleSession(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleChoice(value: MoodleChoice?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.courseModule.toLong())
+        int(value.course.toLong())
+        str(value.name)
+        str(value.intro)
+        int(value.introFormat.toLong())
+        list(value.introFiles) { writeMoodleFile(it) }
+        int(value.section?.toLong())
+        bool(value.visible)
+        int(value.groupMode?.toLong())
+        int(value.groupingId?.toLong())
+        str(value.lang)
+        bool(value.publish)
+        int(value.showresults?.toLong())
+        int(value.display?.toLong())
+        bool(value.allowupdate)
+        bool(value.allowmultiple)
+        bool(value.showunanswered)
+        bool(value.includeinactive)
+        bool(value.limitanswers)
+        int(value.timeOpen)
+        int(value.timeClose)
+        bool(value.showpreview)
+        int(value.timeModified)
+        bool(value.completionSubmit)
+        bool(value.showavailable)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleChoiceGetChoiceOptionsResponse(value: MoodleChoiceGetChoiceOptionsResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.options) { writeMoodleChoiceGetChoiceOptionsResponseOption(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleChoiceGetChoiceOptionsResponseOption(value: MoodleChoiceGetChoiceOptionsResponseOption?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        str(value.text)
+        int(value.maxanswers.toLong())
+        bool(value.displaylayout)
+        int(value.countanswers.toLong())
+        bool(value.checked)
+        bool(value.disabled)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleChoiceGetChoiceResultsResponse(value: MoodleChoiceGetChoiceResultsResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.options) { writeMoodleChoiceGetChoiceResultsResponseOption(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleChoiceGetChoiceResultsResponseOption(value: MoodleChoiceGetChoiceResultsResponseOption?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        str(value.text)
+        int(value.maxanswer.toLong())
+        list(value.userresponses) { writeMoodleUserresponse(it) }
+        int(value.numberofuser.toLong())
+        num(value.percentageamount)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleChoiceGetChoicesByCoursesResponse(value: MoodleChoiceGetChoicesByCoursesResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.choices) { writeMoodleChoice(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleCm(value: MoodleCm?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.course.toLong())
+        int(value.module.toLong())
+        str(value.name)
+        str(value.modName)
+        int(value.instance.toLong())
+        int(value.section.toLong())
+        int(value.sectionnum.toLong())
+        int(value.groupMode.toLong())
+        int(value.groupingId.toLong())
+        int(value.completion.toLong())
+        str(value.idNumber)
+        int(value.added?.toLong())
+        int(value.score?.toLong())
+        int(value.indent?.toLong())
+        int(value.visible?.toLong())
+        int(value.visibleOnCoursePage?.toLong())
+        int(value.visibleold?.toLong())
+        int(value.completiongradeitemnumber?.toLong())
+        int(value.completionpassgrade?.toLong())
+        int(value.completionview?.toLong())
+        int(value.completionexpected?.toLong())
+        int(value.showdescription?.toLong())
+        int(value.downloadContent?.toLong())
+        str(value.availability)
+        num(value.grade)
+        str(value.scale)
+        str(value.gradepass)
+        int(value.gradecat?.toLong())
+        list(value.advancedgrading) { writeMoodleAdvancedgrading(it) }
+        list(value.outcomes) { writeMoodleOutcome(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleCollection(value: MoodleCollection?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        str(value.name)
+        bool(value.isdefault)
+        str(value.component)
+        int(value.sortOrder.toLong())
+        bool(value.searchable)
+        str(value.customurl)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleColumn(value: MoodleColumn?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.key)
+        str(value.label)
+        str(value.width)
+        str(value.type)
+        bool(value.sortable)
+        bool(value.allowHtml)
+        str(value.formatter)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleCommentAddCommentsItem(value: MoodleCommentAddCommentsItem?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        str(value.content)
+        int(value.format.toLong())
+        int(value.timeCreated)
+        str(value.strftimeformat)
+        str(value.profileUrl)
+        str(value.fullName)
+        str(value.time)
+        str(value.avatar)
+        int(value.userId.toLong())
+        bool(value.delete)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleCommentGetCommentsResponse(value: MoodleCommentGetCommentsResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.comments) { writeMoodleCommentAddCommentsItem(it) }
+        int(value.count?.toLong())
+        int(value.perPage?.toLong())
+        bool(value.canpost)
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleCommentarea(value: MoodleCommentarea?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.component)
+        str(value.commentarea)
+        int(value.itemId.toLong())
+        int(value.courseId.toLong())
+        int(value.contextId.toLong())
+        str(value.cid)
+        bool(value.autostart)
+        bool(value.canpost)
+        bool(value.canview)
+        int(value.count.toLong())
+        str(value.collapsediconkey)
+        bool(value.displaytotalcount)
+        bool(value.displaycancel)
+        bool(value.fullwidth)
+        str(value.linktext)
+        bool(value.notoggle)
+        str(value.template)
+        bool(value.canpostorhascomments)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleCompetencyCourseModule(value: MoodleCompetencyCourseModule?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        str(value.name)
+        str(value.url)
+        str(value.iconUrl)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleCompetencyGetScaleValuesItem(value: MoodleCompetencyGetScaleValuesItem?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        str(value.name)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleCompetencyGradeCompetencyInCourseResponse(value: MoodleCompetencyGradeCompetencyInCourseResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.usercompetencyid.toLong())
+        int(value.contextId.toLong())
+        int(value.action.toLong())
+        int(value.actionuserid.toLong())
+        str(value.descidentifier)
+        str(value.desccomponent)
+        str(value.desca)
+        str(value.url)
+        int(value.grade.toLong())
+        str(value.note)
+        int(value.id.toLong())
+        int(value.timeCreated)
+        int(value.timeModified)
+        int(value.userModified.toLong())
+        writeMoodleActionuser(value.actionuser)
+        str(value.description)
+        str(value.gradename)
+        str(value.userdate)
+        bool(value.canDelete)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleCompetencyListCourseCompetenciesItem(value: MoodleCompetencyListCourseCompetenciesItem?) {
+    if (value == null) return nil()
+    obj(value) {
+        writeMoodleCompetencyListCourseCompetenciesItemCompetency(value.competency)
+        writeMoodleCoursecompetency(value.coursecompetency)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleCompetencyListCourseCompetenciesItemCompetency(value: MoodleCompetencyListCourseCompetenciesItemCompetency?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.shortName)
+        str(value.idNumber)
+        str(value.description)
+        int(value.descriptionFormat.toLong())
+        int(value.sortOrder.toLong())
+        int(value.parentId.toLong())
+        str(value.path)
+        int(value.ruleoutcome.toLong())
+        str(value.ruletype)
+        str(value.ruleconfig)
+        int(value.scaleId.toLong())
+        str(value.scaleconfiguration)
+        int(value.competencyframeworkid.toLong())
+        int(value.id.toLong())
+        int(value.timeCreated)
+        int(value.timeModified)
+        int(value.userModified.toLong())
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleCompleted(value: MoodleCompleted?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.feedback.toLong())
+        int(value.userId.toLong())
+        int(value.timeModified)
+        int(value.randomResponse.toLong())
+        int(value.anonymousResponse.toLong())
+        int(value.courseId.toLong())
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleCompletion(value: MoodleCompletion?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.type.toLong())
+        str(value.title)
+        str(value.status)
+        bool(value.complete)
+        int(value.timeCompleted)
+        writeMoodleDetail(value.details)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleCompletionGetCourseCompletionStatusResponse(value: MoodleCompletionGetCourseCompletionStatusResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        writeMoodleCompletionstatu(value.completionstatus)
         list(value.warnings) { writeMoodleWarning(it) }
     }
 }
@@ -443,6 +1936,64 @@ internal fun LiveFingerprint.writeMoodleCompletionRuleValue(value: MoodleComplet
     obj(value) {
         int(value.status.toLong())
         str(value.description)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleCompletionstatu(value: MoodleCompletionstatu?) {
+    if (value == null) return nil()
+    obj(value) {
+        bool(value.completed)
+        int(value.aggregation.toLong())
+        list(value.completions) { writeMoodleCompletion(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleComponent(value: MoodleComponent?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.displayName)
+        list(value.notifications) { writeMoodleComponentNotification(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleComponentNotification(value: MoodleComponentNotification?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.displayName)
+        str(value.preferencekey)
+        list(value.processors) { writeMoodleComponentNotificationProcessor(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleComponentNotificationProcessor(value: MoodleComponentNotificationProcessor?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.displayName)
+        str(value.name)
+        bool(value.locked)
+        str(value.lockedmessage)
+        int(value.userconfigured.toLong())
+        bool(value.enabled)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleComppath(value: MoodleComppath?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.ancestors) { writeMoodleAncestor(it) }
+        writeMoodleAncestor(value.framework)
+        str(value.pluginbaseurl)
+        int(value.pagecontextid.toLong())
+        bool(value.showlinks)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleConfig(value: MoodleConfig?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.name)
+        str(value.value)
+        str(value.type)
     }
 }
 
@@ -539,6 +2090,20 @@ internal fun LiveFingerprint.writeMoodleConversationsResponse(value: MoodleConve
     }
 }
 
+internal fun LiveFingerprint.writeMoodleCorrectanswer(value: MoodleCorrectanswer?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.answer)
+        bool(value.correct)
+        bool(value.incorrect)
+        bool(value.text)
+        bool(value.checked)
+        bool(value.unchecked)
+        bool(value.pass)
+        bool(value.fail)
+    }
+}
+
 internal fun LiveFingerprint.writeMoodleCourse(value: MoodleCourse?) {
     if (value == null) return nil()
     obj(value) {
@@ -601,6 +2166,83 @@ internal fun LiveFingerprint.writeMoodleCourseAssignments(value: MoodleCourseAss
 }
 
 internal fun LiveFingerprint.writeMoodleCourseCustomField(value: MoodleCourseCustomField?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.name)
+        str(value.shortName)
+        str(value.type)
+        str(value.valueRaw)
+        str(value.value)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleCourseGetCategoriesItem(value: MoodleCourseGetCategoriesItem?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        str(value.name)
+        str(value.idNumber)
+        str(value.description)
+        int(value.descriptionFormat.toLong())
+        int(value.parent.toLong())
+        int(value.sortOrder.toLong())
+        int(value.courseCount.toLong())
+        int(value.visible?.toLong())
+        int(value.visibleold?.toLong())
+        int(value.timeModified)
+        int(value.depth.toLong())
+        str(value.path)
+        str(value.theme)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleCourseGetCourseModuleResponse(value: MoodleCourseGetCourseModuleResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        writeMoodleCm(value.cm)
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleCourseGetCoursesItem(value: MoodleCourseGetCoursesItem?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        str(value.shortName)
+        int(value.categoryId.toLong())
+        int(value.categorysortorder?.toLong())
+        str(value.fullName)
+        str(value.displayName)
+        str(value.idNumber)
+        str(value.summary)
+        int(value.summaryFormat.toLong())
+        str(value.format)
+        int(value.showGrades?.toLong())
+        int(value.newsItems?.toLong())
+        int(value.startDate)
+        int(value.endDate)
+        int(value.numsections?.toLong())
+        int(value.maxBytes)
+        int(value.showReports?.toLong())
+        int(value.visible?.toLong())
+        int(value.hiddensections?.toLong())
+        int(value.groupMode?.toLong())
+        int(value.groupModeForce?.toLong())
+        int(value.defaultGroupingId?.toLong())
+        int(value.timeCreated)
+        int(value.timeModified)
+        int(value.enableCompletion?.toLong())
+        int(value.completionNotify?.toLong())
+        str(value.lang)
+        str(value.forcetheme)
+        list(value.courseFormatOptions) { writeMoodleNamedValue(it) }
+        bool(value.showActivityDates)
+        bool(value.showCompletionConditions)
+        list(value.customFields) { writeMoodleCourseGetCoursesItemCustomField(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleCourseGetCoursesItemCustomField(value: MoodleCourseGetCoursesItemCustomField?) {
     if (value == null) return nil()
     obj(value) {
         str(value.name)
@@ -702,11 +2344,242 @@ internal fun LiveFingerprint.writeMoodleCourseUserGroupsResponse(value: MoodleCo
     }
 }
 
+internal fun LiveFingerprint.writeMoodleCoursecompetency(value: MoodleCoursecompetency?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.courseId.toLong())
+        int(value.competencyid.toLong())
+        int(value.sortOrder.toLong())
+        int(value.ruleoutcome.toLong())
+        int(value.id.toLong())
+        int(value.timeCreated)
+        int(value.timeModified)
+        int(value.userModified.toLong())
+    }
+}
+
 internal fun LiveFingerprint.writeMoodleCoursesByFieldResponse(value: MoodleCoursesByFieldResponse?) {
     if (value == null) return nil()
     obj(value) {
         list(value.courses) { writeMoodleCourse(it) }
         list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleDataGetDataAccessInformationResponse(value: MoodleDataGetDataAccessInformationResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.groupId.toLong())
+        bool(value.canaddentry)
+        bool(value.canmanageentries)
+        bool(value.canapprove)
+        bool(value.timeavailable)
+        bool(value.inreadonlyperiod)
+        int(value.numentries.toLong())
+        int(value.entrieslefttoadd.toLong())
+        int(value.entrieslefttoview.toLong())
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleDataGetDatabasesByCoursesResponse(value: MoodleDataGetDatabasesByCoursesResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.databases) { writeMoodleDatabase(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleDataGetEntriesResponse(value: MoodleDataGetEntriesResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.entries) { writeMoodleDataGetEntriesResponseEntry(it) }
+        int(value.totalcount.toLong())
+        int(value.totalfilesize)
+        str(value.listviewcontents)
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleDataGetEntriesResponseEntry(value: MoodleDataGetEntriesResponseEntry?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.userId.toLong())
+        int(value.groupId.toLong())
+        int(value.dataId.toLong())
+        int(value.timeCreated)
+        int(value.timeModified)
+        bool(value.approved)
+        bool(value.canmanageentry)
+        str(value.fullName)
+        list(value.contents) { writeMoodleDataGetEntriesResponseEntryContent(it) }
+        list(value.tags) { writeMoodleContentTag(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleDataGetEntriesResponseEntryContent(value: MoodleDataGetEntriesResponseEntryContent?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.fieldid.toLong())
+        int(value.recordid.toLong())
+        str(value.content)
+        str(value.content1)
+        str(value.content2)
+        str(value.content3)
+        str(value.content4)
+        list(value.files) { writeMoodleSummaryFile(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleDataGetEntryResponse(value: MoodleDataGetEntryResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        writeMoodleDataGetEntriesResponseEntry(value.entry)
+        str(value.entryviewcontents)
+        writeMoodleRatingInfo(value.ratingInfo)
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleDataGetFieldsResponse(value: MoodleDataGetFieldsResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.fields) { writeMoodleField(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleDataSearchEntriesResponse(value: MoodleDataSearchEntriesResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.entries) { writeMoodleDataGetEntriesResponseEntry(it) }
+        int(value.totalcount.toLong())
+        int(value.maxcount?.toLong())
+        str(value.listviewcontents)
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleDatabase(value: MoodleDatabase?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.course.toLong())
+        str(value.name)
+        str(value.intro)
+        int(value.introFormat.toLong())
+        str(value.lang)
+        bool(value.comments)
+        int(value.timeavailablefrom)
+        int(value.timeavailableto)
+        int(value.timeviewfrom)
+        int(value.timeviewto)
+        int(value.requiredentries.toLong())
+        int(value.requiredentriestoview.toLong())
+        int(value.maxentries.toLong())
+        int(value.rssArticles.toLong())
+        str(value.singletemplate)
+        str(value.listtemplate)
+        str(value.listtemplateheader)
+        str(value.listtemplatefooter)
+        str(value.addtemplate)
+        str(value.rsstemplate)
+        str(value.rsstitletemplate)
+        str(value.csstemplate)
+        str(value.jstemplate)
+        str(value.asearchtemplate)
+        bool(value.approval)
+        bool(value.manageapproved)
+        int(value.scale?.toLong())
+        int(value.assessed?.toLong())
+        int(value.assessTimeStart)
+        int(value.assessTimeFinish)
+        int(value.defaultsort.toLong())
+        int(value.defaultsortdir.toLong())
+        bool(value.editany)
+        int(value.notification?.toLong())
+        int(value.timeModified)
+        int(value.courseModule.toLong())
+        list(value.introFiles) { writeMoodleSummaryFile(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleDataprivacyGetAccessInformationResponse(value: MoodleDataprivacyGetAccessInformationResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        bool(value.cancontactdpo)
+        bool(value.canmanagedatarequests)
+        bool(value.cancreatedatadownloadrequest)
+        bool(value.cancreatedatadeletionrequest)
+        bool(value.hasongoingdatadownloadrequest)
+        bool(value.hasongoingdatadeletionrequest)
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleDataprivacyGetDataRequestsResponse(value: MoodleDataprivacyGetDataRequestsResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.requests) { writeMoodleDataprivacyGetDataRequestsResponseRequest(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleDataprivacyGetDataRequestsResponseRequest(value: MoodleDataprivacyGetDataRequestsResponseRequest?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.type.toLong())
+        str(value.comments)
+        int(value.commentsformat.toLong())
+        int(value.userId.toLong())
+        int(value.requestedby.toLong())
+        int(value.status.toLong())
+        int(value.dpo.toLong())
+        str(value.dpocomment)
+        int(value.dpocommentformat.toLong())
+        bool(value.systemapproved)
+        int(value.creationmethod.toLong())
+        int(value.id.toLong())
+        int(value.timeCreated)
+        int(value.timeModified)
+        int(value.userModified.toLong())
+        writeMoodleActionuser(value.foruser)
+        writeMoodleActionuser(value.requestedbyuser)
+        writeMoodleActionuser(value.dpouser)
+        str(value.messagehtml)
+        str(value.typename)
+        str(value.typenameshort)
+        str(value.statuslabel)
+        str(value.statuslabelclass)
+        bool(value.canreview)
+        bool(value.approvedeny)
+        bool(value.allowfiltering)
+        bool(value.canmarkcomplete)
+        str(value.downloadlink)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleDeployedfile(value: MoodleDeployedfile?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.fileName)
+        str(value.filePath)
+        int(value.fileSize)
+        str(value.fileUrl)
+        int(value.timeModified)
+        str(value.mimeType)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleDetail(value: MoodleDetail?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.type)
+        str(value.criteria)
+        str(value.requirement)
+        str(value.status)
     }
 }
 
@@ -726,6 +2599,81 @@ internal fun LiveFingerprint.writeMoodleDiscussionPostsResponse(value: MoodleDis
         int(value.courseId.toLong())
         writeMoodleRatingInfo(value.ratingInfo)
         list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleEnrolGetCourseEnrolmentMethodsItem(value: MoodleEnrolGetCourseEnrolmentMethodsItem?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.courseId.toLong())
+        str(value.type)
+        str(value.name)
+        str(value.status)
+        str(value.wsfunction)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleEnrolGetEnrolledUsersItem(value: MoodleEnrolGetEnrolledUsersItem?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        str(value.username)
+        str(value.firstName)
+        str(value.lastName)
+        str(value.fullName)
+        str(value.email)
+        str(value.address)
+        str(value.phone1)
+        str(value.phone2)
+        str(value.department)
+        str(value.institution)
+        str(value.idNumber)
+        str(value.interests)
+        int(value.firstAccess)
+        int(value.lastAccess)
+        int(value.lastcourseaccess)
+        str(value.description)
+        int(value.descriptionFormat?.toLong())
+        str(value.city)
+        str(value.country)
+        str(value.profileImageUrlSmall)
+        str(value.profileImageUrl)
+        list(value.customFields) { writeMoodleEnrolGetEnrolledUsersItemCustomField(it) }
+        list(value.groups) { writeMoodleUserGroup(it) }
+        list(value.roles) { writeMoodleUserRole(it) }
+        list(value.preferences) { writeMoodleKeyValue(it) }
+        list(value.enrolledCourses) { writeMoodleUserEnrolledCourse(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleEnrolGetEnrolledUsersItemCustomField(value: MoodleEnrolGetEnrolledUsersItemCustomField?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.type)
+        str(value.value)
+        str(value.name)
+        str(value.shortName)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleEnrolGuestGetInstanceInfoResponse(value: MoodleEnrolGuestGetInstanceInfoResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        writeMoodleInstanceinfo(value.instanceinfo)
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleEnrolSelfGetInstanceInfoResponse(value: MoodleEnrolSelfGetInstanceInfoResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.courseId.toLong())
+        str(value.type)
+        str(value.name)
+        str(value.status)
+        str(value.enrolpassword)
     }
 }
 
@@ -840,6 +2788,258 @@ internal fun LiveFingerprint.writeMoodleEventSubscription(value: MoodleEventSubs
     }
 }
 
+internal fun LiveFingerprint.writeMoodleEvidence(value: MoodleEvidence?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.userId.toLong())
+        str(value.name)
+        str(value.description)
+        int(value.descriptionFormat.toLong())
+        str(value.url)
+        int(value.id.toLong())
+        int(value.timeCreated)
+        int(value.timeModified)
+        int(value.userModified.toLong())
+        bool(value.canManage)
+        int(value.fileCount.toLong())
+        list(value.files) { writeMoodlePostInlineFile(it) }
+        bool(value.hasurlorfiles)
+        str(value.urlshort)
+        int(value.competencycount.toLong())
+        list(value.usercompetencies) { writeMoodleEvidenceUsercompetency(it) }
+        bool(value.userhasplan)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleEvidenceUsercompetency(value: MoodleEvidenceUsercompetency?) {
+    if (value == null) return nil()
+    obj(value) {
+        writeMoodleCompetencyListCourseCompetenciesItemCompetency(value.competency)
+        writeMoodleLpDataForPlanPageResponseCompetencyUsercompetency(value.usercompetency)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleExample(value: MoodleExample?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        str(value.title)
+        int(value.assessmentid.toLong())
+        num(value.grade)
+        num(value.gradinggrade)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleFeature(value: MoodleFeature?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.name)
+        bool(value.isenabled)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleFeedbackGetAnalysisResponse(value: MoodleFeedbackGetAnalysisResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.completedcount.toLong())
+        int(value.itemscount.toLong())
+        list(value.itemsdata) { writeMoodleItemsdata(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleFeedbackGetCurrentCompletedTmpResponse(value: MoodleFeedbackGetCurrentCompletedTmpResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        writeMoodleFeedbackGetCurrentCompletedTmpResponseFeedback(value.feedback)
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleFeedbackGetCurrentCompletedTmpResponseFeedback(value: MoodleFeedbackGetCurrentCompletedTmpResponseFeedback?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.feedback.toLong())
+        int(value.userId.toLong())
+        str(value.guestid)
+        int(value.timeModified)
+        int(value.randomResponse.toLong())
+        int(value.anonymousResponse.toLong())
+        int(value.courseId.toLong())
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleFeedbackGetFeedbackAccessInformationResponse(value: MoodleFeedbackGetFeedbackAccessInformationResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        bool(value.canviewanalysis)
+        bool(value.cancomplete)
+        bool(value.canSubmit)
+        bool(value.candeletesubmissions)
+        bool(value.canViewReports)
+        bool(value.canedititems)
+        bool(value.isempty)
+        bool(value.isopen)
+        bool(value.isalreadysubmitted)
+        bool(value.isanonymous)
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleFeedbackGetFeedbacksByCoursesResponse(value: MoodleFeedbackGetFeedbacksByCoursesResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.feedbacks) { writeMoodleFeedbackGetFeedbacksByCoursesResponseFeedback(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleFeedbackGetFeedbacksByCoursesResponseFeedback(value: MoodleFeedbackGetFeedbacksByCoursesResponseFeedback?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.course.toLong())
+        str(value.name)
+        str(value.intro)
+        int(value.introFormat.toLong())
+        str(value.lang)
+        int(value.anonymous.toLong())
+        bool(value.emailNotification)
+        bool(value.multipleSubmit)
+        bool(value.autonumbering)
+        str(value.siteAfterSubmit)
+        str(value.pageAfterSubmit)
+        int(value.pageAfterSubmitformat.toLong())
+        bool(value.publishStats)
+        int(value.timeOpen)
+        int(value.timeClose)
+        int(value.timeModified)
+        bool(value.completionSubmit)
+        int(value.courseModule.toLong())
+        list(value.introFiles) { writeMoodleSummaryFile(it) }
+        list(value.pageaftersubmitfiles) { writeMoodleSummaryFile(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleFeedbackGetFinishedResponsesResponse(value: MoodleFeedbackGetFinishedResponsesResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.responses) { writeMoodleFeedbackGetFinishedResponsesResponseResponse(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleFeedbackGetFinishedResponsesResponseResponse(value: MoodleFeedbackGetFinishedResponsesResponseResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.courseId.toLong())
+        int(value.item.toLong())
+        int(value.completed.toLong())
+        int(value.tmpCompleted.toLong())
+        str(value.value)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleFeedbackGetItemsResponse(value: MoodleFeedbackGetItemsResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.items) { writeMoodleItem(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleFeedbackGetLastCompletedResponse(value: MoodleFeedbackGetLastCompletedResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        writeMoodleCompleted(value.completed)
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleFeedbackGetNonRespondentsResponse(value: MoodleFeedbackGetNonRespondentsResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.users) { writeMoodleFeedbackGetNonRespondentsResponseUser(it) }
+        int(value.total.toLong())
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleFeedbackGetNonRespondentsResponseUser(value: MoodleFeedbackGetNonRespondentsResponseUser?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.courseId.toLong())
+        int(value.userId.toLong())
+        str(value.fullName)
+        bool(value.started)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleFeedbackGetResponsesAnalysisResponse(value: MoodleFeedbackGetResponsesAnalysisResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.attempts) { writeMoodleFeedbackGetResponsesAnalysisResponseAttempt(it) }
+        int(value.totalattempts.toLong())
+        list(value.anonattempts) { writeMoodleAnonattempt(it) }
+        int(value.totalanonattempts.toLong())
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleFeedbackGetResponsesAnalysisResponseAttempt(value: MoodleFeedbackGetResponsesAnalysisResponseAttempt?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.courseId.toLong())
+        int(value.userId.toLong())
+        int(value.timeModified)
+        str(value.fullName)
+        list(value.responses) { writeMoodleFeedbackGetResponsesAnalysisResponseAttemptResponse(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleFeedbackGetResponsesAnalysisResponseAttemptResponse(value: MoodleFeedbackGetResponsesAnalysisResponseAttemptResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        str(value.name)
+        str(value.printval)
+        str(value.rawval)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleFeedbackLaunchFeedbackResponse(value: MoodleFeedbackLaunchFeedbackResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.gopage.toLong())
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleField(value: MoodleField?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.dataId.toLong())
+        str(value.type)
+        str(value.name)
+        str(value.description)
+        bool(value.required)
+        str(value.param1)
+        str(value.param2)
+        str(value.param3)
+        str(value.param4)
+        str(value.param5)
+        str(value.param6)
+        str(value.param7)
+        str(value.param8)
+        str(value.param9)
+        str(value.param10)
+    }
+}
+
 internal fun LiveFingerprint.writeMoodleFile(value: MoodleFile?) {
     if (value == null) return nil()
     obj(value) {
@@ -855,12 +3055,103 @@ internal fun LiveFingerprint.writeMoodleFile(value: MoodleFile?) {
     }
 }
 
+internal fun LiveFingerprint.writeMoodleFilesGetFilesResponse(value: MoodleFilesGetFilesResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.parents) { writeMoodleParent(it) }
+        list(value.files) { writeMoodleFilesGetFilesResponseFile(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleFilesGetFilesResponseFile(value: MoodleFilesGetFilesResponseFile?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.contextId.toLong())
+        str(value.component)
+        str(value.fileArea)
+        int(value.itemId.toLong())
+        str(value.filePath)
+        str(value.fileName)
+        bool(value.isDirectory)
+        str(value.url)
+        int(value.timeModified)
+        int(value.timeCreated)
+        int(value.fileSize)
+        str(value.author)
+        str(value.license)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleFilesGetUnusedDraftItemidResponse(value: MoodleFilesGetUnusedDraftItemidResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.component)
+        int(value.contextId.toLong())
+        int(value.userId.toLong())
+        str(value.fileArea)
+        int(value.itemId.toLong())
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
 internal fun LiveFingerprint.writeMoodleFilter(value: MoodleFilter?) {
     if (value == null) return nil()
     obj(value) {
         str(value.filter)
         int(value.localState.toLong())
         int(value.inheritedState.toLong())
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleFiltersGetAllStatesResponse(value: MoodleFiltersGetAllStatesResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.filters) { writeMoodleFiltersGetAllStatesResponseFilter(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleFiltersGetAllStatesResponseFilter(value: MoodleFiltersGetAllStatesResponseFilter?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.contextlevel)
+        int(value.instanceId.toLong())
+        int(value.contextId.toLong())
+        str(value.filter)
+        int(value.state.toLong())
+        int(value.sortOrder.toLong())
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleFolder(value: MoodleFolder?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.courseModule.toLong())
+        int(value.course.toLong())
+        str(value.name)
+        str(value.intro)
+        int(value.introFormat.toLong())
+        list(value.introFiles) { writeMoodleFile(it) }
+        int(value.section?.toLong())
+        bool(value.visible)
+        int(value.groupMode?.toLong())
+        int(value.groupingId?.toLong())
+        str(value.lang)
+        int(value.revision.toLong())
+        int(value.timeModified)
+        int(value.display.toLong())
+        int(value.showexpanded.toLong())
+        int(value.showdownloadfolder.toLong())
+        int(value.forcedownload.toLong())
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleFolderGetFoldersByCoursesResponse(value: MoodleFolderGetFoldersByCoursesResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.folders) { writeMoodleFolder(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
     }
 }
 
@@ -953,6 +3244,49 @@ internal fun LiveFingerprint.writeMoodleForumDiscussionsResponse(value: MoodleFo
     }
 }
 
+internal fun LiveFingerprint.writeMoodleForumGetForumAccessInformationResponse(value: MoodleForumGetForumAccessInformationResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.warnings) { writeMoodleWarning(it) }
+        bool(value.canaddinstance)
+        bool(value.canviewdiscussion)
+        bool(value.canviewhiddentimedposts)
+        bool(value.canstartdiscussion)
+        bool(value.canreplypost)
+        bool(value.canaddnews)
+        bool(value.canreplynews)
+        bool(value.canviewrating)
+        bool(value.canviewanyrating)
+        bool(value.canviewallratings)
+        bool(value.canRate)
+        bool(value.canpostprivatereply)
+        bool(value.canreadprivatereplies)
+        bool(value.canCreateAttachment)
+        bool(value.candeleteownpost)
+        bool(value.candeleteanypost)
+        bool(value.cansplitdiscussions)
+        bool(value.canmovediscussions)
+        bool(value.canPinDiscussions)
+        bool(value.caneditanypost)
+        bool(value.canviewqandawithoutposting)
+        bool(value.canviewsubscribers)
+        bool(value.canmanagesubscriptions)
+        bool(value.canpostwithoutthrottling)
+        bool(value.canexportdiscussion)
+        bool(value.canexportforum)
+        bool(value.canexportpost)
+        bool(value.canexportownpost)
+        bool(value.canaddquestion)
+        bool(value.canallowforcesubscribe)
+        bool(value.cancanposttomygroups)
+        bool(value.cancanoverridediscussionlock)
+        bool(value.cancanoverridecutoff)
+        bool(value.cancantogglefavourite)
+        bool(value.cangrade)
+        bool(value.cancanmailnow)
+    }
+}
+
 internal fun LiveFingerprint.writeMoodleForumPost(value: MoodleForumPost?) {
     if (value == null) return nil()
     obj(value) {
@@ -979,6 +3313,192 @@ internal fun LiveFingerprint.writeMoodleForumPost(value: MoodleForumPost?) {
         list(value.messageInlineFiles) { writeMoodlePostInlineFile(it) }
         list(value.tags) { writeMoodlePostTag(it) }
         writeMoodlePostHtml(value.html)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleFramework(value: MoodleFramework?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.shortName)
+        str(value.idNumber)
+        str(value.description)
+        int(value.descriptionFormat.toLong())
+        bool(value.visible)
+        int(value.scaleId.toLong())
+        str(value.scaleconfiguration)
+        int(value.contextId.toLong())
+        str(value.taxonomies)
+        int(value.id.toLong())
+        int(value.timeCreated)
+        int(value.timeModified)
+        int(value.userModified.toLong())
+        bool(value.canManage)
+        int(value.competenciescount.toLong())
+        str(value.contextname)
+        str(value.contextnamenoprefix)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleGetComponentStringsItem(value: MoodleGetComponentStringsItem?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.stringid)
+        str(value.string)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleGlossary(value: MoodleGlossary?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.courseModule.toLong())
+        int(value.course.toLong())
+        str(value.name)
+        str(value.intro)
+        int(value.introFormat.toLong())
+        list(value.introFiles) { writeMoodleFile(it) }
+        int(value.section?.toLong())
+        bool(value.visible)
+        int(value.groupMode?.toLong())
+        int(value.groupingId?.toLong())
+        str(value.lang)
+        int(value.allowduplicatedentries.toLong())
+        str(value.displayformat)
+        int(value.mainglossary.toLong())
+        int(value.showspecial.toLong())
+        int(value.showalphabet.toLong())
+        int(value.showall.toLong())
+        int(value.allowcomments.toLong())
+        int(value.allowprintview.toLong())
+        int(value.usedynalink.toLong())
+        int(value.defaultapproval.toLong())
+        str(value.approvaldisplayformat)
+        int(value.globalglossary.toLong())
+        int(value.entbypage.toLong())
+        int(value.editalways.toLong())
+        int(value.rssType.toLong())
+        int(value.rssArticles.toLong())
+        int(value.assessed.toLong())
+        int(value.assessTimeStart)
+        int(value.assessTimeFinish)
+        int(value.scale.toLong())
+        int(value.timeCreated)
+        int(value.timeModified)
+        int(value.completionentries.toLong())
+        list(value.browsemodes) { str(it) }
+        int(value.canaddentry?.toLong())
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleGlossaryGetAuthorsResponse(value: MoodleGlossaryGetAuthorsResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.count.toLong())
+        list(value.authors) { writeMoodleAuthor(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleGlossaryGetCategoriesResponse(value: MoodleGlossaryGetCategoriesResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.count.toLong())
+        list(value.categories) { writeMoodleCategory(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleGlossaryGetEntriesByAuthorResponse(value: MoodleGlossaryGetEntriesByAuthorResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.count.toLong())
+        list(value.entries) { writeMoodleGlossaryGetEntriesByAuthorResponseEntry(it) }
+        writeMoodleRatingInfo(value.ratingInfo)
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleGlossaryGetEntriesByAuthorResponseEntry(value: MoodleGlossaryGetEntriesByAuthorResponseEntry?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.glossaryid.toLong())
+        int(value.userId.toLong())
+        str(value.userFullName)
+        str(value.userPictureUrl)
+        str(value.concept)
+        str(value.definition)
+        int(value.definitionformat.toLong())
+        bool(value.definitiontrust)
+        list(value.definitioninlinefiles) { writeMoodleFile(it) }
+        bool(value.attachment)
+        list(value.attachments) { writeMoodleFile(it) }
+        int(value.timeCreated)
+        int(value.timeModified)
+        bool(value.teacherentry)
+        int(value.sourceglossaryid.toLong())
+        bool(value.usedynalink)
+        bool(value.casesensitive)
+        bool(value.fullmatch)
+        bool(value.approved)
+        list(value.tags) { writeMoodleContentTag(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleGlossaryGetEntriesByCategoryResponse(value: MoodleGlossaryGetEntriesByCategoryResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.count.toLong())
+        list(value.entries) { writeMoodleGlossaryGetEntriesByCategoryResponseEntry(it) }
+        writeMoodleRatingInfo(value.ratingInfo)
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleGlossaryGetEntriesByCategoryResponseEntry(value: MoodleGlossaryGetEntriesByCategoryResponseEntry?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.glossaryid.toLong())
+        int(value.userId.toLong())
+        str(value.userFullName)
+        str(value.userPictureUrl)
+        str(value.concept)
+        str(value.definition)
+        int(value.definitionformat.toLong())
+        bool(value.definitiontrust)
+        list(value.definitioninlinefiles) { writeMoodleFile(it) }
+        bool(value.attachment)
+        list(value.attachments) { writeMoodleFile(it) }
+        int(value.timeCreated)
+        int(value.timeModified)
+        bool(value.teacherentry)
+        int(value.sourceglossaryid.toLong())
+        bool(value.usedynalink)
+        bool(value.casesensitive)
+        bool(value.fullmatch)
+        bool(value.approved)
+        list(value.tags) { writeMoodleContentTag(it) }
+        int(value.categoryId.toLong())
+        str(value.categoryName)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleGlossaryGetEntryByIdResponse(value: MoodleGlossaryGetEntryByIdResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        writeMoodleGlossaryGetEntriesByAuthorResponseEntry(value.entry)
+        writeMoodleRatingInfo(value.ratingInfo)
+        writeMoodlePermission(value.permissions)
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleGlossaryGetGlossariesByCoursesResponse(value: MoodleGlossaryGetGlossariesByCoursesResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.glossaries) { writeMoodleGlossary(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
     }
 }
 
@@ -1039,11 +3559,852 @@ internal fun LiveFingerprint.writeMoodleGradeItemsResponse(value: MoodleGradeIte
     }
 }
 
+internal fun LiveFingerprint.writeMoodleGradereportSingleviewGetGradeItemsForSearchWidgetResponse(value: MoodleGradereportSingleviewGetGradeItemsForSearchWidgetResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.gradeItems) { writeMoodleGradereportSingleviewGetGradeItemsForSearchWidgetResponseGradeItem(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleGradereportSingleviewGetGradeItemsForSearchWidgetResponseGradeItem(value: MoodleGradereportSingleviewGetGradeItemsForSearchWidgetResponseGradeItem?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id?.toLong())
+        str(value.name)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleGradereportUserGetAccessInformationResponse(value: MoodleGradereportUserGetAccessInformationResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        bool(value.canviewusergradereport)
+        bool(value.canviewmygrades)
+        bool(value.canviewallgrades)
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleGradereportUserGetGradesTableResponse(value: MoodleGradereportUserGetGradesTableResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.tables) { writeMoodleTable(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleGradesGetEnrolledUsersForSelectorResponse(value: MoodleGradesGetEnrolledUsersForSelectorResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.users) { writeMoodleUser(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleGradesGetGradeitemsResponse(value: MoodleGradesGetGradeitemsResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.gradeItems) { writeMoodleGradesGetGradeitemsResponseGradeItem(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleGradesGetGradeitemsResponseGradeItem(value: MoodleGradesGetGradeitemsResponseGradeItem?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.id)
+        str(value.itemName)
+        str(value.category)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleGradesGetGroupsForSearchWidgetResponse(value: MoodleGradesGetGroupsForSearchWidgetResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.groups) { writeMoodleGradesGetGroupsForSearchWidgetResponseGroup(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleGradesGetGroupsForSearchWidgetResponseGroup(value: MoodleGradesGetGroupsForSearchWidgetResponseGroup?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.id)
+        str(value.name)
+        str(value.groupimageurl)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleGroupGetActivityAllowedGroupsResponse(value: MoodleGroupGetActivityAllowedGroupsResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.groups) { writeMoodleCourseGroup(it) }
+        bool(value.canaccessallgroups)
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleGroupGetActivityGroupmodeResponse(value: MoodleGroupGetActivityGroupmodeResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.groupMode.toLong())
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleGroupGetCourseGroupingsItem(value: MoodleGroupGetCourseGroupingsItem?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.courseId.toLong())
+        str(value.name)
+        str(value.description)
+        int(value.descriptionFormat.toLong())
+        str(value.idNumber)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleGroupGetCourseGroupsItem(value: MoodleGroupGetCourseGroupsItem?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.courseId.toLong())
+        str(value.name)
+        str(value.description)
+        int(value.descriptionFormat.toLong())
+        str(value.enrolmentkey)
+        str(value.idNumber)
+        int(value.visibility.toLong())
+        bool(value.participation)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleH5pGetTrustedH5pFileResponse(value: MoodleH5pGetTrustedH5pFileResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.files) { writeMoodleFile(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleH5pactivity(value: MoodleH5pactivity?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.course.toLong())
+        str(value.name)
+        int(value.timeCreated)
+        int(value.timeModified)
+        str(value.intro)
+        int(value.introFormat.toLong())
+        int(value.grade?.toLong())
+        int(value.displayoptions.toLong())
+        int(value.enabletracking.toLong())
+        int(value.gradeMethod.toLong())
+        str(value.contenthash)
+        int(value.courseModule.toLong())
+        int(value.context.toLong())
+        list(value.introFiles) { writeMoodleSummaryFile(it) }
+        list(value.`package`) { writeMoodleSummaryFile(it) }
+        writeMoodleDeployedfile(value.deployedfile)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleH5pactivityGetAttemptsResponse(value: MoodleH5pactivityGetAttemptsResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.activityid.toLong())
+        list(value.usersattempts) { writeMoodleUsersattempt(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleH5pactivityGetH5pactivitiesByCoursesResponse(value: MoodleH5pactivityGetH5pactivitiesByCoursesResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.h5pactivities) { writeMoodleH5pactivity(it) }
+        writeMoodleH5pglobalsetting(value.h5pglobalsettings)
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleH5pactivityGetH5pactivityAccessInformationResponse(value: MoodleH5pactivityGetH5pactivityAccessInformationResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.warnings) { writeMoodleWarning(it) }
+        bool(value.canview)
+        bool(value.canaddinstance)
+        bool(value.canSubmit)
+        bool(value.canreviewattempts)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleH5pactivityGetResultsResponse(value: MoodleH5pactivityGetResultsResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.activityid.toLong())
+        list(value.attempts) { writeMoodleH5pactivityGetResultsResponseAttempt(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleH5pactivityGetResultsResponseAttempt(value: MoodleH5pactivityGetResultsResponseAttempt?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.h5pactivityid.toLong())
+        int(value.userId.toLong())
+        int(value.timeCreated)
+        int(value.timeModified)
+        int(value.attempt.toLong())
+        int(value.rawscore.toLong())
+        int(value.maxscore.toLong())
+        int(value.duration.toLong())
+        int(value.completion?.toLong())
+        int(value.success?.toLong())
+        num(value.scaled)
+        list(value.results) { writeMoodleH5pactivityGetResultsResponseAttemptResult(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleH5pactivityGetResultsResponseAttemptResult(value: MoodleH5pactivityGetResultsResponseAttemptResult?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.attemptId.toLong())
+        str(value.subcontent)
+        int(value.timeCreated)
+        str(value.interactiontype)
+        str(value.description)
+        str(value.content)
+        int(value.rawscore.toLong())
+        int(value.maxscore.toLong())
+        int(value.duration?.toLong())
+        int(value.completion?.toLong())
+        int(value.success?.toLong())
+        str(value.optionslabel)
+        str(value.correctlabel)
+        str(value.answerlabel)
+        bool(value.track)
+        list(value.options) { writeMoodleH5pactivityGetResultsResponseAttemptResultOption(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleH5pactivityGetResultsResponseAttemptResultOption(value: MoodleH5pactivityGetResultsResponseAttemptResultOption?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.description)
+        str(value.id)
+        writeMoodleCorrectanswer(value.correctanswer)
+        writeMoodleCorrectanswer(value.useranswer)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleH5pglobalsetting(value: MoodleH5pglobalsetting?) {
+    if (value == null) return nil()
+    obj(value) {
+        bool(value.enablesavestate)
+        int(value.savestatefreq?.toLong())
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleIdentityprovider(value: MoodleIdentityprovider?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.name)
+        str(value.iconUrl)
+        str(value.url)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleImscp(value: MoodleImscp?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.courseModule.toLong())
+        int(value.course.toLong())
+        str(value.name)
+        str(value.intro)
+        int(value.introFormat?.toLong())
+        list(value.introFiles) { writeMoodleFile(it) }
+        int(value.section?.toLong())
+        bool(value.visible)
+        int(value.groupMode?.toLong())
+        int(value.groupingId?.toLong())
+        str(value.lang)
+        int(value.revision?.toLong())
+        int(value.keepold?.toLong())
+        str(value.structure)
+        str(value.timeModified)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleImscpGetImscpsByCoursesResponse(value: MoodleImscpGetImscpsByCoursesResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.imscps) { writeMoodleImscp(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleInstanceinfo(value: MoodleInstanceinfo?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.courseId.toLong())
+        str(value.type)
+        str(value.name)
+        bool(value.status)
+        bool(value.passwordrequired)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleItem(value: MoodleItem?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.feedback.toLong())
+        int(value.template.toLong())
+        str(value.name)
+        int(value.nameformat.toLong())
+        str(value.label)
+        str(value.presentation)
+        int(value.presentationformat.toLong())
+        str(value.typ)
+        int(value.hasvalue.toLong())
+        int(value.position.toLong())
+        bool(value.required)
+        int(value.dependitem.toLong())
+        str(value.dependvalue)
+        str(value.options)
+        list(value.itemfiles) { writeMoodlePostInlineFile(it) }
+        int(value.itemNumber.toLong())
+        str(value.otherData)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleItemName(value: MoodleItemName?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.`class`)
+        int(value.colspan.toLong())
+        str(value.content)
+        str(value.id)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleItemsdata(value: MoodleItemsdata?) {
+    if (value == null) return nil()
+    obj(value) {
+        writeMoodleItem(value.item)
+        list(value.data) { str(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleJump(value: MoodleJump?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.pageid.toLong())
+        int(value.answerid.toLong())
+        int(value.jumpto.toLong())
+        int(value.calculatedjump.toLong())
+    }
+}
+
 internal fun LiveFingerprint.writeMoodleKeyValue(value: MoodleKeyValue?) {
     if (value == null) return nil()
     obj(value) {
         str(value.name)
         str(value.value)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleLabel(value: MoodleLabel?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.courseModule.toLong())
+        int(value.course.toLong())
+        str(value.name)
+        str(value.intro)
+        int(value.introFormat.toLong())
+        list(value.introFiles) { writeMoodleFile(it) }
+        int(value.section?.toLong())
+        bool(value.visible)
+        int(value.groupMode?.toLong())
+        int(value.groupingId?.toLong())
+        str(value.lang)
+        int(value.timeModified)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleLabelGetLabelsByCoursesResponse(value: MoodleLabelGetLabelsByCoursesResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.labels) { writeMoodleLabel(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleLeader(value: MoodleLeader?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.`class`)
+        int(value.rowspan.toLong())
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleLesson(value: MoodleLesson?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.course.toLong())
+        int(value.courseModule.toLong())
+        str(value.name)
+        str(value.intro)
+        int(value.introFormat.toLong())
+        str(value.lang)
+        bool(value.practice)
+        bool(value.modattempts)
+        bool(value.usepassword)
+        str(value.password)
+        int(value.dependency?.toLong())
+        str(value.conditions)
+        int(value.grade?.toLong())
+        bool(value.custom)
+        bool(value.ongoing)
+        int(value.usemaxgrade?.toLong())
+        int(value.maxanswers?.toLong())
+        int(value.maxAttempts?.toLong())
+        bool(value.review)
+        int(value.nextpagedefault?.toLong())
+        bool(value.feedback)
+        int(value.minquestions?.toLong())
+        int(value.maxpages?.toLong())
+        int(value.timeLimit)
+        bool(value.retake)
+        int(value.activitylink?.toLong())
+        str(value.mediafile)
+        int(value.mediaheight?.toLong())
+        int(value.mediawidth?.toLong())
+        int(value.mediaclose?.toLong())
+        bool(value.slideshow)
+        int(value.width?.toLong())
+        int(value.height?.toLong())
+        str(value.bgcolor)
+        bool(value.displayleft)
+        int(value.displayleftif?.toLong())
+        bool(value.progressbar)
+        int(value.available?.toLong())
+        int(value.deadline?.toLong())
+        int(value.timeModified)
+        int(value.completionendreached?.toLong())
+        int(value.completiontimespent)
+        bool(value.allowOfflineAttempts)
+        list(value.introFiles) { writeMoodleSummaryFile(it) }
+        list(value.mediafiles) { writeMoodleSummaryFile(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleLessonFinishAttemptResponseMessage(value: MoodleLessonFinishAttemptResponseMessage?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.message)
+        str(value.type)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleLessonGetAttemptsOverviewResponse(value: MoodleLessonGetAttemptsOverviewResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        writeMoodleLessonGetAttemptsOverviewResponseData(value.data)
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleLessonGetAttemptsOverviewResponseData(value: MoodleLessonGetAttemptsOverviewResponseData?) {
+    if (value == null) return nil()
+    obj(value) {
+        bool(value.lessonscored)
+        int(value.numofattempts.toLong())
+        num(value.avescore)
+        num(value.highscore)
+        num(value.lowscore)
+        int(value.avetime)
+        int(value.hightime)
+        int(value.lowtime)
+        list(value.students) { writeMoodleStudent(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleLessonGetLessonAccessInformationResponse(value: MoodleLessonGetLessonAccessInformationResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        bool(value.canManage)
+        bool(value.cangrade)
+        bool(value.canViewReports)
+        bool(value.reviewmode)
+        int(value.attemptscount.toLong())
+        int(value.lastpageseen.toLong())
+        bool(value.leftduringtimedsession)
+        int(value.firstpageid.toLong())
+        list(value.preventAccessReasons) { writeMoodlePreventAccessReason(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleLessonGetLessonResponse(value: MoodleLessonGetLessonResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        writeMoodleLesson(value.lesson)
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleLessonGetLessonsByCoursesResponse(value: MoodleLessonGetLessonsByCoursesResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.lessons) { writeMoodleLesson(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleLessonGetPageDataResponse(value: MoodleLessonGetPageDataResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        writeMoodleLessonGetPageDataResponsePage(value.page)
+        int(value.newpageid.toLong())
+        str(value.pagecontent)
+        str(value.ongoingscore)
+        int(value.progress.toLong())
+        list(value.contentfiles) { writeMoodleFile(it) }
+        list(value.answers) { writeMoodleLessonGetPageDataResponseAnswer(it) }
+        list(value.messages) { writeMoodleLessonFinishAttemptResponseMessage(it) }
+        bool(value.displaymenu)
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleLessonGetPageDataResponseAnswer(value: MoodleLessonGetPageDataResponseAnswer?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        list(value.answerfiles) { writeMoodleFile(it) }
+        list(value.responsefiles) { writeMoodleFile(it) }
+        int(value.jumpto?.toLong())
+        int(value.grade?.toLong())
+        int(value.score?.toLong())
+        int(value.flags?.toLong())
+        int(value.timeCreated)
+        int(value.timeModified)
+        str(value.answer)
+        int(value.answerformat?.toLong())
+        str(value.response)
+        int(value.responseformat?.toLong())
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleLessonGetPageDataResponsePage(value: MoodleLessonGetPageDataResponsePage?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.lessonid.toLong())
+        int(value.prevpageid.toLong())
+        int(value.nextpageid.toLong())
+        int(value.qtype.toLong())
+        int(value.qoption.toLong())
+        int(value.layout.toLong())
+        int(value.display.toLong())
+        int(value.timeCreated)
+        int(value.timeModified)
+        str(value.title)
+        str(value.contents)
+        int(value.contentsformat?.toLong())
+        bool(value.displayinmenublock)
+        int(value.type.toLong())
+        int(value.typeid.toLong())
+        str(value.typestring)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleLessonGetPagesPossibleJumpsResponse(value: MoodleLessonGetPagesPossibleJumpsResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.jumps) { writeMoodleJump(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleLessonGetPagesResponse(value: MoodleLessonGetPagesResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.pages) { writeMoodleLessonGetPagesResponsePage(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleLessonGetPagesResponsePage(value: MoodleLessonGetPagesResponsePage?) {
+    if (value == null) return nil()
+    obj(value) {
+        writeMoodleLessonGetPageDataResponsePage(value.page)
+        list(value.answerids) { int(it.toLong()) }
+        list(value.jumps) { int(it.toLong()) }
+        int(value.filesCount.toLong())
+        int(value.filessizetotal)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleLessonGetQuestionsAttemptsResponse(value: MoodleLessonGetQuestionsAttemptsResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.attempts) { writeMoodleLessonGetQuestionsAttemptsResponseAttempt(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleLessonGetQuestionsAttemptsResponseAttempt(value: MoodleLessonGetQuestionsAttemptsResponseAttempt?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.lessonid.toLong())
+        int(value.pageid.toLong())
+        int(value.userId.toLong())
+        int(value.answerid.toLong())
+        int(value.retry.toLong())
+        int(value.correct.toLong())
+        str(value.useranswer)
+        int(value.timeseen)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleLessonGetUserGradeResponse(value: MoodleLessonGetUserGradeResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        num(value.grade)
+        str(value.formattedgrade)
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleLessonGetUserTimersResponse(value: MoodleLessonGetUserTimersResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.timers) { writeMoodleTimer(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleLpDataForCourseCompetenciesPageResponse(value: MoodleLpDataForCourseCompetenciesPageResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.courseId.toLong())
+        int(value.pagecontextid.toLong())
+        int(value.gradableuserid?.toLong())
+        bool(value.canmanagecompetencyframeworks)
+        bool(value.canmanagecoursecompetencies)
+        bool(value.canconfigurecoursecompetencies)
+        bool(value.cangradecompetencies)
+        writeMoodleSetting(value.settings)
+        writeMoodleStatistic(value.statistics)
+        list(value.competencies) { writeMoodleLpDataForCourseCompetenciesPageResponseCompetency(it) }
+        str(value.manageurl)
+        str(value.pluginbaseurl)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleLpDataForCourseCompetenciesPageResponseCompetency(value: MoodleLpDataForCourseCompetenciesPageResponseCompetency?) {
+    if (value == null) return nil()
+    obj(value) {
+        writeMoodleCompetencyListCourseCompetenciesItemCompetency(value.competency)
+        writeMoodleCoursecompetency(value.coursecompetency)
+        list(value.coursemodules) { writeMoodleCompetencyCourseModule(it) }
+        writeMoodleUsercompetencycourse(value.usercompetencycourse)
+        list(value.ruleoutcomeoptions) { writeMoodleRuleoutcomeoption(it) }
+        writeMoodleComppath(value.comppath)
+        list(value.plans) { writeMoodlePlan(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleLpDataForPlanPageResponse(value: MoodleLpDataForPlanPageResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        writeMoodlePlan(value.plan)
+        int(value.contextId.toLong())
+        str(value.pluginbaseurl)
+        list(value.competencies) { writeMoodleLpDataForPlanPageResponseCompetency(it) }
+        int(value.competencycount.toLong())
+        int(value.proficientcompetencycount.toLong())
+        num(value.proficientcompetencypercentage)
+        str(value.proficientcompetencypercentageformatted)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleLpDataForPlanPageResponseCompetency(value: MoodleLpDataForPlanPageResponseCompetency?) {
+    if (value == null) return nil()
+    obj(value) {
+        writeMoodleCompetencyListCourseCompetenciesItemCompetency(value.competency)
+        writeMoodleComppath(value.comppath)
+        writeMoodleLpDataForPlanPageResponseCompetencyUsercompetency(value.usercompetency)
+        writeMoodleUsercompetencyplan(value.usercompetencyplan)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleLpDataForPlanPageResponseCompetencyUsercompetency(value: MoodleLpDataForPlanPageResponseCompetencyUsercompetency?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.userId.toLong())
+        int(value.competencyid.toLong())
+        int(value.status.toLong())
+        int(value.reviewerid.toLong())
+        bool(value.proficiency)
+        int(value.grade.toLong())
+        int(value.id.toLong())
+        int(value.timeCreated)
+        int(value.timeModified)
+        int(value.userModified.toLong())
+        bool(value.canrequestreview)
+        bool(value.canreview)
+        str(value.gradename)
+        bool(value.isrequestreviewallowed)
+        bool(value.iscancelreviewrequestallowed)
+        bool(value.isstartreviewallowed)
+        bool(value.isstopreviewallowed)
+        bool(value.isstatusidle)
+        bool(value.isstatusinreview)
+        bool(value.isstatuswaitingforreview)
+        str(value.proficiencyname)
+        writeMoodleActionuser(value.reviewer)
+        str(value.statusname)
+        str(value.url)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleLpDataForPlansPageResponse(value: MoodleLpDataForPlansPageResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.userId.toLong())
+        list(value.plans) { writeMoodlePlan(it) }
+        str(value.pluginbaseurl)
+        list(value.navigation) { str(it) }
+        bool(value.canreaduserevidence)
+        bool(value.canmanageuserplans)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleLpDataForUserCompetencySummaryInCourseResponse(value: MoodleLpDataForUserCompetencySummaryInCourseResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        writeMoodleLpDataForUserCompetencySummaryResponse(value.usercompetencysummary)
+        writeMoodleEventCourse(value.course)
+        list(value.coursemodules) { writeMoodleCompetencyCourseModule(it) }
+        list(value.plans) { writeMoodlePlan(it) }
+        str(value.pluginbaseurl)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleLpDataForUserCompetencySummaryInPlanResponse(value: MoodleLpDataForUserCompetencySummaryInPlanResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        writeMoodleLpDataForUserCompetencySummaryResponse(value.usercompetencysummary)
+        writeMoodlePlan(value.plan)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleLpDataForUserCompetencySummaryResponse(value: MoodleLpDataForUserCompetencySummaryResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        bool(value.showrelatedcompetencies)
+        bool(value.cangrade)
+        writeMoodleLpDataForUserCompetencySummaryResponseCompetency(value.competency)
+        writeMoodleActionuser(value.user)
+        writeMoodleLpDataForPlanPageResponseCompetencyUsercompetency(value.usercompetency)
+        writeMoodleUsercompetencyplan(value.usercompetencyplan)
+        writeMoodleUsercompetencycourse(value.usercompetencycourse)
+        list(value.evidence) { writeMoodleCompetencyGradeCompetencyInCourseResponse(it) }
+        writeMoodleCommentarea(value.commentarea)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleLpDataForUserCompetencySummaryResponseCompetency(value: MoodleLpDataForUserCompetencySummaryResponseCompetency?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.linkedcourses) { writeMoodleEventCourse(it) }
+        list(value.relatedcompetencies) { writeMoodleCompetencyListCourseCompetenciesItemCompetency(it) }
+        writeMoodleCompetencyListCourseCompetenciesItemCompetency(value.competency)
+        writeMoodleFramework(value.framework)
+        bool(value.hascourses)
+        bool(value.hasrelatedcompetencies)
+        int(value.scaleId.toLong())
+        str(value.scaleconfiguration)
+        str(value.taxonomyterm)
+        writeMoodleComppath(value.comppath)
+        str(value.pluginbaseurl)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleLpDataForUserEvidenceListPageResponse(value: MoodleLpDataForUserEvidenceListPageResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        bool(value.canManage)
+        int(value.userId.toLong())
+        str(value.pluginbaseurl)
+        list(value.evidence) { writeMoodleEvidence(it) }
+        list(value.navigation) { str(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleLpDataForUserEvidencePageResponse(value: MoodleLpDataForUserEvidencePageResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        writeMoodleEvidence(value.userevidence)
+        str(value.pluginbaseurl)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleLti(value: MoodleLti?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.courseModule.toLong())
+        int(value.course.toLong())
+        str(value.name)
+        str(value.intro)
+        int(value.introFormat?.toLong())
+        list(value.introFiles) { writeMoodleFile(it) }
+        int(value.section?.toLong())
+        bool(value.visible)
+        int(value.groupMode?.toLong())
+        int(value.groupingId?.toLong())
+        str(value.lang)
+        int(value.timeCreated)
+        int(value.timeModified)
+        int(value.typeid?.toLong())
+        str(value.toolurl)
+        str(value.securetoolurl)
+        str(value.instructorchoicesendname)
+        int(value.instructorchoicesendemailaddr?.toLong())
+        int(value.instructorchoiceallowroster?.toLong())
+        int(value.instructorchoiceallowsetting?.toLong())
+        str(value.instructorcustomparameters)
+        int(value.instructorchoiceacceptgrades?.toLong())
+        int(value.grade?.toLong())
+        int(value.launchcontainer?.toLong())
+        str(value.resourcekey)
+        str(value.password)
+        int(value.debuglaunch?.toLong())
+        int(value.showtitlelaunch?.toLong())
+        int(value.showdescriptionlaunch?.toLong())
+        str(value.servicesalt)
+        str(value.icon)
+        str(value.secureicon)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleLtiGetLtisByCoursesResponse(value: MoodleLtiGetLtisByCoursesResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.ltis) { writeMoodleLti(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
     }
 }
 
@@ -1054,6 +4415,123 @@ internal fun LiveFingerprint.writeMoodleMemberConversation(value: MoodleMemberCo
         int(value.type.toLong())
         str(value.name)
         int(value.timeCreated)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleMessageGetBlockedUsersResponse(value: MoodleMessageGetBlockedUsersResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.users) { writeMoodleMessageGetBlockedUsersResponseUser(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleMessageGetBlockedUsersResponseUser(value: MoodleMessageGetBlockedUsersResponseUser?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        str(value.fullName)
+        str(value.profileImageUrl)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleMessageGetUserMessagePreferencesResponse(value: MoodleMessageGetUserMessagePreferencesResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        writeMoodleMessageGetUserMessagePreferencesResponsePreference(value.preferences)
+        int(value.blocknoncontacts.toLong())
+        bool(value.entertosend)
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleMessageGetUserMessagePreferencesResponsePreference(value: MoodleMessageGetUserMessagePreferencesResponsePreference?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.userId.toLong())
+        int(value.disableall.toLong())
+        list(value.processors) { writeMoodleMessageGetUserMessagePreferencesResponsePreferenceProcessor(it) }
+        list(value.components) { writeMoodleComponent(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleMessageGetUserMessagePreferencesResponsePreferenceProcessor(value: MoodleMessageGetUserMessagePreferencesResponsePreferenceProcessor?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.displayName)
+        str(value.name)
+        bool(value.hassettings)
+        int(value.contextId.toLong())
+        int(value.userconfigured.toLong())
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleMessageGetUserNotificationPreferencesResponse(value: MoodleMessageGetUserNotificationPreferencesResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        writeMoodleMessageGetUserMessagePreferencesResponsePreference(value.preferences)
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleMobileGetConfigResponse(value: MoodleMobileGetConfigResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.settings) { writeMoodleKeyValue(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleMobileGetPluginsSupportingMobileResponse(value: MoodleMobileGetPluginsSupportingMobileResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.plugins) { writeMoodlePlugin(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleMobileGetPublicConfigResponse(value: MoodleMobileGetPublicConfigResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.wwwroot)
+        str(value.httpswwwroot)
+        str(value.siteName)
+        int(value.guestlogin)
+        int(value.rememberusername.toLong())
+        int(value.authloginviaemail)
+        str(value.registerauth)
+        str(value.forgottenpasswordurl)
+        str(value.authinstructions)
+        int(value.authnoneenabled.toLong())
+        int(value.enablewebservices.toLong())
+        int(value.enablemobilewebservice.toLong())
+        int(value.maintenanceenabled.toLong())
+        str(value.maintenancemessage)
+        str(value.logourl)
+        str(value.compactlogourl)
+        int(value.typeoflogin)
+        str(value.launchurl)
+        str(value.mobileCssUrl)
+        str(value.toolMobileDisabledfeatures)
+        list(value.identityproviders) { writeMoodleIdentityprovider(it) }
+        str(value.country)
+        bool(value.agedigitalconsentverification)
+        str(value.supportname)
+        str(value.supportemail)
+        str(value.supportpage)
+        int(value.supportavailability?.toLong())
+        int(value.autolang?.toLong())
+        str(value.lang)
+        int(value.langmenu?.toLong())
+        str(value.langlist)
+        str(value.locale)
+        str(value.toolMobileMinimumversion)
+        str(value.toolMobileIosappid)
+        str(value.toolMobileAndroidappid)
+        str(value.toolMobileSetuplink)
+        int(value.toolMobileQrcodetype?.toLong())
+        list(value.warnings) { writeMoodleWarning(it) }
+        int(value.showloginform)
     }
 }
 
@@ -1129,6 +4607,198 @@ internal fun LiveFingerprint.writeMoodleModuleDate(value: MoodleModuleDate?) {
         int(value.timestamp)
         int(value.relativeTo?.toLong())
         str(value.dataId)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleMoodlenetVerifyWebfingerResponse(value: MoodleMoodlenetVerifyWebfingerResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        bool(value.result)
+        str(value.message)
+        str(value.domain)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleNamedValue(value: MoodleNamedValue?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.name)
+        str(value.value)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleNotesGetCourseNotesResponse(value: MoodleNotesGetCourseNotesResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.sitenotes) { writeMoodleSitenote(it) }
+        list(value.coursenotes) { writeMoodleSitenote(it) }
+        list(value.personalnotes) { writeMoodleSitenote(it) }
+        bool(value.canmanagesystemnotes)
+        bool(value.canmanagecoursenotes)
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleOutcome(value: MoodleOutcome?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.id)
+        str(value.name)
+        str(value.scale)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodlePageGetPagesByCoursesResponse(value: MoodlePageGetPagesByCoursesResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.pages) { writeMoodlePageGetPagesByCoursesResponsePage(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodlePageGetPagesByCoursesResponsePage(value: MoodlePageGetPagesByCoursesResponsePage?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.courseModule.toLong())
+        int(value.course.toLong())
+        str(value.name)
+        str(value.intro)
+        int(value.introFormat.toLong())
+        list(value.introFiles) { writeMoodleFile(it) }
+        int(value.section?.toLong())
+        bool(value.visible)
+        int(value.groupMode?.toLong())
+        int(value.groupingId?.toLong())
+        str(value.lang)
+        str(value.content)
+        int(value.contentformat.toLong())
+        list(value.contentfiles) { writeMoodleFile(it) }
+        int(value.legacyFiles.toLong())
+        int(value.legacyfileslast.toLong())
+        int(value.display.toLong())
+        str(value.displayoptions)
+        int(value.revision.toLong())
+        int(value.timeModified)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleParent(value: MoodleParent?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.contextId.toLong())
+        str(value.component)
+        str(value.fileArea)
+        int(value.itemId.toLong())
+        str(value.filePath)
+        str(value.fileName)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodlePermission(value: MoodlePermission?) {
+    if (value == null) return nil()
+    obj(value) {
+        bool(value.canDelete)
+        bool(value.canupdate)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodlePhase(value: MoodlePhase?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.code.toLong())
+        str(value.title)
+        bool(value.active)
+        list(value.tasks) { writeMoodleTask(it) }
+        list(value.actions) { writeMoodleAction(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodlePlan(value: MoodlePlan?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.name)
+        str(value.description)
+        int(value.descriptionFormat.toLong())
+        int(value.userId.toLong())
+        int(value.templateid.toLong())
+        int(value.origtemplateid.toLong())
+        int(value.status.toLong())
+        int(value.dueDate)
+        int(value.reviewerid.toLong())
+        int(value.id.toLong())
+        int(value.timeCreated)
+        int(value.timeModified)
+        int(value.userModified.toLong())
+        str(value.statusname)
+        bool(value.isbasedontemplate)
+        bool(value.canManage)
+        bool(value.canrequestreview)
+        bool(value.canreview)
+        bool(value.canbeedited)
+        bool(value.isactive)
+        bool(value.isdraft)
+        bool(value.iscompleted)
+        bool(value.isinreview)
+        bool(value.iswaitingforreview)
+        bool(value.isreopenallowed)
+        bool(value.iscompleteallowed)
+        bool(value.isunlinkallowed)
+        bool(value.isrequestreviewallowed)
+        bool(value.iscancelreviewrequestallowed)
+        bool(value.isstartreviewallowed)
+        bool(value.isstopreviewallowed)
+        bool(value.isapproveallowed)
+        bool(value.isunapproveallowed)
+        str(value.duedateformatted)
+        writeMoodleCommentarea(value.commentarea)
+        writeMoodleActionuser(value.reviewer)
+        writeMoodleTemplate(value.template)
+        str(value.url)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodlePlugin(value: MoodlePlugin?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.component)
+        str(value.version)
+        str(value.addon)
+        list(value.dependencies) { str(it) }
+        str(value.fileUrl)
+        str(value.filehash)
+        int(value.fileSize)
+        str(value.handlers)
+        str(value.lang)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodlePolicyGetUserAcceptancesResponse(value: MoodlePolicyGetUserAcceptancesResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.policies) { writeMoodlePolicyGetUserAcceptancesResponsePolicy(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodlePolicyGetUserAcceptancesResponsePolicy(value: MoodlePolicyGetUserAcceptancesResponsePolicy?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.policyid.toLong())
+        int(value.versionid.toLong())
+        int(value.agreementstyle.toLong())
+        int(value.optional.toLong())
+        str(value.revision)
+        int(value.status.toLong())
+        str(value.name)
+        str(value.summary)
+        int(value.summaryFormat.toLong())
+        str(value.content)
+        int(value.contentformat.toLong())
+        writeMoodleAcceptance(value.acceptance)
+        bool(value.canaccept)
+        bool(value.candecline)
+        bool(value.canrevoke)
     }
 }
 
@@ -1293,6 +4963,25 @@ internal fun LiveFingerprint.writeMoodlePostUrls(value: MoodlePostUrls?) {
     }
 }
 
+internal fun LiveFingerprint.writeMoodlePresentation(value: MoodlePresentation?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.url)
+        str(value.iconname)
+        str(value.icondesc)
+        str(value.name)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodlePreventAccessReason(value: MoodlePreventAccessReason?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.reason)
+        str(value.data)
+        str(value.message)
+    }
+}
+
 internal fun LiveFingerprint.writeMoodlePrivateFilesInfo(value: MoodlePrivateFilesInfo?) {
     if (value == null) return nil()
     obj(value) {
@@ -1301,6 +4990,20 @@ internal fun LiveFingerprint.writeMoodlePrivateFilesInfo(value: MoodlePrivateFil
         int(value.fileSize)
         int(value.fileSizeWithoutReferences)
         list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleQuestion(value: MoodleQuestion?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        str(value.text)
+        str(value.shorttext)
+        str(value.multi)
+        str(value.intro)
+        int(value.type.toLong())
+        str(value.options)
+        int(value.parent.toLong())
     }
 }
 
@@ -1400,6 +5103,23 @@ internal fun LiveFingerprint.writeMoodleQuizAttempt(value: MoodleQuizAttempt?) {
     }
 }
 
+internal fun LiveFingerprint.writeMoodleQuizGetCombinedReviewOptionsResponse(value: MoodleQuizGetCombinedReviewOptionsResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.someoptions) { writeMoodleAdvancedFeature(it) }
+        list(value.alloptions) { writeMoodleAdvancedFeature(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleQuizGetQuizRequiredQtypesResponse(value: MoodleQuizGetQuizRequiredQtypesResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.questiontypes) { str(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
 internal fun LiveFingerprint.writeMoodleQuizzesResponse(value: MoodleQuizzesResponse?) {
     if (value == null) return nil()
     obj(value) {
@@ -1468,6 +5188,322 @@ internal fun LiveFingerprint.writeMoodleRelatedBadge(value: MoodleRelatedBadge?)
     }
 }
 
+internal fun LiveFingerprint.writeMoodleReportbuilderListReportsResponse(value: MoodleReportbuilderListReportsResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.reports) { writeMoodleReportbuilderListReportsResponseReport(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleReportbuilderListReportsResponseReport(value: MoodleReportbuilderListReportsResponseReport?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.name)
+        str(value.source)
+        int(value.type.toLong())
+        bool(value.uniquerows)
+        str(value.conditiondata)
+        str(value.settingsdata)
+        int(value.contextId.toLong())
+        str(value.component)
+        str(value.area)
+        int(value.itemId.toLong())
+        int(value.userCreated.toLong())
+        int(value.id.toLong())
+        int(value.timeCreated)
+        int(value.timeModified)
+        int(value.userModified.toLong())
+        str(value.sourcename)
+        list(value.tags) { writeMoodleContentTag(it) }
+        writeMoodleActionuser(value.modifiedby)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleReportbuilderRetrieveReportResponse(value: MoodleReportbuilderRetrieveReportResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        writeMoodleReportbuilderListReportsResponseReport(value.details)
+        writeMoodleReportbuilderRetrieveReportResponseData(value.data)
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleReportbuilderRetrieveReportResponseData(value: MoodleReportbuilderRetrieveReportResponseData?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.headers) { str(it) }
+        list(value.rows) { writeMoodleRow(it) }
+        int(value.totalrowcount.toLong())
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleResource(value: MoodleResource?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.courseModule.toLong())
+        int(value.course.toLong())
+        str(value.name)
+        str(value.intro)
+        int(value.introFormat.toLong())
+        list(value.introFiles) { writeMoodleFile(it) }
+        int(value.section?.toLong())
+        bool(value.visible)
+        int(value.groupMode?.toLong())
+        int(value.groupingId?.toLong())
+        str(value.lang)
+        list(value.contentfiles) { writeMoodleFile(it) }
+        int(value.tobemigrated.toLong())
+        int(value.legacyFiles.toLong())
+        int(value.legacyfileslast.toLong())
+        int(value.display.toLong())
+        str(value.displayoptions)
+        int(value.filterfiles.toLong())
+        int(value.revision.toLong())
+        int(value.timeModified)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleResourceGetResourcesByCoursesResponse(value: MoodleResourceGetResourcesByCoursesResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.resources) { writeMoodleResource(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleReviewedby(value: MoodleReviewedby?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.userId.toLong())
+        int(value.assessmentid.toLong())
+        int(value.submissionid.toLong())
+        num(value.grade)
+        num(value.gradinggrade)
+        num(value.gradinggradeover)
+        int(value.weight.toLong())
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleRow(value: MoodleRow?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.columns) { str(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleRuleoutcomeoption(value: MoodleRuleoutcomeoption?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.value.toLong())
+        str(value.text)
+        bool(value.selected)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleScoe(value: MoodleScoe?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.scorm.toLong())
+        str(value.manifest)
+        str(value.organization)
+        str(value.parent)
+        str(value.identifier)
+        str(value.launch)
+        str(value.scormtype)
+        str(value.title)
+        int(value.sortOrder.toLong())
+        list(value.extradata) { writeMoodleTrack(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleScored(value: MoodleScored?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.title)
+        str(value.gradeMethod)
+        list(value.attempts) { writeMoodleUsersattemptAttempt(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleScorm(value: MoodleScorm?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.courseModule.toLong())
+        int(value.course.toLong())
+        str(value.name)
+        str(value.intro)
+        int(value.introFormat.toLong())
+        list(value.introFiles) { writeMoodleFile(it) }
+        int(value.section?.toLong())
+        bool(value.visible)
+        int(value.groupMode?.toLong())
+        int(value.groupingId?.toLong())
+        str(value.lang)
+        int(value.packagesize)
+        str(value.packageurl)
+        str(value.version)
+        int(value.maxGrade?.toLong())
+        int(value.gradeMethod?.toLong())
+        int(value.whatgrade?.toLong())
+        int(value.maxattempt?.toLong())
+        bool(value.forcecompleted)
+        int(value.forcenewattempt?.toLong())
+        bool(value.lastattemptlock)
+        int(value.displayattemptstatus?.toLong())
+        bool(value.displaycoursestructure)
+        str(value.sha1hash)
+        str(value.md5hash)
+        int(value.revision?.toLong())
+        int(value.launch?.toLong())
+        int(value.skipview?.toLong())
+        bool(value.hidebrowse)
+        int(value.hidetoc?.toLong())
+        int(value.nav?.toLong())
+        int(value.navpositionleft?.toLong())
+        int(value.navpositiontop?.toLong())
+        bool(value.auto)
+        int(value.popup?.toLong())
+        int(value.width?.toLong())
+        int(value.height?.toLong())
+        int(value.timeOpen)
+        int(value.timeClose)
+        str(value.scormtype)
+        str(value.reference)
+        bool(value.protectpackagedownloads)
+        int(value.updatefreq)
+        str(value.options)
+        int(value.completionstatusrequired?.toLong())
+        int(value.completionscorerequired?.toLong())
+        int(value.completionstatusallscos?.toLong())
+        bool(value.autocommit)
+        int(value.timeModified)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleScormGetScormAccessInformationResponse(value: MoodleScormGetScormAccessInformationResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.warnings) { writeMoodleWarning(it) }
+        bool(value.canaddinstance)
+        bool(value.canviewreport)
+        bool(value.canskipview)
+        bool(value.cansavetrack)
+        bool(value.canviewscores)
+        bool(value.candeleteresponses)
+        bool(value.candeleteownresponses)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleScormGetScormAttemptCountResponse(value: MoodleScormGetScormAttemptCountResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.attemptscount.toLong())
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleScormGetScormScoTracksResponse(value: MoodleScormGetScormScoTracksResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        writeMoodleScormGetScormScoTracksResponseData(value.data)
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleScormGetScormScoTracksResponseData(value: MoodleScormGetScormScoTracksResponseData?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.attempt.toLong())
+        list(value.tracks) { writeMoodleTrack(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleScormGetScormScoesResponse(value: MoodleScormGetScormScoesResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.scoes) { writeMoodleScoe(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleScormGetScormUserDataResponse(value: MoodleScormGetScormUserDataResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.data) { writeMoodleScormGetScormUserDataResponseData(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleScormGetScormUserDataResponseData(value: MoodleScormGetScormUserDataResponseData?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.scoid.toLong())
+        list(value.userdata) { writeMoodleTrack(it) }
+        list(value.defaultdata) { writeMoodleTrack(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleScormGetScormsByCoursesResponse(value: MoodleScormGetScormsByCoursesResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.scorms) { writeMoodleScorm(it) }
+        list(value.options) { writeMoodleKeyValue(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleSearchGetSearchAreasListResponse(value: MoodleSearchGetSearchAreasListResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.areas) { writeMoodleSearchGetSearchAreasListResponseArea(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleSearchGetSearchAreasListResponseArea(value: MoodleSearchGetSearchAreasListResponseArea?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.id)
+        str(value.categoryId)
+        str(value.categoryName)
+        str(value.name)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleSession(value: MoodleSession?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.sessionstart.toLong())
+        int(value.sessionend.toLong())
+        list(value.sessionusers) { writeMoodleSessionuser(it) }
+        bool(value.iscomplete)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleSessionuser(value: MoodleSessionuser?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.userId.toLong())
+        int(value.messagecount.toLong())
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleSetting(value: MoodleSetting?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.courseId.toLong())
+        bool(value.pushratingstouserplans)
+        int(value.id.toLong())
+        int(value.timeCreated)
+        int(value.timeModified)
+        int(value.userModified.toLong())
+    }
+}
+
 internal fun LiveFingerprint.writeMoodleSiteFunction(value: MoodleSiteFunction?) {
     if (value == null) return nil()
     obj(value) {
@@ -1512,6 +5548,260 @@ internal fun LiveFingerprint.writeMoodleSiteInfo(value: MoodleSiteInfo?) {
     }
 }
 
+internal fun LiveFingerprint.writeMoodleSitenote(value: MoodleSitenote?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.courseId.toLong())
+        int(value.userId.toLong())
+        str(value.content)
+        int(value.format.toLong())
+        int(value.created)
+        int(value.lastModified.toLong())
+        int(value.userModified.toLong())
+        str(value.publishstate)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleStatistic(value: MoodleStatistic?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.competencycount.toLong())
+        int(value.proficientcompetencycount.toLong())
+        num(value.proficientcompetencypercentage)
+        str(value.proficientcompetencypercentageformatted)
+        list(value.leastproficient) { writeMoodleCompetencyListCourseCompetenciesItemCompetency(it) }
+        int(value.leastproficientcount.toLong())
+        bool(value.canbegradedincourse)
+        bool(value.canmanagecoursecompetencies)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleStudent(value: MoodleStudent?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        str(value.fullName)
+        num(value.bestgrade)
+        list(value.attempts) { writeMoodleStudentAttempt(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleStudentAttempt(value: MoodleStudentAttempt?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.`try`.toLong())
+        num(value.grade)
+        int(value.timeStart)
+        int(value.timeEnd)
+        int(value.end)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleSubwiki(value: MoodleSubwiki?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.wikiid.toLong())
+        str(value.groupId)
+        int(value.userId.toLong())
+        bool(value.canEdit)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleSummaryFile(value: MoodleSummaryFile?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.fileName)
+        str(value.filePath)
+        int(value.fileSize)
+        str(value.fileUrl)
+        int(value.timeModified)
+        str(value.mimeType)
+        bool(value.isExternalFile)
+        str(value.repositoryType)
+        str(value.icon)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleSurvey(value: MoodleSurvey?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.courseModule.toLong())
+        int(value.course.toLong())
+        str(value.name)
+        str(value.intro)
+        int(value.introFormat?.toLong())
+        list(value.introFiles) { writeMoodleFile(it) }
+        int(value.section?.toLong())
+        bool(value.visible)
+        int(value.groupMode?.toLong())
+        int(value.groupingId?.toLong())
+        str(value.lang)
+        int(value.template?.toLong())
+        int(value.days?.toLong())
+        str(value.questions)
+        int(value.surveydone?.toLong())
+        int(value.timeCreated)
+        int(value.timeModified)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleSurveyGetQuestionsResponse(value: MoodleSurveyGetQuestionsResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.questions) { writeMoodleQuestion(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleSurveyGetSurveysByCoursesResponse(value: MoodleSurveyGetSurveysByCoursesResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.surveys) { writeMoodleSurvey(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleTable(value: MoodleTable?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.courseId.toLong())
+        int(value.userId.toLong())
+        str(value.userFullName)
+        int(value.maxDepth.toLong())
+        list(value.tabledata) { writeMoodleTableTabledata(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleTableTabledata(value: MoodleTableTabledata?) {
+    if (value == null) return nil()
+    obj(value) {
+        writeMoodleItemName(value.itemName)
+        writeMoodleLeader(value.leader)
+        writeMoodleWeight(value.weight)
+        writeMoodleWeight(value.grade)
+        writeMoodleWeight(value.range)
+        writeMoodleWeight(value.percentage)
+        writeMoodleWeight(value.lettergrade)
+        writeMoodleWeight(value.rank)
+        writeMoodleWeight(value.average)
+        writeMoodleWeight(value.feedback)
+        writeMoodleWeight(value.contributiontocoursetotal)
+        list(value.parentcategories) { int(it.toLong()) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleTag(value: MoodleTag?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.name)
+        str(value.viewUrl)
+        bool(value.flag)
+        bool(value.isStandard)
+        int(value.count?.toLong())
+        int(value.size)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleTagGetTagAreasResponse(value: MoodleTagGetTagAreasResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.areas) { writeMoodleTagGetTagAreasResponseArea(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleTagGetTagAreasResponseArea(value: MoodleTagGetTagAreasResponseArea?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        str(value.component)
+        str(value.itemType)
+        bool(value.enabled)
+        int(value.tagCollId.toLong())
+        str(value.callback)
+        str(value.callbackfile)
+        int(value.showstandard.toLong())
+        bool(value.multiplecontexts)
+        bool(value.locked)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleTagGetTagCloudResponse(value: MoodleTagGetTagCloudResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.tags) { writeMoodleTag(it) }
+        int(value.tagscount.toLong())
+        int(value.totalcount.toLong())
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleTagGetTagCollectionsResponse(value: MoodleTagGetTagCollectionsResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.collections) { writeMoodleCollection(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleTask(value: MoodleTask?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.code)
+        str(value.title)
+        str(value.link)
+        str(value.details)
+        str(value.completed)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleTemplate(value: MoodleTemplate?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.shortName)
+        str(value.description)
+        int(value.descriptionFormat.toLong())
+        int(value.dueDate)
+        bool(value.visible)
+        int(value.contextId.toLong())
+        int(value.id.toLong())
+        int(value.timeCreated)
+        int(value.timeModified)
+        int(value.userModified.toLong())
+        str(value.duedateformatted)
+        int(value.cohortscount.toLong())
+        int(value.planscount.toLong())
+        bool(value.canManage)
+        bool(value.canread)
+        str(value.contextname)
+        str(value.contextnamenoprefix)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleTimer(value: MoodleTimer?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.lessonid.toLong())
+        int(value.userId.toLong())
+        int(value.starttime)
+        int(value.lessontime)
+        int(value.completed.toLong())
+        int(value.timeModifiedOffline)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleTrack(value: MoodleTrack?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.element)
+        str(value.value)
+    }
+}
+
 internal fun LiveFingerprint.writeMoodleUnreadConversationCounts(value: MoodleUnreadConversationCounts?) {
     if (value == null) return nil()
     obj(value) {
@@ -1526,6 +5816,75 @@ internal fun LiveFingerprint.writeMoodleUnreadCountsByType(value: MoodleUnreadCo
         int(value.individualConversations.toLong())
         int(value.groupConversations.toLong())
         int(value.selfConversations.toLong())
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleUrl(value: MoodleUrl?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.courseModule.toLong())
+        int(value.course.toLong())
+        str(value.name)
+        str(value.intro)
+        int(value.introFormat.toLong())
+        list(value.introFiles) { writeMoodleFile(it) }
+        int(value.section?.toLong())
+        bool(value.visible)
+        int(value.groupMode?.toLong())
+        int(value.groupingId?.toLong())
+        str(value.lang)
+        str(value.externalurl)
+        int(value.display.toLong())
+        str(value.displayoptions)
+        str(value.parameters)
+        int(value.timeModified)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleUrlGetUrlsByCoursesResponse(value: MoodleUrlGetUrlsByCoursesResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.urls) { writeMoodleUrl(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleUser(value: MoodleUser?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        str(value.username)
+        str(value.firstName)
+        str(value.lastName)
+        str(value.fullName)
+        str(value.email)
+        str(value.address)
+        str(value.phone1)
+        str(value.phone2)
+        str(value.department)
+        str(value.institution)
+        str(value.idNumber)
+        str(value.interests)
+        int(value.firstAccess)
+        int(value.lastAccess)
+        str(value.auth)
+        bool(value.suspended)
+        bool(value.confirmed)
+        str(value.lang)
+        str(value.calendarType)
+        str(value.theme)
+        str(value.timezone)
+        int(value.mailFormat?.toLong())
+        int(value.trackForums?.toLong())
+        str(value.description)
+        int(value.descriptionFormat?.toLong())
+        str(value.city)
+        str(value.country)
+        str(value.profileImageUrlSmall)
+        str(value.profileImageUrl)
+        list(value.customFields) { writeMoodleUserCustomField(it) }
+        list(value.preferences) { writeMoodleKeyValue(it) }
     }
 }
 
@@ -1599,6 +5958,26 @@ internal fun LiveFingerprint.writeMoodleUserBestGradeResponse(value: MoodleUserB
     }
 }
 
+internal fun LiveFingerprint.writeMoodleUserCustomField(value: MoodleUserCustomField?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.type)
+        str(value.value)
+        str(value.displayValue)
+        str(value.name)
+        str(value.shortName)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleUserEnrolledCourse(value: MoodleUserEnrolledCourse?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        str(value.fullName)
+        str(value.shortName)
+    }
+}
+
 internal fun LiveFingerprint.writeMoodleUserGrades(value: MoodleUserGrades?) {
     if (value == null) return nil()
     obj(value) {
@@ -1612,6 +5991,107 @@ internal fun LiveFingerprint.writeMoodleUserGrades(value: MoodleUserGrades?) {
     }
 }
 
+internal fun LiveFingerprint.writeMoodleUserGroup(value: MoodleUserGroup?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        str(value.name)
+        str(value.description)
+        int(value.descriptionFormat.toLong())
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleUserRole(value: MoodleUserRole?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.roleId.toLong())
+        str(value.name)
+        str(value.shortName)
+        int(value.sortOrder.toLong())
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleUsercompetencycourse(value: MoodleUsercompetencycourse?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.userId.toLong())
+        int(value.courseId.toLong())
+        int(value.competencyid.toLong())
+        bool(value.proficiency)
+        int(value.grade.toLong())
+        int(value.id.toLong())
+        int(value.timeCreated)
+        int(value.timeModified)
+        int(value.userModified.toLong())
+        str(value.gradename)
+        str(value.proficiencyname)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleUsercompetencyplan(value: MoodleUsercompetencyplan?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.userId.toLong())
+        int(value.competencyid.toLong())
+        bool(value.proficiency)
+        int(value.grade.toLong())
+        int(value.planid.toLong())
+        int(value.sortOrder.toLong())
+        int(value.id.toLong())
+        int(value.timeCreated)
+        int(value.timeModified)
+        int(value.userModified.toLong())
+        str(value.gradename)
+        str(value.proficiencyname)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleUserplan(value: MoodleUserplan?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.phases) { writeMoodlePhase(it) }
+        list(value.examples) { writeMoodleExample(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleUserresponse(value: MoodleUserresponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.userId.toLong())
+        str(value.fullName)
+        str(value.profileImageUrl)
+        int(value.answerid?.toLong())
+        int(value.timeModified)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleUsersattempt(value: MoodleUsersattempt?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.userId.toLong())
+        list(value.attempts) { writeMoodleUsersattemptAttempt(it) }
+        writeMoodleScored(value.scored)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleUsersattemptAttempt(value: MoodleUsersattemptAttempt?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.h5pactivityid.toLong())
+        int(value.userId.toLong())
+        int(value.timeCreated)
+        int(value.timeModified)
+        int(value.attempt.toLong())
+        int(value.rawscore.toLong())
+        int(value.maxscore.toLong())
+        int(value.duration.toLong())
+        int(value.completion?.toLong())
+        int(value.success?.toLong())
+        num(value.scaled)
+    }
+}
+
 internal fun LiveFingerprint.writeMoodleWarning(value: MoodleWarning?) {
     if (value == null) return nil()
     obj(value) {
@@ -1622,9 +6102,318 @@ internal fun LiveFingerprint.writeMoodleWarning(value: MoodleWarning?) {
     }
 }
 
+internal fun LiveFingerprint.writeMoodleWeight(value: MoodleWeight?) {
+    if (value == null) return nil()
+    obj(value) {
+        str(value.`class`)
+        str(value.content)
+        str(value.headers)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleWiki(value: MoodleWiki?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.courseModule.toLong())
+        int(value.course.toLong())
+        str(value.name)
+        str(value.intro)
+        int(value.introFormat?.toLong())
+        list(value.introFiles) { writeMoodleFile(it) }
+        int(value.section?.toLong())
+        bool(value.visible)
+        int(value.groupMode?.toLong())
+        int(value.groupingId?.toLong())
+        str(value.lang)
+        int(value.timeCreated)
+        int(value.timeModified)
+        str(value.firstpagetitle)
+        str(value.wikimode)
+        str(value.defaultformat)
+        int(value.forceformat?.toLong())
+        int(value.editbegin?.toLong())
+        int(value.editend?.toLong())
+        bool(value.cancreatepages)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleWikiGetPageContentsResponse(value: MoodleWikiGetPageContentsResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        writeMoodleWikiGetPageContentsResponsePage(value.page)
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleWikiGetPageContentsResponsePage(value: MoodleWikiGetPageContentsResponsePage?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.wikiid.toLong())
+        int(value.subwikiid.toLong())
+        int(value.groupId.toLong())
+        int(value.userId.toLong())
+        str(value.title)
+        str(value.cachedcontent)
+        int(value.contentformat?.toLong())
+        bool(value.caneditpage)
+        int(value.version?.toLong())
+        list(value.tags) { writeMoodleContentTag(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleWikiGetSubwikiPagesResponse(value: MoodleWikiGetSubwikiPagesResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.pages) { writeMoodleWikiGetSubwikiPagesResponsePage(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleWikiGetSubwikiPagesResponsePage(value: MoodleWikiGetSubwikiPagesResponsePage?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.subwikiid.toLong())
+        str(value.title)
+        int(value.timeCreated)
+        int(value.timeModified)
+        int(value.timerendered)
+        int(value.userId.toLong())
+        int(value.pageviews.toLong())
+        int(value.readonly.toLong())
+        bool(value.caneditpage)
+        bool(value.firstpage)
+        str(value.cachedcontent)
+        int(value.contentformat?.toLong())
+        int(value.contentsize)
+        list(value.tags) { writeMoodleContentTag(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleWikiGetSubwikisResponse(value: MoodleWikiGetSubwikisResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.subwikis) { writeMoodleSubwiki(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleWikiGetWikisByCoursesResponse(value: MoodleWikiGetWikisByCoursesResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.wikis) { writeMoodleWiki(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleWorkshop(value: MoodleWorkshop?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.course.toLong())
+        str(value.name)
+        str(value.intro)
+        int(value.introFormat.toLong())
+        str(value.lang)
+        str(value.instructauthors)
+        int(value.instructauthorsformat.toLong())
+        str(value.instructreviewers)
+        int(value.instructreviewersformat.toLong())
+        int(value.timeModified)
+        int(value.phase?.toLong())
+        bool(value.useexamples)
+        bool(value.usepeerassessment)
+        bool(value.useselfassessment)
+        num(value.grade)
+        num(value.gradinggrade)
+        str(value.strategy)
+        str(value.evaluation)
+        int(value.gradedecimals?.toLong())
+        int(value.submissiontypetext?.toLong())
+        int(value.submissiontypefile?.toLong())
+        int(value.nattachments?.toLong())
+        str(value.submissionfiletypes)
+        bool(value.latesubmissions)
+        int(value.maxBytes)
+        int(value.examplesmode?.toLong())
+        int(value.submissionstart?.toLong())
+        int(value.submissionend?.toLong())
+        int(value.assessmentstart?.toLong())
+        int(value.assessmentend?.toLong())
+        bool(value.phaseswitchassessment)
+        str(value.conclusion)
+        int(value.conclusionformat.toLong())
+        int(value.overallfeedbackmode?.toLong())
+        int(value.overallfeedbackfiles?.toLong())
+        str(value.overallfeedbackfiletypes)
+        int(value.overallfeedbackmaxbytes)
+        int(value.courseModule.toLong())
+        list(value.introFiles) { writeMoodleSummaryFile(it) }
+        list(value.instructauthorsfiles) { writeMoodleSummaryFile(it) }
+        list(value.instructreviewersfiles) { writeMoodleSummaryFile(it) }
+        list(value.conclusionfiles) { writeMoodleSummaryFile(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleWorkshopGetGradesReportResponse(value: MoodleWorkshopGetGradesReportResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        writeMoodleWorkshopGetGradesReportResponseReport(value.report)
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleWorkshopGetGradesReportResponseReport(value: MoodleWorkshopGetGradesReportResponseReport?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.grades) { writeMoodleWorkshopGetGradesReportResponseReportGrade(it) }
+        int(value.totalcount.toLong())
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleWorkshopGetGradesReportResponseReportGrade(value: MoodleWorkshopGetGradesReportResponseReportGrade?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.userId.toLong())
+        int(value.submissionid.toLong())
+        str(value.submissiontitle)
+        int(value.submissionmodified.toLong())
+        num(value.submissiongrade)
+        num(value.gradinggrade)
+        num(value.submissiongradeover)
+        int(value.submissiongradeoverby?.toLong())
+        int(value.submissionpublished?.toLong())
+        list(value.reviewedby) { writeMoodleReviewedby(it) }
+        list(value.reviewerof) { writeMoodleReviewedby(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleWorkshopGetGradesResponse(value: MoodleWorkshopGetGradesResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        num(value.assessmentrawgrade)
+        str(value.assessmentlongstrgrade)
+        bool(value.assessmentgradehidden)
+        num(value.submissionrawgrade)
+        str(value.submissionlongstrgrade)
+        bool(value.submissiongradehidden)
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleWorkshopGetReviewerAssessmentsResponse(value: MoodleWorkshopGetReviewerAssessmentsResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.assessments) { writeMoodleAssessment(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleWorkshopGetSubmissionResponse(value: MoodleWorkshopGetSubmissionResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        writeMoodleWorkshopGetSubmissionResponseSubmission(value.submission)
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleWorkshopGetSubmissionResponseSubmission(value: MoodleWorkshopGetSubmissionResponseSubmission?) {
+    if (value == null) return nil()
+    obj(value) {
+        int(value.id.toLong())
+        int(value.workshopid.toLong())
+        bool(value.example)
+        int(value.authorid.toLong())
+        int(value.timeCreated)
+        int(value.timeModified)
+        str(value.title)
+        str(value.content)
+        int(value.contentformat.toLong())
+        int(value.contenttrust.toLong())
+        int(value.attachment.toLong())
+        num(value.grade)
+        num(value.gradeover)
+        int(value.gradeoverby?.toLong())
+        str(value.feedbackauthor)
+        int(value.feedbackauthorformat.toLong())
+        int(value.timegraded)
+        bool(value.published)
+        int(value.late.toLong())
+        list(value.contentfiles) { writeMoodleSummaryFile(it) }
+        list(value.attachmentfiles) { writeMoodleSummaryFile(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleWorkshopGetSubmissionsResponse(value: MoodleWorkshopGetSubmissionsResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.submissions) { writeMoodleWorkshopGetSubmissionResponseSubmission(it) }
+        int(value.totalcount.toLong())
+        int(value.totalfilesize)
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleWorkshopGetUserPlanResponse(value: MoodleWorkshopGetUserPlanResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        writeMoodleUserplan(value.userplan)
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleWorkshopGetWorkshopAccessInformationResponse(value: MoodleWorkshopGetWorkshopAccessInformationResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        bool(value.creatingsubmissionallowed)
+        bool(value.modifyingsubmissionallowed)
+        bool(value.assessingallowed)
+        bool(value.assessingexamplesallowed)
+        bool(value.examplesassessedbeforesubmission)
+        bool(value.examplesassessedbeforeassessment)
+        list(value.warnings) { writeMoodleWarning(it) }
+        bool(value.canview)
+        bool(value.canaddinstance)
+        bool(value.canswitchphase)
+        bool(value.caneditdimensions)
+        bool(value.canSubmit)
+        bool(value.canpeerassess)
+        bool(value.canmanageexamples)
+        bool(value.canallocate)
+        bool(value.canpublishsubmissions)
+        bool(value.canviewauthornames)
+        bool(value.canviewreviewernames)
+        bool(value.canviewallsubmissions)
+        bool(value.canviewpublishedsubmissions)
+        bool(value.canviewauthorpublished)
+        bool(value.canviewallassessments)
+        bool(value.canoverridegrades)
+        bool(value.canignoredeadlines)
+        bool(value.candeletesubmissions)
+        bool(value.canexportsubmissions)
+    }
+}
+
+internal fun LiveFingerprint.writeMoodleWorkshopGetWorkshopsByCoursesResponse(value: MoodleWorkshopGetWorkshopsByCoursesResponse?) {
+    if (value == null) return nil()
+    obj(value) {
+        list(value.workshops) { writeMoodleWorkshop(it) }
+        list(value.warnings) { writeMoodleWarning(it) }
+    }
+}
+
 /** What the responses of Moodle look like, for the runtime to check real ones against. */
 private val SHAPES = listOf(
-    "{\"records\":{\"MoodleActivitiesCompletionResponse\":[[\"statuses\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleActivityCompletionStatus\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleActivityBadge\":[[\"badgecontent\",{\"k\":\"string\"},true],[\"badgestyle\",{\"k\":\"string\"},true],[\"badgeurl\",{\"k\":\"string\"},true],[\"badgeelementid\",{\"k\":\"string\"},true],[\"badgeextraattributes\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleActivityBadgeAttribute\"}},true]],\"MoodleActivityBadgeAttribute\":[[\"name\",{\"k\":\"string\"},true],[\"value\",{\"k\":\"string\"},true]],\"MoodleActivityCompletionStatus\":[[\"cmid\",{\"k\":\"int\"},true],[\"modname\",{\"k\":\"string\"},true],[\"instance\",{\"k\":\"int\"},true],[\"state\",{\"k\":\"int\"},true],[\"timecompleted\",{\"k\":\"int\"},true],[\"tracking\",{\"k\":\"int\"},true],[\"overrideby\",{\"k\":\"int\"},true],[\"valueused\",{\"k\":\"bool\"},true],[\"hascompletion\",{\"k\":\"bool\"},true],[\"isautomatic\",{\"k\":\"bool\"},true],[\"istrackeduser\",{\"k\":\"bool\"},true],[\"uservisible\",{\"k\":\"bool\"},true],[\"details\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCompletionRule\"}},true],[\"isoverallcomplete\",{\"k\":\"bool\"},true]],\"MoodleAdvancedFeature\":[[\"name\",{\"k\":\"string\"},true],[\"value\",{\"k\":\"int\"},true]],\"MoodleAssignment\":[[\"id\",{\"k\":\"int\"},true],[\"cmid\",{\"k\":\"int\"},true],[\"course\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"nosubmissions\",{\"k\":\"int\"},true],[\"submissiondrafts\",{\"k\":\"int\"},true],[\"sendnotifications\",{\"k\":\"int\"},true],[\"sendlatenotifications\",{\"k\":\"int\"},true],[\"sendstudentnotifications\",{\"k\":\"int\"},true],[\"duedate\",{\"k\":\"int\"},true],[\"allowsubmissionsfromdate\",{\"k\":\"int\"},true],[\"grade\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"completionsubmit\",{\"k\":\"int\"},true],[\"cutoffdate\",{\"k\":\"int\"},true],[\"gradingduedate\",{\"k\":\"int\"},true],[\"teamsubmission\",{\"k\":\"int\"},true],[\"requireallteammemberssubmit\",{\"k\":\"int\"},true],[\"teamsubmissiongroupingid\",{\"k\":\"int\"},true],[\"blindmarking\",{\"k\":\"int\"},true],[\"hidegrader\",{\"k\":\"int\"},true],[\"revealidentities\",{\"k\":\"int\"},true],[\"attemptreopenmethod\",{\"k\":\"string\"},true],[\"maxattempts\",{\"k\":\"int\"},true],[\"markingworkflow\",{\"k\":\"int\"},true],[\"markingallocation\",{\"k\":\"int\"},true],[\"markinganonymous\",{\"k\":\"int\"},true],[\"requiresubmissionstatement\",{\"k\":\"int\"},true],[\"preventsubmissionnotingroup\",{\"k\":\"int\"},true],[\"submissionstatement\",{\"k\":\"string\"},true],[\"submissionstatementformat\",{\"k\":\"int\"},true],[\"configs\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleAssignmentConfig\"}},true],[\"intro\",{\"k\":\"string\"},true],[\"introformat\",{\"k\":\"int\"},true],[\"introfiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFile\"}},true],[\"introattachments\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFile\"}},true],[\"activity\",{\"k\":\"string\"},true],[\"activityformat\",{\"k\":\"int\"},true],[\"activityattachments\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFile\"}},true],[\"timelimit\",{\"k\":\"int\"},true],[\"submissionattachments\",{\"k\":\"int\"},true]],\"MoodleAssignmentConfig\":[[\"id\",{\"k\":\"int\"},true],[\"assignment\",{\"k\":\"int\"},true],[\"plugin\",{\"k\":\"string\"},true],[\"subtype\",{\"k\":\"string\"},true],[\"name\",{\"k\":\"string\"},true],[\"value\",{\"k\":\"string\"},true]],\"MoodleAssignmentsResponse\":[[\"courses\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCourseAssignments\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleAttemptReviewData\":[[\"id\",{\"k\":\"string\"},true],[\"title\",{\"k\":\"string\"},true],[\"content\",{\"k\":\"string\"},true]],\"MoodleAttemptReviewResponse\":[[\"grade\",{\"k\":\"string\"},true],[\"attempt\",{\"k\":\"record\",\"n\":\"MoodleQuizAttempt\",\"folded\":true},false],[\"additionaldata\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleAttemptReviewData\"}},true],[\"questions\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleQuizQuestion\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleBadgeAlignment\":[[\"id\",{\"k\":\"int\"},true],[\"badgeid\",{\"k\":\"int\"},true],[\"targetName\",{\"k\":\"string\"},true],[\"targetUrl\",{\"k\":\"string\"},true],[\"targetDescription\",{\"k\":\"string\"},true],[\"targetFramework\",{\"k\":\"string\"},true],[\"targetCode\",{\"k\":\"string\"},true]],\"MoodleBadgeEndorsement\":[[\"id\",{\"k\":\"int\"},true],[\"badgeid\",{\"k\":\"int\"},true],[\"issuername\",{\"k\":\"string\"},true],[\"issuerurl\",{\"k\":\"string\"},true],[\"issueremail\",{\"k\":\"string\"},true],[\"claimid\",{\"k\":\"string\"},true],[\"claimcomment\",{\"k\":\"string\"},true],[\"dateissued\",{\"k\":\"int\"},true]],\"MoodleCalendarDate\":[[\"seconds\",{\"k\":\"int\"},true],[\"minutes\",{\"k\":\"int\"},true],[\"hours\",{\"k\":\"int\"},true],[\"mday\",{\"k\":\"int\"},true],[\"wday\",{\"k\":\"int\"},true],[\"mon\",{\"k\":\"int\"},true],[\"year\",{\"k\":\"int\"},true],[\"yday\",{\"k\":\"int\"},true],[\"weekday\",{\"k\":\"string\"},true],[\"month\",{\"k\":\"string\"},true],[\"timestamp\",{\"k\":\"int\"},true]],\"MoodleCalendarDay\":[[\"seconds\",{\"k\":\"int\"},true],[\"minutes\",{\"k\":\"int\"},true],[\"hours\",{\"k\":\"int\"},true],[\"mday\",{\"k\":\"int\"},true],[\"wday\",{\"k\":\"int\"},true],[\"year\",{\"k\":\"int\"},true],[\"yday\",{\"k\":\"int\"},true],[\"istoday\",{\"k\":\"bool\"},true],[\"isweekend\",{\"k\":\"bool\"},true],[\"timestamp\",{\"k\":\"int\"},true],[\"neweventtimestamp\",{\"k\":\"int\"},true],[\"viewdaylink\",{\"k\":\"string\"},true],[\"viewdaylinktitle\",{\"k\":\"string\"},true],[\"events\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCalendarDayEvent\"}},true],[\"hasevents\",{\"k\":\"bool\"},true],[\"calendareventtypes\",{\"k\":\"list\",\"e\":{\"k\":\"string\"}},true],[\"previousperiod\",{\"k\":\"int\"},true],[\"nextperiod\",{\"k\":\"int\"},true],[\"haslastdayofevent\",{\"k\":\"bool\"},true],[\"popovertitle\",{\"k\":\"string\"},true],[\"daytitle\",{\"k\":\"string\"},true]],\"MoodleCalendarDayEvent\":[[\"id\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"description\",{\"k\":\"string\"},true],[\"descriptionformat\",{\"k\":\"int\"},true],[\"location\",{\"k\":\"string\"},true],[\"categoryid\",{\"k\":\"int\"},true],[\"groupid\",{\"k\":\"int\"},true],[\"userid\",{\"k\":\"int\"},true],[\"repeatid\",{\"k\":\"int\"},true],[\"eventcount\",{\"k\":\"int\"},true],[\"component\",{\"k\":\"string\"},true],[\"modulename\",{\"k\":\"string\"},true],[\"activityname\",{\"k\":\"string\"},true],[\"activitystr\",{\"k\":\"string\"},true],[\"instance\",{\"k\":\"int\"},true],[\"eventtype\",{\"k\":\"string\"},true],[\"timestart\",{\"k\":\"int\"},true],[\"timeduration\",{\"k\":\"int\"},true],[\"timesort\",{\"k\":\"int\"},true],[\"timeusermidnight\",{\"k\":\"int\"},true],[\"visible\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"overdue\",{\"k\":\"bool\"},true],[\"icon\",{\"k\":\"record\",\"n\":\"MoodleEventIcon\",\"folded\":true},false],[\"category\",{\"k\":\"record\",\"n\":\"MoodleEventCategory\",\"folded\":true},true],[\"course\",{\"k\":\"record\",\"n\":\"MoodleEventCourse\",\"folded\":true},true],[\"subscription\",{\"k\":\"record\",\"n\":\"MoodleEventSubscription\",\"folded\":true},true],[\"canedit\",{\"k\":\"bool\"},true],[\"candelete\",{\"k\":\"bool\"},true],[\"deleteurl\",{\"k\":\"string\"},true],[\"editurl\",{\"k\":\"string\"},true],[\"viewurl\",{\"k\":\"string\"},true],[\"formattedtime\",{\"k\":\"string\"},true],[\"formattedlocation\",{\"k\":\"string\"},true],[\"isactionevent\",{\"k\":\"bool\"},true],[\"iscourseevent\",{\"k\":\"bool\"},true],[\"iscategoryevent\",{\"k\":\"bool\"},true],[\"groupname\",{\"k\":\"string\"},true],[\"normalisedeventtype\",{\"k\":\"string\"},true],[\"normalisedeventtypetext\",{\"k\":\"string\"},true],[\"action\",{\"k\":\"record\",\"n\":\"MoodleEventAction\",\"folded\":true},true],[\"purpose\",{\"k\":\"string\"},true],[\"branded\",{\"k\":\"bool\"},true],[\"url\",{\"k\":\"string\"},true],[\"islastday\",{\"k\":\"bool\"},true],[\"popupname\",{\"k\":\"string\"},true],[\"mindaytimestamp\",{\"k\":\"int\"},true],[\"mindayerror\",{\"k\":\"string\"},true],[\"maxdaytimestamp\",{\"k\":\"int\"},true],[\"maxdayerror\",{\"k\":\"string\"},true],[\"draggable\",{\"k\":\"bool\"},true]],\"MoodleCalendarDayName\":[[\"dayno\",{\"k\":\"int\"},true],[\"shortname\",{\"k\":\"string\"},true],[\"fullname\",{\"k\":\"string\"},true]],\"MoodleCalendarEvent\":[[\"id\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"description\",{\"k\":\"string\"},true],[\"descriptionformat\",{\"k\":\"int\"},true],[\"location\",{\"k\":\"string\"},true],[\"categoryid\",{\"k\":\"int\"},true],[\"groupid\",{\"k\":\"int\"},true],[\"userid\",{\"k\":\"int\"},true],[\"repeatid\",{\"k\":\"int\"},true],[\"eventcount\",{\"k\":\"int\"},true],[\"component\",{\"k\":\"string\"},true],[\"modulename\",{\"k\":\"string\"},true],[\"activityname\",{\"k\":\"string\"},true],[\"activitystr\",{\"k\":\"string\"},true],[\"instance\",{\"k\":\"int\"},true],[\"eventtype\",{\"k\":\"string\"},true],[\"timestart\",{\"k\":\"int\"},true],[\"timeduration\",{\"k\":\"int\"},true],[\"timesort\",{\"k\":\"int\"},true],[\"timeusermidnight\",{\"k\":\"int\"},true],[\"visible\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"overdue\",{\"k\":\"bool\"},true],[\"icon\",{\"k\":\"record\",\"n\":\"MoodleEventIcon\",\"folded\":true},false],[\"category\",{\"k\":\"record\",\"n\":\"MoodleEventCategory\",\"folded\":true},true],[\"course\",{\"k\":\"record\",\"n\":\"MoodleEventCourse\",\"folded\":true},true],[\"subscription\",{\"k\":\"record\",\"n\":\"MoodleEventSubscription\",\"folded\":true},true],[\"canedit\",{\"k\":\"bool\"},true],[\"candelete\",{\"k\":\"bool\"},true],[\"deleteurl\",{\"k\":\"string\"},true],[\"editurl\",{\"k\":\"string\"},true],[\"viewurl\",{\"k\":\"string\"},true],[\"formattedtime\",{\"k\":\"string\"},true],[\"formattedlocation\",{\"k\":\"string\"},true],[\"isactionevent\",{\"k\":\"bool\"},true],[\"iscourseevent\",{\"k\":\"bool\"},true],[\"iscategoryevent\",{\"k\":\"bool\"},true],[\"groupname\",{\"k\":\"string\"},true],[\"normalisedeventtype\",{\"k\":\"string\"},true],[\"normalisedeventtypetext\",{\"k\":\"string\"},true],[\"action\",{\"k\":\"record\",\"n\":\"MoodleEventAction\",\"folded\":true},true],[\"purpose\",{\"k\":\"string\"},true],[\"branded\",{\"k\":\"bool\"},true],[\"url\",{\"k\":\"string\"},true]],\"MoodleCalendarEventsResponse\":[[\"events\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCalendarEvent\"}},true],[\"firstid\",{\"k\":\"int\"},true],[\"lastid\",{\"k\":\"int\"},true]],\"MoodleCalendarMonth\":[[\"url\",{\"k\":\"string\"},true],[\"courseid\",{\"k\":\"int\"},true],[\"categoryid\",{\"k\":\"int\"},true],[\"filter_selector\",{\"k\":\"string\"},true],[\"weeks\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCalendarWeek\"}},true],[\"daynames\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCalendarDayName\"}},true],[\"view\",{\"k\":\"string\"},true],[\"date\",{\"k\":\"record\",\"n\":\"MoodleCalendarDate\",\"folded\":true},false],[\"periodname\",{\"k\":\"string\"},true],[\"includenavigation\",{\"k\":\"bool\"},true],[\"initialeventsloaded\",{\"k\":\"bool\"},true],[\"previousperiod\",{\"k\":\"record\",\"n\":\"MoodleCalendarDate\",\"folded\":true},false],[\"previousperiodlink\",{\"k\":\"string\"},true],[\"previousperiodname\",{\"k\":\"string\"},true],[\"nextperiod\",{\"k\":\"record\",\"n\":\"MoodleCalendarDate\",\"folded\":true},false],[\"nextperiodname\",{\"k\":\"string\"},true],[\"nextperiodlink\",{\"k\":\"string\"},true],[\"larrow\",{\"k\":\"string\"},true],[\"rarrow\",{\"k\":\"string\"},true],[\"defaulteventcontext\",{\"k\":\"int\"},true],[\"calendarinstanceid\",{\"k\":\"int\"},true],[\"viewingmonth\",{\"k\":\"bool\"},true],[\"showviewselector\",{\"k\":\"bool\"},true],[\"viewinginblock\",{\"k\":\"bool\"},true]],\"MoodleCalendarUpcomingView\":[[\"events\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCalendarDayEvent\"}},true],[\"defaulteventcontext\",{\"k\":\"int\"},true],[\"filter_selector\",{\"k\":\"string\"},true],[\"courseid\",{\"k\":\"int\"},true],[\"categoryid\",{\"k\":\"int\"},true],[\"isloggedin\",{\"k\":\"bool\"},true],[\"date\",{\"k\":\"record\",\"n\":\"MoodleCalendarDate\",\"folded\":true},false]],\"MoodleCalendarWeek\":[[\"prepadding\",{\"k\":\"list\",\"e\":{\"k\":\"int\"}},true],[\"postpadding\",{\"k\":\"list\",\"e\":{\"k\":\"int\"}},true],[\"days\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCalendarDay\"}},true]],\"MoodleCanAddDiscussionResponse\":[[\"status\",{\"k\":\"bool\"},true],[\"canpindiscussions\",{\"k\":\"bool\"},true],[\"cancreateattachment\",{\"k\":\"bool\"},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleCompletionRule\":[[\"rulename\",{\"k\":\"string\"},true],[\"rulevalue\",{\"k\":\"record\",\"n\":\"MoodleCompletionRuleValue\",\"folded\":true},false]],\"MoodleCompletionRuleValue\":[[\"status\",{\"k\":\"int\"},true],[\"description\",{\"k\":\"string\"},true]],\"MoodleContact\":[[\"id\",{\"k\":\"int\"},true],[\"fullname\",{\"k\":\"string\"},true]],\"MoodleContactRequest\":[[\"id\",{\"k\":\"int\"},true],[\"userid\",{\"k\":\"int\"},true],[\"requesteduserid\",{\"k\":\"int\"},true],[\"timecreated\",{\"k\":\"int\"},true]],\"MoodleContentTag\":[[\"id\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"rawname\",{\"k\":\"string\"},true],[\"isstandard\",{\"k\":\"bool\"},true],[\"tagcollid\",{\"k\":\"int\"},true],[\"taginstanceid\",{\"k\":\"int\"},true],[\"taginstancecontextid\",{\"k\":\"int\"},true],[\"itemid\",{\"k\":\"int\"},true],[\"ordering\",{\"k\":\"int\"},true],[\"flag\",{\"k\":\"int\"},true],[\"viewurl\",{\"k\":\"string\"},true]],\"MoodleConversation\":[[\"id\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"subname\",{\"k\":\"string\"},true],[\"imageurl\",{\"k\":\"string\"},true],[\"type\",{\"k\":\"int\"},true],[\"membercount\",{\"k\":\"int\"},true],[\"ismuted\",{\"k\":\"bool\"},true],[\"isfavourite\",{\"k\":\"bool\"},true],[\"isread\",{\"k\":\"bool\"},true],[\"unreadcount\",{\"k\":\"int\"},true],[\"members\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleConversationMember\"}},true],[\"messages\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleConversationMessage\"}},true],[\"candeletemessagesforallusers\",{\"k\":\"bool\"},true]],\"MoodleConversationMember\":[[\"id\",{\"k\":\"int\"},true],[\"fullname\",{\"k\":\"string\"},true],[\"profileurl\",{\"k\":\"string\"},true],[\"profileimageurl\",{\"k\":\"string\"},true],[\"profileimageurlsmall\",{\"k\":\"string\"},true],[\"isonline\",{\"k\":\"bool\"},true],[\"showonlinestatus\",{\"k\":\"bool\"},true],[\"isblocked\",{\"k\":\"bool\"},true],[\"iscontact\",{\"k\":\"bool\"},true],[\"isdeleted\",{\"k\":\"bool\"},true],[\"canmessageevenifblocked\",{\"k\":\"bool\"},true],[\"canmessage\",{\"k\":\"bool\"},true],[\"requirescontact\",{\"k\":\"bool\"},true],[\"cancreatecontact\",{\"k\":\"bool\"},true],[\"contactrequests\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleContactRequest\"}},true],[\"conversations\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleMemberConversation\"}},true]],\"MoodleConversationMessage\":[[\"id\",{\"k\":\"int\"},true],[\"useridfrom\",{\"k\":\"int\"},true],[\"text\",{\"k\":\"string\"},true],[\"timecreated\",{\"k\":\"int\"},true]],\"MoodleConversationsResponse\":[[\"conversations\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleConversation\"}},true]],\"MoodleCourse\":[[\"id\",{\"k\":\"int\"},true],[\"fullname\",{\"k\":\"string\"},true],[\"displayname\",{\"k\":\"string\"},true],[\"shortname\",{\"k\":\"string\"},true],[\"courseimage\",{\"k\":\"string\"},true],[\"categoryid\",{\"k\":\"int\"},true],[\"categoryname\",{\"k\":\"string\"},true],[\"sortorder\",{\"k\":\"int\"},true],[\"summary\",{\"k\":\"string\"},true],[\"summaryformat\",{\"k\":\"int\"},true],[\"summaryfiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFile\"}},true],[\"overviewfiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFile\"}},true],[\"showactivitydates\",{\"k\":\"bool\"},true],[\"showcompletionconditions\",{\"k\":\"bool\"},true],[\"contacts\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleContact\"}},true],[\"enrollmentmethods\",{\"k\":\"list\",\"e\":{\"k\":\"string\"}},true],[\"customfields\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCourseCustomField\"}},true],[\"idnumber\",{\"k\":\"string\"},true],[\"format\",{\"k\":\"string\"},true],[\"showgrades\",{\"k\":\"int\"},true],[\"newsitems\",{\"k\":\"int\"},true],[\"startdate\",{\"k\":\"int\"},true],[\"enddate\",{\"k\":\"int\"},true],[\"maxbytes\",{\"k\":\"int\"},true],[\"showreports\",{\"k\":\"int\"},true],[\"visible\",{\"k\":\"int\"},true],[\"groupmode\",{\"k\":\"int\"},true],[\"groupmodeforce\",{\"k\":\"int\"},true],[\"defaultgroupingid\",{\"k\":\"int\"},true],[\"enablecompletion\",{\"k\":\"int\"},true],[\"completionnotify\",{\"k\":\"int\"},true],[\"lang\",{\"k\":\"string\"},true],[\"theme\",{\"k\":\"string\"},true],[\"marker\",{\"k\":\"int\"},true],[\"legacyfiles\",{\"k\":\"int\"},true],[\"calendartype\",{\"k\":\"string\"},true],[\"timecreated\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"requested\",{\"k\":\"int\"},true],[\"cacherev\",{\"k\":\"int\"},true],[\"filters\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFilter\"}},true],[\"courseformatoptions\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleKeyValue\"}},true],[\"communicationroomname\",{\"k\":\"string\"},true],[\"communicationroomurl\",{\"k\":\"string\"},true]],\"MoodleCourseAssignments\":[[\"id\",{\"k\":\"int\"},true],[\"fullname\",{\"k\":\"string\"},true],[\"shortname\",{\"k\":\"string\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"assignments\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleAssignment\"}},true]],\"MoodleCourseCustomField\":[[\"name\",{\"k\":\"string\"},true],[\"shortname\",{\"k\":\"string\"},true],[\"type\",{\"k\":\"string\"},true],[\"valueraw\",{\"k\":\"string\"},true],[\"value\",{\"k\":\"string\"},true]],\"MoodleCourseGrade\":[[\"courseid\",{\"k\":\"int\"},true],[\"grade\",{\"k\":\"string\"},true],[\"rawgrade\",{\"k\":\"string\"},true],[\"rank\",{\"k\":\"int\"},true]],\"MoodleCourseGradesResponse\":[[\"grades\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCourseGrade\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleCourseGroup\":[[\"id\",{\"",
-    "k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"description\",{\"k\":\"string\"},true],[\"descriptionformat\",{\"k\":\"int\"},true],[\"idnumber\",{\"k\":\"string\"},true],[\"courseid\",{\"k\":\"int\"},true]],\"MoodleCourseModule\":[[\"id\",{\"k\":\"int\"},true],[\"url\",{\"k\":\"string\"},true],[\"name\",{\"k\":\"string\"},true],[\"instance\",{\"k\":\"int\"},true],[\"contextid\",{\"k\":\"int\"},true],[\"description\",{\"k\":\"string\"},true],[\"visible\",{\"k\":\"int\"},true],[\"uservisible\",{\"k\":\"bool\"},true],[\"availabilityinfo\",{\"k\":\"string\"},true],[\"visibleoncoursepage\",{\"k\":\"int\"},true],[\"modicon\",{\"k\":\"string\"},true],[\"modname\",{\"k\":\"string\"},true],[\"purpose\",{\"k\":\"string\"},true],[\"branded\",{\"k\":\"bool\"},true],[\"modplural\",{\"k\":\"string\"},true],[\"availability\",{\"k\":\"string\"},true],[\"indent\",{\"k\":\"int\"},true],[\"onclick\",{\"k\":\"string\"},true],[\"afterlink\",{\"k\":\"string\"},true],[\"activitybadge\",{\"k\":\"record\",\"n\":\"MoodleActivityBadge\",\"folded\":true},true],[\"customdata\",{\"k\":\"string\"},true],[\"noviewlink\",{\"k\":\"bool\"},true],[\"completion\",{\"k\":\"int\"},true],[\"completiondata\",{\"k\":\"record\",\"n\":\"MoodleModuleCompletion\",\"folded\":true},true],[\"downloadcontent\",{\"k\":\"int\"},true],[\"dates\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleModuleDate\"}},true],[\"groupmode\",{\"k\":\"int\"},true],[\"contents\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleModuleContent\"}},true],[\"contentsinfo\",{\"k\":\"record\",\"n\":\"MoodleModuleContentsInfo\",\"folded\":true},true]],\"MoodleCourseSection\":[[\"id\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"visible\",{\"k\":\"int\"},true],[\"summary\",{\"k\":\"string\"},true],[\"summaryformat\",{\"k\":\"int\"},true],[\"section\",{\"k\":\"int\"},true],[\"hiddenbynumsections\",{\"k\":\"int\"},true],[\"uservisible\",{\"k\":\"bool\"},true],[\"availabilityinfo\",{\"k\":\"string\"},true],[\"component\",{\"k\":\"string\"},true],[\"itemid\",{\"k\":\"int\"},true],[\"modules\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCourseModule\"}},true]],\"MoodleCourseUserGroupsResponse\":[[\"groups\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCourseGroup\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleCoursesByFieldResponse\":[[\"courses\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCourse\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleDiscussionPostResponse\":[[\"post\",{\"k\":\"record\",\"n\":\"MoodleForumPost\",\"folded\":true},false],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleDiscussionPostsResponse\":[[\"posts\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleForumPost\"}},true],[\"forumid\",{\"k\":\"int\"},true],[\"courseid\",{\"k\":\"int\"},true],[\"ratinginfo\",{\"k\":\"record\",\"n\":\"MoodleRatingInfo\",\"folded\":true},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleEnrolledCourse\":[[\"id\",{\"k\":\"int\"},true],[\"shortname\",{\"k\":\"string\"},true],[\"fullname\",{\"k\":\"string\"},true],[\"displayname\",{\"k\":\"string\"},true],[\"enrolledusercount\",{\"k\":\"int\"},true],[\"idnumber\",{\"k\":\"string\"},true],[\"visible\",{\"k\":\"int\"},true],[\"summary\",{\"k\":\"string\"},true],[\"summaryformat\",{\"k\":\"int\"},true],[\"format\",{\"k\":\"string\"},true],[\"courseimage\",{\"k\":\"string\"},true],[\"showgrades\",{\"k\":\"bool\"},true],[\"lang\",{\"k\":\"string\"},true],[\"enablecompletion\",{\"k\":\"bool\"},true],[\"completionhascriteria\",{\"k\":\"bool\"},true],[\"completionusertracked\",{\"k\":\"bool\"},true],[\"category\",{\"k\":\"int\"},true],[\"progress\",{\"k\":\"number\"},true],[\"completed\",{\"k\":\"bool\"},true],[\"startdate\",{\"k\":\"int\"},true],[\"enddate\",{\"k\":\"int\"},true],[\"marker\",{\"k\":\"int\"},true],[\"lastaccess\",{\"k\":\"int\"},true],[\"isfavourite\",{\"k\":\"bool\"},true],[\"hidden\",{\"k\":\"bool\"},true],[\"overviewfiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFile\"}},true],[\"showactivitydates\",{\"k\":\"bool\"},true],[\"showcompletionconditions\",{\"k\":\"bool\"},true],[\"timemodified\",{\"k\":\"int\"},true]],\"MoodleEventAction\":[[\"name\",{\"k\":\"string\"},true],[\"url\",{\"k\":\"string\"},true],[\"itemcount\",{\"k\":\"int\"},true],[\"actionable\",{\"k\":\"bool\"},true],[\"showitemcount\",{\"k\":\"bool\"},true]],\"MoodleEventCategory\":[[\"id\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"idnumber\",{\"k\":\"string\"},true],[\"description\",{\"k\":\"string\"},true],[\"parent\",{\"k\":\"int\"},true],[\"coursecount\",{\"k\":\"int\"},true],[\"visible\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"depth\",{\"k\":\"int\"},true],[\"nestedname\",{\"k\":\"string\"},true],[\"url\",{\"k\":\"string\"},true]],\"MoodleEventCourse\":[[\"id\",{\"k\":\"int\"},true],[\"fullname\",{\"k\":\"string\"},true],[\"shortname\",{\"k\":\"string\"},true],[\"idnumber\",{\"k\":\"string\"},true],[\"summary\",{\"k\":\"string\"},true],[\"summaryformat\",{\"k\":\"int\"},true],[\"startdate\",{\"k\":\"int\"},true],[\"enddate\",{\"k\":\"int\"},true],[\"visible\",{\"k\":\"bool\"},true],[\"showactivitydates\",{\"k\":\"bool\"},true],[\"showcompletionconditions\",{\"k\":\"bool\"},true],[\"pdfexportfont\",{\"k\":\"string\"},true],[\"fullnamedisplay\",{\"k\":\"string\"},true],[\"viewurl\",{\"k\":\"string\"},true],[\"courseimage\",{\"k\":\"string\"},true],[\"progress\",{\"k\":\"int\"},true],[\"hasprogress\",{\"k\":\"bool\"},true],[\"isfavourite\",{\"k\":\"bool\"},true],[\"hidden\",{\"k\":\"bool\"},true],[\"timeaccess\",{\"k\":\"int\"},true],[\"showshortname\",{\"k\":\"bool\"},true],[\"coursecategory\",{\"k\":\"string\"},true]],\"MoodleEventIcon\":[[\"key\",{\"k\":\"string\"},true],[\"component\",{\"k\":\"string\"},true],[\"alttext\",{\"k\":\"string\"},true],[\"iconurl\",{\"k\":\"string\"},true],[\"iconclass\",{\"k\":\"string\"},true]],\"MoodleEventSubscription\":[[\"displayeventsource\",{\"k\":\"bool\"},true],[\"subscriptionname\",{\"k\":\"string\"},true],[\"subscriptionurl\",{\"k\":\"string\"},true]],\"MoodleFile\":[[\"filename\",{\"k\":\"string\"},true],[\"filepath\",{\"k\":\"string\"},true],[\"filesize\",{\"k\":\"int\"},true],[\"fileurl\",{\"k\":\"string\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"mimetype\",{\"k\":\"string\"},true],[\"isexternalfile\",{\"k\":\"bool\"},true],[\"repositorytype\",{\"k\":\"string\"},true],[\"icon\",{\"k\":\"string\"},true]],\"MoodleFilter\":[[\"filter\",{\"k\":\"string\"},true],[\"localstate\",{\"k\":\"int\"},true],[\"inheritedstate\",{\"k\":\"int\"},true]],\"MoodleForum\":[[\"id\",{\"k\":\"int\"},true],[\"course\",{\"k\":\"int\"},true],[\"type\",{\"k\":\"string\"},true],[\"name\",{\"k\":\"string\"},true],[\"intro\",{\"k\":\"string\"},true],[\"introformat\",{\"k\":\"int\"},true],[\"introfiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFile\"}},true],[\"lang\",{\"k\":\"string\"},true],[\"duedate\",{\"k\":\"int\"},true],[\"cutoffdate\",{\"k\":\"int\"},true],[\"assessed\",{\"k\":\"int\"},true],[\"assesstimestart\",{\"k\":\"int\"},true],[\"assesstimefinish\",{\"k\":\"int\"},true],[\"scale\",{\"k\":\"int\"},true],[\"grade_forum\",{\"k\":\"int\"},true],[\"grade_forum_notify\",{\"k\":\"int\"},true],[\"maxbytes\",{\"k\":\"int\"},true],[\"maxattachments\",{\"k\":\"int\"},true],[\"forcesubscribe\",{\"k\":\"int\"},true],[\"trackingtype\",{\"k\":\"int\"},true],[\"rsstype\",{\"k\":\"int\"},true],[\"rssarticles\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"warnafter\",{\"k\":\"int\"},true],[\"blockafter\",{\"k\":\"int\"},true],[\"blockperiod\",{\"k\":\"int\"},true],[\"completiondiscussions\",{\"k\":\"int\"},true],[\"completionreplies\",{\"k\":\"int\"},true],[\"completionposts\",{\"k\":\"int\"},true],[\"cmid\",{\"k\":\"int\"},true],[\"numdiscussions\",{\"k\":\"int\"},true],[\"cancreatediscussions\",{\"k\":\"bool\"},true],[\"lockdiscussionafter\",{\"k\":\"int\"},true],[\"istracked\",{\"k\":\"bool\"},true],[\"unreadpostscount\",{\"k\":\"int\"},true]],\"MoodleForumDiscussion\":[[\"id\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"groupid\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"usermodified\",{\"k\":\"int\"},true],[\"timestart\",{\"k\":\"int\"},true],[\"timeend\",{\"k\":\"int\"},true],[\"discussion\",{\"k\":\"int\"},true],[\"parent\",{\"k\":\"int\"},true],[\"userid\",{\"k\":\"int\"},true],[\"created\",{\"k\":\"int\"},true],[\"modified\",{\"k\":\"int\"},true],[\"mailed\",{\"k\":\"int\"},true],[\"subject\",{\"k\":\"string\"},true],[\"message\",{\"k\":\"string\"},true],[\"messageformat\",{\"k\":\"int\"},true],[\"messagetrust\",{\"k\":\"int\"},true],[\"messageinlinefiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFile\"}},true],[\"attachment\",{\"k\":\"string\"},true],[\"attachments\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFile\"}},true],[\"totalscore\",{\"k\":\"int\"},true],[\"mailnow\",{\"k\":\"int\"},true],[\"userfullname\",{\"k\":\"string\"},true],[\"usermodifiedfullname\",{\"k\":\"string\"},true],[\"userpictureurl\",{\"k\":\"string\"},true],[\"usermodifiedpictureurl\",{\"k\":\"string\"},true],[\"numreplies\",{\"k\":\"int\"},true],[\"numunread\",{\"k\":\"int\"},true],[\"pinned\",{\"k\":\"bool\"},true],[\"locked\",{\"k\":\"bool\"},true],[\"starred\",{\"k\":\"bool\"},true],[\"canreply\",{\"k\":\"bool\"},true],[\"canlock\",{\"k\":\"bool\"},true],[\"canfavourite\",{\"k\":\"bool\"},true]],\"MoodleForumDiscussionsResponse\":[[\"discussions\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleForumDiscussion\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleForumPost\":[[\"id\",{\"k\":\"int\"},true],[\"subject\",{\"k\":\"string\"},true],[\"replysubject\",{\"k\":\"string\"},true],[\"message\",{\"k\":\"string\"},true],[\"messageformat\",{\"k\":\"int\"},true],[\"author\",{\"k\":\"record\",\"n\":\"MoodlePostAuthor\",\"folded\":true},false],[\"discussionid\",{\"k\":\"int\"},true],[\"hasparent\",{\"k\":\"bool\"},true],[\"parentid\",{\"k\":\"int\"},true],[\"timecreated\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"unread\",{\"k\":\"bool\"},true],[\"isdeleted\",{\"k\":\"bool\"},true],[\"isprivatereply\",{\"k\":\"bool\"},true],[\"haswordcount\",{\"k\":\"bool\"},true],[\"wordcount\",{\"k\":\"int\"},true],[\"charcount\",{\"k\":\"int\"},true],[\"capabilities\",{\"k\":\"record\",\"n\":\"MoodlePostCapabilities\",\"folded\":true},false],[\"urls\",{\"k\":\"record\",\"n\":\"MoodlePostUrls\",\"folded\":true},true],[\"attachments\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodlePostAttachment\"}},true],[\"messageinlinefiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodlePostInlineFile\"}},true],[\"tags\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodlePostTag\"}},true],[\"html\",{\"k\":\"record\",\"n\":\"MoodlePostHtml\",\"folded\":true},true]],\"MoodleGradeItem\":[[\"id\",{\"k\":\"int\"},true],[\"itemname\",{\"k\":\"string\"},true],[\"itemtype\",{\"k\":\"string\"},true],[\"itemmodule\",{\"k\":\"string\"},true],[\"iteminstance\",{\"k\":\"int\"},true],[\"itemnumber\",{\"k\":\"int\"},true],[\"idnumber\",{\"k\":\"string\"},true],[\"categoryid\",{\"k\":\"int\"},true],[\"outcomeid\",{\"k\":\"int\"},true],[\"scaleid\",{\"k\":\"int\"},true],[\"locked\",{\"k\":\"bool\"},true],[\"cmid\",{\"k\":\"int\"},true],[\"weightraw\",{\"k\":\"number\"},true],[\"weightformatted\",{\"k\":\"string\"},true],[\"status\",{\"k\":\"string\"},true],[\"graderaw\",{\"k\":\"number\"},true],[\"gradedatesubmitted\",{\"k\":\"int\"},true],[\"gradedategraded\",{\"k\":\"int\"},true],[\"gradehiddenbydate\",{\"k\":\"bool\"},true],[\"gradeneedsupdate\",{\"k\":\"bool\"},true],[\"gradeishidden\",{\"k\":\"bool\"},true],[\"gradeislocked\",{\"k\":\"bool\"},true],[\"gradeisoverridden\",{\"k\":\"bool\"},true],[\"gradeformatted\",{\"k\":\"string\"},true],[\"grademin\",{\"k\":\"number\"},true],[\"grademax\",{\"k\":\"number\"},true],[\"rangeformatted\",{\"k\":\"string\"},true],[\"percentageformatted\",{\"k\":\"string\"},true],[\"lettergradeformatted\",{\"k\":\"string\"},true],[\"rank\",{\"k\":\"int\"},true],[\"numusers\",{\"k\":\"int\"},true],[\"averageformatted\",{\"k\":\"string\"},true],[\"feedback\",{\"k\":\"string\"},true],[\"feedbackformat\",{\"k\":\"int\"},true]],\"MoodleGradeItemMark\":[[\"name\",{\"k\":\"string\"},true],[\"grade\",{\"k\":\"number\"},true],[\"maxgrade\",{\"k\":\"number\"},true]],\"MoodleGradeItemsResponse\":[[\"usergrades\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleUserGrades\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleKeyValue\":[[\"name\",{\"k\":\"string\"},true],[\"value\",{\"k\":\"string\"},true]],\"MoodleMemberConversation\":[[\"id\",{\"k\":\"int\"},true],[\"type\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"timecreated\",{\"k\":\"int\"},true]],\"MoodleModuleCompletion\":[[\"state\",{\"k\":\"int\"},true],[\"timecompleted\",{\"k\":\"int\"},true],[\"overrideby\",{\"k\":\"int\"},true],[\"valueused\",{\"k\":\"bool\"},true],[\"hascompletion\",{\"k\":\"bool\"},true],[\"isautomatic\",{\"k\":\"bool\"},true],[\"istrackeduser\",{\"k\":\"bool\"},true],[\"uservisible\",{\"k\":\"bool\"},true],[\"details\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleModuleCompletionRule\"}},true],[\"isoverallcomplete\",{\"k\":\"bool\"},true]],\"MoodleModuleCompletionRule\":[[\"rulename\",{\"k\":\"string\"},true],[\"rulevalue\",{\"k\":\"record\",\"n\":\"MoodleModuleCompletionRuleValue\",\"folded\":true},false]],\"MoodleModuleCompletionRuleValue\":[[\"status\",{\"k\":\"int\"},true],[\"description\",{\"k\":\"string\"},true]],\"MoodleModuleContent\":[[\"type\",{\"k\":\"string\"},true],[\"filename\",{\"k\":\"string\"},true],[\"filepath\",{\"k\":\"string\"},true],[\"filesize\",{\"k\":\"int\"},true],[\"fileurl\",{\"k\":\"string\"},true],[\"content\",{\"k\":\"string\"},true],[\"timecreated\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"sortorder\",{\"k\":\"int\"},true],[\"mimetype\",{\"k\":\"string\"},true],[\"isexternalfile\",{\"k\":\"bool\"},true],[\"repositorytype\",{\"k\":\"string\"},true],[\"userid\",{\"k\":\"int\"},true],[\"author\",{\"k\":\"string\"},true],[\"license\",{\"k\":\"string\"},true],[\"tags\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleContentTag\"}},true]],\"MoodleModuleContentsInfo\":[[\"filescount\",{\"k\":\"int\"},true],[\"filessize\",{\"k\":\"int\"},true],[\"lastmodified\",{\"k\":\"int\"},true],[\"mimetypes\",{\"k\":\"list\",\"e\":{\"k\":\"string\"}},true],[\"repositorytype\",{\"k\":\"string\"},true]],\"MoodleModuleDate\":[[\"label\",{\"k\":\"string\"},true],[\"timestamp\",{\"k\":\"int\"},true],[\"relativeto\",{\"k\":\"int\"},true],[\"dataid\",{\"k\":\"string\"},true]],\"MoodlePostAttachment\":[[\"contextid\",{\"k\":\"int\"},true],[\"component\",{\"k\":\"string\"},true],[\"filearea\",{\"k\":\"string\"},true],[\"itemid\",{\"k\":\"int\"},true],[\"filepath\",{\"k\":\"string\"},true],[\"filename\",{\"k\":\"string\"},true],[\"isdir\",{\"k\":\"bool\"},true],[\"isimage\",{\"k\":\"bool\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"timecreated\",{\"k\":\"int\"},true],[\"filesize\",{\"k\":\"int\"},true],[\"author\",{\"k\":\"string\"},true],[\"license\",{\"k\":\"string\"},true],[\"filenameshort\",{\"k\":\"string\"},true],[\"filesizeformatted\",{\"k\":\"string\"},true],[\"icon\",{\"k\":\"string\"},true],[\"timecreatedformatted\",{\"k\":\"string\"},true],[\"timemodifiedformatted\",{\"k\":\"string\"},true],[\"url\",{\"k\":\"string\"},true],[\"urls\",{\"k\":\"record\",\"n\":\"MoodlePostAttachmentUrls\",\"folded\":true},false],[\"html\",{\"k\":\"record\",\"n\":\"MoodlePostAttachmentHtml\",\"folded\":true},false]],\"MoodlePostAttachmentHtml\":[[\"plagiarism\",{\"k\":\"string\"},true]],\"MoodlePostAttachmentUrls\":[[\"export\",{\"k\":\"string\"},true]],\"MoodlePostAuthor\":[[\"id\",{\"k\":\"int\"},true],[\"fullname\",{\"k\":\"string\"},true],[\"isdeleted\",{\"k\":\"bool\"},true],[\"groups\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodlePostAuthorGroup\"}},true],[\"urls\",{\"k\":\"record\",\"n\":\"MoodlePostAuthorUrls\",\"folded\":true},false]],\"MoodlePostAuthorGroup\":[[\"id\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"urls\",{\"k\":\"record\",\"n\":\"MoodlePostAuthorGroupUrls\",\"folded\":true},false]],\"MoodlePostAuthorGroupUrls\":[[\"image\",{\"k\":\"string\"},true]],\"MoodlePostAuthorUrls\":[[\"profile\",{\"k\":\"string\"},true],[\"profileimage\",{\"k\":\"string\"},true]],\"MoodlePostCapabilities\":[[\"view\",{\"k\":\"bool\"},true],[\"edit\",{\"k\":\"bool\"},true],[\"delete\",{\"k\":\"bool\"},true],[\"split\",{\"k\":\"bool\"},true],[\"reply\",{\"k\":\"bool\"},true],[\"selfenrol\",{\"k\":\"bool\"},true],[\"export\",{\"k\":\"bool\"},true],[\"controlreadstatus\",{\"k\":\"bool\"},true],[\"canreplyprivately\",{\"k\":\"bool\"},true]],\"MoodlePostHtml\":[[\"rating\",{\"k\":\"string\"},true],[\"taglist\",{\"k\":\"string\"},true],[\"authorsubheading\",{\"k\":\"string\"},true]],\"MoodlePostInlineFile\":[[\"contextid\",{\"k\":\"int\"},true],[\"component\",{\"k\":\"string\"},true],[\"filearea\",{\"k\":\"string\"},true],[\"itemid\",{\"k\":\"int\"},true],[\"filepath\",{\"k\":\"string\"},true],[\"filename\",{\"k\":\"string\"},true],[\"isdir\",{\"k\":\"bool\"},true],[\"isimage\",{\"k\":\"bool\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"timecreated\",{\"k\":\"int\"},true],[\"filesize\",{\"k\":\"int\"},true],[\"author\",{\"k\":\"string\"},true],[\"license\",{\"k\":\"string\"},true],[\"filenameshort\",{\"k\":\"string\"},true],[\"filesizeformatted\",{\"k\":\"string\"},true],[\"icon\",{\"k\":\"string\"},true],[\"timecreatedformatted\",{\"k\":\"string\"},true],[\"timemodifiedformatted\",{\"k\":\"string\"},true],[\"url\",{\"k\":\"string\"},true]],\"MoodlePostTag\":[[\"id\",{\"k\":\"int\"},true],[\"tagid\",{\"k\":\"int\"},true],[\"isstandard\",{\"k\":\"bool\"},true],[\"displayname\",{\"k\":\"string\"},true],[\"flag\",{\"k\":\"bool\"},true],[\"urls\",{\"k\":\"record\",\"n\":\"MoodlePostTagUrls\",\"folded\":true},false]],\"MoodlePostTagUrls\":[[\"view\",{\"k\":\"string\"},true]],\"MoodlePostUrls\":[[\"view\",{\"k\":\"string\"},true],[\"viewisolated\",{\"k\":\"string\"},true],[\"viewparent\",{\"k\":\"string\"},true],[\"edit\",{\"k\":\"string\"},true],[\"delete\",{\"k\":\"string\"},true],[\"split\",{\"k\":\"string\"},true],[\"reply\",{\"k\":\"string\"},true],[\"export\",{\"k\":\"string\"},true],[\"markasread\",{\"k\":\"string\"},true],[\"markasunread\",{\"k\":\"string\"},true],[\"discuss\",{\"k\":\"string\"},true]],\"MoodlePriv",
-    "ateFilesInfo\":[[\"filecount\",{\"k\":\"int\"},true],[\"foldercount\",{\"k\":\"int\"},true],[\"filesize\",{\"k\":\"int\"},true],[\"filesizewithoutreferences\",{\"k\":\"int\"},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleQuiz\":[[\"id\",{\"k\":\"int\"},true],[\"coursemodule\",{\"k\":\"int\"},true],[\"course\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"intro\",{\"k\":\"string\"},true],[\"introformat\",{\"k\":\"int\"},true],[\"introfiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFile\"}},true],[\"section\",{\"k\":\"int\"},true],[\"visible\",{\"k\":\"bool\"},true],[\"groupmode\",{\"k\":\"int\"},true],[\"groupingid\",{\"k\":\"int\"},true],[\"lang\",{\"k\":\"string\"},true],[\"timeopen\",{\"k\":\"int\"},true],[\"timeclose\",{\"k\":\"int\"},true],[\"timelimit\",{\"k\":\"int\"},true],[\"overduehandling\",{\"k\":\"string\"},true],[\"graceperiod\",{\"k\":\"int\"},true],[\"preferredbehaviour\",{\"k\":\"string\"},true],[\"canredoquestions\",{\"k\":\"int\"},true],[\"attempts\",{\"k\":\"int\"},true],[\"attemptonlast\",{\"k\":\"int\"},true],[\"grademethod\",{\"k\":\"int\"},true],[\"decimalpoints\",{\"k\":\"int\"},true],[\"questiondecimalpoints\",{\"k\":\"int\"},true],[\"reviewattempt\",{\"k\":\"int\"},true],[\"reviewcorrectness\",{\"k\":\"int\"},true],[\"reviewmaxmarks\",{\"k\":\"int\"},true],[\"reviewmarks\",{\"k\":\"int\"},true],[\"reviewspecificfeedback\",{\"k\":\"int\"},true],[\"reviewgeneralfeedback\",{\"k\":\"int\"},true],[\"reviewrightanswer\",{\"k\":\"int\"},true],[\"reviewoverallfeedback\",{\"k\":\"int\"},true],[\"questionsperpage\",{\"k\":\"int\"},true],[\"navmethod\",{\"k\":\"string\"},true],[\"shuffleanswers\",{\"k\":\"int\"},true],[\"sumgrades\",{\"k\":\"number\"},true],[\"grade\",{\"k\":\"number\"},true],[\"timecreated\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"password\",{\"k\":\"string\"},true],[\"subnet\",{\"k\":\"string\"},true],[\"browsersecurity\",{\"k\":\"string\"},true],[\"delay1\",{\"k\":\"int\"},true],[\"delay2\",{\"k\":\"int\"},true],[\"showuserpicture\",{\"k\":\"int\"},true],[\"showblocks\",{\"k\":\"int\"},true],[\"completionattemptsexhausted\",{\"k\":\"int\"},true],[\"completionpass\",{\"k\":\"int\"},true],[\"allowofflineattempts\",{\"k\":\"int\"},true],[\"autosaveperiod\",{\"k\":\"int\"},true],[\"hasfeedback\",{\"k\":\"int\"},true],[\"hasquestions\",{\"k\":\"int\"},true]],\"MoodleQuizAccessInformation\":[[\"canattempt\",{\"k\":\"bool\"},true],[\"canmanage\",{\"k\":\"bool\"},true],[\"canpreview\",{\"k\":\"bool\"},true],[\"canreviewmyattempts\",{\"k\":\"bool\"},true],[\"canviewreports\",{\"k\":\"bool\"},true],[\"accessrules\",{\"k\":\"list\",\"e\":{\"k\":\"string\"}},true],[\"activerulenames\",{\"k\":\"list\",\"e\":{\"k\":\"string\"}},true],[\"preventaccessreasons\",{\"k\":\"list\",\"e\":{\"k\":\"string\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleQuizAttempt\":[[\"id\",{\"k\":\"int\"},true],[\"quiz\",{\"k\":\"int\"},true],[\"userid\",{\"k\":\"int\"},true],[\"attempt\",{\"k\":\"int\"},true],[\"uniqueid\",{\"k\":\"int\"},true],[\"layout\",{\"k\":\"string\"},true],[\"currentpage\",{\"k\":\"int\"},true],[\"preview\",{\"k\":\"int\"},true],[\"state\",{\"k\":\"string\"},true],[\"timestart\",{\"k\":\"int\"},true],[\"timefinish\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"timemodifiedoffline\",{\"k\":\"int\"},true],[\"timecheckstate\",{\"k\":\"int\"},true],[\"sumgrades\",{\"k\":\"number\"},true],[\"gradeitemmarks\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleGradeItemMark\"}},true],[\"gradednotificationsenttime\",{\"k\":\"int\"},true]],\"MoodleQuizQuestion\":[[\"slot\",{\"k\":\"int\"},true],[\"type\",{\"k\":\"string\"},true],[\"page\",{\"k\":\"int\"},true],[\"questionnumber\",{\"k\":\"string\"},true],[\"number\",{\"k\":\"int\"},true],[\"html\",{\"k\":\"string\"},true],[\"responsefileareas\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleResponseFileArea\"}},true],[\"sequencecheck\",{\"k\":\"int\"},true],[\"lastactiontime\",{\"k\":\"int\"},true],[\"hasautosavedstep\",{\"k\":\"bool\"},true],[\"flagged\",{\"k\":\"bool\"},true],[\"state\",{\"k\":\"string\"},true],[\"stateclass\",{\"k\":\"string\"},true],[\"status\",{\"k\":\"string\"},true],[\"blockedbyprevious\",{\"k\":\"bool\"},true],[\"mark\",{\"k\":\"string\"},true],[\"maxmark\",{\"k\":\"number\"},true],[\"settings\",{\"k\":\"string\"},true]],\"MoodleQuizzesResponse\":[[\"quizzes\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleQuiz\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleRating\":[[\"itemid\",{\"k\":\"int\"},true],[\"scaleid\",{\"k\":\"int\"},true],[\"userid\",{\"k\":\"int\"},true],[\"aggregate\",{\"k\":\"number\"},true],[\"aggregatestr\",{\"k\":\"string\"},true],[\"aggregatelabel\",{\"k\":\"string\"},true],[\"count\",{\"k\":\"int\"},true],[\"rating\",{\"k\":\"int\"},true],[\"canrate\",{\"k\":\"bool\"},true],[\"canviewaggregate\",{\"k\":\"bool\"},true]],\"MoodleRatingInfo\":[[\"contextid\",{\"k\":\"int\"},true],[\"component\",{\"k\":\"string\"},true],[\"ratingarea\",{\"k\":\"string\"},true],[\"canviewall\",{\"k\":\"bool\"},true],[\"canviewany\",{\"k\":\"bool\"},true],[\"scales\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleRatingScale\"}},true],[\"ratings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleRating\"}},true]],\"MoodleRatingScale\":[[\"id\",{\"k\":\"int\"},true],[\"courseid\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"max\",{\"k\":\"int\"},true],[\"isnumeric\",{\"k\":\"bool\"},true],[\"items\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleRatingScaleItem\"}},true]],\"MoodleRatingScaleItem\":[[\"value\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true]],\"MoodleRelatedBadge\":[[\"id\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"version\",{\"k\":\"string\"},true],[\"language\",{\"k\":\"string\"},true],[\"type\",{\"k\":\"int\"},true]],\"MoodleResponseFileArea\":[[\"area\",{\"k\":\"string\"},true],[\"files\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFile\"}},true]],\"MoodleSiteFunction\":[[\"name\",{\"k\":\"string\"},true],[\"version\",{\"k\":\"string\"},true]],\"MoodleSiteInfo\":[[\"sitename\",{\"k\":\"string\"},true],[\"username\",{\"k\":\"string\"},true],[\"firstname\",{\"k\":\"string\"},true],[\"lastname\",{\"k\":\"string\"},true],[\"fullname\",{\"k\":\"string\"},true],[\"lang\",{\"k\":\"string\"},true],[\"userid\",{\"k\":\"int\"},true],[\"siteurl\",{\"k\":\"string\"},true],[\"userpictureurl\",{\"k\":\"string\"},true],[\"functions\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleSiteFunction\"}},true],[\"downloadfiles\",{\"k\":\"int\"},true],[\"uploadfiles\",{\"k\":\"int\"},true],[\"release\",{\"k\":\"string\"},true],[\"version\",{\"k\":\"string\"},true],[\"mobilecssurl\",{\"k\":\"string\"},true],[\"advancedfeatures\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleAdvancedFeature\"}},true],[\"usercanmanageownfiles\",{\"k\":\"bool\"},true],[\"userquota\",{\"k\":\"int\"},true],[\"usermaxuploadfilesize\",{\"k\":\"int\"},true],[\"userhomepage\",{\"k\":\"int\"},true],[\"userhomepageurl\",{\"k\":\"string\"},true],[\"userprivateaccesskey\",{\"k\":\"string\"},true],[\"siteid\",{\"k\":\"int\"},true],[\"sitecalendartype\",{\"k\":\"string\"},true],[\"usercalendartype\",{\"k\":\"string\"},true],[\"userissiteadmin\",{\"k\":\"bool\"},true],[\"theme\",{\"k\":\"string\"},true],[\"limitconcurrentlogins\",{\"k\":\"int\"},true],[\"usersessionscount\",{\"k\":\"int\"},true],[\"policyagreed\",{\"k\":\"int\"},true]],\"MoodleStatusResponse\":[[\"status\",{\"k\":\"bool\"},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleUnreadConversationCounts\":[[\"favourites\",{\"k\":\"int\"},true],[\"types\",{\"k\":\"record\",\"n\":\"MoodleUnreadCountsByType\",\"folded\":true},false]],\"MoodleUnreadCountsByType\":[[\"1\",{\"k\":\"int\"},true],[\"2\",{\"k\":\"int\"},true],[\"3\",{\"k\":\"int\"},true]],\"MoodleUserAttemptsResponse\":[[\"attempts\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleQuizAttempt\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleUserBadge\":[[\"id\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"description\",{\"k\":\"string\"},true],[\"timecreated\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"usercreated\",{\"k\":\"int\"},true],[\"usermodified\",{\"k\":\"int\"},true],[\"issuername\",{\"k\":\"string\"},true],[\"issuerurl\",{\"k\":\"string\"},true],[\"issuercontact\",{\"k\":\"string\"},true],[\"expiredate\",{\"k\":\"int\"},true],[\"expireperiod\",{\"k\":\"int\"},true],[\"type\",{\"k\":\"int\"},true],[\"courseid\",{\"k\":\"int\"},true],[\"message\",{\"k\":\"string\"},true],[\"messagesubject\",{\"k\":\"string\"},true],[\"attachment\",{\"k\":\"int\"},true],[\"notification\",{\"k\":\"int\"},true],[\"nextcron\",{\"k\":\"int\"},true],[\"status\",{\"k\":\"int\"},true],[\"issuedid\",{\"k\":\"int\"},true],[\"uniquehash\",{\"k\":\"string\"},true],[\"dateissued\",{\"k\":\"int\"},true],[\"dateexpire\",{\"k\":\"int\"},true],[\"visible\",{\"k\":\"int\"},true],[\"recipientid\",{\"k\":\"int\"},true],[\"recipientfullname\",{\"k\":\"string\"},true],[\"email\",{\"k\":\"string\"},true],[\"version\",{\"k\":\"string\"},true],[\"language\",{\"k\":\"string\"},true],[\"imageauthorname\",{\"k\":\"string\"},true],[\"imageauthoremail\",{\"k\":\"string\"},true],[\"imageauthorurl\",{\"k\":\"string\"},true],[\"imagecaption\",{\"k\":\"string\"},true],[\"badgeurl\",{\"k\":\"string\"},true],[\"endorsement\",{\"k\":\"record\",\"n\":\"MoodleBadgeEndorsement\",\"folded\":true},true],[\"alignment\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleBadgeAlignment\"}},true],[\"relatedbadges\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleRelatedBadge\"}},true]],\"MoodleUserBadgesResponse\":[[\"badges\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleUserBadge\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleUserBestGradeResponse\":[[\"hasgrade\",{\"k\":\"bool\"},true],[\"grade\",{\"k\":\"number\"},true],[\"gradetopass\",{\"k\":\"number\"},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleUserGrades\":[[\"courseid\",{\"k\":\"int\"},true],[\"courseidnumber\",{\"k\":\"string\"},true],[\"userid\",{\"k\":\"int\"},true],[\"userfullname\",{\"k\":\"string\"},true],[\"useridnumber\",{\"k\":\"string\"},true],[\"maxdepth\",{\"k\":\"int\"},true],[\"gradeitems\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleGradeItem\"}},true]],\"MoodleUserPreferencesResponse\":[[\"preferences\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleKeyValue\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleWarning\":[[\"item\",{\"k\":\"string\"},true],[\"itemid\",{\"k\":\"int\"},true],[\"warningcode\",{\"k\":\"string\"},true],[\"message\",{\"k\":\"string\"},true]]},\"enums\":{}}",
+    "{\"records\":{\"MoodleAcceptance\":[[\"status\",{\"k\":\"int\"},true],[\"lang\",{\"k\":\"string\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"usermodified\",{\"k\":\"int\"},true],[\"note\",{\"k\":\"string\"},true],[\"modfullname\",{\"k\":\"string\"},true]],\"MoodleAction\":[[\"type\",{\"k\":\"string\"},true],[\"label\",{\"k\":\"string\"},true],[\"url\",{\"k\":\"string\"},true],[\"method\",{\"k\":\"string\"},true]],\"MoodleActionuser\":[[\"id\",{\"k\":\"int\"},true],[\"email\",{\"k\":\"string\"},true],[\"idnumber\",{\"k\":\"string\"},true],[\"phone1\",{\"k\":\"string\"},true],[\"phone2\",{\"k\":\"string\"},true],[\"department\",{\"k\":\"string\"},true],[\"institution\",{\"k\":\"string\"},true],[\"fullname\",{\"k\":\"string\"},true],[\"identity\",{\"k\":\"string\"},true],[\"profileurl\",{\"k\":\"string\"},true],[\"profileimageurl\",{\"k\":\"string\"},true],[\"profileimageurlsmall\",{\"k\":\"string\"},true]],\"MoodleActivitiesCompletionResponse\":[[\"statuses\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleActivityCompletionStatus\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleActivityBadge\":[[\"badgecontent\",{\"k\":\"string\"},true],[\"badgestyle\",{\"k\":\"string\"},true],[\"badgeurl\",{\"k\":\"string\"},true],[\"badgeelementid\",{\"k\":\"string\"},true],[\"badgeextraattributes\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleActivityBadgeAttribute\"}},true]],\"MoodleActivityBadgeAttribute\":[[\"name\",{\"k\":\"string\"},true],[\"value\",{\"k\":\"string\"},true]],\"MoodleActivityCompletionStatus\":[[\"cmid\",{\"k\":\"int\"},true],[\"modname\",{\"k\":\"string\"},true],[\"instance\",{\"k\":\"int\"},true],[\"state\",{\"k\":\"int\"},true],[\"timecompleted\",{\"k\":\"int\"},true],[\"tracking\",{\"k\":\"int\"},true],[\"overrideby\",{\"k\":\"int\"},true],[\"valueused\",{\"k\":\"bool\"},true],[\"hascompletion\",{\"k\":\"bool\"},true],[\"isautomatic\",{\"k\":\"bool\"},true],[\"istrackeduser\",{\"k\":\"bool\"},true],[\"uservisible\",{\"k\":\"bool\"},true],[\"details\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCompletionRule\"}},true],[\"isoverallcomplete\",{\"k\":\"bool\"},true]],\"MoodleAdvancedFeature\":[[\"name\",{\"k\":\"string\"},true],[\"value\",{\"k\":\"int\"},true]],\"MoodleAdvancedgrading\":[[\"area\",{\"k\":\"string\"},true],[\"method\",{\"k\":\"string\"},true]],\"MoodleAiGetPolicyStatusResponse\":[[\"status\",{\"k\":\"bool\"},true]],\"MoodleAnalyticsPotentialContextsItem\":[[\"id\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true]],\"MoodleAncestor\":[[\"id\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"first\",{\"k\":\"bool\"},true],[\"last\",{\"k\":\"bool\"},true],[\"position\",{\"k\":\"int\"},true]],\"MoodleAnonattempt\":[[\"id\",{\"k\":\"int\"},true],[\"courseid\",{\"k\":\"int\"},true],[\"number\",{\"k\":\"int\"},true],[\"responses\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFeedbackGetResponsesAnalysisResponseAttemptResponse\"}},true]],\"MoodleAssessment\":[[\"id\",{\"k\":\"int\"},true],[\"submissionid\",{\"k\":\"int\"},true],[\"reviewerid\",{\"k\":\"int\"},true],[\"weight\",{\"k\":\"int\"},true],[\"timecreated\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"grade\",{\"k\":\"number\"},true],[\"gradinggrade\",{\"k\":\"number\"},true],[\"gradinggradeover\",{\"k\":\"number\"},true],[\"gradinggradeoverby\",{\"k\":\"int\"},true],[\"feedbackauthor\",{\"k\":\"string\"},true],[\"feedbackauthorformat\",{\"k\":\"int\"},true],[\"feedbackauthorattachment\",{\"k\":\"int\"},true],[\"feedbackreviewer\",{\"k\":\"string\"},true],[\"feedbackreviewerformat\",{\"k\":\"int\"},true],[\"feedbackcontentfiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleSummaryFile\"}},true],[\"feedbackattachmentfiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleSummaryFile\"}},true]],\"MoodleAssignment\":[[\"id\",{\"k\":\"int\"},true],[\"cmid\",{\"k\":\"int\"},true],[\"course\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"nosubmissions\",{\"k\":\"int\"},true],[\"submissiondrafts\",{\"k\":\"int\"},true],[\"sendnotifications\",{\"k\":\"int\"},true],[\"sendlatenotifications\",{\"k\":\"int\"},true],[\"sendstudentnotifications\",{\"k\":\"int\"},true],[\"duedate\",{\"k\":\"int\"},true],[\"allowsubmissionsfromdate\",{\"k\":\"int\"},true],[\"grade\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"completionsubmit\",{\"k\":\"int\"},true],[\"cutoffdate\",{\"k\":\"int\"},true],[\"gradingduedate\",{\"k\":\"int\"},true],[\"teamsubmission\",{\"k\":\"int\"},true],[\"requireallteammemberssubmit\",{\"k\":\"int\"},true],[\"teamsubmissiongroupingid\",{\"k\":\"int\"},true],[\"blindmarking\",{\"k\":\"int\"},true],[\"hidegrader\",{\"k\":\"int\"},true],[\"revealidentities\",{\"k\":\"int\"},true],[\"attemptreopenmethod\",{\"k\":\"string\"},true],[\"maxattempts\",{\"k\":\"int\"},true],[\"markingworkflow\",{\"k\":\"int\"},true],[\"markingallocation\",{\"k\":\"int\"},true],[\"markinganonymous\",{\"k\":\"int\"},true],[\"requiresubmissionstatement\",{\"k\":\"int\"},true],[\"preventsubmissionnotingroup\",{\"k\":\"int\"},true],[\"submissionstatement\",{\"k\":\"string\"},true],[\"submissionstatementformat\",{\"k\":\"int\"},true],[\"configs\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleAssignmentConfig\"}},true],[\"intro\",{\"k\":\"string\"},true],[\"introformat\",{\"k\":\"int\"},true],[\"introfiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFile\"}},true],[\"introattachments\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFile\"}},true],[\"activity\",{\"k\":\"string\"},true],[\"activityformat\",{\"k\":\"int\"},true],[\"activityattachments\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFile\"}},true],[\"timelimit\",{\"k\":\"int\"},true],[\"submissionattachments\",{\"k\":\"int\"},true]],\"MoodleAssignmentConfig\":[[\"id\",{\"k\":\"int\"},true],[\"assignment\",{\"k\":\"int\"},true],[\"plugin\",{\"k\":\"string\"},true],[\"subtype\",{\"k\":\"string\"},true],[\"name\",{\"k\":\"string\"},true],[\"value\",{\"k\":\"string\"},true]],\"MoodleAssignmentsResponse\":[[\"courses\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCourseAssignments\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleAttemptReviewData\":[[\"id\",{\"k\":\"string\"},true],[\"title\",{\"k\":\"string\"},true],[\"content\",{\"k\":\"string\"},true]],\"MoodleAttemptReviewResponse\":[[\"grade\",{\"k\":\"string\"},true],[\"attempt\",{\"k\":\"record\",\"n\":\"MoodleQuizAttempt\",\"folded\":true},false],[\"additionaldata\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleAttemptReviewData\"}},true],[\"questions\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleQuizQuestion\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleAuthor\":[[\"id\",{\"k\":\"int\"},true],[\"fullname\",{\"k\":\"string\"},true],[\"pictureurl\",{\"k\":\"string\"},true]],\"MoodleBadge\":[[\"type\",{\"k\":\"string\"},true],[\"id\",{\"k\":\"string\"},true],[\"issuer\",{\"k\":\"string\"},true],[\"name\",{\"k\":\"string\"},true],[\"image\",{\"k\":\"string\"},true],[\"description\",{\"k\":\"string\"},true],[\"hostedUrl\",{\"k\":\"string\"},true],[\"alignment\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleBadgeAlignment\"}},true],[\"criteriaUrl\",{\"k\":\"string\"},true],[\"criteriaNarrative\",{\"k\":\"string\"},true]],\"MoodleBadgeAlignment\":[[\"id\",{\"k\":\"int\"},true],[\"badgeid\",{\"k\":\"int\"},true],[\"targetName\",{\"k\":\"string\"},true],[\"targetUrl\",{\"k\":\"string\"},true],[\"targetDescription\",{\"k\":\"string\"},true],[\"targetFramework\",{\"k\":\"string\"},true],[\"targetCode\",{\"k\":\"string\"},true]],\"MoodleBadgeEndorsement\":[[\"id\",{\"k\":\"int\"},true],[\"badgeid\",{\"k\":\"int\"},true],[\"issuername\",{\"k\":\"string\"},true],[\"issuerurl\",{\"k\":\"string\"},true],[\"issueremail\",{\"k\":\"string\"},true],[\"claimid\",{\"k\":\"string\"},true],[\"claimcomment\",{\"k\":\"string\"},true],[\"dateissued\",{\"k\":\"int\"},true]],\"MoodleBadgesGetBadgeResponse\":[[\"badge\",{\"k\":\"record\",\"n\":\"MoodleBadge\",\"folded\":true},false],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleBigbluebuttonbn\":[[\"id\",{\"k\":\"int\"},true],[\"coursemodule\",{\"k\":\"int\"},true],[\"course\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"intro\",{\"k\":\"string\"},true],[\"introformat\",{\"k\":\"int\"},true],[\"introfiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFile\"}},true],[\"section\",{\"k\":\"int\"},true],[\"visible\",{\"k\":\"bool\"},true],[\"groupmode\",{\"k\":\"int\"},true],[\"groupingid\",{\"k\":\"int\"},true],[\"lang\",{\"k\":\"string\"},true],[\"meetingid\",{\"k\":\"string\"},true],[\"timemodified\",{\"k\":\"int\"},true]],\"MoodleBigbluebuttonbnCanJoinResponse\":[[\"can_join\",{\"k\":\"bool\"},true],[\"cmid\",{\"k\":\"int\"},true]],\"MoodleBigbluebuttonbnGetBigbluebuttonbnsByCoursesResponse\":[[\"bigbluebuttonbns\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleBigbluebuttonbn\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleBigbluebuttonbnGetRecordingsResponse\":[[\"status\",{\"k\":\"bool\"},true],[\"tabledata\",{\"k\":\"record\",\"n\":\"MoodleBigbluebuttonbnGetRecordingsResponseTabledata\",\"folded\":true},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleBigbluebuttonbnGetRecordingsResponseTabledata\":[[\"activity\",{\"k\":\"string\"},true],[\"ping_interval\",{\"k\":\"int\"},true],[\"locale\",{\"k\":\"string\"},true],[\"profile_features\",{\"k\":\"list\",\"e\":{\"k\":\"string\"}},true],[\"columns\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleColumn\"}},true],[\"data\",{\"k\":\"string\"},true]],\"MoodleBigbluebuttonbnMeetingInfoResponse\":[[\"cmid\",{\"k\":\"int\"},true],[\"userlimit\",{\"k\":\"int\"},true],[\"bigbluebuttonbnid\",{\"k\":\"string\"},true],[\"groupid\",{\"k\":\"int\"},true],[\"meetingid\",{\"k\":\"string\"},true],[\"openingtime\",{\"k\":\"int\"},true],[\"closingtime\",{\"k\":\"int\"},true],[\"statusrunning\",{\"k\":\"bool\"},true],[\"statusclosed\",{\"k\":\"bool\"},true],[\"statusopen\",{\"k\":\"bool\"},true],[\"statusmessage\",{\"k\":\"string\"},true],[\"startedat\",{\"k\":\"int\"},true],[\"moderatorcount\",{\"k\":\"int\"},true],[\"participantcount\",{\"k\":\"int\"},true],[\"moderatorplural\",{\"k\":\"bool\"},true],[\"participantplural\",{\"k\":\"bool\"},true],[\"canjoin\",{\"k\":\"bool\"},true],[\"ismoderator\",{\"k\":\"bool\"},true],[\"presentations\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodlePresentation\"}},true],[\"joinurl\",{\"k\":\"string\"},true],[\"guestaccessenabled\",{\"k\":\"bool\"},true],[\"guestjoinurl\",{\"k\":\"string\"},true],[\"guestpassword\",{\"k\":\"string\"},true],[\"showpresentations\",{\"k\":\"bool\"},true],[\"features\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFeature\"}},true]],\"MoodleBlock\":[[\"instanceid\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"region\",{\"k\":\"string\"},true],[\"positionid\",{\"k\":\"int\"},true],[\"collapsible\",{\"k\":\"bool\"},true],[\"dockable\",{\"k\":\"bool\"},true],[\"weight\",{\"k\":\"int\"},true],[\"visible\",{\"k\":\"bool\"},true],[\"contents\",{\"k\":\"record\",\"n\":\"MoodleBlockContent\",\"folded\":true},true],[\"configs\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleConfig\"}},true]],\"MoodleBlockContent\":[[\"title\",{\"k\":\"string\"},true],[\"content\",{\"k\":\"string\"},true],[\"contentformat\",{\"k\":\"int\"},true],[\"footer\",{\"k\":\"string\"},true],[\"files\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFile\"}},true]],\"MoodleBlockGetCourseBlocksResponse\":[[\"blocks\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleBlock\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleBlockRecentlyaccesseditemsGetRecentItemsItem\":[[\"id\",{\"k\":\"int\"},true],[\"courseid\",{\"k\":\"int\"},true],[\"cmid\",{\"k\":\"int\"},true],[\"userid\",{\"k\":\"int\"},true],[\"modname\",{\"k\":\"string\"},true],[\"name\",{\"k\":\"string\"},true],[\"coursename\",{\"k\":\"string\"},true],[\"timeaccess\",{\"k\":\"int\"},true],[\"viewurl\",{\"k\":\"string\"},true],[\"courseviewurl\",{\"k\":\"string\"},true],[\"icon\",{\"k\":\"string\"},true],[\"purpose\",{\"k\":\"string\"},true],[\"branded\",{\"k\":\"bool\"},true]],\"MoodleBlogGetAccessInformationResponse\":[[\"canview\",{\"k\":\"bool\"},true],[\"cansearch\",{\"k\":\"bool\"},true],[\"canviewdrafts\",{\"k\":\"bool\"},true],[\"cancreate\",{\"k\":\"bool\"},true],[\"canmanageentries\",{\"k\":\"bool\"},true],[\"canmanageexternal\",{\"k\":\"bool\"},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleBlogGetEntriesResponse\":[[\"entries\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleBlogGetEntriesResponseEntry\"}},true],[\"totalentries\",{\"k\":\"int\"},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleBlogGetEntriesResponseEntry\":[[\"id\",{\"k\":\"int\"},true],[\"module\",{\"k\":\"string\"},true],[\"userid\",{\"k\":\"int\"},true],[\"courseid\",{\"k\":\"int\"},true],[\"groupid\",{\"k\":\"int\"},true],[\"moduleid\",{\"k\":\"int\"},true],[\"coursemoduleid\",{\"k\":\"int\"},true],[\"subject\",{\"k\":\"string\"},true],[\"summary\",{\"k\":\"string\"},true],[\"summaryformat\",{\"k\":\"int\"},true],[\"content\",{\"k\":\"string\"},true],[\"uniquehash\",{\"k\":\"string\"},true],[\"rating\",{\"k\":\"int\"},true],[\"format\",{\"k\":\"int\"},true],[\"attachment\",{\"k\":\"string\"},true],[\"publishstate\",{\"k\":\"string\"},true],[\"lastmodified\",{\"k\":\"int\"},true],[\"created\",{\"k\":\"int\"},true],[\"usermodified\",{\"k\":\"int\"},true],[\"summaryfiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleSummaryFile\"}},true],[\"attachmentfiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleSummaryFile\"}},true],[\"tags\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleContentTag\"}},true],[\"canedit\",{\"k\":\"bool\"},true]],\"MoodleBook\":[[\"id\",{\"k\":\"int\"},true],[\"coursemodule\",{\"k\":\"int\"},true],[\"course\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"intro\",{\"k\":\"string\"},true],[\"introformat\",{\"k\":\"int\"},true],[\"introfiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFile\"}},true],[\"section\",{\"k\":\"int\"},true],[\"visible\",{\"k\":\"bool\"},true],[\"groupmode\",{\"k\":\"int\"},true],[\"groupingid\",{\"k\":\"int\"},true],[\"lang\",{\"k\":\"string\"},true],[\"numbering\",{\"k\":\"int\"},true],[\"navstyle\",{\"k\":\"int\"},true],[\"customtitles\",{\"k\":\"int\"},true],[\"revision\",{\"k\":\"int\"},true],[\"timecreated\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true]],\"MoodleBookGetBooksByCoursesResponse\":[[\"books\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleBook\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleCalendarDate\":[[\"seconds\",{\"k\":\"int\"},true],[\"minutes\",{\"k\":\"int\"},true],[\"hours\",{\"k\":\"int\"},true],[\"mday\",{\"k\":\"int\"},true],[\"wday\",{\"k\":\"int\"},true],[\"mon\",{\"k\":\"int\"},true],[\"year\",{\"k\":\"int\"},true],[\"yday\",{\"k\":\"int\"},true],[\"weekday\",{\"k\":\"string\"},true],[\"month\",{\"k\":\"string\"},true],[\"timestamp\",{\"k\":\"int\"},true]],\"MoodleCalendarDay\":[[\"seconds\",{\"k\":\"int\"},true],[\"minutes\",{\"k\":\"int\"},true],[\"hours\",{\"k\":\"int\"},true],[\"mday\",{\"k\":\"int\"},true],[\"wday\",{\"k\":\"int\"},true],[\"year\",{\"k\":\"int\"},true],[\"yday\",{\"k\":\"int\"},true],[\"istoday\",{\"k\":\"bool\"},true],[\"isweekend\",{\"k\":\"bool\"},true],[\"timestamp\",{\"k\":\"int\"},true],[\"neweventtimestamp\",{\"k\":\"int\"},true],[\"viewdaylink\",{\"k\":\"string\"},true],[\"viewdaylinktitle\",{\"k\":\"string\"},true],[\"events\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCalendarDayEvent\"}},true],[\"hasevents\",{\"k\":\"bool\"},true],[\"calendareventtypes\",{\"k\":\"list\",\"e\":{\"k\":\"string\"}},true],[\"previousperiod\",{\"k\":\"int\"},true],[\"nextperiod\",{\"k\":\"int\"},true],[\"haslastdayofevent\",{\"k\":\"bool\"},true],[\"popovertitle\",{\"k\":\"string\"},true],[\"daytitle\",{\"k\":\"string\"},true]],\"MoodleCalendarDayEvent\":[[\"id\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"description\",{\"k\":\"string\"},true],[\"descriptionformat\",{\"k\":\"int\"},true],[\"location\",{\"k\":\"string\"},true],[\"categoryid\",{\"k\":\"int\"},true],[\"groupid\",{\"k\":\"int\"},true],[\"userid\",{\"k\":\"int\"},true],[\"repeatid\",{\"k\":\"int\"},true],[\"eventcount\",{\"k\":\"int\"},true],[\"component\",{\"k\":\"string\"},true],[\"modulename\",{\"k\":\"string\"},true],[\"activityname\",{\"k\":\"string\"},true],[\"activitystr\",{\"k\":\"string\"},true],[\"instance\",{\"k\":\"int\"},true],[\"eventtype\",{\"k\":\"string\"},true],[\"timestart\",{\"k\":\"int\"},true],[\"timeduration\",{\"k\":\"int\"},true],[\"timesort\",{\"k\":\"int\"},true],[\"timeusermidnight\",{\"k\":\"int\"},true],[\"visible\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"overdue\",{\"k\":\"bool\"},true],[\"icon\",{\"k\":\"record\",\"n\":\"MoodleEventIcon\",\"folded\":true},false],[\"category\",{\"k\":\"record\",\"n\":\"MoodleEventCategory\",\"folded\":true},true],[\"course\",{\"k\":\"record\",\"n\":\"MoodleEventCourse\",\"folded\":true},true],[\"subscription\",{\"k\":\"record\",\"n\":\"MoodleEventSubscription\",\"folded\":true},true],[\"canedit\",{\"k\":\"bool\"},true],[\"candelete\",{\"k\":\"bool\"},true],[\"deleteurl\",{\"k\":\"string\"},true],[\"editurl\",{\"k\":\"string\"},true],[\"viewurl\",{\"k\":\"string\"},true],[\"formattedtime\",{\"k\":\"string\"},true],[\"formattedlocation\",{\"k\":\"string\"},true],[\"isactionevent\",{\"k\":\"bool\"},true],[\"iscourseevent\",{\"k\":\"bool\"},true],[\"iscategoryevent\",{\"k\":\"bool\"},true],[\"groupname\",{\"k\":\"string\"},true],[\"normalisedeventtype\",{\"k\":\"string\"},true],[\"normalisedeventtypetext\",{\"k\":\"string\"},true],[\"action\",{\"k\":\"record\",\"n\":\"MoodleEventAction\",\"folded\":true},true],[\"purpose\",{\"k\":\"string\"},true],[\"branded\",{\"k\":\"bool\"},true],[\"url\",{\"k\":\"string\"},true],[\"islastday\",{\"k\":\"bool\"},true],[\"popupname\",{\"k\":\"string\"},true],[\"mindaytimestamp\",{\"k\":\"int\"},true],[\"mindayerror\",{\"k\":\"string\"},true],[\"maxdaytimestamp\",{\"k\":\"int\"},true],[\"maxdayerror\",{\"k\":\"string\"},true],[\"draggable\",{\"k\":\"bool\"},true]],\"MoodleCalendarDayName\":[[\"dayno\",{\"k\":\"",
+    "int\"},true],[\"shortname\",{\"k\":\"string\"},true],[\"fullname\",{\"k\":\"string\"},true]],\"MoodleCalendarEvent\":[[\"id\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"description\",{\"k\":\"string\"},true],[\"descriptionformat\",{\"k\":\"int\"},true],[\"location\",{\"k\":\"string\"},true],[\"categoryid\",{\"k\":\"int\"},true],[\"groupid\",{\"k\":\"int\"},true],[\"userid\",{\"k\":\"int\"},true],[\"repeatid\",{\"k\":\"int\"},true],[\"eventcount\",{\"k\":\"int\"},true],[\"component\",{\"k\":\"string\"},true],[\"modulename\",{\"k\":\"string\"},true],[\"activityname\",{\"k\":\"string\"},true],[\"activitystr\",{\"k\":\"string\"},true],[\"instance\",{\"k\":\"int\"},true],[\"eventtype\",{\"k\":\"string\"},true],[\"timestart\",{\"k\":\"int\"},true],[\"timeduration\",{\"k\":\"int\"},true],[\"timesort\",{\"k\":\"int\"},true],[\"timeusermidnight\",{\"k\":\"int\"},true],[\"visible\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"overdue\",{\"k\":\"bool\"},true],[\"icon\",{\"k\":\"record\",\"n\":\"MoodleEventIcon\",\"folded\":true},false],[\"category\",{\"k\":\"record\",\"n\":\"MoodleEventCategory\",\"folded\":true},true],[\"course\",{\"k\":\"record\",\"n\":\"MoodleEventCourse\",\"folded\":true},true],[\"subscription\",{\"k\":\"record\",\"n\":\"MoodleEventSubscription\",\"folded\":true},true],[\"canedit\",{\"k\":\"bool\"},true],[\"candelete\",{\"k\":\"bool\"},true],[\"deleteurl\",{\"k\":\"string\"},true],[\"editurl\",{\"k\":\"string\"},true],[\"viewurl\",{\"k\":\"string\"},true],[\"formattedtime\",{\"k\":\"string\"},true],[\"formattedlocation\",{\"k\":\"string\"},true],[\"isactionevent\",{\"k\":\"bool\"},true],[\"iscourseevent\",{\"k\":\"bool\"},true],[\"iscategoryevent\",{\"k\":\"bool\"},true],[\"groupname\",{\"k\":\"string\"},true],[\"normalisedeventtype\",{\"k\":\"string\"},true],[\"normalisedeventtypetext\",{\"k\":\"string\"},true],[\"action\",{\"k\":\"record\",\"n\":\"MoodleEventAction\",\"folded\":true},true],[\"purpose\",{\"k\":\"string\"},true],[\"branded\",{\"k\":\"bool\"},true],[\"url\",{\"k\":\"string\"},true]],\"MoodleCalendarEventsResponse\":[[\"events\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCalendarEvent\"}},true],[\"firstid\",{\"k\":\"int\"},true],[\"lastid\",{\"k\":\"int\"},true]],\"MoodleCalendarGetAllowedEventTypesResponse\":[[\"allowedeventtypes\",{\"k\":\"list\",\"e\":{\"k\":\"string\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleCalendarGetCalendarAccessInformationResponse\":[[\"canmanageentries\",{\"k\":\"bool\"},true],[\"canmanageownentries\",{\"k\":\"bool\"},true],[\"canmanagegroupentries\",{\"k\":\"bool\"},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleCalendarGetCalendarEventByIdResponse\":[[\"event\",{\"k\":\"record\",\"n\":\"MoodleCalendarEvent\",\"folded\":true},false],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleCalendarGetCalendarEventsResponse\":[[\"events\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCalendarGetCalendarEventsResponseEvent\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleCalendarGetCalendarEventsResponseEvent\":[[\"id\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"description\",{\"k\":\"string\"},true],[\"format\",{\"k\":\"int\"},true],[\"courseid\",{\"k\":\"int\"},true],[\"categoryid\",{\"k\":\"int\"},true],[\"groupid\",{\"k\":\"int\"},true],[\"userid\",{\"k\":\"int\"},true],[\"repeatid\",{\"k\":\"int\"},true],[\"modulename\",{\"k\":\"string\"},true],[\"instance\",{\"k\":\"int\"},true],[\"eventtype\",{\"k\":\"string\"},true],[\"timestart\",{\"k\":\"int\"},true],[\"timeduration\",{\"k\":\"int\"},true],[\"visible\",{\"k\":\"int\"},true],[\"uuid\",{\"k\":\"string\"},true],[\"sequence\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"subscriptionid\",{\"k\":\"int\"},true]],\"MoodleCalendarGetCalendarExportTokenResponse\":[[\"token\",{\"k\":\"string\"},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleCalendarMonth\":[[\"url\",{\"k\":\"string\"},true],[\"courseid\",{\"k\":\"int\"},true],[\"categoryid\",{\"k\":\"int\"},true],[\"filter_selector\",{\"k\":\"string\"},true],[\"weeks\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCalendarWeek\"}},true],[\"daynames\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCalendarDayName\"}},true],[\"view\",{\"k\":\"string\"},true],[\"date\",{\"k\":\"record\",\"n\":\"MoodleCalendarDate\",\"folded\":true},false],[\"periodname\",{\"k\":\"string\"},true],[\"includenavigation\",{\"k\":\"bool\"},true],[\"initialeventsloaded\",{\"k\":\"bool\"},true],[\"previousperiod\",{\"k\":\"record\",\"n\":\"MoodleCalendarDate\",\"folded\":true},false],[\"previousperiodlink\",{\"k\":\"string\"},true],[\"previousperiodname\",{\"k\":\"string\"},true],[\"nextperiod\",{\"k\":\"record\",\"n\":\"MoodleCalendarDate\",\"folded\":true},false],[\"nextperiodname\",{\"k\":\"string\"},true],[\"nextperiodlink\",{\"k\":\"string\"},true],[\"larrow\",{\"k\":\"string\"},true],[\"rarrow\",{\"k\":\"string\"},true],[\"defaulteventcontext\",{\"k\":\"int\"},true],[\"calendarinstanceid\",{\"k\":\"int\"},true],[\"viewingmonth\",{\"k\":\"bool\"},true],[\"showviewselector\",{\"k\":\"bool\"},true],[\"viewinginblock\",{\"k\":\"bool\"},true]],\"MoodleCalendarUpcomingView\":[[\"events\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCalendarDayEvent\"}},true],[\"defaulteventcontext\",{\"k\":\"int\"},true],[\"filter_selector\",{\"k\":\"string\"},true],[\"courseid\",{\"k\":\"int\"},true],[\"categoryid\",{\"k\":\"int\"},true],[\"isloggedin\",{\"k\":\"bool\"},true],[\"date\",{\"k\":\"record\",\"n\":\"MoodleCalendarDate\",\"folded\":true},false]],\"MoodleCalendarWeek\":[[\"prepadding\",{\"k\":\"list\",\"e\":{\"k\":\"int\"}},true],[\"postpadding\",{\"k\":\"list\",\"e\":{\"k\":\"int\"}},true],[\"days\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCalendarDay\"}},true]],\"MoodleCanAddDiscussionResponse\":[[\"status\",{\"k\":\"bool\"},true],[\"canpindiscussions\",{\"k\":\"bool\"},true],[\"cancreateattachment\",{\"k\":\"bool\"},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleCategory\":[[\"id\",{\"k\":\"int\"},true],[\"glossaryid\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"usedynalink\",{\"k\":\"bool\"},true]],\"MoodleChat\":[[\"id\",{\"k\":\"int\"},true],[\"coursemodule\",{\"k\":\"int\"},true],[\"course\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"intro\",{\"k\":\"string\"},true],[\"introformat\",{\"k\":\"int\"},true],[\"introfiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFile\"}},true],[\"section\",{\"k\":\"int\"},true],[\"visible\",{\"k\":\"bool\"},true],[\"groupmode\",{\"k\":\"int\"},true],[\"groupingid\",{\"k\":\"int\"},true],[\"lang\",{\"k\":\"string\"},true],[\"chatmethod\",{\"k\":\"string\"},true],[\"keepdays\",{\"k\":\"int\"},true],[\"studentlogs\",{\"k\":\"int\"},true],[\"chattime\",{\"k\":\"int\"},true],[\"schedule\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true]],\"MoodleChatGetChatsByCoursesResponse\":[[\"chats\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleChat\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleChatGetSessionMessagesResponse\":[[\"messages\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleChatGetSessionMessagesResponseMessage\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleChatGetSessionMessagesResponseMessage\":[[\"id\",{\"k\":\"int\"},true],[\"chatid\",{\"k\":\"int\"},true],[\"userid\",{\"k\":\"int\"},true],[\"groupid\",{\"k\":\"int\"},true],[\"issystem\",{\"k\":\"bool\"},true],[\"message\",{\"k\":\"string\"},true],[\"timestamp\",{\"k\":\"int\"},true]],\"MoodleChatGetSessionsResponse\":[[\"sessions\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleSession\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleChoice\":[[\"id\",{\"k\":\"int\"},true],[\"coursemodule\",{\"k\":\"int\"},true],[\"course\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"intro\",{\"k\":\"string\"},true],[\"introformat\",{\"k\":\"int\"},true],[\"introfiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFile\"}},true],[\"section\",{\"k\":\"int\"},true],[\"visible\",{\"k\":\"bool\"},true],[\"groupmode\",{\"k\":\"int\"},true],[\"groupingid\",{\"k\":\"int\"},true],[\"lang\",{\"k\":\"string\"},true],[\"publish\",{\"k\":\"bool\"},true],[\"showresults\",{\"k\":\"int\"},true],[\"display\",{\"k\":\"int\"},true],[\"allowupdate\",{\"k\":\"bool\"},true],[\"allowmultiple\",{\"k\":\"bool\"},true],[\"showunanswered\",{\"k\":\"bool\"},true],[\"includeinactive\",{\"k\":\"bool\"},true],[\"limitanswers\",{\"k\":\"bool\"},true],[\"timeopen\",{\"k\":\"int\"},true],[\"timeclose\",{\"k\":\"int\"},true],[\"showpreview\",{\"k\":\"bool\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"completionsubmit\",{\"k\":\"bool\"},true],[\"showavailable\",{\"k\":\"bool\"},true]],\"MoodleChoiceGetChoiceOptionsResponse\":[[\"options\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleChoiceGetChoiceOptionsResponseOption\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleChoiceGetChoiceOptionsResponseOption\":[[\"id\",{\"k\":\"int\"},true],[\"text\",{\"k\":\"string\"},true],[\"maxanswers\",{\"k\":\"int\"},true],[\"displaylayout\",{\"k\":\"bool\"},true],[\"countanswers\",{\"k\":\"int\"},true],[\"checked\",{\"k\":\"bool\"},true],[\"disabled\",{\"k\":\"bool\"},true]],\"MoodleChoiceGetChoiceResultsResponse\":[[\"options\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleChoiceGetChoiceResultsResponseOption\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleChoiceGetChoiceResultsResponseOption\":[[\"id\",{\"k\":\"int\"},true],[\"text\",{\"k\":\"string\"},true],[\"maxanswer\",{\"k\":\"int\"},true],[\"userresponses\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleUserresponse\"}},true],[\"numberofuser\",{\"k\":\"int\"},true],[\"percentageamount\",{\"k\":\"number\"},true]],\"MoodleChoiceGetChoicesByCoursesResponse\":[[\"choices\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleChoice\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleCm\":[[\"id\",{\"k\":\"int\"},true],[\"course\",{\"k\":\"int\"},true],[\"module\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"modname\",{\"k\":\"string\"},true],[\"instance\",{\"k\":\"int\"},true],[\"section\",{\"k\":\"int\"},true],[\"sectionnum\",{\"k\":\"int\"},true],[\"groupmode\",{\"k\":\"int\"},true],[\"groupingid\",{\"k\":\"int\"},true],[\"completion\",{\"k\":\"int\"},true],[\"idnumber\",{\"k\":\"string\"},true],[\"added\",{\"k\":\"int\"},true],[\"score\",{\"k\":\"int\"},true],[\"indent\",{\"k\":\"int\"},true],[\"visible\",{\"k\":\"int\"},true],[\"visibleoncoursepage\",{\"k\":\"int\"},true],[\"visibleold\",{\"k\":\"int\"},true],[\"completiongradeitemnumber\",{\"k\":\"int\"},true],[\"completionpassgrade\",{\"k\":\"int\"},true],[\"completionview\",{\"k\":\"int\"},true],[\"completionexpected\",{\"k\":\"int\"},true],[\"showdescription\",{\"k\":\"int\"},true],[\"downloadcontent\",{\"k\":\"int\"},true],[\"availability\",{\"k\":\"string\"},true],[\"grade\",{\"k\":\"number\"},true],[\"scale\",{\"k\":\"string\"},true],[\"gradepass\",{\"k\":\"string\"},true],[\"gradecat\",{\"k\":\"int\"},true],[\"advancedgrading\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleAdvancedgrading\"}},true],[\"outcomes\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleOutcome\"}},true]],\"MoodleCollection\":[[\"id\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"isdefault\",{\"k\":\"bool\"},true],[\"component\",{\"k\":\"string\"},true],[\"sortorder\",{\"k\":\"int\"},true],[\"searchable\",{\"k\":\"bool\"},true],[\"customurl\",{\"k\":\"string\"},true]],\"MoodleColumn\":[[\"key\",{\"k\":\"string\"},true],[\"label\",{\"k\":\"string\"},true],[\"width\",{\"k\":\"string\"},true],[\"type\",{\"k\":\"string\"},true],[\"sortable\",{\"k\":\"bool\"},true],[\"allowHTML\",{\"k\":\"bool\"},true],[\"formatter\",{\"k\":\"string\"},true]],\"MoodleCommentAddCommentsItem\":[[\"id\",{\"k\":\"int\"},true],[\"content\",{\"k\":\"string\"},true],[\"format\",{\"k\":\"int\"},true],[\"timecreated\",{\"k\":\"int\"},true],[\"strftimeformat\",{\"k\":\"string\"},true],[\"profileurl\",{\"k\":\"string\"},true],[\"fullname\",{\"k\":\"string\"},true],[\"time\",{\"k\":\"string\"},true],[\"avatar\",{\"k\":\"string\"},true],[\"userid\",{\"k\":\"int\"},true],[\"delete\",{\"k\":\"bool\"},true]],\"MoodleCommentGetCommentsResponse\":[[\"comments\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCommentAddCommentsItem\"}},true],[\"count\",{\"k\":\"int\"},true],[\"perpage\",{\"k\":\"int\"},true],[\"canpost\",{\"k\":\"bool\"},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleCommentarea\":[[\"component\",{\"k\":\"string\"},true],[\"commentarea\",{\"k\":\"string\"},true],[\"itemid\",{\"k\":\"int\"},true],[\"courseid\",{\"k\":\"int\"},true],[\"contextid\",{\"k\":\"int\"},true],[\"cid\",{\"k\":\"string\"},true],[\"autostart\",{\"k\":\"bool\"},true],[\"canpost\",{\"k\":\"bool\"},true],[\"canview\",{\"k\":\"bool\"},true],[\"count\",{\"k\":\"int\"},true],[\"collapsediconkey\",{\"k\":\"string\"},true],[\"displaytotalcount\",{\"k\":\"bool\"},true],[\"displaycancel\",{\"k\":\"bool\"},true],[\"fullwidth\",{\"k\":\"bool\"},true],[\"linktext\",{\"k\":\"string\"},true],[\"notoggle\",{\"k\":\"bool\"},true],[\"template\",{\"k\":\"string\"},true],[\"canpostorhascomments\",{\"k\":\"bool\"},true]],\"MoodleCompetencyCourseModule\":[[\"id\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"url\",{\"k\":\"string\"},true],[\"iconurl\",{\"k\":\"string\"},true]],\"MoodleCompetencyGetScaleValuesItem\":[[\"id\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true]],\"MoodleCompetencyGradeCompetencyInCourseResponse\":[[\"usercompetencyid\",{\"k\":\"int\"},true],[\"contextid\",{\"k\":\"int\"},true],[\"action\",{\"k\":\"int\"},true],[\"actionuserid\",{\"k\":\"int\"},true],[\"descidentifier\",{\"k\":\"string\"},true],[\"desccomponent\",{\"k\":\"string\"},true],[\"desca\",{\"k\":\"string\"},true],[\"url\",{\"k\":\"string\"},true],[\"grade\",{\"k\":\"int\"},true],[\"note\",{\"k\":\"string\"},true],[\"id\",{\"k\":\"int\"},true],[\"timecreated\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"usermodified\",{\"k\":\"int\"},true],[\"actionuser\",{\"k\":\"record\",\"n\":\"MoodleActionuser\",\"folded\":true},true],[\"description\",{\"k\":\"string\"},true],[\"gradename\",{\"k\":\"string\"},true],[\"userdate\",{\"k\":\"string\"},true],[\"candelete\",{\"k\":\"bool\"},true]],\"MoodleCompetencyListCourseCompetenciesItem\":[[\"competency\",{\"k\":\"record\",\"n\":\"MoodleCompetencyListCourseCompetenciesItemCompetency\",\"folded\":true},false],[\"coursecompetency\",{\"k\":\"record\",\"n\":\"MoodleCoursecompetency\",\"folded\":true},false]],\"MoodleCompetencyListCourseCompetenciesItemCompetency\":[[\"shortname\",{\"k\":\"string\"},true],[\"idnumber\",{\"k\":\"string\"},true],[\"description\",{\"k\":\"string\"},true],[\"descriptionformat\",{\"k\":\"int\"},true],[\"sortorder\",{\"k\":\"int\"},true],[\"parentid\",{\"k\":\"int\"},true],[\"path\",{\"k\":\"string\"},true],[\"ruleoutcome\",{\"k\":\"int\"},true],[\"ruletype\",{\"k\":\"string\"},true],[\"ruleconfig\",{\"k\":\"string\"},true],[\"scaleid\",{\"k\":\"int\"},true],[\"scaleconfiguration\",{\"k\":\"string\"},true],[\"competencyframeworkid\",{\"k\":\"int\"},true],[\"id\",{\"k\":\"int\"},true],[\"timecreated\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"usermodified\",{\"k\":\"int\"},true]],\"MoodleCompleted\":[[\"id\",{\"k\":\"int\"},true],[\"feedback\",{\"k\":\"int\"},true],[\"userid\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"random_response\",{\"k\":\"int\"},true],[\"anonymous_response\",{\"k\":\"int\"},true],[\"courseid\",{\"k\":\"int\"},true]],\"MoodleCompletion\":[[\"type\",{\"k\":\"int\"},true],[\"title\",{\"k\":\"string\"},true],[\"status\",{\"k\":\"string\"},true],[\"complete\",{\"k\":\"bool\"},true],[\"timecompleted\",{\"k\":\"int\"},true],[\"details\",{\"k\":\"record\",\"n\":\"MoodleDetail\",\"folded\":true},false]],\"MoodleCompletionGetCourseCompletionStatusResponse\":[[\"completionstatus\",{\"k\":\"record\",\"n\":\"MoodleCompletionstatu\",\"folded\":true},false],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleCompletionRule\":[[\"rulename\",{\"k\":\"string\"},true],[\"rulevalue\",{\"k\":\"record\",\"n\":\"MoodleCompletionRuleValue\",\"folded\":true},false]],\"MoodleCompletionRuleValue\":[[\"status\",{\"k\":\"int\"},true],[\"description\",{\"k\":\"string\"},true]],\"MoodleCompletionstatu\":[[\"completed\",{\"k\":\"bool\"},true],[\"aggregation\",{\"k\":\"int\"},true],[\"completions\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCompletion\"}},true]],\"MoodleComponent\":[[\"displayname\",{\"k\":\"string\"},true],[\"notifications\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleComponentNotification\"}},true]],\"MoodleComponentNotification\":[[\"displayname\",{\"k\":\"string\"},true],[\"preferencekey\",{\"k\":\"string\"},true],[\"processors\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleComponentNotificationProcessor\"}},true]],\"MoodleComponentNotificationProcessor\":[[\"displayname\",{\"k\":\"string\"},true],[\"name\",{\"k\":\"string\"},true],[\"locked\",{\"k\":\"bool\"},true],[\"lockedmessage\",{\"k\":\"string\"},true],[\"userconfigured\",{\"k\":\"int\"},true],[\"enabled\",{\"k\":\"bool\"},true]],\"MoodleComppath\":[[\"ancestors\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleAncestor\"}},true],[\"framework\",{\"k\":\"record\",\"n\":\"MoodleAncestor\",\"folded\":true},false],[\"pluginbaseurl\",{\"k\":\"string\"},true],[\"pagecontextid\",{\"k\":\"int\"},true],[\"showlinks\",{\"k\":\"bool\"},true]],\"MoodleConfig\":[[\"name\",{\"k\":\"string\"},true],[\"value\",{\"k\":\"string\"},true],[\"type\",{\"k\":\"string\"},true]],\"MoodleContact\":[[\"id\",{\"k\":\"int\"},true],[\"fullname\",{\"k\":\"string\"},true]],\"MoodleContactRequest\":[[\"id\",{\"k\":\"int\"},true],[\"userid\",{\"k\":\"int\"},true],[\"requesteduserid\",{\"k\":\"int\"},true],[\"timecreated\",{\"k\":\"int\"},true]],\"MoodleContentTag\":[[\"id\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],",
+    "[\"rawname\",{\"k\":\"string\"},true],[\"isstandard\",{\"k\":\"bool\"},true],[\"tagcollid\",{\"k\":\"int\"},true],[\"taginstanceid\",{\"k\":\"int\"},true],[\"taginstancecontextid\",{\"k\":\"int\"},true],[\"itemid\",{\"k\":\"int\"},true],[\"ordering\",{\"k\":\"int\"},true],[\"flag\",{\"k\":\"int\"},true],[\"viewurl\",{\"k\":\"string\"},true]],\"MoodleConversation\":[[\"id\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"subname\",{\"k\":\"string\"},true],[\"imageurl\",{\"k\":\"string\"},true],[\"type\",{\"k\":\"int\"},true],[\"membercount\",{\"k\":\"int\"},true],[\"ismuted\",{\"k\":\"bool\"},true],[\"isfavourite\",{\"k\":\"bool\"},true],[\"isread\",{\"k\":\"bool\"},true],[\"unreadcount\",{\"k\":\"int\"},true],[\"members\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleConversationMember\"}},true],[\"messages\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleConversationMessage\"}},true],[\"candeletemessagesforallusers\",{\"k\":\"bool\"},true]],\"MoodleConversationMember\":[[\"id\",{\"k\":\"int\"},true],[\"fullname\",{\"k\":\"string\"},true],[\"profileurl\",{\"k\":\"string\"},true],[\"profileimageurl\",{\"k\":\"string\"},true],[\"profileimageurlsmall\",{\"k\":\"string\"},true],[\"isonline\",{\"k\":\"bool\"},true],[\"showonlinestatus\",{\"k\":\"bool\"},true],[\"isblocked\",{\"k\":\"bool\"},true],[\"iscontact\",{\"k\":\"bool\"},true],[\"isdeleted\",{\"k\":\"bool\"},true],[\"canmessageevenifblocked\",{\"k\":\"bool\"},true],[\"canmessage\",{\"k\":\"bool\"},true],[\"requirescontact\",{\"k\":\"bool\"},true],[\"cancreatecontact\",{\"k\":\"bool\"},true],[\"contactrequests\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleContactRequest\"}},true],[\"conversations\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleMemberConversation\"}},true]],\"MoodleConversationMessage\":[[\"id\",{\"k\":\"int\"},true],[\"useridfrom\",{\"k\":\"int\"},true],[\"text\",{\"k\":\"string\"},true],[\"timecreated\",{\"k\":\"int\"},true]],\"MoodleConversationsResponse\":[[\"conversations\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleConversation\"}},true]],\"MoodleCorrectanswer\":[[\"answer\",{\"k\":\"string\"},true],[\"correct\",{\"k\":\"bool\"},true],[\"incorrect\",{\"k\":\"bool\"},true],[\"text\",{\"k\":\"bool\"},true],[\"checked\",{\"k\":\"bool\"},true],[\"unchecked\",{\"k\":\"bool\"},true],[\"pass\",{\"k\":\"bool\"},true],[\"fail\",{\"k\":\"bool\"},true]],\"MoodleCourse\":[[\"id\",{\"k\":\"int\"},true],[\"fullname\",{\"k\":\"string\"},true],[\"displayname\",{\"k\":\"string\"},true],[\"shortname\",{\"k\":\"string\"},true],[\"courseimage\",{\"k\":\"string\"},true],[\"categoryid\",{\"k\":\"int\"},true],[\"categoryname\",{\"k\":\"string\"},true],[\"sortorder\",{\"k\":\"int\"},true],[\"summary\",{\"k\":\"string\"},true],[\"summaryformat\",{\"k\":\"int\"},true],[\"summaryfiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFile\"}},true],[\"overviewfiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFile\"}},true],[\"showactivitydates\",{\"k\":\"bool\"},true],[\"showcompletionconditions\",{\"k\":\"bool\"},true],[\"contacts\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleContact\"}},true],[\"enrollmentmethods\",{\"k\":\"list\",\"e\":{\"k\":\"string\"}},true],[\"customfields\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCourseCustomField\"}},true],[\"idnumber\",{\"k\":\"string\"},true],[\"format\",{\"k\":\"string\"},true],[\"showgrades\",{\"k\":\"int\"},true],[\"newsitems\",{\"k\":\"int\"},true],[\"startdate\",{\"k\":\"int\"},true],[\"enddate\",{\"k\":\"int\"},true],[\"maxbytes\",{\"k\":\"int\"},true],[\"showreports\",{\"k\":\"int\"},true],[\"visible\",{\"k\":\"int\"},true],[\"groupmode\",{\"k\":\"int\"},true],[\"groupmodeforce\",{\"k\":\"int\"},true],[\"defaultgroupingid\",{\"k\":\"int\"},true],[\"enablecompletion\",{\"k\":\"int\"},true],[\"completionnotify\",{\"k\":\"int\"},true],[\"lang\",{\"k\":\"string\"},true],[\"theme\",{\"k\":\"string\"},true],[\"marker\",{\"k\":\"int\"},true],[\"legacyfiles\",{\"k\":\"int\"},true],[\"calendartype\",{\"k\":\"string\"},true],[\"timecreated\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"requested\",{\"k\":\"int\"},true],[\"cacherev\",{\"k\":\"int\"},true],[\"filters\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFilter\"}},true],[\"courseformatoptions\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleKeyValue\"}},true],[\"communicationroomname\",{\"k\":\"string\"},true],[\"communicationroomurl\",{\"k\":\"string\"},true]],\"MoodleCourseAssignments\":[[\"id\",{\"k\":\"int\"},true],[\"fullname\",{\"k\":\"string\"},true],[\"shortname\",{\"k\":\"string\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"assignments\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleAssignment\"}},true]],\"MoodleCourseCustomField\":[[\"name\",{\"k\":\"string\"},true],[\"shortname\",{\"k\":\"string\"},true],[\"type\",{\"k\":\"string\"},true],[\"valueraw\",{\"k\":\"string\"},true],[\"value\",{\"k\":\"string\"},true]],\"MoodleCourseGetCategoriesItem\":[[\"id\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"idnumber\",{\"k\":\"string\"},true],[\"description\",{\"k\":\"string\"},true],[\"descriptionformat\",{\"k\":\"int\"},true],[\"parent\",{\"k\":\"int\"},true],[\"sortorder\",{\"k\":\"int\"},true],[\"coursecount\",{\"k\":\"int\"},true],[\"visible\",{\"k\":\"int\"},true],[\"visibleold\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"depth\",{\"k\":\"int\"},true],[\"path\",{\"k\":\"string\"},true],[\"theme\",{\"k\":\"string\"},true]],\"MoodleCourseGetCourseModuleResponse\":[[\"cm\",{\"k\":\"record\",\"n\":\"MoodleCm\",\"folded\":true},false],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleCourseGetCoursesItem\":[[\"id\",{\"k\":\"int\"},true],[\"shortname\",{\"k\":\"string\"},true],[\"categoryid\",{\"k\":\"int\"},true],[\"categorysortorder\",{\"k\":\"int\"},true],[\"fullname\",{\"k\":\"string\"},true],[\"displayname\",{\"k\":\"string\"},true],[\"idnumber\",{\"k\":\"string\"},true],[\"summary\",{\"k\":\"string\"},true],[\"summaryformat\",{\"k\":\"int\"},true],[\"format\",{\"k\":\"string\"},true],[\"showgrades\",{\"k\":\"int\"},true],[\"newsitems\",{\"k\":\"int\"},true],[\"startdate\",{\"k\":\"int\"},true],[\"enddate\",{\"k\":\"int\"},true],[\"numsections\",{\"k\":\"int\"},true],[\"maxbytes\",{\"k\":\"int\"},true],[\"showreports\",{\"k\":\"int\"},true],[\"visible\",{\"k\":\"int\"},true],[\"hiddensections\",{\"k\":\"int\"},true],[\"groupmode\",{\"k\":\"int\"},true],[\"groupmodeforce\",{\"k\":\"int\"},true],[\"defaultgroupingid\",{\"k\":\"int\"},true],[\"timecreated\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"enablecompletion\",{\"k\":\"int\"},true],[\"completionnotify\",{\"k\":\"int\"},true],[\"lang\",{\"k\":\"string\"},true],[\"forcetheme\",{\"k\":\"string\"},true],[\"courseformatoptions\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleNamedValue\"}},true],[\"showactivitydates\",{\"k\":\"bool\"},true],[\"showcompletionconditions\",{\"k\":\"bool\"},true],[\"customfields\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCourseGetCoursesItemCustomField\"}},true]],\"MoodleCourseGetCoursesItemCustomField\":[[\"name\",{\"k\":\"string\"},true],[\"shortname\",{\"k\":\"string\"},true],[\"type\",{\"k\":\"string\"},true],[\"valueraw\",{\"k\":\"string\"},true],[\"value\",{\"k\":\"string\"},true]],\"MoodleCourseGrade\":[[\"courseid\",{\"k\":\"int\"},true],[\"grade\",{\"k\":\"string\"},true],[\"rawgrade\",{\"k\":\"string\"},true],[\"rank\",{\"k\":\"int\"},true]],\"MoodleCourseGradesResponse\":[[\"grades\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCourseGrade\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleCourseGroup\":[[\"id\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"description\",{\"k\":\"string\"},true],[\"descriptionformat\",{\"k\":\"int\"},true],[\"idnumber\",{\"k\":\"string\"},true],[\"courseid\",{\"k\":\"int\"},true]],\"MoodleCourseModule\":[[\"id\",{\"k\":\"int\"},true],[\"url\",{\"k\":\"string\"},true],[\"name\",{\"k\":\"string\"},true],[\"instance\",{\"k\":\"int\"},true],[\"contextid\",{\"k\":\"int\"},true],[\"description\",{\"k\":\"string\"},true],[\"visible\",{\"k\":\"int\"},true],[\"uservisible\",{\"k\":\"bool\"},true],[\"availabilityinfo\",{\"k\":\"string\"},true],[\"visibleoncoursepage\",{\"k\":\"int\"},true],[\"modicon\",{\"k\":\"string\"},true],[\"modname\",{\"k\":\"string\"},true],[\"purpose\",{\"k\":\"string\"},true],[\"branded\",{\"k\":\"bool\"},true],[\"modplural\",{\"k\":\"string\"},true],[\"availability\",{\"k\":\"string\"},true],[\"indent\",{\"k\":\"int\"},true],[\"onclick\",{\"k\":\"string\"},true],[\"afterlink\",{\"k\":\"string\"},true],[\"activitybadge\",{\"k\":\"record\",\"n\":\"MoodleActivityBadge\",\"folded\":true},true],[\"customdata\",{\"k\":\"string\"},true],[\"noviewlink\",{\"k\":\"bool\"},true],[\"completion\",{\"k\":\"int\"},true],[\"completiondata\",{\"k\":\"record\",\"n\":\"MoodleModuleCompletion\",\"folded\":true},true],[\"downloadcontent\",{\"k\":\"int\"},true],[\"dates\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleModuleDate\"}},true],[\"groupmode\",{\"k\":\"int\"},true],[\"contents\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleModuleContent\"}},true],[\"contentsinfo\",{\"k\":\"record\",\"n\":\"MoodleModuleContentsInfo\",\"folded\":true},true]],\"MoodleCourseSection\":[[\"id\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"visible\",{\"k\":\"int\"},true],[\"summary\",{\"k\":\"string\"},true],[\"summaryformat\",{\"k\":\"int\"},true],[\"section\",{\"k\":\"int\"},true],[\"hiddenbynumsections\",{\"k\":\"int\"},true],[\"uservisible\",{\"k\":\"bool\"},true],[\"availabilityinfo\",{\"k\":\"string\"},true],[\"component\",{\"k\":\"string\"},true],[\"itemid\",{\"k\":\"int\"},true],[\"modules\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCourseModule\"}},true]],\"MoodleCourseUserGroupsResponse\":[[\"groups\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCourseGroup\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleCoursecompetency\":[[\"courseid\",{\"k\":\"int\"},true],[\"competencyid\",{\"k\":\"int\"},true],[\"sortorder\",{\"k\":\"int\"},true],[\"ruleoutcome\",{\"k\":\"int\"},true],[\"id\",{\"k\":\"int\"},true],[\"timecreated\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"usermodified\",{\"k\":\"int\"},true]],\"MoodleCoursesByFieldResponse\":[[\"courses\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCourse\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleDataGetDataAccessInformationResponse\":[[\"groupid\",{\"k\":\"int\"},true],[\"canaddentry\",{\"k\":\"bool\"},true],[\"canmanageentries\",{\"k\":\"bool\"},true],[\"canapprove\",{\"k\":\"bool\"},true],[\"timeavailable\",{\"k\":\"bool\"},true],[\"inreadonlyperiod\",{\"k\":\"bool\"},true],[\"numentries\",{\"k\":\"int\"},true],[\"entrieslefttoadd\",{\"k\":\"int\"},true],[\"entrieslefttoview\",{\"k\":\"int\"},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleDataGetDatabasesByCoursesResponse\":[[\"databases\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleDatabase\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleDataGetEntriesResponse\":[[\"entries\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleDataGetEntriesResponseEntry\"}},true],[\"totalcount\",{\"k\":\"int\"},true],[\"totalfilesize\",{\"k\":\"int\"},true],[\"listviewcontents\",{\"k\":\"string\"},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleDataGetEntriesResponseEntry\":[[\"id\",{\"k\":\"int\"},true],[\"userid\",{\"k\":\"int\"},true],[\"groupid\",{\"k\":\"int\"},true],[\"dataid\",{\"k\":\"int\"},true],[\"timecreated\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"approved\",{\"k\":\"bool\"},true],[\"canmanageentry\",{\"k\":\"bool\"},true],[\"fullname\",{\"k\":\"string\"},true],[\"contents\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleDataGetEntriesResponseEntryContent\"}},true],[\"tags\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleContentTag\"}},true]],\"MoodleDataGetEntriesResponseEntryContent\":[[\"id\",{\"k\":\"int\"},true],[\"fieldid\",{\"k\":\"int\"},true],[\"recordid\",{\"k\":\"int\"},true],[\"content\",{\"k\":\"string\"},true],[\"content1\",{\"k\":\"string\"},true],[\"content2\",{\"k\":\"string\"},true],[\"content3\",{\"k\":\"string\"},true],[\"content4\",{\"k\":\"string\"},true],[\"files\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleSummaryFile\"}},true]],\"MoodleDataGetEntryResponse\":[[\"entry\",{\"k\":\"record\",\"n\":\"MoodleDataGetEntriesResponseEntry\",\"folded\":true},false],[\"entryviewcontents\",{\"k\":\"string\"},true],[\"ratinginfo\",{\"k\":\"record\",\"n\":\"MoodleRatingInfo\",\"folded\":true},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleDataGetFieldsResponse\":[[\"fields\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleField\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleDataSearchEntriesResponse\":[[\"entries\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleDataGetEntriesResponseEntry\"}},true],[\"totalcount\",{\"k\":\"int\"},true],[\"maxcount\",{\"k\":\"int\"},true],[\"listviewcontents\",{\"k\":\"string\"},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleDatabase\":[[\"id\",{\"k\":\"int\"},true],[\"course\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"intro\",{\"k\":\"string\"},true],[\"introformat\",{\"k\":\"int\"},true],[\"lang\",{\"k\":\"string\"},true],[\"comments\",{\"k\":\"bool\"},true],[\"timeavailablefrom\",{\"k\":\"int\"},true],[\"timeavailableto\",{\"k\":\"int\"},true],[\"timeviewfrom\",{\"k\":\"int\"},true],[\"timeviewto\",{\"k\":\"int\"},true],[\"requiredentries\",{\"k\":\"int\"},true],[\"requiredentriestoview\",{\"k\":\"int\"},true],[\"maxentries\",{\"k\":\"int\"},true],[\"rssarticles\",{\"k\":\"int\"},true],[\"singletemplate\",{\"k\":\"string\"},true],[\"listtemplate\",{\"k\":\"string\"},true],[\"listtemplateheader\",{\"k\":\"string\"},true],[\"listtemplatefooter\",{\"k\":\"string\"},true],[\"addtemplate\",{\"k\":\"string\"},true],[\"rsstemplate\",{\"k\":\"string\"},true],[\"rsstitletemplate\",{\"k\":\"string\"},true],[\"csstemplate\",{\"k\":\"string\"},true],[\"jstemplate\",{\"k\":\"string\"},true],[\"asearchtemplate\",{\"k\":\"string\"},true],[\"approval\",{\"k\":\"bool\"},true],[\"manageapproved\",{\"k\":\"bool\"},true],[\"scale\",{\"k\":\"int\"},true],[\"assessed\",{\"k\":\"int\"},true],[\"assesstimestart\",{\"k\":\"int\"},true],[\"assesstimefinish\",{\"k\":\"int\"},true],[\"defaultsort\",{\"k\":\"int\"},true],[\"defaultsortdir\",{\"k\":\"int\"},true],[\"editany\",{\"k\":\"bool\"},true],[\"notification\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"coursemodule\",{\"k\":\"int\"},true],[\"introfiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleSummaryFile\"}},true]],\"MoodleDataprivacyGetAccessInformationResponse\":[[\"cancontactdpo\",{\"k\":\"bool\"},true],[\"canmanagedatarequests\",{\"k\":\"bool\"},true],[\"cancreatedatadownloadrequest\",{\"k\":\"bool\"},true],[\"cancreatedatadeletionrequest\",{\"k\":\"bool\"},true],[\"hasongoingdatadownloadrequest\",{\"k\":\"bool\"},true],[\"hasongoingdatadeletionrequest\",{\"k\":\"bool\"},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleDataprivacyGetDataRequestsResponse\":[[\"requests\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleDataprivacyGetDataRequestsResponseRequest\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleDataprivacyGetDataRequestsResponseRequest\":[[\"type\",{\"k\":\"int\"},true],[\"comments\",{\"k\":\"string\"},true],[\"commentsformat\",{\"k\":\"int\"},true],[\"userid\",{\"k\":\"int\"},true],[\"requestedby\",{\"k\":\"int\"},true],[\"status\",{\"k\":\"int\"},true],[\"dpo\",{\"k\":\"int\"},true],[\"dpocomment\",{\"k\":\"string\"},true],[\"dpocommentformat\",{\"k\":\"int\"},true],[\"systemapproved\",{\"k\":\"bool\"},true],[\"creationmethod\",{\"k\":\"int\"},true],[\"id\",{\"k\":\"int\"},true],[\"timecreated\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"usermodified\",{\"k\":\"int\"},true],[\"foruser\",{\"k\":\"record\",\"n\":\"MoodleActionuser\",\"folded\":true},false],[\"requestedbyuser\",{\"k\":\"record\",\"n\":\"MoodleActionuser\",\"folded\":true},true],[\"dpouser\",{\"k\":\"record\",\"n\":\"MoodleActionuser\",\"folded\":true},true],[\"messagehtml\",{\"k\":\"string\"},true],[\"typename\",{\"k\":\"string\"},true],[\"typenameshort\",{\"k\":\"string\"},true],[\"statuslabel\",{\"k\":\"string\"},true],[\"statuslabelclass\",{\"k\":\"string\"},true],[\"canreview\",{\"k\":\"bool\"},true],[\"approvedeny\",{\"k\":\"bool\"},true],[\"allowfiltering\",{\"k\":\"bool\"},true],[\"canmarkcomplete\",{\"k\":\"bool\"},true],[\"downloadlink\",{\"k\":\"string\"},true]],\"MoodleDeployedfile\":[[\"filename\",{\"k\":\"string\"},true],[\"filepath\",{\"k\":\"string\"},true],[\"filesize\",{\"k\":\"int\"},true],[\"fileurl\",{\"k\":\"string\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"mimetype\",{\"k\":\"string\"},true]],\"MoodleDetail\":[[\"type\",{\"k\":\"string\"},true],[\"criteria\",{\"k\":\"string\"},true],[\"requirement\",{\"k\":\"string\"},true],[\"status\",{\"k\":\"string\"},true]],\"MoodleDiscussionPostResponse\":[[\"post\",{\"k\":\"record\",\"n\":\"MoodleForumPost\",\"folded\":true},false],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleDiscussionPostsResponse\":[[\"posts\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleForumPost\"}},true],[\"forumid\",{\"k\":\"int\"},true],[\"courseid\",{\"k\":\"int\"},true],[\"ratinginfo\",{\"k\":\"record\",\"n\":\"MoodleRatingInfo\",\"folded\":true},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleEnrolGetCourseEnrolmentMethodsItem\":[[\"id\",{\"k\":\"int\"},true],[\"courseid\",{\"k\":\"int\"},true],[\"type\",{\"k\":\"string\"},true],[\"name\",{\"k\":\"string\"},true],[\"status\",{\"k\":\"string\"},true],[\"wsfunction\",{\"k\":\"string\"},true]],\"MoodleEnrolGetEnrolledUsersItem\":[[\"id\",{\"k\":\"int\"},true],[\"username\",{\"k\":\"string\"},true],[\"firstname\",{\"k\":\"string\"},true],[\"lastname\",{\"k\":\"string\"},true],[\"fullname\",{\"k\":\"string\"},true],[\"email\",{\"k",
+    "\":\"string\"},true],[\"address\",{\"k\":\"string\"},true],[\"phone1\",{\"k\":\"string\"},true],[\"phone2\",{\"k\":\"string\"},true],[\"department\",{\"k\":\"string\"},true],[\"institution\",{\"k\":\"string\"},true],[\"idnumber\",{\"k\":\"string\"},true],[\"interests\",{\"k\":\"string\"},true],[\"firstaccess\",{\"k\":\"int\"},true],[\"lastaccess\",{\"k\":\"int\"},true],[\"lastcourseaccess\",{\"k\":\"int\"},true],[\"description\",{\"k\":\"string\"},true],[\"descriptionformat\",{\"k\":\"int\"},true],[\"city\",{\"k\":\"string\"},true],[\"country\",{\"k\":\"string\"},true],[\"profileimageurlsmall\",{\"k\":\"string\"},true],[\"profileimageurl\",{\"k\":\"string\"},true],[\"customfields\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleEnrolGetEnrolledUsersItemCustomField\"}},true],[\"groups\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleUserGroup\"}},true],[\"roles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleUserRole\"}},true],[\"preferences\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleKeyValue\"}},true],[\"enrolledcourses\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleUserEnrolledCourse\"}},true]],\"MoodleEnrolGetEnrolledUsersItemCustomField\":[[\"type\",{\"k\":\"string\"},true],[\"value\",{\"k\":\"string\"},true],[\"name\",{\"k\":\"string\"},true],[\"shortname\",{\"k\":\"string\"},true]],\"MoodleEnrolGuestGetInstanceInfoResponse\":[[\"instanceinfo\",{\"k\":\"record\",\"n\":\"MoodleInstanceinfo\",\"folded\":true},false],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleEnrolSelfGetInstanceInfoResponse\":[[\"id\",{\"k\":\"int\"},true],[\"courseid\",{\"k\":\"int\"},true],[\"type\",{\"k\":\"string\"},true],[\"name\",{\"k\":\"string\"},true],[\"status\",{\"k\":\"string\"},true],[\"enrolpassword\",{\"k\":\"string\"},true]],\"MoodleEnrolledCourse\":[[\"id\",{\"k\":\"int\"},true],[\"shortname\",{\"k\":\"string\"},true],[\"fullname\",{\"k\":\"string\"},true],[\"displayname\",{\"k\":\"string\"},true],[\"enrolledusercount\",{\"k\":\"int\"},true],[\"idnumber\",{\"k\":\"string\"},true],[\"visible\",{\"k\":\"int\"},true],[\"summary\",{\"k\":\"string\"},true],[\"summaryformat\",{\"k\":\"int\"},true],[\"format\",{\"k\":\"string\"},true],[\"courseimage\",{\"k\":\"string\"},true],[\"showgrades\",{\"k\":\"bool\"},true],[\"lang\",{\"k\":\"string\"},true],[\"enablecompletion\",{\"k\":\"bool\"},true],[\"completionhascriteria\",{\"k\":\"bool\"},true],[\"completionusertracked\",{\"k\":\"bool\"},true],[\"category\",{\"k\":\"int\"},true],[\"progress\",{\"k\":\"number\"},true],[\"completed\",{\"k\":\"bool\"},true],[\"startdate\",{\"k\":\"int\"},true],[\"enddate\",{\"k\":\"int\"},true],[\"marker\",{\"k\":\"int\"},true],[\"lastaccess\",{\"k\":\"int\"},true],[\"isfavourite\",{\"k\":\"bool\"},true],[\"hidden\",{\"k\":\"bool\"},true],[\"overviewfiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFile\"}},true],[\"showactivitydates\",{\"k\":\"bool\"},true],[\"showcompletionconditions\",{\"k\":\"bool\"},true],[\"timemodified\",{\"k\":\"int\"},true]],\"MoodleEventAction\":[[\"name\",{\"k\":\"string\"},true],[\"url\",{\"k\":\"string\"},true],[\"itemcount\",{\"k\":\"int\"},true],[\"actionable\",{\"k\":\"bool\"},true],[\"showitemcount\",{\"k\":\"bool\"},true]],\"MoodleEventCategory\":[[\"id\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"idnumber\",{\"k\":\"string\"},true],[\"description\",{\"k\":\"string\"},true],[\"parent\",{\"k\":\"int\"},true],[\"coursecount\",{\"k\":\"int\"},true],[\"visible\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"depth\",{\"k\":\"int\"},true],[\"nestedname\",{\"k\":\"string\"},true],[\"url\",{\"k\":\"string\"},true]],\"MoodleEventCourse\":[[\"id\",{\"k\":\"int\"},true],[\"fullname\",{\"k\":\"string\"},true],[\"shortname\",{\"k\":\"string\"},true],[\"idnumber\",{\"k\":\"string\"},true],[\"summary\",{\"k\":\"string\"},true],[\"summaryformat\",{\"k\":\"int\"},true],[\"startdate\",{\"k\":\"int\"},true],[\"enddate\",{\"k\":\"int\"},true],[\"visible\",{\"k\":\"bool\"},true],[\"showactivitydates\",{\"k\":\"bool\"},true],[\"showcompletionconditions\",{\"k\":\"bool\"},true],[\"pdfexportfont\",{\"k\":\"string\"},true],[\"fullnamedisplay\",{\"k\":\"string\"},true],[\"viewurl\",{\"k\":\"string\"},true],[\"courseimage\",{\"k\":\"string\"},true],[\"progress\",{\"k\":\"int\"},true],[\"hasprogress\",{\"k\":\"bool\"},true],[\"isfavourite\",{\"k\":\"bool\"},true],[\"hidden\",{\"k\":\"bool\"},true],[\"timeaccess\",{\"k\":\"int\"},true],[\"showshortname\",{\"k\":\"bool\"},true],[\"coursecategory\",{\"k\":\"string\"},true]],\"MoodleEventIcon\":[[\"key\",{\"k\":\"string\"},true],[\"component\",{\"k\":\"string\"},true],[\"alttext\",{\"k\":\"string\"},true],[\"iconurl\",{\"k\":\"string\"},true],[\"iconclass\",{\"k\":\"string\"},true]],\"MoodleEventSubscription\":[[\"displayeventsource\",{\"k\":\"bool\"},true],[\"subscriptionname\",{\"k\":\"string\"},true],[\"subscriptionurl\",{\"k\":\"string\"},true]],\"MoodleEvidence\":[[\"userid\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"description\",{\"k\":\"string\"},true],[\"descriptionformat\",{\"k\":\"int\"},true],[\"url\",{\"k\":\"string\"},true],[\"id\",{\"k\":\"int\"},true],[\"timecreated\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"usermodified\",{\"k\":\"int\"},true],[\"canmanage\",{\"k\":\"bool\"},true],[\"filecount\",{\"k\":\"int\"},true],[\"files\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodlePostInlineFile\"}},true],[\"hasurlorfiles\",{\"k\":\"bool\"},true],[\"urlshort\",{\"k\":\"string\"},true],[\"competencycount\",{\"k\":\"int\"},true],[\"usercompetencies\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleEvidenceUsercompetency\"}},true],[\"userhasplan\",{\"k\":\"bool\"},true]],\"MoodleEvidenceUsercompetency\":[[\"competency\",{\"k\":\"record\",\"n\":\"MoodleCompetencyListCourseCompetenciesItemCompetency\",\"folded\":true},false],[\"usercompetency\",{\"k\":\"record\",\"n\":\"MoodleLpDataForPlanPageResponseCompetencyUsercompetency\",\"folded\":true},false]],\"MoodleExample\":[[\"id\",{\"k\":\"int\"},true],[\"title\",{\"k\":\"string\"},true],[\"assessmentid\",{\"k\":\"int\"},true],[\"grade\",{\"k\":\"number\"},true],[\"gradinggrade\",{\"k\":\"number\"},true]],\"MoodleFeature\":[[\"name\",{\"k\":\"string\"},true],[\"isenabled\",{\"k\":\"bool\"},true]],\"MoodleFeedbackGetAnalysisResponse\":[[\"completedcount\",{\"k\":\"int\"},true],[\"itemscount\",{\"k\":\"int\"},true],[\"itemsdata\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleItemsdata\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleFeedbackGetCurrentCompletedTmpResponse\":[[\"feedback\",{\"k\":\"record\",\"n\":\"MoodleFeedbackGetCurrentCompletedTmpResponseFeedback\",\"folded\":true},false],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleFeedbackGetCurrentCompletedTmpResponseFeedback\":[[\"id\",{\"k\":\"int\"},true],[\"feedback\",{\"k\":\"int\"},true],[\"userid\",{\"k\":\"int\"},true],[\"guestid\",{\"k\":\"string\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"random_response\",{\"k\":\"int\"},true],[\"anonymous_response\",{\"k\":\"int\"},true],[\"courseid\",{\"k\":\"int\"},true]],\"MoodleFeedbackGetFeedbackAccessInformationResponse\":[[\"canviewanalysis\",{\"k\":\"bool\"},true],[\"cancomplete\",{\"k\":\"bool\"},true],[\"cansubmit\",{\"k\":\"bool\"},true],[\"candeletesubmissions\",{\"k\":\"bool\"},true],[\"canviewreports\",{\"k\":\"bool\"},true],[\"canedititems\",{\"k\":\"bool\"},true],[\"isempty\",{\"k\":\"bool\"},true],[\"isopen\",{\"k\":\"bool\"},true],[\"isalreadysubmitted\",{\"k\":\"bool\"},true],[\"isanonymous\",{\"k\":\"bool\"},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleFeedbackGetFeedbacksByCoursesResponse\":[[\"feedbacks\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFeedbackGetFeedbacksByCoursesResponseFeedback\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleFeedbackGetFeedbacksByCoursesResponseFeedback\":[[\"id\",{\"k\":\"int\"},true],[\"course\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"intro\",{\"k\":\"string\"},true],[\"introformat\",{\"k\":\"int\"},true],[\"lang\",{\"k\":\"string\"},true],[\"anonymous\",{\"k\":\"int\"},true],[\"email_notification\",{\"k\":\"bool\"},true],[\"multiple_submit\",{\"k\":\"bool\"},true],[\"autonumbering\",{\"k\":\"bool\"},true],[\"site_after_submit\",{\"k\":\"string\"},true],[\"page_after_submit\",{\"k\":\"string\"},true],[\"page_after_submitformat\",{\"k\":\"int\"},true],[\"publish_stats\",{\"k\":\"bool\"},true],[\"timeopen\",{\"k\":\"int\"},true],[\"timeclose\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"completionsubmit\",{\"k\":\"bool\"},true],[\"coursemodule\",{\"k\":\"int\"},true],[\"introfiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleSummaryFile\"}},true],[\"pageaftersubmitfiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleSummaryFile\"}},true]],\"MoodleFeedbackGetFinishedResponsesResponse\":[[\"responses\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFeedbackGetFinishedResponsesResponseResponse\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleFeedbackGetFinishedResponsesResponseResponse\":[[\"id\",{\"k\":\"int\"},true],[\"course_id\",{\"k\":\"int\"},true],[\"item\",{\"k\":\"int\"},true],[\"completed\",{\"k\":\"int\"},true],[\"tmp_completed\",{\"k\":\"int\"},true],[\"value\",{\"k\":\"string\"},true]],\"MoodleFeedbackGetItemsResponse\":[[\"items\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleItem\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleFeedbackGetLastCompletedResponse\":[[\"completed\",{\"k\":\"record\",\"n\":\"MoodleCompleted\",\"folded\":true},false],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleFeedbackGetNonRespondentsResponse\":[[\"users\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFeedbackGetNonRespondentsResponseUser\"}},true],[\"total\",{\"k\":\"int\"},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleFeedbackGetNonRespondentsResponseUser\":[[\"courseid\",{\"k\":\"int\"},true],[\"userid\",{\"k\":\"int\"},true],[\"fullname\",{\"k\":\"string\"},true],[\"started\",{\"k\":\"bool\"},true]],\"MoodleFeedbackGetResponsesAnalysisResponse\":[[\"attempts\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFeedbackGetResponsesAnalysisResponseAttempt\"}},true],[\"totalattempts\",{\"k\":\"int\"},true],[\"anonattempts\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleAnonattempt\"}},true],[\"totalanonattempts\",{\"k\":\"int\"},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleFeedbackGetResponsesAnalysisResponseAttempt\":[[\"id\",{\"k\":\"int\"},true],[\"courseid\",{\"k\":\"int\"},true],[\"userid\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"fullname\",{\"k\":\"string\"},true],[\"responses\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFeedbackGetResponsesAnalysisResponseAttemptResponse\"}},true]],\"MoodleFeedbackGetResponsesAnalysisResponseAttemptResponse\":[[\"id\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"printval\",{\"k\":\"string\"},true],[\"rawval\",{\"k\":\"string\"},true]],\"MoodleFeedbackLaunchFeedbackResponse\":[[\"gopage\",{\"k\":\"int\"},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleField\":[[\"id\",{\"k\":\"int\"},true],[\"dataid\",{\"k\":\"int\"},true],[\"type\",{\"k\":\"string\"},true],[\"name\",{\"k\":\"string\"},true],[\"description\",{\"k\":\"string\"},true],[\"required\",{\"k\":\"bool\"},true],[\"param1\",{\"k\":\"string\"},true],[\"param2\",{\"k\":\"string\"},true],[\"param3\",{\"k\":\"string\"},true],[\"param4\",{\"k\":\"string\"},true],[\"param5\",{\"k\":\"string\"},true],[\"param6\",{\"k\":\"string\"},true],[\"param7\",{\"k\":\"string\"},true],[\"param8\",{\"k\":\"string\"},true],[\"param9\",{\"k\":\"string\"},true],[\"param10\",{\"k\":\"string\"},true]],\"MoodleFile\":[[\"filename\",{\"k\":\"string\"},true],[\"filepath\",{\"k\":\"string\"},true],[\"filesize\",{\"k\":\"int\"},true],[\"fileurl\",{\"k\":\"string\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"mimetype\",{\"k\":\"string\"},true],[\"isexternalfile\",{\"k\":\"bool\"},true],[\"repositorytype\",{\"k\":\"string\"},true],[\"icon\",{\"k\":\"string\"},true]],\"MoodleFilesGetFilesResponse\":[[\"parents\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleParent\"}},true],[\"files\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFilesGetFilesResponseFile\"}},true]],\"MoodleFilesGetFilesResponseFile\":[[\"contextid\",{\"k\":\"int\"},true],[\"component\",{\"k\":\"string\"},true],[\"filearea\",{\"k\":\"string\"},true],[\"itemid\",{\"k\":\"int\"},true],[\"filepath\",{\"k\":\"string\"},true],[\"filename\",{\"k\":\"string\"},true],[\"isdir\",{\"k\":\"bool\"},true],[\"url\",{\"k\":\"string\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"timecreated\",{\"k\":\"int\"},true],[\"filesize\",{\"k\":\"int\"},true],[\"author\",{\"k\":\"string\"},true],[\"license\",{\"k\":\"string\"},true]],\"MoodleFilesGetUnusedDraftItemidResponse\":[[\"component\",{\"k\":\"string\"},true],[\"contextid\",{\"k\":\"int\"},true],[\"userid\",{\"k\":\"int\"},true],[\"filearea\",{\"k\":\"string\"},true],[\"itemid\",{\"k\":\"int\"},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleFilter\":[[\"filter\",{\"k\":\"string\"},true],[\"localstate\",{\"k\":\"int\"},true],[\"inheritedstate\",{\"k\":\"int\"},true]],\"MoodleFiltersGetAllStatesResponse\":[[\"filters\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFiltersGetAllStatesResponseFilter\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleFiltersGetAllStatesResponseFilter\":[[\"contextlevel\",{\"k\":\"string\"},true],[\"instanceid\",{\"k\":\"int\"},true],[\"contextid\",{\"k\":\"int\"},true],[\"filter\",{\"k\":\"string\"},true],[\"state\",{\"k\":\"int\"},true],[\"sortorder\",{\"k\":\"int\"},true]],\"MoodleFolder\":[[\"id\",{\"k\":\"int\"},true],[\"coursemodule\",{\"k\":\"int\"},true],[\"course\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"intro\",{\"k\":\"string\"},true],[\"introformat\",{\"k\":\"int\"},true],[\"introfiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFile\"}},true],[\"section\",{\"k\":\"int\"},true],[\"visible\",{\"k\":\"bool\"},true],[\"groupmode\",{\"k\":\"int\"},true],[\"groupingid\",{\"k\":\"int\"},true],[\"lang\",{\"k\":\"string\"},true],[\"revision\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"display\",{\"k\":\"int\"},true],[\"showexpanded\",{\"k\":\"int\"},true],[\"showdownloadfolder\",{\"k\":\"int\"},true],[\"forcedownload\",{\"k\":\"int\"},true]],\"MoodleFolderGetFoldersByCoursesResponse\":[[\"folders\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFolder\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleForum\":[[\"id\",{\"k\":\"int\"},true],[\"course\",{\"k\":\"int\"},true],[\"type\",{\"k\":\"string\"},true],[\"name\",{\"k\":\"string\"},true],[\"intro\",{\"k\":\"string\"},true],[\"introformat\",{\"k\":\"int\"},true],[\"introfiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFile\"}},true],[\"lang\",{\"k\":\"string\"},true],[\"duedate\",{\"k\":\"int\"},true],[\"cutoffdate\",{\"k\":\"int\"},true],[\"assessed\",{\"k\":\"int\"},true],[\"assesstimestart\",{\"k\":\"int\"},true],[\"assesstimefinish\",{\"k\":\"int\"},true],[\"scale\",{\"k\":\"int\"},true],[\"grade_forum\",{\"k\":\"int\"},true],[\"grade_forum_notify\",{\"k\":\"int\"},true],[\"maxbytes\",{\"k\":\"int\"},true],[\"maxattachments\",{\"k\":\"int\"},true],[\"forcesubscribe\",{\"k\":\"int\"},true],[\"trackingtype\",{\"k\":\"int\"},true],[\"rsstype\",{\"k\":\"int\"},true],[\"rssarticles\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"warnafter\",{\"k\":\"int\"},true],[\"blockafter\",{\"k\":\"int\"},true],[\"blockperiod\",{\"k\":\"int\"},true],[\"completiondiscussions\",{\"k\":\"int\"},true],[\"completionreplies\",{\"k\":\"int\"},true],[\"completionposts\",{\"k\":\"int\"},true],[\"cmid\",{\"k\":\"int\"},true],[\"numdiscussions\",{\"k\":\"int\"},true],[\"cancreatediscussions\",{\"k\":\"bool\"},true],[\"lockdiscussionafter\",{\"k\":\"int\"},true],[\"istracked\",{\"k\":\"bool\"},true],[\"unreadpostscount\",{\"k\":\"int\"},true]],\"MoodleForumDiscussion\":[[\"id\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"groupid\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"usermodified\",{\"k\":\"int\"},true],[\"timestart\",{\"k\":\"int\"},true],[\"timeend\",{\"k\":\"int\"},true],[\"discussion\",{\"k\":\"int\"},true],[\"parent\",{\"k\":\"int\"},true],[\"userid\",{\"k\":\"int\"},true],[\"created\",{\"k\":\"int\"},true],[\"modified\",{\"k\":\"int\"},true],[\"mailed\",{\"k\":\"int\"},true],[\"subject\",{\"k\":\"string\"},true],[\"message\",{\"k\":\"string\"},true],[\"messageformat\",{\"k\":\"int\"},true],[\"messagetrust\",{\"k\":\"int\"},true],[\"messageinlinefiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFile\"}},true],[\"attachment\",{\"k\":\"string\"},true],[\"attachments\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFile\"}},true],[\"totalscore\",{\"k\":\"int\"},true],[\"mailnow\",{\"k\":\"int\"},true],[\"userfullname\",{\"k\":\"string\"},true],[\"usermodifiedfullname\",{\"k\":\"string\"},true],[\"userpictureurl\",{\"k\":\"string\"},true],[\"usermodifiedpictureurl\",{\"k\":\"string\"},true],[\"numreplies\",{\"k\":\"int\"},true],[\"numunread\",{\"k\":\"int\"},true],[\"pinned\",{\"k\":\"bool\"},true],[\"locked\",{\"k\":\"bool\"},true],[\"starred\",{\"k\":\"bool\"},true],[\"canreply\",{\"k\":\"bool\"},true],[\"canlock\",{\"k\":\"bool\"},true],[\"canfavourite\",{\"k\":\"bool\"},true]],\"MoodleForumDiscussionsResponse\":[[\"discussions\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleForumDiscussion\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleForumGetForumAccessInformationResponse\":[[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true],[\"canaddinstance\",{\"k\":\"bool\"},true],[\"canviewdiscussion\",{\"k\":\"bool\"},true],[\"canviewhiddentimedposts\",{\"k\":\"bool\"},true],[\"canstartdiscussion\",{\"k\":\"bool\"},true],[\"canreplypost\",{\"k\":\"boo",
+    "l\"},true],[\"canaddnews\",{\"k\":\"bool\"},true],[\"canreplynews\",{\"k\":\"bool\"},true],[\"canviewrating\",{\"k\":\"bool\"},true],[\"canviewanyrating\",{\"k\":\"bool\"},true],[\"canviewallratings\",{\"k\":\"bool\"},true],[\"canrate\",{\"k\":\"bool\"},true],[\"canpostprivatereply\",{\"k\":\"bool\"},true],[\"canreadprivatereplies\",{\"k\":\"bool\"},true],[\"cancreateattachment\",{\"k\":\"bool\"},true],[\"candeleteownpost\",{\"k\":\"bool\"},true],[\"candeleteanypost\",{\"k\":\"bool\"},true],[\"cansplitdiscussions\",{\"k\":\"bool\"},true],[\"canmovediscussions\",{\"k\":\"bool\"},true],[\"canpindiscussions\",{\"k\":\"bool\"},true],[\"caneditanypost\",{\"k\":\"bool\"},true],[\"canviewqandawithoutposting\",{\"k\":\"bool\"},true],[\"canviewsubscribers\",{\"k\":\"bool\"},true],[\"canmanagesubscriptions\",{\"k\":\"bool\"},true],[\"canpostwithoutthrottling\",{\"k\":\"bool\"},true],[\"canexportdiscussion\",{\"k\":\"bool\"},true],[\"canexportforum\",{\"k\":\"bool\"},true],[\"canexportpost\",{\"k\":\"bool\"},true],[\"canexportownpost\",{\"k\":\"bool\"},true],[\"canaddquestion\",{\"k\":\"bool\"},true],[\"canallowforcesubscribe\",{\"k\":\"bool\"},true],[\"cancanposttomygroups\",{\"k\":\"bool\"},true],[\"cancanoverridediscussionlock\",{\"k\":\"bool\"},true],[\"cancanoverridecutoff\",{\"k\":\"bool\"},true],[\"cancantogglefavourite\",{\"k\":\"bool\"},true],[\"cangrade\",{\"k\":\"bool\"},true],[\"cancanmailnow\",{\"k\":\"bool\"},true]],\"MoodleForumPost\":[[\"id\",{\"k\":\"int\"},true],[\"subject\",{\"k\":\"string\"},true],[\"replysubject\",{\"k\":\"string\"},true],[\"message\",{\"k\":\"string\"},true],[\"messageformat\",{\"k\":\"int\"},true],[\"author\",{\"k\":\"record\",\"n\":\"MoodlePostAuthor\",\"folded\":true},false],[\"discussionid\",{\"k\":\"int\"},true],[\"hasparent\",{\"k\":\"bool\"},true],[\"parentid\",{\"k\":\"int\"},true],[\"timecreated\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"unread\",{\"k\":\"bool\"},true],[\"isdeleted\",{\"k\":\"bool\"},true],[\"isprivatereply\",{\"k\":\"bool\"},true],[\"haswordcount\",{\"k\":\"bool\"},true],[\"wordcount\",{\"k\":\"int\"},true],[\"charcount\",{\"k\":\"int\"},true],[\"capabilities\",{\"k\":\"record\",\"n\":\"MoodlePostCapabilities\",\"folded\":true},false],[\"urls\",{\"k\":\"record\",\"n\":\"MoodlePostUrls\",\"folded\":true},true],[\"attachments\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodlePostAttachment\"}},true],[\"messageinlinefiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodlePostInlineFile\"}},true],[\"tags\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodlePostTag\"}},true],[\"html\",{\"k\":\"record\",\"n\":\"MoodlePostHtml\",\"folded\":true},true]],\"MoodleFramework\":[[\"shortname\",{\"k\":\"string\"},true],[\"idnumber\",{\"k\":\"string\"},true],[\"description\",{\"k\":\"string\"},true],[\"descriptionformat\",{\"k\":\"int\"},true],[\"visible\",{\"k\":\"bool\"},true],[\"scaleid\",{\"k\":\"int\"},true],[\"scaleconfiguration\",{\"k\":\"string\"},true],[\"contextid\",{\"k\":\"int\"},true],[\"taxonomies\",{\"k\":\"string\"},true],[\"id\",{\"k\":\"int\"},true],[\"timecreated\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"usermodified\",{\"k\":\"int\"},true],[\"canmanage\",{\"k\":\"bool\"},true],[\"competenciescount\",{\"k\":\"int\"},true],[\"contextname\",{\"k\":\"string\"},true],[\"contextnamenoprefix\",{\"k\":\"string\"},true]],\"MoodleGetComponentStringsItem\":[[\"stringid\",{\"k\":\"string\"},true],[\"string\",{\"k\":\"string\"},true]],\"MoodleGlossary\":[[\"id\",{\"k\":\"int\"},true],[\"coursemodule\",{\"k\":\"int\"},true],[\"course\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"intro\",{\"k\":\"string\"},true],[\"introformat\",{\"k\":\"int\"},true],[\"introfiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFile\"}},true],[\"section\",{\"k\":\"int\"},true],[\"visible\",{\"k\":\"bool\"},true],[\"groupmode\",{\"k\":\"int\"},true],[\"groupingid\",{\"k\":\"int\"},true],[\"lang\",{\"k\":\"string\"},true],[\"allowduplicatedentries\",{\"k\":\"int\"},true],[\"displayformat\",{\"k\":\"string\"},true],[\"mainglossary\",{\"k\":\"int\"},true],[\"showspecial\",{\"k\":\"int\"},true],[\"showalphabet\",{\"k\":\"int\"},true],[\"showall\",{\"k\":\"int\"},true],[\"allowcomments\",{\"k\":\"int\"},true],[\"allowprintview\",{\"k\":\"int\"},true],[\"usedynalink\",{\"k\":\"int\"},true],[\"defaultapproval\",{\"k\":\"int\"},true],[\"approvaldisplayformat\",{\"k\":\"string\"},true],[\"globalglossary\",{\"k\":\"int\"},true],[\"entbypage\",{\"k\":\"int\"},true],[\"editalways\",{\"k\":\"int\"},true],[\"rsstype\",{\"k\":\"int\"},true],[\"rssarticles\",{\"k\":\"int\"},true],[\"assessed\",{\"k\":\"int\"},true],[\"assesstimestart\",{\"k\":\"int\"},true],[\"assesstimefinish\",{\"k\":\"int\"},true],[\"scale\",{\"k\":\"int\"},true],[\"timecreated\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"completionentries\",{\"k\":\"int\"},true],[\"browsemodes\",{\"k\":\"list\",\"e\":{\"k\":\"string\"}},true],[\"canaddentry\",{\"k\":\"int\"},true]],\"MoodleGlossaryGetAuthorsResponse\":[[\"count\",{\"k\":\"int\"},true],[\"authors\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleAuthor\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleGlossaryGetCategoriesResponse\":[[\"count\",{\"k\":\"int\"},true],[\"categories\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCategory\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleGlossaryGetEntriesByAuthorResponse\":[[\"count\",{\"k\":\"int\"},true],[\"entries\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleGlossaryGetEntriesByAuthorResponseEntry\"}},true],[\"ratinginfo\",{\"k\":\"record\",\"n\":\"MoodleRatingInfo\",\"folded\":true},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleGlossaryGetEntriesByAuthorResponseEntry\":[[\"id\",{\"k\":\"int\"},true],[\"glossaryid\",{\"k\":\"int\"},true],[\"userid\",{\"k\":\"int\"},true],[\"userfullname\",{\"k\":\"string\"},true],[\"userpictureurl\",{\"k\":\"string\"},true],[\"concept\",{\"k\":\"string\"},true],[\"definition\",{\"k\":\"string\"},true],[\"definitionformat\",{\"k\":\"int\"},true],[\"definitiontrust\",{\"k\":\"bool\"},true],[\"definitioninlinefiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFile\"}},true],[\"attachment\",{\"k\":\"bool\"},true],[\"attachments\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFile\"}},true],[\"timecreated\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"teacherentry\",{\"k\":\"bool\"},true],[\"sourceglossaryid\",{\"k\":\"int\"},true],[\"usedynalink\",{\"k\":\"bool\"},true],[\"casesensitive\",{\"k\":\"bool\"},true],[\"fullmatch\",{\"k\":\"bool\"},true],[\"approved\",{\"k\":\"bool\"},true],[\"tags\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleContentTag\"}},true]],\"MoodleGlossaryGetEntriesByCategoryResponse\":[[\"count\",{\"k\":\"int\"},true],[\"entries\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleGlossaryGetEntriesByCategoryResponseEntry\"}},true],[\"ratinginfo\",{\"k\":\"record\",\"n\":\"MoodleRatingInfo\",\"folded\":true},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleGlossaryGetEntriesByCategoryResponseEntry\":[[\"id\",{\"k\":\"int\"},true],[\"glossaryid\",{\"k\":\"int\"},true],[\"userid\",{\"k\":\"int\"},true],[\"userfullname\",{\"k\":\"string\"},true],[\"userpictureurl\",{\"k\":\"string\"},true],[\"concept\",{\"k\":\"string\"},true],[\"definition\",{\"k\":\"string\"},true],[\"definitionformat\",{\"k\":\"int\"},true],[\"definitiontrust\",{\"k\":\"bool\"},true],[\"definitioninlinefiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFile\"}},true],[\"attachment\",{\"k\":\"bool\"},true],[\"attachments\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFile\"}},true],[\"timecreated\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"teacherentry\",{\"k\":\"bool\"},true],[\"sourceglossaryid\",{\"k\":\"int\"},true],[\"usedynalink\",{\"k\":\"bool\"},true],[\"casesensitive\",{\"k\":\"bool\"},true],[\"fullmatch\",{\"k\":\"bool\"},true],[\"approved\",{\"k\":\"bool\"},true],[\"tags\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleContentTag\"}},true],[\"categoryid\",{\"k\":\"int\"},true],[\"categoryname\",{\"k\":\"string\"},true]],\"MoodleGlossaryGetEntryByIdResponse\":[[\"entry\",{\"k\":\"record\",\"n\":\"MoodleGlossaryGetEntriesByAuthorResponseEntry\",\"folded\":true},false],[\"ratinginfo\",{\"k\":\"record\",\"n\":\"MoodleRatingInfo\",\"folded\":true},true],[\"permissions\",{\"k\":\"record\",\"n\":\"MoodlePermission\",\"folded\":true},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleGlossaryGetGlossariesByCoursesResponse\":[[\"glossaries\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleGlossary\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleGradeItem\":[[\"id\",{\"k\":\"int\"},true],[\"itemname\",{\"k\":\"string\"},true],[\"itemtype\",{\"k\":\"string\"},true],[\"itemmodule\",{\"k\":\"string\"},true],[\"iteminstance\",{\"k\":\"int\"},true],[\"itemnumber\",{\"k\":\"int\"},true],[\"idnumber\",{\"k\":\"string\"},true],[\"categoryid\",{\"k\":\"int\"},true],[\"outcomeid\",{\"k\":\"int\"},true],[\"scaleid\",{\"k\":\"int\"},true],[\"locked\",{\"k\":\"bool\"},true],[\"cmid\",{\"k\":\"int\"},true],[\"weightraw\",{\"k\":\"number\"},true],[\"weightformatted\",{\"k\":\"string\"},true],[\"status\",{\"k\":\"string\"},true],[\"graderaw\",{\"k\":\"number\"},true],[\"gradedatesubmitted\",{\"k\":\"int\"},true],[\"gradedategraded\",{\"k\":\"int\"},true],[\"gradehiddenbydate\",{\"k\":\"bool\"},true],[\"gradeneedsupdate\",{\"k\":\"bool\"},true],[\"gradeishidden\",{\"k\":\"bool\"},true],[\"gradeislocked\",{\"k\":\"bool\"},true],[\"gradeisoverridden\",{\"k\":\"bool\"},true],[\"gradeformatted\",{\"k\":\"string\"},true],[\"grademin\",{\"k\":\"number\"},true],[\"grademax\",{\"k\":\"number\"},true],[\"rangeformatted\",{\"k\":\"string\"},true],[\"percentageformatted\",{\"k\":\"string\"},true],[\"lettergradeformatted\",{\"k\":\"string\"},true],[\"rank\",{\"k\":\"int\"},true],[\"numusers\",{\"k\":\"int\"},true],[\"averageformatted\",{\"k\":\"string\"},true],[\"feedback\",{\"k\":\"string\"},true],[\"feedbackformat\",{\"k\":\"int\"},true]],\"MoodleGradeItemMark\":[[\"name\",{\"k\":\"string\"},true],[\"grade\",{\"k\":\"number\"},true],[\"maxgrade\",{\"k\":\"number\"},true]],\"MoodleGradeItemsResponse\":[[\"usergrades\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleUserGrades\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleGradereportSingleviewGetGradeItemsForSearchWidgetResponse\":[[\"gradeitems\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleGradereportSingleviewGetGradeItemsForSearchWidgetResponseGradeItem\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleGradereportSingleviewGetGradeItemsForSearchWidgetResponseGradeItem\":[[\"id\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true]],\"MoodleGradereportUserGetAccessInformationResponse\":[[\"canviewusergradereport\",{\"k\":\"bool\"},true],[\"canviewmygrades\",{\"k\":\"bool\"},true],[\"canviewallgrades\",{\"k\":\"bool\"},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleGradereportUserGetGradesTableResponse\":[[\"tables\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleTable\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleGradesGetEnrolledUsersForSelectorResponse\":[[\"users\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleUser\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleGradesGetGradeitemsResponse\":[[\"gradeItems\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleGradesGetGradeitemsResponseGradeItem\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleGradesGetGradeitemsResponseGradeItem\":[[\"id\",{\"k\":\"string\"},true],[\"itemname\",{\"k\":\"string\"},true],[\"category\",{\"k\":\"string\"},true]],\"MoodleGradesGetGroupsForSearchWidgetResponse\":[[\"groups\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleGradesGetGroupsForSearchWidgetResponseGroup\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleGradesGetGroupsForSearchWidgetResponseGroup\":[[\"id\",{\"k\":\"string\"},true],[\"name\",{\"k\":\"string\"},true],[\"groupimageurl\",{\"k\":\"string\"},true]],\"MoodleGroupGetActivityAllowedGroupsResponse\":[[\"groups\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCourseGroup\"}},true],[\"canaccessallgroups\",{\"k\":\"bool\"},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleGroupGetActivityGroupmodeResponse\":[[\"groupmode\",{\"k\":\"int\"},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleGroupGetCourseGroupingsItem\":[[\"id\",{\"k\":\"int\"},true],[\"courseid\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"description\",{\"k\":\"string\"},true],[\"descriptionformat\",{\"k\":\"int\"},true],[\"idnumber\",{\"k\":\"string\"},true]],\"MoodleGroupGetCourseGroupsItem\":[[\"id\",{\"k\":\"int\"},true],[\"courseid\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"description\",{\"k\":\"string\"},true],[\"descriptionformat\",{\"k\":\"int\"},true],[\"enrolmentkey\",{\"k\":\"string\"},true],[\"idnumber\",{\"k\":\"string\"},true],[\"visibility\",{\"k\":\"int\"},true],[\"participation\",{\"k\":\"bool\"},true]],\"MoodleH5pGetTrustedH5pFileResponse\":[[\"files\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFile\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleH5pactivity\":[[\"id\",{\"k\":\"int\"},true],[\"course\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"timecreated\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"intro\",{\"k\":\"string\"},true],[\"introformat\",{\"k\":\"int\"},true],[\"grade\",{\"k\":\"int\"},true],[\"displayoptions\",{\"k\":\"int\"},true],[\"enabletracking\",{\"k\":\"int\"},true],[\"grademethod\",{\"k\":\"int\"},true],[\"contenthash\",{\"k\":\"string\"},true],[\"coursemodule\",{\"k\":\"int\"},true],[\"context\",{\"k\":\"int\"},true],[\"introfiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleSummaryFile\"}},true],[\"package\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleSummaryFile\"}},true],[\"deployedfile\",{\"k\":\"record\",\"n\":\"MoodleDeployedfile\",\"folded\":true},true]],\"MoodleH5pactivityGetAttemptsResponse\":[[\"activityid\",{\"k\":\"int\"},true],[\"usersattempts\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleUsersattempt\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleH5pactivityGetH5pactivitiesByCoursesResponse\":[[\"h5pactivities\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleH5pactivity\"}},true],[\"h5pglobalsettings\",{\"k\":\"record\",\"n\":\"MoodleH5pglobalsetting\",\"folded\":true},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleH5pactivityGetH5pactivityAccessInformationResponse\":[[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true],[\"canview\",{\"k\":\"bool\"},true],[\"canaddinstance\",{\"k\":\"bool\"},true],[\"cansubmit\",{\"k\":\"bool\"},true],[\"canreviewattempts\",{\"k\":\"bool\"},true]],\"MoodleH5pactivityGetResultsResponse\":[[\"activityid\",{\"k\":\"int\"},true],[\"attempts\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleH5pactivityGetResultsResponseAttempt\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleH5pactivityGetResultsResponseAttempt\":[[\"id\",{\"k\":\"int\"},true],[\"h5pactivityid\",{\"k\":\"int\"},true],[\"userid\",{\"k\":\"int\"},true],[\"timecreated\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"attempt\",{\"k\":\"int\"},true],[\"rawscore\",{\"k\":\"int\"},true],[\"maxscore\",{\"k\":\"int\"},true],[\"duration\",{\"k\":\"int\"},true],[\"completion\",{\"k\":\"int\"},true],[\"success\",{\"k\":\"int\"},true],[\"scaled\",{\"k\":\"number\"},true],[\"results\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleH5pactivityGetResultsResponseAttemptResult\"}},true]],\"MoodleH5pactivityGetResultsResponseAttemptResult\":[[\"id\",{\"k\":\"int\"},true],[\"attemptid\",{\"k\":\"int\"},true],[\"subcontent\",{\"k\":\"string\"},true],[\"timecreated\",{\"k\":\"int\"},true],[\"interactiontype\",{\"k\":\"string\"},true],[\"description\",{\"k\":\"string\"},true],[\"content\",{\"k\":\"string\"},true],[\"rawscore\",{\"k\":\"int\"},true],[\"maxscore\",{\"k\":\"int\"},true],[\"duration\",{\"k\":\"int\"},true],[\"completion\",{\"k\":\"int\"},true],[\"success\",{\"k\":\"int\"},true],[\"optionslabel\",{\"k\":\"string\"},true],[\"correctlabel\",{\"k\":\"string\"},true],[\"answerlabel\",{\"k\":\"string\"},true],[\"track\",{\"k\":\"bool\"},true],[\"options\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleH5pactivityGetResultsResponseAttemptResultOption\"}},true]],\"MoodleH5pactivityGetResultsResponseAttemptResultOption\":[[\"description\",{\"k\":\"string\"},true],[\"id\",{\"k\":\"string\"},true],[\"correctanswer\",{\"k\":\"record\",\"n\":\"MoodleCorrectanswer\",\"folded\":true},true],[\"useranswer\",{\"k\":\"record\",\"n\":\"MoodleCorrectanswer\",\"folded\":true},true]],\"MoodleH5pglobalsetting\":[[\"enablesavestate\",{\"k\":\"bool\"},true],[\"savestatefreq\",{\"k\":\"int\"},true]],\"MoodleIdentityprovider\":[[\"name\",{\"k\":\"string\"},true],[\"iconurl\",{\"k\":\"string\"},true],[\"url\",{\"k\":\"string\"},true]],\"MoodleImscp\":[[\"id\",{\"k\":\"int\"},true],[\"coursemodule\",{\"k\":\"int\"},true],[\"course\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"intro\",{\"k\":\"string\"},true],[\"introformat\",{\"k\":\"int\"},true],[\"introfiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFile\"}},true],[\"section\",{\"k\":\"int\"},true],[\"visible\",{\"k\":\"bool\"},true],[\"groupmode\",{\"k\":\"int\"},true],[\"groupingid\",{\"k\":\"int\"},true],[\"lang\",{\"k\":\"string\"},true],[\"revision\",{\"k\":\"int\"},true],[\"keepold\",{\"k\":\"int\"},true],[\"structure\",{\"k\":\"string\"},true],[\"timemodified\",{\"k\":\"string\"},true]",
+    "],\"MoodleImscpGetImscpsByCoursesResponse\":[[\"imscps\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleImscp\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleInstanceinfo\":[[\"id\",{\"k\":\"int\"},true],[\"courseid\",{\"k\":\"int\"},true],[\"type\",{\"k\":\"string\"},true],[\"name\",{\"k\":\"string\"},true],[\"status\",{\"k\":\"bool\"},true],[\"passwordrequired\",{\"k\":\"bool\"},true]],\"MoodleItem\":[[\"id\",{\"k\":\"int\"},true],[\"feedback\",{\"k\":\"int\"},true],[\"template\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"nameformat\",{\"k\":\"int\"},true],[\"label\",{\"k\":\"string\"},true],[\"presentation\",{\"k\":\"string\"},true],[\"presentationformat\",{\"k\":\"int\"},true],[\"typ\",{\"k\":\"string\"},true],[\"hasvalue\",{\"k\":\"int\"},true],[\"position\",{\"k\":\"int\"},true],[\"required\",{\"k\":\"bool\"},true],[\"dependitem\",{\"k\":\"int\"},true],[\"dependvalue\",{\"k\":\"string\"},true],[\"options\",{\"k\":\"string\"},true],[\"itemfiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodlePostInlineFile\"}},true],[\"itemnumber\",{\"k\":\"int\"},true],[\"otherdata\",{\"k\":\"string\"},true]],\"MoodleItemName\":[[\"class\",{\"k\":\"string\"},true],[\"colspan\",{\"k\":\"int\"},true],[\"content\",{\"k\":\"string\"},true],[\"id\",{\"k\":\"string\"},true]],\"MoodleItemsdata\":[[\"item\",{\"k\":\"record\",\"n\":\"MoodleItem\",\"folded\":true},false],[\"data\",{\"k\":\"list\",\"e\":{\"k\":\"string\"}},true]],\"MoodleJump\":[[\"pageid\",{\"k\":\"int\"},true],[\"answerid\",{\"k\":\"int\"},true],[\"jumpto\",{\"k\":\"int\"},true],[\"calculatedjump\",{\"k\":\"int\"},true]],\"MoodleKeyValue\":[[\"name\",{\"k\":\"string\"},true],[\"value\",{\"k\":\"string\"},true]],\"MoodleLabel\":[[\"id\",{\"k\":\"int\"},true],[\"coursemodule\",{\"k\":\"int\"},true],[\"course\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"intro\",{\"k\":\"string\"},true],[\"introformat\",{\"k\":\"int\"},true],[\"introfiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFile\"}},true],[\"section\",{\"k\":\"int\"},true],[\"visible\",{\"k\":\"bool\"},true],[\"groupmode\",{\"k\":\"int\"},true],[\"groupingid\",{\"k\":\"int\"},true],[\"lang\",{\"k\":\"string\"},true],[\"timemodified\",{\"k\":\"int\"},true]],\"MoodleLabelGetLabelsByCoursesResponse\":[[\"labels\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleLabel\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleLeader\":[[\"class\",{\"k\":\"string\"},true],[\"rowspan\",{\"k\":\"int\"},true]],\"MoodleLesson\":[[\"id\",{\"k\":\"int\"},true],[\"course\",{\"k\":\"int\"},true],[\"coursemodule\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"intro\",{\"k\":\"string\"},true],[\"introformat\",{\"k\":\"int\"},true],[\"lang\",{\"k\":\"string\"},true],[\"practice\",{\"k\":\"bool\"},true],[\"modattempts\",{\"k\":\"bool\"},true],[\"usepassword\",{\"k\":\"bool\"},true],[\"password\",{\"k\":\"string\"},true],[\"dependency\",{\"k\":\"int\"},true],[\"conditions\",{\"k\":\"string\"},true],[\"grade\",{\"k\":\"int\"},true],[\"custom\",{\"k\":\"bool\"},true],[\"ongoing\",{\"k\":\"bool\"},true],[\"usemaxgrade\",{\"k\":\"int\"},true],[\"maxanswers\",{\"k\":\"int\"},true],[\"maxattempts\",{\"k\":\"int\"},true],[\"review\",{\"k\":\"bool\"},true],[\"nextpagedefault\",{\"k\":\"int\"},true],[\"feedback\",{\"k\":\"bool\"},true],[\"minquestions\",{\"k\":\"int\"},true],[\"maxpages\",{\"k\":\"int\"},true],[\"timelimit\",{\"k\":\"int\"},true],[\"retake\",{\"k\":\"bool\"},true],[\"activitylink\",{\"k\":\"int\"},true],[\"mediafile\",{\"k\":\"string\"},true],[\"mediaheight\",{\"k\":\"int\"},true],[\"mediawidth\",{\"k\":\"int\"},true],[\"mediaclose\",{\"k\":\"int\"},true],[\"slideshow\",{\"k\":\"bool\"},true],[\"width\",{\"k\":\"int\"},true],[\"height\",{\"k\":\"int\"},true],[\"bgcolor\",{\"k\":\"string\"},true],[\"displayleft\",{\"k\":\"bool\"},true],[\"displayleftif\",{\"k\":\"int\"},true],[\"progressbar\",{\"k\":\"bool\"},true],[\"available\",{\"k\":\"int\"},true],[\"deadline\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"completionendreached\",{\"k\":\"int\"},true],[\"completiontimespent\",{\"k\":\"int\"},true],[\"allowofflineattempts\",{\"k\":\"bool\"},true],[\"introfiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleSummaryFile\"}},true],[\"mediafiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleSummaryFile\"}},true]],\"MoodleLessonFinishAttemptResponseMessage\":[[\"message\",{\"k\":\"string\"},true],[\"type\",{\"k\":\"string\"},true]],\"MoodleLessonGetAttemptsOverviewResponse\":[[\"data\",{\"k\":\"record\",\"n\":\"MoodleLessonGetAttemptsOverviewResponseData\",\"folded\":true},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleLessonGetAttemptsOverviewResponseData\":[[\"lessonscored\",{\"k\":\"bool\"},true],[\"numofattempts\",{\"k\":\"int\"},true],[\"avescore\",{\"k\":\"number\"},true],[\"highscore\",{\"k\":\"number\"},true],[\"lowscore\",{\"k\":\"number\"},true],[\"avetime\",{\"k\":\"int\"},true],[\"hightime\",{\"k\":\"int\"},true],[\"lowtime\",{\"k\":\"int\"},true],[\"students\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleStudent\"}},true]],\"MoodleLessonGetLessonAccessInformationResponse\":[[\"canmanage\",{\"k\":\"bool\"},true],[\"cangrade\",{\"k\":\"bool\"},true],[\"canviewreports\",{\"k\":\"bool\"},true],[\"reviewmode\",{\"k\":\"bool\"},true],[\"attemptscount\",{\"k\":\"int\"},true],[\"lastpageseen\",{\"k\":\"int\"},true],[\"leftduringtimedsession\",{\"k\":\"bool\"},true],[\"firstpageid\",{\"k\":\"int\"},true],[\"preventaccessreasons\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodlePreventAccessReason\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleLessonGetLessonResponse\":[[\"lesson\",{\"k\":\"record\",\"n\":\"MoodleLesson\",\"folded\":true},false],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleLessonGetLessonsByCoursesResponse\":[[\"lessons\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleLesson\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleLessonGetPageDataResponse\":[[\"page\",{\"k\":\"record\",\"n\":\"MoodleLessonGetPageDataResponsePage\",\"folded\":true},true],[\"newpageid\",{\"k\":\"int\"},true],[\"pagecontent\",{\"k\":\"string\"},true],[\"ongoingscore\",{\"k\":\"string\"},true],[\"progress\",{\"k\":\"int\"},true],[\"contentfiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFile\"}},true],[\"answers\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleLessonGetPageDataResponseAnswer\"}},true],[\"messages\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleLessonFinishAttemptResponseMessage\"}},true],[\"displaymenu\",{\"k\":\"bool\"},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleLessonGetPageDataResponseAnswer\":[[\"id\",{\"k\":\"int\"},true],[\"answerfiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFile\"}},true],[\"responsefiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFile\"}},true],[\"jumpto\",{\"k\":\"int\"},true],[\"grade\",{\"k\":\"int\"},true],[\"score\",{\"k\":\"int\"},true],[\"flags\",{\"k\":\"int\"},true],[\"timecreated\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"answer\",{\"k\":\"string\"},true],[\"answerformat\",{\"k\":\"int\"},true],[\"response\",{\"k\":\"string\"},true],[\"responseformat\",{\"k\":\"int\"},true]],\"MoodleLessonGetPageDataResponsePage\":[[\"id\",{\"k\":\"int\"},true],[\"lessonid\",{\"k\":\"int\"},true],[\"prevpageid\",{\"k\":\"int\"},true],[\"nextpageid\",{\"k\":\"int\"},true],[\"qtype\",{\"k\":\"int\"},true],[\"qoption\",{\"k\":\"int\"},true],[\"layout\",{\"k\":\"int\"},true],[\"display\",{\"k\":\"int\"},true],[\"timecreated\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"title\",{\"k\":\"string\"},true],[\"contents\",{\"k\":\"string\"},true],[\"contentsformat\",{\"k\":\"int\"},true],[\"displayinmenublock\",{\"k\":\"bool\"},true],[\"type\",{\"k\":\"int\"},true],[\"typeid\",{\"k\":\"int\"},true],[\"typestring\",{\"k\":\"string\"},true]],\"MoodleLessonGetPagesPossibleJumpsResponse\":[[\"jumps\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleJump\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleLessonGetPagesResponse\":[[\"pages\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleLessonGetPagesResponsePage\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleLessonGetPagesResponsePage\":[[\"page\",{\"k\":\"record\",\"n\":\"MoodleLessonGetPageDataResponsePage\",\"folded\":true},false],[\"answerids\",{\"k\":\"list\",\"e\":{\"k\":\"int\"}},true],[\"jumps\",{\"k\":\"list\",\"e\":{\"k\":\"int\"}},true],[\"filescount\",{\"k\":\"int\"},true],[\"filessizetotal\",{\"k\":\"int\"},true]],\"MoodleLessonGetQuestionsAttemptsResponse\":[[\"attempts\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleLessonGetQuestionsAttemptsResponseAttempt\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleLessonGetQuestionsAttemptsResponseAttempt\":[[\"id\",{\"k\":\"int\"},true],[\"lessonid\",{\"k\":\"int\"},true],[\"pageid\",{\"k\":\"int\"},true],[\"userid\",{\"k\":\"int\"},true],[\"answerid\",{\"k\":\"int\"},true],[\"retry\",{\"k\":\"int\"},true],[\"correct\",{\"k\":\"int\"},true],[\"useranswer\",{\"k\":\"string\"},true],[\"timeseen\",{\"k\":\"int\"},true]],\"MoodleLessonGetUserGradeResponse\":[[\"grade\",{\"k\":\"number\"},true],[\"formattedgrade\",{\"k\":\"string\"},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleLessonGetUserTimersResponse\":[[\"timers\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleTimer\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleLpDataForCourseCompetenciesPageResponse\":[[\"courseid\",{\"k\":\"int\"},true],[\"pagecontextid\",{\"k\":\"int\"},true],[\"gradableuserid\",{\"k\":\"int\"},true],[\"canmanagecompetencyframeworks\",{\"k\":\"bool\"},true],[\"canmanagecoursecompetencies\",{\"k\":\"bool\"},true],[\"canconfigurecoursecompetencies\",{\"k\":\"bool\"},true],[\"cangradecompetencies\",{\"k\":\"bool\"},true],[\"settings\",{\"k\":\"record\",\"n\":\"MoodleSetting\",\"folded\":true},false],[\"statistics\",{\"k\":\"record\",\"n\":\"MoodleStatistic\",\"folded\":true},false],[\"competencies\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleLpDataForCourseCompetenciesPageResponseCompetency\"}},true],[\"manageurl\",{\"k\":\"string\"},true],[\"pluginbaseurl\",{\"k\":\"string\"},true]],\"MoodleLpDataForCourseCompetenciesPageResponseCompetency\":[[\"competency\",{\"k\":\"record\",\"n\":\"MoodleCompetencyListCourseCompetenciesItemCompetency\",\"folded\":true},false],[\"coursecompetency\",{\"k\":\"record\",\"n\":\"MoodleCoursecompetency\",\"folded\":true},false],[\"coursemodules\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCompetencyCourseModule\"}},true],[\"usercompetencycourse\",{\"k\":\"record\",\"n\":\"MoodleUsercompetencycourse\",\"folded\":true},true],[\"ruleoutcomeoptions\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleRuleoutcomeoption\"}},true],[\"comppath\",{\"k\":\"record\",\"n\":\"MoodleComppath\",\"folded\":true},false],[\"plans\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodlePlan\"}},true]],\"MoodleLpDataForPlanPageResponse\":[[\"plan\",{\"k\":\"record\",\"n\":\"MoodlePlan\",\"folded\":true},false],[\"contextid\",{\"k\":\"int\"},true],[\"pluginbaseurl\",{\"k\":\"string\"},true],[\"competencies\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleLpDataForPlanPageResponseCompetency\"}},true],[\"competencycount\",{\"k\":\"int\"},true],[\"proficientcompetencycount\",{\"k\":\"int\"},true],[\"proficientcompetencypercentage\",{\"k\":\"number\"},true],[\"proficientcompetencypercentageformatted\",{\"k\":\"string\"},true]],\"MoodleLpDataForPlanPageResponseCompetency\":[[\"competency\",{\"k\":\"record\",\"n\":\"MoodleCompetencyListCourseCompetenciesItemCompetency\",\"folded\":true},false],[\"comppath\",{\"k\":\"record\",\"n\":\"MoodleComppath\",\"folded\":true},false],[\"usercompetency\",{\"k\":\"record\",\"n\":\"MoodleLpDataForPlanPageResponseCompetencyUsercompetency\",\"folded\":true},true],[\"usercompetencyplan\",{\"k\":\"record\",\"n\":\"MoodleUsercompetencyplan\",\"folded\":true},true]],\"MoodleLpDataForPlanPageResponseCompetencyUsercompetency\":[[\"userid\",{\"k\":\"int\"},true],[\"competencyid\",{\"k\":\"int\"},true],[\"status\",{\"k\":\"int\"},true],[\"reviewerid\",{\"k\":\"int\"},true],[\"proficiency\",{\"k\":\"bool\"},true],[\"grade\",{\"k\":\"int\"},true],[\"id\",{\"k\":\"int\"},true],[\"timecreated\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"usermodified\",{\"k\":\"int\"},true],[\"canrequestreview\",{\"k\":\"bool\"},true],[\"canreview\",{\"k\":\"bool\"},true],[\"gradename\",{\"k\":\"string\"},true],[\"isrequestreviewallowed\",{\"k\":\"bool\"},true],[\"iscancelreviewrequestallowed\",{\"k\":\"bool\"},true],[\"isstartreviewallowed\",{\"k\":\"bool\"},true],[\"isstopreviewallowed\",{\"k\":\"bool\"},true],[\"isstatusidle\",{\"k\":\"bool\"},true],[\"isstatusinreview\",{\"k\":\"bool\"},true],[\"isstatuswaitingforreview\",{\"k\":\"bool\"},true],[\"proficiencyname\",{\"k\":\"string\"},true],[\"reviewer\",{\"k\":\"record\",\"n\":\"MoodleActionuser\",\"folded\":true},true],[\"statusname\",{\"k\":\"string\"},true],[\"url\",{\"k\":\"string\"},true]],\"MoodleLpDataForPlansPageResponse\":[[\"userid\",{\"k\":\"int\"},true],[\"plans\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodlePlan\"}},true],[\"pluginbaseurl\",{\"k\":\"string\"},true],[\"navigation\",{\"k\":\"list\",\"e\":{\"k\":\"string\"}},true],[\"canreaduserevidence\",{\"k\":\"bool\"},true],[\"canmanageuserplans\",{\"k\":\"bool\"},true]],\"MoodleLpDataForUserCompetencySummaryInCourseResponse\":[[\"usercompetencysummary\",{\"k\":\"record\",\"n\":\"MoodleLpDataForUserCompetencySummaryResponse\",\"folded\":true},false],[\"course\",{\"k\":\"record\",\"n\":\"MoodleEventCourse\",\"folded\":true},false],[\"coursemodules\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCompetencyCourseModule\"}},true],[\"plans\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodlePlan\"}},true],[\"pluginbaseurl\",{\"k\":\"string\"},true]],\"MoodleLpDataForUserCompetencySummaryInPlanResponse\":[[\"usercompetencysummary\",{\"k\":\"record\",\"n\":\"MoodleLpDataForUserCompetencySummaryResponse\",\"folded\":true},false],[\"plan\",{\"k\":\"record\",\"n\":\"MoodlePlan\",\"folded\":true},false]],\"MoodleLpDataForUserCompetencySummaryResponse\":[[\"showrelatedcompetencies\",{\"k\":\"bool\"},true],[\"cangrade\",{\"k\":\"bool\"},true],[\"competency\",{\"k\":\"record\",\"n\":\"MoodleLpDataForUserCompetencySummaryResponseCompetency\",\"folded\":true},false],[\"user\",{\"k\":\"record\",\"n\":\"MoodleActionuser\",\"folded\":true},false],[\"usercompetency\",{\"k\":\"record\",\"n\":\"MoodleLpDataForPlanPageResponseCompetencyUsercompetency\",\"folded\":true},true],[\"usercompetencyplan\",{\"k\":\"record\",\"n\":\"MoodleUsercompetencyplan\",\"folded\":true},true],[\"usercompetencycourse\",{\"k\":\"record\",\"n\":\"MoodleUsercompetencycourse\",\"folded\":true},true],[\"evidence\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCompetencyGradeCompetencyInCourseResponse\"}},true],[\"commentarea\",{\"k\":\"record\",\"n\":\"MoodleCommentarea\",\"folded\":true},true]],\"MoodleLpDataForUserCompetencySummaryResponseCompetency\":[[\"linkedcourses\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleEventCourse\"}},true],[\"relatedcompetencies\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCompetencyListCourseCompetenciesItemCompetency\"}},true],[\"competency\",{\"k\":\"record\",\"n\":\"MoodleCompetencyListCourseCompetenciesItemCompetency\",\"folded\":true},false],[\"framework\",{\"k\":\"record\",\"n\":\"MoodleFramework\",\"folded\":true},false],[\"hascourses\",{\"k\":\"bool\"},true],[\"hasrelatedcompetencies\",{\"k\":\"bool\"},true],[\"scaleid\",{\"k\":\"int\"},true],[\"scaleconfiguration\",{\"k\":\"string\"},true],[\"taxonomyterm\",{\"k\":\"string\"},true],[\"comppath\",{\"k\":\"record\",\"n\":\"MoodleComppath\",\"folded\":true},false],[\"pluginbaseurl\",{\"k\":\"string\"},true]],\"MoodleLpDataForUserEvidenceListPageResponse\":[[\"canmanage\",{\"k\":\"bool\"},true],[\"userid\",{\"k\":\"int\"},true],[\"pluginbaseurl\",{\"k\":\"string\"},true],[\"evidence\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleEvidence\"}},true],[\"navigation\",{\"k\":\"list\",\"e\":{\"k\":\"string\"}},true]],\"MoodleLpDataForUserEvidencePageResponse\":[[\"userevidence\",{\"k\":\"record\",\"n\":\"MoodleEvidence\",\"folded\":true},false],[\"pluginbaseurl\",{\"k\":\"string\"},true]],\"MoodleLti\":[[\"id\",{\"k\":\"int\"},true],[\"coursemodule\",{\"k\":\"int\"},true],[\"course\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"intro\",{\"k\":\"string\"},true],[\"introformat\",{\"k\":\"int\"},true],[\"introfiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFile\"}},true],[\"section\",{\"k\":\"int\"},true],[\"visible\",{\"k\":\"bool\"},true],[\"groupmode\",{\"k\":\"int\"},true],[\"groupingid\",{\"k\":\"int\"},true],[\"lang\",{\"k\":\"string\"},true],[\"timecreated\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"typeid\",{\"k\":\"int\"},true],[\"toolurl\",{\"k\":\"string\"},true],[\"securetoolurl\",{\"k\":\"string\"},true],[\"instructorchoicesendname\",{\"k\":\"string\"},true],[\"instructorchoicesendemailaddr\",{\"k\":\"int\"},true],[\"instructorchoiceallowroster\",{\"k\":\"int\"},true],[\"instructorchoiceallowsetting\",{\"k\":\"int\"},true],[\"instructorcustomparameters\",{\"k\":\"string\"},true],[\"instructorchoiceacceptgrades\",{\"k\":\"int\"},true],[\"grade\",{\"k\":\"int\"},true],[\"launchcontainer\",{\"k\":\"int\"},true],[\"resourcekey\",{\"k\":\"string\"},true],[\"password\",{\"k\":\"string\"},true],[\"debuglaunch\",{\"k\":\"int\"},true],[\"showtitlelaunch\",{\"k\":\"int\"},true],[\"showdescriptionlaunch\",{\"k\":\"int\"},true],[\"servicesalt\",{\"k\":\"string\"},true],[\"icon\",{\"k\":\"string\"},true],[\"secureicon\",{\"k\":\"string\"},true]],\"MoodleLtiGetLtisByCoursesResponse\":[[\"ltis\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleLti\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":",
+    "\"MoodleWarning\"}},true]],\"MoodleMemberConversation\":[[\"id\",{\"k\":\"int\"},true],[\"type\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"timecreated\",{\"k\":\"int\"},true]],\"MoodleMessageGetBlockedUsersResponse\":[[\"users\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleMessageGetBlockedUsersResponseUser\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleMessageGetBlockedUsersResponseUser\":[[\"id\",{\"k\":\"int\"},true],[\"fullname\",{\"k\":\"string\"},true],[\"profileimageurl\",{\"k\":\"string\"},true]],\"MoodleMessageGetUserMessagePreferencesResponse\":[[\"preferences\",{\"k\":\"record\",\"n\":\"MoodleMessageGetUserMessagePreferencesResponsePreference\",\"folded\":true},false],[\"blocknoncontacts\",{\"k\":\"int\"},true],[\"entertosend\",{\"k\":\"bool\"},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleMessageGetUserMessagePreferencesResponsePreference\":[[\"userid\",{\"k\":\"int\"},true],[\"disableall\",{\"k\":\"int\"},true],[\"processors\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleMessageGetUserMessagePreferencesResponsePreferenceProcessor\"}},true],[\"components\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleComponent\"}},true]],\"MoodleMessageGetUserMessagePreferencesResponsePreferenceProcessor\":[[\"displayname\",{\"k\":\"string\"},true],[\"name\",{\"k\":\"string\"},true],[\"hassettings\",{\"k\":\"bool\"},true],[\"contextid\",{\"k\":\"int\"},true],[\"userconfigured\",{\"k\":\"int\"},true]],\"MoodleMessageGetUserNotificationPreferencesResponse\":[[\"preferences\",{\"k\":\"record\",\"n\":\"MoodleMessageGetUserMessagePreferencesResponsePreference\",\"folded\":true},false],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleMobileGetConfigResponse\":[[\"settings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleKeyValue\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleMobileGetPluginsSupportingMobileResponse\":[[\"plugins\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodlePlugin\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleMobileGetPublicConfigResponse\":[[\"wwwroot\",{\"k\":\"string\"},true],[\"httpswwwroot\",{\"k\":\"string\"},true],[\"sitename\",{\"k\":\"string\"},true],[\"guestlogin\",{\"k\":\"int\"},true],[\"rememberusername\",{\"k\":\"int\"},true],[\"authloginviaemail\",{\"k\":\"int\"},true],[\"registerauth\",{\"k\":\"string\"},true],[\"forgottenpasswordurl\",{\"k\":\"string\"},true],[\"authinstructions\",{\"k\":\"string\"},true],[\"authnoneenabled\",{\"k\":\"int\"},true],[\"enablewebservices\",{\"k\":\"int\"},true],[\"enablemobilewebservice\",{\"k\":\"int\"},true],[\"maintenanceenabled\",{\"k\":\"int\"},true],[\"maintenancemessage\",{\"k\":\"string\"},true],[\"logourl\",{\"k\":\"string\"},true],[\"compactlogourl\",{\"k\":\"string\"},true],[\"typeoflogin\",{\"k\":\"int\"},true],[\"launchurl\",{\"k\":\"string\"},true],[\"mobilecssurl\",{\"k\":\"string\"},true],[\"tool_mobile_disabledfeatures\",{\"k\":\"string\"},true],[\"identityproviders\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleIdentityprovider\"}},true],[\"country\",{\"k\":\"string\"},true],[\"agedigitalconsentverification\",{\"k\":\"bool\"},true],[\"supportname\",{\"k\":\"string\"},true],[\"supportemail\",{\"k\":\"string\"},true],[\"supportpage\",{\"k\":\"string\"},true],[\"supportavailability\",{\"k\":\"int\"},true],[\"autolang\",{\"k\":\"int\"},true],[\"lang\",{\"k\":\"string\"},true],[\"langmenu\",{\"k\":\"int\"},true],[\"langlist\",{\"k\":\"string\"},true],[\"locale\",{\"k\":\"string\"},true],[\"tool_mobile_minimumversion\",{\"k\":\"string\"},true],[\"tool_mobile_iosappid\",{\"k\":\"string\"},true],[\"tool_mobile_androidappid\",{\"k\":\"string\"},true],[\"tool_mobile_setuplink\",{\"k\":\"string\"},true],[\"tool_mobile_qrcodetype\",{\"k\":\"int\"},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true],[\"showloginform\",{\"k\":\"int\"},true]],\"MoodleModuleCompletion\":[[\"state\",{\"k\":\"int\"},true],[\"timecompleted\",{\"k\":\"int\"},true],[\"overrideby\",{\"k\":\"int\"},true],[\"valueused\",{\"k\":\"bool\"},true],[\"hascompletion\",{\"k\":\"bool\"},true],[\"isautomatic\",{\"k\":\"bool\"},true],[\"istrackeduser\",{\"k\":\"bool\"},true],[\"uservisible\",{\"k\":\"bool\"},true],[\"details\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleModuleCompletionRule\"}},true],[\"isoverallcomplete\",{\"k\":\"bool\"},true]],\"MoodleModuleCompletionRule\":[[\"rulename\",{\"k\":\"string\"},true],[\"rulevalue\",{\"k\":\"record\",\"n\":\"MoodleModuleCompletionRuleValue\",\"folded\":true},false]],\"MoodleModuleCompletionRuleValue\":[[\"status\",{\"k\":\"int\"},true],[\"description\",{\"k\":\"string\"},true]],\"MoodleModuleContent\":[[\"type\",{\"k\":\"string\"},true],[\"filename\",{\"k\":\"string\"},true],[\"filepath\",{\"k\":\"string\"},true],[\"filesize\",{\"k\":\"int\"},true],[\"fileurl\",{\"k\":\"string\"},true],[\"content\",{\"k\":\"string\"},true],[\"timecreated\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"sortorder\",{\"k\":\"int\"},true],[\"mimetype\",{\"k\":\"string\"},true],[\"isexternalfile\",{\"k\":\"bool\"},true],[\"repositorytype\",{\"k\":\"string\"},true],[\"userid\",{\"k\":\"int\"},true],[\"author\",{\"k\":\"string\"},true],[\"license\",{\"k\":\"string\"},true],[\"tags\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleContentTag\"}},true]],\"MoodleModuleContentsInfo\":[[\"filescount\",{\"k\":\"int\"},true],[\"filessize\",{\"k\":\"int\"},true],[\"lastmodified\",{\"k\":\"int\"},true],[\"mimetypes\",{\"k\":\"list\",\"e\":{\"k\":\"string\"}},true],[\"repositorytype\",{\"k\":\"string\"},true]],\"MoodleModuleDate\":[[\"label\",{\"k\":\"string\"},true],[\"timestamp\",{\"k\":\"int\"},true],[\"relativeto\",{\"k\":\"int\"},true],[\"dataid\",{\"k\":\"string\"},true]],\"MoodleMoodlenetVerifyWebfingerResponse\":[[\"result\",{\"k\":\"bool\"},true],[\"message\",{\"k\":\"string\"},true],[\"domain\",{\"k\":\"string\"},true]],\"MoodleNamedValue\":[[\"name\",{\"k\":\"string\"},true],[\"value\",{\"k\":\"string\"},true]],\"MoodleNotesGetCourseNotesResponse\":[[\"sitenotes\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleSitenote\"}},true],[\"coursenotes\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleSitenote\"}},true],[\"personalnotes\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleSitenote\"}},true],[\"canmanagesystemnotes\",{\"k\":\"bool\"},true],[\"canmanagecoursenotes\",{\"k\":\"bool\"},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleOutcome\":[[\"id\",{\"k\":\"string\"},true],[\"name\",{\"k\":\"string\"},true],[\"scale\",{\"k\":\"string\"},true]],\"MoodlePageGetPagesByCoursesResponse\":[[\"pages\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodlePageGetPagesByCoursesResponsePage\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodlePageGetPagesByCoursesResponsePage\":[[\"id\",{\"k\":\"int\"},true],[\"coursemodule\",{\"k\":\"int\"},true],[\"course\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"intro\",{\"k\":\"string\"},true],[\"introformat\",{\"k\":\"int\"},true],[\"introfiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFile\"}},true],[\"section\",{\"k\":\"int\"},true],[\"visible\",{\"k\":\"bool\"},true],[\"groupmode\",{\"k\":\"int\"},true],[\"groupingid\",{\"k\":\"int\"},true],[\"lang\",{\"k\":\"string\"},true],[\"content\",{\"k\":\"string\"},true],[\"contentformat\",{\"k\":\"int\"},true],[\"contentfiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFile\"}},true],[\"legacyfiles\",{\"k\":\"int\"},true],[\"legacyfileslast\",{\"k\":\"int\"},true],[\"display\",{\"k\":\"int\"},true],[\"displayoptions\",{\"k\":\"string\"},true],[\"revision\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true]],\"MoodleParent\":[[\"contextid\",{\"k\":\"int\"},true],[\"component\",{\"k\":\"string\"},true],[\"filearea\",{\"k\":\"string\"},true],[\"itemid\",{\"k\":\"int\"},true],[\"filepath\",{\"k\":\"string\"},true],[\"filename\",{\"k\":\"string\"},true]],\"MoodlePermission\":[[\"candelete\",{\"k\":\"bool\"},true],[\"canupdate\",{\"k\":\"bool\"},true]],\"MoodlePhase\":[[\"code\",{\"k\":\"int\"},true],[\"title\",{\"k\":\"string\"},true],[\"active\",{\"k\":\"bool\"},true],[\"tasks\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleTask\"}},true],[\"actions\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleAction\"}},true]],\"MoodlePlan\":[[\"name\",{\"k\":\"string\"},true],[\"description\",{\"k\":\"string\"},true],[\"descriptionformat\",{\"k\":\"int\"},true],[\"userid\",{\"k\":\"int\"},true],[\"templateid\",{\"k\":\"int\"},true],[\"origtemplateid\",{\"k\":\"int\"},true],[\"status\",{\"k\":\"int\"},true],[\"duedate\",{\"k\":\"int\"},true],[\"reviewerid\",{\"k\":\"int\"},true],[\"id\",{\"k\":\"int\"},true],[\"timecreated\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"usermodified\",{\"k\":\"int\"},true],[\"statusname\",{\"k\":\"string\"},true],[\"isbasedontemplate\",{\"k\":\"bool\"},true],[\"canmanage\",{\"k\":\"bool\"},true],[\"canrequestreview\",{\"k\":\"bool\"},true],[\"canreview\",{\"k\":\"bool\"},true],[\"canbeedited\",{\"k\":\"bool\"},true],[\"isactive\",{\"k\":\"bool\"},true],[\"isdraft\",{\"k\":\"bool\"},true],[\"iscompleted\",{\"k\":\"bool\"},true],[\"isinreview\",{\"k\":\"bool\"},true],[\"iswaitingforreview\",{\"k\":\"bool\"},true],[\"isreopenallowed\",{\"k\":\"bool\"},true],[\"iscompleteallowed\",{\"k\":\"bool\"},true],[\"isunlinkallowed\",{\"k\":\"bool\"},true],[\"isrequestreviewallowed\",{\"k\":\"bool\"},true],[\"iscancelreviewrequestallowed\",{\"k\":\"bool\"},true],[\"isstartreviewallowed\",{\"k\":\"bool\"},true],[\"isstopreviewallowed\",{\"k\":\"bool\"},true],[\"isapproveallowed\",{\"k\":\"bool\"},true],[\"isunapproveallowed\",{\"k\":\"bool\"},true],[\"duedateformatted\",{\"k\":\"string\"},true],[\"commentarea\",{\"k\":\"record\",\"n\":\"MoodleCommentarea\",\"folded\":true},false],[\"reviewer\",{\"k\":\"record\",\"n\":\"MoodleActionuser\",\"folded\":true},true],[\"template\",{\"k\":\"record\",\"n\":\"MoodleTemplate\",\"folded\":true},true],[\"url\",{\"k\":\"string\"},true]],\"MoodlePlugin\":[[\"component\",{\"k\":\"string\"},true],[\"version\",{\"k\":\"string\"},true],[\"addon\",{\"k\":\"string\"},true],[\"dependencies\",{\"k\":\"list\",\"e\":{\"k\":\"string\"}},true],[\"fileurl\",{\"k\":\"string\"},true],[\"filehash\",{\"k\":\"string\"},true],[\"filesize\",{\"k\":\"int\"},true],[\"handlers\",{\"k\":\"string\"},true],[\"lang\",{\"k\":\"string\"},true]],\"MoodlePolicyGetUserAcceptancesResponse\":[[\"policies\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodlePolicyGetUserAcceptancesResponsePolicy\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodlePolicyGetUserAcceptancesResponsePolicy\":[[\"policyid\",{\"k\":\"int\"},true],[\"versionid\",{\"k\":\"int\"},true],[\"agreementstyle\",{\"k\":\"int\"},true],[\"optional\",{\"k\":\"int\"},true],[\"revision\",{\"k\":\"string\"},true],[\"status\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"summary\",{\"k\":\"string\"},true],[\"summaryformat\",{\"k\":\"int\"},true],[\"content\",{\"k\":\"string\"},true],[\"contentformat\",{\"k\":\"int\"},true],[\"acceptance\",{\"k\":\"record\",\"n\":\"MoodleAcceptance\",\"folded\":true},true],[\"canaccept\",{\"k\":\"bool\"},true],[\"candecline\",{\"k\":\"bool\"},true],[\"canrevoke\",{\"k\":\"bool\"},true]],\"MoodlePostAttachment\":[[\"contextid\",{\"k\":\"int\"},true],[\"component\",{\"k\":\"string\"},true],[\"filearea\",{\"k\":\"string\"},true],[\"itemid\",{\"k\":\"int\"},true],[\"filepath\",{\"k\":\"string\"},true],[\"filename\",{\"k\":\"string\"},true],[\"isdir\",{\"k\":\"bool\"},true],[\"isimage\",{\"k\":\"bool\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"timecreated\",{\"k\":\"int\"},true],[\"filesize\",{\"k\":\"int\"},true],[\"author\",{\"k\":\"string\"},true],[\"license\",{\"k\":\"string\"},true],[\"filenameshort\",{\"k\":\"string\"},true],[\"filesizeformatted\",{\"k\":\"string\"},true],[\"icon\",{\"k\":\"string\"},true],[\"timecreatedformatted\",{\"k\":\"string\"},true],[\"timemodifiedformatted\",{\"k\":\"string\"},true],[\"url\",{\"k\":\"string\"},true],[\"urls\",{\"k\":\"record\",\"n\":\"MoodlePostAttachmentUrls\",\"folded\":true},false],[\"html\",{\"k\":\"record\",\"n\":\"MoodlePostAttachmentHtml\",\"folded\":true},false]],\"MoodlePostAttachmentHtml\":[[\"plagiarism\",{\"k\":\"string\"},true]],\"MoodlePostAttachmentUrls\":[[\"export\",{\"k\":\"string\"},true]],\"MoodlePostAuthor\":[[\"id\",{\"k\":\"int\"},true],[\"fullname\",{\"k\":\"string\"},true],[\"isdeleted\",{\"k\":\"bool\"},true],[\"groups\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodlePostAuthorGroup\"}},true],[\"urls\",{\"k\":\"record\",\"n\":\"MoodlePostAuthorUrls\",\"folded\":true},false]],\"MoodlePostAuthorGroup\":[[\"id\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"urls\",{\"k\":\"record\",\"n\":\"MoodlePostAuthorGroupUrls\",\"folded\":true},false]],\"MoodlePostAuthorGroupUrls\":[[\"image\",{\"k\":\"string\"},true]],\"MoodlePostAuthorUrls\":[[\"profile\",{\"k\":\"string\"},true],[\"profileimage\",{\"k\":\"string\"},true]],\"MoodlePostCapabilities\":[[\"view\",{\"k\":\"bool\"},true],[\"edit\",{\"k\":\"bool\"},true],[\"delete\",{\"k\":\"bool\"},true],[\"split\",{\"k\":\"bool\"},true],[\"reply\",{\"k\":\"bool\"},true],[\"selfenrol\",{\"k\":\"bool\"},true],[\"export\",{\"k\":\"bool\"},true],[\"controlreadstatus\",{\"k\":\"bool\"},true],[\"canreplyprivately\",{\"k\":\"bool\"},true]],\"MoodlePostHtml\":[[\"rating\",{\"k\":\"string\"},true],[\"taglist\",{\"k\":\"string\"},true],[\"authorsubheading\",{\"k\":\"string\"},true]],\"MoodlePostInlineFile\":[[\"contextid\",{\"k\":\"int\"},true],[\"component\",{\"k\":\"string\"},true],[\"filearea\",{\"k\":\"string\"},true],[\"itemid\",{\"k\":\"int\"},true],[\"filepath\",{\"k\":\"string\"},true],[\"filename\",{\"k\":\"string\"},true],[\"isdir\",{\"k\":\"bool\"},true],[\"isimage\",{\"k\":\"bool\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"timecreated\",{\"k\":\"int\"},true],[\"filesize\",{\"k\":\"int\"},true],[\"author\",{\"k\":\"string\"},true],[\"license\",{\"k\":\"string\"},true],[\"filenameshort\",{\"k\":\"string\"},true],[\"filesizeformatted\",{\"k\":\"string\"},true],[\"icon\",{\"k\":\"string\"},true],[\"timecreatedformatted\",{\"k\":\"string\"},true],[\"timemodifiedformatted\",{\"k\":\"string\"},true],[\"url\",{\"k\":\"string\"},true]],\"MoodlePostTag\":[[\"id\",{\"k\":\"int\"},true],[\"tagid\",{\"k\":\"int\"},true],[\"isstandard\",{\"k\":\"bool\"},true],[\"displayname\",{\"k\":\"string\"},true],[\"flag\",{\"k\":\"bool\"},true],[\"urls\",{\"k\":\"record\",\"n\":\"MoodlePostTagUrls\",\"folded\":true},false]],\"MoodlePostTagUrls\":[[\"view\",{\"k\":\"string\"},true]],\"MoodlePostUrls\":[[\"view\",{\"k\":\"string\"},true],[\"viewisolated\",{\"k\":\"string\"},true],[\"viewparent\",{\"k\":\"string\"},true],[\"edit\",{\"k\":\"string\"},true],[\"delete\",{\"k\":\"string\"},true],[\"split\",{\"k\":\"string\"},true],[\"reply\",{\"k\":\"string\"},true],[\"export\",{\"k\":\"string\"},true],[\"markasread\",{\"k\":\"string\"},true],[\"markasunread\",{\"k\":\"string\"},true],[\"discuss\",{\"k\":\"string\"},true]],\"MoodlePresentation\":[[\"url\",{\"k\":\"string\"},true],[\"iconname\",{\"k\":\"string\"},true],[\"icondesc\",{\"k\":\"string\"},true],[\"name\",{\"k\":\"string\"},true]],\"MoodlePreventAccessReason\":[[\"reason\",{\"k\":\"string\"},true],[\"data\",{\"k\":\"string\"},true],[\"message\",{\"k\":\"string\"},true]],\"MoodlePrivateFilesInfo\":[[\"filecount\",{\"k\":\"int\"},true],[\"foldercount\",{\"k\":\"int\"},true],[\"filesize\",{\"k\":\"int\"},true],[\"filesizewithoutreferences\",{\"k\":\"int\"},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleQuestion\":[[\"id\",{\"k\":\"int\"},true],[\"text\",{\"k\":\"string\"},true],[\"shorttext\",{\"k\":\"string\"},true],[\"multi\",{\"k\":\"string\"},true],[\"intro\",{\"k\":\"string\"},true],[\"type\",{\"k\":\"int\"},true],[\"options\",{\"k\":\"string\"},true],[\"parent\",{\"k\":\"int\"},true]],\"MoodleQuiz\":[[\"id\",{\"k\":\"int\"},true],[\"coursemodule\",{\"k\":\"int\"},true],[\"course\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"intro\",{\"k\":\"string\"},true],[\"introformat\",{\"k\":\"int\"},true],[\"introfiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFile\"}},true],[\"section\",{\"k\":\"int\"},true],[\"visible\",{\"k\":\"bool\"},true],[\"groupmode\",{\"k\":\"int\"},true],[\"groupingid\",{\"k\":\"int\"},true],[\"lang\",{\"k\":\"string\"},true],[\"timeopen\",{\"k\":\"int\"},true],[\"timeclose\",{\"k\":\"int\"},true],[\"timelimit\",{\"k\":\"int\"},true],[\"overduehandling\",{\"k\":\"string\"},true],[\"graceperiod\",{\"k\":\"int\"},true],[\"preferredbehaviour\",{\"k\":\"string\"},true],[\"canredoquestions\",{\"k\":\"int\"},true],[\"attempts\",{\"k\":\"int\"},true],[\"attemptonlast\",{\"k\":\"int\"},true],[\"grademethod\",{\"k\":\"int\"},true],[\"decimalpoints\",{\"k\":\"int\"},true],[\"questiondecimalpoints\",{\"k\":\"int\"},true],[\"reviewattempt\",{\"k\":\"int\"},true],[\"reviewcorrectness\",{\"k\":\"int\"},true],[\"reviewmaxmarks\",{\"k\":\"int\"},true],[\"reviewmarks\",{\"k\":\"int\"},true],[\"reviewspecificfeedback\",{\"k\":\"int\"},true],[\"reviewgeneralfeedback\",{\"k\":\"int\"},true],[\"reviewrightanswer\",{\"k\":\"int\"},true],[\"reviewoverallfeedback\",{\"k\":\"int\"},true],[\"questionsperpage\",{\"k\":\"int\"},true],[\"navmethod\",{\"k\":\"string\"},true],[\"shuffleanswers\",{\"k\":\"int\"},true],[\"sumgrades\",{\"k\":\"number\"},true],[\"grade\",{\"k\":\"number\"},true],[\"timecreated\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"password\",{\"k\":\"string\"},true],[\"subnet\",{\"k\":\"string\"},true],[\"browsersecurity\",{\"k\":\"string\"},true],[\"delay1\",{\"k\":\"int\"},true],[\"delay2\",{\"k\":\"int\"},true],[\"showuserpicture\",{\"k\":\"int\"},true],[\"showblocks\",{\"k\":\"int\"},true],[\"completionattemptsexhausted\",{\"k\":\"int\"},true],[\"completionpass\",{\"k\":\"int\"},true],[\"allowofflineattempts\",{\"k\":\"int\"},true],[\"autosaveperiod\",{\"k\":\"int\"},true],[\"hasfeedback\",{\"k\":\"int\"},true],[\"hasquestions\",{\"k\":\"int\"},true]],\"MoodleQuizAccessInformation\":[[\"canattempt\",{\"k\":\"bool\"},true],[\"canmanage\",{\"k\":\"bool\"},true],[\"canpreview\",{\"k",
+    "\":\"bool\"},true],[\"canreviewmyattempts\",{\"k\":\"bool\"},true],[\"canviewreports\",{\"k\":\"bool\"},true],[\"accessrules\",{\"k\":\"list\",\"e\":{\"k\":\"string\"}},true],[\"activerulenames\",{\"k\":\"list\",\"e\":{\"k\":\"string\"}},true],[\"preventaccessreasons\",{\"k\":\"list\",\"e\":{\"k\":\"string\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleQuizAttempt\":[[\"id\",{\"k\":\"int\"},true],[\"quiz\",{\"k\":\"int\"},true],[\"userid\",{\"k\":\"int\"},true],[\"attempt\",{\"k\":\"int\"},true],[\"uniqueid\",{\"k\":\"int\"},true],[\"layout\",{\"k\":\"string\"},true],[\"currentpage\",{\"k\":\"int\"},true],[\"preview\",{\"k\":\"int\"},true],[\"state\",{\"k\":\"string\"},true],[\"timestart\",{\"k\":\"int\"},true],[\"timefinish\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"timemodifiedoffline\",{\"k\":\"int\"},true],[\"timecheckstate\",{\"k\":\"int\"},true],[\"sumgrades\",{\"k\":\"number\"},true],[\"gradeitemmarks\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleGradeItemMark\"}},true],[\"gradednotificationsenttime\",{\"k\":\"int\"},true]],\"MoodleQuizGetCombinedReviewOptionsResponse\":[[\"someoptions\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleAdvancedFeature\"}},true],[\"alloptions\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleAdvancedFeature\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleQuizGetQuizRequiredQtypesResponse\":[[\"questiontypes\",{\"k\":\"list\",\"e\":{\"k\":\"string\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleQuizQuestion\":[[\"slot\",{\"k\":\"int\"},true],[\"type\",{\"k\":\"string\"},true],[\"page\",{\"k\":\"int\"},true],[\"questionnumber\",{\"k\":\"string\"},true],[\"number\",{\"k\":\"int\"},true],[\"html\",{\"k\":\"string\"},true],[\"responsefileareas\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleResponseFileArea\"}},true],[\"sequencecheck\",{\"k\":\"int\"},true],[\"lastactiontime\",{\"k\":\"int\"},true],[\"hasautosavedstep\",{\"k\":\"bool\"},true],[\"flagged\",{\"k\":\"bool\"},true],[\"state\",{\"k\":\"string\"},true],[\"stateclass\",{\"k\":\"string\"},true],[\"status\",{\"k\":\"string\"},true],[\"blockedbyprevious\",{\"k\":\"bool\"},true],[\"mark\",{\"k\":\"string\"},true],[\"maxmark\",{\"k\":\"number\"},true],[\"settings\",{\"k\":\"string\"},true]],\"MoodleQuizzesResponse\":[[\"quizzes\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleQuiz\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleRating\":[[\"itemid\",{\"k\":\"int\"},true],[\"scaleid\",{\"k\":\"int\"},true],[\"userid\",{\"k\":\"int\"},true],[\"aggregate\",{\"k\":\"number\"},true],[\"aggregatestr\",{\"k\":\"string\"},true],[\"aggregatelabel\",{\"k\":\"string\"},true],[\"count\",{\"k\":\"int\"},true],[\"rating\",{\"k\":\"int\"},true],[\"canrate\",{\"k\":\"bool\"},true],[\"canviewaggregate\",{\"k\":\"bool\"},true]],\"MoodleRatingInfo\":[[\"contextid\",{\"k\":\"int\"},true],[\"component\",{\"k\":\"string\"},true],[\"ratingarea\",{\"k\":\"string\"},true],[\"canviewall\",{\"k\":\"bool\"},true],[\"canviewany\",{\"k\":\"bool\"},true],[\"scales\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleRatingScale\"}},true],[\"ratings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleRating\"}},true]],\"MoodleRatingScale\":[[\"id\",{\"k\":\"int\"},true],[\"courseid\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"max\",{\"k\":\"int\"},true],[\"isnumeric\",{\"k\":\"bool\"},true],[\"items\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleRatingScaleItem\"}},true]],\"MoodleRatingScaleItem\":[[\"value\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true]],\"MoodleRelatedBadge\":[[\"id\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"version\",{\"k\":\"string\"},true],[\"language\",{\"k\":\"string\"},true],[\"type\",{\"k\":\"int\"},true]],\"MoodleReportbuilderListReportsResponse\":[[\"reports\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleReportbuilderListReportsResponseReport\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleReportbuilderListReportsResponseReport\":[[\"name\",{\"k\":\"string\"},true],[\"source\",{\"k\":\"string\"},true],[\"type\",{\"k\":\"int\"},true],[\"uniquerows\",{\"k\":\"bool\"},true],[\"conditiondata\",{\"k\":\"string\"},true],[\"settingsdata\",{\"k\":\"string\"},true],[\"contextid\",{\"k\":\"int\"},true],[\"component\",{\"k\":\"string\"},true],[\"area\",{\"k\":\"string\"},true],[\"itemid\",{\"k\":\"int\"},true],[\"usercreated\",{\"k\":\"int\"},true],[\"id\",{\"k\":\"int\"},true],[\"timecreated\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"usermodified\",{\"k\":\"int\"},true],[\"sourcename\",{\"k\":\"string\"},true],[\"tags\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleContentTag\"}},true],[\"modifiedby\",{\"k\":\"record\",\"n\":\"MoodleActionuser\",\"folded\":true},false]],\"MoodleReportbuilderRetrieveReportResponse\":[[\"details\",{\"k\":\"record\",\"n\":\"MoodleReportbuilderListReportsResponseReport\",\"folded\":true},false],[\"data\",{\"k\":\"record\",\"n\":\"MoodleReportbuilderRetrieveReportResponseData\",\"folded\":true},false],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleReportbuilderRetrieveReportResponseData\":[[\"headers\",{\"k\":\"list\",\"e\":{\"k\":\"string\"}},true],[\"rows\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleRow\"}},true],[\"totalrowcount\",{\"k\":\"int\"},true]],\"MoodleResource\":[[\"id\",{\"k\":\"int\"},true],[\"coursemodule\",{\"k\":\"int\"},true],[\"course\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"intro\",{\"k\":\"string\"},true],[\"introformat\",{\"k\":\"int\"},true],[\"introfiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFile\"}},true],[\"section\",{\"k\":\"int\"},true],[\"visible\",{\"k\":\"bool\"},true],[\"groupmode\",{\"k\":\"int\"},true],[\"groupingid\",{\"k\":\"int\"},true],[\"lang\",{\"k\":\"string\"},true],[\"contentfiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFile\"}},true],[\"tobemigrated\",{\"k\":\"int\"},true],[\"legacyfiles\",{\"k\":\"int\"},true],[\"legacyfileslast\",{\"k\":\"int\"},true],[\"display\",{\"k\":\"int\"},true],[\"displayoptions\",{\"k\":\"string\"},true],[\"filterfiles\",{\"k\":\"int\"},true],[\"revision\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true]],\"MoodleResourceGetResourcesByCoursesResponse\":[[\"resources\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleResource\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleResponseFileArea\":[[\"area\",{\"k\":\"string\"},true],[\"files\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFile\"}},true]],\"MoodleReviewedby\":[[\"userid\",{\"k\":\"int\"},true],[\"assessmentid\",{\"k\":\"int\"},true],[\"submissionid\",{\"k\":\"int\"},true],[\"grade\",{\"k\":\"number\"},true],[\"gradinggrade\",{\"k\":\"number\"},true],[\"gradinggradeover\",{\"k\":\"number\"},true],[\"weight\",{\"k\":\"int\"},true]],\"MoodleRow\":[[\"columns\",{\"k\":\"list\",\"e\":{\"k\":\"string\"}},true]],\"MoodleRuleoutcomeoption\":[[\"value\",{\"k\":\"int\"},true],[\"text\",{\"k\":\"string\"},true],[\"selected\",{\"k\":\"bool\"},true]],\"MoodleScoe\":[[\"id\",{\"k\":\"int\"},true],[\"scorm\",{\"k\":\"int\"},true],[\"manifest\",{\"k\":\"string\"},true],[\"organization\",{\"k\":\"string\"},true],[\"parent\",{\"k\":\"string\"},true],[\"identifier\",{\"k\":\"string\"},true],[\"launch\",{\"k\":\"string\"},true],[\"scormtype\",{\"k\":\"string\"},true],[\"title\",{\"k\":\"string\"},true],[\"sortorder\",{\"k\":\"int\"},true],[\"extradata\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleTrack\"}},true]],\"MoodleScored\":[[\"title\",{\"k\":\"string\"},true],[\"grademethod\",{\"k\":\"string\"},true],[\"attempts\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleUsersattemptAttempt\"}},true]],\"MoodleScorm\":[[\"id\",{\"k\":\"int\"},true],[\"coursemodule\",{\"k\":\"int\"},true],[\"course\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"intro\",{\"k\":\"string\"},true],[\"introformat\",{\"k\":\"int\"},true],[\"introfiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFile\"}},true],[\"section\",{\"k\":\"int\"},true],[\"visible\",{\"k\":\"bool\"},true],[\"groupmode\",{\"k\":\"int\"},true],[\"groupingid\",{\"k\":\"int\"},true],[\"lang\",{\"k\":\"string\"},true],[\"packagesize\",{\"k\":\"int\"},true],[\"packageurl\",{\"k\":\"string\"},true],[\"version\",{\"k\":\"string\"},true],[\"maxgrade\",{\"k\":\"int\"},true],[\"grademethod\",{\"k\":\"int\"},true],[\"whatgrade\",{\"k\":\"int\"},true],[\"maxattempt\",{\"k\":\"int\"},true],[\"forcecompleted\",{\"k\":\"bool\"},true],[\"forcenewattempt\",{\"k\":\"int\"},true],[\"lastattemptlock\",{\"k\":\"bool\"},true],[\"displayattemptstatus\",{\"k\":\"int\"},true],[\"displaycoursestructure\",{\"k\":\"bool\"},true],[\"sha1hash\",{\"k\":\"string\"},true],[\"md5hash\",{\"k\":\"string\"},true],[\"revision\",{\"k\":\"int\"},true],[\"launch\",{\"k\":\"int\"},true],[\"skipview\",{\"k\":\"int\"},true],[\"hidebrowse\",{\"k\":\"bool\"},true],[\"hidetoc\",{\"k\":\"int\"},true],[\"nav\",{\"k\":\"int\"},true],[\"navpositionleft\",{\"k\":\"int\"},true],[\"navpositiontop\",{\"k\":\"int\"},true],[\"auto\",{\"k\":\"bool\"},true],[\"popup\",{\"k\":\"int\"},true],[\"width\",{\"k\":\"int\"},true],[\"height\",{\"k\":\"int\"},true],[\"timeopen\",{\"k\":\"int\"},true],[\"timeclose\",{\"k\":\"int\"},true],[\"scormtype\",{\"k\":\"string\"},true],[\"reference\",{\"k\":\"string\"},true],[\"protectpackagedownloads\",{\"k\":\"bool\"},true],[\"updatefreq\",{\"k\":\"int\"},true],[\"options\",{\"k\":\"string\"},true],[\"completionstatusrequired\",{\"k\":\"int\"},true],[\"completionscorerequired\",{\"k\":\"int\"},true],[\"completionstatusallscos\",{\"k\":\"int\"},true],[\"autocommit\",{\"k\":\"bool\"},true],[\"timemodified\",{\"k\":\"int\"},true]],\"MoodleScormGetScormAccessInformationResponse\":[[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true],[\"canaddinstance\",{\"k\":\"bool\"},true],[\"canviewreport\",{\"k\":\"bool\"},true],[\"canskipview\",{\"k\":\"bool\"},true],[\"cansavetrack\",{\"k\":\"bool\"},true],[\"canviewscores\",{\"k\":\"bool\"},true],[\"candeleteresponses\",{\"k\":\"bool\"},true],[\"candeleteownresponses\",{\"k\":\"bool\"},true]],\"MoodleScormGetScormAttemptCountResponse\":[[\"attemptscount\",{\"k\":\"int\"},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleScormGetScormScoTracksResponse\":[[\"data\",{\"k\":\"record\",\"n\":\"MoodleScormGetScormScoTracksResponseData\",\"folded\":true},false],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleScormGetScormScoTracksResponseData\":[[\"attempt\",{\"k\":\"int\"},true],[\"tracks\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleTrack\"}},true]],\"MoodleScormGetScormScoesResponse\":[[\"scoes\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleScoe\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleScormGetScormUserDataResponse\":[[\"data\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleScormGetScormUserDataResponseData\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleScormGetScormUserDataResponseData\":[[\"scoid\",{\"k\":\"int\"},true],[\"userdata\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleTrack\"}},true],[\"defaultdata\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleTrack\"}},true]],\"MoodleScormGetScormsByCoursesResponse\":[[\"scorms\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleScorm\"}},true],[\"options\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleKeyValue\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleSearchGetSearchAreasListResponse\":[[\"areas\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleSearchGetSearchAreasListResponseArea\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleSearchGetSearchAreasListResponseArea\":[[\"id\",{\"k\":\"string\"},true],[\"categoryid\",{\"k\":\"string\"},true],[\"categoryname\",{\"k\":\"string\"},true],[\"name\",{\"k\":\"string\"},true]],\"MoodleSession\":[[\"sessionstart\",{\"k\":\"int\"},true],[\"sessionend\",{\"k\":\"int\"},true],[\"sessionusers\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleSessionuser\"}},true],[\"iscomplete\",{\"k\":\"bool\"},true]],\"MoodleSessionuser\":[[\"userid\",{\"k\":\"int\"},true],[\"messagecount\",{\"k\":\"int\"},true]],\"MoodleSetting\":[[\"courseid\",{\"k\":\"int\"},true],[\"pushratingstouserplans\",{\"k\":\"bool\"},true],[\"id\",{\"k\":\"int\"},true],[\"timecreated\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"usermodified\",{\"k\":\"int\"},true]],\"MoodleSiteFunction\":[[\"name\",{\"k\":\"string\"},true],[\"version\",{\"k\":\"string\"},true]],\"MoodleSiteInfo\":[[\"sitename\",{\"k\":\"string\"},true],[\"username\",{\"k\":\"string\"},true],[\"firstname\",{\"k\":\"string\"},true],[\"lastname\",{\"k\":\"string\"},true],[\"fullname\",{\"k\":\"string\"},true],[\"lang\",{\"k\":\"string\"},true],[\"userid\",{\"k\":\"int\"},true],[\"siteurl\",{\"k\":\"string\"},true],[\"userpictureurl\",{\"k\":\"string\"},true],[\"functions\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleSiteFunction\"}},true],[\"downloadfiles\",{\"k\":\"int\"},true],[\"uploadfiles\",{\"k\":\"int\"},true],[\"release\",{\"k\":\"string\"},true],[\"version\",{\"k\":\"string\"},true],[\"mobilecssurl\",{\"k\":\"string\"},true],[\"advancedfeatures\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleAdvancedFeature\"}},true],[\"usercanmanageownfiles\",{\"k\":\"bool\"},true],[\"userquota\",{\"k\":\"int\"},true],[\"usermaxuploadfilesize\",{\"k\":\"int\"},true],[\"userhomepage\",{\"k\":\"int\"},true],[\"userhomepageurl\",{\"k\":\"string\"},true],[\"userprivateaccesskey\",{\"k\":\"string\"},true],[\"siteid\",{\"k\":\"int\"},true],[\"sitecalendartype\",{\"k\":\"string\"},true],[\"usercalendartype\",{\"k\":\"string\"},true],[\"userissiteadmin\",{\"k\":\"bool\"},true],[\"theme\",{\"k\":\"string\"},true],[\"limitconcurrentlogins\",{\"k\":\"int\"},true],[\"usersessionscount\",{\"k\":\"int\"},true],[\"policyagreed\",{\"k\":\"int\"},true]],\"MoodleSitenote\":[[\"id\",{\"k\":\"int\"},true],[\"courseid\",{\"k\":\"int\"},true],[\"userid\",{\"k\":\"int\"},true],[\"content\",{\"k\":\"string\"},true],[\"format\",{\"k\":\"int\"},true],[\"created\",{\"k\":\"int\"},true],[\"lastmodified\",{\"k\":\"int\"},true],[\"usermodified\",{\"k\":\"int\"},true],[\"publishstate\",{\"k\":\"string\"},true]],\"MoodleStatistic\":[[\"competencycount\",{\"k\":\"int\"},true],[\"proficientcompetencycount\",{\"k\":\"int\"},true],[\"proficientcompetencypercentage\",{\"k\":\"number\"},true],[\"proficientcompetencypercentageformatted\",{\"k\":\"string\"},true],[\"leastproficient\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCompetencyListCourseCompetenciesItemCompetency\"}},true],[\"leastproficientcount\",{\"k\":\"int\"},true],[\"canbegradedincourse\",{\"k\":\"bool\"},true],[\"canmanagecoursecompetencies\",{\"k\":\"bool\"},true]],\"MoodleStatusResponse\":[[\"status\",{\"k\":\"bool\"},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleStudent\":[[\"id\",{\"k\":\"int\"},true],[\"fullname\",{\"k\":\"string\"},true],[\"bestgrade\",{\"k\":\"number\"},true],[\"attempts\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleStudentAttempt\"}},true]],\"MoodleStudentAttempt\":[[\"try\",{\"k\":\"int\"},true],[\"grade\",{\"k\":\"number\"},true],[\"timestart\",{\"k\":\"int\"},true],[\"timeend\",{\"k\":\"int\"},true],[\"end\",{\"k\":\"int\"},true]],\"MoodleSubwiki\":[[\"id\",{\"k\":\"int\"},true],[\"wikiid\",{\"k\":\"int\"},true],[\"groupid\",{\"k\":\"string\"},true],[\"userid\",{\"k\":\"int\"},true],[\"canedit\",{\"k\":\"bool\"},true]],\"MoodleSummaryFile\":[[\"filename\",{\"k\":\"string\"},true],[\"filepath\",{\"k\":\"string\"},true],[\"filesize\",{\"k\":\"int\"},true],[\"fileurl\",{\"k\":\"string\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"mimetype\",{\"k\":\"string\"},true],[\"isexternalfile\",{\"k\":\"bool\"},true],[\"repositorytype\",{\"k\":\"string\"},true],[\"icon\",{\"k\":\"string\"},true]],\"MoodleSurvey\":[[\"id\",{\"k\":\"int\"},true],[\"coursemodule\",{\"k\":\"int\"},true],[\"course\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"intro\",{\"k\":\"string\"},true],[\"introformat\",{\"k\":\"int\"},true],[\"introfiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFile\"}},true],[\"section\",{\"k\":\"int\"},true],[\"visible\",{\"k\":\"bool\"},true],[\"groupmode\",{\"k\":\"int\"},true],[\"groupingid\",{\"k\":\"int\"},true],[\"lang\",{\"k\":\"string\"},true],[\"template\",{\"k\":\"int\"},true],[\"days\",{\"k\":\"int\"},true],[\"questions\",{\"k\":\"string\"},true],[\"surveydone\",{\"k\":\"int\"},true],[\"timecreated\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true]],\"MoodleSurveyGetQuestionsResponse\":[[\"questions\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleQuestion\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleSurveyGetSurveysByCoursesResponse\":[[\"surveys\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleSurvey\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleTable\":[[\"courseid\",{\"k\":\"int\"},true],[\"userid\",{\"k\":\"int\"},true],[\"userfullname\",{\"k\":\"string\"},true],[\"maxdepth\",{\"k\":\"int\"},true],[\"tabledata\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleTableTabledata\"}},true]],\"MoodleTableTabledata\":[[\"itemname\",{\"k\":\"record\",\"n\":\"MoodleItemName\",\"folded\":true},true],[\"leader\",{\"k\":\"record\",\"n\":\"MoodleLeader\",\"folded\":true},true],[\"weight\",{\"k\":\"record\",\"n\":\"MoodleWeight\",\"folded\":true},true],[\"grade\",{\"k\":\"record\",\"n\":\"MoodleWeight\",\"folded\":true},true],[\"range\",{\"k\":\"record\",\"n\":\"MoodleWeight\",\"folded\":true},true],[\"percentage\",{\"k\":\"record\",\"n\":\"MoodleWeight\",\"folded\":true},true],[\"lettergrade\",{\"k\":\"record\",\"n\":\"MoodleWeight\",\"folded\":true},true],[\"rank\",{\"k\":\"record\",\"n\":\"MoodleWeight\",\"folded\":true},true],[\"average\",{\"k\":\"record\",\"n\":\"MoodleWeight\",\"folded\":true},true],[\"feedback\",{\"k\":\"record\",\"n\":\"MoodleWeight\",\"folded\":true},true],[\"contributiont",
+    "ocoursetotal\",{\"k\":\"record\",\"n\":\"MoodleWeight\",\"folded\":true},true],[\"parentcategories\",{\"k\":\"list\",\"e\":{\"k\":\"int\"}},true]],\"MoodleTag\":[[\"name\",{\"k\":\"string\"},true],[\"viewurl\",{\"k\":\"string\"},true],[\"flag\",{\"k\":\"bool\"},true],[\"isstandard\",{\"k\":\"bool\"},true],[\"count\",{\"k\":\"int\"},true],[\"size\",{\"k\":\"int\"},true]],\"MoodleTagGetTagAreasResponse\":[[\"areas\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleTagGetTagAreasResponseArea\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleTagGetTagAreasResponseArea\":[[\"id\",{\"k\":\"int\"},true],[\"component\",{\"k\":\"string\"},true],[\"itemtype\",{\"k\":\"string\"},true],[\"enabled\",{\"k\":\"bool\"},true],[\"tagcollid\",{\"k\":\"int\"},true],[\"callback\",{\"k\":\"string\"},true],[\"callbackfile\",{\"k\":\"string\"},true],[\"showstandard\",{\"k\":\"int\"},true],[\"multiplecontexts\",{\"k\":\"bool\"},true],[\"locked\",{\"k\":\"bool\"},true]],\"MoodleTagGetTagCloudResponse\":[[\"tags\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleTag\"}},true],[\"tagscount\",{\"k\":\"int\"},true],[\"totalcount\",{\"k\":\"int\"},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleTagGetTagCollectionsResponse\":[[\"collections\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCollection\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleTask\":[[\"code\",{\"k\":\"string\"},true],[\"title\",{\"k\":\"string\"},true],[\"link\",{\"k\":\"string\"},true],[\"details\",{\"k\":\"string\"},true],[\"completed\",{\"k\":\"string\"},true]],\"MoodleTemplate\":[[\"shortname\",{\"k\":\"string\"},true],[\"description\",{\"k\":\"string\"},true],[\"descriptionformat\",{\"k\":\"int\"},true],[\"duedate\",{\"k\":\"int\"},true],[\"visible\",{\"k\":\"bool\"},true],[\"contextid\",{\"k\":\"int\"},true],[\"id\",{\"k\":\"int\"},true],[\"timecreated\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"usermodified\",{\"k\":\"int\"},true],[\"duedateformatted\",{\"k\":\"string\"},true],[\"cohortscount\",{\"k\":\"int\"},true],[\"planscount\",{\"k\":\"int\"},true],[\"canmanage\",{\"k\":\"bool\"},true],[\"canread\",{\"k\":\"bool\"},true],[\"contextname\",{\"k\":\"string\"},true],[\"contextnamenoprefix\",{\"k\":\"string\"},true]],\"MoodleTimer\":[[\"id\",{\"k\":\"int\"},true],[\"lessonid\",{\"k\":\"int\"},true],[\"userid\",{\"k\":\"int\"},true],[\"starttime\",{\"k\":\"int\"},true],[\"lessontime\",{\"k\":\"int\"},true],[\"completed\",{\"k\":\"int\"},true],[\"timemodifiedoffline\",{\"k\":\"int\"},true]],\"MoodleTrack\":[[\"element\",{\"k\":\"string\"},true],[\"value\",{\"k\":\"string\"},true]],\"MoodleUnreadConversationCounts\":[[\"favourites\",{\"k\":\"int\"},true],[\"types\",{\"k\":\"record\",\"n\":\"MoodleUnreadCountsByType\",\"folded\":true},false]],\"MoodleUnreadCountsByType\":[[\"1\",{\"k\":\"int\"},true],[\"2\",{\"k\":\"int\"},true],[\"3\",{\"k\":\"int\"},true]],\"MoodleUrl\":[[\"id\",{\"k\":\"int\"},true],[\"coursemodule\",{\"k\":\"int\"},true],[\"course\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"intro\",{\"k\":\"string\"},true],[\"introformat\",{\"k\":\"int\"},true],[\"introfiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFile\"}},true],[\"section\",{\"k\":\"int\"},true],[\"visible\",{\"k\":\"bool\"},true],[\"groupmode\",{\"k\":\"int\"},true],[\"groupingid\",{\"k\":\"int\"},true],[\"lang\",{\"k\":\"string\"},true],[\"externalurl\",{\"k\":\"string\"},true],[\"display\",{\"k\":\"int\"},true],[\"displayoptions\",{\"k\":\"string\"},true],[\"parameters\",{\"k\":\"string\"},true],[\"timemodified\",{\"k\":\"int\"},true]],\"MoodleUrlGetUrlsByCoursesResponse\":[[\"urls\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleUrl\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleUser\":[[\"id\",{\"k\":\"int\"},true],[\"username\",{\"k\":\"string\"},true],[\"firstname\",{\"k\":\"string\"},true],[\"lastname\",{\"k\":\"string\"},true],[\"fullname\",{\"k\":\"string\"},true],[\"email\",{\"k\":\"string\"},true],[\"address\",{\"k\":\"string\"},true],[\"phone1\",{\"k\":\"string\"},true],[\"phone2\",{\"k\":\"string\"},true],[\"department\",{\"k\":\"string\"},true],[\"institution\",{\"k\":\"string\"},true],[\"idnumber\",{\"k\":\"string\"},true],[\"interests\",{\"k\":\"string\"},true],[\"firstaccess\",{\"k\":\"int\"},true],[\"lastaccess\",{\"k\":\"int\"},true],[\"auth\",{\"k\":\"string\"},true],[\"suspended\",{\"k\":\"bool\"},true],[\"confirmed\",{\"k\":\"bool\"},true],[\"lang\",{\"k\":\"string\"},true],[\"calendartype\",{\"k\":\"string\"},true],[\"theme\",{\"k\":\"string\"},true],[\"timezone\",{\"k\":\"string\"},true],[\"mailformat\",{\"k\":\"int\"},true],[\"trackforums\",{\"k\":\"int\"},true],[\"description\",{\"k\":\"string\"},true],[\"descriptionformat\",{\"k\":\"int\"},true],[\"city\",{\"k\":\"string\"},true],[\"country\",{\"k\":\"string\"},true],[\"profileimageurlsmall\",{\"k\":\"string\"},true],[\"profileimageurl\",{\"k\":\"string\"},true],[\"customfields\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleUserCustomField\"}},true],[\"preferences\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleKeyValue\"}},true]],\"MoodleUserAttemptsResponse\":[[\"attempts\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleQuizAttempt\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleUserBadge\":[[\"id\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"description\",{\"k\":\"string\"},true],[\"timecreated\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"usercreated\",{\"k\":\"int\"},true],[\"usermodified\",{\"k\":\"int\"},true],[\"issuername\",{\"k\":\"string\"},true],[\"issuerurl\",{\"k\":\"string\"},true],[\"issuercontact\",{\"k\":\"string\"},true],[\"expiredate\",{\"k\":\"int\"},true],[\"expireperiod\",{\"k\":\"int\"},true],[\"type\",{\"k\":\"int\"},true],[\"courseid\",{\"k\":\"int\"},true],[\"message\",{\"k\":\"string\"},true],[\"messagesubject\",{\"k\":\"string\"},true],[\"attachment\",{\"k\":\"int\"},true],[\"notification\",{\"k\":\"int\"},true],[\"nextcron\",{\"k\":\"int\"},true],[\"status\",{\"k\":\"int\"},true],[\"issuedid\",{\"k\":\"int\"},true],[\"uniquehash\",{\"k\":\"string\"},true],[\"dateissued\",{\"k\":\"int\"},true],[\"dateexpire\",{\"k\":\"int\"},true],[\"visible\",{\"k\":\"int\"},true],[\"recipientid\",{\"k\":\"int\"},true],[\"recipientfullname\",{\"k\":\"string\"},true],[\"email\",{\"k\":\"string\"},true],[\"version\",{\"k\":\"string\"},true],[\"language\",{\"k\":\"string\"},true],[\"imageauthorname\",{\"k\":\"string\"},true],[\"imageauthoremail\",{\"k\":\"string\"},true],[\"imageauthorurl\",{\"k\":\"string\"},true],[\"imagecaption\",{\"k\":\"string\"},true],[\"badgeurl\",{\"k\":\"string\"},true],[\"endorsement\",{\"k\":\"record\",\"n\":\"MoodleBadgeEndorsement\",\"folded\":true},true],[\"alignment\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleBadgeAlignment\"}},true],[\"relatedbadges\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleRelatedBadge\"}},true]],\"MoodleUserBadgesResponse\":[[\"badges\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleUserBadge\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleUserBestGradeResponse\":[[\"hasgrade\",{\"k\":\"bool\"},true],[\"grade\",{\"k\":\"number\"},true],[\"gradetopass\",{\"k\":\"number\"},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleUserCustomField\":[[\"type\",{\"k\":\"string\"},true],[\"value\",{\"k\":\"string\"},true],[\"displayvalue\",{\"k\":\"string\"},true],[\"name\",{\"k\":\"string\"},true],[\"shortname\",{\"k\":\"string\"},true]],\"MoodleUserEnrolledCourse\":[[\"id\",{\"k\":\"int\"},true],[\"fullname\",{\"k\":\"string\"},true],[\"shortname\",{\"k\":\"string\"},true]],\"MoodleUserGrades\":[[\"courseid\",{\"k\":\"int\"},true],[\"courseidnumber\",{\"k\":\"string\"},true],[\"userid\",{\"k\":\"int\"},true],[\"userfullname\",{\"k\":\"string\"},true],[\"useridnumber\",{\"k\":\"string\"},true],[\"maxdepth\",{\"k\":\"int\"},true],[\"gradeitems\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleGradeItem\"}},true]],\"MoodleUserGroup\":[[\"id\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"description\",{\"k\":\"string\"},true],[\"descriptionformat\",{\"k\":\"int\"},true]],\"MoodleUserPreferencesResponse\":[[\"preferences\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleKeyValue\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleUserPreparePrivateFilesForEditionResponse\":[[\"draftitemid\",{\"k\":\"int\"},true],[\"areaoptions\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleKeyValue\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleUserRole\":[[\"roleid\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"shortname\",{\"k\":\"string\"},true],[\"sortorder\",{\"k\":\"int\"},true]],\"MoodleUsercompetencycourse\":[[\"userid\",{\"k\":\"int\"},true],[\"courseid\",{\"k\":\"int\"},true],[\"competencyid\",{\"k\":\"int\"},true],[\"proficiency\",{\"k\":\"bool\"},true],[\"grade\",{\"k\":\"int\"},true],[\"id\",{\"k\":\"int\"},true],[\"timecreated\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"usermodified\",{\"k\":\"int\"},true],[\"gradename\",{\"k\":\"string\"},true],[\"proficiencyname\",{\"k\":\"string\"},true]],\"MoodleUsercompetencyplan\":[[\"userid\",{\"k\":\"int\"},true],[\"competencyid\",{\"k\":\"int\"},true],[\"proficiency\",{\"k\":\"bool\"},true],[\"grade\",{\"k\":\"int\"},true],[\"planid\",{\"k\":\"int\"},true],[\"sortorder\",{\"k\":\"int\"},true],[\"id\",{\"k\":\"int\"},true],[\"timecreated\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"usermodified\",{\"k\":\"int\"},true],[\"gradename\",{\"k\":\"string\"},true],[\"proficiencyname\",{\"k\":\"string\"},true]],\"MoodleUserplan\":[[\"phases\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodlePhase\"}},true],[\"examples\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleExample\"}},true]],\"MoodleUserresponse\":[[\"userid\",{\"k\":\"int\"},true],[\"fullname\",{\"k\":\"string\"},true],[\"profileimageurl\",{\"k\":\"string\"},true],[\"answerid\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true]],\"MoodleUsersattempt\":[[\"userid\",{\"k\":\"int\"},true],[\"attempts\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleUsersattemptAttempt\"}},true],[\"scored\",{\"k\":\"record\",\"n\":\"MoodleScored\",\"folded\":true},true]],\"MoodleUsersattemptAttempt\":[[\"id\",{\"k\":\"int\"},true],[\"h5pactivityid\",{\"k\":\"int\"},true],[\"userid\",{\"k\":\"int\"},true],[\"timecreated\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"attempt\",{\"k\":\"int\"},true],[\"rawscore\",{\"k\":\"int\"},true],[\"maxscore\",{\"k\":\"int\"},true],[\"duration\",{\"k\":\"int\"},true],[\"completion\",{\"k\":\"int\"},true],[\"success\",{\"k\":\"int\"},true],[\"scaled\",{\"k\":\"number\"},true]],\"MoodleWarning\":[[\"item\",{\"k\":\"string\"},true],[\"itemid\",{\"k\":\"int\"},true],[\"warningcode\",{\"k\":\"string\"},true],[\"message\",{\"k\":\"string\"},true]],\"MoodleWeight\":[[\"class\",{\"k\":\"string\"},true],[\"content\",{\"k\":\"string\"},true],[\"headers\",{\"k\":\"string\"},true]],\"MoodleWiki\":[[\"id\",{\"k\":\"int\"},true],[\"coursemodule\",{\"k\":\"int\"},true],[\"course\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"intro\",{\"k\":\"string\"},true],[\"introformat\",{\"k\":\"int\"},true],[\"introfiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleFile\"}},true],[\"section\",{\"k\":\"int\"},true],[\"visible\",{\"k\":\"bool\"},true],[\"groupmode\",{\"k\":\"int\"},true],[\"groupingid\",{\"k\":\"int\"},true],[\"lang\",{\"k\":\"string\"},true],[\"timecreated\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"firstpagetitle\",{\"k\":\"string\"},true],[\"wikimode\",{\"k\":\"string\"},true],[\"defaultformat\",{\"k\":\"string\"},true],[\"forceformat\",{\"k\":\"int\"},true],[\"editbegin\",{\"k\":\"int\"},true],[\"editend\",{\"k\":\"int\"},true],[\"cancreatepages\",{\"k\":\"bool\"},true]],\"MoodleWikiGetPageContentsResponse\":[[\"page\",{\"k\":\"record\",\"n\":\"MoodleWikiGetPageContentsResponsePage\",\"folded\":true},false],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleWikiGetPageContentsResponsePage\":[[\"id\",{\"k\":\"int\"},true],[\"wikiid\",{\"k\":\"int\"},true],[\"subwikiid\",{\"k\":\"int\"},true],[\"groupid\",{\"k\":\"int\"},true],[\"userid\",{\"k\":\"int\"},true],[\"title\",{\"k\":\"string\"},true],[\"cachedcontent\",{\"k\":\"string\"},true],[\"contentformat\",{\"k\":\"int\"},true],[\"caneditpage\",{\"k\":\"bool\"},true],[\"version\",{\"k\":\"int\"},true],[\"tags\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleContentTag\"}},true]],\"MoodleWikiGetSubwikiPagesResponse\":[[\"pages\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWikiGetSubwikiPagesResponsePage\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleWikiGetSubwikiPagesResponsePage\":[[\"id\",{\"k\":\"int\"},true],[\"subwikiid\",{\"k\":\"int\"},true],[\"title\",{\"k\":\"string\"},true],[\"timecreated\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"timerendered\",{\"k\":\"int\"},true],[\"userid\",{\"k\":\"int\"},true],[\"pageviews\",{\"k\":\"int\"},true],[\"readonly\",{\"k\":\"int\"},true],[\"caneditpage\",{\"k\":\"bool\"},true],[\"firstpage\",{\"k\":\"bool\"},true],[\"cachedcontent\",{\"k\":\"string\"},true],[\"contentformat\",{\"k\":\"int\"},true],[\"contentsize\",{\"k\":\"int\"},true],[\"tags\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleContentTag\"}},true]],\"MoodleWikiGetSubwikisResponse\":[[\"subwikis\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleSubwiki\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleWikiGetWikisByCoursesResponse\":[[\"wikis\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWiki\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleWorkshop\":[[\"id\",{\"k\":\"int\"},true],[\"course\",{\"k\":\"int\"},true],[\"name\",{\"k\":\"string\"},true],[\"intro\",{\"k\":\"string\"},true],[\"introformat\",{\"k\":\"int\"},true],[\"lang\",{\"k\":\"string\"},true],[\"instructauthors\",{\"k\":\"string\"},true],[\"instructauthorsformat\",{\"k\":\"int\"},true],[\"instructreviewers\",{\"k\":\"string\"},true],[\"instructreviewersformat\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"phase\",{\"k\":\"int\"},true],[\"useexamples\",{\"k\":\"bool\"},true],[\"usepeerassessment\",{\"k\":\"bool\"},true],[\"useselfassessment\",{\"k\":\"bool\"},true],[\"grade\",{\"k\":\"number\"},true],[\"gradinggrade\",{\"k\":\"number\"},true],[\"strategy\",{\"k\":\"string\"},true],[\"evaluation\",{\"k\":\"string\"},true],[\"gradedecimals\",{\"k\":\"int\"},true],[\"submissiontypetext\",{\"k\":\"int\"},true],[\"submissiontypefile\",{\"k\":\"int\"},true],[\"nattachments\",{\"k\":\"int\"},true],[\"submissionfiletypes\",{\"k\":\"string\"},true],[\"latesubmissions\",{\"k\":\"bool\"},true],[\"maxbytes\",{\"k\":\"int\"},true],[\"examplesmode\",{\"k\":\"int\"},true],[\"submissionstart\",{\"k\":\"int\"},true],[\"submissionend\",{\"k\":\"int\"},true],[\"assessmentstart\",{\"k\":\"int\"},true],[\"assessmentend\",{\"k\":\"int\"},true],[\"phaseswitchassessment\",{\"k\":\"bool\"},true],[\"conclusion\",{\"k\":\"string\"},true],[\"conclusionformat\",{\"k\":\"int\"},true],[\"overallfeedbackmode\",{\"k\":\"int\"},true],[\"overallfeedbackfiles\",{\"k\":\"int\"},true],[\"overallfeedbackfiletypes\",{\"k\":\"string\"},true],[\"overallfeedbackmaxbytes\",{\"k\":\"int\"},true],[\"coursemodule\",{\"k\":\"int\"},true],[\"introfiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleSummaryFile\"}},true],[\"instructauthorsfiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleSummaryFile\"}},true],[\"instructreviewersfiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleSummaryFile\"}},true],[\"conclusionfiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleSummaryFile\"}},true]],\"MoodleWorkshopGetGradesReportResponse\":[[\"report\",{\"k\":\"record\",\"n\":\"MoodleWorkshopGetGradesReportResponseReport\",\"folded\":true},false],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleWorkshopGetGradesReportResponseReport\":[[\"grades\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWorkshopGetGradesReportResponseReportGrade\"}},true],[\"totalcount\",{\"k\":\"int\"},true]],\"MoodleWorkshopGetGradesReportResponseReportGrade\":[[\"userid\",{\"k\":\"int\"},true],[\"submissionid\",{\"k\":\"int\"},true],[\"submissiontitle\",{\"k\":\"string\"},true],[\"submissionmodified\",{\"k\":\"int\"},true],[\"submissiongrade\",{\"k\":\"number\"},true],[\"gradinggrade\",{\"k\":\"number\"},true],[\"submissiongradeover\",{\"k\":\"number\"},true],[\"submissiongradeoverby\",{\"k\":\"int\"},true],[\"submissionpublished\",{\"k\":\"int\"},true],[\"reviewedby\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleReviewedby\"}},true],[\"reviewerof\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleReviewedby\"}},true]],\"MoodleWorkshopGetGradesResponse\":[[\"assessmentrawgrade\",{\"k\":\"number\"},true],[\"assessmentlongstrgrade\",{\"k\":\"string\"},true],[\"assessmentgradehidden\",{\"k\":\"bool\"},true],[\"submissionrawgrade\",{\"k\":\"number\"},true],[\"submissionlongstrgrade\",{\"k\":\"string\"},true],[\"submissiongradehidden\",{\"k\":\"bool\"},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleWorkshopGetReviewerAssessmentsResponse\":[[\"assessments\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleAssessment\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleWorkshopGetSubmissionResponse\":[[\"submission\",{\"k\":\"record\",\"n\":\"MoodleWorkshopGetSubmissionResponseSubmission\",\"folded\":true},false],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleWorkshopGetSubmissionResponseSubmission\":[[\"id\",{\"k\":\"int\"},true],[\"workshopid\",{\"k\":\"int\"},true],[\"example\",{\"k\":\"bool\"},true],[\"authorid\",{\"k\":\"int\"},true],[\"timecreated\",{\"k\":\"int\"},true],[\"timemodified\",{\"k\":\"int\"},true],[\"title\",{\"k\":\"string\"},true],[\"content\",{\"k\":\"string\"},true],[\"contentformat\",{\"k\":\"int",
+    "\"},true],[\"contenttrust\",{\"k\":\"int\"},true],[\"attachment\",{\"k\":\"int\"},true],[\"grade\",{\"k\":\"number\"},true],[\"gradeover\",{\"k\":\"number\"},true],[\"gradeoverby\",{\"k\":\"int\"},true],[\"feedbackauthor\",{\"k\":\"string\"},true],[\"feedbackauthorformat\",{\"k\":\"int\"},true],[\"timegraded\",{\"k\":\"int\"},true],[\"published\",{\"k\":\"bool\"},true],[\"late\",{\"k\":\"int\"},true],[\"contentfiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleSummaryFile\"}},true],[\"attachmentfiles\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleSummaryFile\"}},true]],\"MoodleWorkshopGetSubmissionsResponse\":[[\"submissions\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWorkshopGetSubmissionResponseSubmission\"}},true],[\"totalcount\",{\"k\":\"int\"},true],[\"totalfilesize\",{\"k\":\"int\"},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleWorkshopGetUserPlanResponse\":[[\"userplan\",{\"k\":\"record\",\"n\":\"MoodleUserplan\",\"folded\":true},false],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]],\"MoodleWorkshopGetWorkshopAccessInformationResponse\":[[\"creatingsubmissionallowed\",{\"k\":\"bool\"},true],[\"modifyingsubmissionallowed\",{\"k\":\"bool\"},true],[\"assessingallowed\",{\"k\":\"bool\"},true],[\"assessingexamplesallowed\",{\"k\":\"bool\"},true],[\"examplesassessedbeforesubmission\",{\"k\":\"bool\"},true],[\"examplesassessedbeforeassessment\",{\"k\":\"bool\"},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true],[\"canview\",{\"k\":\"bool\"},true],[\"canaddinstance\",{\"k\":\"bool\"},true],[\"canswitchphase\",{\"k\":\"bool\"},true],[\"caneditdimensions\",{\"k\":\"bool\"},true],[\"cansubmit\",{\"k\":\"bool\"},true],[\"canpeerassess\",{\"k\":\"bool\"},true],[\"canmanageexamples\",{\"k\":\"bool\"},true],[\"canallocate\",{\"k\":\"bool\"},true],[\"canpublishsubmissions\",{\"k\":\"bool\"},true],[\"canviewauthornames\",{\"k\":\"bool\"},true],[\"canviewreviewernames\",{\"k\":\"bool\"},true],[\"canviewallsubmissions\",{\"k\":\"bool\"},true],[\"canviewpublishedsubmissions\",{\"k\":\"bool\"},true],[\"canviewauthorpublished\",{\"k\":\"bool\"},true],[\"canviewallassessments\",{\"k\":\"bool\"},true],[\"canoverridegrades\",{\"k\":\"bool\"},true],[\"canignoredeadlines\",{\"k\":\"bool\"},true],[\"candeletesubmissions\",{\"k\":\"bool\"},true],[\"canexportsubmissions\",{\"k\":\"bool\"},true]],\"MoodleWorkshopGetWorkshopsByCoursesResponse\":[[\"workshops\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWorkshop\"}},true],[\"warnings\",{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleWarning\"}},true]]},\"enums\":{}}",
 ).joinToString("")

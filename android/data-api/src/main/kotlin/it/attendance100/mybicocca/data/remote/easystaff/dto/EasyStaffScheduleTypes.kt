@@ -4,8 +4,15 @@ package it.attendance100.mybicocca.data.remote.easystaff.dto
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.SerializationException
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
 /** A cell of a weekly schedule: a lesson, a closure of the university, or a kind this SDK doesn't know, which has none of the values below. */
 @Serializable
@@ -23,6 +30,14 @@ data class EasyStaffScheduleCell(
 
     @SerialName("codice_insegnamento")
     val subjectCode: String? = null,
+
+    /** The Esse3 code of a lesson's activity (`E3101Q113`), the same for every section and part (lectures, labs) of the subject. */
+    @Serializable(with = EasyStaffBlankAsNullSerializer::class)
+    @SerialName("CodiceGenerale")
+    val generalCode: String? = null,
+
+    @SerialName("CodiceCombinato")
+    val combinedCode: EasyStaffCombinedCode? = null,
 
     @SerialName("id")
     val id: String? = null,
@@ -96,3 +111,40 @@ data class EasyStaffScheduleCell(
     @SerialName("from_esterno")
     val isExternal: Boolean = false
 )
+
+/** Where a lesson sits in the study program, written as `E3101Q-11^GGG^E3101Q113^T1^MILANO`. */
+@Serializable(with = EasyStaffCombinedCode.Serializer::class)
+data class EasyStaffCombinedCode(
+    /** The study program and its regulation (`E3101Q-11`). */
+    val program: String,
+    /** The curriculum path (`GGG`). */
+    val curriculumPath: String,
+    /** The Esse3 code of the activity (`E3101Q113`). */
+    val activityCode: String,
+    /** The section of a subject taught in several (`T1`, `T2`, `T1GEA` for its exercises), `TU` for a single section, `N0` when the subject isn't split. */
+    val section: String,
+    /** The campus (`MILANO`). */
+    val site: String
+) {
+    /** Reads and writes the form `program^curriculumPath^activityCode^section^site`. */
+    object Serializer : KSerializer<EasyStaffCombinedCode> {
+        override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("EasyStaffCombinedCode", PrimitiveKind.STRING)
+
+        override fun deserialize(decoder: Decoder): EasyStaffCombinedCode {
+            val text = decoder.decodeString()
+            val parts = text.split("^", limit = 5)
+            if (parts.size != 5) throw SerializationException("Invalid EasyStaffCombinedCode: $text")
+            return EasyStaffCombinedCode(
+                program = parts[0],
+                curriculumPath = parts[1],
+                activityCode = parts[2],
+                section = parts[3],
+                site = parts[4]
+            )
+        }
+
+        override fun serialize(encoder: Encoder, value: EasyStaffCombinedCode) {
+            encoder.encodeString(listOf(value.program, value.curriculumPath, value.activityCode, value.section, value.site).joinToString("^"))
+        }
+    }
+}

@@ -10,6 +10,43 @@ public struct MoodleBadgeApi: Sendable {
         self.client = client
     }
 
+    /// Retrieves a badge by id.
+    ///
+    /// - Parameters:
+    ///   - id: Badge id
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getBadge(id: Int, auth: MoodleTokenAuth) async throws -> MoodleBadgesGetBadgeResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_badges_get_badge"), ("moodlewsrestformat", "json")],
+                form: [("id", id)],
+                auth: auth
+            )
+        )
+    }
+
+    /// Returns the badge awarded to a user by hash.
+    ///
+    /// - Parameters:
+    ///   - hash: Badge issued hash
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getUserBadgeByHash(
+        hash: String,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleBadgesGetUserBadgeByHashResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_badges_get_user_badge_by_hash"), ("moodlewsrestformat", "json")],
+                form: [("hash", hash)],
+                auth: auth
+            )
+        )
+    }
+
     /// Returns the list of badges awarded to a user.
     ///
     /// - Parameters:

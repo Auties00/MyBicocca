@@ -10,6 +10,186 @@ import org.junit.jupiter.api.Test
 /** The live tests of the Moodle Message module, planned from `common/specs/moodle/tests.yaml`. */
 class MoodleMessageLiveTest : LiveTest<MoodleApi>(MoodleLive) {
     @Test
+    @DisplayName("Message.getBlockedUsers#1")
+    fun getBlockedUsers1() = case("Message.getBlockedUsers#1") {
+        val userId = choose("userId", listOf(siteGetSiteInfo()).mapNotNull { it.userId })
+        val result = call("{\"k\":\"record\",\"n\":\"MoodleMessageGetBlockedUsersResponse\"}") {
+            api.message.getBlockedUsers(userId = userId, auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { writeMoodleMessageGetBlockedUsersResponse(result) }
+    }
+
+    @Test
+    @DisplayName("Message.getBlockedUsers#invalid-credentials")
+    fun getBlockedUsersInvalidCredentials() = case("Message.getBlockedUsers#invalid-credentials") {
+        val userId = choose("userId", listOf(siteGetSiteInfo()).mapNotNull { it.userId })
+        refused(acceptsEmpty = false) {
+            api.message.getBlockedUsers(userId = userId, auth = MoodleTokenAuth(token = "mybicocca-invalid-credential"))
+        }
+    }
+
+    @Test
+    @DisplayName("Message.getContactRequests#1")
+    fun getContactRequests1() = case("Message.getContactRequests#1") {
+        val userId = choose("userId", listOf(siteGetSiteInfo()).mapNotNull { it.userId })
+        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleConversationMember\"}}") {
+            api.message.getContactRequests(userId = userId, auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { list(result) { writeMoodleConversationMember(it) } }
+    }
+
+    @Test
+    @DisplayName("Message.getConversation#1")
+    fun getConversation1() = case("Message.getConversation#1") {
+        val userId = choose("userId", listOf(siteGetSiteInfo()).mapNotNull { it.userId })
+        val conversationId = choose("conversationId", listOf(messageGetSelfConversation()).mapNotNull { it.id })
+        val result = call("{\"k\":\"record\",\"n\":\"MoodleConversation\"}") {
+            api.message.getConversation(userId = userId, conversationId = conversationId, includecontactrequests = true, includeprivacyinfo = true, auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { writeMoodleConversation(result) }
+    }
+
+    @Test
+    @DisplayName("Message.getConversation#2")
+    fun getConversation2() = case("Message.getConversation#2", index = 1) {
+        val userId = choose("userId", listOf(siteGetSiteInfo()).mapNotNull { it.userId })
+        val conversationId = choose("conversationId", listOf(messageGetSelfConversation()).mapNotNull { it.id })
+        val result = call("{\"k\":\"record\",\"n\":\"MoodleConversation\"}") {
+            api.message.getConversation(userId = userId, conversationId = conversationId, includecontactrequests = false, includeprivacyinfo = true, newestmessagesfirst = false, auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { writeMoodleConversation(result) }
+    }
+
+    @Test
+    @DisplayName("Message.getConversation#3")
+    fun getConversation3() = case("Message.getConversation#3", index = 2) {
+        val userId = choose("userId", listOf(siteGetSiteInfo()).mapNotNull { it.userId })
+        val conversationId = choose("conversationId", listOf(messageGetSelfConversation()).mapNotNull { it.id })
+        val result = call("{\"k\":\"record\",\"n\":\"MoodleConversation\"}") {
+            api.message.getConversation(userId = userId, conversationId = conversationId, includecontactrequests = true, includeprivacyinfo = false, newestmessagesfirst = false, auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { writeMoodleConversation(result) }
+    }
+
+    @Test
+    @DisplayName("Message.getConversation#4")
+    fun getConversation4() = case("Message.getConversation#4", index = 3) {
+        val userId = choose("userId", listOf(siteGetSiteInfo()).mapNotNull { it.userId })
+        val conversationId = choose("conversationId", listOf(messageGetSelfConversation()).mapNotNull { it.id })
+        val result = call("{\"k\":\"record\",\"n\":\"MoodleConversation\"}") {
+            api.message.getConversation(userId = userId, conversationId = conversationId, includecontactrequests = false, includeprivacyinfo = false, newestmessagesfirst = true, auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { writeMoodleConversation(result) }
+    }
+
+    @Test
+    @DisplayName("Message.getConversation#5")
+    fun getConversation5() = case("Message.getConversation#5", index = 4) {
+        val userId = choose("userId", listOf(siteGetSiteInfo()).mapNotNull { it.userId })
+        val conversationId = choose("conversationId", listOf(messageGetSelfConversation()).mapNotNull { it.id })
+        val result = call("{\"k\":\"record\",\"n\":\"MoodleConversation\"}") {
+            api.message.getConversation(userId = userId, conversationId = conversationId, includecontactrequests = false, includeprivacyinfo = false, auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { writeMoodleConversation(result) }
+    }
+
+    @Test
+    @DisplayName("Message.getConversation#6")
+    fun getConversation6() = case("Message.getConversation#6", index = 5) {
+        val userId = choose("userId", listOf(siteGetSiteInfo()).mapNotNull { it.userId })
+        val conversationId = choose("conversationId", listOf(messageGetSelfConversation()).mapNotNull { it.id })
+        val result = call("{\"k\":\"record\",\"n\":\"MoodleConversation\"}") {
+            api.message.getConversation(userId = userId, conversationId = conversationId, includecontactrequests = true, includeprivacyinfo = true, newestmessagesfirst = true, auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { writeMoodleConversation(result) }
+    }
+
+    @Test
+    @DisplayName("Message.getConversationCounts#1")
+    fun getConversationCounts1() = case("Message.getConversationCounts#1") {
+        val result = call("{\"k\":\"record\",\"n\":\"MoodleUnreadConversationCounts\"}") {
+            api.message.getConversationCounts(auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { writeMoodleUnreadConversationCounts(result) }
+    }
+
+    @Test
+    @DisplayName("Message.getConversationCounts#2")
+    fun getConversationCounts2() = case("Message.getConversationCounts#2", index = 1) {
+        val userId = choose("userId", listOf(siteGetSiteInfo()).mapNotNull { it.userId })
+        val result = call("{\"k\":\"record\",\"n\":\"MoodleUnreadConversationCounts\"}") {
+            api.message.getConversationCounts(userId = userId, auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { writeMoodleUnreadConversationCounts(result) }
+    }
+
+    @Test
+    @DisplayName("Message.getConversationMembers#1")
+    fun getConversationMembers1() = case("Message.getConversationMembers#1") {
+        val userId = choose("userId", listOf(siteGetSiteInfo()).mapNotNull { it.userId })
+        val conversationId = choose("conversationId", listOf(messageGetSelfConversation()).mapNotNull { it.id })
+        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleConversationMember\"}}") {
+            api.message.getConversationMembers(userId = userId, conversationId = conversationId, auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { list(result) { writeMoodleConversationMember(it) } }
+    }
+
+    @Test
+    @DisplayName("Message.getConversationMembers#2")
+    fun getConversationMembers2() = case("Message.getConversationMembers#2", index = 1) {
+        val userId = choose("userId", listOf(siteGetSiteInfo()).mapNotNull { it.userId })
+        val conversationId = choose("conversationId", listOf(messageGetSelfConversation()).mapNotNull { it.id })
+        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleConversationMember\"}}") {
+            api.message.getConversationMembers(userId = userId, conversationId = conversationId, includeprivacyinfo = false, auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { list(result) { writeMoodleConversationMember(it) } }
+    }
+
+    @Test
+    @DisplayName("Message.getConversationMembers#3")
+    fun getConversationMembers3() = case("Message.getConversationMembers#3", index = 2) {
+        val userId = choose("userId", listOf(siteGetSiteInfo()).mapNotNull { it.userId })
+        val conversationId = choose("conversationId", listOf(messageGetSelfConversation()).mapNotNull { it.id })
+        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleConversationMember\"}}") {
+            api.message.getConversationMembers(userId = userId, conversationId = conversationId, includecontactrequests = true, auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { list(result) { writeMoodleConversationMember(it) } }
+    }
+
+    @Test
+    @DisplayName("Message.getConversationMembers#4")
+    fun getConversationMembers4() = case("Message.getConversationMembers#4", index = 3) {
+        val userId = choose("userId", listOf(siteGetSiteInfo()).mapNotNull { it.userId })
+        val conversationId = choose("conversationId", listOf(messageGetSelfConversation()).mapNotNull { it.id })
+        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleConversationMember\"}}") {
+            api.message.getConversationMembers(userId = userId, conversationId = conversationId, includeprivacyinfo = true, auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { list(result) { writeMoodleConversationMember(it) } }
+    }
+
+    @Test
+    @DisplayName("Message.getConversationMembers#5")
+    fun getConversationMembers5() = case("Message.getConversationMembers#5", index = 4) {
+        val userId = choose("userId", listOf(siteGetSiteInfo()).mapNotNull { it.userId })
+        val conversationId = choose("conversationId", listOf(messageGetSelfConversation()).mapNotNull { it.id })
+        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleConversationMember\"}}") {
+            api.message.getConversationMembers(userId = userId, conversationId = conversationId, includecontactrequests = true, includeprivacyinfo = true, auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { list(result) { writeMoodleConversationMember(it) } }
+    }
+
+    @Test
+    @DisplayName("Message.getConversationMembers#6")
+    fun getConversationMembers6() = case("Message.getConversationMembers#6", index = 5) {
+        val userId = choose("userId", listOf(siteGetSiteInfo()).mapNotNull { it.userId })
+        val conversationId = choose("conversationId", listOf(messageGetSelfConversation()).mapNotNull { it.id })
+        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleConversationMember\"}}") {
+            api.message.getConversationMembers(userId = userId, conversationId = conversationId, includecontactrequests = false, includeprivacyinfo = true, auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { list(result) { writeMoodleConversationMember(it) } }
+    }
+
+    @Test
     @DisplayName("Message.getConversations#1")
     fun getConversations1() = case("Message.getConversations#1") {
         val userId = choose("userId", listOf(siteGetSiteInfo()).mapNotNull { it.userId })
@@ -70,12 +250,43 @@ class MoodleMessageLiveTest : LiveTest<MoodleApi>(MoodleLive) {
     }
 
     @Test
-    @DisplayName("Message.getConversations#invalid-credentials")
-    fun getConversationsInvalidCredentials() = case("Message.getConversations#invalid-credentials") {
+    @DisplayName("Message.getReceivedContactRequestsCount#1")
+    fun getReceivedContactRequestsCount1() = case("Message.getReceivedContactRequestsCount#1") {
         val userId = choose("userId", listOf(siteGetSiteInfo()).mapNotNull { it.userId })
-        refused(acceptsEmpty = false) {
-            api.message.getConversations(userId = userId, auth = MoodleTokenAuth(token = "mybicocca-invalid-credential"))
-        }
+        val result = call("{\"k\":\"int\"}") {
+            api.message.getReceivedContactRequestsCount(userId = userId, auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { int(result.toLong()) }
+    }
+
+    @Test
+    @DisplayName("Message.getSelfConversation#1")
+    fun getSelfConversation1() = case("Message.getSelfConversation#1") {
+        val userId = choose("userId", listOf(siteGetSiteInfo()).mapNotNull { it.userId })
+        val result = call("{\"k\":\"record\",\"n\":\"MoodleConversation\"}") {
+            api.message.getSelfConversation(userId = userId, auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { writeMoodleConversation(result) }
+    }
+
+    @Test
+    @DisplayName("Message.getSelfConversation#2")
+    fun getSelfConversation2() = case("Message.getSelfConversation#2", index = 1) {
+        val userId = choose("userId", listOf(siteGetSiteInfo()).mapNotNull { it.userId })
+        val result = call("{\"k\":\"record\",\"n\":\"MoodleConversation\"}") {
+            api.message.getSelfConversation(userId = userId, newestmessagesfirst = true, auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { writeMoodleConversation(result) }
+    }
+
+    @Test
+    @DisplayName("Message.getSelfConversation#3")
+    fun getSelfConversation3() = case("Message.getSelfConversation#3", index = 2) {
+        val userId = choose("userId", listOf(siteGetSiteInfo()).mapNotNull { it.userId })
+        val result = call("{\"k\":\"record\",\"n\":\"MoodleConversation\"}") {
+            api.message.getSelfConversation(userId = userId, newestmessagesfirst = false, auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { writeMoodleConversation(result) }
     }
 
     @Test
@@ -95,5 +306,53 @@ class MoodleMessageLiveTest : LiveTest<MoodleApi>(MoodleLive) {
             api.message.getUnreadConversationCounts(userId = userId, auth = tokenCredentials())
         } ?: return@case
         fingerprint { writeMoodleUnreadConversationCounts(result) }
+    }
+
+    @Test
+    @DisplayName("Message.getUserContacts#1")
+    fun getUserContacts1() = case("Message.getUserContacts#1") {
+        val userId = choose("userId", listOf(siteGetSiteInfo()).mapNotNull { it.userId })
+        val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleConversationMember\"}}") {
+            api.message.getUserContacts(userId = userId, auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { list(result) { writeMoodleConversationMember(it) } }
+    }
+
+    @Test
+    @DisplayName("Message.getUserMessagePreferences#1")
+    fun getUserMessagePreferences1() = case("Message.getUserMessagePreferences#1") {
+        val result = call("{\"k\":\"record\",\"n\":\"MoodleMessageGetUserMessagePreferencesResponse\"}") {
+            api.message.getUserMessagePreferences(auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { writeMoodleMessageGetUserMessagePreferencesResponse(result) }
+    }
+
+    @Test
+    @DisplayName("Message.getUserMessagePreferences#2")
+    fun getUserMessagePreferences2() = case("Message.getUserMessagePreferences#2", index = 1) {
+        val userId = choose("userId", listOf(siteGetSiteInfo()).mapNotNull { it.userId })
+        val result = call("{\"k\":\"record\",\"n\":\"MoodleMessageGetUserMessagePreferencesResponse\"}") {
+            api.message.getUserMessagePreferences(userId = userId, auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { writeMoodleMessageGetUserMessagePreferencesResponse(result) }
+    }
+
+    @Test
+    @DisplayName("Message.getUserNotificationPreferences#1")
+    fun getUserNotificationPreferences1() = case("Message.getUserNotificationPreferences#1") {
+        val result = call("{\"k\":\"record\",\"n\":\"MoodleMessageGetUserNotificationPreferencesResponse\"}") {
+            api.message.getUserNotificationPreferences(auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { writeMoodleMessageGetUserNotificationPreferencesResponse(result) }
+    }
+
+    @Test
+    @DisplayName("Message.getUserNotificationPreferences#2")
+    fun getUserNotificationPreferences2() = case("Message.getUserNotificationPreferences#2", index = 1) {
+        val userId = choose("userId", listOf(siteGetSiteInfo()).mapNotNull { it.userId })
+        val result = call("{\"k\":\"record\",\"n\":\"MoodleMessageGetUserNotificationPreferencesResponse\"}") {
+            api.message.getUserNotificationPreferences(userId = userId, auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { writeMoodleMessageGetUserNotificationPreferencesResponse(result) }
     }
 }

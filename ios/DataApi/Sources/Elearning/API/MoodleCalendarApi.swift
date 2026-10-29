@@ -10,6 +10,44 @@ public struct MoodleCalendarApi: Sendable {
         self.client = client
     }
 
+    /// Create calendar events
+    ///
+    /// - Parameters:
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func createCalendarEvents(
+        events: [MoodleCalendarCreateCalendarEventsEvent],
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleCalendarCreateCalendarEventsResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_calendar_create_calendar_events"), ("moodlewsrestformat", "json")],
+                form: RestRequest.brackets("events", events),
+                auth: auth
+            )
+        )
+    }
+
+    /// Delete calendar events
+    ///
+    /// - Parameters:
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func deleteCalendarEvents(
+        events: [MoodleCalendarDeleteCalendarEventsEvent],
+        auth: MoodleTokenAuth
+    ) async throws {
+        try await client.send(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_calendar_delete_calendar_events"), ("moodlewsrestformat", "json")],
+                form: RestRequest.brackets("events", events),
+                auth: auth
+            )
+        )
+    }
+
     /// Get calendar action events by course
     ///
     /// - Parameters:
@@ -42,6 +80,38 @@ public struct MoodleCalendarApi: Sendable {
                     ("limitnum", limitNum),
                     ("searchvalue", searchValue)
                 ],
+                auth: auth
+            )
+        )
+    }
+
+    /// Get calendar action events by courses
+    ///
+    /// - Parameters:
+    ///   - timeSortFrom: Time sort from
+    ///   - timeSortTo: Time sort to
+    ///   - limitNum: Limit number
+    ///   - searchValue: The value a user wishes to search against
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getActionEventsByCourses(
+        courseIds: [Int],
+        timeSortFrom: Int64? = nil,
+        timeSortTo: Int64? = nil,
+        limitNum: Int? = nil,
+        searchValue: String? = nil,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleCalendarGetActionEventsByCoursesResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_calendar_get_action_events_by_courses"), ("moodlewsrestformat", "json")],
+                form: [
+                    ("timesortfrom", timeSortFrom),
+                    ("timesortto", timeSortTo),
+                    ("limitnum", limitNum),
+                    ("searchvalue", searchValue)
+                ] + RestRequest.brackets("courseids", courseIds),
                 auth: auth
             )
         )
@@ -81,6 +151,139 @@ public struct MoodleCalendarApi: Sendable {
                     ("userid", userId),
                     ("searchvalue", searchValue)
                 ] + RestRequest.brackets("limittononsuspendedevents", limitToNonSuspendedEvents),
+                auth: auth
+            )
+        )
+    }
+
+    /// Get the type of events a user can create in the given course.
+    ///
+    /// - Parameters:
+    ///   - courseId: Course to check, empty for site.
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getAllowedEventTypes(
+        courseId: Int? = nil,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleCalendarGetAllowedEventTypesResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_calendar_get_allowed_event_types"), ("moodlewsrestformat", "json")],
+                form: [("courseid", courseId)],
+                auth: auth
+            )
+        )
+    }
+
+    /// Convenience function to retrieve some permissions/access information for the given course calendar.
+    ///
+    /// - Parameters:
+    ///   - courseId: Course to check, empty for site calendar events.
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getCalendarAccessInformation(
+        courseId: Int? = nil,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleCalendarGetCalendarAccessInformationResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_calendar_get_calendar_access_information"), ("moodlewsrestformat", "json")],
+                form: [("courseid", courseId)],
+                auth: auth
+            )
+        )
+    }
+
+    /// Fetch the day view data for a calendar
+    ///
+    /// - Parameters:
+    ///   - year: Year to be viewed
+    ///   - month: Month to be viewed
+    ///   - day: Day to be viewed
+    ///   - courseId: Course being viewed
+    ///   - categoryId: Category being viewed
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getCalendarDayView(
+        year: Int,
+        month: Int,
+        day: Int,
+        courseId: Int? = nil,
+        categoryId: Int? = nil,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleCalendarGetCalendarDayViewResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_calendar_get_calendar_day_view"), ("moodlewsrestformat", "json")],
+                form: [
+                    ("year", year),
+                    ("month", month),
+                    ("day", day),
+                    ("courseid", courseId),
+                    ("categoryid", categoryId)
+                ],
+                auth: auth
+            )
+        )
+    }
+
+    /// Get calendar event by id
+    ///
+    /// - Parameters:
+    ///   - eventid: The event id to be retrieved
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getCalendarEventById(
+        eventid: Int,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleCalendarGetCalendarEventByIdResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_calendar_get_calendar_event_by_id"), ("moodlewsrestformat", "json")],
+                form: [("eventid", eventid)],
+                auth: auth
+            )
+        )
+    }
+
+    /// Get calendar events
+    ///
+    /// - Parameters:
+    ///   - events: Event details
+    ///   - options: Options
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getCalendarEvents(
+        events: MoodleCalendarGetCalendarEventsEvent? = nil,
+        options: MoodleCalendarGetCalendarEventsOption? = nil,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleCalendarGetCalendarEventsResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_calendar_get_calendar_events"), ("moodlewsrestformat", "json")],
+                form: RestRequest.brackets("events", events) + RestRequest.brackets("options", options),
+                auth: auth
+            )
+        )
+    }
+
+    /// Return the auth token required for exporting a calendar.
+    ///
+    /// - Parameters:
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getCalendarExportToken(
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleCalendarGetCalendarExportTokenResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_calendar_get_calendar_export_token"), ("moodlewsrestformat", "json")],
                 auth: auth
             )
         )
@@ -144,6 +347,48 @@ public struct MoodleCalendarApi: Sendable {
                 path: "/webservice/rest/server.php",
                 query: [("wsfunction", "core_calendar_get_calendar_upcoming_view"), ("moodlewsrestformat", "json")],
                 form: [("courseid", courseId), ("categoryid", categoryId)],
+                auth: auth
+            )
+        )
+    }
+
+    /// Submit form data for event form
+    ///
+    /// - Parameters:
+    ///   - formdata: The data from the event form
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func submitCreateUpdateForm(
+        formdata: String,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleCalendarSubmitCreateUpdateFormResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_calendar_submit_create_update_form"), ("moodlewsrestformat", "json")],
+                form: [("formdata", formdata)],
+                auth: auth
+            )
+        )
+    }
+
+    /// Update the start day (but not time) for an event.
+    ///
+    /// - Parameters:
+    ///   - eventid: Id of event to be updated
+    ///   - daytimestamp: Timestamp for the new start day
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func updateEventStartDay(
+        eventid: Int,
+        daytimestamp: Int64,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleCalendarUpdateEventStartDayResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_calendar_update_event_start_day"), ("moodlewsrestformat", "json")],
+                form: [("eventid", eventid), ("daytimestamp", daytimestamp)],
                 auth: auth
             )
         )

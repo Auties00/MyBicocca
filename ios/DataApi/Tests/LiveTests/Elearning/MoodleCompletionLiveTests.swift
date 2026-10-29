@@ -24,4 +24,14 @@ final class MoodleCompletionLiveTests: XCTestCase {
             try await live.refused(acceptsEmpty: false) { try await live.api.completion.getActivitiesCompletionStatus(courseId: courseId, userId: userId, auth: MoodleTokenAuth(token: "mybicocca-invalid-credential")) }
         }
     }
+
+    func test_getCourseCompletionStatus1() async throws {
+        try await liveCase(MoodleLive.api, "Completion.getCourseCompletionStatus#1") { live in
+            let courseId = try live.choose("courseId", [try await MoodleLive.courseGetUsersCourses(live)].flatMap { $0 }.compactMap { $0.id })
+            let userId = try live.choose("userId", [try await MoodleLive.siteGetSiteInfo(live)].compactMap { $0.userId })
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleCompletionGetCourseCompletionStatusResponse\"}") { try await live.api.completion.getCourseCompletionStatus(courseId: courseId, userId: userId, auth: auth) }
+            live.fingerprint { f in MoodleLive.writeMoodleCompletionGetCourseCompletionStatusResponse(f, result) }
+        }
+    }
 }

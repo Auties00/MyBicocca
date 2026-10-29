@@ -8,8 +8,10 @@ import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
 import io.ktor.http.HttpMethod
 import io.ktor.http.parameters
-import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseGradesResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleGradeItemsResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleGradereportUserGetAccessInformationResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleGradereportUserGetGradesTableResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleStatusResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
 import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import kotlinx.serialization.json.Json
@@ -21,21 +23,21 @@ class MoodleGradeApi(
 ) : RestApi(client, json, "", MoodleRuntime.policy) {
 
     /**
-     * Get the given user courses final grades
+     * Returns user access information for the user grade report.
      *
-     * @param userId Get grades for this user (optional, default current)
+     * @param courseId Course to check.
      * @param auth The credentials: [MoodleTokenAuth].
      */
-    suspend fun getCourseGrades(
-        userId: Int? = null,
+    suspend fun getAccessInformation(
+        courseId: Int,
         auth: MoodleTokenAuth
-    ): MoodleCourseGradesResponse {
-        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleCourseGradesResponse>()) {
+    ): MoodleGradereportUserGetAccessInformationResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleGradereportUserGetAccessInformationResponse>()) {
             setBody(FormDataContent(parameters {
-                userId?.let { append("userid", it.toString()) }
+                append("courseid", courseId.toString())
                 auth.form.forEach { (name, value) -> append(name, value) }
             }))
-            parameter("wsfunction", "gradereport_overview_get_course_grades")
+            parameter("wsfunction", "gradereport_user_get_access_information")
             parameter("moodlewsrestformat", "json")
             auth.headers.forEach { (name, value) -> header(name, value) }
         }
@@ -63,6 +65,57 @@ class MoodleGradeApi(
                 auth.form.forEach { (name, value) -> append(name, value) }
             }))
             parameter("wsfunction", "gradereport_user_get_grade_items")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Get the user/s report grades table for a course
+     *
+     * @param courseId Course Id
+     * @param userId Return grades only for this user (optional)
+     * @param groupId Get users from this group only
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getGradesTable(
+        courseId: Int,
+        userId: Int? = null,
+        groupId: Int? = null,
+        auth: MoodleTokenAuth
+    ): MoodleGradereportUserGetGradesTableResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleGradereportUserGetGradesTableResponse>()) {
+            setBody(FormDataContent(parameters {
+                append("courseid", courseId.toString())
+                userId?.let { append("userid", it.toString()) }
+                groupId?.let { append("groupid", it.toString()) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "gradereport_user_get_grades_table")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Trigger the report view event
+     *
+     * @param courseId id of the course
+     * @param userId id of the user, 0 means current user
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun viewGradeReport(
+        courseId: Int,
+        userId: Int? = null,
+        auth: MoodleTokenAuth
+    ): MoodleStatusResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleStatusResponse>()) {
+            setBody(FormDataContent(parameters {
+                append("courseid", courseId.toString())
+                userId?.let { append("userid", it.toString()) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "gradereport_user_view_grade_report")
             parameter("moodlewsrestformat", "json")
             auth.headers.forEach { (name, value) -> header(name, value) }
         }

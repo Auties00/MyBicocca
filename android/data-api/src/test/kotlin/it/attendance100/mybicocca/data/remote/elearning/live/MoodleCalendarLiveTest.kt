@@ -54,6 +54,72 @@ class MoodleCalendarLiveTest : LiveTest<MoodleApi>(MoodleLive) {
     }
 
     @Test
+    @DisplayName("Calendar.getAllowedEventTypes#1")
+    fun getAllowedEventTypes1() = case("Calendar.getAllowedEventTypes#1") {
+        val result = call("{\"k\":\"record\",\"n\":\"MoodleCalendarGetAllowedEventTypesResponse\"}") {
+            api.calendar.getAllowedEventTypes(auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { writeMoodleCalendarGetAllowedEventTypesResponse(result) }
+    }
+
+    @Test
+    @DisplayName("Calendar.getAllowedEventTypes#2")
+    fun getAllowedEventTypes2() = case("Calendar.getAllowedEventTypes#2", index = 1) {
+        val courseId = choose("courseId", listOf(courseGetUsersCourses()).flatten().mapNotNull { it.id })
+        val result = call("{\"k\":\"record\",\"n\":\"MoodleCalendarGetAllowedEventTypesResponse\"}") {
+            api.calendar.getAllowedEventTypes(courseId = courseId, auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { writeMoodleCalendarGetAllowedEventTypesResponse(result) }
+    }
+
+    @Test
+    @DisplayName("Calendar.getCalendarAccessInformation#1")
+    fun getCalendarAccessInformation1() = case("Calendar.getCalendarAccessInformation#1") {
+        val result = call("{\"k\":\"record\",\"n\":\"MoodleCalendarGetCalendarAccessInformationResponse\"}") {
+            api.calendar.getCalendarAccessInformation(auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { writeMoodleCalendarGetCalendarAccessInformationResponse(result) }
+    }
+
+    @Test
+    @DisplayName("Calendar.getCalendarAccessInformation#2")
+    fun getCalendarAccessInformation2() = case("Calendar.getCalendarAccessInformation#2", index = 1) {
+        val courseId = choose("courseId", listOf(courseGetUsersCourses()).flatten().mapNotNull { it.id })
+        val result = call("{\"k\":\"record\",\"n\":\"MoodleCalendarGetCalendarAccessInformationResponse\"}") {
+            api.calendar.getCalendarAccessInformation(courseId = courseId, auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { writeMoodleCalendarGetCalendarAccessInformationResponse(result) }
+    }
+
+    @Test
+    @DisplayName("Calendar.getCalendarEventById#1")
+    fun getCalendarEventById1() = case("Calendar.getCalendarEventById#1") {
+        val eventid = choose("eventid", listOf(calendarGetActionEventsByTimesort()).mapNotNull { it.events }.flatten().mapNotNull { it.id })
+        val result = call("{\"k\":\"record\",\"n\":\"MoodleCalendarGetCalendarEventByIdResponse\"}") {
+            api.calendar.getCalendarEventById(eventid = eventid, auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { writeMoodleCalendarGetCalendarEventByIdResponse(result) }
+    }
+
+    @Test
+    @DisplayName("Calendar.getCalendarEvents#1")
+    fun getCalendarEvents1() = case("Calendar.getCalendarEvents#1") {
+        val result = call("{\"k\":\"record\",\"n\":\"MoodleCalendarGetCalendarEventsResponse\"}") {
+            api.calendar.getCalendarEvents(auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { writeMoodleCalendarGetCalendarEventsResponse(result) }
+    }
+
+    @Test
+    @DisplayName("Calendar.getCalendarExportToken#1")
+    fun getCalendarExportToken1() = case("Calendar.getCalendarExportToken#1") {
+        val result = call("{\"k\":\"record\",\"n\":\"MoodleCalendarGetCalendarExportTokenResponse\"}") {
+            api.calendar.getCalendarExportToken(auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { writeMoodleCalendarGetCalendarExportTokenResponse(result) }
+    }
+
+    @Test
     @DisplayName("Calendar.getCalendarMonthlyView#1")
     fun getCalendarMonthlyView1() = case("Calendar.getCalendarMonthlyView#1") {
         val year = LiveTemplates.resolve("{today:yyyy}").toInt()

@@ -14,8 +14,9 @@ class DemoException(
     statusCode: Int,
     errorCode: String?,
     errorMessage: String,
-    val expectedRoles: Set<DemoPermissionLevel> = emptySet()
-) : ApiException("Demo", statusCode, errorCode, errorMessage) {
+    val expectedRoles: Set<DemoPermissionLevel> = emptySet(),
+    serverMessage: String? = null
+) : ApiException("Demo", statusCode, errorCode, errorMessage, serverMessage) {
     companion object {
         /** Nothing has that id. */
         const val NOT_FOUND = "not_found"

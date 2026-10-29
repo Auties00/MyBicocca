@@ -9,11 +9,13 @@ export class ApiFailure extends Error {
    * @param code The machine-readable error code the body carried, if any.
    * @param message The human-readable message the body carried, else the code, else a
    *   description of the status.
+   * @param serverMessage The human-readable message the body carried, if any.
    */
   constructor(
     readonly status: number,
     readonly code: string | undefined,
     message: string,
+    readonly serverMessage?: string,
   ) {
     super(message);
   }
@@ -193,8 +195,9 @@ export class RestClient {
   private async failure(response: Response): Promise<ApiFailure> {
     const body = await json(response);
     const errorCode = code(this.policy.errors, body);
-    const message = first(this.policy.errors?.message, body) ?? errorCode ?? `Request failed with status ${response.status}`;
-    return new ApiFailure(response.status, errorCode, message);
+    const serverMessage = first(this.policy.errors?.message, body);
+    const message = serverMessage ?? errorCode ?? `Request failed with status ${response.status}`;
+    return new ApiFailure(response.status, errorCode, message, serverMessage);
   }
 
   private fill(template: string): string {

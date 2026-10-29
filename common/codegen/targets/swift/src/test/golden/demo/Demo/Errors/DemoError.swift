@@ -16,6 +16,8 @@ public struct DemoError: Error, CustomStringConvertible {
     public let code: String?
     /// The human-readable message the body carried, else the code, else a description of the status.
     public let message: String
+    /// The human-readable message the body carried, if any.
+    public let serverMessage: String?
     /// The roles the operation requires, a hint when the status is 401 or 403.
     public let expectedRoles: Set<DemoPermissionLevel>
 
@@ -23,6 +25,7 @@ public struct DemoError: Error, CustomStringConvertible {
         status = failure.status
         code = failure.code
         message = failure.message
+        serverMessage = failure.serverMessage
         self.expectedRoles = expectedRoles
     }
 

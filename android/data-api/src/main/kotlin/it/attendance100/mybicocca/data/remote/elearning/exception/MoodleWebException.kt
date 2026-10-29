@@ -10,5 +10,6 @@ import it.attendance100.mybicocca.data.remote.runtime.ApiException
 class MoodleWebException(
     statusCode: Int,
     errorCode: String?,
-    errorMessage: String
-) : ApiException("MoodleWeb", statusCode, errorCode, errorMessage)
+    errorMessage: String,
+    serverMessage: String? = null
+) : ApiException("MoodleWeb", statusCode, errorCode, errorMessage, serverMessage)

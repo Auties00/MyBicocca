@@ -3,92 +3,49 @@
 import DataApiRuntime
 import Foundation
 
-public struct MoodleCourseGradesResponse: Codable, Hashable, Sendable {
-    public var grades: [MoodleCourseGrade]
+public struct MoodleGradereportUserGetAccessInformationResponse: Codable, Hashable, Sendable {
+    /// Whether the user can view the user grade report.
+    public var canviewusergradereport: Bool
+    /// Whether the user can view his grades in the course.
+    public var canviewmygrades: Bool
+    /// Whether the user can view all users grades in the course.
+    public var canviewallgrades: Bool
     /// list of warnings
     public var warnings: [MoodleWarning]
 
     public init(
-        grades: [MoodleCourseGrade] = [],
+        canviewusergradereport: Bool = false,
+        canviewmygrades: Bool = false,
+        canviewallgrades: Bool = false,
         warnings: [MoodleWarning] = []
     ) {
-        self.grades = grades
+        self.canviewusergradereport = canviewusergradereport
+        self.canviewmygrades = canviewmygrades
+        self.canviewallgrades = canviewallgrades
         self.warnings = warnings
     }
 
     private enum CodingKeys: String, CodingKey {
-        case grades = "grades"
+        case canviewusergradereport = "canviewusergradereport"
+        case canviewmygrades = "canviewmygrades"
+        case canviewallgrades = "canviewallgrades"
         case warnings = "warnings"
     }
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.grades = container.decodeLenient([MoodleCourseGrade].self, forKey: .grades) ?? []
+        self.canviewusergradereport = container.decodeLenient(Bool.self, forKey: .canviewusergradereport) ?? false
+        self.canviewmygrades = container.decodeLenient(Bool.self, forKey: .canviewmygrades) ?? false
+        self.canviewallgrades = container.decodeLenient(Bool.self, forKey: .canviewallgrades) ?? false
         self.warnings = container.decodeLenient([MoodleWarning].self, forKey: .warnings) ?? []
     }
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if !grades.isEmpty {
-            try container.encode(grades, forKey: .grades)
-        }
-        if !warnings.isEmpty {
-            try container.encode(warnings, forKey: .warnings)
-        }
-    }
-}
-
-public struct MoodleCourseGrade: Codable, Hashable, Sendable {
-    /// Course id
-    public var courseId: Int
-    /// Grade formatted
-    public var grade: String
-    /// Raw grade, not formatted
-    public var rawGrade: String
-    /// Your rank in the course
-    public var rank: Int?
-
-    public init(
-        courseId: Int = 0,
-        grade: String = "",
-        rawGrade: String = "",
-        rank: Int? = nil
-    ) {
-        self.courseId = courseId
-        self.grade = grade
-        self.rawGrade = rawGrade
-        self.rank = rank
-    }
-
-    private enum CodingKeys: String, CodingKey {
-        case courseId = "courseid"
-        case grade = "grade"
-        case rawGrade = "rawgrade"
-        case rank = "rank"
-    }
-
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.courseId = container.decodeLenient(Int.self, forKey: .courseId) ?? 0
-        self.grade = container.decodeLenient(String.self, forKey: .grade) ?? ""
-        self.rawGrade = container.decodeLenient(String.self, forKey: .rawGrade) ?? ""
-        self.rank = container.decodeLenient(Int.self, forKey: .rank)
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        if courseId != 0 {
-            try container.encode(courseId, forKey: .courseId)
-        }
-        if grade != "" {
-            try container.encode(grade, forKey: .grade)
-        }
-        if rawGrade != "" {
-            try container.encode(rawGrade, forKey: .rawGrade)
-        }
-        if rank != nil {
-            try container.encode(rank, forKey: .rank)
-        }
+        try container.encode(canviewusergradereport, forKey: .canviewusergradereport)
+        try container.encode(canviewmygrades, forKey: .canviewmygrades)
+        try container.encode(canviewallgrades, forKey: .canviewallgrades)
+        try container.encode(warnings, forKey: .warnings)
     }
 }
 
@@ -118,12 +75,8 @@ public struct MoodleGradeItemsResponse: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if !userGrades.isEmpty {
-            try container.encode(userGrades, forKey: .userGrades)
-        }
-        if !warnings.isEmpty {
-            try container.encode(warnings, forKey: .warnings)
-        }
+        try container.encode(userGrades, forKey: .userGrades)
+        try container.encode(warnings, forKey: .warnings)
     }
 }
 
@@ -183,27 +136,13 @@ public struct MoodleUserGrades: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if courseId != 0 {
-            try container.encode(courseId, forKey: .courseId)
-        }
-        if courseIdNumber != "" {
-            try container.encode(courseIdNumber, forKey: .courseIdNumber)
-        }
-        if userId != 0 {
-            try container.encode(userId, forKey: .userId)
-        }
-        if userFullName != "" {
-            try container.encode(userFullName, forKey: .userFullName)
-        }
-        if userIdNumber != "" {
-            try container.encode(userIdNumber, forKey: .userIdNumber)
-        }
-        if maxDepth != 0 {
-            try container.encode(maxDepth, forKey: .maxDepth)
-        }
-        if !gradeItems.isEmpty {
-            try container.encode(gradeItems, forKey: .gradeItems)
-        }
+        try container.encode(courseId, forKey: .courseId)
+        try container.encode(courseIdNumber, forKey: .courseIdNumber)
+        try container.encode(userId, forKey: .userId)
+        try container.encode(userFullName, forKey: .userFullName)
+        try container.encode(userIdNumber, forKey: .userIdNumber)
+        try container.encode(maxDepth, forKey: .maxDepth)
+        try container.encode(gradeItems, forKey: .gradeItems)
     }
 }
 
@@ -427,107 +366,344 @@ public struct MoodleGradeItem: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if id != 0 {
-            try container.encode(id, forKey: .id)
-        }
-        if itemName != "" {
-            try container.encode(itemName, forKey: .itemName)
-        }
-        if itemType != "" {
-            try container.encode(itemType, forKey: .itemType)
-        }
-        if itemModule != "" {
-            try container.encode(itemModule, forKey: .itemModule)
-        }
-        if itemInstance != 0 {
-            try container.encode(itemInstance, forKey: .itemInstance)
-        }
-        if itemNumber != 0 {
-            try container.encode(itemNumber, forKey: .itemNumber)
-        }
-        if idNumber != "" {
-            try container.encode(idNumber, forKey: .idNumber)
-        }
-        if categoryId != 0 {
-            try container.encode(categoryId, forKey: .categoryId)
-        }
-        if outcomeId != 0 {
-            try container.encode(outcomeId, forKey: .outcomeId)
-        }
-        if scaleId != 0 {
-            try container.encode(scaleId, forKey: .scaleId)
-        }
-        if locked != nil {
-            try container.encode(locked, forKey: .locked)
-        }
-        if cmId != nil {
-            try container.encode(cmId, forKey: .cmId)
-        }
-        if weightRaw != nil {
-            try container.encode(weightRaw, forKey: .weightRaw)
-        }
-        if weightFormatted != nil {
-            try container.encode(weightFormatted, forKey: .weightFormatted)
-        }
-        if status != nil {
-            try container.encode(status, forKey: .status)
-        }
-        if gradeRaw != nil {
-            try container.encode(gradeRaw, forKey: .gradeRaw)
-        }
-        if gradeDateSubmitted != nil {
-            try container.encode(gradeDateSubmitted, forKey: .gradeDateSubmitted)
-        }
-        if gradeDateGraded != nil {
-            try container.encode(gradeDateGraded, forKey: .gradeDateGraded)
-        }
-        if gradeHiddenByDate != nil {
-            try container.encode(gradeHiddenByDate, forKey: .gradeHiddenByDate)
-        }
-        if gradeNeedsUpdate != nil {
-            try container.encode(gradeNeedsUpdate, forKey: .gradeNeedsUpdate)
-        }
-        if gradeIsHidden != nil {
-            try container.encode(gradeIsHidden, forKey: .gradeIsHidden)
-        }
-        if gradeIsLocked != nil {
-            try container.encode(gradeIsLocked, forKey: .gradeIsLocked)
-        }
-        if gradeIsOverridden != nil {
-            try container.encode(gradeIsOverridden, forKey: .gradeIsOverridden)
-        }
-        if gradeFormatted != nil {
-            try container.encode(gradeFormatted, forKey: .gradeFormatted)
-        }
-        if gradeMin != nil {
-            try container.encode(gradeMin, forKey: .gradeMin)
-        }
-        if gradeMax != nil {
-            try container.encode(gradeMax, forKey: .gradeMax)
-        }
-        if rangeFormatted != nil {
-            try container.encode(rangeFormatted, forKey: .rangeFormatted)
-        }
-        if percentageFormatted != nil {
-            try container.encode(percentageFormatted, forKey: .percentageFormatted)
-        }
-        if letterGradeFormatted != nil {
-            try container.encode(letterGradeFormatted, forKey: .letterGradeFormatted)
-        }
-        if rank != nil {
-            try container.encode(rank, forKey: .rank)
-        }
-        if numUsers != nil {
-            try container.encode(numUsers, forKey: .numUsers)
-        }
-        if averageFormatted != nil {
-            try container.encode(averageFormatted, forKey: .averageFormatted)
-        }
-        if feedback != nil {
-            try container.encode(feedback, forKey: .feedback)
-        }
-        if feedbackFormat != nil {
-            try container.encode(feedbackFormat, forKey: .feedbackFormat)
-        }
+        try container.encode(id, forKey: .id)
+        try container.encode(itemName, forKey: .itemName)
+        try container.encode(itemType, forKey: .itemType)
+        try container.encode(itemModule, forKey: .itemModule)
+        try container.encode(itemInstance, forKey: .itemInstance)
+        try container.encode(itemNumber, forKey: .itemNumber)
+        try container.encode(idNumber, forKey: .idNumber)
+        try container.encode(categoryId, forKey: .categoryId)
+        try container.encode(outcomeId, forKey: .outcomeId)
+        try container.encode(scaleId, forKey: .scaleId)
+        try container.encode(locked, forKey: .locked)
+        try container.encode(cmId, forKey: .cmId)
+        try container.encode(weightRaw, forKey: .weightRaw)
+        try container.encode(weightFormatted, forKey: .weightFormatted)
+        try container.encode(status, forKey: .status)
+        try container.encode(gradeRaw, forKey: .gradeRaw)
+        try container.encode(gradeDateSubmitted, forKey: .gradeDateSubmitted)
+        try container.encode(gradeDateGraded, forKey: .gradeDateGraded)
+        try container.encode(gradeHiddenByDate, forKey: .gradeHiddenByDate)
+        try container.encode(gradeNeedsUpdate, forKey: .gradeNeedsUpdate)
+        try container.encode(gradeIsHidden, forKey: .gradeIsHidden)
+        try container.encode(gradeIsLocked, forKey: .gradeIsLocked)
+        try container.encode(gradeIsOverridden, forKey: .gradeIsOverridden)
+        try container.encode(gradeFormatted, forKey: .gradeFormatted)
+        try container.encode(gradeMin, forKey: .gradeMin)
+        try container.encode(gradeMax, forKey: .gradeMax)
+        try container.encode(rangeFormatted, forKey: .rangeFormatted)
+        try container.encode(percentageFormatted, forKey: .percentageFormatted)
+        try container.encode(letterGradeFormatted, forKey: .letterGradeFormatted)
+        try container.encode(rank, forKey: .rank)
+        try container.encode(numUsers, forKey: .numUsers)
+        try container.encode(averageFormatted, forKey: .averageFormatted)
+        try container.encode(feedback, forKey: .feedback)
+        try container.encode(feedbackFormat, forKey: .feedbackFormat)
+    }
+}
+
+public struct MoodleGradereportUserGetGradesTableResponse: Codable, Hashable, Sendable {
+    public var tables: [MoodleTable]
+    /// list of warnings
+    public var warnings: [MoodleWarning]
+
+    public init(
+        tables: [MoodleTable] = [],
+        warnings: [MoodleWarning] = []
+    ) {
+        self.tables = tables
+        self.warnings = warnings
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case tables = "tables"
+        case warnings = "warnings"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.tables = container.decodeLenient([MoodleTable].self, forKey: .tables) ?? []
+        self.warnings = container.decodeLenient([MoodleWarning].self, forKey: .warnings) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(tables, forKey: .tables)
+        try container.encode(warnings, forKey: .warnings)
+    }
+}
+
+public struct MoodleTable: Codable, Hashable, Sendable {
+    /// course id
+    public var courseId: Int
+    /// user id
+    public var userId: Int
+    /// user fullname
+    public var userFullName: String
+    /// table max depth (needed for printing it)
+    public var maxDepth: Int
+    public var tabledata: [MoodleTableTabledata]
+
+    public init(
+        courseId: Int = 0,
+        userId: Int = 0,
+        userFullName: String = "",
+        maxDepth: Int = 0,
+        tabledata: [MoodleTableTabledata] = []
+    ) {
+        self.courseId = courseId
+        self.userId = userId
+        self.userFullName = userFullName
+        self.maxDepth = maxDepth
+        self.tabledata = tabledata
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case courseId = "courseid"
+        case userId = "userid"
+        case userFullName = "userfullname"
+        case maxDepth = "maxdepth"
+        case tabledata = "tabledata"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.courseId = container.decodeLenient(Int.self, forKey: .courseId) ?? 0
+        self.userId = container.decodeLenient(Int.self, forKey: .userId) ?? 0
+        self.userFullName = container.decodeLenient(String.self, forKey: .userFullName) ?? ""
+        self.maxDepth = container.decodeLenient(Int.self, forKey: .maxDepth) ?? 0
+        self.tabledata = container.decodeLenient([MoodleTableTabledata].self, forKey: .tabledata) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(courseId, forKey: .courseId)
+        try container.encode(userId, forKey: .userId)
+        try container.encode(userFullName, forKey: .userFullName)
+        try container.encode(maxDepth, forKey: .maxDepth)
+        try container.encode(tabledata, forKey: .tabledata)
+    }
+}
+
+/// table
+public struct MoodleTableTabledata: Codable, Hashable, Sendable {
+    /// The item returned data
+    public var itemName: MoodleItemName?
+    /// The item returned data
+    public var leader: MoodleLeader?
+    /// weight column
+    public var weight: MoodleWeight?
+    /// grade column
+    public var grade: MoodleWeight?
+    /// range column
+    public var range: MoodleWeight?
+    /// percentage column
+    public var percentage: MoodleWeight?
+    /// lettergrade column
+    public var lettergrade: MoodleWeight?
+    /// rank column
+    public var rank: MoodleWeight?
+    /// average column
+    public var average: MoodleWeight?
+    /// feedback column
+    public var feedback: MoodleWeight?
+    /// contributiontocoursetotal column
+    public var contributiontocoursetotal: MoodleWeight?
+    public var parentcategories: [Int]
+
+    public init(
+        itemName: MoodleItemName? = nil,
+        leader: MoodleLeader? = nil,
+        weight: MoodleWeight? = nil,
+        grade: MoodleWeight? = nil,
+        range: MoodleWeight? = nil,
+        percentage: MoodleWeight? = nil,
+        lettergrade: MoodleWeight? = nil,
+        rank: MoodleWeight? = nil,
+        average: MoodleWeight? = nil,
+        feedback: MoodleWeight? = nil,
+        contributiontocoursetotal: MoodleWeight? = nil,
+        parentcategories: [Int] = []
+    ) {
+        self.itemName = itemName
+        self.leader = leader
+        self.weight = weight
+        self.grade = grade
+        self.range = range
+        self.percentage = percentage
+        self.lettergrade = lettergrade
+        self.rank = rank
+        self.average = average
+        self.feedback = feedback
+        self.contributiontocoursetotal = contributiontocoursetotal
+        self.parentcategories = parentcategories
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case itemName = "itemname"
+        case leader = "leader"
+        case weight = "weight"
+        case grade = "grade"
+        case range = "range"
+        case percentage = "percentage"
+        case lettergrade = "lettergrade"
+        case rank = "rank"
+        case average = "average"
+        case feedback = "feedback"
+        case contributiontocoursetotal = "contributiontocoursetotal"
+        case parentcategories = "parentcategories"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.itemName = container.decodeFolded(MoodleItemName.self, forKey: .itemName)
+        self.leader = container.decodeFolded(MoodleLeader.self, forKey: .leader)
+        self.weight = container.decodeFolded(MoodleWeight.self, forKey: .weight)
+        self.grade = container.decodeFolded(MoodleWeight.self, forKey: .grade)
+        self.range = container.decodeFolded(MoodleWeight.self, forKey: .range)
+        self.percentage = container.decodeFolded(MoodleWeight.self, forKey: .percentage)
+        self.lettergrade = container.decodeFolded(MoodleWeight.self, forKey: .lettergrade)
+        self.rank = container.decodeFolded(MoodleWeight.self, forKey: .rank)
+        self.average = container.decodeFolded(MoodleWeight.self, forKey: .average)
+        self.feedback = container.decodeFolded(MoodleWeight.self, forKey: .feedback)
+        self.contributiontocoursetotal = container.decodeFolded(MoodleWeight.self, forKey: .contributiontocoursetotal)
+        self.parentcategories = container.decodeLenient([Int].self, forKey: .parentcategories) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(itemName, forKey: .itemName)
+        try container.encode(leader, forKey: .leader)
+        try container.encode(weight, forKey: .weight)
+        try container.encode(grade, forKey: .grade)
+        try container.encode(range, forKey: .range)
+        try container.encode(percentage, forKey: .percentage)
+        try container.encode(lettergrade, forKey: .lettergrade)
+        try container.encode(rank, forKey: .rank)
+        try container.encode(average, forKey: .average)
+        try container.encode(feedback, forKey: .feedback)
+        try container.encode(contributiontocoursetotal, forKey: .contributiontocoursetotal)
+        try container.encode(parentcategories, forKey: .parentcategories)
+    }
+}
+
+/// The item returned data
+public struct MoodleItemName: Codable, Hashable, Sendable {
+    /// class
+    public var `class`: String
+    /// col span
+    public var colspan: Int
+    /// cell content
+    public var content: String
+    /// id
+    public var id: String
+
+    public init(
+        `class`: String = "",
+        colspan: Int = 0,
+        content: String = "",
+        id: String = ""
+    ) {
+        self.`class` = `class`
+        self.colspan = colspan
+        self.content = content
+        self.id = id
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case `class` = "class"
+        case colspan = "colspan"
+        case content = "content"
+        case id = "id"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.`class` = container.decodeLenient(String.self, forKey: .`class`) ?? ""
+        self.colspan = container.decodeLenient(Int.self, forKey: .colspan) ?? 0
+        self.content = container.decodeLenient(String.self, forKey: .content) ?? ""
+        self.id = container.decodeLenient(String.self, forKey: .id) ?? ""
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(`class`, forKey: .`class`)
+        try container.encode(colspan, forKey: .colspan)
+        try container.encode(content, forKey: .content)
+        try container.encode(id, forKey: .id)
+    }
+}
+
+/// The item returned data
+public struct MoodleLeader: Codable, Hashable, Sendable {
+    /// class
+    public var `class`: String
+    /// row span
+    public var rowspan: Int
+
+    public init(
+        `class`: String = "",
+        rowspan: Int = 0
+    ) {
+        self.`class` = `class`
+        self.rowspan = rowspan
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case `class` = "class"
+        case rowspan = "rowspan"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.`class` = container.decodeLenient(String.self, forKey: .`class`) ?? ""
+        self.rowspan = container.decodeLenient(Int.self, forKey: .rowspan) ?? 0
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(`class`, forKey: .`class`)
+        try container.encode(rowspan, forKey: .rowspan)
+    }
+}
+
+/// weight column
+public struct MoodleWeight: Codable, Hashable, Sendable {
+    /// class
+    public var `class`: String
+    /// cell content
+    public var content: String
+    /// headers
+    public var headers: String
+
+    public init(
+        `class`: String = "",
+        content: String = "",
+        headers: String = ""
+    ) {
+        self.`class` = `class`
+        self.content = content
+        self.headers = headers
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case `class` = "class"
+        case content = "content"
+        case headers = "headers"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.`class` = container.decodeLenient(String.self, forKey: .`class`) ?? ""
+        self.content = container.decodeLenient(String.self, forKey: .content) ?? ""
+        self.headers = container.decodeLenient(String.self, forKey: .headers) ?? ""
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(`class`, forKey: .`class`)
+        try container.encode(content, forKey: .content)
+        try container.encode(headers, forKey: .headers)
     }
 }

@@ -304,7 +304,7 @@ components:
         submittableSessions:
           type: array
           items: { $ref: "#/components/schemas/MoodleWebSubmittableSession" }
-          x-mb-scrape: [{ select-all: "table.generaltable td[colspan=3]" }]
+          x-mb-scrape: [{ select-all: "table.generaltable td[colspan='3']" }]
     MoodleWebAttendanceSummary:
       description: >-
         A student's attendance in an attendance activity, from the statistics table of `view.php`.
@@ -364,7 +364,7 @@ components:
           type: string
           x-mb-scrape:
             - first-of:
-                - [{ select: "a[href*=attendance.php]" }, { attribute: href }, { regex: 'sessid[=:]\s*(\d+)' }]
+                - [{ select: "a[href*='attendance.php']" }, { attribute: href }, { regex: 'sessid[=:]\s*(\d+)' }]
                 - [{ select: "input[name=sessid]" }, { attribute: value }]
     MoodleWebAttendanceSessionForm:
       description: The form of a session a student may mark themselves present at, from the template of `mobile_user_form`.

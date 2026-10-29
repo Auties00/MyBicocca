@@ -23,7 +23,7 @@ class MoodleForumLiveTest : LiveTest<MoodleApi>(MoodleLive) {
     @DisplayName("Forum.canAddDiscussion#2")
     fun canAddDiscussion2() = case("Forum.canAddDiscussion#2", index = 1) {
         val forumId = choose("forumId", listOf(forumGetForumsByCourses()).flatten().mapNotNull { it.id })
-        val groupId = choose("groupId", listOf(calendarGetActionEventsByTimesort()).mapNotNull { it.events }.flatten().mapNotNull { it.groupId })
+        val groupId = choose("groupId", listOf(blogGetEntries()).mapNotNull { it.entries }.flatten().mapNotNull { it.groupId })
         val result = call("{\"k\":\"record\",\"n\":\"MoodleCanAddDiscussionResponse\"}", errors = listOf("requireloginerror")) {
             api.forum.canAddDiscussion(forumId = forumId, groupId = groupId, auth = tokenCredentials())
         } ?: return@case
@@ -80,6 +80,16 @@ class MoodleForumLiveTest : LiveTest<MoodleApi>(MoodleLive) {
     }
 
     @Test
+    @DisplayName("Forum.getForumAccessInformation#1")
+    fun getForumAccessInformation1() = case("Forum.getForumAccessInformation#1") {
+        val forumId = choose("forumId", listOf(forumGetForumsByCourses()).flatten().mapNotNull { it.id })
+        val result = call("{\"k\":\"record\",\"n\":\"MoodleForumGetForumAccessInformationResponse\"}") {
+            api.forum.getForumAccessInformation(forumId = forumId, auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { writeMoodleForumGetForumAccessInformationResponse(result) }
+    }
+
+    @Test
     @DisplayName("Forum.getForumDiscussions#1")
     fun getForumDiscussions1() = case("Forum.getForumDiscussions#1") {
         val forumId = choose("forumId", listOf(forumGetForumsByCourses()).flatten().mapNotNull { it.id })
@@ -93,7 +103,7 @@ class MoodleForumLiveTest : LiveTest<MoodleApi>(MoodleLive) {
     @DisplayName("Forum.getForumDiscussions#2")
     fun getForumDiscussions2() = case("Forum.getForumDiscussions#2", index = 1) {
         val forumId = choose("forumId", listOf(forumGetForumsByCourses()).flatten().mapNotNull { it.id })
-        val groupId = choose("groupId", listOf(calendarGetActionEventsByTimesort()).mapNotNull { it.events }.flatten().mapNotNull { it.groupId })
+        val groupId = choose("groupId", listOf(blogGetEntries()).mapNotNull { it.entries }.flatten().mapNotNull { it.groupId })
         val result = call("{\"k\":\"record\",\"n\":\"MoodleForumDiscussionsResponse\"}", errors = listOf("requireloginerror")) {
             api.forum.getForumDiscussions(forumId = forumId, groupId = groupId, auth = tokenCredentials())
         } ?: return@case

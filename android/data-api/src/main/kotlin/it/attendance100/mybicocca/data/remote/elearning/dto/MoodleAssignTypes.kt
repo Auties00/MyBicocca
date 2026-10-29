@@ -236,6 +236,130 @@ data class MoodleAssignmentConfig(
 )
 
 @Serializable
+data class MoodleAssignGetGradesResponse(
+    /** list of assignment grade information */
+    @SerialName("assignments")
+    val assignments: List<MoodleAssignGetGradesResponseAssignment> = emptyList(),
+
+    /** list of warnings */
+    @SerialName("warnings")
+    val warnings: List<MoodleWarning> = emptyList()
+)
+
+@Serializable
+data class MoodleAssignGetGradesResponseAssignment(
+    /** assignment id */
+    @SerialName("assignmentid")
+    val assignmentId: Int = 0,
+
+    @SerialName("grades")
+    val grades: List<MoodleAssignmentGrade> = emptyList()
+)
+
+/** grade information */
+@Serializable
+data class MoodleAssignmentGrade(
+    /** grade id */
+    @SerialName("id")
+    val id: Int = 0,
+
+    /** assignment id */
+    @SerialName("assignment")
+    val assignment: Int? = null,
+
+    /** student id */
+    @SerialName("userid")
+    val userId: Int = 0,
+
+    /** attempt number */
+    @SerialName("attemptnumber")
+    val attemptNumber: Int = 0,
+
+    /** grade creation time */
+    @SerialName("timecreated")
+    val timeCreated: Long = 0L,
+
+    /** grade last modified time */
+    @SerialName("timemodified")
+    val timeModified: Long = 0L,
+
+    /** grader, -1 if grader is hidden */
+    @SerialName("grader")
+    val grader: Int = 0,
+
+    /** grade */
+    @SerialName("grade")
+    val grade: String = "",
+
+    /** grade rendered into a format suitable for display */
+    @SerialName("gradefordisplay")
+    val gradeForDisplay: String? = null
+)
+
+@Serializable
+data class MoodleAssignGetParticipantResponse(
+    /** ID of the user */
+    @SerialName("id")
+    val id: Int = 0,
+
+    /** The fullname of the user */
+    @SerialName("fullname")
+    val fullName: String = "",
+
+    /** have they submitted their assignment */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("submitted")
+    val submitted: Boolean = false,
+
+    /** is their submission waiting for grading */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("requiregrading")
+    val requiregrading: Boolean = false,
+
+    /** have they been granted an extension */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("grantedextension")
+    val grantedextension: Boolean = false,
+
+    /** is blind marking enabled for this assignment */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("blindmarking")
+    val blindMarking: Boolean = false,
+
+    /** allowsubmissionsfromdate for the user */
+    @SerialName("allowsubmissionsfromdate")
+    val allowSubmissionsFromDate: Long = 0L,
+
+    /** duedate for the user */
+    @SerialName("duedate")
+    val dueDate: Long = 0L,
+
+    /** cutoffdate for the user */
+    @SerialName("cutoffdate")
+    val cutoffDate: Long = 0L,
+
+    /** duedate for the user */
+    @SerialName("duedatestr")
+    val duedatestr: String = "",
+
+    /** for group assignments this is the group id */
+    @SerialName("groupid")
+    val groupId: Int? = null,
+
+    /** for group assignments this is the group name */
+    @SerialName("groupname")
+    val groupName: String? = null,
+
+    /** The submission status (new, draft, reopened or submitted). Empty when not submitted. */
+    @SerialName("submissionstatus")
+    val submissionstatus: String? = null,
+
+    @Serializable(with = MoodleUserFoldedSerializer::class)
+    @SerialName("user")
+    val user: MoodleUser? = null
+)
+
+@Serializable
 data class MoodleSubmissionStatus(
     /** Grading information. */
     @Serializable(with = MoodleGradingSummaryFoldedSerializer::class)
@@ -490,46 +614,6 @@ data class MoodleFeedback(
     val plugins: List<MoodleSubmissionPlugin> = emptyList()
 )
 
-/** grade information */
-@Serializable
-data class MoodleAssignmentGrade(
-    /** grade id */
-    @SerialName("id")
-    val id: Int = 0,
-
-    /** assignment id */
-    @SerialName("assignment")
-    val assignment: Int? = null,
-
-    /** student id */
-    @SerialName("userid")
-    val userId: Int = 0,
-
-    /** attempt number */
-    @SerialName("attemptnumber")
-    val attemptNumber: Int = 0,
-
-    /** grade creation time */
-    @SerialName("timecreated")
-    val timeCreated: Long = 0L,
-
-    /** grade last modified time */
-    @SerialName("timemodified")
-    val timeModified: Long = 0L,
-
-    /** grader, -1 if grader is hidden */
-    @SerialName("grader")
-    val grader: Int = 0,
-
-    /** grade */
-    @SerialName("grade")
-    val grade: String = "",
-
-    /** grade rendered into a format suitable for display */
-    @SerialName("gradefordisplay")
-    val gradeForDisplay: String? = null
-)
-
 @Serializable
 data class MoodlePreviousAttempt(
     /** Attempt number. */
@@ -581,6 +665,424 @@ data class MoodleAssignmentAttachments(
 )
 
 @Serializable
+data class MoodleAssignGetSubmissionsResponse(
+    /** assignment submissions */
+    @SerialName("assignments")
+    val assignments: List<MoodleAssignGetSubmissionsResponseAssignment> = emptyList(),
+
+    /** list of warnings */
+    @SerialName("warnings")
+    val warnings: List<MoodleWarning> = emptyList()
+)
+
+@Serializable
+data class MoodleAssignGetSubmissionsResponseAssignment(
+    /** assignment id */
+    @SerialName("assignmentid")
+    val assignmentId: Int = 0,
+
+    @SerialName("submissions")
+    val submissions: List<MoodleSubmission> = emptyList()
+)
+
+@Serializable
+data class MoodleAssignGetUserFlagsResponse(
+    /** list of assign user flag information */
+    @SerialName("assignments")
+    val assignments: List<MoodleAssignGetUserFlagsResponseAssignment> = emptyList(),
+
+    /** list of warnings */
+    @SerialName("warnings")
+    val warnings: List<MoodleWarning> = emptyList()
+)
+
+@Serializable
+data class MoodleAssignGetUserFlagsResponseAssignment(
+    /** assignment id */
+    @SerialName("assignmentid")
+    val assignmentId: Int = 0,
+
+    @SerialName("userflags")
+    val userflags: List<MoodleAssignGetUserFlagsResponseAssignmentUserflag> = emptyList()
+)
+
+@Serializable
+data class MoodleAssignGetUserFlagsResponseAssignmentUserflag(
+    /** user flag id */
+    @SerialName("id")
+    val id: Int = 0,
+
+    /** student id */
+    @SerialName("userid")
+    val userId: Int = 0,
+
+    /** locked */
+    @SerialName("locked")
+    val locked: Long = 0L,
+
+    /** mailed */
+    @SerialName("mailed")
+    val mailed: Int = 0,
+
+    /** extension due date */
+    @SerialName("extensionduedate")
+    val extensionDueDate: Long = 0L,
+
+    /** marking workflow state */
+    @SerialName("workflowstate")
+    val workflowstate: String? = null,
+
+    /** allocated marker */
+    @SerialName("allocatedmarker")
+    val allocatedmarker: Int = 0
+)
+
+@Serializable
+data class MoodleAssignGetUserMappingsResponse(
+    /** list of assign user mapping data */
+    @SerialName("assignments")
+    val assignments: List<MoodleAssignGetUserMappingsResponseAssignment> = emptyList(),
+
+    /** list of warnings */
+    @SerialName("warnings")
+    val warnings: List<MoodleWarning> = emptyList()
+)
+
+@Serializable
+data class MoodleAssignGetUserMappingsResponseAssignment(
+    /** assignment id */
+    @SerialName("assignmentid")
+    val assignmentId: Int = 0,
+
+    @SerialName("mappings")
+    val mappings: List<MoodleMapping> = emptyList()
+)
+
+@Serializable
+data class MoodleMapping(
+    /** user mapping id */
+    @SerialName("id")
+    val id: Int = 0,
+
+    /** student id */
+    @SerialName("userid")
+    val userId: Int = 0
+)
+
+@Serializable
+data class MoodleAssignListParticipantsItem(
+    /** ID of the user */
+    @SerialName("id")
+    val id: Int = 0,
+
+    /** The username */
+    @SerialName("username")
+    val username: String? = null,
+
+    /** The first name(s) of the user */
+    @SerialName("firstname")
+    val firstName: String? = null,
+
+    /** The family name of the user */
+    @SerialName("lastname")
+    val lastName: String? = null,
+
+    /** The fullname of the user */
+    @SerialName("fullname")
+    val fullName: String = "",
+
+    /** Email address */
+    @SerialName("email")
+    val email: String? = null,
+
+    /** Postal address */
+    @SerialName("address")
+    val address: String? = null,
+
+    /** Phone 1 */
+    @SerialName("phone1")
+    val phone1: String? = null,
+
+    /** Phone 2 */
+    @SerialName("phone2")
+    val phone2: String? = null,
+
+    /** department */
+    @SerialName("department")
+    val department: String? = null,
+
+    /** institution */
+    @SerialName("institution")
+    val institution: String? = null,
+
+    /** The idnumber of the user */
+    @SerialName("idnumber")
+    val idNumber: String? = null,
+
+    /** user interests (separated by commas) */
+    @SerialName("interests")
+    val interests: String? = null,
+
+    /** first access to the site (0 if never) */
+    @SerialName("firstaccess")
+    val firstAccess: Long? = null,
+
+    /** last access to the site (0 if never) */
+    @SerialName("lastaccess")
+    val lastAccess: Long? = null,
+
+    /** Suspend user account, either false to enable user login or true to disable it */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("suspended")
+    val suspended: Boolean? = null,
+
+    /** Whether the user is tracking forums. */
+    @SerialName("trackforums")
+    val trackForums: Int? = null,
+
+    /** User profile description */
+    @SerialName("description")
+    val description: String? = null,
+
+    /** int format (1 = HTML, 0 = MOODLE, 2 = PLAIN, or 4 = MARKDOWN) */
+    @SerialName("descriptionformat")
+    val descriptionFormat: Int? = null,
+
+    /** Home city of the user */
+    @SerialName("city")
+    val city: String? = null,
+
+    /** Home country code of the user, such as AU or CZ */
+    @SerialName("country")
+    val country: String? = null,
+
+    /** User image profile URL - small version */
+    @SerialName("profileimageurlsmall")
+    val profileImageUrlSmall: String? = null,
+
+    /** User image profile URL - big version */
+    @SerialName("profileimageurl")
+    val profileImageUrl: String? = null,
+
+    /** User custom fields (also known as user profile fields) */
+    @SerialName("customfields")
+    val customFields: List<MoodleUserCustomField> = emptyList(),
+
+    /** Users preferences */
+    @SerialName("preferences")
+    val preferences: List<MoodleKeyValue> = emptyList(),
+
+    /** record id */
+    @SerialName("recordid")
+    val recordid: Int = 0,
+
+    /** user groups */
+    @SerialName("groups")
+    val groups: List<MoodleAssignListParticipantsItemGroup> = emptyList(),
+
+    /** user roles */
+    @SerialName("roles")
+    val roles: List<MoodleUserRole> = emptyList(),
+
+    /** Courses where the user is enrolled - limited by which courses the user is able to see */
+    @SerialName("enrolledcourses")
+    val enrolledCourses: List<MoodleUserEnrolledCourse> = emptyList(),
+
+    /** have they submitted their assignment */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("submitted")
+    val submitted: Boolean = false,
+
+    /** is their submission waiting for grading */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("requiregrading")
+    val requiregrading: Boolean = false,
+
+    /** have they been granted an extension */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("grantedextension")
+    val grantedextension: Boolean = false,
+
+    /** The submission status (new, draft, reopened or submitted). Empty when not submitted. */
+    @SerialName("submissionstatus")
+    val submissionstatus: String? = null,
+
+    /** for group assignments this is the group id */
+    @SerialName("groupid")
+    val groupId: Int? = null,
+
+    /** for group assignments this is the group name */
+    @SerialName("groupname")
+    val groupName: String? = null
+)
+
+@Serializable
+data class MoodleAssignListParticipantsItemGroup(
+    /** group id */
+    @SerialName("id")
+    val id: Int = 0,
+
+    /** group name */
+    @SerialName("name")
+    val name: String = "",
+
+    /** group description */
+    @SerialName("description")
+    val description: String = ""
+)
+
+/** plugin data */
+@Serializable
+data class MoodlePluginData(
+    /** Editor structure */
+    @Serializable(with = MoodleAssignfeedbackcommentsEditorFoldedSerializer::class)
+    @SerialName("assignfeedbackcomments_editor")
+    val assignfeedbackcommentsEditor: MoodleAssignfeedbackcommentsEditor? = null,
+
+    /** The id of a draft area containing files for this feedback. */
+    @SerialName("files_filemanager")
+    val filesFilemanager: Int? = null
+)
+
+/** Editor structure */
+@Serializable
+data class MoodleAssignfeedbackcommentsEditor(
+    /** The text for this feedback. */
+    @SerialName("text")
+    val text: String = "",
+
+    /** The format for this feedback */
+    @SerialName("format")
+    val format: Int = 0
+)
+
+/** advanced grading data */
+@Serializable
+data class MoodleAdvancedgradingdata(
+    /** items */
+    @Serializable(with = MoodleGuideFoldedSerializer::class)
+    @SerialName("guide")
+    val guide: MoodleGuide? = null,
+
+    /** items */
+    @Serializable(with = MoodleRubricFoldedSerializer::class)
+    @SerialName("rubric")
+    val rubric: MoodleRubric? = null
+)
+
+/** items */
+@Serializable
+data class MoodleGuide(
+    @SerialName("criteria")
+    val criteria: List<MoodleGuideCriteria> = emptyList()
+)
+
+@Serializable
+data class MoodleGuideCriteria(
+    /** criterion id */
+    @SerialName("criterionid")
+    val criterionid: Int = 0,
+
+    /** filling */
+    @SerialName("fillings")
+    val fillings: List<MoodleGuideCriteriaFilling> = emptyList()
+)
+
+@Serializable
+data class MoodleGuideCriteriaFilling(
+    /** criterion id */
+    @SerialName("criterionid")
+    val criterionid: Int = 0,
+
+    /** level id */
+    @SerialName("levelid")
+    val levelid: Int? = null,
+
+    /** remark */
+    @SerialName("remark")
+    val remark: String? = null,
+
+    /** remark format (1 = HTML, 0 = MOODLE, 2 = PLAIN, or 4 = MARKDOWN) */
+    @SerialName("remarkformat")
+    val remarkformat: Int? = null,
+
+    /** maximum score */
+    @SerialName("score")
+    val score: Double = 0.0
+)
+
+/** items */
+@Serializable
+data class MoodleRubric(
+    @SerialName("criteria")
+    val criteria: List<MoodleRubricCriteria> = emptyList()
+)
+
+@Serializable
+data class MoodleRubricCriteria(
+    /** criterion id */
+    @SerialName("criterionid")
+    val criterionid: Int = 0,
+
+    /** filling */
+    @SerialName("fillings")
+    val fillings: List<MoodleRubricCriteriaFilling> = emptyList()
+)
+
+@Serializable
+data class MoodleRubricCriteriaFilling(
+    /** criterion id */
+    @SerialName("criterionid")
+    val criterionid: Int = 0,
+
+    /** level id */
+    @SerialName("levelid")
+    val levelid: Int? = null,
+
+    /** remark */
+    @SerialName("remark")
+    val remark: String? = null,
+
+    /** remark format (1 = HTML, 0 = MOODLE, 2 = PLAIN, or 4 = MARKDOWN) */
+    @SerialName("remarkformat")
+    val remarkformat: Int? = null
+)
+
+@Serializable
+data class MoodleAssignSaveGradesGrade(
+    /** The student id to operate on */
+    @SerialName("userid")
+    val userId: Int = 0,
+
+    /** The new grade for this user. Ignored if advanced grading used */
+    @SerialName("grade")
+    val grade: Double = 0.0,
+
+    /** The attempt number (-1 means latest attempt) */
+    @SerialName("attemptnumber")
+    val attemptNumber: Int = 0,
+
+    /** Allow another attempt if manual attempt reopen method */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("addattempt")
+    val addattempt: Boolean = false,
+
+    /** The next marking workflow state */
+    @SerialName("workflowstate")
+    val workflowstate: String = "",
+
+    /** plugin data */
+    @Serializable(with = MoodlePluginDataFoldedSerializer::class)
+    @SerialName("plugindata")
+    val pluginData: MoodlePluginData? = null,
+
+    /** advanced grading data */
+    @Serializable(with = MoodleAdvancedgradingdataFoldedSerializer::class)
+    @SerialName("advancedgradingdata")
+    val advancedgradingdata: MoodleAdvancedgradingdata? = null
+)
+
+@Serializable
 data class MoodleSubmissionPluginData(
     /** The id of a draft area containing files for this submission. */
     @SerialName("files_filemanager")
@@ -606,4 +1108,57 @@ data class MoodleOnlineTextEditor(
     /** The draft area id for files attached to the submission */
     @SerialName("itemid")
     val itemId: Int = 0
+)
+
+@Serializable
+data class MoodleAssignSetUserFlagsUserflag(
+    /** student id */
+    @SerialName("userid")
+    val userId: Int = 0,
+
+    /** locked */
+    @SerialName("locked")
+    val locked: Long? = null,
+
+    /** mailed */
+    @SerialName("mailed")
+    val mailed: Int? = null,
+
+    /** extension due date */
+    @SerialName("extensionduedate")
+    val extensionDueDate: Long? = null,
+
+    /** marking workflow state */
+    @SerialName("workflowstate")
+    val workflowstate: String? = null,
+
+    /** allocated marker */
+    @SerialName("allocatedmarker")
+    val allocatedmarker: Int? = null
+)
+
+@Serializable
+data class MoodleAssignSetUserFlagsItem(
+    /** id of record if successful, -1 for failure */
+    @SerialName("id")
+    val id: Int = 0,
+
+    /** userid of record */
+    @SerialName("userid")
+    val userId: Int = 0,
+
+    /** Failure error message */
+    @SerialName("errormessage")
+    val errorMessage: String? = null
+)
+
+@Serializable
+data class MoodleAssignStartSubmissionResponse(
+    /** New submission ID. */
+    @SerialName("submissionid")
+    val submissionid: Int = 0,
+
+    /** list of warnings */
+    @SerialName("warnings")
+    val warnings: List<MoodleWarning> = emptyList()
 )

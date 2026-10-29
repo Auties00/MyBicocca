@@ -3,10 +3,22 @@
 import { describe } from "vitest";
 import { MoodleTokenAuth } from "../../src/elearning/models/index.js";
 import { isPresent, liveCase } from "../runtime/live.js";
-import { MoodleLive, courseGetUsersCourses, siteGetSiteInfo, tokenCredentials, writeMoodleUserBadgesResponse } from "./MoodleLive.js";
+import { MoodleLive, badgeGetUserBadges, courseGetUsersCourses, siteGetSiteInfo, tokenCredentials, writeMoodleBadgesGetBadgeResponse, writeMoodleUserBadgesResponse } from "./MoodleLive.js";
 
 // The live tests of the Moodle Badge module, planned from common/specs/moodle/tests.yaml.
 describe("Moodle Badge", () => {
+  liveCase(MoodleLive, "Badge.getBadge#1", {}, async (live) => {
+    const id = live.choose("id", [await badgeGetUserBadges(live)].map((it) => it.badges).filter(isPresent).flat().map((it) => it.id).filter(isPresent));
+    const auth = await tokenCredentials(live);
+    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleBadgesGetBadgeResponse\"}", {}, async () => live.api.badge.getBadge(id, auth));
+    live.fingerprint((f) => writeMoodleBadgesGetBadgeResponse(f, result));
+  });
+
+  liveCase(MoodleLive, "Badge.getBadge#invalid-credentials", {}, async (live) => {
+    const id = live.choose("id", [await badgeGetUserBadges(live)].map((it) => it.badges).filter(isPresent).flat().map((it) => it.id).filter(isPresent));
+    await live.refused(false, async () => live.api.badge.getBadge(id, new MoodleTokenAuth("mybicocca-invalid-credential")));
+  });
+
   liveCase(MoodleLive, "Badge.getUserBadges#1", {}, async (live) => {
     const auth = await tokenCredentials(live);
     const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleUserBadgesResponse\"}", {}, async () => live.api.badge.getUserBadges(auth));
@@ -47,9 +59,5 @@ describe("Moodle Badge", () => {
     const auth = await tokenCredentials(live);
     const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleUserBadgesResponse\"}", {}, async () => live.api.badge.getUserBadges(auth, { userId: userId, courseId: courseId, onlyPublic: false }));
     live.fingerprint((f) => writeMoodleUserBadgesResponse(f, result));
-  });
-
-  liveCase(MoodleLive, "Badge.getUserBadges#invalid-credentials", {}, async (live) => {
-    await live.refused(false, async () => live.api.badge.getUserBadges(new MoodleTokenAuth("mybicocca-invalid-credential")));
   });
 });

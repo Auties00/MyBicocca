@@ -206,7 +206,7 @@ class ElearningGradeRepositoryImplTest {
     fun `refreshAllCourseGrades stores overview rows with no course name and stamps`() = runTest {
         val scope = CoroutineScope(SupervisorJob() + UnconfinedTestDispatcher(testScheduler))
         val repository = newRepository(scope)
-        coEvery { elearningApi.moodle.grade.getCourseGrades(userId = lmsUserId, auth = auth) } returns
+        coEvery { elearningApi.moodle.gradeOverview.getCourseGrades(userId = lmsUserId, auth = auth) } returns
             MoodleCourseGradesResponse(
                 grades = listOf(MoodleCourseGrade(courseId = 11, grade = "27,00", rawGrade = "27.0")),
             )

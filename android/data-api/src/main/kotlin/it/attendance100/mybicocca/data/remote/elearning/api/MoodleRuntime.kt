@@ -19,12 +19,13 @@ internal object MoodleRuntime {
         coerceInputValues = true
         ignoreUnknownKeys = true
         isLenient = true
+        encodeDefaults = true
     }
 
     val policy = RestPolicy(
         baseUrl = "https://elearning.unimib.it",
         errors = ErrorFormat(detect = listOf("/exception", "/errorcode", "/error"), code = listOf("/errorcode"), message = listOf("/message", "/error")),
-        failure = { MoodleException(it.statusCode, it.errorCode, it.errorMessage) }
+        failure = { MoodleException(it.statusCode, it.errorCode, it.errorMessage, serverMessage = it.serverMessage) }
     )
 
     fun settings() = ClientSettings(

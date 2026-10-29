@@ -53,6 +53,38 @@ public struct MoodleUserApi: Sendable {
         )
     }
 
+    /// Copy files from a draft area to users private files area.
+    ///
+    /// - Parameters:
+    ///   - draftid: draft area id
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func addUserPrivateFiles(draftid: Int, auth: MoodleTokenAuth) async throws {
+        try await client.send(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_user_add_user_private_files"), ("moodlewsrestformat", "json")],
+                form: [("draftid", draftid)],
+                auth: auth
+            )
+        )
+    }
+
+    /// Agree the site policy for the current user.
+    ///
+    /// - Parameters:
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func agreeSitePolicy(auth: MoodleTokenAuth) async throws -> MoodleStatusResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_user_agree_site_policy"), ("moodlewsrestformat", "json")],
+                auth: auth
+            )
+        )
+    }
+
     /// Get course user profiles (each of the profils matching a course id and a user id),.
     ///
     /// - Parameters:
@@ -135,6 +167,23 @@ public struct MoodleUserApi: Sendable {
         )
     }
 
+    /// Prepares the draft area for user private files.
+    ///
+    /// - Parameters:
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func preparePrivateFilesForEdition(
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleUserPreparePrivateFilesForEditionResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_user_prepare_private_files_for_edition"), ("moodlewsrestformat", "json")],
+                auth: auth
+            )
+        )
+    }
+
     /// Remove a user device from the Moodle database.
     ///
     /// - Parameters:
@@ -152,6 +201,97 @@ public struct MoodleUserApi: Sendable {
                 path: "/webservice/rest/server.php",
                 query: [("wsfunction", "core_user_remove_user_device"), ("moodlewsrestformat", "json")],
                 form: [("uuid", uuid), ("appid", appId)],
+                auth: auth
+            )
+        )
+    }
+
+    /// Set user preferences.
+    ///
+    /// - Parameters:
+    ///   - auth: The credentials, if any: ``MoodleTokenAuth``.
+    public func setUserPreferences(
+        preferences: [MoodleUserSetUserPreferencesPreference],
+        auth: (MoodleTokenAuth)? = nil
+    ) async throws -> MoodleUserSetUserPreferencesResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_user_set_user_preferences"), ("moodlewsrestformat", "json")],
+                form: RestRequest.brackets("preferences", preferences),
+                auth: auth
+            )
+        )
+    }
+
+    /// Update or delete the user picture in the site
+    ///
+    /// - Parameters:
+    ///   - draftItemId: Id of the user draft file to use as image
+    ///   - delete: If we should delete the user picture
+    ///   - userId: Id of the user, 0 for current user
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func updatePicture(
+        draftItemId: Int,
+        delete: Bool? = nil,
+        userId: Int? = nil,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleUserUpdatePictureResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_user_update_picture"), ("moodlewsrestformat", "json")],
+                form: [("draftitemid", draftItemId), ("userid", userId)] + RestRequest.brackets("delete", delete),
+                auth: auth
+            )
+        )
+    }
+
+    /// Copy files from a draft area to users private files area.
+    ///
+    /// - Parameters:
+    ///   - draftItemId: The draft item id with the files.
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func updatePrivateFiles(
+        draftItemId: Int,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleStatusResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_user_update_private_files"), ("moodlewsrestformat", "json")],
+                form: [("draftitemid", draftItemId)],
+                auth: auth
+            )
+        )
+    }
+
+    /// Store mobile user public key.
+    ///
+    /// - Parameters:
+    ///   - uuid: the device UUID
+    ///   - appId: The app id, something like com.moodle.moodlemobile
+    ///   - publicKey: the app generated public key
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func updateUserDevicePublicKey(
+        uuid: String,
+        appId: String,
+        publicKey: String,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleStatusResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_user_update_user_device_public_key"), ("moodlewsrestformat", "json")],
+                form: [
+                    ("uuid", uuid),
+                    ("appid", appId),
+                    ("publickey", publicKey)
+                ],
                 auth: auth
             )
         )
@@ -176,6 +316,26 @@ public struct MoodleUserApi: Sendable {
                 path: "/webservice/rest/server.php",
                 query: [("wsfunction", "core_user_update_user_preferences"), ("moodlewsrestformat", "json")],
                 form: [("userid", userId), ("emailstop", emailStop)] + RestRequest.brackets("preferences", preferences),
+                auth: auth
+            )
+        )
+    }
+
+    /// Simulates the web-interface view of user/index.php (triggering events),.
+    ///
+    /// - Parameters:
+    ///   - courseId: id of the course, 0 for site
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func viewUserList(
+        courseId: Int,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleStatusResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_user_view_user_list"), ("moodlewsrestformat", "json")],
+                form: [("courseid", courseId)],
                 auth: auth
             )
         )

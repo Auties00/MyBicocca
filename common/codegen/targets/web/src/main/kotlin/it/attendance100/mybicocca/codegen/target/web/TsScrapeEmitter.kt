@@ -60,7 +60,7 @@ internal class TsScrapeEmitter(private val spec: ApiSpec, private val layout: Ts
     /** Reads each field into a numbered constant, so a field's name never shadows the node. */
     private fun CodeWriter.record(record: RecordType, file: TsFile) {
         val missing = record.scrape!!.missing
-        layout.importDeclaration(file, record.name)
+        layout.importDeclaration(file, record.name, "type ${record.name}")
         line("/** Reads {@link ${record.name}} out of `node`, or returns `undefined` when a value it requires is missing. */")
         block("export function ${functionName(record)}(node: ScrapeNode): ${record.name} | undefined {") {
             if (missing.isNotEmpty()) line("const missing = ${missing.joinToString(", ", "[", "]") { TsSyntax.string(it) }};")

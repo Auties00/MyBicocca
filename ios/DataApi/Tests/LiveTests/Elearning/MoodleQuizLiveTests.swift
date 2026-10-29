@@ -9,7 +9,7 @@ import XCTest
 final class MoodleQuizLiveTests: XCTestCase {
     func test_getAttemptReview1() async throws {
         try await liveCase(MoodleLive.api, "Quiz.getAttemptReview#1") { live in
-            let attemptId = try live.choose("attemptId", [try await MoodleLive.quizGetUserAttempts(live)].compactMap { $0.attempts }.flatMap { $0 }.compactMap { $0.id })
+            let attemptId = try live.choose("attemptId", [try await MoodleLive.h5pactivityGetResults(live)].compactMap { $0.attempts }.flatMap { $0 }.compactMap { $0.results }.flatMap { $0 }.compactMap { $0.attemptId })
             let auth = try await MoodleLive.tokenCredentials(live)
             _ = try await live.call("{\"k\":\"record\",\"n\":\"MoodleAttemptReviewResponse\"}") { try await live.api.quiz.getAttemptReview(attemptId: attemptId, auth: auth) }
         }
@@ -17,8 +17,27 @@ final class MoodleQuizLiveTests: XCTestCase {
 
     func test_getAttemptReviewInvalidCredentials() async throws {
         try await liveCase(MoodleLive.api, "Quiz.getAttemptReview#invalid-credentials") { live in
-            let attemptId = try live.choose("attemptId", [try await MoodleLive.quizGetUserAttempts(live)].compactMap { $0.attempts }.flatMap { $0 }.compactMap { $0.id })
+            let attemptId = try live.choose("attemptId", [try await MoodleLive.h5pactivityGetResults(live)].compactMap { $0.attempts }.flatMap { $0 }.compactMap { $0.results }.flatMap { $0 }.compactMap { $0.attemptId })
             try await live.refused(acceptsEmpty: false) { try await live.api.quiz.getAttemptReview(attemptId: attemptId, auth: MoodleTokenAuth(token: "mybicocca-invalid-credential")) }
+        }
+    }
+
+    func test_getCombinedReviewOptions1() async throws {
+        try await liveCase(MoodleLive.api, "Quiz.getCombinedReviewOptions#1") { live in
+            let quizId = try live.choose("quizId", [try await MoodleLive.quizGetQuizzesByCourses(live)].compactMap { $0.quizzes }.flatMap { $0 }.compactMap { $0.id })
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleQuizGetCombinedReviewOptionsResponse\"}") { try await live.api.quiz.getCombinedReviewOptions(quizId: quizId, auth: auth) }
+            live.fingerprint { f in MoodleLive.writeMoodleQuizGetCombinedReviewOptionsResponse(f, result) }
+        }
+    }
+
+    func test_getCombinedReviewOptions2() async throws {
+        try await liveCase(MoodleLive.api, "Quiz.getCombinedReviewOptions#2", index: 1) { live in
+            let quizId = try live.choose("quizId", [try await MoodleLive.quizGetQuizzesByCourses(live)].compactMap { $0.quizzes }.flatMap { $0 }.compactMap { $0.id })
+            let userId = try live.choose("userId", [try await MoodleLive.siteGetSiteInfo(live)].compactMap { $0.userId })
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleQuizGetCombinedReviewOptionsResponse\"}") { try await live.api.quiz.getCombinedReviewOptions(quizId: quizId, userId: userId, auth: auth) }
+            live.fingerprint { f in MoodleLive.writeMoodleQuizGetCombinedReviewOptionsResponse(f, result) }
         }
     }
 
@@ -28,6 +47,15 @@ final class MoodleQuizLiveTests: XCTestCase {
             let auth = try await MoodleLive.tokenCredentials(live)
             let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleQuizAccessInformation\"}") { try await live.api.quiz.getQuizAccessInformation(quizId: quizId, auth: auth) }
             live.fingerprint { f in MoodleLive.writeMoodleQuizAccessInformation(f, result) }
+        }
+    }
+
+    func test_getQuizRequiredQtypes1() async throws {
+        try await liveCase(MoodleLive.api, "Quiz.getQuizRequiredQtypes#1") { live in
+            let quizId = try live.choose("quizId", [try await MoodleLive.quizGetQuizzesByCourses(live)].compactMap { $0.quizzes }.flatMap { $0 }.compactMap { $0.id })
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleQuizGetQuizRequiredQtypesResponse\"}") { try await live.api.quiz.getQuizRequiredQtypes(quizId: quizId, auth: auth) }
+            live.fingerprint { f in MoodleLive.writeMoodleQuizGetQuizRequiredQtypesResponse(f, result) }
         }
     }
 

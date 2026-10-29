@@ -5,33 +5,143 @@ import Foundation
 
 /// Entry point of the Moodle API: one property per module, all sharing one client.
 public struct MoodleApi: Sendable {
+    public let aiplacementCourseassist: MoodleAiplacementCourseassistApi
+    public let aiplacementEditor: MoodleAiplacementEditorApi
+    public let blockRecentlyaccesseditems: MoodleBlockRecentlyaccesseditemsApi
+    public let blockStarredcourses: MoodleBlockStarredcoursesApi
+    public let ai: MoodleAiApi
     public let badge: MoodleBadgeApi
+    public let block: MoodleBlockApi
+    public let blog: MoodleBlogApi
     public let calendar: MoodleCalendarApi
+    public let comment: MoodleCommentApi
+    public let competency: MoodleCompetencyApi
     public let completion: MoodleCompletionApi
     public let course: MoodleCourseApi
+    public let draftArea: MoodleDraftAreaApi
+    public let filters: MoodleFiltersApi
+    public let get: MoodleGetApi
+    public let grades: MoodleGradesApi
+    public let h5p: MoodleH5pApi
     public let message: MoodleMessageApi
+    public let my: MoodleMyApi
+    public let notes: MoodleNotesApi
+    public let question: MoodleQuestionApi
+    public let rating: MoodleRatingApi
+    public let reportbuilder: MoodleReportbuilderApi
+    public let search: MoodleSearchApi
+    public let table: MoodleTableApi
+    public let tag: MoodleTagApi
     public let user: MoodleUserApi
     public let site: MoodleSiteApi
+    public let xapi: MoodleXapiApi
+    public let enrolGuest: MoodleEnrolGuestApi
+    public let gradereportGrader: MoodleGradereportGraderApi
+    public let gradeOverview: MoodleGradeOverviewApi
+    public let gradereportSingleview: MoodleGradereportSingleviewApi
     public let grade: MoodleGradeApi
+    public let messageAirnotifier: MoodleMessageAirnotifierApi
+    public let messagePopup: MoodleMessagePopupApi
     public let assign: MoodleAssignApi
+    public let bigbluebuttonbn: MoodleBigbluebuttonbnApi
+    public let book: MoodleBookApi
+    public let chat: MoodleChatApi
+    public let choice: MoodleChoiceApi
+    public let data: MoodleDataApi
+    public let feedback: MoodleFeedbackApi
+    public let folder: MoodleFolderApi
     public let forum: MoodleForumApi
+    public let glossary: MoodleGlossaryApi
+    public let h5pactivity: MoodleH5pactivityApi
+    public let imscp: MoodleImscpApi
+    public let label: MoodleLabelApi
+    public let lesson: MoodleLessonApi
+    public let lti: MoodleLtiApi
+    public let page: MoodlePageApi
     public let quiz: MoodleQuizApi
+    public let resource: MoodleResourceApi
+    public let scorm: MoodleScormApi
+    public let survey: MoodleSurveyApi
+    public let url: MoodleUrlApi
+    public let wiki: MoodleWikiApi
+    public let workshop: MoodleWorkshopApi
+    public let reportInsights: MoodleReportInsightsApi
+    public let analytics: MoodleAnalyticsApi
+    public let dataprivacy: MoodleDataprivacyApi
+    public let lp: MoodleLpApi
     public let mobile: MoodleMobileApi
+    public let moodlenet: MoodleMoodlenetApi
+    public let policy: MoodlePolicyApi
     public let files: MoodleFilesApi
 
     public init(client: MoodleClient) {
+        self.aiplacementCourseassist = MoodleAiplacementCourseassistApi(client: client)
+        self.aiplacementEditor = MoodleAiplacementEditorApi(client: client)
+        self.blockRecentlyaccesseditems = MoodleBlockRecentlyaccesseditemsApi(client: client)
+        self.blockStarredcourses = MoodleBlockStarredcoursesApi(client: client)
+        self.ai = MoodleAiApi(client: client)
         self.badge = MoodleBadgeApi(client: client)
+        self.block = MoodleBlockApi(client: client)
+        self.blog = MoodleBlogApi(client: client)
         self.calendar = MoodleCalendarApi(client: client)
+        self.comment = MoodleCommentApi(client: client)
+        self.competency = MoodleCompetencyApi(client: client)
         self.completion = MoodleCompletionApi(client: client)
         self.course = MoodleCourseApi(client: client)
+        self.draftArea = MoodleDraftAreaApi(client: client)
+        self.filters = MoodleFiltersApi(client: client)
+        self.get = MoodleGetApi(client: client)
+        self.grades = MoodleGradesApi(client: client)
+        self.h5p = MoodleH5pApi(client: client)
         self.message = MoodleMessageApi(client: client)
+        self.my = MoodleMyApi(client: client)
+        self.notes = MoodleNotesApi(client: client)
+        self.question = MoodleQuestionApi(client: client)
+        self.rating = MoodleRatingApi(client: client)
+        self.reportbuilder = MoodleReportbuilderApi(client: client)
+        self.search = MoodleSearchApi(client: client)
+        self.table = MoodleTableApi(client: client)
+        self.tag = MoodleTagApi(client: client)
         self.user = MoodleUserApi(client: client)
         self.site = MoodleSiteApi(client: client)
+        self.xapi = MoodleXapiApi(client: client)
+        self.enrolGuest = MoodleEnrolGuestApi(client: client)
+        self.gradereportGrader = MoodleGradereportGraderApi(client: client)
+        self.gradeOverview = MoodleGradeOverviewApi(client: client)
+        self.gradereportSingleview = MoodleGradereportSingleviewApi(client: client)
         self.grade = MoodleGradeApi(client: client)
+        self.messageAirnotifier = MoodleMessageAirnotifierApi(client: client)
+        self.messagePopup = MoodleMessagePopupApi(client: client)
         self.assign = MoodleAssignApi(client: client)
+        self.bigbluebuttonbn = MoodleBigbluebuttonbnApi(client: client)
+        self.book = MoodleBookApi(client: client)
+        self.chat = MoodleChatApi(client: client)
+        self.choice = MoodleChoiceApi(client: client)
+        self.data = MoodleDataApi(client: client)
+        self.feedback = MoodleFeedbackApi(client: client)
+        self.folder = MoodleFolderApi(client: client)
         self.forum = MoodleForumApi(client: client)
+        self.glossary = MoodleGlossaryApi(client: client)
+        self.h5pactivity = MoodleH5pactivityApi(client: client)
+        self.imscp = MoodleImscpApi(client: client)
+        self.label = MoodleLabelApi(client: client)
+        self.lesson = MoodleLessonApi(client: client)
+        self.lti = MoodleLtiApi(client: client)
+        self.page = MoodlePageApi(client: client)
         self.quiz = MoodleQuizApi(client: client)
+        self.resource = MoodleResourceApi(client: client)
+        self.scorm = MoodleScormApi(client: client)
+        self.survey = MoodleSurveyApi(client: client)
+        self.url = MoodleUrlApi(client: client)
+        self.wiki = MoodleWikiApi(client: client)
+        self.workshop = MoodleWorkshopApi(client: client)
+        self.reportInsights = MoodleReportInsightsApi(client: client)
+        self.analytics = MoodleAnalyticsApi(client: client)
+        self.dataprivacy = MoodleDataprivacyApi(client: client)
+        self.lp = MoodleLpApi(client: client)
         self.mobile = MoodleMobileApi(client: client)
+        self.moodlenet = MoodleMoodlenetApi(client: client)
+        self.policy = MoodlePolicyApi(client: client)
         self.files = MoodleFilesApi(client: client)
     }
 }

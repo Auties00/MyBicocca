@@ -8,7 +8,19 @@ import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
 import io.ktor.http.HttpMethod
 import io.ktor.http.parameters
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAdvancedgradingdata
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAssignGetGradesResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAssignGetParticipantResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAssignGetSubmissionsResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAssignGetUserFlagsResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAssignGetUserMappingsResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAssignListParticipantsItem
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAssignSaveGradesGrade
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAssignSetUserFlagsItem
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAssignSetUserFlagsUserflag
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAssignStartSubmissionResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAssignmentsResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodlePluginData
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleStatusResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleSubmissionPluginData
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleSubmissionStatus
@@ -53,6 +65,57 @@ class MoodleAssignApi(
     }
 
     /**
+     * Returns grades from the assignment
+     *
+     * @param assignmentids 1 or more assignment ids
+     * @param since timestamp, only return records where timemodified >= since
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getGrades(
+        assignmentids: List<Int>,
+        since: Int? = null,
+        auth: MoodleTokenAuth
+    ): MoodleAssignGetGradesResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleAssignGetGradesResponse>()) {
+            setBody(FormDataContent(parameters {
+                appendBrackets("assignmentids", json.encodeToJsonElement(assignmentids))
+                since?.let { append("since", it.toString()) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "mod_assign_get_grades")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Get a participant for an assignment, with some summary info about their submissions.
+     *
+     * @param assignId assign instance id
+     * @param userId user id
+     * @param embeduser user id
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getParticipant(
+        assignId: Int,
+        userId: Int,
+        embeduser: Boolean? = null,
+        auth: MoodleTokenAuth
+    ): MoodleAssignGetParticipantResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleAssignGetParticipantResponse>()) {
+            setBody(FormDataContent(parameters {
+                append("assignid", assignId.toString())
+                append("userid", userId.toString())
+                embeduser?.let { appendBrackets("embeduser", json.encodeToJsonElement(it)) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "mod_assign_get_participant")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
      * Returns information about an assignment submission status for a given user.
      *
      * @param assignId assignment instance id
@@ -74,6 +137,144 @@ class MoodleAssignApi(
                 auth.form.forEach { (name, value) -> append(name, value) }
             }))
             parameter("wsfunction", "mod_assign_get_submission_status")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Returns the submissions for assignments
+     *
+     * @param assignmentids 1 or more assignment ids
+     * @param status status
+     * @param since submitted since
+     * @param before submitted before
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getSubmissions(
+        assignmentids: List<Int>,
+        status: String? = null,
+        since: Int? = null,
+        before: Int? = null,
+        auth: MoodleTokenAuth
+    ): MoodleAssignGetSubmissionsResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleAssignGetSubmissionsResponse>()) {
+            setBody(FormDataContent(parameters {
+                appendBrackets("assignmentids", json.encodeToJsonElement(assignmentids))
+                status?.let { append("status", it) }
+                since?.let { append("since", it.toString()) }
+                before?.let { append("before", it.toString()) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "mod_assign_get_submissions")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Returns the user flags for assignments
+     *
+     * @param assignmentids 1 or more assignment ids
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getUserFlags(
+        assignmentids: List<Int>,
+        auth: MoodleTokenAuth
+    ): MoodleAssignGetUserFlagsResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleAssignGetUserFlagsResponse>()) {
+            setBody(FormDataContent(parameters {
+                appendBrackets("assignmentids", json.encodeToJsonElement(assignmentids))
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "mod_assign_get_user_flags")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Returns the blind marking mappings for assignments
+     *
+     * @param assignmentids 1 or more assignment ids
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getUserMappings(
+        assignmentids: List<Int>,
+        auth: MoodleTokenAuth
+    ): MoodleAssignGetUserMappingsResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleAssignGetUserMappingsResponse>()) {
+            setBody(FormDataContent(parameters {
+                appendBrackets("assignmentids", json.encodeToJsonElement(assignmentids))
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "mod_assign_get_user_mappings")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * List the participants for a single assignment, with some summary info about their submissions.
+     *
+     * @param assignId assign instance id
+     * @param groupId group id
+     * @param filter search string to filter the results
+     * @param skip number of records to skip
+     * @param limit maximum number of records to return
+     * @param onlyids Do not return all user fields
+     * @param includeenrolments Do return courses where the user is enrolled
+     * @param tablesort Apply current user table sorting preferences.
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun listParticipants(
+        assignId: Int,
+        groupId: Int,
+        filter: String,
+        skip: Int? = null,
+        limit: Int? = null,
+        onlyids: Boolean? = null,
+        includeenrolments: Boolean? = null,
+        tablesort: Boolean? = null,
+        auth: MoodleTokenAuth
+    ): List<MoodleAssignListParticipantsItem> {
+        return jsonList(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<List<MoodleAssignListParticipantsItem>>()) {
+            setBody(FormDataContent(parameters {
+                append("assignid", assignId.toString())
+                append("groupid", groupId.toString())
+                append("filter", filter)
+                skip?.let { append("skip", it.toString()) }
+                limit?.let { append("limit", it.toString()) }
+                onlyids?.let { appendBrackets("onlyids", json.encodeToJsonElement(it)) }
+                includeenrolments?.let { appendBrackets("includeenrolments", json.encodeToJsonElement(it)) }
+                tablesort?.let { appendBrackets("tablesort", json.encodeToJsonElement(it)) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "mod_assign_list_participants")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Prevent students from making changes to a list of submissions
+     *
+     * @param assignmentId The assignment id to operate on
+     * @param userids 1 or more user ids
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun lockSubmissions(
+        assignmentId: Int,
+        userids: List<Int>,
+        auth: MoodleTokenAuth
+    ): List<MoodleWarning> {
+        return jsonList(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<List<MoodleWarning>>()) {
+            setBody(FormDataContent(parameters {
+                append("assignmentid", assignmentId.toString())
+                appendBrackets("userids", json.encodeToJsonElement(userids))
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "mod_assign_lock_submissions")
             parameter("moodlewsrestformat", "json")
             auth.headers.forEach { (name, value) -> header(name, value) }
         }
@@ -104,6 +305,122 @@ class MoodleAssignApi(
     }
 
     /**
+     * Reveal the identities for a blind marking assignment
+     *
+     * @param assignmentId The assignment id to operate on
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun revealIdentities(
+        assignmentId: Int,
+        auth: MoodleTokenAuth
+    ): List<MoodleWarning> {
+        return jsonList(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<List<MoodleWarning>>()) {
+            setBody(FormDataContent(parameters {
+                append("assignmentid", assignmentId.toString())
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "mod_assign_reveal_identities")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Reverts the list of submissions to draft status
+     *
+     * @param assignmentId The assignment id to operate on
+     * @param userids 1 or more user ids
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun revertSubmissionsToDraft(
+        assignmentId: Int,
+        userids: List<Int>,
+        auth: MoodleTokenAuth
+    ): List<MoodleWarning> {
+        return jsonList(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<List<MoodleWarning>>()) {
+            setBody(FormDataContent(parameters {
+                append("assignmentid", assignmentId.toString())
+                appendBrackets("userids", json.encodeToJsonElement(userids))
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "mod_assign_revert_submissions_to_draft")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Save a grade update for a single student.
+     *
+     * @param assignmentId The assignment id to operate on
+     * @param userId The student id to operate on
+     * @param grade The new grade for this user. Ignored if advanced grading used
+     * @param attemptNumber The attempt number (-1 means latest attempt)
+     * @param addattempt Allow another attempt if the attempt reopen method is manual
+     * @param workflowstate The next marking workflow state
+     * @param applytoall If true, this grade will be applied to all members of the group (for group assignments).
+     * @param pluginData plugin data
+     * @param advancedgradingdata advanced grading data
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun saveGrade(
+        assignmentId: Int,
+        userId: Int,
+        grade: Double,
+        attemptNumber: Int,
+        addattempt: Boolean,
+        workflowstate: String,
+        applytoall: Boolean,
+        pluginData: MoodlePluginData? = null,
+        advancedgradingdata: MoodleAdvancedgradingdata? = null,
+        auth: MoodleTokenAuth
+    ) {
+        send(HttpMethod.Post, "/webservice/rest/server.php") {
+            setBody(FormDataContent(parameters {
+                append("assignmentid", assignmentId.toString())
+                append("userid", userId.toString())
+                append("grade", grade.toString())
+                append("attemptnumber", attemptNumber.toString())
+                appendBrackets("addattempt", json.encodeToJsonElement(addattempt))
+                append("workflowstate", workflowstate)
+                appendBrackets("applytoall", json.encodeToJsonElement(applytoall))
+                pluginData?.let { appendBrackets("plugindata", json.encodeToJsonElement(it)) }
+                advancedgradingdata?.let { appendBrackets("advancedgradingdata", json.encodeToJsonElement(it)) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "mod_assign_save_grade")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Save multiple grade updates for an assignment.
+     *
+     * @param assignmentId The assignment id to operate on
+     * @param applytoall If true, this grade will be applied to all members of the group (for group assignments).
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun saveGrades(
+        assignmentId: Int,
+        applytoall: Boolean,
+        grades: List<MoodleAssignSaveGradesGrade>,
+        auth: MoodleTokenAuth
+    ) {
+        send(HttpMethod.Post, "/webservice/rest/server.php") {
+            setBody(FormDataContent(parameters {
+                append("assignmentid", assignmentId.toString())
+                appendBrackets("applytoall", json.encodeToJsonElement(applytoall))
+                appendBrackets("grades", json.encodeToJsonElement(grades))
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "mod_assign_save_grades")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
      * Update the current students submission
      *
      * @param assignmentId The assignment id to operate on
@@ -121,6 +438,77 @@ class MoodleAssignApi(
                 auth.form.forEach { (name, value) -> append(name, value) }
             }))
             parameter("wsfunction", "mod_assign_save_submission")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Save a list of assignment extensions
+     *
+     * @param assignmentId The assignment id to operate on
+     * @param userids 1 or more user ids
+     * @param dates 1 or more extension dates (timestamp)
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun saveUserExtensions(
+        assignmentId: Int,
+        userids: List<Int>,
+        dates: List<Long>,
+        auth: MoodleTokenAuth
+    ): List<MoodleWarning> {
+        return jsonList(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<List<MoodleWarning>>()) {
+            setBody(FormDataContent(parameters {
+                append("assignmentid", assignmentId.toString())
+                appendBrackets("userids", json.encodeToJsonElement(userids))
+                appendBrackets("dates", json.encodeToJsonElement(dates))
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "mod_assign_save_user_extensions")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Creates or updates user flags
+     *
+     * @param assignmentId assignment id
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun setUserFlags(
+        assignmentId: Int,
+        userflags: List<MoodleAssignSetUserFlagsUserflag>,
+        auth: MoodleTokenAuth
+    ): List<MoodleAssignSetUserFlagsItem> {
+        return jsonList(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<List<MoodleAssignSetUserFlagsItem>>()) {
+            setBody(FormDataContent(parameters {
+                append("assignmentid", assignmentId.toString())
+                appendBrackets("userflags", json.encodeToJsonElement(userflags))
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "mod_assign_set_user_flags")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Start a submission for user if assignment has a time limit.
+     *
+     * @param assignId Assignment instance id
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun startSubmission(
+        assignId: Int,
+        auth: MoodleTokenAuth
+    ): MoodleAssignStartSubmissionResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleAssignStartSubmissionResponse>()) {
+            setBody(FormDataContent(parameters {
+                append("assignid", assignId.toString())
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "mod_assign_start_submission")
             parameter("moodlewsrestformat", "json")
             auth.headers.forEach { (name, value) -> header(name, value) }
         }
@@ -145,6 +533,120 @@ class MoodleAssignApi(
                 auth.form.forEach { (name, value) -> append(name, value) }
             }))
             parameter("wsfunction", "mod_assign_submit_for_grading")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Submit the grading form data via ajax
+     *
+     * @param assignmentId The assignment id to operate on
+     * @param userId The user id the submission belongs to
+     * @param jsonformdata The data from the grading form, encoded as a json array
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun submitGradingForm(
+        assignmentId: Int,
+        userId: Int,
+        jsonformdata: String,
+        auth: MoodleTokenAuth
+    ): List<MoodleWarning> {
+        return jsonList(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<List<MoodleWarning>>()) {
+            setBody(FormDataContent(parameters {
+                append("assignmentid", assignmentId.toString())
+                append("userid", userId.toString())
+                append("jsonformdata", jsonformdata)
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "mod_assign_submit_grading_form")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Allow students to make changes to a list of submissions
+     *
+     * @param assignmentId The assignment id to operate on
+     * @param userids 1 or more user ids
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun unlockSubmissions(
+        assignmentId: Int,
+        userids: List<Int>,
+        auth: MoodleTokenAuth
+    ): List<MoodleWarning> {
+        return jsonList(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<List<MoodleWarning>>()) {
+            setBody(FormDataContent(parameters {
+                append("assignmentid", assignmentId.toString())
+                appendBrackets("userids", json.encodeToJsonElement(userids))
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "mod_assign_unlock_submissions")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Update the module completion status.
+     *
+     * @param assignId assign instance id
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun viewAssign(
+        assignId: Int,
+        auth: MoodleTokenAuth
+    ): MoodleStatusResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleStatusResponse>()) {
+            setBody(FormDataContent(parameters {
+                append("assignid", assignId.toString())
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "mod_assign_view_assign")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Trigger the grading_table_viewed event.
+     *
+     * @param assignId assign instance id
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun viewGradingTable(
+        assignId: Int,
+        auth: MoodleTokenAuth
+    ): MoodleStatusResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleStatusResponse>()) {
+            setBody(FormDataContent(parameters {
+                append("assignid", assignId.toString())
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "mod_assign_view_grading_table")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Trigger the submission status viewed event.
+     *
+     * @param assignId assign instance id
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun viewSubmissionStatus(
+        assignId: Int,
+        auth: MoodleTokenAuth
+    ): MoodleStatusResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleStatusResponse>()) {
+            setBody(FormDataContent(parameters {
+                append("assignid", assignId.toString())
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "mod_assign_view_submission_status")
             parameter("moodlewsrestformat", "json")
             auth.headers.forEach { (name, value) -> header(name, value) }
         }
