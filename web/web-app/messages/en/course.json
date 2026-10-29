@@ -1,0 +1,368 @@
+{
+	"$schema": "https://inlang.com/schema/inlang-message-format",
+	"course_back": "E-learning",
+	"course_loading": "Loading the course…",
+	"course_teacher": "Prof. {name}",
+	"course_favourite": "Add to favourites",
+	"course_refresh": "Refresh the course",
+	"course_unfavourite": "Remove from favourites",
+	"course_sections_label": "Course sections",
+	"course_tab_overview": "Overview",
+	"course_tab_content": "Content",
+	"course_tab_quizzes": "Quizzes",
+	"course_tab_assignments": "Assignments",
+	"course_tab_forums": "Forums",
+	"course_continue_kicker": "Continue watching",
+	"course_next_kicker": "Lecture recording",
+	"course_resume": "Resume",
+	"course_watch": "Watch",
+	"course_resume_at": "Resume {title} from {time}",
+	"course_watch_title": "Watch {title}",
+	"course_go_to_lesson": "Go to the lesson",
+	"course_section_fallback": "Section {number}",
+	"course_completed": "Completed",
+	"course_info_title": "Information",
+	"course_credits_caption": "credits",
+	"course_credits_unit": "CFU",
+	"course_hours_caption": "teaching hours",
+	"course_hours_unit": "hours",
+	"course_language_caption": "course language",
+	"course_level_caption": "degree programme",
+	"course_level_bachelor": "Bachelor’s",
+	"course_level_master": "Master’s",
+	"course_level_doctorate": "Doctorate",
+	"course_level_bachelor_short": "B",
+	"course_level_master_short": "M",
+	"course_level_doctorate_short": "PhD",
+	"course_semester_first": "First semester",
+	"course_semester_second": "Second semester",
+	"course_semester_annual": "Full year",
+	"course_semester_first_range": "September – February",
+	"course_semester_second_range": "March – August",
+	"course_semester_annual_range": "September – August",
+	"course_objectives": "Aims",
+	"course_summary": "Brief contents",
+	"course_programme": "Detailed programme",
+	"course_prerequisites": "Prerequisites",
+	"course_teaching_method": "Teaching method",
+	"course_reference_material": "Textbooks and resources",
+	"course_assessment": "Assessment",
+	"course_office_hours": "Office hours",
+	"course_sustainable_goals": "Sustainable Development Goals",
+	"course_part_kicker": "PART",
+	"course_topics_count": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} topic",
+				"countPlural=other": "{count} topics"
+			}
+		}
+	],
+	"course_staff": "Teachers and tutors",
+	"course_role_teacher": "Teacher",
+	"course_role_tutor": "Tutor",
+	"course_role_assistant": "Teaching assistant",
+	"course_role_staff": "Staff",
+	"course_staff_write": "send an e-mail",
+	"course_links_label": "Course links",
+	"course_link_syllabus_pdf": "Download the overview as PDF",
+	"course_link_opinions": "Last year’s student opinions",
+	"course_link_library": "Course books in the library",
+	"course_overview_empty_title": "No overview yet.",
+	"course_overview_empty_body": "The programme of this course hasn’t been published yet.",
+	"course_overview_failed": "Couldn’t load the course overview",
+	"course_syllabus_failed": "Couldn’t load the programme",
+	"course_content_failed": "Couldn’t load the course content",
+	"course_content_empty_title": "No content yet.",
+	"course_content_empty_body": "Course materials will appear here as soon as the teacher publishes them.",
+	"course_sections_count": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} section",
+				"countPlural=other": "{count} sections"
+			}
+		}
+	],
+	"course_progress_label": "Completed activities",
+	"course_progress_value": "{done} of {total}",
+	"course_expand_all": "Expand all",
+	"course_collapse_all": "Collapse all",
+	"course_index_title": "Sections",
+	"course_index_label": "Section index",
+	"course_section_done": "{done}/{total} done",
+	"course_section_empty": "Nothing in this section yet.",
+	"course_no_resources": "No resources",
+	"course_count_video": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} video",
+				"countPlural=other": "{count} videos"
+			}
+		}
+	],
+	"course_count_pdf": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} PDF",
+				"countPlural=other": "{count} PDFs"
+			}
+		}
+	],
+	"course_count_file": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} file",
+				"countPlural=other": "{count} files"
+			}
+		}
+	],
+	"course_count_quiz": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} quiz",
+				"countPlural=other": "{count} quizzes"
+			}
+		}
+	],
+	"course_count_assign": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} assignment",
+				"countPlural=other": "{count} assignments"
+			}
+		}
+	],
+	"course_count_forum": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} forum",
+				"countPlural=other": "{count} forums"
+			}
+		}
+	],
+	"course_count_link": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} link",
+				"countPlural=other": "{count} links"
+			}
+		}
+	],
+	"course_count_folder": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} folder",
+				"countPlural=other": "{count} folders"
+			}
+		}
+	],
+	"course_count_page": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} page",
+				"countPlural=other": "{count} pages"
+			}
+		}
+	],
+	"course_count_other": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} activity",
+				"countPlural=other": "{count} activities"
+			}
+		}
+	],
+	"course_module_video": "Lecture recording",
+	"course_module_watched": "Watched",
+	"course_module_watched_percent": "Watched {percent}",
+	"course_module_quiz": "Quiz",
+	"course_module_assign": "Assignment",
+	"course_module_folder": "Folder",
+	"course_module_folder_count": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "Folder · {count} file",
+				"countPlural=other": "Folder · {count} files"
+			}
+		}
+	],
+	"course_module_forum": "Forum",
+	"course_module_link": "Link",
+	"course_module_page": "Page",
+	"course_module_book": "Book",
+	"course_module_lesson": "Lesson",
+	"course_module_choice": "Poll",
+	"course_module_choice_group": "Group choice",
+	"course_module_wiki": "Wiki",
+	"course_module_glossary": "Glossary",
+	"course_module_workshop": "Workshop",
+	"course_module_feedback": "Survey",
+	"course_module_wooclap": "Wooclap",
+	"course_module_lti": "External tool",
+	"course_module_reservation": "Booking",
+	"course_module_webex": "Webex",
+	"course_module_database": "Database",
+	"course_module_attendance": "Attendance",
+	"course_module_scheduler": "Appointments",
+	"course_module_interactive": "Interactive activity",
+	"course_module_package": "SCORM package",
+	"course_module_activity": "Activity",
+	"course_deadline_closed": "closed on {date} at {time}",
+	"course_deadline_due": "due {date} at {time}",
+	"course_deadline_from": "from {date} at {time}",
+	"course_kind_video": "Video",
+	"course_kind_audio": "Audio",
+	"course_kind_image": "Image",
+	"course_kind_html": "Web page",
+	"course_kind_text": "Text",
+	"course_kind_file": "File",
+	"course_kinds_pdf": "PDFs",
+	"course_kinds_image": "images",
+	"course_kinds_video": "videos",
+	"course_kinds_audio": "audio files",
+	"course_kinds_html": "web pages",
+	"course_kinds_text": "text files",
+	"course_kinds_zip": "archives",
+	"course_opens_new_tab": "(opens in a new tab)",
+	"course_more_actions": "More actions for {name}",
+	"course_open_with": "Open with…",
+	"course_download": "Download",
+	"course_download_named": "Download {name}",
+	"course_download_failed": "Download failed",
+	"course_copy_link": "Copy link",
+	"course_link_copied": "Link copied",
+	"course_link_copy_failed": "The link couldn’t be copied.",
+	"course_folder_count": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} file",
+				"countPlural=other": "{count} files"
+			}
+		}
+	],
+	"course_open_question": "View it here or download it?",
+	"course_view_here": "View here",
+	"course_remember_choice": "Remember for {kind}",
+	"course_remember_hint": "Change it in Settings › Files, or for one file with “Open with…” in its menu.",
+	"course_office_word": "Word document",
+	"course_office_excel": "Excel spreadsheet",
+	"course_office_powerpoint": "PowerPoint presentation",
+	"course_office_readonly": "Opens in {app}, read-only.",
+	"course_office_token_note": "{app} receives a personal link that gives access to your e-learning: use it on your own devices only. {app} must be installed.",
+	"course_office_open": "Open in {app}",
+	"course_office_download_only": "Download it to open it in {app} or another app on this device.",
+	"course_office_missed": "Didn’t {app} open? Download the file and open it from there.",
+	"course_share": "Share",
+	"course_share_failed": "The file couldn’t be shared.",
+	"course_viewer_close": "Close",
+	"course_viewer_downloading": "Downloading…",
+	"course_viewer_in_archive": "in {name}",
+	"course_viewer_missing_title": "File not found.",
+	"course_viewer_missing_body": "The teacher may have moved or removed it.",
+	"course_viewer_to_content": "Go to the content",
+	"course_viewer_no_preview": "This kind of file has no preview: download it to open it.",
+	"course_viewer_new_tab": "Open in a new tab",
+	"course_viewer_smaller": "Smaller text",
+	"course_viewer_larger": "Larger text",
+	"course_viewer_wrap_on": "Wrap lines",
+	"course_viewer_wrap_off": "Don’t wrap lines",
+	"course_viewer_theme": "Theme: {theme}",
+	"course_viewer_theme_system": "system",
+	"course_viewer_theme_light": "light",
+	"course_viewer_theme_dark": "dark",
+	"course_pdf_opening": "Opening the PDF…",
+	"course_pdf_failed": "Couldn’t open the PDF.",
+	"course_pdf_failed_body": "Download it to open it in another app.",
+	"course_pdf_locked_body": "It’s password-protected: download it to open it in another app.",
+	"course_pdf_page_indicator": "{page} / {total}",
+	"course_pdf_zoom_in": "Zoom in",
+	"course_pdf_zoom_out": "Zoom out",
+	"course_image_fit": "Fit to screen",
+	"course_image_actual": "Actual size",
+	"course_text_truncated": "… (file truncated)",
+	"course_zip_summary": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} file · {size}",
+				"countPlural=other": "{count} files · {size}"
+			}
+		}
+	],
+	"course_zip_unreadable": "The archive is empty or can’t be read.",
+	"course_video_back_to_course": "Back to the course",
+	"course_video_fallback_title": "Lecture recording",
+	"course_video_player": "Video player: {title}",
+	"course_video_loading": "Loading the video",
+	"course_video_unavailable": "This video is no longer available.",
+	"course_video_failed": "The video couldn’t be loaded.",
+	"course_video_unsupported": "This browser can’t play the lecture recordings.",
+	"course_video_unsupported_body": "Open them in an up-to-date browser: Chrome, Edge, Firefox or Safari.",
+	"course_video_play": "Play",
+	"course_video_pause": "Pause",
+	"course_video_previous": "Previous",
+	"course_video_next": "Next",
+	"course_video_previous_named": "Previous video: {title}",
+	"course_video_next_named": "Next video: {title}",
+	"course_video_back": "Back 10 seconds",
+	"course_video_forward": "Forward 10 seconds",
+	"course_video_mute": "Mute",
+	"course_video_unmute": "Unmute",
+	"course_video_position": "Position",
+	"course_video_position_value": "{position} of {total}",
+	"course_video_settings": "Playback settings",
+	"course_video_speed": "Speed",
+	"course_video_speed_normal": "Normal",
+	"course_video_quality": "Quality",
+	"course_video_quality_auto": "Automatic",
+	"course_video_quality_auto_detail": "Adaptive (recommended)",
+	"course_video_kbps": "{kbps} kbps",
+	"course_video_pip": "Picture in picture",
+	"course_video_fullscreen": "Full screen",
+	"course_video_exit_fullscreen": "Exit full screen",
+	"course_video_playlist": "Course videos",
+	"course_video_completed_count": "{done} of {total} watched",
+	"course_video_keys_play": "Play or pause",
+	"course_video_keys_mute": "Mute or unmute",
+	"course_video_keys_next": "Next video",
+	"course_video_keys_previous": "Previous video",
+	"course_editor_bold": "Bold",
+	"course_editor_bullets": "Bulleted list",
+	"course_editor_italic": "Italic",
+	"course_editor_link": "Link",
+	"course_editor_link_add": "Insert",
+	"course_editor_link_url": "Link address",
+	"course_editor_numbers": "Numbered list",
+	"course_editor_quote": "Quote",
+	"course_editor_strike": "Strikethrough",
+	"course_editor_toolbar": "Formatting"
+}

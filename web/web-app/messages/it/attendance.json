@@ -1,0 +1,108 @@
+{
+	"$schema": "https://inlang.com/schema/inlang-message-format",
+	"attendance_title": "Presenze",
+	"attendance_desc": "Frequenze e rilevazioni",
+	"attendance_to_attend": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} corso da frequentare",
+				"countPlural=other": "{count} corsi da frequentare"
+			}
+		}
+	],
+	"attendance_courses_label": "Corsi da frequentare",
+	"attendance_course_label": "Corso",
+	"attendance_loading": "Caricamento presenze…",
+	"attendance_load_failed": "Presenze non disponibili",
+	"attendance_no_courses": "Nessun corso da frequentare",
+	"attendance_no_courses_body": "Hai superato tutti i corsi previsti dal tuo piano fino a questo semestre.",
+	"attendance_check_in": "Rileva presenza",
+	"attendance_no_records": "Nessuna rilevazione presenze",
+	"attendance_status_attending": "Frequentante",
+	"attendance_status_in_progress": "In frequenza",
+	"attendance_status_not_attending": "Non frequentante",
+	"attendance_lessons": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} lezione",
+				"countPlural=other": "{count} lezioni"
+			}
+		}
+	],
+	"attendance_year": "Anno {year}",
+	"attendance_year_other": "Altri corsi",
+	"attendance_semester_first": "1° semestre",
+	"attendance_semester_second": "2° semestre",
+	"attendance_tab_lessons": "Lezioni",
+	"attendance_tab_sessions": "Sessioni",
+	"attendance_source_classroom": "Rilevate in aula",
+	"attendance_source_register": "Registro e-learning",
+	"attendance_caption_attendance": "frequenza",
+	"attendance_caption_recorded": "sulle registrate",
+	"attendance_recorded_percent": "{percent} sulle registrate",
+	"attendance_minimum": "minimo {percent}",
+	"attendance_presences": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} presenza",
+				"countPlural=other": "{count} presenze"
+			}
+		}
+	],
+	"attendance_lessons_attended": "Lezioni frequentate",
+	"attendance_hours_attended": "Ore frequentate",
+	"attendance_no_classroom": "Nessuna rilevazione in aula",
+	"attendance_easystaff_no_records": "EasyStaff non ha ancora registrato presenze per questo corso.",
+	"attendance_register_no_records": "Il registro non contiene ancora presenze registrate.",
+	"attendance_open_elearning": "Corso e-learning",
+	"attendance_course_missing": "Corso non trovato",
+	"attendance_course_missing_body": "Non è tra i corsi che hai ancora da frequentare.",
+	"attendance_back_to_list": "Tutti i corsi",
+	"attendance_checkin_subtitle": "Come vuoi registrare la tua presenza?",
+	"attendance_lesson": "Lezione",
+	"attendance_classroom_presence": "Presenze in aula",
+	"attendance_other_activities": "Altre attività",
+	"attendance_elearning_presence": "Presenze e-learning",
+	"attendance_lesson_code": "Codice lezione",
+	"attendance_lesson_code_hint": "Inserisci il codice fornito dal docente.",
+	"attendance_scan_qr": "Scansiona il QR",
+	"attendance_link_label": "Link del QR",
+	"attendance_link_hint": "Incolla il link a cui porta il QR mostrato dal docente.",
+	"attendance_link_hint_scan": "Inquadra il QR mostrato dal docente, oppure incolla qui il link a cui porta.",
+	"attendance_record": "Registra",
+	"attendance_offline": "Sei offline: potrai registrare la presenza quando torni online.",
+	"attendance_qr_hint": "Inquadra il QR della lezione",
+	"attendance_manual_code_entry": "Inserisci codice manualmente",
+	"attendance_scanner_title": "Scansione del QR",
+	"attendance_recording": "Registrazione in corso…",
+	"attendance_progress_subtitle": "Invio in corso…",
+	"attendance_result_time": "Oggi alle {time}",
+	"attendance_status_label": "Stato: {status}",
+	"attendance_presence_recorded": "Presenza registrata",
+	"attendance_already_recorded": "Già registrata",
+	"attendance_wrong_credential": "Credenziale non valida",
+	"attendance_session_unavailable": "Sessione non disponibile",
+	"attendance_registration_failed": "Registrazione non riuscita",
+	"attendance_msg_recorded": "Presenza registrata",
+	"attendance_msg_already_recorded": "Presenza già registrata",
+	"attendance_msg_wrong_credential": "Password o codice non corretti",
+	"attendance_msg_network_wrong": "Devi essere connesso alla rete dell’aula per registrare la presenza",
+	"attendance_msg_network_prevent_shared": "Una presenza è già stata registrata da questa rete",
+	"attendance_msg_session_closed": "La sessione non è più disponibile",
+	"attendance_msg_failed": "Registrazione non riuscita",
+	"attendance_msg_code_unrecognized": "Codice non riconosciuto",
+	"attendance_msg_no_register_found": "Nessun corso con registro presenze trovato",
+	"attendance_msg_session_not_in_courses": "La sessione non è aperta o non è tra i tuoi corsi",
+	"attendance_msg_student_number_unavailable": "Matricola non disponibile",
+	"attendance_done": "Fatto",
+	"attendance_edit_code": "Correggi il codice",
+	"attendance_link_not_a_link": "Non è il link di un codice QR. Per registrarti con il codice della lezione usa Lezione.",
+	"attendance_edit_link": "Correggi il link",
+	"attendance_view_outcome": "Vedi"
+}

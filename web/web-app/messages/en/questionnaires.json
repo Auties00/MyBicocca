@@ -1,0 +1,165 @@
+{
+	"$schema": "https://inlang.com/schema/inlang-message-format",
+	"questionnaires_title": "Questionnaires",
+	"questionnaires_pending_count": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "1 questionnaire pending",
+				"countPlural=other": "{count} questionnaires pending"
+			}
+		}
+	],
+	"questionnaires_none_pending": "All questionnaires completed",
+	"questionnaires_todo_heading": "To fill in",
+	"questionnaires_todo_description": "Esse3 may ask for them before you can book the exam.",
+	"questionnaires_done_heading": "Completed",
+	"questionnaires_all_done_title": "You’ve evaluated every course.",
+	"questionnaires_all_done_body": "New evaluations will show up here when they open.",
+	"questionnaires_status_todo": "To fill in",
+	"questionnaires_status_partial": "Partly done",
+	"questionnaires_status_done": "Completed",
+	"questionnaires_status_misconfigured": "Needs checking",
+	"questionnaires_empty_title": "No questionnaires",
+	"questionnaires_empty_body": "A course’s evaluation usually opens once about two thirds of its lectures are done.",
+	"questionnaires_load_failed": "Couldn’t load the questionnaires",
+	"questionnaires_list_label": "Courses to evaluate",
+	"questionnaires_detail_label": "Selected course",
+	"questionnaires_rules_heading": "How it works",
+	"questionnaires_rule_units": "You evaluate each lecturer or module: a course can have more than one.",
+	"questionnaires_units_subtitle": "Course evaluation questionnaire",
+	"questionnaires_units_heading": "Lecturers and modules",
+	"questionnaires_units_load_failed": "Couldn’t load the lecturers to evaluate",
+	"questionnaires_unit_compile": "Fill in",
+	"questionnaires_unit_compile_label": "Fill in the questionnaire for {name}",
+	"questionnaires_unit_done": "Completed",
+	"questionnaires_unit_unavailable": "Unavailable",
+	"questionnaires_units_all_done": "You’ve evaluated every lecturer of this course.",
+	"questionnaires_units_none": "There are no lecturers to evaluate for this course.",
+	"questionnaires_window_closed": "The evaluation period for this course isn’t open.",
+	"questionnaires_misconfigured": "Esse3 reports a problem with this questionnaire’s setup. If you can’t fill it in, contact the student office.",
+	"questionnaires_summary_ready": "Ready to send",
+	"questionnaires_summary_missing": "Incomplete",
+	"questionnaires_offline_hint": "You’re offline: you can fill it in once you’re back online.",
+	"questionnaires_facts_heading": "Before you start",
+	"questionnaires_fact_anonymous_title": "Anonymous",
+	"questionnaires_fact_anonymous": "Your answers aren’t linked to your name.",
+	"questionnaires_fact_named_title": "Not anonymous",
+	"questionnaires_fact_named": "Esse3 records who fills in this questionnaire.",
+	"questionnaires_fact_send_title": "Sent at the end",
+	"questionnaires_fact_send": "Your answers are sent together from the summary, and can’t be changed afterwards.",
+	"questionnaires_fact_draft_title": "No drafts",
+	"questionnaires_fact_draft": "If you leave before sending, your answers are lost and you start over.",
+	"questionnaires_not_found_title": "Course not found",
+	"questionnaires_not_found_body": "It isn’t among the courses with an evaluation questionnaire.",
+	"questionnaires_back_to_list": "Back to questionnaires",
+	"questionnaires_back_to_units": "Back to the course",
+	"questionnaires_compile_title": "Fill in questionnaire",
+	"questionnaires_intro_title": "Ready to start?",
+	"questionnaires_intro_body": "It only takes a few minutes.",
+	"questionnaires_intro_start": "Start",
+	"questionnaires_starting": "Starting questionnaire…",
+	"questionnaires_start_failed_title": "Unable to start the questionnaire",
+	"questionnaires_page_number": "Page {number}",
+	"questionnaires_optional": "Optional",
+	"questionnaires_missing_answer": "Answer to continue",
+	"questionnaires_missing_text": "Specify your answer to continue",
+	"questionnaires_missing_count": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "1 answer missing",
+				"countPlural=other": "{count} answers missing"
+			}
+		}
+	],
+	"questionnaires_answered_count": [
+		{
+			"declarations": ["input answered", "input total", "local totalPlural = total: plural"],
+			"selectors": ["totalPlural"],
+			"match": {
+				"totalPlural=one": "{answered} of 1 answered",
+				"totalPlural=other": "{answered} of {total} answered"
+			}
+		}
+	],
+	"questionnaires_free_text_placeholder": "Write your answer…",
+	"questionnaires_specify_label": "{option}: please specify",
+	"questionnaires_specify_placeholder": "Please specify…",
+	"questionnaires_other_option": "Other",
+	"questionnaires_scale_disagree": "Disagree",
+	"questionnaires_scale_agree": "Agree",
+	"questionnaires_choose_up_to": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "Choose one at most",
+				"countPlural=other": "Choose up to {count}"
+			}
+		}
+	],
+	"questionnaires_choose_many": "You can choose more than one",
+	"questionnaires_next": "Next",
+	"questionnaires_previous": "Previous page",
+	"questionnaires_move_failed": "Page not saved",
+	"questionnaires_summary_title": "Summary",
+	"questionnaires_summary_complete": "Questionnaire complete",
+	"questionnaires_summary_incomplete": "Questionnaire incomplete",
+	"questionnaires_summary_help": "Check your answers, then send them.",
+	"questionnaires_summary_incomplete_help": "Some required answers are missing: go back to complete them.",
+	"questionnaires_review_heading": "Your answers",
+	"questionnaires_review_none": "No answer",
+	"questionnaires_send": "Send",
+	"questionnaires_send_title": "Send the questionnaire?",
+	"questionnaires_send_body": "Your answers for {name} will be sent and can’t be changed afterwards.",
+	"questionnaires_exit_title": "Leave without sending?",
+	"questionnaires_exit_body": "The answers you’ve given so far will be lost, and this questionnaire can’t be resumed.",
+	"questionnaires_exit_confirm": "Leave",
+	"questionnaires_exit_cancel": "Keep filling in",
+	"questionnaires_keys_next": "Next page, or send from the last",
+	"questionnaires_keys_leave": "Leave the questionnaire",
+	"questionnaires_sent_title": "Questionnaire sent",
+	"questionnaires_sent_body": "Thank you: your evaluation for {name} has been recorded.",
+	"questionnaires_sent_next_unit": "Evaluate {name}",
+	"questionnaires_sent_next_activity": "Next: {name}",
+	"questionnaires_sent_all_done": "You’ve completed every questionnaire.",
+	"questionnaires_unit_gone_title": "Nothing to fill in",
+	"questionnaires_unit_gone_body": "This questionnaire has already been filled in or is no longer available.",
+	"questionnaires_empty_action": "See exam calls",
+	"questionnaires_overview_next": "Next up",
+	"questionnaires_overview_waiting": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "1 lecturer to evaluate",
+				"countPlural=other": "{count} lecturers to evaluate"
+			}
+		}
+	],
+	"questionnaires_overview_start": "Start",
+	"questionnaires_overview_start_label": "Start the questionnaire for {name}",
+	"questionnaires_summary_anonymous_help": "Check your answers, then send them. The questionnaire is anonymous.",
+	"questionnaires_back_failed": "Couldn’t go back",
+	"questionnaires_progress_heading": "Progress",
+	"questionnaires_progress_current": "Current page",
+	"questionnaires_progress_back": "Back to page {number}",
+	"questionnaires_check_count": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "1 questionnaire to check",
+				"countPlural=other": "{count} questionnaires to check"
+			}
+		}
+	],
+	"questionnaires_overview_open": "See lecturers",
+	"questionnaires_offline_status": "Offline",
+	"questionnaires_offline_band": "You’re offline: reconnect to go on. The answers you’ve given stay here.",
+	"questionnaires_closed_on_switch": "Questionnaire closed without sending: you switched account or career.",
+	"questionnaires_rail_facts": "Good to know"
+}
