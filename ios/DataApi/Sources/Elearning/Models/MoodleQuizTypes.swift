@@ -3,39 +3,56 @@
 import DataApiRuntime
 import Foundation
 
-public struct MoodleNamedValue: Codable, Hashable, Sendable {
-    /// data name
-    public var name: String
-    /// data value
-    public var value: String
+public struct MoodleQuizGetAttemptAccessInformationResponse: Codable, Hashable, Sendable {
+    /// When the attempt must be submitted (determined by rules).
+    public var endtime: Int64?
+    /// Whether there is no way the user will ever be allowed to attempt.
+    public var isfinished: Bool
+    /// whether a check is required before the user starts/continues his attempt.
+    public var ispreflightcheckrequired: Bool?
+    /// list of reasons
+    public var preventnewattemptreasons: [String]
+    /// list of warnings
+    public var warnings: [MoodleWarning]
 
     public init(
-        name: String = "",
-        value: String = ""
+        endtime: Int64? = nil,
+        isfinished: Bool = false,
+        ispreflightcheckrequired: Bool? = nil,
+        preventnewattemptreasons: [String] = [],
+        warnings: [MoodleWarning] = []
     ) {
-        self.name = name
-        self.value = value
+        self.endtime = endtime
+        self.isfinished = isfinished
+        self.ispreflightcheckrequired = ispreflightcheckrequired
+        self.preventnewattemptreasons = preventnewattemptreasons
+        self.warnings = warnings
     }
 
     private enum CodingKeys: String, CodingKey {
-        case name = "name"
-        case value = "value"
+        case endtime = "endtime"
+        case isfinished = "isfinished"
+        case ispreflightcheckrequired = "ispreflightcheckrequired"
+        case preventnewattemptreasons = "preventnewattemptreasons"
+        case warnings = "warnings"
     }
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.name = container.decodeLenient(String.self, forKey: .name) ?? ""
-        self.value = container.decodeLenient(String.self, forKey: .value) ?? ""
+        self.endtime = container.decodeLenient(Int64.self, forKey: .endtime)
+        self.isfinished = container.decodeLenient(Bool.self, forKey: .isfinished) ?? false
+        self.ispreflightcheckrequired = container.decodeLenient(Bool.self, forKey: .ispreflightcheckrequired)
+        self.preventnewattemptreasons = container.decodeLenient([String].self, forKey: .preventnewattemptreasons) ?? []
+        self.warnings = container.decodeLenient([MoodleWarning].self, forKey: .warnings) ?? []
     }
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if name != "" {
-            try container.encode(name, forKey: .name)
-        }
-        if value != "" {
-            try container.encode(value, forKey: .value)
-        }
+        try container.encode(endtime, forKey: .endtime)
+        try container.encode(isfinished, forKey: .isfinished)
+        try container.encode(ispreflightcheckrequired, forKey: .ispreflightcheckrequired)
+        try container.encode(preventnewattemptreasons, forKey: .preventnewattemptreasons)
+        try container.encode(warnings, forKey: .warnings)
     }
 }
 
@@ -83,18 +100,10 @@ public struct MoodleAttemptDataResponse: Codable, Hashable, Sendable {
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(attempt, forKey: .attempt)
-        if !messages.isEmpty {
-            try container.encode(messages, forKey: .messages)
-        }
-        if nextPage != 0 {
-            try container.encode(nextPage, forKey: .nextPage)
-        }
-        if !questions.isEmpty {
-            try container.encode(questions, forKey: .questions)
-        }
-        if !warnings.isEmpty {
-            try container.encode(warnings, forKey: .warnings)
-        }
+        try container.encode(messages, forKey: .messages)
+        try container.encode(nextPage, forKey: .nextPage)
+        try container.encode(questions, forKey: .questions)
+        try container.encode(warnings, forKey: .warnings)
     }
 }
 
@@ -215,57 +224,23 @@ public struct MoodleQuizAttempt: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if id != nil {
-            try container.encode(id, forKey: .id)
-        }
-        if quiz != nil {
-            try container.encode(quiz, forKey: .quiz)
-        }
-        if userId != nil {
-            try container.encode(userId, forKey: .userId)
-        }
-        if attempt != nil {
-            try container.encode(attempt, forKey: .attempt)
-        }
-        if uniqueId != nil {
-            try container.encode(uniqueId, forKey: .uniqueId)
-        }
-        if layout != nil {
-            try container.encode(layout, forKey: .layout)
-        }
-        if currentPage != nil {
-            try container.encode(currentPage, forKey: .currentPage)
-        }
-        if preview != nil {
-            try container.encode(preview, forKey: .preview)
-        }
-        if state != nil {
-            try container.encode(state, forKey: .state)
-        }
-        if timeStart != nil {
-            try container.encode(timeStart, forKey: .timeStart)
-        }
-        if timeFinish != nil {
-            try container.encode(timeFinish, forKey: .timeFinish)
-        }
-        if timeModified != nil {
-            try container.encode(timeModified, forKey: .timeModified)
-        }
-        if timeModifiedOffline != nil {
-            try container.encode(timeModifiedOffline, forKey: .timeModifiedOffline)
-        }
-        if timeCheckState != nil {
-            try container.encode(timeCheckState, forKey: .timeCheckState)
-        }
-        if sumGrades != nil {
-            try container.encode(sumGrades, forKey: .sumGrades)
-        }
-        if !gradeItemMarks.isEmpty {
-            try container.encode(gradeItemMarks, forKey: .gradeItemMarks)
-        }
-        if gradedNotificationSentTime != nil {
-            try container.encode(gradedNotificationSentTime, forKey: .gradedNotificationSentTime)
-        }
+        try container.encode(id, forKey: .id)
+        try container.encode(quiz, forKey: .quiz)
+        try container.encode(userId, forKey: .userId)
+        try container.encode(attempt, forKey: .attempt)
+        try container.encode(uniqueId, forKey: .uniqueId)
+        try container.encode(layout, forKey: .layout)
+        try container.encode(currentPage, forKey: .currentPage)
+        try container.encode(preview, forKey: .preview)
+        try container.encode(state, forKey: .state)
+        try container.encode(timeStart, forKey: .timeStart)
+        try container.encode(timeFinish, forKey: .timeFinish)
+        try container.encode(timeModified, forKey: .timeModified)
+        try container.encode(timeModifiedOffline, forKey: .timeModifiedOffline)
+        try container.encode(timeCheckState, forKey: .timeCheckState)
+        try container.encode(sumGrades, forKey: .sumGrades)
+        try container.encode(gradeItemMarks, forKey: .gradeItemMarks)
+        try container.encode(gradedNotificationSentTime, forKey: .gradedNotificationSentTime)
     }
 }
 
@@ -303,15 +278,9 @@ public struct MoodleGradeItemMark: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if name != "" {
-            try container.encode(name, forKey: .name)
-        }
-        if grade != 0 {
-            try container.encode(grade, forKey: .grade)
-        }
-        if maxGrade != 0 {
-            try container.encode(maxGrade, forKey: .maxGrade)
-        }
+        try container.encode(name, forKey: .name)
+        try container.encode(grade, forKey: .grade)
+        try container.encode(maxGrade, forKey: .maxGrade)
     }
 }
 
@@ -439,60 +408,24 @@ public struct MoodleQuizQuestion: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if slot != 0 {
-            try container.encode(slot, forKey: .slot)
-        }
-        if type != "" {
-            try container.encode(type, forKey: .type)
-        }
-        if page != 0 {
-            try container.encode(page, forKey: .page)
-        }
-        if questionNumber != "" {
-            try container.encode(questionNumber, forKey: .questionNumber)
-        }
-        if number != nil {
-            try container.encode(number, forKey: .number)
-        }
-        if html != "" {
-            try container.encode(html, forKey: .html)
-        }
-        if !responseFileAreas.isEmpty {
-            try container.encode(responseFileAreas, forKey: .responseFileAreas)
-        }
-        if sequenceCheck != nil {
-            try container.encode(sequenceCheck, forKey: .sequenceCheck)
-        }
-        if lastActionTime != nil {
-            try container.encode(lastActionTime, forKey: .lastActionTime)
-        }
-        if hasAutoSavedStep != nil {
-            try container.encode(hasAutoSavedStep, forKey: .hasAutoSavedStep)
-        }
-        if flagged != false {
-            try container.encode(flagged, forKey: .flagged)
-        }
-        if state != nil {
-            try container.encode(state, forKey: .state)
-        }
-        if stateClass != nil {
-            try container.encode(stateClass, forKey: .stateClass)
-        }
-        if status != nil {
-            try container.encode(status, forKey: .status)
-        }
-        if blockedByPrevious != nil {
-            try container.encode(blockedByPrevious, forKey: .blockedByPrevious)
-        }
-        if mark != nil {
-            try container.encode(mark, forKey: .mark)
-        }
-        if maxMark != nil {
-            try container.encode(maxMark, forKey: .maxMark)
-        }
-        if settings != nil {
-            try container.encode(settings, forKey: .settings)
-        }
+        try container.encode(slot, forKey: .slot)
+        try container.encode(type, forKey: .type)
+        try container.encode(page, forKey: .page)
+        try container.encode(questionNumber, forKey: .questionNumber)
+        try container.encode(number, forKey: .number)
+        try container.encode(html, forKey: .html)
+        try container.encode(responseFileAreas, forKey: .responseFileAreas)
+        try container.encode(sequenceCheck, forKey: .sequenceCheck)
+        try container.encode(lastActionTime, forKey: .lastActionTime)
+        try container.encode(hasAutoSavedStep, forKey: .hasAutoSavedStep)
+        try container.encode(flagged, forKey: .flagged)
+        try container.encode(state, forKey: .state)
+        try container.encode(stateClass, forKey: .stateClass)
+        try container.encode(status, forKey: .status)
+        try container.encode(blockedByPrevious, forKey: .blockedByPrevious)
+        try container.encode(mark, forKey: .mark)
+        try container.encode(maxMark, forKey: .maxMark)
+        try container.encode(settings, forKey: .settings)
     }
 }
 
@@ -523,12 +456,8 @@ public struct MoodleResponseFileArea: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if area != "" {
-            try container.encode(area, forKey: .area)
-        }
-        if !files.isEmpty {
-            try container.encode(files, forKey: .files)
-        }
+        try container.encode(area, forKey: .area)
+        try container.encode(files, forKey: .files)
     }
 }
 
@@ -574,19 +503,11 @@ public struct MoodleAttemptReviewResponse: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if grade != "" {
-            try container.encode(grade, forKey: .grade)
-        }
+        try container.encode(grade, forKey: .grade)
         try container.encode(attempt, forKey: .attempt)
-        if !additionalData.isEmpty {
-            try container.encode(additionalData, forKey: .additionalData)
-        }
-        if !questions.isEmpty {
-            try container.encode(questions, forKey: .questions)
-        }
-        if !warnings.isEmpty {
-            try container.encode(warnings, forKey: .warnings)
-        }
+        try container.encode(additionalData, forKey: .additionalData)
+        try container.encode(questions, forKey: .questions)
+        try container.encode(warnings, forKey: .warnings)
     }
 }
 
@@ -623,15 +544,9 @@ public struct MoodleAttemptReviewData: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if id != "" {
-            try container.encode(id, forKey: .id)
-        }
-        if title != "" {
-            try container.encode(title, forKey: .title)
-        }
-        if content != "" {
-            try container.encode(content, forKey: .content)
-        }
+        try container.encode(id, forKey: .id)
+        try container.encode(title, forKey: .title)
+        try container.encode(content, forKey: .content)
     }
 }
 
@@ -667,15 +582,46 @@ public struct MoodleAttemptSummaryResponse: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if !questions.isEmpty {
-            try container.encode(questions, forKey: .questions)
-        }
-        if totalUnanswered != nil {
-            try container.encode(totalUnanswered, forKey: .totalUnanswered)
-        }
-        if !warnings.isEmpty {
-            try container.encode(warnings, forKey: .warnings)
-        }
+        try container.encode(questions, forKey: .questions)
+        try container.encode(totalUnanswered, forKey: .totalUnanswered)
+        try container.encode(warnings, forKey: .warnings)
+    }
+}
+
+public struct MoodleQuizGetCombinedReviewOptionsResponse: Codable, Hashable, Sendable {
+    public var someoptions: [MoodleAdvancedFeature]
+    public var alloptions: [MoodleAdvancedFeature]
+    /// list of warnings
+    public var warnings: [MoodleWarning]
+
+    public init(
+        someoptions: [MoodleAdvancedFeature] = [],
+        alloptions: [MoodleAdvancedFeature] = [],
+        warnings: [MoodleWarning] = []
+    ) {
+        self.someoptions = someoptions
+        self.alloptions = alloptions
+        self.warnings = warnings
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case someoptions = "someoptions"
+        case alloptions = "alloptions"
+        case warnings = "warnings"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.someoptions = container.decodeLenient([MoodleAdvancedFeature].self, forKey: .someoptions) ?? []
+        self.alloptions = container.decodeLenient([MoodleAdvancedFeature].self, forKey: .alloptions) ?? []
+        self.warnings = container.decodeLenient([MoodleWarning].self, forKey: .warnings) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(someoptions, forKey: .someoptions)
+        try container.encode(alloptions, forKey: .alloptions)
+        try container.encode(warnings, forKey: .warnings)
     }
 }
 
@@ -748,33 +694,93 @@ public struct MoodleQuizAccessInformation: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if canAttempt != false {
-            try container.encode(canAttempt, forKey: .canAttempt)
-        }
-        if canManage != false {
-            try container.encode(canManage, forKey: .canManage)
-        }
-        if canPreview != false {
-            try container.encode(canPreview, forKey: .canPreview)
-        }
-        if canReviewMyAttempts != false {
-            try container.encode(canReviewMyAttempts, forKey: .canReviewMyAttempts)
-        }
-        if canViewReports != false {
-            try container.encode(canViewReports, forKey: .canViewReports)
-        }
-        if !accessRules.isEmpty {
-            try container.encode(accessRules, forKey: .accessRules)
-        }
-        if !activeRuleNames.isEmpty {
-            try container.encode(activeRuleNames, forKey: .activeRuleNames)
-        }
-        if !preventAccessReasons.isEmpty {
-            try container.encode(preventAccessReasons, forKey: .preventAccessReasons)
-        }
-        if !warnings.isEmpty {
-            try container.encode(warnings, forKey: .warnings)
-        }
+        try container.encode(canAttempt, forKey: .canAttempt)
+        try container.encode(canManage, forKey: .canManage)
+        try container.encode(canPreview, forKey: .canPreview)
+        try container.encode(canReviewMyAttempts, forKey: .canReviewMyAttempts)
+        try container.encode(canViewReports, forKey: .canViewReports)
+        try container.encode(accessRules, forKey: .accessRules)
+        try container.encode(activeRuleNames, forKey: .activeRuleNames)
+        try container.encode(preventAccessReasons, forKey: .preventAccessReasons)
+        try container.encode(warnings, forKey: .warnings)
+    }
+}
+
+public struct MoodleQuizGetQuizFeedbackForGradeResponse: Codable, Hashable, Sendable {
+    /// the comment that corresponds to this grade (empty for none)
+    public var feedbacktext: String
+    /// feedbacktext format (1 = HTML, 0 = MOODLE, 2 = PLAIN, or 4 = MARKDOWN)
+    public var feedbacktextformat: Int?
+    /// feedback inline files
+    public var feedbackinlinefiles: [MoodleFile]
+    /// list of warnings
+    public var warnings: [MoodleWarning]
+
+    public init(
+        feedbacktext: String = "",
+        feedbacktextformat: Int? = nil,
+        feedbackinlinefiles: [MoodleFile] = [],
+        warnings: [MoodleWarning] = []
+    ) {
+        self.feedbacktext = feedbacktext
+        self.feedbacktextformat = feedbacktextformat
+        self.feedbackinlinefiles = feedbackinlinefiles
+        self.warnings = warnings
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case feedbacktext = "feedbacktext"
+        case feedbacktextformat = "feedbacktextformat"
+        case feedbackinlinefiles = "feedbackinlinefiles"
+        case warnings = "warnings"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.feedbacktext = container.decodeLenient(String.self, forKey: .feedbacktext) ?? ""
+        self.feedbacktextformat = container.decodeLenient(Int.self, forKey: .feedbacktextformat)
+        self.feedbackinlinefiles = container.decodeLenient([MoodleFile].self, forKey: .feedbackinlinefiles) ?? []
+        self.warnings = container.decodeLenient([MoodleWarning].self, forKey: .warnings) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(feedbacktext, forKey: .feedbacktext)
+        try container.encode(feedbacktextformat, forKey: .feedbacktextformat)
+        try container.encode(feedbackinlinefiles, forKey: .feedbackinlinefiles)
+        try container.encode(warnings, forKey: .warnings)
+    }
+}
+
+public struct MoodleQuizGetQuizRequiredQtypesResponse: Codable, Hashable, Sendable {
+    /// list of question types used in the quiz
+    public var questiontypes: [String]
+    /// list of warnings
+    public var warnings: [MoodleWarning]
+
+    public init(
+        questiontypes: [String] = [],
+        warnings: [MoodleWarning] = []
+    ) {
+        self.questiontypes = questiontypes
+        self.warnings = warnings
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case questiontypes = "questiontypes"
+        case warnings = "warnings"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.questiontypes = container.decodeLenient([String].self, forKey: .questiontypes) ?? []
+        self.warnings = container.decodeLenient([MoodleWarning].self, forKey: .warnings) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(questiontypes, forKey: .questiontypes)
+        try container.encode(warnings, forKey: .warnings)
     }
 }
 
@@ -804,12 +810,8 @@ public struct MoodleQuizzesResponse: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if !quizzes.isEmpty {
-            try container.encode(quizzes, forKey: .quizzes)
-        }
-        if !warnings.isEmpty {
-            try container.encode(warnings, forKey: .warnings)
-        }
+        try container.encode(quizzes, forKey: .quizzes)
+        try container.encode(warnings, forKey: .warnings)
     }
 }
 
@@ -1140,162 +1142,58 @@ public struct MoodleQuiz: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if id != 0 {
-            try container.encode(id, forKey: .id)
-        }
-        if courseModule != 0 {
-            try container.encode(courseModule, forKey: .courseModule)
-        }
-        if course != 0 {
-            try container.encode(course, forKey: .course)
-        }
-        if name != "" {
-            try container.encode(name, forKey: .name)
-        }
-        if intro != nil {
-            try container.encode(intro, forKey: .intro)
-        }
-        if introFormat != nil {
-            try container.encode(introFormat, forKey: .introFormat)
-        }
-        if !introFiles.isEmpty {
-            try container.encode(introFiles, forKey: .introFiles)
-        }
-        if section != nil {
-            try container.encode(section, forKey: .section)
-        }
-        if visible != nil {
-            try container.encode(visible, forKey: .visible)
-        }
-        if groupMode != nil {
-            try container.encode(groupMode, forKey: .groupMode)
-        }
-        if groupingId != nil {
-            try container.encode(groupingId, forKey: .groupingId)
-        }
-        if lang != nil {
-            try container.encode(lang, forKey: .lang)
-        }
-        if timeOpen != nil {
-            try container.encode(timeOpen, forKey: .timeOpen)
-        }
-        if timeClose != nil {
-            try container.encode(timeClose, forKey: .timeClose)
-        }
-        if timeLimit != nil {
-            try container.encode(timeLimit, forKey: .timeLimit)
-        }
-        if overdueHandling != nil {
-            try container.encode(overdueHandling, forKey: .overdueHandling)
-        }
-        if gracePeriod != nil {
-            try container.encode(gracePeriod, forKey: .gracePeriod)
-        }
-        if preferredBehaviour != nil {
-            try container.encode(preferredBehaviour, forKey: .preferredBehaviour)
-        }
-        if canRedoQuestions != nil {
-            try container.encode(canRedoQuestions, forKey: .canRedoQuestions)
-        }
-        if attempts != nil {
-            try container.encode(attempts, forKey: .attempts)
-        }
-        if attemptOnLast != nil {
-            try container.encode(attemptOnLast, forKey: .attemptOnLast)
-        }
-        if gradeMethod != nil {
-            try container.encode(gradeMethod, forKey: .gradeMethod)
-        }
-        if decimalPoints != nil {
-            try container.encode(decimalPoints, forKey: .decimalPoints)
-        }
-        if questionDecimalPoints != nil {
-            try container.encode(questionDecimalPoints, forKey: .questionDecimalPoints)
-        }
-        if reviewAttempt != nil {
-            try container.encode(reviewAttempt, forKey: .reviewAttempt)
-        }
-        if reviewCorrectness != nil {
-            try container.encode(reviewCorrectness, forKey: .reviewCorrectness)
-        }
-        if reviewMaxMarks != nil {
-            try container.encode(reviewMaxMarks, forKey: .reviewMaxMarks)
-        }
-        if reviewMarks != nil {
-            try container.encode(reviewMarks, forKey: .reviewMarks)
-        }
-        if reviewSpecificFeedback != nil {
-            try container.encode(reviewSpecificFeedback, forKey: .reviewSpecificFeedback)
-        }
-        if reviewGeneralFeedback != nil {
-            try container.encode(reviewGeneralFeedback, forKey: .reviewGeneralFeedback)
-        }
-        if reviewRightAnswer != nil {
-            try container.encode(reviewRightAnswer, forKey: .reviewRightAnswer)
-        }
-        if reviewOverallFeedback != nil {
-            try container.encode(reviewOverallFeedback, forKey: .reviewOverallFeedback)
-        }
-        if questionsPerPage != nil {
-            try container.encode(questionsPerPage, forKey: .questionsPerPage)
-        }
-        if navMethod != nil {
-            try container.encode(navMethod, forKey: .navMethod)
-        }
-        if shuffleAnswers != nil {
-            try container.encode(shuffleAnswers, forKey: .shuffleAnswers)
-        }
-        if sumGrades != nil {
-            try container.encode(sumGrades, forKey: .sumGrades)
-        }
-        if grade != nil {
-            try container.encode(grade, forKey: .grade)
-        }
-        if timeCreated != nil {
-            try container.encode(timeCreated, forKey: .timeCreated)
-        }
-        if timeModified != nil {
-            try container.encode(timeModified, forKey: .timeModified)
-        }
-        if password != nil {
-            try container.encode(password, forKey: .password)
-        }
-        if subnet != nil {
-            try container.encode(subnet, forKey: .subnet)
-        }
-        if browserSecurity != nil {
-            try container.encode(browserSecurity, forKey: .browserSecurity)
-        }
-        if delay1 != nil {
-            try container.encode(delay1, forKey: .delay1)
-        }
-        if delay2 != nil {
-            try container.encode(delay2, forKey: .delay2)
-        }
-        if showUserPicture != nil {
-            try container.encode(showUserPicture, forKey: .showUserPicture)
-        }
-        if showBlocks != nil {
-            try container.encode(showBlocks, forKey: .showBlocks)
-        }
-        if completionAttemptsExhausted != nil {
-            try container.encode(completionAttemptsExhausted, forKey: .completionAttemptsExhausted)
-        }
-        if completionPass != nil {
-            try container.encode(completionPass, forKey: .completionPass)
-        }
-        if allowOfflineAttempts != nil {
-            try container.encode(allowOfflineAttempts, forKey: .allowOfflineAttempts)
-        }
-        if autoSavePeriod != nil {
-            try container.encode(autoSavePeriod, forKey: .autoSavePeriod)
-        }
-        if hasFeedback != nil {
-            try container.encode(hasFeedback, forKey: .hasFeedback)
-        }
-        if hasQuestions != nil {
-            try container.encode(hasQuestions, forKey: .hasQuestions)
-        }
+        try container.encode(id, forKey: .id)
+        try container.encode(courseModule, forKey: .courseModule)
+        try container.encode(course, forKey: .course)
+        try container.encode(name, forKey: .name)
+        try container.encode(intro, forKey: .intro)
+        try container.encode(introFormat, forKey: .introFormat)
+        try container.encode(introFiles, forKey: .introFiles)
+        try container.encode(section, forKey: .section)
+        try container.encode(visible, forKey: .visible)
+        try container.encode(groupMode, forKey: .groupMode)
+        try container.encode(groupingId, forKey: .groupingId)
+        try container.encode(lang, forKey: .lang)
+        try container.encode(timeOpen, forKey: .timeOpen)
+        try container.encode(timeClose, forKey: .timeClose)
+        try container.encode(timeLimit, forKey: .timeLimit)
+        try container.encode(overdueHandling, forKey: .overdueHandling)
+        try container.encode(gracePeriod, forKey: .gracePeriod)
+        try container.encode(preferredBehaviour, forKey: .preferredBehaviour)
+        try container.encode(canRedoQuestions, forKey: .canRedoQuestions)
+        try container.encode(attempts, forKey: .attempts)
+        try container.encode(attemptOnLast, forKey: .attemptOnLast)
+        try container.encode(gradeMethod, forKey: .gradeMethod)
+        try container.encode(decimalPoints, forKey: .decimalPoints)
+        try container.encode(questionDecimalPoints, forKey: .questionDecimalPoints)
+        try container.encode(reviewAttempt, forKey: .reviewAttempt)
+        try container.encode(reviewCorrectness, forKey: .reviewCorrectness)
+        try container.encode(reviewMaxMarks, forKey: .reviewMaxMarks)
+        try container.encode(reviewMarks, forKey: .reviewMarks)
+        try container.encode(reviewSpecificFeedback, forKey: .reviewSpecificFeedback)
+        try container.encode(reviewGeneralFeedback, forKey: .reviewGeneralFeedback)
+        try container.encode(reviewRightAnswer, forKey: .reviewRightAnswer)
+        try container.encode(reviewOverallFeedback, forKey: .reviewOverallFeedback)
+        try container.encode(questionsPerPage, forKey: .questionsPerPage)
+        try container.encode(navMethod, forKey: .navMethod)
+        try container.encode(shuffleAnswers, forKey: .shuffleAnswers)
+        try container.encode(sumGrades, forKey: .sumGrades)
+        try container.encode(grade, forKey: .grade)
+        try container.encode(timeCreated, forKey: .timeCreated)
+        try container.encode(timeModified, forKey: .timeModified)
+        try container.encode(password, forKey: .password)
+        try container.encode(subnet, forKey: .subnet)
+        try container.encode(browserSecurity, forKey: .browserSecurity)
+        try container.encode(delay1, forKey: .delay1)
+        try container.encode(delay2, forKey: .delay2)
+        try container.encode(showUserPicture, forKey: .showUserPicture)
+        try container.encode(showBlocks, forKey: .showBlocks)
+        try container.encode(completionAttemptsExhausted, forKey: .completionAttemptsExhausted)
+        try container.encode(completionPass, forKey: .completionPass)
+        try container.encode(allowOfflineAttempts, forKey: .allowOfflineAttempts)
+        try container.encode(autoSavePeriod, forKey: .autoSavePeriod)
+        try container.encode(hasFeedback, forKey: .hasFeedback)
+        try container.encode(hasQuestions, forKey: .hasQuestions)
     }
 }
 
@@ -1325,12 +1223,8 @@ public struct MoodleUserAttemptsResponse: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if !attempts.isEmpty {
-            try container.encode(attempts, forKey: .attempts)
-        }
-        if !warnings.isEmpty {
-            try container.encode(warnings, forKey: .warnings)
-        }
+        try container.encode(attempts, forKey: .attempts)
+        try container.encode(warnings, forKey: .warnings)
     }
 }
 
@@ -1373,18 +1267,10 @@ public struct MoodleUserBestGradeResponse: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if hasGrade != false {
-            try container.encode(hasGrade, forKey: .hasGrade)
-        }
-        if grade != nil {
-            try container.encode(grade, forKey: .grade)
-        }
-        if gradeToPass != nil {
-            try container.encode(gradeToPass, forKey: .gradeToPass)
-        }
-        if !warnings.isEmpty {
-            try container.encode(warnings, forKey: .warnings)
-        }
+        try container.encode(hasGrade, forKey: .hasGrade)
+        try container.encode(grade, forKey: .grade)
+        try container.encode(gradeToPass, forKey: .gradeToPass)
+        try container.encode(warnings, forKey: .warnings)
     }
 }
 
@@ -1415,12 +1301,8 @@ public struct MoodleProcessAttemptResponse: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if state != "" {
-            try container.encode(state, forKey: .state)
-        }
-        if !warnings.isEmpty {
-            try container.encode(warnings, forKey: .warnings)
-        }
+        try container.encode(state, forKey: .state)
+        try container.encode(warnings, forKey: .warnings)
     }
 }
 
@@ -1451,8 +1333,6 @@ public struct MoodleStartAttemptResponse: Codable, Hashable, Sendable {
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(attempt, forKey: .attempt)
-        if !warnings.isEmpty {
-            try container.encode(warnings, forKey: .warnings)
-        }
+        try container.encode(warnings, forKey: .warnings)
     }
 }

@@ -10,29 +10,21 @@ import org.junit.jupiter.api.Test
 /** The live tests of the Moodle Grade module, planned from `common/specs/moodle/tests.yaml`. */
 class MoodleGradeLiveTest : LiveTest<MoodleApi>(MoodleLive) {
     @Test
-    @DisplayName("Grade.getCourseGrades#1")
-    fun getCourseGrades1() = case("Grade.getCourseGrades#1") {
-        val result = call("{\"k\":\"record\",\"n\":\"MoodleCourseGradesResponse\"}") {
-            api.grade.getCourseGrades(auth = tokenCredentials())
+    @DisplayName("Grade.getAccessInformation#1")
+    fun getAccessInformation1() = case("Grade.getAccessInformation#1") {
+        val courseId = choose("courseId", listOf(courseGetUsersCourses()).flatten().mapNotNull { it.id })
+        val result = call("{\"k\":\"record\",\"n\":\"MoodleGradereportUserGetAccessInformationResponse\"}") {
+            api.grade.getAccessInformation(courseId = courseId, auth = tokenCredentials())
         } ?: return@case
-        fingerprint { writeMoodleCourseGradesResponse(result) }
+        fingerprint { writeMoodleGradereportUserGetAccessInformationResponse(result) }
     }
 
     @Test
-    @DisplayName("Grade.getCourseGrades#2")
-    fun getCourseGrades2() = case("Grade.getCourseGrades#2", index = 1) {
-        val userId = choose("userId", listOf(siteGetSiteInfo()).mapNotNull { it.userId })
-        val result = call("{\"k\":\"record\",\"n\":\"MoodleCourseGradesResponse\"}") {
-            api.grade.getCourseGrades(userId = userId, auth = tokenCredentials())
-        } ?: return@case
-        fingerprint { writeMoodleCourseGradesResponse(result) }
-    }
-
-    @Test
-    @DisplayName("Grade.getCourseGrades#invalid-credentials")
-    fun getCourseGradesInvalidCredentials() = case("Grade.getCourseGrades#invalid-credentials") {
+    @DisplayName("Grade.getAccessInformation#invalid-credentials")
+    fun getAccessInformationInvalidCredentials() = case("Grade.getAccessInformation#invalid-credentials") {
+        val courseId = choose("courseId", listOf(courseGetUsersCourses()).flatten().mapNotNull { it.id })
         refused(acceptsEmpty = false) {
-            api.grade.getCourseGrades(auth = MoodleTokenAuth(token = "mybicocca-invalid-credential"))
+            api.grade.getAccessInformation(courseId = courseId, auth = MoodleTokenAuth(token = "mybicocca-invalid-credential"))
         }
     }
 
@@ -50,10 +42,63 @@ class MoodleGradeLiveTest : LiveTest<MoodleApi>(MoodleLive) {
     @DisplayName("Grade.getGradeItems#2")
     fun getGradeItems2() = case("Grade.getGradeItems#2", index = 1) {
         val courseId = choose("courseId", listOf(courseGetUsersCourses()).flatten().mapNotNull { it.id })
-        val groupId = choose("groupId", listOf(calendarGetActionEventsByTimesort()).mapNotNull { it.events }.flatten().mapNotNull { it.groupId })
+        val groupId = choose("groupId", listOf(blogGetEntries()).mapNotNull { it.entries }.flatten().mapNotNull { it.groupId })
         val result = call("{\"k\":\"record\",\"n\":\"MoodleGradeItemsResponse\"}", errors = listOf("nopermissions")) {
             api.grade.getGradeItems(courseId = courseId, groupId = groupId, auth = tokenCredentials())
         } ?: return@case
         fingerprint { writeMoodleGradeItemsResponse(result) }
+    }
+
+    @Test
+    @DisplayName("Grade.getGradesTable#1")
+    fun getGradesTable1() = case("Grade.getGradesTable#1") {
+        val courseId = choose("courseId", listOf(courseGetUsersCourses()).flatten().mapNotNull { it.id })
+        val result = call("{\"k\":\"record\",\"n\":\"MoodleGradereportUserGetGradesTableResponse\"}") {
+            api.grade.getGradesTable(courseId = courseId, auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { writeMoodleGradereportUserGetGradesTableResponse(result) }
+    }
+
+    @Test
+    @DisplayName("Grade.getGradesTable#2")
+    fun getGradesTable2() = case("Grade.getGradesTable#2", index = 1) {
+        val courseId = choose("courseId", listOf(courseGetUsersCourses()).flatten().mapNotNull { it.id })
+        val groupId = choose("groupId", listOf(blogGetEntries()).mapNotNull { it.entries }.flatten().mapNotNull { it.groupId })
+        val result = call("{\"k\":\"record\",\"n\":\"MoodleGradereportUserGetGradesTableResponse\"}") {
+            api.grade.getGradesTable(courseId = courseId, groupId = groupId, auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { writeMoodleGradereportUserGetGradesTableResponse(result) }
+    }
+
+    @Test
+    @DisplayName("Grade.getGradesTable#3")
+    fun getGradesTable3() = case("Grade.getGradesTable#3", index = 2) {
+        val courseId = choose("courseId", listOf(courseGetUsersCourses()).flatten().mapNotNull { it.id })
+        val userId = choose("userId", listOf(siteGetSiteInfo()).mapNotNull { it.userId })
+        val result = call("{\"k\":\"record\",\"n\":\"MoodleGradereportUserGetGradesTableResponse\"}") {
+            api.grade.getGradesTable(courseId = courseId, userId = userId, auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { writeMoodleGradereportUserGetGradesTableResponse(result) }
+    }
+
+    @Test
+    @DisplayName("Grade.getGradesTable#4")
+    fun getGradesTable4() = case("Grade.getGradesTable#4", index = 3) {
+        val courseId = choose("courseId", listOf(courseGetUsersCourses()).flatten().mapNotNull { it.id })
+        val userId = choose("userId", listOf(siteGetSiteInfo()).mapNotNull { it.userId })
+        val groupId = choose("groupId", listOf(blogGetEntries()).mapNotNull { it.entries }.flatten().mapNotNull { it.groupId })
+        val result = call("{\"k\":\"record\",\"n\":\"MoodleGradereportUserGetGradesTableResponse\"}") {
+            api.grade.getGradesTable(courseId = courseId, userId = userId, groupId = groupId, auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { writeMoodleGradereportUserGetGradesTableResponse(result) }
+    }
+
+    @Test
+    @DisplayName("Grade.viewGradeReport#1")
+    fun viewGradeReport1() = case("Grade.viewGradeReport#1", effect = "benign") {
+        val courseId = choose("courseId", listOf(courseGetUsersCourses()).flatten().mapNotNull { it.id })
+        call("{\"k\":\"record\",\"n\":\"MoodleStatusResponse\"}") {
+            api.grade.viewGradeReport(courseId = courseId, auth = tokenCredentials())
+        }
     }
 }

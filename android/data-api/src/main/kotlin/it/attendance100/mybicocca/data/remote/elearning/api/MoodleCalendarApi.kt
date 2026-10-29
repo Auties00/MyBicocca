@@ -8,9 +8,23 @@ import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
 import io.ktor.http.HttpMethod
 import io.ktor.http.parameters
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCalendarCreateCalendarEventsEvent
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCalendarCreateCalendarEventsResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCalendarDeleteCalendarEventsEvent
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCalendarEventsResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCalendarGetActionEventsByCoursesResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCalendarGetAllowedEventTypesResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCalendarGetCalendarAccessInformationResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCalendarGetCalendarDayViewResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCalendarGetCalendarEventByIdResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCalendarGetCalendarEventsEvent
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCalendarGetCalendarEventsOption
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCalendarGetCalendarEventsResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCalendarGetCalendarExportTokenResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCalendarMonth
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCalendarSubmitCreateUpdateFormResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCalendarUpcomingView
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCalendarUpdateEventStartDayResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
 import it.attendance100.mybicocca.data.remote.elearning.dto.appendBrackets
 import it.attendance100.mybicocca.data.remote.runtime.RestApi
@@ -22,6 +36,46 @@ class MoodleCalendarApi(
     client: HttpClient,
     json: Json
 ) : RestApi(client, json, "", MoodleRuntime.policy) {
+
+    /**
+     * Create calendar events
+     *
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun createCalendarEvents(
+        events: List<MoodleCalendarCreateCalendarEventsEvent>,
+        auth: MoodleTokenAuth
+    ): MoodleCalendarCreateCalendarEventsResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleCalendarCreateCalendarEventsResponse>()) {
+            setBody(FormDataContent(parameters {
+                appendBrackets("events", json.encodeToJsonElement(events))
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_calendar_create_calendar_events")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Delete calendar events
+     *
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun deleteCalendarEvents(
+        events: List<MoodleCalendarDeleteCalendarEventsEvent>,
+        auth: MoodleTokenAuth
+    ) {
+        send(HttpMethod.Post, "/webservice/rest/server.php") {
+            setBody(FormDataContent(parameters {
+                appendBrackets("events", json.encodeToJsonElement(events))
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_calendar_delete_calendar_events")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
 
     /**
      * Get calendar action events by course
@@ -54,6 +108,38 @@ class MoodleCalendarApi(
                 auth.form.forEach { (name, value) -> append(name, value) }
             }))
             parameter("wsfunction", "core_calendar_get_action_events_by_course")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Get calendar action events by courses
+     *
+     * @param timeSortFrom Time sort from
+     * @param timeSortTo Time sort to
+     * @param limitNum Limit number
+     * @param searchValue The value a user wishes to search against
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getActionEventsByCourses(
+        courseIds: List<Int>,
+        timeSortFrom: Long? = null,
+        timeSortTo: Long? = null,
+        limitNum: Int? = null,
+        searchValue: String? = null,
+        auth: MoodleTokenAuth
+    ): MoodleCalendarGetActionEventsByCoursesResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleCalendarGetActionEventsByCoursesResponse>()) {
+            setBody(FormDataContent(parameters {
+                appendBrackets("courseids", json.encodeToJsonElement(courseIds))
+                timeSortFrom?.let { append("timesortfrom", it.toString()) }
+                timeSortTo?.let { append("timesortto", it.toString()) }
+                limitNum?.let { append("limitnum", it.toString()) }
+                searchValue?.let { append("searchvalue", it) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_calendar_get_action_events_by_courses")
             parameter("moodlewsrestformat", "json")
             auth.headers.forEach { (name, value) -> header(name, value) }
         }
@@ -93,6 +179,144 @@ class MoodleCalendarApi(
                 auth.form.forEach { (name, value) -> append(name, value) }
             }))
             parameter("wsfunction", "core_calendar_get_action_events_by_timesort")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Get the type of events a user can create in the given course.
+     *
+     * @param courseId Course to check, empty for site.
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getAllowedEventTypes(
+        courseId: Int? = null,
+        auth: MoodleTokenAuth
+    ): MoodleCalendarGetAllowedEventTypesResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleCalendarGetAllowedEventTypesResponse>()) {
+            setBody(FormDataContent(parameters {
+                courseId?.let { append("courseid", it.toString()) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_calendar_get_allowed_event_types")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Convenience function to retrieve some permissions/access information for the given course calendar.
+     *
+     * @param courseId Course to check, empty for site calendar events.
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getCalendarAccessInformation(
+        courseId: Int? = null,
+        auth: MoodleTokenAuth
+    ): MoodleCalendarGetCalendarAccessInformationResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleCalendarGetCalendarAccessInformationResponse>()) {
+            setBody(FormDataContent(parameters {
+                courseId?.let { append("courseid", it.toString()) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_calendar_get_calendar_access_information")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Fetch the day view data for a calendar
+     *
+     * @param year Year to be viewed
+     * @param month Month to be viewed
+     * @param day Day to be viewed
+     * @param courseId Course being viewed
+     * @param categoryId Category being viewed
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getCalendarDayView(
+        year: Int,
+        month: Int,
+        day: Int,
+        courseId: Int? = null,
+        categoryId: Int? = null,
+        auth: MoodleTokenAuth
+    ): MoodleCalendarGetCalendarDayViewResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleCalendarGetCalendarDayViewResponse>()) {
+            setBody(FormDataContent(parameters {
+                append("year", year.toString())
+                append("month", month.toString())
+                append("day", day.toString())
+                courseId?.let { append("courseid", it.toString()) }
+                categoryId?.let { append("categoryid", it.toString()) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_calendar_get_calendar_day_view")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Get calendar event by id
+     *
+     * @param eventid The event id to be retrieved
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getCalendarEventById(
+        eventid: Int,
+        auth: MoodleTokenAuth
+    ): MoodleCalendarGetCalendarEventByIdResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleCalendarGetCalendarEventByIdResponse>()) {
+            setBody(FormDataContent(parameters {
+                append("eventid", eventid.toString())
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_calendar_get_calendar_event_by_id")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Get calendar events
+     *
+     * @param events Event details
+     * @param options Options
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getCalendarEvents(
+        events: MoodleCalendarGetCalendarEventsEvent? = null,
+        options: MoodleCalendarGetCalendarEventsOption? = null,
+        auth: MoodleTokenAuth
+    ): MoodleCalendarGetCalendarEventsResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleCalendarGetCalendarEventsResponse>()) {
+            setBody(FormDataContent(parameters {
+                events?.let { appendBrackets("events", json.encodeToJsonElement(it)) }
+                options?.let { appendBrackets("options", json.encodeToJsonElement(it)) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_calendar_get_calendar_events")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Return the auth token required for exporting a calendar.
+     *
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getCalendarExportToken(
+        auth: MoodleTokenAuth
+    ): MoodleCalendarGetCalendarExportTokenResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleCalendarGetCalendarExportTokenResponse>()) {
+            setBody(FormDataContent(parameters {
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_calendar_get_calendar_export_token")
             parameter("moodlewsrestformat", "json")
             auth.headers.forEach { (name, value) -> header(name, value) }
         }
@@ -159,6 +383,51 @@ class MoodleCalendarApi(
                 auth.form.forEach { (name, value) -> append(name, value) }
             }))
             parameter("wsfunction", "core_calendar_get_calendar_upcoming_view")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Submit form data for event form
+     *
+     * @param formdata The data from the event form
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun submitCreateUpdateForm(
+        formdata: String,
+        auth: MoodleTokenAuth
+    ): MoodleCalendarSubmitCreateUpdateFormResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleCalendarSubmitCreateUpdateFormResponse>()) {
+            setBody(FormDataContent(parameters {
+                append("formdata", formdata)
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_calendar_submit_create_update_form")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Update the start day (but not time) for an event.
+     *
+     * @param eventid Id of event to be updated
+     * @param daytimestamp Timestamp for the new start day
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun updateEventStartDay(
+        eventid: Int,
+        daytimestamp: Long,
+        auth: MoodleTokenAuth
+    ): MoodleCalendarUpdateEventStartDayResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleCalendarUpdateEventStartDayResponse>()) {
+            setBody(FormDataContent(parameters {
+                append("eventid", eventid.toString())
+                append("daytimestamp", daytimestamp.toString())
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_calendar_update_event_start_day")
             parameter("moodlewsrestformat", "json")
             auth.headers.forEach { (name, value) -> header(name, value) }
         }

@@ -32,6 +32,121 @@ public struct MoodleMessageApi: Sendable {
         )
     }
 
+    /// Confirms a contact request
+    ///
+    /// - Parameters:
+    ///   - userId: The id of the user making the request
+    ///   - requestedUserId: The id of the user being requested
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func confirmContactRequest(
+        userId: Int,
+        requestedUserId: Int,
+        auth: MoodleTokenAuth
+    ) async throws -> [MoodleWarning] {
+        try await client.jsonList(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_message_confirm_contact_request"), ("moodlewsrestformat", "json")],
+                form: [("userid", userId), ("requesteduserid", requestedUserId)],
+                auth: auth
+            )
+        )
+    }
+
+    /// Creates a contact request
+    ///
+    /// - Parameters:
+    ///   - userId: The id of the user making the request
+    ///   - requestedUserId: The id of the user being requested
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func createContactRequest(
+        userId: Int,
+        requestedUserId: Int,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleMessageCreateContactRequestResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_message_create_contact_request"), ("moodlewsrestformat", "json")],
+                form: [("userid", userId), ("requesteduserid", requestedUserId)],
+                auth: auth
+            )
+        )
+    }
+
+    /// Retrieve the template data for searching for messages
+    ///
+    /// - Parameters:
+    ///   - userId: The id of the user who is performing the search
+    ///   - search: The string being searched
+    ///   - limitFrom: Limit from
+    ///   - limitNum: Limit number
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func dataForMessageareaSearchMessages(
+        userId: Int,
+        search: String,
+        limitFrom: Int? = nil,
+        limitNum: Int? = nil,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleMessageDataForMessageareaSearchMessagesResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_message_data_for_messagearea_search_messages"), ("moodlewsrestformat", "json")],
+                form: [
+                    ("userid", userId),
+                    ("search", search),
+                    ("limitfrom", limitFrom),
+                    ("limitnum", limitNum)
+                ],
+                auth: auth
+            )
+        )
+    }
+
+    /// Declines a contact request
+    ///
+    /// - Parameters:
+    ///   - userId: The id of the user making the request
+    ///   - requestedUserId: The id of the user being requested
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func declineContactRequest(
+        userId: Int,
+        requestedUserId: Int,
+        auth: MoodleTokenAuth
+    ) async throws -> [MoodleWarning] {
+        try await client.jsonList(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_message_decline_contact_request"), ("moodlewsrestformat", "json")],
+                form: [("userid", userId), ("requesteduserid", requestedUserId)],
+                auth: auth
+            )
+        )
+    }
+
+    /// Remove contacts from the contact list
+    ///
+    /// - Parameters:
+    ///   - userids: List of user IDs
+    ///   - userId: The id of the user we are deleting the contacts for, 0 for the current user
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func deleteContacts(userids: [Int], userId: Int? = nil, auth: MoodleTokenAuth) async throws {
+        try await client.send(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_message_delete_contacts"), ("moodlewsrestformat", "json")],
+                form: [("userid", userId)] + RestRequest.brackets("userids", userids),
+                auth: auth
+            )
+        )
+    }
+
     /// Deletes a list of conversations.
     ///
     /// - Parameters:
@@ -49,6 +164,241 @@ public struct MoodleMessageApi: Sendable {
                 path: "/webservice/rest/server.php",
                 query: [("wsfunction", "core_message_delete_conversations_by_id"), ("moodlewsrestformat", "json")],
                 form: [("userid", userId)] + RestRequest.brackets("conversationids", conversationIds),
+                auth: auth
+            )
+        )
+    }
+
+    /// Deletes a message.
+    ///
+    /// - Parameters:
+    ///   - messageid: The message id
+    ///   - userId: The user id of who we want to delete the message for
+    ///   - read: If is a message read
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func deleteMessage(
+        messageid: Int,
+        userId: Int,
+        read: Bool? = nil,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleStatusResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_message_delete_message"), ("moodlewsrestformat", "json")],
+                form: [("messageid", messageid), ("userid", userId)] + RestRequest.brackets("read", read),
+                auth: auth
+            )
+        )
+    }
+
+    /// Deletes a message for all users.
+    ///
+    /// - Parameters:
+    ///   - messageid: The message id
+    ///   - userId: The user id of who we want to delete the message for all users
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func deleteMessageForAllUsers(
+        messageid: Int,
+        userId: Int,
+        auth: MoodleTokenAuth
+    ) async throws -> [MoodleWarning] {
+        try await client.jsonList(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_message_delete_message_for_all_users"), ("moodlewsrestformat", "json")],
+                form: [("messageid", messageid), ("userid", userId)],
+                auth: auth
+            )
+        )
+    }
+
+    /// Retrieve a list of users blocked
+    ///
+    /// - Parameters:
+    ///   - userId: the user whose blocked users we want to retrieve
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getBlockedUsers(
+        userId: Int,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleMessageGetBlockedUsersResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_message_get_blocked_users"), ("moodlewsrestformat", "json")],
+                form: [("userid", userId)],
+                auth: auth
+            )
+        )
+    }
+
+    /// Returns contact requests for a user
+    ///
+    /// - Parameters:
+    ///   - userId: The id of the user we want the requests for
+    ///   - limitFrom: Limit from
+    ///   - limitNum: Limit number
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getContactRequests(
+        userId: Int,
+        limitFrom: Int? = nil,
+        limitNum: Int? = nil,
+        auth: MoodleTokenAuth
+    ) async throws -> [MoodleConversationMember] {
+        try await client.jsonList(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_message_get_contact_requests"), ("moodlewsrestformat", "json")],
+                form: [
+                    ("userid", userId),
+                    ("limitfrom", limitFrom),
+                    ("limitnum", limitNum)
+                ],
+                auth: auth
+            )
+        )
+    }
+
+    /// Retrieve a conversation for a user
+    ///
+    /// - Parameters:
+    ///   - userId: The id of the user who we are viewing conversations for
+    ///   - conversationId: The id of the conversation to fetch
+    ///   - includecontactrequests: Include contact requests in the members
+    ///   - includeprivacyinfo: Include privacy info in the members
+    ///   - memberlimit: Limit for number of members
+    ///   - memberoffset: Offset for member list
+    ///   - messagelimit: Limit for number of messages
+    ///   - messageoffset: Offset for messages list
+    ///   - newestmessagesfirst: Order messages by newest first
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getConversation(
+        userId: Int,
+        conversationId: Int,
+        includecontactrequests: Bool,
+        includeprivacyinfo: Bool,
+        memberlimit: Int? = nil,
+        memberoffset: Int? = nil,
+        messagelimit: Int? = nil,
+        messageoffset: Int? = nil,
+        newestmessagesfirst: Bool? = nil,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleConversation {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_message_get_conversation"), ("moodlewsrestformat", "json")],
+                form: [
+                    ("userid", userId),
+                    ("conversationid", conversationId),
+                    ("memberlimit", memberlimit),
+                    ("memberoffset", memberoffset),
+                    ("messagelimit", messagelimit),
+                    ("messageoffset", messageoffset)
+                ] + RestRequest.brackets("includecontactrequests", includecontactrequests) + RestRequest.brackets("includeprivacyinfo", includeprivacyinfo) + RestRequest.brackets("newestmessagesfirst", newestmessagesfirst),
+                auth: auth
+            )
+        )
+    }
+
+    /// Retrieve a conversation for a user between another user
+    ///
+    /// - Parameters:
+    ///   - userId: The id of the user who we are viewing conversations for
+    ///   - otheruserid: The other user id
+    ///   - includecontactrequests: Include contact requests in the members
+    ///   - includeprivacyinfo: Include privacy info in the members
+    ///   - memberlimit: Limit for number of members
+    ///   - memberoffset: Offset for member list
+    ///   - messagelimit: Limit for number of messages
+    ///   - messageoffset: Offset for messages list
+    ///   - newestmessagesfirst: Order messages by newest first
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getConversationBetweenUsers(
+        userId: Int,
+        otheruserid: Int,
+        includecontactrequests: Bool,
+        includeprivacyinfo: Bool,
+        memberlimit: Int? = nil,
+        memberoffset: Int? = nil,
+        messagelimit: Int? = nil,
+        messageoffset: Int? = nil,
+        newestmessagesfirst: Bool? = nil,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleConversation {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_message_get_conversation_between_users"), ("moodlewsrestformat", "json")],
+                form: [
+                    ("userid", userId),
+                    ("otheruserid", otheruserid),
+                    ("memberlimit", memberlimit),
+                    ("memberoffset", memberoffset),
+                    ("messagelimit", messagelimit),
+                    ("messageoffset", messageoffset)
+                ] + RestRequest.brackets("includecontactrequests", includecontactrequests) + RestRequest.brackets("includeprivacyinfo", includeprivacyinfo) + RestRequest.brackets("newestmessagesfirst", newestmessagesfirst),
+                auth: auth
+            )
+        )
+    }
+
+    /// Retrieve a list of conversation counts, indexed by type.
+    ///
+    /// - Parameters:
+    ///   - userId: id of the user, 0 for current user
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getConversationCounts(
+        userId: Int? = nil,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleUnreadConversationCounts {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_message_get_conversation_counts"), ("moodlewsrestformat", "json")],
+                form: [("userid", userId)],
+                auth: auth
+            )
+        )
+    }
+
+    /// Retrieve a list of members in a conversation
+    ///
+    /// - Parameters:
+    ///   - userId: The id of the user we are performing this action on behalf of
+    ///   - conversationId: The id of the conversation
+    ///   - includecontactrequests: Do we want to include contact requests?
+    ///   - includeprivacyinfo: Do we want to include privacy info?
+    ///   - limitFrom: Limit from
+    ///   - limitNum: Limit number
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getConversationMembers(
+        userId: Int,
+        conversationId: Int,
+        includecontactrequests: Bool? = nil,
+        includeprivacyinfo: Bool? = nil,
+        limitFrom: Int? = nil,
+        limitNum: Int? = nil,
+        auth: MoodleTokenAuth
+    ) async throws -> [MoodleConversationMember] {
+        try await client.jsonList(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_message_get_conversation_members"), ("moodlewsrestformat", "json")],
+                form: [
+                    ("userid", userId),
+                    ("conversationid", conversationId),
+                    ("limitfrom", limitFrom),
+                    ("limitnum", limitNum)
+                ] + RestRequest.brackets("includecontactrequests", includecontactrequests) + RestRequest.brackets("includeprivacyinfo", includeprivacyinfo),
                 auth: auth
             )
         )
@@ -125,6 +475,120 @@ public struct MoodleMessageApi: Sendable {
         )
     }
 
+    /// Retrieve a user message profiles
+    ///
+    /// - Parameters:
+    ///   - referenceuserid: id of the user
+    ///   - includecontactrequests: include contact requests in response
+    ///   - includeprivacyinfo: include privacy info in response
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getMemberInfo(
+        referenceuserid: Int,
+        userids: [Int],
+        includecontactrequests: Bool? = nil,
+        includeprivacyinfo: Bool? = nil,
+        auth: MoodleTokenAuth
+    ) async throws -> [MoodleConversationMember] {
+        try await client.jsonList(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_message_get_member_info"), ("moodlewsrestformat", "json")],
+                form: [("referenceuserid", referenceuserid)] + RestRequest.brackets("userids", userids) + RestRequest.brackets("includecontactrequests", includecontactrequests) + RestRequest.brackets("includeprivacyinfo", includeprivacyinfo),
+                auth: auth
+            )
+        )
+    }
+
+    /// Retrieve a list of messages sent and received by a user (conversations, notifications or both)
+    ///
+    /// - Parameters:
+    ///   - useridto: the user id who received the message, 0 for any user
+    ///   - userIdFrom: the user id who send the message, 0 for any user. -10 or -20 for no-reply or support user
+    ///   - type: type of message to return, expected values are: notifications, conversations and both
+    ///   - read: 1 for getting read messages, 0 for unread, 2 for both
+    ///   - newestfirst: true for ordering by newest first, false for oldest first
+    ///   - limitFrom: limit from
+    ///   - limitNum: limit number
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getMessages(
+        useridto: Int,
+        userIdFrom: Int? = nil,
+        type: String? = nil,
+        read: Int? = nil,
+        newestfirst: Bool? = nil,
+        limitFrom: Int? = nil,
+        limitNum: Int? = nil,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleMessageGetMessagesResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_message_get_messages"), ("moodlewsrestformat", "json")],
+                form: [
+                    ("useridto", useridto),
+                    ("useridfrom", userIdFrom),
+                    ("type", type),
+                    ("read", read),
+                    ("limitfrom", limitFrom),
+                    ("limitnum", limitNum)
+                ] + RestRequest.brackets("newestfirst", newestfirst),
+                auth: auth
+            )
+        )
+    }
+
+    /// Gets the number of received contact requests
+    ///
+    /// - Parameters:
+    ///   - userId: The id of the user we want to return the number of received contact requests for
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getReceivedContactRequestsCount(
+        userId: Int,
+        auth: MoodleTokenAuth
+    ) async throws -> Int {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_message_get_received_contact_requests_count"), ("moodlewsrestformat", "json")],
+                form: [("userid", userId)],
+                auth: auth
+            )
+        )
+    }
+
+    /// Retrieve a self-conversation for a user
+    ///
+    /// - Parameters:
+    ///   - userId: The id of the user who we are viewing self-conversations for
+    ///   - messagelimit: Limit for number of messages
+    ///   - messageoffset: Offset for messages list
+    ///   - newestmessagesfirst: Order messages by newest first
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getSelfConversation(
+        userId: Int,
+        messagelimit: Int? = nil,
+        messageoffset: Int? = nil,
+        newestmessagesfirst: Bool? = nil,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleConversation {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_message_get_self_conversation"), ("moodlewsrestformat", "json")],
+                form: [
+                    ("userid", userId),
+                    ("messagelimit", messagelimit),
+                    ("messageoffset", messageoffset)
+                ] + RestRequest.brackets("newestmessagesfirst", newestmessagesfirst),
+                auth: auth
+            )
+        )
+    }
+
     /// Retrieve a list of unread conversation counts, indexed by type.
     ///
     /// - Parameters:
@@ -139,6 +603,108 @@ public struct MoodleMessageApi: Sendable {
                 method: .post,
                 path: "/webservice/rest/server.php",
                 query: [("wsfunction", "core_message_get_unread_conversation_counts"), ("moodlewsrestformat", "json")],
+                form: [("userid", userId)],
+                auth: auth
+            )
+        )
+    }
+
+    /// Retrieve the count of unread conversations for a given user
+    ///
+    /// - Parameters:
+    ///   - useridto: the user id who received the message, 0 for any user
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getUnreadConversationsCount(useridto: Int, auth: MoodleTokenAuth) async throws -> Int {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_message_get_unread_conversations_count"), ("moodlewsrestformat", "json")],
+                form: [("useridto", useridto)],
+                auth: auth
+            )
+        )
+    }
+
+    /// Get number of unread notifications.
+    ///
+    /// - Parameters:
+    ///   - useridto: user id who received the notification, 0 for any user
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getUnreadNotificationCount(useridto: Int, auth: MoodleTokenAuth) async throws -> Int {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_message_get_unread_notification_count"), ("moodlewsrestformat", "json")],
+                form: [("useridto", useridto)],
+                auth: auth
+            )
+        )
+    }
+
+    /// Retrieve the contact list
+    ///
+    /// - Parameters:
+    ///   - userId: The id of the user who we retrieving the contacts for
+    ///   - limitFrom: Limit from
+    ///   - limitNum: Limit number
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getUserContacts(
+        userId: Int,
+        limitFrom: Int? = nil,
+        limitNum: Int? = nil,
+        auth: MoodleTokenAuth
+    ) async throws -> [MoodleConversationMember] {
+        try await client.jsonList(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_message_get_user_contacts"), ("moodlewsrestformat", "json")],
+                form: [
+                    ("userid", userId),
+                    ("limitfrom", limitFrom),
+                    ("limitnum", limitNum)
+                ],
+                auth: auth
+            )
+        )
+    }
+
+    /// Get the message preferences for a given user.
+    ///
+    /// - Parameters:
+    ///   - userId: id of the user, 0 for current user
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getUserMessagePreferences(
+        userId: Int? = nil,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleMessageGetUserMessagePreferencesResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_message_get_user_message_preferences"), ("moodlewsrestformat", "json")],
+                form: [("userid", userId)],
+                auth: auth
+            )
+        )
+    }
+
+    /// Get the notification preferences for a given user.
+    ///
+    /// - Parameters:
+    ///   - userId: id of the user, 0 for current user
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getUserNotificationPreferences(
+        userId: Int? = nil,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleMessageGetUserNotificationPreferencesResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_message_get_user_notification_preferences"), ("moodlewsrestformat", "json")],
                 form: [("userid", userId)],
                 auth: auth
             )
@@ -167,6 +733,176 @@ public struct MoodleMessageApi: Sendable {
         )
     }
 
+    /// Mark all notifications as read for a given user
+    ///
+    /// - Parameters:
+    ///   - useridto: the user id who received the message, 0 for any user
+    ///   - userIdFrom: the user id who send the message, 0 for any user. -10 or -20 for no-reply or support user
+    ///   - timecreatedto: mark messages created before this time as read, 0 for all messages
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func markAllNotificationsAsRead(
+        useridto: Int,
+        userIdFrom: Int? = nil,
+        timecreatedto: Int64? = nil,
+        auth: MoodleTokenAuth
+    ) async throws -> Bool {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_message_mark_all_notifications_as_read"), ("moodlewsrestformat", "json")],
+                form: [
+                    ("useridto", useridto),
+                    ("useridfrom", userIdFrom),
+                    ("timecreatedto", timecreatedto)
+                ],
+                auth: auth
+            )
+        )
+    }
+
+    /// Mark a single message as read, trigger message_viewed event.
+    ///
+    /// - Parameters:
+    ///   - messageid: id of the message in the messages table
+    ///   - timeread: timestamp for when the message should be marked read
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func markMessageRead(
+        messageid: Int,
+        timeread: Int64? = nil,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleMessageMarkMessageReadResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_message_mark_message_read"), ("moodlewsrestformat", "json")],
+                form: [("messageid", messageid), ("timeread", timeread)],
+                auth: auth
+            )
+        )
+    }
+
+    /// Mark a single notification as read, trigger notification_viewed event.
+    ///
+    /// - Parameters:
+    ///   - notificationid: id of the notification
+    ///   - timeread: timestamp for when the notification should be marked read
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func markNotificationRead(
+        notificationid: Int,
+        timeread: Int64? = nil,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleMessageMarkNotificationReadResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_message_mark_notification_read"), ("moodlewsrestformat", "json")],
+                form: [("notificationid", notificationid), ("timeread", timeread)],
+                auth: auth
+            )
+        )
+    }
+
+    /// Process the message processor config form
+    ///
+    /// - Parameters:
+    ///   - userId: id of the user, 0 for current user
+    ///   - name: The name of the message processor
+    ///   - formvalues: Config form values
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func messageProcessorConfigForm(
+        userId: Int,
+        name: String,
+        formvalues: [MoodleFormvalue],
+        auth: MoodleTokenAuth
+    ) async throws {
+        try await client.send(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_message_message_processor_config_form"), ("moodlewsrestformat", "json")],
+                form: [("userid", userId), ("name", name)] + RestRequest.brackets("formvalues", formvalues),
+                auth: auth
+            )
+        )
+    }
+
+    /// Retrieve the data for searching for people
+    ///
+    /// - Parameters:
+    ///   - userId: The id of the user who is performing the search
+    ///   - search: The string being searched
+    ///   - limitFrom: Limit from
+    ///   - limitNum: Limit number
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func messageSearchUsers(
+        userId: Int,
+        search: String,
+        limitFrom: Int? = nil,
+        limitNum: Int? = nil,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleMessageMessageSearchUsersResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_message_message_search_users"), ("moodlewsrestformat", "json")],
+                form: [
+                    ("userid", userId),
+                    ("search", search),
+                    ("limitfrom", limitFrom),
+                    ("limitnum", limitNum)
+                ],
+                auth: auth
+            )
+        )
+    }
+
+    /// Mutes a list of conversations
+    ///
+    /// - Parameters:
+    ///   - userId: The id of the user who is blocking
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func muteConversations(
+        userId: Int,
+        conversationIds: [Int],
+        auth: MoodleTokenAuth
+    ) async throws -> [MoodleWarning] {
+        try await client.jsonList(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_message_mute_conversations"), ("moodlewsrestformat", "json")],
+                form: [("userid", userId)] + RestRequest.brackets("conversationids", conversationIds),
+                auth: auth
+            )
+        )
+    }
+
+    /// Search for contacts
+    ///
+    /// - Parameters:
+    ///   - searchtext: String the user's fullname has to match to be found
+    ///   - onlymycourses: Limit search to the user's courses
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func searchContacts(
+        searchtext: String,
+        onlymycourses: Bool? = nil,
+        auth: MoodleTokenAuth
+    ) async throws -> [MoodleMessageSearchContactsItem] {
+        try await client.jsonList(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_message_search_contacts"), ("moodlewsrestformat", "json")],
+                form: [("searchtext", searchtext)] + RestRequest.brackets("onlymycourses", onlymycourses),
+                auth: auth
+            )
+        )
+    }
+
     /// Send instant messages
     ///
     /// - Parameters:
@@ -181,6 +917,48 @@ public struct MoodleMessageApi: Sendable {
                 path: "/webservice/rest/server.php",
                 query: [("wsfunction", "core_message_send_instant_messages"), ("moodlewsrestformat", "json")],
                 form: RestRequest.brackets("messages", messages),
+                auth: auth
+            )
+        )
+    }
+
+    /// Send messages to an existing conversation between users
+    ///
+    /// - Parameters:
+    ///   - conversationId: id of the conversation
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func sendMessagesToConversation(
+        conversationId: Int,
+        messages: [MoodleMessageSendMessagesToConversationMessage],
+        auth: MoodleTokenAuth
+    ) async throws -> [MoodleConversationMessage] {
+        try await client.jsonList(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_message_send_messages_to_conversation"), ("moodlewsrestformat", "json")],
+                form: [("conversationid", conversationId)] + RestRequest.brackets("messages", messages),
+                auth: auth
+            )
+        )
+    }
+
+    /// Mark a conversation or group of conversations as favourites/starred conversations.
+    ///
+    /// - Parameters:
+    ///   - userId: id of the user, 0 for current user
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func setFavouriteConversations(
+        userId: Int? = nil,
+        conversations: [Int],
+        auth: MoodleTokenAuth
+    ) async throws -> [MoodleWarning] {
+        try await client.jsonList(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_message_set_favourite_conversations"), ("moodlewsrestformat", "json")],
+                form: [("userid", userId)] + RestRequest.brackets("conversations", conversations),
                 auth: auth
             )
         )
@@ -203,6 +981,48 @@ public struct MoodleMessageApi: Sendable {
                 path: "/webservice/rest/server.php",
                 query: [("wsfunction", "core_message_unblock_user"), ("moodlewsrestformat", "json")],
                 form: [("userid", userId), ("unblockeduserid", unblockedUserId)],
+                auth: auth
+            )
+        )
+    }
+
+    /// Unmutes a list of conversations
+    ///
+    /// - Parameters:
+    ///   - userId: The id of the user who is unblocking
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func unmuteConversations(
+        userId: Int,
+        conversationIds: [Int],
+        auth: MoodleTokenAuth
+    ) async throws -> [MoodleWarning] {
+        try await client.jsonList(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_message_unmute_conversations"), ("moodlewsrestformat", "json")],
+                form: [("userid", userId)] + RestRequest.brackets("conversationids", conversationIds),
+                auth: auth
+            )
+        )
+    }
+
+    /// Unset a conversation or group of conversations as favourites/starred conversations.
+    ///
+    /// - Parameters:
+    ///   - userId: id of the user, 0 for current user
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func unsetFavouriteConversations(
+        userId: Int? = nil,
+        conversations: [Int],
+        auth: MoodleTokenAuth
+    ) async throws -> [MoodleWarning] {
+        try await client.jsonList(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_message_unset_favourite_conversations"), ("moodlewsrestformat", "json")],
+                form: [("userid", userId)] + RestRequest.brackets("conversations", conversations),
                 auth: auth
             )
         )

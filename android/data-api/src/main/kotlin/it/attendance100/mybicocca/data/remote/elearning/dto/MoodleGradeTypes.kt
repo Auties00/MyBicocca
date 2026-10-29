@@ -5,32 +5,25 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class MoodleCourseGradesResponse(
-    @SerialName("grades")
-    val grades: List<MoodleCourseGrade> = emptyList(),
+data class MoodleGradereportUserGetAccessInformationResponse(
+    /** Whether the user can view the user grade report. */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("canviewusergradereport")
+    val canviewusergradereport: Boolean = false,
+
+    /** Whether the user can view his grades in the course. */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("canviewmygrades")
+    val canviewmygrades: Boolean = false,
+
+    /** Whether the user can view all users grades in the course. */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("canviewallgrades")
+    val canviewallgrades: Boolean = false,
 
     /** list of warnings */
     @SerialName("warnings")
     val warnings: List<MoodleWarning> = emptyList()
-)
-
-@Serializable
-data class MoodleCourseGrade(
-    /** Course id */
-    @SerialName("courseid")
-    val courseId: Int = 0,
-
-    /** Grade formatted */
-    @SerialName("grade")
-    val grade: String = "",
-
-    /** Raw grade, not formatted */
-    @SerialName("rawgrade")
-    val rawGrade: String = "",
-
-    /** Your rank in the course */
-    @SerialName("rank")
-    val rank: Int? = null
 )
 
 @Serializable
@@ -217,4 +210,146 @@ data class MoodleGradeItem(
     /** feedback format (1 = HTML, 0 = MOODLE, 2 = PLAIN, or 4 = MARKDOWN) */
     @SerialName("feedbackformat")
     val feedbackFormat: Int? = null
+)
+
+@Serializable
+data class MoodleGradereportUserGetGradesTableResponse(
+    @SerialName("tables")
+    val tables: List<MoodleTable> = emptyList(),
+
+    /** list of warnings */
+    @SerialName("warnings")
+    val warnings: List<MoodleWarning> = emptyList()
+)
+
+@Serializable
+data class MoodleTable(
+    /** course id */
+    @SerialName("courseid")
+    val courseId: Int = 0,
+
+    /** user id */
+    @SerialName("userid")
+    val userId: Int = 0,
+
+    /** user fullname */
+    @SerialName("userfullname")
+    val userFullName: String = "",
+
+    /** table max depth (needed for printing it) */
+    @SerialName("maxdepth")
+    val maxDepth: Int = 0,
+
+    @SerialName("tabledata")
+    val tabledata: List<MoodleTableTabledata> = emptyList()
+)
+
+/** table */
+@Serializable
+data class MoodleTableTabledata(
+    /** The item returned data */
+    @Serializable(with = MoodleItemNameFoldedSerializer::class)
+    @SerialName("itemname")
+    val itemName: MoodleItemName? = null,
+
+    /** The item returned data */
+    @Serializable(with = MoodleLeaderFoldedSerializer::class)
+    @SerialName("leader")
+    val leader: MoodleLeader? = null,
+
+    /** weight column */
+    @Serializable(with = MoodleWeightFoldedSerializer::class)
+    @SerialName("weight")
+    val weight: MoodleWeight? = null,
+
+    /** grade column */
+    @Serializable(with = MoodleWeightFoldedSerializer::class)
+    @SerialName("grade")
+    val grade: MoodleWeight? = null,
+
+    /** range column */
+    @Serializable(with = MoodleWeightFoldedSerializer::class)
+    @SerialName("range")
+    val range: MoodleWeight? = null,
+
+    /** percentage column */
+    @Serializable(with = MoodleWeightFoldedSerializer::class)
+    @SerialName("percentage")
+    val percentage: MoodleWeight? = null,
+
+    /** lettergrade column */
+    @Serializable(with = MoodleWeightFoldedSerializer::class)
+    @SerialName("lettergrade")
+    val lettergrade: MoodleWeight? = null,
+
+    /** rank column */
+    @Serializable(with = MoodleWeightFoldedSerializer::class)
+    @SerialName("rank")
+    val rank: MoodleWeight? = null,
+
+    /** average column */
+    @Serializable(with = MoodleWeightFoldedSerializer::class)
+    @SerialName("average")
+    val average: MoodleWeight? = null,
+
+    /** feedback column */
+    @Serializable(with = MoodleWeightFoldedSerializer::class)
+    @SerialName("feedback")
+    val feedback: MoodleWeight? = null,
+
+    /** contributiontocoursetotal column */
+    @Serializable(with = MoodleWeightFoldedSerializer::class)
+    @SerialName("contributiontocoursetotal")
+    val contributiontocoursetotal: MoodleWeight? = null,
+
+    @SerialName("parentcategories")
+    val parentcategories: List<Int> = emptyList()
+)
+
+/** The item returned data */
+@Serializable
+data class MoodleItemName(
+    /** class */
+    @SerialName("class")
+    val `class`: String = "",
+
+    /** col span */
+    @SerialName("colspan")
+    val colspan: Int = 0,
+
+    /** cell content */
+    @SerialName("content")
+    val content: String = "",
+
+    /** id */
+    @SerialName("id")
+    val id: String = ""
+)
+
+/** The item returned data */
+@Serializable
+data class MoodleLeader(
+    /** class */
+    @SerialName("class")
+    val `class`: String = "",
+
+    /** row span */
+    @SerialName("rowspan")
+    val rowspan: Int = 0
+)
+
+/** weight column */
+@Serializable
+data class MoodleWeight(
+    /** class */
+    @SerialName("class")
+    val `class`: String = "",
+
+    /** cell content */
+    @SerialName("content")
+    val content: String = "",
+
+    /** headers */
+    @SerialName("headers")
+    val headers: String = ""
 )

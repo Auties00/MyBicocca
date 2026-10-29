@@ -103,14 +103,81 @@ data class MoodleCompletionRuleValue(
     val description: String = ""
 )
 
+/** Course completion status */
 @Serializable
-data class MoodleStatusResponse(
-    /** status, true if success */
-    @Serializable(with = MoodleBooleanSerializer::class)
-    @SerialName("status")
-    val status: Boolean = false,
+data class MoodleCompletionGetCourseCompletionStatusResponse(
+    /** Course status */
+    @Serializable(with = MoodleCompletionstatuFoldedSerializer::class)
+    @SerialName("completionstatus")
+    val completionstatus: MoodleCompletionstatu,
 
     /** list of warnings */
     @SerialName("warnings")
     val warnings: List<MoodleWarning> = emptyList()
+)
+
+/** Course status */
+@Serializable
+data class MoodleCompletionstatu(
+    /** true if the course is complete, false otherwise */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("completed")
+    val completed: Boolean = false,
+
+    /** aggregation method 1 means all, 2 means any */
+    @SerialName("aggregation")
+    val aggregation: Int = 0,
+
+    @SerialName("completions")
+    val completions: List<MoodleCompletion> = emptyList()
+)
+
+/** Completions */
+@Serializable
+data class MoodleCompletion(
+    /** Completion criteria type */
+    @SerialName("type")
+    val type: Int = 0,
+
+    /** Completion criteria Title */
+    @SerialName("title")
+    val title: String = "",
+
+    /** Completion status (Yes/No) a % or number */
+    @SerialName("status")
+    val status: String = "",
+
+    /** Completion status (true/false) */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("complete")
+    val complete: Boolean = false,
+
+    /** Timestamp for criteria completetion */
+    @SerialName("timecompleted")
+    val timeCompleted: Long = 0L,
+
+    /** details */
+    @Serializable(with = MoodleDetailFoldedSerializer::class)
+    @SerialName("details")
+    val details: MoodleDetail
+)
+
+/** details */
+@Serializable
+data class MoodleDetail(
+    /** Type description */
+    @SerialName("type")
+    val type: String = "",
+
+    /** Criteria description */
+    @SerialName("criteria")
+    val criteria: String = "",
+
+    /** Requirement description */
+    @SerialName("requirement")
+    val requirement: String = "",
+
+    /** Status description, can be anything */
+    @SerialName("status")
+    val status: String = ""
 )

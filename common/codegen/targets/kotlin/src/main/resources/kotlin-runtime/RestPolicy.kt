@@ -35,6 +35,7 @@ class Failure(
     val errorCode: String?,
     val errorMessage: String,
     val roles: Set<Enum<*>>,
+    val serverMessage: String? = null,
 )
 
 /**

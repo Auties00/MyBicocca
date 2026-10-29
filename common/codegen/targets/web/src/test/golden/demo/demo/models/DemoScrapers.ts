@@ -2,7 +2,7 @@
 
 import { scrape, type ScrapeNode } from "../../runtime/index.js";
 import { decodeDemoKind, decodeDemoPriority } from "./DemoEnumTypes.js";
-import { DemoRoom, DemoStaffGroup } from "./DemoPagesTypes.js";
+import { type DemoRoom, type DemoStaffGroup } from "./DemoPagesTypes.js";
 
 /** Reads {@link DemoRoom} out of `node`, or returns `undefined` when a value it requires is missing. */
 export function scrapeDemoRoom(node: ScrapeNode): DemoRoom | undefined {

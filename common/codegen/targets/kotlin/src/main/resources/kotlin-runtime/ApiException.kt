@@ -13,12 +13,14 @@ package __PACKAGE__
  * @property errorCode The machine-readable error code the body carried, if any.
  * @property errorMessage The human-readable message the body carried, else the error code,
  *   else a description of the status.
+ * @property serverMessage The human-readable message the body carried, if any.
  */
 open class ApiException(
     val api: String,
     val statusCode: Int,
     val errorCode: String?,
     val errorMessage: String,
+    val serverMessage: String? = null,
 ) : Exception(
     "$api request failed with status $statusCode" +
         (errorCode?.takeUnless { it == errorMessage }?.let { " ($it)" } ?: "") +

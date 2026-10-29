@@ -10,5 +10,6 @@ import it.attendance100.mybicocca.data.remote.runtime.ApiException
 class EasyStaffException(
     statusCode: Int,
     errorCode: String?,
-    errorMessage: String
-) : ApiException("EasyStaff", statusCode, errorCode, errorMessage)
+    errorMessage: String,
+    serverMessage: String? = null
+) : ApiException("EasyStaff", statusCode, errorCode, errorMessage, serverMessage)

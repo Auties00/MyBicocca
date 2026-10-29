@@ -10,6 +10,9 @@ x-mb-prefix: Moodle
 x-mb-client:
   baseUrl: https://elearning.unimib.it
   timeoutSeconds: 30
+  # Moodle rejects a call missing a required key, and a required value at its zero (an empty
+  # answer, format 0, item id 0) is still a value; a default spelled out means the same as one left out.
+  sendsDefaults: true
   headers:
     Accept: application/json
   # Filter text and rewrite file URLs as the mobile app does, so that links work with the token.

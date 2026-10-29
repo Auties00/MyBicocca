@@ -7,6 +7,22 @@ import XCTest
 
 /// The live tests of the Moodle Badge module, planned from `common/specs/moodle/tests.yaml`.
 final class MoodleBadgeLiveTests: XCTestCase {
+    func test_getBadge1() async throws {
+        try await liveCase(MoodleLive.api, "Badge.getBadge#1") { live in
+            let id = try live.choose("id", [try await MoodleLive.badgeGetUserBadges(live)].compactMap { $0.badges }.flatMap { $0 }.compactMap { $0.id })
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleBadgesGetBadgeResponse\"}") { try await live.api.badge.getBadge(id: id, auth: auth) }
+            live.fingerprint { f in MoodleLive.writeMoodleBadgesGetBadgeResponse(f, result) }
+        }
+    }
+
+    func test_getBadgeInvalidCredentials() async throws {
+        try await liveCase(MoodleLive.api, "Badge.getBadge#invalid-credentials") { live in
+            let id = try live.choose("id", [try await MoodleLive.badgeGetUserBadges(live)].compactMap { $0.badges }.flatMap { $0 }.compactMap { $0.id })
+            try await live.refused(acceptsEmpty: false) { try await live.api.badge.getBadge(id: id, auth: MoodleTokenAuth(token: "mybicocca-invalid-credential")) }
+        }
+    }
+
     func test_getUserBadges1() async throws {
         try await liveCase(MoodleLive.api, "Badge.getUserBadges#1") { live in
             let auth = try await MoodleLive.tokenCredentials(live)
@@ -58,12 +74,6 @@ final class MoodleBadgeLiveTests: XCTestCase {
             let auth = try await MoodleLive.tokenCredentials(live)
             let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleUserBadgesResponse\"}") { try await live.api.badge.getUserBadges(userId: userId, courseId: courseId, onlyPublic: false, auth: auth) }
             live.fingerprint { f in MoodleLive.writeMoodleUserBadgesResponse(f, result) }
-        }
-    }
-
-    func test_getUserBadgesInvalidCredentials() async throws {
-        try await liveCase(MoodleLive.api, "Badge.getUserBadges#invalid-credentials") { live in
-            try await live.refused(acceptsEmpty: false) { try await live.api.badge.getUserBadges(auth: MoodleTokenAuth(token: "mybicocca-invalid-credential")) }
         }
     }
 }

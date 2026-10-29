@@ -46,17 +46,9 @@ public struct MoodleUploadedFile: Codable, Hashable, Sendable {
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(itemId, forKey: .itemId)
-        if fileName != nil {
-            try container.encode(fileName, forKey: .fileName)
-        }
-        if filePath != nil {
-            try container.encode(filePath, forKey: .filePath)
-        }
-        if fileSize != nil {
-            try container.encode(fileSize, forKey: .fileSize)
-        }
-        if fileArea != nil {
-            try container.encode(fileArea, forKey: .fileArea)
-        }
+        try container.encode(fileName, forKey: .fileName)
+        try container.encode(filePath, forKey: .filePath)
+        try container.encode(fileSize, forKey: .fileSize)
+        try container.encode(fileArea, forKey: .fileArea)
     }
 }

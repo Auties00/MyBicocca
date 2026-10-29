@@ -21,7 +21,7 @@ internal object MoodleWebRuntime {
 
     val policy = RestPolicy(
         baseUrl = null,
-        failure = { MoodleWebException(it.statusCode, it.errorCode, it.errorMessage) }
+        failure = { MoodleWebException(it.statusCode, it.errorCode, it.errorMessage, serverMessage = it.serverMessage) }
     )
 
     fun settings() = ClientSettings(emptyList())

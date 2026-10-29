@@ -11,11 +11,14 @@ public struct KalturaError: Error, CustomStringConvertible {
     public let code: String?
     /// The human-readable message the body carried, else the code, else a description of the status.
     public let message: String
+    /// The human-readable message the body carried, if any.
+    public let serverMessage: String?
 
     public init(failure: ApiFailure) {
         status = failure.status
         code = failure.code
         message = failure.message
+        serverMessage = failure.serverMessage
     }
 
     public var description: String {

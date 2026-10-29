@@ -7,26 +7,19 @@ import XCTest
 
 /// The live tests of the Moodle Grade module, planned from `common/specs/moodle/tests.yaml`.
 final class MoodleGradeLiveTests: XCTestCase {
-    func test_getCourseGrades1() async throws {
-        try await liveCase(MoodleLive.api, "Grade.getCourseGrades#1") { live in
+    func test_getAccessInformation1() async throws {
+        try await liveCase(MoodleLive.api, "Grade.getAccessInformation#1") { live in
+            let courseId = try live.choose("courseId", [try await MoodleLive.courseGetUsersCourses(live)].flatMap { $0 }.compactMap { $0.id })
             let auth = try await MoodleLive.tokenCredentials(live)
-            let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleCourseGradesResponse\"}") { try await live.api.grade.getCourseGrades(auth: auth) }
-            live.fingerprint { f in MoodleLive.writeMoodleCourseGradesResponse(f, result) }
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleGradereportUserGetAccessInformationResponse\"}") { try await live.api.grade.getAccessInformation(courseId: courseId, auth: auth) }
+            live.fingerprint { f in MoodleLive.writeMoodleGradereportUserGetAccessInformationResponse(f, result) }
         }
     }
 
-    func test_getCourseGrades2() async throws {
-        try await liveCase(MoodleLive.api, "Grade.getCourseGrades#2", index: 1) { live in
-            let userId = try live.choose("userId", [try await MoodleLive.siteGetSiteInfo(live)].compactMap { $0.userId })
-            let auth = try await MoodleLive.tokenCredentials(live)
-            let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleCourseGradesResponse\"}") { try await live.api.grade.getCourseGrades(userId: userId, auth: auth) }
-            live.fingerprint { f in MoodleLive.writeMoodleCourseGradesResponse(f, result) }
-        }
-    }
-
-    func test_getCourseGradesInvalidCredentials() async throws {
-        try await liveCase(MoodleLive.api, "Grade.getCourseGrades#invalid-credentials") { live in
-            try await live.refused(acceptsEmpty: false) { try await live.api.grade.getCourseGrades(auth: MoodleTokenAuth(token: "mybicocca-invalid-credential")) }
+    func test_getAccessInformationInvalidCredentials() async throws {
+        try await liveCase(MoodleLive.api, "Grade.getAccessInformation#invalid-credentials") { live in
+            let courseId = try live.choose("courseId", [try await MoodleLive.courseGetUsersCourses(live)].flatMap { $0 }.compactMap { $0.id })
+            try await live.refused(acceptsEmpty: false) { try await live.api.grade.getAccessInformation(courseId: courseId, auth: MoodleTokenAuth(token: "mybicocca-invalid-credential")) }
         }
     }
 
@@ -42,10 +35,58 @@ final class MoodleGradeLiveTests: XCTestCase {
     func test_getGradeItems2() async throws {
         try await liveCase(MoodleLive.api, "Grade.getGradeItems#2", index: 1) { live in
             let courseId = try live.choose("courseId", [try await MoodleLive.courseGetUsersCourses(live)].flatMap { $0 }.compactMap { $0.id })
-            let groupId = try live.choose("groupId", [try await MoodleLive.calendarGetActionEventsByTimesort(live)].compactMap { $0.events }.flatMap { $0 }.compactMap { $0.groupId })
+            let groupId = try live.choose("groupId", [try await MoodleLive.blogGetEntries(live)].compactMap { $0.entries }.flatMap { $0 }.compactMap { $0.groupId })
             let auth = try await MoodleLive.tokenCredentials(live)
             let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleGradeItemsResponse\"}", errors: ["nopermissions"]) { try await live.api.grade.getGradeItems(courseId: courseId, groupId: groupId, auth: auth) }
             live.fingerprint { f in MoodleLive.writeMoodleGradeItemsResponse(f, result) }
+        }
+    }
+
+    func test_getGradesTable1() async throws {
+        try await liveCase(MoodleLive.api, "Grade.getGradesTable#1") { live in
+            let courseId = try live.choose("courseId", [try await MoodleLive.courseGetUsersCourses(live)].flatMap { $0 }.compactMap { $0.id })
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleGradereportUserGetGradesTableResponse\"}") { try await live.api.grade.getGradesTable(courseId: courseId, auth: auth) }
+            live.fingerprint { f in MoodleLive.writeMoodleGradereportUserGetGradesTableResponse(f, result) }
+        }
+    }
+
+    func test_getGradesTable2() async throws {
+        try await liveCase(MoodleLive.api, "Grade.getGradesTable#2", index: 1) { live in
+            let courseId = try live.choose("courseId", [try await MoodleLive.courseGetUsersCourses(live)].flatMap { $0 }.compactMap { $0.id })
+            let groupId = try live.choose("groupId", [try await MoodleLive.blogGetEntries(live)].compactMap { $0.entries }.flatMap { $0 }.compactMap { $0.groupId })
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleGradereportUserGetGradesTableResponse\"}") { try await live.api.grade.getGradesTable(courseId: courseId, groupId: groupId, auth: auth) }
+            live.fingerprint { f in MoodleLive.writeMoodleGradereportUserGetGradesTableResponse(f, result) }
+        }
+    }
+
+    func test_getGradesTable3() async throws {
+        try await liveCase(MoodleLive.api, "Grade.getGradesTable#3", index: 2) { live in
+            let courseId = try live.choose("courseId", [try await MoodleLive.courseGetUsersCourses(live)].flatMap { $0 }.compactMap { $0.id })
+            let userId = try live.choose("userId", [try await MoodleLive.siteGetSiteInfo(live)].compactMap { $0.userId })
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleGradereportUserGetGradesTableResponse\"}") { try await live.api.grade.getGradesTable(courseId: courseId, userId: userId, auth: auth) }
+            live.fingerprint { f in MoodleLive.writeMoodleGradereportUserGetGradesTableResponse(f, result) }
+        }
+    }
+
+    func test_getGradesTable4() async throws {
+        try await liveCase(MoodleLive.api, "Grade.getGradesTable#4", index: 3) { live in
+            let courseId = try live.choose("courseId", [try await MoodleLive.courseGetUsersCourses(live)].flatMap { $0 }.compactMap { $0.id })
+            let userId = try live.choose("userId", [try await MoodleLive.siteGetSiteInfo(live)].compactMap { $0.userId })
+            let groupId = try live.choose("groupId", [try await MoodleLive.blogGetEntries(live)].compactMap { $0.entries }.flatMap { $0 }.compactMap { $0.groupId })
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleGradereportUserGetGradesTableResponse\"}") { try await live.api.grade.getGradesTable(courseId: courseId, userId: userId, groupId: groupId, auth: auth) }
+            live.fingerprint { f in MoodleLive.writeMoodleGradereportUserGetGradesTableResponse(f, result) }
+        }
+    }
+
+    func test_viewGradeReport1() async throws {
+        try await liveCase(MoodleLive.api, "Grade.viewGradeReport#1", effect: "benign") { live in
+            let courseId = try live.choose("courseId", [try await MoodleLive.courseGetUsersCourses(live)].flatMap { $0 }.compactMap { $0.id })
+            let auth = try await MoodleLive.tokenCredentials(live)
+            _ = try await live.call("{\"k\":\"record\",\"n\":\"MoodleStatusResponse\"}") { try await live.api.grade.viewGradeReport(courseId: courseId, auth: auth) }
         }
     }
 }

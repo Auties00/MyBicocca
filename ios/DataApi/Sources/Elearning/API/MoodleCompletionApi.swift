@@ -32,6 +32,48 @@ public struct MoodleCompletionApi: Sendable {
         )
     }
 
+    /// Returns course completion status.
+    ///
+    /// - Parameters:
+    ///   - courseId: Course ID
+    ///   - userId: User ID
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getCourseCompletionStatus(
+        courseId: Int,
+        userId: Int,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleCompletionGetCourseCompletionStatusResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_completion_get_course_completion_status"), ("moodlewsrestformat", "json")],
+                form: [("courseid", courseId), ("userid", userId)],
+                auth: auth
+            )
+        )
+    }
+
+    /// Update the course completion status for the current user (if course self-completion is enabled).
+    ///
+    /// - Parameters:
+    ///   - courseId: Course ID
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func markCourseSelfCompleted(
+        courseId: Int,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleStatusResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_completion_mark_course_self_completed"), ("moodlewsrestformat", "json")],
+                form: [("courseid", courseId)],
+                auth: auth
+            )
+        )
+    }
+
     /// Update completion status for the current user in an activity, only for activities with manual tracking.
     ///
     /// - Parameters:

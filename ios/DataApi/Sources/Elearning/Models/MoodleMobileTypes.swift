@@ -3,6 +3,129 @@
 import DataApiRuntime
 import Foundation
 
+public struct MoodleMobileCallExternalFunctionsRequest: Codable, Hashable, Sendable {
+    /// Function name
+    public var function: String
+    /// JSON-encoded object with named arguments
+    public var arguments: String
+    /// Return raw text
+    public var settingraw: Bool
+    /// Filter text
+    public var settingfilter: Bool
+    /// Rewrite plugin file URLs
+    public var settingfileurl: Bool
+    /// Session language
+    public var settinglang: String
+
+    public init(
+        function: String = "",
+        arguments: String = "{}",
+        settingraw: Bool = false,
+        settingfilter: Bool = false,
+        settingfileurl: Bool = true,
+        settinglang: String = ""
+    ) {
+        self.function = function
+        self.arguments = arguments
+        self.settingraw = settingraw
+        self.settingfilter = settingfilter
+        self.settingfileurl = settingfileurl
+        self.settinglang = settinglang
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case function = "function"
+        case arguments = "arguments"
+        case settingraw = "settingraw"
+        case settingfilter = "settingfilter"
+        case settingfileurl = "settingfileurl"
+        case settinglang = "settinglang"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.function = container.decodeLenient(String.self, forKey: .function) ?? ""
+        self.arguments = container.decodeLenient(String.self, forKey: .arguments) ?? "{}"
+        self.settingraw = container.decodeLenient(Bool.self, forKey: .settingraw) ?? false
+        self.settingfilter = container.decodeLenient(Bool.self, forKey: .settingfilter) ?? false
+        self.settingfileurl = container.decodeLenient(Bool.self, forKey: .settingfileurl) ?? true
+        self.settinglang = container.decodeLenient(String.self, forKey: .settinglang) ?? ""
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(function, forKey: .function)
+        try container.encode(arguments, forKey: .arguments)
+        try container.encode(settingraw, forKey: .settingraw)
+        try container.encode(settingfilter, forKey: .settingfilter)
+        try container.encode(settingfileurl, forKey: .settingfileurl)
+        try container.encode(settinglang, forKey: .settinglang)
+    }
+}
+
+public struct MoodleMobileCallExternalFunctionsResponse: Codable, Hashable, Sendable {
+    public var responses: [MoodleMobileCallExternalFunctionsResponseResponse]
+
+    public init(
+        responses: [MoodleMobileCallExternalFunctionsResponseResponse] = []
+    ) {
+        self.responses = responses
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case responses = "responses"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.responses = container.decodeLenient([MoodleMobileCallExternalFunctionsResponseResponse].self, forKey: .responses) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(responses, forKey: .responses)
+    }
+}
+
+public struct MoodleMobileCallExternalFunctionsResponseResponse: Codable, Hashable, Sendable {
+    /// Whether an exception was thrown.
+    public var error: Bool
+    /// JSON-encoded response data
+    public var data: String?
+    /// JSON-encoed exception info
+    public var exception: String?
+
+    public init(
+        error: Bool = false,
+        data: String? = nil,
+        exception: String? = nil
+    ) {
+        self.error = error
+        self.data = data
+        self.exception = exception
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case error = "error"
+        case data = "data"
+        case exception = "exception"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.error = container.decodeLenient(Bool.self, forKey: .error) ?? false
+        self.data = container.decodeLenient(String.self, forKey: .data)
+        self.exception = container.decodeLenient(String.self, forKey: .exception)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(error, forKey: .error)
+        try container.encode(data, forKey: .data)
+        try container.encode(exception, forKey: .exception)
+    }
+}
+
 public struct MoodleAutologinKey: Codable, Hashable, Sendable {
     /// Auto-login key for a single usage with time expiration.
     public var key: String
@@ -36,15 +159,41 @@ public struct MoodleAutologinKey: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if key != "" {
-            try container.encode(key, forKey: .key)
-        }
-        if autologinUrl != "" {
-            try container.encode(autologinUrl, forKey: .autologinUrl)
-        }
-        if !warnings.isEmpty {
-            try container.encode(warnings, forKey: .warnings)
-        }
+        try container.encode(key, forKey: .key)
+        try container.encode(autologinUrl, forKey: .autologinUrl)
+        try container.encode(warnings, forKey: .warnings)
+    }
+}
+
+public struct MoodleMobileGetConfigResponse: Codable, Hashable, Sendable {
+    /// Settings
+    public var settings: [MoodleKeyValue]
+    /// list of warnings
+    public var warnings: [MoodleWarning]
+
+    public init(
+        settings: [MoodleKeyValue] = [],
+        warnings: [MoodleWarning] = []
+    ) {
+        self.settings = settings
+        self.warnings = warnings
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case settings = "settings"
+        case warnings = "warnings"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.settings = container.decodeLenient([MoodleKeyValue].self, forKey: .settings) ?? []
+        self.warnings = container.decodeLenient([MoodleWarning].self, forKey: .warnings) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(settings, forKey: .settings)
+        try container.encode(warnings, forKey: .warnings)
     }
 }
 
@@ -99,22 +248,12 @@ public struct MoodleMobileContent: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if !templates.isEmpty {
-            try container.encode(templates, forKey: .templates)
-        }
-        if javascript != "" {
-            try container.encode(javascript, forKey: .javascript)
-        }
-        if !otherData.isEmpty {
-            try container.encode(otherData, forKey: .otherData)
-        }
-        if !files.isEmpty {
-            try container.encode(files, forKey: .files)
-        }
+        try container.encode(templates, forKey: .templates)
+        try container.encode(javascript, forKey: .javascript)
+        try container.encode(otherData, forKey: .otherData)
+        try container.encode(files, forKey: .files)
         try container.encode(restrict, forKey: .restrict)
-        if disabled != nil {
-            try container.encode(disabled, forKey: .disabled)
-        }
+        try container.encode(disabled, forKey: .disabled)
     }
 }
 
@@ -145,12 +284,8 @@ public struct MoodleMobileTemplate: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if id != "" {
-            try container.encode(id, forKey: .id)
-        }
-        if html != "" {
-            try container.encode(html, forKey: .html)
-        }
+        try container.encode(id, forKey: .id)
+        try container.encode(html, forKey: .html)
     }
 }
 
@@ -182,11 +317,520 @@ public struct MoodleMobileContentRestriction: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if !users.isEmpty {
-            try container.encode(users, forKey: .users)
-        }
-        if !courses.isEmpty {
-            try container.encode(courses, forKey: .courses)
-        }
+        try container.encode(users, forKey: .users)
+        try container.encode(courses, forKey: .courses)
+    }
+}
+
+public struct MoodleMobileGetPluginsSupportingMobileResponse: Codable, Hashable, Sendable {
+    public var plugins: [MoodlePlugin]
+    /// list of warnings
+    public var warnings: [MoodleWarning]
+
+    public init(
+        plugins: [MoodlePlugin] = [],
+        warnings: [MoodleWarning] = []
+    ) {
+        self.plugins = plugins
+        self.warnings = warnings
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case plugins = "plugins"
+        case warnings = "warnings"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.plugins = container.decodeLenient([MoodlePlugin].self, forKey: .plugins) ?? []
+        self.warnings = container.decodeLenient([MoodleWarning].self, forKey: .warnings) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(plugins, forKey: .plugins)
+        try container.encode(warnings, forKey: .warnings)
+    }
+}
+
+public struct MoodlePlugin: Codable, Hashable, Sendable {
+    /// The plugin component name.
+    public var component: String
+    /// The plugin version number.
+    public var version: String
+    /// The Mobile addon (package) name.
+    public var addon: String
+    /// The list of Mobile addons this addon depends on.
+    public var dependencies: [String]
+    /// The addon package url for download or empty if it doesn't exist.
+    public var fileUrl: String
+    /// The addon package hash or empty if it doesn't exist.
+    public var filehash: String
+    /// The addon package size or empty if it doesn't exist.
+    public var fileSize: Int64
+    /// Handlers definition (JSON)
+    public var handlers: String?
+    /// Language strings used by the handlers (JSON)
+    public var lang: String?
+
+    public init(
+        component: String = "",
+        version: String = "",
+        addon: String = "",
+        dependencies: [String] = [],
+        fileUrl: String = "",
+        filehash: String = "",
+        fileSize: Int64 = 0,
+        handlers: String? = nil,
+        lang: String? = nil
+    ) {
+        self.component = component
+        self.version = version
+        self.addon = addon
+        self.dependencies = dependencies
+        self.fileUrl = fileUrl
+        self.filehash = filehash
+        self.fileSize = fileSize
+        self.handlers = handlers
+        self.lang = lang
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case component = "component"
+        case version = "version"
+        case addon = "addon"
+        case dependencies = "dependencies"
+        case fileUrl = "fileurl"
+        case filehash = "filehash"
+        case fileSize = "filesize"
+        case handlers = "handlers"
+        case lang = "lang"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.component = container.decodeLenient(String.self, forKey: .component) ?? ""
+        self.version = container.decodeLenient(String.self, forKey: .version) ?? ""
+        self.addon = container.decodeLenient(String.self, forKey: .addon) ?? ""
+        self.dependencies = container.decodeLenient([String].self, forKey: .dependencies) ?? []
+        self.fileUrl = container.decodeLenient(String.self, forKey: .fileUrl) ?? ""
+        self.filehash = container.decodeLenient(String.self, forKey: .filehash) ?? ""
+        self.fileSize = container.decodeLenient(Int64.self, forKey: .fileSize) ?? 0
+        self.handlers = container.decodeLenient(String.self, forKey: .handlers)
+        self.lang = container.decodeLenient(String.self, forKey: .lang)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(component, forKey: .component)
+        try container.encode(version, forKey: .version)
+        try container.encode(addon, forKey: .addon)
+        try container.encode(dependencies, forKey: .dependencies)
+        try container.encode(fileUrl, forKey: .fileUrl)
+        try container.encode(filehash, forKey: .filehash)
+        try container.encode(fileSize, forKey: .fileSize)
+        try container.encode(handlers, forKey: .handlers)
+        try container.encode(lang, forKey: .lang)
+    }
+}
+
+public struct MoodleMobileGetPublicConfigResponse: Codable, Hashable, Sendable {
+    /// Site URL.
+    public var wwwroot: String
+    /// Site https URL (if httpslogin is enabled).
+    public var httpswwwroot: String
+    /// Site name.
+    public var siteName: String
+    /// Whether guest login is enabled.
+    public var guestlogin: Int64
+    /// Values: 0 for No, 1 for Yes, 2 for optional.
+    public var rememberusername: Int
+    /// Whether log in via email is enabled.
+    public var authloginviaemail: Int64
+    /// Authentication method for user registration.
+    public var registerauth: String
+    /// Forgotten password URL.
+    public var forgottenpasswordurl: String
+    /// Authentication instructions.
+    public var authinstructions: String
+    /// Whether auth none is enabled.
+    public var authnoneenabled: Int
+    /// Whether Web Services are enabled.
+    public var enablewebservices: Int
+    /// Whether the Mobile service is enabled.
+    public var enablemobilewebservice: Int
+    /// Whether site maintenance is enabled.
+    public var maintenanceenabled: Int
+    /// Maintenance message.
+    public var maintenancemessage: String
+    /// The site logo URL
+    public var logourl: String?
+    /// The site compact logo URL
+    public var compactlogourl: String?
+    /// The type of login. 1 for app, 2 for browser, 3 for embedded.
+    public var typeoflogin: Int64
+    /// SSO login launch URL.
+    public var launchurl: String?
+    /// Mobile custom CSS theme
+    public var mobileCssUrl: String?
+    /// Disabled features in the app
+    public var toolMobileDisabledfeatures: String?
+    /// Identity providers
+    public var identityproviders: [MoodleIdentityprovider]
+    /// Default site country
+    public var country: String?
+    /// Whether age digital consent verification is enabled.
+    public var agedigitalconsentverification: Bool?
+    /// Site support contact name (only if age verification is enabled).
+    public var supportname: String?
+    /// Site support contact email (only if age verification is enabled).
+    public var supportemail: String?
+    /// Site support page link.
+    public var supportpage: String?
+    /// Determines who has access to contact site support.
+    public var supportavailability: Int?
+    /// Whether to detect default language from browser setting.
+    public var autolang: Int?
+    /// Default language for the site.
+    public var lang: String?
+    /// Whether the language menu should be displayed.
+    public var langmenu: Int?
+    /// Languages on language menu.
+    public var langlist: String?
+    /// Sitewide locale.
+    public var locale: String?
+    /// Minimum required version to access.
+    public var toolMobileMinimumversion: String?
+    /// iOS app's unique identifier.
+    public var toolMobileIosappid: String?
+    /// Android app's unique identifier.
+    public var toolMobileAndroidappid: String?
+    /// App download page.
+    public var toolMobileSetuplink: String?
+    /// QR login configuration.
+    public var toolMobileQrcodetype: Int?
+    /// list of warnings
+    public var warnings: [MoodleWarning]
+    /// Display default login form.
+    public var showloginform: Int64
+
+    public init(
+        wwwroot: String = "",
+        httpswwwroot: String = "",
+        siteName: String = "",
+        guestlogin: Int64 = 0,
+        rememberusername: Int = 0,
+        authloginviaemail: Int64 = 0,
+        registerauth: String = "",
+        forgottenpasswordurl: String = "",
+        authinstructions: String = "",
+        authnoneenabled: Int = 0,
+        enablewebservices: Int = 0,
+        enablemobilewebservice: Int = 0,
+        maintenanceenabled: Int = 0,
+        maintenancemessage: String = "",
+        logourl: String? = nil,
+        compactlogourl: String? = nil,
+        typeoflogin: Int64 = 0,
+        launchurl: String? = nil,
+        mobileCssUrl: String? = nil,
+        toolMobileDisabledfeatures: String? = nil,
+        identityproviders: [MoodleIdentityprovider] = [],
+        country: String? = nil,
+        agedigitalconsentverification: Bool? = nil,
+        supportname: String? = nil,
+        supportemail: String? = nil,
+        supportpage: String? = nil,
+        supportavailability: Int? = nil,
+        autolang: Int? = nil,
+        lang: String? = nil,
+        langmenu: Int? = nil,
+        langlist: String? = nil,
+        locale: String? = nil,
+        toolMobileMinimumversion: String? = nil,
+        toolMobileIosappid: String? = nil,
+        toolMobileAndroidappid: String? = nil,
+        toolMobileSetuplink: String? = nil,
+        toolMobileQrcodetype: Int? = nil,
+        warnings: [MoodleWarning] = [],
+        showloginform: Int64 = 0
+    ) {
+        self.wwwroot = wwwroot
+        self.httpswwwroot = httpswwwroot
+        self.siteName = siteName
+        self.guestlogin = guestlogin
+        self.rememberusername = rememberusername
+        self.authloginviaemail = authloginviaemail
+        self.registerauth = registerauth
+        self.forgottenpasswordurl = forgottenpasswordurl
+        self.authinstructions = authinstructions
+        self.authnoneenabled = authnoneenabled
+        self.enablewebservices = enablewebservices
+        self.enablemobilewebservice = enablemobilewebservice
+        self.maintenanceenabled = maintenanceenabled
+        self.maintenancemessage = maintenancemessage
+        self.logourl = logourl
+        self.compactlogourl = compactlogourl
+        self.typeoflogin = typeoflogin
+        self.launchurl = launchurl
+        self.mobileCssUrl = mobileCssUrl
+        self.toolMobileDisabledfeatures = toolMobileDisabledfeatures
+        self.identityproviders = identityproviders
+        self.country = country
+        self.agedigitalconsentverification = agedigitalconsentverification
+        self.supportname = supportname
+        self.supportemail = supportemail
+        self.supportpage = supportpage
+        self.supportavailability = supportavailability
+        self.autolang = autolang
+        self.lang = lang
+        self.langmenu = langmenu
+        self.langlist = langlist
+        self.locale = locale
+        self.toolMobileMinimumversion = toolMobileMinimumversion
+        self.toolMobileIosappid = toolMobileIosappid
+        self.toolMobileAndroidappid = toolMobileAndroidappid
+        self.toolMobileSetuplink = toolMobileSetuplink
+        self.toolMobileQrcodetype = toolMobileQrcodetype
+        self.warnings = warnings
+        self.showloginform = showloginform
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case wwwroot = "wwwroot"
+        case httpswwwroot = "httpswwwroot"
+        case siteName = "sitename"
+        case guestlogin = "guestlogin"
+        case rememberusername = "rememberusername"
+        case authloginviaemail = "authloginviaemail"
+        case registerauth = "registerauth"
+        case forgottenpasswordurl = "forgottenpasswordurl"
+        case authinstructions = "authinstructions"
+        case authnoneenabled = "authnoneenabled"
+        case enablewebservices = "enablewebservices"
+        case enablemobilewebservice = "enablemobilewebservice"
+        case maintenanceenabled = "maintenanceenabled"
+        case maintenancemessage = "maintenancemessage"
+        case logourl = "logourl"
+        case compactlogourl = "compactlogourl"
+        case typeoflogin = "typeoflogin"
+        case launchurl = "launchurl"
+        case mobileCssUrl = "mobilecssurl"
+        case toolMobileDisabledfeatures = "tool_mobile_disabledfeatures"
+        case identityproviders = "identityproviders"
+        case country = "country"
+        case agedigitalconsentverification = "agedigitalconsentverification"
+        case supportname = "supportname"
+        case supportemail = "supportemail"
+        case supportpage = "supportpage"
+        case supportavailability = "supportavailability"
+        case autolang = "autolang"
+        case lang = "lang"
+        case langmenu = "langmenu"
+        case langlist = "langlist"
+        case locale = "locale"
+        case toolMobileMinimumversion = "tool_mobile_minimumversion"
+        case toolMobileIosappid = "tool_mobile_iosappid"
+        case toolMobileAndroidappid = "tool_mobile_androidappid"
+        case toolMobileSetuplink = "tool_mobile_setuplink"
+        case toolMobileQrcodetype = "tool_mobile_qrcodetype"
+        case warnings = "warnings"
+        case showloginform = "showloginform"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.wwwroot = container.decodeLenient(String.self, forKey: .wwwroot) ?? ""
+        self.httpswwwroot = container.decodeLenient(String.self, forKey: .httpswwwroot) ?? ""
+        self.siteName = container.decodeLenient(String.self, forKey: .siteName) ?? ""
+        self.guestlogin = container.decodeLenient(Int64.self, forKey: .guestlogin) ?? 0
+        self.rememberusername = container.decodeLenient(Int.self, forKey: .rememberusername) ?? 0
+        self.authloginviaemail = container.decodeLenient(Int64.self, forKey: .authloginviaemail) ?? 0
+        self.registerauth = container.decodeLenient(String.self, forKey: .registerauth) ?? ""
+        self.forgottenpasswordurl = container.decodeLenient(String.self, forKey: .forgottenpasswordurl) ?? ""
+        self.authinstructions = container.decodeLenient(String.self, forKey: .authinstructions) ?? ""
+        self.authnoneenabled = container.decodeLenient(Int.self, forKey: .authnoneenabled) ?? 0
+        self.enablewebservices = container.decodeLenient(Int.self, forKey: .enablewebservices) ?? 0
+        self.enablemobilewebservice = container.decodeLenient(Int.self, forKey: .enablemobilewebservice) ?? 0
+        self.maintenanceenabled = container.decodeLenient(Int.self, forKey: .maintenanceenabled) ?? 0
+        self.maintenancemessage = container.decodeLenient(String.self, forKey: .maintenancemessage) ?? ""
+        self.logourl = container.decodeLenient(String.self, forKey: .logourl)
+        self.compactlogourl = container.decodeLenient(String.self, forKey: .compactlogourl)
+        self.typeoflogin = container.decodeLenient(Int64.self, forKey: .typeoflogin) ?? 0
+        self.launchurl = container.decodeLenient(String.self, forKey: .launchurl)
+        self.mobileCssUrl = container.decodeLenient(String.self, forKey: .mobileCssUrl)
+        self.toolMobileDisabledfeatures = container.decodeLenient(String.self, forKey: .toolMobileDisabledfeatures)
+        self.identityproviders = container.decodeLenient([MoodleIdentityprovider].self, forKey: .identityproviders) ?? []
+        self.country = container.decodeLenient(String.self, forKey: .country)
+        self.agedigitalconsentverification = container.decodeLenient(Bool.self, forKey: .agedigitalconsentverification)
+        self.supportname = container.decodeLenient(String.self, forKey: .supportname)
+        self.supportemail = container.decodeLenient(String.self, forKey: .supportemail)
+        self.supportpage = container.decodeLenient(String.self, forKey: .supportpage)
+        self.supportavailability = container.decodeLenient(Int.self, forKey: .supportavailability)
+        self.autolang = container.decodeLenient(Int.self, forKey: .autolang)
+        self.lang = container.decodeLenient(String.self, forKey: .lang)
+        self.langmenu = container.decodeLenient(Int.self, forKey: .langmenu)
+        self.langlist = container.decodeLenient(String.self, forKey: .langlist)
+        self.locale = container.decodeLenient(String.self, forKey: .locale)
+        self.toolMobileMinimumversion = container.decodeLenient(String.self, forKey: .toolMobileMinimumversion)
+        self.toolMobileIosappid = container.decodeLenient(String.self, forKey: .toolMobileIosappid)
+        self.toolMobileAndroidappid = container.decodeLenient(String.self, forKey: .toolMobileAndroidappid)
+        self.toolMobileSetuplink = container.decodeLenient(String.self, forKey: .toolMobileSetuplink)
+        self.toolMobileQrcodetype = container.decodeLenient(Int.self, forKey: .toolMobileQrcodetype)
+        self.warnings = container.decodeLenient([MoodleWarning].self, forKey: .warnings) ?? []
+        self.showloginform = container.decodeLenient(Int64.self, forKey: .showloginform) ?? 0
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(wwwroot, forKey: .wwwroot)
+        try container.encode(httpswwwroot, forKey: .httpswwwroot)
+        try container.encode(siteName, forKey: .siteName)
+        try container.encode(guestlogin, forKey: .guestlogin)
+        try container.encode(rememberusername, forKey: .rememberusername)
+        try container.encode(authloginviaemail, forKey: .authloginviaemail)
+        try container.encode(registerauth, forKey: .registerauth)
+        try container.encode(forgottenpasswordurl, forKey: .forgottenpasswordurl)
+        try container.encode(authinstructions, forKey: .authinstructions)
+        try container.encode(authnoneenabled, forKey: .authnoneenabled)
+        try container.encode(enablewebservices, forKey: .enablewebservices)
+        try container.encode(enablemobilewebservice, forKey: .enablemobilewebservice)
+        try container.encode(maintenanceenabled, forKey: .maintenanceenabled)
+        try container.encode(maintenancemessage, forKey: .maintenancemessage)
+        try container.encode(logourl, forKey: .logourl)
+        try container.encode(compactlogourl, forKey: .compactlogourl)
+        try container.encode(typeoflogin, forKey: .typeoflogin)
+        try container.encode(launchurl, forKey: .launchurl)
+        try container.encode(mobileCssUrl, forKey: .mobileCssUrl)
+        try container.encode(toolMobileDisabledfeatures, forKey: .toolMobileDisabledfeatures)
+        try container.encode(identityproviders, forKey: .identityproviders)
+        try container.encode(country, forKey: .country)
+        try container.encode(agedigitalconsentverification, forKey: .agedigitalconsentverification)
+        try container.encode(supportname, forKey: .supportname)
+        try container.encode(supportemail, forKey: .supportemail)
+        try container.encode(supportpage, forKey: .supportpage)
+        try container.encode(supportavailability, forKey: .supportavailability)
+        try container.encode(autolang, forKey: .autolang)
+        try container.encode(lang, forKey: .lang)
+        try container.encode(langmenu, forKey: .langmenu)
+        try container.encode(langlist, forKey: .langlist)
+        try container.encode(locale, forKey: .locale)
+        try container.encode(toolMobileMinimumversion, forKey: .toolMobileMinimumversion)
+        try container.encode(toolMobileIosappid, forKey: .toolMobileIosappid)
+        try container.encode(toolMobileAndroidappid, forKey: .toolMobileAndroidappid)
+        try container.encode(toolMobileSetuplink, forKey: .toolMobileSetuplink)
+        try container.encode(toolMobileQrcodetype, forKey: .toolMobileQrcodetype)
+        try container.encode(warnings, forKey: .warnings)
+        try container.encode(showloginform, forKey: .showloginform)
+    }
+}
+
+public struct MoodleIdentityprovider: Codable, Hashable, Sendable {
+    /// The identity provider name.
+    public var name: String
+    /// The icon URL for the provider.
+    public var iconUrl: String
+    /// The URL of the provider.
+    public var url: String
+
+    public init(
+        name: String = "",
+        iconUrl: String = "",
+        url: String = ""
+    ) {
+        self.name = name
+        self.iconUrl = iconUrl
+        self.url = url
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case name = "name"
+        case iconUrl = "iconurl"
+        case url = "url"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.name = container.decodeLenient(String.self, forKey: .name) ?? ""
+        self.iconUrl = container.decodeLenient(String.self, forKey: .iconUrl) ?? ""
+        self.url = container.decodeLenient(String.self, forKey: .url) ?? ""
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(name, forKey: .name)
+        try container.encode(iconUrl, forKey: .iconUrl)
+        try container.encode(url, forKey: .url)
+    }
+}
+
+public struct MoodleMobileGetTokensForQrLoginResponse: Codable, Hashable, Sendable {
+    /// A valid WebService token for the official mobile app service.
+    public var token: String
+    /// Private token used for auto-login processes.
+    public var privateToken: String
+    /// list of warnings
+    public var warnings: [MoodleWarning]
+
+    public init(
+        token: String = "",
+        privateToken: String = "",
+        warnings: [MoodleWarning] = []
+    ) {
+        self.token = token
+        self.privateToken = privateToken
+        self.warnings = warnings
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case token = "token"
+        case privateToken = "privatetoken"
+        case warnings = "warnings"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.token = container.decodeLenient(String.self, forKey: .token) ?? ""
+        self.privateToken = container.decodeLenient(String.self, forKey: .privateToken) ?? ""
+        self.warnings = container.decodeLenient([MoodleWarning].self, forKey: .warnings) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(token, forKey: .token)
+        try container.encode(privateToken, forKey: .privateToken)
+        try container.encode(warnings, forKey: .warnings)
+    }
+}
+
+public struct MoodleMobileValidateSubscriptionKeyResponse: Codable, Hashable, Sendable {
+    /// Whether the key is validated or not.
+    public var validated: Bool
+    /// list of warnings
+    public var warnings: [MoodleWarning]
+
+    public init(
+        validated: Bool = false,
+        warnings: [MoodleWarning] = []
+    ) {
+        self.validated = validated
+        self.warnings = warnings
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case validated = "validated"
+        case warnings = "warnings"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.validated = container.decodeLenient(Bool.self, forKey: .validated) ?? false
+        self.warnings = container.decodeLenient([MoodleWarning].self, forKey: .warnings) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(validated, forKey: .validated)
+        try container.encode(warnings, forKey: .warnings)
     }
 }

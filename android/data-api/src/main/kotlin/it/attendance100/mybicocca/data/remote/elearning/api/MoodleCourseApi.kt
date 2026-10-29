@@ -8,13 +8,37 @@ import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
 import io.ktor.http.HttpMethod
 import io.ktor.http.parameters
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseCheckUpdatesResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseGetCategoriesCriteria
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseGetCategoriesItem
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseGetCourseModuleResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseGetCoursesItem
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseGetCoursesOption
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseGetEnrolledCoursesByTimelineClassificationResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseGetEnrolledCoursesWithActionEventsByTimelineClassificationResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseGetUserAdministrationOptionsResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseSearchCoursesResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseSection
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseSetFavouriteCoursesCourse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseSetFavouriteCoursesResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseUserGroupsResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCoursesByFieldResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleEnrolGetCourseEnrolmentMethodsItem
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleEnrolGetEnrolledUsersItem
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleEnrolSelfGetInstanceInfoResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleEnrolledCourse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleEventCourse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleGradesGetGroupsForSearchWidgetResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleGroupGetActivityAllowedGroupsResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleGroupGetActivityGroupmodeResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleGroupGetCourseGroupingsItem
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleGroupGetCourseGroupsItem
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleNamedValue
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleOption
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleStatusResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTocheck
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleUser
 import it.attendance100.mybicocca.data.remote.elearning.dto.appendBrackets
 import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import kotlinx.serialization.json.Json
@@ -25,6 +49,57 @@ class MoodleCourseApi(
     client: HttpClient,
     json: Json
 ) : RestApi(client, json, "", MoodleRuntime.policy) {
+
+    /**
+     * Check if there is updates affecting the user for the given course and contexts.
+     *
+     * @param courseId Course id to check
+     * @param tocheck Instances to check
+     * @param filter Check only for updates in these areas
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun checkUpdates(
+        courseId: Int,
+        tocheck: List<MoodleTocheck>,
+        filter: List<String>? = null,
+        auth: MoodleTokenAuth
+    ): MoodleCourseCheckUpdatesResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleCourseCheckUpdatesResponse>()) {
+            setBody(FormDataContent(parameters {
+                append("courseid", courseId.toString())
+                appendBrackets("tocheck", json.encodeToJsonElement(tocheck))
+                filter?.let { appendBrackets("filter", json.encodeToJsonElement(it)) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_course_check_updates")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Return category details
+     *
+     * @param criteria criteria
+     * @param addsubcategories return the sub categories infos (1 - default) otherwise only the category info (0)
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getCategories(
+        criteria: List<MoodleCourseGetCategoriesCriteria>? = null,
+        addsubcategories: Boolean? = null,
+        auth: MoodleTokenAuth
+    ): List<MoodleCourseGetCategoriesItem> {
+        return jsonList(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<List<MoodleCourseGetCategoriesItem>>()) {
+            setBody(FormDataContent(parameters {
+                criteria?.let { appendBrackets("criteria", json.encodeToJsonElement(it)) }
+                addsubcategories?.let { appendBrackets("addsubcategories", json.encodeToJsonElement(it)) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_course_get_categories")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
 
     /**
      * Get course contents
@@ -45,6 +120,72 @@ class MoodleCourseApi(
                 auth.form.forEach { (name, value) -> append(name, value) }
             }))
             parameter("wsfunction", "core_course_get_contents")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Return information about a course module
+     *
+     * @param cmId The course module id
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getCourseModule(
+        cmId: Int,
+        auth: MoodleTokenAuth
+    ): MoodleCourseGetCourseModuleResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleCourseGetCourseModuleResponse>()) {
+            setBody(FormDataContent(parameters {
+                append("cmid", cmId.toString())
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_course_get_course_module")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Return information about a given module name and instance id
+     *
+     * @param module The module name
+     * @param instance The module instance id
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getCourseModuleByInstance(
+        module: String,
+        instance: Int,
+        auth: MoodleTokenAuth
+    ): MoodleCourseGetCourseModuleResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleCourseGetCourseModuleResponse>()) {
+            setBody(FormDataContent(parameters {
+                append("module", module)
+                append("instance", instance.toString())
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_course_get_course_module_by_instance")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Return course details
+     *
+     * @param options options - operator OR is used
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getCourses(
+        options: MoodleCourseGetCoursesOption? = null,
+        auth: MoodleTokenAuth
+    ): List<MoodleCourseGetCoursesItem> {
+        return jsonList(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<List<MoodleCourseGetCoursesItem>>()) {
+            setBody(FormDataContent(parameters {
+                options?.let { appendBrackets("options", json.encodeToJsonElement(it)) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_course_get_courses")
             parameter("moodlewsrestformat", "json")
             auth.headers.forEach { (name, value) -> header(name, value) }
         }
@@ -75,6 +216,318 @@ class MoodleCourseApi(
     }
 
     /**
+     * List of enrolled courses for the given timeline classification (past, inprogress, or future).
+     *
+     * @param classification future, inprogress, or past
+     * @param limit Result set limit
+     * @param offset Result set offset
+     * @param sort Sort string
+     * @param customfieldname Used when classification = customfield
+     * @param customfieldvalue Used when classification = customfield
+     * @param searchValue The value a user wishes to search against
+     * @param requiredfields Array of the only field names that need to be returned. If empty, all fields will be returned.
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getEnrolledCoursesByTimelineClassification(
+        classification: String,
+        limit: Int? = null,
+        offset: Int? = null,
+        sort: String? = null,
+        customfieldname: String? = null,
+        customfieldvalue: String? = null,
+        searchValue: String? = null,
+        requiredfields: List<String>? = null,
+        auth: MoodleTokenAuth
+    ): MoodleCourseGetEnrolledCoursesByTimelineClassificationResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleCourseGetEnrolledCoursesByTimelineClassificationResponse>()) {
+            setBody(FormDataContent(parameters {
+                append("classification", classification)
+                limit?.let { append("limit", it.toString()) }
+                offset?.let { append("offset", it.toString()) }
+                sort?.let { append("sort", it) }
+                customfieldname?.let { append("customfieldname", it) }
+                customfieldvalue?.let { append("customfieldvalue", it) }
+                searchValue?.let { append("searchvalue", it) }
+                requiredfields?.let { appendBrackets("requiredfields", json.encodeToJsonElement(it)) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_course_get_enrolled_courses_by_timeline_classification")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * List of enrolled courses with action events in a given timeframe, for the given timeline classification.
+     *
+     * @param classification future, inprogress, or past
+     * @param limit Result set limit
+     * @param offset Result set offset
+     * @param sort Sort string
+     * @param customfieldname Used when classification = customfield
+     * @param customfieldvalue Used when classification = customfield
+     * @param searchValue The value a user wishes to search against
+     * @param eventsfrom Optional starting timestamp for action events
+     * @param eventsto Optional ending timestamp for action events
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getEnrolledCoursesWithActionEventsByTimelineClassification(
+        classification: String,
+        limit: Int? = null,
+        offset: Int? = null,
+        sort: String? = null,
+        customfieldname: String? = null,
+        customfieldvalue: String? = null,
+        searchValue: String? = null,
+        eventsfrom: Int? = null,
+        eventsto: Int? = null,
+        auth: MoodleTokenAuth
+    ): MoodleCourseGetEnrolledCoursesWithActionEventsByTimelineClassificationResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleCourseGetEnrolledCoursesWithActionEventsByTimelineClassificationResponse>()) {
+            setBody(FormDataContent(parameters {
+                append("classification", classification)
+                limit?.let { append("limit", it.toString()) }
+                offset?.let { append("offset", it.toString()) }
+                sort?.let { append("sort", it) }
+                customfieldname?.let { append("customfieldname", it) }
+                customfieldvalue?.let { append("customfieldvalue", it) }
+                searchValue?.let { append("searchvalue", it) }
+                eventsfrom?.let { append("eventsfrom", it.toString()) }
+                eventsto?.let { append("eventsto", it.toString()) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_course_get_enrolled_courses_with_action_events_by_timeline_classification")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * List of courses a user has accessed most recently.
+     *
+     * @param userId id of the user, default to current user
+     * @param limit result set limit
+     * @param offset Result set offset
+     * @param sort Sort string
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getRecentCourses(
+        userId: Int? = null,
+        limit: Int? = null,
+        offset: Int? = null,
+        sort: String? = null,
+        auth: MoodleTokenAuth
+    ): List<MoodleEventCourse> {
+        return jsonList(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<List<MoodleEventCourse>>()) {
+            setBody(FormDataContent(parameters {
+                userId?.let { append("userid", it.toString()) }
+                limit?.let { append("limit", it.toString()) }
+                offset?.let { append("offset", it.toString()) }
+                sort?.let { append("sort", it) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_course_get_recent_courses")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Check if there are updates affecting the user for the given course since the given time stamp.
+     *
+     * @param courseId Course id to check
+     * @param since Check updates since this time stamp
+     * @param filter Check only for updates in these areas
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getUpdatesSince(
+        courseId: Int,
+        since: Int,
+        filter: List<String>? = null,
+        auth: MoodleTokenAuth
+    ): MoodleCourseCheckUpdatesResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleCourseCheckUpdatesResponse>()) {
+            setBody(FormDataContent(parameters {
+                append("courseid", courseId.toString())
+                append("since", since.toString())
+                filter?.let { appendBrackets("filter", json.encodeToJsonElement(it)) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_course_get_updates_since")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Return a list of administration options in a set of courses that are avaialable or not for the current user.
+     *
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getUserAdministrationOptions(
+        courseIds: List<Int>,
+        auth: MoodleTokenAuth
+    ): MoodleCourseGetUserAdministrationOptionsResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleCourseGetUserAdministrationOptionsResponse>()) {
+            setBody(FormDataContent(parameters {
+                appendBrackets("courseids", json.encodeToJsonElement(courseIds))
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_course_get_user_administration_options")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Return a list of navigation options in a set of courses that are avaialable or not for the current user.
+     *
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getUserNavigationOptions(
+        courseIds: List<Int>,
+        auth: MoodleTokenAuth
+    ): MoodleCourseGetUserAdministrationOptionsResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleCourseGetUserAdministrationOptionsResponse>()) {
+            setBody(FormDataContent(parameters {
+                appendBrackets("courseids", json.encodeToJsonElement(courseIds))
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_course_get_user_navigation_options")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Search courses by (name, module, block, tag)
+     *
+     * @param criterianame criteria name (search, modulelist (only admins), blocklist (only admins), tagid)
+     * @param criteriavalue criteria value
+     * @param page page number (0 based)
+     * @param perPage items per page
+     * @param requiredcapabilities Optional list of required capabilities (used to filter the list)
+     * @param limittoenrolled limit to enrolled courses
+     * @param onlywithcompletion limit to courses where completion is enabled
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun searchCourses(
+        criterianame: String,
+        criteriavalue: String,
+        page: Int? = null,
+        perPage: Int? = null,
+        requiredcapabilities: List<String>? = null,
+        limittoenrolled: Boolean? = null,
+        onlywithcompletion: Boolean? = null,
+        auth: MoodleTokenAuth
+    ): MoodleCourseSearchCoursesResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleCourseSearchCoursesResponse>()) {
+            setBody(FormDataContent(parameters {
+                append("criterianame", criterianame)
+                append("criteriavalue", criteriavalue)
+                page?.let { append("page", it.toString()) }
+                perPage?.let { append("perpage", it.toString()) }
+                requiredcapabilities?.let { appendBrackets("requiredcapabilities", json.encodeToJsonElement(it)) }
+                limittoenrolled?.let { appendBrackets("limittoenrolled", json.encodeToJsonElement(it)) }
+                onlywithcompletion?.let { appendBrackets("onlywithcompletion", json.encodeToJsonElement(it)) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_course_search_courses")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Add a list of courses to the list of favourite courses.
+     *
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun setFavouriteCourses(
+        courses: List<MoodleCourseSetFavouriteCoursesCourse>,
+        auth: MoodleTokenAuth
+    ): MoodleCourseSetFavouriteCoursesResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleCourseSetFavouriteCoursesResponse>()) {
+            setBody(FormDataContent(parameters {
+                appendBrackets("courses", json.encodeToJsonElement(courses))
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_course_set_favourite_courses")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Log that the course was viewed
+     *
+     * @param courseId id of the course
+     * @param sectionnumber section number
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun viewCourse(
+        courseId: Int,
+        sectionnumber: Int? = null,
+        auth: MoodleTokenAuth
+    ): MoodleStatusResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleStatusResponse>()) {
+            setBody(FormDataContent(parameters {
+                append("courseid", courseId.toString())
+                sectionnumber?.let { append("sectionnumber", it.toString()) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_course_view_course")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Get the list of course enrolment methods
+     *
+     * @param courseId Course id
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getCourseEnrolmentMethods(
+        courseId: Int,
+        auth: MoodleTokenAuth
+    ): List<MoodleEnrolGetCourseEnrolmentMethodsItem> {
+        return jsonList(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<List<MoodleEnrolGetCourseEnrolmentMethodsItem>>()) {
+            setBody(FormDataContent(parameters {
+                append("courseid", courseId.toString())
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_enrol_get_course_enrolment_methods")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Get enrolled users by course id.
+     *
+     * @param courseId course id
+     * @param options Option names: * withcapability (string) return only users with this capability. This option requires 'moodle/role:review' on the course context. * groupid (integer) return only users in this group id. If the course has groups enabled and this param isn't defined, returns all the viewable users. This option requires 'moodle/site:accessallgroups' on the course context if the user doesn't belong to the group. * onlyactive (integer) return only users with active enrolments and matching time restrictions. This option requires 'moodle/course:enrolreview' on the course context. Please note that this option can't be used together with onlysuspended (only one can be active). * onlysuspended (integer) return only suspended users. This option requires 'moodle/course:enrolreview' on the course context. Please note that this option can't be used together with onlyactive (only one can be active). * userfields ('string, string, ...') return only the values of these user fields. * limitfrom (integer) sql limit from. * limitnumber (integer) maximum number of returned users. * sortby (string) sort by id, firstname or lastname. For ordering like the site does, use siteorder. * sortdirection (string) ASC or DESC
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getEnrolledUsers(
+        courseId: Int,
+        options: List<MoodleNamedValue>? = null,
+        auth: MoodleTokenAuth
+    ): List<MoodleEnrolGetEnrolledUsersItem> {
+        return jsonList(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<List<MoodleEnrolGetEnrolledUsersItem>>()) {
+            setBody(FormDataContent(parameters {
+                append("courseid", courseId.toString())
+                options?.let { appendBrackets("options", json.encodeToJsonElement(it)) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_enrol_get_enrolled_users")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
      * Get the list of courses where a user is enrolled in
      *
      * @param userId user id
@@ -93,6 +546,129 @@ class MoodleCourseApi(
                 auth.form.forEach { (name, value) -> append(name, value) }
             }))
             parameter("wsfunction", "core_enrol_get_users_courses")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Search within the list of course participants
+     *
+     * @param courseId course id
+     * @param search query
+     * @param searchanywhere find a match anywhere, or only at the beginning
+     * @param page Page number
+     * @param perPage Number per page
+     * @param contextId Context ID
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun searchUsers(
+        courseId: Int,
+        search: String,
+        searchanywhere: Boolean,
+        page: Int,
+        perPage: Int,
+        contextId: Int? = null,
+        auth: MoodleTokenAuth
+    ): List<MoodleUser> {
+        return jsonList(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<List<MoodleUser>>()) {
+            setBody(FormDataContent(parameters {
+                append("courseid", courseId.toString())
+                append("search", search)
+                appendBrackets("searchanywhere", json.encodeToJsonElement(searchanywhere))
+                append("page", page.toString())
+                append("perpage", perPage.toString())
+                contextId?.let { append("contextid", it.toString()) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_enrol_search_users")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Gets a list of groups that the user is allowed to access within the specified activity.
+     *
+     * @param cmId course module id
+     * @param userId id of user, empty for current user
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getActivityAllowedGroups(
+        cmId: Int,
+        userId: Int? = null,
+        auth: MoodleTokenAuth
+    ): MoodleGroupGetActivityAllowedGroupsResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleGroupGetActivityAllowedGroupsResponse>()) {
+            setBody(FormDataContent(parameters {
+                append("cmid", cmId.toString())
+                userId?.let { append("userid", it.toString()) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_group_get_activity_allowed_groups")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Returns effective groupmode used in a given activity.
+     *
+     * @param cmId course module id
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getActivityGroupmode(
+        cmId: Int,
+        auth: MoodleTokenAuth
+    ): MoodleGroupGetActivityGroupmodeResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleGroupGetActivityGroupmodeResponse>()) {
+            setBody(FormDataContent(parameters {
+                append("cmid", cmId.toString())
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_group_get_activity_groupmode")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Returns all groupings in specified course.
+     *
+     * @param courseId id of course
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getCourseGroupings(
+        courseId: Int,
+        auth: MoodleTokenAuth
+    ): List<MoodleGroupGetCourseGroupingsItem> {
+        return jsonList(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<List<MoodleGroupGetCourseGroupingsItem>>()) {
+            setBody(FormDataContent(parameters {
+                append("courseid", courseId.toString())
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_group_get_course_groupings")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Returns all groups in specified course.
+     *
+     * @param courseId id of course
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getCourseGroups(
+        courseId: Int,
+        auth: MoodleTokenAuth
+    ): List<MoodleGroupGetCourseGroupsItem> {
+        return jsonList(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<List<MoodleGroupGetCourseGroupsItem>>()) {
+            setBody(FormDataContent(parameters {
+                append("courseid", courseId.toString())
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_group_get_course_groups")
             parameter("moodlewsrestformat", "json")
             auth.headers.forEach { (name, value) -> header(name, value) }
         }
@@ -126,6 +702,30 @@ class MoodleCourseApi(
     }
 
     /**
+     * Get the group/(s) for a course
+     *
+     * @param courseId Course Id
+     * @param cmId Course module Id
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getGroupsForSelector(
+        courseId: Int,
+        cmId: Int? = null,
+        auth: MoodleTokenAuth
+    ): MoodleGradesGetGroupsForSearchWidgetResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleGradesGetGroupsForSearchWidgetResponse>()) {
+            setBody(FormDataContent(parameters {
+                append("courseid", courseId.toString())
+                cmId?.let { append("cmid", it.toString()) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_group_get_groups_for_selector")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
      * Self enrol the current user in the given course.
      *
      * @param courseId Id of the course
@@ -147,6 +747,27 @@ class MoodleCourseApi(
                 auth.form.forEach { (name, value) -> append(name, value) }
             }))
             parameter("wsfunction", "enrol_self_enrol_user")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * self enrolment instance information.
+     *
+     * @param instanceId instance id of self enrolment plugin.
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getInstanceInfo(
+        instanceId: Int,
+        auth: MoodleTokenAuth
+    ): MoodleEnrolSelfGetInstanceInfoResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleEnrolSelfGetInstanceInfoResponse>()) {
+            setBody(FormDataContent(parameters {
+                append("instanceid", instanceId.toString())
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "enrol_self_get_instance_info")
             parameter("moodlewsrestformat", "json")
             auth.headers.forEach { (name, value) -> header(name, value) }
         }

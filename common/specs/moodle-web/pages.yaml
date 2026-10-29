@@ -329,7 +329,7 @@ components:
             plugin's mobile handler only accepts a session's fixed password.
           type: array
           items: { $ref: "#/components/schemas/MoodleWebSubmittableSession" }
-          x-mb-scrape: [{ select-all: "table.generaltable tr:has(td[colspan=3] a[href*=attendance.php])" }]
+          x-mb-scrape: [{ select-all: "table.generaltable tr:has(td[colspan='3'] a[href*='attendance.php'])" }]
     MoodleWebAttendanceSummary:
       description: >-
         A student's attendance in an attendance activity, from the statistics table of `view.php`.
@@ -390,7 +390,7 @@ components:
       properties:
         id:
           type: string
-          x-mb-scrape: [{ select: "td[colspan=3] a[href*=attendance.php]" }, { attribute: href }, { regex: 'sessid=(\d+)' }]
+          x-mb-scrape: [{ select: "td[colspan='3'] a[href*='attendance.php']" }, { attribute: href }, { regex: 'sessid=(\d+)' }]
         time:
           description: >-
             The session's date and time as the plugin writes it in the page's language (e.g.
@@ -404,7 +404,7 @@ components:
             reporting an absence in advance.
           type: string
           default: ""
-          x-mb-scrape: [{ select: "td[colspan=3] a[href*=attendance.php]" }, text]
+          x-mb-scrape: [{ select: "td[colspan='3'] a[href*='attendance.php']" }, text]
     MoodleWebAttendanceSessionForm:
       description: The form of a session a student may mark themselves present at, from the template of `mobile_user_form`.
       type: object

@@ -3,46 +3,300 @@
 import DataApiRuntime
 import Foundation
 
-public struct MoodleConversationMessages: Codable, Hashable, Sendable {
-    /// The conversation id
+public struct MoodleMessageCreateContactRequestResponse: Codable, Hashable, Sendable {
+    /// request record
+    public var request: MoodleContactRequest?
+    /// list of warnings
+    public var warnings: [MoodleWarning]
+
+    public init(
+        request: MoodleContactRequest? = nil,
+        warnings: [MoodleWarning] = []
+    ) {
+        self.request = request
+        self.warnings = warnings
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case request = "request"
+        case warnings = "warnings"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.request = container.decodeFolded(MoodleContactRequest.self, forKey: .request)
+        self.warnings = container.decodeLenient([MoodleWarning].self, forKey: .warnings) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(request, forKey: .request)
+        try container.encode(warnings, forKey: .warnings)
+    }
+}
+
+/// request record
+public struct MoodleContactRequest: Codable, Hashable, Sendable {
+    /// Message id
     public var id: Int
-    public var members: [MoodleConversationMember]
-    public var messages: [MoodleConversationMessage]
+    /// User from id
+    public var userId: Int
+    /// User to id
+    public var requestedUserId: Int
+    /// Time created
+    public var timeCreated: Int64
 
     public init(
         id: Int = 0,
-        members: [MoodleConversationMember] = [],
-        messages: [MoodleConversationMessage] = []
+        userId: Int = 0,
+        requestedUserId: Int = 0,
+        timeCreated: Int64 = 0
     ) {
         self.id = id
-        self.members = members
-        self.messages = messages
+        self.userId = userId
+        self.requestedUserId = requestedUserId
+        self.timeCreated = timeCreated
     }
 
     private enum CodingKeys: String, CodingKey {
         case id = "id"
-        case members = "members"
-        case messages = "messages"
+        case userId = "userid"
+        case requestedUserId = "requesteduserid"
+        case timeCreated = "timecreated"
     }
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.id = container.decodeLenient(Int.self, forKey: .id) ?? 0
-        self.members = container.decodeLenient([MoodleConversationMember].self, forKey: .members) ?? []
-        self.messages = container.decodeLenient([MoodleConversationMessage].self, forKey: .messages) ?? []
+        self.userId = container.decodeLenient(Int.self, forKey: .userId) ?? 0
+        self.requestedUserId = container.decodeLenient(Int.self, forKey: .requestedUserId) ?? 0
+        self.timeCreated = container.decodeLenient(Int64.self, forKey: .timeCreated) ?? 0
     }
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if id != 0 {
-            try container.encode(id, forKey: .id)
-        }
-        if !members.isEmpty {
-            try container.encode(members, forKey: .members)
-        }
-        if !messages.isEmpty {
-            try container.encode(messages, forKey: .messages)
-        }
+        try container.encode(id, forKey: .id)
+        try container.encode(userId, forKey: .userId)
+        try container.encode(requestedUserId, forKey: .requestedUserId)
+        try container.encode(timeCreated, forKey: .timeCreated)
+    }
+}
+
+public struct MoodleMessageDataForMessageareaSearchMessagesResponse: Codable, Hashable, Sendable {
+    public var contacts: [MoodleMessageDataForMessageareaSearchMessagesResponseContact]
+
+    public init(
+        contacts: [MoodleMessageDataForMessageareaSearchMessagesResponseContact] = []
+    ) {
+        self.contacts = contacts
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case contacts = "contacts"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.contacts = container.decodeLenient([MoodleMessageDataForMessageareaSearchMessagesResponseContact].self, forKey: .contacts) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(contacts, forKey: .contacts)
+    }
+}
+
+public struct MoodleMessageDataForMessageareaSearchMessagesResponseContact: Codable, Hashable, Sendable {
+    /// The user's id
+    public var userId: Int
+    /// The user's name
+    public var fullName: String
+    /// User picture URL
+    public var profileImageUrl: String
+    /// Small user picture URL
+    public var profileImageUrlSmall: String
+    /// If we are messaging the user
+    public var ismessaging: Bool
+    /// Was the last message sent from the current user?
+    public var sentfromcurrentuser: Bool
+    /// The user's last message
+    public var lastmessage: String
+    /// Timestamp for last message
+    public var lastmessagedate: Int64?
+    /// The unique search message id
+    public var messageid: Int?
+    /// Show the user's online status?
+    public var showOnlineStatus: Bool
+    /// The user's online status
+    public var isOnline: Bool
+    /// If the user has read the message
+    public var isRead: Bool
+    /// If the user has been blocked
+    public var isBlocked: Bool
+    /// The number of unread messages in this conversation
+    public var unreadCount: Int?
+    /// The id of the conversation
+    public var conversationId: Int?
+
+    public init(
+        userId: Int = 0,
+        fullName: String = "",
+        profileImageUrl: String = "",
+        profileImageUrlSmall: String = "",
+        ismessaging: Bool = false,
+        sentfromcurrentuser: Bool = false,
+        lastmessage: String = "",
+        lastmessagedate: Int64? = nil,
+        messageid: Int? = nil,
+        showOnlineStatus: Bool = false,
+        isOnline: Bool = false,
+        isRead: Bool = false,
+        isBlocked: Bool = false,
+        unreadCount: Int? = nil,
+        conversationId: Int? = nil
+    ) {
+        self.userId = userId
+        self.fullName = fullName
+        self.profileImageUrl = profileImageUrl
+        self.profileImageUrlSmall = profileImageUrlSmall
+        self.ismessaging = ismessaging
+        self.sentfromcurrentuser = sentfromcurrentuser
+        self.lastmessage = lastmessage
+        self.lastmessagedate = lastmessagedate
+        self.messageid = messageid
+        self.showOnlineStatus = showOnlineStatus
+        self.isOnline = isOnline
+        self.isRead = isRead
+        self.isBlocked = isBlocked
+        self.unreadCount = unreadCount
+        self.conversationId = conversationId
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case userId = "userid"
+        case fullName = "fullname"
+        case profileImageUrl = "profileimageurl"
+        case profileImageUrlSmall = "profileimageurlsmall"
+        case ismessaging = "ismessaging"
+        case sentfromcurrentuser = "sentfromcurrentuser"
+        case lastmessage = "lastmessage"
+        case lastmessagedate = "lastmessagedate"
+        case messageid = "messageid"
+        case showOnlineStatus = "showonlinestatus"
+        case isOnline = "isonline"
+        case isRead = "isread"
+        case isBlocked = "isblocked"
+        case unreadCount = "unreadcount"
+        case conversationId = "conversationid"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.userId = container.decodeLenient(Int.self, forKey: .userId) ?? 0
+        self.fullName = container.decodeLenient(String.self, forKey: .fullName) ?? ""
+        self.profileImageUrl = container.decodeLenient(String.self, forKey: .profileImageUrl) ?? ""
+        self.profileImageUrlSmall = container.decodeLenient(String.self, forKey: .profileImageUrlSmall) ?? ""
+        self.ismessaging = container.decodeLenient(Bool.self, forKey: .ismessaging) ?? false
+        self.sentfromcurrentuser = container.decodeLenient(Bool.self, forKey: .sentfromcurrentuser) ?? false
+        self.lastmessage = container.decodeLenient(String.self, forKey: .lastmessage) ?? ""
+        self.lastmessagedate = container.decodeLenient(Int64.self, forKey: .lastmessagedate)
+        self.messageid = container.decodeLenient(Int.self, forKey: .messageid)
+        self.showOnlineStatus = container.decodeLenient(Bool.self, forKey: .showOnlineStatus) ?? false
+        self.isOnline = container.decodeLenient(Bool.self, forKey: .isOnline) ?? false
+        self.isRead = container.decodeLenient(Bool.self, forKey: .isRead) ?? false
+        self.isBlocked = container.decodeLenient(Bool.self, forKey: .isBlocked) ?? false
+        self.unreadCount = container.decodeLenient(Int.self, forKey: .unreadCount)
+        self.conversationId = container.decodeLenient(Int.self, forKey: .conversationId)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(userId, forKey: .userId)
+        try container.encode(fullName, forKey: .fullName)
+        try container.encode(profileImageUrl, forKey: .profileImageUrl)
+        try container.encode(profileImageUrlSmall, forKey: .profileImageUrlSmall)
+        try container.encode(ismessaging, forKey: .ismessaging)
+        try container.encode(sentfromcurrentuser, forKey: .sentfromcurrentuser)
+        try container.encode(lastmessage, forKey: .lastmessage)
+        try container.encode(lastmessagedate, forKey: .lastmessagedate)
+        try container.encode(messageid, forKey: .messageid)
+        try container.encode(showOnlineStatus, forKey: .showOnlineStatus)
+        try container.encode(isOnline, forKey: .isOnline)
+        try container.encode(isRead, forKey: .isRead)
+        try container.encode(isBlocked, forKey: .isBlocked)
+        try container.encode(unreadCount, forKey: .unreadCount)
+        try container.encode(conversationId, forKey: .conversationId)
+    }
+}
+
+public struct MoodleMessageGetBlockedUsersResponse: Codable, Hashable, Sendable {
+    /// List of blocked users
+    public var users: [MoodleMessageGetBlockedUsersResponseUser]
+    /// list of warnings
+    public var warnings: [MoodleWarning]
+
+    public init(
+        users: [MoodleMessageGetBlockedUsersResponseUser] = [],
+        warnings: [MoodleWarning] = []
+    ) {
+        self.users = users
+        self.warnings = warnings
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case users = "users"
+        case warnings = "warnings"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.users = container.decodeLenient([MoodleMessageGetBlockedUsersResponseUser].self, forKey: .users) ?? []
+        self.warnings = container.decodeLenient([MoodleWarning].self, forKey: .warnings) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(users, forKey: .users)
+        try container.encode(warnings, forKey: .warnings)
+    }
+}
+
+public struct MoodleMessageGetBlockedUsersResponseUser: Codable, Hashable, Sendable {
+    /// User ID
+    public var id: Int
+    /// User full name
+    public var fullName: String
+    /// User picture URL
+    public var profileImageUrl: String?
+
+    public init(
+        id: Int = 0,
+        fullName: String = "",
+        profileImageUrl: String? = nil
+    ) {
+        self.id = id
+        self.fullName = fullName
+        self.profileImageUrl = profileImageUrl
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id = "id"
+        case fullName = "fullname"
+        case profileImageUrl = "profileimageurl"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = container.decodeLenient(Int.self, forKey: .id) ?? 0
+        self.fullName = container.decodeLenient(String.self, forKey: .fullName) ?? ""
+        self.profileImageUrl = container.decodeLenient(String.self, forKey: .profileImageUrl)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(fullName, forKey: .fullName)
+        try container.encode(profileImageUrl, forKey: .profileImageUrl)
     }
 }
 
@@ -157,108 +411,22 @@ public struct MoodleConversationMember: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if id != 0 {
-            try container.encode(id, forKey: .id)
-        }
-        if fullName != "" {
-            try container.encode(fullName, forKey: .fullName)
-        }
-        if profileUrl != "" {
-            try container.encode(profileUrl, forKey: .profileUrl)
-        }
-        if profileImageUrl != "" {
-            try container.encode(profileImageUrl, forKey: .profileImageUrl)
-        }
-        if profileImageUrlSmall != "" {
-            try container.encode(profileImageUrlSmall, forKey: .profileImageUrlSmall)
-        }
-        if isOnline != false {
-            try container.encode(isOnline, forKey: .isOnline)
-        }
-        if showOnlineStatus != false {
-            try container.encode(showOnlineStatus, forKey: .showOnlineStatus)
-        }
-        if isBlocked != false {
-            try container.encode(isBlocked, forKey: .isBlocked)
-        }
-        if isContact != false {
-            try container.encode(isContact, forKey: .isContact)
-        }
-        if isDeleted != false {
-            try container.encode(isDeleted, forKey: .isDeleted)
-        }
-        if canMessageEvenIfBlocked != false {
-            try container.encode(canMessageEvenIfBlocked, forKey: .canMessageEvenIfBlocked)
-        }
-        if canMessage != false {
-            try container.encode(canMessage, forKey: .canMessage)
-        }
-        if requiresContact != false {
-            try container.encode(requiresContact, forKey: .requiresContact)
-        }
-        if canCreateContact != false {
-            try container.encode(canCreateContact, forKey: .canCreateContact)
-        }
-        if !contactRequests.isEmpty {
-            try container.encode(contactRequests, forKey: .contactRequests)
-        }
-        if !conversations.isEmpty {
-            try container.encode(conversations, forKey: .conversations)
-        }
-    }
-}
-
-public struct MoodleContactRequest: Codable, Hashable, Sendable {
-    /// The id of the contact request
-    public var id: Int
-    /// The id of the user who created the contact request
-    public var userId: Int
-    /// The id of the user confirming the request
-    public var requestedUserId: Int
-    /// The timecreated timestamp for the contact request
-    public var timeCreated: Int64
-
-    public init(
-        id: Int = 0,
-        userId: Int = 0,
-        requestedUserId: Int = 0,
-        timeCreated: Int64 = 0
-    ) {
-        self.id = id
-        self.userId = userId
-        self.requestedUserId = requestedUserId
-        self.timeCreated = timeCreated
-    }
-
-    private enum CodingKeys: String, CodingKey {
-        case id = "id"
-        case userId = "userid"
-        case requestedUserId = "requesteduserid"
-        case timeCreated = "timecreated"
-    }
-
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.id = container.decodeLenient(Int.self, forKey: .id) ?? 0
-        self.userId = container.decodeLenient(Int.self, forKey: .userId) ?? 0
-        self.requestedUserId = container.decodeLenient(Int.self, forKey: .requestedUserId) ?? 0
-        self.timeCreated = container.decodeLenient(Int64.self, forKey: .timeCreated) ?? 0
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        if id != 0 {
-            try container.encode(id, forKey: .id)
-        }
-        if userId != 0 {
-            try container.encode(userId, forKey: .userId)
-        }
-        if requestedUserId != 0 {
-            try container.encode(requestedUserId, forKey: .requestedUserId)
-        }
-        if timeCreated != 0 {
-            try container.encode(timeCreated, forKey: .timeCreated)
-        }
+        try container.encode(id, forKey: .id)
+        try container.encode(fullName, forKey: .fullName)
+        try container.encode(profileUrl, forKey: .profileUrl)
+        try container.encode(profileImageUrl, forKey: .profileImageUrl)
+        try container.encode(profileImageUrlSmall, forKey: .profileImageUrlSmall)
+        try container.encode(isOnline, forKey: .isOnline)
+        try container.encode(showOnlineStatus, forKey: .showOnlineStatus)
+        try container.encode(isBlocked, forKey: .isBlocked)
+        try container.encode(isContact, forKey: .isContact)
+        try container.encode(isDeleted, forKey: .isDeleted)
+        try container.encode(canMessageEvenIfBlocked, forKey: .canMessageEvenIfBlocked)
+        try container.encode(canMessage, forKey: .canMessage)
+        try container.encode(requiresContact, forKey: .requiresContact)
+        try container.encode(canCreateContact, forKey: .canCreateContact)
+        try container.encode(contactRequests, forKey: .contactRequests)
+        try container.encode(conversations, forKey: .conversations)
     }
 }
 
@@ -302,98 +470,10 @@ public struct MoodleMemberConversation: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if id != 0 {
-            try container.encode(id, forKey: .id)
-        }
-        if type != 0 {
-            try container.encode(type, forKey: .type)
-        }
-        if name != "" {
-            try container.encode(name, forKey: .name)
-        }
-        if timeCreated != 0 {
-            try container.encode(timeCreated, forKey: .timeCreated)
-        }
-    }
-}
-
-public struct MoodleConversationMessage: Codable, Hashable, Sendable {
-    /// The id of the message
-    public var id: Int
-    /// The id of the user who sent the message
-    public var userIdFrom: Int
-    /// The text of the message
-    public var text: String
-    /// The timecreated timestamp for the message
-    public var timeCreated: Int64
-
-    public init(
-        id: Int = 0,
-        userIdFrom: Int = 0,
-        text: String = "",
-        timeCreated: Int64 = 0
-    ) {
-        self.id = id
-        self.userIdFrom = userIdFrom
-        self.text = text
-        self.timeCreated = timeCreated
-    }
-
-    private enum CodingKeys: String, CodingKey {
-        case id = "id"
-        case userIdFrom = "useridfrom"
-        case text = "text"
-        case timeCreated = "timecreated"
-    }
-
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.id = container.decodeLenient(Int.self, forKey: .id) ?? 0
-        self.userIdFrom = container.decodeLenient(Int.self, forKey: .userIdFrom) ?? 0
-        self.text = container.decodeLenient(String.self, forKey: .text) ?? ""
-        self.timeCreated = container.decodeLenient(Int64.self, forKey: .timeCreated) ?? 0
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        if id != 0 {
-            try container.encode(id, forKey: .id)
-        }
-        if userIdFrom != 0 {
-            try container.encode(userIdFrom, forKey: .userIdFrom)
-        }
-        if text != "" {
-            try container.encode(text, forKey: .text)
-        }
-        if timeCreated != 0 {
-            try container.encode(timeCreated, forKey: .timeCreated)
-        }
-    }
-}
-
-public struct MoodleConversationsResponse: Codable, Hashable, Sendable {
-    public var conversations: [MoodleConversation]
-
-    public init(
-        conversations: [MoodleConversation] = []
-    ) {
-        self.conversations = conversations
-    }
-
-    private enum CodingKeys: String, CodingKey {
-        case conversations = "conversations"
-    }
-
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.conversations = container.decodeLenient([MoodleConversation].self, forKey: .conversations) ?? []
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        if !conversations.isEmpty {
-            try container.encode(conversations, forKey: .conversations)
-        }
+        try container.encode(id, forKey: .id)
+        try container.encode(type, forKey: .type)
+        try container.encode(name, forKey: .name)
+        try container.encode(timeCreated, forKey: .timeCreated)
     }
 }
 
@@ -488,50 +568,70 @@ public struct MoodleConversation: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if id != 0 {
-            try container.encode(id, forKey: .id)
-        }
-        if name != nil {
-            try container.encode(name, forKey: .name)
-        }
-        if subname != nil {
-            try container.encode(subname, forKey: .subname)
-        }
-        if imageUrl != nil {
-            try container.encode(imageUrl, forKey: .imageUrl)
-        }
-        if type != 0 {
-            try container.encode(type, forKey: .type)
-        }
-        if memberCount != 0 {
-            try container.encode(memberCount, forKey: .memberCount)
-        }
-        if isMuted != false {
-            try container.encode(isMuted, forKey: .isMuted)
-        }
-        if isFavourite != false {
-            try container.encode(isFavourite, forKey: .isFavourite)
-        }
-        if isRead != false {
-            try container.encode(isRead, forKey: .isRead)
-        }
-        if unreadCount != nil {
-            try container.encode(unreadCount, forKey: .unreadCount)
-        }
-        if !members.isEmpty {
-            try container.encode(members, forKey: .members)
-        }
-        if !messages.isEmpty {
-            try container.encode(messages, forKey: .messages)
-        }
-        if canDeleteMessagesForAllUsers != false {
-            try container.encode(canDeleteMessagesForAllUsers, forKey: .canDeleteMessagesForAllUsers)
-        }
+        try container.encode(id, forKey: .id)
+        try container.encode(name, forKey: .name)
+        try container.encode(subname, forKey: .subname)
+        try container.encode(imageUrl, forKey: .imageUrl)
+        try container.encode(type, forKey: .type)
+        try container.encode(memberCount, forKey: .memberCount)
+        try container.encode(isMuted, forKey: .isMuted)
+        try container.encode(isFavourite, forKey: .isFavourite)
+        try container.encode(isRead, forKey: .isRead)
+        try container.encode(unreadCount, forKey: .unreadCount)
+        try container.encode(members, forKey: .members)
+        try container.encode(messages, forKey: .messages)
+        try container.encode(canDeleteMessagesForAllUsers, forKey: .canDeleteMessagesForAllUsers)
+    }
+}
+
+public struct MoodleConversationMessage: Codable, Hashable, Sendable {
+    /// The id of the message
+    public var id: Int
+    /// The id of the user who sent the message
+    public var userIdFrom: Int
+    /// The text of the message
+    public var text: String
+    /// The timecreated timestamp for the message
+    public var timeCreated: Int64
+
+    public init(
+        id: Int = 0,
+        userIdFrom: Int = 0,
+        text: String = "",
+        timeCreated: Int64 = 0
+    ) {
+        self.id = id
+        self.userIdFrom = userIdFrom
+        self.text = text
+        self.timeCreated = timeCreated
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id = "id"
+        case userIdFrom = "useridfrom"
+        case text = "text"
+        case timeCreated = "timecreated"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = container.decodeLenient(Int.self, forKey: .id) ?? 0
+        self.userIdFrom = container.decodeLenient(Int.self, forKey: .userIdFrom) ?? 0
+        self.text = container.decodeLenient(String.self, forKey: .text) ?? ""
+        self.timeCreated = container.decodeLenient(Int64.self, forKey: .timeCreated) ?? 0
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(userIdFrom, forKey: .userIdFrom)
+        try container.encode(text, forKey: .text)
+        try container.encode(timeCreated, forKey: .timeCreated)
     }
 }
 
 public struct MoodleUnreadConversationCounts: Codable, Hashable, Sendable {
-    /// Total number of unread favourite conversations
+    /// Total number of favourite conversations
     public var favourites: Int
     public var types: MoodleUnreadCountsByType
 
@@ -556,19 +656,17 @@ public struct MoodleUnreadConversationCounts: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if favourites != 0 {
-            try container.encode(favourites, forKey: .favourites)
-        }
+        try container.encode(favourites, forKey: .favourites)
         try container.encode(types, forKey: .types)
     }
 }
 
 public struct MoodleUnreadCountsByType: Codable, Hashable, Sendable {
-    /// Total number of unread individual conversations
+    /// Total number of individual conversations
     public var individualConversations: Int
-    /// Total number of unread group conversations
+    /// Total number of group conversations
     public var groupConversations: Int
-    /// Total number of unread self conversations
+    /// Total number of self conversations
     public var selfConversations: Int
 
     public init(
@@ -596,15 +694,738 @@ public struct MoodleUnreadCountsByType: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if individualConversations != 0 {
-            try container.encode(individualConversations, forKey: .individualConversations)
-        }
-        if groupConversations != 0 {
-            try container.encode(groupConversations, forKey: .groupConversations)
-        }
-        if selfConversations != 0 {
-            try container.encode(selfConversations, forKey: .selfConversations)
-        }
+        try container.encode(individualConversations, forKey: .individualConversations)
+        try container.encode(groupConversations, forKey: .groupConversations)
+        try container.encode(selfConversations, forKey: .selfConversations)
+    }
+}
+
+public struct MoodleConversationMessages: Codable, Hashable, Sendable {
+    /// The conversation id
+    public var id: Int
+    public var members: [MoodleConversationMember]
+    public var messages: [MoodleConversationMessage]
+
+    public init(
+        id: Int = 0,
+        members: [MoodleConversationMember] = [],
+        messages: [MoodleConversationMessage] = []
+    ) {
+        self.id = id
+        self.members = members
+        self.messages = messages
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id = "id"
+        case members = "members"
+        case messages = "messages"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = container.decodeLenient(Int.self, forKey: .id) ?? 0
+        self.members = container.decodeLenient([MoodleConversationMember].self, forKey: .members) ?? []
+        self.messages = container.decodeLenient([MoodleConversationMessage].self, forKey: .messages) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(members, forKey: .members)
+        try container.encode(messages, forKey: .messages)
+    }
+}
+
+public struct MoodleConversationsResponse: Codable, Hashable, Sendable {
+    public var conversations: [MoodleConversation]
+
+    public init(
+        conversations: [MoodleConversation] = []
+    ) {
+        self.conversations = conversations
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case conversations = "conversations"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.conversations = container.decodeLenient([MoodleConversation].self, forKey: .conversations) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(conversations, forKey: .conversations)
+    }
+}
+
+public struct MoodleMessageGetMessagesResponse: Codable, Hashable, Sendable {
+    public var messages: [MoodleMessageGetMessagesResponseMessage]
+    /// list of warnings
+    public var warnings: [MoodleWarning]
+
+    public init(
+        messages: [MoodleMessageGetMessagesResponseMessage] = [],
+        warnings: [MoodleWarning] = []
+    ) {
+        self.messages = messages
+        self.warnings = warnings
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case messages = "messages"
+        case warnings = "warnings"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.messages = container.decodeLenient([MoodleMessageGetMessagesResponseMessage].self, forKey: .messages) ?? []
+        self.warnings = container.decodeLenient([MoodleWarning].self, forKey: .warnings) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(messages, forKey: .messages)
+        try container.encode(warnings, forKey: .warnings)
+    }
+}
+
+/// message
+public struct MoodleMessageGetMessagesResponseMessage: Codable, Hashable, Sendable {
+    /// Message id
+    public var id: Int
+    /// User from id
+    public var userIdFrom: Int
+    /// User to id
+    public var useridto: Int
+    /// The message subject
+    public var subject: String
+    /// The message text formated
+    public var text: String
+    /// The message
+    public var fullmessage: String
+    /// fullmessage format (1 = HTML, 0 = MOODLE, 2 = PLAIN, or 4 = MARKDOWN)
+    public var fullmessageformat: Int
+    /// The message in html
+    public var fullmessagehtml: String
+    /// The shorten message
+    public var smallmessage: String
+    /// Is a notification?
+    public var notification: Int
+    /// Context URL
+    public var contexturl: String
+    /// Context URL link name
+    public var contexturlname: String
+    /// Time created
+    public var timeCreated: Int64
+    /// Time read
+    public var timeread: Int64
+    /// User to full name
+    public var usertofullname: String
+    /// User from full name
+    public var userfromfullname: String
+    /// The component that generated the notification
+    public var component: String?
+    /// The type of notification
+    public var eventType: String?
+    /// Custom data to be passed to the message processor. The data here is serialised using json_encode().
+    public var customData: String?
+    /// URL for icon, only for notifications.
+    public var iconUrl: String?
+
+    public init(
+        id: Int = 0,
+        userIdFrom: Int = 0,
+        useridto: Int = 0,
+        subject: String = "",
+        text: String = "",
+        fullmessage: String = "",
+        fullmessageformat: Int = 0,
+        fullmessagehtml: String = "",
+        smallmessage: String = "",
+        notification: Int = 0,
+        contexturl: String = "",
+        contexturlname: String = "",
+        timeCreated: Int64 = 0,
+        timeread: Int64 = 0,
+        usertofullname: String = "",
+        userfromfullname: String = "",
+        component: String? = nil,
+        eventType: String? = nil,
+        customData: String? = nil,
+        iconUrl: String? = nil
+    ) {
+        self.id = id
+        self.userIdFrom = userIdFrom
+        self.useridto = useridto
+        self.subject = subject
+        self.text = text
+        self.fullmessage = fullmessage
+        self.fullmessageformat = fullmessageformat
+        self.fullmessagehtml = fullmessagehtml
+        self.smallmessage = smallmessage
+        self.notification = notification
+        self.contexturl = contexturl
+        self.contexturlname = contexturlname
+        self.timeCreated = timeCreated
+        self.timeread = timeread
+        self.usertofullname = usertofullname
+        self.userfromfullname = userfromfullname
+        self.component = component
+        self.eventType = eventType
+        self.customData = customData
+        self.iconUrl = iconUrl
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id = "id"
+        case userIdFrom = "useridfrom"
+        case useridto = "useridto"
+        case subject = "subject"
+        case text = "text"
+        case fullmessage = "fullmessage"
+        case fullmessageformat = "fullmessageformat"
+        case fullmessagehtml = "fullmessagehtml"
+        case smallmessage = "smallmessage"
+        case notification = "notification"
+        case contexturl = "contexturl"
+        case contexturlname = "contexturlname"
+        case timeCreated = "timecreated"
+        case timeread = "timeread"
+        case usertofullname = "usertofullname"
+        case userfromfullname = "userfromfullname"
+        case component = "component"
+        case eventType = "eventtype"
+        case customData = "customdata"
+        case iconUrl = "iconurl"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = container.decodeLenient(Int.self, forKey: .id) ?? 0
+        self.userIdFrom = container.decodeLenient(Int.self, forKey: .userIdFrom) ?? 0
+        self.useridto = container.decodeLenient(Int.self, forKey: .useridto) ?? 0
+        self.subject = container.decodeLenient(String.self, forKey: .subject) ?? ""
+        self.text = container.decodeLenient(String.self, forKey: .text) ?? ""
+        self.fullmessage = container.decodeLenient(String.self, forKey: .fullmessage) ?? ""
+        self.fullmessageformat = container.decodeLenient(Int.self, forKey: .fullmessageformat) ?? 0
+        self.fullmessagehtml = container.decodeLenient(String.self, forKey: .fullmessagehtml) ?? ""
+        self.smallmessage = container.decodeLenient(String.self, forKey: .smallmessage) ?? ""
+        self.notification = container.decodeLenient(Int.self, forKey: .notification) ?? 0
+        self.contexturl = container.decodeLenient(String.self, forKey: .contexturl) ?? ""
+        self.contexturlname = container.decodeLenient(String.self, forKey: .contexturlname) ?? ""
+        self.timeCreated = container.decodeLenient(Int64.self, forKey: .timeCreated) ?? 0
+        self.timeread = container.decodeLenient(Int64.self, forKey: .timeread) ?? 0
+        self.usertofullname = container.decodeLenient(String.self, forKey: .usertofullname) ?? ""
+        self.userfromfullname = container.decodeLenient(String.self, forKey: .userfromfullname) ?? ""
+        self.component = container.decodeLenient(String.self, forKey: .component)
+        self.eventType = container.decodeLenient(String.self, forKey: .eventType)
+        self.customData = container.decodeLenient(String.self, forKey: .customData)
+        self.iconUrl = container.decodeLenient(String.self, forKey: .iconUrl)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(userIdFrom, forKey: .userIdFrom)
+        try container.encode(useridto, forKey: .useridto)
+        try container.encode(subject, forKey: .subject)
+        try container.encode(text, forKey: .text)
+        try container.encode(fullmessage, forKey: .fullmessage)
+        try container.encode(fullmessageformat, forKey: .fullmessageformat)
+        try container.encode(fullmessagehtml, forKey: .fullmessagehtml)
+        try container.encode(smallmessage, forKey: .smallmessage)
+        try container.encode(notification, forKey: .notification)
+        try container.encode(contexturl, forKey: .contexturl)
+        try container.encode(contexturlname, forKey: .contexturlname)
+        try container.encode(timeCreated, forKey: .timeCreated)
+        try container.encode(timeread, forKey: .timeread)
+        try container.encode(usertofullname, forKey: .usertofullname)
+        try container.encode(userfromfullname, forKey: .userfromfullname)
+        try container.encode(component, forKey: .component)
+        try container.encode(eventType, forKey: .eventType)
+        try container.encode(customData, forKey: .customData)
+        try container.encode(iconUrl, forKey: .iconUrl)
+    }
+}
+
+public struct MoodleMessageGetUserMessagePreferencesResponse: Codable, Hashable, Sendable {
+    public var preferences: MoodleMessageGetUserMessagePreferencesResponsePreference
+    /// Privacy messaging setting to define who can message you
+    public var blocknoncontacts: Int
+    /// User preference for using enter to send messages
+    public var entertosend: Bool
+    /// list of warnings
+    public var warnings: [MoodleWarning]
+
+    public init(
+        preferences: MoodleMessageGetUserMessagePreferencesResponsePreference,
+        blocknoncontacts: Int = 0,
+        entertosend: Bool = false,
+        warnings: [MoodleWarning] = []
+    ) {
+        self.preferences = preferences
+        self.blocknoncontacts = blocknoncontacts
+        self.entertosend = entertosend
+        self.warnings = warnings
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case preferences = "preferences"
+        case blocknoncontacts = "blocknoncontacts"
+        case entertosend = "entertosend"
+        case warnings = "warnings"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.preferences = try container.required(container.decodeFolded(MoodleMessageGetUserMessagePreferencesResponsePreference.self, forKey: .preferences), forKey: .preferences)
+        self.blocknoncontacts = container.decodeLenient(Int.self, forKey: .blocknoncontacts) ?? 0
+        self.entertosend = container.decodeLenient(Bool.self, forKey: .entertosend) ?? false
+        self.warnings = container.decodeLenient([MoodleWarning].self, forKey: .warnings) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(preferences, forKey: .preferences)
+        try container.encode(blocknoncontacts, forKey: .blocknoncontacts)
+        try container.encode(entertosend, forKey: .entertosend)
+        try container.encode(warnings, forKey: .warnings)
+    }
+}
+
+public struct MoodleMessageGetUserMessagePreferencesResponsePreference: Codable, Hashable, Sendable {
+    /// User id
+    public var userId: Int
+    /// Whether all the preferences are disabled
+    public var disableall: Int
+    /// Config form values
+    public var processors: [MoodleMessageGetUserMessagePreferencesResponsePreferenceProcessor]
+    /// Available components
+    public var components: [MoodleComponent]
+
+    public init(
+        userId: Int = 0,
+        disableall: Int = 0,
+        processors: [MoodleMessageGetUserMessagePreferencesResponsePreferenceProcessor] = [],
+        components: [MoodleComponent] = []
+    ) {
+        self.userId = userId
+        self.disableall = disableall
+        self.processors = processors
+        self.components = components
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case userId = "userid"
+        case disableall = "disableall"
+        case processors = "processors"
+        case components = "components"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.userId = container.decodeLenient(Int.self, forKey: .userId) ?? 0
+        self.disableall = container.decodeLenient(Int.self, forKey: .disableall) ?? 0
+        self.processors = container.decodeLenient([MoodleMessageGetUserMessagePreferencesResponsePreferenceProcessor].self, forKey: .processors) ?? []
+        self.components = container.decodeLenient([MoodleComponent].self, forKey: .components) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(userId, forKey: .userId)
+        try container.encode(disableall, forKey: .disableall)
+        try container.encode(processors, forKey: .processors)
+        try container.encode(components, forKey: .components)
+    }
+}
+
+public struct MoodleMessageGetUserMessagePreferencesResponsePreferenceProcessor: Codable, Hashable, Sendable {
+    /// Display name
+    public var displayName: String
+    /// Processor name
+    public var name: String
+    /// Whether has settings
+    public var hassettings: Bool
+    /// Context id
+    public var contextId: Int
+    /// Whether is configured by the user
+    public var userconfigured: Int
+
+    public init(
+        displayName: String = "",
+        name: String = "",
+        hassettings: Bool = false,
+        contextId: Int = 0,
+        userconfigured: Int = 0
+    ) {
+        self.displayName = displayName
+        self.name = name
+        self.hassettings = hassettings
+        self.contextId = contextId
+        self.userconfigured = userconfigured
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case displayName = "displayname"
+        case name = "name"
+        case hassettings = "hassettings"
+        case contextId = "contextid"
+        case userconfigured = "userconfigured"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.displayName = container.decodeLenient(String.self, forKey: .displayName) ?? ""
+        self.name = container.decodeLenient(String.self, forKey: .name) ?? ""
+        self.hassettings = container.decodeLenient(Bool.self, forKey: .hassettings) ?? false
+        self.contextId = container.decodeLenient(Int.self, forKey: .contextId) ?? 0
+        self.userconfigured = container.decodeLenient(Int.self, forKey: .userconfigured) ?? 0
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(displayName, forKey: .displayName)
+        try container.encode(name, forKey: .name)
+        try container.encode(hassettings, forKey: .hassettings)
+        try container.encode(contextId, forKey: .contextId)
+        try container.encode(userconfigured, forKey: .userconfigured)
+    }
+}
+
+public struct MoodleComponent: Codable, Hashable, Sendable {
+    /// Display name
+    public var displayName: String
+    /// List of notificaitons for the component
+    public var notifications: [MoodleComponentNotification]
+
+    public init(
+        displayName: String = "",
+        notifications: [MoodleComponentNotification] = []
+    ) {
+        self.displayName = displayName
+        self.notifications = notifications
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case displayName = "displayname"
+        case notifications = "notifications"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.displayName = container.decodeLenient(String.self, forKey: .displayName) ?? ""
+        self.notifications = container.decodeLenient([MoodleComponentNotification].self, forKey: .notifications) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(displayName, forKey: .displayName)
+        try container.encode(notifications, forKey: .notifications)
+    }
+}
+
+public struct MoodleComponentNotification: Codable, Hashable, Sendable {
+    /// Display name
+    public var displayName: String
+    /// Preference key
+    public var preferencekey: String
+    /// Processors values for this notification
+    public var processors: [MoodleComponentNotificationProcessor]
+
+    public init(
+        displayName: String = "",
+        preferencekey: String = "",
+        processors: [MoodleComponentNotificationProcessor] = []
+    ) {
+        self.displayName = displayName
+        self.preferencekey = preferencekey
+        self.processors = processors
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case displayName = "displayname"
+        case preferencekey = "preferencekey"
+        case processors = "processors"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.displayName = container.decodeLenient(String.self, forKey: .displayName) ?? ""
+        self.preferencekey = container.decodeLenient(String.self, forKey: .preferencekey) ?? ""
+        self.processors = container.decodeLenient([MoodleComponentNotificationProcessor].self, forKey: .processors) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(displayName, forKey: .displayName)
+        try container.encode(preferencekey, forKey: .preferencekey)
+        try container.encode(processors, forKey: .processors)
+    }
+}
+
+public struct MoodleComponentNotificationProcessor: Codable, Hashable, Sendable {
+    /// Display name
+    public var displayName: String
+    /// Processor name
+    public var name: String
+    /// Is locked by admin?
+    public var locked: Bool
+    /// Text to display if locked
+    public var lockedmessage: String?
+    /// Is configured?
+    public var userconfigured: Int
+    /// Is enabled?
+    public var enabled: Bool
+
+    public init(
+        displayName: String = "",
+        name: String = "",
+        locked: Bool = false,
+        lockedmessage: String? = nil,
+        userconfigured: Int = 0,
+        enabled: Bool = false
+    ) {
+        self.displayName = displayName
+        self.name = name
+        self.locked = locked
+        self.lockedmessage = lockedmessage
+        self.userconfigured = userconfigured
+        self.enabled = enabled
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case displayName = "displayname"
+        case name = "name"
+        case locked = "locked"
+        case lockedmessage = "lockedmessage"
+        case userconfigured = "userconfigured"
+        case enabled = "enabled"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.displayName = container.decodeLenient(String.self, forKey: .displayName) ?? ""
+        self.name = container.decodeLenient(String.self, forKey: .name) ?? ""
+        self.locked = container.decodeLenient(Bool.self, forKey: .locked) ?? false
+        self.lockedmessage = container.decodeLenient(String.self, forKey: .lockedmessage)
+        self.userconfigured = container.decodeLenient(Int.self, forKey: .userconfigured) ?? 0
+        self.enabled = container.decodeLenient(Bool.self, forKey: .enabled) ?? false
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(displayName, forKey: .displayName)
+        try container.encode(name, forKey: .name)
+        try container.encode(locked, forKey: .locked)
+        try container.encode(lockedmessage, forKey: .lockedmessage)
+        try container.encode(userconfigured, forKey: .userconfigured)
+        try container.encode(enabled, forKey: .enabled)
+    }
+}
+
+public struct MoodleMessageGetUserNotificationPreferencesResponse: Codable, Hashable, Sendable {
+    public var preferences: MoodleMessageGetUserMessagePreferencesResponsePreference
+    /// list of warnings
+    public var warnings: [MoodleWarning]
+
+    public init(
+        preferences: MoodleMessageGetUserMessagePreferencesResponsePreference,
+        warnings: [MoodleWarning] = []
+    ) {
+        self.preferences = preferences
+        self.warnings = warnings
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case preferences = "preferences"
+        case warnings = "warnings"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.preferences = try container.required(container.decodeFolded(MoodleMessageGetUserMessagePreferencesResponsePreference.self, forKey: .preferences), forKey: .preferences)
+        self.warnings = container.decodeLenient([MoodleWarning].self, forKey: .warnings) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(preferences, forKey: .preferences)
+        try container.encode(warnings, forKey: .warnings)
+    }
+}
+
+public struct MoodleMessageMarkMessageReadResponse: Codable, Hashable, Sendable {
+    /// the id of the message in the messages table
+    public var messageid: Int
+    /// list of warnings
+    public var warnings: [MoodleWarning]
+
+    public init(
+        messageid: Int = 0,
+        warnings: [MoodleWarning] = []
+    ) {
+        self.messageid = messageid
+        self.warnings = warnings
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case messageid = "messageid"
+        case warnings = "warnings"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.messageid = container.decodeLenient(Int.self, forKey: .messageid) ?? 0
+        self.warnings = container.decodeLenient([MoodleWarning].self, forKey: .warnings) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(messageid, forKey: .messageid)
+        try container.encode(warnings, forKey: .warnings)
+    }
+}
+
+public struct MoodleMessageMarkNotificationReadResponse: Codable, Hashable, Sendable {
+    /// id of the notification
+    public var notificationid: Int
+    /// list of warnings
+    public var warnings: [MoodleWarning]
+
+    public init(
+        notificationid: Int = 0,
+        warnings: [MoodleWarning] = []
+    ) {
+        self.notificationid = notificationid
+        self.warnings = warnings
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case notificationid = "notificationid"
+        case warnings = "warnings"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.notificationid = container.decodeLenient(Int.self, forKey: .notificationid) ?? 0
+        self.warnings = container.decodeLenient([MoodleWarning].self, forKey: .warnings) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(notificationid, forKey: .notificationid)
+        try container.encode(warnings, forKey: .warnings)
+    }
+}
+
+public struct MoodleFormvalue: Codable, Hashable, Sendable {
+    /// name of the form element
+    public var name: String
+    /// value of the form element
+    public var value: String
+
+    public init(
+        name: String = "",
+        value: String = ""
+    ) {
+        self.name = name
+        self.value = value
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case name = "name"
+        case value = "value"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.name = container.decodeLenient(String.self, forKey: .name) ?? ""
+        self.value = container.decodeLenient(String.self, forKey: .value) ?? ""
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(name, forKey: .name)
+        try container.encode(value, forKey: .value)
+    }
+}
+
+public struct MoodleMessageMessageSearchUsersResponse: Codable, Hashable, Sendable {
+    public var contacts: [MoodleConversationMember]
+    public var noncontacts: [MoodleConversationMember]
+
+    public init(
+        contacts: [MoodleConversationMember] = [],
+        noncontacts: [MoodleConversationMember] = []
+    ) {
+        self.contacts = contacts
+        self.noncontacts = noncontacts
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case contacts = "contacts"
+        case noncontacts = "noncontacts"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.contacts = container.decodeLenient([MoodleConversationMember].self, forKey: .contacts) ?? []
+        self.noncontacts = container.decodeLenient([MoodleConversationMember].self, forKey: .noncontacts) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(contacts, forKey: .contacts)
+        try container.encode(noncontacts, forKey: .noncontacts)
+    }
+}
+
+public struct MoodleMessageSearchContactsItem: Codable, Hashable, Sendable {
+    /// User ID
+    public var id: Int
+    /// User full name
+    public var fullName: String
+    /// User picture URL
+    public var profileImageUrl: String?
+    /// Small user picture URL
+    public var profileImageUrlSmall: String?
+
+    public init(
+        id: Int = 0,
+        fullName: String = "",
+        profileImageUrl: String? = nil,
+        profileImageUrlSmall: String? = nil
+    ) {
+        self.id = id
+        self.fullName = fullName
+        self.profileImageUrl = profileImageUrl
+        self.profileImageUrlSmall = profileImageUrlSmall
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id = "id"
+        case fullName = "fullname"
+        case profileImageUrl = "profileimageurl"
+        case profileImageUrlSmall = "profileimageurlsmall"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = container.decodeLenient(Int.self, forKey: .id) ?? 0
+        self.fullName = container.decodeLenient(String.self, forKey: .fullName) ?? ""
+        self.profileImageUrl = container.decodeLenient(String.self, forKey: .profileImageUrl)
+        self.profileImageUrlSmall = container.decodeLenient(String.self, forKey: .profileImageUrlSmall)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(fullName, forKey: .fullName)
+        try container.encode(profileImageUrl, forKey: .profileImageUrl)
+        try container.encode(profileImageUrlSmall, forKey: .profileImageUrlSmall)
     }
 }
 
@@ -647,18 +1468,10 @@ public struct MoodleOutgoingMessage: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if toUserId != 0 {
-            try container.encode(toUserId, forKey: .toUserId)
-        }
-        if text != "" {
-            try container.encode(text, forKey: .text)
-        }
-        if textFormat != 0 {
-            try container.encode(textFormat, forKey: .textFormat)
-        }
-        if clientMessageId != nil {
-            try container.encode(clientMessageId, forKey: .clientMessageId)
-        }
+        try container.encode(toUserId, forKey: .toUserId)
+        try container.encode(text, forKey: .text)
+        try container.encode(textFormat, forKey: .textFormat)
+        try container.encode(clientMessageId, forKey: .clientMessageId)
     }
 }
 
@@ -725,29 +1538,45 @@ public struct MoodleSentMessage: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if messageId != 0 {
-            try container.encode(messageId, forKey: .messageId)
-        }
-        if clientMessageId != nil {
-            try container.encode(clientMessageId, forKey: .clientMessageId)
-        }
-        if errorMessage != nil {
-            try container.encode(errorMessage, forKey: .errorMessage)
-        }
-        if text != nil {
-            try container.encode(text, forKey: .text)
-        }
-        if timeCreated != nil {
-            try container.encode(timeCreated, forKey: .timeCreated)
-        }
-        if conversationId != nil {
-            try container.encode(conversationId, forKey: .conversationId)
-        }
-        if userIdFrom != nil {
-            try container.encode(userIdFrom, forKey: .userIdFrom)
-        }
-        if canDeleteMessagesForAllUsers != false {
-            try container.encode(canDeleteMessagesForAllUsers, forKey: .canDeleteMessagesForAllUsers)
-        }
+        try container.encode(messageId, forKey: .messageId)
+        try container.encode(clientMessageId, forKey: .clientMessageId)
+        try container.encode(errorMessage, forKey: .errorMessage)
+        try container.encode(text, forKey: .text)
+        try container.encode(timeCreated, forKey: .timeCreated)
+        try container.encode(conversationId, forKey: .conversationId)
+        try container.encode(userIdFrom, forKey: .userIdFrom)
+        try container.encode(canDeleteMessagesForAllUsers, forKey: .canDeleteMessagesForAllUsers)
+    }
+}
+
+public struct MoodleMessageSendMessagesToConversationMessage: Codable, Hashable, Sendable {
+    /// the text of the message
+    public var text: String
+    /// text format (1 = HTML, 0 = MOODLE, 2 = PLAIN, or 4 = MARKDOWN)
+    public var textFormat: Int
+
+    public init(
+        text: String = "",
+        textFormat: Int = 0
+    ) {
+        self.text = text
+        self.textFormat = textFormat
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case text = "text"
+        case textFormat = "textformat"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.text = container.decodeLenient(String.self, forKey: .text) ?? ""
+        self.textFormat = container.decodeLenient(Int.self, forKey: .textFormat) ?? 0
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(text, forKey: .text)
+        try container.encode(textFormat, forKey: .textFormat)
     }
 }

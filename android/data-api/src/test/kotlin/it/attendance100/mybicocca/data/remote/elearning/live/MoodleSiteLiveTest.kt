@@ -12,7 +12,7 @@ class MoodleSiteLiveTest : LiveTest<MoodleApi>(MoodleLive) {
     @Test
     @DisplayName("Site.componentStrings#1")
     fun componentStrings1() = case("Site.componentStrings#1") {
-        val component = choose("component", listOf(calendarGetActionEventsByTimesort()).mapNotNull { it.events }.flatten().mapNotNull { it.component })
+        val component = choose("component", listOf(draftAreaGetUnusedDraftItemid()).mapNotNull { it.component })
         val result = call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleComponentString\"}}") {
             api.site.componentStrings(component = component, auth = tokenCredentials())
         } ?: return@case

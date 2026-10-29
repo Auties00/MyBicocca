@@ -989,6 +989,17 @@ components:
         codice_insegnamento:
           x-mb-name: subjectCode
           type: string
+        CodiceGenerale:
+          x-mb-name: generalCode
+          description: >-
+            The Esse3 code of a lesson's activity (`E3101Q113`), the same for every section and
+            part (lectures, labs) of the subject.
+          type: string
+          x-mb-blank-as-null: true
+        CodiceCombinato:
+          x-mb-name: combinedCode
+          allOf:
+            - $ref: "#/components/schemas/EasyStaffCombinedCode"
         id: { type: string }
         timestamp:
           x-mb-name: dateTime
@@ -1093,6 +1104,29 @@ components:
           x-mb-name: exams
           type: array
           items: { $ref: "#/components/schemas/EasyStaffScheduledExam" }
+    EasyStaffCombinedCode:
+      type: object
+      description: Where a lesson sits in the study program, written as `E3101Q-11^GGG^E3101Q113^T1^MILANO`.
+      x-mb-delimited: "^"
+      required: [program, curriculumPath, activityCode, section, site]
+      properties:
+        program:
+          description: The study program and its regulation (`E3101Q-11`).
+          type: string
+        curriculumPath:
+          description: The curriculum path (`GGG`).
+          type: string
+        activityCode:
+          description: The Esse3 code of the activity (`E3101Q113`).
+          type: string
+        section:
+          description: >-
+            The section of a subject taught in several (`T1`, `T2`, `T1GEA` for its exercises),
+            `TU` for a single section, `N0` when the subject isn't split.
+          type: string
+        site:
+          description: The campus (`MILANO`).
+          type: string
     EasyStaffExamSubjectData:
       type: object
       required: [Codice, Nome]

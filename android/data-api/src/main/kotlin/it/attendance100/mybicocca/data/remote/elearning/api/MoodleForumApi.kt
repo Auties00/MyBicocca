@@ -17,6 +17,8 @@ import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleDiscussionSumm
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleFileToKeep
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleForum
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleForumDiscussionsResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleForumGetForumAccessInformationResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleForumSetLockStateResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleOption
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodlePrepareDraftAreaResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleStatusResponse
@@ -195,6 +197,27 @@ class MoodleForumApi(
     }
 
     /**
+     * Return capabilities information for a given forum.
+     *
+     * @param forumId Forum instance id.
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getForumAccessInformation(
+        forumId: Int,
+        auth: MoodleTokenAuth
+    ): MoodleForumGetForumAccessInformationResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleForumGetForumAccessInformationResponse>()) {
+            setBody(FormDataContent(parameters {
+                append("forumid", forumId.toString())
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "mod_forum_get_forum_access_information")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
      * Returns a list of forum discussions optionally sorted and paginated.
      *
      * @param forumId forum instance id
@@ -273,6 +296,57 @@ class MoodleForumApi(
                 auth.form.forEach { (name, value) -> append(name, value) }
             }))
             parameter("wsfunction", "mod_forum_prepare_draft_area_for_post")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Set the lock state for the discussion
+     *
+     * @param forumId Forum that the discussion is in
+     * @param discussionId The discussion to lock / unlock
+     * @param targetState The timestamp for the lock state
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun setLockState(
+        forumId: Int,
+        discussionId: Int,
+        targetState: Int,
+        auth: MoodleTokenAuth
+    ): MoodleForumSetLockStateResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleForumSetLockStateResponse>()) {
+            setBody(FormDataContent(parameters {
+                append("forumid", forumId.toString())
+                append("discussionid", discussionId.toString())
+                append("targetstate", targetState.toString())
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "mod_forum_set_lock_state")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Set the pin state
+     *
+     * @param discussionId The discussion to pin or unpin
+     * @param targetState The target state
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun setPinState(
+        discussionId: Int,
+        targetState: Int,
+        auth: MoodleTokenAuth
+    ): MoodleDiscussionSummary {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleDiscussionSummary>()) {
+            setBody(FormDataContent(parameters {
+                append("discussionid", discussionId.toString())
+                append("targetstate", targetState.toString())
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "mod_forum_set_pin_state")
             parameter("moodlewsrestformat", "json")
             auth.headers.forEach { (name, value) -> header(name, value) }
         }

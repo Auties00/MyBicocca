@@ -3,7 +3,7 @@
 import { EasyStaffPlanningAvailabilityApi } from "./EasyStaffPlanningAvailabilityApi.js";
 import { EasyStaffPlanningCatalogApi } from "./EasyStaffPlanningCatalogApi.js";
 import { EasyStaffPlanningClient } from "./EasyStaffPlanningClient.js";
-import { EasyStaffPlanningParameters } from "./EasyStaffPlanningParameters.js";
+import { type EasyStaffPlanningParameters } from "./EasyStaffPlanningParameters.js";
 import { EasyStaffPlanningPortalsApi } from "./EasyStaffPlanningPortalsApi.js";
 import { EasyStaffPlanningReservationsApi } from "./EasyStaffPlanningReservationsApi.js";
 

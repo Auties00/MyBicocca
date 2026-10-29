@@ -90,7 +90,7 @@ public enum MoodleWebScrapers {
         let value0 = Scrape.int(Scrape.regex(Scrape.html(Scrape.select(node, "html")), "\"userId\"\\s*:\\s*(\\d+)"))
         let value1 = (Scrape.select(node, "body#page-mod-attendance-view") != nil)
         let value2 = Scrape.select(node, "table.attlist:has(tr:nth-of-type(8)):not(:has(tr:nth-of-type(9)))").flatMap { attendanceSummary($0) }
-        let value3 = Scrape.selectAll(node, "table.generaltable tr:has(td[colspan=3] a[href*=attendance.php])").compactMap { submittableSession($0) }
+        let value3 = Scrape.selectAll(node, "table.generaltable tr:has(td[colspan='3'] a[href*='attendance.php'])").compactMap { submittableSession($0) }
         return MoodleWebAttendanceView(
             userId: value0,
             shown: value1,
@@ -123,9 +123,9 @@ public enum MoodleWebScrapers {
 
     /// Reads ``MoodleWebSubmittableSession`` out of `node`, or returns nil when a value it requires is missing.
     public static func submittableSession(_ node: ScrapeNode) -> MoodleWebSubmittableSession? {
-        guard let value0 = Scrape.regex(Scrape.attribute(Scrape.select(node, "td[colspan=3] a[href*=attendance.php]"), "href", missing: []), "sessid=(\\d+)") else { return nil }
+        guard let value0 = Scrape.regex(Scrape.attribute(Scrape.select(node, "td[colspan='3'] a[href*='attendance.php']"), "href", missing: []), "sessid=(\\d+)") else { return nil }
         guard let value1 = Scrape.text(Scrape.select(node, "td"), exclude: nil, missing: []) else { return nil }
-        let value2 = Scrape.text(Scrape.select(node, "td[colspan=3] a[href*=attendance.php]"), exclude: nil, missing: []) ?? ""
+        let value2 = Scrape.text(Scrape.select(node, "td[colspan='3'] a[href*='attendance.php']"), exclude: nil, missing: []) ?? ""
         return MoodleWebSubmittableSession(
             id: value0,
             time: value1,

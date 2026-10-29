@@ -21,7 +21,7 @@ internal object KalturaRuntime {
 
     val policy = RestPolicy(
         baseUrl = null,
-        failure = { KalturaException(it.statusCode, it.errorCode, it.errorMessage) }
+        failure = { KalturaException(it.statusCode, it.errorCode, it.errorMessage, serverMessage = it.serverMessage) }
     )
 
     fun settings() = ClientSettings(emptyList())

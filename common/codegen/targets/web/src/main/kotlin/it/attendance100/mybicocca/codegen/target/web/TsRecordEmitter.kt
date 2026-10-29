@@ -47,7 +47,7 @@ internal class TsRecordEmitter(private val layout: TsLayout, private val codecs:
             }
         }
         out.line()
-        layout.importRuntime(file, "JsonObject")
+        layout.importRuntime(file, "type JsonObject")
         val parameter = if (record.fields.isEmpty()) "_value" else "value"
         out.block("export function ${layout.encoderName(record.name)}($parameter: ${record.name}): JsonObject {") {
             block("return {", "};") {

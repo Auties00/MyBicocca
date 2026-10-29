@@ -8,10 +8,27 @@ import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
 import io.ktor.http.HttpMethod
 import io.ktor.http.parameters
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleBooleanSerializer
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleConversation
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleConversationMember
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleConversationMessage
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleConversationMessages
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleConversationsResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleFormvalue
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleMessageCreateContactRequestResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleMessageDataForMessageareaSearchMessagesResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleMessageGetBlockedUsersResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleMessageGetMessagesResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleMessageGetUserMessagePreferencesResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleMessageGetUserNotificationPreferencesResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleMessageMarkMessageReadResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleMessageMarkNotificationReadResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleMessageMessageSearchUsersResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleMessageSearchContactsItem
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleMessageSendMessagesToConversationMessage
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleOutgoingMessage
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleSentMessage
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleStatusResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleUnreadConversationCounts
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleWarning
@@ -51,6 +68,132 @@ class MoodleMessageApi(
     }
 
     /**
+     * Confirms a contact request
+     *
+     * @param userId The id of the user making the request
+     * @param requestedUserId The id of the user being requested
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun confirmContactRequest(
+        userId: Int,
+        requestedUserId: Int,
+        auth: MoodleTokenAuth
+    ): List<MoodleWarning> {
+        return jsonList(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<List<MoodleWarning>>()) {
+            setBody(FormDataContent(parameters {
+                append("userid", userId.toString())
+                append("requesteduserid", requestedUserId.toString())
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_message_confirm_contact_request")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Creates a contact request
+     *
+     * @param userId The id of the user making the request
+     * @param requestedUserId The id of the user being requested
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun createContactRequest(
+        userId: Int,
+        requestedUserId: Int,
+        auth: MoodleTokenAuth
+    ): MoodleMessageCreateContactRequestResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleMessageCreateContactRequestResponse>()) {
+            setBody(FormDataContent(parameters {
+                append("userid", userId.toString())
+                append("requesteduserid", requestedUserId.toString())
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_message_create_contact_request")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Retrieve the template data for searching for messages
+     *
+     * @param userId The id of the user who is performing the search
+     * @param search The string being searched
+     * @param limitFrom Limit from
+     * @param limitNum Limit number
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun dataForMessageareaSearchMessages(
+        userId: Int,
+        search: String,
+        limitFrom: Int? = null,
+        limitNum: Int? = null,
+        auth: MoodleTokenAuth
+    ): MoodleMessageDataForMessageareaSearchMessagesResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleMessageDataForMessageareaSearchMessagesResponse>()) {
+            setBody(FormDataContent(parameters {
+                append("userid", userId.toString())
+                append("search", search)
+                limitFrom?.let { append("limitfrom", it.toString()) }
+                limitNum?.let { append("limitnum", it.toString()) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_message_data_for_messagearea_search_messages")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Declines a contact request
+     *
+     * @param userId The id of the user making the request
+     * @param requestedUserId The id of the user being requested
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun declineContactRequest(
+        userId: Int,
+        requestedUserId: Int,
+        auth: MoodleTokenAuth
+    ): List<MoodleWarning> {
+        return jsonList(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<List<MoodleWarning>>()) {
+            setBody(FormDataContent(parameters {
+                append("userid", userId.toString())
+                append("requesteduserid", requestedUserId.toString())
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_message_decline_contact_request")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Remove contacts from the contact list
+     *
+     * @param userids List of user IDs
+     * @param userId The id of the user we are deleting the contacts for, 0 for the current user
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun deleteContacts(
+        userids: List<Int>,
+        userId: Int? = null,
+        auth: MoodleTokenAuth
+    ) {
+        send(HttpMethod.Post, "/webservice/rest/server.php") {
+            setBody(FormDataContent(parameters {
+                appendBrackets("userids", json.encodeToJsonElement(userids))
+                userId?.let { append("userid", it.toString()) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_message_delete_contacts")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
      * Deletes a list of conversations.
      *
      * @param userId The user id of who we want to delete the conversation for
@@ -69,6 +212,252 @@ class MoodleMessageApi(
                 auth.form.forEach { (name, value) -> append(name, value) }
             }))
             parameter("wsfunction", "core_message_delete_conversations_by_id")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Deletes a message.
+     *
+     * @param messageid The message id
+     * @param userId The user id of who we want to delete the message for
+     * @param read If is a message read
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun deleteMessage(
+        messageid: Int,
+        userId: Int,
+        read: Boolean? = null,
+        auth: MoodleTokenAuth
+    ): MoodleStatusResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleStatusResponse>()) {
+            setBody(FormDataContent(parameters {
+                append("messageid", messageid.toString())
+                append("userid", userId.toString())
+                read?.let { appendBrackets("read", json.encodeToJsonElement(it)) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_message_delete_message")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Deletes a message for all users.
+     *
+     * @param messageid The message id
+     * @param userId The user id of who we want to delete the message for all users
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun deleteMessageForAllUsers(
+        messageid: Int,
+        userId: Int,
+        auth: MoodleTokenAuth
+    ): List<MoodleWarning> {
+        return jsonList(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<List<MoodleWarning>>()) {
+            setBody(FormDataContent(parameters {
+                append("messageid", messageid.toString())
+                append("userid", userId.toString())
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_message_delete_message_for_all_users")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Retrieve a list of users blocked
+     *
+     * @param userId the user whose blocked users we want to retrieve
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getBlockedUsers(
+        userId: Int,
+        auth: MoodleTokenAuth
+    ): MoodleMessageGetBlockedUsersResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleMessageGetBlockedUsersResponse>()) {
+            setBody(FormDataContent(parameters {
+                append("userid", userId.toString())
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_message_get_blocked_users")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Returns contact requests for a user
+     *
+     * @param userId The id of the user we want the requests for
+     * @param limitFrom Limit from
+     * @param limitNum Limit number
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getContactRequests(
+        userId: Int,
+        limitFrom: Int? = null,
+        limitNum: Int? = null,
+        auth: MoodleTokenAuth
+    ): List<MoodleConversationMember> {
+        return jsonList(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<List<MoodleConversationMember>>()) {
+            setBody(FormDataContent(parameters {
+                append("userid", userId.toString())
+                limitFrom?.let { append("limitfrom", it.toString()) }
+                limitNum?.let { append("limitnum", it.toString()) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_message_get_contact_requests")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Retrieve a conversation for a user
+     *
+     * @param userId The id of the user who we are viewing conversations for
+     * @param conversationId The id of the conversation to fetch
+     * @param includecontactrequests Include contact requests in the members
+     * @param includeprivacyinfo Include privacy info in the members
+     * @param memberlimit Limit for number of members
+     * @param memberoffset Offset for member list
+     * @param messagelimit Limit for number of messages
+     * @param messageoffset Offset for messages list
+     * @param newestmessagesfirst Order messages by newest first
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getConversation(
+        userId: Int,
+        conversationId: Int,
+        includecontactrequests: Boolean,
+        includeprivacyinfo: Boolean,
+        memberlimit: Int? = null,
+        memberoffset: Int? = null,
+        messagelimit: Int? = null,
+        messageoffset: Int? = null,
+        newestmessagesfirst: Boolean? = null,
+        auth: MoodleTokenAuth
+    ): MoodleConversation {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleConversation>()) {
+            setBody(FormDataContent(parameters {
+                append("userid", userId.toString())
+                append("conversationid", conversationId.toString())
+                appendBrackets("includecontactrequests", json.encodeToJsonElement(includecontactrequests))
+                appendBrackets("includeprivacyinfo", json.encodeToJsonElement(includeprivacyinfo))
+                memberlimit?.let { append("memberlimit", it.toString()) }
+                memberoffset?.let { append("memberoffset", it.toString()) }
+                messagelimit?.let { append("messagelimit", it.toString()) }
+                messageoffset?.let { append("messageoffset", it.toString()) }
+                newestmessagesfirst?.let { appendBrackets("newestmessagesfirst", json.encodeToJsonElement(it)) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_message_get_conversation")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Retrieve a conversation for a user between another user
+     *
+     * @param userId The id of the user who we are viewing conversations for
+     * @param otheruserid The other user id
+     * @param includecontactrequests Include contact requests in the members
+     * @param includeprivacyinfo Include privacy info in the members
+     * @param memberlimit Limit for number of members
+     * @param memberoffset Offset for member list
+     * @param messagelimit Limit for number of messages
+     * @param messageoffset Offset for messages list
+     * @param newestmessagesfirst Order messages by newest first
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getConversationBetweenUsers(
+        userId: Int,
+        otheruserid: Int,
+        includecontactrequests: Boolean,
+        includeprivacyinfo: Boolean,
+        memberlimit: Int? = null,
+        memberoffset: Int? = null,
+        messagelimit: Int? = null,
+        messageoffset: Int? = null,
+        newestmessagesfirst: Boolean? = null,
+        auth: MoodleTokenAuth
+    ): MoodleConversation {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleConversation>()) {
+            setBody(FormDataContent(parameters {
+                append("userid", userId.toString())
+                append("otheruserid", otheruserid.toString())
+                appendBrackets("includecontactrequests", json.encodeToJsonElement(includecontactrequests))
+                appendBrackets("includeprivacyinfo", json.encodeToJsonElement(includeprivacyinfo))
+                memberlimit?.let { append("memberlimit", it.toString()) }
+                memberoffset?.let { append("memberoffset", it.toString()) }
+                messagelimit?.let { append("messagelimit", it.toString()) }
+                messageoffset?.let { append("messageoffset", it.toString()) }
+                newestmessagesfirst?.let { appendBrackets("newestmessagesfirst", json.encodeToJsonElement(it)) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_message_get_conversation_between_users")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Retrieve a list of conversation counts, indexed by type.
+     *
+     * @param userId id of the user, 0 for current user
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getConversationCounts(
+        userId: Int? = null,
+        auth: MoodleTokenAuth
+    ): MoodleUnreadConversationCounts {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleUnreadConversationCounts>()) {
+            setBody(FormDataContent(parameters {
+                userId?.let { append("userid", it.toString()) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_message_get_conversation_counts")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Retrieve a list of members in a conversation
+     *
+     * @param userId The id of the user we are performing this action on behalf of
+     * @param conversationId The id of the conversation
+     * @param includecontactrequests Do we want to include contact requests?
+     * @param includeprivacyinfo Do we want to include privacy info?
+     * @param limitFrom Limit from
+     * @param limitNum Limit number
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getConversationMembers(
+        userId: Int,
+        conversationId: Int,
+        includecontactrequests: Boolean? = null,
+        includeprivacyinfo: Boolean? = null,
+        limitFrom: Int? = null,
+        limitNum: Int? = null,
+        auth: MoodleTokenAuth
+    ): List<MoodleConversationMember> {
+        return jsonList(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<List<MoodleConversationMember>>()) {
+            setBody(FormDataContent(parameters {
+                append("userid", userId.toString())
+                append("conversationid", conversationId.toString())
+                includecontactrequests?.let { appendBrackets("includecontactrequests", json.encodeToJsonElement(it)) }
+                includeprivacyinfo?.let { appendBrackets("includeprivacyinfo", json.encodeToJsonElement(it)) }
+                limitFrom?.let { append("limitfrom", it.toString()) }
+                limitNum?.let { append("limitnum", it.toString()) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_message_get_conversation_members")
             parameter("moodlewsrestformat", "json")
             auth.headers.forEach { (name, value) -> header(name, value) }
         }
@@ -147,6 +536,125 @@ class MoodleMessageApi(
     }
 
     /**
+     * Retrieve a user message profiles
+     *
+     * @param referenceuserid id of the user
+     * @param includecontactrequests include contact requests in response
+     * @param includeprivacyinfo include privacy info in response
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getMemberInfo(
+        referenceuserid: Int,
+        userids: List<Int>,
+        includecontactrequests: Boolean? = null,
+        includeprivacyinfo: Boolean? = null,
+        auth: MoodleTokenAuth
+    ): List<MoodleConversationMember> {
+        return jsonList(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<List<MoodleConversationMember>>()) {
+            setBody(FormDataContent(parameters {
+                append("referenceuserid", referenceuserid.toString())
+                appendBrackets("userids", json.encodeToJsonElement(userids))
+                includecontactrequests?.let { appendBrackets("includecontactrequests", json.encodeToJsonElement(it)) }
+                includeprivacyinfo?.let { appendBrackets("includeprivacyinfo", json.encodeToJsonElement(it)) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_message_get_member_info")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Retrieve a list of messages sent and received by a user (conversations, notifications or both)
+     *
+     * @param useridto the user id who received the message, 0 for any user
+     * @param userIdFrom the user id who send the message, 0 for any user. -10 or -20 for no-reply or support user
+     * @param type type of message to return, expected values are: notifications, conversations and both
+     * @param read 1 for getting read messages, 0 for unread, 2 for both
+     * @param newestfirst true for ordering by newest first, false for oldest first
+     * @param limitFrom limit from
+     * @param limitNum limit number
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getMessages(
+        useridto: Int,
+        userIdFrom: Int? = null,
+        type: String? = null,
+        read: Int? = null,
+        newestfirst: Boolean? = null,
+        limitFrom: Int? = null,
+        limitNum: Int? = null,
+        auth: MoodleTokenAuth
+    ): MoodleMessageGetMessagesResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleMessageGetMessagesResponse>()) {
+            setBody(FormDataContent(parameters {
+                append("useridto", useridto.toString())
+                userIdFrom?.let { append("useridfrom", it.toString()) }
+                type?.let { append("type", it) }
+                read?.let { append("read", it.toString()) }
+                newestfirst?.let { appendBrackets("newestfirst", json.encodeToJsonElement(it)) }
+                limitFrom?.let { append("limitfrom", it.toString()) }
+                limitNum?.let { append("limitnum", it.toString()) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_message_get_messages")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Gets the number of received contact requests
+     *
+     * @param userId The id of the user we want to return the number of received contact requests for
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getReceivedContactRequestsCount(
+        userId: Int,
+        auth: MoodleTokenAuth
+    ): Int {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<Int>()) {
+            setBody(FormDataContent(parameters {
+                append("userid", userId.toString())
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_message_get_received_contact_requests_count")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Retrieve a self-conversation for a user
+     *
+     * @param userId The id of the user who we are viewing self-conversations for
+     * @param messagelimit Limit for number of messages
+     * @param messageoffset Offset for messages list
+     * @param newestmessagesfirst Order messages by newest first
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getSelfConversation(
+        userId: Int,
+        messagelimit: Int? = null,
+        messageoffset: Int? = null,
+        newestmessagesfirst: Boolean? = null,
+        auth: MoodleTokenAuth
+    ): MoodleConversation {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleConversation>()) {
+            setBody(FormDataContent(parameters {
+                append("userid", userId.toString())
+                messagelimit?.let { append("messagelimit", it.toString()) }
+                messageoffset?.let { append("messageoffset", it.toString()) }
+                newestmessagesfirst?.let { appendBrackets("newestmessagesfirst", json.encodeToJsonElement(it)) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_message_get_self_conversation")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
      * Retrieve a list of unread conversation counts, indexed by type.
      *
      * @param userId id of the user, 0 for current user
@@ -162,6 +670,117 @@ class MoodleMessageApi(
                 auth.form.forEach { (name, value) -> append(name, value) }
             }))
             parameter("wsfunction", "core_message_get_unread_conversation_counts")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Retrieve the count of unread conversations for a given user
+     *
+     * @param useridto the user id who received the message, 0 for any user
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getUnreadConversationsCount(
+        useridto: Int,
+        auth: MoodleTokenAuth
+    ): Int {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<Int>()) {
+            setBody(FormDataContent(parameters {
+                append("useridto", useridto.toString())
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_message_get_unread_conversations_count")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Get number of unread notifications.
+     *
+     * @param useridto user id who received the notification, 0 for any user
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getUnreadNotificationCount(
+        useridto: Int,
+        auth: MoodleTokenAuth
+    ): Int {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<Int>()) {
+            setBody(FormDataContent(parameters {
+                append("useridto", useridto.toString())
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_message_get_unread_notification_count")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Retrieve the contact list
+     *
+     * @param userId The id of the user who we retrieving the contacts for
+     * @param limitFrom Limit from
+     * @param limitNum Limit number
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getUserContacts(
+        userId: Int,
+        limitFrom: Int? = null,
+        limitNum: Int? = null,
+        auth: MoodleTokenAuth
+    ): List<MoodleConversationMember> {
+        return jsonList(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<List<MoodleConversationMember>>()) {
+            setBody(FormDataContent(parameters {
+                append("userid", userId.toString())
+                limitFrom?.let { append("limitfrom", it.toString()) }
+                limitNum?.let { append("limitnum", it.toString()) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_message_get_user_contacts")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Get the message preferences for a given user.
+     *
+     * @param userId id of the user, 0 for current user
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getUserMessagePreferences(
+        userId: Int? = null,
+        auth: MoodleTokenAuth
+    ): MoodleMessageGetUserMessagePreferencesResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleMessageGetUserMessagePreferencesResponse>()) {
+            setBody(FormDataContent(parameters {
+                userId?.let { append("userid", it.toString()) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_message_get_user_message_preferences")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Get the notification preferences for a given user.
+     *
+     * @param userId id of the user, 0 for current user
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getUserNotificationPreferences(
+        userId: Int? = null,
+        auth: MoodleTokenAuth
+    ): MoodleMessageGetUserNotificationPreferencesResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleMessageGetUserNotificationPreferencesResponse>()) {
+            setBody(FormDataContent(parameters {
+                userId?.let { append("userid", it.toString()) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_message_get_user_notification_preferences")
             parameter("moodlewsrestformat", "json")
             auth.headers.forEach { (name, value) -> header(name, value) }
         }
@@ -192,6 +811,185 @@ class MoodleMessageApi(
     }
 
     /**
+     * Mark all notifications as read for a given user
+     *
+     * @param useridto the user id who received the message, 0 for any user
+     * @param userIdFrom the user id who send the message, 0 for any user. -10 or -20 for no-reply or support user
+     * @param timecreatedto mark messages created before this time as read, 0 for all messages
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun markAllNotificationsAsRead(
+        useridto: Int,
+        userIdFrom: Int? = null,
+        timecreatedto: Long? = null,
+        auth: MoodleTokenAuth
+    ): Boolean {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = MoodleBooleanSerializer) {
+            setBody(FormDataContent(parameters {
+                append("useridto", useridto.toString())
+                userIdFrom?.let { append("useridfrom", it.toString()) }
+                timecreatedto?.let { append("timecreatedto", it.toString()) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_message_mark_all_notifications_as_read")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Mark a single message as read, trigger message_viewed event.
+     *
+     * @param messageid id of the message in the messages table
+     * @param timeread timestamp for when the message should be marked read
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun markMessageRead(
+        messageid: Int,
+        timeread: Long? = null,
+        auth: MoodleTokenAuth
+    ): MoodleMessageMarkMessageReadResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleMessageMarkMessageReadResponse>()) {
+            setBody(FormDataContent(parameters {
+                append("messageid", messageid.toString())
+                timeread?.let { append("timeread", it.toString()) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_message_mark_message_read")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Mark a single notification as read, trigger notification_viewed event.
+     *
+     * @param notificationid id of the notification
+     * @param timeread timestamp for when the notification should be marked read
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun markNotificationRead(
+        notificationid: Int,
+        timeread: Long? = null,
+        auth: MoodleTokenAuth
+    ): MoodleMessageMarkNotificationReadResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleMessageMarkNotificationReadResponse>()) {
+            setBody(FormDataContent(parameters {
+                append("notificationid", notificationid.toString())
+                timeread?.let { append("timeread", it.toString()) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_message_mark_notification_read")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Process the message processor config form
+     *
+     * @param userId id of the user, 0 for current user
+     * @param name The name of the message processor
+     * @param formvalues Config form values
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun messageProcessorConfigForm(
+        userId: Int,
+        name: String,
+        formvalues: List<MoodleFormvalue>,
+        auth: MoodleTokenAuth
+    ) {
+        send(HttpMethod.Post, "/webservice/rest/server.php") {
+            setBody(FormDataContent(parameters {
+                append("userid", userId.toString())
+                append("name", name)
+                appendBrackets("formvalues", json.encodeToJsonElement(formvalues))
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_message_message_processor_config_form")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Retrieve the data for searching for people
+     *
+     * @param userId The id of the user who is performing the search
+     * @param search The string being searched
+     * @param limitFrom Limit from
+     * @param limitNum Limit number
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun messageSearchUsers(
+        userId: Int,
+        search: String,
+        limitFrom: Int? = null,
+        limitNum: Int? = null,
+        auth: MoodleTokenAuth
+    ): MoodleMessageMessageSearchUsersResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleMessageMessageSearchUsersResponse>()) {
+            setBody(FormDataContent(parameters {
+                append("userid", userId.toString())
+                append("search", search)
+                limitFrom?.let { append("limitfrom", it.toString()) }
+                limitNum?.let { append("limitnum", it.toString()) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_message_message_search_users")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Mutes a list of conversations
+     *
+     * @param userId The id of the user who is blocking
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun muteConversations(
+        userId: Int,
+        conversationIds: List<Int>,
+        auth: MoodleTokenAuth
+    ): List<MoodleWarning> {
+        return jsonList(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<List<MoodleWarning>>()) {
+            setBody(FormDataContent(parameters {
+                append("userid", userId.toString())
+                appendBrackets("conversationids", json.encodeToJsonElement(conversationIds))
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_message_mute_conversations")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Search for contacts
+     *
+     * @param searchtext String the user's fullname has to match to be found
+     * @param onlymycourses Limit search to the user's courses
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun searchContacts(
+        searchtext: String,
+        onlymycourses: Boolean? = null,
+        auth: MoodleTokenAuth
+    ): List<MoodleMessageSearchContactsItem> {
+        return jsonList(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<List<MoodleMessageSearchContactsItem>>()) {
+            setBody(FormDataContent(parameters {
+                append("searchtext", searchtext)
+                onlymycourses?.let { appendBrackets("onlymycourses", json.encodeToJsonElement(it)) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_message_search_contacts")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
      * Send instant messages
      *
      * @param auth The credentials: [MoodleTokenAuth].
@@ -206,6 +1004,52 @@ class MoodleMessageApi(
                 auth.form.forEach { (name, value) -> append(name, value) }
             }))
             parameter("wsfunction", "core_message_send_instant_messages")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Send messages to an existing conversation between users
+     *
+     * @param conversationId id of the conversation
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun sendMessagesToConversation(
+        conversationId: Int,
+        messages: List<MoodleMessageSendMessagesToConversationMessage>,
+        auth: MoodleTokenAuth
+    ): List<MoodleConversationMessage> {
+        return jsonList(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<List<MoodleConversationMessage>>()) {
+            setBody(FormDataContent(parameters {
+                append("conversationid", conversationId.toString())
+                appendBrackets("messages", json.encodeToJsonElement(messages))
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_message_send_messages_to_conversation")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Mark a conversation or group of conversations as favourites/starred conversations.
+     *
+     * @param userId id of the user, 0 for current user
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun setFavouriteConversations(
+        userId: Int? = null,
+        conversations: List<Int>,
+        auth: MoodleTokenAuth
+    ): List<MoodleWarning> {
+        return jsonList(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<List<MoodleWarning>>()) {
+            setBody(FormDataContent(parameters {
+                userId?.let { append("userid", it.toString()) }
+                appendBrackets("conversations", json.encodeToJsonElement(conversations))
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_message_set_favourite_conversations")
             parameter("moodlewsrestformat", "json")
             auth.headers.forEach { (name, value) -> header(name, value) }
         }
@@ -230,6 +1074,52 @@ class MoodleMessageApi(
                 auth.form.forEach { (name, value) -> append(name, value) }
             }))
             parameter("wsfunction", "core_message_unblock_user")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Unmutes a list of conversations
+     *
+     * @param userId The id of the user who is unblocking
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun unmuteConversations(
+        userId: Int,
+        conversationIds: List<Int>,
+        auth: MoodleTokenAuth
+    ): List<MoodleWarning> {
+        return jsonList(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<List<MoodleWarning>>()) {
+            setBody(FormDataContent(parameters {
+                append("userid", userId.toString())
+                appendBrackets("conversationids", json.encodeToJsonElement(conversationIds))
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_message_unmute_conversations")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Unset a conversation or group of conversations as favourites/starred conversations.
+     *
+     * @param userId id of the user, 0 for current user
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun unsetFavouriteConversations(
+        userId: Int? = null,
+        conversations: List<Int>,
+        auth: MoodleTokenAuth
+    ): List<MoodleWarning> {
+        return jsonList(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<List<MoodleWarning>>()) {
+            setBody(FormDataContent(parameters {
+                userId?.let { append("userid", it.toString()) }
+                appendBrackets("conversations", json.encodeToJsonElement(conversations))
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_message_unset_favourite_conversations")
             parameter("moodlewsrestformat", "json")
             auth.headers.forEach { (name, value) -> header(name, value) }
         }

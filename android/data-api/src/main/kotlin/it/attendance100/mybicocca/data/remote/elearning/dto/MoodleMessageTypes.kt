@@ -5,16 +5,136 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class MoodleConversationMessages(
-    /** The conversation id */
+data class MoodleMessageCreateContactRequestResponse(
+    /** request record */
+    @Serializable(with = MoodleContactRequestFoldedSerializer::class)
+    @SerialName("request")
+    val request: MoodleContactRequest? = null,
+
+    /** list of warnings */
+    @SerialName("warnings")
+    val warnings: List<MoodleWarning> = emptyList()
+)
+
+/** request record */
+@Serializable
+data class MoodleContactRequest(
+    /** Message id */
     @SerialName("id")
     val id: Int = 0,
 
-    @SerialName("members")
-    val members: List<MoodleConversationMember> = emptyList(),
+    /** User from id */
+    @SerialName("userid")
+    val userId: Int = 0,
 
-    @SerialName("messages")
-    val messages: List<MoodleConversationMessage> = emptyList()
+    /** User to id */
+    @SerialName("requesteduserid")
+    val requestedUserId: Int = 0,
+
+    /** Time created */
+    @SerialName("timecreated")
+    val timeCreated: Long = 0L
+)
+
+@Serializable
+data class MoodleMessageDataForMessageareaSearchMessagesResponse(
+    @SerialName("contacts")
+    val contacts: List<MoodleMessageDataForMessageareaSearchMessagesResponseContact> = emptyList()
+)
+
+@Serializable
+data class MoodleMessageDataForMessageareaSearchMessagesResponseContact(
+    /** The user's id */
+    @SerialName("userid")
+    val userId: Int = 0,
+
+    /** The user's name */
+    @SerialName("fullname")
+    val fullName: String = "",
+
+    /** User picture URL */
+    @SerialName("profileimageurl")
+    val profileImageUrl: String = "",
+
+    /** Small user picture URL */
+    @SerialName("profileimageurlsmall")
+    val profileImageUrlSmall: String = "",
+
+    /** If we are messaging the user */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("ismessaging")
+    val ismessaging: Boolean = false,
+
+    /** Was the last message sent from the current user? */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("sentfromcurrentuser")
+    val sentfromcurrentuser: Boolean = false,
+
+    /** The user's last message */
+    @SerialName("lastmessage")
+    val lastmessage: String = "",
+
+    /** Timestamp for last message */
+    @SerialName("lastmessagedate")
+    val lastmessagedate: Long? = null,
+
+    /** The unique search message id */
+    @SerialName("messageid")
+    val messageid: Int? = null,
+
+    /** Show the user's online status? */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("showonlinestatus")
+    val showOnlineStatus: Boolean = false,
+
+    /** The user's online status */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("isonline")
+    val isOnline: Boolean = false,
+
+    /** If the user has read the message */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("isread")
+    val isRead: Boolean = false,
+
+    /** If the user has been blocked */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("isblocked")
+    val isBlocked: Boolean = false,
+
+    /** The number of unread messages in this conversation */
+    @SerialName("unreadcount")
+    val unreadCount: Int? = null,
+
+    /** The id of the conversation */
+    @SerialName("conversationid")
+    val conversationId: Int? = null
+)
+
+@Serializable
+data class MoodleMessageGetBlockedUsersResponse(
+    /** List of blocked users */
+    @SerialName("users")
+    val users: List<MoodleMessageGetBlockedUsersResponseUser> = emptyList(),
+
+    /** list of warnings */
+    @SerialName("warnings")
+    val warnings: List<MoodleWarning> = emptyList()
+)
+
+@Serializable
+data class MoodleMessageGetBlockedUsersResponseUser(
+    /** User ID */
+    @SerialName("id")
+    val id: Int = 0,
+
+    /** User full name */
+    @SerialName("fullname")
+    val fullName: String = "",
+
+    /** User picture URL */
+    @SerialName("profileimageurl")
+    val profileImageUrl: String? = null
 )
 
 @Serializable
@@ -93,25 +213,6 @@ data class MoodleConversationMember(
     val conversations: List<MoodleMemberConversation> = emptyList()
 )
 
-@Serializable
-data class MoodleContactRequest(
-    /** The id of the contact request */
-    @SerialName("id")
-    val id: Int = 0,
-
-    /** The id of the user who created the contact request */
-    @SerialName("userid")
-    val userId: Int = 0,
-
-    /** The id of the user confirming the request */
-    @SerialName("requesteduserid")
-    val requestedUserId: Int = 0,
-
-    /** The timecreated timestamp for the contact request */
-    @SerialName("timecreated")
-    val timeCreated: Long = 0L
-)
-
 /** information about conversation */
 @Serializable
 data class MoodleMemberConversation(
@@ -130,31 +231,6 @@ data class MoodleMemberConversation(
     /** The timecreated timestamp for the conversation */
     @SerialName("timecreated")
     val timeCreated: Long = 0L
-)
-
-@Serializable
-data class MoodleConversationMessage(
-    /** The id of the message */
-    @SerialName("id")
-    val id: Int = 0,
-
-    /** The id of the user who sent the message */
-    @SerialName("useridfrom")
-    val userIdFrom: Int = 0,
-
-    /** The text of the message */
-    @SerialName("text")
-    val text: String = "",
-
-    /** The timecreated timestamp for the message */
-    @SerialName("timecreated")
-    val timeCreated: Long = 0L
-)
-
-@Serializable
-data class MoodleConversationsResponse(
-    @SerialName("conversations")
-    val conversations: List<MoodleConversation> = emptyList()
 )
 
 @Serializable
@@ -215,8 +291,27 @@ data class MoodleConversation(
 )
 
 @Serializable
+data class MoodleConversationMessage(
+    /** The id of the message */
+    @SerialName("id")
+    val id: Int = 0,
+
+    /** The id of the user who sent the message */
+    @SerialName("useridfrom")
+    val userIdFrom: Int = 0,
+
+    /** The text of the message */
+    @SerialName("text")
+    val text: String = "",
+
+    /** The timecreated timestamp for the message */
+    @SerialName("timecreated")
+    val timeCreated: Long = 0L
+)
+
+@Serializable
 data class MoodleUnreadConversationCounts(
-    /** Total number of unread favourite conversations */
+    /** Total number of favourite conversations */
     @SerialName("favourites")
     val favourites: Int = 0,
 
@@ -227,17 +322,320 @@ data class MoodleUnreadConversationCounts(
 
 @Serializable
 data class MoodleUnreadCountsByType(
-    /** Total number of unread individual conversations */
+    /** Total number of individual conversations */
     @SerialName("1")
     val individualConversations: Int = 0,
 
-    /** Total number of unread group conversations */
+    /** Total number of group conversations */
     @SerialName("2")
     val groupConversations: Int = 0,
 
-    /** Total number of unread self conversations */
+    /** Total number of self conversations */
     @SerialName("3")
     val selfConversations: Int = 0
+)
+
+@Serializable
+data class MoodleConversationMessages(
+    /** The conversation id */
+    @SerialName("id")
+    val id: Int = 0,
+
+    @SerialName("members")
+    val members: List<MoodleConversationMember> = emptyList(),
+
+    @SerialName("messages")
+    val messages: List<MoodleConversationMessage> = emptyList()
+)
+
+@Serializable
+data class MoodleConversationsResponse(
+    @SerialName("conversations")
+    val conversations: List<MoodleConversation> = emptyList()
+)
+
+@Serializable
+data class MoodleMessageGetMessagesResponse(
+    @SerialName("messages")
+    val messages: List<MoodleMessageGetMessagesResponseMessage> = emptyList(),
+
+    /** list of warnings */
+    @SerialName("warnings")
+    val warnings: List<MoodleWarning> = emptyList()
+)
+
+/** message */
+@Serializable
+data class MoodleMessageGetMessagesResponseMessage(
+    /** Message id */
+    @SerialName("id")
+    val id: Int = 0,
+
+    /** User from id */
+    @SerialName("useridfrom")
+    val userIdFrom: Int = 0,
+
+    /** User to id */
+    @SerialName("useridto")
+    val useridto: Int = 0,
+
+    /** The message subject */
+    @SerialName("subject")
+    val subject: String = "",
+
+    /** The message text formated */
+    @SerialName("text")
+    val text: String = "",
+
+    /** The message */
+    @SerialName("fullmessage")
+    val fullmessage: String = "",
+
+    /** fullmessage format (1 = HTML, 0 = MOODLE, 2 = PLAIN, or 4 = MARKDOWN) */
+    @SerialName("fullmessageformat")
+    val fullmessageformat: Int = 0,
+
+    /** The message in html */
+    @SerialName("fullmessagehtml")
+    val fullmessagehtml: String = "",
+
+    /** The shorten message */
+    @SerialName("smallmessage")
+    val smallmessage: String = "",
+
+    /** Is a notification? */
+    @SerialName("notification")
+    val notification: Int = 0,
+
+    /** Context URL */
+    @SerialName("contexturl")
+    val contexturl: String = "",
+
+    /** Context URL link name */
+    @SerialName("contexturlname")
+    val contexturlname: String = "",
+
+    /** Time created */
+    @SerialName("timecreated")
+    val timeCreated: Long = 0L,
+
+    /** Time read */
+    @SerialName("timeread")
+    val timeread: Long = 0L,
+
+    /** User to full name */
+    @SerialName("usertofullname")
+    val usertofullname: String = "",
+
+    /** User from full name */
+    @SerialName("userfromfullname")
+    val userfromfullname: String = "",
+
+    /** The component that generated the notification */
+    @SerialName("component")
+    val component: String? = null,
+
+    /** The type of notification */
+    @SerialName("eventtype")
+    val eventType: String? = null,
+
+    /** Custom data to be passed to the message processor. The data here is serialised using json_encode(). */
+    @SerialName("customdata")
+    val customData: String? = null,
+
+    /** URL for icon, only for notifications. */
+    @SerialName("iconurl")
+    val iconUrl: String? = null
+)
+
+@Serializable
+data class MoodleMessageGetUserMessagePreferencesResponse(
+    @Serializable(with = MoodleMessageGetUserMessagePreferencesResponsePreferenceFoldedSerializer::class)
+    @SerialName("preferences")
+    val preferences: MoodleMessageGetUserMessagePreferencesResponsePreference,
+
+    /** Privacy messaging setting to define who can message you */
+    @SerialName("blocknoncontacts")
+    val blocknoncontacts: Int = 0,
+
+    /** User preference for using enter to send messages */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("entertosend")
+    val entertosend: Boolean = false,
+
+    /** list of warnings */
+    @SerialName("warnings")
+    val warnings: List<MoodleWarning> = emptyList()
+)
+
+@Serializable
+data class MoodleMessageGetUserMessagePreferencesResponsePreference(
+    /** User id */
+    @SerialName("userid")
+    val userId: Int = 0,
+
+    /** Whether all the preferences are disabled */
+    @SerialName("disableall")
+    val disableall: Int = 0,
+
+    /** Config form values */
+    @SerialName("processors")
+    val processors: List<MoodleMessageGetUserMessagePreferencesResponsePreferenceProcessor> = emptyList(),
+
+    /** Available components */
+    @SerialName("components")
+    val components: List<MoodleComponent> = emptyList()
+)
+
+@Serializable
+data class MoodleMessageGetUserMessagePreferencesResponsePreferenceProcessor(
+    /** Display name */
+    @SerialName("displayname")
+    val displayName: String = "",
+
+    /** Processor name */
+    @SerialName("name")
+    val name: String = "",
+
+    /** Whether has settings */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("hassettings")
+    val hassettings: Boolean = false,
+
+    /** Context id */
+    @SerialName("contextid")
+    val contextId: Int = 0,
+
+    /** Whether is configured by the user */
+    @SerialName("userconfigured")
+    val userconfigured: Int = 0
+)
+
+@Serializable
+data class MoodleComponent(
+    /** Display name */
+    @SerialName("displayname")
+    val displayName: String = "",
+
+    /** List of notificaitons for the component */
+    @SerialName("notifications")
+    val notifications: List<MoodleComponentNotification> = emptyList()
+)
+
+@Serializable
+data class MoodleComponentNotification(
+    /** Display name */
+    @SerialName("displayname")
+    val displayName: String = "",
+
+    /** Preference key */
+    @SerialName("preferencekey")
+    val preferencekey: String = "",
+
+    /** Processors values for this notification */
+    @SerialName("processors")
+    val processors: List<MoodleComponentNotificationProcessor> = emptyList()
+)
+
+@Serializable
+data class MoodleComponentNotificationProcessor(
+    /** Display name */
+    @SerialName("displayname")
+    val displayName: String = "",
+
+    /** Processor name */
+    @SerialName("name")
+    val name: String = "",
+
+    /** Is locked by admin? */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("locked")
+    val locked: Boolean = false,
+
+    /** Text to display if locked */
+    @SerialName("lockedmessage")
+    val lockedmessage: String? = null,
+
+    /** Is configured? */
+    @SerialName("userconfigured")
+    val userconfigured: Int = 0,
+
+    /** Is enabled? */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("enabled")
+    val enabled: Boolean = false
+)
+
+@Serializable
+data class MoodleMessageGetUserNotificationPreferencesResponse(
+    @Serializable(with = MoodleMessageGetUserMessagePreferencesResponsePreferenceFoldedSerializer::class)
+    @SerialName("preferences")
+    val preferences: MoodleMessageGetUserMessagePreferencesResponsePreference,
+
+    /** list of warnings */
+    @SerialName("warnings")
+    val warnings: List<MoodleWarning> = emptyList()
+)
+
+@Serializable
+data class MoodleMessageMarkMessageReadResponse(
+    /** the id of the message in the messages table */
+    @SerialName("messageid")
+    val messageid: Int = 0,
+
+    /** list of warnings */
+    @SerialName("warnings")
+    val warnings: List<MoodleWarning> = emptyList()
+)
+
+@Serializable
+data class MoodleMessageMarkNotificationReadResponse(
+    /** id of the notification */
+    @SerialName("notificationid")
+    val notificationid: Int = 0,
+
+    /** list of warnings */
+    @SerialName("warnings")
+    val warnings: List<MoodleWarning> = emptyList()
+)
+
+@Serializable
+data class MoodleFormvalue(
+    /** name of the form element */
+    @SerialName("name")
+    val name: String = "",
+
+    /** value of the form element */
+    @SerialName("value")
+    val value: String = ""
+)
+
+@Serializable
+data class MoodleMessageMessageSearchUsersResponse(
+    @SerialName("contacts")
+    val contacts: List<MoodleConversationMember> = emptyList(),
+
+    @SerialName("noncontacts")
+    val noncontacts: List<MoodleConversationMember> = emptyList()
+)
+
+@Serializable
+data class MoodleMessageSearchContactsItem(
+    /** User ID */
+    @SerialName("id")
+    val id: Int = 0,
+
+    /** User full name */
+    @SerialName("fullname")
+    val fullName: String = "",
+
+    /** User picture URL */
+    @SerialName("profileimageurl")
+    val profileImageUrl: String? = null,
+
+    /** Small user picture URL */
+    @SerialName("profileimageurlsmall")
+    val profileImageUrlSmall: String? = null
 )
 
 @Serializable
@@ -293,4 +691,15 @@ data class MoodleSentMessage(
     @Serializable(with = MoodleBooleanSerializer::class)
     @SerialName("candeletemessagesforallusers")
     val canDeleteMessagesForAllUsers: Boolean = false
+)
+
+@Serializable
+data class MoodleMessageSendMessagesToConversationMessage(
+    /** the text of the message */
+    @SerialName("text")
+    val text: String = "",
+
+    /** text format (1 = HTML, 0 = MOODLE, 2 = PLAIN, or 4 = MARKDOWN) */
+    @SerialName("textformat")
+    val textFormat: Int = 0
 )

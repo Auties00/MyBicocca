@@ -30,7 +30,7 @@ internal class TsServiceEmitter(
             if (spec.parameters.isEmpty()) {
                 line("constructor(private readonly client: ${layout.client}) {}")
             } else {
-                file.importFile(layout.parameters, layout.parametersFile)
+                file.importFile("type ${layout.parameters}", layout.parametersFile)
                 commaListOrLine(
                     "constructor(",
                     listOf("private readonly client: ${layout.client}", "private readonly parameters: ${layout.parameters}"),

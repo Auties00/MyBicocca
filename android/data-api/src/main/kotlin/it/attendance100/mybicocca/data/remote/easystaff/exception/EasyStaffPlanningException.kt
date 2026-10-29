@@ -10,8 +10,9 @@ import it.attendance100.mybicocca.data.remote.runtime.ApiException
 class EasyStaffPlanningException(
     statusCode: Int,
     errorCode: String?,
-    errorMessage: String
-) : ApiException("EasyStaffPlanning", statusCode, errorCode, errorMessage) {
+    errorMessage: String,
+    serverMessage: String? = null
+) : ApiException("EasyStaffPlanning", statusCode, errorCode, errorMessage, serverMessage) {
     companion object {
         /** The guest token is missing or expired. */
         const val INVALID_TOKEN = "unauthorized.invalid_token"

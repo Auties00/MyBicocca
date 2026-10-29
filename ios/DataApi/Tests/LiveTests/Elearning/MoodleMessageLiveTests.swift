@@ -7,6 +7,168 @@ import XCTest
 
 /// The live tests of the Moodle Message module, planned from `common/specs/moodle/tests.yaml`.
 final class MoodleMessageLiveTests: XCTestCase {
+    func test_getBlockedUsers1() async throws {
+        try await liveCase(MoodleLive.api, "Message.getBlockedUsers#1") { live in
+            let userId = try live.choose("userId", [try await MoodleLive.siteGetSiteInfo(live)].compactMap { $0.userId })
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleMessageGetBlockedUsersResponse\"}") { try await live.api.message.getBlockedUsers(userId: userId, auth: auth) }
+            live.fingerprint { f in MoodleLive.writeMoodleMessageGetBlockedUsersResponse(f, result) }
+        }
+    }
+
+    func test_getBlockedUsersInvalidCredentials() async throws {
+        try await liveCase(MoodleLive.api, "Message.getBlockedUsers#invalid-credentials") { live in
+            let userId = try live.choose("userId", [try await MoodleLive.siteGetSiteInfo(live)].compactMap { $0.userId })
+            try await live.refused(acceptsEmpty: false) { try await live.api.message.getBlockedUsers(userId: userId, auth: MoodleTokenAuth(token: "mybicocca-invalid-credential")) }
+        }
+    }
+
+    func test_getContactRequests1() async throws {
+        try await liveCase(MoodleLive.api, "Message.getContactRequests#1") { live in
+            let userId = try live.choose("userId", [try await MoodleLive.siteGetSiteInfo(live)].compactMap { $0.userId })
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleConversationMember\"}}") { try await live.api.message.getContactRequests(userId: userId, auth: auth) }
+            live.fingerprint { f in f.list(result) { item0 in MoodleLive.writeMoodleConversationMember(f, item0) } }
+        }
+    }
+
+    func test_getConversation1() async throws {
+        try await liveCase(MoodleLive.api, "Message.getConversation#1") { live in
+            let userId = try live.choose("userId", [try await MoodleLive.siteGetSiteInfo(live)].compactMap { $0.userId })
+            let conversationId = try live.choose("conversationId", [try await MoodleLive.messageGetSelfConversation(live)].compactMap { $0.id })
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleConversation\"}") { try await live.api.message.getConversation(userId: userId, conversationId: conversationId, includecontactrequests: true, includeprivacyinfo: true, auth: auth) }
+            live.fingerprint { f in MoodleLive.writeMoodleConversation(f, result) }
+        }
+    }
+
+    func test_getConversation2() async throws {
+        try await liveCase(MoodleLive.api, "Message.getConversation#2", index: 1) { live in
+            let userId = try live.choose("userId", [try await MoodleLive.siteGetSiteInfo(live)].compactMap { $0.userId })
+            let conversationId = try live.choose("conversationId", [try await MoodleLive.messageGetSelfConversation(live)].compactMap { $0.id })
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleConversation\"}") { try await live.api.message.getConversation(userId: userId, conversationId: conversationId, includecontactrequests: false, includeprivacyinfo: true, newestmessagesfirst: false, auth: auth) }
+            live.fingerprint { f in MoodleLive.writeMoodleConversation(f, result) }
+        }
+    }
+
+    func test_getConversation3() async throws {
+        try await liveCase(MoodleLive.api, "Message.getConversation#3", index: 2) { live in
+            let userId = try live.choose("userId", [try await MoodleLive.siteGetSiteInfo(live)].compactMap { $0.userId })
+            let conversationId = try live.choose("conversationId", [try await MoodleLive.messageGetSelfConversation(live)].compactMap { $0.id })
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleConversation\"}") { try await live.api.message.getConversation(userId: userId, conversationId: conversationId, includecontactrequests: true, includeprivacyinfo: false, newestmessagesfirst: false, auth: auth) }
+            live.fingerprint { f in MoodleLive.writeMoodleConversation(f, result) }
+        }
+    }
+
+    func test_getConversation4() async throws {
+        try await liveCase(MoodleLive.api, "Message.getConversation#4", index: 3) { live in
+            let userId = try live.choose("userId", [try await MoodleLive.siteGetSiteInfo(live)].compactMap { $0.userId })
+            let conversationId = try live.choose("conversationId", [try await MoodleLive.messageGetSelfConversation(live)].compactMap { $0.id })
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleConversation\"}") { try await live.api.message.getConversation(userId: userId, conversationId: conversationId, includecontactrequests: false, includeprivacyinfo: false, newestmessagesfirst: true, auth: auth) }
+            live.fingerprint { f in MoodleLive.writeMoodleConversation(f, result) }
+        }
+    }
+
+    func test_getConversation5() async throws {
+        try await liveCase(MoodleLive.api, "Message.getConversation#5", index: 4) { live in
+            let userId = try live.choose("userId", [try await MoodleLive.siteGetSiteInfo(live)].compactMap { $0.userId })
+            let conversationId = try live.choose("conversationId", [try await MoodleLive.messageGetSelfConversation(live)].compactMap { $0.id })
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleConversation\"}") { try await live.api.message.getConversation(userId: userId, conversationId: conversationId, includecontactrequests: false, includeprivacyinfo: false, auth: auth) }
+            live.fingerprint { f in MoodleLive.writeMoodleConversation(f, result) }
+        }
+    }
+
+    func test_getConversation6() async throws {
+        try await liveCase(MoodleLive.api, "Message.getConversation#6", index: 5) { live in
+            let userId = try live.choose("userId", [try await MoodleLive.siteGetSiteInfo(live)].compactMap { $0.userId })
+            let conversationId = try live.choose("conversationId", [try await MoodleLive.messageGetSelfConversation(live)].compactMap { $0.id })
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleConversation\"}") { try await live.api.message.getConversation(userId: userId, conversationId: conversationId, includecontactrequests: true, includeprivacyinfo: true, newestmessagesfirst: true, auth: auth) }
+            live.fingerprint { f in MoodleLive.writeMoodleConversation(f, result) }
+        }
+    }
+
+    func test_getConversationCounts1() async throws {
+        try await liveCase(MoodleLive.api, "Message.getConversationCounts#1") { live in
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleUnreadConversationCounts\"}") { try await live.api.message.getConversationCounts(auth: auth) }
+            live.fingerprint { f in MoodleLive.writeMoodleUnreadConversationCounts(f, result) }
+        }
+    }
+
+    func test_getConversationCounts2() async throws {
+        try await liveCase(MoodleLive.api, "Message.getConversationCounts#2", index: 1) { live in
+            let userId = try live.choose("userId", [try await MoodleLive.siteGetSiteInfo(live)].compactMap { $0.userId })
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleUnreadConversationCounts\"}") { try await live.api.message.getConversationCounts(userId: userId, auth: auth) }
+            live.fingerprint { f in MoodleLive.writeMoodleUnreadConversationCounts(f, result) }
+        }
+    }
+
+    func test_getConversationMembers1() async throws {
+        try await liveCase(MoodleLive.api, "Message.getConversationMembers#1") { live in
+            let userId = try live.choose("userId", [try await MoodleLive.siteGetSiteInfo(live)].compactMap { $0.userId })
+            let conversationId = try live.choose("conversationId", [try await MoodleLive.messageGetSelfConversation(live)].compactMap { $0.id })
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleConversationMember\"}}") { try await live.api.message.getConversationMembers(userId: userId, conversationId: conversationId, auth: auth) }
+            live.fingerprint { f in f.list(result) { item0 in MoodleLive.writeMoodleConversationMember(f, item0) } }
+        }
+    }
+
+    func test_getConversationMembers2() async throws {
+        try await liveCase(MoodleLive.api, "Message.getConversationMembers#2", index: 1) { live in
+            let userId = try live.choose("userId", [try await MoodleLive.siteGetSiteInfo(live)].compactMap { $0.userId })
+            let conversationId = try live.choose("conversationId", [try await MoodleLive.messageGetSelfConversation(live)].compactMap { $0.id })
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleConversationMember\"}}") { try await live.api.message.getConversationMembers(userId: userId, conversationId: conversationId, includeprivacyinfo: false, auth: auth) }
+            live.fingerprint { f in f.list(result) { item0 in MoodleLive.writeMoodleConversationMember(f, item0) } }
+        }
+    }
+
+    func test_getConversationMembers3() async throws {
+        try await liveCase(MoodleLive.api, "Message.getConversationMembers#3", index: 2) { live in
+            let userId = try live.choose("userId", [try await MoodleLive.siteGetSiteInfo(live)].compactMap { $0.userId })
+            let conversationId = try live.choose("conversationId", [try await MoodleLive.messageGetSelfConversation(live)].compactMap { $0.id })
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleConversationMember\"}}") { try await live.api.message.getConversationMembers(userId: userId, conversationId: conversationId, includecontactrequests: true, auth: auth) }
+            live.fingerprint { f in f.list(result) { item0 in MoodleLive.writeMoodleConversationMember(f, item0) } }
+        }
+    }
+
+    func test_getConversationMembers4() async throws {
+        try await liveCase(MoodleLive.api, "Message.getConversationMembers#4", index: 3) { live in
+            let userId = try live.choose("userId", [try await MoodleLive.siteGetSiteInfo(live)].compactMap { $0.userId })
+            let conversationId = try live.choose("conversationId", [try await MoodleLive.messageGetSelfConversation(live)].compactMap { $0.id })
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleConversationMember\"}}") { try await live.api.message.getConversationMembers(userId: userId, conversationId: conversationId, includeprivacyinfo: true, auth: auth) }
+            live.fingerprint { f in f.list(result) { item0 in MoodleLive.writeMoodleConversationMember(f, item0) } }
+        }
+    }
+
+    func test_getConversationMembers5() async throws {
+        try await liveCase(MoodleLive.api, "Message.getConversationMembers#5", index: 4) { live in
+            let userId = try live.choose("userId", [try await MoodleLive.siteGetSiteInfo(live)].compactMap { $0.userId })
+            let conversationId = try live.choose("conversationId", [try await MoodleLive.messageGetSelfConversation(live)].compactMap { $0.id })
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleConversationMember\"}}") { try await live.api.message.getConversationMembers(userId: userId, conversationId: conversationId, includecontactrequests: true, includeprivacyinfo: true, auth: auth) }
+            live.fingerprint { f in f.list(result) { item0 in MoodleLive.writeMoodleConversationMember(f, item0) } }
+        }
+    }
+
+    func test_getConversationMembers6() async throws {
+        try await liveCase(MoodleLive.api, "Message.getConversationMembers#6", index: 5) { live in
+            let userId = try live.choose("userId", [try await MoodleLive.siteGetSiteInfo(live)].compactMap { $0.userId })
+            let conversationId = try live.choose("conversationId", [try await MoodleLive.messageGetSelfConversation(live)].compactMap { $0.id })
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleConversationMember\"}}") { try await live.api.message.getConversationMembers(userId: userId, conversationId: conversationId, includecontactrequests: false, includeprivacyinfo: true, auth: auth) }
+            live.fingerprint { f in f.list(result) { item0 in MoodleLive.writeMoodleConversationMember(f, item0) } }
+        }
+    }
+
     func test_getConversations1() async throws {
         try await liveCase(MoodleLive.api, "Message.getConversations#1") { live in
             let userId = try live.choose("userId", [try await MoodleLive.siteGetSiteInfo(live)].compactMap { $0.userId })
@@ -61,10 +223,39 @@ final class MoodleMessageLiveTests: XCTestCase {
         }
     }
 
-    func test_getConversationsInvalidCredentials() async throws {
-        try await liveCase(MoodleLive.api, "Message.getConversations#invalid-credentials") { live in
+    func test_getReceivedContactRequestsCount1() async throws {
+        try await liveCase(MoodleLive.api, "Message.getReceivedContactRequestsCount#1") { live in
             let userId = try live.choose("userId", [try await MoodleLive.siteGetSiteInfo(live)].compactMap { $0.userId })
-            try await live.refused(acceptsEmpty: false) { try await live.api.message.getConversations(userId: userId, auth: MoodleTokenAuth(token: "mybicocca-invalid-credential")) }
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"int\"}") { try await live.api.message.getReceivedContactRequestsCount(userId: userId, auth: auth) }
+            live.fingerprint { f in f.int(result) }
+        }
+    }
+
+    func test_getSelfConversation1() async throws {
+        try await liveCase(MoodleLive.api, "Message.getSelfConversation#1") { live in
+            let userId = try live.choose("userId", [try await MoodleLive.siteGetSiteInfo(live)].compactMap { $0.userId })
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleConversation\"}") { try await live.api.message.getSelfConversation(userId: userId, auth: auth) }
+            live.fingerprint { f in MoodleLive.writeMoodleConversation(f, result) }
+        }
+    }
+
+    func test_getSelfConversation2() async throws {
+        try await liveCase(MoodleLive.api, "Message.getSelfConversation#2", index: 1) { live in
+            let userId = try live.choose("userId", [try await MoodleLive.siteGetSiteInfo(live)].compactMap { $0.userId })
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleConversation\"}") { try await live.api.message.getSelfConversation(userId: userId, newestmessagesfirst: true, auth: auth) }
+            live.fingerprint { f in MoodleLive.writeMoodleConversation(f, result) }
+        }
+    }
+
+    func test_getSelfConversation3() async throws {
+        try await liveCase(MoodleLive.api, "Message.getSelfConversation#3", index: 2) { live in
+            let userId = try live.choose("userId", [try await MoodleLive.siteGetSiteInfo(live)].compactMap { $0.userId })
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleConversation\"}") { try await live.api.message.getSelfConversation(userId: userId, newestmessagesfirst: false, auth: auth) }
+            live.fingerprint { f in MoodleLive.writeMoodleConversation(f, result) }
         }
     }
 
@@ -82,6 +273,49 @@ final class MoodleMessageLiveTests: XCTestCase {
             let auth = try await MoodleLive.tokenCredentials(live)
             let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleUnreadConversationCounts\"}") { try await live.api.message.getUnreadConversationCounts(userId: userId, auth: auth) }
             live.fingerprint { f in MoodleLive.writeMoodleUnreadConversationCounts(f, result) }
+        }
+    }
+
+    func test_getUserContacts1() async throws {
+        try await liveCase(MoodleLive.api, "Message.getUserContacts#1") { live in
+            let userId = try live.choose("userId", [try await MoodleLive.siteGetSiteInfo(live)].compactMap { $0.userId })
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleConversationMember\"}}") { try await live.api.message.getUserContacts(userId: userId, auth: auth) }
+            live.fingerprint { f in f.list(result) { item0 in MoodleLive.writeMoodleConversationMember(f, item0) } }
+        }
+    }
+
+    func test_getUserMessagePreferences1() async throws {
+        try await liveCase(MoodleLive.api, "Message.getUserMessagePreferences#1") { live in
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleMessageGetUserMessagePreferencesResponse\"}") { try await live.api.message.getUserMessagePreferences(auth: auth) }
+            live.fingerprint { f in MoodleLive.writeMoodleMessageGetUserMessagePreferencesResponse(f, result) }
+        }
+    }
+
+    func test_getUserMessagePreferences2() async throws {
+        try await liveCase(MoodleLive.api, "Message.getUserMessagePreferences#2", index: 1) { live in
+            let userId = try live.choose("userId", [try await MoodleLive.siteGetSiteInfo(live)].compactMap { $0.userId })
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleMessageGetUserMessagePreferencesResponse\"}") { try await live.api.message.getUserMessagePreferences(userId: userId, auth: auth) }
+            live.fingerprint { f in MoodleLive.writeMoodleMessageGetUserMessagePreferencesResponse(f, result) }
+        }
+    }
+
+    func test_getUserNotificationPreferences1() async throws {
+        try await liveCase(MoodleLive.api, "Message.getUserNotificationPreferences#1") { live in
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleMessageGetUserNotificationPreferencesResponse\"}") { try await live.api.message.getUserNotificationPreferences(auth: auth) }
+            live.fingerprint { f in MoodleLive.writeMoodleMessageGetUserNotificationPreferencesResponse(f, result) }
+        }
+    }
+
+    func test_getUserNotificationPreferences2() async throws {
+        try await liveCase(MoodleLive.api, "Message.getUserNotificationPreferences#2", index: 1) { live in
+            let userId = try live.choose("userId", [try await MoodleLive.siteGetSiteInfo(live)].compactMap { $0.userId })
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleMessageGetUserNotificationPreferencesResponse\"}") { try await live.api.message.getUserNotificationPreferences(userId: userId, auth: auth) }
+            live.fingerprint { f in MoodleLive.writeMoodleMessageGetUserNotificationPreferencesResponse(f, result) }
         }
     }
 }

@@ -8,6 +8,8 @@ import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
 import io.ktor.http.HttpMethod
 import io.ktor.http.parameters
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleBadgesGetBadgeResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleBadgesGetUserBadgeByHashResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleUserBadgesResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.appendBrackets
@@ -20,6 +22,48 @@ class MoodleBadgeApi(
     client: HttpClient,
     json: Json
 ) : RestApi(client, json, "", MoodleRuntime.policy) {
+
+    /**
+     * Retrieves a badge by id.
+     *
+     * @param id Badge id
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getBadge(
+        id: Int,
+        auth: MoodleTokenAuth
+    ): MoodleBadgesGetBadgeResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleBadgesGetBadgeResponse>()) {
+            setBody(FormDataContent(parameters {
+                append("id", id.toString())
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_badges_get_badge")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Returns the badge awarded to a user by hash.
+     *
+     * @param hash Badge issued hash
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getUserBadgeByHash(
+        hash: String,
+        auth: MoodleTokenAuth
+    ): MoodleBadgesGetUserBadgeByHashResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleBadgesGetUserBadgeByHashResponse>()) {
+            setBody(FormDataContent(parameters {
+                append("hash", hash)
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_badges_get_user_badge_by_hash")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
 
     /**
      * Returns the list of badges awarded to a user.

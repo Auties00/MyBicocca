@@ -9,7 +9,7 @@ import XCTest
 final class MoodleSiteLiveTests: XCTestCase {
     func test_componentStrings1() async throws {
         try await liveCase(MoodleLive.api, "Site.componentStrings#1") { live in
-            let component = try live.choose("component", [try await MoodleLive.calendarGetActionEventsByTimesort(live)].compactMap { $0.events }.flatMap { $0 }.compactMap { $0.component })
+            let component = try live.choose("component", [try await MoodleLive.draftAreaGetUnusedDraftItemid(live)].compactMap { $0.component })
             let auth = try await MoodleLive.tokenCredentials(live)
             let result = try await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleComponentString\"}}") { try await live.api.site.componentStrings(component: component, auth: auth) }
             live.fingerprint { f in f.list(result) { item0 in MoodleLive.writeMoodleComponentString(f, item0) } }

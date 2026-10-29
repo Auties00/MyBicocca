@@ -30,12 +30,8 @@ public struct MoodleActivitiesCompletionResponse: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if !statuses.isEmpty {
-            try container.encode(statuses, forKey: .statuses)
-        }
-        if !warnings.isEmpty {
-            try container.encode(warnings, forKey: .warnings)
-        }
+        try container.encode(statuses, forKey: .statuses)
+        try container.encode(warnings, forKey: .warnings)
     }
 }
 
@@ -139,48 +135,20 @@ public struct MoodleActivityCompletionStatus: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if cmId != 0 {
-            try container.encode(cmId, forKey: .cmId)
-        }
-        if modName != "" {
-            try container.encode(modName, forKey: .modName)
-        }
-        if instance != 0 {
-            try container.encode(instance, forKey: .instance)
-        }
-        if state != 0 {
-            try container.encode(state, forKey: .state)
-        }
-        if timeCompleted != 0 {
-            try container.encode(timeCompleted, forKey: .timeCompleted)
-        }
-        if tracking != 0 {
-            try container.encode(tracking, forKey: .tracking)
-        }
-        if overrideBy != nil {
-            try container.encode(overrideBy, forKey: .overrideBy)
-        }
-        if valueUsed != nil {
-            try container.encode(valueUsed, forKey: .valueUsed)
-        }
-        if hasCompletion != nil {
-            try container.encode(hasCompletion, forKey: .hasCompletion)
-        }
-        if isAutomatic != nil {
-            try container.encode(isAutomatic, forKey: .isAutomatic)
-        }
-        if isTrackedUser != nil {
-            try container.encode(isTrackedUser, forKey: .isTrackedUser)
-        }
-        if userVisible != nil {
-            try container.encode(userVisible, forKey: .userVisible)
-        }
-        if !details.isEmpty {
-            try container.encode(details, forKey: .details)
-        }
-        if isOverallComplete != nil {
-            try container.encode(isOverallComplete, forKey: .isOverallComplete)
-        }
+        try container.encode(cmId, forKey: .cmId)
+        try container.encode(modName, forKey: .modName)
+        try container.encode(instance, forKey: .instance)
+        try container.encode(state, forKey: .state)
+        try container.encode(timeCompleted, forKey: .timeCompleted)
+        try container.encode(tracking, forKey: .tracking)
+        try container.encode(overrideBy, forKey: .overrideBy)
+        try container.encode(valueUsed, forKey: .valueUsed)
+        try container.encode(hasCompletion, forKey: .hasCompletion)
+        try container.encode(isAutomatic, forKey: .isAutomatic)
+        try container.encode(isTrackedUser, forKey: .isTrackedUser)
+        try container.encode(userVisible, forKey: .userVisible)
+        try container.encode(details, forKey: .details)
+        try container.encode(isOverallComplete, forKey: .isOverallComplete)
     }
 }
 
@@ -210,9 +178,7 @@ public struct MoodleCompletionRule: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if ruleName != "" {
-            try container.encode(ruleName, forKey: .ruleName)
-        }
+        try container.encode(ruleName, forKey: .ruleName)
         try container.encode(ruleValue, forKey: .ruleValue)
     }
 }
@@ -244,47 +210,187 @@ public struct MoodleCompletionRuleValue: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if status != 0 {
-            try container.encode(status, forKey: .status)
-        }
-        if description != "" {
-            try container.encode(description, forKey: .description)
-        }
+        try container.encode(status, forKey: .status)
+        try container.encode(description, forKey: .description)
     }
 }
 
-public struct MoodleStatusResponse: Codable, Hashable, Sendable {
-    /// status, true if success
-    public var status: Bool
+/// Course completion status
+public struct MoodleCompletionGetCourseCompletionStatusResponse: Codable, Hashable, Sendable {
+    /// Course status
+    public var completionstatus: MoodleCompletionstatu
     /// list of warnings
     public var warnings: [MoodleWarning]
 
     public init(
-        status: Bool = false,
+        completionstatus: MoodleCompletionstatu,
         warnings: [MoodleWarning] = []
     ) {
-        self.status = status
+        self.completionstatus = completionstatus
         self.warnings = warnings
     }
 
     private enum CodingKeys: String, CodingKey {
-        case status = "status"
+        case completionstatus = "completionstatus"
         case warnings = "warnings"
     }
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.status = container.decodeLenient(Bool.self, forKey: .status) ?? false
+        self.completionstatus = try container.required(container.decodeFolded(MoodleCompletionstatu.self, forKey: .completionstatus), forKey: .completionstatus)
         self.warnings = container.decodeLenient([MoodleWarning].self, forKey: .warnings) ?? []
     }
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if status != false {
-            try container.encode(status, forKey: .status)
-        }
-        if !warnings.isEmpty {
-            try container.encode(warnings, forKey: .warnings)
-        }
+        try container.encode(completionstatus, forKey: .completionstatus)
+        try container.encode(warnings, forKey: .warnings)
+    }
+}
+
+/// Course status
+public struct MoodleCompletionstatu: Codable, Hashable, Sendable {
+    /// true if the course is complete, false otherwise
+    public var completed: Bool
+    /// aggregation method 1 means all, 2 means any
+    public var aggregation: Int
+    public var completions: [MoodleCompletion]
+
+    public init(
+        completed: Bool = false,
+        aggregation: Int = 0,
+        completions: [MoodleCompletion] = []
+    ) {
+        self.completed = completed
+        self.aggregation = aggregation
+        self.completions = completions
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case completed = "completed"
+        case aggregation = "aggregation"
+        case completions = "completions"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.completed = container.decodeLenient(Bool.self, forKey: .completed) ?? false
+        self.aggregation = container.decodeLenient(Int.self, forKey: .aggregation) ?? 0
+        self.completions = container.decodeLenient([MoodleCompletion].self, forKey: .completions) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(completed, forKey: .completed)
+        try container.encode(aggregation, forKey: .aggregation)
+        try container.encode(completions, forKey: .completions)
+    }
+}
+
+/// Completions
+public struct MoodleCompletion: Codable, Hashable, Sendable {
+    /// Completion criteria type
+    public var type: Int
+    /// Completion criteria Title
+    public var title: String
+    /// Completion status (Yes/No) a % or number
+    public var status: String
+    /// Completion status (true/false)
+    public var complete: Bool
+    /// Timestamp for criteria completetion
+    public var timeCompleted: Int64
+    /// details
+    public var details: MoodleDetail
+
+    public init(
+        type: Int = 0,
+        title: String = "",
+        status: String = "",
+        complete: Bool = false,
+        timeCompleted: Int64 = 0,
+        details: MoodleDetail
+    ) {
+        self.type = type
+        self.title = title
+        self.status = status
+        self.complete = complete
+        self.timeCompleted = timeCompleted
+        self.details = details
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case type = "type"
+        case title = "title"
+        case status = "status"
+        case complete = "complete"
+        case timeCompleted = "timecompleted"
+        case details = "details"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.type = container.decodeLenient(Int.self, forKey: .type) ?? 0
+        self.title = container.decodeLenient(String.self, forKey: .title) ?? ""
+        self.status = container.decodeLenient(String.self, forKey: .status) ?? ""
+        self.complete = container.decodeLenient(Bool.self, forKey: .complete) ?? false
+        self.timeCompleted = container.decodeLenient(Int64.self, forKey: .timeCompleted) ?? 0
+        self.details = try container.required(container.decodeFolded(MoodleDetail.self, forKey: .details), forKey: .details)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(type, forKey: .type)
+        try container.encode(title, forKey: .title)
+        try container.encode(status, forKey: .status)
+        try container.encode(complete, forKey: .complete)
+        try container.encode(timeCompleted, forKey: .timeCompleted)
+        try container.encode(details, forKey: .details)
+    }
+}
+
+/// details
+public struct MoodleDetail: Codable, Hashable, Sendable {
+    /// Type description
+    public var type: String
+    /// Criteria description
+    public var criteria: String
+    /// Requirement description
+    public var requirement: String
+    /// Status description, can be anything
+    public var status: String
+
+    public init(
+        type: String = "",
+        criteria: String = "",
+        requirement: String = "",
+        status: String = ""
+    ) {
+        self.type = type
+        self.criteria = criteria
+        self.requirement = requirement
+        self.status = status
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case type = "type"
+        case criteria = "criteria"
+        case requirement = "requirement"
+        case status = "status"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.type = container.decodeLenient(String.self, forKey: .type) ?? ""
+        self.criteria = container.decodeLenient(String.self, forKey: .criteria) ?? ""
+        self.requirement = container.decodeLenient(String.self, forKey: .requirement) ?? ""
+        self.status = container.decodeLenient(String.self, forKey: .status) ?? ""
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(type, forKey: .type)
+        try container.encode(criteria, forKey: .criteria)
+        try container.encode(requirement, forKey: .requirement)
+        try container.encode(status, forKey: .status)
     }
 }

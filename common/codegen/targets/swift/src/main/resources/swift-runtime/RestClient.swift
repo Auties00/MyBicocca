@@ -7,11 +7,14 @@ public struct ApiFailure: Error, Sendable {
     public let code: String?
     /// The human-readable message the body carried, else the code, else a description of the status.
     public let message: String
+    /// The human-readable message the body carried, if any.
+    public let serverMessage: String?
 
-    public init(status: Int, code: String?, message: String) {
+    public init(status: Int, code: String?, message: String, serverMessage: String? = nil) {
         self.status = status
         self.code = code
         self.message = message
+        self.serverMessage = serverMessage
     }
 }
 
@@ -245,7 +248,8 @@ public struct RestClient: Sendable {
     private func failure(_ response: RestResponse) -> ApiFailure {
         let body = json(response)
         let code = policy.errors.code(body)
-        return ApiFailure(status: response.status, code: code, message: policy.errors.message(body) ?? code ?? "Request failed with status \(response.status)")
+        let serverMessage = policy.errors.message(body)
+        return ApiFailure(status: response.status, code: code, message: serverMessage ?? code ?? "Request failed with status \(response.status)", serverMessage: serverMessage)
     }
 
     private func json(_ response: RestResponse) -> JSONValue? {

@@ -18,6 +18,10 @@ export class DemoError extends Error {
   readonly status: number;
   /** The machine-readable error code the body carried, if any. */
   readonly code: string | undefined;
+  /** The human-readable message the body carried, else the code, else a description of the status. */
+  readonly errorMessage: string;
+  /** The human-readable message the body carried, if any. */
+  readonly serverMessage: string | undefined;
 
   /** @param expectedRoles The roles the operation requires, a hint when the status is 401 or 403. */
   constructor(failure: ApiFailure, readonly expectedRoles: readonly DemoPermissionLevel[] = []) {
@@ -25,5 +29,7 @@ export class DemoError extends Error {
     super(`Demo request failed with status ${failure.status}${code}: ${failure.message}`);
     this.status = failure.status;
     this.code = failure.code;
+    this.errorMessage = failure.message;
+    this.serverMessage = failure.serverMessage;
   }
 }
