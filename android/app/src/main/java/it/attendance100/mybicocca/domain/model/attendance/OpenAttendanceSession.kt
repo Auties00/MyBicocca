@@ -1,18 +1,21 @@
 package it.attendance100.mybicocca.domain.model.attendance
 
 /**
- * A Moodle mod_attendance session currently open for student self-marking, discovered through
- * the tool_mobile_get_content bridge. The registry "Presenze" sub-screen lists open sessions
- * and lets the student mark themselves present.
+ * A Moodle mod_attendance session currently open for student self-marking, found on the
+ * module's page and described by the plugin's mobile take form. Scanned attendance QR links
+ * are matched against these before marking.
  *
  * @property sessionId Moodle session id (the "sessid" carried by attendance QR links).
  * @property module Attendance activity the session belongs to.
+ * @property time The session's date and time as Moodle renders it, which is how the marking
+ *   result is matched to the session.
  * @property requiresPassword Whether marking requires the session password ("studentpass").
  * @property statuses Status choices the student may submit.
  */
 data class OpenAttendanceSession(
     val sessionId: String,
     val module: AttendanceModuleRef,
+    val time: String,
     val requiresPassword: Boolean,
     val statuses: List<AttendanceStatusOption>,
 )

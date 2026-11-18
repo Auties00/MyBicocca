@@ -35,7 +35,7 @@ fun EasyStaffAttendanceRecord.toDomain(): ClassroomAttendance = ClassroomAttenda
  */
 fun ElearningAttendanceSummary.toDomain(label: String): SessionAttendance = SessionAttendance(
     label = label,
-    attendedSessions = attendedSessions,
+    recordedSessions = takenSessions,
     recordedPercentage = takenSessionsPercentage,
     totalSessions = totalSessions,
     overallPercentage = allSessionsPercentage,
@@ -48,6 +48,7 @@ fun ElearningAttendanceMarkableSession.toDomain(module: AttendanceModuleRef): Op
     OpenAttendanceSession(
         sessionId = sessionId,
         module = module,
+        time = time,
         requiresPassword = requiresPassword,
         statuses = statuses.map { AttendanceStatusOption(it.id, it.description) },
     )
@@ -87,6 +88,11 @@ fun ElearningAttendanceMarkResult.toOutcome(): PresenceMarkOutcome = when (this)
             message = UiText.StringResource(R.string.attendance_msg_session_closed),
         )
     }
+
+    ElearningAttendanceMarkResult.Unconfirmed ->
+        PresenceMarkOutcome.Failed(
+            message = UiText.StringResource(R.string.attendance_msg_unconfirmed),
+        )
 
     is ElearningAttendanceMarkResult.Failed ->
         PresenceMarkOutcome.Failed(

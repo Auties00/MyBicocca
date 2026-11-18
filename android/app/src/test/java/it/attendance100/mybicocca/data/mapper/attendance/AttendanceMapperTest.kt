@@ -45,7 +45,7 @@ class AttendanceMapperTest {
     @Test
     fun `moodle summary maps to a labeled session register`() {
         val summary = ElearningAttendanceSummary(
-            attendedSessions = 5,
+            takenSessions = 5,
             takenSessionsPercentage = 83.3,
             totalSessions = 12,
             allSessionsPercentage = 41.6,
@@ -54,7 +54,8 @@ class AttendanceMapperTest {
             maxPossiblePercentage = 100.0,
         ).toDomain("Laboratorio")
         assertThat(summary.label).isEqualTo("Laboratorio")
-        assertThat(summary.attendedSessions).isEqualTo(5)
+        assertThat(summary.recordedSessions).isEqualTo(5)
+        assertThat(summary.loadFailed).isFalse()
         assertThat(summary.recordedPercentage).isEqualTo(83.3)
         assertThat(summary.totalSessions).isEqualTo(12)
         assertThat(summary.overallPercentage).isEqualTo(41.6)
@@ -67,6 +68,7 @@ class AttendanceMapperTest {
         val module = AttendanceModuleRef(courseId = 10, courseModuleId = 20, name = "Presenze")
         val session = ElearningAttendanceMarkableSession(
             sessionId = "55",
+            time = "mer 18 nov 2026 2PM - 4PM",
             requiresPassword = true,
             statuses = listOf(
                 ElearningAttendanceStatusOption("1", "Presente"),
@@ -75,6 +77,7 @@ class AttendanceMapperTest {
         ).toDomain(module)
         assertThat(session.sessionId).isEqualTo("55")
         assertThat(session.module).isEqualTo(module)
+        assertThat(session.time).isEqualTo("mer 18 nov 2026 2PM - 4PM")
         assertThat(session.requiresPassword).isTrue()
         assertThat(session.statuses.map { it.id }).containsExactly("1", "2").inOrder()
         assertThat(session.statuses.first().description).isEqualTo("Presente")
@@ -129,6 +132,13 @@ class AttendanceMapperTest {
         val outcome = ElearningAttendanceMarkResult.NotOpen(null).toOutcome()
         assertThat(outcome).isInstanceOf(PresenceMarkOutcome.NotOpen::class.java)
         assertThat(outcome.message).isEqualTo(UiText.StringResource(R.string.attendance_msg_session_closed))
+    }
+
+    @Test
+    fun `mark result Unconfirmed is a failure that says to check the register`() {
+        val outcome = ElearningAttendanceMarkResult.Unconfirmed.toOutcome()
+        assertThat(outcome).isInstanceOf(PresenceMarkOutcome.Failed::class.java)
+        assertThat(outcome.message).isEqualTo(UiText.StringResource(R.string.attendance_msg_unconfirmed))
     }
 
     @Test

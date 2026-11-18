@@ -21,11 +21,11 @@ interface AttendanceRepository {
      */
     suspend fun getPendingCourses(careerId: CareerId): List<CourseAttendance>
 
+    /** The sessions of [modules] the student can self-mark right now. */
     suspend fun getOpenSessions(modules: List<AttendanceModuleRef>): List<OpenAttendanceSession>
 
     suspend fun markSession(
-        module: AttendanceModuleRef,
-        sessionId: String,
+        session: OpenAttendanceSession,
         statusId: String?,
         password: String?,
     ): PresenceMarkOutcome

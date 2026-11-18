@@ -61,7 +61,7 @@ class DemoAttendanceRepository @Inject constructor() : AttendanceRepository {
             sessionAttendance = listOf(
                 SessionAttendance(
                     label = "Lezioni",
-                    attendedSessions = present,
+                    recordedSessions = present,
                     recordedPercentage = percentage,
                     totalSessions = held + 6,
                     overallPercentage = present * 100.0 / (held + 6),
@@ -79,6 +79,7 @@ class DemoAttendanceRepository @Inject constructor() : AttendanceRepository {
             OpenAttendanceSession(
                 sessionId = OPEN_SESSION,
                 module = open,
+                time = "mer 18 nov 2026 2PM - 4PM",
                 requiresPassword = false,
                 statuses = listOf(AttendanceStatusOption("P", "Presente")),
             ),
@@ -86,11 +87,10 @@ class DemoAttendanceRepository @Inject constructor() : AttendanceRepository {
     }
 
     override suspend fun markSession(
-        module: AttendanceModuleRef,
-        sessionId: String,
+        session: OpenAttendanceSession,
         statusId: String?,
         password: String?,
-    ): PresenceMarkOutcome = record(sessionId)
+    ): PresenceMarkOutcome = record(session.sessionId)
 
     override suspend fun registerPresence(scan: PresenceScan, careerId: CareerId): PresenceMarkOutcome = when (scan) {
         is PresenceScan.SessionLink -> record(scan.sessionId)
