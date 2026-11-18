@@ -4,8 +4,11 @@ import io.ktor.client.*
 import it.attendance100.mybicocca.data.remote.common.exception.HtmlParsingException
 import it.attendance100.mybicocca.data.remote.common.util.cleanText
 import it.attendance100.mybicocca.data.remote.easystaff.dto.*
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.json.DecodeSequenceMode
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.decodeFromJsonElement
+import kotlinx.serialization.json.decodeToSequence
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import org.jsoup.Jsoup
@@ -141,6 +144,7 @@ class EasyStaffBuildingsApi(
      * @throws IllegalArgumentException if the buildings are empty
      * @return The room showcase results
      */
+    @OptIn(ExperimentalSerializationApi::class)
     suspend fun getRoomDetails(
         buildings: List<EasyStaffBuilding>,
         rooms: List<EasyStaffRoom> = emptyList(),
@@ -173,7 +177,13 @@ class EasyStaffBuildingsApi(
         val page = executeGetText(AGENDA_WEB_ENDPOINT, params)
         val jsonString = extractJsonFromJsAssignment(page, ROOM_SHOWCASE_VARIABLE)
             ?: throw HtmlParsingException("Cannot find $ROOM_SHOWCASE_VARIABLE in the room showcase")
-        return json.decodeFromString(PhpArrayValuesSerializer(EasyStaffRoomShowcaseBuilding.serializer()), jsonString)
+        // Decode only the first JSON value on the line, so any script after the assignment is ignored
+        return json.decodeToSequence(
+            jsonString.byteInputStream(),
+            PhpArrayValuesSerializer(EasyStaffRoomShowcaseBuilding.serializer()),
+            DecodeSequenceMode.WHITESPACE_SEPARATED
+        )
+            .first()
             .flatMap { building -> building.rooms.map { parseRoomDetails(building, it) } }
     }
 
@@ -195,7 +205,7 @@ class EasyStaffBuildingsApi(
             ?: parseRoomMapsLink(building.googleMapsIframe),
         interactive360Link = room.interactive360Link?.takeIf { it.isNotBlank() },
         description = room.description?.let { parseMultilineText(it) },
-        capacity = room.capacity?.toIntOrNull()?.takeIf { it > 0 },
+        capacity = room.capacity?.cleanText()?.toIntOrNull()?.takeIf { it > 0 },
         roomType = room.typeName?.cleanText()?.takeIf { it.isNotBlank() && it != "non definito" },
         floor = room.floorName?.let { parseRoomFloor(it) },
         isAccessible = room.barrierFree == "1",
