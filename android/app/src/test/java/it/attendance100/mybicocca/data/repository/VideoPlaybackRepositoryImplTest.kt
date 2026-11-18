@@ -49,7 +49,7 @@ class VideoPlaybackRepositoryImplTest {
 
     private fun newRepository(cachedEntryId: String? = null): VideoPlaybackRepositoryImpl {
         coEvery { sessionManager.elearning() } returns ElearningSession(elearningApi, token)
-        coEvery { sessionManager.reauthElearning() } returns ElearningSession(elearningApi, token)
+        coEvery { sessionManager.reauthElearning(any()) } returns ElearningSession(elearningApi, token)
         coEvery { kalturaEntryDao.getEntryId(cmId) } returns cachedEntryId
         return VideoPlaybackRepositoryImpl(sessionManager, videoProgressDao, kalturaEntryDao, courseRepository)
     }
@@ -88,7 +88,7 @@ class VideoPlaybackRepositoryImplTest {
         coVerify { kalturaEntryDao.upsert(capture(row)) }
         assertThat(row.captured.cmId).isEqualTo(cmId)
         assertThat(row.captured.entryId).isEqualTo("1_entry")
-        coVerify(exactly = 0) { sessionManager.reauthElearning() }
+        coVerify(exactly = 0) { sessionManager.reauthElearning(any()) }
     }
 
     @Test
@@ -103,7 +103,7 @@ class VideoPlaybackRepositoryImplTest {
         val stream = repository.resolveStream(cmId)
 
         assertThat(stream.cmId).isEqualTo(cmId)
-        coVerify(exactly = 1) { sessionManager.reauthElearning() }
+        coVerify(exactly = 1) { sessionManager.reauthElearning(stale = elearningApi) }
         coVerify(exactly = 2) { kalturaApi.resolveKalturaEntryIdForModule(cmId) }
     }
 
@@ -116,18 +116,56 @@ class VideoPlaybackRepositoryImplTest {
         val thrown = repository.runCatching { resolveStream(cmId) }.exceptionOrNull()
 
         assertThat(thrown).isInstanceOf(ElearningException::class.java)
-        coVerify(exactly = 1) { sessionManager.reauthElearning() }
+        coVerify(exactly = 1) { sessionManager.reauthElearning(any()) }
     }
 
     @Test
-    fun `resolveStream throws VideoUnavailableException for a withdrawn entry`() = runTest {
+    fun `resolveStream throws VideoUnavailableException when the module still points at a withdrawn entry`() = runTest {
         val repository = newRepository(cachedEntryId = "1_gone")
+        coEvery { kalturaApi.getVideoStream("1_gone", any()) } returns
+            ElearningKalturaVideoStreamResponse.Unavailable
+        coEvery { kalturaApi.resolveKalturaEntryIdForModule(cmId) } returns
+            ElearningKalturaEntryIdResponse.Success("1_gone")
+
+        val thrown = repository.runCatching { resolveStream(cmId) }.exceptionOrNull()
+
+        assertThat(thrown).isInstanceOf(VideoUnavailableException::class.java)
+        coVerify(exactly = 1) { kalturaEntryDao.delete(cmId) }
+        coVerify(exactly = 1) { kalturaApi.resolveKalturaEntryIdForModule(cmId) }
+    }
+
+    @Test
+    fun `resolveStream follows a module whose video was replaced`() = runTest {
+        val repository = newRepository(cachedEntryId = "1_old")
+        coEvery { kalturaApi.getVideoStream("1_old", any()) } returns
+            ElearningKalturaVideoStreamResponse.Unavailable
+        coEvery { kalturaApi.resolveKalturaEntryIdForModule(cmId) } returns
+            ElearningKalturaEntryIdResponse.Success("1_new")
+        coEvery { kalturaApi.getVideoStream("1_new", any()) } returns
+            streamSuccess().copy(kalturaEntryId = "1_new")
+
+        val stream = repository.resolveStream(cmId)
+
+        assertThat(stream.kalturaEntryId).isEqualTo("1_new")
+        coVerify(exactly = 1) { kalturaEntryDao.delete(cmId) }
+        val row = slot<KalturaEntryEntity>()
+        coVerify { kalturaEntryDao.upsert(capture(row)) }
+        assertThat(row.captured.entryId).isEqualTo("1_new")
+    }
+
+    @Test
+    fun `resolveStream doesn't re-read the page for an entry it just read`() = runTest {
+        val repository = newRepository()
+        coEvery { kalturaApi.resolveKalturaEntryIdForModule(cmId) } returns
+            ElearningKalturaEntryIdResponse.Success("1_gone")
         coEvery { kalturaApi.getVideoStream("1_gone", any()) } returns
             ElearningKalturaVideoStreamResponse.Unavailable
 
         val thrown = repository.runCatching { resolveStream(cmId) }.exceptionOrNull()
 
         assertThat(thrown).isInstanceOf(VideoUnavailableException::class.java)
+        coVerify(exactly = 1) { kalturaApi.resolveKalturaEntryIdForModule(cmId) }
+        coVerify(exactly = 0) { kalturaEntryDao.delete(any()) }
     }
 
     @Test
@@ -150,7 +188,7 @@ class VideoPlaybackRepositoryImplTest {
         val url = repository.thumbnailUrl(cmId)
 
         assertThat(url).isNull()
-        coVerify(exactly = 1) { sessionManager.reauthElearning() }
+        coVerify(exactly = 1) { sessionManager.reauthElearning(any()) }
     }
 
     @Test

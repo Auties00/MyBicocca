@@ -14,4 +14,7 @@ interface KalturaEntryDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(entity: KalturaEntryEntity)
+
+    @Query("DELETE FROM elearning_kaltura_entry WHERE cm_id = :cmId")
+    suspend fun delete(cmId: Int)
 }

@@ -31,7 +31,8 @@ import javax.inject.Singleton
  * A module's Kaltura entry id is read once from `mod/kalvidres/view.php`, with one session
  * renewal and retry when the `MoodleSession` cookie has expired, and then persisted in Room:
  * every load of that page logs a "viewed" event in Moodle. Streams are looked up with Kaltura
- * on every resolution, since an entry can be withdrawn at any time. When saved progress passes
+ * on every resolution, since an entry can be withdrawn at any time; a withdrawn entry makes the
+ * page be read once more, in case the module now points at another video. When saved progress passes
  * the completion threshold the row is flagged completed and the activity completion is
  * mirrored to the platform best-effort — a mirror failure never breaks local playback state.
  */
@@ -43,31 +44,54 @@ class VideoPlaybackRepositoryImpl @Inject constructor(
     private val elearningCourseRepository: ElearningCourseRepository,
 ) : VideoPlaybackRepository {
 
+    /**
+     * A persisted entry id whose stream Kaltura no longer has may be stale: the teacher can
+     * replace the module's video. The row is then dropped and the module's page read once more;
+     * the video is unavailable only if the page still points at a missing entry.
+     */
     override suspend fun resolveStream(cmId: Int): VideoStream {
-        val entryId = resolveEntryId(cmId)
-            ?: throw ElearningException(
-                errorCode = null,
-                errorMessage = "Could not resolve the Kaltura entry of cmId=$cmId after reauth",
-            )
-        return when (val stream = sessionManager.elearning().api.kaltura.getVideoStream(entryId)) {
-            is ElearningKalturaVideoStreamResponse.Success -> stream.toDomain(cmId)
-            ElearningKalturaVideoStreamResponse.Unavailable -> throw VideoUnavailableException(cmId)
-        }
+        val cachedEntryId = kalturaEntryDao.getEntryId(cmId)
+        val entryId = cachedEntryId ?: readEntryIdOrThrow(cmId)
+        streamOf(cmId, entryId)?.let { return it }
+        if (cachedEntryId == null) throw VideoUnavailableException(cmId)
+
+        kalturaEntryDao.delete(cmId)
+        val freshEntryId = readEntryIdOrThrow(cmId)
+        if (freshEntryId == cachedEntryId) throw VideoUnavailableException(cmId)
+        return streamOf(cmId, freshEntryId) ?: throw VideoUnavailableException(cmId)
     }
+
+    private suspend fun readEntryIdOrThrow(cmId: Int): String =
+        readEntryId(cmId) ?: throw ElearningException(
+            errorCode = null,
+            errorMessage = "Could not resolve the Kaltura entry of cmId=$cmId after reauth",
+        )
+
+    private suspend fun streamOf(cmId: Int, entryId: String): VideoStream? =
+        when (val stream = sessionManager.elearning().api.kaltura.getVideoStream(entryId)) {
+            is ElearningKalturaVideoStreamResponse.Success -> stream.toDomain(cmId)
+            ElearningKalturaVideoStreamResponse.Unavailable -> null
+        }
 
     override suspend fun thumbnailUrl(cmId: Int): String? =
         resolveEntryId(cmId)?.let { ElearningKalturaApi.thumbnailUrl(it, widthPx = THUMBNAIL_WIDTH_PX) }
 
+    /** Returns the persisted entry id of [cmId], or reads it from `view.php`. */
+    private suspend fun resolveEntryId(cmId: Int): String? =
+        kalturaEntryDao.getEntryId(cmId) ?: readEntryId(cmId)
+
     /**
-     * Returns the persisted entry id of [cmId], or reads it from `view.php`, renewing the
-     * Moodle session once if the page came back without it. Null when even the retry fails.
+     * Reads the entry id of [cmId] from `view.php` and persists it, renewing the Moodle session
+     * once, through the client that saw it expire, if the page came back without it. Null when
+     * even the retry fails.
      */
-    private suspend fun resolveEntryId(cmId: Int): String? {
-        kalturaEntryDao.getEntryId(cmId)?.let { return it }
-        val entryId = when (val response = sessionManager.elearning().api.kaltura.resolveKalturaEntryIdForModule(cmId)) {
+    private suspend fun readEntryId(cmId: Int): String? {
+        val session = sessionManager.elearning()
+        val entryId = when (val response = session.api.kaltura.resolveKalturaEntryIdForModule(cmId)) {
             is ElearningKalturaEntryIdResponse.Success -> response.kalturaEntryId
             ElearningKalturaEntryIdResponse.RequiresReauth -> {
-                when (val retry = sessionManager.reauthElearning().api.kaltura.resolveKalturaEntryIdForModule(cmId)) {
+                val renewed = sessionManager.reauthElearning(stale = session.api)
+                when (val retry = renewed.api.kaltura.resolveKalturaEntryIdForModule(cmId)) {
                     is ElearningKalturaEntryIdResponse.Success -> retry.kalturaEntryId
                     ElearningKalturaEntryIdResponse.RequiresReauth -> return null
                 }
