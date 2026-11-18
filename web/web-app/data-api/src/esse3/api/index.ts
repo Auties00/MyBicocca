@@ -23,6 +23,7 @@ export * from "./Esse3PersonalDataApi.js";
 export * from "./Esse3PlansApi.js";
 export * from "./Esse3QuestionnairesApi.js";
 export * from "./Esse3RecordsApi.js";
+export * from "./Esse3Resources.js";
 export * from "./Esse3RulePropertiesApi.js";
 export * from "./Esse3Server.js";
 export * from "./Esse3ServicesApi.js";
