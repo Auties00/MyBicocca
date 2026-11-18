@@ -13,7 +13,6 @@ This module provides type-safe API clients for integrating with the university's
 | `esse3`     | [Segreterie OnLine](https://s3w.si.unimib.it)                                  | Student administration (grades, exams, taxes)              |
 | `elearning` | [Moodle](https://elearning.unimib.it)                                          | E-learning platform (courses, assignments, quizzes)        |
 | `easystaff` | [Agenda Web](https://gestioneorari.didattica.unimib.it)                        | Scheduling system (lessons, exams, rooms)                  |
-| `bicoccapp` | [BicoccApp](https://play.google.com/store/apps/details?id=it.bicoccapp.unimib) | Official app backend API                                   |
 
 ## Tech Stack
 
@@ -40,8 +39,7 @@ data-api/
 ├── src/main/kotlin/.../data/remote/common/   # shared utilities (util/, exception/)
 ├── esse3/                 # data.remote.esse3.{api,dto,exception}
 ├── elearning/             # data.remote.elearning.{api,dto,exception}
-├── easystaff/             # data.remote.easystaff.{api,dto}
-└── bicoccapp/             # data.remote.bicoccapp.{api,dto}
+└── easystaff/             # data.remote.easystaff.{api,dto}
 ```
 
 Per-module layout (e.g. `esse3/`):
@@ -134,18 +132,6 @@ api.close()
 | `buildings`  | Rooms, occupation, showcase        |
 | `events`     | Event search                       |
 | `attendance` | Attendance tracking                |
-
-### BicoccappApi
-| Sub-API    | Description       |
-|------------|-------------------|
-| `auth`     | OAuth2/OIDC flows |
-| `profile`  | Student profile   |
-| `career`   | Academic progress |
-| `exams`    | Exam sessions     |
-| `taxes`    | Fee status        |
-| `calendar` | Course schedule   |
-| `wizard`   | Course selection  |
-| `campus`   | POIs, maps        |
 
 ## License
 

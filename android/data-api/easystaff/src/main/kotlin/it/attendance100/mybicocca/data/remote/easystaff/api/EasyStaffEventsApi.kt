@@ -4,10 +4,8 @@ import io.ktor.client.*
 import it.attendance100.mybicocca.data.remote.common.exception.HtmlParsingException
 import it.attendance100.mybicocca.data.remote.easystaff.dto.*
 import kotlinx.serialization.json.Json
-import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.temporal.TemporalAdjusters
 
 /**
  * API for event search operations (Ricerca eventi).
@@ -46,88 +44,6 @@ class EasyStaffEventsApi(
         val jsonString = extractJsonFromJsVariable(response, "elenco_tipi")
             ?: throw HtmlParsingException("Missing 'elenco_tipi' field")
         return json.decodeFromString(jsonString)
-    }
-
-    /**
-     * Gets all events for today.
-     *
-     * @param buildings Optional building filter
-     * @param eventTypes Optional event type filter
-     * @param language The language for labels
-     * @param keyword Optional keyword search
-     * @return The search results
-     */
-    suspend fun getTodayEvents(
-        buildings: List<EasyStaffBuilding> = emptyList(),
-        eventTypes: List<EasyStaffEventType> = emptyList(),
-        language: EasyStaffLanguage = EasyStaffLanguage.ITALIAN,
-        keyword: String? = null
-    ): List<EasyStaffEvent> {
-        val today = LocalDate.now()
-        return getEvents(
-            buildings = buildings,
-            startDate = today,
-            endDate = today,
-            eventTypes = eventTypes,
-            language = language,
-            keyword = keyword
-        )
-    }
-
-    /**
-     * Gets all events for this week.
-     *
-     * @param buildings Optional building filter
-     * @param eventTypes Optional event type filter
-     * @param language The language for labels
-     * @param keyword Optional keyword search
-     * @return The search results
-     */
-    suspend fun getWeekEvents(
-        buildings: List<EasyStaffBuilding> = emptyList(),
-        eventTypes: List<EasyStaffEventType> = emptyList(),
-        language: EasyStaffLanguage = EasyStaffLanguage.ITALIAN,
-        keyword: String? = null
-    ): List<EasyStaffEvent> {
-        val today = LocalDate.now()
-        val weekStart = today.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
-        val weekEnd = today.with(TemporalAdjusters.nextOrSame(DayOfWeek.SUNDAY))
-        return getEvents(
-            buildings = buildings,
-            startDate = weekStart,
-            endDate = weekEnd,
-            eventTypes = eventTypes,
-            language = language,
-            keyword = keyword
-        )
-    }
-
-    /**
-     * Gets all events for this month.
-     *
-     * @param buildings Optional building filter
-     * @param eventTypes Optional event type filter
-     * @param language The language for labels
-     * @param keyword Optional keyword search
-     * @return The search results
-     */
-    suspend fun getMonthEvents(
-        buildings: List<EasyStaffBuilding> = emptyList(),
-        eventTypes: List<EasyStaffEventType> = emptyList(),
-        language: EasyStaffLanguage = EasyStaffLanguage.ITALIAN,
-        keyword: String? = null,
-    ): List<EasyStaffEvent> {
-        val today = LocalDate.now()
-        val monthStart = today.with(TemporalAdjusters.firstDayOfMonth())
-        val monthEnd = today.with(TemporalAdjusters.lastDayOfMonth())
-        return getEvents(
-            buildings = buildings,
-            startDate = monthStart,
-            endDate = monthEnd,
-            eventTypes = eventTypes,
-            language = language,
-            keyword = keyword
-        )
     }
 
     /**
