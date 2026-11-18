@@ -1,5 +1,6 @@
 package it.attendance100.mybicocca.codegen.reader.openapi
 
+import io.swagger.v3.core.util.Json
 import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.Operation as OpenApiOperation
 import io.swagger.v3.oas.models.PathItem
@@ -17,8 +18,10 @@ import it.attendance100.mybicocca.codegen.model.Field
 import it.attendance100.mybicocca.codegen.model.HttpMethod
 import it.attendance100.mybicocca.codegen.model.Operation
 import it.attendance100.mybicocca.codegen.model.Parameter
+import it.attendance100.mybicocca.codegen.model.ParameterEncoding
 import it.attendance100.mybicocca.codegen.model.ParameterLocation
 import it.attendance100.mybicocca.codegen.model.PrimitiveKind
+import it.attendance100.mybicocca.codegen.model.RecordEncoding
 import it.attendance100.mybicocca.codegen.model.RecordType
 import it.attendance100.mybicocca.codegen.model.RequestBody
 import it.attendance100.mybicocca.codegen.model.ResponseBody
@@ -31,14 +34,18 @@ import java.math.BigDecimal
  *
  * - Each tag is a module, named after the operation's first tag; paths are absolute on the
  *   operation's server, so modules have no base path.
- * - Component schemas with `enum` are enums, the others records. A record belongs to the
- *   module named by `x-mb-module`, else to the first module that uses it.
- * - A property that isn't `required` takes its `default`, or an empty list for arrays, or
- *   null; one that is required has no default unless it declares one.
+ * - Component schemas with `enum` are enums (integer ones when of type `integer`), the others
+ *   records. A record belongs to the module named by `x-mb-module`, else to the first module
+ *   that uses it.
+ * - An object schema with `additionalProperties` is a map.
+ * - A property that isn't `required` takes its `default`, or an empty list or map, or null;
+ *   one that is required has no default unless it declares one.
  * - Names come from `x-mb-name`, else from the wire name in camelCase.
  */
 internal class OpenApiModelBuilder(private val api: OpenAPI) {
     private val schemas: Map<String, Schema<*>> = api.components?.schemas.orEmpty()
+
+    private val apiParameterNames: List<String> = Extensions.refNames(api.extensions?.get(Extensions.PARAMETERS), Extensions.PARAMETERS)
 
     private val servers: List<Server> = api.servers.orEmpty().map { server ->
         Server(server.extensions?.get(Extensions.NAME)?.toString() ?: error("Server ${server.url} needs ${Extensions.NAME}"), server.url)
@@ -71,6 +78,9 @@ internal class OpenApiModelBuilder(private val api: OpenAPI) {
             enums = schemas.filterKeys { it in enumNames }.map { (name, schema) -> enum(name, schema) },
             servers = servers,
             authSchemes = Extensions.authSchemes(api.components?.extensions?.get(Extensions.AUTH_SCHEMES)),
+            parameters = apiParameterNames.map { name ->
+                parameter("the API", api.components?.parameters?.get(name) ?: error("Unknown API parameter $name"))
+            },
         )
     }
 
@@ -87,7 +97,9 @@ internal class OpenApiModelBuilder(private val api: OpenAPI) {
     private fun operation(path: String, item: PathItem, method: HttpMethod, operation: OpenApiOperation): Operation {
         val name = operation.operationId ?: error("$method $path has no operationId")
         val extensions = operation.extensions.orEmpty()
-        val parameters = (item.parameters.orEmpty() + operation.parameters.orEmpty()).map { parameter(name, resolve(it)) }
+        val parameters = (item.parameters.orEmpty() + operation.parameters.orEmpty())
+            .filterNot { parameter -> parameter.`$ref`?.let(::refName) in apiParameterNames }
+            .map { parameter(name, resolve(it)) }
         val formSchema = operation.requestBody?.content?.get(FORM)?.schema?.let(::resolve)
         val form = formSchema?.properties.orEmpty().map { (wire, schema) ->
             val (type, _) = type(schema, "$name form field $wire")
@@ -107,19 +119,23 @@ internal class OpenApiModelBuilder(private val api: OpenAPI) {
         return Operation(
             name = name,
             method = method,
-            path = path,
+            path = extensions[Extensions.PATH]?.toString() ?: path,
             parameters = parameters + form,
             body = body,
             response = response(name, operation),
             summary = operation.summary ?: operation.description,
             server = server(operation, item),
-            headers = Extensions.stringMap(extensions[Extensions.HEADERS], "${Extensions.HEADERS} of $name"),
+            headers = Extensions.stringMap(api.extensions?.get(Extensions.HEADERS), "${Extensions.HEADERS} of the document") +
+                Extensions.stringMap(extensions[Extensions.HEADERS], "${Extensions.HEADERS} of $name"),
             auth = Extensions.authRequirement(extensions[Extensions.AUTH]),
         )
     }
 
+    /** A parameter; one with `content: application/json` is JSON-encoded, its default as JSON text. */
     private fun parameter(operation: String, parameter: OpenApiParameter): Parameter {
-        val schema = parameter.schema ?: error("Parameter ${parameter.name} of $operation has no schema")
+        val jsonSchema = parameter.content?.get(JSON)?.schema
+        val schema = parameter.schema ?: jsonSchema ?: error("Parameter ${parameter.name} of $operation has no schema")
+        val encoding = if (parameter.schema == null) ParameterEncoding.JSON else ParameterEncoding.PLAIN
         val (type, _) = type(schema, "$operation parameter ${parameter.name}")
         return Parameter(
             name = nameOf(parameter.extensions, parameter.name),
@@ -128,12 +144,14 @@ internal class OpenApiModelBuilder(private val api: OpenAPI) {
                 "path" -> ParameterLocation.PATH
                 "query" -> ParameterLocation.QUERY
                 "header" -> ParameterLocation.HEADER
+                "cookie" -> ParameterLocation.COOKIE
                 else -> error("Unsupported location '${parameter.`in`}' of parameter ${parameter.name} of $operation")
             },
             type = type,
             required = parameter.required == true,
             description = parameter.description,
-            default = schema.default?.let { DefaultValue.Literal(literal(it)) },
+            default = schema.default?.let { DefaultValue.Literal(if (encoding == ParameterEncoding.JSON) Json.mapper().writeValueAsString(it) else literal(it)) },
+            encoding = encoding,
         )
     }
 
@@ -158,14 +176,17 @@ internal class OpenApiModelBuilder(private val api: OpenAPI) {
         return RecordType(
             name = name,
             description = schema.description,
+            encoding = schema.extensions?.get(Extensions.DELIMITED)?.let { RecordEncoding.Delimited(it.toString()) } ?: RecordEncoding.Object,
             fields = schema.properties.orEmpty().map { (wire, property) ->
                 val (type, codec) = type(property, "$name.$wire")
                 val explicit = property.default
                 val (nullable, default) = when {
                     explicit is List<*> -> false to DefaultValue.EmptyList
+                    explicit is Map<*, *> -> false to DefaultValue.EmptyMap
                     explicit != null -> (property.nullable == true) to DefaultValue.Literal(literal(explicit))
                     wire in required -> (property.nullable == true) to null
                     type is TypeRef.ListOf -> false to DefaultValue.EmptyList
+                    type is TypeRef.MapOf -> false to DefaultValue.EmptyMap
                     else -> true to DefaultValue.Null
                 }
                 Field(nameOf(property, wire), wire, type, nullable, default, codec, property.description)
@@ -183,15 +204,26 @@ internal class OpenApiModelBuilder(private val api: OpenAPI) {
             open = schema.extensions?.get(Extensions.OPEN) as? Boolean ?: true,
             acceptsWrappedValue = schema.extensions?.get(Extensions.WRAPPED) as? Boolean ?: false,
             description = schema.description,
+            integer = schema.type == "integer",
         )
     }
 
     /** The type of [schema], and the codec of its wire format when it isn't the default. */
     private fun type(schema: Schema<*>, where: String): Pair<TypeRef, Codec?> {
         schema.`$ref`?.let { return TypeRef.Named(refName(it)) to null }
+        schema.allOf?.let { parts ->
+            val ref = parts.singleOrNull()?.`$ref` ?: error("$where: allOf must wrap a single \$ref")
+            val codec = when {
+                schema.extensions?.get(Extensions.FOLDED) == true -> Codec.FoldedObject
+                schema.extensions?.get(Extensions.EMBEDDED) == true -> Codec.EmbeddedJson
+                else -> null
+            }
+            return TypeRef.Named(refName(ref)) to codec
+        }
         require(schema.enum == null) { "$where declares an inline enum; declare it as a component schema" }
         val kind = when (schema.type) {
             "array" -> return TypeRef.ListOf(type(schema.items ?: error("$where is an array without items"), "$where items").first) to null
+            "object" -> schema.additionalProperties?.let { values -> return map(schema, values, where) to null } ?: PrimitiveKind.JSON_OBJECT
             "string" -> when (schema.format) {
                 "date" -> PrimitiveKind.LOCAL_DATE
                 "date-time" -> PrimitiveKind.LOCAL_DATE_TIME
@@ -202,14 +234,36 @@ internal class OpenApiModelBuilder(private val api: OpenAPI) {
             "integer" -> if (schema.format == "int64") PrimitiveKind.INT64 else PrimitiveKind.INT32
             "number" -> if (schema.format == "float") PrimitiveKind.FLOAT32 else PrimitiveKind.FLOAT64
             "boolean" -> PrimitiveKind.BOOLEAN
-            "object" -> PrimitiveKind.JSON_OBJECT
             null -> PrimitiveKind.JSON_VALUE
             else -> error("$where has unsupported type '${schema.type}'")
         }
         val pattern = schema.extensions?.get(Extensions.PATTERN)?.toString()
         require(pattern == null || kind.isTemporal) { "$where has ${Extensions.PATTERN} but isn't a date or time" }
-        val codec = pattern?.let { Codec.Temporal(it, blankAsNull = schema.extensions?.get(Extensions.BLANK_AS_NULL) == true) }
+        val blankAsNull = schema.extensions?.get(Extensions.BLANK_AS_NULL) == true
+        val codec = when {
+            pattern != null -> Codec.Temporal(pattern, blankAsNull)
+            blankAsNull && kind == PrimitiveKind.STRING ->
+                Codec.BlankAsNull(Extensions.stringList(schema.extensions?.get(Extensions.ALSO_NULL), "${Extensions.ALSO_NULL} of $where"))
+            else -> null
+        }
         return TypeRef.Primitive(kind) to codec
+    }
+
+    /** A map whose values are [values] (a schema, or `true` for any JSON value), keyed as `x-mb-key` says. */
+    private fun map(schema: Schema<*>, values: Any, where: String): TypeRef.MapOf {
+        val key = when (val key = schema.extensions?.get(Extensions.KEY)?.toString()) {
+            null, "string" -> TypeRef.STRING
+            "integer" -> TypeRef.Primitive(PrimitiveKind.INT32)
+            "int64" -> TypeRef.Primitive(PrimitiveKind.INT64)
+            "date" -> TypeRef.Primitive(PrimitiveKind.LOCAL_DATE)
+            else -> TypeRef.Named(key)
+        }
+        val value = when (values) {
+            is Schema<*> -> type(values, "$where values").first
+            true -> TypeRef.Primitive(PrimitiveKind.JSON_VALUE)
+            else -> error("$where has unsupported additionalProperties '$values'")
+        }
+        return TypeRef.MapOf(key, value)
     }
 
     private fun resolve(parameter: OpenApiParameter): OpenApiParameter =
@@ -234,6 +288,10 @@ internal class OpenApiModelBuilder(private val api: OpenAPI) {
                     schemas[type.name]?.properties.orEmpty().forEach { (wire, property) -> claim(type(property, "${type.name}.$wire").first, module) }
                 }
                 is TypeRef.ListOf -> claim(type.element, module)
+                is TypeRef.MapOf -> {
+                    claim(type.key, module)
+                    claim(type.value, module)
+                }
                 is TypeRef.Primitive, null -> Unit
             }
         }

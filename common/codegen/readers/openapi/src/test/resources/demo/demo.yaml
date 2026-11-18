@@ -4,6 +4,8 @@ info:
   version: "1"
 x-mb-id: demo
 x-mb-prefix: Demo
+x-mb-parameters:
+  - $ref: "#/components/parameters/tenant"
 servers:
   - url: https://api.example.com/v1
     x-mb-name: Main
@@ -18,6 +20,12 @@ components:
       headers:
         Authorization: "Bearer {token}"
   parameters:
+    tenant:
+      name: X-TENANT
+      in: header
+      required: true
+      x-mb-name: tenant
+      schema: { type: string }
     itemId:
       name: item_id
       in: path
@@ -45,6 +53,34 @@ components:
       type: object
       properties:
         id: { type: string }
+    DemoLevel:
+      type: integer
+      enum: [1, 2]
+      x-enum-varnames: [Basic, Expert]
+    DemoSlot:
+      type: object
+      x-mb-delimited: "-"
+      required: [start, end]
+      properties:
+        start: { type: string, format: time, x-mb-pattern: "HH:mm" }
+        end: { type: string, format: time, x-mb-pattern: "HH:mm" }
+    DemoSettings:
+      type: object
+      properties:
+        enabled: { type: boolean, default: false }
+    DemoCalendar:
+      type: object
+      properties:
+        days:
+          type: object
+          x-mb-key: date
+          additionalProperties: { type: array, items: { $ref: "#/components/schemas/DemoSlot" } }
+        labels: { type: object, additionalProperties: { type: string } }
+        extra: { type: object, additionalProperties: true }
+        level: { $ref: "#/components/schemas/DemoLevel" }
+        note: { type: string, nullable: true, x-mb-blank-as-null: true, x-mb-also-null: ["0"] }
+        settings: { allOf: [{ $ref: "#/components/schemas/DemoSettings" }], nullable: true, x-mb-folded: true }
+        policy: { allOf: [{ $ref: "#/components/schemas/DemoSettings" }], nullable: true, x-mb-embedded: true }
 paths:
   /items/{item_id}:
     get:
@@ -71,3 +107,15 @@ paths:
       x-mb-empty-body: true
       responses:
         "204": { description: Done }
+  /calendar:
+    get:
+      tags: [files]
+      operationId: getCalendar
+      parameters:
+        - name: filters
+          in: cookie
+          content:
+            application/json:
+              schema: { allOf: [{ $ref: "#/components/schemas/DemoSettings" }], default: {} }
+      responses:
+        "200": { description: OK, content: { application/json: { schema: { $ref: "#/components/schemas/DemoCalendar" } } } }

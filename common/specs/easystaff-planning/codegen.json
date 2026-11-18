@@ -1,0 +1,52 @@
+{
+  "reader": {
+    "type": "openapi",
+    "options": {
+      "spec": "planning.yaml"
+    }
+  },
+  "targets": {
+    "kotlin": {
+      "outputDir": "../../../android/data-api/easystaff/src/main/kotlin",
+      "options": {
+        "packageName": "it.attendance100.mybicocca.data.remote.easystaff",
+        "temporalSerializers": [
+          {
+            "kind": "LOCAL_DATE",
+            "pattern": "yyyy-MM-dd",
+            "blankAsNull": false,
+            "nullable": false,
+            "serializer": "EasyStaffPlanningLocalDateSerializer"
+          },
+          {
+            "kind": "LOCAL_DATE",
+            "pattern": "yyyy-MM-dd",
+            "blankAsNull": false,
+            "nullable": true,
+            "serializer": "EasyStaffPlanningLocalDateSerializer"
+          },
+          {
+            "kind": "LOCAL_TIME",
+            "pattern": "HH:mm:ss",
+            "blankAsNull": false,
+            "nullable": true,
+            "serializer": "EasyStaffPlanningLocalTimeSerializer"
+          },
+          {
+            "kind": "LOCAL_DATE_TIME",
+            "pattern": "yyyy-MM-dd HH:mm",
+            "blankAsNull": true,
+            "nullable": true,
+            "serializer": "EasyStaffPlanningNullableLocalDateTimeSerializer"
+          }
+        ]
+      }
+    },
+    "swift": {
+      "outputDir": "../../../ios/DataApi/Sources/EasyStaffPlanning/Generated"
+    },
+    "web": {
+      "outputDir": "../../../web/packages/easystaff-planning/src/generated"
+    }
+  }
+}

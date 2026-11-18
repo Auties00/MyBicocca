@@ -132,6 +132,7 @@ data class AffluencesOverviewNotice(
 
 @Serializable
 data class AffluencesForecast(
+    @Serializable(with = AffluencesBooleanSerializer::class)
     @SerialName("opened")
     val opened: Boolean = false,
 
@@ -141,6 +142,7 @@ data class AffluencesForecast(
     @SerialName("waiting_time")
     val waitingTimeMinutes: Int? = null,
 
+    @Serializable(with = AffluencesBooleanSerializer::class)
     @SerialName("waiting_time_overflow")
     val waitingTimeOverflow: Boolean = false,
 

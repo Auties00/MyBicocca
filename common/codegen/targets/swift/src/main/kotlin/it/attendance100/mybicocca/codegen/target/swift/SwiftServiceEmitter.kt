@@ -6,6 +6,7 @@ import it.attendance100.mybicocca.codegen.model.ApiSpec
 import it.attendance100.mybicocca.codegen.model.EnumType
 import it.attendance100.mybicocca.codegen.model.Operation
 import it.attendance100.mybicocca.codegen.model.Parameter
+import it.attendance100.mybicocca.codegen.model.ParameterEncoding
 import it.attendance100.mybicocca.codegen.model.ParameterLocation
 import it.attendance100.mybicocca.codegen.model.RequestBody
 import it.attendance100.mybicocca.codegen.model.ResponseBody
@@ -14,17 +15,24 @@ import it.attendance100.mybicocca.codegen.target.swift.SwiftSyntax.doc
 
 /**
  * Emits a module as a struct of `async throws` functions, each building a `RestRequest` and
- * handing it to the API's client (see [SwiftLayout] for the client's contract).
+ * handing it to the API's client (see [SwiftLayout] for the client's contract). The API
+ * parameters the module uses are stored properties, set by the facade.
  */
 internal class SwiftServiceEmitter(private val spec: ApiSpec, private val layout: SwiftLayout) {
 
     fun emit(module: ApiModule, out: CodeWriter) {
+        val apiParameters = spec.parametersOf(module)
         out.block("public struct ${layout.serviceName(module)}: Sendable {") {
             line("private let client: ${layout.client}")
+            for (parameter in apiParameters) line("private let ${SwiftSyntax.identifier(parameter.name)}: ${layout.render(parameter.type)}")
             line()
-            block("public init(client: ${layout.client}) {") {
+            val parameters = listOf("client: ${layout.client}") + apiParameters.map { "${SwiftSyntax.identifier(it.name)}: ${layout.render(it.type)}" }
+            commaListOrLine("public init(", parameters, ") {", MAX_LINE_LENGTH)
+            indent {
                 line("self.client = client")
+                for (parameter in apiParameters) line("self.${SwiftSyntax.identifier(parameter.name)} = ${SwiftSyntax.identifier(parameter.name)}")
             }
+            line("}")
             for (operation in module.operations) {
                 line()
                 function(module, operation)
@@ -47,7 +55,7 @@ internal class SwiftServiceEmitter(private val spec: ApiSpec, private val layout
                 add(
                     when {
                         parameter.required -> "$name: $type"
-                        default != null -> "$name: $type = ${layout.literal(parameter.type, default)}"
+                        default != null && parameter.encoding == ParameterEncoding.PLAIN -> "$name: $type = ${layout.literal(parameter.type, default)}"
                         else -> "$name: $type? = nil"
                     }
                 )
@@ -78,13 +86,15 @@ internal class SwiftServiceEmitter(private val spec: ApiSpec, private val layout
     }
 
     private fun CodeWriter.requestArguments(module: ApiModule, operation: Operation): List<String> = buildList {
+        val apiParameters = spec.parameters.groupBy { it.location }
         add("method: .${operation.method.name.lowercase()}")
         add("path: ${path(module, operation)}")
-        operation.queryParameters.takeIf { it.isNotEmpty() }?.let { add("query: ${items(it)}") }
+        (apiParameters[ParameterLocation.QUERY].orEmpty() + operation.queryParameters).takeIf { it.isNotEmpty() }?.let { add("query: ${items(it)}") }
         operation.formParameters.takeIf { it.isNotEmpty() }?.let { add("form: ${items(it)}") }
-        val headers = operation.headers.map { (name, value) -> "(${SwiftSyntax.string(name)}, ${SwiftSyntax.string(value)})" } +
-            operation.headerParameters.map(::pair)
+        val headers = operation.headers.map { (name, value) -> "(${SwiftSyntax.string(name)}, ${template(value)})" } +
+            (apiParameters[ParameterLocation.HEADER].orEmpty() + operation.headerParameters).map(::pair)
         if (headers.isNotEmpty()) add("headers: ${array(headers)}")
+        (apiParameters[ParameterLocation.COOKIE].orEmpty() + operation.cookieParameters).takeIf { it.isNotEmpty() }?.let { add("cookies: ${items(it)}") }
         when (operation.body) {
             is RequestBody.Json -> add("body: $BODY")
             RequestBody.EmptyObject -> add("body: EmptyObject()")
@@ -98,15 +108,28 @@ internal class SwiftServiceEmitter(private val spec: ApiSpec, private val layout
 
     /** The full path as a string literal, with path parameters interpolated as encoded segments. */
     private fun path(module: ApiModule, operation: Operation): String {
-        val names = operation.pathParameters.associate { it.wireName to SwiftSyntax.identifier(it.name) }
+        val names = (spec.parameters.filter { it.location == ParameterLocation.PATH } + operation.pathParameters)
+            .associate { it.wireName to SwiftSyntax.identifier(it.name) }
         val literal = SwiftSyntax.string(module.basePath.trimEnd('/') + operation.path)
         return PLACEHOLDER.replace(literal) { "\\(RestRequest.pathSegment(${names.getValue(it.groupValues[1])}))" }
     }
 
+    /** A header value as a string literal interpolating the API parameters it names. */
+    private fun template(value: String): String =
+        PLACEHOLDER.replace(SwiftSyntax.string(value)) { "\\(${SwiftSyntax.identifier(it.groupValues[1])})" }
+
     /** Name/value pairs as an array literal, wrapped one per line when there are several. */
     private fun CodeWriter.items(parameters: List<Parameter>): String = array(parameters.map(::pair))
 
-    private fun pair(parameter: Parameter): String = "(${SwiftSyntax.string(parameter.wireName)}, ${SwiftSyntax.identifier(parameter.name)})"
+    /** A parameter's name and value; a JSON-encoded value is written as JSON text, or its default's. */
+    private fun pair(parameter: Parameter): String {
+        val name = SwiftSyntax.identifier(parameter.name)
+        val value = when (parameter.encoding) {
+            ParameterEncoding.PLAIN -> name
+            ParameterEncoding.JSON -> "RestRequest.json($name)" + (parameter.default?.let { " ?? ${SwiftSyntax.string(it.value)}" } ?: "")
+        }
+        return "(${SwiftSyntax.string(parameter.wireName)}, $value)"
+    }
 
     private fun CodeWriter.array(items: List<String>): String =
         if (items.size <= INLINE_ITEMS) items.joinToString(", ", "[", "]") else nested { commaList("[", items, "]") }

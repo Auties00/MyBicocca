@@ -65,6 +65,8 @@ public struct RestRequest: Sendable {
     public var form: [QueryItem]?
     /// Headers, including those of the credentials.
     public var headers: [QueryItem]
+    /// Cookies, with their values not yet percent-encoded.
+    public var cookies: [QueryItem]
     /// JSON body, if the request has one.
     public var body: Data?
     /// The base URL to send the request to, for APIs with several; nil for the client's own.
@@ -76,6 +78,7 @@ public struct RestRequest: Sendable {
     ///   - query: Query parameters; those with no value are left out.
     ///   - form: Form fields; those with no value are left out.
     ///   - headers: Headers; those with no value are left out.
+    ///   - cookies: Cookies; those with no value are left out.
     ///   - body: A value sent as JSON.
     ///   - auth: Credentials whose headers are added.
     public init(
@@ -84,6 +87,7 @@ public struct RestRequest: Sendable {
         query: [(String, (any QueryValueConvertible)?)] = [],
         form: [(String, (any QueryValueConvertible)?)]? = nil,
         headers: [(String, (any QueryValueConvertible)?)] = [],
+        cookies: [(String, (any QueryValueConvertible)?)] = [],
         body: (any Encodable)? = nil,
         auth: (any RequestAuth)? = nil,
         server: String? = nil,
@@ -94,9 +98,15 @@ public struct RestRequest: Sendable {
         self.query = RestRequest.items(query)
         self.form = form.map(RestRequest.items)
         self.headers = RestRequest.items(headers) + (auth?.headers ?? [:]).sorted { $0.key < $1.key }.map { QueryItem(name: $0.key, value: $0.value) }
+        self.cookies = RestRequest.items(cookies)
         self.body = try body.map { try JSONEncoder().encode($0) }
         self.server = server
         self.envelope = envelope
+    }
+
+    /// `value` as JSON text, for a parameter written as JSON; nil when there is no value.
+    public static func json(_ value: (some Encodable)?) throws -> String? {
+        try value.map { String(decoding: try JSONEncoder().encode($0), as: UTF8.self) }
     }
 
     /// Percent-encodes a value for use as one path segment.
@@ -199,6 +209,9 @@ public struct RestConfiguration: Sendable {
         for header in request.headers {
             urlRequest.setValue(header.value, forHTTPHeaderField: header.name)
         }
+        if !request.cookies.isEmpty {
+            setCookies(request.cookies, for: url, on: &urlRequest)
+        }
         if let form = request.form {
             urlRequest.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
             urlRequest.httpBody = Data(form.map { "\(RestConfiguration.formEncode($0.name))=\(RestConfiguration.formEncode($0.value))" }.joined(separator: "&").utf8)
@@ -207,6 +220,22 @@ public struct RestConfiguration: Sendable {
             urlRequest.httpBody = body
         }
         return urlRequest
+    }
+
+    /// Adds `cookies` to the session's cookie storage, which then sends them with the stored
+    /// ones; a session without storage sends them as a `Cookie` header.
+    private func setCookies(_ cookies: [QueryItem], for url: URL, on urlRequest: inout URLRequest) {
+        let encoded = cookies.map { QueryItem(name: $0.name, value: RestConfiguration.formEncode($0.value)) }
+        guard let storage = session.configuration.httpCookieStorage, let host = url.host else {
+            urlRequest.setValue(encoded.map { "\($0.name)=\($0.value)" }.joined(separator: "; "), forHTTPHeaderField: "Cookie")
+            return
+        }
+        for cookie in encoded {
+            let properties: [HTTPCookiePropertyKey: Any] = [.name: cookie.name, .value: cookie.value, .domain: host, .path: url.path]
+            if let cookie = HTTPCookie(properties: properties) {
+                storage.setCookie(cookie)
+            }
+        }
     }
 
     private static let formCharacters = CharacterSet.alphanumerics.union(CharacterSet(charactersIn: "-._~"))

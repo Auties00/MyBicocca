@@ -11,6 +11,15 @@ sealed interface TypeRef {
     /** An ordered list of [element]s. */
     data class ListOf(val element: TypeRef) : TypeRef
 
+    /**
+     * A JSON object read as a map from [key]s to [value]s. Keys are strings on the wire, so
+     * [key] is a type with a string form (see [ApiSpec.isMapKey]).
+     *
+     * PHP writes an empty map as `[]`, and some servers send a map as an array of single-key
+     * objects; maps accept both, merging the objects of an array.
+     */
+    data class MapOf(val key: TypeRef, val value: TypeRef) : TypeRef
+
     companion object {
         val STRING = Primitive(PrimitiveKind.STRING)
     }
@@ -57,7 +66,8 @@ sealed interface TypeDeclaration {
 }
 
 /**
- * A structured value with named fields, encoded as a JSON object.
+ * A structured value with named fields, encoded as a JSON object unless [encoding] says
+ * otherwise.
  *
  * @property fields The fields, in declaration order.
  */
@@ -65,7 +75,21 @@ data class RecordType(
     override val name: String,
     val fields: List<Field>,
     override val description: String? = null,
+    val encoding: RecordEncoding = RecordEncoding.Object,
 ) : TypeDeclaration
+
+/** How a [RecordType] is written on the wire. */
+sealed interface RecordEncoding {
+    /** A JSON object with a key per field. */
+    data object Object : RecordEncoding
+
+    /**
+     * A JSON string joining the fields' values with [separator], in order (e.g. `09:00-09:30`
+     * for a range of two times). Every field is a non-null scalar or temporal primitive,
+     * written in its own codec's format.
+     */
+    data class Delimited(val separator: String) : RecordEncoding
+}
 
 /**
  * A field of a [RecordType].
@@ -96,6 +120,9 @@ sealed interface DefaultValue {
     /** An empty list; only valid on list fields. */
     data object EmptyList : DefaultValue
 
+    /** An empty map; only valid on map fields. */
+    data object EmptyMap : DefaultValue
+
     /** The zero value of a scalar primitive: an empty string, `0` or `false`. */
     data object Zero : DefaultValue
 
@@ -107,11 +134,13 @@ sealed interface DefaultValue {
 }
 
 /**
- * An enumeration of string values.
+ * An enumeration of string or integer values.
  *
  * @property open Whether values outside [values] are kept as an "unknown" case instead of
  *   failing to decode. Servers add values over time, so APIs are normally open.
  * @property acceptsWrappedValue Whether a value may also arrive wrapped as `{"value": "…"}`.
+ * @property integer Whether values are written as JSON integers rather than strings. Their
+ *   [EnumValue.wireValue]s are still the decimal text, and decoding accepts either form.
  */
 data class EnumType(
     override val name: String,
@@ -119,6 +148,7 @@ data class EnumType(
     val open: Boolean = true,
     val acceptsWrappedValue: Boolean = false,
     override val description: String? = null,
+    val integer: Boolean = false,
 ) : TypeDeclaration
 
 /**
@@ -157,4 +187,21 @@ sealed interface Codec {
             }
         }
     }
+
+    /**
+     * A string where blank strings, and any of [alsoNull] (such as `"0"`), mean no value.
+     */
+    data class BlankAsNull(val alsoNull: List<String> = emptyList()) : Codec
+
+    /**
+     * A record that may also arrive as an array of single-key objects, merged into one object
+     * (`[{"a": 1}, {"b": 2}]` for `{"a": 1, "b": 2}`), as Laravel writes some settings.
+     */
+    data object FoldedObject : Codec
+
+    /**
+     * A record that may also arrive as a JSON document inside a string. A blank string means
+     * no value.
+     */
+    data object EmbeddedJson : Codec
 }

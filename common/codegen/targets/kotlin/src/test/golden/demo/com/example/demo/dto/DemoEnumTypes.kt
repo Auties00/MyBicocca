@@ -39,6 +39,32 @@ sealed interface DemoKind {
     }
 }
 
+@Serializable(with = DemoLevel.Serializer::class)
+sealed interface DemoLevel {
+    val value: String
+
+    data object Basic : DemoLevel { override val value = "1" }
+    data object Expert : DemoLevel { override val value = "2" }
+    data class Unknown(override val value: String) : DemoLevel
+
+    object Serializer : KSerializer<DemoLevel> {
+        override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("DemoLevel", PrimitiveKind.LONG)
+
+        override fun deserialize(decoder: Decoder): DemoLevel {
+            val raw = (decoder as JsonDecoder).decodeJsonElement().jsonPrimitive.content
+            return when (raw) {
+                "1" -> Basic
+                "2" -> Expert
+                else -> Unknown(raw)
+            }
+        }
+
+        override fun serialize(encoder: Encoder, value: DemoLevel) {
+            value.value.toLongOrNull()?.let(encoder::encodeLong) ?: encoder.encodeString(value.value)
+        }
+    }
+}
+
 @Serializable(with = DemoPriority.Serializer::class)
 sealed interface DemoPriority {
     val value: String

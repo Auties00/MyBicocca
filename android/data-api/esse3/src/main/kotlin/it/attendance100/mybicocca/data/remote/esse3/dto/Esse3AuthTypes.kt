@@ -159,6 +159,7 @@ data class Esse3UserSession(
     val internalAuthToken: String? = null,
 
     /** indica se la password risulta scaduta */
+    @Serializable(with = Esse3BooleanSerializer::class)
     @SerialName("expPwd")
     val passwordExpiration: Boolean = false,
 
@@ -392,10 +393,12 @@ data class Esse3CareerPortion(
 @Serializable
 data class Esse3CheckLoginResult(
     /** indica se la verifica delle credenziali ha avuto successp */
+    @Serializable(with = Esse3BooleanSerializer::class)
     @SerialName("ok")
     val ok: Boolean? = null,
 
     /** indica se l'utente deve cambiare la password (ad esempio perché scaduta) */
+    @Serializable(with = Esse3BooleanSerializer::class)
     @SerialName("changePassword")
     val changePassword: Boolean? = null
 )

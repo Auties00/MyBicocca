@@ -64,6 +64,7 @@ data class AffluencesSite(
 
 @Serializable
 data class AffluencesBookingInfo(
+    @Serializable(with = AffluencesBooleanSerializer::class)
     @SerialName("hasBooking")
     val hasBooking: Boolean = false,
 
@@ -88,9 +89,11 @@ data class AffluencesSiteCategory(
 
 @Serializable
 data class AffluencesPageLayout(
+    @Serializable(with = AffluencesBooleanSerializer::class)
     @SerialName("timetables")
     val timetables: Boolean? = null,
 
+    @Serializable(with = AffluencesBooleanSerializer::class)
     @SerialName("events")
     val events: Boolean? = null
 )
@@ -125,18 +128,21 @@ data class AffluencesSiteCard(
 
 @Serializable
 data class AffluencesSiteCardStatus(
+    @Serializable(with = AffluencesBooleanSerializer::class)
     @SerialName("isOpen")
     val isOpen: Boolean,
 
     @SerialName("openingText")
     val openingText: String? = null,
 
+    @Serializable(with = AffluencesBooleanSerializer::class)
     @SerialName("isOpeningSoon")
     val isOpeningSoon: Boolean? = null,
 
     @SerialName("closingText")
     val closingText: String? = null,
 
+    @Serializable(with = AffluencesBooleanSerializer::class)
     @SerialName("isClosingSoon")
     val isClosingSoon: Boolean? = null
 )
@@ -189,6 +195,7 @@ data class AffluencesLiveData(
 
 @Serializable
 data class AffluencesSiteStatus(
+    @Serializable(with = AffluencesBooleanSerializer::class)
     @SerialName("isOpen")
     val isOpen: Boolean,
 
@@ -206,9 +213,11 @@ data class AffluencesSiteStatus(
     @SerialName("closingAt")
     val closingAt: String? = null,
 
+    @Serializable(with = AffluencesBooleanSerializer::class)
     @SerialName("isOpeningSoon")
     val isOpeningSoon: Boolean? = null,
 
+    @Serializable(with = AffluencesBooleanSerializer::class)
     @SerialName("isClosingSoon")
     val isClosingSoon: Boolean? = null
 )
@@ -292,6 +301,7 @@ data class AffluencesDayTimetable(
     @SerialName("day")
     val day: String,
 
+    @Serializable(with = AffluencesBooleanSerializer::class)
     @SerialName("isToday")
     val isToday: Boolean = false,
 

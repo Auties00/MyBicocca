@@ -9,6 +9,7 @@ object SpecValidator {
     /** Returns every violated invariant of [spec]; empty when the spec is valid. */
     fun validate(spec: ApiSpec): List<String> = buildList {
         checkDeclarations(spec)
+        checkApiParameters(spec)
         for (module in spec.modules) {
             checkModule(spec, module)
         }
@@ -41,6 +42,11 @@ object SpecValidator {
 
         for (enum in spec.enums) {
             if (enum.values.isEmpty()) add("Enum '${enum.name}' has no values")
+            if (enum.integer) {
+                for (value in enum.values.filter { it.wireValue.toLongOrNull() == null }) {
+                    add("Integer enum '${enum.name}' has non-integer wire value '${value.wireValue}'")
+                }
+            }
             checkUnique(enum.values.map { it.name }) { "Enum '${enum.name}' declares value name '$it' more than once" }
             checkUnique(enum.values.map { it.wireValue }) { "Enum '${enum.name}' declares wire value '$it' more than once" }
         }
@@ -51,6 +57,31 @@ object SpecValidator {
             for (field in record.fields) {
                 checkField(spec, record, field)
             }
+            (record.encoding as? RecordEncoding.Delimited)?.let { checkDelimited(record, it) }
+        }
+    }
+
+    private fun MutableList<String>.checkDelimited(record: RecordType, encoding: RecordEncoding.Delimited) {
+        if (encoding.separator.isEmpty()) add("Delimited record '${record.name}' has an empty separator")
+        if (record.fields.isEmpty()) add("Delimited record '${record.name}' has no fields")
+        for (field in record.fields) {
+            val where = "Field '${record.name}.${field.name}' of a delimited record"
+            val kind = (field.type as? TypeRef.Primitive)?.kind
+            if (kind == null || !(kind.isScalar || kind.isTemporal)) add("$where isn't a scalar or temporal primitive")
+            if (field.nullable) add("$where is nullable")
+            if (field.codec != null && field.codec !is Codec.Temporal) add("$where has a non-temporal codec")
+        }
+    }
+
+    private fun MutableList<String>.checkApiParameters(spec: ApiSpec) {
+        checkUnique(spec.parameters.map { it.name }) { "API parameter '$it' is declared more than once" }
+        for (parameter in spec.parameters) {
+            val where = "API parameter '${parameter.name}'"
+            checkRef(spec, parameter.type, where)
+            if (!parameter.required) add("$where isn't required")
+            if (parameter.location == ParameterLocation.FORM) add("$where is a form parameter")
+            if (parameter.encoding != ParameterEncoding.PLAIN) add("$where isn't plainly encoded")
+            if (!isPlain(spec, parameter.type)) add("$where can't be written as plain text")
         }
     }
 
@@ -60,6 +91,7 @@ object SpecValidator {
         when (field.default) {
             DefaultValue.Null -> if (!field.nullable) add("$where defaults to null but isn't nullable")
             DefaultValue.EmptyList -> if (field.type !is TypeRef.ListOf) add("$where defaults to an empty list but isn't a list")
+            DefaultValue.EmptyMap -> if (field.type !is TypeRef.MapOf) add("$where defaults to an empty map but isn't a map")
             DefaultValue.Zero -> if ((field.type as? TypeRef.Primitive)?.kind?.isScalar != true) {
                 add("$where defaults to zero but isn't a scalar primitive")
             }
@@ -72,8 +104,28 @@ object SpecValidator {
                 if (kind?.isTemporal != true) add("$where uses a temporal codec but isn't a date or time")
                 if (codec.blankAsNull && !field.nullable) add("$where decodes blanks to null but isn't nullable")
             }
+            is Codec.BlankAsNull -> {
+                if (field.type != TypeRef.STRING) add("$where decodes blanks to null but isn't a string")
+                if (!field.nullable) add("$where decodes blanks to null but isn't nullable")
+            }
+            Codec.FoldedObject -> if (!isObjectRecord(spec, field.type)) add("$where may arrive folded but isn't an object record")
+            Codec.EmbeddedJson -> {
+                if (!isObjectRecord(spec, field.type)) add("$where may arrive embedded but isn't an object record")
+                if (!field.nullable) add("$where may arrive as a blank string but isn't nullable")
+            }
             null -> Unit
         }
+    }
+
+    private fun isObjectRecord(spec: ApiSpec, type: TypeRef): Boolean =
+        type is TypeRef.Named && (spec.declarations[type.name] as? RecordType)?.encoding == RecordEncoding.Object
+
+    /** Whether values of [type] have a plain text form: scalars, dates, enums and lists of them. */
+    private fun isPlain(spec: ApiSpec, type: TypeRef): Boolean = when (type) {
+        is TypeRef.Primitive -> type.kind.isScalar || type.kind.isTemporal
+        is TypeRef.Named -> spec.declarations[type.name] is EnumType
+        is TypeRef.ListOf -> type.element !is TypeRef.ListOf && isPlain(spec, type.element)
+        is TypeRef.MapOf -> false
     }
 
     private fun MutableList<String>.checkModule(spec: ApiSpec, module: ApiModule) {
@@ -81,13 +133,28 @@ object SpecValidator {
         for (operation in module.operations) {
             val where = "Operation '${module.name}.${operation.name}'"
             checkUnique(operation.parameters.map { it.name }) { "$where declares parameter '$it' more than once" }
+            for (name in operation.parameters.map { it.name }.intersect(spec.parameters.map { it.name }.toSet())) {
+                add("$where parameter '$name' clashes with an API parameter")
+            }
             for (parameter in operation.parameters) {
-                checkRef(spec, parameter.type, "$where parameter '${parameter.name}'")
-                parameter.default?.let { checkLiteral(spec, parameter.type, it, "$where parameter '${parameter.name}'") }
-                if (parameter.location == ParameterLocation.PATH && !parameter.required) add("$where path parameter '${parameter.name}' isn't required")
+                val what = "$where parameter '${parameter.name}'"
+                checkRef(spec, parameter.type, what)
+                when (parameter.encoding) {
+                    ParameterEncoding.PLAIN -> {
+                        parameter.default?.let { checkLiteral(spec, parameter.type, it, what) }
+                        if (!isPlain(spec, parameter.type)) add("$what can't be written as plain text; encode it as JSON")
+                    }
+                    ParameterEncoding.JSON -> if (parameter.location == ParameterLocation.PATH) add("$what is a JSON-encoded path parameter")
+                }
+                if (parameter.location == ParameterLocation.PATH && !parameter.required) add("$what isn't required")
             }
             operation.server?.let { server ->
                 if (spec.servers.none { it.name == server }) add("$where targets unknown server '$server'")
+            }
+            for ((header, template) in operation.headers) {
+                for (placeholder in PLACEHOLDER.findAll(template).map { it.groupValues[1] }) {
+                    if (spec.parameters.none { it.name == placeholder }) add("$where header '$header' uses unknown API parameter '{$placeholder}'")
+                }
             }
             operation.auth?.let { auth ->
                 if (auth.schemes.isEmpty()) add("$where accepts no auth scheme")
@@ -110,7 +177,8 @@ object SpecValidator {
 
             val placeholders = PLACEHOLDER.findAll(operation.path).map { it.groupValues[1] }.toSet()
             val pathParameters = operation.pathParameters.map { it.wireName }.toSet()
-            for (missing in placeholders - pathParameters) add("$where has no path parameter for '{$missing}'")
+            val apiPathParameters = spec.parameters.filter { it.location == ParameterLocation.PATH }.map { it.wireName }.toSet()
+            for (missing in placeholders - pathParameters - apiPathParameters) add("$where has no path parameter for '{$missing}'")
             for (unused in pathParameters - placeholders) add("$where declares path parameter '$unused' missing from its path")
         }
     }
@@ -119,6 +187,11 @@ object SpecValidator {
         when (type) {
             is TypeRef.Named -> if (type.name !in spec.declarations) add("$where references unknown type '${type.name}'")
             is TypeRef.ListOf -> checkRef(spec, type.element, where)
+            is TypeRef.MapOf -> {
+                checkRef(spec, type.key, where)
+                if (!spec.isMapKey(type.key)) add("$where has map keys that have no string form")
+                checkRef(spec, type.value, where)
+            }
             is TypeRef.Primitive -> Unit
         }
     }
@@ -133,7 +206,7 @@ object SpecValidator {
                 else -> false
             }
             is TypeRef.Named -> (spec.declarations[type.name] as? EnumType)?.values?.any { it.wireValue == literal.value } == true
-            is TypeRef.ListOf -> false
+            is TypeRef.ListOf, is TypeRef.MapOf -> false
         }
         if (!valid) add("$where defaults to '${literal.value}', which isn't a value of its type")
     }

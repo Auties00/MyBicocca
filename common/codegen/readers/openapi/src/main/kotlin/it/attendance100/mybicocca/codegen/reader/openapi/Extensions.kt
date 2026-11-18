@@ -11,35 +11,54 @@ import it.attendance100.mybicocca.codegen.model.AuthScheme
  * |-----------------------|----------------------|-------------------------------------------------------------------|
  * | root                  | `x-mb-id`            | The API's id (e.g. `affluences`).                                 |
  * | root                  | `x-mb-prefix`        | Prefix of its declarations (e.g. `Affluences`).                   |
+ * | root                  | `x-mb-parameters`    | API parameters, as `$ref`s to component parameters. Operations reference the path ones as usual; the reader drops those references. |
+ * | root                  | `x-mb-headers`       | Headers every operation sends, before its own.                   |
  * | server                | `x-mb-name`          | PascalCase name of the server.                                    |
  * | components            | `x-mb-auth-schemes`  | Auth schemes: `{Name: {description, parameters: [{name, description}], headers: {Header: "Bearer {param}"}}}`. |
  * | operation             | `x-mb-auth`          | `{schemes: [Name, …], required: true}`.                          |
- * | operation             | `x-mb-headers`       | Fixed headers, `{name: value}`.                                  |
+ * | operation             | `x-mb-headers`       | Fixed headers, `{name: value}`; `{parameter}` in a value names an API parameter. |
  * | operation             | `x-mb-envelope`      | Keys the response value is nested in, e.g. `[data]`.             |
  * | operation             | `x-mb-empty-body`    | `true` to send `{}` as the body.                                 |
+ * | operation             | `x-mb-path`          | The path to send, when it clashes with another operation's: OpenAPI forbids paths that differ only in parameter names. |
  * | schema                | `x-mb-module`        | Module the record belongs to, when not the first that uses it.   |
+ * | object schema         | `x-mb-delimited`     | Separator of a record written as one string (`09:00-09:30`).      |
+ * | map schema            | `x-mb-key`           | Key type: `integer`, `int64`, `date` or a schema name (default: strings). |
  * | enum schema           | `x-enum-varnames`    | PascalCase names of the values, in order.                         |
  * | enum schema           | `x-mb-open`          | `false` to reject unknown values (enums are open by default).    |
  * | enum schema           | `x-mb-wrapped`       | `true` when values may arrive as `{"value": "…"}`.               |
  * | property, parameter   | `x-mb-name`          | camelCase name, when not derivable from the wire name.           |
  * | string property       | `x-mb-pattern`       | Date/time pattern of a `date`, `date-time` or `time` value.      |
- * | string property       | `x-mb-blank-as-null` | `true` when blank strings mean no value (with `x-mb-pattern`).   |
+ * | string property       | `x-mb-blank-as-null` | `true` when blank strings mean no value.                          |
+ * | string property       | `x-mb-also-null`     | Other strings meaning no value, e.g. `["0"]` (with `x-mb-blank-as-null`). |
+ * | `allOf` property      | `x-mb-folded`        | `true` when the record may arrive as an array of single-key objects. |
+ * | `allOf` property      | `x-mb-embedded`      | `true` when the record may arrive as JSON inside a string.        |
+ *
+ * Keys next to a `$ref` are lost, so a property referencing a record with a codec, or a
+ * parameter with a default, wraps the reference: `allOf: [$ref: …]`. Parameters `in: cookie` are cookies, and a
+ * parameter with `content: application/json` is written as JSON.
  */
 internal object Extensions {
     const val ID = "x-mb-id"
     const val PREFIX = "x-mb-prefix"
+    const val PARAMETERS = "x-mb-parameters"
     const val NAME = "x-mb-name"
     const val AUTH_SCHEMES = "x-mb-auth-schemes"
     const val AUTH = "x-mb-auth"
     const val HEADERS = "x-mb-headers"
     const val ENVELOPE = "x-mb-envelope"
     const val EMPTY_BODY = "x-mb-empty-body"
+    const val PATH = "x-mb-path"
     const val MODULE = "x-mb-module"
+    const val DELIMITED = "x-mb-delimited"
+    const val KEY = "x-mb-key"
     const val ENUM_NAMES = "x-enum-varnames"
     const val OPEN = "x-mb-open"
     const val WRAPPED = "x-mb-wrapped"
     const val PATTERN = "x-mb-pattern"
     const val BLANK_AS_NULL = "x-mb-blank-as-null"
+    const val ALSO_NULL = "x-mb-also-null"
+    const val FOLDED = "x-mb-folded"
+    const val EMBEDDED = "x-mb-embedded"
 
     fun authSchemes(raw: Any?): List<AuthScheme> {
         val schemes = raw as? Map<*, *> ?: return emptyList()
@@ -67,6 +86,13 @@ internal object Extensions {
         null -> emptyMap()
         is Map<*, *> -> raw.entries.associate { (key, value) -> key.toString() to value.toString() }
         else -> error("Expected an object for $what")
+    }
+
+    /** The names a list of `$ref`s points to. */
+    fun refNames(raw: Any?, what: String): List<String> = when (raw) {
+        null -> emptyList()
+        is List<*> -> raw.map { item -> ((item as? Map<*, *>)?.get("\$ref") ?: error("Expected a \$ref in $what")).toString().substringAfterLast('/') }
+        else -> error("Expected a list for $what")
     }
 
     fun stringList(raw: Any?, what: String): List<String> = when (raw) {

@@ -2,15 +2,17 @@
 
 import { decodeString } from "@mybicocca/data-api-runtime";
 import { DemoClient } from "../client.js";
+import { DemoParameters } from "./DemoParameters.js";
 
 export class DemoSharedApi {
-  constructor(private readonly client: DemoClient) {}
+  constructor(private readonly client: DemoClient, private readonly parameters: DemoParameters) {}
 
   async ping(): Promise<string> {
     return this.client.json(
       {
         method: "GET",
         path: "/ping",
+        headers: [["X-TENANT", this.parameters.tenant]],
       },
       [],
       decodeString,

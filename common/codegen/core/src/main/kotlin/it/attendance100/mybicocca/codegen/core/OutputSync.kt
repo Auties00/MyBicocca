@@ -14,7 +14,8 @@ import kotlin.io.path.writeText
 /**
  * The changes that bring an output directory in line with a target's generated files.
  *
- * @property writes Files that are missing or whose content differs.
+ * @property writes Files that are missing or whose content differs. A file is never written over
+ *   a hand-written one: planning fails instead.
  * @property deletions Previously generated files (recognised by [GENERATED_MARKER]) that the
  *   target no longer produces. Hand-written files in the same directory are never touched.
  */
@@ -41,6 +42,10 @@ object OutputSync {
         val writes = files.filter { file ->
             val target = outputDir.resolve(file.path)
             !target.exists() || target.readText().normalizeNewlines() != file.content
+        }
+        val handWritten = writes.map { outputDir.resolve(it.path) }.filter { it.exists() && !it.isGenerated() }
+        require(handWritten.isEmpty()) {
+            "Generated files would replace hand-written ones; move or delete them first:\n" + handWritten.joinToString("\n") { "  - $it" }
         }
 
         val produced = files.map { it.path }.toSet()

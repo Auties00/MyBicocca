@@ -14,24 +14,36 @@ internal class FacadeEmitter(private val spec: ApiSpec, private val layout: Kotl
         file.import("io.ktor.client.HttpClientConfig")
         file.import(layout.runtime)
         val runtime = layout.runtime.substringAfterLast('.')
+        val parameters = spec.parameters.map { "${KotlinSyntax.identifier(it.name)}: ${layout.render(it.type, file)}" } +
+            "httpClientConfig: HttpClientConfig<*>.() -> Unit = {}"
         file.body.apply {
             line("/**")
             line(" * Entry point of the ${spec.prefix} API: one property per module, all sharing one HTTP client.")
             line(" *")
+            for (parameter in spec.parameters) {
+                parameter.description?.let { line(" * @param ${KotlinSyntax.identifier(parameter.name)} ${KotlinSyntax.docText(it)}") }
+            }
             line(" * @param httpClientConfig Additional configuration of the HTTP client, such as authentication.")
             line(" */")
-            block("class ${layout.facadeName}(httpClientConfig: HttpClientConfig<*>.() -> Unit = {}) : AutoCloseable {") {
+            if (spec.parameters.isEmpty()) {
+                line("class ${layout.facadeName}(${parameters.single()}) : AutoCloseable {")
+            } else {
+                commaList("class ${layout.facadeName}(", parameters, ") : AutoCloseable {")
+            }
+            indent {
                 line("private val json = $runtime.json")
                 line("private val client = $runtime.createHttpClient(json, httpClientConfig)")
                 line()
                 for (module in spec.modules.filter { it.operations.isNotEmpty() }) {
-                    line("val ${KotlinSyntax.identifier(module.name.decapitalized())} = ${layout.serviceName(module)}(client, json)")
+                    val arguments = listOf("client", "json") + spec.parametersOf(module).map { KotlinSyntax.identifier(it.name) }
+                    line("val ${KotlinSyntax.identifier(module.name.decapitalized())} = ${layout.serviceName(module)}(${arguments.joinToString(", ")})")
                 }
                 line()
                 block("override fun close() {") {
                     line("client.close()")
                 }
             }
+            line("}")
         }
     }
 }

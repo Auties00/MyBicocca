@@ -4,10 +4,11 @@ import { JsonValue, decodeJsonValue } from "@mybicocca/data-api-runtime";
 import { DemoClient } from "../client.js";
 import { DemoAuth, DemoKeyAuth } from "./DemoAuthTypes.js";
 import { DemoItem, decodeDemoItem } from "./DemoItemsTypes.js";
+import { DemoParameters } from "./DemoParameters.js";
 import { DemoServer } from "./DemoServer.js";
 
 export class DemoSearchApi {
-  constructor(private readonly client: DemoClient) {}
+  constructor(private readonly client: DemoClient, private readonly parameters: DemoParameters) {}
 
   /**
    * @param options.timeZone Zone the results are localised to.
@@ -26,7 +27,11 @@ export class DemoSearchApi {
         method: "GET",
         path: "/search",
         query: [["q", query], ["page", options.page ?? 0]],
-        headers: [["x-client", "sdk"], ["X-TIMEZONE", options.timeZone ?? "Europe/Rome"]],
+        headers: [
+          ["x-client", "sdk"],
+          ["X-TENANT", this.parameters.tenant],
+          ["X-TIMEZONE", options.timeZone ?? "Europe/Rome"],
+        ],
         auth: options.auth,
         server: DemoServer.Search,
         envelope: ["data", "items"],
@@ -44,6 +49,7 @@ export class DemoSearchApi {
       {
         method: "POST",
         path: "/touch",
+        headers: [["X-TENANT", this.parameters.tenant]],
         body: {},
         auth: auth,
         server: DemoServer.Main,

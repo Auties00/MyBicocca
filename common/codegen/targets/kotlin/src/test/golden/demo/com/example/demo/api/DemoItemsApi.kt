@@ -7,6 +7,7 @@ import com.example.demo.dto.DemoPriority
 import com.example.demo.dto.DemoStatus
 import io.ktor.client.HttpClient
 import io.ktor.client.request.forms.FormDataContent
+import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
@@ -17,7 +18,8 @@ import kotlinx.serialization.json.Json
 
 class DemoItemsApi(
     client: HttpClient,
-    json: Json
+    json: Json,
+    private val tenant: String
 ) : DemoAbstractApi(client, json, "/items-service-v1") {
 
     /**
@@ -37,6 +39,7 @@ class DemoItemsApi(
             status?.let { parameter("stato", it.value) }
             ids?.let { parameter("ids", it.joinToString(",")) }
             parameter("limit", limit)
+            header("X-TENANT", tenant)
         }
     }
 
@@ -51,6 +54,7 @@ class DemoItemsApi(
             contentType(ContentType.Application.Json)
             setBody(body)
             notify?.let { parameter("notifica", it) }
+            header("X-TENANT", tenant)
         }
     }
 
@@ -66,6 +70,7 @@ class DemoItemsApi(
                 count?.let { append("num", it.toString()) }
                 status?.let { append("stato", it.value) }
             }))
+            header("X-TENANT", tenant)
         }
         ensureSuccess(response, emptySet())
     }
@@ -73,7 +78,9 @@ class DemoItemsApi(
     suspend fun deleteItem(
         itemId: String
     ) {
-        val response = executeDelete("/items/${itemId}")
+        val response = executeDelete("/items/${itemId}") {
+            header("X-TENANT", tenant)
+        }
         ensureSuccess(response, emptySet())
     }
 
@@ -83,6 +90,7 @@ class DemoItemsApi(
     ): ByteReadChannel {
         return executeStreamGet("/items/${itemId}/pdf", emptySet()) {
             parameter("priority", priority.value)
+            header("X-TENANT", tenant)
         }
     }
 }
