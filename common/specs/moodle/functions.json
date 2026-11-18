@@ -6394,6 +6394,64 @@
             }
         },
         {
+            "name": "core_get_component_strings",
+            "component": "core_get",
+            "type": "read",
+            "loginrequired": false,
+            "description": "Return all raw strings (with {$a->xxx}), for a specific component - similar to core get_component_strings(), call",
+            "parameters": {
+                "kind": "object",
+                "keys": {
+                    "component": {
+                        "kind": "value",
+                        "type": "component",
+                        "presence": "required",
+                        "nullable": true,
+                        "description": "component"
+                    },
+                    "lang": {
+                        "kind": "value",
+                        "type": "lang",
+                        "presence": "default",
+                        "nullable": true,
+                        "description": "lang",
+                        "default": null
+                    }
+                },
+                "presence": "required",
+                "nullable": false,
+                "description": ""
+            },
+            "returns": {
+                "kind": "list",
+                "content": {
+                    "kind": "object",
+                    "keys": {
+                        "stringid": {
+                            "kind": "value",
+                            "type": "stringid",
+                            "presence": "required",
+                            "nullable": true,
+                            "description": "string id"
+                        },
+                        "string": {
+                            "kind": "value",
+                            "type": "raw",
+                            "presence": "required",
+                            "nullable": true,
+                            "description": "translated string"
+                        }
+                    },
+                    "presence": "required",
+                    "nullable": false,
+                    "description": ""
+                },
+                "presence": "required",
+                "nullable": false,
+                "description": ""
+            }
+        },
+        {
             "name": "core_group_get_course_user_groups",
             "component": "core_group",
             "type": "read",

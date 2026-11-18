@@ -7,7 +7,7 @@ The iOS app. It consumes the Swift SDKs generated from the specs in [`../common`
 [`DataApi`](DataApi) is a Swift package with one library per data API:
 
 - `DataApiRuntime` — the hand-written runtime every SDK uses (dates, lenient decoding, requests)
-- `Affluences`, `EasyStaff`, `EasyStaffPlanning`, `Esse3`, `Moodle` and `MoodleWeb` — generated
+- `Affluences`, `EasyStaff`, `EasyStaffPlanning`, `Esse3`, `Kaltura`, `Moodle` and `MoodleWeb` — generated
   sources in `Generated/`, clients included; `EasyStaffPlanning` adds a few hand-written helpers
 
 ```swift

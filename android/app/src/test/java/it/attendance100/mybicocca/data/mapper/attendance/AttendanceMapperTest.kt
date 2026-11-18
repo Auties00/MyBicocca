@@ -7,8 +7,8 @@ import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffAttendanceR
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffAttendanceStatus
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffCertificationResult
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffCertifyAttendanceResult
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceMarkResult
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceMarkableSession
+import it.attendance100.mybicocca.data.elearning.ElearningAttendanceMarkResult
+import it.attendance100.mybicocca.data.elearning.ElearningAttendanceMarkableSession
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleWebAttendanceStatusOption
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleWebAttendanceSummary
 import it.attendance100.mybicocca.domain.model.attendance.AttendanceModuleRef

@@ -2,6 +2,7 @@ package it.attendance100.mybicocca.data.remote.elearning.dto
 
 import org.jsoup.Jsoup
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -11,6 +12,8 @@ class MoodleWebScrapersTest {
     @Test
     fun `reads the attendance summary of view php by position`() {
         val page = """
+            <head><script>M.cfg = {"wwwroot":"https://elearning.unimib.it","userId":42};</script></head>
+            <body id="page-mod-attendance-view">
             <table class="attlist">
               <tr><td>Sessioni frequentate:</td><td>10</td></tr>
               <tr><td>Punteggio sulle sessione già registrate:</td><td>10 / 10</td></tr>
@@ -27,8 +30,11 @@ class MoodleWebScrapersTest {
               <tr><td>gio 19 nov 2026 2PM - 4PM</td><td colspan="3"><a href="https://elearning.unimib.it/mod/attendance/attendance.php?sessid=125&amp;sesskey=x">Report future absence</a></td></tr>
               <tr><td>ven 13 mar 2026 5PM - 6PM</td><td colspan="3">Nessuna azione</td></tr>
             </table>
+            </body>
         """.trimIndent()
         val view = MoodleWebScrapers.attendanceView(Jsoup.parse(page))!!
+        assertTrue(view.shown)
+        assertEquals(42, view.userId)
         val summary = view.summary!!
         assertEquals(10, summary.takenSessions)
         assertEquals("10 / 10", summary.pointsTakenLabel)
@@ -49,9 +55,50 @@ class MoodleWebScrapersTest {
 
     @Test
     fun `a view php without statistics has no summary`() {
-        val view = MoodleWebScrapers.attendanceView(Jsoup.parse("<html><body><p>Nessuna sessione</p></body></html>"))!!
+        val view = MoodleWebScrapers.attendanceView(Jsoup.parse("""<html><body id="page-mod-attendance-view"><p>Nessuna sessione</p></body></html>"""))!!
+        assertTrue(view.shown)
         assertNull(view.summary)
         assertTrue(view.submittableSessions.isEmpty())
+    }
+
+    @Test
+    fun `Moodle's login page is not the attendance page`() {
+        val login = """<html><body id="page-login-index"><form id="login"><input name="username"></form></body></html>"""
+        assertFalse(MoodleWebScrapers.attendanceView(Jsoup.parse(login))!!.shown)
+    }
+
+    @Test
+    fun `reads the template rendered after marking`() {
+        val template = """
+            <span class="messages">
+                <ion-item class="ion-text-wrap"><ion-label>{{ 'plugin.mod_attendance.incorrectpasswordshort' | translate }}</ion-label></ion-item>
+            </span>
+            <ion-item>
+                <ion-label>
+                    <h2>Lezione 12</h2>
+                    <h3>Gruppo A</h3>
+                    <h3>Presente</h3>
+                </ion-label>
+            </ion-item>
+            <ion-item>
+                <ion-label>
+                    <h2>Lezione 13</h2>
+                    <h3>Gruppo B</h3>
+                    <h3></h3>
+                    <ion-button core-site-plugins-new-content component="mod_attendance" method="mobile_user_form" [args]="{cmid: 5, courseid: 7, sessid: 124, timestamp: 1}">Invia</ion-button>
+                </ion-label>
+            </ion-item>
+        """.trimIndent()
+        val page = MoodleWebScrapers.attendanceMarkPage(Jsoup.parse(template))!!
+        assertEquals(listOf("incorrectpasswordshort"), page.messages.map { it.key })
+        // The message's item has no session title, so it isn't a session.
+        assertEquals(
+            listOf(
+                Triple("Lezione 12", emptyList(), listOf("Gruppo A", "Presente")),
+                Triple("Lezione 13", listOf("124"), listOf("Gruppo B")),
+            ),
+            page.sessions.map { session -> Triple(session.time, session.markActions.map { it.sessionId }, session.headings) }
+        )
     }
 
     @Test

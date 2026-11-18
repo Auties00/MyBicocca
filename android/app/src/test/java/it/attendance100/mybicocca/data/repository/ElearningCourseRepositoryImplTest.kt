@@ -17,7 +17,7 @@ import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncScope
 import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncStateDao
 import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncStateEntity
 import it.attendance100.mybicocca.data.local.settings.ElearningFilterStore
-import it.attendance100.mybicocca.data.remote.elearning.api.ElearningApi
+import it.attendance100.mybicocca.data.elearning.ElearningApi
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCalendarEvent
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleEventIcon
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleStatusResponse

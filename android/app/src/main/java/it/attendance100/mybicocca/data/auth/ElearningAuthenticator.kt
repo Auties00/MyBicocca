@@ -24,7 +24,7 @@ import io.ktor.http.content.TextContent
 import io.ktor.utils.io.jvm.javaio.toInputStream
 import it.attendance100.mybicocca.data.observability.HttpMetrics
 import io.ktor.client.plugins.UserAgent
-import it.attendance100.mybicocca.data.remote.elearning.api.ElearningApi
+import it.attendance100.mybicocca.data.elearning.ElearningApi
 import it.attendance100.mybicocca.data.remote.elearning.api.MoodleApi
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
 import it.attendance100.mybicocca.data.remote.elearning.exception.MoodleException

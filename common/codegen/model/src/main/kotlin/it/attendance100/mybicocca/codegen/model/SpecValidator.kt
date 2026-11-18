@@ -168,6 +168,7 @@ object SpecValidator {
     private fun MutableList<String>.checkField(spec: ApiSpec, record: RecordType, field: Field) {
         val where = "Field '${record.name}.${field.name}'"
         checkRef(spec, field.type, where)
+        if (field.type.mentions(PrimitiveKind.FILE)) add("$where is a file, which only a multipart form can send")
         when (field.default) {
             DefaultValue.Null -> if (!field.nullable) add("$where defaults to null but isn't nullable")
             DefaultValue.EmptyList -> if (field.type !is TypeRef.ListOf) add("$where defaults to an empty list but isn't a list")
@@ -209,6 +210,13 @@ object SpecValidator {
         }
     }
 
+    private fun TypeRef.mentions(kind: PrimitiveKind): Boolean = when (this) {
+        is TypeRef.Primitive -> this.kind == kind
+        is TypeRef.ListOf -> element.mentions(kind)
+        is TypeRef.MapOf -> key.mentions(kind) || value.mentions(kind)
+        is TypeRef.Named -> false
+    }
+
     private fun isObjectRecord(spec: ApiSpec, type: TypeRef): Boolean =
         type is TypeRef.Named && (spec.declarations[type.name] as? RecordType)?.encoding == RecordEncoding.Object
 
@@ -234,7 +242,11 @@ object SpecValidator {
                 when (parameter.encoding) {
                     ParameterEncoding.PLAIN -> {
                         parameter.default?.let { checkLiteral(spec, parameter.type, it, what) }
-                        if (!isPlain(spec, parameter.type)) add("$what can't be written as plain text; encode it as JSON")
+                        if (parameter.type == TypeRef.Primitive(PrimitiveKind.FILE)) {
+                            if (parameter.location != ParameterLocation.FORM || !operation.multipart) add("$what is a file but isn't a field of a multipart form")
+                        } else if (!isPlain(spec, parameter.type)) {
+                            add("$what can't be written as plain text; encode it as JSON")
+                        }
                     }
                     ParameterEncoding.JSON -> if (parameter.location == ParameterLocation.PATH) add("$what is a JSON-encoded path parameter")
                     ParameterEncoding.BRACKETS -> {
@@ -255,6 +267,7 @@ object SpecValidator {
                     }
                 }
                 if (parameter.location == ParameterLocation.PATH && !parameter.required) add("$what isn't required")
+                if (parameter.raw && (parameter.location != ParameterLocation.PATH || parameter.type != TypeRef.STRING)) add("$what is sent raw but isn't a string path parameter")
                 if (parameter.pattern != null) {
                     if ((parameter.type as? TypeRef.Primitive)?.kind?.isTemporal != true) add("$what has a pattern but isn't a date or time")
                     if (parameter.encoding != ParameterEncoding.PLAIN) add("$what has a pattern but isn't plainly encoded")
@@ -298,8 +311,9 @@ object SpecValidator {
                     checkRef(spec, response.type, "$where response")
                     checkScrape(spec, response.type, response.scrape, "$where response")
                 }
-                ResponseBody.None, ResponseBody.Binary -> Unit
+                ResponseBody.None, ResponseBody.Binary, ResponseBody.Text -> Unit
             }
+            if (operation.multipart && operation.body != null) add("$where sends both a JSON body and a multipart form")
 
             val placeholders = PLACEHOLDER.findAll(operation.path).map { it.groupValues[1] }.toSet()
             val pathParameters = operation.pathParameters.map { it.wireName }.toSet()

@@ -7,6 +7,15 @@ import kotlinx.serialization.Serializable
 /** An attendance activity's `view.php` showing every session (`view=5`): the student's statistics and the sessions it offers to submit attendance for. */
 @Serializable
 data class MoodleWebAttendanceView(
+    /** The user Moodle rendered the page for, from its JavaScript config (`M.cfg`): 1, the guest user, when the session expired. */
+    @SerialName("userId")
+    val userId: Int? = null,
+
+    /** Whether Moodle showed the activity's page, rather than another one: its enrol page (an expired session, or a course the user isn't enrolled in), the teachers' or the report viewers' page, or a policy or access restriction page. */
+    @Serializable(with = MoodleWebBooleanSerializer::class)
+    @SerialName("shown")
+    val shown: Boolean = false,
+
     /** The student's statistics, or none when the page shows no table of them, or one without the eight rows it is read by, which means the markup changed. */
     @SerialName("summary")
     val summary: MoodleWebAttendanceSummary? = null,
@@ -85,4 +94,44 @@ data class MoodleWebAttendanceStatusOption(
 
     @SerialName("description")
     val description: String = ""
+)
+
+/** The template of `mobile_view_activity` after marking: a message for each reason the presence wasn't recorded, and an item for each session it lists. It only lists the sessions starting between 6 hours ago and 24 hours from now (the site's defaults). */
+@Serializable
+data class MoodleWebAttendanceMarkPage(
+    @SerialName("messages")
+    val messages: List<MoodleWebAttendanceMessage> = emptyList(),
+
+    @SerialName("sessions")
+    val sessions: List<MoodleWebAttendanceMarkSession> = emptyList()
+)
+
+/** A session's item in the template of `mobile_view_activity`: its date and time, the button marking it while it is open, and the status it was assigned once marked. */
+@Serializable
+data class MoodleWebAttendanceMarkSession(
+    /** The session's date and time, as `view.php` writes them in the same language (`MoodleWebSubmittableSession.time`). */
+    @SerialName("time")
+    val time: String,
+
+    @SerialName("markActions")
+    val markActions: List<MoodleWebAttendanceMarkAction> = emptyList(),
+
+    /** The item's headings, in order: the session's group, then the status it was assigned. */
+    @SerialName("headings")
+    val headings: List<String> = emptyList()
+)
+
+/** A message of the plugin, which the template names by its string key (`plugin.mod_attendance.<key>`). */
+@Serializable
+data class MoodleWebAttendanceMessage(
+    /** The string key, such as `incorrectpasswordshort`. */
+    @SerialName("key")
+    val key: String
+)
+
+/** The button marking a session, whose arguments name the session. */
+@Serializable
+data class MoodleWebAttendanceMarkAction(
+    @SerialName("sessionId")
+    val sessionId: String
 )

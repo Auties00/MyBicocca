@@ -12,11 +12,11 @@ import it.attendance100.mybicocca.data.auth.SessionManager
 import it.attendance100.mybicocca.data.local.settings.DeviceIdentityStore
 import it.attendance100.mybicocca.data.location.DeviceLocationProvider
 import it.attendance100.mybicocca.data.remote.easystaff.api.EasyStaffApi
-import it.attendance100.mybicocca.data.remote.elearning.api.ElearningApi
-import it.attendance100.mybicocca.data.remote.elearning.api.ElearningAttendanceApi
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceMarkableSession
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceSubmittableSession
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceViewResponse
+import it.attendance100.mybicocca.data.elearning.ElearningApi
+import it.attendance100.mybicocca.data.elearning.ElearningAttendance
+import it.attendance100.mybicocca.data.elearning.ElearningAttendanceMarkableSession
+import it.attendance100.mybicocca.data.elearning.ElearningAttendanceSubmittableSession
+import it.attendance100.mybicocca.data.elearning.ElearningAttendanceViewResponse
 import it.attendance100.mybicocca.domain.model.attendance.AttendanceModuleRef
 import it.attendance100.mybicocca.domain.model.attendance.OpenAttendanceSession
 import it.attendance100.mybicocca.domain.model.attendance.PresenceMarkOutcome
@@ -45,7 +45,7 @@ class AttendanceRepositoryImplTest {
     private val elearningCourseRepository: ElearningCourseRepository = mockk(relaxed = true)
     private val deviceIdentityStore: DeviceIdentityStore = mockk(relaxed = true)
     private val locationProvider: DeviceLocationProvider = mockk(relaxed = true)
-    private val attendanceApi: ElearningAttendanceApi = mockk(relaxed = true)
+    private val attendanceApi: ElearningAttendance = mockk(relaxed = true)
     private val elearningApi: ElearningApi = mockk(relaxed = true) {
         every { attendance } returns attendanceApi
     }
@@ -142,7 +142,7 @@ class AttendanceRepositoryImplTest {
 
     @Test
     fun `an expired browser session is renewed once, through the client that saw it expire`() = runTest {
-        val renewedAttendanceApi: ElearningAttendanceApi = mockk(relaxed = true)
+        val renewedAttendanceApi: ElearningAttendance = mockk(relaxed = true)
         val renewedApi: ElearningApi = mockk(relaxed = true) { every { attendance } returns renewedAttendanceApi }
         coEvery { sessionManager.elearning() } returns ElearningSession(elearningApi, "ws-token")
         coEvery { sessionManager.reauthElearning(stale = elearningApi) } returns ElearningSession(renewedApi, "new-token")

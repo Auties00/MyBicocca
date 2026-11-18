@@ -17,7 +17,7 @@ import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncScope
 import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncStateDao
 import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncStateEntity
 import it.attendance100.mybicocca.data.local.file.ContentUriReader
-import it.attendance100.mybicocca.data.remote.elearning.api.ElearningApi
+import it.attendance100.mybicocca.data.elearning.ElearningApi
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAssignment
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseAssignments
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAssignmentsResponse
@@ -25,8 +25,8 @@ import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleOnlineTextEdit
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleStatusResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleSubmissionPluginData
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleSubmissionStatus
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningUpload
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningUploadedFile
+import it.attendance100.mybicocca.data.remote.runtime.FileUpload
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleUploadedFile
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.elearning.assignment.Assignment
@@ -203,7 +203,7 @@ class ElearningAssignmentRepositoryImplTest {
         val repository = newRepository(scope)
         every { assignmentDao.observe(accountId.value, assignmentId.value) } returns flowOf(assignmentEntity(500))
         coEvery { elearningApi.files.downloadFileBytes(token, "https://kept/file.pdf") } returns byteArrayOf(1, 2)
-        coEvery { elearningApi.files.uploadToDraftArea(token, any()) } returns listOf(ElearningUploadedFile(itemId = 808))
+        coEvery { elearningApi.files.uploadToDraftArea(token, any()) } returns listOf(MoodleUploadedFile(itemId = 808))
         coEvery { elearningApi.moodle.assign.getSubmissionStatus(assignmentId.value, auth = auth) } returns
             MoodleSubmissionStatus()
 
@@ -217,7 +217,7 @@ class ElearningAssignmentRepositoryImplTest {
             ),
         )
 
-        val uploads = slot<List<ElearningUpload>>()
+        val uploads = slot<List<FileUpload>>()
         coVerify { elearningApi.files.uploadToDraftArea(token, capture(uploads)) }
         assertThat(uploads.captured.map { it.fileName }).containsExactly("file.pdf", "new.pdf").inOrder()
         coVerify {

@@ -70,6 +70,7 @@
     "core_course_get_courses_by_field/returns/warnings[]": "",
     "core_enrol_get_users_courses/returns[]": "EnrolledCourse",
     "core_enrol_get_users_courses/returns[]/overviewfiles[]": "File",
+    "core_get_component_strings/returns[]": "ComponentString",
     "core_group_get_course_user_groups/returns": "CourseUserGroupsResponse",
     "core_group_get_course_user_groups/returns/groups[]": "CourseGroup",
     "core_group_get_course_user_groups/returns/warnings[]": "",

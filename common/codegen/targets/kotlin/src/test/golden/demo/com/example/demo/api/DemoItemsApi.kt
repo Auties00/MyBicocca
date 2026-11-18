@@ -5,9 +5,13 @@ import com.example.demo.dto.DemoItem
 import com.example.demo.dto.DemoPermissionLevel
 import com.example.demo.dto.DemoPriority
 import com.example.demo.dto.DemoStatus
+import com.example.runtime.FileUpload
 import com.example.runtime.RestApi
+import com.example.runtime.appendFile
 import io.ktor.client.HttpClient
 import io.ktor.client.request.forms.FormDataContent
+import io.ktor.client.request.forms.MultiPartFormDataContent
+import io.ktor.client.request.forms.formData
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
@@ -25,6 +29,45 @@ class DemoItemsApi(
     private val tenant: String,
     private val region: String
 ) : RestApi(client, json, "/items-service-v1", DemoRuntime.policy, mapOf("tenant" to tenant.toString(), "region" to region.toString())) {
+
+    /**
+     * Attaches a file to an item.
+     */
+    suspend fun uploadAttachment(
+        itemId: Long,
+        note: String? = null,
+        file: FileUpload
+    ) {
+        send(HttpMethod.Post, "/items/${itemId}/attachments") {
+            setBody(MultiPartFormDataContent(formData {
+                note?.let { append("nota", it) }
+                appendFile("file", file)
+            }))
+            header("X-TENANT", tenant)
+        }
+    }
+
+    /**
+     * @param path The attachment's path, as its link writes it.
+     */
+    suspend fun downloadAttachment(
+        path: String
+    ): ByteReadChannel {
+        return stream(HttpMethod.Get, "/attachments/${path}") {
+            header("X-TENANT", tenant)
+        }
+    }
+
+    /**
+     * The item's change log, as plain text.
+     */
+    suspend fun getItemLog(
+        itemId: Long
+    ): String {
+        return text(HttpMethod.Get, "/items/${itemId}/log") {
+            header("X-TENANT", tenant)
+        }
+    }
 
     /**
      * Lists the items of an owner.

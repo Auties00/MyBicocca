@@ -6,6 +6,7 @@ import { MoodleCalendarApi } from "./MoodleCalendarApi.js";
 import { MoodleClient } from "./MoodleClient.js";
 import { MoodleCompletionApi } from "./MoodleCompletionApi.js";
 import { MoodleCourseApi } from "./MoodleCourseApi.js";
+import { MoodleFilesApi } from "./MoodleFilesApi.js";
 import { MoodleForumApi } from "./MoodleForumApi.js";
 import { MoodleGradeApi } from "./MoodleGradeApi.js";
 import { MoodleMessageApi } from "./MoodleMessageApi.js";
@@ -20,27 +21,29 @@ export class MoodleApi {
   readonly calendar: MoodleCalendarApi;
   readonly completion: MoodleCompletionApi;
   readonly course: MoodleCourseApi;
+  readonly site: MoodleSiteApi;
   readonly message: MoodleMessageApi;
   readonly user: MoodleUserApi;
-  readonly site: MoodleSiteApi;
   readonly grade: MoodleGradeApi;
   readonly assign: MoodleAssignApi;
   readonly forum: MoodleForumApi;
   readonly quiz: MoodleQuizApi;
   readonly mobile: MoodleMobileApi;
+  readonly files: MoodleFilesApi;
 
   constructor(readonly client: MoodleClient) {
     this.badge = new MoodleBadgeApi(client);
     this.calendar = new MoodleCalendarApi(client);
     this.completion = new MoodleCompletionApi(client);
     this.course = new MoodleCourseApi(client);
+    this.site = new MoodleSiteApi(client);
     this.message = new MoodleMessageApi(client);
     this.user = new MoodleUserApi(client);
-    this.site = new MoodleSiteApi(client);
     this.grade = new MoodleGradeApi(client);
     this.assign = new MoodleAssignApi(client);
     this.forum = new MoodleForumApi(client);
     this.quiz = new MoodleQuizApi(client);
     this.mobile = new MoodleMobileApi(client);
+    this.files = new MoodleFilesApi(client);
   }
 }

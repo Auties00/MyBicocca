@@ -11,7 +11,7 @@ import it.attendance100.mybicocca.data.mapper.account.composeDisplayName
 import it.attendance100.mybicocca.data.mapper.account.toDomain
 import it.attendance100.mybicocca.data.mapper.account.toEntity
 import it.attendance100.mybicocca.data.mapper.account.toLearningIdentity
-import it.attendance100.mybicocca.data.remote.elearning.api.ElearningApi
+import it.attendance100.mybicocca.data.elearning.ElearningApi
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleSiteInfo
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
 import it.attendance100.mybicocca.data.remote.esse3.api.Esse3Api
@@ -387,7 +387,7 @@ class SessionManager @Inject constructor(
 
     /**
      * Replaces the active account's expired `MoodleSession` cookie. Use after an
-     * [it.attendance100.mybicocca.data.remote.elearning.dto.ElearningKalturaEntryIdResponse.RequiresReauth]
+     * [it.attendance100.mybicocca.data.elearning.ElearningKalturaEntryIdResponse.RequiresReauth]
      * (or equivalent) signal.
      *
      * The cookie is first renewed through Moodle's mobile autologin, which keeps the web service

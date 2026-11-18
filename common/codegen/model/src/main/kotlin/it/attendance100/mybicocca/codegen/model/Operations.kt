@@ -22,6 +22,8 @@ package it.attendance100.mybicocca.codegen.model
  * @property form Form fields sent with every call, by name, such as the view a PHP endpoint
  *   renders. An empty value sends the field with no value.
  * @property auth The credentials the operation accepts, if any.
+ * @property multipart Whether the form is sent as `multipart/form-data`, as files need, rather
+ *   than URL-encoded.
  */
 data class Operation(
     val name: String,
@@ -37,6 +39,7 @@ data class Operation(
     val auth: AuthRequirement? = null,
     val query: Map<String, String> = emptyMap(),
     val form: Map<String, String> = emptyMap(),
+    val multipart: Boolean = false,
 ) {
     val pathParameters: List<Parameter> get() = parameters.filter { it.location == ParameterLocation.PATH }
     val queryParameters: List<Parameter> get() = parameters.filter { it.location == ParameterLocation.QUERY }
@@ -68,6 +71,8 @@ enum class HttpMethod { GET, POST, PUT, PATCH, DELETE }
  * @property encoding How the value is written.
  * @property pattern The pattern a date or time is written with, in the syntax of
  *   [Codec.Temporal]; ISO 8601 when null.
+ * @property raw For a path parameter: whether the value is sent as given, slashes included, as
+ *   a part of a path the server handed out, already encoded.
  */
 data class Parameter(
     val name: String,
@@ -80,6 +85,7 @@ data class Parameter(
     val default: DefaultValue.Literal? = null,
     val encoding: ParameterEncoding = ParameterEncoding.PLAIN,
     val pattern: String? = null,
+    val raw: Boolean = false,
 ) {
     /** Whether the caller may leave the parameter out, in which case it isn't sent. */
     val isOmittable: Boolean get() = !required && default == null
@@ -138,6 +144,9 @@ sealed interface ResponseBody {
 
     /** Raw bytes, such as a PDF. */
     data object Binary : ResponseBody
+
+    /** Text the caller reads itself, such as a playlist. */
+    data object Text : ResponseBody
 
     /**
      * A JSON value of [type] assigned to the JavaScript [variable] by a script, on a line of its

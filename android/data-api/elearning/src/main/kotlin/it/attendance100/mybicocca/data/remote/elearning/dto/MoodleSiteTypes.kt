@@ -5,6 +5,17 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
+data class MoodleComponentString(
+    /** string id */
+    @SerialName("stringid")
+    val stringId: String = "",
+
+    /** translated string */
+    @SerialName("string")
+    val string: String = ""
+)
+
+@Serializable
 data class MoodleSiteInfo(
     /** site name */
     @SerialName("sitename")

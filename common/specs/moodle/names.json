@@ -611,6 +611,8 @@
     "stateclass": "stateClass",
     "status": "",
     "statuses": "",
+    "string": "",
+    "stringid": "stringId",
     "subject": "",
     "submission": "",
     "submissionattachments": "submissionAttachments",

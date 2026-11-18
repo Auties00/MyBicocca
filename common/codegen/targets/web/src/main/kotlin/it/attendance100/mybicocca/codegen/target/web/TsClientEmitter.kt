@@ -145,6 +145,10 @@ internal class TsClientEmitter(private val spec: ApiSpec, private val layout: Ts
                 line("return new Uint8Array(await (await this.execute(request, ${rolesArgument}false))!.arrayBuffer());")
             }
             line()
+            block("async text(request: RestRequest${if (spec.usesRoles) ", roles: readonly ${layout.roles}[]" else ""}): Promise<string> {") {
+                line("return (await this.execute(request, ${rolesArgument}false))!.text();")
+            }
+            line()
             line("/** Decodes the JSON a script assigns to `variable`. */")
             block("async script<T>(request: RestRequest, ${rolesParameter}variable: string, decode: (json: unknown) => T | undefined): Promise<T> {") {
                 line("return scriptResponse((await this.execute(request, ${rolesArgument}false))!, variable, decode);")

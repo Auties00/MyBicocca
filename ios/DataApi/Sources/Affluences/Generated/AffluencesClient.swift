@@ -34,6 +34,10 @@ public final class AffluencesClient: Sendable {
         try await execute(request, readsJSON: false)!.body
     }
 
+    public func text(_ request: RestRequest) async throws -> String {
+        try await execute(request, readsJSON: false)!.text
+    }
+
     /// Decodes the JSON a script assigns to `variable`.
     public func script<T: Decodable>(_ request: RestRequest, variable: String) async throws -> T {
         try await execute(request, readsJSON: false)!.script(T.self, variable: variable)

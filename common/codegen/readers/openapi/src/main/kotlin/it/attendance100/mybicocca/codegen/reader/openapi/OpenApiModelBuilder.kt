@@ -109,9 +109,15 @@ internal class OpenApiModelBuilder(private val api: OpenAPI) {
         val parameters = (item.parameters.orEmpty() + operation.parameters.orEmpty())
             .filterNot { parameter -> parameter.`$ref`?.let(::refName) in apiParameterNames }
             .map { parameter(name, resolve(it)) }
-        val formSchema = operation.requestBody?.content?.get(FORM)?.schema?.let(::resolve)
+        val multipartSchema = operation.requestBody?.content?.get(MULTIPART)?.schema?.let(::resolve)
+        val formSchema = multipartSchema ?: operation.requestBody?.content?.get(FORM)?.schema?.let(::resolve)
         val form = formSchema?.properties.orEmpty().map { (wire, schema) ->
-            val (type, codec) = type(schema, "$name form field $wire")
+            // A multipart form sends binary fields as files.
+            val (type, codec) = if (multipartSchema != null && schema.format == "binary") {
+                TypeRef.Primitive(PrimitiveKind.FILE) to null
+            } else {
+                type(schema, "$name form field $wire")
+            }
             Parameter(
                 name = nameOf(schema, wire),
                 wireName = wire,
@@ -142,6 +148,7 @@ internal class OpenApiModelBuilder(private val api: OpenAPI) {
             auth = Extensions.authRequirement(extensions[Extensions.AUTH]),
             query = Extensions.stringMap(extensions[Extensions.QUERY], "${Extensions.QUERY} of $name"),
             form = Extensions.stringMap(extensions[Extensions.FORM], "${Extensions.FORM} of $name"),
+            multipart = multipartSchema != null,
         )
     }
 
@@ -171,6 +178,7 @@ internal class OpenApiModelBuilder(private val api: OpenAPI) {
             default = schema.default?.let { DefaultValue.Literal(if (encoding == ParameterEncoding.JSON) Json.mapper().writeValueAsString(it) else literal(it)) },
             encoding = encoding,
             pattern = (codec as? Codec.Temporal)?.pattern,
+            raw = parameter.extensions?.get(Extensions.RAW) == true,
         )
     }
 
@@ -189,12 +197,25 @@ internal class OpenApiModelBuilder(private val api: OpenAPI) {
             val envelope = Extensions.stringList(definition.extensions?.get(Extensions.ENVELOPE), "${Extensions.ENVELOPE} of $operation")
             return ResponseBody.Json(type(schema, "$operation response").first, envelope)
         }
-        return if (content.isNotEmpty()) ResponseBody.Binary else ResponseBody.None
+        // Text the caller reads itself, such as a playlist, as opposed to bytes.
+        val text = content.entries.firstOrNull { (mediaType, media) ->
+            val schema = media.schema
+            if (schema == null) mediaType.startsWith("text/") else schema.type == "string" && schema.format != "binary"
+        }
+        return when {
+            text != null -> ResponseBody.Text
+            content.isNotEmpty() -> ResponseBody.Binary
+            else -> ResponseBody.None
+        }
     }
 
-    /** The server an operation targets: its own, its path's, or the document's first. */
+    /**
+     * The server an operation targets: its own, its path's, or the document's first; none, for
+     * the client's base URL, in a document declaring none.
+     */
     private fun server(operation: OpenApiOperation, item: PathItem): String? {
         val url = (operation.servers ?: item.servers ?: api.servers)?.firstOrNull()?.url ?: return null
+        if (servers.isEmpty() && url == "/") return null
         return servers.firstOrNull { it.url == url }?.name ?: error("Server $url isn't declared at the root")
     }
 
@@ -348,7 +369,7 @@ internal class OpenApiModelBuilder(private val api: OpenAPI) {
                         is ResponseBody.Json -> response.type
                         is ResponseBody.ScriptVariable -> response.type
                         is ResponseBody.Html -> response.type
-                        ResponseBody.None, ResponseBody.Binary -> null
+                        ResponseBody.None, ResponseBody.Binary, ResponseBody.Text -> null
                     },
                     module,
                 )
@@ -375,6 +396,7 @@ internal class OpenApiModelBuilder(private val api: OpenAPI) {
     private companion object {
         const val JSON = "application/json"
         const val FORM = "application/x-www-form-urlencoded"
+        const val MULTIPART = "multipart/form-data"
         const val HTML = "text/html"
     }
 }

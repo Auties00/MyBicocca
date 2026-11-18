@@ -5,6 +5,7 @@ export * from "./MoodleWebCatalogApi.js";
 export * from "./MoodleWebMediaTypes.js";
 export * from "./MoodleWebMediaApi.js";
 export * from "./MoodleWebAttendanceTypes.js";
+export * from "./MoodleWebAttendanceApi.js";
 export * from "./MoodleWebServer.js";
 export * from "./MoodleWebScrapers.js";
 export * from "./MoodleWebApi.js";

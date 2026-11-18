@@ -29,7 +29,7 @@ import it.attendance100.mybicocca.codegen.model.TypeRef
  * They build on the hand-written runtime module ([runtimeModule]): `LocalDate`, `LocalDateTime`,
  * `JSONObject`, `WireEnum`, `WireMap`, `RestRequest`, `RestClient` and the lenient `Codable`
  * helpers. `Esse3Client` sends `RestRequest`s and decodes responses and errors, through
- * `json(_:roles:)`, `jsonList(_:roles:)`, `data(_:roles:)`, `script(_:variable:roles:)`,
+ * `json(_:roles:)`, `jsonList(_:roles:)`, `data(_:roles:)`, `text(_:roles:)`, `script(_:variable:roles:)`,
  * `html(_:scrape:roles:)` and `send(_:roles:)`; the `roles` of the `Esse3PermissionLevel`
  * enum only when operations declare roles (see [SwiftClientEmitter]).
  */
@@ -94,6 +94,7 @@ internal class SwiftLayout(private val spec: ApiSpec, val runtimeModule: String)
             PrimitiveKind.JSON_OBJECT -> "JSONObject"
             PrimitiveKind.JSON_VALUE -> "JSONValue"
             PrimitiveKind.BINARY -> "Data"
+            PrimitiveKind.FILE -> "FileUpload"
         }
     }
 

@@ -20,14 +20,15 @@ class MoodleApi(httpClientConfig: HttpClientConfig<*>.() -> Unit = {}) : AutoClo
     val calendar = MoodleCalendarApi(client, json)
     val completion = MoodleCompletionApi(client, json)
     val course = MoodleCourseApi(client, json)
+    val site = MoodleSiteApi(client, json)
     val message = MoodleMessageApi(client, json)
     val user = MoodleUserApi(client, json)
-    val site = MoodleSiteApi(client, json)
     val grade = MoodleGradeApi(client, json)
     val assign = MoodleAssignApi(client, json)
     val forum = MoodleForumApi(client, json)
     val quiz = MoodleQuizApi(client, json)
     val mobile = MoodleMobileApi(client, json)
+    val files = MoodleFilesApi(client, json)
 
     override fun close() {
         client.close()

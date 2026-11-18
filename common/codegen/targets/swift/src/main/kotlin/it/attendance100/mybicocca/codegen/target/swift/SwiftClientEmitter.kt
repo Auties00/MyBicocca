@@ -76,6 +76,10 @@ internal class SwiftClientEmitter(private val spec: ApiSpec, private val layout:
                 line("try await execute(request$rolesArgument, readsJSON: false)!.body")
             }
             line()
+            block("public func text(_ request: RestRequest$rolesParameter) async throws -> String {") {
+                line("try await execute(request$rolesArgument, readsJSON: false)!.text")
+            }
+            line()
             line("/// Decodes the JSON a script assigns to `variable`.")
             block("public func script<T: Decodable>(_ request: RestRequest, variable: String$rolesParameter) async throws -> T {") {
                 line("try await execute(request$rolesArgument, readsJSON: false)!.script(T.self, variable: variable)")

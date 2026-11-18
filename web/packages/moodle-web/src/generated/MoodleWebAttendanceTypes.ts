@@ -4,6 +4,10 @@ import { JsonObject, asJsonObject, decodeBoolean, decodeInteger, decodeList, dec
 
 /** An attendance activity's `view.php` showing every session (`view=5`): the student's statistics and the sessions it offers to submit attendance for. */
 export interface MoodleWebAttendanceView {
+  /** The user Moodle rendered the page for, from its JavaScript config (`M.cfg`): 1, the guest user, when the session expired. */
+  userId: number | null;
+  /** Whether Moodle showed the activity's page, rather than another one: its enrol page (an expired session, or a course the user isn't enrolled in), the teachers' or the report viewers' page, or a policy or access restriction page. */
+  shown: boolean;
   /** The student's statistics, or none when the page shows no table of them, or one without the eight rows it is read by, which means the markup changed. */
   summary: MoodleWebAttendanceSummary | null;
   /** The session log's rows whose status, points and remarks cells are merged into one link to `attendance.php`. Sessions that have a status are left out, even when it can still be updated, and so are rotating QR sessions, shown as a form instead: the plugin's mobile handler only accepts a session's fixed password. */
@@ -15,6 +19,8 @@ export function decodeMoodleWebAttendanceView(json: unknown): MoodleWebAttendanc
   const object = asJsonObject(json);
   if (object === undefined) return undefined;
   return {
+    userId: decodeInteger(object["userId"]) ?? null,
+    shown: decodeBoolean(object["shown"]) ?? false,
     summary: decodeMoodleWebAttendanceSummary(object["summary"]) ?? null,
     submittableSessions: decodeList(object["submittableSessions"], decodeMoodleWebSubmittableSession) ?? [],
   };
@@ -22,6 +28,8 @@ export function decodeMoodleWebAttendanceView(json: unknown): MoodleWebAttendanc
 
 export function encodeMoodleWebAttendanceView(value: MoodleWebAttendanceView): JsonObject {
   return {
+    "userId": value.userId,
+    "shown": value.shown,
     "summary": value.summary === null ? null : encodeMoodleWebAttendanceSummary(value.summary),
     "submittableSessions": value.submittableSessions.map((item) => encodeMoodleWebSubmittableSession(item)),
   };
@@ -146,5 +154,97 @@ export function encodeMoodleWebAttendanceStatusOption(value: MoodleWebAttendance
   return {
     "id": value.id,
     "description": value.description,
+  };
+}
+
+/** The template of `mobile_view_activity` after marking: a message for each reason the presence wasn't recorded, and an item for each session it lists. It only lists the sessions starting between 6 hours ago and 24 hours from now (the site's defaults). */
+export interface MoodleWebAttendanceMarkPage {
+  messages: MoodleWebAttendanceMessage[];
+  sessions: MoodleWebAttendanceMarkSession[];
+}
+
+/** Decodes a {@link MoodleWebAttendanceMarkPage}; `undefined` when `json` isn't an object. */
+export function decodeMoodleWebAttendanceMarkPage(json: unknown): MoodleWebAttendanceMarkPage | undefined {
+  const object = asJsonObject(json);
+  if (object === undefined) return undefined;
+  return {
+    messages: decodeList(object["messages"], decodeMoodleWebAttendanceMessage) ?? [],
+    sessions: decodeList(object["sessions"], decodeMoodleWebAttendanceMarkSession) ?? [],
+  };
+}
+
+export function encodeMoodleWebAttendanceMarkPage(value: MoodleWebAttendanceMarkPage): JsonObject {
+  return {
+    "messages": value.messages.map((item) => encodeMoodleWebAttendanceMessage(item)),
+    "sessions": value.sessions.map((item) => encodeMoodleWebAttendanceMarkSession(item)),
+  };
+}
+
+/** A session's item in the template of `mobile_view_activity`: its date and time, the button marking it while it is open, and the status it was assigned once marked. */
+export interface MoodleWebAttendanceMarkSession {
+  /** The session's date and time, as `view.php` writes them in the same language (`MoodleWebSubmittableSession.time`). */
+  time: string;
+  markActions: MoodleWebAttendanceMarkAction[];
+  /** The item's headings, in order: the session's group, then the status it was assigned. */
+  headings: string[];
+}
+
+/** Decodes a {@link MoodleWebAttendanceMarkSession}; `undefined` when `json` isn't an object. */
+export function decodeMoodleWebAttendanceMarkSession(json: unknown): MoodleWebAttendanceMarkSession | undefined {
+  const object = asJsonObject(json);
+  if (object === undefined) return undefined;
+  return {
+    time: required(decodeString(object["time"]), "MoodleWebAttendanceMarkSession.time"),
+    markActions: decodeList(object["markActions"], decodeMoodleWebAttendanceMarkAction) ?? [],
+    headings: decodeList(object["headings"], decodeString) ?? [],
+  };
+}
+
+export function encodeMoodleWebAttendanceMarkSession(value: MoodleWebAttendanceMarkSession): JsonObject {
+  return {
+    "time": value.time,
+    "markActions": value.markActions.map((item) => encodeMoodleWebAttendanceMarkAction(item)),
+    "headings": value.headings,
+  };
+}
+
+/** A message of the plugin, which the template names by its string key (`plugin.mod_attendance.<key>`). */
+export interface MoodleWebAttendanceMessage {
+  /** The string key, such as `incorrectpasswordshort`. */
+  key: string;
+}
+
+/** Decodes a {@link MoodleWebAttendanceMessage}; `undefined` when `json` isn't an object. */
+export function decodeMoodleWebAttendanceMessage(json: unknown): MoodleWebAttendanceMessage | undefined {
+  const object = asJsonObject(json);
+  if (object === undefined) return undefined;
+  return {
+    key: required(decodeString(object["key"]), "MoodleWebAttendanceMessage.key"),
+  };
+}
+
+export function encodeMoodleWebAttendanceMessage(value: MoodleWebAttendanceMessage): JsonObject {
+  return {
+    "key": value.key,
+  };
+}
+
+/** The button marking a session, whose arguments name the session. */
+export interface MoodleWebAttendanceMarkAction {
+  sessionId: string;
+}
+
+/** Decodes a {@link MoodleWebAttendanceMarkAction}; `undefined` when `json` isn't an object. */
+export function decodeMoodleWebAttendanceMarkAction(json: unknown): MoodleWebAttendanceMarkAction | undefined {
+  const object = asJsonObject(json);
+  if (object === undefined) return undefined;
+  return {
+    sessionId: required(decodeString(object["sessionId"]), "MoodleWebAttendanceMarkAction.sessionId"),
+  };
+}
+
+export function encodeMoodleWebAttendanceMarkAction(value: MoodleWebAttendanceMarkAction): JsonObject {
+  return {
+    "sessionId": value.sessionId,
   };
 }
