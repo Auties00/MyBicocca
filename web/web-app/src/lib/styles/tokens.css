@@ -1,0 +1,437 @@
+/*
+ * Carta design tokens. Colours are OKLCH ramps with Radix step semantics (1–2 backgrounds,
+ * 3–5 component fills, 6–8 borders, 9–10 solids, 11–12 text), resolved for light and dark with
+ * light-dark(). Palettes rotate the hue of the same ramps; a few palettes also scale chroma to
+ * stay inside sRGB and nudge the dark solid so a white label keeps 4.5:1.
+ *
+ * The rule also matches [data-palette] and [data-theme] so any subtree (a theme preview, a
+ * palette swatch) can re-tint itself: var() resolves where a custom property is declared.
+ */
+@layer tokens {
+	:root,
+	[data-palette],
+	[data-theme] {
+		color-scheme: light dark;
+
+		--hue: 14.4;
+		--p-chroma: 1;
+		--p-solid-dark-l: 56%;
+		--p-solid-hover-dark-l: 52%;
+
+		/* Accent ramp (Bicocca crimson, seed #9C0C35 at step 9 in light). */
+		--c1: light-dark(
+			oklch(99% calc(0.005 * var(--p-chroma)) calc(var(--hue) + 4)),
+			oklch(19% calc(0.022 * var(--p-chroma)) var(--hue))
+		);
+		--c2: light-dark(
+			oklch(97.5% calc(0.012 * var(--p-chroma)) calc(var(--hue) + 4)),
+			oklch(21.5% calc(0.032 * var(--p-chroma)) var(--hue))
+		);
+		--c3: light-dark(
+			oklch(94.8% calc(0.026 * var(--p-chroma)) calc(var(--hue) + 4)),
+			oklch(26.2% calc(0.06 * var(--p-chroma)) var(--hue))
+		);
+		--c4: light-dark(
+			oklch(91.8% calc(0.042 * var(--p-chroma)) calc(var(--hue) + 4)),
+			oklch(30% calc(0.08 * var(--p-chroma)) var(--hue))
+		);
+		--c5: light-dark(
+			oklch(88.4% calc(0.061 * var(--p-chroma)) calc(var(--hue) + 3)),
+			oklch(34% calc(0.095 * var(--p-chroma)) var(--hue))
+		);
+		--c6: light-dark(
+			oklch(84.2% calc(0.087 * var(--p-chroma)) calc(var(--hue) + 2)),
+			oklch(39% calc(0.11 * var(--p-chroma)) var(--hue))
+		);
+		--c7: light-dark(
+			oklch(78.2% calc(0.12 * var(--p-chroma)) calc(var(--hue) + 1)),
+			oklch(45.5% calc(0.135 * var(--p-chroma)) var(--hue))
+		);
+		--c8: light-dark(
+			oklch(70% calc(0.16 * var(--p-chroma)) var(--hue)),
+			oklch(53% calc(0.17 * var(--p-chroma)) var(--hue))
+		);
+		--c9: light-dark(
+			oklch(44.5% calc(0.171 * var(--p-chroma)) var(--hue)),
+			oklch(var(--p-solid-dark-l) calc(0.2 * var(--p-chroma)) var(--hue))
+		);
+		--c10: light-dark(
+			oklch(39% calc(0.155 * var(--p-chroma)) var(--hue)),
+			oklch(61% calc(0.2 * var(--p-chroma)) var(--hue))
+		);
+		--c11: light-dark(
+			oklch(47% calc(0.175 * var(--p-chroma)) var(--hue)),
+			oklch(79% calc(0.115 * var(--p-chroma)) calc(var(--hue) + 3))
+		);
+		--c12: light-dark(
+			oklch(30% calc(0.105 * var(--p-chroma)) var(--hue)),
+			oklch(92.5% calc(0.038 * var(--p-chroma)) calc(var(--hue) + 5))
+		);
+
+		/* Neutral ramp, tinted with the palette hue. */
+		--g1: light-dark(oklch(99.1% 0.002 var(--hue)), oklch(17.5% 0.004 var(--hue)));
+		--g2: light-dark(oklch(97.8% 0.003 var(--hue)), oklch(20% 0.005 var(--hue)));
+		--g3: light-dark(oklch(95.4% 0.005 var(--hue)), oklch(23.5% 0.006 var(--hue)));
+		--g4: light-dark(oklch(93.2% 0.006 var(--hue)), oklch(26.2% 0.007 var(--hue)));
+		--g5: light-dark(oklch(91% 0.007 var(--hue)), oklch(29% 0.008 var(--hue)));
+		--g6: light-dark(oklch(88.5% 0.008 var(--hue)), oklch(32.2% 0.009 var(--hue)));
+		--g7: light-dark(oklch(84.8% 0.009 var(--hue)), oklch(37.2% 0.009 var(--hue)));
+		--g8: light-dark(oklch(78% 0.01 var(--hue)), oklch(45% 0.01 var(--hue)));
+		--g9: light-dark(oklch(62% 0.011 var(--hue)), oklch(55.5% 0.011 var(--hue)));
+		--g10: light-dark(oklch(58% 0.011 var(--hue)), oklch(60% 0.011 var(--hue)));
+		--g11: light-dark(oklch(50% 0.01 var(--hue)), oklch(77% 0.008 var(--hue)));
+		--g12: light-dark(oklch(23.5% 0.008 var(--hue)), oklch(95% 0.003 var(--hue)));
+
+		/* Roles. */
+		--bg: light-dark(var(--g2), var(--g1));
+		--surface: light-dark(oklch(100% 0 0), var(--g2));
+		--surface-raised: light-dark(oklch(100% 0 0), var(--g3));
+		--surface-sunken: light-dark(var(--g3), oklch(15.5% 0.004 var(--hue)));
+		--surface-hover: light-dark(var(--g3), var(--g4));
+		--container: var(--c3);
+		--container-hover: var(--c4);
+		--container-press: var(--c5);
+		--on-container: var(--c12);
+		--accent: var(--c9);
+		--accent-hover: light-dark(
+			var(--c10),
+			oklch(var(--p-solid-hover-dark-l) calc(0.2 * var(--p-chroma)) var(--hue))
+		);
+		--on-accent: oklch(100% 0 0);
+		--accent-text: var(--c11);
+		--text: var(--g12);
+		--text-muted: var(--g11);
+		--text-subtle: var(--g9);
+		--border: var(--g6);
+		--border-strong: var(--g8);
+		--hairline: color-mix(in oklch, var(--text) 9%, transparent);
+		--hairline-strong: color-mix(in oklch, var(--text) 16%, transparent);
+		--focus: light-dark(var(--c9), var(--c11));
+		--state-hover: color-mix(in oklch, currentColor 8%, transparent);
+		--state-press: color-mix(in oklch, currentColor 12%, transparent);
+		--track: light-dark(var(--g4), var(--g5));
+
+		/* Semantic hues, kept away from the brand: danger is vermilion (38), never crimson. */
+		--danger: light-dark(oklch(48% 0.15 38), oklch(80% 0.11 38));
+		--danger-solid: light-dark(oklch(57% 0.18 38), oklch(55% 0.18 38));
+		--danger-solid-hover: light-dark(oklch(52% 0.17 38), oklch(51% 0.17 38));
+		--danger-container: light-dark(oklch(95.5% 0.035 38), oklch(27% 0.055 38));
+		--on-danger-container: light-dark(oklch(36% 0.1 38), oklch(90% 0.06 38));
+		--warning: light-dark(oklch(48% 0.104 70), oklch(80% 0.12 70));
+		/* Arcs, bars and marks: 3:1 on the surface, where the text tone would read brown. */
+		--warning-graphic: light-dark(oklch(62% 0.14 70), var(--warning));
+		--warning-solid: oklch(78% 0.169 70);
+		--on-warning-solid: oklch(23.5% 0.03 70);
+		--warning-container: light-dark(oklch(95.5% 0.035 70), oklch(27% 0.055 70));
+		--on-warning-container: light-dark(oklch(36% 0.1 70), oklch(90% 0.06 70));
+		--success: light-dark(oklch(48% 0.132 150), oklch(80% 0.12 150));
+		--success-solid: oklch(52% 0.14 150);
+		--success-container: light-dark(oklch(95.5% 0.035 150), oklch(27% 0.055 150));
+		--on-success-container: light-dark(oklch(36% 0.1 150), oklch(90% 0.06 150));
+		--info: light-dark(oklch(48% 0.121 245), oklch(80% 0.108 245));
+		--info-solid: oklch(52% 0.14 245);
+		--info-container: light-dark(oklch(95.5% 0.035 245), oklch(27% 0.055 245));
+		--on-info-container: light-dark(oklch(36% 0.1 245), oklch(90% 0.06 245));
+		/* Gold marks honours ("30 e lode"), mirroring Android's tertiary. */
+		--gold: light-dark(oklch(49.2% 0.074 72.5), oklch(83.6% 0.083 75.3));
+		--gold-container: light-dark(oklch(95.5% 0.035 75), oklch(27% 0.05 75));
+		--on-gold-container: light-dark(oklch(36% 0.07 72.5), oklch(90% 0.06 75));
+		/* A category hue with no status meaning: Documents, violet as on Android. */
+		--violet: light-dark(oklch(48% 0.15 295), oklch(80% 0.1 295));
+		--violet-container: light-dark(oklch(95.5% 0.035 295), oklch(27% 0.055 295));
+		--on-violet-container: light-dark(oklch(36% 0.11 295), oklch(90% 0.06 295));
+
+		/* The university's crimson for the logo and wordmark, whatever the palette (as on Android). */
+		--brand: light-dark(oklch(44.5% 0.171 14.4), oklch(56% 0.2 14.4));
+		--brand-deep: light-dark(oklch(30% 0.12 4.5), oklch(38% 0.13 6));
+		/* The crimson as text: lifted in dark mode to reach 4.5:1. */
+		--brand-text: light-dark(oklch(44.5% 0.171 14.4), oklch(70% 0.16 14.4));
+
+		/* Offline band: fixed hues so it reads the same in every palette. */
+		--band-offline: light-dark(oklch(48% 0.15 38), oklch(42% 0.13 38));
+		--band-online: light-dark(oklch(48% 0.132 150), oklch(42% 0.11 150));
+		--on-band: oklch(100% 0 0);
+
+		/* Elevation: warm-tinted shadows in light, lighter surfaces plus a top edge in dark. */
+		--shadow-color: light-dark(oklch(25% 0.03 var(--hue)), oklch(0% 0 0));
+		--inner-light: inset 0 1px 0 light-dark(transparent, oklch(100% 0 0 / 0.05));
+		--elev-1:
+			0 0 0 1px var(--hairline), 0 1px 2px color-mix(in oklch, var(--shadow-color) 6%, transparent);
+		--elev-2:
+			0 0 0 1px var(--hairline), 0 1px 2px color-mix(in oklch, var(--shadow-color) 6%, transparent),
+			0 4px 12px -4px color-mix(in oklch, var(--shadow-color) 12%, transparent);
+		--elev-3:
+			0 0 0 1px var(--hairline), 0 2px 4px color-mix(in oklch, var(--shadow-color) 6%, transparent),
+			0 12px 28px -12px color-mix(in oklch, var(--shadow-color) 18%, transparent),
+			0 28px 56px -28px color-mix(in oklch, var(--shadow-color) 22%, transparent);
+		--elev-overlay:
+			0 0 0 1px var(--hairline), 0 4px 8px color-mix(in oklch, var(--shadow-color) 6%, transparent),
+			0 24px 48px -12px color-mix(in oklch, var(--shadow-color) 24%, transparent);
+
+		/* Materials: a veil for the two small sticky bars, a smoke scrim behind modals. */
+		--veil: color-mix(in oklch, var(--bg) 82%, transparent);
+		--veil-raised: color-mix(in oklch, var(--surface-raised) 86%, transparent);
+		--veil-filter: blur(16px) saturate(1.6);
+		--scrim: light-dark(oklch(15% 0.02 var(--hue) / 0.36), oklch(4% 0.005 var(--hue) / 0.62));
+
+		/* Course colours: equal lightness and chroma, eight hues clear of brand and danger. */
+		--course-h: 240;
+	}
+
+	:root[data-theme='light'],
+	[data-theme='light'] {
+		color-scheme: light;
+	}
+
+	:root[data-theme='dark'],
+	[data-theme='dark'] {
+		color-scheme: dark;
+	}
+
+	[data-palette='oceano'] {
+		--hue: 258;
+		--p-chroma: 0.92;
+		--p-solid-dark-l: 55%;
+		--p-solid-hover-dark-l: 51%;
+	}
+
+	[data-palette='bosco'] {
+		--hue: 142;
+		--p-chroma: 0.86;
+		--p-solid-dark-l: 53%;
+		--p-solid-hover-dark-l: 49%;
+	}
+
+	@media (color-gamut: p3) {
+		:root,
+		[data-palette],
+		[data-theme] {
+			--c9: light-dark(
+				oklch(44.5% calc(0.195 * var(--p-chroma)) var(--hue)),
+				oklch(var(--p-solid-dark-l) calc(0.24 * var(--p-chroma)) var(--hue))
+			);
+		}
+	}
+
+	[data-course] {
+		--course-container: light-dark(
+			oklch(94% 0.035 var(--course-h)),
+			oklch(28% 0.05 var(--course-h))
+		);
+		--course-container-hover: light-dark(
+			oklch(91.5% 0.045 var(--course-h)),
+			oklch(31% 0.06 var(--course-h))
+		);
+		--course-bar: light-dark(oklch(55% 0.15 var(--course-h)), oklch(70% 0.14 var(--course-h)));
+		--course-ink: light-dark(oklch(45% 0.12 var(--course-h)), oklch(84% 0.09 var(--course-h)));
+	}
+	[data-course='1'] {
+		--course-h: 55;
+	}
+	[data-course='2'] {
+		--course-h: 95;
+	}
+	[data-course='3'] {
+		--course-h: 135;
+	}
+	[data-course='4'] {
+		--course-h: 170;
+	}
+	[data-course='5'] {
+		--course-h: 205;
+	}
+	[data-course='6'] {
+		--course-h: 240;
+	}
+	[data-course='7'] {
+		--course-h: 280;
+	}
+	[data-course='8'] {
+		--course-h: 320;
+	}
+
+	:root {
+		/* Type. Instrument Sans for everything you operate, Newsreader for the moments that matter. */
+		--font-ui:
+			'Instrument Sans Variable', 'Instrument Sans Fallback', ui-sans-serif, system-ui, sans-serif;
+		--font-display: 'Newsreader Variable', 'Newsreader Fallback', Georgia, serif;
+
+		--type-display-l: 450 clamp(2.5rem, 1.7rem + 3vw, 4rem) / 1.04 var(--font-display);
+		--track-display-l: -0.025em;
+		--type-display-m: 450 clamp(2rem, 1.5rem + 1.8vw, 2.75rem) / 1.08 var(--font-display);
+		--track-display-m: -0.02em;
+		--type-numeral-xl: 500 4rem / 1 var(--font-display);
+		--track-numeral: -0.03em;
+		--type-numeral-l: 500 2.5rem / 1 var(--font-display);
+		--type-title-l: 500 1.75rem / 1.15 var(--font-display);
+		--track-title-l: -0.015em;
+		--type-title-m: 600 1.25rem / 1.3 var(--font-ui);
+		--track-title-m: -0.01em;
+		--type-title-s: 600 1.0625rem / 1.35 var(--font-ui);
+		--track-title-s: -0.005em;
+		--type-body: 400 1rem / 1.5 var(--font-ui);
+		--type-body-strong: 550 1rem / 1.5 var(--font-ui);
+		/* The title of a list row: between body and UI sizes, so a row reads as one unit. */
+		--type-row-title: 550 0.9375rem / 1.35 var(--font-ui);
+		--track-row-title: -0.003em;
+		--type-ui: 500 0.875rem / 1.43 var(--font-ui);
+		--type-ui-strong: 600 0.875rem / 1.43 var(--font-ui);
+		--type-meta: 400 0.8125rem / 1.38 var(--font-ui);
+		--track-meta: 0.005em;
+		--type-overline: 600 0.75rem / 1.33 var(--font-ui);
+		--track-overline: 0.06em;
+		--type-label: 500 0.75rem / 1.33 var(--font-ui);
+
+		/* Space (4 px grid). */
+		--sp-1: 4px;
+		--sp-2: 8px;
+		--sp-3: 12px;
+		--sp-4: 16px;
+		--sp-5: 20px;
+		--sp-6: 24px;
+		--sp-7: 32px;
+		--sp-8: 40px;
+		--sp-9: 48px;
+		--sp-10: 64px;
+
+		/* Radius: concentric, inner = outer − padding. */
+		--r-2xs: 4px;
+		--r-xs: 6px;
+		--r-sm: 10px;
+		--r-md: 14px;
+		--r-lg: 20px;
+		--r-xl: 28px;
+		--r-pill: 999px;
+
+		/* Controls: comfortable on touch, compact on a fine pointer. */
+		--control-h: 44px;
+		--control-h-sm: 36px;
+		--control-h-lg: 52px;
+		--hit-min: 44px;
+		--icon: 20px;
+		--icon-sm: 16px;
+
+		/* Motion. Springs are damped-oscillator curves (M3 standard spatial parity). */
+		--ease-out: cubic-bezier(0.25, 1, 0.5, 1);
+		--ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+		--ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+		--ease-in: cubic-bezier(0.5, 0, 0.75, 0);
+		--ease-sheet: cubic-bezier(0.32, 0.72, 0, 1);
+		--spring-standard: linear(
+			0,
+			0.022 3.8%,
+			0.076 7.7%,
+			0.151 11.5%,
+			0.491 26.9%,
+			0.635 34.6%,
+			0.749 42.3%,
+			0.834 50%,
+			0.894 57.7%,
+			0.95 69.2%,
+			0.986 84.6%,
+			1
+		);
+		--spring-pop: linear(
+			0,
+			0.061 3.8%,
+			0.207 7.7%,
+			0.575 15.4%,
+			0.741 19.2%,
+			0.876 23.1%,
+			0.976 26.9%,
+			1.042 30.8%,
+			1.079 34.6%,
+			1.094 38.5%,
+			1.092 42.3%,
+			1.005 65.4%,
+			1
+		);
+		--dur-instant: 80ms;
+		--dur-fast: 140ms;
+		--dur-base: 200ms;
+		--dur-slow: 300ms;
+		--dur-spring: 380ms;
+		--dur-sheet: 450ms;
+
+		/* Stacking. Dialogs, popovers and toasts use the top layer and sit above all of these. */
+		--z-raised: 1;
+		--z-sticky: 10;
+		--z-nav: 20;
+		--z-topbar: 30;
+		--z-band: 40;
+
+		/* Layout. */
+		--w-reading: 720px;
+		--w-form: 640px;
+		--w-dashboard: 1200px;
+		--gutter: 16px;
+		--topbar-h: 56px;
+		--tabbar-h: 64px;
+		--rail-w: 80px;
+		--sidebar-w: 256px;
+		--safe-top: env(safe-area-inset-top, 0px);
+		--safe-bottom: env(safe-area-inset-bottom, 0px);
+	}
+
+	@media (pointer: fine) {
+		:root {
+			--control-h: 36px;
+			--control-h-sm: 28px;
+			--control-h-lg: 44px;
+			--hit-min: 24px;
+		}
+	}
+
+	@media (width >= 600px) {
+		:root {
+			--gutter: 24px;
+		}
+	}
+
+	@media (width >= 1024px) {
+		:root {
+			--gutter: 40px;
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		:root {
+			--spring-standard: cubic-bezier(0.25, 1, 0.5, 1);
+			--spring-pop: cubic-bezier(0.25, 1, 0.5, 1);
+			--ease-sheet: cubic-bezier(0.25, 1, 0.5, 1);
+			--dur-base: 120ms;
+			--dur-slow: 120ms;
+			--dur-spring: 120ms;
+			--dur-sheet: 120ms;
+		}
+	}
+
+	@media (prefers-reduced-transparency: reduce) {
+		:root,
+		[data-palette],
+		[data-theme] {
+			--veil: color-mix(in oklch, var(--bg) 96%, transparent);
+			--veil-raised: color-mix(in oklch, var(--surface-raised) 96%, transparent);
+			--veil-filter: none;
+		}
+	}
+
+	@supports not (backdrop-filter: blur(1px)) {
+		:root,
+		[data-palette],
+		[data-theme] {
+			--veil: color-mix(in oklch, var(--bg) 96%, transparent);
+			--veil-raised: color-mix(in oklch, var(--surface-raised) 96%, transparent);
+		}
+	}
+}
+
+/*
+ * The font size an element inherited, as an absolute length: set it to 1em on a wrapper and read
+ * it below an element that repurposes its own font size (ListDetail's threshold, see there).
+ */
+@property --inherited-font-size {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 16px;
+}

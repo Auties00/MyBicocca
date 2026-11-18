@@ -1,0 +1,128 @@
+{
+	"$schema": "https://inlang.com/schema/inlang-message-format",
+	"search_placeholder": "Cerca corsi, aule, esami, servizi…",
+	"search_placeholder_short": "Cerca corsi, aule, esami…",
+	"search_clear": "Cancella",
+	"search_loading": "Carico i tuoi dati…",
+	"search_results": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} risultato",
+				"countPlural=other": "{count} risultati"
+			}
+		}
+	],
+	"search_top_hit": "Miglior risultato",
+	"search_category_todo": "Da fare",
+	"search_category_courses": "Corsi",
+	"search_category_assignments": "Compiti",
+	"search_category_quizzes": "Quiz",
+	"search_category_calendar": "Calendario",
+	"search_category_places": "Luoghi",
+	"search_category_career": "Carriera",
+	"search_history_clear": "Cancella la cronologia",
+	"search_history_remove": "Rimuovi dalla cronologia",
+	"search_history_remove_short": "Rimuovi",
+	"search_grade": "Voto {grade}",
+	"search_due": "Scade {date}, {time}",
+	"search_overdue": "Scaduto {date}",
+	"search_catalog_title": "Cerca “{query}” nel catalogo",
+	"search_catalog_subtitle": "E-learning · Catalogo dei corsi",
+	"search_map_title": "Cerca “{query}” nella mappa",
+	"search_map_subtitle": "Mappa · Edifici e aule",
+	"search_open_in_calendar": "Apri nel calendario",
+	"search_day_today": "Oggi",
+	"search_day_tomorrow": "Domani",
+	"search_day_after_tomorrow": "Dopodomani",
+	"search_exam_aliases": "esame, esami, esame prenotato, appello, prenotazione",
+	"search_todo_questionnaire": "Valuta {course}",
+	"search_todo_questionnaire_aliases": "questionario, valutazione, valuta la didattica, opis",
+	"search_todo_result": "Accetta o rifiuta {course}",
+	"search_todo_result_aliases": "esito, voto, verbalizzazione, accetta, rifiuta",
+	"search_todo_booking": "Prenota {course}",
+	"search_todo_booking_aliases": "esame, esami, appello, prenota esame, iscrizione esame",
+	"search_todo_booking_closes": [
+		{
+			"declarations": ["input date", "input day"],
+			"selectors": ["day"],
+			"match": {
+				"day=1": "Prenota entro l’{date}",
+				"day=8": "Prenota entro l’{date}",
+				"day=11": "Prenota entro l’{date}",
+				"day=*": "Prenota entro il {date}"
+			}
+		}
+	],
+	"search_todo_booking_opens": [
+		{
+			"declarations": ["input date", "input day"],
+			"selectors": ["day"],
+			"match": {
+				"day=1": "Iscrizioni dall’{date}",
+				"day=8": "Iscrizioni dall’{date}",
+				"day=11": "Iscrizioni dall’{date}",
+				"day=*": "Iscrizioni dal {date}"
+			}
+		}
+	],
+	"search_todo_booking_call": [
+		{
+			"declarations": ["input date", "input day"],
+			"selectors": ["day"],
+			"match": {
+				"day=1": "appello dell’{date}",
+				"day=8": "appello dell’{date}",
+				"day=11": "appello dell’{date}",
+				"day=*": "appello del {date}"
+			}
+		}
+	],
+	"search_todo_fee": "Paga {fee}",
+	"search_todo_fee_aliases": "tasse, pagare, paga, pagamento, pagamenti, pagopa, rata, bollettino",
+	"search_action_book_exam": "Prenota un esame",
+	"search_action_book_exam_aliases": "esami, esame, prenota appello, iscriviti a un esame, iscrizione appello, prenotazione esame, appello esame",
+	"search_action_library_seat": "Prenota un posto in biblioteca",
+	"search_action_library_seat_aliases": "prenota posto, prenota biblioteca, posto in sala studio, prenotazione biblioteca",
+	"search_action_appointment": "Prenota un appuntamento in segreteria",
+	"search_action_appointment_aliases": "prenota sportello, appuntamento segreteria, prenotazione appuntamento",
+	"search_action_pay_fees": "Paga le tasse",
+	"search_action_pay_fees_aliases": "paga, pagare, pagamento tasse, paga rata, paga bollettino, pagopa",
+	"search_action_questionnaire": "Compila un questionario",
+	"search_action_questionnaire_aliases": "valuta la didattica, compila valutazione, questionario corso",
+	"search_action_study_plan": "Modifica il piano di studi",
+	"search_action_study_plan_aliases": "modifica piano, compila piano, piano carriera, scegli esami",
+	"search_action_add_course": "Aggiungi un corso",
+	"search_action_add_course_aliases": "iscriviti a un corso, nuovo corso, iscrizione corso moodle, cerca corso, catalogo",
+	"search_action_average": "Simula la media",
+	"search_action_average_aliases": "simula voto, calcola media, media ponderata, proiezione media, calcolatrice voti, voto di laurea",
+	"search_action_language": "Cambia lingua",
+	"search_action_language_aliases": "lingua app, change language, english",
+	"search_category_elsewhere": "Cerca altrove",
+	"search_matched_alias": "Corrisponde a “{alias}”",
+	"search_notice_failed": "Risultati parziali: impossibile caricare {parts}.",
+	"search_notice_failed_many": "Risultati parziali: alcuni servizi non rispondono.",
+	"search_notice_offline": "Sei offline: cerco solo tra i dati salvati.",
+	"search_notice_unavailable": "Ricerca non disponibile: cerco solo tra le pagine.",
+	"search_part_courses": "corsi",
+	"search_part_deadlines": "scadenze",
+	"search_part_transcript": "libretto",
+	"search_part_rooms": "aule",
+	"search_part_questionnaires": "questionari",
+	"search_part_results": "esiti",
+	"search_part_bookings": "prenotazioni",
+	"search_part_calls": "appelli",
+	"search_history_cleared": "Cronologia cancellata",
+	"search_history_restore": "Ripristina la cronologia",
+	"search_kind_exam": "Esame",
+	"search_assignment_aliases": "compito, compiti, consegna, consegne, elaborato",
+	"search_quiz_aliases": "quiz, test, verifica",
+	"search_empty_partial": "Niente da mostrare per “{query}”",
+	"search_empty_partial_hint": "Alcuni dati non sono disponibili: riprova tra poco.",
+	"search_empty_offline_hint": "Il resto arriva quando torni online.",
+	"search_history_remove_item": "Rimuovi “{title}” dalla cronologia",
+	"search_voice": "Cerca con la voce",
+	"search_voice_stop": "Smetti di ascoltare",
+	"search_voice_listening": "Ti ascolto…"
+}

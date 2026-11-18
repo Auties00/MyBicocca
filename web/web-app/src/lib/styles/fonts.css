@@ -1,0 +1,143 @@
+/*
+ * Self-hosted from @fontsource-variable (latin + latin-ext only; copied to static/fonts so
+ * app.html can preload the faces of the first paint before any script runs). The fallback faces
+ * are metric overrides of local fonts (width of Italian running text and titles, ascent and
+ * descent measured against Arial and Georgia), so text keeps its size and line breaks when the
+ * web font arrives. Newsreader's has a face per Georgia style: its italic and its heavier weights
+ * run much narrower than Georgia's regular face slanted or emboldened.
+ */
+@font-face {
+	font-family: 'Instrument Sans Variable';
+	font-style: normal;
+	font-display: swap;
+	font-weight: 400 700;
+	font-stretch: 75% 100%;
+	src: url('/fonts/instrument-sans-latin.woff2') format('woff2');
+	unicode-range:
+		U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+		U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+	font-family: 'Instrument Sans Variable';
+	font-style: normal;
+	font-display: swap;
+	font-weight: 400 700;
+	font-stretch: 75% 100%;
+	src: url('/fonts/instrument-sans-latin-ext.woff2') format('woff2');
+	unicode-range:
+		U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
+		U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
+		U+A720-A7FF;
+}
+
+@font-face {
+	font-family: 'Instrument Sans Variable';
+	font-style: italic;
+	font-display: swap;
+	font-weight: 400 700;
+	font-stretch: 75% 100%;
+	src: url('/fonts/instrument-sans-latin-italic.woff2') format('woff2');
+	unicode-range:
+		U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+		U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+	font-family: 'Instrument Sans Variable';
+	font-style: italic;
+	font-display: swap;
+	font-weight: 400 700;
+	font-stretch: 75% 100%;
+	src: url('/fonts/instrument-sans-latin-ext-italic.woff2') format('woff2');
+	unicode-range:
+		U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
+		U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
+		U+A720-A7FF;
+}
+
+@font-face {
+	font-family: 'Newsreader Variable';
+	font-style: normal;
+	font-display: swap;
+	font-weight: 200 800;
+	src: url('/fonts/newsreader-latin.woff2') format('woff2');
+	unicode-range:
+		U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+		U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+	font-family: 'Newsreader Variable';
+	font-style: normal;
+	font-display: swap;
+	font-weight: 200 800;
+	src: url('/fonts/newsreader-latin-ext.woff2') format('woff2');
+	unicode-range:
+		U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
+		U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
+		U+A720-A7FF;
+}
+
+@font-face {
+	font-family: 'Newsreader Variable';
+	font-style: italic;
+	font-display: swap;
+	font-weight: 200 800;
+	src: url('/fonts/newsreader-latin-italic.woff2') format('woff2');
+	unicode-range:
+		U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329,
+		U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+	font-family: 'Newsreader Variable';
+	font-style: italic;
+	font-display: swap;
+	font-weight: 200 800;
+	src: url('/fonts/newsreader-latin-ext-italic.woff2') format('woff2');
+	unicode-range:
+		U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329,
+		U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
+		U+A720-A7FF;
+}
+
+@font-face {
+	font-family: 'Instrument Sans Fallback';
+	src: local('Arial'), local('Helvetica Neue'), local('Helvetica');
+	size-adjust: 101.8%;
+	ascent-override: 95.3%;
+	descent-override: 24.6%;
+	line-gap-override: 0%;
+}
+
+@font-face {
+	font-family: 'Newsreader Fallback';
+	font-weight: 200 574;
+	src: local('Georgia');
+	size-adjust: 97.6%;
+	ascent-override: 75.8%;
+	descent-override: 27.7%;
+	line-gap-override: 0%;
+}
+
+@font-face {
+	font-family: 'Newsreader Fallback';
+	font-weight: 575 800;
+	src: local('Georgia Bold'), local('Georgia-Bold');
+	size-adjust: 87.2%;
+	ascent-override: 84.9%;
+	descent-override: 31%;
+	line-gap-override: 0%;
+}
+
+@font-face {
+	font-family: 'Newsreader Fallback';
+	font-style: italic;
+	font-weight: 200 800;
+	src: local('Georgia Italic'), local('Georgia-Italic');
+	size-adjust: 87.3%;
+	ascent-override: 84.8%;
+	descent-override: 30.9%;
+	line-gap-override: 0%;
+}
