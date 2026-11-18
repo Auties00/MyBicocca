@@ -15,6 +15,7 @@ public struct DemoRoom: Codable, Hashable, Sendable {
     public var kinds: [DemoKind]
     public var website: String?
     public var siteId: Int64?
+    public var occupancy: Double?
     public var notes: String?
     public var title: String?
     public var descriptionHtml: String
@@ -34,6 +35,7 @@ public struct DemoRoom: Codable, Hashable, Sendable {
         kinds: [DemoKind] = [],
         website: String? = nil,
         siteId: Int64? = nil,
+        occupancy: Double? = nil,
         notes: String? = nil,
         title: String? = nil,
         descriptionHtml: String = "",
@@ -52,6 +54,7 @@ public struct DemoRoom: Codable, Hashable, Sendable {
         self.kinds = kinds
         self.website = website
         self.siteId = siteId
+        self.occupancy = occupancy
         self.notes = notes
         self.title = title
         self.descriptionHtml = descriptionHtml
@@ -72,6 +75,7 @@ public struct DemoRoom: Codable, Hashable, Sendable {
         case kinds = "kinds"
         case website = "website"
         case siteId = "siteId"
+        case occupancy = "occupancy"
         case notes = "notes"
         case title = "title"
         case descriptionHtml = "descriptionHtml"
@@ -93,6 +97,7 @@ public struct DemoRoom: Codable, Hashable, Sendable {
         self.kinds = container.decodeLenient([DemoKind].self, forKey: .kinds) ?? []
         self.website = container.decodeLenient(String.self, forKey: .website)
         self.siteId = container.decodeLenient(Int64.self, forKey: .siteId)
+        self.occupancy = container.decodeLenient(Double.self, forKey: .occupancy)
         self.notes = container.decodeLenient(String.self, forKey: .notes)
         self.title = container.decodeLenient(String.self, forKey: .title)
         self.descriptionHtml = container.decodeLenient(String.self, forKey: .descriptionHtml) ?? ""
@@ -114,6 +119,7 @@ public struct DemoRoom: Codable, Hashable, Sendable {
         try container.encode(kinds, forKey: .kinds)
         try container.encode(website, forKey: .website)
         try container.encode(siteId, forKey: .siteId)
+        try container.encode(occupancy, forKey: .occupancy)
         try container.encode(notes, forKey: .notes)
         try container.encode(title, forKey: .title)
         try container.encode(descriptionHtml, forKey: .descriptionHtml)

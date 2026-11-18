@@ -18,12 +18,13 @@ public enum DemoScrapers {
         let value7 = Scrape.selectAll(node, ".equipment span").filter { candidate4 in Scrape.contains(Scrape.text(Scrape.next(candidate4), exclude: nil, missing: missing), "available") == true }.compactMap { Scrape.text($0, exclude: nil, missing: missing).map(DemoKind.init(wireValue:)) }
         let value8 = Scrape.url(Scrape.select(node, "a.site"), "href") ?? Scrape.attribute(Scrape.select(Scrape.follow(Scrape.select(node, ".map"), "href"), "iframe"), "src", missing: missing)
         let value9 = Scrape.int64(Scrape.queryParameter(Scrape.url(Scrape.select(node, "a.site"), "href"), "id"))
-        let value10 = Scrape.lines(Scrape.selectAll(node, ".label").filter { candidate5 in Scrape.equals(Scrape.text(candidate5, exclude: nil, missing: missing), "Notes") == true }.first, missing: missing)
-        let value11 = Scrape.nullIf(Scrape.text(Scrape.select(Scrape.root(node), "h1.page"), exclude: ".sr-only", missing: missing), ["Untitled"])
-        let value12 = Scrape.html(Scrape.select(node, ".description")) ?? ""
-        let value13 = Scrape.removePrefix(Scrape.attribute(Scrape.select(node, ".level"), "data-level", missing: missing), "level-").flatMap(DemoPriority.init(wireValue:))
-        let value14 = Scrape.sections(Scrape.select(node, ".staff"), header: "h4").compactMap { staffGroup($0) }
-        let value15 = Scrape.sections(Scrape.select(node, ".staff"), header: "h4").first.flatMap { staffGroup($0) }
+        let value10 = Scrape.double(Scrape.replaceAll(Scrape.removeSuffix(Scrape.text(Scrape.select(node, ".occupancy"), exclude: nil, missing: missing), "%"), [(",", ".")]))
+        let value11 = Scrape.lines(Scrape.selectAll(node, ".label").filter { candidate5 in Scrape.equals(Scrape.text(candidate5, exclude: nil, missing: missing), "Notes") == true }.first, missing: missing)
+        let value12 = Scrape.nullIf(Scrape.text(Scrape.select(Scrape.root(node), "h1.page"), exclude: ".sr-only", missing: missing), ["Untitled"])
+        let value13 = Scrape.html(Scrape.select(node, ".description")) ?? ""
+        let value14 = Scrape.removePrefix(Scrape.attribute(Scrape.select(node, ".level"), "data-level", missing: missing), "level-").flatMap(DemoPriority.init(wireValue:))
+        let value15 = Scrape.sections(Scrape.select(node, ".staff"), header: "h4").compactMap { staffGroup($0) }
+        let value16 = Scrape.sections(Scrape.select(node, ".staff"), header: "h4").first.flatMap { staffGroup($0) }
         return DemoRoom(
             name: value0,
             code: value1,
@@ -35,12 +36,13 @@ public enum DemoScrapers {
             kinds: value7,
             website: value8,
             siteId: value9,
-            notes: value10,
-            title: value11,
-            descriptionHtml: value12,
-            level: value13,
-            staff: value14,
-            lead: value15
+            occupancy: value10,
+            notes: value11,
+            title: value12,
+            descriptionHtml: value13,
+            level: value14,
+            staff: value15,
+            lead: value16
         )
     }
 

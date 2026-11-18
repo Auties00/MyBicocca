@@ -34,7 +34,8 @@ import java.math.BigDecimal
  * Converts an OpenAPI document into the model:
  *
  * - Each tag is a module, named after the operation's first tag; paths are absolute on the
- *   operation's server, so modules have no base path.
+ *   operation's server, so modules have no base path. A module `x-mb-module` names may have
+ *   no operations.
  * - Component schemas with `enum` are enums (integer ones when of type `integer`), the others
  *   records. A record belongs to the module named by `x-mb-module`, else to the first module
  *   that uses it.
@@ -63,6 +64,11 @@ internal class OpenApiModelBuilder(private val api: OpenAPI) {
         }
 
         val enumNames = schemas.filterValues { it.enum != null }.keys
+        // A module x-mb-module names may hold only records, such as those read out of pages
+        // the API's operations don't fetch themselves.
+        for (schema in schemas.values) {
+            schema.extensions?.get(Extensions.MODULE)?.let { operationsByModule.getOrPut(it.toString()) { mutableListOf() } }
+        }
         val recordOwners = recordOwners(operationsByModule, enumNames)
         val modules = operationsByModule.map { (module, operations) ->
             ApiModule(

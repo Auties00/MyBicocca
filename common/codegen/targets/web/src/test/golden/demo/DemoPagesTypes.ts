@@ -17,6 +17,7 @@ export interface DemoRoom {
   kinds: DemoKind[];
   website: string | null;
   siteId: number | null;
+  occupancy: number | null;
   notes: string | null;
   title: string | null;
   descriptionHtml: string;
@@ -41,6 +42,7 @@ export function decodeDemoRoom(json: unknown): DemoRoom | undefined {
     kinds: decodeList(object["kinds"], decodeDemoKind) ?? [],
     website: decodeString(object["website"]) ?? null,
     siteId: decodeInteger(object["siteId"]) ?? null,
+    occupancy: decodeNumber(object["occupancy"]) ?? null,
     notes: decodeString(object["notes"]) ?? null,
     title: decodeString(object["title"]) ?? null,
     descriptionHtml: decodeString(object["descriptionHtml"]) ?? "",
@@ -63,6 +65,7 @@ export function encodeDemoRoom(value: DemoRoom): JsonObject {
     "kinds": value.kinds,
     "website": value.website,
     "siteId": value.siteId,
+    "occupancy": value.occupancy,
     "notes": value.notes,
     "title": value.title,
     "descriptionHtml": value.descriptionHtml,

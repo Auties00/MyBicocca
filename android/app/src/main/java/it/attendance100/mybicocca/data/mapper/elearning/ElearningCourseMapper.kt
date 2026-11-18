@@ -10,9 +10,10 @@ import it.attendance100.mybicocca.data.local.elearning.sync.ElearningJson
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleActivityCompletionStatus
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseModule
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningCoursePublicInfo
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseSection
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleEnrolledCourse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleWebCourseInfo
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleWebSyllabusField
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.elearning.course.CompletionState
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
@@ -381,7 +382,7 @@ internal fun MoodleCourse.toCourseSheetMetadata(): CourseSheetMetadata {
  * preferred, falling back to English, then to whatever the page lists first. The chosen tab's fields and the structured info extracted from
  * them are packed into the JSON blob column.
  */
-internal fun ElearningCoursePublicInfo.toSyllabusEntity(
+internal fun MoodleWebCourseInfo.toSyllabusEntity(
     accountId: AccountId,
     courseId: Int,
     metadata: CourseSheetMetadata?,
@@ -468,7 +469,7 @@ private fun SyllabusInfoJson.toDomain(): SyllabusInfo = SyllabusInfo(
  * matched on both combined.
  */
 private fun buildSyllabusInfo(
-    fields: List<it.attendance100.mybicocca.data.remote.elearning.dto.ElearningCourseSyllabusField>,
+    fields: List<MoodleWebSyllabusField>,
     metadata: CourseSheetMetadata?,
 ): SyllabusInfoJson {
     val byKey = fields.associate { field ->
@@ -835,7 +836,7 @@ private fun matchSemester(text: String?): Semester? {
  * Flattens the role-grouped staff listing of the public course page into staff cache
  * rows, numbering rows across the groups so the page order survives as the row index.
  */
-internal fun ElearningCoursePublicInfo.toStaffEntities(
+internal fun MoodleWebCourseInfo.toStaffEntities(
     accountId: AccountId,
     courseId: Int,
 ): List<CourseStaffEntity> {
