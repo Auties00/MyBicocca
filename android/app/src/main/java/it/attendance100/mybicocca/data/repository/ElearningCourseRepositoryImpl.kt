@@ -1,5 +1,6 @@
 package it.attendance100.mybicocca.data.repository
 
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.text.StringResolver
 import it.attendance100.mybicocca.core.time.StalePolicy
@@ -13,6 +14,7 @@ import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncStateEn
 import it.attendance100.mybicocca.data.local.settings.ElearningFilterStore
 import it.attendance100.mybicocca.data.mapper.elearning.toDeadlineEntity
 import it.attendance100.mybicocca.data.mapper.elearning.toDomain
+import it.attendance100.mybicocca.data.mapper.elearning.toCourseSheetMetadata
 import it.attendance100.mybicocca.data.mapper.elearning.toEntity
 import it.attendance100.mybicocca.data.mapper.elearning.toModuleEntities
 import it.attendance100.mybicocca.data.mapper.elearning.toStaffEntities
@@ -141,8 +143,8 @@ class ElearningCourseRepositoryImpl @Inject constructor(
         val account = sessionManager.activeAccount.value ?: error("No active account.")
         require(account.id == accountId) { "Active account changed during refresh." }
         val (api, token) = sessionManager.elearning()
-        val response = api.courses.getUserCourses(token, account.learning.lmsUserId)
-        val rows = response.courses.mapIndexed { index, dto -> dto.toEntity(accountId, index) }
+        val courses = api.moodle.course.getUsersCourses(account.learning.lmsUserId, auth = MoodleTokenAuth(token))
+        val rows = courses.mapIndexed { index, dto -> dto.toEntity(accountId, index) }
         courseDao.replaceEnrolled(accountId.value, rows)
         stamp(accountId, ElearningSyncScope.ENROLLED_COURSES, 0)
     }
@@ -161,11 +163,11 @@ class ElearningCourseRepositoryImpl @Inject constructor(
         val seen = HashSet<Int>()
         var afterEventId: Int? = null
         for (page in 0 until MAX_DEADLINE_PAGES) {
-            val response = api.calendar.getActionEventsByTimesort(
-                wsToken = token,
-                timesortFrom = from,
+            val response = api.moodle.calendar.getActionEventsByTimesort(
+                timeSortFrom = from,
                 afterEventId = afterEventId,
                 limitNum = DEADLINE_PAGE_SIZE,
+                auth = MoodleTokenAuth(token),
             )
             val fresh = response.events.filter { seen.add(it.id) }
             fresh.forEach { event ->
@@ -173,7 +175,7 @@ class ElearningCourseRepositoryImpl @Inject constructor(
             }
             if (fresh.isEmpty() || response.events.size < DEADLINE_PAGE_SIZE) break
             afterEventId = response.lastId
-            from = response.events.mapNotNull { it.timeSort }.maxOrNull() ?: break
+            from = response.events.maxOfOrNull { it.timeSort } ?: break
         }
         deadlineDao.replaceForAccount(accountId.value, resolveDeadlineInstanceIds(rows))
     }
@@ -199,17 +201,16 @@ class ElearningCourseRepositoryImpl @Inject constructor(
                 .distinct()
             val assignIdByCmId = async {
                 if (assignCourseIds.isEmpty()) emptyMap()
-                else api.assignments.getAssignments(token, assignCourseIds)
+                else api.moodle.assign.getAssignments(courseIds = assignCourseIds, auth = MoodleTokenAuth(token))
                     .courses
                     .flatMap { it.assignments }
-                    .mapNotNull { dto -> dto.courseModuleId?.let { it to dto.id } }
-                    .toMap()
+                    .associate { it.cmId to it.id }
             }
             val quizIdByCmId = async {
                 if (quizCourseIds.isEmpty()) emptyMap()
-                else api.quizzes.getQuizzes(token, quizCourseIds)
+                else api.moodle.quiz.getQuizzesByCourses(courseIds = quizCourseIds, auth = MoodleTokenAuth(token))
                     .quizzes
-                    .associate { it.courseModuleId to it.id }
+                    .associate { it.courseModule to it.id }
             }
             rows.mapNotNull { row ->
                 val instanceId = when (row.kind) {
@@ -243,12 +244,14 @@ class ElearningCourseRepositoryImpl @Inject constructor(
     ) {
         if (!force && !isStale(accountId, ElearningSyncScope.COURSE_DETAILS, courseId.value.toLong())) return
         val (api, token) = sessionManager.elearning()
+        val auth = MoodleTokenAuth(token)
+        val userId = sessionManager.activeAccount.value?.learning?.lmsUserId
         coroutineScope {
-            val sectionsAsync = async { runCatching { api.courses.getCourseContents(token, courseId.value) }.getOrNull() }
+            val sectionsAsync = async { runCatching { api.moodle.course.getContents(courseId.value, auth = auth) }.getOrNull() }
             val publicAsync = async { runCatching { api.courses.getCoursePublicInfo(courseId.value) }.getOrNull() }
-            val metadataAsync = async { runCatching { api.courses.getCourseMetadata(token, courseId.value) }.getOrNull() }
+            val metadataAsync = async { runCatching { api.moodle.course.getCoursesByField(field = "id", value = courseId.value.toString(), auth = auth).courses.firstOrNull()?.toCourseSheetMetadata() }.getOrNull() }
             val completionAsync = async {
-                runCatching { api.completion.getActivitiesCompletionStatus(token, courseId.value, null) }.getOrNull()
+                userId?.let { runCatching { api.moodle.completion.getActivitiesCompletionStatus(courseId.value, it, auth = auth) }.getOrNull() }
             }
             val sectionsResp = sectionsAsync.await()
             val publicInfo = publicAsync.await()
@@ -256,8 +259,8 @@ class ElearningCourseRepositoryImpl @Inject constructor(
             val completion = completionAsync.await()
 
             if (sectionsResp != null) {
-                val sectionRows = sectionsResp.sections.map { it.toEntity(accountId, courseId.value) }
-                val moduleRows = sectionsResp.sections.toModuleEntities(accountId, courseId.value)
+                val sectionRows = sectionsResp.map { it.toEntity(accountId, courseId.value) }
+                val moduleRows = sectionsResp.toModuleEntities(accountId, courseId.value)
                 courseDao.replaceCourseStructure(accountId.value, courseId.value, sectionRows, moduleRows)
             }
             if (publicInfo != null) {
@@ -280,9 +283,11 @@ class ElearningCourseRepositoryImpl @Inject constructor(
         completed: Boolean,
     ) {
         val (api, token) = sessionManager.elearning()
-        api.completion.updateActivityCompletion(token, cmId, completed)
+        val auth = MoodleTokenAuth(token)
+        api.moodle.completion.updateActivityCompletionStatusManually(cmId, completed, auth = auth)
         runCatching {
-            val statuses = api.completion.getActivitiesCompletionStatus(token, courseId.value, null)
+            val userId = sessionManager.activeAccount.value?.learning?.lmsUserId ?: error("No active account.")
+            val statuses = api.moodle.completion.getActivitiesCompletionStatus(courseId.value, userId, auth = auth)
             val rows = statuses.statuses.map { it.toEntity(accountId, courseId.value) }
             if (rows.isNotEmpty()) courseDao.upsertCompletionAll(rows)
         }
@@ -299,7 +304,7 @@ class ElearningCourseRepositoryImpl @Inject constructor(
 
     override suspend fun enrolIntoCourse(accountId: AccountId, courseId: CourseId, password: String?) {
         val (api, token) = sessionManager.elearning()
-        val response = api.courses.enrollIntoCourse(token, courseId.value, password)
+        val response = api.moodle.course.enrolUser(courseId.value, password, auth = MoodleTokenAuth(token))
         if (!response.status) {
             val warning = response.warnings.firstOrNull()?.message
             error(

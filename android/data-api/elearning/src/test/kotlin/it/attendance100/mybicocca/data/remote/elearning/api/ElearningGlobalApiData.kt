@@ -1,6 +1,7 @@
 package it.attendance100.mybicocca.data.remote.elearning.api
 
 import io.ktor.client.plugins.logging.*
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
 import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.ExtensionContext
@@ -40,7 +41,7 @@ object ElearningGlobalApiData : BeforeAllCallback, AutoCloseable {
     }
 
     private suspend fun fetchUserProfile(api: ElearningApi, session: ElearningAuthSession): ElearningUserProfile {
-        val siteInfo = api.site.getSiteInfo(session.wsToken)
+        val siteInfo = api.moodle.site.getSiteInfo(auth = MoodleTokenAuth(session.wsToken))
         return ElearningUserProfile(
             userId = siteInfo.userId,
             username = siteInfo.username,

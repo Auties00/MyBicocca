@@ -1,24 +1,29 @@
 package it.attendance100.mybicocca.data.remote.elearning.api
 
 import io.ktor.client.*
+import io.ktor.client.request.forms.FormDataContent
 import io.ktor.client.request.get
+import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
 import io.ktor.client.statement.request
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.isSuccess
+import io.ktor.http.parameters
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceMarkResult
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceMarkableSession
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceStatusOption
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceSubmittableSession
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceSummary
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceViewResponse
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningCourseModule
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningGetComponentStringsRequest
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningGetComponentStringsResponse
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningGetFilteredCourseModulesRequest
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningGetMobileContentRequest
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningGetMobileContentResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningComponentString
 import it.attendance100.mybicocca.data.remote.elearning.exception.ElearningException
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseModule
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleNamedValue
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleOption
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.decodeFromJsonElement
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import java.util.concurrent.ConcurrentHashMap
@@ -43,10 +48,12 @@ import java.util.concurrent.ConcurrentHashMap
  *
  * @param client The shared [HttpClient] instance
  * @param json The shared [Json] instance
+ * @param moodle The web service functions the plugin's views are reached through
  */
 class ElearningAttendanceApi(
     client: HttpClient,
-    json: Json
+    json: Json,
+    private val moodle: MoodleApi,
 ) : ElearningAbstractApi(client, json) {
 
     companion object {
@@ -293,14 +300,16 @@ class ElearningAttendanceApi(
     suspend fun getAttendanceModules(
         wsToken: String,
         courseId: Int
-    ): List<ElearningCourseModule> {
-        val response = executeAuthenticatedRequest(
-            wsToken,
-            ElearningGetFilteredCourseModulesRequest(courseId, ATTENDANCE_MODULE_NAME)
+    ): List<MoodleCourseModule> {
+        // Only attendance modules, and without their file listings, to keep the response small.
+        val sections = moodle.course.getContents(
+            courseId = courseId,
+            options = listOf(MoodleOption("modname", ATTENDANCE_MODULE_NAME), MoodleOption("excludecontents", "1")),
+            auth = MoodleTokenAuth(wsToken),
         )
-        return response.sections
+        return sections
             .flatMap { it.modules }
-            .filter { it.moduleName == ATTENDANCE_MODULE_NAME }
+            .filter { it.modName == ATTENDANCE_MODULE_NAME }
     }
 
     /**
@@ -342,15 +351,25 @@ class ElearningAttendanceApi(
 
     /**
      * Looks up, through `core_get_component_strings` (a site-level read that logs nothing in a
-     * course), the text of the link the session log shows for a session not open yet.
+     * course), the text of the link the session log shows for a session not open yet. The
+     * generated [MoodleApi] doesn't include the function, so it is posted by hand; Moodle answers
+     * with the strings' array, or with an error object, which makes this return null.
      */
     private suspend fun getFutureLinkText(wsToken: String, language: String): String? {
         futureLinkTexts[language]?.let { return it }
-        val strings: ElearningGetComponentStringsResponse = executeAuthenticatedRequest(
-            wsToken,
-            ElearningGetComponentStringsRequest(component = MOBILE_COMPONENT, language = language)
-        )
-        val text = strings.items.firstOrNull { it.stringId == FUTURE_LINK_STRING_ID }?.string ?: return null
+        val response = executePost("/webservice/rest/server.php") {
+            url.parameters.append("wsfunction", "core_get_component_strings")
+            url.parameters.append("moodlewsrestformat", "json")
+            setBody(FormDataContent(parameters {
+                append("wstoken", wsToken)
+                append("component", MOBILE_COMPONENT)
+                append("lang", language)
+            }))
+        }
+        if (!response.status.isSuccess()) return null
+        val body = json.parseToJsonElement(response.bodyAsText()) as? JsonArray ?: return null
+        val strings = json.decodeFromJsonElement<List<ElearningComponentString>>(body)
+        val text = strings.firstOrNull { it.stringId == FUTURE_LINK_STRING_ID }?.string ?: return null
         futureLinkTexts[language] = text
         return text
     }
@@ -450,14 +469,12 @@ class ElearningAttendanceApi(
         method: String,
         args: Map<String, String>
     ): String? {
-        val response: ElearningGetMobileContentResponse = executeAuthenticatedRequest(
-            wsToken,
-            ElearningGetMobileContentRequest(
-                component = MOBILE_COMPONENT,
-                method = method,
-                args = args
-            )
+        val content = moodle.mobile.getContent(
+            component = MOBILE_COMPONENT,
+            method = method,
+            args = args.map { (name, value) -> MoodleNamedValue(name, value) },
+            auth = MoodleTokenAuth(wsToken),
         )
-        return response.templates.firstOrNull()?.html
+        return content.templates.firstOrNull()?.html
     }
 }

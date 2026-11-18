@@ -113,76 +113,6 @@ class ElearningApi(
     }
 
     /**
-     * API for site-level operations.
-     */
-    val site: ElearningSiteApi = ElearningSiteApi(client, json)
-
-    /**
-     * API for user-related operations.
-     */
-    val users: ElearningUserApi = ElearningUserApi(client, json)
-
-    /**
-     * API for course-related operations.
-     */
-    val courses: ElearningCourseApi = ElearningCourseApi(client, json)
-
-    /**
-     * API for quiz-related operations.
-     */
-    val quizzes: ElearningQuizApi = ElearningQuizApi(client, json)
-
-    /**
-     * API for assignment-related operations.
-     */
-    val assignments: ElearningAssignApi = ElearningAssignApi(client, json)
-
-    /**
-     * API for forum-related operations.
-     */
-    val forums: ElearningForumApi = ElearningForumApi(client, json)
-
-    /**
-     * API for calendar-related operations.
-     */
-    val calendar: ElearningCalendarApi = ElearningCalendarApi(client, json)
-
-    /**
-     * API for badge-related operations.
-     */
-    val badges: ElearningBadgeApi = ElearningBadgeApi(client, json)
-
-    /**
-     * API for completion-related operations.
-     */
-    val completion: ElearningCompletionApi = ElearningCompletionApi(client, json)
-
-    /**
-     * API for attendance-related operations (mod_attendance).
-     */
-    val attendance: ElearningAttendanceApi = ElearningAttendanceApi(client, json)
-
-    /**
-     * API for grade-related operations.
-     */
-    val grades: ElearningGradeApi = ElearningGradeApi(client, json)
-
-    /**
-     * API for messaging operations.
-     */
-    val messages: ElearningMessageApi = ElearningMessageApi(client, json)
-
-    /**
-     * API for Kaltura video resource playback (mod/kalvidres).
-     */
-    val kaltura: ElearningKalturaApi = ElearningKalturaApi(client, json)
-
-    /**
-     * API for downloading files served by the web service file endpoint.
-     */
-    val files: ElearningFileApi = ElearningFileApi(client, json)
-
-    /**
      * The Moodle web service functions, generated from Moodle's own descriptions; calls are
      * made in [language]. It has its own HTTP client, since web service calls need no cookies.
      */
@@ -190,6 +120,26 @@ class ElearningApi(
         httpClientConfig()
         language { this@ElearningApi.language }
     })
+
+    /**
+     * The public course pages: the course catalog and each course's info page.
+     */
+    val courses: ElearningCourseApi = ElearningCourseApi(client, json)
+
+    /**
+     * Attendance (mod_attendance), whose views are reached through the mobile app bridge.
+     */
+    val attendance: ElearningAttendanceApi = ElearningAttendanceApi(client, json, moodle)
+
+    /**
+     * Kaltura video resource playback (mod/kalvidres).
+     */
+    val kaltura: ElearningKalturaApi = ElearningKalturaApi(client, json)
+
+    /**
+     * Downloads of files served by the web service file endpoint, and uploads to draft areas.
+     */
+    val files: ElearningFileApi = ElearningFileApi(client, json)
 
     /**
      * Closes the underlying HTTP client and releases resources.
