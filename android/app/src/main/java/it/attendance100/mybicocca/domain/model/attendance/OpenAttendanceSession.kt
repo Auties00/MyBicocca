@@ -7,12 +7,15 @@ package it.attendance100.mybicocca.domain.model.attendance
  *
  * @property sessionId Moodle session id (the "sessid" carried by attendance QR links).
  * @property module Attendance activity the session belongs to.
+ * @property time The session's date and time as Moodle renders it, which is how the marking
+ *   result is matched to the session.
  * @property requiresPassword Whether marking requires the session password ("studentpass").
  * @property statuses Status choices the student may submit.
  */
 data class OpenAttendanceSession(
     val sessionId: String,
     val module: AttendanceModuleRef,
+    val time: String,
     val requiresPassword: Boolean,
     val statuses: List<AttendanceStatusOption>,
 )

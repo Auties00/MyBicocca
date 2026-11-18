@@ -482,6 +482,8 @@
     <string name="attendance_easystaff_no_records">EasyStaff has not yet recorded attendance for this course.</string>
     <string name="attendance_no_detection_available">No check-in available</string>
     <string name="attendance_register_no_records">The register has no recorded attendance yet.</string>
+    <string name="attendance_register_load_failed_title">Register unavailable</string>
+    <string name="attendance_register_load_failed">The register couldn\'t be read. Try again later.</string>
     <string name="attendance_lesson">Lecture</string>
     <string name="attendance_classroom_presence">Classroom attendance</string>
     <string name="attendance_other_activities">Other activities</string>
@@ -499,6 +501,7 @@
     <string name="attendance_msg_network_prevent_shared">Attendance has already been recorded from this network</string>
     <string name="attendance_msg_session_closed">The session is no longer available</string>
     <string name="attendance_msg_failed">Registration failed</string>
+    <string name="attendance_msg_unconfirmed">The registration couldn\'t be confirmed: check the register on e-learning</string>
     <string name="attendance_msg_code_unrecognized">Unrecognized code</string>
     <string name="attendance_msg_no_register_found">No course with attendance register found</string>
     <string name="attendance_msg_session_not_in_courses">The session is not open or not among your courses</string>
@@ -2047,8 +2050,8 @@
     <string name="registry_caption_frequenza">attendance</string>
     <string name="registry_footnote_minimum">minimum %1$d%%</string>
     <string name="registry_caption_recorded">of those recorded</string>
-    <string name="registry_presence_one">1 attendance</string>
-    <string name="registry_presence_many">%1$d attendances</string>
+    <string name="registry_recorded_one">1 recorded session</string>
+    <string name="registry_recorded_many">%1$d recorded sessions</string>
     <string name="registry_students_count">%1$d students</string>
     <string name="registry_exam_written">Written exam</string>
     <string name="registry_exam_oral">Oral exam</string>
