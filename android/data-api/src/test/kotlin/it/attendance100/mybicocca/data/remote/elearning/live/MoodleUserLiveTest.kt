@@ -54,6 +54,23 @@ class MoodleUserLiveTest : LiveTest<MoodleApi>(MoodleLive) {
     }
 
     @Test
+    @DisplayName("User.preparePrivateFilesForEdition#1")
+    fun preparePrivateFilesForEdition1() = case("User.preparePrivateFilesForEdition#1", effect = "benign") {
+        call("{\"k\":\"record\",\"n\":\"MoodleUserPreparePrivateFilesForEditionResponse\"}") {
+            api.user.preparePrivateFilesForEdition(auth = tokenCredentials())
+        }
+    }
+
+    @Test
+    @DisplayName("User.viewUserList#1")
+    fun viewUserList1() = case("User.viewUserList#1", effect = "benign") {
+        val courseId = choose("courseId", listOf(courseGetUsersCourses()).flatten().mapNotNull { it.id })
+        call("{\"k\":\"record\",\"n\":\"MoodleStatusResponse\"}") {
+            api.user.viewUserList(courseId = courseId, auth = tokenCredentials())
+        }
+    }
+
+    @Test
     @DisplayName("User.viewUserProfile#1")
     fun viewUserProfile1() = case("User.viewUserProfile#1", effect = "benign") {
         val userId = choose("userId", listOf(siteGetSiteInfo()).mapNotNull { it.userId })

@@ -5,14 +5,128 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class MoodleOption(
-    /** The expected keys (value format) are: excludemodules (bool) Do not return modules, return only the sections structure excludecontents (bool) Do not return module contents (i.e: files inside a resource) includestealthmodules (bool) Return stealth modules for students in a special section (with id -1) sectionid (int) Return only this section sectionnumber (int) Return only this section with number (order) cmid (int) Return only this module information (among the whole sections structure) modname (string) Return only modules with this name "label, forum, etc..." modid (int) Return only the module with this id (to be used with modname */
+data class MoodleTocheck(
+    /** The context level for the file location. Only module supported right now. */
+    @SerialName("contextlevel")
+    val contextlevel: String = "",
+
+    /** Context instance id */
+    @SerialName("id")
+    val id: Int = 0,
+
+    /** Check updates since this time stamp */
+    @SerialName("since")
+    val since: Int = 0
+)
+
+@Serializable
+data class MoodleCourseCheckUpdatesResponse(
+    @SerialName("instances")
+    val instances: List<MoodleInstance> = emptyList(),
+
+    /** list of warnings */
+    @SerialName("warnings")
+    val warnings: List<MoodleWarning> = emptyList()
+)
+
+@Serializable
+data class MoodleInstance(
+    /** The context level */
+    @SerialName("contextlevel")
+    val contextlevel: String = "",
+
+    /** Instance id */
+    @SerialName("id")
+    val id: Int = 0,
+
+    @SerialName("updates")
+    val updates: List<MoodleUpdate> = emptyList()
+)
+
+@Serializable
+data class MoodleUpdate(
+    /** Name of the area updated. */
     @SerialName("name")
     val name: String = "",
 
-    /** the value of the option, this param is personaly validated in the external function. */
+    /** Last time was updated */
+    @SerialName("timeupdated")
+    val timeupdated: Long? = null,
+
+    /** The ids of the items updated */
+    @SerialName("itemids")
+    val itemids: List<Int> = emptyList()
+)
+
+@Serializable
+data class MoodleCourseGetCategoriesCriteria(
+    /** The category column to search, expected keys (value format) are:"id" (int) the category id,"ids" (string) category ids separated by commas,"name" (string) the category name,"parent" (int) the parent category id,"idnumber" (string) category idnumber - user must have 'moodle/category:manage' to search on idnumber,"visible" (int) whether the returned categories must be visible or hidden. If the key is not passed, then the function return all categories that the user can see. - user must have 'moodle/category:manage' or 'moodle/category:viewhiddencategories' to search on visible,"theme" (string) only return the categories having this theme - user must have 'moodle/category:manage' to search on theme */
+    @SerialName("key")
+    val key: String = "",
+
+    /** the value to match */
     @SerialName("value")
     val value: String = ""
+)
+
+/** List of categories */
+@Serializable
+data class MoodleCourseGetCategoriesItem(
+    /** category id */
+    @SerialName("id")
+    val id: Int = 0,
+
+    /** category name */
+    @SerialName("name")
+    val name: String = "",
+
+    /** category id number */
+    @SerialName("idnumber")
+    val idNumber: String? = null,
+
+    /** category description */
+    @SerialName("description")
+    val description: String = "",
+
+    /** description format (1 = HTML, 0 = MOODLE, 2 = PLAIN, or 4 = MARKDOWN) */
+    @SerialName("descriptionformat")
+    val descriptionFormat: Int = 0,
+
+    /** parent category id */
+    @SerialName("parent")
+    val parent: Int = 0,
+
+    /** category sorting order */
+    @SerialName("sortorder")
+    val sortOrder: Int = 0,
+
+    /** number of courses in this category */
+    @SerialName("coursecount")
+    val courseCount: Int = 0,
+
+    /** 1: available, 0:not available */
+    @SerialName("visible")
+    val visible: Int? = null,
+
+    /** 1: available, 0:not available */
+    @SerialName("visibleold")
+    val visibleold: Int? = null,
+
+    /** timestamp */
+    @SerialName("timemodified")
+    val timeModified: Long? = null,
+
+    /** category depth */
+    @SerialName("depth")
+    val depth: Int = 0,
+
+    /** category path */
+    @SerialName("path")
+    val path: String = "",
+
+    /** category theme */
+    @SerialName("theme")
+    val theme: String? = null
 )
 
 @Serializable
@@ -385,54 +499,6 @@ data class MoodleModuleContent(
     val tags: List<MoodleContentTag> = emptyList()
 )
 
-@Serializable
-data class MoodleContentTag(
-    /** Tag id. */
-    @SerialName("id")
-    val id: Int = 0,
-
-    /** Tag name. */
-    @SerialName("name")
-    val name: String = "",
-
-    /** The raw, unnormalised name for the tag as entered by users. */
-    @SerialName("rawname")
-    val rawName: String = "",
-
-    /** Whether this tag is standard. */
-    @Serializable(with = MoodleBooleanSerializer::class)
-    @SerialName("isstandard")
-    val isStandard: Boolean = false,
-
-    /** Tag collection id. */
-    @SerialName("tagcollid")
-    val tagCollId: Int = 0,
-
-    /** Tag instance id. */
-    @SerialName("taginstanceid")
-    val tagInstanceId: Int = 0,
-
-    /** Context the tag instance belongs to. */
-    @SerialName("taginstancecontextid")
-    val tagInstanceContextId: Int = 0,
-
-    /** Id of the record tagged. */
-    @SerialName("itemid")
-    val itemId: Int = 0,
-
-    /** Tag ordering. */
-    @SerialName("ordering")
-    val ordering: Int = 0,
-
-    /** Whether the tag is flagged as inappropriate. */
-    @SerialName("flag")
-    val flag: Int = 0,
-
-    /** The url to view the tag. */
-    @SerialName("viewurl")
-    val viewUrl: String? = null
-)
-
 /** Contents summary information. */
 @Serializable
 data class MoodleModuleContentsInfo(
@@ -455,6 +521,346 @@ data class MoodleModuleContentsInfo(
     /** The repository type for the main file. */
     @SerialName("repositorytype")
     val repositoryType: String? = null
+)
+
+@Serializable
+data class MoodleCourseGetCourseModuleResponse(
+    @Serializable(with = MoodleCmFoldedSerializer::class)
+    @SerialName("cm")
+    val cm: MoodleCm,
+
+    /** list of warnings */
+    @SerialName("warnings")
+    val warnings: List<MoodleWarning> = emptyList()
+)
+
+@Serializable
+data class MoodleCm(
+    /** The course module id */
+    @SerialName("id")
+    val id: Int = 0,
+
+    /** The course id */
+    @SerialName("course")
+    val course: Int = 0,
+
+    /** The module type id */
+    @SerialName("module")
+    val module: Int = 0,
+
+    /** The activity name */
+    @SerialName("name")
+    val name: String = "",
+
+    /** The module component name (forum, assign, etc..) */
+    @SerialName("modname")
+    val modName: String = "",
+
+    /** The activity instance id */
+    @SerialName("instance")
+    val instance: Int = 0,
+
+    /** The module section id */
+    @SerialName("section")
+    val section: Int = 0,
+
+    /** The module section number */
+    @SerialName("sectionnum")
+    val sectionnum: Int = 0,
+
+    /** Group mode */
+    @SerialName("groupmode")
+    val groupMode: Int = 0,
+
+    /** Grouping id */
+    @SerialName("groupingid")
+    val groupingId: Int = 0,
+
+    /** If completion is enabled */
+    @SerialName("completion")
+    val completion: Int = 0,
+
+    /** Module id number */
+    @SerialName("idnumber")
+    val idNumber: String? = null,
+
+    /** Time added */
+    @SerialName("added")
+    val added: Int? = null,
+
+    /** Score */
+    @SerialName("score")
+    val score: Int? = null,
+
+    /** Indentation */
+    @SerialName("indent")
+    val indent: Int? = null,
+
+    /** If visible */
+    @SerialName("visible")
+    val visible: Int? = null,
+
+    /** If visible on course page */
+    @SerialName("visibleoncoursepage")
+    val visibleOnCoursePage: Int? = null,
+
+    /** Visible old */
+    @SerialName("visibleold")
+    val visibleold: Int? = null,
+
+    /** Completion grade item */
+    @SerialName("completiongradeitemnumber")
+    val completiongradeitemnumber: Int? = null,
+
+    /** Completion pass grade setting */
+    @SerialName("completionpassgrade")
+    val completionpassgrade: Int? = null,
+
+    /** Completion view setting */
+    @SerialName("completionview")
+    val completionview: Int? = null,
+
+    /** Completion time expected */
+    @SerialName("completionexpected")
+    val completionexpected: Int? = null,
+
+    /** If the description is showed */
+    @SerialName("showdescription")
+    val showdescription: Int? = null,
+
+    /** The download content value */
+    @SerialName("downloadcontent")
+    val downloadContent: Int? = null,
+
+    /** Availability settings */
+    @SerialName("availability")
+    val availability: String? = null,
+
+    /** Grade (max value or scale id) */
+    @SerialName("grade")
+    val grade: Double? = null,
+
+    /** Scale items (if used) */
+    @SerialName("scale")
+    val scale: String? = null,
+
+    /** Grade to pass (float) */
+    @SerialName("gradepass")
+    val gradepass: String? = null,
+
+    /** Grade category */
+    @SerialName("gradecat")
+    val gradecat: Int? = null,
+
+    /** Advanced grading settings */
+    @SerialName("advancedgrading")
+    val advancedgrading: List<MoodleAdvancedgrading> = emptyList(),
+
+    /** Outcomes information */
+    @SerialName("outcomes")
+    val outcomes: List<MoodleOutcome> = emptyList()
+)
+
+@Serializable
+data class MoodleAdvancedgrading(
+    /** Gradable area name */
+    @SerialName("area")
+    val area: String = "",
+
+    /** Grading method */
+    @SerialName("method")
+    val method: String = ""
+)
+
+@Serializable
+data class MoodleOutcome(
+    /** Outcome id */
+    @SerialName("id")
+    val id: String = "",
+
+    /** Outcome full name */
+    @SerialName("name")
+    val name: String = "",
+
+    /** Scale items */
+    @SerialName("scale")
+    val scale: String = ""
+)
+
+/** options - operator OR is used */
+@Serializable
+data class MoodleCourseGetCoursesOption(
+    /** List of course id. If empty return all courses except front page course. */
+    @SerialName("ids")
+    val ids: List<Int> = emptyList()
+)
+
+/** course */
+@Serializable
+data class MoodleCourseGetCoursesItem(
+    /** course id */
+    @SerialName("id")
+    val id: Int = 0,
+
+    /** course short name */
+    @SerialName("shortname")
+    val shortName: String = "",
+
+    /** category id */
+    @SerialName("categoryid")
+    val categoryId: Int = 0,
+
+    /** sort order into the category */
+    @SerialName("categorysortorder")
+    val categorysortorder: Int? = null,
+
+    /** full name */
+    @SerialName("fullname")
+    val fullName: String = "",
+
+    /** course display name */
+    @SerialName("displayname")
+    val displayName: String = "",
+
+    /** id number */
+    @SerialName("idnumber")
+    val idNumber: String? = null,
+
+    /** summary */
+    @SerialName("summary")
+    val summary: String = "",
+
+    /** summary format (1 = HTML, 0 = MOODLE, 2 = PLAIN, or 4 = MARKDOWN) */
+    @SerialName("summaryformat")
+    val summaryFormat: Int = 0,
+
+    /** course format: weeks, topics, social, site,.. */
+    @SerialName("format")
+    val format: String = "",
+
+    /** 1 if grades are shown, otherwise 0 */
+    @SerialName("showgrades")
+    val showGrades: Int? = null,
+
+    /** number of recent items appearing on the course page */
+    @SerialName("newsitems")
+    val newsItems: Int? = null,
+
+    /** timestamp when the course start */
+    @SerialName("startdate")
+    val startDate: Long = 0L,
+
+    /** timestamp when the course end */
+    @SerialName("enddate")
+    val endDate: Long = 0L,
+
+    /** (deprecated, use courseformatoptions) number of weeks/topics */
+    @SerialName("numsections")
+    val numsections: Int? = null,
+
+    /** largest size of file that can be uploaded into the course */
+    @SerialName("maxbytes")
+    val maxBytes: Long? = null,
+
+    /** are activity report shown (yes = 1, no =0) */
+    @SerialName("showreports")
+    val showReports: Int? = null,
+
+    /** 1: available to student, 0:not available */
+    @SerialName("visible")
+    val visible: Int? = null,
+
+    /** (deprecated, use courseformatoptions) How the hidden sections in the course are displayed to students */
+    @SerialName("hiddensections")
+    val hiddensections: Int? = null,
+
+    /** no group, separate, visible */
+    @SerialName("groupmode")
+    val groupMode: Int? = null,
+
+    /** 1: yes, 0: no */
+    @SerialName("groupmodeforce")
+    val groupModeForce: Int? = null,
+
+    /** default grouping id */
+    @SerialName("defaultgroupingid")
+    val defaultGroupingId: Int? = null,
+
+    /** timestamp when the course have been created */
+    @SerialName("timecreated")
+    val timeCreated: Long? = null,
+
+    /** timestamp when the course have been modified */
+    @SerialName("timemodified")
+    val timeModified: Long? = null,
+
+    /** Enabled, control via completion and activity settings. Disbaled, not shown in activity settings. */
+    @SerialName("enablecompletion")
+    val enableCompletion: Int? = null,
+
+    /** 1: yes 0: no */
+    @SerialName("completionnotify")
+    val completionNotify: Int? = null,
+
+    /** forced course language */
+    @SerialName("lang")
+    val lang: String? = null,
+
+    /** name of the force theme */
+    @SerialName("forcetheme")
+    val forcetheme: String? = null,
+
+    /** additional options for particular course format */
+    @SerialName("courseformatoptions")
+    val courseFormatOptions: List<MoodleNamedValue> = emptyList(),
+
+    /** Whether the activity dates are shown or not */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("showactivitydates")
+    val showActivityDates: Boolean = false,
+
+    /** Whether the activity completion conditions are shown or not */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("showcompletionconditions")
+    val showCompletionConditions: Boolean = false,
+
+    /** Custom fields and associated values */
+    @SerialName("customfields")
+    val customFields: List<MoodleCourseGetCoursesItemCustomField> = emptyList()
+)
+
+@Serializable
+data class MoodleNamedValue(
+    /** course format option name */
+    @SerialName("name")
+    val name: String = "",
+
+    /** course format option value */
+    @SerialName("value")
+    val value: String = ""
+)
+
+@Serializable
+data class MoodleCourseGetCoursesItemCustomField(
+    /** The name of the custom field */
+    @SerialName("name")
+    val name: String = "",
+
+    /** The shortname of the custom field */
+    @SerialName("shortname")
+    val shortName: String = "",
+
+    /** The type of the custom field - text, checkbox... */
+    @SerialName("type")
+    val type: String = "",
+
+    /** The raw value of the custom field */
+    @SerialName("valueraw")
+    val valueRaw: String = "",
+
+    /** The value of the custom field */
+    @SerialName("value")
+    val value: String = ""
 )
 
 @Serializable
@@ -649,47 +1055,6 @@ data class MoodleCourse(
     val communicationRoomUrl: String? = null
 )
 
-/** File. */
-@Serializable
-data class MoodleFile(
-    /** File name. */
-    @SerialName("filename")
-    val fileName: String? = null,
-
-    /** File path. */
-    @SerialName("filepath")
-    val filePath: String? = null,
-
-    /** File size. */
-    @SerialName("filesize")
-    val fileSize: Long? = null,
-
-    /** Downloadable file url. */
-    @SerialName("fileurl")
-    val fileUrl: String? = null,
-
-    /** Time modified. */
-    @SerialName("timemodified")
-    val timeModified: Long? = null,
-
-    /** File mime type. */
-    @SerialName("mimetype")
-    val mimeType: String? = null,
-
-    /** Whether is an external file. */
-    @Serializable(with = MoodleBooleanSerializer::class)
-    @SerialName("isexternalfile")
-    val isExternalFile: Boolean? = null,
-
-    /** The repository type for external files. */
-    @SerialName("repositorytype")
-    val repositoryType: String? = null,
-
-    /** The relative path to the relevant file type icon based on the file's mime type. */
-    @SerialName("icon")
-    val icon: String? = null
-)
-
 @Serializable
 data class MoodleContact(
     /** contact user id */
@@ -740,14 +1105,380 @@ data class MoodleFilter(
 )
 
 @Serializable
-data class MoodleKeyValue(
-    /** Course format option name. */
+data class MoodleCourseGetEnrolledCoursesByTimelineClassificationResponse(
+    /** Course */
+    @SerialName("courses")
+    val courses: List<MoodleEventCourse> = emptyList(),
+
+    /** Offset for the next request */
+    @SerialName("nextoffset")
+    val nextoffset: Int = 0
+)
+
+@Serializable
+data class MoodleCourseGetEnrolledCoursesWithActionEventsByTimelineClassificationResponse(
+    /** Course */
+    @SerialName("courses")
+    val courses: List<MoodleEventCourse> = emptyList(),
+
+    /** Offset for the next request */
+    @SerialName("nextoffset")
+    val nextoffset: Int = 0,
+
+    /** Whether more courses with events exist within the provided parameters */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("morecoursesavailable")
+    val morecoursesavailable: Boolean = false
+)
+
+@Serializable
+data class MoodleCourseGetUserAdministrationOptionsResponse(
+    /** List of courses */
+    @SerialName("courses")
+    val courses: List<MoodleCourseGetUserAdministrationOptionsResponseCourse> = emptyList(),
+
+    /** list of warnings */
+    @SerialName("warnings")
+    val warnings: List<MoodleWarning> = emptyList()
+)
+
+@Serializable
+data class MoodleCourseGetUserAdministrationOptionsResponseCourse(
+    /** Course id */
+    @SerialName("id")
+    val id: Int = 0,
+
+    @SerialName("options")
+    val options: List<MoodleCourseGetUserAdministrationOptionsResponseCourseOption> = emptyList()
+)
+
+@Serializable
+data class MoodleCourseGetUserAdministrationOptionsResponseCourseOption(
+    /** Option name */
     @SerialName("name")
     val name: String = "",
 
-    /** Course format option value. */
+    /** Whether the option is available or not */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("available")
+    val available: Boolean = false
+)
+
+@Serializable
+data class MoodleCourseSearchCoursesResponse(
+    /** total course count */
+    @SerialName("total")
+    val total: Int = 0,
+
+    /** course */
+    @SerialName("courses")
+    val courses: List<MoodleCourseSearchCoursesResponseCourse> = emptyList(),
+
+    /** list of warnings */
+    @SerialName("warnings")
+    val warnings: List<MoodleWarning> = emptyList()
+)
+
+@Serializable
+data class MoodleCourseSearchCoursesResponseCourse(
+    /** course id */
+    @SerialName("id")
+    val id: Int = 0,
+
+    /** course full name */
+    @SerialName("fullname")
+    val fullName: String = "",
+
+    /** course display name */
+    @SerialName("displayname")
+    val displayName: String = "",
+
+    /** course short name */
+    @SerialName("shortname")
+    val shortName: String = "",
+
+    /** Course image */
+    @SerialName("courseimage")
+    val courseImage: String? = null,
+
+    /** category id */
+    @SerialName("categoryid")
+    val categoryId: Int = 0,
+
+    /** category name */
+    @SerialName("categoryname")
+    val categoryName: String = "",
+
+    /** Sort order in the category */
+    @SerialName("sortorder")
+    val sortOrder: Int? = null,
+
+    /** summary */
+    @SerialName("summary")
+    val summary: String = "",
+
+    /** summary format (1 = HTML, 0 = MOODLE, 2 = PLAIN, or 4 = MARKDOWN) */
+    @SerialName("summaryformat")
+    val summaryFormat: Int = 0,
+
+    /** summary files in the summary field */
+    @SerialName("summaryfiles")
+    val summaryFiles: List<MoodleFile> = emptyList(),
+
+    /** additional overview files attached to this course */
+    @SerialName("overviewfiles")
+    val overviewFiles: List<MoodleFile> = emptyList(),
+
+    /** Whether the activity dates are shown or not */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("showactivitydates")
+    val showActivityDates: Boolean = false,
+
+    /** Whether the activity completion conditions are shown or not */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("showcompletionconditions")
+    val showCompletionConditions: Boolean = false,
+
+    /** contact users */
+    @SerialName("contacts")
+    val contacts: List<MoodleContact> = emptyList(),
+
+    /** enrollment methods list */
+    @SerialName("enrollmentmethods")
+    val enrollmentMethods: List<String> = emptyList(),
+
+    /** Custom fields */
+    @SerialName("customfields")
+    val customFields: List<MoodleCourseCustomField> = emptyList()
+)
+
+@Serializable
+data class MoodleCourseSetFavouriteCoursesCourse(
+    /** course ID */
+    @SerialName("id")
+    val id: Int = 0,
+
+    /** favourite status */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("favourite")
+    val favourite: Boolean = false
+)
+
+@Serializable
+data class MoodleCourseSetFavouriteCoursesResponse(
+    /** list of warnings */
+    @SerialName("warnings")
+    val warnings: List<MoodleWarning> = emptyList()
+)
+
+@Serializable
+data class MoodleEnrolGetCourseEnrolmentMethodsItem(
+    /** id of course enrolment instance */
+    @SerialName("id")
+    val id: Int = 0,
+
+    /** id of course */
+    @SerialName("courseid")
+    val courseId: Int = 0,
+
+    /** type of enrolment plugin */
+    @SerialName("type")
+    val type: String = "",
+
+    /** name of enrolment plugin */
+    @SerialName("name")
+    val name: String = "",
+
+    /** status of enrolment plugin */
+    @SerialName("status")
+    val status: String = "",
+
+    /** webservice function to get more information */
+    @SerialName("wsfunction")
+    val wsfunction: String? = null
+)
+
+@Serializable
+data class MoodleEnrolGetEnrolledUsersItem(
+    /** ID of the user */
+    @SerialName("id")
+    val id: Int = 0,
+
+    /** Username policy is defined in Moodle security config */
+    @SerialName("username")
+    val username: String? = null,
+
+    /** The first name(s) of the user */
+    @SerialName("firstname")
+    val firstName: String? = null,
+
+    /** The family name of the user */
+    @SerialName("lastname")
+    val lastName: String? = null,
+
+    /** The fullname of the user */
+    @SerialName("fullname")
+    val fullName: String = "",
+
+    /** An email address - allow email as root@localhost */
+    @SerialName("email")
+    val email: String? = null,
+
+    /** Postal address */
+    @SerialName("address")
+    val address: String? = null,
+
+    /** Phone 1 */
+    @SerialName("phone1")
+    val phone1: String? = null,
+
+    /** Phone 2 */
+    @SerialName("phone2")
+    val phone2: String? = null,
+
+    /** department */
+    @SerialName("department")
+    val department: String? = null,
+
+    /** institution */
+    @SerialName("institution")
+    val institution: String? = null,
+
+    /** An arbitrary ID code number perhaps from the institution */
+    @SerialName("idnumber")
+    val idNumber: String? = null,
+
+    /** user interests (separated by commas) */
+    @SerialName("interests")
+    val interests: String? = null,
+
+    /** first access to the site (0 if never) */
+    @SerialName("firstaccess")
+    val firstAccess: Long? = null,
+
+    /** last access to the site (0 if never) */
+    @SerialName("lastaccess")
+    val lastAccess: Long? = null,
+
+    /** last access to the course (0 if never) */
+    @SerialName("lastcourseaccess")
+    val lastcourseaccess: Long? = null,
+
+    /** User profile description */
+    @SerialName("description")
+    val description: String? = null,
+
+    /** description format (1 = HTML, 0 = MOODLE, 2 = PLAIN, or 4 = MARKDOWN) */
+    @SerialName("descriptionformat")
+    val descriptionFormat: Int? = null,
+
+    /** Home city of the user */
+    @SerialName("city")
+    val city: String? = null,
+
+    /** Home country code of the user, such as AU or CZ */
+    @SerialName("country")
+    val country: String? = null,
+
+    /** User image profile URL - small version */
+    @SerialName("profileimageurlsmall")
+    val profileImageUrlSmall: String? = null,
+
+    /** User image profile URL - big version */
+    @SerialName("profileimageurl")
+    val profileImageUrl: String? = null,
+
+    /** User custom fields (also known as user profil fields) */
+    @SerialName("customfields")
+    val customFields: List<MoodleEnrolGetEnrolledUsersItemCustomField> = emptyList(),
+
+    /** user groups */
+    @SerialName("groups")
+    val groups: List<MoodleUserGroup> = emptyList(),
+
+    /** user roles */
+    @SerialName("roles")
+    val roles: List<MoodleUserRole> = emptyList(),
+
+    /** User preferences */
+    @SerialName("preferences")
+    val preferences: List<MoodleKeyValue> = emptyList(),
+
+    /** Courses where the user is enrolled - limited by which courses the user is able to see */
+    @SerialName("enrolledcourses")
+    val enrolledCourses: List<MoodleUserEnrolledCourse> = emptyList()
+)
+
+@Serializable
+data class MoodleEnrolGetEnrolledUsersItemCustomField(
+    /** The type of the custom field - text field, checkbox... */
+    @SerialName("type")
+    val type: String = "",
+
+    /** The value of the custom field */
     @SerialName("value")
-    val value: String = ""
+    val value: String = "",
+
+    /** The name of the custom field */
+    @SerialName("name")
+    val name: String = "",
+
+    /** The shortname of the custom field - to be able to build the field class in the code */
+    @SerialName("shortname")
+    val shortName: String = ""
+)
+
+@Serializable
+data class MoodleUserGroup(
+    /** group id */
+    @SerialName("id")
+    val id: Int = 0,
+
+    /** group name */
+    @SerialName("name")
+    val name: String = "",
+
+    /** group description */
+    @SerialName("description")
+    val description: String = "",
+
+    /** description format (1 = HTML, 0 = MOODLE, 2 = PLAIN, or 4 = MARKDOWN) */
+    @SerialName("descriptionformat")
+    val descriptionFormat: Int = 0
+)
+
+@Serializable
+data class MoodleUserRole(
+    /** role id */
+    @SerialName("roleid")
+    val roleId: Int = 0,
+
+    /** role name */
+    @SerialName("name")
+    val name: String = "",
+
+    /** role shortname */
+    @SerialName("shortname")
+    val shortName: String = "",
+
+    /** role sortorder */
+    @SerialName("sortorder")
+    val sortOrder: Int = 0
+)
+
+@Serializable
+data class MoodleUserEnrolledCourse(
+    /** Id of the course */
+    @SerialName("id")
+    val id: Int = 0,
+
+    /** Fullname of the course */
+    @SerialName("fullname")
+    val fullName: String = "",
+
+    /** Shortname of the course */
+    @SerialName("shortname")
+    val shortName: String = ""
 )
 
 @Serializable
@@ -879,9 +1610,170 @@ data class MoodleEnrolledCourse(
 )
 
 @Serializable
-data class MoodleCourseUserGroupsResponse(
+data class MoodleUser(
+    /** ID of the user */
+    @SerialName("id")
+    val id: Int = 0,
+
+    /** The username */
+    @SerialName("username")
+    val username: String? = null,
+
+    /** The first name(s) of the user */
+    @SerialName("firstname")
+    val firstName: String? = null,
+
+    /** The family name of the user */
+    @SerialName("lastname")
+    val lastName: String? = null,
+
+    /** The fullname of the user */
+    @SerialName("fullname")
+    val fullName: String = "",
+
+    /** An email address - allow email as root@localhost */
+    @SerialName("email")
+    val email: String? = null,
+
+    /** Postal address */
+    @SerialName("address")
+    val address: String? = null,
+
+    /** Phone 1 */
+    @SerialName("phone1")
+    val phone1: String? = null,
+
+    /** Phone 2 */
+    @SerialName("phone2")
+    val phone2: String? = null,
+
+    /** department */
+    @SerialName("department")
+    val department: String? = null,
+
+    /** institution */
+    @SerialName("institution")
+    val institution: String? = null,
+
+    /** An arbitrary ID code number perhaps from the institution */
+    @SerialName("idnumber")
+    val idNumber: String? = null,
+
+    /** user interests (separated by commas) */
+    @SerialName("interests")
+    val interests: String? = null,
+
+    /** first access to the site (0 if never) */
+    @SerialName("firstaccess")
+    val firstAccess: Long? = null,
+
+    /** last access to the site (0 if never) */
+    @SerialName("lastaccess")
+    val lastAccess: Long? = null,
+
+    /** Auth plugins include manual, ldap, etc */
+    @SerialName("auth")
+    val auth: String? = null,
+
+    /** Suspend user account, either false to enable user login or true to disable it */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("suspended")
+    val suspended: Boolean? = null,
+
+    /** Active user: 1 if confirmed, 0 otherwise */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("confirmed")
+    val confirmed: Boolean? = null,
+
+    /** Language code such as "en", must exist on server */
+    @SerialName("lang")
+    val lang: String? = null,
+
+    /** Calendar type such as "gregorian", must exist on server */
+    @SerialName("calendartype")
+    val calendarType: String? = null,
+
+    /** Theme name such as "standard", must exist on server */
+    @SerialName("theme")
+    val theme: String? = null,
+
+    /** Timezone code such as Australia/Perth, or 99 for default */
+    @SerialName("timezone")
+    val timezone: String? = null,
+
+    /** Mail format code is 0 for plain text, 1 for HTML etc */
+    @SerialName("mailformat")
+    val mailFormat: Int? = null,
+
+    /** Whether the user is tracking forums. */
+    @SerialName("trackforums")
+    val trackForums: Int? = null,
+
+    /** User profile description */
+    @SerialName("description")
+    val description: String? = null,
+
+    /** int format (1 = HTML, 0 = MOODLE, 2 = PLAIN, or 4 = MARKDOWN) */
+    @SerialName("descriptionformat")
+    val descriptionFormat: Int? = null,
+
+    /** Home city of the user */
+    @SerialName("city")
+    val city: String? = null,
+
+    /** Home country code of the user, such as AU or CZ */
+    @SerialName("country")
+    val country: String? = null,
+
+    /** User image profile URL - small version */
+    @SerialName("profileimageurlsmall")
+    val profileImageUrlSmall: String = "",
+
+    /** User image profile URL - big version */
+    @SerialName("profileimageurl")
+    val profileImageUrl: String = "",
+
+    /** User custom fields (also known as user profile fields) */
+    @SerialName("customfields")
+    val customFields: List<MoodleUserCustomField> = emptyList(),
+
+    /** Users preferences */
+    @SerialName("preferences")
+    val preferences: List<MoodleKeyValue> = emptyList()
+)
+
+@Serializable
+data class MoodleUserCustomField(
+    /** The type of the custom field - text field, checkbox... */
+    @SerialName("type")
+    val type: String = "",
+
+    /** The value of the custom field (as stored in the database) */
+    @SerialName("value")
+    val value: String = "",
+
+    /** The value of the custom field for display */
+    @SerialName("displayvalue")
+    val displayValue: String? = null,
+
+    /** The name of the custom field */
+    @SerialName("name")
+    val name: String = "",
+
+    /** The shortname of the custom field - to be able to build the field class in the code */
+    @SerialName("shortname")
+    val shortName: String = ""
+)
+
+@Serializable
+data class MoodleGroupGetActivityAllowedGroupsResponse(
     @SerialName("groups")
     val groups: List<MoodleCourseGroup> = emptyList(),
+
+    /** Whether the user will be able to access all the activity groups. */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("canaccessallgroups")
+    val canaccessallgroups: Boolean? = null,
 
     /** list of warnings */
     @SerialName("warnings")
@@ -913,4 +1805,119 @@ data class MoodleCourseGroup(
     /** course id */
     @SerialName("courseid")
     val courseId: Int? = null
+)
+
+@Serializable
+data class MoodleGroupGetActivityGroupmodeResponse(
+    /** group mode: 0 for no groups, 1 for separate groups, 2 for visible groups */
+    @SerialName("groupmode")
+    val groupMode: Int = 0,
+
+    /** list of warnings */
+    @SerialName("warnings")
+    val warnings: List<MoodleWarning> = emptyList()
+)
+
+@Serializable
+data class MoodleGroupGetCourseGroupingsItem(
+    /** grouping record id */
+    @SerialName("id")
+    val id: Int = 0,
+
+    /** id of course */
+    @SerialName("courseid")
+    val courseId: Int = 0,
+
+    /** multilang compatible name, course unique */
+    @SerialName("name")
+    val name: String = "",
+
+    /** grouping description text */
+    @SerialName("description")
+    val description: String = "",
+
+    /** description format (1 = HTML, 0 = MOODLE, 2 = PLAIN, or 4 = MARKDOWN) */
+    @SerialName("descriptionformat")
+    val descriptionFormat: Int = 0,
+
+    /** id number */
+    @SerialName("idnumber")
+    val idNumber: String = ""
+)
+
+@Serializable
+data class MoodleGroupGetCourseGroupsItem(
+    /** group record id */
+    @SerialName("id")
+    val id: Int = 0,
+
+    /** id of course */
+    @SerialName("courseid")
+    val courseId: Int = 0,
+
+    /** group name */
+    @SerialName("name")
+    val name: String = "",
+
+    /** group description text */
+    @SerialName("description")
+    val description: String = "",
+
+    /** description format (1 = HTML, 0 = MOODLE, 2 = PLAIN, or 4 = MARKDOWN) */
+    @SerialName("descriptionformat")
+    val descriptionFormat: Int = 0,
+
+    /** group enrol secret phrase */
+    @SerialName("enrolmentkey")
+    val enrolmentkey: String = "",
+
+    /** id number */
+    @SerialName("idnumber")
+    val idNumber: String = "",
+
+    /** group visibility mode. 0 = Visible to all. 1 = Visible to members. 2 = See own membership. 3 = Membership is hidden. */
+    @SerialName("visibility")
+    val visibility: Int = 0,
+
+    /** participation mode */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("participation")
+    val participation: Boolean = false
+)
+
+@Serializable
+data class MoodleCourseUserGroupsResponse(
+    @SerialName("groups")
+    val groups: List<MoodleCourseGroup> = emptyList(),
+
+    /** list of warnings */
+    @SerialName("warnings")
+    val warnings: List<MoodleWarning> = emptyList()
+)
+
+@Serializable
+data class MoodleEnrolSelfGetInstanceInfoResponse(
+    /** id of course enrolment instance */
+    @SerialName("id")
+    val id: Int = 0,
+
+    /** id of course */
+    @SerialName("courseid")
+    val courseId: Int = 0,
+
+    /** type of enrolment plugin */
+    @SerialName("type")
+    val type: String = "",
+
+    /** name of enrolment plugin */
+    @SerialName("name")
+    val name: String = "",
+
+    /** status of enrolment plugin */
+    @SerialName("status")
+    val status: String = "",
+
+    /** password required for enrolment */
+    @SerialName("enrolpassword")
+    val enrolpassword: String? = null
 )

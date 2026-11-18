@@ -3,19 +3,34 @@
 import { describe } from "vitest";
 import { MoodleTokenAuth } from "../../src/elearning/models/index.js";
 import { isPresent, liveCase } from "../runtime/live.js";
-import { MoodleLive, quizGetQuizzesByCourses, quizGetUserAttempts, siteGetSiteInfo, tokenCredentials, writeMoodleQuizAccessInformation, writeMoodleQuizzesResponse, writeMoodleUserAttemptsResponse, writeMoodleUserBestGradeResponse } from "./MoodleLive.js";
+import { MoodleLive, h5pactivityGetResults, quizGetQuizzesByCourses, siteGetSiteInfo, tokenCredentials, writeMoodleQuizAccessInformation, writeMoodleQuizGetCombinedReviewOptionsResponse, writeMoodleQuizGetQuizRequiredQtypesResponse, writeMoodleQuizzesResponse, writeMoodleUserAttemptsResponse, writeMoodleUserBestGradeResponse } from "./MoodleLive.js";
 
 // The live tests of the Moodle Quiz module, planned from common/specs/moodle/tests.yaml.
 describe("Moodle Quiz", () => {
   liveCase(MoodleLive, "Quiz.getAttemptReview#1", {}, async (live) => {
-    const attemptId = live.choose("attemptId", [await quizGetUserAttempts(live)].map((it) => it.attempts).filter(isPresent).flat().map((it) => it.id).filter(isPresent));
+    const attemptId = live.choose("attemptId", [await h5pactivityGetResults(live)].map((it) => it.attempts).filter(isPresent).flat().map((it) => it.results).filter(isPresent).flat().map((it) => it.attemptId).filter(isPresent));
     const auth = await tokenCredentials(live);
     await live.call("{\"k\":\"record\",\"n\":\"MoodleAttemptReviewResponse\"}", {}, async () => live.api.quiz.getAttemptReview(attemptId, auth));
   });
 
   liveCase(MoodleLive, "Quiz.getAttemptReview#invalid-credentials", {}, async (live) => {
-    const attemptId = live.choose("attemptId", [await quizGetUserAttempts(live)].map((it) => it.attempts).filter(isPresent).flat().map((it) => it.id).filter(isPresent));
+    const attemptId = live.choose("attemptId", [await h5pactivityGetResults(live)].map((it) => it.attempts).filter(isPresent).flat().map((it) => it.results).filter(isPresent).flat().map((it) => it.attemptId).filter(isPresent));
     await live.refused(false, async () => live.api.quiz.getAttemptReview(attemptId, new MoodleTokenAuth("mybicocca-invalid-credential")));
+  });
+
+  liveCase(MoodleLive, "Quiz.getCombinedReviewOptions#1", {}, async (live) => {
+    const quizId = live.choose("quizId", [await quizGetQuizzesByCourses(live)].map((it) => it.quizzes).filter(isPresent).flat().map((it) => it.id).filter(isPresent));
+    const auth = await tokenCredentials(live);
+    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleQuizGetCombinedReviewOptionsResponse\"}", {}, async () => live.api.quiz.getCombinedReviewOptions(quizId, auth));
+    live.fingerprint((f) => writeMoodleQuizGetCombinedReviewOptionsResponse(f, result));
+  });
+
+  liveCase(MoodleLive, "Quiz.getCombinedReviewOptions#2", { index: 1 }, async (live) => {
+    const quizId = live.choose("quizId", [await quizGetQuizzesByCourses(live)].map((it) => it.quizzes).filter(isPresent).flat().map((it) => it.id).filter(isPresent));
+    const userId = live.choose("userId", [await siteGetSiteInfo(live)].map((it) => it.userId).filter(isPresent));
+    const auth = await tokenCredentials(live);
+    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleQuizGetCombinedReviewOptionsResponse\"}", {}, async () => live.api.quiz.getCombinedReviewOptions(quizId, auth, { userId: userId }));
+    live.fingerprint((f) => writeMoodleQuizGetCombinedReviewOptionsResponse(f, result));
   });
 
   liveCase(MoodleLive, "Quiz.getQuizAccessInformation#1", {}, async (live) => {
@@ -23,6 +38,13 @@ describe("Moodle Quiz", () => {
     const auth = await tokenCredentials(live);
     const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleQuizAccessInformation\"}", {}, async () => live.api.quiz.getQuizAccessInformation(quizId, auth));
     live.fingerprint((f) => writeMoodleQuizAccessInformation(f, result));
+  });
+
+  liveCase(MoodleLive, "Quiz.getQuizRequiredQtypes#1", {}, async (live) => {
+    const quizId = live.choose("quizId", [await quizGetQuizzesByCourses(live)].map((it) => it.quizzes).filter(isPresent).flat().map((it) => it.id).filter(isPresent));
+    const auth = await tokenCredentials(live);
+    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleQuizGetQuizRequiredQtypesResponse\"}", {}, async () => live.api.quiz.getQuizRequiredQtypes(quizId, auth));
+    live.fingerprint((f) => writeMoodleQuizGetQuizRequiredQtypesResponse(f, result));
   });
 
   liveCase(MoodleLive, "Quiz.getQuizzesByCourses#1", {}, async (live) => {

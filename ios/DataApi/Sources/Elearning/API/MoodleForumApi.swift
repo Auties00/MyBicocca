@@ -165,6 +165,26 @@ public struct MoodleForumApi: Sendable {
         )
     }
 
+    /// Return capabilities information for a given forum.
+    ///
+    /// - Parameters:
+    ///   - forumId: Forum instance id.
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getForumAccessInformation(
+        forumId: Int,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleForumGetForumAccessInformationResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "mod_forum_get_forum_access_information"), ("moodlewsrestformat", "json")],
+                form: [("forumid", forumId)],
+                auth: auth
+            )
+        )
+    }
+
     /// Returns a list of forum discussions optionally sorted and paginated.
     ///
     /// - Parameters:
@@ -244,6 +264,56 @@ public struct MoodleForumApi: Sendable {
                     ("area", area),
                     ("draftitemid", draftItemId)
                 ] + RestRequest.brackets("filestokeep", filesToKeep),
+                auth: auth
+            )
+        )
+    }
+
+    /// Set the lock state for the discussion
+    ///
+    /// - Parameters:
+    ///   - forumId: Forum that the discussion is in
+    ///   - discussionId: The discussion to lock / unlock
+    ///   - targetState: The timestamp for the lock state
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func setLockState(
+        forumId: Int,
+        discussionId: Int,
+        targetState: Int,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleForumSetLockStateResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "mod_forum_set_lock_state"), ("moodlewsrestformat", "json")],
+                form: [
+                    ("forumid", forumId),
+                    ("discussionid", discussionId),
+                    ("targetstate", targetState)
+                ],
+                auth: auth
+            )
+        )
+    }
+
+    /// Set the pin state
+    ///
+    /// - Parameters:
+    ///   - discussionId: The discussion to pin or unpin
+    ///   - targetState: The target state
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func setPinState(
+        discussionId: Int,
+        targetState: Int,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleDiscussionSummary {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "mod_forum_set_pin_state"), ("moodlewsrestformat", "json")],
+                form: [("discussionid", discussionId), ("targetstate", targetState)],
                 auth: auth
             )
         )

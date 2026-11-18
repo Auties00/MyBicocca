@@ -5,6 +5,58 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
+data class MoodleMobileCallExternalFunctionsRequest(
+    /** Function name */
+    @SerialName("function")
+    val function: String = "",
+
+    /** JSON-encoded object with named arguments */
+    @SerialName("arguments")
+    val arguments: String = "{}",
+
+    /** Return raw text */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("settingraw")
+    val settingraw: Boolean = false,
+
+    /** Filter text */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("settingfilter")
+    val settingfilter: Boolean = false,
+
+    /** Rewrite plugin file URLs */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("settingfileurl")
+    val settingfileurl: Boolean = true,
+
+    /** Session language */
+    @SerialName("settinglang")
+    val settinglang: String = ""
+)
+
+@Serializable
+data class MoodleMobileCallExternalFunctionsResponse(
+    @SerialName("responses")
+    val responses: List<MoodleMobileCallExternalFunctionsResponseResponse> = emptyList()
+)
+
+@Serializable
+data class MoodleMobileCallExternalFunctionsResponseResponse(
+    /** Whether an exception was thrown. */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("error")
+    val error: Boolean = false,
+
+    /** JSON-encoded response data */
+    @SerialName("data")
+    val data: String? = null,
+
+    /** JSON-encoed exception info */
+    @SerialName("exception")
+    val exception: String? = null
+)
+
+@Serializable
 data class MoodleAutologinKey(
     /** Auto-login key for a single usage with time expiration. */
     @SerialName("key")
@@ -13,6 +65,17 @@ data class MoodleAutologinKey(
     /** Auto-login URL. */
     @SerialName("autologinurl")
     val autologinUrl: String = "",
+
+    /** list of warnings */
+    @SerialName("warnings")
+    val warnings: List<MoodleWarning> = emptyList()
+)
+
+@Serializable
+data class MoodleMobileGetConfigResponse(
+    /** Settings */
+    @SerialName("settings")
+    val settings: List<MoodleKeyValue> = emptyList(),
 
     /** list of warnings */
     @SerialName("warnings")
@@ -69,4 +132,255 @@ data class MoodleMobileContentRestriction(
     /** List of allowed courses. */
     @SerialName("courses")
     val courses: List<Int> = emptyList()
+)
+
+@Serializable
+data class MoodleMobileGetPluginsSupportingMobileResponse(
+    @SerialName("plugins")
+    val plugins: List<MoodlePlugin> = emptyList(),
+
+    /** list of warnings */
+    @SerialName("warnings")
+    val warnings: List<MoodleWarning> = emptyList()
+)
+
+@Serializable
+data class MoodlePlugin(
+    /** The plugin component name. */
+    @SerialName("component")
+    val component: String = "",
+
+    /** The plugin version number. */
+    @SerialName("version")
+    val version: String = "",
+
+    /** The Mobile addon (package) name. */
+    @SerialName("addon")
+    val addon: String = "",
+
+    /** The list of Mobile addons this addon depends on. */
+    @SerialName("dependencies")
+    val dependencies: List<String> = emptyList(),
+
+    /** The addon package url for download or empty if it doesn't exist. */
+    @SerialName("fileurl")
+    val fileUrl: String = "",
+
+    /** The addon package hash or empty if it doesn't exist. */
+    @SerialName("filehash")
+    val filehash: String = "",
+
+    /** The addon package size or empty if it doesn't exist. */
+    @SerialName("filesize")
+    val fileSize: Long = 0L,
+
+    /** Handlers definition (JSON) */
+    @SerialName("handlers")
+    val handlers: String? = null,
+
+    /** Language strings used by the handlers (JSON) */
+    @SerialName("lang")
+    val lang: String? = null
+)
+
+@Serializable
+data class MoodleMobileGetPublicConfigResponse(
+    /** Site URL. */
+    @SerialName("wwwroot")
+    val wwwroot: String = "",
+
+    /** Site https URL (if httpslogin is enabled). */
+    @SerialName("httpswwwroot")
+    val httpswwwroot: String = "",
+
+    /** Site name. */
+    @SerialName("sitename")
+    val siteName: String = "",
+
+    /** Whether guest login is enabled. */
+    @SerialName("guestlogin")
+    val guestlogin: Long = 0L,
+
+    /** Values: 0 for No, 1 for Yes, 2 for optional. */
+    @SerialName("rememberusername")
+    val rememberusername: Int = 0,
+
+    /** Whether log in via email is enabled. */
+    @SerialName("authloginviaemail")
+    val authloginviaemail: Long = 0L,
+
+    /** Authentication method for user registration. */
+    @SerialName("registerauth")
+    val registerauth: String = "",
+
+    /** Forgotten password URL. */
+    @SerialName("forgottenpasswordurl")
+    val forgottenpasswordurl: String = "",
+
+    /** Authentication instructions. */
+    @SerialName("authinstructions")
+    val authinstructions: String = "",
+
+    /** Whether auth none is enabled. */
+    @SerialName("authnoneenabled")
+    val authnoneenabled: Int = 0,
+
+    /** Whether Web Services are enabled. */
+    @SerialName("enablewebservices")
+    val enablewebservices: Int = 0,
+
+    /** Whether the Mobile service is enabled. */
+    @SerialName("enablemobilewebservice")
+    val enablemobilewebservice: Int = 0,
+
+    /** Whether site maintenance is enabled. */
+    @SerialName("maintenanceenabled")
+    val maintenanceenabled: Int = 0,
+
+    /** Maintenance message. */
+    @SerialName("maintenancemessage")
+    val maintenancemessage: String = "",
+
+    /** The site logo URL */
+    @SerialName("logourl")
+    val logourl: String? = null,
+
+    /** The site compact logo URL */
+    @SerialName("compactlogourl")
+    val compactlogourl: String? = null,
+
+    /** The type of login. 1 for app, 2 for browser, 3 for embedded. */
+    @SerialName("typeoflogin")
+    val typeoflogin: Long = 0L,
+
+    /** SSO login launch URL. */
+    @SerialName("launchurl")
+    val launchurl: String? = null,
+
+    /** Mobile custom CSS theme */
+    @SerialName("mobilecssurl")
+    val mobileCssUrl: String? = null,
+
+    /** Disabled features in the app */
+    @SerialName("tool_mobile_disabledfeatures")
+    val toolMobileDisabledfeatures: String? = null,
+
+    /** Identity providers */
+    @SerialName("identityproviders")
+    val identityproviders: List<MoodleIdentityprovider> = emptyList(),
+
+    /** Default site country */
+    @SerialName("country")
+    val country: String? = null,
+
+    /** Whether age digital consent verification is enabled. */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("agedigitalconsentverification")
+    val agedigitalconsentverification: Boolean? = null,
+
+    /** Site support contact name (only if age verification is enabled). */
+    @SerialName("supportname")
+    val supportname: String? = null,
+
+    /** Site support contact email (only if age verification is enabled). */
+    @SerialName("supportemail")
+    val supportemail: String? = null,
+
+    /** Site support page link. */
+    @SerialName("supportpage")
+    val supportpage: String? = null,
+
+    /** Determines who has access to contact site support. */
+    @SerialName("supportavailability")
+    val supportavailability: Int? = null,
+
+    /** Whether to detect default language from browser setting. */
+    @SerialName("autolang")
+    val autolang: Int? = null,
+
+    /** Default language for the site. */
+    @SerialName("lang")
+    val lang: String? = null,
+
+    /** Whether the language menu should be displayed. */
+    @SerialName("langmenu")
+    val langmenu: Int? = null,
+
+    /** Languages on language menu. */
+    @SerialName("langlist")
+    val langlist: String? = null,
+
+    /** Sitewide locale. */
+    @SerialName("locale")
+    val locale: String? = null,
+
+    /** Minimum required version to access. */
+    @SerialName("tool_mobile_minimumversion")
+    val toolMobileMinimumversion: String? = null,
+
+    /** iOS app's unique identifier. */
+    @SerialName("tool_mobile_iosappid")
+    val toolMobileIosappid: String? = null,
+
+    /** Android app's unique identifier. */
+    @SerialName("tool_mobile_androidappid")
+    val toolMobileAndroidappid: String? = null,
+
+    /** App download page. */
+    @SerialName("tool_mobile_setuplink")
+    val toolMobileSetuplink: String? = null,
+
+    /** QR login configuration. */
+    @SerialName("tool_mobile_qrcodetype")
+    val toolMobileQrcodetype: Int? = null,
+
+    /** list of warnings */
+    @SerialName("warnings")
+    val warnings: List<MoodleWarning> = emptyList(),
+
+    /** Display default login form. */
+    @SerialName("showloginform")
+    val showloginform: Long = 0L
+)
+
+@Serializable
+data class MoodleIdentityprovider(
+    /** The identity provider name. */
+    @SerialName("name")
+    val name: String = "",
+
+    /** The icon URL for the provider. */
+    @SerialName("iconurl")
+    val iconUrl: String = "",
+
+    /** The URL of the provider. */
+    @SerialName("url")
+    val url: String = ""
+)
+
+@Serializable
+data class MoodleMobileGetTokensForQrLoginResponse(
+    /** A valid WebService token for the official mobile app service. */
+    @SerialName("token")
+    val token: String = "",
+
+    /** Private token used for auto-login processes. */
+    @SerialName("privatetoken")
+    val privateToken: String = "",
+
+    /** list of warnings */
+    @SerialName("warnings")
+    val warnings: List<MoodleWarning> = emptyList()
+)
+
+@Serializable
+data class MoodleMobileValidateSubscriptionKeyResponse(
+    /** Whether the key is validated or not. */
+    @Serializable(with = MoodleBooleanSerializer::class)
+    @SerialName("validated")
+    val validated: Boolean = false,
+
+    /** list of warnings */
+    @SerialName("warnings")
+    val warnings: List<MoodleWarning> = emptyList()
 )

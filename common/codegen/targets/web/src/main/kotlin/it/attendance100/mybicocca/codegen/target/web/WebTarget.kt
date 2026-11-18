@@ -167,7 +167,7 @@ class WebTarget : CodeTarget {
 
     /** A class per scheme building its headers, and the union of all of them. */
     private fun authTypes(spec: ApiSpec, layout: TsLayout, file: TsFile) {
-        layout.importRuntime(file, "RequestAuth")
+        layout.importRuntime(file, "type RequestAuth")
         file.body.apply {
             for (scheme in spec.authSchemes) {
                 scheme.description?.let { line("/** ${TsSyntax.docText(it)} */") }
@@ -230,7 +230,7 @@ class WebTarget : CodeTarget {
         val modules = spec.modules.filter { it.operations.isNotEmpty() }
         file.importFile(layout.client, layout.clientFile)
         modules.forEach { file.importFile(layout.serviceName(it), layout.serviceFile(it)) }
-        if (spec.parameters.isNotEmpty()) file.importFile(layout.parameters, layout.parametersFile)
+        if (spec.parameters.isNotEmpty()) file.importFile("type ${layout.parameters}", layout.parametersFile)
         file.body.apply {
             line("/** Entry point of the ${spec.prefix} API: one property per module, all sharing one client. */")
             block("export class ${layout.facadeName} {") {

@@ -17,6 +17,10 @@ import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleStatusResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleUser
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleUserPreferencesResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleUserPreparePrivateFilesForEditionResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleUserSetUserPreferencesPreference
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleUserSetUserPreferencesResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleUserUpdatePictureResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleWarning
 import it.attendance100.mybicocca.data.remote.elearning.dto.appendBrackets
 import it.attendance100.mybicocca.data.remote.runtime.RestApi
@@ -66,6 +70,45 @@ class MoodleUserApi(
                 auth.form.forEach { (name, value) -> append(name, value) }
             }))
             parameter("wsfunction", "core_user_add_user_device")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Copy files from a draft area to users private files area.
+     *
+     * @param draftid draft area id
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun addUserPrivateFiles(
+        draftid: Int,
+        auth: MoodleTokenAuth
+    ) {
+        send(HttpMethod.Post, "/webservice/rest/server.php") {
+            setBody(FormDataContent(parameters {
+                append("draftid", draftid.toString())
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_user_add_user_private_files")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Agree the site policy for the current user.
+     *
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun agreeSitePolicy(
+        auth: MoodleTokenAuth
+    ): MoodleStatusResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleStatusResponse>()) {
+            setBody(FormDataContent(parameters {
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_user_agree_site_policy")
             parameter("moodlewsrestformat", "json")
             auth.headers.forEach { (name, value) -> header(name, value) }
         }
@@ -160,6 +203,24 @@ class MoodleUserApi(
     }
 
     /**
+     * Prepares the draft area for user private files.
+     *
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun preparePrivateFilesForEdition(
+        auth: MoodleTokenAuth
+    ): MoodleUserPreparePrivateFilesForEditionResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleUserPreparePrivateFilesForEditionResponse>()) {
+            setBody(FormDataContent(parameters {
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_user_prepare_private_files_for_edition")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
      * Remove a user device from the Moodle database.
      *
      * @param uuid the device UUID
@@ -178,6 +239,101 @@ class MoodleUserApi(
                 auth.form.forEach { (name, value) -> append(name, value) }
             }))
             parameter("wsfunction", "core_user_remove_user_device")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Set user preferences.
+     *
+     * @param auth The credentials, if any: [MoodleTokenAuth].
+     */
+    suspend fun setUserPreferences(
+        preferences: List<MoodleUserSetUserPreferencesPreference>,
+        auth: MoodleTokenAuth? = null
+    ): MoodleUserSetUserPreferencesResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleUserSetUserPreferencesResponse>()) {
+            setBody(FormDataContent(parameters {
+                appendBrackets("preferences", json.encodeToJsonElement(preferences))
+                auth?.form?.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_user_set_user_preferences")
+            parameter("moodlewsrestformat", "json")
+            auth?.headers?.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Update or delete the user picture in the site
+     *
+     * @param draftItemId Id of the user draft file to use as image
+     * @param delete If we should delete the user picture
+     * @param userId Id of the user, 0 for current user
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun updatePicture(
+        draftItemId: Int,
+        delete: Boolean? = null,
+        userId: Int? = null,
+        auth: MoodleTokenAuth
+    ): MoodleUserUpdatePictureResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleUserUpdatePictureResponse>()) {
+            setBody(FormDataContent(parameters {
+                append("draftitemid", draftItemId.toString())
+                delete?.let { appendBrackets("delete", json.encodeToJsonElement(it)) }
+                userId?.let { append("userid", it.toString()) }
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_user_update_picture")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Copy files from a draft area to users private files area.
+     *
+     * @param draftItemId The draft item id with the files.
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun updatePrivateFiles(
+        draftItemId: Int,
+        auth: MoodleTokenAuth
+    ): MoodleStatusResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleStatusResponse>()) {
+            setBody(FormDataContent(parameters {
+                append("draftitemid", draftItemId.toString())
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_user_update_private_files")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Store mobile user public key.
+     *
+     * @param uuid the device UUID
+     * @param appId The app id, something like com.moodle.moodlemobile
+     * @param publicKey the app generated public key
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun updateUserDevicePublicKey(
+        uuid: String,
+        appId: String,
+        publicKey: String,
+        auth: MoodleTokenAuth
+    ): MoodleStatusResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleStatusResponse>()) {
+            setBody(FormDataContent(parameters {
+                append("uuid", uuid)
+                append("appid", appId)
+                append("publickey", publicKey)
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_user_update_user_device_public_key")
             parameter("moodlewsrestformat", "json")
             auth.headers.forEach { (name, value) -> header(name, value) }
         }
@@ -205,6 +361,27 @@ class MoodleUserApi(
                 auth.form.forEach { (name, value) -> append(name, value) }
             }))
             parameter("wsfunction", "core_user_update_user_preferences")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Simulates the web-interface view of user/index.php (triggering events),.
+     *
+     * @param courseId id of the course, 0 for site
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun viewUserList(
+        courseId: Int,
+        auth: MoodleTokenAuth
+    ): MoodleStatusResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleStatusResponse>()) {
+            setBody(FormDataContent(parameters {
+                append("courseid", courseId.toString())
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_user_view_user_list")
             parameter("moodlewsrestformat", "json")
             auth.headers.forEach { (name, value) -> header(name, value) }
         }

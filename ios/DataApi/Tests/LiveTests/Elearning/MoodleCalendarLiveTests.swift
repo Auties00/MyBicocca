@@ -44,6 +44,65 @@ final class MoodleCalendarLiveTests: XCTestCase {
         }
     }
 
+    func test_getAllowedEventTypes1() async throws {
+        try await liveCase(MoodleLive.api, "Calendar.getAllowedEventTypes#1") { live in
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleCalendarGetAllowedEventTypesResponse\"}") { try await live.api.calendar.getAllowedEventTypes(auth: auth) }
+            live.fingerprint { f in MoodleLive.writeMoodleCalendarGetAllowedEventTypesResponse(f, result) }
+        }
+    }
+
+    func test_getAllowedEventTypes2() async throws {
+        try await liveCase(MoodleLive.api, "Calendar.getAllowedEventTypes#2", index: 1) { live in
+            let courseId = try live.choose("courseId", [try await MoodleLive.courseGetUsersCourses(live)].flatMap { $0 }.compactMap { $0.id })
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleCalendarGetAllowedEventTypesResponse\"}") { try await live.api.calendar.getAllowedEventTypes(courseId: courseId, auth: auth) }
+            live.fingerprint { f in MoodleLive.writeMoodleCalendarGetAllowedEventTypesResponse(f, result) }
+        }
+    }
+
+    func test_getCalendarAccessInformation1() async throws {
+        try await liveCase(MoodleLive.api, "Calendar.getCalendarAccessInformation#1") { live in
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleCalendarGetCalendarAccessInformationResponse\"}") { try await live.api.calendar.getCalendarAccessInformation(auth: auth) }
+            live.fingerprint { f in MoodleLive.writeMoodleCalendarGetCalendarAccessInformationResponse(f, result) }
+        }
+    }
+
+    func test_getCalendarAccessInformation2() async throws {
+        try await liveCase(MoodleLive.api, "Calendar.getCalendarAccessInformation#2", index: 1) { live in
+            let courseId = try live.choose("courseId", [try await MoodleLive.courseGetUsersCourses(live)].flatMap { $0 }.compactMap { $0.id })
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleCalendarGetCalendarAccessInformationResponse\"}") { try await live.api.calendar.getCalendarAccessInformation(courseId: courseId, auth: auth) }
+            live.fingerprint { f in MoodleLive.writeMoodleCalendarGetCalendarAccessInformationResponse(f, result) }
+        }
+    }
+
+    func test_getCalendarEventById1() async throws {
+        try await liveCase(MoodleLive.api, "Calendar.getCalendarEventById#1") { live in
+            let eventid = try live.choose("eventid", [try await MoodleLive.calendarGetActionEventsByTimesort(live)].compactMap { $0.events }.flatMap { $0 }.compactMap { $0.id })
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleCalendarGetCalendarEventByIdResponse\"}") { try await live.api.calendar.getCalendarEventById(eventid: eventid, auth: auth) }
+            live.fingerprint { f in MoodleLive.writeMoodleCalendarGetCalendarEventByIdResponse(f, result) }
+        }
+    }
+
+    func test_getCalendarEvents1() async throws {
+        try await liveCase(MoodleLive.api, "Calendar.getCalendarEvents#1") { live in
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleCalendarGetCalendarEventsResponse\"}") { try await live.api.calendar.getCalendarEvents(auth: auth) }
+            live.fingerprint { f in MoodleLive.writeMoodleCalendarGetCalendarEventsResponse(f, result) }
+        }
+    }
+
+    func test_getCalendarExportToken1() async throws {
+        try await liveCase(MoodleLive.api, "Calendar.getCalendarExportToken#1") { live in
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleCalendarGetCalendarExportTokenResponse\"}") { try await live.api.calendar.getCalendarExportToken(auth: auth) }
+            live.fingerprint { f in MoodleLive.writeMoodleCalendarGetCalendarExportTokenResponse(f, result) }
+        }
+    }
+
     func test_getCalendarMonthlyView1() async throws {
         try await liveCase(MoodleLive.api, "Calendar.getCalendarMonthlyView#1") { live in
             let year = try LiveText.int(LiveTemplates.resolve("{today:yyyy}"))

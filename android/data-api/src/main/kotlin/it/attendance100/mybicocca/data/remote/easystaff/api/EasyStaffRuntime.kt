@@ -22,7 +22,7 @@ internal object EasyStaffRuntime {
 
     val policy = RestPolicy(
         baseUrl = null,
-        failure = { EasyStaffException(it.statusCode, it.errorCode, it.errorMessage) }
+        failure = { EasyStaffException(it.statusCode, it.errorCode, it.errorMessage, serverMessage = it.serverMessage) }
     )
 
     fun settings() = ClientSettings(emptyList())

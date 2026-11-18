@@ -14,7 +14,7 @@ internal class TsFile(val path: String, private val apiId: String) {
     private val imports = sortedMapOf<String, MutableSet<String>>(compareBy({ it.startsWith(".") }, { it }))
     val body = CodeWriter("  ")
 
-    /** Imports [name] from the package [from]. */
+    /** Imports [name] from the package [from]; a `type ` prefix marks a name only used as a type. */
     fun import(name: String, from: String) {
         imports.getOrPut(from) { sortedSetOf() } += name
     }
@@ -28,7 +28,9 @@ internal class TsFile(val path: String, private val apiId: String) {
         val content = buildString {
             append("// ${generatedMarker(apiId)}. Do not edit.\n\n")
             for ((module, names) in imports) {
-                append("import { ${names.joinToString(", ")} } from ${TsSyntax.string(module)};\n")
+                // A name the file also uses as a value is imported once, as a value.
+                val used = names.filterNot { it.startsWith(TYPE_PREFIX) && it.removePrefix(TYPE_PREFIX) in names }
+                append("import { ${used.joinToString(", ")} } from ${TsSyntax.string(module)};\n")
             }
             if (imports.isNotEmpty()) append('\n')
             append(body)
@@ -37,6 +39,8 @@ internal class TsFile(val path: String, private val apiId: String) {
     }
 
     companion object {
+        private const val TYPE_PREFIX = "type "
+
         /** The import specifier of the file at [to] in a file at [from], both relative to one directory. */
         fun relativeModule(from: String, to: String): String {
             val fromFolders = from.split('/').dropLast(1)

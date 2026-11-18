@@ -10,6 +10,52 @@ public struct MoodleCourseApi: Sendable {
         self.client = client
     }
 
+    /// Check if there is updates affecting the user for the given course and contexts.
+    ///
+    /// - Parameters:
+    ///   - courseId: Course id to check
+    ///   - tocheck: Instances to check
+    ///   - filter: Check only for updates in these areas
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func checkUpdates(
+        courseId: Int,
+        tocheck: [MoodleTocheck],
+        filter: [String]? = nil,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleCourseCheckUpdatesResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_course_check_updates"), ("moodlewsrestformat", "json")],
+                form: [("courseid", courseId)] + RestRequest.brackets("tocheck", tocheck) + RestRequest.brackets("filter", filter),
+                auth: auth
+            )
+        )
+    }
+
+    /// Return category details
+    ///
+    /// - Parameters:
+    ///   - criteria: criteria
+    ///   - addsubcategories: return the sub categories infos (1 - default) otherwise only the category info (0)
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getCategories(
+        criteria: [MoodleCourseGetCategoriesCriteria]? = nil,
+        addsubcategories: Bool? = nil,
+        auth: MoodleTokenAuth
+    ) async throws -> [MoodleCourseGetCategoriesItem] {
+        try await client.jsonList(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_course_get_categories"), ("moodlewsrestformat", "json")],
+                form: RestRequest.brackets("criteria", criteria) + RestRequest.brackets("addsubcategories", addsubcategories),
+                auth: auth
+            )
+        )
+    }
+
     /// Get course contents
     ///
     /// - Parameters:
@@ -27,6 +73,68 @@ public struct MoodleCourseApi: Sendable {
                 path: "/webservice/rest/server.php",
                 query: [("wsfunction", "core_course_get_contents"), ("moodlewsrestformat", "json")],
                 form: [("courseid", courseId)] + RestRequest.brackets("options", options),
+                auth: auth
+            )
+        )
+    }
+
+    /// Return information about a course module
+    ///
+    /// - Parameters:
+    ///   - cmId: The course module id
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getCourseModule(
+        cmId: Int,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleCourseGetCourseModuleResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_course_get_course_module"), ("moodlewsrestformat", "json")],
+                form: [("cmid", cmId)],
+                auth: auth
+            )
+        )
+    }
+
+    /// Return information about a given module name and instance id
+    ///
+    /// - Parameters:
+    ///   - module: The module name
+    ///   - instance: The module instance id
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getCourseModuleByInstance(
+        module: String,
+        instance: Int,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleCourseGetCourseModuleResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_course_get_course_module_by_instance"), ("moodlewsrestformat", "json")],
+                form: [("module", module), ("instance", instance)],
+                auth: auth
+            )
+        )
+    }
+
+    /// Return course details
+    ///
+    /// - Parameters:
+    ///   - options: options - operator OR is used
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getCourses(
+        options: MoodleCourseGetCoursesOption? = nil,
+        auth: MoodleTokenAuth
+    ) async throws -> [MoodleCourseGetCoursesItem] {
+        try await client.jsonList(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_course_get_courses"), ("moodlewsrestformat", "json")],
+                form: RestRequest.brackets("options", options),
                 auth: auth
             )
         )
@@ -54,6 +162,307 @@ public struct MoodleCourseApi: Sendable {
         )
     }
 
+    /// List of enrolled courses for the given timeline classification (past, inprogress, or future).
+    ///
+    /// - Parameters:
+    ///   - classification: future, inprogress, or past
+    ///   - limit: Result set limit
+    ///   - offset: Result set offset
+    ///   - sort: Sort string
+    ///   - customfieldname: Used when classification = customfield
+    ///   - customfieldvalue: Used when classification = customfield
+    ///   - searchValue: The value a user wishes to search against
+    ///   - requiredfields: Array of the only field names that need to be returned. If empty, all fields will be returned.
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getEnrolledCoursesByTimelineClassification(
+        classification: String,
+        limit: Int? = nil,
+        offset: Int? = nil,
+        sort: String? = nil,
+        customfieldname: String? = nil,
+        customfieldvalue: String? = nil,
+        searchValue: String? = nil,
+        requiredfields: [String]? = nil,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleCourseGetEnrolledCoursesByTimelineClassificationResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_course_get_enrolled_courses_by_timeline_classification"), ("moodlewsrestformat", "json")],
+                form: [
+                    ("classification", classification),
+                    ("limit", limit),
+                    ("offset", offset),
+                    ("sort", sort),
+                    ("customfieldname", customfieldname),
+                    ("customfieldvalue", customfieldvalue),
+                    ("searchvalue", searchValue)
+                ] + RestRequest.brackets("requiredfields", requiredfields),
+                auth: auth
+            )
+        )
+    }
+
+    /// List of enrolled courses with action events in a given timeframe, for the given timeline classification.
+    ///
+    /// - Parameters:
+    ///   - classification: future, inprogress, or past
+    ///   - limit: Result set limit
+    ///   - offset: Result set offset
+    ///   - sort: Sort string
+    ///   - customfieldname: Used when classification = customfield
+    ///   - customfieldvalue: Used when classification = customfield
+    ///   - searchValue: The value a user wishes to search against
+    ///   - eventsfrom: Optional starting timestamp for action events
+    ///   - eventsto: Optional ending timestamp for action events
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getEnrolledCoursesWithActionEventsByTimelineClassification(
+        classification: String,
+        limit: Int? = nil,
+        offset: Int? = nil,
+        sort: String? = nil,
+        customfieldname: String? = nil,
+        customfieldvalue: String? = nil,
+        searchValue: String? = nil,
+        eventsfrom: Int? = nil,
+        eventsto: Int? = nil,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleCourseGetEnrolledCoursesWithActionEventsByTimelineClassificationResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_course_get_enrolled_courses_with_action_events_by_timeline_classification"), ("moodlewsrestformat", "json")],
+                form: [
+                    ("classification", classification),
+                    ("limit", limit),
+                    ("offset", offset),
+                    ("sort", sort),
+                    ("customfieldname", customfieldname),
+                    ("customfieldvalue", customfieldvalue),
+                    ("searchvalue", searchValue),
+                    ("eventsfrom", eventsfrom),
+                    ("eventsto", eventsto)
+                ],
+                auth: auth
+            )
+        )
+    }
+
+    /// List of courses a user has accessed most recently.
+    ///
+    /// - Parameters:
+    ///   - userId: id of the user, default to current user
+    ///   - limit: result set limit
+    ///   - offset: Result set offset
+    ///   - sort: Sort string
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getRecentCourses(
+        userId: Int? = nil,
+        limit: Int? = nil,
+        offset: Int? = nil,
+        sort: String? = nil,
+        auth: MoodleTokenAuth
+    ) async throws -> [MoodleEventCourse] {
+        try await client.jsonList(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_course_get_recent_courses"), ("moodlewsrestformat", "json")],
+                form: [
+                    ("userid", userId),
+                    ("limit", limit),
+                    ("offset", offset),
+                    ("sort", sort)
+                ],
+                auth: auth
+            )
+        )
+    }
+
+    /// Check if there are updates affecting the user for the given course since the given time stamp.
+    ///
+    /// - Parameters:
+    ///   - courseId: Course id to check
+    ///   - since: Check updates since this time stamp
+    ///   - filter: Check only for updates in these areas
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getUpdatesSince(
+        courseId: Int,
+        since: Int,
+        filter: [String]? = nil,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleCourseCheckUpdatesResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_course_get_updates_since"), ("moodlewsrestformat", "json")],
+                form: [("courseid", courseId), ("since", since)] + RestRequest.brackets("filter", filter),
+                auth: auth
+            )
+        )
+    }
+
+    /// Return a list of administration options in a set of courses that are avaialable or not for the current user.
+    ///
+    /// - Parameters:
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getUserAdministrationOptions(
+        courseIds: [Int],
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleCourseGetUserAdministrationOptionsResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_course_get_user_administration_options"), ("moodlewsrestformat", "json")],
+                form: RestRequest.brackets("courseids", courseIds),
+                auth: auth
+            )
+        )
+    }
+
+    /// Return a list of navigation options in a set of courses that are avaialable or not for the current user.
+    ///
+    /// - Parameters:
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getUserNavigationOptions(
+        courseIds: [Int],
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleCourseGetUserAdministrationOptionsResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_course_get_user_navigation_options"), ("moodlewsrestformat", "json")],
+                form: RestRequest.brackets("courseids", courseIds),
+                auth: auth
+            )
+        )
+    }
+
+    /// Search courses by (name, module, block, tag)
+    ///
+    /// - Parameters:
+    ///   - criterianame: criteria name (search, modulelist (only admins), blocklist (only admins), tagid)
+    ///   - criteriavalue: criteria value
+    ///   - page: page number (0 based)
+    ///   - perPage: items per page
+    ///   - requiredcapabilities: Optional list of required capabilities (used to filter the list)
+    ///   - limittoenrolled: limit to enrolled courses
+    ///   - onlywithcompletion: limit to courses where completion is enabled
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func searchCourses(
+        criterianame: String,
+        criteriavalue: String,
+        page: Int? = nil,
+        perPage: Int? = nil,
+        requiredcapabilities: [String]? = nil,
+        limittoenrolled: Bool? = nil,
+        onlywithcompletion: Bool? = nil,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleCourseSearchCoursesResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_course_search_courses"), ("moodlewsrestformat", "json")],
+                form: [
+                    ("criterianame", criterianame),
+                    ("criteriavalue", criteriavalue),
+                    ("page", page),
+                    ("perpage", perPage)
+                ] + RestRequest.brackets("requiredcapabilities", requiredcapabilities) + RestRequest.brackets("limittoenrolled", limittoenrolled) + RestRequest.brackets("onlywithcompletion", onlywithcompletion),
+                auth: auth
+            )
+        )
+    }
+
+    /// Add a list of courses to the list of favourite courses.
+    ///
+    /// - Parameters:
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func setFavouriteCourses(
+        courses: [MoodleCourseSetFavouriteCoursesCourse],
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleCourseSetFavouriteCoursesResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_course_set_favourite_courses"), ("moodlewsrestformat", "json")],
+                form: RestRequest.brackets("courses", courses),
+                auth: auth
+            )
+        )
+    }
+
+    /// Log that the course was viewed
+    ///
+    /// - Parameters:
+    ///   - courseId: id of the course
+    ///   - sectionnumber: section number
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func viewCourse(
+        courseId: Int,
+        sectionnumber: Int? = nil,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleStatusResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_course_view_course"), ("moodlewsrestformat", "json")],
+                form: [("courseid", courseId), ("sectionnumber", sectionnumber)],
+                auth: auth
+            )
+        )
+    }
+
+    /// Get the list of course enrolment methods
+    ///
+    /// - Parameters:
+    ///   - courseId: Course id
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getCourseEnrolmentMethods(
+        courseId: Int,
+        auth: MoodleTokenAuth
+    ) async throws -> [MoodleEnrolGetCourseEnrolmentMethodsItem] {
+        try await client.jsonList(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_enrol_get_course_enrolment_methods"), ("moodlewsrestformat", "json")],
+                form: [("courseid", courseId)],
+                auth: auth
+            )
+        )
+    }
+
+    /// Get enrolled users by course id.
+    ///
+    /// - Parameters:
+    ///   - courseId: course id
+    ///   - options: Option names: * withcapability (string) return only users with this capability. This option requires 'moodle/role:review' on the course context. * groupid (integer) return only users in this group id. If the course has groups enabled and this param isn't defined, returns all the viewable users. This option requires 'moodle/site:accessallgroups' on the course context if the user doesn't belong to the group. * onlyactive (integer) return only users with active enrolments and matching time restrictions. This option requires 'moodle/course:enrolreview' on the course context. Please note that this option can't be used together with onlysuspended (only one can be active). * onlysuspended (integer) return only suspended users. This option requires 'moodle/course:enrolreview' on the course context. Please note that this option can't be used together with onlyactive (only one can be active). * userfields ('string, string, ...') return only the values of these user fields. * limitfrom (integer) sql limit from. * limitnumber (integer) maximum number of returned users. * sortby (string) sort by id, firstname or lastname. For ordering like the site does, use siteorder. * sortdirection (string) ASC or DESC
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getEnrolledUsers(
+        courseId: Int,
+        options: [MoodleNamedValue]? = nil,
+        auth: MoodleTokenAuth
+    ) async throws -> [MoodleEnrolGetEnrolledUsersItem] {
+        try await client.jsonList(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_enrol_get_enrolled_users"), ("moodlewsrestformat", "json")],
+                form: [("courseid", courseId)] + RestRequest.brackets("options", options),
+                auth: auth
+            )
+        )
+    }
+
     /// Get the list of courses where a user is enrolled in
     ///
     /// - Parameters:
@@ -71,6 +480,124 @@ public struct MoodleCourseApi: Sendable {
                 path: "/webservice/rest/server.php",
                 query: [("wsfunction", "core_enrol_get_users_courses"), ("moodlewsrestformat", "json")],
                 form: [("userid", userId)] + RestRequest.brackets("returnusercount", returnUserCount),
+                auth: auth
+            )
+        )
+    }
+
+    /// Search within the list of course participants
+    ///
+    /// - Parameters:
+    ///   - courseId: course id
+    ///   - search: query
+    ///   - searchanywhere: find a match anywhere, or only at the beginning
+    ///   - page: Page number
+    ///   - perPage: Number per page
+    ///   - contextId: Context ID
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func searchUsers(
+        courseId: Int,
+        search: String,
+        searchanywhere: Bool,
+        page: Int,
+        perPage: Int,
+        contextId: Int? = nil,
+        auth: MoodleTokenAuth
+    ) async throws -> [MoodleUser] {
+        try await client.jsonList(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_enrol_search_users"), ("moodlewsrestformat", "json")],
+                form: [
+                    ("courseid", courseId),
+                    ("search", search),
+                    ("page", page),
+                    ("perpage", perPage),
+                    ("contextid", contextId)
+                ] + RestRequest.brackets("searchanywhere", searchanywhere),
+                auth: auth
+            )
+        )
+    }
+
+    /// Gets a list of groups that the user is allowed to access within the specified activity.
+    ///
+    /// - Parameters:
+    ///   - cmId: course module id
+    ///   - userId: id of user, empty for current user
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getActivityAllowedGroups(
+        cmId: Int,
+        userId: Int? = nil,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleGroupGetActivityAllowedGroupsResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_group_get_activity_allowed_groups"), ("moodlewsrestformat", "json")],
+                form: [("cmid", cmId), ("userid", userId)],
+                auth: auth
+            )
+        )
+    }
+
+    /// Returns effective groupmode used in a given activity.
+    ///
+    /// - Parameters:
+    ///   - cmId: course module id
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getActivityGroupmode(
+        cmId: Int,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleGroupGetActivityGroupmodeResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_group_get_activity_groupmode"), ("moodlewsrestformat", "json")],
+                form: [("cmid", cmId)],
+                auth: auth
+            )
+        )
+    }
+
+    /// Returns all groupings in specified course.
+    ///
+    /// - Parameters:
+    ///   - courseId: id of course
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getCourseGroupings(
+        courseId: Int,
+        auth: MoodleTokenAuth
+    ) async throws -> [MoodleGroupGetCourseGroupingsItem] {
+        try await client.jsonList(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_group_get_course_groupings"), ("moodlewsrestformat", "json")],
+                form: [("courseid", courseId)],
+                auth: auth
+            )
+        )
+    }
+
+    /// Returns all groups in specified course.
+    ///
+    /// - Parameters:
+    ///   - courseId: id of course
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getCourseGroups(
+        courseId: Int,
+        auth: MoodleTokenAuth
+    ) async throws -> [MoodleGroupGetCourseGroupsItem] {
+        try await client.jsonList(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_group_get_course_groups"), ("moodlewsrestformat", "json")],
+                form: [("courseid", courseId)],
                 auth: auth
             )
         )
@@ -104,6 +631,28 @@ public struct MoodleCourseApi: Sendable {
         )
     }
 
+    /// Get the group/(s) for a course
+    ///
+    /// - Parameters:
+    ///   - courseId: Course Id
+    ///   - cmId: Course module Id
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getGroupsForSelector(
+        courseId: Int,
+        cmId: Int? = nil,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleGradesGetGroupsForSearchWidgetResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "core_group_get_groups_for_selector"), ("moodlewsrestformat", "json")],
+                form: [("courseid", courseId), ("cmid", cmId)],
+                auth: auth
+            )
+        )
+    }
+
     /// Self enrol the current user in the given course.
     ///
     /// - Parameters:
@@ -127,6 +676,26 @@ public struct MoodleCourseApi: Sendable {
                     ("password", password),
                     ("instanceid", instanceId)
                 ],
+                auth: auth
+            )
+        )
+    }
+
+    /// self enrolment instance information.
+    ///
+    /// - Parameters:
+    ///   - instanceId: instance id of self enrolment plugin.
+    ///   - auth: The credentials: ``MoodleTokenAuth``.
+    public func getInstanceInfo(
+        instanceId: Int,
+        auth: MoodleTokenAuth
+    ) async throws -> MoodleEnrolSelfGetInstanceInfoResponse {
+        try await client.json(
+            RestRequest(
+                method: .post,
+                path: "/webservice/rest/server.php",
+                query: [("wsfunction", "enrol_self_get_instance_info"), ("moodlewsrestformat", "json")],
+                form: [("instanceid", instanceId)],
                 auth: auth
             )
         )

@@ -58,7 +58,7 @@ object MoodleWebScrapers {
         userId = regex(present((select(node, "html") as? Element)?.html()), PATTERN_2)?.toIntOrNull(),
         shown = (select(node, "body#page-mod-attendance-view") != null),
         summary = select(node, "table.attlist:has(tr:nth-of-type(8)):not(:has(tr:nth-of-type(9)))")?.let { attendanceSummary(it) },
-        submittableSessions = selectAll(node, "table.generaltable tr:has(td[colspan=3] a[href*=attendance.php])").mapNotNull { submittableSession(it) }
+        submittableSessions = selectAll(node, "table.generaltable tr:has(td[colspan='3'] a[href*='attendance.php'])").mapNotNull { submittableSession(it) }
     )
 
     /** Reads [MoodleWebAttendanceSummary] out of [node], or returns null when a value it requires is missing. */
@@ -75,9 +75,9 @@ object MoodleWebScrapers {
 
     /** Reads [MoodleWebSubmittableSession] out of [node], or returns null when a value it requires is missing. */
     fun submittableSession(node: Node): MoodleWebSubmittableSession? = MoodleWebSubmittableSession(
-        id = regex(attribute(select(node, "td[colspan=3] a[href*=attendance.php]"), "href", emptyList()), PATTERN_3) ?: return null,
+        id = regex(attribute(select(node, "td[colspan='3'] a[href*='attendance.php']"), "href", emptyList()), PATTERN_3) ?: return null,
         time = text(select(node, "td"), null, emptyList()) ?: return null,
-        linkText = text(select(node, "td[colspan=3] a[href*=attendance.php]"), null, emptyList()) ?: ""
+        linkText = text(select(node, "td[colspan='3'] a[href*='attendance.php']"), null, emptyList()) ?: ""
     )
 
     /** Reads [MoodleWebAttendanceSessionForm] out of [node], or returns null when a value it requires is missing. */

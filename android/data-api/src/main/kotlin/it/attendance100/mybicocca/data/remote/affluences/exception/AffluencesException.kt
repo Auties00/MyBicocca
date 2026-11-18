@@ -10,8 +10,9 @@ import it.attendance100.mybicocca.data.remote.runtime.ApiException
 class AffluencesException(
     statusCode: Int,
     errorCode: String?,
-    errorMessage: String
-) : ApiException("Affluences", statusCode, errorCode, errorMessage) {
+    errorMessage: String,
+    serverMessage: String? = null
+) : ApiException("Affluences", statusCode, errorCode, errorMessage, serverMessage) {
     companion object {
         /** Polling an email validation the user hasn't completed yet. */
         const val NOT_VALIDATED_YET = "does_not_exist"

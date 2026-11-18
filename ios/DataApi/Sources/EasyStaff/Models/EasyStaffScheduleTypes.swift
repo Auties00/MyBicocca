@@ -11,6 +11,9 @@ public struct EasyStaffScheduleCell: Codable, Hashable, Sendable {
     /// The name of a lesson's subject.
     public var subjectName: String?
     public var subjectCode: String?
+    /// The Esse3 code of a lesson's activity (`E3101Q113`), the same for every section and part (lectures, labs) of the subject.
+    public var generalCode: String?
+    public var combinedCode: EasyStaffCombinedCode?
     public var id: String?
     public var dateTime: LocalDateTime?
     public var date: LocalDate?
@@ -37,6 +40,8 @@ public struct EasyStaffScheduleCell: Codable, Hashable, Sendable {
         name: String? = nil,
         subjectName: String? = nil,
         subjectCode: String? = nil,
+        generalCode: String? = nil,
+        combinedCode: EasyStaffCombinedCode? = nil,
         id: String? = nil,
         dateTime: LocalDateTime? = nil,
         date: LocalDate? = nil,
@@ -61,6 +66,8 @@ public struct EasyStaffScheduleCell: Codable, Hashable, Sendable {
         self.name = name
         self.subjectName = subjectName
         self.subjectCode = subjectCode
+        self.generalCode = generalCode
+        self.combinedCode = combinedCode
         self.id = id
         self.dateTime = dateTime
         self.date = date
@@ -87,6 +94,8 @@ public struct EasyStaffScheduleCell: Codable, Hashable, Sendable {
         case name = "nome"
         case subjectName = "nome_insegnamento"
         case subjectCode = "codice_insegnamento"
+        case generalCode = "CodiceGenerale"
+        case combinedCode = "CodiceCombinato"
         case id = "id"
         case dateTime = "timestamp"
         case date = "data"
@@ -114,6 +123,8 @@ public struct EasyStaffScheduleCell: Codable, Hashable, Sendable {
         self.name = container.decodeLenient(String.self, forKey: .name)
         self.subjectName = container.decodeLenient(String.self, forKey: .subjectName)
         self.subjectCode = container.decodeLenient(String.self, forKey: .subjectCode)
+        self.generalCode = container.decodeBlankAsNull(forKey: .generalCode)
+        self.combinedCode = container.decodeLenient(EasyStaffCombinedCode.self, forKey: .combinedCode)
         self.id = container.decodeLenient(String.self, forKey: .id)
         self.dateTime = container.decodeEpochSeconds(forKey: .dateTime)
         self.date = try container.decodeTemporal(LocalDate.self, forKey: .date, pattern: "dd-MM-yyyy", blankAsNull: false)
@@ -146,6 +157,12 @@ public struct EasyStaffScheduleCell: Codable, Hashable, Sendable {
         }
         if subjectCode != nil {
             try container.encode(subjectCode, forKey: .subjectCode)
+        }
+        if generalCode != nil {
+            try container.encode(generalCode, forKey: .generalCode)
+        }
+        if combinedCode != nil {
+            try container.encode(combinedCode, forKey: .combinedCode)
         }
         if id != nil {
             try container.encode(id, forKey: .id)
@@ -204,5 +221,63 @@ public struct EasyStaffScheduleCell: Codable, Hashable, Sendable {
         if isExternal != false {
             try container.encode(isExternal, forKey: .isExternal)
         }
+    }
+}
+
+/// Where a lesson sits in the study program, written as `E3101Q-11^GGG^E3101Q113^T1^MILANO`.
+public struct EasyStaffCombinedCode: Codable, Hashable, Sendable, WireMapKey {
+    /// The study program and its regulation (`E3101Q-11`).
+    public var program: String
+    /// The curriculum path (`GGG`).
+    public var curriculumPath: String
+    /// The Esse3 code of the activity (`E3101Q113`).
+    public var activityCode: String
+    /// The section of a subject taught in several (`T1`, `T2`, `T1GEA` for its exercises), `TU` for a single section, `N0` when the subject isn't split.
+    public var section: String
+    /// The campus (`MILANO`).
+    public var site: String
+
+    public init(
+        program: String,
+        curriculumPath: String,
+        activityCode: String,
+        section: String,
+        site: String
+    ) {
+        self.program = program
+        self.curriculumPath = curriculumPath
+        self.activityCode = activityCode
+        self.section = section
+        self.site = site
+    }
+
+    /// Reads the form `program^curriculumPath^activityCode^section^site`.
+    public init?(wireKey: String) {
+        let parts = wireKey.components(separatedBy: "^")
+        guard parts.count >= 5 else { return nil }
+        guard let program = Optional(parts[0].trimmingCharacters(in: .whitespaces)) else { return nil }
+        guard let curriculumPath = Optional(parts[1].trimmingCharacters(in: .whitespaces)) else { return nil }
+        guard let activityCode = Optional(parts[2].trimmingCharacters(in: .whitespaces)) else { return nil }
+        guard let section = Optional(parts[3].trimmingCharacters(in: .whitespaces)) else { return nil }
+        guard let site = Optional(parts[4...].joined(separator: "^").trimmingCharacters(in: .whitespaces)) else { return nil }
+        self.init(program: program, curriculumPath: curriculumPath, activityCode: activityCode, section: section, site: site)
+    }
+
+    public var wireKey: String {
+        [program, curriculumPath, activityCode, section, site].joined(separator: "^")
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.singleValueContainer()
+        let text = try container.decode(String.self)
+        guard let value = EasyStaffCombinedCode(wireKey: text) else {
+            throw DecodingError.dataCorruptedError(in: container, debugDescription: "Invalid EasyStaffCombinedCode '\(text)'")
+        }
+        self = value
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(wireKey)
     }
 }

@@ -64,6 +64,10 @@ internal class TsClientEmitter(private val spec: ApiSpec, private val layout: Ts
             line("readonly status: number;")
             line("/** The machine-readable error code the body carried, if any. */")
             line("readonly code: string | undefined;")
+            line("/** The human-readable message the body carried, else the code, else a description of the status. */")
+            line("readonly errorMessage: string;")
+            line("/** The human-readable message the body carried, if any. */")
+            line("readonly serverMessage: string | undefined;")
             line()
             if (roles) line("/** @param expectedRoles The roles the operation requires, a hint when the status is 401 or 403. */")
             val parameters = listOf("failure: ApiFailure") + listOfNotNull(if (roles) "readonly expectedRoles: readonly ${layout.roles}[] = []" else null)
@@ -72,6 +76,8 @@ internal class TsClientEmitter(private val spec: ApiSpec, private val layout: Ts
                 line("super(`${spec.prefix} request failed with status \${failure.status}\${code}: \${failure.message}`);")
                 line("this.status = failure.status;")
                 line("this.code = failure.code;")
+                line("this.errorMessage = failure.message;")
+                line("this.serverMessage = failure.serverMessage;")
             }
         }
     }

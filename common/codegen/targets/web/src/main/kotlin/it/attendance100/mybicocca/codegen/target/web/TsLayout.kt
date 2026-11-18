@@ -73,7 +73,7 @@ internal class TsLayout(private val spec: ApiSpec, val packageName: String, val 
     /** The parameter type of [auth]: the scheme's class when there is one, else the union of all. */
     fun authType(auth: AuthRequirement, file: TsFile): String {
         val type = auth.schemes.singleOrNull()?.let(::authClass) ?: authBase
-        file.importFile(type, authFile)
+        file.importFile("type $type", authFile)
         return type
     }
 
@@ -129,10 +129,10 @@ internal class TsLayout(private val spec: ApiSpec, val packageName: String, val 
 
     fun isRecord(type: TypeRef.Named): Boolean = spec.resolve(type) is RecordType
 
-    /** Renders [type], importing what it references into [file]. */
+    /** Renders [type], importing what it references into [file] as types. */
     fun render(type: TypeRef, file: TsFile): String = when (type) {
         is TypeRef.Named -> {
-            importDeclaration(file, type.name)
+            importDeclaration(file, type.name, "type ${type.name}")
             type.name
         }
         is TypeRef.ListOf -> {
@@ -162,7 +162,7 @@ internal class TsLayout(private val spec: ApiSpec, val packageName: String, val 
     }
 
     private fun runtimeType(name: String, file: TsFile): String {
-        importRuntime(file, name)
+        importRuntime(file, "type $name")
         return name
     }
 }

@@ -83,7 +83,7 @@ internal class ClientEmitter(private val spec: ApiSpec, private val layout: Kotl
             }
             val roles = if (spec.usesRoles) ", it.roles.filterIsInstance<$rolesName>().toSet()" else ""
             if (spec.usesRoles) file.import(layout.roles)
-            add("failure = { $exceptionName(it.statusCode, it.errorCode, it.errorMessage$roles) }")
+            add("failure = { $exceptionName(it.statusCode, it.errorCode, it.errorMessage$roles, serverMessage = it.serverMessage) }")
         }
         commaList("val policy = RestPolicy(", arguments, ")")
     }
@@ -141,9 +141,10 @@ internal class ClientEmitter(private val spec: ApiSpec, private val layout: Kotl
             }
             line(" */")
             val parameters = listOf("statusCode: Int", "errorCode: String?", "errorMessage: String") +
-                listOfNotNull(if (spec.usesRoles) "val expectedRoles: Set<$rolesName> = emptySet()" else null)
+                listOfNotNull(if (spec.usesRoles) "val expectedRoles: Set<$rolesName> = emptySet()" else null) +
+                "serverMessage: String? = null"
             if (spec.usesRoles) file.import(layout.roles)
-            commaList("class $exceptionName(", parameters, ") : ApiException(${KotlinSyntax.string(spec.prefix)}, statusCode, errorCode, errorMessage)" + if (codes.isEmpty()) "" else " {")
+            commaList("class $exceptionName(", parameters, ") : ApiException(${KotlinSyntax.string(spec.prefix)}, statusCode, errorCode, errorMessage, serverMessage)" + if (codes.isEmpty()) "" else " {")
             if (codes.isNotEmpty()) {
                 indent {
                     block("companion object {") {

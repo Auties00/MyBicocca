@@ -3,7 +3,7 @@
 import { describe } from "vitest";
 import { MoodleTokenAuth } from "../../src/elearning/models/index.js";
 import { LiveTemplates, isPresent, liveCase } from "../runtime/live.js";
-import { MoodleLive, calendarGetActionEventsByTimesort, calendarGetCalendarUpcomingView, courseGetUsersCourses, tokenCredentials, writeMoodleCalendarEventsResponse } from "./MoodleLive.js";
+import { MoodleLive, calendarGetActionEventsByTimesort, calendarGetCalendarUpcomingView, courseGetUsersCourses, tokenCredentials, writeMoodleCalendarEventsResponse, writeMoodleCalendarGetAllowedEventTypesResponse, writeMoodleCalendarGetCalendarAccessInformationResponse, writeMoodleCalendarGetCalendarEventByIdResponse, writeMoodleCalendarGetCalendarEventsResponse, writeMoodleCalendarGetCalendarExportTokenResponse } from "./MoodleLive.js";
 
 // The live tests of the Moodle Calendar module, planned from common/specs/moodle/tests.yaml.
 describe("Moodle Calendar", () => {
@@ -32,6 +32,51 @@ describe("Moodle Calendar", () => {
   liveCase(MoodleLive, "Calendar.getActionEventsByTimesort#3", { index: 2 }, async (live) => {
     const auth = await tokenCredentials(live);
     await live.call("{\"k\":\"record\",\"n\":\"MoodleCalendarEventsResponse\"}", {}, async () => live.api.calendar.getActionEventsByTimesort(auth, { limitToNonSuspendedEvents: false }));
+  });
+
+  liveCase(MoodleLive, "Calendar.getAllowedEventTypes#1", {}, async (live) => {
+    const auth = await tokenCredentials(live);
+    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleCalendarGetAllowedEventTypesResponse\"}", {}, async () => live.api.calendar.getAllowedEventTypes(auth));
+    live.fingerprint((f) => writeMoodleCalendarGetAllowedEventTypesResponse(f, result));
+  });
+
+  liveCase(MoodleLive, "Calendar.getAllowedEventTypes#2", { index: 1 }, async (live) => {
+    const courseId = live.choose("courseId", [await courseGetUsersCourses(live)].flat().map((it) => it.id).filter(isPresent));
+    const auth = await tokenCredentials(live);
+    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleCalendarGetAllowedEventTypesResponse\"}", {}, async () => live.api.calendar.getAllowedEventTypes(auth, { courseId: courseId }));
+    live.fingerprint((f) => writeMoodleCalendarGetAllowedEventTypesResponse(f, result));
+  });
+
+  liveCase(MoodleLive, "Calendar.getCalendarAccessInformation#1", {}, async (live) => {
+    const auth = await tokenCredentials(live);
+    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleCalendarGetCalendarAccessInformationResponse\"}", {}, async () => live.api.calendar.getCalendarAccessInformation(auth));
+    live.fingerprint((f) => writeMoodleCalendarGetCalendarAccessInformationResponse(f, result));
+  });
+
+  liveCase(MoodleLive, "Calendar.getCalendarAccessInformation#2", { index: 1 }, async (live) => {
+    const courseId = live.choose("courseId", [await courseGetUsersCourses(live)].flat().map((it) => it.id).filter(isPresent));
+    const auth = await tokenCredentials(live);
+    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleCalendarGetCalendarAccessInformationResponse\"}", {}, async () => live.api.calendar.getCalendarAccessInformation(auth, { courseId: courseId }));
+    live.fingerprint((f) => writeMoodleCalendarGetCalendarAccessInformationResponse(f, result));
+  });
+
+  liveCase(MoodleLive, "Calendar.getCalendarEventById#1", {}, async (live) => {
+    const eventid = live.choose("eventid", [await calendarGetActionEventsByTimesort(live)].map((it) => it.events).filter(isPresent).flat().map((it) => it.id).filter(isPresent));
+    const auth = await tokenCredentials(live);
+    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleCalendarGetCalendarEventByIdResponse\"}", {}, async () => live.api.calendar.getCalendarEventById(eventid, auth));
+    live.fingerprint((f) => writeMoodleCalendarGetCalendarEventByIdResponse(f, result));
+  });
+
+  liveCase(MoodleLive, "Calendar.getCalendarEvents#1", {}, async (live) => {
+    const auth = await tokenCredentials(live);
+    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleCalendarGetCalendarEventsResponse\"}", {}, async () => live.api.calendar.getCalendarEvents(auth));
+    live.fingerprint((f) => writeMoodleCalendarGetCalendarEventsResponse(f, result));
+  });
+
+  liveCase(MoodleLive, "Calendar.getCalendarExportToken#1", {}, async (live) => {
+    const auth = await tokenCredentials(live);
+    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleCalendarGetCalendarExportTokenResponse\"}", {}, async () => live.api.calendar.getCalendarExportToken(auth));
+    live.fingerprint((f) => writeMoodleCalendarGetCalendarExportTokenResponse(f, result));
   });
 
   liveCase(MoodleLive, "Calendar.getCalendarMonthlyView#1", {}, async (live) => {

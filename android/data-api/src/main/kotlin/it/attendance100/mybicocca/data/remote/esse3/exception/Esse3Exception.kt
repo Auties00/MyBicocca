@@ -14,5 +14,6 @@ class Esse3Exception(
     statusCode: Int,
     errorCode: String?,
     errorMessage: String,
-    val expectedRoles: Set<Esse3PermissionLevel> = emptySet()
-) : ApiException("Esse3", statusCode, errorCode, errorMessage)
+    val expectedRoles: Set<Esse3PermissionLevel> = emptySet(),
+    serverMessage: String? = null
+) : ApiException("Esse3", statusCode, errorCode, errorMessage, serverMessage)

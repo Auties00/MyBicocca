@@ -7,6 +7,7 @@
     "./affluences": "./src/affluences/index.ts",
     "./easystaff": "./src/easystaff/index.ts",
     "./elearning": "./src/elearning/index.ts",
+    "./elearning/resources/*": "./src/elearning/resources/*",
     "./esse3": "./src/esse3/index.ts",
     "./runtime": "./src/runtime/index.ts"
   },

@@ -29,4 +29,15 @@ class MoodleCompletionLiveTest : LiveTest<MoodleApi>(MoodleLive) {
             api.completion.getActivitiesCompletionStatus(courseId = courseId, userId = userId, auth = MoodleTokenAuth(token = "mybicocca-invalid-credential"))
         }
     }
+
+    @Test
+    @DisplayName("Completion.getCourseCompletionStatus#1")
+    fun getCourseCompletionStatus1() = case("Completion.getCourseCompletionStatus#1") {
+        val courseId = choose("courseId", listOf(courseGetUsersCourses()).flatten().mapNotNull { it.id })
+        val userId = choose("userId", listOf(siteGetSiteInfo()).mapNotNull { it.userId })
+        val result = call("{\"k\":\"record\",\"n\":\"MoodleCompletionGetCourseCompletionStatusResponse\"}") {
+            api.completion.getCourseCompletionStatus(courseId = courseId, userId = userId, auth = tokenCredentials())
+        } ?: return@case
+        fingerprint { writeMoodleCompletionGetCourseCompletionStatusResponse(result) }
+    }
 }

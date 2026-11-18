@@ -7,7 +7,7 @@ import kotlinx.serialization.DeserializationStrategy
 /** The data the SDK ships along with its code, read out of its resources. */
 object MoodleWebResources {
     /** The catalog of the courses on the university's Moodle, as its category pages list them, crawled ahead of time: searching it needs no network or account. Decoded on every call: keep the result. */
-    fun catalog(): MoodleWebCatalog = read("moodle-web/catalog.json", MoodleWebCatalog.serializer())
+    fun catalog(): MoodleWebCatalog = read("/it/attendance100/mybicocca/data/remote/elearning/api/moodle-web/catalog.json", MoodleWebCatalog.serializer())
 
     private fun <T> read(name: String, deserializer: DeserializationStrategy<T>): T {
         val stream = MoodleWebResources::class.java.getResourceAsStream(name) ?: error("The SDK lacks its resource $name")

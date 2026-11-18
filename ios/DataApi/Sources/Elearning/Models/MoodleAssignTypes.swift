@@ -30,12 +30,8 @@ public struct MoodleAssignmentsResponse: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if !courses.isEmpty {
-            try container.encode(courses, forKey: .courses)
-        }
-        if !warnings.isEmpty {
-            try container.encode(warnings, forKey: .warnings)
-        }
+        try container.encode(courses, forKey: .courses)
+        try container.encode(warnings, forKey: .warnings)
     }
 }
 
@@ -85,21 +81,11 @@ public struct MoodleCourseAssignments: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if id != 0 {
-            try container.encode(id, forKey: .id)
-        }
-        if fullName != "" {
-            try container.encode(fullName, forKey: .fullName)
-        }
-        if shortName != "" {
-            try container.encode(shortName, forKey: .shortName)
-        }
-        if timeModified != 0 {
-            try container.encode(timeModified, forKey: .timeModified)
-        }
-        if !assignments.isEmpty {
-            try container.encode(assignments, forKey: .assignments)
-        }
+        try container.encode(id, forKey: .id)
+        try container.encode(fullName, forKey: .fullName)
+        try container.encode(shortName, forKey: .shortName)
+        try container.encode(timeModified, forKey: .timeModified)
+        try container.encode(assignments, forKey: .assignments)
     }
 }
 
@@ -365,129 +351,47 @@ public struct MoodleAssignment: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if id != 0 {
-            try container.encode(id, forKey: .id)
-        }
-        if cmId != 0 {
-            try container.encode(cmId, forKey: .cmId)
-        }
-        if course != 0 {
-            try container.encode(course, forKey: .course)
-        }
-        if name != "" {
-            try container.encode(name, forKey: .name)
-        }
-        if noSubmissions != 0 {
-            try container.encode(noSubmissions, forKey: .noSubmissions)
-        }
-        if submissionDrafts != 0 {
-            try container.encode(submissionDrafts, forKey: .submissionDrafts)
-        }
-        if sendNotifications != 0 {
-            try container.encode(sendNotifications, forKey: .sendNotifications)
-        }
-        if sendLateNotifications != 0 {
-            try container.encode(sendLateNotifications, forKey: .sendLateNotifications)
-        }
-        if sendStudentNotifications != 0 {
-            try container.encode(sendStudentNotifications, forKey: .sendStudentNotifications)
-        }
-        if dueDate != 0 {
-            try container.encode(dueDate, forKey: .dueDate)
-        }
-        if allowSubmissionsFromDate != 0 {
-            try container.encode(allowSubmissionsFromDate, forKey: .allowSubmissionsFromDate)
-        }
-        if grade != 0 {
-            try container.encode(grade, forKey: .grade)
-        }
-        if timeModified != 0 {
-            try container.encode(timeModified, forKey: .timeModified)
-        }
-        if completionSubmit != 0 {
-            try container.encode(completionSubmit, forKey: .completionSubmit)
-        }
-        if cutoffDate != 0 {
-            try container.encode(cutoffDate, forKey: .cutoffDate)
-        }
-        if gradingDueDate != 0 {
-            try container.encode(gradingDueDate, forKey: .gradingDueDate)
-        }
-        if teamSubmission != 0 {
-            try container.encode(teamSubmission, forKey: .teamSubmission)
-        }
-        if requireAllTeamMembersSubmit != 0 {
-            try container.encode(requireAllTeamMembersSubmit, forKey: .requireAllTeamMembersSubmit)
-        }
-        if teamSubmissionGroupingId != 0 {
-            try container.encode(teamSubmissionGroupingId, forKey: .teamSubmissionGroupingId)
-        }
-        if blindMarking != 0 {
-            try container.encode(blindMarking, forKey: .blindMarking)
-        }
-        if hideGrader != 0 {
-            try container.encode(hideGrader, forKey: .hideGrader)
-        }
-        if revealIdentities != 0 {
-            try container.encode(revealIdentities, forKey: .revealIdentities)
-        }
-        if attemptReopenMethod != "" {
-            try container.encode(attemptReopenMethod, forKey: .attemptReopenMethod)
-        }
-        if maxAttempts != 0 {
-            try container.encode(maxAttempts, forKey: .maxAttempts)
-        }
-        if markingWorkflow != 0 {
-            try container.encode(markingWorkflow, forKey: .markingWorkflow)
-        }
-        if markingAllocation != 0 {
-            try container.encode(markingAllocation, forKey: .markingAllocation)
-        }
-        if markingAnonymous != 0 {
-            try container.encode(markingAnonymous, forKey: .markingAnonymous)
-        }
-        if requireSubmissionStatement != 0 {
-            try container.encode(requireSubmissionStatement, forKey: .requireSubmissionStatement)
-        }
-        if preventSubmissionNotInGroup != nil {
-            try container.encode(preventSubmissionNotInGroup, forKey: .preventSubmissionNotInGroup)
-        }
-        if submissionStatement != nil {
-            try container.encode(submissionStatement, forKey: .submissionStatement)
-        }
-        if submissionStatementFormat != nil {
-            try container.encode(submissionStatementFormat, forKey: .submissionStatementFormat)
-        }
-        if !configs.isEmpty {
-            try container.encode(configs, forKey: .configs)
-        }
-        if intro != nil {
-            try container.encode(intro, forKey: .intro)
-        }
-        if introFormat != nil {
-            try container.encode(introFormat, forKey: .introFormat)
-        }
-        if !introFiles.isEmpty {
-            try container.encode(introFiles, forKey: .introFiles)
-        }
-        if !introAttachments.isEmpty {
-            try container.encode(introAttachments, forKey: .introAttachments)
-        }
-        if activity != nil {
-            try container.encode(activity, forKey: .activity)
-        }
-        if activityFormat != nil {
-            try container.encode(activityFormat, forKey: .activityFormat)
-        }
-        if !activityAttachments.isEmpty {
-            try container.encode(activityAttachments, forKey: .activityAttachments)
-        }
-        if timeLimit != nil {
-            try container.encode(timeLimit, forKey: .timeLimit)
-        }
-        if submissionAttachments != nil {
-            try container.encode(submissionAttachments, forKey: .submissionAttachments)
-        }
+        try container.encode(id, forKey: .id)
+        try container.encode(cmId, forKey: .cmId)
+        try container.encode(course, forKey: .course)
+        try container.encode(name, forKey: .name)
+        try container.encode(noSubmissions, forKey: .noSubmissions)
+        try container.encode(submissionDrafts, forKey: .submissionDrafts)
+        try container.encode(sendNotifications, forKey: .sendNotifications)
+        try container.encode(sendLateNotifications, forKey: .sendLateNotifications)
+        try container.encode(sendStudentNotifications, forKey: .sendStudentNotifications)
+        try container.encode(dueDate, forKey: .dueDate)
+        try container.encode(allowSubmissionsFromDate, forKey: .allowSubmissionsFromDate)
+        try container.encode(grade, forKey: .grade)
+        try container.encode(timeModified, forKey: .timeModified)
+        try container.encode(completionSubmit, forKey: .completionSubmit)
+        try container.encode(cutoffDate, forKey: .cutoffDate)
+        try container.encode(gradingDueDate, forKey: .gradingDueDate)
+        try container.encode(teamSubmission, forKey: .teamSubmission)
+        try container.encode(requireAllTeamMembersSubmit, forKey: .requireAllTeamMembersSubmit)
+        try container.encode(teamSubmissionGroupingId, forKey: .teamSubmissionGroupingId)
+        try container.encode(blindMarking, forKey: .blindMarking)
+        try container.encode(hideGrader, forKey: .hideGrader)
+        try container.encode(revealIdentities, forKey: .revealIdentities)
+        try container.encode(attemptReopenMethod, forKey: .attemptReopenMethod)
+        try container.encode(maxAttempts, forKey: .maxAttempts)
+        try container.encode(markingWorkflow, forKey: .markingWorkflow)
+        try container.encode(markingAllocation, forKey: .markingAllocation)
+        try container.encode(markingAnonymous, forKey: .markingAnonymous)
+        try container.encode(requireSubmissionStatement, forKey: .requireSubmissionStatement)
+        try container.encode(preventSubmissionNotInGroup, forKey: .preventSubmissionNotInGroup)
+        try container.encode(submissionStatement, forKey: .submissionStatement)
+        try container.encode(submissionStatementFormat, forKey: .submissionStatementFormat)
+        try container.encode(configs, forKey: .configs)
+        try container.encode(intro, forKey: .intro)
+        try container.encode(introFormat, forKey: .introFormat)
+        try container.encode(introFiles, forKey: .introFiles)
+        try container.encode(introAttachments, forKey: .introAttachments)
+        try container.encode(activity, forKey: .activity)
+        try container.encode(activityFormat, forKey: .activityFormat)
+        try container.encode(activityAttachments, forKey: .activityAttachments)
+        try container.encode(timeLimit, forKey: .timeLimit)
+        try container.encode(submissionAttachments, forKey: .submissionAttachments)
     }
 }
 
@@ -543,24 +447,272 @@ public struct MoodleAssignmentConfig: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if id != nil {
-            try container.encode(id, forKey: .id)
-        }
-        if assignment != nil {
-            try container.encode(assignment, forKey: .assignment)
-        }
-        if plugin != "" {
-            try container.encode(plugin, forKey: .plugin)
-        }
-        if subtype != "" {
-            try container.encode(subtype, forKey: .subtype)
-        }
-        if name != "" {
-            try container.encode(name, forKey: .name)
-        }
-        if value != "" {
-            try container.encode(value, forKey: .value)
-        }
+        try container.encode(id, forKey: .id)
+        try container.encode(assignment, forKey: .assignment)
+        try container.encode(plugin, forKey: .plugin)
+        try container.encode(subtype, forKey: .subtype)
+        try container.encode(name, forKey: .name)
+        try container.encode(value, forKey: .value)
+    }
+}
+
+public struct MoodleAssignGetGradesResponse: Codable, Hashable, Sendable {
+    /// list of assignment grade information
+    public var assignments: [MoodleAssignGetGradesResponseAssignment]
+    /// list of warnings
+    public var warnings: [MoodleWarning]
+
+    public init(
+        assignments: [MoodleAssignGetGradesResponseAssignment] = [],
+        warnings: [MoodleWarning] = []
+    ) {
+        self.assignments = assignments
+        self.warnings = warnings
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case assignments = "assignments"
+        case warnings = "warnings"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.assignments = container.decodeLenient([MoodleAssignGetGradesResponseAssignment].self, forKey: .assignments) ?? []
+        self.warnings = container.decodeLenient([MoodleWarning].self, forKey: .warnings) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(assignments, forKey: .assignments)
+        try container.encode(warnings, forKey: .warnings)
+    }
+}
+
+public struct MoodleAssignGetGradesResponseAssignment: Codable, Hashable, Sendable {
+    /// assignment id
+    public var assignmentId: Int
+    public var grades: [MoodleAssignmentGrade]
+
+    public init(
+        assignmentId: Int = 0,
+        grades: [MoodleAssignmentGrade] = []
+    ) {
+        self.assignmentId = assignmentId
+        self.grades = grades
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case assignmentId = "assignmentid"
+        case grades = "grades"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.assignmentId = container.decodeLenient(Int.self, forKey: .assignmentId) ?? 0
+        self.grades = container.decodeLenient([MoodleAssignmentGrade].self, forKey: .grades) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(assignmentId, forKey: .assignmentId)
+        try container.encode(grades, forKey: .grades)
+    }
+}
+
+/// grade information
+public struct MoodleAssignmentGrade: Codable, Hashable, Sendable {
+    /// grade id
+    public var id: Int
+    /// assignment id
+    public var assignment: Int?
+    /// student id
+    public var userId: Int
+    /// attempt number
+    public var attemptNumber: Int
+    /// grade creation time
+    public var timeCreated: Int64
+    /// grade last modified time
+    public var timeModified: Int64
+    /// grader, -1 if grader is hidden
+    public var grader: Int
+    /// grade
+    public var grade: String
+    /// grade rendered into a format suitable for display
+    public var gradeForDisplay: String?
+
+    public init(
+        id: Int = 0,
+        assignment: Int? = nil,
+        userId: Int = 0,
+        attemptNumber: Int = 0,
+        timeCreated: Int64 = 0,
+        timeModified: Int64 = 0,
+        grader: Int = 0,
+        grade: String = "",
+        gradeForDisplay: String? = nil
+    ) {
+        self.id = id
+        self.assignment = assignment
+        self.userId = userId
+        self.attemptNumber = attemptNumber
+        self.timeCreated = timeCreated
+        self.timeModified = timeModified
+        self.grader = grader
+        self.grade = grade
+        self.gradeForDisplay = gradeForDisplay
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id = "id"
+        case assignment = "assignment"
+        case userId = "userid"
+        case attemptNumber = "attemptnumber"
+        case timeCreated = "timecreated"
+        case timeModified = "timemodified"
+        case grader = "grader"
+        case grade = "grade"
+        case gradeForDisplay = "gradefordisplay"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = container.decodeLenient(Int.self, forKey: .id) ?? 0
+        self.assignment = container.decodeLenient(Int.self, forKey: .assignment)
+        self.userId = container.decodeLenient(Int.self, forKey: .userId) ?? 0
+        self.attemptNumber = container.decodeLenient(Int.self, forKey: .attemptNumber) ?? 0
+        self.timeCreated = container.decodeLenient(Int64.self, forKey: .timeCreated) ?? 0
+        self.timeModified = container.decodeLenient(Int64.self, forKey: .timeModified) ?? 0
+        self.grader = container.decodeLenient(Int.self, forKey: .grader) ?? 0
+        self.grade = container.decodeLenient(String.self, forKey: .grade) ?? ""
+        self.gradeForDisplay = container.decodeLenient(String.self, forKey: .gradeForDisplay)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(assignment, forKey: .assignment)
+        try container.encode(userId, forKey: .userId)
+        try container.encode(attemptNumber, forKey: .attemptNumber)
+        try container.encode(timeCreated, forKey: .timeCreated)
+        try container.encode(timeModified, forKey: .timeModified)
+        try container.encode(grader, forKey: .grader)
+        try container.encode(grade, forKey: .grade)
+        try container.encode(gradeForDisplay, forKey: .gradeForDisplay)
+    }
+}
+
+public struct MoodleAssignGetParticipantResponse: Codable, Hashable, Sendable {
+    /// ID of the user
+    public var id: Int
+    /// The fullname of the user
+    public var fullName: String
+    /// have they submitted their assignment
+    public var submitted: Bool
+    /// is their submission waiting for grading
+    public var requiregrading: Bool
+    /// have they been granted an extension
+    public var grantedextension: Bool
+    /// is blind marking enabled for this assignment
+    public var blindMarking: Bool
+    /// allowsubmissionsfromdate for the user
+    public var allowSubmissionsFromDate: Int64
+    /// duedate for the user
+    public var dueDate: Int64
+    /// cutoffdate for the user
+    public var cutoffDate: Int64
+    /// duedate for the user
+    public var duedatestr: String
+    /// for group assignments this is the group id
+    public var groupId: Int?
+    /// for group assignments this is the group name
+    public var groupName: String?
+    /// The submission status (new, draft, reopened or submitted). Empty when not submitted.
+    public var submissionstatus: String?
+    public var user: MoodleUser?
+
+    public init(
+        id: Int = 0,
+        fullName: String = "",
+        submitted: Bool = false,
+        requiregrading: Bool = false,
+        grantedextension: Bool = false,
+        blindMarking: Bool = false,
+        allowSubmissionsFromDate: Int64 = 0,
+        dueDate: Int64 = 0,
+        cutoffDate: Int64 = 0,
+        duedatestr: String = "",
+        groupId: Int? = nil,
+        groupName: String? = nil,
+        submissionstatus: String? = nil,
+        user: MoodleUser? = nil
+    ) {
+        self.id = id
+        self.fullName = fullName
+        self.submitted = submitted
+        self.requiregrading = requiregrading
+        self.grantedextension = grantedextension
+        self.blindMarking = blindMarking
+        self.allowSubmissionsFromDate = allowSubmissionsFromDate
+        self.dueDate = dueDate
+        self.cutoffDate = cutoffDate
+        self.duedatestr = duedatestr
+        self.groupId = groupId
+        self.groupName = groupName
+        self.submissionstatus = submissionstatus
+        self.user = user
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id = "id"
+        case fullName = "fullname"
+        case submitted = "submitted"
+        case requiregrading = "requiregrading"
+        case grantedextension = "grantedextension"
+        case blindMarking = "blindmarking"
+        case allowSubmissionsFromDate = "allowsubmissionsfromdate"
+        case dueDate = "duedate"
+        case cutoffDate = "cutoffdate"
+        case duedatestr = "duedatestr"
+        case groupId = "groupid"
+        case groupName = "groupname"
+        case submissionstatus = "submissionstatus"
+        case user = "user"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = container.decodeLenient(Int.self, forKey: .id) ?? 0
+        self.fullName = container.decodeLenient(String.self, forKey: .fullName) ?? ""
+        self.submitted = container.decodeLenient(Bool.self, forKey: .submitted) ?? false
+        self.requiregrading = container.decodeLenient(Bool.self, forKey: .requiregrading) ?? false
+        self.grantedextension = container.decodeLenient(Bool.self, forKey: .grantedextension) ?? false
+        self.blindMarking = container.decodeLenient(Bool.self, forKey: .blindMarking) ?? false
+        self.allowSubmissionsFromDate = container.decodeLenient(Int64.self, forKey: .allowSubmissionsFromDate) ?? 0
+        self.dueDate = container.decodeLenient(Int64.self, forKey: .dueDate) ?? 0
+        self.cutoffDate = container.decodeLenient(Int64.self, forKey: .cutoffDate) ?? 0
+        self.duedatestr = container.decodeLenient(String.self, forKey: .duedatestr) ?? ""
+        self.groupId = container.decodeLenient(Int.self, forKey: .groupId)
+        self.groupName = container.decodeLenient(String.self, forKey: .groupName)
+        self.submissionstatus = container.decodeLenient(String.self, forKey: .submissionstatus)
+        self.user = container.decodeFolded(MoodleUser.self, forKey: .user)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(fullName, forKey: .fullName)
+        try container.encode(submitted, forKey: .submitted)
+        try container.encode(requiregrading, forKey: .requiregrading)
+        try container.encode(grantedextension, forKey: .grantedextension)
+        try container.encode(blindMarking, forKey: .blindMarking)
+        try container.encode(allowSubmissionsFromDate, forKey: .allowSubmissionsFromDate)
+        try container.encode(dueDate, forKey: .dueDate)
+        try container.encode(cutoffDate, forKey: .cutoffDate)
+        try container.encode(duedatestr, forKey: .duedatestr)
+        try container.encode(groupId, forKey: .groupId)
+        try container.encode(groupName, forKey: .groupName)
+        try container.encode(submissionstatus, forKey: .submissionstatus)
+        try container.encode(user, forKey: .user)
     }
 }
 
@@ -615,24 +767,12 @@ public struct MoodleSubmissionStatus: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if gradingSummary != nil {
-            try container.encode(gradingSummary, forKey: .gradingSummary)
-        }
-        if lastAttempt != nil {
-            try container.encode(lastAttempt, forKey: .lastAttempt)
-        }
-        if feedback != nil {
-            try container.encode(feedback, forKey: .feedback)
-        }
-        if !previousAttempts.isEmpty {
-            try container.encode(previousAttempts, forKey: .previousAttempts)
-        }
-        if assignmentData != nil {
-            try container.encode(assignmentData, forKey: .assignmentData)
-        }
-        if !warnings.isEmpty {
-            try container.encode(warnings, forKey: .warnings)
-        }
+        try container.encode(gradingSummary, forKey: .gradingSummary)
+        try container.encode(lastAttempt, forKey: .lastAttempt)
+        try container.encode(feedback, forKey: .feedback)
+        try container.encode(previousAttempts, forKey: .previousAttempts)
+        try container.encode(assignmentData, forKey: .assignmentData)
+        try container.encode(warnings, forKey: .warnings)
     }
 }
 
@@ -688,24 +828,12 @@ public struct MoodleGradingSummary: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if participantCount != 0 {
-            try container.encode(participantCount, forKey: .participantCount)
-        }
-        if submissionDraftsCount != 0 {
-            try container.encode(submissionDraftsCount, forKey: .submissionDraftsCount)
-        }
-        if submissionsEnabled != false {
-            try container.encode(submissionsEnabled, forKey: .submissionsEnabled)
-        }
-        if submissionsSubmittedCount != 0 {
-            try container.encode(submissionsSubmittedCount, forKey: .submissionsSubmittedCount)
-        }
-        if submissionsNeedGradingCount != 0 {
-            try container.encode(submissionsNeedGradingCount, forKey: .submissionsNeedGradingCount)
-        }
-        if warnOfUngroupedUsers != "" {
-            try container.encode(warnOfUngroupedUsers, forKey: .warnOfUngroupedUsers)
-        }
+        try container.encode(participantCount, forKey: .participantCount)
+        try container.encode(submissionDraftsCount, forKey: .submissionDraftsCount)
+        try container.encode(submissionsEnabled, forKey: .submissionsEnabled)
+        try container.encode(submissionsSubmittedCount, forKey: .submissionsSubmittedCount)
+        try container.encode(submissionsNeedGradingCount, forKey: .submissionsNeedGradingCount)
+        try container.encode(warnOfUngroupedUsers, forKey: .warnOfUngroupedUsers)
     }
 }
 
@@ -815,51 +943,21 @@ public struct MoodleLastAttempt: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if submission != nil {
-            try container.encode(submission, forKey: .submission)
-        }
-        if teamSubmission != nil {
-            try container.encode(teamSubmission, forKey: .teamSubmission)
-        }
-        if submissionGroup != nil {
-            try container.encode(submissionGroup, forKey: .submissionGroup)
-        }
-        if !submissionGroupMembersWhoNeedToSubmit.isEmpty {
-            try container.encode(submissionGroupMembersWhoNeedToSubmit, forKey: .submissionGroupMembersWhoNeedToSubmit)
-        }
-        if submissionsEnabled != false {
-            try container.encode(submissionsEnabled, forKey: .submissionsEnabled)
-        }
-        if locked != false {
-            try container.encode(locked, forKey: .locked)
-        }
-        if graded != false {
-            try container.encode(graded, forKey: .graded)
-        }
-        if canEdit != false {
-            try container.encode(canEdit, forKey: .canEdit)
-        }
-        if canEditOwner != false {
-            try container.encode(canEditOwner, forKey: .canEditOwner)
-        }
-        if canSubmit != false {
-            try container.encode(canSubmit, forKey: .canSubmit)
-        }
-        if extensionDueDate != 0 {
-            try container.encode(extensionDueDate, forKey: .extensionDueDate)
-        }
-        if timeLimit != nil {
-            try container.encode(timeLimit, forKey: .timeLimit)
-        }
-        if blindMarking != false {
-            try container.encode(blindMarking, forKey: .blindMarking)
-        }
-        if gradingStatus != "" {
-            try container.encode(gradingStatus, forKey: .gradingStatus)
-        }
-        if !userGroups.isEmpty {
-            try container.encode(userGroups, forKey: .userGroups)
-        }
+        try container.encode(submission, forKey: .submission)
+        try container.encode(teamSubmission, forKey: .teamSubmission)
+        try container.encode(submissionGroup, forKey: .submissionGroup)
+        try container.encode(submissionGroupMembersWhoNeedToSubmit, forKey: .submissionGroupMembersWhoNeedToSubmit)
+        try container.encode(submissionsEnabled, forKey: .submissionsEnabled)
+        try container.encode(locked, forKey: .locked)
+        try container.encode(graded, forKey: .graded)
+        try container.encode(canEdit, forKey: .canEdit)
+        try container.encode(canEditOwner, forKey: .canEditOwner)
+        try container.encode(canSubmit, forKey: .canSubmit)
+        try container.encode(extensionDueDate, forKey: .extensionDueDate)
+        try container.encode(timeLimit, forKey: .timeLimit)
+        try container.encode(blindMarking, forKey: .blindMarking)
+        try container.encode(gradingStatus, forKey: .gradingStatus)
+        try container.encode(userGroups, forKey: .userGroups)
     }
 }
 
@@ -951,42 +1049,18 @@ public struct MoodleSubmission: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if id != 0 {
-            try container.encode(id, forKey: .id)
-        }
-        if userId != 0 {
-            try container.encode(userId, forKey: .userId)
-        }
-        if attemptNumber != 0 {
-            try container.encode(attemptNumber, forKey: .attemptNumber)
-        }
-        if timeCreated != 0 {
-            try container.encode(timeCreated, forKey: .timeCreated)
-        }
-        if timeModified != 0 {
-            try container.encode(timeModified, forKey: .timeModified)
-        }
-        if timeStarted != nil {
-            try container.encode(timeStarted, forKey: .timeStarted)
-        }
-        if status != "" {
-            try container.encode(status, forKey: .status)
-        }
-        if groupId != 0 {
-            try container.encode(groupId, forKey: .groupId)
-        }
-        if assignment != nil {
-            try container.encode(assignment, forKey: .assignment)
-        }
-        if latest != nil {
-            try container.encode(latest, forKey: .latest)
-        }
-        if !plugins.isEmpty {
-            try container.encode(plugins, forKey: .plugins)
-        }
-        if gradingStatus != nil {
-            try container.encode(gradingStatus, forKey: .gradingStatus)
-        }
+        try container.encode(id, forKey: .id)
+        try container.encode(userId, forKey: .userId)
+        try container.encode(attemptNumber, forKey: .attemptNumber)
+        try container.encode(timeCreated, forKey: .timeCreated)
+        try container.encode(timeModified, forKey: .timeModified)
+        try container.encode(timeStarted, forKey: .timeStarted)
+        try container.encode(status, forKey: .status)
+        try container.encode(groupId, forKey: .groupId)
+        try container.encode(assignment, forKey: .assignment)
+        try container.encode(latest, forKey: .latest)
+        try container.encode(plugins, forKey: .plugins)
+        try container.encode(gradingStatus, forKey: .gradingStatus)
     }
 }
 
@@ -1029,18 +1103,10 @@ public struct MoodleSubmissionPlugin: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if type != "" {
-            try container.encode(type, forKey: .type)
-        }
-        if name != "" {
-            try container.encode(name, forKey: .name)
-        }
-        if !fileAreas.isEmpty {
-            try container.encode(fileAreas, forKey: .fileAreas)
-        }
-        if !editorFields.isEmpty {
-            try container.encode(editorFields, forKey: .editorFields)
-        }
+        try container.encode(type, forKey: .type)
+        try container.encode(name, forKey: .name)
+        try container.encode(fileAreas, forKey: .fileAreas)
+        try container.encode(editorFields, forKey: .editorFields)
     }
 }
 
@@ -1071,12 +1137,8 @@ public struct MoodleFileArea: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if area != "" {
-            try container.encode(area, forKey: .area)
-        }
-        if !files.isEmpty {
-            try container.encode(files, forKey: .files)
-        }
+        try container.encode(area, forKey: .area)
+        try container.encode(files, forKey: .files)
     }
 }
 
@@ -1119,18 +1181,10 @@ public struct MoodleEditorField: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if name != "" {
-            try container.encode(name, forKey: .name)
-        }
-        if description != "" {
-            try container.encode(description, forKey: .description)
-        }
-        if text != "" {
-            try container.encode(text, forKey: .text)
-        }
-        if format != 0 {
-            try container.encode(format, forKey: .format)
-        }
+        try container.encode(name, forKey: .name)
+        try container.encode(description, forKey: .description)
+        try container.encode(text, forKey: .text)
+        try container.encode(format, forKey: .format)
     }
 }
 
@@ -1174,118 +1228,10 @@ public struct MoodleFeedback: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if grade != nil {
-            try container.encode(grade, forKey: .grade)
-        }
-        if gradeForDisplay != "" {
-            try container.encode(gradeForDisplay, forKey: .gradeForDisplay)
-        }
-        if gradedDate != 0 {
-            try container.encode(gradedDate, forKey: .gradedDate)
-        }
-        if !plugins.isEmpty {
-            try container.encode(plugins, forKey: .plugins)
-        }
-    }
-}
-
-/// grade information
-public struct MoodleAssignmentGrade: Codable, Hashable, Sendable {
-    /// grade id
-    public var id: Int
-    /// assignment id
-    public var assignment: Int?
-    /// student id
-    public var userId: Int
-    /// attempt number
-    public var attemptNumber: Int
-    /// grade creation time
-    public var timeCreated: Int64
-    /// grade last modified time
-    public var timeModified: Int64
-    /// grader, -1 if grader is hidden
-    public var grader: Int
-    /// grade
-    public var grade: String
-    /// grade rendered into a format suitable for display
-    public var gradeForDisplay: String?
-
-    public init(
-        id: Int = 0,
-        assignment: Int? = nil,
-        userId: Int = 0,
-        attemptNumber: Int = 0,
-        timeCreated: Int64 = 0,
-        timeModified: Int64 = 0,
-        grader: Int = 0,
-        grade: String = "",
-        gradeForDisplay: String? = nil
-    ) {
-        self.id = id
-        self.assignment = assignment
-        self.userId = userId
-        self.attemptNumber = attemptNumber
-        self.timeCreated = timeCreated
-        self.timeModified = timeModified
-        self.grader = grader
-        self.grade = grade
-        self.gradeForDisplay = gradeForDisplay
-    }
-
-    private enum CodingKeys: String, CodingKey {
-        case id = "id"
-        case assignment = "assignment"
-        case userId = "userid"
-        case attemptNumber = "attemptnumber"
-        case timeCreated = "timecreated"
-        case timeModified = "timemodified"
-        case grader = "grader"
-        case grade = "grade"
-        case gradeForDisplay = "gradefordisplay"
-    }
-
-    public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        self.id = container.decodeLenient(Int.self, forKey: .id) ?? 0
-        self.assignment = container.decodeLenient(Int.self, forKey: .assignment)
-        self.userId = container.decodeLenient(Int.self, forKey: .userId) ?? 0
-        self.attemptNumber = container.decodeLenient(Int.self, forKey: .attemptNumber) ?? 0
-        self.timeCreated = container.decodeLenient(Int64.self, forKey: .timeCreated) ?? 0
-        self.timeModified = container.decodeLenient(Int64.self, forKey: .timeModified) ?? 0
-        self.grader = container.decodeLenient(Int.self, forKey: .grader) ?? 0
-        self.grade = container.decodeLenient(String.self, forKey: .grade) ?? ""
-        self.gradeForDisplay = container.decodeLenient(String.self, forKey: .gradeForDisplay)
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        if id != 0 {
-            try container.encode(id, forKey: .id)
-        }
-        if assignment != nil {
-            try container.encode(assignment, forKey: .assignment)
-        }
-        if userId != 0 {
-            try container.encode(userId, forKey: .userId)
-        }
-        if attemptNumber != 0 {
-            try container.encode(attemptNumber, forKey: .attemptNumber)
-        }
-        if timeCreated != 0 {
-            try container.encode(timeCreated, forKey: .timeCreated)
-        }
-        if timeModified != 0 {
-            try container.encode(timeModified, forKey: .timeModified)
-        }
-        if grader != 0 {
-            try container.encode(grader, forKey: .grader)
-        }
-        if grade != "" {
-            try container.encode(grade, forKey: .grade)
-        }
-        if gradeForDisplay != nil {
-            try container.encode(gradeForDisplay, forKey: .gradeForDisplay)
-        }
+        try container.encode(grade, forKey: .grade)
+        try container.encode(gradeForDisplay, forKey: .gradeForDisplay)
+        try container.encode(gradedDate, forKey: .gradedDate)
+        try container.encode(plugins, forKey: .plugins)
     }
 }
 
@@ -1328,18 +1274,10 @@ public struct MoodlePreviousAttempt: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if attemptNumber != 0 {
-            try container.encode(attemptNumber, forKey: .attemptNumber)
-        }
-        if submission != nil {
-            try container.encode(submission, forKey: .submission)
-        }
-        if grade != nil {
-            try container.encode(grade, forKey: .grade)
-        }
-        if !feedbackPlugins.isEmpty {
-            try container.encode(feedbackPlugins, forKey: .feedbackPlugins)
-        }
+        try container.encode(attemptNumber, forKey: .attemptNumber)
+        try container.encode(submission, forKey: .submission)
+        try container.encode(grade, forKey: .grade)
+        try container.encode(feedbackPlugins, forKey: .feedbackPlugins)
     }
 }
 
@@ -1377,15 +1315,9 @@ public struct MoodleAssignmentData: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if attachments != nil {
-            try container.encode(attachments, forKey: .attachments)
-        }
-        if activity != nil {
-            try container.encode(activity, forKey: .activity)
-        }
-        if activityFormat != nil {
-            try container.encode(activityFormat, forKey: .activityFormat)
-        }
+        try container.encode(attachments, forKey: .attachments)
+        try container.encode(activity, forKey: .activity)
+        try container.encode(activityFormat, forKey: .activityFormat)
     }
 }
 
@@ -1417,12 +1349,977 @@ public struct MoodleAssignmentAttachments: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if !intro.isEmpty {
-            try container.encode(intro, forKey: .intro)
-        }
-        if !activity.isEmpty {
-            try container.encode(activity, forKey: .activity)
-        }
+        try container.encode(intro, forKey: .intro)
+        try container.encode(activity, forKey: .activity)
+    }
+}
+
+public struct MoodleAssignGetSubmissionsResponse: Codable, Hashable, Sendable {
+    /// assignment submissions
+    public var assignments: [MoodleAssignGetSubmissionsResponseAssignment]
+    /// list of warnings
+    public var warnings: [MoodleWarning]
+
+    public init(
+        assignments: [MoodleAssignGetSubmissionsResponseAssignment] = [],
+        warnings: [MoodleWarning] = []
+    ) {
+        self.assignments = assignments
+        self.warnings = warnings
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case assignments = "assignments"
+        case warnings = "warnings"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.assignments = container.decodeLenient([MoodleAssignGetSubmissionsResponseAssignment].self, forKey: .assignments) ?? []
+        self.warnings = container.decodeLenient([MoodleWarning].self, forKey: .warnings) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(assignments, forKey: .assignments)
+        try container.encode(warnings, forKey: .warnings)
+    }
+}
+
+public struct MoodleAssignGetSubmissionsResponseAssignment: Codable, Hashable, Sendable {
+    /// assignment id
+    public var assignmentId: Int
+    public var submissions: [MoodleSubmission]
+
+    public init(
+        assignmentId: Int = 0,
+        submissions: [MoodleSubmission] = []
+    ) {
+        self.assignmentId = assignmentId
+        self.submissions = submissions
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case assignmentId = "assignmentid"
+        case submissions = "submissions"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.assignmentId = container.decodeLenient(Int.self, forKey: .assignmentId) ?? 0
+        self.submissions = container.decodeLenient([MoodleSubmission].self, forKey: .submissions) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(assignmentId, forKey: .assignmentId)
+        try container.encode(submissions, forKey: .submissions)
+    }
+}
+
+public struct MoodleAssignGetUserFlagsResponse: Codable, Hashable, Sendable {
+    /// list of assign user flag information
+    public var assignments: [MoodleAssignGetUserFlagsResponseAssignment]
+    /// list of warnings
+    public var warnings: [MoodleWarning]
+
+    public init(
+        assignments: [MoodleAssignGetUserFlagsResponseAssignment] = [],
+        warnings: [MoodleWarning] = []
+    ) {
+        self.assignments = assignments
+        self.warnings = warnings
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case assignments = "assignments"
+        case warnings = "warnings"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.assignments = container.decodeLenient([MoodleAssignGetUserFlagsResponseAssignment].self, forKey: .assignments) ?? []
+        self.warnings = container.decodeLenient([MoodleWarning].self, forKey: .warnings) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(assignments, forKey: .assignments)
+        try container.encode(warnings, forKey: .warnings)
+    }
+}
+
+public struct MoodleAssignGetUserFlagsResponseAssignment: Codable, Hashable, Sendable {
+    /// assignment id
+    public var assignmentId: Int
+    public var userflags: [MoodleAssignGetUserFlagsResponseAssignmentUserflag]
+
+    public init(
+        assignmentId: Int = 0,
+        userflags: [MoodleAssignGetUserFlagsResponseAssignmentUserflag] = []
+    ) {
+        self.assignmentId = assignmentId
+        self.userflags = userflags
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case assignmentId = "assignmentid"
+        case userflags = "userflags"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.assignmentId = container.decodeLenient(Int.self, forKey: .assignmentId) ?? 0
+        self.userflags = container.decodeLenient([MoodleAssignGetUserFlagsResponseAssignmentUserflag].self, forKey: .userflags) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(assignmentId, forKey: .assignmentId)
+        try container.encode(userflags, forKey: .userflags)
+    }
+}
+
+public struct MoodleAssignGetUserFlagsResponseAssignmentUserflag: Codable, Hashable, Sendable {
+    /// user flag id
+    public var id: Int
+    /// student id
+    public var userId: Int
+    /// locked
+    public var locked: Int64
+    /// mailed
+    public var mailed: Int
+    /// extension due date
+    public var extensionDueDate: Int64
+    /// marking workflow state
+    public var workflowstate: String?
+    /// allocated marker
+    public var allocatedmarker: Int
+
+    public init(
+        id: Int = 0,
+        userId: Int = 0,
+        locked: Int64 = 0,
+        mailed: Int = 0,
+        extensionDueDate: Int64 = 0,
+        workflowstate: String? = nil,
+        allocatedmarker: Int = 0
+    ) {
+        self.id = id
+        self.userId = userId
+        self.locked = locked
+        self.mailed = mailed
+        self.extensionDueDate = extensionDueDate
+        self.workflowstate = workflowstate
+        self.allocatedmarker = allocatedmarker
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id = "id"
+        case userId = "userid"
+        case locked = "locked"
+        case mailed = "mailed"
+        case extensionDueDate = "extensionduedate"
+        case workflowstate = "workflowstate"
+        case allocatedmarker = "allocatedmarker"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = container.decodeLenient(Int.self, forKey: .id) ?? 0
+        self.userId = container.decodeLenient(Int.self, forKey: .userId) ?? 0
+        self.locked = container.decodeLenient(Int64.self, forKey: .locked) ?? 0
+        self.mailed = container.decodeLenient(Int.self, forKey: .mailed) ?? 0
+        self.extensionDueDate = container.decodeLenient(Int64.self, forKey: .extensionDueDate) ?? 0
+        self.workflowstate = container.decodeLenient(String.self, forKey: .workflowstate)
+        self.allocatedmarker = container.decodeLenient(Int.self, forKey: .allocatedmarker) ?? 0
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(userId, forKey: .userId)
+        try container.encode(locked, forKey: .locked)
+        try container.encode(mailed, forKey: .mailed)
+        try container.encode(extensionDueDate, forKey: .extensionDueDate)
+        try container.encode(workflowstate, forKey: .workflowstate)
+        try container.encode(allocatedmarker, forKey: .allocatedmarker)
+    }
+}
+
+public struct MoodleAssignGetUserMappingsResponse: Codable, Hashable, Sendable {
+    /// list of assign user mapping data
+    public var assignments: [MoodleAssignGetUserMappingsResponseAssignment]
+    /// list of warnings
+    public var warnings: [MoodleWarning]
+
+    public init(
+        assignments: [MoodleAssignGetUserMappingsResponseAssignment] = [],
+        warnings: [MoodleWarning] = []
+    ) {
+        self.assignments = assignments
+        self.warnings = warnings
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case assignments = "assignments"
+        case warnings = "warnings"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.assignments = container.decodeLenient([MoodleAssignGetUserMappingsResponseAssignment].self, forKey: .assignments) ?? []
+        self.warnings = container.decodeLenient([MoodleWarning].self, forKey: .warnings) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(assignments, forKey: .assignments)
+        try container.encode(warnings, forKey: .warnings)
+    }
+}
+
+public struct MoodleAssignGetUserMappingsResponseAssignment: Codable, Hashable, Sendable {
+    /// assignment id
+    public var assignmentId: Int
+    public var mappings: [MoodleMapping]
+
+    public init(
+        assignmentId: Int = 0,
+        mappings: [MoodleMapping] = []
+    ) {
+        self.assignmentId = assignmentId
+        self.mappings = mappings
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case assignmentId = "assignmentid"
+        case mappings = "mappings"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.assignmentId = container.decodeLenient(Int.self, forKey: .assignmentId) ?? 0
+        self.mappings = container.decodeLenient([MoodleMapping].self, forKey: .mappings) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(assignmentId, forKey: .assignmentId)
+        try container.encode(mappings, forKey: .mappings)
+    }
+}
+
+public struct MoodleMapping: Codable, Hashable, Sendable {
+    /// user mapping id
+    public var id: Int
+    /// student id
+    public var userId: Int
+
+    public init(
+        id: Int = 0,
+        userId: Int = 0
+    ) {
+        self.id = id
+        self.userId = userId
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id = "id"
+        case userId = "userid"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = container.decodeLenient(Int.self, forKey: .id) ?? 0
+        self.userId = container.decodeLenient(Int.self, forKey: .userId) ?? 0
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(userId, forKey: .userId)
+    }
+}
+
+public struct MoodleAssignListParticipantsItem: Codable, Hashable, Sendable {
+    /// ID of the user
+    public var id: Int
+    /// The username
+    public var username: String?
+    /// The first name(s) of the user
+    public var firstName: String?
+    /// The family name of the user
+    public var lastName: String?
+    /// The fullname of the user
+    public var fullName: String
+    /// Email address
+    public var email: String?
+    /// Postal address
+    public var address: String?
+    /// Phone 1
+    public var phone1: String?
+    /// Phone 2
+    public var phone2: String?
+    /// department
+    public var department: String?
+    /// institution
+    public var institution: String?
+    /// The idnumber of the user
+    public var idNumber: String?
+    /// user interests (separated by commas)
+    public var interests: String?
+    /// first access to the site (0 if never)
+    public var firstAccess: Int64?
+    /// last access to the site (0 if never)
+    public var lastAccess: Int64?
+    /// Suspend user account, either false to enable user login or true to disable it
+    public var suspended: Bool?
+    /// Whether the user is tracking forums.
+    public var trackForums: Int?
+    /// User profile description
+    public var description: String?
+    /// int format (1 = HTML, 0 = MOODLE, 2 = PLAIN, or 4 = MARKDOWN)
+    public var descriptionFormat: Int?
+    /// Home city of the user
+    public var city: String?
+    /// Home country code of the user, such as AU or CZ
+    public var country: String?
+    /// User image profile URL - small version
+    public var profileImageUrlSmall: String?
+    /// User image profile URL - big version
+    public var profileImageUrl: String?
+    /// User custom fields (also known as user profile fields)
+    public var customFields: [MoodleUserCustomField]
+    /// Users preferences
+    public var preferences: [MoodleKeyValue]
+    /// record id
+    public var recordid: Int
+    /// user groups
+    public var groups: [MoodleAssignListParticipantsItemGroup]
+    /// user roles
+    public var roles: [MoodleUserRole]
+    /// Courses where the user is enrolled - limited by which courses the user is able to see
+    public var enrolledCourses: [MoodleUserEnrolledCourse]
+    /// have they submitted their assignment
+    public var submitted: Bool
+    /// is their submission waiting for grading
+    public var requiregrading: Bool
+    /// have they been granted an extension
+    public var grantedextension: Bool
+    /// The submission status (new, draft, reopened or submitted). Empty when not submitted.
+    public var submissionstatus: String?
+    /// for group assignments this is the group id
+    public var groupId: Int?
+    /// for group assignments this is the group name
+    public var groupName: String?
+
+    public init(
+        id: Int = 0,
+        username: String? = nil,
+        firstName: String? = nil,
+        lastName: String? = nil,
+        fullName: String = "",
+        email: String? = nil,
+        address: String? = nil,
+        phone1: String? = nil,
+        phone2: String? = nil,
+        department: String? = nil,
+        institution: String? = nil,
+        idNumber: String? = nil,
+        interests: String? = nil,
+        firstAccess: Int64? = nil,
+        lastAccess: Int64? = nil,
+        suspended: Bool? = nil,
+        trackForums: Int? = nil,
+        description: String? = nil,
+        descriptionFormat: Int? = nil,
+        city: String? = nil,
+        country: String? = nil,
+        profileImageUrlSmall: String? = nil,
+        profileImageUrl: String? = nil,
+        customFields: [MoodleUserCustomField] = [],
+        preferences: [MoodleKeyValue] = [],
+        recordid: Int = 0,
+        groups: [MoodleAssignListParticipantsItemGroup] = [],
+        roles: [MoodleUserRole] = [],
+        enrolledCourses: [MoodleUserEnrolledCourse] = [],
+        submitted: Bool = false,
+        requiregrading: Bool = false,
+        grantedextension: Bool = false,
+        submissionstatus: String? = nil,
+        groupId: Int? = nil,
+        groupName: String? = nil
+    ) {
+        self.id = id
+        self.username = username
+        self.firstName = firstName
+        self.lastName = lastName
+        self.fullName = fullName
+        self.email = email
+        self.address = address
+        self.phone1 = phone1
+        self.phone2 = phone2
+        self.department = department
+        self.institution = institution
+        self.idNumber = idNumber
+        self.interests = interests
+        self.firstAccess = firstAccess
+        self.lastAccess = lastAccess
+        self.suspended = suspended
+        self.trackForums = trackForums
+        self.description = description
+        self.descriptionFormat = descriptionFormat
+        self.city = city
+        self.country = country
+        self.profileImageUrlSmall = profileImageUrlSmall
+        self.profileImageUrl = profileImageUrl
+        self.customFields = customFields
+        self.preferences = preferences
+        self.recordid = recordid
+        self.groups = groups
+        self.roles = roles
+        self.enrolledCourses = enrolledCourses
+        self.submitted = submitted
+        self.requiregrading = requiregrading
+        self.grantedextension = grantedextension
+        self.submissionstatus = submissionstatus
+        self.groupId = groupId
+        self.groupName = groupName
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id = "id"
+        case username = "username"
+        case firstName = "firstname"
+        case lastName = "lastname"
+        case fullName = "fullname"
+        case email = "email"
+        case address = "address"
+        case phone1 = "phone1"
+        case phone2 = "phone2"
+        case department = "department"
+        case institution = "institution"
+        case idNumber = "idnumber"
+        case interests = "interests"
+        case firstAccess = "firstaccess"
+        case lastAccess = "lastaccess"
+        case suspended = "suspended"
+        case trackForums = "trackforums"
+        case description = "description"
+        case descriptionFormat = "descriptionformat"
+        case city = "city"
+        case country = "country"
+        case profileImageUrlSmall = "profileimageurlsmall"
+        case profileImageUrl = "profileimageurl"
+        case customFields = "customfields"
+        case preferences = "preferences"
+        case recordid = "recordid"
+        case groups = "groups"
+        case roles = "roles"
+        case enrolledCourses = "enrolledcourses"
+        case submitted = "submitted"
+        case requiregrading = "requiregrading"
+        case grantedextension = "grantedextension"
+        case submissionstatus = "submissionstatus"
+        case groupId = "groupid"
+        case groupName = "groupname"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = container.decodeLenient(Int.self, forKey: .id) ?? 0
+        self.username = container.decodeLenient(String.self, forKey: .username)
+        self.firstName = container.decodeLenient(String.self, forKey: .firstName)
+        self.lastName = container.decodeLenient(String.self, forKey: .lastName)
+        self.fullName = container.decodeLenient(String.self, forKey: .fullName) ?? ""
+        self.email = container.decodeLenient(String.self, forKey: .email)
+        self.address = container.decodeLenient(String.self, forKey: .address)
+        self.phone1 = container.decodeLenient(String.self, forKey: .phone1)
+        self.phone2 = container.decodeLenient(String.self, forKey: .phone2)
+        self.department = container.decodeLenient(String.self, forKey: .department)
+        self.institution = container.decodeLenient(String.self, forKey: .institution)
+        self.idNumber = container.decodeLenient(String.self, forKey: .idNumber)
+        self.interests = container.decodeLenient(String.self, forKey: .interests)
+        self.firstAccess = container.decodeLenient(Int64.self, forKey: .firstAccess)
+        self.lastAccess = container.decodeLenient(Int64.self, forKey: .lastAccess)
+        self.suspended = container.decodeLenient(Bool.self, forKey: .suspended)
+        self.trackForums = container.decodeLenient(Int.self, forKey: .trackForums)
+        self.description = container.decodeLenient(String.self, forKey: .description)
+        self.descriptionFormat = container.decodeLenient(Int.self, forKey: .descriptionFormat)
+        self.city = container.decodeLenient(String.self, forKey: .city)
+        self.country = container.decodeLenient(String.self, forKey: .country)
+        self.profileImageUrlSmall = container.decodeLenient(String.self, forKey: .profileImageUrlSmall)
+        self.profileImageUrl = container.decodeLenient(String.self, forKey: .profileImageUrl)
+        self.customFields = container.decodeLenient([MoodleUserCustomField].self, forKey: .customFields) ?? []
+        self.preferences = container.decodeLenient([MoodleKeyValue].self, forKey: .preferences) ?? []
+        self.recordid = container.decodeLenient(Int.self, forKey: .recordid) ?? 0
+        self.groups = container.decodeLenient([MoodleAssignListParticipantsItemGroup].self, forKey: .groups) ?? []
+        self.roles = container.decodeLenient([MoodleUserRole].self, forKey: .roles) ?? []
+        self.enrolledCourses = container.decodeLenient([MoodleUserEnrolledCourse].self, forKey: .enrolledCourses) ?? []
+        self.submitted = container.decodeLenient(Bool.self, forKey: .submitted) ?? false
+        self.requiregrading = container.decodeLenient(Bool.self, forKey: .requiregrading) ?? false
+        self.grantedextension = container.decodeLenient(Bool.self, forKey: .grantedextension) ?? false
+        self.submissionstatus = container.decodeLenient(String.self, forKey: .submissionstatus)
+        self.groupId = container.decodeLenient(Int.self, forKey: .groupId)
+        self.groupName = container.decodeLenient(String.self, forKey: .groupName)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(username, forKey: .username)
+        try container.encode(firstName, forKey: .firstName)
+        try container.encode(lastName, forKey: .lastName)
+        try container.encode(fullName, forKey: .fullName)
+        try container.encode(email, forKey: .email)
+        try container.encode(address, forKey: .address)
+        try container.encode(phone1, forKey: .phone1)
+        try container.encode(phone2, forKey: .phone2)
+        try container.encode(department, forKey: .department)
+        try container.encode(institution, forKey: .institution)
+        try container.encode(idNumber, forKey: .idNumber)
+        try container.encode(interests, forKey: .interests)
+        try container.encode(firstAccess, forKey: .firstAccess)
+        try container.encode(lastAccess, forKey: .lastAccess)
+        try container.encode(suspended, forKey: .suspended)
+        try container.encode(trackForums, forKey: .trackForums)
+        try container.encode(description, forKey: .description)
+        try container.encode(descriptionFormat, forKey: .descriptionFormat)
+        try container.encode(city, forKey: .city)
+        try container.encode(country, forKey: .country)
+        try container.encode(profileImageUrlSmall, forKey: .profileImageUrlSmall)
+        try container.encode(profileImageUrl, forKey: .profileImageUrl)
+        try container.encode(customFields, forKey: .customFields)
+        try container.encode(preferences, forKey: .preferences)
+        try container.encode(recordid, forKey: .recordid)
+        try container.encode(groups, forKey: .groups)
+        try container.encode(roles, forKey: .roles)
+        try container.encode(enrolledCourses, forKey: .enrolledCourses)
+        try container.encode(submitted, forKey: .submitted)
+        try container.encode(requiregrading, forKey: .requiregrading)
+        try container.encode(grantedextension, forKey: .grantedextension)
+        try container.encode(submissionstatus, forKey: .submissionstatus)
+        try container.encode(groupId, forKey: .groupId)
+        try container.encode(groupName, forKey: .groupName)
+    }
+}
+
+public struct MoodleAssignListParticipantsItemGroup: Codable, Hashable, Sendable {
+    /// group id
+    public var id: Int
+    /// group name
+    public var name: String
+    /// group description
+    public var description: String
+
+    public init(
+        id: Int = 0,
+        name: String = "",
+        description: String = ""
+    ) {
+        self.id = id
+        self.name = name
+        self.description = description
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id = "id"
+        case name = "name"
+        case description = "description"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = container.decodeLenient(Int.self, forKey: .id) ?? 0
+        self.name = container.decodeLenient(String.self, forKey: .name) ?? ""
+        self.description = container.decodeLenient(String.self, forKey: .description) ?? ""
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(name, forKey: .name)
+        try container.encode(description, forKey: .description)
+    }
+}
+
+/// plugin data
+public struct MoodlePluginData: Codable, Hashable, Sendable {
+    /// Editor structure
+    public var assignfeedbackcommentsEditor: MoodleAssignfeedbackcommentsEditor?
+    /// The id of a draft area containing files for this feedback.
+    public var filesFilemanager: Int?
+
+    public init(
+        assignfeedbackcommentsEditor: MoodleAssignfeedbackcommentsEditor? = nil,
+        filesFilemanager: Int? = nil
+    ) {
+        self.assignfeedbackcommentsEditor = assignfeedbackcommentsEditor
+        self.filesFilemanager = filesFilemanager
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case assignfeedbackcommentsEditor = "assignfeedbackcomments_editor"
+        case filesFilemanager = "files_filemanager"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.assignfeedbackcommentsEditor = container.decodeFolded(MoodleAssignfeedbackcommentsEditor.self, forKey: .assignfeedbackcommentsEditor)
+        self.filesFilemanager = container.decodeLenient(Int.self, forKey: .filesFilemanager)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(assignfeedbackcommentsEditor, forKey: .assignfeedbackcommentsEditor)
+        try container.encode(filesFilemanager, forKey: .filesFilemanager)
+    }
+}
+
+/// Editor structure
+public struct MoodleAssignfeedbackcommentsEditor: Codable, Hashable, Sendable {
+    /// The text for this feedback.
+    public var text: String
+    /// The format for this feedback
+    public var format: Int
+
+    public init(
+        text: String = "",
+        format: Int = 0
+    ) {
+        self.text = text
+        self.format = format
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case text = "text"
+        case format = "format"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.text = container.decodeLenient(String.self, forKey: .text) ?? ""
+        self.format = container.decodeLenient(Int.self, forKey: .format) ?? 0
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(text, forKey: .text)
+        try container.encode(format, forKey: .format)
+    }
+}
+
+/// advanced grading data
+public struct MoodleAdvancedgradingdata: Codable, Hashable, Sendable {
+    /// items
+    public var guide: MoodleGuide?
+    /// items
+    public var rubric: MoodleRubric?
+
+    public init(
+        guide: MoodleGuide? = nil,
+        rubric: MoodleRubric? = nil
+    ) {
+        self.guide = guide
+        self.rubric = rubric
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case guide = "guide"
+        case rubric = "rubric"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.guide = container.decodeFolded(MoodleGuide.self, forKey: .guide)
+        self.rubric = container.decodeFolded(MoodleRubric.self, forKey: .rubric)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(guide, forKey: .guide)
+        try container.encode(rubric, forKey: .rubric)
+    }
+}
+
+/// items
+public struct MoodleGuide: Codable, Hashable, Sendable {
+    public var criteria: [MoodleGuideCriteria]
+
+    public init(
+        criteria: [MoodleGuideCriteria] = []
+    ) {
+        self.criteria = criteria
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case criteria = "criteria"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.criteria = container.decodeLenient([MoodleGuideCriteria].self, forKey: .criteria) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(criteria, forKey: .criteria)
+    }
+}
+
+public struct MoodleGuideCriteria: Codable, Hashable, Sendable {
+    /// criterion id
+    public var criterionid: Int
+    /// filling
+    public var fillings: [MoodleGuideCriteriaFilling]
+
+    public init(
+        criterionid: Int = 0,
+        fillings: [MoodleGuideCriteriaFilling] = []
+    ) {
+        self.criterionid = criterionid
+        self.fillings = fillings
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case criterionid = "criterionid"
+        case fillings = "fillings"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.criterionid = container.decodeLenient(Int.self, forKey: .criterionid) ?? 0
+        self.fillings = container.decodeLenient([MoodleGuideCriteriaFilling].self, forKey: .fillings) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(criterionid, forKey: .criterionid)
+        try container.encode(fillings, forKey: .fillings)
+    }
+}
+
+public struct MoodleGuideCriteriaFilling: Codable, Hashable, Sendable {
+    /// criterion id
+    public var criterionid: Int
+    /// level id
+    public var levelid: Int?
+    /// remark
+    public var remark: String?
+    /// remark format (1 = HTML, 0 = MOODLE, 2 = PLAIN, or 4 = MARKDOWN)
+    public var remarkformat: Int?
+    /// maximum score
+    public var score: Double
+
+    public init(
+        criterionid: Int = 0,
+        levelid: Int? = nil,
+        remark: String? = nil,
+        remarkformat: Int? = nil,
+        score: Double = 0
+    ) {
+        self.criterionid = criterionid
+        self.levelid = levelid
+        self.remark = remark
+        self.remarkformat = remarkformat
+        self.score = score
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case criterionid = "criterionid"
+        case levelid = "levelid"
+        case remark = "remark"
+        case remarkformat = "remarkformat"
+        case score = "score"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.criterionid = container.decodeLenient(Int.self, forKey: .criterionid) ?? 0
+        self.levelid = container.decodeLenient(Int.self, forKey: .levelid)
+        self.remark = container.decodeLenient(String.self, forKey: .remark)
+        self.remarkformat = container.decodeLenient(Int.self, forKey: .remarkformat)
+        self.score = container.decodeLenient(Double.self, forKey: .score) ?? 0
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(criterionid, forKey: .criterionid)
+        try container.encode(levelid, forKey: .levelid)
+        try container.encode(remark, forKey: .remark)
+        try container.encode(remarkformat, forKey: .remarkformat)
+        try container.encode(score, forKey: .score)
+    }
+}
+
+/// items
+public struct MoodleRubric: Codable, Hashable, Sendable {
+    public var criteria: [MoodleRubricCriteria]
+
+    public init(
+        criteria: [MoodleRubricCriteria] = []
+    ) {
+        self.criteria = criteria
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case criteria = "criteria"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.criteria = container.decodeLenient([MoodleRubricCriteria].self, forKey: .criteria) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(criteria, forKey: .criteria)
+    }
+}
+
+public struct MoodleRubricCriteria: Codable, Hashable, Sendable {
+    /// criterion id
+    public var criterionid: Int
+    /// filling
+    public var fillings: [MoodleRubricCriteriaFilling]
+
+    public init(
+        criterionid: Int = 0,
+        fillings: [MoodleRubricCriteriaFilling] = []
+    ) {
+        self.criterionid = criterionid
+        self.fillings = fillings
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case criterionid = "criterionid"
+        case fillings = "fillings"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.criterionid = container.decodeLenient(Int.self, forKey: .criterionid) ?? 0
+        self.fillings = container.decodeLenient([MoodleRubricCriteriaFilling].self, forKey: .fillings) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(criterionid, forKey: .criterionid)
+        try container.encode(fillings, forKey: .fillings)
+    }
+}
+
+public struct MoodleRubricCriteriaFilling: Codable, Hashable, Sendable {
+    /// criterion id
+    public var criterionid: Int
+    /// level id
+    public var levelid: Int?
+    /// remark
+    public var remark: String?
+    /// remark format (1 = HTML, 0 = MOODLE, 2 = PLAIN, or 4 = MARKDOWN)
+    public var remarkformat: Int?
+
+    public init(
+        criterionid: Int = 0,
+        levelid: Int? = nil,
+        remark: String? = nil,
+        remarkformat: Int? = nil
+    ) {
+        self.criterionid = criterionid
+        self.levelid = levelid
+        self.remark = remark
+        self.remarkformat = remarkformat
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case criterionid = "criterionid"
+        case levelid = "levelid"
+        case remark = "remark"
+        case remarkformat = "remarkformat"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.criterionid = container.decodeLenient(Int.self, forKey: .criterionid) ?? 0
+        self.levelid = container.decodeLenient(Int.self, forKey: .levelid)
+        self.remark = container.decodeLenient(String.self, forKey: .remark)
+        self.remarkformat = container.decodeLenient(Int.self, forKey: .remarkformat)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(criterionid, forKey: .criterionid)
+        try container.encode(levelid, forKey: .levelid)
+        try container.encode(remark, forKey: .remark)
+        try container.encode(remarkformat, forKey: .remarkformat)
+    }
+}
+
+public struct MoodleAssignSaveGradesGrade: Codable, Hashable, Sendable {
+    /// The student id to operate on
+    public var userId: Int
+    /// The new grade for this user. Ignored if advanced grading used
+    public var grade: Double
+    /// The attempt number (-1 means latest attempt)
+    public var attemptNumber: Int
+    /// Allow another attempt if manual attempt reopen method
+    public var addattempt: Bool
+    /// The next marking workflow state
+    public var workflowstate: String
+    /// plugin data
+    public var pluginData: MoodlePluginData?
+    /// advanced grading data
+    public var advancedgradingdata: MoodleAdvancedgradingdata?
+
+    public init(
+        userId: Int = 0,
+        grade: Double = 0,
+        attemptNumber: Int = 0,
+        addattempt: Bool = false,
+        workflowstate: String = "",
+        pluginData: MoodlePluginData? = nil,
+        advancedgradingdata: MoodleAdvancedgradingdata? = nil
+    ) {
+        self.userId = userId
+        self.grade = grade
+        self.attemptNumber = attemptNumber
+        self.addattempt = addattempt
+        self.workflowstate = workflowstate
+        self.pluginData = pluginData
+        self.advancedgradingdata = advancedgradingdata
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case userId = "userid"
+        case grade = "grade"
+        case attemptNumber = "attemptnumber"
+        case addattempt = "addattempt"
+        case workflowstate = "workflowstate"
+        case pluginData = "plugindata"
+        case advancedgradingdata = "advancedgradingdata"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.userId = container.decodeLenient(Int.self, forKey: .userId) ?? 0
+        self.grade = container.decodeLenient(Double.self, forKey: .grade) ?? 0
+        self.attemptNumber = container.decodeLenient(Int.self, forKey: .attemptNumber) ?? 0
+        self.addattempt = container.decodeLenient(Bool.self, forKey: .addattempt) ?? false
+        self.workflowstate = container.decodeLenient(String.self, forKey: .workflowstate) ?? ""
+        self.pluginData = container.decodeFolded(MoodlePluginData.self, forKey: .pluginData)
+        self.advancedgradingdata = container.decodeFolded(MoodleAdvancedgradingdata.self, forKey: .advancedgradingdata)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(userId, forKey: .userId)
+        try container.encode(grade, forKey: .grade)
+        try container.encode(attemptNumber, forKey: .attemptNumber)
+        try container.encode(addattempt, forKey: .addattempt)
+        try container.encode(workflowstate, forKey: .workflowstate)
+        try container.encode(pluginData, forKey: .pluginData)
+        try container.encode(advancedgradingdata, forKey: .advancedgradingdata)
     }
 }
 
@@ -1453,12 +2350,8 @@ public struct MoodleSubmissionPluginData: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if filesFilemanager != nil {
-            try container.encode(filesFilemanager, forKey: .filesFilemanager)
-        }
-        if onlinetextEditor != nil {
-            try container.encode(onlinetextEditor, forKey: .onlinetextEditor)
-        }
+        try container.encode(filesFilemanager, forKey: .filesFilemanager)
+        try container.encode(onlinetextEditor, forKey: .onlinetextEditor)
     }
 }
 
@@ -1496,14 +2389,139 @@ public struct MoodleOnlineTextEditor: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        if text != "" {
-            try container.encode(text, forKey: .text)
-        }
-        if format != 0 {
-            try container.encode(format, forKey: .format)
-        }
-        if itemId != 0 {
-            try container.encode(itemId, forKey: .itemId)
-        }
+        try container.encode(text, forKey: .text)
+        try container.encode(format, forKey: .format)
+        try container.encode(itemId, forKey: .itemId)
+    }
+}
+
+public struct MoodleAssignSetUserFlagsUserflag: Codable, Hashable, Sendable {
+    /// student id
+    public var userId: Int
+    /// locked
+    public var locked: Int64?
+    /// mailed
+    public var mailed: Int?
+    /// extension due date
+    public var extensionDueDate: Int64?
+    /// marking workflow state
+    public var workflowstate: String?
+    /// allocated marker
+    public var allocatedmarker: Int?
+
+    public init(
+        userId: Int = 0,
+        locked: Int64? = nil,
+        mailed: Int? = nil,
+        extensionDueDate: Int64? = nil,
+        workflowstate: String? = nil,
+        allocatedmarker: Int? = nil
+    ) {
+        self.userId = userId
+        self.locked = locked
+        self.mailed = mailed
+        self.extensionDueDate = extensionDueDate
+        self.workflowstate = workflowstate
+        self.allocatedmarker = allocatedmarker
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case userId = "userid"
+        case locked = "locked"
+        case mailed = "mailed"
+        case extensionDueDate = "extensionduedate"
+        case workflowstate = "workflowstate"
+        case allocatedmarker = "allocatedmarker"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.userId = container.decodeLenient(Int.self, forKey: .userId) ?? 0
+        self.locked = container.decodeLenient(Int64.self, forKey: .locked)
+        self.mailed = container.decodeLenient(Int.self, forKey: .mailed)
+        self.extensionDueDate = container.decodeLenient(Int64.self, forKey: .extensionDueDate)
+        self.workflowstate = container.decodeLenient(String.self, forKey: .workflowstate)
+        self.allocatedmarker = container.decodeLenient(Int.self, forKey: .allocatedmarker)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(userId, forKey: .userId)
+        try container.encode(locked, forKey: .locked)
+        try container.encode(mailed, forKey: .mailed)
+        try container.encode(extensionDueDate, forKey: .extensionDueDate)
+        try container.encode(workflowstate, forKey: .workflowstate)
+        try container.encode(allocatedmarker, forKey: .allocatedmarker)
+    }
+}
+
+public struct MoodleAssignSetUserFlagsItem: Codable, Hashable, Sendable {
+    /// id of record if successful, -1 for failure
+    public var id: Int
+    /// userid of record
+    public var userId: Int
+    /// Failure error message
+    public var errorMessage: String?
+
+    public init(
+        id: Int = 0,
+        userId: Int = 0,
+        errorMessage: String? = nil
+    ) {
+        self.id = id
+        self.userId = userId
+        self.errorMessage = errorMessage
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case id = "id"
+        case userId = "userid"
+        case errorMessage = "errormessage"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = container.decodeLenient(Int.self, forKey: .id) ?? 0
+        self.userId = container.decodeLenient(Int.self, forKey: .userId) ?? 0
+        self.errorMessage = container.decodeLenient(String.self, forKey: .errorMessage)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(id, forKey: .id)
+        try container.encode(userId, forKey: .userId)
+        try container.encode(errorMessage, forKey: .errorMessage)
+    }
+}
+
+public struct MoodleAssignStartSubmissionResponse: Codable, Hashable, Sendable {
+    /// New submission ID.
+    public var submissionid: Int
+    /// list of warnings
+    public var warnings: [MoodleWarning]
+
+    public init(
+        submissionid: Int = 0,
+        warnings: [MoodleWarning] = []
+    ) {
+        self.submissionid = submissionid
+        self.warnings = warnings
+    }
+
+    private enum CodingKeys: String, CodingKey {
+        case submissionid = "submissionid"
+        case warnings = "warnings"
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.submissionid = container.decodeLenient(Int.self, forKey: .submissionid) ?? 0
+        self.warnings = container.decodeLenient([MoodleWarning].self, forKey: .warnings) ?? []
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        try container.encode(submissionid, forKey: .submissionid)
+        try container.encode(warnings, forKey: .warnings)
     }
 }

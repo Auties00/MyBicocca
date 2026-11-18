@@ -3,12 +3,12 @@
 import { describe } from "vitest";
 import { MoodleTokenAuth } from "../../src/elearning/models/index.js";
 import { isPresent, liveCase } from "../runtime/live.js";
-import { MoodleLive, calendarGetActionEventsByTimesort, tokenCredentials, writeMoodleComponentString, writeMoodleSiteInfo } from "./MoodleLive.js";
+import { MoodleLive, draftAreaGetUnusedDraftItemid, tokenCredentials, writeMoodleComponentString, writeMoodleSiteInfo } from "./MoodleLive.js";
 
 // The live tests of the Moodle Site module, planned from common/specs/moodle/tests.yaml.
 describe("Moodle Site", () => {
   liveCase(MoodleLive, "Site.componentStrings#1", {}, async (live) => {
-    const component = live.choose("component", [await calendarGetActionEventsByTimesort(live)].map((it) => it.events).filter(isPresent).flat().map((it) => it.component).filter(isPresent));
+    const component = live.choose("component", [await draftAreaGetUnusedDraftItemid(live)].map((it) => it.component).filter(isPresent));
     const auth = await tokenCredentials(live);
     const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleComponentString\"}}", {}, async () => live.api.site.componentStrings(component, { auth: auth }));
     live.fingerprint((f) => f.list(result, (it) => writeMoodleComponentString(f, it)));

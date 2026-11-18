@@ -26,7 +26,7 @@ internal object Esse3Runtime {
         baseUrl = "https://s3w.si.unimib.it/e3rest/api",
         emptyStatuses = setOf(404),
         errors = ErrorFormat(code = listOf("/retCode"), message = listOf("/retErrMsg")),
-        failure = { Esse3Exception(it.statusCode, it.errorCode, it.errorMessage, it.roles.filterIsInstance<Esse3PermissionLevel>().toSet()) }
+        failure = { Esse3Exception(it.statusCode, it.errorCode, it.errorMessage, it.roles.filterIsInstance<Esse3PermissionLevel>().toSet(), serverMessage = it.serverMessage) }
     )
 
     fun settings() = ClientSettings(emptyList())

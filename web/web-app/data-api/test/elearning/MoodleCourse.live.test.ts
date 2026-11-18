@@ -3,10 +3,32 @@
 import { describe } from "vitest";
 import { MoodleTokenAuth } from "../../src/elearning/models/index.js";
 import { isPresent, liveCase } from "../runtime/live.js";
-import { MoodleLive, courseGetUsersCourses, quizGetQuizzesByCourses, siteGetSiteInfo, tokenCredentials, writeMoodleCourseSection, writeMoodleCourseUserGroupsResponse, writeMoodleCoursesByFieldResponse, writeMoodleEnrolledCourse } from "./MoodleLive.js";
+import { MoodleLive, bigbluebuttonbnGetBigbluebuttonbnsByCourses, blockGetDashboardBlocks, blockRecentlyaccesseditemsGetRecentItems, blogGetEntries, calendarGetActionEventsByTimesort, courseGetUsersCourses, siteGetSiteInfo, tokenCredentials, writeMoodleCourseGetCategoriesItem, writeMoodleCourseGetCourseModuleResponse, writeMoodleCourseGetCoursesItem, writeMoodleCourseSection, writeMoodleCourseUserGroupsResponse, writeMoodleCoursesByFieldResponse, writeMoodleEnrolGetCourseEnrolmentMethodsItem, writeMoodleEnrolGetEnrolledUsersItem, writeMoodleEnrolSelfGetInstanceInfoResponse, writeMoodleEnrolledCourse, writeMoodleEventCourse, writeMoodleGradesGetGroupsForSearchWidgetResponse, writeMoodleGroupGetActivityAllowedGroupsResponse, writeMoodleGroupGetActivityGroupmodeResponse, writeMoodleGroupGetCourseGroupingsItem, writeMoodleGroupGetCourseGroupsItem } from "./MoodleLive.js";
 
 // The live tests of the Moodle Course module, planned from common/specs/moodle/tests.yaml.
 describe("Moodle Course", () => {
+  liveCase(MoodleLive, "Course.getCategories#1", {}, async (live) => {
+    const auth = await tokenCredentials(live);
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCourseGetCategoriesItem\"}}", {}, async () => live.api.course.getCategories(auth));
+    live.fingerprint((f) => f.list(result, (it) => writeMoodleCourseGetCategoriesItem(f, it)));
+  });
+
+  liveCase(MoodleLive, "Course.getCategories#2", { index: 1 }, async (live) => {
+    const auth = await tokenCredentials(live);
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCourseGetCategoriesItem\"}}", {}, async () => live.api.course.getCategories(auth, { addsubcategories: true }));
+    live.fingerprint((f) => f.list(result, (it) => writeMoodleCourseGetCategoriesItem(f, it)));
+  });
+
+  liveCase(MoodleLive, "Course.getCategories#3", { index: 2 }, async (live) => {
+    const auth = await tokenCredentials(live);
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCourseGetCategoriesItem\"}}", {}, async () => live.api.course.getCategories(auth, { addsubcategories: false }));
+    live.fingerprint((f) => f.list(result, (it) => writeMoodleCourseGetCategoriesItem(f, it)));
+  });
+
+  liveCase(MoodleLive, "Course.getCategories#invalid-credentials", {}, async (live) => {
+    await live.refused(false, async () => live.api.course.getCategories(new MoodleTokenAuth("mybicocca-invalid-credential")));
+  });
+
   liveCase(MoodleLive, "Course.getContents#1", {}, async (live) => {
     const courseId = live.choose("courseId", [await courseGetUsersCourses(live)].flat().map((it) => it.id).filter(isPresent));
     const auth = await tokenCredentials(live);
@@ -14,9 +36,25 @@ describe("Moodle Course", () => {
     live.fingerprint((f) => f.list(result, (it) => writeMoodleCourseSection(f, it)));
   });
 
-  liveCase(MoodleLive, "Course.getContents#invalid-credentials", {}, async (live) => {
-    const courseId = live.choose("courseId", [await courseGetUsersCourses(live)].flat().map((it) => it.id).filter(isPresent));
-    await live.refused(false, async () => live.api.course.getContents(courseId, new MoodleTokenAuth("mybicocca-invalid-credential")));
+  liveCase(MoodleLive, "Course.getCourseModule#1", {}, async (live) => {
+    const cmId = live.choose("cmId", [await blockRecentlyaccesseditemsGetRecentItems(live)].flat().map((it) => it.cmId).filter(isPresent));
+    const auth = await tokenCredentials(live);
+    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleCourseGetCourseModuleResponse\"}", {}, async () => live.api.course.getCourseModule(cmId, auth));
+    live.fingerprint((f) => writeMoodleCourseGetCourseModuleResponse(f, result));
+  });
+
+  liveCase(MoodleLive, "Course.getCourseModuleByInstance#1", {}, async (live) => {
+    const module = live.choose("module", [await blogGetEntries(live)].map((it) => it.entries).filter(isPresent).flat().map((it) => it.module).filter(isPresent));
+    const instance = live.choose("instance", [await calendarGetActionEventsByTimesort(live)].map((it) => it.events).filter(isPresent).flat().map((it) => it.instance).filter(isPresent));
+    const auth = await tokenCredentials(live);
+    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleCourseGetCourseModuleResponse\"}", {}, async () => live.api.course.getCourseModuleByInstance(module, instance, auth));
+    live.fingerprint((f) => writeMoodleCourseGetCourseModuleResponse(f, result));
+  });
+
+  liveCase(MoodleLive, "Course.getCourses#1", {}, async (live) => {
+    const auth = await tokenCredentials(live);
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleCourseGetCoursesItem\"}}", {}, async () => live.api.course.getCourses(auth));
+    live.fingerprint((f) => f.list(result, (it) => writeMoodleCourseGetCoursesItem(f, it)));
   });
 
   liveCase(MoodleLive, "Course.getCoursesByField#1", {}, async (live) => {
@@ -24,6 +62,39 @@ describe("Moodle Course", () => {
     const auth = await tokenCredentials(live);
     const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleCoursesByFieldResponse\"}", {}, async () => live.api.course.getCoursesByField(auth, { field: "id", value: value }));
     live.fingerprint((f) => writeMoodleCoursesByFieldResponse(f, result));
+  });
+
+  liveCase(MoodleLive, "Course.getRecentCourses#1", {}, async (live) => {
+    const auth = await tokenCredentials(live);
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleEventCourse\"}}", {}, async () => live.api.course.getRecentCourses(auth));
+    live.fingerprint((f) => f.list(result, (it) => writeMoodleEventCourse(f, it)));
+  });
+
+  liveCase(MoodleLive, "Course.getRecentCourses#2", { index: 1 }, async (live) => {
+    const userId = live.choose("userId", [await siteGetSiteInfo(live)].map((it) => it.userId).filter(isPresent));
+    const auth = await tokenCredentials(live);
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleEventCourse\"}}", {}, async () => live.api.course.getRecentCourses(auth, { userId: userId }));
+    live.fingerprint((f) => f.list(result, (it) => writeMoodleEventCourse(f, it)));
+  });
+
+  liveCase(MoodleLive, "Course.viewCourse#1", { effect: "benign" }, async (live) => {
+    const courseId = live.choose("courseId", [await courseGetUsersCourses(live)].flat().map((it) => it.id).filter(isPresent));
+    const auth = await tokenCredentials(live);
+    await live.call("{\"k\":\"record\",\"n\":\"MoodleStatusResponse\"}", {}, async () => live.api.course.viewCourse(courseId, auth));
+  });
+
+  liveCase(MoodleLive, "Course.getCourseEnrolmentMethods#1", {}, async (live) => {
+    const courseId = live.choose("courseId", [await courseGetUsersCourses(live)].flat().map((it) => it.id).filter(isPresent));
+    const auth = await tokenCredentials(live);
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleEnrolGetCourseEnrolmentMethodsItem\"}}", {}, async () => live.api.course.getCourseEnrolmentMethods(courseId, auth));
+    live.fingerprint((f) => f.list(result, (it) => writeMoodleEnrolGetCourseEnrolmentMethodsItem(f, it)));
+  });
+
+  liveCase(MoodleLive, "Course.getEnrolledUsers#1", {}, async (live) => {
+    const courseId = live.choose("courseId", [await courseGetUsersCourses(live)].flat().map((it) => it.id).filter(isPresent));
+    const auth = await tokenCredentials(live);
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleEnrolGetEnrolledUsersItem\"}}", {}, async () => live.api.course.getEnrolledUsers(courseId, auth));
+    live.fingerprint((f) => f.list(result, (it) => writeMoodleEnrolGetEnrolledUsersItem(f, it)));
   });
 
   liveCase(MoodleLive, "Course.getUsersCourses#1", {}, async (live) => {
@@ -47,6 +118,42 @@ describe("Moodle Course", () => {
     live.fingerprint((f) => f.list(result, (it) => writeMoodleEnrolledCourse(f, it)));
   });
 
+  liveCase(MoodleLive, "Course.getActivityAllowedGroups#1", {}, async (live) => {
+    const cmId = live.choose("cmId", [await blockRecentlyaccesseditemsGetRecentItems(live)].flat().map((it) => it.cmId).filter(isPresent));
+    const auth = await tokenCredentials(live);
+    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleGroupGetActivityAllowedGroupsResponse\"}", {}, async () => live.api.course.getActivityAllowedGroups(cmId, auth));
+    live.fingerprint((f) => writeMoodleGroupGetActivityAllowedGroupsResponse(f, result));
+  });
+
+  liveCase(MoodleLive, "Course.getActivityAllowedGroups#2", { index: 1 }, async (live) => {
+    const cmId = live.choose("cmId", [await blockRecentlyaccesseditemsGetRecentItems(live)].flat().map((it) => it.cmId).filter(isPresent));
+    const userId = live.choose("userId", [await siteGetSiteInfo(live)].map((it) => it.userId).filter(isPresent));
+    const auth = await tokenCredentials(live);
+    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleGroupGetActivityAllowedGroupsResponse\"}", {}, async () => live.api.course.getActivityAllowedGroups(cmId, auth, { userId: userId }));
+    live.fingerprint((f) => writeMoodleGroupGetActivityAllowedGroupsResponse(f, result));
+  });
+
+  liveCase(MoodleLive, "Course.getActivityGroupmode#1", {}, async (live) => {
+    const cmId = live.choose("cmId", [await blockRecentlyaccesseditemsGetRecentItems(live)].flat().map((it) => it.cmId).filter(isPresent));
+    const auth = await tokenCredentials(live);
+    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleGroupGetActivityGroupmodeResponse\"}", {}, async () => live.api.course.getActivityGroupmode(cmId, auth));
+    live.fingerprint((f) => writeMoodleGroupGetActivityGroupmodeResponse(f, result));
+  });
+
+  liveCase(MoodleLive, "Course.getCourseGroupings#1", {}, async (live) => {
+    const courseId = live.choose("courseId", [await courseGetUsersCourses(live)].flat().map((it) => it.id).filter(isPresent));
+    const auth = await tokenCredentials(live);
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleGroupGetCourseGroupingsItem\"}}", {}, async () => live.api.course.getCourseGroupings(courseId, auth));
+    live.fingerprint((f) => f.list(result, (it) => writeMoodleGroupGetCourseGroupingsItem(f, it)));
+  });
+
+  liveCase(MoodleLive, "Course.getCourseGroups#1", {}, async (live) => {
+    const courseId = live.choose("courseId", [await courseGetUsersCourses(live)].flat().map((it) => it.id).filter(isPresent));
+    const auth = await tokenCredentials(live);
+    const result = await live.call("{\"k\":\"list\",\"e\":{\"k\":\"record\",\"n\":\"MoodleGroupGetCourseGroupsItem\"}}", {}, async () => live.api.course.getCourseGroups(courseId, auth));
+    live.fingerprint((f) => f.list(result, (it) => writeMoodleGroupGetCourseGroupsItem(f, it)));
+  });
+
   liveCase(MoodleLive, "Course.getCourseUserGroups#1", {}, async (live) => {
     const auth = await tokenCredentials(live);
     const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleCourseUserGroupsResponse\"}", {}, async () => live.api.course.getCourseUserGroups(auth));
@@ -63,7 +170,7 @@ describe("Moodle Course", () => {
 
   liveCase(MoodleLive, "Course.getCourseUserGroups#3", { index: 2 }, async (live) => {
     const courseId = live.choose("courseId", [await courseGetUsersCourses(live)].flat().map((it) => it.id).filter(isPresent));
-    const groupingId = live.choose("groupingId", [await quizGetQuizzesByCourses(live)].map((it) => it.quizzes).filter(isPresent).flat().map((it) => it.groupingId).filter(isPresent));
+    const groupingId = live.choose("groupingId", [await bigbluebuttonbnGetBigbluebuttonbnsByCourses(live)].map((it) => it.bigbluebuttonbns).filter(isPresent).flat().map((it) => it.groupingId).filter(isPresent));
     const auth = await tokenCredentials(live);
     const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleCourseUserGroupsResponse\"}", {}, async () => live.api.course.getCourseUserGroups(auth, { courseId: courseId, groupingId: groupingId }));
     live.fingerprint((f) => writeMoodleCourseUserGroupsResponse(f, result));
@@ -71,9 +178,31 @@ describe("Moodle Course", () => {
 
   liveCase(MoodleLive, "Course.getCourseUserGroups#4", { index: 3 }, async (live) => {
     const userId = live.choose("userId", [await siteGetSiteInfo(live)].map((it) => it.userId).filter(isPresent));
-    const groupingId = live.choose("groupingId", [await quizGetQuizzesByCourses(live)].map((it) => it.quizzes).filter(isPresent).flat().map((it) => it.groupingId).filter(isPresent));
+    const groupingId = live.choose("groupingId", [await bigbluebuttonbnGetBigbluebuttonbnsByCourses(live)].map((it) => it.bigbluebuttonbns).filter(isPresent).flat().map((it) => it.groupingId).filter(isPresent));
     const auth = await tokenCredentials(live);
     const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleCourseUserGroupsResponse\"}", {}, async () => live.api.course.getCourseUserGroups(auth, { userId: userId, groupingId: groupingId }));
     live.fingerprint((f) => writeMoodleCourseUserGroupsResponse(f, result));
+  });
+
+  liveCase(MoodleLive, "Course.getGroupsForSelector#1", {}, async (live) => {
+    const courseId = live.choose("courseId", [await courseGetUsersCourses(live)].flat().map((it) => it.id).filter(isPresent));
+    const auth = await tokenCredentials(live);
+    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleGradesGetGroupsForSearchWidgetResponse\"}", {}, async () => live.api.course.getGroupsForSelector(courseId, auth));
+    live.fingerprint((f) => writeMoodleGradesGetGroupsForSearchWidgetResponse(f, result));
+  });
+
+  liveCase(MoodleLive, "Course.getGroupsForSelector#2", { index: 1 }, async (live) => {
+    const courseId = live.choose("courseId", [await courseGetUsersCourses(live)].flat().map((it) => it.id).filter(isPresent));
+    const cmId = live.choose("cmId", [await blockRecentlyaccesseditemsGetRecentItems(live)].flat().map((it) => it.cmId).filter(isPresent));
+    const auth = await tokenCredentials(live);
+    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleGradesGetGroupsForSearchWidgetResponse\"}", {}, async () => live.api.course.getGroupsForSelector(courseId, auth, { cmId: cmId }));
+    live.fingerprint((f) => writeMoodleGradesGetGroupsForSearchWidgetResponse(f, result));
+  });
+
+  liveCase(MoodleLive, "Course.getInstanceInfo#1", {}, async (live) => {
+    const instanceId = live.choose("instanceId", [await blockGetDashboardBlocks(live)].map((it) => it.blocks).filter(isPresent).flat().map((it) => it.instanceId).filter(isPresent));
+    const auth = await tokenCredentials(live);
+    const result = await live.call("{\"k\":\"record\",\"n\":\"MoodleEnrolSelfGetInstanceInfoResponse\"}", {}, async () => live.api.course.getInstanceInfo(instanceId, auth));
+    live.fingerprint((f) => writeMoodleEnrolSelfGetInstanceInfoResponse(f, result));
   });
 });

@@ -19,7 +19,7 @@ final class MoodleForumLiveTests: XCTestCase {
     func test_canAddDiscussion2() async throws {
         try await liveCase(MoodleLive.api, "Forum.canAddDiscussion#2", index: 1) { live in
             let forumId = try live.choose("forumId", [try await MoodleLive.forumGetForumsByCourses(live)].flatMap { $0 }.compactMap { $0.id })
-            let groupId = try live.choose("groupId", [try await MoodleLive.calendarGetActionEventsByTimesort(live)].compactMap { $0.events }.flatMap { $0 }.compactMap { $0.groupId })
+            let groupId = try live.choose("groupId", [try await MoodleLive.blogGetEntries(live)].compactMap { $0.entries }.flatMap { $0 }.compactMap { $0.groupId })
             let auth = try await MoodleLive.tokenCredentials(live)
             let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleCanAddDiscussionResponse\"}", errors: ["requireloginerror"]) { try await live.api.forum.canAddDiscussion(forumId: forumId, groupId: groupId, auth: auth) }
             live.fingerprint { f in MoodleLive.writeMoodleCanAddDiscussionResponse(f, result) }
@@ -69,6 +69,15 @@ final class MoodleForumLiveTests: XCTestCase {
         }
     }
 
+    func test_getForumAccessInformation1() async throws {
+        try await liveCase(MoodleLive.api, "Forum.getForumAccessInformation#1") { live in
+            let forumId = try live.choose("forumId", [try await MoodleLive.forumGetForumsByCourses(live)].flatMap { $0 }.compactMap { $0.id })
+            let auth = try await MoodleLive.tokenCredentials(live)
+            let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleForumGetForumAccessInformationResponse\"}") { try await live.api.forum.getForumAccessInformation(forumId: forumId, auth: auth) }
+            live.fingerprint { f in MoodleLive.writeMoodleForumGetForumAccessInformationResponse(f, result) }
+        }
+    }
+
     func test_getForumDiscussions1() async throws {
         try await liveCase(MoodleLive.api, "Forum.getForumDiscussions#1") { live in
             let forumId = try live.choose("forumId", [try await MoodleLive.forumGetForumsByCourses(live)].flatMap { $0 }.compactMap { $0.id })
@@ -81,7 +90,7 @@ final class MoodleForumLiveTests: XCTestCase {
     func test_getForumDiscussions2() async throws {
         try await liveCase(MoodleLive.api, "Forum.getForumDiscussions#2", index: 1) { live in
             let forumId = try live.choose("forumId", [try await MoodleLive.forumGetForumsByCourses(live)].flatMap { $0 }.compactMap { $0.id })
-            let groupId = try live.choose("groupId", [try await MoodleLive.calendarGetActionEventsByTimesort(live)].compactMap { $0.events }.flatMap { $0 }.compactMap { $0.groupId })
+            let groupId = try live.choose("groupId", [try await MoodleLive.blogGetEntries(live)].compactMap { $0.entries }.flatMap { $0 }.compactMap { $0.groupId })
             let auth = try await MoodleLive.tokenCredentials(live)
             let result = try await live.call("{\"k\":\"record\",\"n\":\"MoodleForumDiscussionsResponse\"}", errors: ["requireloginerror"]) { try await live.api.forum.getForumDiscussions(forumId: forumId, groupId: groupId, auth: auth) }
             live.fingerprint { f in MoodleLive.writeMoodleForumDiscussionsResponse(f, result) }

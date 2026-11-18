@@ -9,6 +9,7 @@ import io.ktor.client.request.setBody
 import io.ktor.http.HttpMethod
 import io.ktor.http.parameters
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleActivitiesCompletionResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCompletionGetCourseCompletionStatusResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleStatusResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
 import it.attendance100.mybicocca.data.remote.elearning.dto.appendBrackets
@@ -41,6 +42,51 @@ class MoodleCompletionApi(
                 auth.form.forEach { (name, value) -> append(name, value) }
             }))
             parameter("wsfunction", "core_completion_get_activities_completion_status")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Returns course completion status.
+     *
+     * @param courseId Course ID
+     * @param userId User ID
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun getCourseCompletionStatus(
+        courseId: Int,
+        userId: Int,
+        auth: MoodleTokenAuth
+    ): MoodleCompletionGetCourseCompletionStatusResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleCompletionGetCourseCompletionStatusResponse>()) {
+            setBody(FormDataContent(parameters {
+                append("courseid", courseId.toString())
+                append("userid", userId.toString())
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_completion_get_course_completion_status")
+            parameter("moodlewsrestformat", "json")
+            auth.headers.forEach { (name, value) -> header(name, value) }
+        }
+    }
+
+    /**
+     * Update the course completion status for the current user (if course self-completion is enabled).
+     *
+     * @param courseId Course ID
+     * @param auth The credentials: [MoodleTokenAuth].
+     */
+    suspend fun markCourseSelfCompleted(
+        courseId: Int,
+        auth: MoodleTokenAuth
+    ): MoodleStatusResponse {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleStatusResponse>()) {
+            setBody(FormDataContent(parameters {
+                append("courseid", courseId.toString())
+                auth.form.forEach { (name, value) -> append(name, value) }
+            }))
+            parameter("wsfunction", "core_completion_mark_course_self_completed")
             parameter("moodlewsrestformat", "json")
             auth.headers.forEach { (name, value) -> header(name, value) }
         }
