@@ -10,7 +10,8 @@ import io.ktor.client.HttpClientConfig
  */
 class MoodleWebApi(httpClientConfig: HttpClientConfig<*>.() -> Unit = {}) : AutoCloseable {
     private val json = MoodleWebRuntime.json
-    private val client = MoodleWebRuntime.createHttpClient(json, httpClientConfig)
+    private val settings = MoodleWebRuntime.settings()
+    private val client = MoodleWebRuntime.createHttpClient(json, settings, httpClientConfig)
 
     val catalog = MoodleWebCatalogApi(client, json)
     val media = MoodleWebMediaApi(client, json)

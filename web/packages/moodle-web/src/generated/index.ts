@@ -8,3 +8,4 @@ export * from "./MoodleWebAttendanceTypes.js";
 export * from "./MoodleWebServer.js";
 export * from "./MoodleWebScrapers.js";
 export * from "./MoodleWebApi.js";
+export * from "./MoodleWebClient.js";

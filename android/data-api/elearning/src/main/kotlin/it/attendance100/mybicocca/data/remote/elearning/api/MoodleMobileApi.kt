@@ -6,19 +6,22 @@ import io.ktor.client.request.forms.FormDataContent
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
+import io.ktor.http.HttpMethod
 import io.ktor.http.parameters
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAutologinKey
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleMobileContent
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleNamedValue
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
 import it.attendance100.mybicocca.data.remote.elearning.dto.appendBrackets
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.serializer
 
 class MoodleMobileApi(
     client: HttpClient,
     json: Json
-) : MoodleAbstractApi(client, json, "") {
+) : RestApi(client, json, "", MoodleRuntime.policy) {
 
     /**
      * Creates an auto-login key for the current user. Is created only in https sites and is restricted by time, ip address and only works if the request comes from the Moodle mobile or desktop app.
@@ -30,7 +33,7 @@ class MoodleMobileApi(
         privateToken: String,
         auth: MoodleTokenAuth
     ): MoodleAutologinKey {
-        return executeJsonPost<MoodleAutologinKey>("/webservice/rest/server.php") {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleAutologinKey>()) {
             setBody(FormDataContent(parameters {
                 append("privatetoken", privateToken)
                 auth.form.forEach { (name, value) -> append(name, value) }
@@ -55,7 +58,7 @@ class MoodleMobileApi(
         args: List<MoodleNamedValue>? = null,
         auth: MoodleTokenAuth
     ): MoodleMobileContent {
-        return executeJsonPost<MoodleMobileContent>("/webservice/rest/server.php") {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleMobileContent>()) {
             setBody(FormDataContent(parameters {
                 append("component", component)
                 append("method", method)

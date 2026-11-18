@@ -27,12 +27,12 @@ class Esse3StructureApiTest : Esse3ApiTestBase() {
         val permissions = mutableSetOf(
             Esse3PermissionLevel.ANY,
             Esse3PermissionLevel.AUTHENTICATED_USER,
-            Esse3PermissionLevel.fromGroupId(loginResult.user.groupId)
+            esse3RoleOfGroup(loginResult.user.groupId)
         )
         for (profile in loginResult.profiles) {
             val description = profile.description
             if (description != null) {
-                permissions.add(Esse3PermissionLevel.fromProfileName(description))
+                permissions.add(esse3RoleOfProfile(description))
             }
         }
         userPermissions = permissions

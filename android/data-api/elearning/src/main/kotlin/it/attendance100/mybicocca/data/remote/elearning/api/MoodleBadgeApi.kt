@@ -6,17 +6,20 @@ import io.ktor.client.request.forms.FormDataContent
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
+import io.ktor.http.HttpMethod
 import io.ktor.http.parameters
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleUserBadgesResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.appendBrackets
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.serializer
 
 class MoodleBadgeApi(
     client: HttpClient,
     json: Json
-) : MoodleAbstractApi(client, json, "") {
+) : RestApi(client, json, "", MoodleRuntime.policy) {
 
     /**
      * Returns the list of badges awarded to a user.
@@ -38,7 +41,7 @@ class MoodleBadgeApi(
         onlyPublic: Boolean? = null,
         auth: MoodleTokenAuth
     ): MoodleUserBadgesResponse {
-        return executeJsonPost<MoodleUserBadgesResponse>("/webservice/rest/server.php") {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleUserBadgesResponse>()) {
             setBody(FormDataContent(parameters {
                 userId?.let { append("userid", it.toString()) }
                 courseId?.let { append("courseid", it.toString()) }

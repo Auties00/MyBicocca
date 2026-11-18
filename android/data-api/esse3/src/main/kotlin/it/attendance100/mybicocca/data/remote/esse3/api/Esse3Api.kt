@@ -10,7 +10,8 @@ import io.ktor.client.HttpClientConfig
  */
 class Esse3Api(httpClientConfig: HttpClientConfig<*>.() -> Unit = {}) : AutoCloseable {
     private val json = Esse3Runtime.json
-    private val client = Esse3Runtime.createHttpClient(json, httpClientConfig)
+    private val settings = Esse3Runtime.settings()
+    private val client = Esse3Runtime.createHttpClient(json, settings, httpClientConfig)
 
     val attachments = Esse3AttachmentsApi(client, json)
     val auth = Esse3AuthApi(client, json)

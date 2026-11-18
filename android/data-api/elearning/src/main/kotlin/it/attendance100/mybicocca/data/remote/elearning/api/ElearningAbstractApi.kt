@@ -31,8 +31,8 @@ abstract class ElearningAbstractApi(
         const val WS_TOKEN_LENGTH = 32
 
         /**
-         * Moodle langpack code sent as `moodlewssettinglang` when the client has no
-         * [ElearningAttributes.Language] attribute configured (see [ElearningApi.language]).
+         * Moodle langpack code sent as `moodlewssettinglang` until the caller sets another one
+         * (see [ElearningApi.language]).
          */
         const val DEFAULT_LANGUAGE = "en"
     }

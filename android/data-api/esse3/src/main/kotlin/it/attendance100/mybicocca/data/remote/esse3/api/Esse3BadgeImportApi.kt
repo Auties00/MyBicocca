@@ -4,6 +4,7 @@ package it.attendance100.mybicocca.data.remote.esse3.api
 import io.ktor.client.HttpClient
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
+import io.ktor.http.HttpMethod
 import io.ktor.http.contentType
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3Award
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3AwardReturn
@@ -11,12 +12,14 @@ import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3BadgeClass
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3BadgeClassReturn
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3BadgeIssuanceNotification
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3PermissionLevel
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
 
 class Esse3BadgeImportApi(
     client: HttpClient,
     json: Json
-) : Esse3AbstractApi(client, json, "/importbadge-service-v1") {
+) : RestApi(client, json, "/importbadge-service-v1", Esse3Runtime.policy) {
 
     /**
      * consente di importare uno o più badge (Award)
@@ -26,7 +29,7 @@ class Esse3BadgeImportApi(
     suspend fun postImportAward(
         body: List<Esse3Award>
     ): Esse3AwardReturn {
-        return executeJsonPost<Esse3AwardReturn>("/importAward", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Post, "/importAward", deserializer = serializer<Esse3AwardReturn>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -40,7 +43,7 @@ class Esse3BadgeImportApi(
     suspend fun postImportBadgeClass(
         body: List<Esse3BadgeClass>
     ): Esse3BadgeClassReturn {
-        return executeJsonPost<Esse3BadgeClassReturn>("/importBadgeClass", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Post, "/importBadgeClass", deserializer = serializer<Esse3BadgeClassReturn>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -54,7 +57,7 @@ class Esse3BadgeImportApi(
     suspend fun putBadgeIssuing(
         body: Esse3BadgeIssuanceNotification
     ): String {
-        return executeJsonPut<String>("/importBadgeIssuing", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Put, "/importBadgeIssuing", deserializer = serializer<String>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }

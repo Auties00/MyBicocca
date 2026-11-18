@@ -1,0 +1,204 @@
+package __PACKAGE__
+
+import io.ktor.client.HttpClient
+import io.ktor.client.request.HttpRequestBuilder
+import io.ktor.client.request.header
+import io.ktor.client.request.request
+import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsChannel
+import io.ktor.client.statement.bodyAsText
+import io.ktor.client.statement.request
+import io.ktor.http.ContentType
+import io.ktor.http.HttpMethod
+import io.ktor.http.contentType
+import io.ktor.utils.io.ByteReadChannel
+import kotlinx.coroutines.delay
+import kotlinx.serialization.DeserializationStrategy
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonObject
+import org.jsoup.Jsoup
+import org.jsoup.nodes.Node
+
+/**
+ * Base class of every generated module: sends an operation's request as the API's [policy]
+ * says, and reads the response as JSON, as the JSON a script assigns to a variable, as an HTML
+ * page or as bytes.
+ *
+ * Responses are read whatever their content type, since some servers answer JSON as
+ * `text/html`. A response with an error status, or a JSON body the policy detects as an error,
+ * becomes the API's exception; the policy's retry rules may send the request again first.
+ *
+ * @param basePath Path prefix of every operation of the module.
+ * @param parameters The module's API parameters, by name, for the placeholders of retry
+ *   requests.
+ */
+abstract class RestApi(
+    protected val client: HttpClient,
+    protected val json: Json,
+    private val basePath: String,
+    private val policy: RestPolicy,
+    private val parameters: Map<String, String> = emptyMap(),
+) {
+    /** Sends a request whose response body isn't needed. */
+    protected suspend fun send(
+        method: HttpMethod,
+        endpoint: String,
+        server: String? = null,
+        roles: Set<Enum<*>> = emptySet(),
+        block: HttpRequestBuilder.() -> Unit = {},
+    ) {
+        execute(method, endpoint, server, roles, readsJson = true, allowEmpty = false, block)
+    }
+
+    /** Sends a request and decodes its JSON body, after unwrapping it from [envelope]. */
+    protected suspend fun <T> json(
+        method: HttpMethod,
+        endpoint: String,
+        deserializer: DeserializationStrategy<T>,
+        server: String? = null,
+        envelope: List<String> = emptyList(),
+        roles: Set<Enum<*>> = emptySet(),
+        block: HttpRequestBuilder.() -> Unit = {},
+    ): T = decode(execute(method, endpoint, server, roles, readsJson = true, allowEmpty = false, block)!!, envelope, deserializer)
+
+    /** Like [json] for a list, which is empty when the status is one of the policy's empty ones. */
+    protected suspend fun <T> jsonList(
+        method: HttpMethod,
+        endpoint: String,
+        deserializer: DeserializationStrategy<List<T>>,
+        server: String? = null,
+        envelope: List<String> = emptyList(),
+        roles: Set<Enum<*>> = emptySet(),
+        block: HttpRequestBuilder.() -> Unit = {},
+    ): List<T> {
+        val response = execute(method, endpoint, server, roles, readsJson = true, allowEmpty = true, block) ?: return emptyList()
+        return decode(response, envelope, deserializer)
+    }
+
+    /** Sends a request and returns its body as bytes. */
+    protected suspend fun stream(
+        method: HttpMethod,
+        endpoint: String,
+        server: String? = null,
+        roles: Set<Enum<*>> = emptySet(),
+        block: HttpRequestBuilder.() -> Unit = {},
+    ): ByteReadChannel = execute(method, endpoint, server, roles, readsJson = false, allowEmpty = false, block)!!.bodyAsChannel()
+
+    /**
+     * Sends a request for a script and decodes the JSON it assigns to [variable], on a line of
+     * its own: declared (`var name = …;`) or assigned (`window.name = …;`).
+     *
+     * @throws HtmlParsingException If no line assigns [variable].
+     */
+    protected suspend fun <T> script(
+        method: HttpMethod,
+        endpoint: String,
+        variable: String,
+        deserializer: DeserializationStrategy<T>,
+        server: String? = null,
+        roles: Set<Enum<*>> = emptySet(),
+        block: HttpRequestBuilder.() -> Unit = {},
+    ): T {
+        val response = execute(method, endpoint, server, roles, readsJson = false, allowEmpty = false, block)!!
+        val prefix = "$variable ="
+        val assignment = response.bodyAsText().lineSequence()
+            .map { line -> DECLARATION_KEYWORDS.fold(line.trim()) { statement, keyword -> statement.removePrefix(keyword) } }
+            .firstOrNull { it.startsWith(prefix) }
+            ?: throw HtmlParsingException("${response.request.url} assigns no '$variable'")
+        return json.decodeFromJsonElement(deserializer, json.parseToJsonElement(assignment.removePrefix(prefix).trim().removeSuffix(";")))
+    }
+
+    /**
+     * Sends a request for an HTML page and returns what [scrape] reads from it, parsed with the
+     * URL that answered as its base.
+     *
+     * @throws HtmlParsingException If [scrape] finds nothing, typically because the page changed.
+     */
+    protected suspend fun <T> html(
+        method: HttpMethod,
+        endpoint: String,
+        scrape: (Node) -> T?,
+        server: String? = null,
+        roles: Set<Enum<*>> = emptySet(),
+        block: HttpRequestBuilder.() -> Unit = {},
+    ): T {
+        val response = execute(method, endpoint, server, roles, readsJson = false, allowEmpty = false, block)!!
+        val url = response.request.url.toString()
+        return scrape(Jsoup.parse(response.bodyAsText(), url))
+            ?: throw HtmlParsingException("$url doesn't hold what was expected; the page may have changed")
+    }
+
+    private suspend fun <T> decode(response: HttpResponse, envelope: List<String>, deserializer: DeserializationStrategy<T>): T {
+        val body = json.parseToJsonElement(response.bodyAsText().ifBlank { "null" })
+        val element = envelope.fold(body) { value, key -> value.jsonObject[key] ?: JsonObject(emptyMap()) }
+        return json.decodeFromJsonElement(deserializer, element)
+    }
+
+    /**
+     * Sends the request, recovering from the failures the policy's retry rules match, and
+     * returns the successful response: null when [allowEmpty] and the status is an empty one.
+     * The body of a successful response is inspected for an error when the operation reads
+     * JSON, or when the response is JSON.
+     */
+    private suspend fun execute(
+        method: HttpMethod,
+        endpoint: String,
+        server: String?,
+        roles: Set<Enum<*>>,
+        readsJson: Boolean,
+        allowEmpty: Boolean,
+        block: HttpRequestBuilder.() -> Unit,
+    ): HttpResponse? {
+        val root = (server ?: policy.baseUrl ?: error("The operation names no server and the API has no base URL")).trimEnd('/')
+        val attempt: suspend () -> HttpResponse = {
+            client.request(root + basePath + endpoint) {
+                this.method = method
+                block()
+            }
+        }
+        var response = attempt()
+        for (rule in policy.retries) {
+            if (!response.failed()) break
+            if (rule.status != null && rule.status != response.status.value) continue
+            if (rule.code != null && rule.code != policy.errors.code(response.jsonOrNull())) continue
+            rule.before?.let { before ->
+                client.request(root + fill(before.path)) {
+                    this.method = before.method
+                    before.headers.forEach { (name, value) -> header(name, fill(value)) }
+                }
+            }
+            rule.delay?.let { delay(it) }
+            response = attempt()
+        }
+        if (allowEmpty && response.status.value in policy.emptyStatuses) return null
+        if (response.failed()) throw failure(response, roles)
+        val inspects = policy.errors.detect.isNotEmpty() &&
+            (readsJson || response.contentType()?.match(ContentType.Application.Json) == true)
+        if (inspects && policy.errors.detects(response.jsonOrNull())) throw failure(response, roles)
+        return response
+    }
+
+    private suspend fun failure(response: HttpResponse, roles: Set<Enum<*>>): Exception {
+        val body = response.jsonOrNull()
+        val code = policy.errors.code(body)
+        val message = policy.errors.message(body) ?: code ?: "Request failed with status ${response.status}"
+        return policy.failure(Failure(response.status.value, code, message, roles))
+    }
+
+    private fun HttpResponse.failed(): Boolean = status.value >= 400
+
+    private suspend fun HttpResponse.jsonOrNull(): JsonElement? =
+        runCatching { json.parseToJsonElement(bodyAsText()) }.getOrNull()
+
+    private fun fill(template: String): String =
+        PLACEHOLDER.replace(template) { parameters[it.groupValues[1]] ?: error("No API parameter '${it.groupValues[1]}'") }
+
+    private companion object {
+        /** Keywords a script may declare a variable with, before its name. */
+        val DECLARATION_KEYWORDS = listOf("var ", "let ", "const ")
+
+        val PLACEHOLDER = Regex("""\{([^}]+)}""")
+    }
+}

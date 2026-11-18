@@ -5,17 +5,20 @@ import io.ktor.client.HttpClient
 import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
+import io.ktor.http.HttpMethod
 import io.ktor.http.contentType
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3CommunicationInsert
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3CommunicationWithRecipients
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3PermissionLevel
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3Recipient
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
 
 class Esse3CommunicationsApi(
     client: HttpClient,
     json: Json
-) : Esse3AbstractApi(client, json, "/comunicazioni-service-v1") {
+) : RestApi(client, json, "/comunicazioni-service-v1", Esse3Runtime.policy) {
 
     /**
      * inserisce una nuova comunicazione
@@ -25,11 +28,10 @@ class Esse3CommunicationsApi(
     suspend fun postCommunication(
         body: Esse3CommunicationInsert
     ) {
-        val response = executePost("/comunicazioni") {
+        send(HttpMethod.Post, "/comunicazioni", roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
-        ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -44,7 +46,7 @@ class Esse3CommunicationsApi(
         fields: String? = null,
         optionalFields: String? = null
     ): Esse3CommunicationWithRecipients {
-        return executeJsonGet<Esse3CommunicationWithRecipients>("/comunicazioni/${municipalityId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Get, "/comunicazioni/${municipalityId}", deserializer = serializer<Esse3CommunicationWithRecipients>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             fields?.let { parameter("fields", it) }
             optionalFields?.let { parameter("optionalFields", it) }
         }
@@ -74,7 +76,7 @@ class Esse3CommunicationsApi(
         start: Int? = null,
         limit: Int? = null
     ): List<Esse3Recipient> {
-        return executeJsonGetList<Esse3Recipient>("/comunicazioni/${municipalityId}/destinatari", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/comunicazioni/${municipalityId}/destinatari", deserializer = serializer<List<Esse3Recipient>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             dataOrigin?.let { parameter("origineDato", it) }
             personalDataId?.let { parameter("idAnagrafica", it) }
             contact?.let { parameter("recapito", it) }

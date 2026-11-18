@@ -6,6 +6,7 @@ import io.ktor.client.request.forms.FormDataContent
 import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
+import io.ktor.http.HttpMethod
 import io.ktor.http.contentType
 import io.ktor.http.parameters
 import io.ktor.utils.io.ByteReadChannel
@@ -48,12 +49,14 @@ import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3TeacherAuthorizatio
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3UpdateExamSession
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3UpdateResult
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3UpdateSystemLogCommitments
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
 
 class Esse3ExamsCalendarApi(
     client: HttpClient,
     json: Json
-) : Esse3AbstractApi(client, json, "/calesa-service-v1") {
+) : RestApi(client, json, "/calesa-service-v1", Esse3Runtime.policy) {
 
     /**
      * recupera le informazioni sulle Ablitazioni docente
@@ -81,7 +84,7 @@ class Esse3ExamsCalendarApi(
         fields: String? = null,
         optionalFields: String? = null
     ): List<Esse3TeacherAuthorizations> {
-        return executeJsonGetList<Esse3TeacherAuthorizations>("/abilitazioni", setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/abilitazioni", deserializer = serializer<List<Esse3TeacherAuthorizations>>(), roles = setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             courseOfStudyEnableId?.let { parameter("cdsAbilId", it) }
             courseOfStudyEnableCode?.let { parameter("cdsAbilCod", it) }
             activityAuthorizationId?.let { parameter("adAbilId", it) }
@@ -109,7 +112,7 @@ class Esse3ExamsCalendarApi(
         fields: String? = null,
         optionalFields: String? = null
     ): List<Esse3TeacherAuthorizations> {
-        return executeJsonGetList<Esse3TeacherAuthorizations>("/abilitazioni/${lecturerId}/", setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/abilitazioni/${lecturerId}/", deserializer = serializer<List<Esse3TeacherAuthorizations>>(), roles = setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             order?.let { parameter("order", it) }
             fields?.let { parameter("fields", it) }
             optionalFields?.let { parameter("optionalFields", it) }
@@ -154,7 +157,7 @@ class Esse3ExamsCalendarApi(
         fields: String? = null,
         optionalFields: String? = null
     ): List<Esse3ExamSessionTeacherAuthorization> {
-        return executeJsonGetList<Esse3ExamSessionTeacherAuthorization>("/abilitazioni/${lecturerId}/appelli", setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/abilitazioni/${lecturerId}/appelli", deserializer = serializer<List<Esse3ExamSessionTeacherAuthorization>>(), roles = setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             parameter("minDataApp", minCallDate)
             parameter("maxDataApp", maxCallDate)
             academicYearCalendarId?.let { parameter("aaCalId", it) }
@@ -190,7 +193,7 @@ class Esse3ExamsCalendarApi(
         fields: String? = null,
         optionalFields: String? = null
     ): List<Esse3TeacherAuthorizations> {
-        return executeJsonGetList<Esse3TeacherAuthorizations>("/abilitazioni/${lecturerId}/${courseOfStudyId}/${activityId}/", setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/abilitazioni/${lecturerId}/${courseOfStudyId}/${activityId}/", deserializer = serializer<List<Esse3TeacherAuthorizations>>(), roles = setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             order?.let { parameter("order", it) }
             fields?.let { parameter("fields", it) }
             optionalFields?.let { parameter("optionalFields", it) }
@@ -215,7 +218,7 @@ class Esse3ExamsCalendarApi(
         fields: String? = null,
         optionalFields: String? = null
     ): Esse3TeacherAuthorizations {
-        return executeJsonGet<Esse3TeacherAuthorizations>("/abilitazioni/${lecturerId}/${courseOfStudyId}/${activityId}/${academicYearOfferTeacherAuthorizationId}", setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Get, "/abilitazioni/${lecturerId}/${courseOfStudyId}/${activityId}/${academicYearOfferTeacherAuthorizationId}", deserializer = serializer<Esse3TeacherAuthorizations>(), roles = setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             fields?.let { parameter("fields", it) }
             optionalFields?.let { parameter("optionalFields", it) }
         }
@@ -251,7 +254,7 @@ class Esse3ExamsCalendarApi(
         fields: String? = null,
         optionalFields: String? = null
     ): List<Esse3ActivitiesPerExamSession> {
-        return executeJsonGetList<Esse3ActivitiesPerExamSession>("/appelli", setOf(Esse3PermissionLevel.STUDENT)) {
+        return jsonList(HttpMethod.Get, "/appelli", deserializer = serializer<List<Esse3ActivitiesPerExamSession>>(), roles = setOf(Esse3PermissionLevel.STUDENT)) {
             courseOfStudyEnableId?.let { parameter("cdsAbilId", it) }
             courseOfStudyEnableCode?.let { parameter("cdsAbilCod", it) }
             activityAuthorizationId?.let { parameter("adAbilId", it) }
@@ -313,7 +316,7 @@ class Esse3ExamsCalendarApi(
         fields: String? = null,
         optionalFields: String? = null
     ): List<Esse3ExamSession> {
-        return executeJsonGetList<Esse3ExamSession>("/appelli/${courseOfStudyId}/${activityId}/", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/appelli/${courseOfStudyId}/${activityId}/", deserializer = serializer<List<Esse3ExamSession>>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             academicYearCalendarId?.let { parameter("aaCalId", it) }
             minCallDate?.let { parameter("minDataApp", it) }
             maxCallDate?.let { parameter("maxDataApp", it) }
@@ -345,11 +348,10 @@ class Esse3ExamsCalendarApi(
         activityId: Long,
         body: Esse3ExamSessionInsert
     ) {
-        val response = executePost("/appelli/${courseOfStudyId}/${activityId}/") {
+        send(HttpMethod.Post, "/appelli/${courseOfStudyId}/${activityId}/", roles = setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
-        ensureSuccess(response, setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -380,7 +382,7 @@ class Esse3ExamsCalendarApi(
         fields: String? = null,
         optionalFields: String? = null
     ): Esse3ExamSessionWithDetails {
-        return executeJsonGet<Esse3ExamSessionWithDetails>("/appelli/${courseOfStudyId}/${activityId}/${callId}", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Get, "/appelli/${courseOfStudyId}/${activityId}/${callId}", deserializer = serializer<Esse3ExamSessionWithDetails>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             personId?.let { parameter("persId", it) }
             actorCode?.let { parameter("attoreCod", it) }
             actorCodeExamType?.let { parameter("attoreCodTipoSvolgEsame", it) }
@@ -410,7 +412,7 @@ class Esse3ExamsCalendarApi(
         fields: String? = null,
         optionalFields: String? = null
     ): Esse3ExamSessionWithDetails {
-        return executeJsonPut<Esse3ExamSessionWithDetails>("/appelli/${courseOfStudyId}/${activityId}/${callId}", setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Put, "/appelli/${courseOfStudyId}/${activityId}/${callId}", deserializer = serializer<Esse3ExamSessionWithDetails>(), roles = setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
             actorCodeExamType?.let { parameter("attoreCodTipoSvolgEsame", it) }
@@ -433,10 +435,9 @@ class Esse3ExamsCalendarApi(
         callId: Long,
         forceCancellation: Long
     ) {
-        val response = executeDelete("/appelli/${courseOfStudyId}/${activityId}/${callId}") {
+        send(HttpMethod.Delete, "/appelli/${courseOfStudyId}/${activityId}/${callId}", roles = setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             parameter("forzaCanc", forceCancellation)
         }
-        ensureSuccess(response, setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -455,7 +456,7 @@ class Esse3ExamsCalendarApi(
         order: String? = null,
         fields: String? = null
     ): List<Esse3ExamSessionCommissionTeacher> {
-        return executeJsonGetList<Esse3ExamSessionCommissionTeacher>("/appelli/${courseOfStudyId}/${activityId}/${callId}/comm", setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/appelli/${courseOfStudyId}/${activityId}/${callId}/comm", deserializer = serializer<List<Esse3ExamSessionCommissionTeacher>>(), roles = setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             order?.let { parameter("order", it) }
             fields?.let { parameter("fields", it) }
         }
@@ -477,7 +478,7 @@ class Esse3ExamsCalendarApi(
         lecturerId: Long,
         fields: String? = null
     ): Esse3ExamSessionCommissionTeacher {
-        return executeJsonGet<Esse3ExamSessionCommissionTeacher>("/appelli/${courseOfStudyId}/${activityId}/${callId}/comm/${lecturerId}", setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Get, "/appelli/${courseOfStudyId}/${activityId}/${callId}/comm/${lecturerId}", deserializer = serializer<Esse3ExamSessionCommissionTeacher>(), roles = setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             fields?.let { parameter("fields", it) }
         }
     }
@@ -498,7 +499,7 @@ class Esse3ExamsCalendarApi(
         order: String? = null,
         fields: String? = null
     ): List<Esse3SharedExamSession> {
-        return executeJsonGetList<Esse3SharedExamSession>("/appelli/${courseOfStudyId}/${activityId}/${callId}/esacom", setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/appelli/${courseOfStudyId}/${activityId}/${callId}/esacom", deserializer = serializer<List<Esse3SharedExamSession>>(), roles = setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             order?.let { parameter("order", it) }
             fields?.let { parameter("fields", it) }
         }
@@ -528,7 +529,7 @@ class Esse3ExamsCalendarApi(
         optionalFields: String? = null,
         filter: String? = null
     ): List<Esse3ExamSessionEnrollment> {
-        return executeJsonGetList<Esse3ExamSessionEnrollment>("/appelli/${courseOfStudyId}/${activityId}/${callId}/iscritti", setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/appelli/${courseOfStudyId}/${activityId}/${callId}/iscritti", deserializer = serializer<List<Esse3ExamSessionEnrollment>>(), roles = setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             callLogId?.let { parameter("appLogId", it) }
             actorCode?.let { parameter("attoreCod", it) }
             order?.let { parameter("order", it) }
@@ -552,11 +553,10 @@ class Esse3ExamsCalendarApi(
         callId: Long,
         body: Esse3ExamSessionEnrollmentParameters
     ) {
-        val response = executePost("/appelli/${courseOfStudyId}/${activityId}/${callId}/iscritti") {
+        send(HttpMethod.Post, "/appelli/${courseOfStudyId}/${activityId}/${callId}/iscritti", roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
-        ensureSuccess(response, setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -583,7 +583,7 @@ class Esse3ExamsCalendarApi(
         fields: String? = null,
         optionalFields: String? = null
     ): Esse3ExamSessionEnrollment {
-        return executeJsonGet<Esse3ExamSessionEnrollment>("/appelli/${courseOfStudyId}/${activityId}/${callId}/iscritti/${studentId}", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Get, "/appelli/${courseOfStudyId}/${activityId}/${callId}/iscritti/${studentId}", deserializer = serializer<Esse3ExamSessionEnrollment>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             actorCode?.let { parameter("attoreCod", it) }
             q?.let { parameter("q", it.value) }
             fields?.let { parameter("fields", it) }
@@ -611,7 +611,7 @@ class Esse3ExamsCalendarApi(
         fields: String? = null,
         optionalFields: String? = null
     ): Esse3ExamSessionEnrollment {
-        return executeJsonPut<Esse3ExamSessionEnrollment>("/appelli/${courseOfStudyId}/${activityId}/${callId}/iscritti/${studentId}", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Put, "/appelli/${courseOfStudyId}/${activityId}/${callId}/iscritti/${studentId}", deserializer = serializer<Esse3ExamSessionEnrollment>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
             fields?.let { parameter("fields", it) }
@@ -633,8 +633,7 @@ class Esse3ExamsCalendarApi(
         callId: Long,
         studentId: Long
     ) {
-        val response = executeDelete("/appelli/${courseOfStudyId}/${activityId}/${callId}/iscritti/${studentId}")
-        ensureSuccess(response, setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER))
+        send(HttpMethod.Delete, "/appelli/${courseOfStudyId}/${activityId}/${callId}/iscritti/${studentId}", roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -651,7 +650,7 @@ class Esse3ExamsCalendarApi(
         callId: Long,
         studentId: Long
     ): ByteReadChannel {
-        return executeStreamGet("/appelli/${courseOfStudyId}/${activityId}/${callId}/iscritti/${studentId}/attestato-di-presenza", setOf(Esse3PermissionLevel.STUDENT))
+        return stream(HttpMethod.Get, "/appelli/${courseOfStudyId}/${activityId}/${callId}/iscritti/${studentId}/attestato-di-presenza", roles = setOf(Esse3PermissionLevel.STUDENT))
     }
 
     /**
@@ -674,7 +673,7 @@ class Esse3ExamsCalendarApi(
         fields: String? = null,
         optionalFields: String? = null
     ): Esse3ExamSessionEnrollment {
-        return executeJsonPut<Esse3ExamSessionEnrollment>("/appelli/${courseOfStudyId}/${activityId}/${callId}/iscritti/${studentId}/esito", setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Put, "/appelli/${courseOfStudyId}/${activityId}/${callId}/iscritti/${studentId}/esito", deserializer = serializer<Esse3ExamSessionEnrollment>(), roles = setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
             fields?.let { parameter("fields", it) }
@@ -716,7 +715,7 @@ class Esse3ExamsCalendarApi(
         fields: String? = null,
         optionalFields: String? = null
     ): Esse3ExamSessionEnrollment {
-        return executeJsonPut<Esse3ExamSessionEnrollment>("/appelli/${courseOfStudyId}/${activityId}/${callId}/iscritti/${studentId}/presaVisione", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER)) {
+        return json(HttpMethod.Put, "/appelli/${courseOfStudyId}/${activityId}/${callId}/iscritti/${studentId}/presaVisione", deserializer = serializer<Esse3ExamSessionEnrollment>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER)) {
             setBody(FormDataContent(parameters {
                 append("presaVisione", acknowledgmentOfReceipt.value)
                 linkedOperation?.let { append("appRelOpType", it.value) }
@@ -746,7 +745,7 @@ class Esse3ExamsCalendarApi(
         callId: Long,
         studentId: Long
     ): ByteReadChannel {
-        return executeStreamGet("/appelli/${courseOfStudyId}/${activityId}/${callId}/iscritti/${studentId}/statino-prenotazione", setOf(Esse3PermissionLevel.STUDENT))
+        return stream(HttpMethod.Get, "/appelli/${courseOfStudyId}/${activityId}/${callId}/iscritti/${studentId}/statino-prenotazione", roles = setOf(Esse3PermissionLevel.STUDENT))
     }
 
     /**
@@ -763,11 +762,10 @@ class Esse3ExamsCalendarApi(
         callId: Long,
         body: Esse3PublicationParameters
     ) {
-        val response = executePut("/appelli/${courseOfStudyId}/${activityId}/${callId}/pubblicazione") {
+        send(HttpMethod.Put, "/appelli/${courseOfStudyId}/${activityId}/${callId}/pubblicazione", roles = setOf(Esse3PermissionLevel.TEACHER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
-        ensureSuccess(response, setOf(Esse3PermissionLevel.TEACHER))
     }
 
     /**
@@ -786,7 +784,7 @@ class Esse3ExamsCalendarApi(
         order: String? = null,
         fields: String? = null
     ): List<Esse3ExamSessionSession> {
-        return executeJsonGetList<Esse3ExamSessionSession>("/appelli/${courseOfStudyId}/${activityId}/${callId}/sessioni", setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/appelli/${courseOfStudyId}/${activityId}/${callId}/sessioni", deserializer = serializer<List<Esse3ExamSessionSession>>(), roles = setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             order?.let { parameter("order", it) }
             fields?.let { parameter("fields", it) }
         }
@@ -810,7 +808,7 @@ class Esse3ExamsCalendarApi(
         sessionId: Long,
         fields: String? = null
     ): Esse3ExamSessionSession {
-        return executeJsonGet<Esse3ExamSessionSession>("/appelli/${courseOfStudyId}/${activityId}/${callId}/sessioni/${academicYearSessionId}/${sessionId}", setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Get, "/appelli/${courseOfStudyId}/${activityId}/${callId}/sessioni/${academicYearSessionId}/${sessionId}", deserializer = serializer<Esse3ExamSessionSession>(), roles = setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             fields?.let { parameter("fields", it) }
         }
     }
@@ -831,7 +829,7 @@ class Esse3ExamsCalendarApi(
         activityChoiceId: Long,
         order: String? = null
     ): List<Esse3EnrollmentTag> {
-        return executeJsonGetList<Esse3EnrollmentTag>("/appelli/${courseOfStudyId}/${activityId}/${callId}/tags/${activityChoiceId}", setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/appelli/${courseOfStudyId}/${activityId}/${callId}/tags/${activityChoiceId}", deserializer = serializer<List<Esse3EnrollmentTag>>(), roles = setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             order?.let { parameter("order", it) }
         }
     }
@@ -856,7 +854,7 @@ class Esse3ExamsCalendarApi(
         fields: String? = null,
         filter: String? = null
     ): List<Esse3ExamType> {
-        return executeJsonGetList<Esse3ExamType>("/appelli/${courseOfStudyId}/${activityId}/${callId}/tipi-svolgimento-esame", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/appelli/${courseOfStudyId}/${activityId}/${callId}/tipi-svolgimento-esame", deserializer = serializer<List<Esse3ExamType>>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             actorCodeExamType?.let { parameter("attoreCodTipoSvolgEsame", it) }
             order?.let { parameter("order", it) }
             fields?.let { parameter("fields", it) }
@@ -882,7 +880,7 @@ class Esse3ExamsCalendarApi(
         fields: String? = null,
         optionalFields: String? = null
     ): List<Esse3ExamSessionShift> {
-        return executeJsonGetList<Esse3ExamSessionShift>("/appelli/${courseOfStudyId}/${activityId}/${callId}/turni", setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/appelli/${courseOfStudyId}/${activityId}/${callId}/turni", deserializer = serializer<List<Esse3ExamSessionShift>>(), roles = setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             order?.let { parameter("order", it) }
             fields?.let { parameter("fields", it) }
             optionalFields?.let { parameter("optionalFields", it) }
@@ -907,7 +905,7 @@ class Esse3ExamsCalendarApi(
         fields: String? = null,
         optionalFields: String? = null
     ): Esse3ExamSessionShift {
-        return executeJsonGet<Esse3ExamSessionShift>("/appelli/${courseOfStudyId}/${activityId}/${callId}/turni/${callLogId}", setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Get, "/appelli/${courseOfStudyId}/${activityId}/${callId}/turni/${callLogId}", deserializer = serializer<Esse3ExamSessionShift>(), roles = setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             fields?.let { parameter("fields", it) }
             optionalFields?.let { parameter("optionalFields", it) }
         }
@@ -931,7 +929,7 @@ class Esse3ExamsCalendarApi(
         order: String? = null,
         fields: String? = null
     ): List<Esse3ShiftCommissionTeacher> {
-        return executeJsonGetList<Esse3ShiftCommissionTeacher>("/appelli/${courseOfStudyId}/${activityId}/${callId}/turni/${callLogId}/comm", setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/appelli/${courseOfStudyId}/${activityId}/${callId}/turni/${callLogId}/comm", deserializer = serializer<List<Esse3ShiftCommissionTeacher>>(), roles = setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             order?.let { parameter("order", it) }
             fields?.let { parameter("fields", it) }
         }
@@ -955,7 +953,7 @@ class Esse3ExamsCalendarApi(
         lecturerId: Long,
         fields: String? = null
     ): Esse3ShiftCommissionTeacher {
-        return executeJsonGet<Esse3ShiftCommissionTeacher>("/appelli/${courseOfStudyId}/${activityId}/${callId}/turni/${callLogId}/comm/${lecturerId}", setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Get, "/appelli/${courseOfStudyId}/${activityId}/${callId}/turni/${callLogId}/comm/${lecturerId}", deserializer = serializer<Esse3ShiftCommissionTeacher>(), roles = setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER)) {
             fields?.let { parameter("fields", it) }
         }
     }
@@ -976,11 +974,10 @@ class Esse3ExamsCalendarApi(
         callLogId: Long,
         body: Esse3PublicationParameters
     ) {
-        val response = executePut("/appelli/${courseOfStudyId}/${activityId}/${callId}/turni/${callLogId}/pubblicazione") {
+        send(HttpMethod.Put, "/appelli/${courseOfStudyId}/${activityId}/${callId}/turni/${callLogId}/pubblicazione", roles = setOf(Esse3PermissionLevel.TEACHER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
-        ensureSuccess(response, setOf(Esse3PermissionLevel.TEACHER))
     }
 
     /**
@@ -999,7 +996,7 @@ class Esse3ExamsCalendarApi(
         order: String? = null,
         fields: String? = null
     ): List<Esse3SharedExam> {
-        return executeJsonGetList<Esse3SharedExam>("/esacom/${academicYearId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/esacom/${academicYearId}", deserializer = serializer<List<Esse3SharedExam>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             start?.let { parameter("start", it) }
             limit?.let { parameter("limit", it) }
             order?.let { parameter("order", it) }
@@ -1023,7 +1020,7 @@ class Esse3ExamsCalendarApi(
         order: String? = null,
         fields: String? = null
     ): List<Esse3SharedExam> {
-        return executeJsonGetList<Esse3SharedExam>("/esacom/${academicYearId}/${courseOfStudyGraduationId}/${activityExamId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/esacom/${academicYearId}/${courseOfStudyGraduationId}/${activityExamId}", deserializer = serializer<List<Esse3SharedExam>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             order?.let { parameter("order", it) }
             fields?.let { parameter("fields", it) }
         }
@@ -1045,7 +1042,7 @@ class Esse3ExamsCalendarApi(
         childCourseOfStudyId: Long,
         childActivityId: Long
     ): Esse3SharedExam {
-        return executeJsonGet<Esse3SharedExam>("/esacom/${academicYearId}/${courseOfStudyGraduationId}/${activityExamId}/figli/${childCourseOfStudyId}/${childActivityId}", setOf(Esse3PermissionLevel.TECHNICAL_USER))
+        return json(HttpMethod.Get, "/esacom/${academicYearId}/${courseOfStudyGraduationId}/${activityExamId}/figli/${childCourseOfStudyId}/${childActivityId}", deserializer = serializer<Esse3SharedExam>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -1068,7 +1065,7 @@ class Esse3ExamsCalendarApi(
         body: Esse3SharedExamInsert,
         forceFlag: Boolean? = null
     ): Esse3SharedExamResult {
-        return executeJsonPut<Esse3SharedExamResult>("/esacom/${academicYearId}/${courseOfStudyGraduationId}/${activityExamId}/figli/${childCourseOfStudyId}/${childActivityId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Put, "/esacom/${academicYearId}/${courseOfStudyGraduationId}/${activityExamId}/figli/${childCourseOfStudyId}/${childActivityId}", deserializer = serializer<Esse3SharedExamResult>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
             forceFlag?.let { parameter("forceFlg", it) }
@@ -1093,7 +1090,7 @@ class Esse3ExamsCalendarApi(
         childActivityId: Long,
         forceFlag: Boolean? = null
     ): Esse3SharedExamResult {
-        return executeJsonDelete<Esse3SharedExamResult>("/esacom/${academicYearId}/${courseOfStudyGraduationId}/${activityExamId}/figli/${childCourseOfStudyId}/${childActivityId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Delete, "/esacom/${academicYearId}/${courseOfStudyGraduationId}/${activityExamId}/figli/${childCourseOfStudyId}/${childActivityId}", deserializer = serializer<Esse3SharedExamResult>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             forceFlag?.let { parameter("forceFlg", it) }
         }
     }
@@ -1120,7 +1117,7 @@ class Esse3ExamsCalendarApi(
         optionalFields: String? = null,
         filter: String? = null
     ): List<Esse3ExamSessionEnrollment> {
-        return executeJsonGetList<Esse3ExamSessionEnrollment>("/prenotazioni/${matId}/", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/prenotazioni/${matId}/", deserializer = serializer<List<Esse3ExamSessionEnrollment>>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
             actorCode?.let { parameter("attoreCod", it) }
             q?.let { parameter("q", it.value) }
             order?.let { parameter("order", it) }
@@ -1146,7 +1143,7 @@ class Esse3ExamsCalendarApi(
         fields: String? = null,
         optionalFields: String? = null
     ): Esse3ExamSessionEnrollment {
-        return executeJsonGet<Esse3ExamSessionEnrollment>("/prenotazioni/${matId}/${applicationListId}", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Get, "/prenotazioni/${matId}/${applicationListId}", deserializer = serializer<Esse3ExamSessionEnrollment>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
             actorCode?.let { parameter("attoreCod", it) }
             fields?.let { parameter("fields", it) }
             optionalFields?.let { parameter("optionalFields", it) }
@@ -1183,7 +1180,7 @@ class Esse3ExamsCalendarApi(
         fields: String? = null,
         optionalFields: String? = null
     ): Esse3ExamSessionEnrollment {
-        return executeJsonPut<Esse3ExamSessionEnrollment>("/prenotazioni/${matId}/${applicationListId}/presaVisione", setOf(Esse3PermissionLevel.STUDENT)) {
+        return json(HttpMethod.Put, "/prenotazioni/${matId}/${applicationListId}/presaVisione", deserializer = serializer<Esse3ExamSessionEnrollment>(), roles = setOf(Esse3PermissionLevel.STUDENT)) {
             setBody(FormDataContent(parameters {
                 append("presaVisione", acknowledgmentOfReceipt.value)
                 linkedOperation?.let { append("appRelOpType", it.value) }
@@ -1227,7 +1224,7 @@ class Esse3ExamsCalendarApi(
         fields: String? = null,
         optionalFields: String? = null
     ): List<Esse3Session> {
-        return executeJsonGetList<Esse3Session>("/sessioni", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/sessioni", deserializer = serializer<List<Esse3Session>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             facultyId?.let { parameter("facId", it) }
             courseOfStudyId?.let { parameter("cdsId", it) }
             facultyCode?.let { parameter("facCod", it) }
@@ -1260,7 +1257,7 @@ class Esse3ExamsCalendarApi(
         fields: String? = null,
         optionalFields: String? = null
     ): List<Esse3Session> {
-        return executeJsonGetList<Esse3Session>("/sessioni/${academicYearSessionId}", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/sessioni/${academicYearSessionId}", deserializer = serializer<List<Esse3Session>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             start?.let { parameter("start", it) }
             limit?.let { parameter("limit", it) }
             order?.let { parameter("order", it) }
@@ -1285,7 +1282,7 @@ class Esse3ExamsCalendarApi(
         fields: String? = null,
         optionalFields: String? = null
     ): List<Esse3Session> {
-        return executeJsonGetList<Esse3Session>("/sessioni/${academicYearSessionId}/${courseOfStudyId}", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/sessioni/${academicYearSessionId}/${courseOfStudyId}", deserializer = serializer<List<Esse3Session>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             order?.let { parameter("order", it) }
             fields?.let { parameter("fields", it) }
             optionalFields?.let { parameter("optionalFields", it) }
@@ -1304,7 +1301,7 @@ class Esse3ExamsCalendarApi(
         limit: Int? = null,
         order: String? = null
     ): List<Esse3SystemLogExport> {
-        return executeJsonGetList<Esse3SystemLogExport>("/sistLogExt/export", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/sistLogExt/export", deserializer = serializer<List<Esse3SystemLogExport>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             start?.let { parameter("start", it) }
             limit?.let { parameter("limit", it) }
             order?.let { parameter("order", it) }
@@ -1319,7 +1316,7 @@ class Esse3ExamsCalendarApi(
     suspend fun exportSystemLogByProcessingId(
         processingId: Long
     ): Esse3SystemLogExport {
-        return executeJsonGet<Esse3SystemLogExport>("/sistLogExt/export/${processingId}", setOf(Esse3PermissionLevel.TECHNICAL_USER))
+        return json(HttpMethod.Get, "/sistLogExt/export/${processingId}", deserializer = serializer<Esse3SystemLogExport>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -1336,7 +1333,7 @@ class Esse3ExamsCalendarApi(
         limit: Int? = null,
         excludeIdenticalPackages: Boolean? = null
     ): List<Esse3SystemLogEventTestExport> {
-        return executeJsonGetList<Esse3SystemLogEventTestExport>("/sistLogExt/export/${processingId}/eventi", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/sistLogExt/export/${processingId}/eventi", deserializer = serializer<List<Esse3SystemLogEventTestExport>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             start?.let { parameter("start", it) }
             limit?.let { parameter("limit", it) }
             excludeIdenticalPackages?.let { parameter("escludiPacchettiUguali", it) }
@@ -1355,7 +1352,7 @@ class Esse3ExamsCalendarApi(
         start: Int? = null,
         limit: Int? = null
     ): List<Esse3SystemLogSessionsExport> {
-        return executeJsonGetList<Esse3SystemLogSessionsExport>("/sistLogExt/export/${processingId}/sessioni", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/sistLogExt/export/${processingId}/sessioni", deserializer = serializer<List<Esse3SystemLogSessionsExport>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             start?.let { parameter("start", it) }
             limit?.let { parameter("limit", it) }
         }
@@ -1369,7 +1366,7 @@ class Esse3ExamsCalendarApi(
     suspend fun getCommitmentsByDate(
         referenceDate: String? = null
     ): List<Esse3Esse3SystemLogCommitment> {
-        return executeJsonGetList<Esse3Esse3SystemLogCommitment>("/sistLogExt/impegni", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/sistLogExt/impegni", deserializer = serializer<List<Esse3Esse3SystemLogCommitment>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             referenceDate?.let { parameter("dataRif", it) }
         }
     }
@@ -1386,7 +1383,7 @@ class Esse3ExamsCalendarApi(
         fields: String? = null,
         optionalFields: String? = null
     ): Esse3SystemLogImportResult {
-        return executeJsonPut<Esse3SystemLogImportResult>("/sistLogExt/import/", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Put, "/sistLogExt/import/", deserializer = serializer<Esse3SystemLogImportResult>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
             fields?.let { parameter("fields", it) }
@@ -1402,7 +1399,7 @@ class Esse3ExamsCalendarApi(
     suspend fun updateCommitment(
         body: Esse3UpdateSystemLogCommitments
     ): Esse3SystemLogImportResult {
-        return executeJsonPut<Esse3SystemLogImportResult>("/sistLogExt/update/", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Put, "/sistLogExt/update/", deserializer = serializer<Esse3SystemLogImportResult>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }

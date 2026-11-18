@@ -6,6 +6,7 @@ import io.ktor.client.request.forms.FormDataContent
 import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
+import io.ktor.http.HttpMethod
 import io.ktor.http.parameters
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAttemptDataResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAttemptReviewResponse
@@ -21,13 +22,15 @@ import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleUserAttemptsResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleUserBestGradeResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.appendBrackets
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.serializer
 
 class MoodleQuizApi(
     client: HttpClient,
     json: Json
-) : MoodleAbstractApi(client, json, "") {
+) : RestApi(client, json, "", MoodleRuntime.policy) {
 
     /**
      * Returns information for the given attempt page for a quiz attempt in progress.
@@ -43,7 +46,7 @@ class MoodleQuizApi(
         preflightData: List<MoodleNamedValue>? = null,
         auth: MoodleTokenAuth
     ): MoodleAttemptDataResponse {
-        return executeJsonPost<MoodleAttemptDataResponse>("/webservice/rest/server.php") {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleAttemptDataResponse>()) {
             setBody(FormDataContent(parameters {
                 append("attemptid", attemptId.toString())
                 append("page", page.toString())
@@ -68,7 +71,7 @@ class MoodleQuizApi(
         page: Int? = null,
         auth: MoodleTokenAuth
     ): MoodleAttemptReviewResponse {
-        return executeJsonPost<MoodleAttemptReviewResponse>("/webservice/rest/server.php") {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleAttemptReviewResponse>()) {
             setBody(FormDataContent(parameters {
                 append("attemptid", attemptId.toString())
                 page?.let { append("page", it.toString()) }
@@ -92,7 +95,7 @@ class MoodleQuizApi(
         preflightData: List<MoodleNamedValue>? = null,
         auth: MoodleTokenAuth
     ): MoodleAttemptSummaryResponse {
-        return executeJsonPost<MoodleAttemptSummaryResponse>("/webservice/rest/server.php") {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleAttemptSummaryResponse>()) {
             setBody(FormDataContent(parameters {
                 append("attemptid", attemptId.toString())
                 preflightData?.let { appendBrackets("preflightdata", json.encodeToJsonElement(it)) }
@@ -114,7 +117,7 @@ class MoodleQuizApi(
         quizId: Int,
         auth: MoodleTokenAuth
     ): MoodleQuizAccessInformation {
-        return executeJsonPost<MoodleQuizAccessInformation>("/webservice/rest/server.php") {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleQuizAccessInformation>()) {
             setBody(FormDataContent(parameters {
                 append("quizid", quizId.toString())
                 auth.form.forEach { (name, value) -> append(name, value) }
@@ -135,7 +138,7 @@ class MoodleQuizApi(
         courseIds: List<Int>? = null,
         auth: MoodleTokenAuth
     ): MoodleQuizzesResponse {
-        return executeJsonPost<MoodleQuizzesResponse>("/webservice/rest/server.php") {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleQuizzesResponse>()) {
             setBody(FormDataContent(parameters {
                 courseIds?.let { appendBrackets("courseids", json.encodeToJsonElement(it)) }
                 auth.form.forEach { (name, value) -> append(name, value) }
@@ -162,7 +165,7 @@ class MoodleQuizApi(
         includePreviews: Boolean? = null,
         auth: MoodleTokenAuth
     ): MoodleUserAttemptsResponse {
-        return executeJsonPost<MoodleUserAttemptsResponse>("/webservice/rest/server.php") {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleUserAttemptsResponse>()) {
             setBody(FormDataContent(parameters {
                 append("quizid", quizId.toString())
                 userId?.let { append("userid", it.toString()) }
@@ -188,7 +191,7 @@ class MoodleQuizApi(
         userId: Int? = null,
         auth: MoodleTokenAuth
     ): MoodleUserBestGradeResponse {
-        return executeJsonPost<MoodleUserBestGradeResponse>("/webservice/rest/server.php") {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleUserBestGradeResponse>()) {
             setBody(FormDataContent(parameters {
                 append("quizid", quizId.toString())
                 userId?.let { append("userid", it.toString()) }
@@ -218,7 +221,7 @@ class MoodleQuizApi(
         preflightData: List<MoodleNamedValue>? = null,
         auth: MoodleTokenAuth
     ): MoodleProcessAttemptResponse {
-        return executeJsonPost<MoodleProcessAttemptResponse>("/webservice/rest/server.php") {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleProcessAttemptResponse>()) {
             setBody(FormDataContent(parameters {
                 append("attemptid", attemptId.toString())
                 data?.let { appendBrackets("data", json.encodeToJsonElement(it)) }
@@ -247,7 +250,7 @@ class MoodleQuizApi(
         preflightData: List<MoodleNamedValue>? = null,
         auth: MoodleTokenAuth
     ): MoodleStatusResponse {
-        return executeJsonPost<MoodleStatusResponse>("/webservice/rest/server.php") {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleStatusResponse>()) {
             setBody(FormDataContent(parameters {
                 append("attemptid", attemptId.toString())
                 appendBrackets("data", json.encodeToJsonElement(data))
@@ -274,7 +277,7 @@ class MoodleQuizApi(
         forceNew: Boolean? = null,
         auth: MoodleTokenAuth
     ): MoodleStartAttemptResponse {
-        return executeJsonPost<MoodleStartAttemptResponse>("/webservice/rest/server.php") {
+        return json(HttpMethod.Post, "/webservice/rest/server.php", deserializer = serializer<MoodleStartAttemptResponse>()) {
             setBody(FormDataContent(parameters {
                 append("quizid", quizId.toString())
                 preflightData?.let { appendBrackets("preflightdata", json.encodeToJsonElement(it)) }

@@ -129,21 +129,35 @@ the validator checks them at generation time: each step must get the kind of val
 Selectors are limited to the CSS all three parsers support. The vocabulary is closed, like
 codecs; a step is added only when a page needs it.
 
+### Clients
+
+An API's spec also describes its client (`ClientSpec`, the `x-mb-client` extension of the
+`openapi` reader; Esse3 and Moodle declare theirs in a `client.yaml` part): its base URL, what
+every request carries (headers, query parameters, cookies, and settings the caller may change,
+such as Moodle's language), where failed responses hold the error code and message (also for
+servers reporting errors with HTTP 200), the error codes callers may handle, the statuses with
+which a list is empty, and the failures to recover from by sending the request again (after
+another request, such as one handing out a fresh token, or a delay). Every target generates
+from it the API's client and error type, with a constant per error code.
+
 ### Runtimes
 
-Generated code calls a small hand-written runtime per language, and per API:
+Generated code builds on a shared runtime per language:
 
-- **Kotlin**: `<Prefix>AbstractApi` (request helpers), `<Prefix>Runtime` (JSON and HTTP client),
-  `<Prefix>PermissionLevel` and the date serializers named in the target's options. The other
-  serializers the codecs and maps need are generated into `<Prefix>Serializers.kt`, and the
-  scrapers with their helpers into `<Prefix>Scrapers.kt`. See `KotlinLayout`,
-  `KotlinSerializers` and `ScrapeEmitter`.
-- **Swift**: the `DataApiRuntime` module (`ios/DataApi/Sources/DataApiRuntime`), with
-  `WireMap` for maps and `Scrape` (over SwiftSoup) for scrapers, and `<Prefix>Client`. See
-  `SwiftLayout`.
-- **Web**: `@mybicocca/data-api-runtime` (`web/packages/runtime`), with `WireMap` for maps not
-  keyed by strings and `scrape` (over the DOM) for scrapers, and the API's `client.ts`. See
-  `TsLayout`.
+- **Kotlin**: `RestApi` (the base class of every module, sending requests as the API's
+  `RestPolicy` says), `createRestClient`, `ClientSettings` and `ApiException`, which the
+  `kotlin-runtime` target writes from its resources (see `specs/runtime`), so that
+  `android/data-api` holds only generated code. Each API gets an internal `<Prefix>Runtime`
+  (JSON, policy and HTTP client) and `<Prefix>Exception`; the serializers the codecs, dates and
+  maps need are generated into `<Prefix>Serializers.kt`, and the scrapers with their helpers
+  into `<Prefix>Scrapers.kt`. See `KotlinLayout`, `ClientEmitter`, `KotlinSerializers` and
+  `ScrapeEmitter`.
+- **Swift**: the hand-written `DataApiRuntime` module (`ios/DataApi/Sources/DataApiRuntime`),
+  with `RestClient` for requests, `WireMap` for maps and `Scrape` (over SwiftSoup) for
+  scrapers. Each API gets `<Prefix>Client.swift`. See `SwiftLayout` and `SwiftClientEmitter`.
+- **Web**: the hand-written `@mybicocca/data-api-runtime` (`web/packages/runtime`), with
+  `RestClient` for requests, `WireMap` for maps not keyed by strings and `scrape` (over the
+  DOM) for scrapers. Each API gets `<Prefix>Client.ts`. See `TsLayout` and `TsClientEmitter`.
 
 ## Extending
 

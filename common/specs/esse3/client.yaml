@@ -1,0 +1,22 @@
+# How the Esse3 client talks to Esse3: the REST API (openapi/) and the web portal pages
+# (web/). It joins them as one more part of the same API: see the readers of codegen.json.
+# See common/codegen/readers/openapi for the x-mb-* extensions.
+openapi: 3.0.3
+info:
+  title: Esse3 client
+  version: "1"
+x-mb-id: esse3
+x-mb-prefix: Esse3
+x-mb-client:
+  baseUrl: https://s3w.si.unimib.it/e3rest/api
+  # The web portal's pages need the session cookies its SSO login leaves.
+  keepsCookies: true
+  caches: true
+  # Esse3 reads fields left at their defaults as the defaults it documents only when they're sent.
+  sendsDefaults: true
+  # List services answer 404 when there is nothing to list.
+  emptyStatuses: [404]
+  error:
+    code: [/retCode]
+    message: [/retErrMsg]
+paths: {}

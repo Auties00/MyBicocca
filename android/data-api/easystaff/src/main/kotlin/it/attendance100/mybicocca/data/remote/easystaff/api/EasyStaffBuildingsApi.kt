@@ -5,6 +5,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.request.forms.FormDataContent
 import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
+import io.ktor.http.HttpMethod
 import io.ktor.http.parameters
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffBuilding
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffLanguage
@@ -13,16 +14,18 @@ import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffRoom
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffRoomOccupationEvent
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffRoomShowcaseBuilding
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffTeachingArea
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import kotlinx.serialization.builtins.ListSerializer
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
 
 class EasyStaffBuildingsApi(
     client: HttpClient,
     json: Json
-) : EasyStaffAbstractApi(client, json, "") {
+) : RestApi(client, json, "", EasyStaffRuntime.policy) {
 
     /**
      * @param language The language of the names and labels.
@@ -30,7 +33,7 @@ class EasyStaffBuildingsApi(
     suspend fun getBuildings(
         language: EasyStaffLanguage = EasyStaffLanguage.Italian
     ): List<EasyStaffBuilding> {
-        return executeScriptGet<List<EasyStaffBuilding>>("/PortaleStudentiUnimib/combo.php", server = EasyStaffServer.Main, variable = "elenco_sedi") {
+        return script(HttpMethod.Get, "/PortaleStudentiUnimib/combo.php", variable = "elenco_sedi", deserializer = serializer<List<EasyStaffBuilding>>(), server = EasyStaffServer.Main.url) {
             parameter("sw", "rooms_")
             parameter("_lang", language.value)
         }
@@ -44,7 +47,7 @@ class EasyStaffBuildingsApi(
     suspend fun getRooms(
         language: EasyStaffLanguage = EasyStaffLanguage.Italian
     ): Map<String, List<EasyStaffRoom>> {
-        return executeScriptGet("/PortaleStudentiUnimib/combo.php", server = EasyStaffServer.Main, variable = "elenco_aule", deserializer = EasyStaffMapSerializer(String.serializer(), ListSerializer(EasyStaffRoom.serializer()))) {
+        return script(HttpMethod.Get, "/PortaleStudentiUnimib/combo.php", variable = "elenco_aule", deserializer = EasyStaffMapSerializer(String.serializer(), ListSerializer(EasyStaffRoom.serializer())), server = EasyStaffServer.Main.url) {
             parameter("sw", "rooms_")
             parameter("_lang", language.value)
         }
@@ -58,7 +61,7 @@ class EasyStaffBuildingsApi(
     suspend fun getTeachingAreas(
         language: EasyStaffLanguage = EasyStaffLanguage.Italian
     ): List<EasyStaffTeachingArea> {
-        return executeScriptGet<List<EasyStaffTeachingArea>>("/PortaleStudentiUnimib/combo.php", server = EasyStaffServer.Main, variable = "elenco_scuole") {
+        return script(HttpMethod.Get, "/PortaleStudentiUnimib/combo.php", variable = "elenco_scuole", deserializer = serializer<List<EasyStaffTeachingArea>>(), server = EasyStaffServer.Main.url) {
             parameter("sw", "rooms_")
             parameter("_lang", language.value)
         }
@@ -76,7 +79,7 @@ class EasyStaffBuildingsApi(
         date: LocalDate,
         language: EasyStaffLanguage = EasyStaffLanguage.Italian
     ): List<EasyStaffRoomOccupationEvent> {
-        return executeJsonPostList<EasyStaffRoomOccupationEvent>("/PortaleStudentiUnimib/rooms_call.php", server = EasyStaffServer.Main, envelope = listOf("events")) {
+        return jsonList(HttpMethod.Post, "/PortaleStudentiUnimib/rooms_call.php", deserializer = serializer<List<EasyStaffRoomOccupationEvent>>(), server = EasyStaffServer.Main.url, envelope = listOf("events")) {
             setBody(FormDataContent(parameters {
                 append("view", "rooms")
                 append("include", "rooms")
@@ -108,7 +111,7 @@ class EasyStaffBuildingsApi(
         rooms: List<String>? = null,
         language: EasyStaffLanguage = EasyStaffLanguage.Italian
     ): Map<String, EasyStaffRoomShowcaseBuilding> {
-        return executeScriptGet("/PortaleStudentiUnimib/index.php", server = EasyStaffServer.Main, variable = "window.data_to_show", deserializer = EasyStaffMapSerializer(String.serializer(), EasyStaffRoomShowcaseBuilding.serializer())) {
+        return script(HttpMethod.Get, "/PortaleStudentiUnimib/index.php", variable = "window.data_to_show", deserializer = EasyStaffMapSerializer(String.serializer(), EasyStaffRoomShowcaseBuilding.serializer()), server = EasyStaffServer.Main.url) {
             parameter("form-type", "vetrina_aule")
             parameter("view", "vetrina_aule")
             parameter("include", "vetrina_aule")

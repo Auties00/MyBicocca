@@ -5,6 +5,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
+import io.ktor.http.HttpMethod
 import io.ktor.http.contentType
 import io.ktor.utils.io.ByteReadChannel
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3AttachmentExtension
@@ -15,19 +16,21 @@ import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3GenericAttachmentIn
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3PatchAttachmentMetadata
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3PermissionLevel
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3UploadMetadata
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.serializer
 
 class Esse3AttachmentsApi(
     client: HttpClient,
     json: Json
-) : Esse3AbstractApi(client, json, "/allegati-service-v1") {
+) : RestApi(client, json, "/allegati-service-v1", Esse3Runtime.policy) {
 
     /**
      * tipologie di allegato
      */
     suspend fun getAttachmentTypologies(): List<Esse3AttachmentType> {
-        return executeJsonGetList<Esse3AttachmentType>("/allegati", setOf(Esse3PermissionLevel.TECHNICAL_USER))
+        return jsonList(HttpMethod.Get, "/allegati", deserializer = serializer<List<Esse3AttachmentType>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -42,7 +45,7 @@ class Esse3AttachmentsApi(
         start: Int? = null,
         limit: Int? = null
     ): List<Esse3AttachmentTypeCode> {
-        return executeJsonGetList<Esse3AttachmentTypeCode>("/allegati/codiceTipologiaAllegato/", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.EXTERNAL_SUBJECT)) {
+        return jsonList(HttpMethod.Get, "/allegati/codiceTipologiaAllegato/", deserializer = serializer<List<Esse3AttachmentTypeCode>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.EXTERNAL_SUBJECT)) {
             sessionLanguageCode?.let { parameter("sessionLinguaCod", it) }
             start?.let { parameter("start", it) }
             limit?.let { parameter("limit", it) }
@@ -59,7 +62,7 @@ class Esse3AttachmentsApi(
         start: Int? = null,
         limit: Int? = null
     ): List<Esse3AttachmentExtension> {
-        return executeJsonGetList<Esse3AttachmentExtension>("/allegati/estensioneAllegato", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.EXTERNAL_SUBJECT)) {
+        return jsonList(HttpMethod.Get, "/allegati/estensioneAllegato", deserializer = serializer<List<Esse3AttachmentExtension>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.EXTERNAL_SUBJECT)) {
             start?.let { parameter("start", it) }
             limit?.let { parameter("limit", it) }
         }
@@ -77,7 +80,7 @@ class Esse3AttachmentsApi(
         start: Int? = null,
         limit: Int? = null
     ): List<Esse3AttachmentMetadata> {
-        return executeJsonGetList<Esse3AttachmentMetadata>("/allegati/${attachmentType}/", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/allegati/${attachmentType}/", deserializer = serializer<List<Esse3AttachmentMetadata>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             start?.let { parameter("start", it) }
             limit?.let { parameter("limit", it) }
         }
@@ -93,11 +96,10 @@ class Esse3AttachmentsApi(
         attachmentType: String,
         body: Esse3GenericAttachmentInsertMetadata
     ) {
-        val response = executePost("/allegati/${attachmentType}/") {
+        send(HttpMethod.Post, "/allegati/${attachmentType}/", roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
-        ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -110,7 +112,7 @@ class Esse3AttachmentsApi(
         attachmentType: String,
         attachmentId: Long
     ): Esse3AttachmentMetadata {
-        return executeJsonGet<Esse3AttachmentMetadata>("/allegati/${attachmentType}/${attachmentId}", setOf(Esse3PermissionLevel.TECHNICAL_USER))
+        return json(HttpMethod.Get, "/allegati/${attachmentType}/${attachmentId}", deserializer = serializer<Esse3AttachmentMetadata>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -125,7 +127,7 @@ class Esse3AttachmentsApi(
         attachmentId: Long,
         body: Esse3PatchAttachmentMetadata
     ): Esse3AttachmentMetadata {
-        return executeJsonPatch<Esse3AttachmentMetadata>("/allegati/${attachmentType}/${attachmentId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Patch, "/allegati/${attachmentType}/${attachmentId}", deserializer = serializer<Esse3AttachmentMetadata>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -141,7 +143,7 @@ class Esse3AttachmentsApi(
         attachmentType: String,
         attachmentId: Long
     ): ByteReadChannel {
-        return executeStreamGet("/allegati/${attachmentType}/${attachmentId}/blob", setOf(Esse3PermissionLevel.TECHNICAL_USER))
+        return stream(HttpMethod.Get, "/allegati/${attachmentType}/${attachmentId}/blob", roles = setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -152,7 +154,7 @@ class Esse3AttachmentsApi(
     suspend fun getUploadedAttachmentMetadata(
         uploadId: Long
     ): Esse3UploadMetadata {
-        return executeJsonGet<Esse3UploadMetadata>("/upload/${uploadId}", setOf(Esse3PermissionLevel.ANY, Esse3PermissionLevel.TECHNICAL_USER))
+        return json(HttpMethod.Get, "/upload/${uploadId}", deserializer = serializer<Esse3UploadMetadata>(), roles = setOf(Esse3PermissionLevel.ANY, Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -163,8 +165,7 @@ class Esse3AttachmentsApi(
     suspend fun deleteUploadedAttachment(
         uploadId: Long
     ) {
-        val response = executeDelete("/upload/${uploadId}")
-        ensureSuccess(response, setOf(Esse3PermissionLevel.ANY, Esse3PermissionLevel.TECHNICAL_USER))
+        send(HttpMethod.Delete, "/upload/${uploadId}", roles = setOf(Esse3PermissionLevel.ANY, Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -175,8 +176,7 @@ class Esse3AttachmentsApi(
     suspend fun getUploadedAttachmentState(
         uploadId: Long
     ) {
-        val response = executeGet("/upload/${uploadId}/blob")
-        ensureSuccess(response, setOf(Esse3PermissionLevel.ANY, Esse3PermissionLevel.TECHNICAL_USER))
+        send(HttpMethod.Get, "/upload/${uploadId}/blob", roles = setOf(Esse3PermissionLevel.ANY, Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -188,10 +188,9 @@ class Esse3AttachmentsApi(
         uploadId: Long,
         body: JsonObject
     ) {
-        val response = executePut("/upload/${uploadId}/blob") {
+        send(HttpMethod.Put, "/upload/${uploadId}/blob", roles = setOf(Esse3PermissionLevel.ANY, Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
-        ensureSuccess(response, setOf(Esse3PermissionLevel.ANY, Esse3PermissionLevel.TECHNICAL_USER))
     }
 }

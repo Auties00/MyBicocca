@@ -3,17 +3,20 @@ package it.attendance100.mybicocca.data.remote.esse3.api
 
 import io.ktor.client.HttpClient
 import io.ktor.client.request.parameter
+import io.ktor.http.HttpMethod
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3ChoiceRulesStateFilter
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3PermissionLevel
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3PrerequisiteConstraint
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3PrerequisitesRegulation
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3PrerequisitesRegulationWithConstraints
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
 
 class Esse3RulePropertiesApi(
     client: HttpClient,
     json: Json
-) : Esse3AbstractApi(client, json, "/regprop-service-v1") {
+) : RestApi(client, json, "/regprop-service-v1", Esse3Runtime.policy) {
 
     /**
      * Informazioni di testata sui regolamenti di propedeuticità
@@ -45,7 +48,7 @@ class Esse3RulePropertiesApi(
         fields: String? = null,
         optionalFields: String? = null
     ): List<Esse3PrerequisitesRegulation> {
-        return executeJsonGetList<Esse3PrerequisitesRegulation>("/regprop", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/regprop", deserializer = serializer<List<Esse3PrerequisitesRegulation>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             proposalRuleState?.let { parameter("statoRegprop", it.value) }
             facultyId?.let { parameter("facId", it) }
             facultyCode?.let { parameter("facCod", it) }
@@ -75,7 +78,7 @@ class Esse3RulePropertiesApi(
         optionalFields: String? = null,
         filter: String? = null
     ): Esse3PrerequisitesRegulationWithConstraints {
-        return executeJsonGet<Esse3PrerequisitesRegulationWithConstraints>("/regprop/${proposalRuleId}", setOf(Esse3PermissionLevel.ANY)) {
+        return json(HttpMethod.Get, "/regprop/${proposalRuleId}", deserializer = serializer<Esse3PrerequisitesRegulationWithConstraints>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             fields?.let { parameter("fields", it) }
             optionalFields?.let { parameter("optionalFields", it) }
             filter?.let { parameter("filter", it) }
@@ -98,7 +101,7 @@ class Esse3RulePropertiesApi(
         optionalFields: String? = null,
         filter: String? = null
     ): List<Esse3PrerequisiteConstraint> {
-        return executeJsonGetList<Esse3PrerequisiteConstraint>("/regprop/${proposalRuleId}/${proposalRuleWinnerId}", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/regprop/${proposalRuleId}/${proposalRuleWinnerId}", deserializer = serializer<List<Esse3PrerequisiteConstraint>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             fields?.let { parameter("fields", it) }
             optionalFields?.let { parameter("optionalFields", it) }
             filter?.let { parameter("filter", it) }

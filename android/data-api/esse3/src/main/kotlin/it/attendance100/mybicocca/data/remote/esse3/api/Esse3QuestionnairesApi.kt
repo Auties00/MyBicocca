@@ -5,6 +5,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
+import io.ktor.http.HttpMethod
 import io.ktor.http.contentType
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3Answer
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3CompiledQuestionnaires
@@ -23,12 +24,14 @@ import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3UserCompiledEventTa
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3UserCompiledEventTagsPostLogin
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3UserCompiledEventTagsTeacherAvailability
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3UserCompiledEventTagsTeachingEvaluation
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
 
 class Esse3QuestionnairesApi(
     client: HttpClient,
     json: Json
-) : Esse3AbstractApi(client, json, "/questionari-service-v1") {
+) : RestApi(client, json, "/questionari-service-v1", Esse3Runtime.policy) {
 
     /**
      * Salva le risposte di una pagina di questionario
@@ -48,7 +51,7 @@ class Esse3QuestionnairesApi(
         body: List<Esse3Answer>,
         eventComponentId: String
     ): String {
-        return executeJsonPut<String>("/questionari/compilazione/${studentId}/quest/${questionnaireId}/${questionComponentId}/save/${pageId}", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Put, "/questionari/compilazione/${studentId}/quest/${questionnaireId}/${questionComponentId}/save/${pageId}", deserializer = serializer<String>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
             parameter("eventCompId", eventComponentId)
@@ -77,7 +80,7 @@ class Esse3QuestionnairesApi(
         tagList: String? = null,
         raw: Long? = null
     ): Esse3QuestionnairePage {
-        return executeJsonPut<Esse3QuestionnairePage>("/questionari/compilazione/${studentId}/${activityChoiceId}/quest/${questionnaireId}/start", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Put, "/questionari/compilazione/${studentId}/${activityChoiceId}/quest/${questionnaireId}/start", deserializer = serializer<Esse3QuestionnairePage>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
             parameter("eventCompId", eventComponentId)
@@ -107,7 +110,7 @@ class Esse3QuestionnairesApi(
         userComponentId: Long,
         eventComponentId: String
     ): String {
-        return executeJsonPut<String>("/questionari/compilazione/${studentId}/${activityChoiceId}/quest/${questionnaireId}/${questionComponentId}/conferma", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Put, "/questionari/compilazione/${studentId}/${activityChoiceId}/quest/${questionnaireId}/${questionComponentId}/conferma", deserializer = serializer<String>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
             parameter("questConfigId", questionConfigId)
             parameter("userCompId", userComponentId)
             parameter("eventCompId", eventComponentId)
@@ -134,7 +137,7 @@ class Esse3QuestionnairesApi(
         userComponentId: Long,
         raw: Long? = null
     ): Esse3QuestionnairePage {
-        return executeJsonGet<Esse3QuestionnairePage>("/questionari/compilazione/${studentId}/${activityChoiceId}/quest/${questionnaireId}/${questionComponentId}/getPagina/${pageId}/", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Get, "/questionari/compilazione/${studentId}/${activityChoiceId}/quest/${questionnaireId}/${questionComponentId}/getPagina/${pageId}/", deserializer = serializer<Esse3QuestionnairePage>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
             parameter("userCompId", userComponentId)
             raw?.let { parameter("raw", it) }
         }
@@ -160,7 +163,7 @@ class Esse3QuestionnairesApi(
         userComponentId: Long,
         raw: Long? = null
     ): Esse3QuestionnairePage {
-        return executeJsonGet<Esse3QuestionnairePage>("/questionari/compilazione/${studentId}/${activityChoiceId}/quest/${questionnaireId}/${questionComponentId}/pagina/${pageId}/next", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Get, "/questionari/compilazione/${studentId}/${activityChoiceId}/quest/${questionnaireId}/${questionComponentId}/pagina/${pageId}/next", deserializer = serializer<Esse3QuestionnairePage>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
             parameter("userCompId", userComponentId)
             raw?.let { parameter("raw", it) }
         }
@@ -186,7 +189,7 @@ class Esse3QuestionnairesApi(
         userComponentId: Long,
         raw: Long? = null
     ): Esse3QuestionnairePage {
-        return executeJsonGet<Esse3QuestionnairePage>("/questionari/compilazione/${studentId}/${activityChoiceId}/quest/${questionnaireId}/${questionComponentId}/pagina/${pageId}/prev", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Get, "/questionari/compilazione/${studentId}/${activityChoiceId}/quest/${questionnaireId}/${questionComponentId}/pagina/${pageId}/prev", deserializer = serializer<Esse3QuestionnairePage>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
             parameter("userCompId", userComponentId)
             raw?.let { parameter("raw", it) }
         }
@@ -214,7 +217,7 @@ class Esse3QuestionnairesApi(
         eventComponentId: String,
         raw: Long? = null
     ): Esse3QuestionnaireSummary {
-        return executeJsonGet<Esse3QuestionnaireSummary>("/questionari/compilazione/${studentId}/${activityChoiceId}/quest/${questionnaireId}/${questionComponentId}/summary", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Get, "/questionari/compilazione/${studentId}/${activityChoiceId}/quest/${questionnaireId}/${questionComponentId}/summary", deserializer = serializer<Esse3QuestionnaireSummary>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
             parameter("questConfigId", questionConfigId)
             parameter("userCompId", userComponentId)
             parameter("eventCompId", eventComponentId)
@@ -260,7 +263,7 @@ class Esse3QuestionnairesApi(
         limit: Int? = null,
         order: String? = null
     ): List<Esse3UserCompiledEventTagsTeacherAvailability> {
-        return executeJsonGetList<Esse3UserCompiledEventTagsTeacherAvailability>("/questionari/eventoAvaDoc/datiAccesso/${questionnaireId}/${academicYearId}/", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/questionari/eventoAvaDoc/datiAccesso/${questionnaireId}/${academicYearId}/", deserializer = serializer<List<Esse3UserCompiledEventTagsTeacherAvailability>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             userId?.let { parameter("idUser", it) }
             academicYearOfferActivityId?.let { parameter("aaOffAdId", it) }
             courseOfStudyTeachingActivityCode?.let { parameter("cdsAdCod", it) }
@@ -314,7 +317,7 @@ class Esse3QuestionnairesApi(
         limit: Int? = null,
         order: String? = null
     ): List<Esse3QuestionnaireCompiledEventTagsTeacherAvailability> {
-        return executeJsonGetList<Esse3QuestionnaireCompiledEventTagsTeacherAvailability>("/questionari/eventoAvaDoc/datiCompilazione/${questionnaireId}/${academicYearId}/", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/questionari/eventoAvaDoc/datiCompilazione/${questionnaireId}/${academicYearId}/", deserializer = serializer<List<Esse3QuestionnaireCompiledEventTagsTeacherAvailability>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             academicYearOfferActivityId?.let { parameter("aaOffAdId", it) }
             courseOfStudyTeachingActivityCode?.let { parameter("cdsAdCod", it) }
             courseOfStudyTeachingActivityDescription?.let { parameter("cdsAdDes", it) }
@@ -357,7 +360,7 @@ class Esse3QuestionnairesApi(
         limit: Int? = null,
         order: String? = null
     ): List<Esse3UserCompiledEventTagsGeneralQuestionnaire> {
-        return executeJsonGetList<Esse3UserCompiledEventTagsGeneralQuestionnaire>("/questionari/eventoGenQuest/datiAccesso/${questionnaireId}/${academicYearId}/", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/questionari/eventoGenQuest/datiAccesso/${questionnaireId}/${academicYearId}/", deserializer = serializer<List<Esse3UserCompiledEventTagsGeneralQuestionnaire>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             userId?.let { parameter("idUser", it) }
             courseOfStudyCode?.let { parameter("cdsCod", it) }
             courseOfStudyDescription?.let { parameter("cdsDes", it) }
@@ -393,7 +396,7 @@ class Esse3QuestionnairesApi(
         limit: Int? = null,
         order: String? = null
     ): List<Esse3QuestionnaireCompiledEventTagsGeneralQuestionnaire> {
-        return executeJsonGetList<Esse3QuestionnaireCompiledEventTagsGeneralQuestionnaire>("/questionari/eventoGenQuest/datiCompilazione/${questionnaireId}/${academicYearId}/", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/questionari/eventoGenQuest/datiCompilazione/${questionnaireId}/${academicYearId}/", deserializer = serializer<List<Esse3QuestionnaireCompiledEventTagsGeneralQuestionnaire>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             courseOfStudyCode?.let { parameter("cdsCod", it) }
             courseOfStudyDescription?.let { parameter("cdsDes", it) }
             academicYearOrderId?.let { parameter("aaOrdId", it) }
@@ -430,7 +433,7 @@ class Esse3QuestionnairesApi(
         limit: Int? = null,
         order: String? = null
     ): List<Esse3UserCompiledEventTagsPostLogin> {
-        return executeJsonGetList<Esse3UserCompiledEventTagsPostLogin>("/questionari/eventoPostLogin/datiAccesso/${questionnaireId}/${academicYearId}/", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/questionari/eventoPostLogin/datiAccesso/${questionnaireId}/${academicYearId}/", deserializer = serializer<List<Esse3UserCompiledEventTagsPostLogin>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             userId?.let { parameter("idUser", it) }
             courseOfStudyCode?.let { parameter("cdsCod", it) }
             courseOfStudyDescription?.let { parameter("cdsDes", it) }
@@ -466,7 +469,7 @@ class Esse3QuestionnairesApi(
         limit: Int? = null,
         order: String? = null
     ): List<Esse3QuestionnaireCompiledEventTagsPostLogin> {
-        return executeJsonGetList<Esse3QuestionnaireCompiledEventTagsPostLogin>("/questionari/eventoPostLogin/datiCompilazione/${questionnaireId}/${academicYearId}/", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/questionari/eventoPostLogin/datiCompilazione/${questionnaireId}/${academicYearId}/", deserializer = serializer<List<Esse3QuestionnaireCompiledEventTagsPostLogin>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             courseOfStudyCode?.let { parameter("cdsCod", it) }
             courseOfStudyDescription?.let { parameter("cdsDes", it) }
             academicYearOrderId?.let { parameter("aaOrdId", it) }
@@ -515,7 +518,7 @@ class Esse3QuestionnairesApi(
         limit: Int? = null,
         order: String? = null
     ): List<Esse3UserCompiledEventTagsTeachingEvaluation> {
-        return executeJsonGetList<Esse3UserCompiledEventTagsTeachingEvaluation>("/questionari/eventoValDid/datiAccesso/${questionnaireId}/${academicYearId}/", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/questionari/eventoValDid/datiAccesso/${questionnaireId}/${academicYearId}/", deserializer = serializer<List<Esse3UserCompiledEventTagsTeachingEvaluation>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             userId?.let { parameter("idUser", it) }
             academicYearOfferActivityId?.let { parameter("aaOffAdId", it) }
             courseOfStudyTeachingActivityCode?.let { parameter("cdsAdCod", it) }
@@ -569,7 +572,7 @@ class Esse3QuestionnairesApi(
         limit: Int? = null,
         order: String? = null
     ): List<Esse3QuestionnaireCompiledEventTagsTeachingEvaluation> {
-        return executeJsonGetList<Esse3QuestionnaireCompiledEventTagsTeachingEvaluation>("/questionari/eventoValDid/datiCompilazione/${questionnaireId}/${academicYearId}/", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/questionari/eventoValDid/datiCompilazione/${questionnaireId}/${academicYearId}/", deserializer = serializer<List<Esse3QuestionnaireCompiledEventTagsTeachingEvaluation>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             academicYearOfferActivityId?.let { parameter("aaOffAdId", it) }
             courseOfStudyTeachingActivityCode?.let { parameter("cdsAdCod", it) }
             courseOfStudyTeachingActivityDescription?.let { parameter("cdsAdDes", it) }
@@ -598,7 +601,7 @@ class Esse3QuestionnairesApi(
         eventComponentId: String,
         domicilePartialCode: String? = null
     ): Esse3TeachingUnitWithQuestionnaire {
-        return executeJsonGet<Esse3TeachingUnitWithQuestionnaire>("/questionari/libretto/${activityChoiceId}/unitadidattiche", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Get, "/questionari/libretto/${activityChoiceId}/unitadidattiche", deserializer = serializer<Esse3TeachingUnitWithQuestionnaire>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
             parameter("eventCompId", eventComponentId)
             domicilePartialCode?.let { parameter("domPartCod", it) }
         }
@@ -622,7 +625,7 @@ class Esse3QuestionnairesApi(
         order: String? = null,
         filter: String? = null
     ): List<Esse3TranscriptRowWithQuestionnaireStatus> {
-        return executeJsonGetList<Esse3TranscriptRowWithQuestionnaireStatus>("/questionari/libretto/${matId}", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/questionari/libretto/${matId}", deserializer = serializer<List<Esse3TranscriptRowWithQuestionnaireStatus>>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
             questionFilter?.let { parameter("questFilter", it) }
             optionalFields?.let { parameter("optionalFields", it) }
             fields?.let { parameter("fields", it) }
@@ -645,7 +648,7 @@ class Esse3QuestionnairesApi(
         questionFilter: String? = null,
         optionalFields: String? = null
     ): Esse3TranscriptRowWithQuestionnaireStatus {
-        return executeJsonGet<Esse3TranscriptRowWithQuestionnaireStatus>("/questionari/libretto/${matId}/righe/${activityChoiceId}", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Get, "/questionari/libretto/${matId}/righe/${activityChoiceId}", deserializer = serializer<Esse3TranscriptRowWithQuestionnaireStatus>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
             questionFilter?.let { parameter("questFilter", it) }
             optionalFields?.let { parameter("optionalFields", it) }
         }
@@ -659,7 +662,7 @@ class Esse3QuestionnairesApi(
     suspend fun getCompiledQuestionnaires(
         questionComponentId: Long
     ): List<Esse3CompiledQuestionnaires> {
-        return executeJsonGetList<Esse3CompiledQuestionnaires>("/questionari/questionariCompilati/${questionComponentId}/", setOf(Esse3PermissionLevel.TECHNICAL_USER))
+        return jsonList(HttpMethod.Get, "/questionari/questionariCompilati/${questionComponentId}/", deserializer = serializer<List<Esse3CompiledQuestionnaires>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -668,7 +671,7 @@ class Esse3QuestionnairesApi(
     suspend fun getInternshipQuestionnaires(
         domicileInternshipId: Long
     ): Esse3InternshipQuestionnaires {
-        return executeJsonGet<Esse3InternshipQuestionnaires>("/questionari/tirocinio/${domicileInternshipId}", setOf(Esse3PermissionLevel.TECHNICAL_USER))
+        return json(HttpMethod.Get, "/questionari/tirocinio/${domicileInternshipId}", deserializer = serializer<Esse3InternshipQuestionnaires>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -683,7 +686,6 @@ class Esse3QuestionnairesApi(
         visibleKind: String,
         visibleValue: Boolean
     ) {
-        val response = executePost("/questionari/visibility/${userId}/${questionComponentId}/${visibleKind}/${visibleValue}")
-        ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
+        send(HttpMethod.Post, "/questionari/visibility/${userId}/${questionComponentId}/${visibleKind}/${visibleValue}", roles = setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 }

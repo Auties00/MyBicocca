@@ -5,6 +5,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
+import io.ktor.http.HttpMethod
 import io.ktor.http.contentType
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3AnnualEnrollment
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3AttendanceDays
@@ -22,12 +23,14 @@ import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3GraduationWaitingPa
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3PermissionLevel
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3PhDProgramCareer
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3StudentTypeParameters
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
 
 class Esse3CareersApi(
     client: HttpClient,
     json: Json
-) : Esse3AbstractApi(client, json, "/carriere-service-v1") {
+) : RestApi(client, json, "/carriere-service-v1", Esse3Runtime.policy) {
 
     /**
      * Recupero delle carriere degli studenti
@@ -79,7 +82,7 @@ class Esse3CareersApi(
         academicYearEnrollmentId: Long? = null,
         onlyActive: Int? = null
     ): List<Esse3Career> {
-        return executeJsonGetList<Esse3Career>("/carriere", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/carriere", deserializer = serializer<List<Esse3Career>>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
             userId?.let { parameter("userId", it) }
             surname?.let { parameter("cognome", it) }
             name?.let { parameter("nome", it) }
@@ -155,7 +158,7 @@ class Esse3CareersApi(
         academicYearEnrollmentId: Long? = null,
         onlyActive: Int? = null
     ): List<Esse3CareerMinimalDataGDPR> {
-        return executeJsonGetList<Esse3CareerMinimalDataGDPR>("/carriere-gdpr/datiMin", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/carriere-gdpr/datiMin", deserializer = serializer<List<Esse3CareerMinimalDataGDPR>>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
             userId?.let { parameter("userId", it) }
             surname?.let { parameter("cognome", it) }
             name?.let { parameter("nome", it) }
@@ -191,7 +194,7 @@ class Esse3CareersApi(
         studentId: Long,
         optionalFields: String? = null
     ): List<Esse3CareerGDPR> {
-        return executeJsonGetList<Esse3CareerGDPR>("/carriere-gdpr/${studentId}", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/carriere-gdpr/${studentId}", deserializer = serializer<List<Esse3CareerGDPR>>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
             optionalFields?.let { parameter("optionalFields", it) }
         }
     }
@@ -204,7 +207,7 @@ class Esse3CareersApi(
     suspend fun putGraduationWaiting(
         body: Esse3GraduationWaitingParameters
     ): Esse3Career {
-        return executeJsonPut<Esse3Career>("/carriere/aggiornaAttesaLaurea", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Put, "/carriere/aggiornaAttesaLaurea", deserializer = serializer<Esse3Career>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -264,7 +267,7 @@ class Esse3CareersApi(
         optionalFields: String? = null,
         onlyActive: Int? = null
     ): List<Esse3PhDProgramCareer> {
-        return executeJsonGetList<Esse3PhDProgramCareer>("/carriere/datiDottorato", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/carriere/datiDottorato", deserializer = serializer<List<Esse3PhDProgramCareer>>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
             userId?.let { parameter("userId", it) }
             govIdentifier?.let { parameter("identificativo U-Gov", it) }
             studentId?.let { parameter("stuId", it) }
@@ -342,7 +345,7 @@ class Esse3CareersApi(
         academicYearEnrollmentId: Long? = null,
         onlyActive: Int? = null
     ): List<Esse3CareerMinimalData> {
-        return executeJsonGetList<Esse3CareerMinimalData>("/carriere/datiMin", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/carriere/datiMin", deserializer = serializer<List<Esse3CareerMinimalData>>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
             userId?.let { parameter("userId", it) }
             surname?.let { parameter("cognome", it) }
             name?.let { parameter("nome", it) }
@@ -388,7 +391,7 @@ class Esse3CareersApi(
         paymentCheck: Long? = null,
         reverseCharges: Long? = null
     ): String {
-        return executeJsonGet<String>("/carriere/verifica-annullabilita-iscrizioni", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Get, "/carriere/verifica-annullabilita-iscrizioni", deserializer = serializer<String>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             studentId?.let { parameter("stuId", it) }
             academicYearId?.let { parameter("aaId", it) }
             skipGraduationCheck?.let { parameter("skipCheckEsa", it) }
@@ -411,7 +414,7 @@ class Esse3CareersApi(
         studentMatricola: String? = null,
         daysAfterGraduation: Int? = null
     ): Int {
-        return executeJsonGet<Int>("/carriere/verifica-iscrizione", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Get, "/carriere/verifica-iscrizione", deserializer = serializer<Int>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             fiscalCode?.let { parameter("codFis", it) }
             studentMatricola?.let { parameter("matricolaStudente", it) }
             daysAfterGraduation?.let { parameter("ggDopoLaurea", it) }
@@ -430,7 +433,7 @@ class Esse3CareersApi(
         body: Esse3ExemptionTypeParameters,
         academicYear: Int
     ): Esse3AnnualEnrollment {
-        return executeJsonPut<Esse3AnnualEnrollment>("/carriere/${matricola}/iscrizioni/aggiornaDataIscrAndTipoEsoneroByMat", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Put, "/carriere/${matricola}/iscrizioni/aggiornaDataIscrAndTipoEsoneroByMat", deserializer = serializer<Esse3AnnualEnrollment>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
             parameter("annoAccademico", academicYear)
@@ -445,7 +448,7 @@ class Esse3CareersApi(
     suspend fun getCareerByStudent(
         studentId: Long
     ): Esse3Career {
-        return executeJsonGet<Esse3Career>("/carriere/${studentId}", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER))
+        return json(HttpMethod.Get, "/carriere/${studentId}", deserializer = serializer<Esse3Career>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -458,7 +461,7 @@ class Esse3CareersApi(
         studentId: Long,
         body: Esse3CareerParameters
     ): Esse3Career {
-        return executeJsonPut<Esse3Career>("/carriere/${studentId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Put, "/carriere/${studentId}", deserializer = serializer<Esse3Career>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -474,7 +477,7 @@ class Esse3CareersApi(
         studentId: Long,
         body: Esse3CareerClosureParameters
     ): Esse3Career {
-        return executeJsonPut<Esse3Career>("/carriere/${studentId}/chiudiCarriera", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Put, "/carriere/${studentId}/chiudiCarriera", deserializer = serializer<Esse3Career>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -488,7 +491,7 @@ class Esse3CareersApi(
     suspend fun getAttendanceDays(
         studentId: Long
     ): Esse3AttendanceDays {
-        return executeJsonGet<Esse3AttendanceDays>("/carriere/${studentId}/giorni-freq", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.UNKNOWN, Esse3PermissionLevel.ADMIN_OFFICE))
+        return json(HttpMethod.Get, "/carriere/${studentId}/giorni-freq", deserializer = serializer<Esse3AttendanceDays>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.UNKNOWN, Esse3PermissionLevel.ADMIN_OFFICE))
     }
 
     /**
@@ -511,7 +514,7 @@ class Esse3CareersApi(
         order: String? = null,
         fields: String? = null
     ): List<Esse3AnnualEnrollment> {
-        return executeJsonGetList<Esse3AnnualEnrollment>("/carriere/${studentId}/iscrizioni", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/carriere/${studentId}/iscrizioni", deserializer = serializer<List<Esse3AnnualEnrollment>>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
             academicYear?.let { parameter("annoAccademico", it) }
             lastEnrollmentFlag?.let { parameter("ultimaIscrizioneFlg", it) }
             start?.let { parameter("start", it) }
@@ -533,7 +536,7 @@ class Esse3CareersApi(
         body: Esse3ExemptionTypeParameters,
         academicYear: Int
     ): Esse3AnnualEnrollment {
-        return executeJsonPut<Esse3AnnualEnrollment>("/carriere/${studentId}/iscrizioni/aggiornaDataIscrAndTipoEsonero", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Put, "/carriere/${studentId}/iscrizioni/aggiornaDataIscrAndTipoEsonero", deserializer = serializer<Esse3AnnualEnrollment>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
             parameter("annoAccademico", academicYear)
@@ -552,7 +555,7 @@ class Esse3CareersApi(
         body: Esse3CanteenBandParameters,
         academicYear: Int
     ): Esse3AnnualEnrollment {
-        return executeJsonPut<Esse3AnnualEnrollment>("/carriere/${studentId}/iscrizioni/aggiornaFasciaMensa", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Put, "/carriere/${studentId}/iscrizioni/aggiornaFasciaMensa", deserializer = serializer<Esse3AnnualEnrollment>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
             parameter("annoAccademico", academicYear)
@@ -571,7 +574,7 @@ class Esse3CareersApi(
         body: Esse3StudentTypeParameters,
         academicYear: Int
     ): Esse3AnnualEnrollment {
-        return executeJsonPut<Esse3AnnualEnrollment>("/carriere/${studentId}/iscrizioni/aggiornaTipoStuCod", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Put, "/carriere/${studentId}/iscrizioni/aggiornaTipoStuCod", deserializer = serializer<Esse3AnnualEnrollment>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
             parameter("annoAccademico", academicYear)
@@ -596,7 +599,7 @@ class Esse3CareersApi(
         order: String? = null,
         fields: String? = null
     ): List<Esse3EnrollmentClasses> {
-        return executeJsonGetList<Esse3EnrollmentClasses>("/carriere/${studentId}/iscrizioni/${academicYearEnrollmentId}/classi", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.PROVISIONAL_ENROLLED_STUDENT, Esse3PermissionLevel.STUDENT)) {
+        return jsonList(HttpMethod.Get, "/carriere/${studentId}/iscrizioni/${academicYearEnrollmentId}/classi", deserializer = serializer<List<Esse3EnrollmentClasses>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.PROVISIONAL_ENROLLED_STUDENT, Esse3PermissionLevel.STUDENT)) {
             start?.let { parameter("start", it) }
             limit?.let { parameter("limit", it) }
             order?.let { parameter("order", it) }
@@ -632,7 +635,7 @@ class Esse3CareersApi(
         order: String? = null,
         fields: String? = null
     ): List<Esse3CareerNotes> {
-        return executeJsonGetList<Esse3CareerNotes>("/carriere/${studentId}/noteCarriera", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/carriere/${studentId}/noteCarriera", deserializer = serializer<List<Esse3CareerNotes>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             verificationDate?.let { parameter("dataVerifica", it) }
             blockingNote?.let { parameter("notaBloccante", it) }
             academicYearNote?.let { parameter("notaAa", it) }
@@ -666,7 +669,7 @@ class Esse3CareersApi(
         courseOfStudyCode: String? = null,
         courseOfStudyId: Long? = null
     ): String {
-        return executeJsonGet<String>("/immatricolazioni/informazioni", setOf(Esse3PermissionLevel.ADMIN_OFFICE, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Get, "/immatricolazioni/informazioni", deserializer = serializer<String>(), roles = setOf(Esse3PermissionLevel.ADMIN_OFFICE, Esse3PermissionLevel.TECHNICAL_USER)) {
             languageCode?.let { parameter("codLingua", it) }
             tcGroupCode?.let { parameter("gruppoTcCod", it) }
             courseTypeCode?.let { parameter("tipoCorsoCod", it) }
@@ -697,7 +700,7 @@ class Esse3CareersApi(
         courseOfStudyCode: String? = null,
         courseOfStudyId: Long? = null
     ): String {
-        return executeJsonGet<String>("/immatricolazioni/informazioni/dettaglio", setOf(Esse3PermissionLevel.ADMIN_OFFICE, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Get, "/immatricolazioni/informazioni/dettaglio", deserializer = serializer<String>(), roles = setOf(Esse3PermissionLevel.ADMIN_OFFICE, Esse3PermissionLevel.TECHNICAL_USER)) {
             languageCode?.let { parameter("codLingua", it) }
             tcGroupCode?.let { parameter("gruppoTcCod", it) }
             courseTypeCode?.let { parameter("tipoCorsoCod", it) }
@@ -740,7 +743,7 @@ class Esse3CareersApi(
         order: String? = null,
         fields: String? = null
     ): List<Esse3AnnualEnrollment> {
-        return executeJsonGetList<Esse3AnnualEnrollment>("/iscrizioni/${academicYearEnrollmentId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/iscrizioni/${academicYearEnrollmentId}", deserializer = serializer<List<Esse3AnnualEnrollment>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             parameter("inclSXH", includeSXH)
             parameter("inclCond", includeCondition)
             courseOfStudyId?.let { parameter("cdsId", it) }

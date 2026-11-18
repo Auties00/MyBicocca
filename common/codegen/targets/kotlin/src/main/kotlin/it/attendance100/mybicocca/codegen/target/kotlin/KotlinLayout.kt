@@ -4,42 +4,55 @@ import it.attendance100.mybicocca.codegen.model.ApiModule
 import it.attendance100.mybicocca.codegen.model.ApiSpec
 import it.attendance100.mybicocca.codegen.model.AuthRequirement
 import it.attendance100.mybicocca.codegen.model.Field
+import it.attendance100.mybicocca.codegen.model.Parameter
 import it.attendance100.mybicocca.codegen.model.RecordType
 import it.attendance100.mybicocca.codegen.model.PrimitiveKind
 import it.attendance100.mybicocca.codegen.model.TypeRef
 
 /**
- * Where an API's generated declarations go, and the hand-written runtime declarations they
- * rely on. For an API with prefix `Esse3` in package `…esse3`:
+ * Where an API's generated declarations go. For an API with prefix `Esse3` in package `…esse3`:
  *
- * | Declaration                     | Location                               |
- * |---------------------------------|----------------------------------------|
- * | Records of module `Careers`     | `…esse3.dto.Esse3CareersTypes.kt`      |
- * | Every enum                      | `…esse3.dto.Esse3EnumTypes.kt`         |
- * | Operations of module `Careers`  | `…esse3.api.Esse3CareersApi`           |
- * | Facade                          | `…esse3.api.Esse3Api`                  |
- * | Servers, if any                 | `…esse3.api.Esse3Server` (enum)        |
- * | Auth schemes, if any            | `…esse3.dto.Esse3AuthTypes.kt`         |
- * | Serializers, if any             | `…esse3.dto.Esse3Serializers.kt`       |
- * | Scrapers, if any                | `…esse3.dto.Esse3Scrapers.kt`          |
+ * | Declaration                     | Location                                   |
+ * |---------------------------------|--------------------------------------------|
+ * | Records of module `Careers`     | `…esse3.dto.Esse3CareersTypes.kt`          |
+ * | Every enum                      | `…esse3.dto.Esse3EnumTypes.kt`             |
+ * | Operations of module `Careers`  | `…esse3.api.Esse3CareersApi`               |
+ * | Facade                          | `…esse3.api.Esse3Api`                      |
+ * | Client, JSON and request policy | `…esse3.api.Esse3Runtime` (internal)       |
+ * | Exception                       | `…esse3.exception.Esse3Exception`          |
+ * | Roles, if operations name any   | `…esse3.dto.Esse3PermissionLevel` (enum)   |
+ * | Servers, if any                 | `…esse3.api.Esse3Server` (enum)            |
+ * | Auth schemes, if any            | `…esse3.dto.Esse3AuthTypes.kt`             |
+ * | Serializers, if any             | `…esse3.dto.Esse3Serializers.kt`           |
+ * | Scrapers, if any                | `…esse3.dto.Esse3Scrapers.kt`              |
  *
- * The runtime the API provides by hand:
- * - `…api.Esse3AbstractApi`: base class of every module, with the `execute*` request helpers.
- * - `…api.Esse3Runtime`: the facade's shared `json` and `createHttpClient(json, config)`.
- * - `…dto.Esse3PermissionLevel`: enum of the role names operations declare.
- * - The serializers named by [KotlinTarget.Options.temporalSerializers].
+ * Modules extend the shared runtime's `RestApi`, in [runtimePackage], which [KotlinRuntimeTarget]
+ * generates.
  */
-internal class KotlinLayout(private val spec: ApiSpec, packageName: String) {
+internal class KotlinLayout(private val spec: ApiSpec, packageName: String, val runtimePackage: String) {
     val dtoPackage = "$packageName.dto"
     val apiPackage = "$packageName.api"
 
     val enumsFileName = "${spec.prefix}EnumTypes.kt"
     val facadeName = "${spec.prefix}Api"
 
-    val abstractApi = "$apiPackage.${spec.prefix}AbstractApi"
     val runtime = "$apiPackage.${spec.prefix}Runtime"
+    val exception = "$packageName.exception.${spec.prefix}Exception"
     val roles = "$dtoPackage.${spec.prefix}PermissionLevel"
+    val rolesFileName = "${spec.prefix}PermissionTypes.kt"
     val server = "$apiPackage.${spec.prefix}Server"
+
+    /**
+     * The API parameters [module] takes: those it uses, and those the client's retry requests
+     * name, which `RestApi` fills their placeholders with.
+     */
+    fun moduleParameters(module: ApiModule): List<Parameter> {
+        val used = spec.parametersOf(module).toSet() + spec.retryParameters
+        return spec.parameters.filter { it in used }
+    }
+
+    /** A declaration of the shared runtime. */
+    fun runtime(name: String): String = "$runtimePackage.$name"
 
     val authFileName = "${spec.prefix}AuthTypes.kt"
     val authBase = "${spec.prefix}Auth"

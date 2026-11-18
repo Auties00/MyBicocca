@@ -22,6 +22,7 @@ package it.attendance100.mybicocca.codegen.model
  *   each operation: path parameters fill the placeholders of every operation whose path names
  *   them, and query, header and cookie parameters are sent by every operation. They are
  *   required and plainly encoded.
+ * @property client How the API's client sends requests and reads failures.
  */
 data class ApiSpec(
     val id: String,
@@ -31,9 +32,20 @@ data class ApiSpec(
     val servers: List<Server> = emptyList(),
     val authSchemes: List<AuthScheme> = emptyList(),
     val parameters: List<Parameter> = emptyList(),
+    val client: ClientSpec = ClientSpec.DEFAULT,
 ) {
     /** Whether any operation declares roles, in which case targets pass them to the runtime. */
     val usesRoles: Boolean by lazy { modules.any { module -> module.operations.any { it.roles.isNotEmpty() } } }
+
+    /** The roles operations declare, in the order they first appear. */
+    val roles: List<String> by lazy { modules.flatMap { module -> module.operations.flatMap { it.roles } }.distinct() }
+
+    /** The API [parameters] the client's retry requests name. */
+    val retryParameters: List<Parameter> by lazy {
+        val templates = client.retries.mapNotNull { it.before }.flatMap { listOf(it.path) + it.headers.values }
+        val names = templates.flatMap { template -> PLACEHOLDER.findAll(template).map { it.groupValues[1] } }.toSet()
+        parameters.filter { it.name in names }
+    }
 
     /** Every declared record and enum, by name. */
     val declarations: Map<String, TypeDeclaration> by lazy {
@@ -69,13 +81,16 @@ data class ApiSpec(
     }
 
     companion object {
+        private val PLACEHOLDER = Regex("""\{([^}]+)}""")
+
         private val MAP_KEY_KINDS = setOf(PrimitiveKind.STRING, PrimitiveKind.INT32, PrimitiveKind.INT64, PrimitiveKind.LOCAL_DATE)
 
         /**
          * Joins the parts of an API described by several specs, such as a REST API and the web
          * pages of the same site, into one: their modules side by side, and the enums, servers
          * and auth schemes of every part. Parts may repeat a declaration only identically, and
-         * must agree on the API's identity and parameters, which every operation uses.
+         * must agree on the API's identity and parameters, which every operation uses. At most
+         * one part describes the client.
          */
         fun merge(parts: List<ApiSpec>): ApiSpec {
             require(parts.isNotEmpty()) { "An API needs at least one spec" }
@@ -95,6 +110,10 @@ data class ApiSpec(
                 servers = union(parts.flatMap { it.servers }, "Server") { it.name },
                 authSchemes = union(parts.flatMap { it.authSchemes }, "Auth scheme") { it.name },
                 parameters = first.parameters,
+                client = parts.map { it.client }.filter { it != ClientSpec.DEFAULT }.let { clients ->
+                    require(clients.size <= 1) { "Only one spec of API '${first.id}' may describe its client" }
+                    clients.singleOrNull() ?: ClientSpec.DEFAULT
+                },
             )
         }
 

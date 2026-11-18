@@ -3,14 +3,16 @@ package it.attendance100.mybicocca.data.remote.elearning.api
 
 import io.ktor.client.HttpClient
 import io.ktor.client.request.parameter
+import io.ktor.http.HttpMethod
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleWebKalturaPlayer
 import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleWebScrapers
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import kotlinx.serialization.json.Json
 
 class MoodleWebMediaApi(
     client: HttpClient,
     json: Json
-) : MoodleWebAbstractApi(client, json, "") {
+) : RestApi(client, json, "", MoodleWebRuntime.policy) {
 
     /**
      * The Kaltura player of a video resource. Without a valid session Moodle serves its login page, which has no player.
@@ -18,7 +20,7 @@ class MoodleWebMediaApi(
     suspend fun getKalturaPlayer(
         courseModuleId: Int
     ): MoodleWebKalturaPlayer {
-        return executeHtmlGet("/mod/kalvidres/view.php", server = MoodleWebServer.Main, scrape = MoodleWebScrapers::mediaGetKalturaPlayer) {
+        return html(HttpMethod.Get, "/mod/kalvidres/view.php", scrape = MoodleWebScrapers::mediaGetKalturaPlayer, server = MoodleWebServer.Main.url) {
             parameter("id", courseModuleId)
         }
     }

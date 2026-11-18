@@ -5,8 +5,8 @@ import it.attendance100.mybicocca.codegen.model.ApiSpec
 
 /**
  * Emits the facade: the API's entry point, owning the HTTP client and exposing one property
- * per module. How the client and JSON are configured is up to the API's hand-written
- * `Runtime` object.
+ * per module, and one per client setting, which the caller may change at any time. The client
+ * and JSON come from the API's generated `Runtime` object.
  */
 internal class FacadeEmitter(private val spec: ApiSpec, private val layout: KotlinLayout) {
 
@@ -32,10 +32,17 @@ internal class FacadeEmitter(private val spec: ApiSpec, private val layout: Kotl
             }
             indent {
                 line("private val json = $runtime.json")
-                line("private val client = $runtime.createHttpClient(json, httpClientConfig)")
+                line("private val settings = $runtime.settings()")
+                line("private val client = $runtime.createHttpClient(json, settings, httpClientConfig)")
                 line()
+                for (setting in spec.client.settings) {
+                    val description = setting.description?.let { "${KotlinSyntax.docText(it)} " }.orEmpty()
+                    line("/** ${description}Defaults to `${KotlinSyntax.docText(setting.default)}`. */")
+                    line("var ${KotlinSyntax.identifier(setting.name)}: String by settings")
+                    line()
+                }
                 for (module in spec.modules.filter { it.operations.isNotEmpty() }) {
-                    val arguments = listOf("client", "json") + spec.parametersOf(module).map { KotlinSyntax.identifier(it.name) }
+                    val arguments = listOf("client", "json") + layout.moduleParameters(module).map { KotlinSyntax.identifier(it.name) }
                     line("val ${KotlinSyntax.identifier(module.name.decapitalized())} = ${layout.serviceName(module)}(${arguments.joinToString(", ")})")
                 }
                 line()

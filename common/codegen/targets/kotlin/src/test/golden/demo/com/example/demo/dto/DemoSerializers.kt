@@ -3,8 +3,11 @@ package com.example.demo.dto
 
 import io.ktor.http.ParametersBuilder
 import java.time.Instant
+import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
 import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.builtins.ListSerializer
@@ -24,6 +27,45 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.JsonTransformingSerializer
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.contentOrNull
+
+/** Dates written `dd/MM/yyyy`; blank strings, `null` and values that aren't strings mean no value. */
+object DemoDateSerializer : KSerializer<LocalDate?> {
+    private val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
+
+    override val descriptor = PrimitiveSerialDescriptor("DemoDateSerializer", PrimitiveKind.STRING).nullable
+
+    override fun serialize(encoder: Encoder, value: LocalDate?) = encoder.encodeString(value?.format(formatter).orEmpty())
+
+    override fun deserialize(decoder: Decoder): LocalDate? {
+        val text = when (decoder) {
+            is JsonDecoder -> (decoder.decodeJsonElement() as? JsonPrimitive)?.takeIf { it.isString }?.content
+            else -> decoder.decodeString()
+        }
+        return text?.takeUnless { it.isBlank() || it == "null" }?.let { LocalDate.parse(it, formatter) }
+    }
+}
+
+/** Times written `HH:mm`. */
+object DemoTimeSerializer : KSerializer<LocalTime> {
+    private val formatter = DateTimeFormatter.ofPattern("HH:mm")
+
+    override val descriptor = PrimitiveSerialDescriptor("DemoTimeSerializer", PrimitiveKind.STRING)
+
+    override fun serialize(encoder: Encoder, value: LocalTime) = encoder.encodeString(value.format(formatter))
+
+    override fun deserialize(decoder: Decoder): LocalTime = LocalTime.parse(decoder.decodeString(), formatter)
+}
+
+/** Dates written `yyyy-MM-dd`. */
+object DemoIsoDateSerializer : KSerializer<LocalDate> {
+    private val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+
+    override val descriptor = PrimitiveSerialDescriptor("DemoIsoDateSerializer", PrimitiveKind.STRING)
+
+    override fun serialize(encoder: Encoder, value: LocalDate) = encoder.encodeString(value.format(formatter))
+
+    override fun deserialize(decoder: Decoder): LocalDate = LocalDate.parse(decoder.decodeString(), formatter)
+}
 
 /** Booleans, also sent as `0`/`1` or as strings (`"true"`, `"1"`), as lenient servers send them. */
 object DemoBooleanSerializer : KSerializer<Boolean> {

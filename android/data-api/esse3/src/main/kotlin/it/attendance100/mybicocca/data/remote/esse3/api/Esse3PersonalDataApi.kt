@@ -5,6 +5,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
+import io.ktor.http.HttpMethod
 import io.ktor.http.contentType
 import io.ktor.utils.io.ByteReadChannel
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3AnnualEnrollment
@@ -76,12 +77,14 @@ import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3Tutor
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3TutorsRulesHeader
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3University
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3ValidationFlag
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
 
 class Esse3PersonalDataApi(
     client: HttpClient,
     json: Json
-) : Esse3AbstractApi(client, json, "/anagrafica-service-v2") {
+) : RestApi(client, json, "/anagrafica-service-v2", Esse3Runtime.policy) {
 
     /**
      * refresh della data di scadenza del token dreamapply e recupero dell’url di attivazione
@@ -91,7 +94,7 @@ class Esse3PersonalDataApi(
     suspend fun refreshToken(
         applicationId: String
     ): Esse3RefreshedToken {
-        return executeJsonPut<Esse3RefreshedToken>("/activation-url${applicationId}", setOf(Esse3PermissionLevel.TECHNICAL_USER))
+        return json(HttpMethod.Put, "/activation-url${applicationId}", deserializer = serializer<Esse3RefreshedToken>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -108,7 +111,7 @@ class Esse3PersonalDataApi(
         validFlag: Int? = null,
         webVisibleFlag: Int? = null
     ): List<Esse3GetAuthorizationAttachmentMetadata> {
-        return executeJsonGetList<Esse3GetAuthorizationAttachmentMetadata>("/allegati/autorizzati/${authorizedId}/allegatiAutorizzato/", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/allegati/autorizzati/${authorizedId}/allegatiAutorizzato/", deserializer = serializer<List<Esse3GetAuthorizationAttachmentMetadata>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             attachmentTypology?.let { parameter("tipologiaAllegato", it) }
             validFlag?.let { parameter("validoFlg", it) }
             webVisibleFlag?.let { parameter("webVisFlg", it) }
@@ -125,11 +128,10 @@ class Esse3PersonalDataApi(
         authorizedId: Long,
         body: Esse3AuthorizationAttachmentMetadata
     ) {
-        val response = executePost("/allegati/autorizzati/${authorizedId}/allegatiAutorizzato/") {
+        send(HttpMethod.Post, "/allegati/autorizzati/${authorizedId}/allegatiAutorizzato/", roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
-        ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -150,7 +152,7 @@ class Esse3PersonalDataApi(
         validFlag: Int? = null,
         webVisibleFlag: Int? = null
     ): List<Esse3GetPersonalDocumentAuthorizationMetadata> {
-        return executeJsonGetList<Esse3GetPersonalDocumentAuthorizationMetadata>("/allegati/autorizzati/${authorizedId}/allegatiDocPers/", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/allegati/autorizzati/${authorizedId}/allegatiDocPers/", deserializer = serializer<List<Esse3GetPersonalDocumentAuthorizationMetadata>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             parameter("docIdentTipoCod", identityDocumentTypeCode)
             personalDataDocAuthorizationId?.let { parameter("autDocPersId", it) }
             attachmentTypology?.let { parameter("tipologiaAllegato", it) }
@@ -169,11 +171,10 @@ class Esse3PersonalDataApi(
         authorizedId: Long,
         body: Esse3PersonalDocumentAuthorizationMetadata
     ) {
-        val response = executePost("/allegati/autorizzati/${authorizedId}/allegatiDocPers/") {
+        send(HttpMethod.Post, "/allegati/autorizzati/${authorizedId}/allegatiDocPers/", roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
-        ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -188,11 +189,10 @@ class Esse3PersonalDataApi(
         attachmentId: Long,
         attachmentTypology: String? = null
     ) {
-        val response = executeDelete("/allegati/carriere/${matId}") {
+        send(HttpMethod.Delete, "/allegati/carriere/${matId}", roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             parameter("allegatoId", attachmentId)
             attachmentTypology?.let { parameter("tipologiaAllegato", it) }
         }
-        ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -209,12 +209,11 @@ class Esse3PersonalDataApi(
         personId: Long? = null,
         attachmentTypology: String? = null
     ) {
-        val response = executeDelete("/allegati/docPers/${personalDocumentId}") {
+        send(HttpMethod.Delete, "/allegati/docPers/${personalDocumentId}", roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             parameter("allegatoId", attachmentId)
             personId?.let { parameter("persId", it) }
             attachmentTypology?.let { parameter("tipologiaAllegato", it) }
         }
-        ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -241,7 +240,7 @@ class Esse3PersonalDataApi(
         validFlag: Int? = null,
         webVisibleFlag: Int? = null
     ): List<Esse3GetHandicapDeclarationAttachmentMetadata> {
-        return executeJsonGetList<Esse3GetHandicapDeclarationAttachmentMetadata>("/allegati/${personId}/allegatiDicHand/", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/allegati/${personId}/allegatiDicHand/", deserializer = serializer<List<Esse3GetHandicapDeclarationAttachmentMetadata>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             parameter("tipoHandicap", handicapType)
             declarationDate?.let { parameter("dataDichiar", it) }
             startDate?.let { parameter("dataIni", it) }
@@ -263,11 +262,10 @@ class Esse3PersonalDataApi(
         personId: Long,
         body: Esse3HandicapDeclarationAttachmentMetadata
     ) {
-        val response = executePost("/allegati/${personId}/allegatiDicHand/") {
+        send(HttpMethod.Post, "/allegati/${personId}/allegatiDicHand/", roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
-        ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -288,7 +286,7 @@ class Esse3PersonalDataApi(
         validFlag: Int? = null,
         webVisibleFlag: Int? = null
     ): List<Esse3GetIdentityDocumentAttachmentMetadata> {
-        return executeJsonGetList<Esse3GetIdentityDocumentAttachmentMetadata>("/allegati/${personId}/allegatiDocIdent/", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/allegati/${personId}/allegatiDocIdent/", deserializer = serializer<List<Esse3GetIdentityDocumentAttachmentMetadata>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             parameter("docIdentTipoCod", identityDocumentTypeCode)
             personalDocumentId?.let { parameter("docPersId", it) }
             attachmentTypology?.let { parameter("tipologiaAllegato", it) }
@@ -307,11 +305,10 @@ class Esse3PersonalDataApi(
         personId: Long,
         body: Esse3IdentityDocumentAttachmentMetadata
     ) {
-        val response = executePost("/allegati/${personId}/allegatiDocIdent/") {
+        send(HttpMethod.Post, "/allegati/${personId}/allegatiDocIdent/", roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
-        ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -324,11 +321,10 @@ class Esse3PersonalDataApi(
         personId: Long,
         body: Esse3PersonPhotoAttachmentMetadata
     ) {
-        val response = executePost("/allegati/${personId}/allegatiFotoPersona/") {
+        send(HttpMethod.Post, "/allegati/${personId}/allegatiFotoPersona/", roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
-        ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -351,7 +347,7 @@ class Esse3PersonalDataApi(
         attachmentTypology: String? = null,
         validFlag: Int? = null
     ): List<Esse3GetHighSchoolDiplomaAttachmentMetadata> {
-        return executeJsonGetList<Esse3GetHighSchoolDiplomaAttachmentMetadata>("/allegati/${personId}/allegatiMatur/", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/allegati/${personId}/allegatiMatur/", deserializer = serializer<List<Esse3GetHighSchoolDiplomaAttachmentMetadata>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             parameter("annoMaturita", highSchoolGraduationYear)
             miurDiplomaId?.let { parameter("idDiplomaMiur", it) }
             highSchoolGraduationDate?.let { parameter("dataMaturita", it) }
@@ -371,11 +367,10 @@ class Esse3PersonalDataApi(
         personId: Long,
         body: Esse3HighSchoolDiplomaAttachmentMetadata
     ) {
-        val response = executePost("/allegati/${personId}/allegatiMatur/") {
+        send(HttpMethod.Post, "/allegati/${personId}/allegatiMatur/", roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
-        ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -396,7 +391,7 @@ class Esse3PersonalDataApi(
         attachmentTypology: String? = null,
         validFlag: Int? = null
     ): List<Esse3GetItalianTitleAttachmentMetadata> {
-        return executeJsonGetList<Esse3GetItalianTitleAttachmentMetadata>("/allegati/${personId}/allegatiTitIt/", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/allegati/${personId}/allegatiTitIt/", deserializer = serializer<List<Esse3GetItalianTitleAttachmentMetadata>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             parameter("tipoTititCod", titleCategoryCode)
             academicYearAwardedTitle?.let { parameter("aaConsegTit", it) }
             italianTitleId?.let { parameter("titItId", it) }
@@ -415,11 +410,10 @@ class Esse3PersonalDataApi(
         personId: Long,
         body: Esse3ItalianTitleAttachmentMetadata
     ) {
-        val response = executePost("/allegati/${personId}/allegatiTitIt/") {
+        send(HttpMethod.Post, "/allegati/${personId}/allegatiTitIt/", roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
-        ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -440,7 +434,7 @@ class Esse3PersonalDataApi(
         attachmentTypology: String? = null,
         validFlag: Int? = null
     ): List<Esse3GetForeignTitleAttachmentMetadata> {
-        return executeJsonGetList<Esse3GetForeignTitleAttachmentMetadata>("/allegati/${personId}/allegatiTitStra/", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/allegati/${personId}/allegatiTitStra/", deserializer = serializer<List<Esse3GetForeignTitleAttachmentMetadata>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             parameter("aaConsegTit", academicYearAwardedTitle)
             titleStatusTypeCode?.let { parameter("tipoTitstCod", it) }
             foreignTitleId?.let { parameter("titStraId", it) }
@@ -459,11 +453,10 @@ class Esse3PersonalDataApi(
         personId: Long,
         body: Esse3ForeignTitleAttachmentMetadata
     ) {
-        val response = executePost("/allegati/${personId}/allegatiTitStra/") {
+        send(HttpMethod.Post, "/allegati/${personId}/allegatiTitStra/", roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
-        ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -480,7 +473,7 @@ class Esse3PersonalDataApi(
         validFlag: Int? = null,
         webVisibleFlag: Int? = null
     ): List<Esse3GetEnrollmentNumberAttachmentMetadata> {
-        return executeJsonGetList<Esse3GetEnrollmentNumberAttachmentMetadata>("/allegati/${studentId}/allegatiMatricola/", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/allegati/${studentId}/allegatiMatricola/", deserializer = serializer<List<Esse3GetEnrollmentNumberAttachmentMetadata>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             attachmentTypology?.let { parameter("tipologiaAllegato", it) }
             validFlag?.let { parameter("validoFlg", it) }
             webVisibleFlag?.let { parameter("webVisFlg", it) }
@@ -497,11 +490,10 @@ class Esse3PersonalDataApi(
         studentId: Long,
         body: Esse3EnrollmentNumberAttachmentMetadata
     ) {
-        val response = executePost("/allegati/${studentId}/allegatiMatricola/") {
+        send(HttpMethod.Post, "/allegati/${studentId}/allegatiMatricola/", roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
-        ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -524,7 +516,7 @@ class Esse3PersonalDataApi(
         start: Int? = null,
         limit: Int? = null
     ): List<Esse3University> {
-        return executeJsonGetList<Esse3University>("/atenei", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/atenei", deserializer = serializer<List<Esse3University>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             istatCode?.let { parameter("istatCod", it) }
             universityId?.let { parameter("ateneoId", it) }
             unifiedCode?.let { parameter("codeUn", it) }
@@ -561,7 +553,7 @@ class Esse3PersonalDataApi(
         start: Int? = null,
         limit: Int? = null
     ): List<Esse3StudyCourse> {
-        return executeJsonGetList<Esse3StudyCourse>("/atenei/corsi", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/atenei/corsi", deserializer = serializer<List<Esse3StudyCourse>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             erasmusCode?.let { parameter("erasmusCod", it) }
             universityId?.let { parameter("ateneoId", it) }
             istatCode?.let { parameter("istatCod", it) }
@@ -597,7 +589,7 @@ class Esse3PersonalDataApi(
         start: Int? = null,
         limit: Int? = null
     ): List<Esse3ForeignUniversity> {
-        return executeJsonGetList<Esse3ForeignUniversity>("/ateneiStranieri", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/ateneiStranieri", deserializer = serializer<List<Esse3ForeignUniversity>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             erasmusCode?.let { parameter("erasmusCod", it) }
             foreignUniversityId?.let { parameter("ateneoStranieroId", it) }
             nationFiscalCode?.let { parameter("nazioneCodFisc", it) }
@@ -659,7 +651,7 @@ class Esse3PersonalDataApi(
         academicYearEnrollmentId: Long? = null,
         onlyActive: Int? = null
     ): List<Esse3Career> {
-        return executeJsonGetList<Esse3Career>("/carriere", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/carriere", deserializer = serializer<List<Esse3Career>>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
             userId?.let { parameter("userId", it) }
             surname?.let { parameter("cognome", it) }
             name?.let { parameter("nome", it) }
@@ -695,7 +687,7 @@ class Esse3PersonalDataApi(
         studentId: Long,
         optionalFields: String? = null
     ): List<Esse3CareerGDPR> {
-        return executeJsonGetList<Esse3CareerGDPR>("/carriere-gdpr/${studentId}", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/carriere-gdpr/${studentId}", deserializer = serializer<List<Esse3CareerGDPR>>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
             optionalFields?.let { parameter("optionalFields", it) }
         }
     }
@@ -708,7 +700,7 @@ class Esse3PersonalDataApi(
     suspend fun putGraduationWaiting(
         body: Esse3GraduationWaitingParameters
     ): Esse3Career {
-        return executeJsonPut<Esse3Career>("/carriere/aggiornaAttesaLaurea", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Put, "/carriere/aggiornaAttesaLaurea", deserializer = serializer<Esse3Career>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -768,7 +760,7 @@ class Esse3PersonalDataApi(
         optionalFields: String? = null,
         onlyActive: Int? = null
     ): List<Esse3PhDProgramCareer> {
-        return executeJsonGetList<Esse3PhDProgramCareer>("/carriere/datiDottorato", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/carriere/datiDottorato", deserializer = serializer<List<Esse3PhDProgramCareer>>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
             userId?.let { parameter("userId", it) }
             govIdentifier?.let { parameter("identificativo U-Gov", it) }
             studentId?.let { parameter("stuId", it) }
@@ -846,7 +838,7 @@ class Esse3PersonalDataApi(
         academicYearEnrollmentId: Long? = null,
         onlyActive: Int? = null
     ): List<Esse3CareerMinimalData> {
-        return executeJsonGetList<Esse3CareerMinimalData>("/carriere/datiMin", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/carriere/datiMin", deserializer = serializer<List<Esse3CareerMinimalData>>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
             userId?.let { parameter("userId", it) }
             surname?.let { parameter("cognome", it) }
             name?.let { parameter("nome", it) }
@@ -884,7 +876,7 @@ class Esse3PersonalDataApi(
         body: Esse3ExemptionTypeParameters,
         academicYear: Int
     ): Esse3AnnualEnrollment {
-        return executeJsonPut<Esse3AnnualEnrollment>("/carriere/${matricola}/iscrizioni/aggiornaDataIscrAndTipoEsoneroByMat", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Put, "/carriere/${matricola}/iscrizioni/aggiornaDataIscrAndTipoEsoneroByMat", deserializer = serializer<Esse3AnnualEnrollment>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
             parameter("annoAccademico", academicYear)
@@ -899,7 +891,7 @@ class Esse3PersonalDataApi(
     suspend fun getCareerByStudent(
         studentId: Long
     ): Esse3Career {
-        return executeJsonGet<Esse3Career>("/carriere/${studentId}", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER))
+        return json(HttpMethod.Get, "/carriere/${studentId}", deserializer = serializer<Esse3Career>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -912,7 +904,7 @@ class Esse3PersonalDataApi(
         studentId: Long,
         body: Esse3CareerParameters
     ): Esse3Career {
-        return executeJsonPut<Esse3Career>("/carriere/${studentId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Put, "/carriere/${studentId}", deserializer = serializer<Esse3Career>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -928,7 +920,7 @@ class Esse3PersonalDataApi(
         studentId: Long,
         body: Esse3CareerClosureParameters
     ): Esse3Career {
-        return executeJsonPut<Esse3Career>("/carriere/${studentId}/chiudiCarriera", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Put, "/carriere/${studentId}/chiudiCarriera", deserializer = serializer<Esse3Career>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -954,7 +946,7 @@ class Esse3PersonalDataApi(
         order: String? = null,
         fields: String? = null
     ): List<Esse3AnnualEnrollment> {
-        return executeJsonGetList<Esse3AnnualEnrollment>("/carriere/${studentId}/iscrizioni", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/carriere/${studentId}/iscrizioni", deserializer = serializer<List<Esse3AnnualEnrollment>>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
             academicYear?.let { parameter("annoAccademico", it) }
             lastEnrollmentFlag?.let { parameter("ultimaIscrizioneFlg", it) }
             start?.let { parameter("start", it) }
@@ -976,7 +968,7 @@ class Esse3PersonalDataApi(
         body: Esse3ExemptionTypeParameters,
         academicYear: Int
     ): Esse3AnnualEnrollment {
-        return executeJsonPut<Esse3AnnualEnrollment>("/carriere/${studentId}/iscrizioni/aggiornaDataIscrAndTipoEsonero", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Put, "/carriere/${studentId}/iscrizioni/aggiornaDataIscrAndTipoEsonero", deserializer = serializer<Esse3AnnualEnrollment>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
             parameter("annoAccademico", academicYear)
@@ -995,7 +987,7 @@ class Esse3PersonalDataApi(
         body: Esse3CanteenBandParameters,
         academicYear: Int
     ): Esse3AnnualEnrollment {
-        return executeJsonPut<Esse3AnnualEnrollment>("/carriere/${studentId}/iscrizioni/aggiornaFasciaMensa", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Put, "/carriere/${studentId}/iscrizioni/aggiornaFasciaMensa", deserializer = serializer<Esse3AnnualEnrollment>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
             parameter("annoAccademico", academicYear)
@@ -1014,7 +1006,7 @@ class Esse3PersonalDataApi(
         body: Esse3StudentTypeParameters,
         academicYear: Int
     ): Esse3AnnualEnrollment {
-        return executeJsonPut<Esse3AnnualEnrollment>("/carriere/${studentId}/iscrizioni/aggiornaTipoStuCod", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Put, "/carriere/${studentId}/iscrizioni/aggiornaTipoStuCod", deserializer = serializer<Esse3AnnualEnrollment>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
             parameter("annoAccademico", academicYear)
@@ -1035,7 +1027,7 @@ class Esse3PersonalDataApi(
         limit: Int? = null,
         order: String? = null
     ): List<Esse3BankDetails> {
-        return executeJsonGetList<Esse3BankDetails>("/datiBancari/${personId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/datiBancari/${personId}", deserializer = serializer<List<Esse3BankDetails>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             start?.let { parameter("start", it) }
             limit?.let { parameter("limit", it) }
             order?.let { parameter("order", it) }
@@ -1052,7 +1044,7 @@ class Esse3PersonalDataApi(
         fields: String? = null,
         optionalFields: String? = null
     ): List<Esse3NewTeachers> {
-        return executeJsonGetList<Esse3NewTeachers>("/docenti/${lecturerId}", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER)) {
+        return jsonList(HttpMethod.Get, "/docenti/${lecturerId}", deserializer = serializer<List<Esse3NewTeachers>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER)) {
             fields?.let { parameter("fields", it) }
             optionalFields?.let { parameter("optionalFields", it) }
         }
@@ -1090,7 +1082,7 @@ class Esse3PersonalDataApi(
         order: String? = null,
         fields: String? = null
     ): List<Esse3AnnualEnrollment> {
-        return executeJsonGetList<Esse3AnnualEnrollment>("/iscrizioni/${academicYearEnrollmentId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/iscrizioni/${academicYearEnrollmentId}", deserializer = serializer<List<Esse3AnnualEnrollment>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             parameter("inclSXH", includeSXH)
             parameter("inclCond", includeCondition)
             courseOfStudyId?.let { parameter("cdsId", it) }
@@ -1128,7 +1120,7 @@ class Esse3PersonalDataApi(
         start: Int? = null,
         limit: Int? = null
     ): List<Esse3Institute> {
-        return executeJsonGetList<Esse3Institute>("/istituti", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/istituti", deserializer = serializer<List<Esse3Institute>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             schoolTypologyCode?.let { parameter("tipologiaScuolaCod", it) }
             miurSchoolCode?.let { parameter("scuolaMiurCod", it) }
             higherSchoolId?.let { parameter("scuolaSupId", it) }
@@ -1148,7 +1140,7 @@ class Esse3PersonalDataApi(
     suspend fun getCompensatoryMeasures(
         handicapType: String? = null
     ): List<Esse3CompensatoryMeasures> {
-        return executeJsonGetList<Esse3CompensatoryMeasures>("/misureCompensative", setOf(Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/misureCompensative", deserializer = serializer<List<Esse3CompensatoryMeasures>>(), roles = setOf(Esse3PermissionLevel.ANY)) {
             handicapType?.let { parameter("tipoHandicap", it) }
         }
     }
@@ -1157,7 +1149,7 @@ class Esse3PersonalDataApi(
      * Recupero delle normative legate alle dichiarazioni di handicap
      */
     suspend fun getHandicapRegulations(): List<Esse3HandicapRegulations> {
-        return executeJsonGetList<Esse3HandicapRegulations>("/normativeHandicap", setOf(Esse3PermissionLevel.TECHNICAL_USER))
+        return jsonList(HttpMethod.Get, "/normativeHandicap", deserializer = serializer<List<Esse3HandicapRegulations>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -1188,7 +1180,7 @@ class Esse3PersonalDataApi(
         order: String? = null,
         optionalFields: String? = null
     ): List<Esse3PersonCommonRegistry> {
-        return executeJsonGetList<Esse3PersonCommonRegistry>("/persone", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/persone", deserializer = serializer<List<Esse3PersonCommonRegistry>>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
             surname?.let { parameter("cognome", it) }
             name?.let { parameter("nome", it) }
             fiscalCode?.let { parameter("codFis", it) }
@@ -1225,7 +1217,7 @@ class Esse3PersonalDataApi(
         limit: Int? = null,
         order: String? = null
     ): List<Esse3PersonGDPR> {
-        return executeJsonGetList<Esse3PersonGDPR>("/persone-gdpr", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/persone-gdpr", deserializer = serializer<List<Esse3PersonGDPR>>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
             surname?.let { parameter("cognome", it) }
             name?.let { parameter("nome", it) }
             fiscalCode?.let { parameter("codFis", it) }
@@ -1245,7 +1237,7 @@ class Esse3PersonalDataApi(
     suspend fun getGdprPerson(
         personId: Long
     ): Esse3PersonGDPR {
-        return executeJsonGet<Esse3PersonGDPR>("/persone-gdpr/${personId}/", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER))
+        return json(HttpMethod.Get, "/persone-gdpr/${personId}/", deserializer = serializer<Esse3PersonGDPR>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -1256,7 +1248,7 @@ class Esse3PersonalDataApi(
     suspend fun dismissEmailByAteEmail(
         universityEmail: String
     ): Esse3Person {
-        return executeJsonPatch<Esse3Person>("/persone/${universityEmail}/dismetti", setOf(Esse3PermissionLevel.TECHNICAL_USER))
+        return json(HttpMethod.Patch, "/persone/${universityEmail}/dismetti", deserializer = serializer<Esse3Person>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -1267,7 +1259,7 @@ class Esse3PersonalDataApi(
     suspend fun getPerson(
         personId: Long
     ): Esse3Person {
-        return executeJsonGet<Esse3Person>("/persone/${personId}/", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER))
+        return json(HttpMethod.Get, "/persone/${personId}/", deserializer = serializer<Esse3Person>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -1288,7 +1280,7 @@ class Esse3PersonalDataApi(
         handicapType: String? = null,
         compensatoryMeasureCode: String? = null
     ): List<Esse3PersonCompensatoryMeasures> {
-        return executeJsonPutList<Esse3PersonCompensatoryMeasures>("/persone/${personId}/agg-dicHandMisComp", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Put, "/persone/${personId}/agg-dicHandMisComp", deserializer = serializer<List<Esse3PersonCompensatoryMeasures>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
             parameter("dicHandId", handicapDeclarationId)
@@ -1310,7 +1302,7 @@ class Esse3PersonalDataApi(
         authorizedId: Long? = null,
         optionalFields: String? = null
     ): List<Esse3AuthorizedPerson> {
-        return executeJsonGetList<Esse3AuthorizedPerson>("/persone/${personId}/autorizzati/", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/persone/${personId}/autorizzati/", deserializer = serializer<List<Esse3AuthorizedPerson>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             authorizedId?.let { parameter("autorizzatoId", it) }
             optionalFields?.let { parameter("optionalFields", it) }
         }
@@ -1326,7 +1318,7 @@ class Esse3PersonalDataApi(
         personId: Long,
         studentId: Long
     ): Esse3Career {
-        return executeJsonGet<Esse3Career>("/persone/${personId}/carriere/${studentId}", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER))
+        return json(HttpMethod.Get, "/persone/${personId}/carriere/${studentId}", deserializer = serializer<Esse3Career>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -1339,7 +1331,7 @@ class Esse3PersonalDataApi(
         personId: Long,
         body: Esse3MobileParameter
     ): Esse3MobileParameter {
-        return executeJsonPut<Esse3MobileParameter>("/persone/${personId}/cellulare", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Put, "/persone/${personId}/cellulare", deserializer = serializer<Esse3MobileParameter>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -1361,7 +1353,7 @@ class Esse3PersonalDataApi(
         studentId: Long? = null,
         academicYearId: Long? = null
     ): List<Esse3StudentsConsents> {
-        return executeJsonGetList<Esse3StudentsConsents>("/persone/${personId}/consensi", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/persone/${personId}/consensi", deserializer = serializer<List<Esse3StudentsConsents>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             parameter("procWebCod", webProcedureCode)
             iso6392Code?.let { parameter("iso6392Cod", it) }
             studentId?.let { parameter("stuId", it) }
@@ -1387,7 +1379,7 @@ class Esse3PersonalDataApi(
         studentId: Long? = null,
         academicYearId: Long? = null
     ): List<Esse3StudentsConsents> {
-        return executeJsonPutList<Esse3StudentsConsents>("/persone/${personId}/consensi", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Put, "/persone/${personId}/consensi", deserializer = serializer<List<Esse3StudentsConsents>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
             parameter("procWebCod", webProcedureCode)
@@ -1411,12 +1403,11 @@ class Esse3PersonalDataApi(
         body: Esse3PostCompensatoryMeasuresHandicapDeclarationParameters,
         handicapType: String? = null
     ) {
-        val response = executePost("/persone/${personId}/dic-hand/${handicapDeclarationId}/misure-compensative-dicHand") {
+        send(HttpMethod.Post, "/persone/${personId}/dic-hand/${handicapDeclarationId}/misure-compensative-dicHand", roles = setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.EXTERNAL_SUBJECT)) {
             contentType(ContentType.Application.Json)
             setBody(body)
             handicapType?.let { parameter("tipoHandicap", it) }
         }
-        ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.EXTERNAL_SUBJECT))
     }
 
     /**
@@ -1437,7 +1428,7 @@ class Esse3PersonalDataApi(
         handicapType: String? = null,
         compensatoryMeasureCode: String? = null
     ): List<Esse3PersonCompensatoryMeasures> {
-        return executeJsonPutList<Esse3PersonCompensatoryMeasures>("/persone/${personId}/dic-hand/${handicapDeclarationId}/misure-compensative-dicHand/${handicapDeclarationMeasuresId}", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.EXTERNAL_SUBJECT)) {
+        return jsonList(HttpMethod.Put, "/persone/${personId}/dic-hand/${handicapDeclarationId}/misure-compensative-dicHand/${handicapDeclarationMeasuresId}", deserializer = serializer<List<Esse3PersonCompensatoryMeasures>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.EXTERNAL_SUBJECT)) {
             contentType(ContentType.Application.Json)
             setBody(body)
             handicapType?.let { parameter("tipoHandicap", it) }
@@ -1455,7 +1446,7 @@ class Esse3PersonalDataApi(
         personId: Long,
         handicapDeclarationId: Long? = null
     ): List<Esse3HandicapDeclaration> {
-        return executeJsonGetList<Esse3HandicapDeclaration>("/persone/${personId}/dicHand", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/persone/${personId}/dicHand", deserializer = serializer<List<Esse3HandicapDeclaration>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             handicapDeclarationId?.let { parameter("dicHandId", it) }
         }
     }
@@ -1474,7 +1465,7 @@ class Esse3PersonalDataApi(
         handicapDeclarationId: Long? = null,
         handicapType: String? = null
     ): List<Esse3HandicapDeclaration> {
-        return executeJsonPutList<Esse3HandicapDeclaration>("/persone/${personId}/dicHand", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Put, "/persone/${personId}/dicHand", deserializer = serializer<List<Esse3HandicapDeclaration>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
             handicapDeclarationId?.let { parameter("dicHandId", it) }
@@ -1492,7 +1483,7 @@ class Esse3PersonalDataApi(
         personId: Long,
         handicapDeclarationId: Long
     ): Esse3HandicapDeclaration {
-        return executeJsonGet<Esse3HandicapDeclaration>("/persone/${personId}/dicHand/${handicapDeclarationId}", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.EXTERNAL_SUBJECT))
+        return json(HttpMethod.Get, "/persone/${personId}/dicHand/${handicapDeclarationId}", deserializer = serializer<Esse3HandicapDeclaration>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.EXTERNAL_SUBJECT))
     }
 
     /**
@@ -1507,7 +1498,7 @@ class Esse3PersonalDataApi(
         handicapDeclarationId: Long,
         body: Esse3HandicapDeclarationPut
     ): Esse3HandicapDeclaration {
-        return executeJsonPut<Esse3HandicapDeclaration>("/persone/${personId}/dicHand/${handicapDeclarationId}", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.EXTERNAL_SUBJECT)) {
+        return json(HttpMethod.Put, "/persone/${personId}/dicHand/${handicapDeclarationId}", deserializer = serializer<Esse3HandicapDeclaration>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.EXTERNAL_SUBJECT)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -1527,7 +1518,7 @@ class Esse3PersonalDataApi(
         attachmentId: Long,
         userId: String? = null
     ): ByteReadChannel {
-        return executeStreamGet("/persone/${personId}/dicHand/${handicapDeclarationId}/allegatiDicHand/${attachmentId}/blob", setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.EXTERNAL_SUBJECT)) {
+        return stream(HttpMethod.Get, "/persone/${personId}/dicHand/${handicapDeclarationId}/allegatiDicHand/${attachmentId}/blob", roles = setOf(Esse3PermissionLevel.TEACHER, Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.EXTERNAL_SUBJECT)) {
             userId?.let { parameter("userId", it) }
         }
     }
@@ -1542,7 +1533,7 @@ class Esse3PersonalDataApi(
         personId: Long,
         universityEmail: String? = null
     ): Esse3Person {
-        return executeJsonPatch<Esse3Person>("/persone/${personId}/dismettiEmail", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Patch, "/persone/${personId}/dismettiEmail", deserializer = serializer<Esse3Person>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             universityEmail?.let { parameter("emailAte", it) }
         }
     }
@@ -1557,7 +1548,7 @@ class Esse3PersonalDataApi(
         personId: Long,
         email: String? = null
     ): Esse3Person {
-        return executeJsonPut<Esse3Person>("/persone/${personId}/email", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Put, "/persone/${personId}/email", deserializer = serializer<Esse3Person>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             email?.let { parameter("email", it) }
         }
     }
@@ -1572,7 +1563,7 @@ class Esse3PersonalDataApi(
         personId: Long,
         universityEmail: String
     ): Esse3Person {
-        return executeJsonPut<Esse3Person>("/persone/${personId}/emailAte", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Put, "/persone/${personId}/emailAte", deserializer = serializer<Esse3Person>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             parameter("emailAte", universityEmail)
         }
     }
@@ -1583,7 +1574,7 @@ class Esse3PersonalDataApi(
     suspend fun getPersonPhoto(
         personId: Long
     ): ByteReadChannel {
-        return executeStreamGet("/persone/${personId}/foto", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER))
+        return stream(HttpMethod.Get, "/persone/${personId}/foto", roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -1600,13 +1591,12 @@ class Esse3PersonalDataApi(
         handicapDeclarationId: Long,
         handicapType: String? = null
     ) {
-        val response = executePost("/persone/${personId}/ins-dicHandMisComp") {
+        send(HttpMethod.Post, "/persone/${personId}/ins-dicHandMisComp", roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
             parameter("dicHandId", handicapDeclarationId)
             handicapType?.let { parameter("tipoHandicap", it) }
         }
-        ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -1627,7 +1617,7 @@ class Esse3PersonalDataApi(
         order: String? = null,
         fields: String? = null
     ): List<Esse3PersonCompensatoryMeasures> {
-        return executeJsonGetList<Esse3PersonCompensatoryMeasures>("/persone/${personId}/misure-compensative", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/persone/${personId}/misure-compensative", deserializer = serializer<List<Esse3PersonCompensatoryMeasures>>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
             callStartDate?.let { parameter("dataInizioApp", it) }
             q?.let { parameter("q", it.value) }
             order?.let { parameter("order", it) }
@@ -1647,7 +1637,7 @@ class Esse3PersonalDataApi(
         handicapDeclarationId: Long? = null,
         handicapType: String? = null
     ): List<Esse3PersonCompensatoryMeasures> {
-        return executeJsonGetList<Esse3PersonCompensatoryMeasures>("/persone/${personId}/misure-compensative-dicHand", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/persone/${personId}/misure-compensative-dicHand", deserializer = serializer<List<Esse3PersonCompensatoryMeasures>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             handicapDeclarationId?.let { parameter("dicHandId", it) }
             handicapType?.let { parameter("tipoHandicap", it) }
         }
@@ -1663,7 +1653,7 @@ class Esse3PersonalDataApi(
         personId: Long,
         body: Esse3PhoneParameters
     ): Esse3PhoneParameters {
-        return executeJsonPut<Esse3PhoneParameters>("/persone/${personId}/telefono-domicilio", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Put, "/persone/${personId}/telefono-domicilio", deserializer = serializer<Esse3PhoneParameters>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -1679,7 +1669,7 @@ class Esse3PersonalDataApi(
         personId: Long,
         body: Esse3PhoneParameters
     ): Esse3PhoneParameters {
-        return executeJsonPut<Esse3PhoneParameters>("/persone/${personId}/telefono-residenza", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Put, "/persone/${personId}/telefono-residenza", deserializer = serializer<Esse3PhoneParameters>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -1695,7 +1685,7 @@ class Esse3PersonalDataApi(
         personId: Long,
         tutorsFilter: Int? = null
     ): List<Esse3Tutor> {
-        return executeJsonGetList<Esse3Tutor>("/persone/${personId}/tutori/", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/persone/${personId}/tutori/", deserializer = serializer<List<Esse3Tutor>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             tutorsFilter?.let { parameter("filtroTutori", it) }
         }
     }
@@ -1706,14 +1696,14 @@ class Esse3PersonalDataApi(
     suspend fun getPhotoValidationFlag(
         personId: Long
     ): Esse3ValidationFlag {
-        return executeJsonGet<Esse3ValidationFlag>("/persone/${personId}/validaFoto", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER))
+        return json(HttpMethod.Get, "/persone/${personId}/validaFoto", deserializer = serializer<Esse3ValidationFlag>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
      * Recupero range voti maturità
      */
     suspend fun getHighSchoolGradeRange(): List<Esse3HighSchoolGradeRange> {
-        return executeJsonGetList<Esse3HighSchoolGradeRange>("/rangeVotiMaturita", setOf(Esse3PermissionLevel.TECHNICAL_USER))
+        return jsonList(HttpMethod.Get, "/rangeVotiMaturita", deserializer = serializer<List<Esse3HighSchoolGradeRange>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -1744,7 +1734,7 @@ class Esse3PersonalDataApi(
         start: Int? = null,
         limit: Int? = null
     ): List<Esse3ExternalSubject> {
-        return executeJsonGetList<Esse3ExternalSubject>("/soggettiEsterni", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/soggettiEsterni", deserializer = serializer<List<Esse3ExternalSubject>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             surname?.let { parameter("cognome", it) }
             name?.let { parameter("nome", it) }
             departmentId?.let { parameter("dipId", it) }
@@ -1767,7 +1757,7 @@ class Esse3PersonalDataApi(
     suspend fun putExternalSubject(
         body: Esse3PutExternalSubject
     ): List<Esse3ExternalSubject> {
-        return executeJsonPutList<Esse3ExternalSubject>("/soggettiEsterni", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Put, "/soggettiEsterni", deserializer = serializer<List<Esse3ExternalSubject>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -1781,8 +1771,7 @@ class Esse3PersonalDataApi(
     suspend fun deleteExternalSubject(
         externalSubjectId: Int
     ) {
-        val response = executeDelete("/soggettiEsterni/${externalSubjectId}")
-        ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
+        send(HttpMethod.Delete, "/soggettiEsterni/${externalSubjectId}", roles = setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -1797,7 +1786,7 @@ class Esse3PersonalDataApi(
         webProcedureCode: String,
         iso6392Code: String? = null
     ): List<Esse3ExternalSubjectsConsents> {
-        return executeJsonGetList<Esse3ExternalSubjectsConsents>("/soggettiEsterni/${externalSubjectId}/consensi", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/soggettiEsterni/${externalSubjectId}/consensi", deserializer = serializer<List<Esse3ExternalSubjectsConsents>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             parameter("procWebCod", webProcedureCode)
             iso6392Code?.let { parameter("iso6392Cod", it) }
         }
@@ -1817,7 +1806,7 @@ class Esse3PersonalDataApi(
         webProcedureCode: String,
         iso6392Code: String? = null
     ): List<Esse3ExternalSubjectsConsents> {
-        return executeJsonPutList<Esse3ExternalSubjectsConsents>("/soggettiEsterni/${externalSubjectId}/consensi", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Put, "/soggettiEsterni/${externalSubjectId}/consensi", deserializer = serializer<List<Esse3ExternalSubjectsConsents>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
             parameter("procWebCod", webProcedureCode)
@@ -1855,7 +1844,7 @@ class Esse3PersonalDataApi(
         start: Int? = null,
         limit: Int? = null
     ): List<Esse3ExternalSubjectReplica> {
-        return executeJsonGetList<Esse3ExternalSubjectReplica>("/soggettiEsterniReplica", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/soggettiEsterniReplica", deserializer = serializer<List<Esse3ExternalSubjectReplica>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             externalSubjectId?.let { parameter("soggEstId", it) }
             surname?.let { parameter("cognome", it) }
             name?.let { parameter("nome", it) }
@@ -1881,7 +1870,7 @@ class Esse3PersonalDataApi(
         externalSubjectId: Int,
         optionalFields: String? = null
     ): Esse3ExternalSubjectReplica {
-        return executeJsonGet<Esse3ExternalSubjectReplica>("/soggettiEsterniReplica/${externalSubjectId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Get, "/soggettiEsterniReplica/${externalSubjectId}", deserializer = serializer<Esse3ExternalSubjectReplica>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             optionalFields?.let { parameter("optionalFields", it) }
         }
     }
@@ -1890,7 +1879,7 @@ class Esse3PersonalDataApi(
      * Recupero tipi istituto superiore
      */
     suspend fun getHigherInstitutionTypes(): List<Esse3HigherInstituteTypes> {
-        return executeJsonGetList<Esse3HigherInstituteTypes>("/tipiIstituto", setOf(Esse3PermissionLevel.TECHNICAL_USER))
+        return jsonList(HttpMethod.Get, "/tipiIstituto", deserializer = serializer<List<Esse3HigherInstituteTypes>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -1911,7 +1900,7 @@ class Esse3PersonalDataApi(
         start: Int? = null,
         limit: Int? = null
     ): List<Esse3HigherSchoolTitleType> {
-        return executeJsonGetList<Esse3HigherSchoolTitleType>("/tipiTitoliScuolaSup", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/tipiTitoliScuolaSup", deserializer = serializer<List<Esse3HigherSchoolTitleType>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             titleTypologyCode?.let { parameter("tipologiaTitoloCod", it) }
             titleTypeCode?.let { parameter("tipoTitoloCod", it) }
             fields?.let { parameter("fields", it) }
@@ -1937,7 +1926,7 @@ class Esse3PersonalDataApi(
         start: Int? = null,
         limit: Int? = null
     ): List<Esse3ForeignTitleType> {
-        return executeJsonGetList<Esse3ForeignTitleType>("/tipiTitoliStranieri", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/tipiTitoliStranieri", deserializer = serializer<List<Esse3ForeignTitleType>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             levelCode?.let { parameter("livelloCod", it) }
             fields?.let { parameter("fields", it) }
             order?.let { parameter("order", it) }
@@ -1960,7 +1949,7 @@ class Esse3PersonalDataApi(
         start: Int? = null,
         limit: Int? = null
     ): List<Esse3ForeignTitleValidationDeclaration> {
-        return executeJsonGetList<Esse3ForeignTitleValidationDeclaration>("/tipologieDichiarazioneValoreTitoloStraniero", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/tipologieDichiarazioneValoreTitoloStraniero", deserializer = serializer<List<Esse3ForeignTitleValidationDeclaration>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             fields?.let { parameter("fields", it) }
             order?.let { parameter("order", it) }
             start?.let { parameter("start", it) }
@@ -1976,7 +1965,7 @@ class Esse3PersonalDataApi(
     suspend fun getHandicapTypologies(
         lecturerId: Long? = null
     ): List<Esse3HandicapTypesLookup> {
-        return executeJsonGetList<Esse3HandicapTypesLookup>("/tipologieHandicap", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER)) {
+        return jsonList(HttpMethod.Get, "/tipologieHandicap", deserializer = serializer<List<Esse3HandicapTypesLookup>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER)) {
             lecturerId?.let { parameter("docenteId", it) }
         }
     }
@@ -1989,7 +1978,7 @@ class Esse3PersonalDataApi(
     suspend fun getHandicapTypologiesToEvaluate(
         lecturerId: Long? = null
     ): List<Esse3HandicapTypesLookup> {
-        return executeJsonGetList<Esse3HandicapTypesLookup>("/tipologieHandicapDaValutare", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER)) {
+        return jsonList(HttpMethod.Get, "/tipologieHandicapDaValutare", deserializer = serializer<List<Esse3HandicapTypesLookup>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.TEACHER)) {
             lecturerId?.let { parameter("docenteId", it) }
         }
     }
@@ -1998,7 +1987,7 @@ class Esse3PersonalDataApi(
      * Recupera le tipologie di parentele
      */
     suspend fun getRelationshipTypologies(): List<Esse3RelationshipTypes> {
-        return executeJsonGetList<Esse3RelationshipTypes>("/tipologieParentele", setOf(Esse3PermissionLevel.TECHNICAL_USER))
+        return jsonList(HttpMethod.Get, "/tipologieParentele", deserializer = serializer<List<Esse3RelationshipTypes>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -2009,7 +1998,7 @@ class Esse3PersonalDataApi(
     suspend fun putTitles(
         body: Esse3TitlesInsertion
     ): Esse3EnrollmentReturn {
-        return executeJsonPost<Esse3EnrollmentReturn>("/titoli/import", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Post, "/titoli/import", deserializer = serializer<Esse3EnrollmentReturn>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -2027,7 +2016,7 @@ class Esse3PersonalDataApi(
         studentId: Long? = null,
         optionalFields: String? = null
     ): Esse3PersonTitles {
-        return executeJsonGet<Esse3PersonTitles>("/titoli/${personId}", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.ANY)) {
+        return json(HttpMethod.Get, "/titoli/${personId}", deserializer = serializer<Esse3PersonTitles>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.ANY)) {
             studentId?.let { parameter("stuId", it) }
             optionalFields?.let { parameter("optionalFields", it) }
         }
@@ -2047,7 +2036,7 @@ class Esse3PersonalDataApi(
         fiscalCode: String? = null,
         optionalFields: String? = null
     ): Esse3PersonTitles {
-        return executeJsonGet<Esse3PersonTitles>("/titoliPersona", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.ANY)) {
+        return json(HttpMethod.Get, "/titoliPersona", deserializer = serializer<Esse3PersonTitles>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.ANY)) {
             personId?.let { parameter("persId", it) }
             studentId?.let { parameter("stuId", it) }
             fiscalCode?.let { parameter("codFis", it) }
@@ -2059,6 +2048,6 @@ class Esse3PersonalDataApi(
      * recupero delle regole di richiesta tutori
      */
     suspend fun getTutorRules(): List<Esse3TutorsRulesHeader> {
-        return executeJsonGetList<Esse3TutorsRulesHeader>("/tutori/regoleRichiesta/", setOf(Esse3PermissionLevel.TECHNICAL_USER))
+        return jsonList(HttpMethod.Get, "/tutori/regoleRichiesta/", deserializer = serializer<List<Esse3TutorsRulesHeader>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 }

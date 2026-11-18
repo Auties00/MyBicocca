@@ -6,6 +6,7 @@ import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
+import io.ktor.http.HttpMethod
 import io.ktor.http.contentType
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesAgreement
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesAuth
@@ -24,14 +25,16 @@ import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesResourceS
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesResourceTypeFilters
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesTrustDeviceRequest
 import it.attendance100.mybicocca.data.remote.affluences.dto.AffluencesValidateReservationRequest
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import java.time.LocalDate
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.serializer
 
 class AffluencesReservationsApi(
     client: HttpClient,
     json: Json
-) : AffluencesAbstractApi(client, json, "") {
+) : RestApi(client, json, "", AffluencesRuntime.policy) {
 
     /**
      * Gets the bookable resource types of a site.
@@ -41,7 +44,7 @@ class AffluencesReservationsApi(
     suspend fun getReservationInfo(
         siteIdentifier: String
     ): AffluencesReservationSiteInfo {
-        return executeJsonGet<AffluencesReservationSiteInfo>("/sites/${siteIdentifier}/infos", server = AffluencesServer.Reservation)
+        return json(HttpMethod.Get, "/sites/${siteIdentifier}/infos", deserializer = serializer<AffluencesReservationSiteInfo>(), server = AffluencesServer.Reservation.url)
     }
 
     /**
@@ -57,7 +60,7 @@ class AffluencesReservationsApi(
         resourceId: Int? = null,
         capacity: Int? = null
     ): List<AffluencesAvailableResource> {
-        return executeJsonGetList<AffluencesAvailableResource>("/resources/${siteIdentifier}/available", server = AffluencesServer.Reservation) {
+        return jsonList(HttpMethod.Get, "/resources/${siteIdentifier}/available", deserializer = serializer<List<AffluencesAvailableResource>>(), server = AffluencesServer.Reservation.url) {
             parameter("date", date)
             parameter("type", resourceTypeId)
             durationMinutes?.let { parameter("duration", it) }
@@ -77,7 +80,7 @@ class AffluencesReservationsApi(
         date: LocalDate,
         resourceId: Int? = null
     ): AffluencesResourceTypeFilters {
-        return executeJsonGet<AffluencesResourceTypeFilters>("/sites/${siteIdentifier}/types/${resourceTypeId}/filters", server = AffluencesServer.Reservation) {
+        return json(HttpMethod.Get, "/sites/${siteIdentifier}/types/${resourceTypeId}/filters", deserializer = serializer<AffluencesResourceTypeFilters>(), server = AffluencesServer.Reservation.url) {
             parameter("date", date)
             resourceId?.let { parameter("resource_id", it) }
         }
@@ -91,7 +94,7 @@ class AffluencesReservationsApi(
     suspend fun getAgreements(
         siteIdentifier: String
     ): List<AffluencesAgreement> {
-        return executeJsonGetList<AffluencesAgreement>("/sites/${siteIdentifier}/agreements", server = AffluencesServer.Reservation, envelope = listOf("agreements"))
+        return jsonList(HttpMethod.Get, "/sites/${siteIdentifier}/agreements", deserializer = serializer<List<AffluencesAgreement>>(), server = AffluencesServer.Reservation.url, envelope = listOf("agreements"))
     }
 
     /**
@@ -100,7 +103,7 @@ class AffluencesReservationsApi(
     suspend fun getResourceEmailPolicy(
         resourceId: Int
     ): AffluencesResourceEmailPolicy {
-        return executeJsonGet<AffluencesResourceEmailPolicy>("/resource/${resourceId}", server = AffluencesServer.Reservation)
+        return json(HttpMethod.Get, "/resource/${resourceId}", deserializer = serializer<AffluencesResourceEmailPolicy>(), server = AffluencesServer.Reservation.url)
     }
 
     /**
@@ -109,7 +112,7 @@ class AffluencesReservationsApi(
     suspend fun getResourceForms(
         resourceId: Int
     ): AffluencesResourceForms {
-        return executeJsonGet<AffluencesResourceForms>("/resource/${resourceId}/forms", server = AffluencesServer.Reservation)
+        return json(HttpMethod.Get, "/resource/${resourceId}/forms", deserializer = serializer<AffluencesResourceForms>(), server = AffluencesServer.Reservation.url)
     }
 
     /**
@@ -118,7 +121,7 @@ class AffluencesReservationsApi(
     suspend fun getResourceIdentityProviders(
         resourceId: Int
     ): List<AffluencesIdentityProvider> {
-        return executeJsonGetList<AffluencesIdentityProvider>("/resource/${resourceId}/identity-providers", server = AffluencesServer.Reservation, envelope = listOf("identityProviders"))
+        return jsonList(HttpMethod.Get, "/resource/${resourceId}/identity-providers", deserializer = serializer<List<AffluencesIdentityProvider>>(), server = AffluencesServer.Reservation.url, envelope = listOf("identityProviders"))
     }
 
     /**
@@ -127,7 +130,7 @@ class AffluencesReservationsApi(
     suspend fun getResourceStatus(
         resourceId: Int
     ): AffluencesResourceStatus {
-        return executeJsonGet<AffluencesResourceStatus>("/status/${resourceId}", server = AffluencesServer.Reservation)
+        return json(HttpMethod.Get, "/status/${resourceId}", deserializer = serializer<AffluencesResourceStatus>(), server = AffluencesServer.Reservation.url)
     }
 
     /**
@@ -140,7 +143,7 @@ class AffluencesReservationsApi(
         body: AffluencesReservationRequest,
         auth: AffluencesAuth? = null
     ): AffluencesReservationResult {
-        return executeJsonPost<AffluencesReservationResult>("/reserve/${resourceId}", server = AffluencesServer.Reservation) {
+        return json(HttpMethod.Post, "/reserve/${resourceId}", deserializer = serializer<AffluencesReservationResult>(), server = AffluencesServer.Reservation.url) {
             contentType(ContentType.Application.Json)
             setBody(body)
             auth?.headers?.forEach { (name, value) -> header(name, value) }
@@ -153,7 +156,7 @@ class AffluencesReservationsApi(
     suspend fun validateReservation(
         body: AffluencesValidateReservationRequest
     ): AffluencesReservationValidation {
-        return executeJsonPost<AffluencesReservationValidation>("/validateReservation", server = AffluencesServer.Reservation) {
+        return json(HttpMethod.Post, "/validateReservation", deserializer = serializer<AffluencesReservationValidation>(), server = AffluencesServer.Reservation.url) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -165,7 +168,7 @@ class AffluencesReservationsApi(
     suspend fun confirmReservation(
         reservationToken: String
     ): AffluencesReservationResult {
-        return executeJsonPost<AffluencesReservationResult>("/reservations/${reservationToken}/confirmation", server = AffluencesServer.Reservation) {
+        return json(HttpMethod.Post, "/reservations/${reservationToken}/confirmation", deserializer = serializer<AffluencesReservationResult>(), server = AffluencesServer.Reservation.url) {
             contentType(ContentType.Application.Json)
             setBody(JsonObject(emptyMap()))
         }
@@ -177,7 +180,7 @@ class AffluencesReservationsApi(
     suspend fun getReservationToCancel(
         emailToken: String
     ): AffluencesReservationToCancel {
-        return executeJsonGet<AffluencesReservationToCancel>("/cancelReservation/${emailToken}", server = AffluencesServer.Reservation)
+        return json(HttpMethod.Get, "/cancelReservation/${emailToken}", deserializer = serializer<AffluencesReservationToCancel>(), server = AffluencesServer.Reservation.url)
     }
 
     /**
@@ -186,7 +189,7 @@ class AffluencesReservationsApi(
     suspend fun cancelReservation(
         emailToken: String
     ): AffluencesReservationCancellation {
-        return executeJsonDelete<AffluencesReservationCancellation>("/cancelReservation/", server = AffluencesServer.Reservation) {
+        return json(HttpMethod.Delete, "/cancelReservation/", deserializer = serializer<AffluencesReservationCancellation>(), server = AffluencesServer.Reservation.url) {
             parameter("email_token", emailToken)
         }
     }
@@ -197,7 +200,7 @@ class AffluencesReservationsApi(
     suspend fun confirmEmail(
         token: String
     ): AffluencesEmailConfirmation {
-        return executeJsonGet<AffluencesEmailConfirmation>("/myreservations/email_confirmation/${token}", server = AffluencesServer.Reservation)
+        return json(HttpMethod.Get, "/myreservations/email_confirmation/${token}", deserializer = serializer<AffluencesEmailConfirmation>(), server = AffluencesServer.Reservation.url)
     }
 
     /**
@@ -206,7 +209,7 @@ class AffluencesReservationsApi(
     suspend fun trustDevice(
         body: AffluencesTrustDeviceRequest
     ): JsonObject {
-        return executeJsonPost<JsonObject>("/trust-device", server = AffluencesServer.Reservation) {
+        return json(HttpMethod.Post, "/trust-device", deserializer = serializer<JsonObject>(), server = AffluencesServer.Reservation.url) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }

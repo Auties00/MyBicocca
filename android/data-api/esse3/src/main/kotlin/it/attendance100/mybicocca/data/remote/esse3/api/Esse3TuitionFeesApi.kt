@@ -5,6 +5,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.request.parameter
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
+import io.ktor.http.HttpMethod
 import io.ktor.http.contentType
 import io.ktor.utils.io.ByteReadChannel
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3CancelInvoiceResponse
@@ -37,12 +38,14 @@ import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3StudentExemptions
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3TrafficLight
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3Transaction
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3ValidExemptionsAcademicYear
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
 
 class Esse3TuitionFeesApi(
     client: HttpClient,
     json: Json
-) : Esse3AbstractApi(client, json, "/tasse-service-v1") {
+) : RestApi(client, json, "/tasse-service-v1", Esse3Runtime.policy) {
 
     /**
      * Consente di acquisire gli esiti delle borse di studio regionali.
@@ -52,7 +55,7 @@ class Esse3TuitionFeesApi(
     suspend fun postAcquireScholarshipOutcomeApplications(
         body: Esse3ScholarshipOutcomeData
     ): List<Esse3ScholarshipOutcomeResponse> {
-        return executeJsonPostList<Esse3ScholarshipOutcomeResponse>("/acqDomandeEsitiBorse", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Post, "/acqDomandeEsitiBorse", deserializer = serializer<List<Esse3ScholarshipOutcomeResponse>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -66,7 +69,7 @@ class Esse3TuitionFeesApi(
     suspend fun postAcquireExemptions(
         body: List<Esse3ExemptionData>
     ): List<Esse3ExemptionResponse> {
-        return executeJsonPostList<Esse3ExemptionResponse>("/acqEsoneri", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Post, "/acqEsoneri", deserializer = serializer<List<Esse3ExemptionResponse>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -92,7 +95,7 @@ class Esse3TuitionFeesApi(
         limit: Int? = null,
         order: String? = null
     ): List<Esse3PersonDebit> {
-        return executeJsonGetList<Esse3PersonDebit>("/addebiti-persona/${personId}", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/addebiti-persona/${personId}", deserializer = serializer<List<Esse3PersonDebit>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.ANY)) {
             academicYearId?.let { parameter("aaId", it) }
             invoiceId?.let { parameter("fattId", it) }
             paidFlag?.let { parameter("pagatoFlg", it) }
@@ -137,7 +140,7 @@ class Esse3TuitionFeesApi(
         order: String? = null,
         optionalFields: String? = null
     ): List<Esse3StudentDebit> {
-        return executeJsonGetList<Esse3StudentDebit>("/addebiti-studente", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.PROVISIONAL_ENROLLED_STUDENT)) {
+        return jsonList(HttpMethod.Get, "/addebiti-studente", deserializer = serializer<List<Esse3StudentDebit>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.PROVISIONAL_ENROLLED_STUDENT)) {
             studentId?.let { parameter("stuId", it) }
             externalStudentCode?.let { parameter("extStuCod", it) }
             academicYearId?.let { parameter("aaId", it) }
@@ -164,7 +167,7 @@ class Esse3TuitionFeesApi(
         fiscalCode: String,
         academicYearEnrollmentId: Long
     ): Esse3MeritData {
-        return executeJsonGet<Esse3MeritData>("/adisurc/datiMerito/${fiscalCode}/annoIscr/${academicYearEnrollmentId}", setOf(Esse3PermissionLevel.TECHNICAL_USER))
+        return json(HttpMethod.Get, "/adisurc/datiMerito/${fiscalCode}/annoIscr/${academicYearEnrollmentId}", deserializer = serializer<Esse3MeritData>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -177,11 +180,10 @@ class Esse3TuitionFeesApi(
         invoiceId: Long,
         body: Esse3InvoiceAttachmentMetadata
     ) {
-        val response = executePost("/allegati/${invoiceId}/allegatiFattura/") {
+        send(HttpMethod.Post, "/allegati/${invoiceId}/allegatiFattura/", roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
-        ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -192,7 +194,7 @@ class Esse3TuitionFeesApi(
         invoiceId: Long,
         cancellationType: Int
     ): Esse3CancelInvoiceResponse {
-        return executeJsonPut<Esse3CancelInvoiceResponse>("/annullaFattura/${invoiceId}/tipoAnnullamento/${cancellationType}", setOf(Esse3PermissionLevel.TECHNICAL_USER))
+        return json(HttpMethod.Put, "/annullaFattura/${invoiceId}/tipoAnnullamento/${cancellationType}", deserializer = serializer<Esse3CancelInvoiceResponse>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -205,8 +207,7 @@ class Esse3TuitionFeesApi(
         invoiceId: Long,
         cancelCall: Int
     ) {
-        val response = executePut("/annullaPagamento/${invoiceId}/annullaConvalida/${cancelCall}")
-        ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
+        send(HttpMethod.Put, "/annullaPagamento/${invoiceId}/annullaConvalida/${cancelCall}", roles = setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -223,7 +224,7 @@ class Esse3TuitionFeesApi(
         limit: Int? = null,
         order: String? = null
     ): List<Esse3SelfCertification> {
-        return executeJsonGetList<Esse3SelfCertification>("/autocert/${personId}/annoAcc/${academicYearId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/autocert/${personId}/annoAcc/${academicYearId}", deserializer = serializer<List<Esse3SelfCertification>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             start?.let { parameter("start", it) }
             limit?.let { parameter("limit", it) }
             order?.let { parameter("order", it) }
@@ -242,7 +243,7 @@ class Esse3TuitionFeesApi(
         start: Int? = null,
         limit: Int? = null
     ): List<Esse3ValidExemptionsAcademicYear> {
-        return executeJsonGetList<Esse3ValidExemptionsAcademicYear>("/esoneri-anno-accademico/${academicYearId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/esoneri-anno-accademico/${academicYearId}", deserializer = serializer<List<Esse3ValidExemptionsAcademicYear>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             exemptionCode?.let { parameter("esoneroCod", it) }
             start?.let { parameter("start", it) }
             limit?.let { parameter("limit", it) }
@@ -257,11 +258,10 @@ class Esse3TuitionFeesApi(
     suspend fun rejectExemption(
         body: Esse3RejectExemption
     ) {
-        val response = executePut("/esoneri/respingi") {
+        send(HttpMethod.Put, "/esoneri/respingi", roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
-        ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -272,11 +272,10 @@ class Esse3TuitionFeesApi(
     suspend fun postCreateStudentInvoice(
         body: Esse3InvoiceInsert
     ) {
-        val response = executePost("/fattura") {
+        send(HttpMethod.Post, "/fattura", roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
-        ensureSuccess(response, setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -287,7 +286,7 @@ class Esse3TuitionFeesApi(
     suspend fun getInvoice(
         invoiceId: Long
     ): Esse3Invoices {
-        return executeJsonGet<Esse3Invoices>("/fattura/${invoiceId}", setOf(Esse3PermissionLevel.TECHNICAL_USER))
+        return json(HttpMethod.Get, "/fattura/${invoiceId}", deserializer = serializer<Esse3Invoices>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -298,7 +297,7 @@ class Esse3TuitionFeesApi(
     suspend fun postCollection(
         body: Esse3CollectionData
     ): Esse3PostCollectionResponse {
-        return executeJsonPost<Esse3PostCollectionResponse>("/incassi/inserisciIncasso", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Post, "/incassi/inserisciIncasso", deserializer = serializer<Esse3PostCollectionResponse>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -322,7 +321,7 @@ class Esse3TuitionFeesApi(
         start: Int? = null,
         limit: Int? = null
     ): List<Esse3StudentExemptions> {
-        return executeJsonGetList<Esse3StudentExemptions>("/lista-esoneri-studente", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/lista-esoneri-studente", deserializer = serializer<List<Esse3StudentExemptions>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             studentId?.let { parameter("stuId", it) }
             courseOfStudyId?.let { parameter("cdsId", it) }
             academicYearEnrollmentId?.let { parameter("aaIscrId", it) }
@@ -355,7 +354,7 @@ class Esse3TuitionFeesApi(
         academicYearId: Long? = null,
         retrieveAdditionalInfo: Boolean? = null
     ): List<Esse3Invoices> {
-        return executeJsonGetList<Esse3Invoices>("/lista-fatture", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.ANY)) {
+        return jsonList(HttpMethod.Get, "/lista-fatture", deserializer = serializer<List<Esse3Invoices>>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.ANY)) {
             personId?.let { parameter("persId", it) }
             invoiceId?.let { parameter("fattId", it) }
             iUV?.let { parameter("IUV", it) }
@@ -376,7 +375,7 @@ class Esse3TuitionFeesApi(
         personId: Long,
         invoiceId: Long? = null
     ): List<Esse3Payments> {
-        return executeJsonGetList<Esse3Payments>("/lista-pagamenti/${personId}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/lista-pagamenti/${personId}", deserializer = serializer<List<Esse3Payments>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             invoiceId?.let { parameter("fattId", it) }
         }
     }
@@ -389,7 +388,7 @@ class Esse3TuitionFeesApi(
         personId: Long,
         refundedFlag: Int? = null
     ): List<Esse3Refunds> {
-        return executeJsonGetList<Esse3Refunds>("/lista-rimborsi/${personId}", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/lista-rimborsi/${personId}", deserializer = serializer<List<Esse3Refunds>>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
             refundedFlag?.let { parameter("rimborsatoFlg", it) }
         }
     }
@@ -402,7 +401,7 @@ class Esse3TuitionFeesApi(
     suspend fun postPayInvoice(
         body: Esse3InvoicePaymentData
     ): Esse3MessageOutcomeResponse {
-        return executeJsonPost<Esse3MessageOutcomeResponse>("/pagaFattura", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Post, "/pagaFattura", deserializer = serializer<Esse3MessageOutcomeResponse>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -416,7 +415,7 @@ class Esse3TuitionFeesApi(
     suspend fun putPrintPagoPANotice(
         invoiceId: Long
     ): ByteReadChannel {
-        return executeStreamPut("/pagopa/avviso/${invoiceId}", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.PROVISIONAL_ENROLLED_STUDENT, Esse3PermissionLevel.REGISTERED_USER, Esse3PermissionLevel.TECHNICAL_USER))
+        return stream(HttpMethod.Put, "/pagopa/avviso/${invoiceId}", roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.PROVISIONAL_ENROLLED_STUDENT, Esse3PermissionLevel.REGISTERED_USER, Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -427,7 +426,7 @@ class Esse3TuitionFeesApi(
     suspend fun putRequestPaymentStatus(
         invoiceId: Long
     ): Esse3Payment {
-        return executeJsonPut<Esse3Payment>("/pagopa/chiediStatoVersamento/${invoiceId}", setOf(Esse3PermissionLevel.TECHNICAL_USER))
+        return json(HttpMethod.Put, "/pagopa/chiediStatoVersamento/${invoiceId}", deserializer = serializer<Esse3Payment>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -440,7 +439,7 @@ class Esse3TuitionFeesApi(
         invoiceId: Long,
         language: String
     ): ByteReadChannel {
-        return executeStreamGet("/pagopa/quietanza/${invoiceId}/lingua/${language}", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.PROVISIONAL_ENROLLED_STUDENT, Esse3PermissionLevel.REGISTERED_USER, Esse3PermissionLevel.TECHNICAL_USER))
+        return stream(HttpMethod.Get, "/pagopa/quietanza/${invoiceId}/lingua/${language}", roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.PROVISIONAL_ENROLLED_STUDENT, Esse3PermissionLevel.REGISTERED_USER, Esse3PermissionLevel.TECHNICAL_USER))
     }
 
     /**
@@ -451,7 +450,7 @@ class Esse3TuitionFeesApi(
     suspend fun postInitPagoPaTransaction(
         body: Esse3PagoPATransaction
     ): Esse3PagoPATransactionResponse {
-        return executeJsonPost<Esse3PagoPATransactionResponse>("/pagopa/transaction", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.PROVISIONAL_ENROLLED_STUDENT, Esse3PermissionLevel.REGISTERED_USER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Post, "/pagopa/transaction", deserializer = serializer<Esse3PagoPATransactionResponse>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.PROVISIONAL_ENROLLED_STUDENT, Esse3PermissionLevel.REGISTERED_USER, Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
@@ -473,7 +472,7 @@ class Esse3TuitionFeesApi(
         finalState: Int? = null,
         lastTransaction: Int? = null
     ): List<Esse3Transaction> {
-        return executeJsonGetList<Esse3Transaction>("/pagopa/transazioni", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.PROVISIONAL_ENROLLED_STUDENT, Esse3PermissionLevel.REGISTERED_USER, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/pagopa/transazioni", deserializer = serializer<List<Esse3Transaction>>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.PROVISIONAL_ENROLLED_STUDENT, Esse3PermissionLevel.REGISTERED_USER, Esse3PermissionLevel.TECHNICAL_USER)) {
             invoiceId?.let { parameter("fattId", it) }
             iUV?.let { parameter("IUV", it) }
             academicYearId?.let { parameter("aaId", it) }
@@ -505,7 +504,7 @@ class Esse3TuitionFeesApi(
         reportingFlowCode: String? = null,
         academicYearDebt: Long? = null
     ): List<Esse3MultibenefitPayment> {
-        return executeJsonGetList<Esse3MultibenefitPayment>("/pagopa/versamenti/multiben/ente/${entity}", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return jsonList(HttpMethod.Get, "/pagopa/versamenti/multiben/ente/${entity}", deserializer = serializer<List<Esse3MultibenefitPayment>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             iUV?.let { parameter("IUV", it) }
             iur?.let { parameter("iur", it) }
             paymentDateFrom?.let { parameter("dataPagamentoDa", it) }
@@ -525,7 +524,7 @@ class Esse3TuitionFeesApi(
         invoiceId: Long? = null,
         iUV: String? = null
     ): Esse3Payment {
-        return executeJsonGet<Esse3Payment>("/pagopa/versamento", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Get, "/pagopa/versamento", deserializer = serializer<Esse3Payment>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             invoiceId?.let { parameter("fattId", it) }
             iUV?.let { parameter("IUV", it) }
         }
@@ -541,7 +540,7 @@ class Esse3TuitionFeesApi(
         academicYearEnrollmentId: Long? = null,
         order: String? = null
     ): List<Esse3EnrollmentForTuition> {
-        return executeJsonGetList<Esse3EnrollmentForTuition>("/parametri-iscrizioni-per-tasse/${studentId}", setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.PROVISIONAL_ENROLLED_STUDENT)) {
+        return jsonList(HttpMethod.Get, "/parametri-iscrizioni-per-tasse/${studentId}", deserializer = serializer<List<Esse3EnrollmentForTuition>>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER, Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.PROVISIONAL_ENROLLED_STUDENT)) {
             academicYearEnrollmentId?.let { parameter("aaIscrId", it) }
             order?.let { parameter("order", it) }
         }
@@ -557,7 +556,7 @@ class Esse3TuitionFeesApi(
         academicYearId: Long? = null,
         referenceDate: String? = null
     ): Esse3TrafficLight {
-        return executeJsonGet<Esse3TrafficLight>("/semaforo/${studentId}", setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Get, "/semaforo/${studentId}", deserializer = serializer<Esse3TrafficLight>(), roles = setOf(Esse3PermissionLevel.STUDENT, Esse3PermissionLevel.TECHNICAL_USER)) {
             academicYearId?.let { parameter("aaId", it) }
             referenceDate?.let { parameter("dataRif", it) }
         }
@@ -571,7 +570,7 @@ class Esse3TuitionFeesApi(
     suspend fun postNotifyStatus(
         body: Esse3SpgTransactionStatusData
     ): Esse3MessageOutcomeResponse {
-        return executeJsonPost<Esse3MessageOutcomeResponse>("/spg/notifyStatus", setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
+        return json(HttpMethod.Post, "/spg/notifyStatus", deserializer = serializer<Esse3MessageOutcomeResponse>(), roles = setOf(Esse3PermissionLevel.TECHNICAL_USER)) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }

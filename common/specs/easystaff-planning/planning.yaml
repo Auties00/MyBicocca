@@ -18,6 +18,47 @@ x-mb-parameters:
 x-mb-headers:
   X-CLIENTE: "{portalId}"
 
+x-mb-client:
+  timeoutSeconds: 30
+  # Cookies carry the guest token (`jwt_public`) some endpoints require.
+  keepsCookies: true
+  headers:
+    X-APP-LOCALE: it
+    Accept: application/json
+    # Booking writes (`/entry/store`) are refused with "Unauthorized origin" unless they carry the
+    # official web front-end's origin.
+    Origin: https://gestioneorari.didattica.unimib.it
+  error:
+    # Errors are `{"message": "<key>", "data": [...]}`; the key is the code.
+    code: [/message]
+    codes:
+      InvalidToken:
+        value: unauthorized.invalid_token
+        description: The guest token is missing or expired.
+      TooFast:
+        value: unauthorized.too_fast
+        description: A booking was stored with a guest token younger than about ten seconds.
+      NotFound:
+        value: not_found
+        description: The reservation doesn't exist, as the manage endpoint reports it.
+      ReservationNotFound:
+        value: reservation_not_found
+        description: The reservation doesn't exist, as the info endpoint reports it.
+  retries:
+    - when: { status: 401, code: unauthorized.invalid_token }
+      before:
+        method: GET
+        path: "/servizi/{portalId}"
+        headers: { X-CLIENTE: "{portalId}" }
+      description: >-
+        The backend hands out the guest token on the service and area listings and lets it expire
+        after twenty minutes, so a request rejected for it fetches the service listing first.
+    - when: { status: 401, code: unauthorized.too_fast }
+      delaySeconds: 12
+      description: >-
+        Bookings stored with a token younger than about ten seconds are taken for automation, as
+        always happens right after a renewal; measured live, 9 seconds are refused and 12 are not.
+
 servers:
   - url: https://gestioneorari.didattica.unimib.it/portaleplanningAPI/api
     x-mb-name: Main

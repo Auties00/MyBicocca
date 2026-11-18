@@ -24,7 +24,7 @@ class Esse3DegreeAwardApiTest : Esse3ApiTestBase() {
             val loginResult = Esse3GlobalApiData.api.auth.login()
             permissions = loginResult.profiles
                 .mapNotNull { profile ->
-                    profile.groupId?.toInt()?.let { Esse3PermissionLevel.fromGroupId(it) }
+                    profile.groupId?.toInt()?.let { esse3RoleOfGroup(it) }
                 }
                 .filter { it != Esse3PermissionLevel.UNKNOWN }
                 .toSet()

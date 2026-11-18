@@ -3,23 +3,26 @@ package it.attendance100.mybicocca.data.remote.easystaff.api
 
 import io.ktor.client.HttpClient
 import io.ktor.client.request.parameter
+import io.ktor.http.HttpMethod
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffAcademicYear
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffMapSerializer
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffStudyProgram
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffTeacher
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import kotlinx.serialization.builtins.serializer
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
 
 class EasyStaffCoreApi(
     client: HttpClient,
     json: Json
-) : EasyStaffAbstractApi(client, json, "") {
+) : RestApi(client, json, "", EasyStaffRuntime.policy) {
 
     /**
      * The academic years, keyed by an internal identifier.
      */
     suspend fun getAcademicYears(): Map<String, EasyStaffAcademicYear> {
-        return executeScriptGet("/PortaleStudentiUnimib/combo.php", server = EasyStaffServer.Main, variable = "anni_accademici_ec", deserializer = EasyStaffMapSerializer(String.serializer(), EasyStaffAcademicYear.serializer())) {
+        return script(HttpMethod.Get, "/PortaleStudentiUnimib/combo.php", variable = "anni_accademici_ec", deserializer = EasyStaffMapSerializer(String.serializer(), EasyStaffAcademicYear.serializer()), server = EasyStaffServer.Main.url) {
             parameter("sw", "ec_")
             parameter("aa", "1")
         }
@@ -33,7 +36,7 @@ class EasyStaffCoreApi(
     suspend fun getTeachers(
         academicYear: String
     ): List<EasyStaffTeacher> {
-        return executeScriptGet<List<EasyStaffTeacher>>("/PortaleStudentiUnimib/combo.php", server = EasyStaffServer.Main, variable = "elenco_docenti") {
+        return script(HttpMethod.Get, "/PortaleStudentiUnimib/combo.php", variable = "elenco_docenti", deserializer = serializer<List<EasyStaffTeacher>>(), server = EasyStaffServer.Main.url) {
             parameter("sw", "ec_")
             parameter("page", "docenti")
             parameter("aa", academicYear)
@@ -48,7 +51,7 @@ class EasyStaffCoreApi(
     suspend fun getStudyPrograms(
         academicYear: String
     ): List<EasyStaffStudyProgram> {
-        return executeScriptGet<List<EasyStaffStudyProgram>>("/PortaleStudentiUnimib/combo.php", server = EasyStaffServer.Main, variable = "elenco_corsi") {
+        return script(HttpMethod.Get, "/PortaleStudentiUnimib/combo.php", variable = "elenco_corsi", deserializer = serializer<List<EasyStaffStudyProgram>>(), server = EasyStaffServer.Main.url) {
             parameter("sw", "ec_")
             parameter("page", "corsi")
             parameter("aa", academicYear)

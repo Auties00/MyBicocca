@@ -12,3 +12,4 @@ export * from "./EasyStaffPlanningEnumTypes.js";
 export * from "./EasyStaffPlanningServer.js";
 export * from "./EasyStaffPlanningParameters.js";
 export * from "./EasyStaffPlanningApi.js";
+export * from "./EasyStaffPlanningClient.js";

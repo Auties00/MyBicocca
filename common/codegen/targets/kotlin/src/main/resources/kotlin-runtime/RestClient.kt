@@ -1,0 +1,116 @@
+package __PACKAGE__
+
+import io.ktor.client.HttpClient
+import io.ktor.client.HttpClientConfig
+import io.ktor.client.plugins.DefaultRequest
+import io.ktor.client.plugins.HttpTimeout
+import io.ktor.client.plugins.api.createClientPlugin
+import io.ktor.client.plugins.cache.HttpCache
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.plugins.cookies.HttpCookies
+import io.ktor.serialization.kotlinx.json.json
+import kotlinx.serialization.json.Json
+import kotlin.reflect.KProperty
+
+/**
+ * What every request of an API's client carries, as its spec describes it.
+ *
+ * @property timeoutMillis How long a request may take; null for Ktor's default.
+ * @property keepsCookies Whether the client stores the cookies servers set and sends them back.
+ * @property caches Whether the client caches responses as their headers allow.
+ * @property headers Headers sent with every request, unless the request sets them.
+ * @property query Query parameters sent with every request.
+ */
+class RestClientOptions(
+    val timeoutMillis: Long? = null,
+    val keepsCookies: Boolean = false,
+    val caches: Boolean = false,
+    val headers: Map<String, String> = emptyMap(),
+    val query: Map<String, String> = emptyMap(),
+)
+
+/**
+ * The HTTP client of an API: its [options], [settings] and the caller's [config], which runs
+ * last so that it can override them. Bodies are encoded with [json].
+ */
+fun createRestClient(
+    json: Json,
+    options: RestClientOptions,
+    settings: ClientSettings,
+    config: HttpClientConfig<*>.() -> Unit,
+): HttpClient = HttpClient {
+    configure(json, options, settings)
+    config()
+}
+
+/** Configures a client as [createRestClient] does, before the caller's configuration. */
+internal fun HttpClientConfig<*>.configure(json: Json, options: RestClientOptions, settings: ClientSettings) {
+    options.timeoutMillis?.let { timeout ->
+        install(HttpTimeout) {
+            requestTimeoutMillis = timeout
+            connectTimeoutMillis = timeout
+            socketTimeoutMillis = timeout
+        }
+    }
+    install(ContentNegotiation) {
+        json(json)
+    }
+    if (options.keepsCookies) install(HttpCookies)
+    if (options.caches) install(HttpCache)
+    if (options.headers.isNotEmpty() || options.query.isNotEmpty()) {
+        install(DefaultRequest) {
+            options.headers.forEach { (name, value) -> headers.append(name, value) }
+            options.query.forEach { (name, value) -> url.parameters.append(name, value) }
+        }
+    }
+    if (settings.definitions.isNotEmpty()) {
+        install(createClientPlugin("ClientSettings") {
+            onRequest { request, _ ->
+                for (setting in settings.definitions) {
+                    val value = settings[setting.name]
+                    when (setting.location) {
+                        ClientSetting.Location.QUERY -> request.url.parameters[setting.wireName] = value
+                        ClientSetting.Location.HEADER -> request.headers[setting.wireName] = value
+                    }
+                }
+            }
+        })
+    }
+    followRedirects = true
+}
+
+/**
+ * A value sent with every request that the caller may change at any time.
+ *
+ * @property wireName Name of the query parameter or header.
+ * @property default The value until the caller sets one.
+ */
+class ClientSetting(
+    val name: String,
+    val location: Location,
+    val wireName: String,
+    val default: String,
+) {
+    enum class Location { QUERY, HEADER }
+}
+
+/**
+ * The current values of an API's [ClientSetting]s, shared by its client and its facade, whose
+ * properties delegate to it by name.
+ */
+class ClientSettings(val definitions: List<ClientSetting>) {
+    private val values = definitions.associate { it.name to it.default }.toMutableMap()
+
+    operator fun get(name: String): String = synchronized(values) { values.getValue(name) }
+
+    operator fun set(name: String, value: String) {
+        synchronized(values) {
+            require(name in values) { "Unknown setting '$name'" }
+            values[name] = value
+        }
+    }
+
+    operator fun getValue(thisRef: Any?, property: KProperty<*>): String = get(property.name)
+
+    operator fun setValue(thisRef: Any?, property: KProperty<*>, value: String) = set(property.name, value)
+}

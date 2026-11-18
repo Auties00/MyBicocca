@@ -1,7 +1,15 @@
 {
-  "reader": {
-    "type": "moodle"
-  },
+  "readers": [
+    {
+      "type": "moodle"
+    },
+    {
+      "type": "openapi",
+      "options": {
+        "spec": "client.yaml"
+      }
+    }
+  ],
   "targets": {
     "kotlin": {
       "outputDir": "../../../android/data-api/elearning/src/main/kotlin",

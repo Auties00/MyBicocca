@@ -32,6 +32,7 @@ import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningRes
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningReservationResult
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningResult
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningService
+import it.attendance100.mybicocca.data.remote.easystaff.exception.EasyStaffPlanningException
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentArea
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentForm
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentFormField
@@ -364,7 +365,7 @@ class AppointmentRepositoryImplTest {
     fun `refreshReservations forgets a reservation reported gone by the portal`() = runTest {
         val future = futureEntity("GONE")
         coEvery { reservationDao.getAll() } returns listOf(future)
-        coEvery { reservations.getReservation("GONE", any()) } throws RuntimeException("not_found")
+        coEvery { reservations.getReservation("GONE", any()) } throws EasyStaffPlanningException(404, EasyStaffPlanningException.NOT_FOUND, "not_found")
 
         repository.refreshReservations()
 
@@ -388,7 +389,7 @@ class AppointmentRepositoryImplTest {
     fun `cancelReservation deletes locally even when the portal reports it gone`() = runTest {
         coEvery {
             reservations.deleteReservation("CODE", EasyStaffPlanningReservationDeletion(), "mario@campus.unimib.it")
-        } throws RuntimeException("not_found")
+        } throws EasyStaffPlanningException(404, EasyStaffPlanningException.NOT_FOUND, "not_found")
 
         val reservation = futureEntity("CODE").toDomainReservation()
         repository.cancelReservation(reservation)

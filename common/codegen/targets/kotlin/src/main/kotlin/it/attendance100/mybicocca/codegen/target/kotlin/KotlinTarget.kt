@@ -8,25 +8,29 @@ import it.attendance100.mybicocca.codegen.model.ApiSpec
 import kotlinx.serialization.Serializable
 
 /**
- * Generates a Kotlin/JVM SDK built on Ktor and kotlinx.serialization. See [KotlinLayout] for
- * where declarations go and which runtime declarations the API must provide by hand.
+ * Generates a Kotlin/JVM SDK built on Ktor and kotlinx.serialization, on top of the runtime
+ * [KotlinRuntimeTarget] generates. See [KotlinLayout] for where declarations go.
  */
 class KotlinTarget : CodeTarget {
     override val id: String = "kotlin"
 
     /**
      * @property packageName Root package of the API (e.g. `…data.remote.esse3`).
-     * @property temporalSerializers The runtime's serializer for each date format the API uses.
+     * @property runtimePackage Package of the shared runtime; by default `runtime` next to the
+     *   API's package (e.g. `…data.remote.runtime`).
+     * @property temporalSerializers The serializer for each date format the API uses.
      */
     @Serializable
     data class Options(
         val packageName: String,
+        val runtimePackage: String = packageName.substringBeforeLast('.') + ".runtime",
         val temporalSerializers: List<TemporalSerializer> = emptyList(),
     )
 
     override fun generate(spec: ApiSpec, context: TargetContext): List<GeneratedFile> {
         val options = context.options.decodeOptions<Options>()
-        val layout = KotlinLayout(spec, options.packageName)
+        val layout = KotlinLayout(spec, options.packageName, options.runtimePackage)
+        val client = ClientEmitter(spec, layout)
         val serializers = KotlinSerializers(spec, layout, TemporalSerializers(options.temporalSerializers))
         val records = RecordEmitter(spec, layout, serializers)
         val scrapers = ScrapeEmitter(spec, layout, records)
@@ -60,6 +64,11 @@ class KotlinTarget : CodeTarget {
                 add(file(layout.apiPackage, "${layout.server.substringAfterLast('.')}.kt") { ServerEmitter(spec, layout).emit(it) })
             }
             add(file(layout.apiPackage, "${layout.facadeName}.kt") { FacadeEmitter(spec, layout).emit(it) })
+            add(file(layout.apiPackage, "${layout.runtime.substringAfterLast('.')}.kt") { client.emitRuntime(it) })
+            add(file(layout.exception.substringBeforeLast('.'), "${layout.exception.substringAfterLast('.')}.kt") { client.emitException(it) })
+            if (spec.usesRoles) {
+                add(file(layout.dtoPackage, layout.rolesFileName) { client.emitRoles(it) })
+            }
         }
     }
 }

@@ -3,18 +3,21 @@ package it.attendance100.mybicocca.data.remote.easystaff.api
 
 import io.ktor.client.HttpClient
 import io.ktor.client.request.header
+import io.ktor.http.HttpMethod
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningDaySchedule
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningMonthSchedule
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningResourceAvailability
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningResult
+import it.attendance100.mybicocca.data.remote.runtime.RestApi
 import java.time.LocalDate
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.serializer
 
 class EasyStaffPlanningAvailabilityApi(
     client: HttpClient,
     json: Json,
     private val portalId: Int
-) : EasyStaffPlanningAbstractApi(client, json, "") {
+) : RestApi(client, json, "", EasyStaffPlanningRuntime.policy, mapOf("portalId" to portalId.toString())) {
 
     /**
      * Gets the availability of a service at an area over a month.
@@ -30,7 +33,7 @@ class EasyStaffPlanningAvailabilityApi(
         areaId: Int,
         durationSeconds: Int
     ): EasyStaffPlanningMonthSchedule {
-        return executeJsonGet<EasyStaffPlanningMonthSchedule>("/entry/${serviceId}/schedule/${month}/${areaId}/${durationSeconds}", server = EasyStaffPlanningServer.Main) {
+        return json(HttpMethod.Get, "/entry/${serviceId}/schedule/${month}/${areaId}/${durationSeconds}", deserializer = serializer<EasyStaffPlanningMonthSchedule>(), server = EasyStaffPlanningServer.Main.url) {
             header("X-CLIENTE", "${portalId}")
         }
     }
@@ -48,7 +51,7 @@ class EasyStaffPlanningAvailabilityApi(
         areaId: Int,
         durationSeconds: Int
     ): EasyStaffPlanningDaySchedule {
-        return executeJsonGet<EasyStaffPlanningDaySchedule>("/entry/${serviceId}/schedule/${date}/${areaId}/${durationSeconds}", server = EasyStaffPlanningServer.Main) {
+        return json(HttpMethod.Get, "/entry/${serviceId}/schedule/${date}/${areaId}/${durationSeconds}", deserializer = serializer<EasyStaffPlanningDaySchedule>(), server = EasyStaffPlanningServer.Main.url) {
             header("X-CLIENTE", "${portalId}")
         }
     }
@@ -63,7 +66,7 @@ class EasyStaffPlanningAvailabilityApi(
         serviceId: Int,
         areaId: Int
     ): EasyStaffPlanningResult {
-        return executeJsonGet<EasyStaffPlanningResult>("/prima_disponibilita/${serviceId}/${areaId}", server = EasyStaffPlanningServer.Main) {
+        return json(HttpMethod.Get, "/prima_disponibilita/${serviceId}/${areaId}", deserializer = serializer<EasyStaffPlanningResult>(), server = EasyStaffPlanningServer.Main.url) {
             header("X-CLIENTE", "${portalId}")
         }
     }
@@ -81,7 +84,7 @@ class EasyStaffPlanningAvailabilityApi(
         date: LocalDate,
         durationSeconds: Int
     ): List<EasyStaffPlanningResourceAvailability> {
-        return executeJsonGetList<EasyStaffPlanningResourceAvailability>("/risorsa/${serviceId}/${areaId}/${date}/${durationSeconds}", server = EasyStaffPlanningServer.Main) {
+        return jsonList(HttpMethod.Get, "/risorsa/${serviceId}/${areaId}/${date}/${durationSeconds}", deserializer = serializer<List<EasyStaffPlanningResourceAvailability>>(), server = EasyStaffPlanningServer.Main.url) {
             header("X-CLIENTE", "${portalId}")
         }
     }
