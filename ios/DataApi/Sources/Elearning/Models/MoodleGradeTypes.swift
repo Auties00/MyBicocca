@@ -29,8 +29,12 @@ public struct MoodleCourseGradesResponse: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(grades, forKey: .grades)
-        try container.encode(warnings, forKey: .warnings)
+        if !grades.isEmpty {
+            try container.encode(grades, forKey: .grades)
+        }
+        if !warnings.isEmpty {
+            try container.encode(warnings, forKey: .warnings)
+        }
     }
 }
 
@@ -73,10 +77,18 @@ public struct MoodleCourseGrade: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(courseId, forKey: .courseId)
-        try container.encode(grade, forKey: .grade)
-        try container.encode(rawGrade, forKey: .rawGrade)
-        try container.encode(rank, forKey: .rank)
+        if courseId != 0 {
+            try container.encode(courseId, forKey: .courseId)
+        }
+        if grade != "" {
+            try container.encode(grade, forKey: .grade)
+        }
+        if rawGrade != "" {
+            try container.encode(rawGrade, forKey: .rawGrade)
+        }
+        if rank != nil {
+            try container.encode(rank, forKey: .rank)
+        }
     }
 }
 
@@ -106,8 +118,12 @@ public struct MoodleGradeItemsResponse: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(userGrades, forKey: .userGrades)
-        try container.encode(warnings, forKey: .warnings)
+        if !userGrades.isEmpty {
+            try container.encode(userGrades, forKey: .userGrades)
+        }
+        if !warnings.isEmpty {
+            try container.encode(warnings, forKey: .warnings)
+        }
     }
 }
 
@@ -167,13 +183,27 @@ public struct MoodleUserGrades: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(courseId, forKey: .courseId)
-        try container.encode(courseIdNumber, forKey: .courseIdNumber)
-        try container.encode(userId, forKey: .userId)
-        try container.encode(userFullName, forKey: .userFullName)
-        try container.encode(userIdNumber, forKey: .userIdNumber)
-        try container.encode(maxDepth, forKey: .maxDepth)
-        try container.encode(gradeItems, forKey: .gradeItems)
+        if courseId != 0 {
+            try container.encode(courseId, forKey: .courseId)
+        }
+        if courseIdNumber != "" {
+            try container.encode(courseIdNumber, forKey: .courseIdNumber)
+        }
+        if userId != 0 {
+            try container.encode(userId, forKey: .userId)
+        }
+        if userFullName != "" {
+            try container.encode(userFullName, forKey: .userFullName)
+        }
+        if userIdNumber != "" {
+            try container.encode(userIdNumber, forKey: .userIdNumber)
+        }
+        if maxDepth != 0 {
+            try container.encode(maxDepth, forKey: .maxDepth)
+        }
+        if !gradeItems.isEmpty {
+            try container.encode(gradeItems, forKey: .gradeItems)
+        }
     }
 }
 
@@ -397,39 +427,107 @@ public struct MoodleGradeItem: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(id, forKey: .id)
-        try container.encode(itemName, forKey: .itemName)
-        try container.encode(itemType, forKey: .itemType)
-        try container.encode(itemModule, forKey: .itemModule)
-        try container.encode(itemInstance, forKey: .itemInstance)
-        try container.encode(itemNumber, forKey: .itemNumber)
-        try container.encode(idNumber, forKey: .idNumber)
-        try container.encode(categoryId, forKey: .categoryId)
-        try container.encode(outcomeId, forKey: .outcomeId)
-        try container.encode(scaleId, forKey: .scaleId)
-        try container.encode(locked, forKey: .locked)
-        try container.encode(cmId, forKey: .cmId)
-        try container.encode(weightRaw, forKey: .weightRaw)
-        try container.encode(weightFormatted, forKey: .weightFormatted)
-        try container.encode(status, forKey: .status)
-        try container.encode(gradeRaw, forKey: .gradeRaw)
-        try container.encode(gradeDateSubmitted, forKey: .gradeDateSubmitted)
-        try container.encode(gradeDateGraded, forKey: .gradeDateGraded)
-        try container.encode(gradeHiddenByDate, forKey: .gradeHiddenByDate)
-        try container.encode(gradeNeedsUpdate, forKey: .gradeNeedsUpdate)
-        try container.encode(gradeIsHidden, forKey: .gradeIsHidden)
-        try container.encode(gradeIsLocked, forKey: .gradeIsLocked)
-        try container.encode(gradeIsOverridden, forKey: .gradeIsOverridden)
-        try container.encode(gradeFormatted, forKey: .gradeFormatted)
-        try container.encode(gradeMin, forKey: .gradeMin)
-        try container.encode(gradeMax, forKey: .gradeMax)
-        try container.encode(rangeFormatted, forKey: .rangeFormatted)
-        try container.encode(percentageFormatted, forKey: .percentageFormatted)
-        try container.encode(letterGradeFormatted, forKey: .letterGradeFormatted)
-        try container.encode(rank, forKey: .rank)
-        try container.encode(numUsers, forKey: .numUsers)
-        try container.encode(averageFormatted, forKey: .averageFormatted)
-        try container.encode(feedback, forKey: .feedback)
-        try container.encode(feedbackFormat, forKey: .feedbackFormat)
+        if id != 0 {
+            try container.encode(id, forKey: .id)
+        }
+        if itemName != "" {
+            try container.encode(itemName, forKey: .itemName)
+        }
+        if itemType != "" {
+            try container.encode(itemType, forKey: .itemType)
+        }
+        if itemModule != "" {
+            try container.encode(itemModule, forKey: .itemModule)
+        }
+        if itemInstance != 0 {
+            try container.encode(itemInstance, forKey: .itemInstance)
+        }
+        if itemNumber != 0 {
+            try container.encode(itemNumber, forKey: .itemNumber)
+        }
+        if idNumber != "" {
+            try container.encode(idNumber, forKey: .idNumber)
+        }
+        if categoryId != 0 {
+            try container.encode(categoryId, forKey: .categoryId)
+        }
+        if outcomeId != 0 {
+            try container.encode(outcomeId, forKey: .outcomeId)
+        }
+        if scaleId != 0 {
+            try container.encode(scaleId, forKey: .scaleId)
+        }
+        if locked != nil {
+            try container.encode(locked, forKey: .locked)
+        }
+        if cmId != nil {
+            try container.encode(cmId, forKey: .cmId)
+        }
+        if weightRaw != nil {
+            try container.encode(weightRaw, forKey: .weightRaw)
+        }
+        if weightFormatted != nil {
+            try container.encode(weightFormatted, forKey: .weightFormatted)
+        }
+        if status != nil {
+            try container.encode(status, forKey: .status)
+        }
+        if gradeRaw != nil {
+            try container.encode(gradeRaw, forKey: .gradeRaw)
+        }
+        if gradeDateSubmitted != nil {
+            try container.encode(gradeDateSubmitted, forKey: .gradeDateSubmitted)
+        }
+        if gradeDateGraded != nil {
+            try container.encode(gradeDateGraded, forKey: .gradeDateGraded)
+        }
+        if gradeHiddenByDate != nil {
+            try container.encode(gradeHiddenByDate, forKey: .gradeHiddenByDate)
+        }
+        if gradeNeedsUpdate != nil {
+            try container.encode(gradeNeedsUpdate, forKey: .gradeNeedsUpdate)
+        }
+        if gradeIsHidden != nil {
+            try container.encode(gradeIsHidden, forKey: .gradeIsHidden)
+        }
+        if gradeIsLocked != nil {
+            try container.encode(gradeIsLocked, forKey: .gradeIsLocked)
+        }
+        if gradeIsOverridden != nil {
+            try container.encode(gradeIsOverridden, forKey: .gradeIsOverridden)
+        }
+        if gradeFormatted != nil {
+            try container.encode(gradeFormatted, forKey: .gradeFormatted)
+        }
+        if gradeMin != nil {
+            try container.encode(gradeMin, forKey: .gradeMin)
+        }
+        if gradeMax != nil {
+            try container.encode(gradeMax, forKey: .gradeMax)
+        }
+        if rangeFormatted != nil {
+            try container.encode(rangeFormatted, forKey: .rangeFormatted)
+        }
+        if percentageFormatted != nil {
+            try container.encode(percentageFormatted, forKey: .percentageFormatted)
+        }
+        if letterGradeFormatted != nil {
+            try container.encode(letterGradeFormatted, forKey: .letterGradeFormatted)
+        }
+        if rank != nil {
+            try container.encode(rank, forKey: .rank)
+        }
+        if numUsers != nil {
+            try container.encode(numUsers, forKey: .numUsers)
+        }
+        if averageFormatted != nil {
+            try container.encode(averageFormatted, forKey: .averageFormatted)
+        }
+        if feedback != nil {
+            try container.encode(feedback, forKey: .feedback)
+        }
+        if feedbackFormat != nil {
+            try container.encode(feedbackFormat, forKey: .feedbackFormat)
+        }
     }
 }

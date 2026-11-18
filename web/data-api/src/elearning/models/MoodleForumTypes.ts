@@ -23,8 +23,8 @@ export function decodeMoodleAddDiscussionResponse(json: unknown): MoodleAddDiscu
 
 export function encodeMoodleAddDiscussionResponse(value: MoodleAddDiscussionResponse): JsonObject {
   return {
-    "discussionid": value.discussionId,
-    "warnings": value.warnings.map((item) => encodeMoodleWarning(item)),
+    ...(value.discussionId !== 0 ? { "discussionid": value.discussionId } : {}),
+    ...(value.warnings.length > 0 ? { "warnings": value.warnings.map((item) => encodeMoodleWarning(item)) } : {}),
   };
 }
 
@@ -52,10 +52,10 @@ export function decodeMoodleAddDiscussionPostResponse(json: unknown): MoodleAddD
 
 export function encodeMoodleAddDiscussionPostResponse(value: MoodleAddDiscussionPostResponse): JsonObject {
   return {
-    "postid": value.postId,
-    "warnings": value.warnings.map((item) => encodeMoodleWarning(item)),
+    ...(value.postId !== 0 ? { "postid": value.postId } : {}),
+    ...(value.warnings.length > 0 ? { "warnings": value.warnings.map((item) => encodeMoodleWarning(item)) } : {}),
     "post": encodeMoodleForumPost(value.post),
-    "messages": value.messages.map((item) => encodeMoodlePostMessage(item)),
+    ...(value.messages.length > 0 ? { "messages": value.messages.map((item) => encodeMoodlePostMessage(item)) } : {}),
   };
 }
 
@@ -137,29 +137,29 @@ export function decodeMoodleForumPost(json: unknown): MoodleForumPost | undefine
 
 export function encodeMoodleForumPost(value: MoodleForumPost): JsonObject {
   return {
-    "id": value.id,
-    "subject": value.subject,
-    "replysubject": value.replySubject,
-    "message": value.message,
-    "messageformat": value.messageFormat,
+    ...(value.id !== 0 ? { "id": value.id } : {}),
+    ...(value.subject !== "" ? { "subject": value.subject } : {}),
+    ...(value.replySubject !== "" ? { "replysubject": value.replySubject } : {}),
+    ...(value.message !== "" ? { "message": value.message } : {}),
+    ...(value.messageFormat !== 0 ? { "messageformat": value.messageFormat } : {}),
     "author": encodeMoodlePostAuthor(value.author),
-    "discussionid": value.discussionId,
-    "hasparent": value.hasParent,
-    "parentid": value.parentId,
-    "timecreated": value.timeCreated,
-    "timemodified": value.timeModified,
-    "unread": value.unread,
-    "isdeleted": value.isDeleted,
-    "isprivatereply": value.isPrivateReply,
-    "haswordcount": value.hasWordCount,
-    "wordcount": value.wordCount,
-    "charcount": value.charCount,
+    ...(value.discussionId !== 0 ? { "discussionid": value.discussionId } : {}),
+    ...(value.hasParent !== false ? { "hasparent": value.hasParent } : {}),
+    ...(value.parentId !== null ? { "parentid": value.parentId } : {}),
+    ...(value.timeCreated !== 0 ? { "timecreated": value.timeCreated } : {}),
+    ...(value.timeModified !== 0 ? { "timemodified": value.timeModified } : {}),
+    ...(value.unread !== null ? { "unread": value.unread } : {}),
+    ...(value.isDeleted !== false ? { "isdeleted": value.isDeleted } : {}),
+    ...(value.isPrivateReply !== false ? { "isprivatereply": value.isPrivateReply } : {}),
+    ...(value.hasWordCount !== false ? { "haswordcount": value.hasWordCount } : {}),
+    ...(value.wordCount !== null ? { "wordcount": value.wordCount } : {}),
+    ...(value.charCount !== null ? { "charcount": value.charCount } : {}),
     "capabilities": encodeMoodlePostCapabilities(value.capabilities),
-    "urls": value.urls === null ? null : encodeMoodlePostUrls(value.urls),
-    "attachments": value.attachments.map((item) => encodeMoodlePostAttachment(item)),
-    "messageinlinefiles": value.messageInlineFiles.map((item) => encodeMoodlePostInlineFile(item)),
-    "tags": value.tags.map((item) => encodeMoodlePostTag(item)),
-    "html": value.html === null ? null : encodeMoodlePostHtml(value.html),
+    ...(value.urls !== null ? { "urls": value.urls === null ? null : encodeMoodlePostUrls(value.urls) } : {}),
+    ...(value.attachments.length > 0 ? { "attachments": value.attachments.map((item) => encodeMoodlePostAttachment(item)) } : {}),
+    ...(value.messageInlineFiles.length > 0 ? { "messageinlinefiles": value.messageInlineFiles.map((item) => encodeMoodlePostInlineFile(item)) } : {}),
+    ...(value.tags.length > 0 ? { "tags": value.tags.map((item) => encodeMoodlePostTag(item)) } : {}),
+    ...(value.html !== null ? { "html": value.html === null ? null : encodeMoodlePostHtml(value.html) } : {}),
   };
 }
 
@@ -190,10 +190,10 @@ export function decodeMoodlePostAuthor(json: unknown): MoodlePostAuthor | undefi
 
 export function encodeMoodlePostAuthor(value: MoodlePostAuthor): JsonObject {
   return {
-    "id": value.id,
-    "fullname": value.fullName,
-    "isdeleted": value.isDeleted,
-    "groups": value.groups.map((item) => encodeMoodlePostAuthorGroup(item)),
+    ...(value.id !== null ? { "id": value.id } : {}),
+    ...(value.fullName !== null ? { "fullname": value.fullName } : {}),
+    ...(value.isDeleted !== null ? { "isdeleted": value.isDeleted } : {}),
+    ...(value.groups.length > 0 ? { "groups": value.groups.map((item) => encodeMoodlePostAuthorGroup(item)) } : {}),
     "urls": encodeMoodlePostAuthorUrls(value.urls),
   };
 }
@@ -219,8 +219,8 @@ export function decodeMoodlePostAuthorGroup(json: unknown): MoodlePostAuthorGrou
 
 export function encodeMoodlePostAuthorGroup(value: MoodlePostAuthorGroup): JsonObject {
   return {
-    "id": value.id,
-    "name": value.name,
+    ...(value.id !== 0 ? { "id": value.id } : {}),
+    ...(value.name !== "" ? { "name": value.name } : {}),
     "urls": encodeMoodlePostAuthorGroupUrls(value.urls),
   };
 }
@@ -241,7 +241,7 @@ export function decodeMoodlePostAuthorGroupUrls(json: unknown): MoodlePostAuthor
 
 export function encodeMoodlePostAuthorGroupUrls(value: MoodlePostAuthorGroupUrls): JsonObject {
   return {
-    "image": value.image,
+    ...(value.image !== null ? { "image": value.image } : {}),
   };
 }
 
@@ -264,8 +264,8 @@ export function decodeMoodlePostAuthorUrls(json: unknown): MoodlePostAuthorUrls 
 
 export function encodeMoodlePostAuthorUrls(value: MoodlePostAuthorUrls): JsonObject {
   return {
-    "profile": value.profile,
-    "profileimage": value.profileImage,
+    ...(value.profile !== null ? { "profile": value.profile } : {}),
+    ...(value.profileImage !== null ? { "profileimage": value.profileImage } : {}),
   };
 }
 
@@ -309,15 +309,15 @@ export function decodeMoodlePostCapabilities(json: unknown): MoodlePostCapabilit
 
 export function encodeMoodlePostCapabilities(value: MoodlePostCapabilities): JsonObject {
   return {
-    "view": value.view,
-    "edit": value.edit,
-    "delete": value.delete,
-    "split": value.split,
-    "reply": value.reply,
-    "selfenrol": value.selfEnrol,
-    "export": value.export,
-    "controlreadstatus": value.controlReadStatus,
-    "canreplyprivately": value.canReplyPrivately,
+    ...(value.view !== false ? { "view": value.view } : {}),
+    ...(value.edit !== false ? { "edit": value.edit } : {}),
+    ...(value.delete !== false ? { "delete": value.delete } : {}),
+    ...(value.split !== false ? { "split": value.split } : {}),
+    ...(value.reply !== false ? { "reply": value.reply } : {}),
+    ...(value.selfEnrol !== false ? { "selfenrol": value.selfEnrol } : {}),
+    ...(value.export !== false ? { "export": value.export } : {}),
+    ...(value.controlReadStatus !== false ? { "controlreadstatus": value.controlReadStatus } : {}),
+    ...(value.canReplyPrivately !== false ? { "canreplyprivately": value.canReplyPrivately } : {}),
   };
 }
 
@@ -367,17 +367,17 @@ export function decodeMoodlePostUrls(json: unknown): MoodlePostUrls | undefined 
 
 export function encodeMoodlePostUrls(value: MoodlePostUrls): JsonObject {
   return {
-    "view": value.view,
-    "viewisolated": value.viewIsolated,
-    "viewparent": value.viewParent,
-    "edit": value.edit,
-    "delete": value.delete,
-    "split": value.split,
-    "reply": value.reply,
-    "export": value.export,
-    "markasread": value.markAsRead,
-    "markasunread": value.markAsUnread,
-    "discuss": value.discuss,
+    ...(value.view !== null ? { "view": value.view } : {}),
+    ...(value.viewIsolated !== null ? { "viewisolated": value.viewIsolated } : {}),
+    ...(value.viewParent !== null ? { "viewparent": value.viewParent } : {}),
+    ...(value.edit !== null ? { "edit": value.edit } : {}),
+    ...(value.delete !== null ? { "delete": value.delete } : {}),
+    ...(value.split !== null ? { "split": value.split } : {}),
+    ...(value.reply !== null ? { "reply": value.reply } : {}),
+    ...(value.export !== null ? { "export": value.export } : {}),
+    ...(value.markAsRead !== null ? { "markasread": value.markAsRead } : {}),
+    ...(value.markAsUnread !== null ? { "markasunread": value.markAsUnread } : {}),
+    ...(value.discuss !== null ? { "discuss": value.discuss } : {}),
   };
 }
 
@@ -455,25 +455,25 @@ export function decodeMoodlePostAttachment(json: unknown): MoodlePostAttachment 
 
 export function encodeMoodlePostAttachment(value: MoodlePostAttachment): JsonObject {
   return {
-    "contextid": value.contextId,
-    "component": value.component,
-    "filearea": value.fileArea,
-    "itemid": value.itemId,
-    "filepath": value.filePath,
-    "filename": value.fileName,
-    "isdir": value.isDirectory,
-    "isimage": value.isImage,
-    "timemodified": value.timeModified,
-    "timecreated": value.timeCreated,
-    "filesize": value.fileSize,
-    "author": value.author,
-    "license": value.license,
-    "filenameshort": value.fileNameShort,
-    "filesizeformatted": value.fileSizeFormatted,
-    "icon": value.icon,
-    "timecreatedformatted": value.timeCreatedFormatted,
-    "timemodifiedformatted": value.timeModifiedFormatted,
-    "url": value.url,
+    ...(value.contextId !== 0 ? { "contextid": value.contextId } : {}),
+    ...(value.component !== "" ? { "component": value.component } : {}),
+    ...(value.fileArea !== "" ? { "filearea": value.fileArea } : {}),
+    ...(value.itemId !== 0 ? { "itemid": value.itemId } : {}),
+    ...(value.filePath !== "" ? { "filepath": value.filePath } : {}),
+    ...(value.fileName !== "" ? { "filename": value.fileName } : {}),
+    ...(value.isDirectory !== false ? { "isdir": value.isDirectory } : {}),
+    ...(value.isImage !== false ? { "isimage": value.isImage } : {}),
+    ...(value.timeModified !== 0 ? { "timemodified": value.timeModified } : {}),
+    ...(value.timeCreated !== 0 ? { "timecreated": value.timeCreated } : {}),
+    ...(value.fileSize !== 0 ? { "filesize": value.fileSize } : {}),
+    ...(value.author !== "" ? { "author": value.author } : {}),
+    ...(value.license !== "" ? { "license": value.license } : {}),
+    ...(value.fileNameShort !== "" ? { "filenameshort": value.fileNameShort } : {}),
+    ...(value.fileSizeFormatted !== "" ? { "filesizeformatted": value.fileSizeFormatted } : {}),
+    ...(value.icon !== "" ? { "icon": value.icon } : {}),
+    ...(value.timeCreatedFormatted !== "" ? { "timecreatedformatted": value.timeCreatedFormatted } : {}),
+    ...(value.timeModifiedFormatted !== "" ? { "timemodifiedformatted": value.timeModifiedFormatted } : {}),
+    ...(value.url !== "" ? { "url": value.url } : {}),
     "urls": encodeMoodlePostAttachmentUrls(value.urls),
     "html": encodeMoodlePostAttachmentHtml(value.html),
   };
@@ -495,7 +495,7 @@ export function decodeMoodlePostAttachmentUrls(json: unknown): MoodlePostAttachm
 
 export function encodeMoodlePostAttachmentUrls(value: MoodlePostAttachmentUrls): JsonObject {
   return {
-    "export": value.export,
+    ...(value.export !== null ? { "export": value.export } : {}),
   };
 }
 
@@ -515,7 +515,7 @@ export function decodeMoodlePostAttachmentHtml(json: unknown): MoodlePostAttachm
 
 export function encodeMoodlePostAttachmentHtml(value: MoodlePostAttachmentHtml): JsonObject {
   return {
-    "plagiarism": value.plagiarism,
+    ...(value.plagiarism !== null ? { "plagiarism": value.plagiarism } : {}),
   };
 }
 
@@ -589,25 +589,25 @@ export function decodeMoodlePostInlineFile(json: unknown): MoodlePostInlineFile 
 
 export function encodeMoodlePostInlineFile(value: MoodlePostInlineFile): JsonObject {
   return {
-    "contextid": value.contextId,
-    "component": value.component,
-    "filearea": value.fileArea,
-    "itemid": value.itemId,
-    "filepath": value.filePath,
-    "filename": value.fileName,
-    "isdir": value.isDirectory,
-    "isimage": value.isImage,
-    "timemodified": value.timeModified,
-    "timecreated": value.timeCreated,
-    "filesize": value.fileSize,
-    "author": value.author,
-    "license": value.license,
-    "filenameshort": value.fileNameShort,
-    "filesizeformatted": value.fileSizeFormatted,
-    "icon": value.icon,
-    "timecreatedformatted": value.timeCreatedFormatted,
-    "timemodifiedformatted": value.timeModifiedFormatted,
-    "url": value.url,
+    ...(value.contextId !== 0 ? { "contextid": value.contextId } : {}),
+    ...(value.component !== "" ? { "component": value.component } : {}),
+    ...(value.fileArea !== "" ? { "filearea": value.fileArea } : {}),
+    ...(value.itemId !== 0 ? { "itemid": value.itemId } : {}),
+    ...(value.filePath !== "" ? { "filepath": value.filePath } : {}),
+    ...(value.fileName !== "" ? { "filename": value.fileName } : {}),
+    ...(value.isDirectory !== false ? { "isdir": value.isDirectory } : {}),
+    ...(value.isImage !== false ? { "isimage": value.isImage } : {}),
+    ...(value.timeModified !== 0 ? { "timemodified": value.timeModified } : {}),
+    ...(value.timeCreated !== 0 ? { "timecreated": value.timeCreated } : {}),
+    ...(value.fileSize !== 0 ? { "filesize": value.fileSize } : {}),
+    ...(value.author !== "" ? { "author": value.author } : {}),
+    ...(value.license !== "" ? { "license": value.license } : {}),
+    ...(value.fileNameShort !== "" ? { "filenameshort": value.fileNameShort } : {}),
+    ...(value.fileSizeFormatted !== "" ? { "filesizeformatted": value.fileSizeFormatted } : {}),
+    ...(value.icon !== "" ? { "icon": value.icon } : {}),
+    ...(value.timeCreatedFormatted !== "" ? { "timecreatedformatted": value.timeCreatedFormatted } : {}),
+    ...(value.timeModifiedFormatted !== "" ? { "timemodifiedformatted": value.timeModifiedFormatted } : {}),
+    ...(value.url !== "" ? { "url": value.url } : {}),
   };
 }
 
@@ -641,11 +641,11 @@ export function decodeMoodlePostTag(json: unknown): MoodlePostTag | undefined {
 
 export function encodeMoodlePostTag(value: MoodlePostTag): JsonObject {
   return {
-    "id": value.id,
-    "tagid": value.tagId,
-    "isstandard": value.isStandard,
-    "displayname": value.displayName,
-    "flag": value.flag,
+    ...(value.id !== 0 ? { "id": value.id } : {}),
+    ...(value.tagId !== 0 ? { "tagid": value.tagId } : {}),
+    ...(value.isStandard !== false ? { "isstandard": value.isStandard } : {}),
+    ...(value.displayName !== "" ? { "displayname": value.displayName } : {}),
+    ...(value.flag !== false ? { "flag": value.flag } : {}),
     "urls": encodeMoodlePostTagUrls(value.urls),
   };
 }
@@ -666,7 +666,7 @@ export function decodeMoodlePostTagUrls(json: unknown): MoodlePostTagUrls | unde
 
 export function encodeMoodlePostTagUrls(value: MoodlePostTagUrls): JsonObject {
   return {
-    "view": value.view,
+    ...(value.view !== "" ? { "view": value.view } : {}),
   };
 }
 
@@ -692,9 +692,9 @@ export function decodeMoodlePostHtml(json: unknown): MoodlePostHtml | undefined 
 
 export function encodeMoodlePostHtml(value: MoodlePostHtml): JsonObject {
   return {
-    "rating": value.rating,
-    "taglist": value.tagList,
-    "authorsubheading": value.authorSubheading,
+    ...(value.rating !== null ? { "rating": value.rating } : {}),
+    ...(value.tagList !== null ? { "taglist": value.tagList } : {}),
+    ...(value.authorSubheading !== null ? { "authorsubheading": value.authorSubheading } : {}),
   };
 }
 
@@ -718,8 +718,8 @@ export function decodeMoodlePostMessage(json: unknown): MoodlePostMessage | unde
 
 export function encodeMoodlePostMessage(value: MoodlePostMessage): JsonObject {
   return {
-    "type": value.type,
-    "message": value.message,
+    ...(value.type !== "" ? { "type": value.type } : {}),
+    ...(value.message !== "" ? { "message": value.message } : {}),
   };
 }
 
@@ -748,10 +748,10 @@ export function decodeMoodleCanAddDiscussionResponse(json: unknown): MoodleCanAd
 
 export function encodeMoodleCanAddDiscussionResponse(value: MoodleCanAddDiscussionResponse): JsonObject {
   return {
-    "status": value.status,
-    "canpindiscussions": value.canPinDiscussions,
-    "cancreateattachment": value.canCreateAttachment,
-    "warnings": value.warnings.map((item) => encodeMoodleWarning(item)),
+    ...(value.status !== false ? { "status": value.status } : {}),
+    ...(value.canPinDiscussions !== null ? { "canpindiscussions": value.canPinDiscussions } : {}),
+    ...(value.canCreateAttachment !== null ? { "cancreateattachment": value.canCreateAttachment } : {}),
+    ...(value.warnings.length > 0 ? { "warnings": value.warnings.map((item) => encodeMoodleWarning(item)) } : {}),
   };
 }
 
@@ -774,7 +774,7 @@ export function decodeMoodleDiscussionPostResponse(json: unknown): MoodleDiscuss
 export function encodeMoodleDiscussionPostResponse(value: MoodleDiscussionPostResponse): JsonObject {
   return {
     "post": encodeMoodleForumPost(value.post),
-    "warnings": value.warnings.map((item) => encodeMoodleWarning(item)),
+    ...(value.warnings.length > 0 ? { "warnings": value.warnings.map((item) => encodeMoodleWarning(item)) } : {}),
   };
 }
 
@@ -805,11 +805,11 @@ export function decodeMoodleDiscussionPostsResponse(json: unknown): MoodleDiscus
 
 export function encodeMoodleDiscussionPostsResponse(value: MoodleDiscussionPostsResponse): JsonObject {
   return {
-    "posts": value.posts.map((item) => encodeMoodleForumPost(item)),
-    "forumid": value.forumId,
-    "courseid": value.courseId,
-    "ratinginfo": value.ratingInfo === null ? null : encodeMoodleRatingInfo(value.ratingInfo),
-    "warnings": value.warnings.map((item) => encodeMoodleWarning(item)),
+    ...(value.posts.length > 0 ? { "posts": value.posts.map((item) => encodeMoodleForumPost(item)) } : {}),
+    ...(value.forumId !== 0 ? { "forumid": value.forumId } : {}),
+    ...(value.courseId !== 0 ? { "courseid": value.courseId } : {}),
+    ...(value.ratingInfo !== null ? { "ratinginfo": value.ratingInfo === null ? null : encodeMoodleRatingInfo(value.ratingInfo) } : {}),
+    ...(value.warnings.length > 0 ? { "warnings": value.warnings.map((item) => encodeMoodleWarning(item)) } : {}),
   };
 }
 
@@ -848,13 +848,13 @@ export function decodeMoodleRatingInfo(json: unknown): MoodleRatingInfo | undefi
 
 export function encodeMoodleRatingInfo(value: MoodleRatingInfo): JsonObject {
   return {
-    "contextid": value.contextId,
-    "component": value.component,
-    "ratingarea": value.ratingArea,
-    "canviewall": value.canViewAll,
-    "canviewany": value.canViewAny,
-    "scales": value.scales.map((item) => encodeMoodleRatingScale(item)),
-    "ratings": value.ratings.map((item) => encodeMoodleRating(item)),
+    ...(value.contextId !== 0 ? { "contextid": value.contextId } : {}),
+    ...(value.component !== "" ? { "component": value.component } : {}),
+    ...(value.ratingArea !== "" ? { "ratingarea": value.ratingArea } : {}),
+    ...(value.canViewAll !== null ? { "canviewall": value.canViewAll } : {}),
+    ...(value.canViewAny !== null ? { "canviewany": value.canViewAny } : {}),
+    ...(value.scales.length > 0 ? { "scales": value.scales.map((item) => encodeMoodleRatingScale(item)) } : {}),
+    ...(value.ratings.length > 0 ? { "ratings": value.ratings.map((item) => encodeMoodleRating(item)) } : {}),
   };
 }
 
@@ -890,12 +890,12 @@ export function decodeMoodleRatingScale(json: unknown): MoodleRatingScale | unde
 
 export function encodeMoodleRatingScale(value: MoodleRatingScale): JsonObject {
   return {
-    "id": value.id,
-    "courseid": value.courseId,
-    "name": value.name,
-    "max": value.max,
-    "isnumeric": value.isNumeric,
-    "items": value.items.map((item) => encodeMoodleRatingScaleItem(item)),
+    ...(value.id !== 0 ? { "id": value.id } : {}),
+    ...(value.courseId !== null ? { "courseid": value.courseId } : {}),
+    ...(value.name !== null ? { "name": value.name } : {}),
+    ...(value.max !== 0 ? { "max": value.max } : {}),
+    ...(value.isNumeric !== false ? { "isnumeric": value.isNumeric } : {}),
+    ...(value.items.length > 0 ? { "items": value.items.map((item) => encodeMoodleRatingScaleItem(item)) } : {}),
   };
 }
 
@@ -918,8 +918,8 @@ export function decodeMoodleRatingScaleItem(json: unknown): MoodleRatingScaleIte
 
 export function encodeMoodleRatingScaleItem(value: MoodleRatingScaleItem): JsonObject {
   return {
-    "value": value.value,
-    "name": value.name,
+    ...(value.value !== 0 ? { "value": value.value } : {}),
+    ...(value.name !== "" ? { "name": value.name } : {}),
   };
 }
 
@@ -966,16 +966,16 @@ export function decodeMoodleRating(json: unknown): MoodleRating | undefined {
 
 export function encodeMoodleRating(value: MoodleRating): JsonObject {
   return {
-    "itemid": value.itemId,
-    "scaleid": value.scaleId,
-    "userid": value.userId,
-    "aggregate": value.aggregate,
-    "aggregatestr": value.aggregateStr,
-    "aggregatelabel": value.aggregateLabel,
-    "count": value.count,
-    "rating": value.rating,
-    "canrate": value.canRate,
-    "canviewaggregate": value.canViewAggregate,
+    ...(value.itemId !== 0 ? { "itemid": value.itemId } : {}),
+    ...(value.scaleId !== null ? { "scaleid": value.scaleId } : {}),
+    ...(value.userId !== null ? { "userid": value.userId } : {}),
+    ...(value.aggregate !== null ? { "aggregate": value.aggregate } : {}),
+    ...(value.aggregateStr !== null ? { "aggregatestr": value.aggregateStr } : {}),
+    ...(value.aggregateLabel !== null ? { "aggregatelabel": value.aggregateLabel } : {}),
+    ...(value.count !== null ? { "count": value.count } : {}),
+    ...(value.rating !== null ? { "rating": value.rating } : {}),
+    ...(value.canRate !== null ? { "canrate": value.canRate } : {}),
+    ...(value.canViewAggregate !== null ? { "canviewaggregate": value.canViewAggregate } : {}),
   };
 }
 
@@ -997,8 +997,8 @@ export function decodeMoodleForumDiscussionsResponse(json: unknown): MoodleForum
 
 export function encodeMoodleForumDiscussionsResponse(value: MoodleForumDiscussionsResponse): JsonObject {
   return {
-    "discussions": value.discussions.map((item) => encodeMoodleForumDiscussion(item)),
-    "warnings": value.warnings.map((item) => encodeMoodleWarning(item)),
+    ...(value.discussions.length > 0 ? { "discussions": value.discussions.map((item) => encodeMoodleForumDiscussion(item)) } : {}),
+    ...(value.warnings.length > 0 ? { "warnings": value.warnings.map((item) => encodeMoodleWarning(item)) } : {}),
   };
 }
 
@@ -1118,40 +1118,40 @@ export function decodeMoodleForumDiscussion(json: unknown): MoodleForumDiscussio
 
 export function encodeMoodleForumDiscussion(value: MoodleForumDiscussion): JsonObject {
   return {
-    "id": value.id,
-    "name": value.name,
-    "groupid": value.groupId,
-    "timemodified": value.timeModified,
-    "usermodified": value.userModified,
-    "timestart": value.timeStart,
-    "timeend": value.timeEnd,
-    "discussion": value.discussion,
-    "parent": value.parent,
-    "userid": value.userId,
-    "created": value.created,
-    "modified": value.modified,
-    "mailed": value.mailed,
-    "subject": value.subject,
-    "message": value.message,
-    "messageformat": value.messageFormat,
-    "messagetrust": value.messageTrust,
-    "messageinlinefiles": value.messageInlineFiles.map((item) => encodeMoodleFile(item)),
-    "attachment": value.attachment,
-    "attachments": value.attachments.map((item) => encodeMoodleFile(item)),
-    "totalscore": value.totalScore,
-    "mailnow": value.mailNow,
-    "userfullname": value.userFullName,
-    "usermodifiedfullname": value.userModifiedFullName,
-    "userpictureurl": value.userPictureUrl,
-    "usermodifiedpictureurl": value.userModifiedPictureUrl,
-    "numreplies": value.numReplies,
-    "numunread": value.numUnread,
-    "pinned": value.pinned,
-    "locked": value.locked,
-    "starred": value.starred,
-    "canreply": value.canReply,
-    "canlock": value.canLock,
-    "canfavourite": value.canFavourite,
+    ...(value.id !== 0 ? { "id": value.id } : {}),
+    ...(value.name !== "" ? { "name": value.name } : {}),
+    ...(value.groupId !== 0 ? { "groupid": value.groupId } : {}),
+    ...(value.timeModified !== 0 ? { "timemodified": value.timeModified } : {}),
+    ...(value.userModified !== 0 ? { "usermodified": value.userModified } : {}),
+    ...(value.timeStart !== 0 ? { "timestart": value.timeStart } : {}),
+    ...(value.timeEnd !== 0 ? { "timeend": value.timeEnd } : {}),
+    ...(value.discussion !== 0 ? { "discussion": value.discussion } : {}),
+    ...(value.parent !== 0 ? { "parent": value.parent } : {}),
+    ...(value.userId !== 0 ? { "userid": value.userId } : {}),
+    ...(value.created !== 0 ? { "created": value.created } : {}),
+    ...(value.modified !== 0 ? { "modified": value.modified } : {}),
+    ...(value.mailed !== 0 ? { "mailed": value.mailed } : {}),
+    ...(value.subject !== "" ? { "subject": value.subject } : {}),
+    ...(value.message !== "" ? { "message": value.message } : {}),
+    ...(value.messageFormat !== 0 ? { "messageformat": value.messageFormat } : {}),
+    ...(value.messageTrust !== 0 ? { "messagetrust": value.messageTrust } : {}),
+    ...(value.messageInlineFiles.length > 0 ? { "messageinlinefiles": value.messageInlineFiles.map((item) => encodeMoodleFile(item)) } : {}),
+    ...(value.attachment !== "" ? { "attachment": value.attachment } : {}),
+    ...(value.attachments.length > 0 ? { "attachments": value.attachments.map((item) => encodeMoodleFile(item)) } : {}),
+    ...(value.totalScore !== 0 ? { "totalscore": value.totalScore } : {}),
+    ...(value.mailNow !== 0 ? { "mailnow": value.mailNow } : {}),
+    ...(value.userFullName !== "" ? { "userfullname": value.userFullName } : {}),
+    ...(value.userModifiedFullName !== "" ? { "usermodifiedfullname": value.userModifiedFullName } : {}),
+    ...(value.userPictureUrl !== "" ? { "userpictureurl": value.userPictureUrl } : {}),
+    ...(value.userModifiedPictureUrl !== "" ? { "usermodifiedpictureurl": value.userModifiedPictureUrl } : {}),
+    ...(value.numReplies !== 0 ? { "numreplies": value.numReplies } : {}),
+    ...(value.numUnread !== 0 ? { "numunread": value.numUnread } : {}),
+    ...(value.pinned !== false ? { "pinned": value.pinned } : {}),
+    ...(value.locked !== false ? { "locked": value.locked } : {}),
+    ...(value.starred !== false ? { "starred": value.starred } : {}),
+    ...(value.canReply !== false ? { "canreply": value.canReply } : {}),
+    ...(value.canLock !== false ? { "canlock": value.canLock } : {}),
+    ...(value.canFavourite !== false ? { "canfavourite": value.canFavourite } : {}),
   };
 }
 
@@ -1274,41 +1274,41 @@ export function decodeMoodleForum(json: unknown): MoodleForum | undefined {
 
 export function encodeMoodleForum(value: MoodleForum): JsonObject {
   return {
-    "id": value.id,
-    "course": value.course,
-    "type": value.type,
-    "name": value.name,
-    "intro": value.intro,
-    "introformat": value.introFormat,
-    "introfiles": value.introFiles.map((item) => encodeMoodleFile(item)),
-    "lang": value.lang,
-    "duedate": value.dueDate,
-    "cutoffdate": value.cutoffDate,
-    "assessed": value.assessed,
-    "assesstimestart": value.assessTimeStart,
-    "assesstimefinish": value.assessTimeFinish,
-    "scale": value.scale,
-    "grade_forum": value.gradeForum,
-    "grade_forum_notify": value.gradeForumNotify,
-    "maxbytes": value.maxBytes,
-    "maxattachments": value.maxAttachments,
-    "forcesubscribe": value.forceSubscribe,
-    "trackingtype": value.trackingType,
-    "rsstype": value.rssType,
-    "rssarticles": value.rssArticles,
-    "timemodified": value.timeModified,
-    "warnafter": value.warnAfter,
-    "blockafter": value.blockAfter,
-    "blockperiod": value.blockPeriod,
-    "completiondiscussions": value.completionDiscussions,
-    "completionreplies": value.completionReplies,
-    "completionposts": value.completionPosts,
-    "cmid": value.cmId,
-    "numdiscussions": value.numDiscussions,
-    "cancreatediscussions": value.canCreateDiscussions,
-    "lockdiscussionafter": value.lockDiscussionAfter,
-    "istracked": value.isTracked,
-    "unreadpostscount": value.unreadPostsCount,
+    ...(value.id !== 0 ? { "id": value.id } : {}),
+    ...(value.course !== 0 ? { "course": value.course } : {}),
+    ...(value.type !== "" ? { "type": value.type } : {}),
+    ...(value.name !== "" ? { "name": value.name } : {}),
+    ...(value.intro !== "" ? { "intro": value.intro } : {}),
+    ...(value.introFormat !== 0 ? { "introformat": value.introFormat } : {}),
+    ...(value.introFiles.length > 0 ? { "introfiles": value.introFiles.map((item) => encodeMoodleFile(item)) } : {}),
+    ...(value.lang !== null ? { "lang": value.lang } : {}),
+    ...(value.dueDate !== null ? { "duedate": value.dueDate } : {}),
+    ...(value.cutoffDate !== null ? { "cutoffdate": value.cutoffDate } : {}),
+    ...(value.assessed !== 0 ? { "assessed": value.assessed } : {}),
+    ...(value.assessTimeStart !== 0 ? { "assesstimestart": value.assessTimeStart } : {}),
+    ...(value.assessTimeFinish !== 0 ? { "assesstimefinish": value.assessTimeFinish } : {}),
+    ...(value.scale !== 0 ? { "scale": value.scale } : {}),
+    ...(value.gradeForum !== 0 ? { "grade_forum": value.gradeForum } : {}),
+    ...(value.gradeForumNotify !== 0 ? { "grade_forum_notify": value.gradeForumNotify } : {}),
+    ...(value.maxBytes !== 0 ? { "maxbytes": value.maxBytes } : {}),
+    ...(value.maxAttachments !== 0 ? { "maxattachments": value.maxAttachments } : {}),
+    ...(value.forceSubscribe !== 0 ? { "forcesubscribe": value.forceSubscribe } : {}),
+    ...(value.trackingType !== 0 ? { "trackingtype": value.trackingType } : {}),
+    ...(value.rssType !== 0 ? { "rsstype": value.rssType } : {}),
+    ...(value.rssArticles !== 0 ? { "rssarticles": value.rssArticles } : {}),
+    ...(value.timeModified !== 0 ? { "timemodified": value.timeModified } : {}),
+    ...(value.warnAfter !== 0 ? { "warnafter": value.warnAfter } : {}),
+    ...(value.blockAfter !== 0 ? { "blockafter": value.blockAfter } : {}),
+    ...(value.blockPeriod !== 0 ? { "blockperiod": value.blockPeriod } : {}),
+    ...(value.completionDiscussions !== 0 ? { "completiondiscussions": value.completionDiscussions } : {}),
+    ...(value.completionReplies !== 0 ? { "completionreplies": value.completionReplies } : {}),
+    ...(value.completionPosts !== 0 ? { "completionposts": value.completionPosts } : {}),
+    ...(value.cmId !== 0 ? { "cmid": value.cmId } : {}),
+    ...(value.numDiscussions !== null ? { "numdiscussions": value.numDiscussions } : {}),
+    ...(value.canCreateDiscussions !== null ? { "cancreatediscussions": value.canCreateDiscussions } : {}),
+    ...(value.lockDiscussionAfter !== null ? { "lockdiscussionafter": value.lockDiscussionAfter } : {}),
+    ...(value.isTracked !== null ? { "istracked": value.isTracked } : {}),
+    ...(value.unreadPostsCount !== null ? { "unreadpostscount": value.unreadPostsCount } : {}),
   };
 }
 
@@ -1331,8 +1331,8 @@ export function decodeMoodleFileToKeep(json: unknown): MoodleFileToKeep | undefi
 
 export function encodeMoodleFileToKeep(value: MoodleFileToKeep): JsonObject {
   return {
-    "filename": value.fileName,
-    "filepath": value.filePath,
+    ...(value.fileName !== "" ? { "filename": value.fileName } : {}),
+    ...(value.filePath !== "" ? { "filepath": value.filePath } : {}),
   };
 }
 
@@ -1364,11 +1364,11 @@ export function decodeMoodlePrepareDraftAreaResponse(json: unknown): MoodlePrepa
 
 export function encodeMoodlePrepareDraftAreaResponse(value: MoodlePrepareDraftAreaResponse): JsonObject {
   return {
-    "draftitemid": value.draftItemId,
-    "files": value.files.map((item) => encodeMoodleFile(item)),
-    "areaoptions": value.areaOptions.map((item) => encodeMoodleKeyValue(item)),
-    "messagetext": value.messageText,
-    "warnings": value.warnings.map((item) => encodeMoodleWarning(item)),
+    ...(value.draftItemId !== 0 ? { "draftitemid": value.draftItemId } : {}),
+    ...(value.files.length > 0 ? { "files": value.files.map((item) => encodeMoodleFile(item)) } : {}),
+    ...(value.areaOptions.length > 0 ? { "areaoptions": value.areaOptions.map((item) => encodeMoodleKeyValue(item)) } : {}),
+    ...(value.messageText !== "" ? { "messagetext": value.messageText } : {}),
+    ...(value.warnings.length > 0 ? { "warnings": value.warnings.map((item) => encodeMoodleWarning(item)) } : {}),
   };
 }
 
@@ -1418,14 +1418,14 @@ export function decodeMoodleDiscussionSummary(json: unknown): MoodleDiscussionSu
 
 export function encodeMoodleDiscussionSummary(value: MoodleDiscussionSummary): JsonObject {
   return {
-    "id": value.id,
-    "forumid": value.forumId,
-    "pinned": value.pinned,
-    "locked": value.locked,
-    "istimelocked": value.isTimeLocked,
-    "name": value.name,
-    "firstpostid": value.firstPostId,
-    "group": value.group === null ? null : encodeMoodleDiscussionGroup(value.group),
+    ...(value.id !== 0 ? { "id": value.id } : {}),
+    ...(value.forumId !== 0 ? { "forumid": value.forumId } : {}),
+    ...(value.pinned !== false ? { "pinned": value.pinned } : {}),
+    ...(value.locked !== false ? { "locked": value.locked } : {}),
+    ...(value.isTimeLocked !== false ? { "istimelocked": value.isTimeLocked } : {}),
+    ...(value.name !== "" ? { "name": value.name } : {}),
+    ...(value.firstPostId !== 0 ? { "firstpostid": value.firstPostId } : {}),
+    ...(value.group !== null ? { "group": value.group === null ? null : encodeMoodleDiscussionGroup(value.group) } : {}),
     "times": encodeMoodleDiscussionTimes(value.times),
     "userstate": encodeMoodleDiscussionUserState(value.userState),
     "capabilities": encodeMoodleDiscussionCapabilities(value.capabilities),
@@ -1452,7 +1452,7 @@ export function decodeMoodleDiscussionGroup(json: unknown): MoodleDiscussionGrou
 
 export function encodeMoodleDiscussionGroup(value: MoodleDiscussionGroup): JsonObject {
   return {
-    "name": value.name,
+    ...(value.name !== "" ? { "name": value.name } : {}),
     "urls": encodeMoodleDiscussionGroupUrls(value.urls),
   };
 }
@@ -1476,8 +1476,8 @@ export function decodeMoodleDiscussionGroupUrls(json: unknown): MoodleDiscussion
 
 export function encodeMoodleDiscussionGroupUrls(value: MoodleDiscussionGroupUrls): JsonObject {
   return {
-    "picture": value.picture,
-    "userlist": value.userList,
+    ...(value.picture !== null ? { "picture": value.picture } : {}),
+    ...(value.userList !== null ? { "userlist": value.userList } : {}),
   };
 }
 
@@ -1506,10 +1506,10 @@ export function decodeMoodleDiscussionTimes(json: unknown): MoodleDiscussionTime
 
 export function encodeMoodleDiscussionTimes(value: MoodleDiscussionTimes): JsonObject {
   return {
-    "modified": value.modified,
-    "start": value.start,
-    "end": value.end,
-    "locked": value.locked,
+    ...(value.modified !== 0 ? { "modified": value.modified } : {}),
+    ...(value.start !== 0 ? { "start": value.start } : {}),
+    ...(value.end !== 0 ? { "end": value.end } : {}),
+    ...(value.locked !== 0 ? { "locked": value.locked } : {}),
   };
 }
 
@@ -1532,8 +1532,8 @@ export function decodeMoodleDiscussionUserState(json: unknown): MoodleDiscussion
 
 export function encodeMoodleDiscussionUserState(value: MoodleDiscussionUserState): JsonObject {
   return {
-    "subscribed": value.subscribed,
-    "favourited": value.favourited,
+    ...(value.subscribed !== false ? { "subscribed": value.subscribed } : {}),
+    ...(value.favourited !== false ? { "favourited": value.favourited } : {}),
   };
 }
 
@@ -1568,12 +1568,12 @@ export function decodeMoodleDiscussionCapabilities(json: unknown): MoodleDiscuss
 
 export function encodeMoodleDiscussionCapabilities(value: MoodleDiscussionCapabilities): JsonObject {
   return {
-    "subscribe": value.subscribe,
-    "move": value.move,
-    "pin": value.pin,
-    "post": value.post,
-    "manage": value.manage,
-    "favourite": value.favourite,
+    ...(value.subscribe !== false ? { "subscribe": value.subscribe } : {}),
+    ...(value.move !== false ? { "move": value.move } : {}),
+    ...(value.pin !== false ? { "pin": value.pin } : {}),
+    ...(value.post !== false ? { "post": value.post } : {}),
+    ...(value.manage !== false ? { "manage": value.manage } : {}),
+    ...(value.favourite !== false ? { "favourite": value.favourite } : {}),
   };
 }
 
@@ -1608,12 +1608,12 @@ export function decodeMoodleDiscussionUrls(json: unknown): MoodleDiscussionUrls 
 
 export function encodeMoodleDiscussionUrls(value: MoodleDiscussionUrls): JsonObject {
   return {
-    "view": value.view,
-    "viewlatest": value.viewLatest,
-    "viewfirstunread": value.viewFirstUnread,
-    "markasread": value.markAsRead,
-    "subscribe": value.subscribe,
-    "pin": value.pin,
+    ...(value.view !== "" ? { "view": value.view } : {}),
+    ...(value.viewLatest !== null ? { "viewlatest": value.viewLatest } : {}),
+    ...(value.viewFirstUnread !== null ? { "viewfirstunread": value.viewFirstUnread } : {}),
+    ...(value.markAsRead !== "" ? { "markasread": value.markAsRead } : {}),
+    ...(value.subscribe !== "" ? { "subscribe": value.subscribe } : {}),
+    ...(value.pin !== null ? { "pin": value.pin } : {}),
   };
 }
 
@@ -1636,7 +1636,7 @@ export function decodeMoodleDiscussionTiming(json: unknown): MoodleDiscussionTim
 
 export function encodeMoodleDiscussionTiming(value: MoodleDiscussionTiming): JsonObject {
   return {
-    "istimed": value.isTimed,
-    "visible": value.visible,
+    ...(value.isTimed !== null ? { "istimed": value.isTimed } : {}),
+    ...(value.visible !== null ? { "visible": value.visible } : {}),
   };
 }

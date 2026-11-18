@@ -48,6 +48,7 @@ paths:
     post:
       tags: [Files]
       operationId: uploadFile
+      x-mb-effect: benign
       summary: >-
         Uploads a file to the user's draft area: a new one, or the one `itemId` names, to add
         files to it. The submission saving the draft area names it by its item id.

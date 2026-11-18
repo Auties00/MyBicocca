@@ -28,6 +28,7 @@ paths:
     post:
       tags: [Rooms]
       operationId: getRooms
+      x-mb-effect: read
       x-mb-form:
         view: vetrina_aule
         list: ""

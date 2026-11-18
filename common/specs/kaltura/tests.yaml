@@ -1,0 +1,11 @@
+# The live tests of Kaltura's public playback CDN, which needs no account: see "Live tests" in
+# common/codegen/README.md.
+limits:
+  requestsPerSecond: 1
+  maxRequests: 50
+operations:
+  Playback.getHlsPlaylist:
+    # Entries come from Moodle's pages, which need a session; an entry Kaltura doesn't serve
+    # checks that its 404 decodes as the API's error.
+    inputs: { partnerId: 2351962, entryId: 0_missing0 }
+    errors: ["404"]

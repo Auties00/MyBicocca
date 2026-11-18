@@ -630,6 +630,7 @@ paths:
     get:
       tags: [Catalog]
       operationId: getServices
+      x-mb-effect: benign
       summary: Lists the bookable services of the portal.
       parameters: [{ $ref: "#/components/parameters/PortalId" }, { $ref: "#/components/parameters/EntryFilters" }]
       x-mb-envelope: [servizi]
@@ -648,6 +649,7 @@ paths:
     get:
       tags: [Catalog]
       operationId: getAreas
+      x-mb-effect: benign
       summary: >-
         Lists the areas of the portal. Filtered by service, only the areas offering it are
         listed, each with the services bookable there and their booking constraints.
@@ -716,6 +718,7 @@ paths:
     post:
       tags: [Reservations]
       operationId: createReservation
+      x-mb-effect: reversible
       summary: >-
         Creates a provisional reservation, which holds the slot until confirmed within the
         booking session (30 minutes on the web front-end), or discarded with a forced deletion.
@@ -727,6 +730,7 @@ paths:
     post:
       tags: [Reservations]
       operationId: confirmReservation
+      x-mb-effect: irreversible
       summary: Confirms a provisional reservation.
       parameters:
         - name: entryId
@@ -757,6 +761,7 @@ paths:
     post:
       tags: [Reservations]
       operationId: updateReservation
+      x-mb-effect: reversible
       summary: Changes a reservation.
       parameters: [{ $ref: "#/components/parameters/ReservationCode" }, { $ref: "#/components/parameters/PrimaryValue" }]
       requestBody:
@@ -767,6 +772,7 @@ paths:
     post:
       tags: [Reservations]
       operationId: deleteReservation
+      x-mb-effect: irreversible
       summary: Deletes a reservation.
       parameters: [{ $ref: "#/components/parameters/ReservationCode" }, { $ref: "#/components/parameters/PrimaryValue" }]
       requestBody:

@@ -18,7 +18,7 @@ export function decodeEasyStaffExamCalendar(json: unknown): EasyStaffExamCalenda
 
 export function encodeEasyStaffExamCalendar(value: EasyStaffExamCalendar): JsonObject {
   return {
-    "Insegnamenti": value.subjects.map((item) => encodeEasyStaffExamSubject(item)),
+    ...(value.subjects.length > 0 ? { "Insegnamenti": value.subjects.map((item) => encodeEasyStaffExamSubject(item)) } : {}),
   };
 }
 
@@ -40,7 +40,7 @@ export function decodeEasyStaffExamSubject(json: unknown): EasyStaffExamSubject 
 export function encodeEasyStaffExamSubject(value: EasyStaffExamSubject): JsonObject {
   return {
     "DatiInsegnamento": encodeEasyStaffExamSubjectData(value.subjectData),
-    "Appelli": value.exams.map((item) => encodeEasyStaffScheduledExam(item)),
+    ...(value.exams.length > 0 ? { "Appelli": value.exams.map((item) => encodeEasyStaffScheduledExam(item)) } : {}),
   };
 }
 
@@ -64,7 +64,7 @@ export function decodeEasyStaffExamSubjectData(json: unknown): EasyStaffExamSubj
 export function encodeEasyStaffExamSubjectData(value: EasyStaffExamSubjectData): JsonObject {
   return {
     "Codice": value.code,
-    "CodiceGenerale": value.generalCode,
+    ...(value.generalCode !== "" ? { "CodiceGenerale": value.generalCode } : {}),
     "Nome": value.name,
   };
 }
@@ -108,13 +108,13 @@ export function encodeEasyStaffScheduledExam(value: EasyStaffScheduledExam): Jso
     "Data": encodeTemporal(value.date, "dd-MM-yyyy"),
     "OraInizio": encodeTemporal(value.startTime, "HH:mm"),
     "OraFine": encodeTemporal(value.endTime, "HH:mm"),
-    "Aula": value.room,
-    "Sede": value.building,
-    "event_docenti": value.examiners.map((item) => encodeEasyStaffExamExaminer(item)),
-    "event_PublicNotes": value.notes,
-    "TipoEsame": value.examType,
-    "event_Annullato": value.isCancelled,
-    "event_id": value.eventId,
+    ...(value.room !== "" ? { "Aula": value.room } : {}),
+    ...(value.building !== null ? { "Sede": value.building } : {}),
+    ...(value.examiners.length > 0 ? { "event_docenti": value.examiners.map((item) => encodeEasyStaffExamExaminer(item)) } : {}),
+    ...(value.notes !== "" ? { "event_PublicNotes": value.notes } : {}),
+    ...(value.examType !== null ? { "TipoEsame": value.examType } : {}),
+    ...(value.isCancelled !== false ? { "event_Annullato": value.isCancelled } : {}),
+    ...(value.eventId !== "" ? { "event_id": value.eventId } : {}),
   };
 }
 
@@ -141,10 +141,10 @@ export function decodeEasyStaffExamExaminer(json: unknown): EasyStaffExamExamine
 
 export function encodeEasyStaffExamExaminer(value: EasyStaffExamExaminer): JsonObject {
   return {
-    "Nome": value.name,
-    "Cognome": value.lastName,
-    "Matricola": value.code,
-    "Mail1": value.email,
-    "Mail2": value.fallbackEmail,
+    ...(value.name !== "" ? { "Nome": value.name } : {}),
+    ...(value.lastName !== "" ? { "Cognome": value.lastName } : {}),
+    ...(value.code !== null ? { "Matricola": value.code } : {}),
+    ...(value.email !== null ? { "Mail1": value.email } : {}),
+    ...(value.fallbackEmail !== null ? { "Mail2": value.fallbackEmail } : {}),
   };
 }

@@ -11,8 +11,9 @@ import it.attendance100.mybicocca.codegen.model.ParameterLocation
  * facade initializer building it, the API's error with a constant per known error code, and the
  * enum of the roles operations declare, when they declare any.
  *
- * Swift's `URLSession` keeps cookies, caches and times out on its own, so the client ignores
- * those settings; client settings are initializer parameters.
+ * Swift's `URLSession` keeps cookies and times out on its own, so the client ignores those
+ * settings; with `caches`, the runtime's `ResponseCache` keeps responses as on every platform.
+ * Client settings are initializer parameters.
  */
 internal class SwiftClientEmitter(private val spec: ApiSpec, private val layout: SwiftLayout) {
     private val client = spec.client
@@ -68,7 +69,7 @@ internal class SwiftClientEmitter(private val spec: ApiSpec, private val layout:
             }
             line()
             block("public func data(_ request: RestRequest$rolesParameter) async throws -> Data {") {
-                line("try await execute(request$rolesArgument, readsJSON: false)!.body")
+                line("try await execute(request$rolesArgument, readsJSON: false, stores: false)!.body")
             }
             line()
             block("public func text(_ request: RestRequest$rolesParameter) async throws -> String {") {
@@ -89,7 +90,7 @@ internal class SwiftClientEmitter(private val spec: ApiSpec, private val layout:
                 line("_ = try await execute(request$rolesArgument, readsJSON: true)")
             }
             line()
-            block("private func execute(_ request: RestRequest$rolesParameter, readsJSON: Bool, allowEmpty: Bool = false) async throws -> RestResponse? {") {
+            block("private func execute(_ request: RestRequest$rolesParameter, readsJSON: Bool, allowEmpty: Bool = false, stores: Bool = true) async throws -> RestResponse? {") {
                 val query = client.query.map { (name, value) -> name to SwiftSyntax.string(value) } +
                     client.settings.filter { it.location == ParameterLocation.QUERY }.map { it.wireName to SwiftSyntax.identifier(it.name) }
                 val headers = client.settings.filter { it.location == ParameterLocation.HEADER }.map { it.wireName to SwiftSyntax.identifier(it.name) }
@@ -104,7 +105,7 @@ internal class SwiftClientEmitter(private val spec: ApiSpec, private val layout:
                     "request"
                 }
                 line("do {")
-                indent { line("return try await rest.execute($sent, readsJSON: readsJSON, allowEmpty: allowEmpty)") }
+                indent { line("return try await rest.execute($sent, readsJSON: readsJSON, allowEmpty: allowEmpty, stores: stores)") }
                 block("} catch let failure as ApiFailure {") {
                     line("throw $errorName(failure: failure${if (spec.usesRoles) ", expectedRoles: roles" else ""})")
                 }
@@ -135,6 +136,7 @@ internal class SwiftClientEmitter(private val spec: ApiSpec, private val layout:
                 }
                 add("retries: [\n${rules.joinToString(",\n") { it.prependIndent("    ") }},\n]")
             }
+            if (client.caches) add("caches: true")
         }
         if (arguments.isEmpty()) {
             out.line("static let policy = RestPolicy()")

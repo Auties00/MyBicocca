@@ -47,16 +47,19 @@ portal in the `X-CLIENTE` header. Reservations are provisional holds that must b
 the booking session, or deleted with `force`.
 
 ```kotlin
-val desks = EasyStaffPlanningApi(EasyStaffPlanningPortal.INFORMATION_DESKS)
+val portal = EasyStaffPlanningPortal.INFORMATION_DESKS
+val desks = EasyStaffPlanningApi(portal.id, portal.code)
 val services = desks.catalog.getServices()
 ```
 
 ## Tests
 
-The tests call the live services and are tagged `live`; run the read-only ones by name:
+The live tests are generated from `common/specs/easystaff-agenda/tests.yaml` and
+`common/specs/easystaff-planning/tests.yaml`, and need no account:
 
 ```sh
-./gradlew -p data-api test -PincludeLive --tests "*.EasyStaffAgendaApiTest"
+./gradlew -p data-api liveTest --tests "*.easystaff.live.*"
 ```
 
-`EasyStaffPlanningApiTest` includes a booking round-trip that holds and then deletes a slot.
+The booking round-trip of Portale Planning, which holds a slot and deletes it, stays off until
+someone reviews it: see its entry in `tests.yaml`.

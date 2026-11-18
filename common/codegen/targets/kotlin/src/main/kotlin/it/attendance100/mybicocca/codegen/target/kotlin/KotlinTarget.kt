@@ -3,6 +3,7 @@ package it.attendance100.mybicocca.codegen.target.kotlin
 import it.attendance100.mybicocca.codegen.core.CodeTarget
 import it.attendance100.mybicocca.codegen.core.GeneratedFile
 import it.attendance100.mybicocca.codegen.core.TargetContext
+import it.attendance100.mybicocca.codegen.core.TestPlan
 import it.attendance100.mybicocca.codegen.core.decodeOptions
 import it.attendance100.mybicocca.codegen.model.ApiSpec
 import kotlinx.serialization.Serializable
@@ -71,6 +72,17 @@ class KotlinTarget : CodeTarget {
             }
         }
     }
+
+    /** The live tests of the API, in the `live` package next to its own (see [TestEmitter]). */
+    override fun generateTests(plan: TestPlan, context: TargetContext): List<GeneratedFile> {
+        val options = context.options.decodeOptions<Options>()
+        val layout = KotlinLayout(plan.spec, options.packageName, options.runtimePackage)
+        return TestEmitter(plan, layout, "${options.packageName}.live", "${options.runtimePackage}.live").files()
+    }
+
+    /** The [KotlinLiveRuntime], in the `live` package next to the APIs' runtime. */
+    override fun sharedTestFiles(context: TargetContext): List<GeneratedFile> =
+        KotlinLiveRuntime.files(context.options.decodeOptions<Options>().runtimePackage)
 
     /** The [KotlinRuntime], in the APIs' runtime package. */
     override fun sharedFiles(context: TargetContext): List<GeneratedFile> =

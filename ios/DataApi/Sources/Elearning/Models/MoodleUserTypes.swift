@@ -30,8 +30,12 @@ public struct MoodleCourseUserReference: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(userId, forKey: .userId)
-        try container.encode(courseId, forKey: .courseId)
+        if userId != 0 {
+            try container.encode(userId, forKey: .userId)
+        }
+        if courseId != 0 {
+            try container.encode(courseId, forKey: .courseId)
+        }
     }
 }
 
@@ -260,41 +264,111 @@ public struct MoodleCourseUserProfile: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(id, forKey: .id)
-        try container.encode(username, forKey: .username)
-        try container.encode(firstName, forKey: .firstName)
-        try container.encode(lastName, forKey: .lastName)
-        try container.encode(fullName, forKey: .fullName)
-        try container.encode(email, forKey: .email)
-        try container.encode(address, forKey: .address)
-        try container.encode(phone1, forKey: .phone1)
-        try container.encode(phone2, forKey: .phone2)
-        try container.encode(department, forKey: .department)
-        try container.encode(institution, forKey: .institution)
-        try container.encode(idNumber, forKey: .idNumber)
-        try container.encode(interests, forKey: .interests)
-        try container.encode(firstAccess, forKey: .firstAccess)
-        try container.encode(lastAccess, forKey: .lastAccess)
-        try container.encode(auth, forKey: .auth)
-        try container.encode(suspended, forKey: .suspended)
-        try container.encode(confirmed, forKey: .confirmed)
-        try container.encode(lang, forKey: .lang)
-        try container.encode(calendarType, forKey: .calendarType)
-        try container.encode(theme, forKey: .theme)
-        try container.encode(timezone, forKey: .timezone)
-        try container.encode(mailFormat, forKey: .mailFormat)
-        try container.encode(trackForums, forKey: .trackForums)
-        try container.encode(description, forKey: .description)
-        try container.encode(descriptionFormat, forKey: .descriptionFormat)
-        try container.encode(city, forKey: .city)
-        try container.encode(country, forKey: .country)
-        try container.encode(profileImageUrlSmall, forKey: .profileImageUrlSmall)
-        try container.encode(profileImageUrl, forKey: .profileImageUrl)
-        try container.encode(customFields, forKey: .customFields)
-        try container.encode(preferences, forKey: .preferences)
-        try container.encode(groups, forKey: .groups)
-        try container.encode(roles, forKey: .roles)
-        try container.encode(enrolledCourses, forKey: .enrolledCourses)
+        if id != 0 {
+            try container.encode(id, forKey: .id)
+        }
+        if username != nil {
+            try container.encode(username, forKey: .username)
+        }
+        if firstName != nil {
+            try container.encode(firstName, forKey: .firstName)
+        }
+        if lastName != nil {
+            try container.encode(lastName, forKey: .lastName)
+        }
+        if fullName != "" {
+            try container.encode(fullName, forKey: .fullName)
+        }
+        if email != nil {
+            try container.encode(email, forKey: .email)
+        }
+        if address != nil {
+            try container.encode(address, forKey: .address)
+        }
+        if phone1 != nil {
+            try container.encode(phone1, forKey: .phone1)
+        }
+        if phone2 != nil {
+            try container.encode(phone2, forKey: .phone2)
+        }
+        if department != nil {
+            try container.encode(department, forKey: .department)
+        }
+        if institution != nil {
+            try container.encode(institution, forKey: .institution)
+        }
+        if idNumber != nil {
+            try container.encode(idNumber, forKey: .idNumber)
+        }
+        if interests != nil {
+            try container.encode(interests, forKey: .interests)
+        }
+        if firstAccess != nil {
+            try container.encode(firstAccess, forKey: .firstAccess)
+        }
+        if lastAccess != nil {
+            try container.encode(lastAccess, forKey: .lastAccess)
+        }
+        if auth != nil {
+            try container.encode(auth, forKey: .auth)
+        }
+        if suspended != nil {
+            try container.encode(suspended, forKey: .suspended)
+        }
+        if confirmed != nil {
+            try container.encode(confirmed, forKey: .confirmed)
+        }
+        if lang != nil {
+            try container.encode(lang, forKey: .lang)
+        }
+        if calendarType != nil {
+            try container.encode(calendarType, forKey: .calendarType)
+        }
+        if theme != nil {
+            try container.encode(theme, forKey: .theme)
+        }
+        if timezone != nil {
+            try container.encode(timezone, forKey: .timezone)
+        }
+        if mailFormat != nil {
+            try container.encode(mailFormat, forKey: .mailFormat)
+        }
+        if trackForums != nil {
+            try container.encode(trackForums, forKey: .trackForums)
+        }
+        if description != nil {
+            try container.encode(description, forKey: .description)
+        }
+        if descriptionFormat != nil {
+            try container.encode(descriptionFormat, forKey: .descriptionFormat)
+        }
+        if city != nil {
+            try container.encode(city, forKey: .city)
+        }
+        if country != nil {
+            try container.encode(country, forKey: .country)
+        }
+        if profileImageUrlSmall != "" {
+            try container.encode(profileImageUrlSmall, forKey: .profileImageUrlSmall)
+        }
+        if profileImageUrl != "" {
+            try container.encode(profileImageUrl, forKey: .profileImageUrl)
+        }
+        if !customFields.isEmpty {
+            try container.encode(customFields, forKey: .customFields)
+        }
+        if !preferences.isEmpty {
+            try container.encode(preferences, forKey: .preferences)
+        }
+        if !groups.isEmpty {
+            try container.encode(groups, forKey: .groups)
+        }
+        if !roles.isEmpty {
+            try container.encode(roles, forKey: .roles)
+        }
+        if !enrolledCourses.isEmpty {
+            try container.encode(enrolledCourses, forKey: .enrolledCourses)
+        }
     }
 }
 
@@ -343,11 +417,21 @@ public struct MoodleUserCustomField: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(type, forKey: .type)
-        try container.encode(value, forKey: .value)
-        try container.encode(displayValue, forKey: .displayValue)
-        try container.encode(name, forKey: .name)
-        try container.encode(shortName, forKey: .shortName)
+        if type != "" {
+            try container.encode(type, forKey: .type)
+        }
+        if value != "" {
+            try container.encode(value, forKey: .value)
+        }
+        if displayValue != nil {
+            try container.encode(displayValue, forKey: .displayValue)
+        }
+        if name != "" {
+            try container.encode(name, forKey: .name)
+        }
+        if shortName != "" {
+            try container.encode(shortName, forKey: .shortName)
+        }
     }
 }
 
@@ -390,10 +474,18 @@ public struct MoodleUserGroup: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(id, forKey: .id)
-        try container.encode(name, forKey: .name)
-        try container.encode(description, forKey: .description)
-        try container.encode(descriptionFormat, forKey: .descriptionFormat)
+        if id != 0 {
+            try container.encode(id, forKey: .id)
+        }
+        if name != "" {
+            try container.encode(name, forKey: .name)
+        }
+        if description != "" {
+            try container.encode(description, forKey: .description)
+        }
+        if descriptionFormat != 0 {
+            try container.encode(descriptionFormat, forKey: .descriptionFormat)
+        }
     }
 }
 
@@ -436,10 +528,18 @@ public struct MoodleUserRole: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(roleId, forKey: .roleId)
-        try container.encode(name, forKey: .name)
-        try container.encode(shortName, forKey: .shortName)
-        try container.encode(sortOrder, forKey: .sortOrder)
+        if roleId != 0 {
+            try container.encode(roleId, forKey: .roleId)
+        }
+        if name != "" {
+            try container.encode(name, forKey: .name)
+        }
+        if shortName != "" {
+            try container.encode(shortName, forKey: .shortName)
+        }
+        if sortOrder != 0 {
+            try container.encode(sortOrder, forKey: .sortOrder)
+        }
     }
 }
 
@@ -476,9 +576,15 @@ public struct MoodleUserEnrolledCourse: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(id, forKey: .id)
-        try container.encode(fullName, forKey: .fullName)
-        try container.encode(shortName, forKey: .shortName)
+        if id != 0 {
+            try container.encode(id, forKey: .id)
+        }
+        if fullName != "" {
+            try container.encode(fullName, forKey: .fullName)
+        }
+        if shortName != "" {
+            try container.encode(shortName, forKey: .shortName)
+        }
     }
 }
 
@@ -527,11 +633,21 @@ public struct MoodlePrivateFilesInfo: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(fileCount, forKey: .fileCount)
-        try container.encode(folderCount, forKey: .folderCount)
-        try container.encode(fileSize, forKey: .fileSize)
-        try container.encode(fileSizeWithoutReferences, forKey: .fileSizeWithoutReferences)
-        try container.encode(warnings, forKey: .warnings)
+        if fileCount != 0 {
+            try container.encode(fileCount, forKey: .fileCount)
+        }
+        if folderCount != 0 {
+            try container.encode(folderCount, forKey: .folderCount)
+        }
+        if fileSize != 0 {
+            try container.encode(fileSize, forKey: .fileSize)
+        }
+        if fileSizeWithoutReferences != 0 {
+            try container.encode(fileSizeWithoutReferences, forKey: .fileSizeWithoutReferences)
+        }
+        if !warnings.isEmpty {
+            try container.encode(warnings, forKey: .warnings)
+        }
     }
 }
 
@@ -562,8 +678,12 @@ public struct MoodleUserPreferencesResponse: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(preferences, forKey: .preferences)
-        try container.encode(warnings, forKey: .warnings)
+        if !preferences.isEmpty {
+            try container.encode(preferences, forKey: .preferences)
+        }
+        if !warnings.isEmpty {
+            try container.encode(warnings, forKey: .warnings)
+        }
     }
 }
 
@@ -774,38 +894,102 @@ public struct MoodleUser: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(id, forKey: .id)
-        try container.encode(username, forKey: .username)
-        try container.encode(firstName, forKey: .firstName)
-        try container.encode(lastName, forKey: .lastName)
-        try container.encode(fullName, forKey: .fullName)
-        try container.encode(email, forKey: .email)
-        try container.encode(address, forKey: .address)
-        try container.encode(phone1, forKey: .phone1)
-        try container.encode(phone2, forKey: .phone2)
-        try container.encode(department, forKey: .department)
-        try container.encode(institution, forKey: .institution)
-        try container.encode(idNumber, forKey: .idNumber)
-        try container.encode(interests, forKey: .interests)
-        try container.encode(firstAccess, forKey: .firstAccess)
-        try container.encode(lastAccess, forKey: .lastAccess)
-        try container.encode(auth, forKey: .auth)
-        try container.encode(suspended, forKey: .suspended)
-        try container.encode(confirmed, forKey: .confirmed)
-        try container.encode(lang, forKey: .lang)
-        try container.encode(calendarType, forKey: .calendarType)
-        try container.encode(theme, forKey: .theme)
-        try container.encode(timezone, forKey: .timezone)
-        try container.encode(mailFormat, forKey: .mailFormat)
-        try container.encode(trackForums, forKey: .trackForums)
-        try container.encode(description, forKey: .description)
-        try container.encode(descriptionFormat, forKey: .descriptionFormat)
-        try container.encode(city, forKey: .city)
-        try container.encode(country, forKey: .country)
-        try container.encode(profileImageUrlSmall, forKey: .profileImageUrlSmall)
-        try container.encode(profileImageUrl, forKey: .profileImageUrl)
-        try container.encode(customFields, forKey: .customFields)
-        try container.encode(preferences, forKey: .preferences)
+        if id != 0 {
+            try container.encode(id, forKey: .id)
+        }
+        if username != nil {
+            try container.encode(username, forKey: .username)
+        }
+        if firstName != nil {
+            try container.encode(firstName, forKey: .firstName)
+        }
+        if lastName != nil {
+            try container.encode(lastName, forKey: .lastName)
+        }
+        if fullName != "" {
+            try container.encode(fullName, forKey: .fullName)
+        }
+        if email != nil {
+            try container.encode(email, forKey: .email)
+        }
+        if address != nil {
+            try container.encode(address, forKey: .address)
+        }
+        if phone1 != nil {
+            try container.encode(phone1, forKey: .phone1)
+        }
+        if phone2 != nil {
+            try container.encode(phone2, forKey: .phone2)
+        }
+        if department != nil {
+            try container.encode(department, forKey: .department)
+        }
+        if institution != nil {
+            try container.encode(institution, forKey: .institution)
+        }
+        if idNumber != nil {
+            try container.encode(idNumber, forKey: .idNumber)
+        }
+        if interests != nil {
+            try container.encode(interests, forKey: .interests)
+        }
+        if firstAccess != nil {
+            try container.encode(firstAccess, forKey: .firstAccess)
+        }
+        if lastAccess != nil {
+            try container.encode(lastAccess, forKey: .lastAccess)
+        }
+        if auth != nil {
+            try container.encode(auth, forKey: .auth)
+        }
+        if suspended != nil {
+            try container.encode(suspended, forKey: .suspended)
+        }
+        if confirmed != nil {
+            try container.encode(confirmed, forKey: .confirmed)
+        }
+        if lang != nil {
+            try container.encode(lang, forKey: .lang)
+        }
+        if calendarType != nil {
+            try container.encode(calendarType, forKey: .calendarType)
+        }
+        if theme != nil {
+            try container.encode(theme, forKey: .theme)
+        }
+        if timezone != nil {
+            try container.encode(timezone, forKey: .timezone)
+        }
+        if mailFormat != nil {
+            try container.encode(mailFormat, forKey: .mailFormat)
+        }
+        if trackForums != nil {
+            try container.encode(trackForums, forKey: .trackForums)
+        }
+        if description != nil {
+            try container.encode(description, forKey: .description)
+        }
+        if descriptionFormat != nil {
+            try container.encode(descriptionFormat, forKey: .descriptionFormat)
+        }
+        if city != nil {
+            try container.encode(city, forKey: .city)
+        }
+        if country != nil {
+            try container.encode(country, forKey: .country)
+        }
+        if profileImageUrlSmall != "" {
+            try container.encode(profileImageUrlSmall, forKey: .profileImageUrlSmall)
+        }
+        if profileImageUrl != "" {
+            try container.encode(profileImageUrl, forKey: .profileImageUrl)
+        }
+        if !customFields.isEmpty {
+            try container.encode(customFields, forKey: .customFields)
+        }
+        if !preferences.isEmpty {
+            try container.encode(preferences, forKey: .preferences)
+        }
     }
 }
 
@@ -836,8 +1020,12 @@ public struct MoodleRemoveUserDeviceResponse: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(removed, forKey: .removed)
-        try container.encode(warnings, forKey: .warnings)
+        if removed != false {
+            try container.encode(removed, forKey: .removed)
+        }
+        if !warnings.isEmpty {
+            try container.encode(warnings, forKey: .warnings)
+        }
     }
 }
 
@@ -868,7 +1056,11 @@ public struct MoodlePreferenceUpdate: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(type, forKey: .type)
-        try container.encode(value, forKey: .value)
+        if type != "" {
+            try container.encode(type, forKey: .type)
+        }
+        if value != nil {
+            try container.encode(value, forKey: .value)
+        }
     }
 }

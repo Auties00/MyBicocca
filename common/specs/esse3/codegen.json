@@ -19,6 +19,7 @@
   "targets": {
     "kotlin": {
       "outputDir": "../../../android/data-api/src/main/kotlin",
+      "testOutputDir": "../../../android/data-api/src/test/kotlin",
       "options": {
         "packageName": "it.attendance100.mybicocca.data.remote.esse3",
         "temporalSerializers": [
@@ -41,12 +42,14 @@
     },
     "swift": {
       "outputDir": "../../../ios/DataApi/Sources",
+      "testOutputDir": "../../../ios/DataApi/Tests/LiveTests",
       "options": {
         "module": "Esse3"
       }
     },
     "web": {
       "outputDir": "../../../web/data-api/src",
+      "testOutputDir": "../../../web/data-api/test",
       "options": {
         "packageName": "esse3"
       }

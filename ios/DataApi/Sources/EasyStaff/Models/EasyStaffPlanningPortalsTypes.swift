@@ -90,9 +90,15 @@ public struct EasyStaffPlanningPortalConfig: Codable, Hashable, Sendable {
         try container.encode(id, forKey: .id)
         try container.encode(name, forKey: .name)
         try container.encode(code, forKey: .code)
-        try container.encode(logoPath, forKey: .logoPath)
-        try container.encode(settings, forKey: .settings)
-        try container.encode(colors, forKey: .colors)
+        if logoPath != nil {
+            try container.encode(logoPath, forKey: .logoPath)
+        }
+        if settings != nil {
+            try container.encode(settings, forKey: .settings)
+        }
+        if colors != nil {
+            try container.encode(colors, forKey: .colors)
+        }
     }
 }
 
@@ -116,7 +122,9 @@ public struct EasyStaffPlanningPortalColors: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(textColor, forKey: .textColor)
+        if textColor != nil {
+            try container.encode(textColor, forKey: .textColor)
+        }
     }
 }
 
@@ -167,12 +175,24 @@ public struct EasyStaffPlanningPortalSettings: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(general, forKey: .general)
-        try container.encode(serviceCategories, forKey: .serviceCategories)
-        try container.encode(publicLogin, forKey: .publicLogin)
-        try container.encode(grid, forKey: .grid)
-        try container.encode(portalFields, forKey: .portalFields)
-        try container.encode(publicPortal, forKey: .publicPortal)
+        if general != nil {
+            try container.encode(general, forKey: .general)
+        }
+        if serviceCategories != nil {
+            try container.encode(serviceCategories, forKey: .serviceCategories)
+        }
+        if publicLogin != nil {
+            try container.encode(publicLogin, forKey: .publicLogin)
+        }
+        if grid != nil {
+            try container.encode(grid, forKey: .grid)
+        }
+        if portalFields != nil {
+            try container.encode(portalFields, forKey: .portalFields)
+        }
+        if publicPortal != nil {
+            try container.encode(publicPortal, forKey: .publicPortal)
+        }
     }
 }
 
@@ -216,11 +236,21 @@ public struct EasyStaffPlanningGeneralSettings: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(captchaRequired, forKey: .captchaRequired)
-        try container.encode(concurrentBookingsAllowed, forKey: .concurrentBookingsAllowed)
-        try container.encode(bookingInProgressCheck, forKey: .bookingInProgressCheck)
-        try container.encode(publicPosition, forKey: .publicPosition)
-        try container.encode(shortServicesEnabled, forKey: .shortServicesEnabled)
+        if captchaRequired != false {
+            try container.encode(captchaRequired, forKey: .captchaRequired)
+        }
+        if concurrentBookingsAllowed != false {
+            try container.encode(concurrentBookingsAllowed, forKey: .concurrentBookingsAllowed)
+        }
+        if bookingInProgressCheck != false {
+            try container.encode(bookingInProgressCheck, forKey: .bookingInProgressCheck)
+        }
+        if publicPosition != false {
+            try container.encode(publicPosition, forKey: .publicPosition)
+        }
+        if shortServicesEnabled != false {
+            try container.encode(shortServicesEnabled, forKey: .shortServicesEnabled)
+        }
     }
 }
 
@@ -244,7 +274,9 @@ public struct EasyStaffPlanningServiceCategorySettings: Codable, Hashable, Senda
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(publicChoice, forKey: .publicChoice)
+        if publicChoice != false {
+            try container.encode(publicChoice, forKey: .publicChoice)
+        }
     }
 }
 
@@ -284,10 +316,18 @@ public struct EasyStaffPlanningLoginSettings: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(state, forKey: .state)
-        try container.encode(method, forKey: .method)
-        try container.encode(url, forKey: .url)
-        try container.encode(authBlocked, forKey: .authBlocked)
+        if state != .optional {
+            try container.encode(state, forKey: .state)
+        }
+        if method != nil {
+            try container.encode(method, forKey: .method)
+        }
+        if url != nil {
+            try container.encode(url, forKey: .url)
+        }
+        if authBlocked != false {
+            try container.encode(authBlocked, forKey: .authBlocked)
+        }
     }
 }
 
@@ -311,7 +351,9 @@ public struct EasyStaffPlanningGridSettings: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(showEndTime, forKey: .showEndTime)
+        if showEndTime != false {
+            try container.encode(showEndTime, forKey: .showEndTime)
+        }
     }
 }
 
@@ -361,12 +403,24 @@ public struct EasyStaffPlanningPortalFieldsSettings: Codable, Hashable, Sendable
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(serviceGroup, forKey: .serviceGroup)
-        try container.encode(service, forKey: .service)
-        try container.encode(areaGroup, forKey: .areaGroup)
-        try container.encode(area, forKey: .area)
-        try container.encode(serviceGroupRequired, forKey: .serviceGroupRequired)
-        try container.encode(areaGroupRequired, forKey: .areaGroupRequired)
+        if serviceGroup != 0 {
+            try container.encode(serviceGroup, forKey: .serviceGroup)
+        }
+        if service != 0 {
+            try container.encode(service, forKey: .service)
+        }
+        if areaGroup != 0 {
+            try container.encode(areaGroup, forKey: .areaGroup)
+        }
+        if area != 0 {
+            try container.encode(area, forKey: .area)
+        }
+        if serviceGroupRequired != false {
+            try container.encode(serviceGroupRequired, forKey: .serviceGroupRequired)
+        }
+        if areaGroupRequired != false {
+            try container.encode(areaGroupRequired, forKey: .areaGroupRequired)
+        }
     }
 }
 
@@ -411,11 +465,21 @@ public struct EasyStaffPlanningPublicPortalSettings: Codable, Hashable, Sendable
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(hideEditButton, forKey: .hideEditButton)
-        try container.encode(qrScanEnabled, forKey: .qrScanEnabled)
-        try container.encode(feedbackEnabled, forKey: .feedbackEnabled)
-        try container.encode(showFreeResourceCount, forKey: .showFreeResourceCount)
-        try container.encode(homeLayout, forKey: .homeLayout)
+        if hideEditButton != false {
+            try container.encode(hideEditButton, forKey: .hideEditButton)
+        }
+        if qrScanEnabled != false {
+            try container.encode(qrScanEnabled, forKey: .qrScanEnabled)
+        }
+        if feedbackEnabled != false {
+            try container.encode(feedbackEnabled, forKey: .feedbackEnabled)
+        }
+        if showFreeResourceCount != false {
+            try container.encode(showFreeResourceCount, forKey: .showFreeResourceCount)
+        }
+        if homeLayout != nil {
+            try container.encode(homeLayout, forKey: .homeLayout)
+        }
     }
 }
 
@@ -523,17 +587,39 @@ public struct EasyStaffPlanningFormField: Codable, Hashable, Sendable {
         try container.encode(label, forKey: .label)
         try container.encode(code, forKey: .code)
         try container.encode(type, forKey: .type)
-        try container.encode(values, forKey: .values)
-        try container.encode(defaultValue, forKey: .defaultValue)
-        try container.encode(placeholder, forKey: .placeholder)
-        try container.encode(primary, forKey: .primary)
-        try container.encode(required, forKey: .required)
-        try container.encode(serviceId, forKey: .serviceId)
+        if values != nil {
+            try container.encode(values, forKey: .values)
+        }
+        if defaultValue != nil {
+            try container.encode(defaultValue, forKey: .defaultValue)
+        }
+        if placeholder != nil {
+            try container.encode(placeholder, forKey: .placeholder)
+        }
+        if primary != false {
+            try container.encode(primary, forKey: .primary)
+        }
+        if required != false {
+            try container.encode(required, forKey: .required)
+        }
+        if serviceId != nil {
+            try container.encode(serviceId, forKey: .serviceId)
+        }
         try container.encode(portalId, forKey: .portalId)
-        try container.encode(softwareId, forKey: .softwareId)
-        try container.encode(authPrefilled, forKey: .authPrefilled)
-        try container.encode(identifying, forKey: .identifying)
-        try container.encode(blocked, forKey: .blocked)
-        try container.encode(position, forKey: .position)
+        if softwareId != 0 {
+            try container.encode(softwareId, forKey: .softwareId)
+        }
+        if authPrefilled != false {
+            try container.encode(authPrefilled, forKey: .authPrefilled)
+        }
+        if identifying != false {
+            try container.encode(identifying, forKey: .identifying)
+        }
+        if blocked != false {
+            try container.encode(blocked, forKey: .blocked)
+        }
+        if position != .user {
+            try container.encode(position, forKey: .position)
+        }
     }
 }

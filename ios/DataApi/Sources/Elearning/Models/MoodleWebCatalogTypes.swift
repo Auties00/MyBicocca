@@ -64,15 +64,33 @@ public struct MoodleWebCourseInfo: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(id, forKey: .id)
-        try container.encode(name, forKey: .name)
-        try container.encode(code, forKey: .code)
-        try container.encode(viewUrl, forKey: .viewUrl)
-        try container.encode(syllabus, forKey: .syllabus)
-        try container.encode(staff, forKey: .staff)
-        try container.encode(enrolmentMethods, forKey: .enrolmentMethods)
-        try container.encode(studentOpinionUrl, forKey: .studentOpinionUrl)
-        try container.encode(bibliographyUrl, forKey: .bibliographyUrl)
+        if id != nil {
+            try container.encode(id, forKey: .id)
+        }
+        if name != "" {
+            try container.encode(name, forKey: .name)
+        }
+        if code != "" {
+            try container.encode(code, forKey: .code)
+        }
+        if viewUrl != "" {
+            try container.encode(viewUrl, forKey: .viewUrl)
+        }
+        if !syllabus.isEmpty {
+            try container.encode(syllabus, forKey: .syllabus)
+        }
+        if !staff.isEmpty {
+            try container.encode(staff, forKey: .staff)
+        }
+        if !enrolmentMethods.isEmpty {
+            try container.encode(enrolmentMethods, forKey: .enrolmentMethods)
+        }
+        if studentOpinionUrl != nil {
+            try container.encode(studentOpinionUrl, forKey: .studentOpinionUrl)
+        }
+        if bibliographyUrl != nil {
+            try container.encode(bibliographyUrl, forKey: .bibliographyUrl)
+        }
     }
 }
 
@@ -107,9 +125,15 @@ public struct MoodleWebSyllabus: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(language, forKey: .language)
-        try container.encode(exportPdfUrl, forKey: .exportPdfUrl)
-        try container.encode(fields, forKey: .fields)
+        if language != "unknown" {
+            try container.encode(language, forKey: .language)
+        }
+        if exportPdfUrl != nil {
+            try container.encode(exportPdfUrl, forKey: .exportPdfUrl)
+        }
+        if !fields.isEmpty {
+            try container.encode(fields, forKey: .fields)
+        }
     }
 }
 
@@ -138,8 +162,12 @@ public struct MoodleWebSyllabusField: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(title, forKey: .title)
-        try container.encode(htmlContent, forKey: .htmlContent)
+        if title != "" {
+            try container.encode(title, forKey: .title)
+        }
+        if htmlContent != "" {
+            try container.encode(htmlContent, forKey: .htmlContent)
+        }
     }
 }
 
@@ -169,7 +197,9 @@ public struct MoodleWebStaffGroup: Codable, Hashable, Sendable {
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(role, forKey: .role)
-        try container.encode(members, forKey: .members)
+        if !members.isEmpty {
+            try container.encode(members, forKey: .members)
+        }
     }
 }
 
@@ -214,10 +244,20 @@ public struct MoodleWebStaffMember: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(name, forKey: .name)
-        try container.encode(profileUrl, forKey: .profileUrl)
-        try container.encode(userId, forKey: .userId)
-        try container.encode(initials, forKey: .initials)
-        try container.encode(email, forKey: .email)
+        if name != "" {
+            try container.encode(name, forKey: .name)
+        }
+        if profileUrl != "" {
+            try container.encode(profileUrl, forKey: .profileUrl)
+        }
+        if userId != nil {
+            try container.encode(userId, forKey: .userId)
+        }
+        if initials != nil {
+            try container.encode(initials, forKey: .initials)
+        }
+        if email != nil {
+            try container.encode(email, forKey: .email)
+        }
     }
 }

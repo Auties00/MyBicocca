@@ -1,0 +1,143 @@
+{
+  "Assign.removeSubmission": {
+    "effect": "reversible",
+    "reason": "Clears the content of the student's own draft submission, which can be read beforehand (getSubmissionStatus) and saved back with Assign.saveSubmission.",
+    "notes": "Undo: read Assign.getSubmissionStatus(assignId) first (lastattempt.submission.plugins: online text and files), then call Assign.saveSubmission(assignmentId = $args.assignId) with the same online text and, for files, a draft area re-filled by Files.uploadFile; the restore form cannot express this nested plugin data. Exact only on an assignment with drafts enabled and a draft submission: on an assignment without drafts the re-save counts as a new submission and notifies graders. Files come back with new timestamps and the removal is logged. Use a test assignment nobody grades."
+  },
+  "Assign.saveSubmission": {
+    "effect": "reversible",
+    "reason": "On an assignment with drafts enabled it only saves the student's draft, which Assign.removeSubmission clears again (or a re-save with the previous content restores).",
+    "notes": "Undo: Assign.removeSubmission(userId = the student's id from Site.getSiteInfo, assignId = $args.assignmentId) when there was no draft before; otherwise re-save the content read from Assign.getSubmissionStatus beforehand. Verify with Assign.getSubmissionStatus(assignId = $args.assignmentId) (lastattempt.submission.status == \"draft\"). On an assignment WITHOUT drafts saving counts as submitting: it notifies graders and the student, which cannot be undone, so only configure it against a draft-enabled assignment nobody grades."
+  },
+  "Assign.submitForGrading": {
+    "effect": "irreversible",
+    "reason": "Submits the assignment for grading and notifies graders; only a teacher can revert it to draft, and not through this API."
+  },
+  "Completion.updateActivityCompletionStatusManually": {
+    "effect": "reversible",
+    "reason": "Sets the student's own manual completion tick on one activity, a setter whose previous state can be read (getActivitiesCompletionStatus) and written back with the opposite flag.",
+    "notes": "The undo shown assumes the test marks complete an activity that was incomplete (statuses[*].state == 0 for that cmId in Completion.getActivitiesCompletionStatus(courseId, userId)); for the opposite direction undo with completed = true. Only manual-tracking activities accept it. Pick an activity that is not a course-completion or badge criterion: marking complete can trigger course completion or a badge award that unticking does not revoke."
+  },
+  "Course.enrolUser": {
+    "effect": "irreversible",
+    "reason": "Self-enrols the student in a course, visible in the participant list, and this API has no operation to unenrol again.",
+    "notes": "Moodle has no web service a student can use to self-unenrol (enrol/self/unenrolself.php is a web page; core_enrol_unenrol_user_enrolment needs the enrol/self:unenrol staff capability), so no undo exists in this API. Enrolment can also send the course welcome message and start an enrolment period."
+  },
+  "Forum.addDiscussion": {
+    "effect": "reversible",
+    "reason": "Creates a discussion that Forum.deletePost on its first post removes again; subscribers are only mailed after the editing window, so deleting within it reaches nobody.",
+    "notes": "Undo: Forum.deletePost(postId = first post id); the result only has discussionId, so read the first post id from Forum.getForumDiscussions(forumId).discussions[*].id where discussion == $result.discussionId (or getDiscussionPosts(discussionId).posts[0].id). Must run within the forum's maximum editing time (30 minutes by default): it is both the window before cron e-mails subscribers and the window in which a student may delete their own post. Use a test forum nobody reads, never the announcements forum; until deleted the post is visible to course participants and logged."
+  },
+  "Forum.addDiscussionPost": {
+    "effect": "reversible",
+    "reason": "Creates a reply that Forum.deletePost removes again; subscribers are only mailed after the editing window, so deleting within it reaches nobody.",
+    "notes": "The undo must run within the forum's maximum editing time (30 minutes by default), before cron mails subscribers and while the student may still delete their own post. Reply in a test discussion nobody reads; if the window passes, subscribers and the parent post's author are mailed."
+  },
+  "Forum.deletePost": {
+    "effect": "irreversible",
+    "reason": "Deletes a post, or a whole discussion with everyone's replies, permanently; re-posting creates a new post with new ids and times."
+  },
+  "Forum.prepareDraftAreaForPost": {
+    "effect": "benign",
+    "reason": "Copies a post's files into a temporary draft file area for editing; the post itself is not changed.",
+    "notes": "Draft areas are private scratch space cleaned up by cron. Needs a post the student can edit."
+  },
+  "Forum.setSubscriptionState": {
+    "effect": "reversible",
+    "reason": "Subscribes or unsubscribes the student from one discussion, a private, symmetric toggle that calling again with the opposite state restores exactly.",
+    "notes": "The undo shown fits a test that subscribes (targetState = true) to a discussion the student is not subscribed to; for the opposite direction undo with targetState = true. No read in this API exposes the prior state (only the result's userState.subscribed after the call), so pick a discussion the student has never subscribed to, in a forum without forced subscription. Moodle restores the forum_discussion_subs records exactly on the reverse toggle."
+  },
+  "Forum.toggleFavouriteState": {
+    "effect": "reversible",
+    "reason": "Stars or unstars a discussion for the student, a private per-user favourite that the opposite call restores exactly.",
+    "notes": "The undo shown fits a test that stars (targetState = true) a discussion that was not starred; check beforehand with Forum.getForumDiscussions(forumId).discussions[*].starred for that discussion. For the opposite direction undo with targetState = true."
+  },
+  "Forum.updateDiscussionPost": {
+    "effect": "reversible",
+    "reason": "Edits the student's own post, whose text can be read beforehand with Forum.getDiscussionPost and written back.",
+    "notes": "Pass only message (not subject) so the single restore covers the change; restoring subject too needs a second read of post.subject. getDiscussionPost returns the message formatted for display (filters applied, file URLs rewritten), so the restore is exact only for a plain HTML post without embedded files, such as one the test created. The modified time stays updated. A student can edit only within the maximum editing time (30 minutes by default), so target a fresh test post (e.g. one created by Forum.addDiscussionPost) in a forum nobody reads."
+  },
+  "Forum.viewForum": {
+    "effect": "benign",
+    "reason": "A *_view_* function: logs a course module viewed event and may mark the forum complete on view, as the student opening it would."
+  },
+  "Forum.viewForumDiscussion": {
+    "effect": "benign",
+    "reason": "A *_view_* function: only logs a discussion viewed event, as the student opening it would."
+  },
+  "Message.blockUser": {
+    "effect": "reversible",
+    "reason": "Adds a user to the current user's private block list; unblocking removes the record again.",
+    "notes": "The undo is exact only if the target was not already blocked (otherwise blocking does nothing and the undo removes a block the student had set). The block list cannot be read without a shared conversation (members[].isBlocked of getConversationMessages), so no verify. Pick a target who is not staff: users who can message even when blocked cannot be blocked. While the block is in place the target cannot message the student."
+  },
+  "Message.deleteConversationsById": {
+    "effect": "irreversible",
+    "reason": "Deletes conversations from the student's view, and nothing in the API can bring back the other participants' messages.",
+    "notes": "Deletion is per user (other members keep the conversation), but messages written by others cannot be recreated."
+  },
+  "Message.markAllConversationMessagesAsRead": {
+    "effect": "benign",
+    "reason": "Records the student's own read markers for one conversation, exactly what the Moodle app does when the student opens it, and reaches nobody else.",
+    "notes": "Moodle shows senders no read receipts and message e-mails go out at send time, so no one else sees the change. Only the student's unread badge changes: target the student's self-conversation or one with no unread messages so no real unread message is hidden from them. There is no mark-unread, which is why it is benign rather than reversible."
+  },
+  "Message.sendInstantMessages": {
+    "effect": "irreversible",
+    "reason": "Sends messages to other people, who are notified."
+  },
+  "Message.unblockUser": {
+    "effect": "reversible",
+    "reason": "Removes a user from the current user's private block list; blocking adds them back.",
+    "notes": "The undo is exact only if the target was blocked beforehand; otherwise unblocking does nothing and the undo leaves a new block. Safest to run only as the undo of Message.blockUser."
+  },
+  "Mobile.getAutologinKey": {
+    "effect": "benign",
+    "reason": "Issues a short-lived auto-login key for the current user.",
+    "notes": "Moodle replaces any previous mobile auto-login key and rate-limits generation (about one key every 6 minutes), so a test may fail if the student's app has just requested one. Requires https and the mobile app user agent."
+  },
+  "Mobile.getContent": {
+    "effect": "irreversible",
+    "reason": "Runs an arbitrary plugin's mobile handler, and some handlers act on their args: mod_attendance's records self-marked attendance.",
+    "notes": "Moodle flags it as read, and most handlers only render content (some log views or completion on view, which is benign). The attendance handler, given a session and status in args, records attendance, an official record. Could be allowed per component and method after review (e.g. a pure view method with no status args)."
+  },
+  "Quiz.getAttemptData": {
+    "effect": "irreversible",
+    "reason": "Moves an in-progress attempt to the requested page, which on a quiz with sequential navigation permanently skips the pages before it.",
+    "notes": "Moodle flags it as read. On a free-navigation quiz it only records the current page and a view, which would be benign; on sequential navigation the move cannot be undone. It also needs an in-progress attempt, which only the irreversible Quiz.startAttempt creates, so tests would be touching a real attempt."
+  },
+  "Quiz.getAttemptSummary": {
+    "effect": "benign",
+    "reason": "Returns the question states of an in-progress attempt without changing them; the only possible side effect is closing an already overdue attempt, which the quiz cron would do anyway.",
+    "notes": "Moodle flags it as read. Unsure whether validation in 4.5 runs handle_if_time_expired here; even if it does, the outcome equals what the scheduled overdue-attempt task does. A password preflight only sets a session flag. Needs the id of an existing in-progress attempt."
+  },
+  "Quiz.processAttempt": {
+    "effect": "irreversible",
+    "reason": "Records quiz answers as new question-attempt steps, kept in the review history, and can finish the attempt for grading."
+  },
+  "Quiz.saveAttempt": {
+    "effect": "irreversible",
+    "reason": "Saves answers into an in-progress attempt as new question-attempt steps that stay in the history staff review; there is no way to remove them."
+  },
+  "Quiz.startAttempt": {
+    "effect": "irreversible",
+    "reason": "Starts a new quiz attempt, using up an attempt and starting its timer, which staff see."
+  },
+  "User.addUserDevice": {
+    "effect": "benign",
+    "reason": "Registers a mobile device for push notifications.",
+    "notes": "Use a made-up uuid and pushId and remove it afterwards with User.removeUserDevice(uuid = $args.uuid, appId = $args.appId). Reusing the student's real device uuid and appId would overwrite that device's push registration."
+  },
+  "User.removeUserDevice": {
+    "effect": "benign",
+    "reason": "Removes a push-notification device registration.",
+    "notes": "Benign only for a device the test registered itself (User.addUserDevice). Removing the student's real device uuid would stop push notifications to their phone until the app registers it again on its next start."
+  },
+  "User.updateUserPreferences": {
+    "effect": "reversible",
+    "reason": "Sets the student's own preferences, each of which can be read first with User.getUserPreferences(name) and written back (or unset with a null value).",
+    "notes": "Undo: before the call read User.getUserPreferences(name = preferences[i].type) for every preference touched; afterwards call updateUserPreferences again with preferences = [{type, value: previous value}] (value null when the read returned none, which unsets it). The restore form cannot express it: the read returns a name/value list and the setter takes a list of type/value objects. Avoid emailStop: the API cannot read it back (its usual value is 0, which could be restored as a literal). Stick to harmless preferences (e.g. a display preference), not message-processor or notification settings the student relies on."
+  },
+  "User.viewUserProfile": {
+    "effect": "benign",
+    "reason": "A *_view_* function: only logs a user_profile_viewed event, the same as the student opening the profile."
+  }
+}

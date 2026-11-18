@@ -24,6 +24,8 @@ package it.attendance100.mybicocca.codegen.model
  * @property auth The credentials the operation accepts, if any.
  * @property multipart Whether the form is sent as `multipart/form-data`, as files need, rather
  *   than URL-encoded.
+ * @property effect What calling the operation does to the server's state; null when the spec
+ *   doesn't say, which the [SpecValidator] rejects.
  */
 data class Operation(
     val name: String,
@@ -40,12 +42,45 @@ data class Operation(
     val query: Map<String, String> = emptyMap(),
     val form: Map<String, String> = emptyMap(),
     val multipart: Boolean = false,
+    val effect: Effect? = null,
 ) {
     val pathParameters: List<Parameter> get() = parameters.filter { it.location == ParameterLocation.PATH }
     val queryParameters: List<Parameter> get() = parameters.filter { it.location == ParameterLocation.QUERY }
     val formParameters: List<Parameter> get() = parameters.filter { it.location == ParameterLocation.FORM }
     val headerParameters: List<Parameter> get() = parameters.filter { it.location == ParameterLocation.HEADER }
     val cookieParameters: List<Parameter> get() = parameters.filter { it.location == ParameterLocation.COOKIE }
+}
+
+/**
+ * What calling an operation does to the server's state, which decides whether live tests may call
+ * it, and how.
+ */
+enum class Effect {
+    /** Changes nothing anyone can see, whatever the HTTP method: searches sent as POST are reads. */
+    READ,
+
+    /**
+     * Changes only state nobody relies on: access logs, a session or token being issued, session
+     * settings such as the language, a device registration.
+     */
+    BENIGN,
+
+    /** Changes real state that another operation of the same API undoes exactly. */
+    REVERSIBLE,
+
+    /**
+     * Changes state for good, or in a way people notice: messages, submissions, payments,
+     * attendance, records staff act on. Live tests never call these.
+     */
+    IRREVERSIBLE;
+
+    /** The effect's name in specs (`read`, `benign`, …). */
+    val wireName: String get() = name.lowercase()
+
+    companion object {
+        /** The effect named [name] in a spec, or null when there is none. */
+        fun fromWireName(name: String): Effect? = entries.firstOrNull { it.wireName == name }
+    }
 }
 
 /**

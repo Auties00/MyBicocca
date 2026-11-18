@@ -35,6 +35,7 @@ internal object Esse3Runtime {
         createRestClient(
             json,
             RestClientOptions(
+                timeoutMillis = 60000L,
                 keepsCookies = true,
                 caches = true
             ),

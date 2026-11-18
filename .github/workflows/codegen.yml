@@ -56,9 +56,12 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Type-check the web SDKs
+      # The SDK, and its live tests, which need vitest's and Node's types.
+      - name: Type-check the web SDK and its live tests
         working-directory: web
-        run: npx --yes -p typescript@5.8.3 tsc -p data-api
+        run: |
+          npm ci
+          npm run typecheck
 
   swift:
     name: Swift SDKs
@@ -68,6 +71,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # Also builds the generated live tests, which skip without LIVE_TESTS=1.
       - name: Build and test
         working-directory: ios/DataApi
         run: swift test

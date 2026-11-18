@@ -11,7 +11,9 @@ package it.attendance100.mybicocca.codegen.model
  *   reasonable default; null for the platform's.
  * @property keepsCookies Whether the client stores the cookies servers set and sends them back,
  *   as a session or guest token needs.
- * @property caches Whether the client caches responses as their headers allow.
+ * @property caches Whether the client keeps responses, by the same rules on every platform: a
+ *   successful GET read whole, not a download, answers its URL for the `max-age` of its
+ *   `Cache-Control` (unless `no-store` or `no-cache`), and any other request empties the cache.
  * @property sendsDefaults Whether request bodies spell out fields left at their default values;
  *   some servers need them, others read their presence as a filter.
  * @property sendsNulls Whether request bodies spell out fields without a value as `null`, rather

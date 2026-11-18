@@ -37,7 +37,7 @@ public final class MoodleClient: Sendable {
     }
 
     public func data(_ request: RestRequest) async throws -> Data {
-        try await execute(request, readsJSON: false)!.body
+        try await execute(request, readsJSON: false, stores: false)!.body
     }
 
     public func text(_ request: RestRequest) async throws -> String {
@@ -58,7 +58,7 @@ public final class MoodleClient: Sendable {
         _ = try await execute(request, readsJSON: true)
     }
 
-    private func execute(_ request: RestRequest, readsJSON: Bool, allowEmpty: Bool = false) async throws -> RestResponse? {
+    private func execute(_ request: RestRequest, readsJSON: Bool, allowEmpty: Bool = false, stores: Bool = true) async throws -> RestResponse? {
         var request = request
         request.query += [
             QueryItem(name: "moodlewssettingfilter", value: "true"),
@@ -66,7 +66,7 @@ public final class MoodleClient: Sendable {
             QueryItem(name: "moodlewssettinglang", value: language)
         ]
         do {
-            return try await rest.execute(request, readsJSON: readsJSON, allowEmpty: allowEmpty)
+            return try await rest.execute(request, readsJSON: readsJSON, allowEmpty: allowEmpty, stores: stores)
         } catch let failure as ApiFailure {
             throw MoodleError(failure: failure)
         }

@@ -95,7 +95,9 @@ public struct EasyStaffRoom: Codable, Hashable, Sendable {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(code, forKey: .code)
         try container.encode(name, forKey: .name)
-        try container.encode(capacity, forKey: .capacity)
+        if capacity != nil {
+            try container.encode(capacity, forKey: .capacity)
+        }
     }
 }
 
@@ -189,15 +191,33 @@ public struct EasyStaffRoomOccupationEvent: Codable, Hashable, Sendable {
         try container.encode(date, forKey: .date)
         try container.encodeEpochSeconds(startDateTime, forKey: .startDateTime)
         try container.encodeEpochSeconds(endDateTime, forKey: .endDateTime)
-        try container.encode(roomName, forKey: .roomName)
-        try container.encode(roomCode, forKey: .roomCode)
-        try container.encode(buildingName, forKey: .buildingName)
-        try container.encode(buildingCode, forKey: .buildingCode)
-        try container.encode(facultyId, forKey: .facultyId)
-        try container.encode(status, forKey: .status)
-        try container.encode(eventType, forKey: .eventType)
-        try container.encode(isUniversityEvent, forKey: .isUniversityEvent)
-        try container.encode(teachers, forKey: .teachers)
+        if roomName != "" {
+            try container.encode(roomName, forKey: .roomName)
+        }
+        if roomCode != "" {
+            try container.encode(roomCode, forKey: .roomCode)
+        }
+        if buildingName != "" {
+            try container.encode(buildingName, forKey: .buildingName)
+        }
+        if buildingCode != "" {
+            try container.encode(buildingCode, forKey: .buildingCode)
+        }
+        if facultyId != "" {
+            try container.encode(facultyId, forKey: .facultyId)
+        }
+        if status != nil {
+            try container.encode(status, forKey: .status)
+        }
+        if eventType != "" {
+            try container.encode(eventType, forKey: .eventType)
+        }
+        if isUniversityEvent != false {
+            try container.encode(isUniversityEvent, forKey: .isUniversityEvent)
+        }
+        if !teachers.isEmpty {
+            try container.encode(teachers, forKey: .teachers)
+        }
     }
 }
 
@@ -239,9 +259,15 @@ public struct EasyStaffRoomShowcaseBuilding: Codable, Hashable, Sendable {
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(name, forKey: .name)
-        try container.encode(address, forKey: .address)
-        try container.encode("", forKey: .googleMapsLink)
-        try container.encode(rooms, forKey: .rooms)
+        if address != nil {
+            try container.encode(address, forKey: .address)
+        }
+        if googleMapsLink != nil {
+            try container.encode("", forKey: .googleMapsLink)
+        }
+        if !rooms.isEmpty {
+            try container.encode(rooms, forKey: .rooms)
+        }
     }
 }
 
@@ -333,19 +359,45 @@ public struct EasyStaffRoomShowcaseRoom: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(code, forKey: .code)
-        try container.encode(name, forKey: .name)
-        try container.encode(description, forKey: .description)
-        try container.encode(capacity, forKey: .capacity)
-        try container.encode(typeName, forKey: .typeName)
-        try container.encode("", forKey: .googleMapsLink)
-        try container.encode(floor, forKey: .floor)
-        try container.encode(isAccessible, forKey: .isAccessible)
-        try container.encode(accessibilityNotes, forKey: .accessibilityNotes)
-        try container.encode(isInclusionValidated, forKey: .isInclusionValidated)
-        try container.encode(interactive360Link, forKey: .interactive360Link)
-        try container.encode(fixedEquipment, forKey: .fixedEquipment)
-        try container.encode(mobileEquipment, forKey: .mobileEquipment)
+        if code != nil {
+            try container.encode(code, forKey: .code)
+        }
+        if name != nil {
+            try container.encode(name, forKey: .name)
+        }
+        if description != nil {
+            try container.encode(description, forKey: .description)
+        }
+        if capacity != nil {
+            try container.encode(capacity, forKey: .capacity)
+        }
+        if typeName != nil {
+            try container.encode(typeName, forKey: .typeName)
+        }
+        if googleMapsLink != nil {
+            try container.encode("", forKey: .googleMapsLink)
+        }
+        if floor != nil {
+            try container.encode(floor, forKey: .floor)
+        }
+        if isAccessible != false {
+            try container.encode(isAccessible, forKey: .isAccessible)
+        }
+        if accessibilityNotes != nil {
+            try container.encode(accessibilityNotes, forKey: .accessibilityNotes)
+        }
+        if isInclusionValidated != false {
+            try container.encode(isInclusionValidated, forKey: .isInclusionValidated)
+        }
+        if interactive360Link != nil {
+            try container.encode(interactive360Link, forKey: .interactive360Link)
+        }
+        if !fixedEquipment.isEmpty {
+            try container.encode(fixedEquipment, forKey: .fixedEquipment)
+        }
+        if !mobileEquipment.isEmpty {
+            try container.encode(mobileEquipment, forKey: .mobileEquipment)
+        }
     }
 }
 
@@ -377,7 +429,9 @@ public struct EasyStaffRoomShowcaseEquipment: Codable, Hashable, Sendable {
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(name, forKey: .name)
-        try container.encode(status, forKey: .status)
+        if status != nil {
+            try container.encode(status, forKey: .status)
+        }
     }
 }
 
@@ -416,9 +470,17 @@ public struct EasyStaffEventTeacher: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(name, forKey: .name)
-        try container.encode(surname, forKey: .surname)
-        try container.encode(email, forKey: .email)
-        try container.encode(code, forKey: .code)
+        if name != "" {
+            try container.encode(name, forKey: .name)
+        }
+        if surname != "" {
+            try container.encode(surname, forKey: .surname)
+        }
+        if email != nil {
+            try container.encode(email, forKey: .email)
+        }
+        if code != nil {
+            try container.encode(code, forKey: .code)
+        }
     }
 }

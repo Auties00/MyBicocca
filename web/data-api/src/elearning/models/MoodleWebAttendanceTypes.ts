@@ -28,10 +28,10 @@ export function decodeMoodleWebAttendanceView(json: unknown): MoodleWebAttendanc
 
 export function encodeMoodleWebAttendanceView(value: MoodleWebAttendanceView): JsonObject {
   return {
-    "userId": value.userId,
-    "shown": value.shown,
-    "summary": value.summary === null ? null : encodeMoodleWebAttendanceSummary(value.summary),
-    "submittableSessions": value.submittableSessions.map((item) => encodeMoodleWebSubmittableSession(item)),
+    ...(value.userId !== null ? { "userId": value.userId } : {}),
+    ...(value.shown !== false ? { "shown": value.shown } : {}),
+    ...(value.summary !== null ? { "summary": value.summary === null ? null : encodeMoodleWebAttendanceSummary(value.summary) } : {}),
+    ...(value.submittableSessions.length > 0 ? { "submittableSessions": value.submittableSessions.map((item) => encodeMoodleWebSubmittableSession(item)) } : {}),
   };
 }
 
@@ -67,14 +67,14 @@ export function decodeMoodleWebAttendanceSummary(json: unknown): MoodleWebAttend
 
 export function encodeMoodleWebAttendanceSummary(value: MoodleWebAttendanceSummary): JsonObject {
   return {
-    "takenSessions": value.takenSessions,
-    "pointsTakenLabel": value.pointsTakenLabel,
-    "takenSessionsPercentage": value.takenSessionsPercentage,
-    "totalSessions": value.totalSessions,
-    "pointsAllSessionsLabel": value.pointsAllSessionsLabel,
-    "allSessionsPercentage": value.allSessionsPercentage,
-    "maxPossiblePointsLabel": value.maxPossiblePointsLabel,
-    "maxPossiblePercentage": value.maxPossiblePercentage,
+    ...(value.takenSessions !== null ? { "takenSessions": value.takenSessions } : {}),
+    ...(value.pointsTakenLabel !== null ? { "pointsTakenLabel": value.pointsTakenLabel } : {}),
+    ...(value.takenSessionsPercentage !== null ? { "takenSessionsPercentage": value.takenSessionsPercentage } : {}),
+    ...(value.totalSessions !== null ? { "totalSessions": value.totalSessions } : {}),
+    ...(value.pointsAllSessionsLabel !== null ? { "pointsAllSessionsLabel": value.pointsAllSessionsLabel } : {}),
+    ...(value.allSessionsPercentage !== null ? { "allSessionsPercentage": value.allSessionsPercentage } : {}),
+    ...(value.maxPossiblePointsLabel !== null ? { "maxPossiblePointsLabel": value.maxPossiblePointsLabel } : {}),
+    ...(value.maxPossiblePercentage !== null ? { "maxPossiblePercentage": value.maxPossiblePercentage } : {}),
   };
 }
 
@@ -102,7 +102,7 @@ export function encodeMoodleWebSubmittableSession(value: MoodleWebSubmittableSes
   return {
     "id": value.id,
     "time": value.time,
-    "linkText": value.linkText,
+    ...(value.linkText !== "" ? { "linkText": value.linkText } : {}),
   };
 }
 
@@ -128,9 +128,9 @@ export function decodeMoodleWebAttendanceSessionForm(json: unknown): MoodleWebAt
 
 export function encodeMoodleWebAttendanceSessionForm(value: MoodleWebAttendanceSessionForm): JsonObject {
   return {
-    "refusal": value.refusal,
-    "requiresPassword": value.requiresPassword,
-    "statuses": value.statuses.map((item) => encodeMoodleWebAttendanceStatusOption(item)),
+    ...(value.refusal !== null ? { "refusal": value.refusal } : {}),
+    ...(value.requiresPassword !== false ? { "requiresPassword": value.requiresPassword } : {}),
+    ...(value.statuses.length > 0 ? { "statuses": value.statuses.map((item) => encodeMoodleWebAttendanceStatusOption(item)) } : {}),
   };
 }
 
@@ -153,7 +153,7 @@ export function decodeMoodleWebAttendanceStatusOption(json: unknown): MoodleWebA
 export function encodeMoodleWebAttendanceStatusOption(value: MoodleWebAttendanceStatusOption): JsonObject {
   return {
     "id": value.id,
-    "description": value.description,
+    ...(value.description !== "" ? { "description": value.description } : {}),
   };
 }
 
@@ -175,8 +175,8 @@ export function decodeMoodleWebAttendanceMarkPage(json: unknown): MoodleWebAtten
 
 export function encodeMoodleWebAttendanceMarkPage(value: MoodleWebAttendanceMarkPage): JsonObject {
   return {
-    "messages": value.messages.map((item) => encodeMoodleWebAttendanceMessage(item)),
-    "sessions": value.sessions.map((item) => encodeMoodleWebAttendanceMarkSession(item)),
+    ...(value.messages.length > 0 ? { "messages": value.messages.map((item) => encodeMoodleWebAttendanceMessage(item)) } : {}),
+    ...(value.sessions.length > 0 ? { "sessions": value.sessions.map((item) => encodeMoodleWebAttendanceMarkSession(item)) } : {}),
   };
 }
 
@@ -203,8 +203,8 @@ export function decodeMoodleWebAttendanceMarkSession(json: unknown): MoodleWebAt
 export function encodeMoodleWebAttendanceMarkSession(value: MoodleWebAttendanceMarkSession): JsonObject {
   return {
     "time": value.time,
-    "markActions": value.markActions.map((item) => encodeMoodleWebAttendanceMarkAction(item)),
-    "headings": value.headings,
+    ...(value.markActions.length > 0 ? { "markActions": value.markActions.map((item) => encodeMoodleWebAttendanceMarkAction(item)) } : {}),
+    ...(value.headings.length > 0 ? { "headings": value.headings } : {}),
   };
 }
 

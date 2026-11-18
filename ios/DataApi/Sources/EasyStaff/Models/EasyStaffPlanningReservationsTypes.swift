@@ -186,17 +186,39 @@ public struct EasyStaffPlanningReservationResult: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(reservationCode, forKey: .reservationCode)
-        try container.encode(primaryValue, forKey: .primaryValue)
-        try container.encode(entry, forKey: .entry)
-        try container.encode(userIdentifier, forKey: .userIdentifier)
-        try container.encode(startTimeEpochSeconds, forKey: .startTimeEpochSeconds)
-        try container.encode(endTimeEpochSeconds, forKey: .endTimeEpochSeconds)
-        try container.encode(resource, forKey: .resource)
-        try container.encode(repeatId, forKey: .repeatId)
-        try container.encode(fieldLabels, forKey: .fieldLabels)
-        try container.encode(webConferenceUrl, forKey: .webConferenceUrl)
-        try container.encode(qrCode, forKey: .qrCode)
+        if reservationCode != nil {
+            try container.encode(reservationCode, forKey: .reservationCode)
+        }
+        if primaryValue != nil {
+            try container.encode(primaryValue, forKey: .primaryValue)
+        }
+        if entry != nil {
+            try container.encode(entry, forKey: .entry)
+        }
+        if userIdentifier != nil {
+            try container.encode(userIdentifier, forKey: .userIdentifier)
+        }
+        if startTimeEpochSeconds != nil {
+            try container.encode(startTimeEpochSeconds, forKey: .startTimeEpochSeconds)
+        }
+        if endTimeEpochSeconds != nil {
+            try container.encode(endTimeEpochSeconds, forKey: .endTimeEpochSeconds)
+        }
+        if resource != nil {
+            try container.encode(resource, forKey: .resource)
+        }
+        if repeatId != nil {
+            try container.encode(repeatId, forKey: .repeatId)
+        }
+        if !fieldLabels.entries.isEmpty {
+            try container.encode(fieldLabels, forKey: .fieldLabels)
+        }
+        if webConferenceUrl != nil {
+            try container.encode(webConferenceUrl, forKey: .webConferenceUrl)
+        }
+        if qrCode != nil {
+            try container.encode(qrCode, forKey: .qrCode)
+        }
     }
 }
 
@@ -277,18 +299,42 @@ public struct EasyStaffPlanningManagedReservation: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(success, forKey: .success)
-        try container.encode(reservationCode, forKey: .reservationCode)
-        try container.encode(primaryValue, forKey: .primaryValue)
-        try container.encode(publicFields, forKey: .publicFields)
-        try container.encode(area, forKey: .area)
-        try container.encode(entry, forKey: .entry)
-        try container.encode(service, forKey: .service)
-        try container.encode(seatReleaseEnabled, forKey: .seatReleaseEnabled)
-        try container.encode(resourceName, forKey: .resourceName)
-        try container.encode(confirmed, forKey: .confirmed)
-        try container.encode(status, forKey: .status)
-        try container.encode(qrCode, forKey: .qrCode)
+        if success != true {
+            try container.encode(success, forKey: .success)
+        }
+        if reservationCode != nil {
+            try container.encode(reservationCode, forKey: .reservationCode)
+        }
+        if primaryValue != nil {
+            try container.encode(primaryValue, forKey: .primaryValue)
+        }
+        if !publicFields.entries.isEmpty {
+            try container.encode(publicFields, forKey: .publicFields)
+        }
+        if area != nil {
+            try container.encode(area, forKey: .area)
+        }
+        if entry != nil {
+            try container.encode(entry, forKey: .entry)
+        }
+        if service != nil {
+            try container.encode(service, forKey: .service)
+        }
+        if seatReleaseEnabled != false {
+            try container.encode(seatReleaseEnabled, forKey: .seatReleaseEnabled)
+        }
+        if resourceName != nil {
+            try container.encode(resourceName, forKey: .resourceName)
+        }
+        if confirmed != false {
+            try container.encode(confirmed, forKey: .confirmed)
+        }
+        if status != nil {
+            try container.encode(status, forKey: .status)
+        }
+        if qrCode != nil {
+            try container.encode(qrCode, forKey: .qrCode)
+        }
     }
 }
 
@@ -317,8 +363,12 @@ public struct EasyStaffPlanningReservationArea: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(name, forKey: .name)
-        try container.encode(address, forKey: .address)
+        if name != nil {
+            try container.encode(name, forKey: .name)
+        }
+        if address != nil {
+            try container.encode(address, forKey: .address)
+        }
     }
 }
 
@@ -358,9 +408,15 @@ public struct EasyStaffPlanningReservationEntry: Codable, Hashable, Sendable {
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(id, forKey: .id)
-        try container.encode(startTimeEpochSeconds, forKey: .startTimeEpochSeconds)
-        try container.encode(endTimeEpochSeconds, forKey: .endTimeEpochSeconds)
-        try container.encode(date, forKey: .date)
+        if startTimeEpochSeconds != nil {
+            try container.encode(startTimeEpochSeconds, forKey: .startTimeEpochSeconds)
+        }
+        if endTimeEpochSeconds != nil {
+            try container.encode(endTimeEpochSeconds, forKey: .endTimeEpochSeconds)
+        }
+        if date != nil {
+            try container.encode(date, forKey: .date)
+        }
     }
 }
 
@@ -389,8 +445,12 @@ public struct EasyStaffPlanningReservationService: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(name, forKey: .name)
-        try container.encode(shortService, forKey: .shortService)
+        if name != nil {
+            try container.encode(name, forKey: .name)
+        }
+        if shortService != false {
+            try container.encode(shortService, forKey: .shortService)
+        }
     }
 }
 
@@ -427,9 +487,15 @@ public struct EasyStaffPlanningReservationUpdate: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(type, forKey: .type)
-        try container.encode(station, forKey: .station)
-        try container.encode(publicFields, forKey: .publicFields)
+        if type != nil {
+            try container.encode(type, forKey: .type)
+        }
+        if station != nil {
+            try container.encode(station, forKey: .station)
+        }
+        if !publicFields.entries.isEmpty {
+            try container.encode(publicFields, forKey: .publicFields)
+        }
     }
 }
 
@@ -454,6 +520,8 @@ public struct EasyStaffPlanningReservationDeletion: Codable, Hashable, Sendable 
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(force, forKey: .force)
+        if force != nil {
+            try container.encode(force, forKey: .force)
+        }
     }
 }

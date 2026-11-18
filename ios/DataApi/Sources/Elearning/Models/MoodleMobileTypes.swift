@@ -36,9 +36,15 @@ public struct MoodleAutologinKey: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(key, forKey: .key)
-        try container.encode(autologinUrl, forKey: .autologinUrl)
-        try container.encode(warnings, forKey: .warnings)
+        if key != "" {
+            try container.encode(key, forKey: .key)
+        }
+        if autologinUrl != "" {
+            try container.encode(autologinUrl, forKey: .autologinUrl)
+        }
+        if !warnings.isEmpty {
+            try container.encode(warnings, forKey: .warnings)
+        }
     }
 }
 
@@ -93,12 +99,22 @@ public struct MoodleMobileContent: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(templates, forKey: .templates)
-        try container.encode(javascript, forKey: .javascript)
-        try container.encode(otherData, forKey: .otherData)
-        try container.encode(files, forKey: .files)
+        if !templates.isEmpty {
+            try container.encode(templates, forKey: .templates)
+        }
+        if javascript != "" {
+            try container.encode(javascript, forKey: .javascript)
+        }
+        if !otherData.isEmpty {
+            try container.encode(otherData, forKey: .otherData)
+        }
+        if !files.isEmpty {
+            try container.encode(files, forKey: .files)
+        }
         try container.encode(restrict, forKey: .restrict)
-        try container.encode(disabled, forKey: .disabled)
+        if disabled != nil {
+            try container.encode(disabled, forKey: .disabled)
+        }
     }
 }
 
@@ -129,8 +145,12 @@ public struct MoodleMobileTemplate: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(id, forKey: .id)
-        try container.encode(html, forKey: .html)
+        if id != "" {
+            try container.encode(id, forKey: .id)
+        }
+        if html != "" {
+            try container.encode(html, forKey: .html)
+        }
     }
 }
 
@@ -162,7 +182,11 @@ public struct MoodleMobileContentRestriction: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(users, forKey: .users)
-        try container.encode(courses, forKey: .courses)
+        if !users.isEmpty {
+            try container.encode(users, forKey: .users)
+        }
+        if !courses.isEmpty {
+            try container.encode(courses, forKey: .courses)
+        }
     }
 }

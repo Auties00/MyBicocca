@@ -56,23 +56,23 @@ export function decodeDemoRoom(json: unknown): DemoRoom | undefined {
 export function encodeDemoRoom(value: DemoRoom): JsonObject {
   return {
     "name": value.name,
-    "code": value.code,
-    "capacity": value.capacity,
-    "floor": value.floor,
-    "accessible": value.accessible,
+    ...(value.code !== null ? { "code": value.code } : {}),
+    ...(value.capacity !== null ? { "capacity": value.capacity } : {}),
+    ...(value.floor !== 0 ? { "floor": value.floor } : {}),
+    ...(value.accessible !== false ? { "accessible": value.accessible } : {}),
     "validated": value.validated,
     "closed": value.closed,
-    "kinds": value.kinds,
-    "website": value.website,
-    "siteId": value.siteId,
-    "occupancy": value.occupancy,
-    "notes": value.notes,
-    "title": value.title,
-    "descriptionHtml": value.descriptionHtml,
-    "level": value.level,
-    "staff": value.staff.map((item) => encodeDemoStaffGroup(item)),
-    "lead": value.lead === null ? null : encodeDemoStaffGroup(value.lead),
-    "note": value.note,
+    ...(value.kinds.length > 0 ? { "kinds": value.kinds } : {}),
+    ...(value.website !== null ? { "website": value.website } : {}),
+    ...(value.siteId !== null ? { "siteId": value.siteId } : {}),
+    ...(value.occupancy !== null ? { "occupancy": value.occupancy } : {}),
+    ...(value.notes !== null ? { "notes": value.notes } : {}),
+    ...(value.title !== null ? { "title": value.title } : {}),
+    ...(value.descriptionHtml !== "" ? { "descriptionHtml": value.descriptionHtml } : {}),
+    ...(value.level !== null ? { "level": value.level } : {}),
+    ...(value.staff.length > 0 ? { "staff": value.staff.map((item) => encodeDemoStaffGroup(item)) } : {}),
+    ...(value.lead !== null ? { "lead": value.lead === null ? null : encodeDemoStaffGroup(value.lead) } : {}),
+    ...(value.note !== null ? { "note": value.note } : {}),
   };
 }
 
@@ -94,7 +94,7 @@ export function decodeDemoStaffGroup(json: unknown): DemoStaffGroup | undefined 
 export function encodeDemoStaffGroup(value: DemoStaffGroup): JsonObject {
   return {
     "role": value.role,
-    "members": value.members,
+    ...(value.members.length > 0 ? { "members": value.members } : {}),
   };
 }
 
@@ -125,12 +125,12 @@ export function decodeDemoLesson(json: unknown): DemoLesson | undefined {
 
 export function encodeDemoLesson(value: DemoLesson): JsonObject {
   return {
-    "timestamp": encodeEpochSeconds(value.start),
-    "percentuale": value.attendance,
-    "docente": value.teachers.join(","),
-    "proprietari": value.owners.map((item) => encodeDemoOwner(item)),
-    "maps": "",
-    "staff": "",
-    "aule": "",
+    ...(value.start !== null ? { "timestamp": encodeEpochSeconds(value.start) } : {}),
+    ...(value.attendance !== 0 ? { "percentuale": value.attendance } : {}),
+    ...(value.teachers.length > 0 ? { "docente": value.teachers.join(",") } : {}),
+    ...(value.owners.length > 0 ? { "proprietari": value.owners.map((item) => encodeDemoOwner(item)) } : {}),
+    ...(value.mapsUrl !== null ? { "maps": "" } : {}),
+    ...(value.staff !== null ? { "staff": "" } : {}),
+    ...(value.rooms.length > 0 ? { "aule": "" } : {}),
   };
 }

@@ -70,6 +70,19 @@ interface CodeTarget {
      *   it; shared files are left out.
      */
     fun indexFiles(paths: Set<String>, context: TargetContext): List<GeneratedFile> = emptyList()
+
+    /**
+     * Returns the live tests of an API, from the [TestPlan] worked out from its `tests.yaml`, with
+     * paths relative to the target's test output directory. Like [generate]'s, each file must
+     * contain the [generatedMarker] of the API.
+     */
+    fun generateTests(plan: TestPlan, context: TargetContext): List<GeneratedFile> = emptyList()
+
+    /**
+     * Returns the files the live tests of every API in a test output directory build on, such as
+     * the runtime that runs the cases: like [sharedFiles], for the tests.
+     */
+    fun sharedTestFiles(context: TargetContext): List<GeneratedFile> = emptyList()
 }
 
 /**
@@ -92,9 +105,15 @@ fun resourceFiles(
 /** The owner named by the [generatedMarker] of [CodeTarget.sharedFiles]; no API has this id. */
 const val SHARED_FILES_OWNER = "shared files"
 
-/** @property options The target's `options` object from `codegen.json`; see [decodeOptions]. */
+/**
+ * @property options The target's `options` object from `codegen.json`; see [decodeOptions].
+ * @property outputDir Where the target writes the SDK, when known.
+ * @property testOutputDir Where the target writes the live tests, when the API has some.
+ */
 class TargetContext(
     val options: JsonObject,
+    val outputDir: Path? = null,
+    val testOutputDir: Path? = null,
     val log: (String) -> Unit,
 )
 

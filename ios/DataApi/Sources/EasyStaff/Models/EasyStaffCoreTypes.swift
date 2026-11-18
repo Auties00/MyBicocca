@@ -30,7 +30,9 @@ public struct EasyStaffAcademicYear: Codable, Hashable, Sendable {
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(startYear, forKey: .startYear)
-        try container.encode(label, forKey: .label)
+        if label != "" {
+            try container.encode(label, forKey: .label)
+        }
     }
 }
 
@@ -87,10 +89,18 @@ public struct EasyStaffTeacher: Codable, Hashable, Sendable {
         try container.encode(id, forKey: .id)
         try container.encode(fullName, forKey: .fullName)
         try container.encode(code, forKey: .code)
-        try container.encode(facultyId, forKey: .facultyId)
-        try container.encode(primaryFacultyCode, forKey: .primaryFacultyCode)
-        try container.encode(activePeriods, forKey: .activePeriods)
-        try container.encode(courses, forKey: .courses)
+        if facultyId != 0 {
+            try container.encode(facultyId, forKey: .facultyId)
+        }
+        if primaryFacultyCode != "" {
+            try container.encode(primaryFacultyCode, forKey: .primaryFacultyCode)
+        }
+        if !activePeriods.isEmpty {
+            try container.encode(activePeriods, forKey: .activePeriods)
+        }
+        if !courses.isEmpty {
+            try container.encode(courses, forKey: .courses)
+        }
     }
 }
 
@@ -137,8 +147,12 @@ public struct EasyStaffTeacherPeriod: Codable, Hashable, Sendable {
         try container.encode(id, forKey: .id)
         try container.encode(description, forKey: .description)
         try container.encode(code, forKey: .code)
-        try container.encode(academicYearId, forKey: .academicYearId)
-        try container.encode(facultyCode, forKey: .facultyCode)
+        if academicYearId != 0 {
+            try container.encode(academicYearId, forKey: .academicYearId)
+        }
+        if facultyCode != "" {
+            try container.encode(facultyCode, forKey: .facultyCode)
+        }
     }
 }
 
@@ -174,7 +188,9 @@ public struct EasyStaffTeacherCourse: Codable, Hashable, Sendable {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(name, forKey: .name)
         try container.encode(code, forKey: .code)
-        try container.encode(yearsOfStudy, forKey: .yearsOfStudy)
+        if !yearsOfStudy.isEmpty {
+            try container.encode(yearsOfStudy, forKey: .yearsOfStudy)
+        }
     }
 }
 
@@ -265,12 +281,24 @@ public struct EasyStaffStudyProgram: Codable, Hashable, Sendable {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(code, forKey: .code)
         try container.encode(name, forKey: .name)
-        try container.encode(degreeType, forKey: .degreeType)
-        try container.encode(internalId, forKey: .internalId)
-        try container.encode(teachingAreaCode, forKey: .teachingAreaCode)
-        try container.encode(years, forKey: .years)
-        try container.encode(teachingPeriods, forKey: .teachingPeriods)
-        try container.encode(displayMode, forKey: .displayMode)
+        if degreeType != "" {
+            try container.encode(degreeType, forKey: .degreeType)
+        }
+        if internalId != "" {
+            try container.encode(internalId, forKey: .internalId)
+        }
+        if teachingAreaCode != "" {
+            try container.encode(teachingAreaCode, forKey: .teachingAreaCode)
+        }
+        if !years.isEmpty {
+            try container.encode(years, forKey: .years)
+        }
+        if !teachingPeriods.isEmpty {
+            try container.encode(teachingPeriods, forKey: .teachingPeriods)
+        }
+        if displayMode != "" {
+            try container.encode(displayMode, forKey: .displayMode)
+        }
     }
 }
 
@@ -312,8 +340,12 @@ public struct EasyStaffStudyProgramYear: Codable, Hashable, Sendable {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(code, forKey: .code)
         try container.encode(name, forKey: .name)
-        try container.encode(trackName, forKey: .trackName)
-        try container.encode(subjects, forKey: .subjects)
+        if trackName != "" {
+            try container.encode(trackName, forKey: .trackName)
+        }
+        if !subjects.isEmpty {
+            try container.encode(subjects, forKey: .subjects)
+        }
     }
 }
 
@@ -357,11 +389,17 @@ public struct EasyStaffStudyProgramSubject: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(id, forKey: .id)
+        if id != "" {
+            try container.encode(id, forKey: .id)
+        }
         try container.encode(code, forKey: .code)
         try container.encode(name, forKey: .name)
-        try container.encode(teacherName, forKey: .teacherName)
-        try container.encode(periodId, forKey: .periodId)
+        if teacherName != "" {
+            try container.encode(teacherName, forKey: .teacherName)
+        }
+        if periodId != "" {
+            try container.encode(periodId, forKey: .periodId)
+        }
     }
 }
 
@@ -395,7 +433,9 @@ public struct EasyStaffStudyProgramTeachingPeriod: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(id, forKey: .id)
+        if id != "" {
+            try container.encode(id, forKey: .id)
+        }
         try container.encode(code, forKey: .code)
         try container.encode(name, forKey: .name)
     }

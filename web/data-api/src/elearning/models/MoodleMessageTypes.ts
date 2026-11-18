@@ -22,9 +22,9 @@ export function decodeMoodleConversationMessages(json: unknown): MoodleConversat
 
 export function encodeMoodleConversationMessages(value: MoodleConversationMessages): JsonObject {
   return {
-    "id": value.id,
-    "members": value.members.map((item) => encodeMoodleConversationMember(item)),
-    "messages": value.messages.map((item) => encodeMoodleConversationMessage(item)),
+    ...(value.id !== 0 ? { "id": value.id } : {}),
+    ...(value.members.length > 0 ? { "members": value.members.map((item) => encodeMoodleConversationMember(item)) } : {}),
+    ...(value.messages.length > 0 ? { "messages": value.messages.map((item) => encodeMoodleConversationMessage(item)) } : {}),
   };
 }
 
@@ -89,22 +89,22 @@ export function decodeMoodleConversationMember(json: unknown): MoodleConversatio
 
 export function encodeMoodleConversationMember(value: MoodleConversationMember): JsonObject {
   return {
-    "id": value.id,
-    "fullname": value.fullName,
-    "profileurl": value.profileUrl,
-    "profileimageurl": value.profileImageUrl,
-    "profileimageurlsmall": value.profileImageUrlSmall,
-    "isonline": value.isOnline,
-    "showonlinestatus": value.showOnlineStatus,
-    "isblocked": value.isBlocked,
-    "iscontact": value.isContact,
-    "isdeleted": value.isDeleted,
-    "canmessageevenifblocked": value.canMessageEvenIfBlocked,
-    "canmessage": value.canMessage,
-    "requirescontact": value.requiresContact,
-    "cancreatecontact": value.canCreateContact,
-    "contactrequests": value.contactRequests.map((item) => encodeMoodleContactRequest(item)),
-    "conversations": value.conversations.map((item) => encodeMoodleMemberConversation(item)),
+    ...(value.id !== 0 ? { "id": value.id } : {}),
+    ...(value.fullName !== "" ? { "fullname": value.fullName } : {}),
+    ...(value.profileUrl !== "" ? { "profileurl": value.profileUrl } : {}),
+    ...(value.profileImageUrl !== "" ? { "profileimageurl": value.profileImageUrl } : {}),
+    ...(value.profileImageUrlSmall !== "" ? { "profileimageurlsmall": value.profileImageUrlSmall } : {}),
+    ...(value.isOnline !== false ? { "isonline": value.isOnline } : {}),
+    ...(value.showOnlineStatus !== false ? { "showonlinestatus": value.showOnlineStatus } : {}),
+    ...(value.isBlocked !== false ? { "isblocked": value.isBlocked } : {}),
+    ...(value.isContact !== false ? { "iscontact": value.isContact } : {}),
+    ...(value.isDeleted !== false ? { "isdeleted": value.isDeleted } : {}),
+    ...(value.canMessageEvenIfBlocked !== false ? { "canmessageevenifblocked": value.canMessageEvenIfBlocked } : {}),
+    ...(value.canMessage !== false ? { "canmessage": value.canMessage } : {}),
+    ...(value.requiresContact !== false ? { "requirescontact": value.requiresContact } : {}),
+    ...(value.canCreateContact !== false ? { "cancreatecontact": value.canCreateContact } : {}),
+    ...(value.contactRequests.length > 0 ? { "contactrequests": value.contactRequests.map((item) => encodeMoodleContactRequest(item)) } : {}),
+    ...(value.conversations.length > 0 ? { "conversations": value.conversations.map((item) => encodeMoodleMemberConversation(item)) } : {}),
   };
 }
 
@@ -133,10 +133,10 @@ export function decodeMoodleContactRequest(json: unknown): MoodleContactRequest 
 
 export function encodeMoodleContactRequest(value: MoodleContactRequest): JsonObject {
   return {
-    "id": value.id,
-    "userid": value.userId,
-    "requesteduserid": value.requestedUserId,
-    "timecreated": value.timeCreated,
+    ...(value.id !== 0 ? { "id": value.id } : {}),
+    ...(value.userId !== 0 ? { "userid": value.userId } : {}),
+    ...(value.requestedUserId !== 0 ? { "requesteduserid": value.requestedUserId } : {}),
+    ...(value.timeCreated !== 0 ? { "timecreated": value.timeCreated } : {}),
   };
 }
 
@@ -166,10 +166,10 @@ export function decodeMoodleMemberConversation(json: unknown): MoodleMemberConve
 
 export function encodeMoodleMemberConversation(value: MoodleMemberConversation): JsonObject {
   return {
-    "id": value.id,
-    "type": value.type,
-    "name": value.name,
-    "timecreated": value.timeCreated,
+    ...(value.id !== 0 ? { "id": value.id } : {}),
+    ...(value.type !== 0 ? { "type": value.type } : {}),
+    ...(value.name !== "" ? { "name": value.name } : {}),
+    ...(value.timeCreated !== 0 ? { "timecreated": value.timeCreated } : {}),
   };
 }
 
@@ -198,10 +198,10 @@ export function decodeMoodleConversationMessage(json: unknown): MoodleConversati
 
 export function encodeMoodleConversationMessage(value: MoodleConversationMessage): JsonObject {
   return {
-    "id": value.id,
-    "useridfrom": value.userIdFrom,
-    "text": value.text,
-    "timecreated": value.timeCreated,
+    ...(value.id !== 0 ? { "id": value.id } : {}),
+    ...(value.userIdFrom !== 0 ? { "useridfrom": value.userIdFrom } : {}),
+    ...(value.text !== "" ? { "text": value.text } : {}),
+    ...(value.timeCreated !== 0 ? { "timecreated": value.timeCreated } : {}),
   };
 }
 
@@ -220,7 +220,7 @@ export function decodeMoodleConversationsResponse(json: unknown): MoodleConversa
 
 export function encodeMoodleConversationsResponse(value: MoodleConversationsResponse): JsonObject {
   return {
-    "conversations": value.conversations.map((item) => encodeMoodleConversation(item)),
+    ...(value.conversations.length > 0 ? { "conversations": value.conversations.map((item) => encodeMoodleConversation(item)) } : {}),
   };
 }
 
@@ -274,19 +274,19 @@ export function decodeMoodleConversation(json: unknown): MoodleConversation | un
 
 export function encodeMoodleConversation(value: MoodleConversation): JsonObject {
   return {
-    "id": value.id,
-    "name": value.name,
-    "subname": value.subname,
-    "imageurl": value.imageUrl,
-    "type": value.type,
-    "membercount": value.memberCount,
-    "ismuted": value.isMuted,
-    "isfavourite": value.isFavourite,
-    "isread": value.isRead,
-    "unreadcount": value.unreadCount,
-    "members": value.members.map((item) => encodeMoodleConversationMember(item)),
-    "messages": value.messages.map((item) => encodeMoodleConversationMessage(item)),
-    "candeletemessagesforallusers": value.canDeleteMessagesForAllUsers,
+    ...(value.id !== 0 ? { "id": value.id } : {}),
+    ...(value.name !== null ? { "name": value.name } : {}),
+    ...(value.subname !== null ? { "subname": value.subname } : {}),
+    ...(value.imageUrl !== null ? { "imageurl": value.imageUrl } : {}),
+    ...(value.type !== 0 ? { "type": value.type } : {}),
+    ...(value.memberCount !== 0 ? { "membercount": value.memberCount } : {}),
+    ...(value.isMuted !== false ? { "ismuted": value.isMuted } : {}),
+    ...(value.isFavourite !== false ? { "isfavourite": value.isFavourite } : {}),
+    ...(value.isRead !== false ? { "isread": value.isRead } : {}),
+    ...(value.unreadCount !== null ? { "unreadcount": value.unreadCount } : {}),
+    ...(value.members.length > 0 ? { "members": value.members.map((item) => encodeMoodleConversationMember(item)) } : {}),
+    ...(value.messages.length > 0 ? { "messages": value.messages.map((item) => encodeMoodleConversationMessage(item)) } : {}),
+    ...(value.canDeleteMessagesForAllUsers !== false ? { "candeletemessagesforallusers": value.canDeleteMessagesForAllUsers } : {}),
   };
 }
 
@@ -308,7 +308,7 @@ export function decodeMoodleUnreadConversationCounts(json: unknown): MoodleUnrea
 
 export function encodeMoodleUnreadConversationCounts(value: MoodleUnreadConversationCounts): JsonObject {
   return {
-    "favourites": value.favourites,
+    ...(value.favourites !== 0 ? { "favourites": value.favourites } : {}),
     "types": encodeMoodleUnreadCountsByType(value.types),
   };
 }
@@ -335,9 +335,9 @@ export function decodeMoodleUnreadCountsByType(json: unknown): MoodleUnreadCount
 
 export function encodeMoodleUnreadCountsByType(value: MoodleUnreadCountsByType): JsonObject {
   return {
-    "1": value.individualConversations,
-    "2": value.groupConversations,
-    "3": value.selfConversations,
+    ...(value.individualConversations !== 0 ? { "1": value.individualConversations } : {}),
+    ...(value.groupConversations !== 0 ? { "2": value.groupConversations } : {}),
+    ...(value.selfConversations !== 0 ? { "3": value.selfConversations } : {}),
   };
 }
 
@@ -366,10 +366,10 @@ export function decodeMoodleOutgoingMessage(json: unknown): MoodleOutgoingMessag
 
 export function encodeMoodleOutgoingMessage(value: MoodleOutgoingMessage): JsonObject {
   return {
-    "touserid": value.toUserId,
-    "text": value.text,
-    "textformat": value.textFormat,
-    "clientmsgid": value.clientMessageId,
+    ...(value.toUserId !== 0 ? { "touserid": value.toUserId } : {}),
+    ...(value.text !== "" ? { "text": value.text } : {}),
+    ...(value.textFormat !== 0 ? { "textformat": value.textFormat } : {}),
+    ...(value.clientMessageId !== null ? { "clientmsgid": value.clientMessageId } : {}),
   };
 }
 
@@ -410,13 +410,13 @@ export function decodeMoodleSentMessage(json: unknown): MoodleSentMessage | unde
 
 export function encodeMoodleSentMessage(value: MoodleSentMessage): JsonObject {
   return {
-    "msgid": value.messageId,
-    "clientmsgid": value.clientMessageId,
-    "errormessage": value.errorMessage,
-    "text": value.text,
-    "timecreated": value.timeCreated,
-    "conversationid": value.conversationId,
-    "useridfrom": value.userIdFrom,
-    "candeletemessagesforallusers": value.canDeleteMessagesForAllUsers,
+    ...(value.messageId !== 0 ? { "msgid": value.messageId } : {}),
+    ...(value.clientMessageId !== null ? { "clientmsgid": value.clientMessageId } : {}),
+    ...(value.errorMessage !== null ? { "errormessage": value.errorMessage } : {}),
+    ...(value.text !== null ? { "text": value.text } : {}),
+    ...(value.timeCreated !== null ? { "timecreated": value.timeCreated } : {}),
+    ...(value.conversationId !== null ? { "conversationid": value.conversationId } : {}),
+    ...(value.userIdFrom !== null ? { "useridfrom": value.userIdFrom } : {}),
+    ...(value.canDeleteMessagesForAllUsers !== false ? { "candeletemessagesforallusers": value.canDeleteMessagesForAllUsers } : {}),
   };
 }

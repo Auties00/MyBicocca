@@ -1,0 +1,192 @@
+name: Live tests
+
+# The live tests generated from each API's tests.yaml call the real services with the test
+# accounts, on every platform: see "Live tests" in common/codegen/README.md. The platforms run one
+# after another, so that writes never overlap on the accounts and the request limits hold, all
+# with the same seed, so that the summary can compare what they decode.
+on:
+  schedule:
+    # Every night, when the services are quiet.
+    - cron: '30 2 * * *'
+  workflow_dispatch:
+    inputs:
+      writes:
+        description: Also run the reversible cases, which change data and undo it right away
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: live-tests
+  cancel-in-progress: false
+
+env:
+  LIVE_TESTS: '1'
+  # Scheduled runs include writes; manual runs only when asked.
+  LIVE_WRITES: ${{ (github.event_name == 'schedule' || inputs.writes) && '1' || '0' }}
+  # The test accounts. A case whose account is missing is skipped.
+  ESSE3_USERNAME: ${{ secrets.ESSE3_USERNAME }}
+  ESSE3_PASSWORD: ${{ secrets.ESSE3_PASSWORD }}
+  MOODLE_TOKEN: ${{ secrets.MOODLE_TOKEN }}
+
+jobs:
+  seed:
+    name: Seed
+    runs-on: ubuntu-latest
+    outputs:
+      seed: ${{ steps.seed.outputs.seed }}
+    steps:
+      - id: seed
+        run: echo "seed=$(( $(date -u +%s) / 86400 ))" >> "$GITHUB_OUTPUT"
+
+  kotlin:
+    name: Kotlin
+    needs: seed
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      LIVE_SEED: ${{ needs.seed.outputs.seed }}
+      LIVE_REPORT_DIR: ${{ github.workspace }}/live-reports
+      LIVE_JOURNAL: ${{ github.workspace }}/live-journal/journal.json
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up the Gradle daemon JDK (JetBrains 21)
+        uses: actions/setup-java@v4
+        with:
+          distribution: jetbrains
+          java-version: '21'
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      # The journal of changes not undone yet, as the last run left it.
+      - name: Restore the journal
+        uses: actions/cache/restore@v4
+        with:
+          path: live-journal
+          key: live-journal-${{ github.run_id }}-kotlin
+          restore-keys: live-journal-
+
+      - name: Run the live tests
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew :data-api:liveTest --stacktrace
+
+      - name: Save the journal
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: live-journal
+          key: live-journal-${{ github.run_id }}-kotlin
+
+      - name: Upload the reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-reports-kotlin
+          path: live-reports
+          if-no-files-found: ignore
+
+  typescript:
+    name: TypeScript
+    needs: [seed, kotlin]
+    if: always() && needs.seed.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      LIVE_SEED: ${{ needs.seed.outputs.seed }}
+      LIVE_REPORT_DIR: ${{ github.workspace }}/live-reports
+      LIVE_JOURNAL: ${{ github.workspace }}/live-journal/journal.json
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Restore the journal
+        uses: actions/cache/restore@v4
+        with:
+          path: live-journal
+          key: live-journal-${{ github.run_id }}-typescript
+          restore-keys: live-journal-
+
+      - name: Run the live tests
+        working-directory: web
+        run: |
+          npm ci
+          npm run test:live
+
+      - name: Save the journal
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: live-journal
+          key: live-journal-${{ github.run_id }}-typescript
+
+      - name: Upload the reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-reports-typescript
+          path: live-reports
+          if-no-files-found: ignore
+
+  swift:
+    name: Swift
+    needs: [seed, typescript]
+    if: always() && needs.seed.result == 'success'
+    runs-on: macos-15
+    timeout-minutes: 60
+    env:
+      LIVE_SEED: ${{ needs.seed.outputs.seed }}
+      LIVE_REPORT_DIR: ${{ github.workspace }}/live-reports
+      LIVE_JOURNAL: ${{ github.workspace }}/live-journal/journal.json
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Restore the journal
+        uses: actions/cache/restore@v4
+        with:
+          path: live-journal
+          key: live-journal-${{ github.run_id }}-swift
+          restore-keys: live-journal-
+
+      - name: Run the live tests
+        working-directory: ios/DataApi
+        run: swift test --filter LiveTests
+
+      - name: Save the journal
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: live-journal
+          key: live-journal-${{ github.run_id }}-swift
+
+      - name: Upload the reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-reports-swift
+          path: live-reports
+          if-no-files-found: ignore
+
+  report:
+    name: Summary
+    needs: [kotlin, typescript, swift]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: live-reports-*
+          path: live-reports
+
+      # Fails when a case failed on some platform, or the platforms decoded a result differently.
+      - name: Summarize
+        run: python3 tools/live/report.py live-reports | tee -a "$GITHUB_STEP_SUMMARY"; exit "${PIPESTATUS[0]}"

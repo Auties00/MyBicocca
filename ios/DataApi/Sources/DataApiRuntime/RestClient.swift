@@ -108,11 +108,78 @@ public struct RestPolicy: Sendable {
     public var errors: ErrorFormat
     /// Failures to recover from by sending the request again, tried in order.
     public var retries: [RetryRule]
+    /// Whether the client keeps responses in a ``ResponseCache``.
+    public var caches: Bool
 
-    public init(emptyStatuses: Set<Int> = [], errors: ErrorFormat = ErrorFormat(), retries: [RetryRule] = []) {
+    public init(emptyStatuses: Set<Int> = [], errors: ErrorFormat = ErrorFormat(), retries: [RetryRule] = [], caches: Bool = false) {
         self.emptyStatuses = emptyStatuses
         self.errors = errors
         self.retries = retries
+        self.caches = caches
+    }
+}
+
+/// The responses a client keeps when its API's spec says `caches`, the same on every platform:
+/// - a successful GET read whole, not a download, is kept when its `Cache-Control` has
+///   `max-age=N` and neither `no-store` nor `no-cache`, and answers the same URL for N seconds;
+/// - any request other than a GET empties it once answered, whatever the answer, since it may
+///   have changed what the kept responses show;
+/// - it keeps at most `capacity` responses, dropping the oldest first.
+///
+/// The platform's own HTTP cache isn't used, since each platform's follows other rules.
+public final class ResponseCache: @unchecked Sendable {
+    private struct Entry {
+        let response: RestResponse
+        let expires: Date
+    }
+
+    private let capacity: Int
+    private let lock = NSLock()
+    private var entries: [String: Entry] = [:]
+    /// The URLs of `entries`, oldest first.
+    private var order: [String] = []
+
+    public init(capacity: Int = 200) {
+        self.capacity = capacity
+    }
+
+    /// The response kept for `url`, if it is still fresh.
+    public func get(_ url: String) -> RestResponse? {
+        lock.lock()
+        defer { lock.unlock() }
+        guard let entry = entries[url] else { return nil }
+        if entry.expires > Date() { return entry.response }
+        entries[url] = nil
+        order.removeAll { $0 == url }
+        return nil
+    }
+
+    /// Keeps `response` for `url`, if its headers allow it.
+    public func put(_ url: String, _ response: RestResponse) {
+        guard let seconds = Self.maxAge(response.cacheControl) else { return }
+        lock.lock()
+        defer { lock.unlock() }
+        if entries[url] != nil { order.removeAll { $0 == url } }
+        entries[url] = Entry(response: response, expires: Date().addingTimeInterval(TimeInterval(seconds)))
+        order.append(url)
+        while order.count > capacity { entries[order.removeFirst()] = nil }
+    }
+
+    public func clear() {
+        lock.lock()
+        defer { lock.unlock() }
+        entries.removeAll()
+        order.removeAll()
+    }
+
+    /// How many seconds `Cache-Control` lets a response be kept: its `max-age`, unless it forbids keeping it.
+    public static func maxAge(_ cacheControl: String?) -> Int? {
+        guard let cacheControl else { return nil }
+        let directives = cacheControl.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces).lowercased() }
+        if directives.contains("no-store") || directives.contains("no-cache") { return nil }
+        guard let directive = directives.first(where: { $0.hasPrefix("max-age=") }),
+              let seconds = Int(directive.dropFirst("max-age=".count)), seconds > 0 else { return nil }
+        return seconds
     }
 }
 
@@ -123,11 +190,13 @@ public struct RestClient: Sendable {
     public let policy: RestPolicy
     /// The API parameters, by name, for the placeholders of retry requests.
     public let parameters: [String: String]
+    private let cache: ResponseCache?
 
     public init(configuration: RestConfiguration, policy: RestPolicy, parameters: [String: String] = [:]) {
         self.configuration = configuration
         self.policy = policy
         self.parameters = parameters
+        cache = policy.caches ? ResponseCache() : nil
     }
 
     /// Sends `request`, recovering from the failures the policy's retry rules match.
@@ -136,7 +205,17 @@ public struct RestClient: Sendable {
     ///   - readsJSON: Whether the operation reads a JSON body, which is then inspected for an
     ///     error; other bodies are only when they are JSON.
     ///   - allowEmpty: Whether to return nil for one of the policy's empty statuses.
-    public func execute(_ request: RestRequest, readsJSON: Bool, allowEmpty: Bool = false) async throws -> RestResponse? {
+    ///   - stores: Whether a GET may be answered from the client's ``ResponseCache``, and leave
+    ///     its response there: not for downloads.
+    public func execute(_ request: RestRequest, readsJSON: Bool, allowEmpty: Bool = false, stores: Bool = true) async throws -> RestResponse? {
+        var key: String?
+        if let cache, stores, request.method == .get {
+            key = try configuration.urlRequest(for: request).url?.absoluteString
+            if let key, let kept = cache.get(key) { return kept }
+        }
+        var request = request
+        // Downloads, text and pages take whatever the server sends, which a JSON Accept would refuse.
+        if !readsJSON { request.headers.insert(QueryItem(name: "Accept", value: "*/*"), at: 0) }
         var response = try await configuration.send(request)
         for rule in policy.retries {
             guard !response.isSuccess else { break }
@@ -153,11 +232,14 @@ public struct RestClient: Sendable {
             }
             response = try await configuration.send(request)
         }
+        // What the request changed may show in the kept responses.
+        if request.method != .get { cache?.clear() }
         if allowEmpty && policy.emptyStatuses.contains(response.status) { return nil }
         guard response.isSuccess else { throw failure(response) }
         if !policy.errors.detect.isEmpty && (readsJSON || response.isJSON), policy.errors.detects(json(response)) {
             throw failure(response)
         }
+        if let key { cache?.put(key, response) }
         return response
     }
 

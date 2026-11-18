@@ -11,6 +11,7 @@ import it.attendance100.mybicocca.codegen.model.ErrorCode
 import it.attendance100.mybicocca.codegen.model.ErrorFormat
 import it.attendance100.mybicocca.codegen.model.Codec
 import it.attendance100.mybicocca.codegen.model.DefaultValue
+import it.attendance100.mybicocca.codegen.model.Effect
 import it.attendance100.mybicocca.codegen.model.EnumType
 import it.attendance100.mybicocca.codegen.model.EnumValue
 import it.attendance100.mybicocca.codegen.model.Field
@@ -151,6 +152,7 @@ object SampleSpecs {
             Operation(
                 name = "uploadAttachment",
                 method = HttpMethod.POST,
+                effect = Effect.IRREVERSIBLE,
                 path = "/items/{itemId}/attachments",
                 parameters = listOf(
                     Parameter("itemId", "itemId", ParameterLocation.PATH, INT64, required = true),
@@ -165,6 +167,7 @@ object SampleSpecs {
             Operation(
                 name = "downloadAttachment",
                 method = HttpMethod.GET,
+                effect = Effect.READ,
                 path = "/attachments/{path}",
                 parameters = listOf(Parameter("path", "path", ParameterLocation.PATH, STRING, required = true, description = "The attachment's path, as its link writes it.", raw = true)),
                 body = null,
@@ -173,6 +176,7 @@ object SampleSpecs {
             Operation(
                 name = "getItemLog",
                 method = HttpMethod.GET,
+                effect = Effect.READ,
                 path = "/items/{itemId}/log",
                 parameters = listOf(Parameter("itemId", "itemId", ParameterLocation.PATH, INT64, required = true)),
                 body = null,
@@ -182,6 +186,7 @@ object SampleSpecs {
             Operation(
                 name = "getItems",
                 method = HttpMethod.GET,
+                effect = Effect.READ,
                 path = "/owners/{ownerId}/items",
                 parameters = listOf(
                     Parameter("ownerId", "ownerId", ParameterLocation.PATH, INT64, required = true, description = "Owner of the items."),
@@ -200,6 +205,7 @@ object SampleSpecs {
             Operation(
                 name = "createItem",
                 method = HttpMethod.POST,
+                effect = Effect.REVERSIBLE,
                 path = "/items",
                 parameters = listOf(Parameter("notify", "notifica", ParameterLocation.QUERY, BOOLEAN, required = false)),
                 body = RequestBody.Json(TypeRef.Named(item.name), "The item to create."),
@@ -208,6 +214,7 @@ object SampleSpecs {
             Operation(
                 name = "renameItem",
                 method = HttpMethod.PUT,
+                effect = Effect.REVERSIBLE,
                 path = "/items/{itemId}/name",
                 parameters = listOf(
                     Parameter("itemId", "itemId", ParameterLocation.PATH, STRING, required = true),
@@ -221,6 +228,7 @@ object SampleSpecs {
             Operation(
                 name = "deleteItem",
                 method = HttpMethod.DELETE,
+                effect = Effect.IRREVERSIBLE,
                 path = "/items/{itemId}",
                 parameters = listOf(Parameter("itemId", "itemId", ParameterLocation.PATH, STRING, required = true)),
                 body = null,
@@ -229,6 +237,7 @@ object SampleSpecs {
             Operation(
                 name = "getItemPdf",
                 method = HttpMethod.GET,
+                effect = Effect.READ,
                 path = "/items/{itemId}/pdf",
                 parameters = listOf(
                     Parameter("itemId", "itemId", ParameterLocation.PATH, STRING, required = true),
@@ -248,6 +257,7 @@ object SampleSpecs {
             Operation(
                 name = "searchItems",
                 method = HttpMethod.GET,
+                effect = Effect.READ,
                 path = "/search",
                 parameters = listOf(
                     Parameter("query", "q", ParameterLocation.QUERY, STRING, required = true),
@@ -266,6 +276,7 @@ object SampleSpecs {
             Operation(
                 name = "touch",
                 method = HttpMethod.POST,
+                effect = Effect.BENIGN,
                 path = "/touch",
                 parameters = emptyList(),
                 body = RequestBody.EmptyObject,
@@ -284,6 +295,7 @@ object SampleSpecs {
             Operation(
                 name = "getCalendar",
                 method = HttpMethod.GET,
+                effect = Effect.READ,
                 path = "/regions/{region}/calendar/{day}",
                 parameters = listOf(
                     Parameter("day", "day", ParameterLocation.PATH, LOCAL_DATE, required = true),
@@ -301,6 +313,7 @@ object SampleSpecs {
             Operation(
                 name = "runQuery",
                 method = HttpMethod.POST,
+                effect = Effect.READ,
                 path = "/rpc",
                 parameters = listOf(
                     Parameter("ids", "ids", ParameterLocation.FORM, TypeRef.ListOf(INT64), required = true, encoding = ParameterEncoding.BRACKETS),
@@ -319,6 +332,7 @@ object SampleSpecs {
             Operation(
                 name = "saveLabels",
                 method = HttpMethod.POST,
+                effect = Effect.IRREVERSIBLE,
                 path = "/labels",
                 parameters = emptyList(),
                 body = RequestBody.Json(TypeRef.MapOf(STRING, STRING)),
@@ -425,6 +439,7 @@ object SampleSpecs {
             Operation(
                 name = "getRooms",
                 method = HttpMethod.POST,
+                effect = Effect.READ,
                 path = "/rooms.php",
                 parameters = listOf(
                     Parameter("buildings", "sede[]", ParameterLocation.FORM, TypeRef.ListOf(STRING), required = true, encoding = ParameterEncoding.REPEATED),
@@ -441,6 +456,7 @@ object SampleSpecs {
             Operation(
                 name = "getRoom",
                 method = HttpMethod.GET,
+                effect = Effect.READ,
                 path = "/room.php",
                 parameters = listOf(Parameter("id", "id", ParameterLocation.QUERY, INT32, required = true)),
                 body = null,
@@ -450,6 +466,7 @@ object SampleSpecs {
             Operation(
                 name = "getVideoId",
                 method = HttpMethod.GET,
+                effect = Effect.READ,
                 path = "/video.php",
                 parameters = listOf(Parameter("id", "id", ParameterLocation.QUERY, INT32, required = true)),
                 body = null,
@@ -459,6 +476,7 @@ object SampleSpecs {
             Operation(
                 name = "getLessons",
                 method = HttpMethod.POST,
+                effect = Effect.READ,
                 path = "/grid_call.php",
                 parameters = emptyList(),
                 body = null,
@@ -469,6 +487,7 @@ object SampleSpecs {
             Operation(
                 name = "getOwners",
                 method = HttpMethod.GET,
+                effect = Effect.READ,
                 path = "/combo.php",
                 parameters = emptyList(),
                 body = null,
@@ -487,6 +506,7 @@ object SampleSpecs {
             Operation(
                 name = "ping",
                 method = HttpMethod.GET,
+                effect = Effect.READ,
                 path = "/ping",
                 parameters = emptyList(),
                 body = null,

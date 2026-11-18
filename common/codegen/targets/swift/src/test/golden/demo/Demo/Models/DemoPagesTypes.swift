@@ -110,23 +110,53 @@ public struct DemoRoom: Codable, Hashable, Sendable {
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(name, forKey: .name)
-        try container.encode(code, forKey: .code)
-        try container.encode(capacity, forKey: .capacity)
-        try container.encode(floor, forKey: .floor)
-        try container.encode(accessible, forKey: .accessible)
+        if code != nil {
+            try container.encode(code, forKey: .code)
+        }
+        if capacity != nil {
+            try container.encode(capacity, forKey: .capacity)
+        }
+        if floor != 0 {
+            try container.encode(floor, forKey: .floor)
+        }
+        if accessible != false {
+            try container.encode(accessible, forKey: .accessible)
+        }
         try container.encode(validated, forKey: .validated)
         try container.encode(closed, forKey: .closed)
-        try container.encode(kinds, forKey: .kinds)
-        try container.encode(website, forKey: .website)
-        try container.encode(siteId, forKey: .siteId)
-        try container.encode(occupancy, forKey: .occupancy)
-        try container.encode(notes, forKey: .notes)
-        try container.encode(title, forKey: .title)
-        try container.encode(descriptionHtml, forKey: .descriptionHtml)
-        try container.encode(level, forKey: .level)
-        try container.encode(staff, forKey: .staff)
-        try container.encode(lead, forKey: .lead)
-        try container.encode(note, forKey: .note)
+        if !kinds.isEmpty {
+            try container.encode(kinds, forKey: .kinds)
+        }
+        if website != nil {
+            try container.encode(website, forKey: .website)
+        }
+        if siteId != nil {
+            try container.encode(siteId, forKey: .siteId)
+        }
+        if occupancy != nil {
+            try container.encode(occupancy, forKey: .occupancy)
+        }
+        if notes != nil {
+            try container.encode(notes, forKey: .notes)
+        }
+        if title != nil {
+            try container.encode(title, forKey: .title)
+        }
+        if descriptionHtml != "" {
+            try container.encode(descriptionHtml, forKey: .descriptionHtml)
+        }
+        if level != nil {
+            try container.encode(level, forKey: .level)
+        }
+        if !staff.isEmpty {
+            try container.encode(staff, forKey: .staff)
+        }
+        if lead != nil {
+            try container.encode(lead, forKey: .lead)
+        }
+        if note != nil {
+            try container.encode(note, forKey: .note)
+        }
     }
 }
 
@@ -156,7 +186,9 @@ public struct DemoStaffGroup: Codable, Hashable, Sendable {
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(role, forKey: .role)
-        try container.encode(members, forKey: .members)
+        if !members.isEmpty {
+            try container.encode(members, forKey: .members)
+        }
     }
 }
 
@@ -210,12 +242,26 @@ public struct DemoLesson: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encodeEpochSeconds(start, forKey: .start)
-        try container.encode(attendance, forKey: .attendance)
-        try container.encode(teachers.joined(separator: ","), forKey: .teachers)
-        try container.encode(owners, forKey: .owners)
-        try container.encode("", forKey: .mapsUrl)
-        try container.encode("", forKey: .staff)
-        try container.encode("", forKey: .rooms)
+        if start != nil {
+            try container.encodeEpochSeconds(start, forKey: .start)
+        }
+        if attendance != 0 {
+            try container.encode(attendance, forKey: .attendance)
+        }
+        if !teachers.isEmpty {
+            try container.encode(teachers.joined(separator: ","), forKey: .teachers)
+        }
+        if !owners.isEmpty {
+            try container.encode(owners, forKey: .owners)
+        }
+        if mapsUrl != nil {
+            try container.encode("", forKey: .mapsUrl)
+        }
+        if staff != nil {
+            try container.encode("", forKey: .staff)
+        }
+        if !rooms.isEmpty {
+            try container.encode("", forKey: .rooms)
+        }
     }
 }

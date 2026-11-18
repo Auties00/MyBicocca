@@ -1765,7 +1765,7 @@ data class Esse3TranscriptSegment(
     val matId: Long = 0L,
 
     @SerialName("attributi")
-    val attributes: Esse3TranscriptSegmentAttributes
+    val attributes: Esse3TranscriptSegmentAttributes? = null
 )
 
 @Serializable

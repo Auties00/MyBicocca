@@ -90,16 +90,36 @@ public struct EasyStaffPlanningService: Codable, Hashable, Sendable {
         try container.encode(id, forKey: .id)
         try container.encode(name, forKey: .name)
         try container.encode(durationSeconds, forKey: .durationSeconds)
-        try container.encode(description, forKey: .description)
-        try container.encode(publicGridResolution, forKey: .publicGridResolution)
-        try container.encode(durationOptionsSeconds, forKey: .durationOptionsSeconds)
-        try container.encode(bookingPublicMethod, forKey: .bookingPublicMethod)
-        try container.encode(resourceGrid, forKey: .resourceGrid)
-        try container.encode(group, forKey: .group)
-        try container.encode(shortService, forKey: .shortService)
-        try container.encode(reservationType, forKey: .reservationType)
-        try container.encode(resourceCount, forKey: .resourceCount)
-        try container.encode(multiBooking, forKey: .multiBooking)
+        if description != nil {
+            try container.encode(description, forKey: .description)
+        }
+        if publicGridResolution != 0 {
+            try container.encode(publicGridResolution, forKey: .publicGridResolution)
+        }
+        if !durationOptionsSeconds.isEmpty {
+            try container.encode(durationOptionsSeconds, forKey: .durationOptionsSeconds)
+        }
+        if bookingPublicMethod != 0 {
+            try container.encode(bookingPublicMethod, forKey: .bookingPublicMethod)
+        }
+        if resourceGrid != false {
+            try container.encode(resourceGrid, forKey: .resourceGrid)
+        }
+        if group != nil {
+            try container.encode(group, forKey: .group)
+        }
+        if shortService != false {
+            try container.encode(shortService, forKey: .shortService)
+        }
+        if reservationType != .confirmed {
+            try container.encode(reservationType, forKey: .reservationType)
+        }
+        if resourceCount != 1 {
+            try container.encode(resourceCount, forKey: .resourceCount)
+        }
+        if multiBooking != false {
+            try container.encode(multiBooking, forKey: .multiBooking)
+        }
     }
 }
 
@@ -267,29 +287,75 @@ public struct EasyStaffPlanningDetailedService: Codable, Hashable, Sendable {
         try container.encode(portalId, forKey: .portalId)
         try container.encode(name, forKey: .name)
         try container.encode(durationSeconds, forKey: .durationSeconds)
-        try container.encode(description, forKey: .description)
-        try container.encode(addDaysAhead, forKey: .addDaysAhead)
-        try container.encode(editDaysAhead, forKey: .editDaysAhead)
-        try container.encode(addDeadline, forKey: .addDeadline)
-        try container.encode(editDeadline, forKey: .editDeadline)
-        try container.encode(maxRangeDays, forKey: .maxRangeDays)
-        try container.encode(bookingLimitCount, forKey: .bookingLimitCount)
-        try container.encode(bookingLimitIntervalDays, forKey: .bookingLimitIntervalDays)
-        try container.encode(bookingLimitOnlyFuture, forKey: .bookingLimitOnlyFuture)
-        try container.encode(bookingPublicMethod, forKey: .bookingPublicMethod)
-        try container.encode(virtual, forKey: .virtual)
-        try container.encode(publicGridResolution, forKey: .publicGridResolution)
-        try container.encode(followUpLink, forKey: .followUpLink)
-        try container.encode(durationOptionsSeconds, forKey: .durationOptionsSeconds)
-        try container.encode(group, forKey: .group)
-        try container.encode(minimumSeatReleaseSeconds, forKey: .minimumSeatReleaseSeconds)
-        try container.encode(seatReleaseEnabled, forKey: .seatReleaseEnabled)
-        try container.encode(suspensionPolicy, forKey: .suspensionPolicy)
-        try container.encode(weeklyLimit, forKey: .weeklyLimit)
-        try container.encode(shortService, forKey: .shortService)
-        try container.encode(resourceGrid, forKey: .resourceGrid)
-        try container.encode(reservationType, forKey: .reservationType)
-        try container.encode(multiBooking, forKey: .multiBooking)
+        if description != nil {
+            try container.encode(description, forKey: .description)
+        }
+        if addDaysAhead != 0 {
+            try container.encode(addDaysAhead, forKey: .addDaysAhead)
+        }
+        if editDaysAhead != 0 {
+            try container.encode(editDaysAhead, forKey: .editDaysAhead)
+        }
+        if addDeadline != nil {
+            try container.encode(addDeadline, forKey: .addDeadline)
+        }
+        if editDeadline != nil {
+            try container.encode(editDeadline, forKey: .editDeadline)
+        }
+        if maxRangeDays != nil {
+            try container.encode(maxRangeDays, forKey: .maxRangeDays)
+        }
+        if bookingLimitCount != nil {
+            try container.encode(bookingLimitCount, forKey: .bookingLimitCount)
+        }
+        if bookingLimitIntervalDays != nil {
+            try container.encode(bookingLimitIntervalDays, forKey: .bookingLimitIntervalDays)
+        }
+        if bookingLimitOnlyFuture != false {
+            try container.encode(bookingLimitOnlyFuture, forKey: .bookingLimitOnlyFuture)
+        }
+        if bookingPublicMethod != 0 {
+            try container.encode(bookingPublicMethod, forKey: .bookingPublicMethod)
+        }
+        if virtual != false {
+            try container.encode(virtual, forKey: .virtual)
+        }
+        if publicGridResolution != 0 {
+            try container.encode(publicGridResolution, forKey: .publicGridResolution)
+        }
+        if followUpLink != nil {
+            try container.encode(followUpLink, forKey: .followUpLink)
+        }
+        if !durationOptionsSeconds.isEmpty {
+            try container.encode(durationOptionsSeconds, forKey: .durationOptionsSeconds)
+        }
+        if group != nil {
+            try container.encode(group, forKey: .group)
+        }
+        if minimumSeatReleaseSeconds != nil {
+            try container.encode(minimumSeatReleaseSeconds, forKey: .minimumSeatReleaseSeconds)
+        }
+        if seatReleaseEnabled != false {
+            try container.encode(seatReleaseEnabled, forKey: .seatReleaseEnabled)
+        }
+        if suspensionPolicy != nil {
+            try container.encode(suspensionPolicy, forKey: .suspensionPolicy)
+        }
+        if weeklyLimit != nil {
+            try container.encode(weeklyLimit, forKey: .weeklyLimit)
+        }
+        if shortService != false {
+            try container.encode(shortService, forKey: .shortService)
+        }
+        if resourceGrid != false {
+            try container.encode(resourceGrid, forKey: .resourceGrid)
+        }
+        if reservationType != .confirmed {
+            try container.encode(reservationType, forKey: .reservationType)
+        }
+        if multiBooking != false {
+            try container.encode(multiBooking, forKey: .multiBooking)
+        }
     }
 }
 
@@ -329,10 +395,18 @@ public struct EasyStaffPlanningSuspensionPolicy: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(intervalDays, forKey: .intervalDays)
-        try container.encode(unattendedBookingsThreshold, forKey: .unattendedBookingsThreshold)
-        try container.encode(suspensionDays, forKey: .suspensionDays)
-        try container.encode(suspensionScope, forKey: .suspensionScope)
+        if intervalDays != 0 {
+            try container.encode(intervalDays, forKey: .intervalDays)
+        }
+        if unattendedBookingsThreshold != 0 {
+            try container.encode(unattendedBookingsThreshold, forKey: .unattendedBookingsThreshold)
+        }
+        if suspensionDays != 0 {
+            try container.encode(suspensionDays, forKey: .suspensionDays)
+        }
+        if suspensionScope != nil {
+            try container.encode(suspensionScope, forKey: .suspensionScope)
+        }
     }
 }
 
@@ -410,8 +484,12 @@ public struct EasyStaffPlanningEntryFilters: Codable, Hashable, Sendable {
 
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
-        try container.encode(serviceGroup, forKey: .serviceGroup)
-        try container.encode(service, forKey: .service)
+        if serviceGroup != nil {
+            try container.encode(serviceGroup, forKey: .serviceGroup)
+        }
+        if service != nil {
+            try container.encode(service, forKey: .service)
+        }
     }
 }
 
@@ -462,10 +540,18 @@ public struct EasyStaffPlanningAreaGroup: Codable, Hashable, Sendable {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(id, forKey: .id)
         try container.encode(name, forKey: .name)
-        try container.encode(mapUrl, forKey: .mapUrl)
-        try container.encode(capacity, forKey: .capacity)
-        try container.encode(order, forKey: .order)
-        try container.encode(link, forKey: .link)
+        if mapUrl != nil {
+            try container.encode(mapUrl, forKey: .mapUrl)
+        }
+        if capacity != 0 {
+            try container.encode(capacity, forKey: .capacity)
+        }
+        if order != 0 {
+            try container.encode(order, forKey: .order)
+        }
+        if link != nil {
+            try container.encode(link, forKey: .link)
+        }
     }
 }
 
@@ -570,11 +656,23 @@ public struct EasyStaffPlanningArea: Codable, Hashable, Sendable {
         try container.encode(portalId, forKey: .portalId)
         try container.encode(code, forKey: .code)
         try container.encode(name, forKey: .name)
-        try container.encode(address, forKey: .address)
-        try container.encode(googleMapsLink, forKey: .googleMapsLink)
-        try container.encode(publicHidden, forKey: .publicHidden)
-        try container.encode(suspensionPolicy, forKey: .suspensionPolicy)
-        try container.encode(contact, forKey: .contact)
-        try container.encode(services, forKey: .services)
+        if address != nil {
+            try container.encode(address, forKey: .address)
+        }
+        if googleMapsLink != nil {
+            try container.encode(googleMapsLink, forKey: .googleMapsLink)
+        }
+        if publicHidden != false {
+            try container.encode(publicHidden, forKey: .publicHidden)
+        }
+        if suspensionPolicy != nil {
+            try container.encode(suspensionPolicy, forKey: .suspensionPolicy)
+        }
+        if contact != nil {
+            try container.encode(contact, forKey: .contact)
+        }
+        if !services.isEmpty {
+            try container.encode(services, forKey: .services)
+        }
     }
 }

@@ -9,6 +9,7 @@ import it.attendance100.mybicocca.codegen.model.AuthRequirement
 import it.attendance100.mybicocca.codegen.model.AuthScheme
 import it.attendance100.mybicocca.codegen.model.Codec
 import it.attendance100.mybicocca.codegen.model.DefaultValue
+import it.attendance100.mybicocca.codegen.model.Effect
 import it.attendance100.mybicocca.codegen.model.Field
 import it.attendance100.mybicocca.codegen.model.HttpMethod
 import it.attendance100.mybicocca.codegen.model.Operation
@@ -242,6 +243,9 @@ internal class MoodleModelBuilder(
         summary = function.description.ifEmpty { null },
         query = mapOf("wsfunction" to function.name, "moodlewsrestformat" to "json"),
         auth = AuthRequirement(listOf(TOKEN_SCHEME), required = function.loginrequired),
+        // Moodle flags functions read or write; writes include views that log events and mark
+        // activities complete, so their effect comes from the `effects.json` overlay.
+        effect = Effect.READ.takeIf { function.type == "read" },
     )
 
     /** Assigns the records [type] reaches to [module], unless an earlier module has them. */

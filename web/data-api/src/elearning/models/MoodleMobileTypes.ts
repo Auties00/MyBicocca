@@ -26,9 +26,9 @@ export function decodeMoodleAutologinKey(json: unknown): MoodleAutologinKey | un
 
 export function encodeMoodleAutologinKey(value: MoodleAutologinKey): JsonObject {
   return {
-    "key": value.key,
-    "autologinurl": value.autologinUrl,
-    "warnings": value.warnings.map((item) => encodeMoodleWarning(item)),
+    ...(value.key !== "" ? { "key": value.key } : {}),
+    ...(value.autologinUrl !== "" ? { "autologinurl": value.autologinUrl } : {}),
+    ...(value.warnings.length > 0 ? { "warnings": value.warnings.map((item) => encodeMoodleWarning(item)) } : {}),
   };
 }
 
@@ -63,12 +63,12 @@ export function decodeMoodleMobileContent(json: unknown): MoodleMobileContent | 
 
 export function encodeMoodleMobileContent(value: MoodleMobileContent): JsonObject {
   return {
-    "templates": value.templates.map((item) => encodeMoodleMobileTemplate(item)),
-    "javascript": value.javascript,
-    "otherdata": value.otherData.map((item) => encodeMoodleKeyValue(item)),
-    "files": value.files.map((item) => encodeMoodleFile(item)),
+    ...(value.templates.length > 0 ? { "templates": value.templates.map((item) => encodeMoodleMobileTemplate(item)) } : {}),
+    ...(value.javascript !== "" ? { "javascript": value.javascript } : {}),
+    ...(value.otherData.length > 0 ? { "otherdata": value.otherData.map((item) => encodeMoodleKeyValue(item)) } : {}),
+    ...(value.files.length > 0 ? { "files": value.files.map((item) => encodeMoodleFile(item)) } : {}),
     "restrict": encodeMoodleMobileContentRestriction(value.restrict),
-    "disabled": value.disabled,
+    ...(value.disabled !== null ? { "disabled": value.disabled } : {}),
   };
 }
 
@@ -91,8 +91,8 @@ export function decodeMoodleMobileTemplate(json: unknown): MoodleMobileTemplate 
 
 export function encodeMoodleMobileTemplate(value: MoodleMobileTemplate): JsonObject {
   return {
-    "id": value.id,
-    "html": value.html,
+    ...(value.id !== "" ? { "id": value.id } : {}),
+    ...(value.html !== "" ? { "html": value.html } : {}),
   };
 }
 
@@ -116,7 +116,7 @@ export function decodeMoodleMobileContentRestriction(json: unknown): MoodleMobil
 
 export function encodeMoodleMobileContentRestriction(value: MoodleMobileContentRestriction): JsonObject {
   return {
-    "users": value.users,
-    "courses": value.courses,
+    ...(value.users.length > 0 ? { "users": value.users } : {}),
+    ...(value.courses.length > 0 ? { "courses": value.courses } : {}),
   };
 }
