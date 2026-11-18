@@ -3,6 +3,8 @@ package it.attendance100.mybicocca.codegen.target.kotlin
 import it.attendance100.mybicocca.codegen.model.ApiModule
 import it.attendance100.mybicocca.codegen.model.ApiSpec
 import it.attendance100.mybicocca.codegen.model.AuthRequirement
+import it.attendance100.mybicocca.codegen.model.Field
+import it.attendance100.mybicocca.codegen.model.RecordType
 import it.attendance100.mybicocca.codegen.model.PrimitiveKind
 import it.attendance100.mybicocca.codegen.model.TypeRef
 
@@ -19,6 +21,7 @@ import it.attendance100.mybicocca.codegen.model.TypeRef
  * | Servers, if any                 | `…esse3.api.Esse3Server` (enum)        |
  * | Auth schemes, if any            | `…esse3.dto.Esse3AuthTypes.kt`         |
  * | Serializers, if any             | `…esse3.dto.Esse3Serializers.kt`       |
+ * | Scrapers, if any                | `…esse3.dto.Esse3Scrapers.kt`          |
  *
  * The runtime the API provides by hand:
  * - `…api.Esse3AbstractApi`: base class of every module, with the `execute*` request helpers.
@@ -60,6 +63,10 @@ internal class KotlinLayout(private val spec: ApiSpec, packageName: String) {
     }
 
     fun recordsFileName(module: ApiModule): String = "${spec.prefix}${module.name}Types.kt"
+
+    /** The serializer reading [field] of [record] out of the HTML fragment it is sent as. */
+    fun htmlSerializer(record: RecordType, field: Field): String =
+        "${record.name}${field.name.replaceFirstChar(Char::uppercaseChar)}HtmlSerializer"
 
     fun serviceName(module: ApiModule): String = "${spec.prefix}${module.name}Api"
 

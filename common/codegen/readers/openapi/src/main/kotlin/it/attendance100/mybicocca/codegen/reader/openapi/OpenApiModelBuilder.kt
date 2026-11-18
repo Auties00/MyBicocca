@@ -22,6 +22,7 @@ import it.attendance100.mybicocca.codegen.model.ParameterEncoding
 import it.attendance100.mybicocca.codegen.model.ParameterLocation
 import it.attendance100.mybicocca.codegen.model.PrimitiveKind
 import it.attendance100.mybicocca.codegen.model.RecordEncoding
+import it.attendance100.mybicocca.codegen.model.RecordScrape
 import it.attendance100.mybicocca.codegen.model.RecordType
 import it.attendance100.mybicocca.codegen.model.RequestBody
 import it.attendance100.mybicocca.codegen.model.ResponseBody
@@ -102,7 +103,7 @@ internal class OpenApiModelBuilder(private val api: OpenAPI) {
             .map { parameter(name, resolve(it)) }
         val formSchema = operation.requestBody?.content?.get(FORM)?.schema?.let(::resolve)
         val form = formSchema?.properties.orEmpty().map { (wire, schema) ->
-            val (type, _) = type(schema, "$name form field $wire")
+            val (type, codec) = type(schema, "$name form field $wire")
             Parameter(
                 name = nameOf(schema, wire),
                 wireName = wire,
@@ -110,6 +111,9 @@ internal class OpenApiModelBuilder(private val api: OpenAPI) {
                 type = type,
                 required = wire in formSchema?.required.orEmpty(),
                 description = schema.description,
+                default = schema.default?.let { DefaultValue.Literal(literal(it)) },
+                encoding = if (schema.extensions?.get(Extensions.REPEATED) == true) ParameterEncoding.REPEATED else ParameterEncoding.PLAIN,
+                pattern = (codec as? Codec.Temporal)?.pattern,
             )
         }
         val body = when {
@@ -128,6 +132,8 @@ internal class OpenApiModelBuilder(private val api: OpenAPI) {
             headers = Extensions.stringMap(api.extensions?.get(Extensions.HEADERS), "${Extensions.HEADERS} of the document") +
                 Extensions.stringMap(extensions[Extensions.HEADERS], "${Extensions.HEADERS} of $name"),
             auth = Extensions.authRequirement(extensions[Extensions.AUTH]),
+            query = Extensions.stringMap(extensions[Extensions.QUERY], "${Extensions.QUERY} of $name"),
+            form = Extensions.stringMap(extensions[Extensions.FORM], "${Extensions.FORM} of $name"),
         )
     }
 
@@ -135,8 +141,12 @@ internal class OpenApiModelBuilder(private val api: OpenAPI) {
     private fun parameter(operation: String, parameter: OpenApiParameter): Parameter {
         val jsonSchema = parameter.content?.get(JSON)?.schema
         val schema = parameter.schema ?: jsonSchema ?: error("Parameter ${parameter.name} of $operation has no schema")
-        val encoding = if (parameter.schema == null) ParameterEncoding.JSON else ParameterEncoding.PLAIN
-        val (type, _) = type(schema, "$operation parameter ${parameter.name}")
+        val encoding = when {
+            parameter.schema == null -> ParameterEncoding.JSON
+            parameter.extensions?.get(Extensions.REPEATED) == true -> ParameterEncoding.REPEATED
+            else -> ParameterEncoding.PLAIN
+        }
+        val (type, codec) = type(schema, "$operation parameter ${parameter.name}")
         return Parameter(
             name = nameOf(parameter.extensions, parameter.name),
             wireName = parameter.name,
@@ -152,12 +162,21 @@ internal class OpenApiModelBuilder(private val api: OpenAPI) {
             description = parameter.description,
             default = schema.default?.let { DefaultValue.Literal(if (encoding == ParameterEncoding.JSON) Json.mapper().writeValueAsString(it) else literal(it)) },
             encoding = encoding,
+            pattern = (codec as? Codec.Temporal)?.pattern,
         )
     }
 
     private fun response(operation: String, definition: OpenApiOperation): ResponseBody {
         val success = definition.responses.orEmpty().entries.firstOrNull { it.key.startsWith("2") }?.value ?: return ResponseBody.None
         val content = success.content ?: return ResponseBody.None
+        definition.extensions?.get(Extensions.SCRIPT_VARIABLE)?.let { variable ->
+            val schema = content.values.firstOrNull()?.schema ?: error("$operation reads a script variable but its response has no schema")
+            return ResponseBody.ScriptVariable(variable.toString(), type(schema, "$operation response").first)
+        }
+        content[HTML]?.schema?.let { schema ->
+            val scrape = definition.extensions?.get(Extensions.SCRAPE)?.let { ScrapeSyntax.pipeline(it, "$operation response") }.orEmpty()
+            return ResponseBody.Html(type(schema, "$operation response").first, scrape)
+        }
         content[JSON]?.schema?.let { schema ->
             val envelope = Extensions.stringList(definition.extensions?.get(Extensions.ENVELOPE), "${Extensions.ENVELOPE} of $operation")
             return ResponseBody.Json(type(schema, "$operation response").first, envelope)
@@ -177,8 +196,13 @@ internal class OpenApiModelBuilder(private val api: OpenAPI) {
             name = name,
             description = schema.description,
             encoding = schema.extensions?.get(Extensions.DELIMITED)?.let { RecordEncoding.Delimited(it.toString()) } ?: RecordEncoding.Object,
+            scrape = schema.extensions?.get(Extensions.SCRAPE)?.let { raw ->
+                val options = raw as? Map<*, *> ?: error("${Extensions.SCRAPE} of $name must be an object")
+                RecordScrape(missing = Extensions.stringList(options["missing"], "missing texts of $name"))
+            },
             fields = schema.properties.orEmpty().map { (wire, property) ->
-                val (type, codec) = type(property, "$name.$wire")
+                val (type, typeCodec) = type(property, "$name.$wire")
+                val codec = property.extensions?.get(Extensions.HTML)?.let { Codec.EmbeddedHtml(ScrapeSyntax.pipeline(it, "$name.$wire")) } ?: typeCodec
                 val explicit = property.default
                 val (nullable, default) = when {
                     explicit is List<*> -> false to DefaultValue.EmptyList
@@ -189,7 +213,10 @@ internal class OpenApiModelBuilder(private val api: OpenAPI) {
                     type is TypeRef.MapOf -> false to DefaultValue.EmptyMap
                     else -> true to DefaultValue.Null
                 }
-                Field(nameOf(property, wire), wire, type, nullable, default, codec, property.description)
+                Field(
+                    nameOf(property, wire), wire, type, nullable, default, codec, property.description,
+                    scrape = property.extensions?.get(Extensions.SCRAPE)?.let { ScrapeSyntax.pipeline(it, "$name.$wire") },
+                )
             },
         )
     }
@@ -222,7 +249,15 @@ internal class OpenApiModelBuilder(private val api: OpenAPI) {
         }
         require(schema.enum == null) { "$where declares an inline enum; declare it as a component schema" }
         val kind = when (schema.type) {
-            "array" -> return TypeRef.ListOf(type(schema.items ?: error("$where is an array without items"), "$where items").first) to null
+            "array" -> {
+                val list = TypeRef.ListOf(type(schema.items ?: error("$where is an array without items"), "$where items").first)
+                val codec = when {
+                    schema.extensions?.get(Extensions.JOINED) != null -> Codec.Joined(schema.extensions.getValue(Extensions.JOINED).toString())
+                    schema.extensions?.get(Extensions.OBJECT_VALUES) == true -> Codec.ObjectValues
+                    else -> null
+                }
+                return list to codec
+            }
             "object" -> schema.additionalProperties?.let { values -> return map(schema, values, where) to null } ?: PrimitiveKind.JSON_OBJECT
             "string" -> when (schema.format) {
                 "date" -> PrimitiveKind.LOCAL_DATE
@@ -241,6 +276,7 @@ internal class OpenApiModelBuilder(private val api: OpenAPI) {
         require(pattern == null || kind.isTemporal) { "$where has ${Extensions.PATTERN} but isn't a date or time" }
         val blankAsNull = schema.extensions?.get(Extensions.BLANK_AS_NULL) == true
         val codec = when {
+            schema.extensions?.get(Extensions.EPOCH_SECONDS) == true -> Codec.EpochSeconds
             pattern != null -> Codec.Temporal(pattern, blankAsNull)
             blankAsNull && kind == PrimitiveKind.STRING ->
                 Codec.BlankAsNull(Extensions.stringList(schema.extensions?.get(Extensions.ALSO_NULL), "${Extensions.ALSO_NULL} of $where"))
@@ -299,7 +335,15 @@ internal class OpenApiModelBuilder(private val api: OpenAPI) {
             for (operation in operations) {
                 operation.parameters.forEach { claim(it.type, module) }
                 claim((operation.body as? RequestBody.Json)?.type, module)
-                claim((operation.response as? ResponseBody.Json)?.type, module)
+                claim(
+                    when (val response = operation.response) {
+                        is ResponseBody.Json -> response.type
+                        is ResponseBody.ScriptVariable -> response.type
+                        is ResponseBody.Html -> response.type
+                        ResponseBody.None, ResponseBody.Binary -> null
+                    },
+                    module,
+                )
             }
         }
         val first = operationsByModule.keys.first()
@@ -322,5 +366,6 @@ internal class OpenApiModelBuilder(private val api: OpenAPI) {
     private companion object {
         const val JSON = "application/json"
         const val FORM = "application/x-www-form-urlencoded"
+        const val HTML = "text/html"
     }
 }

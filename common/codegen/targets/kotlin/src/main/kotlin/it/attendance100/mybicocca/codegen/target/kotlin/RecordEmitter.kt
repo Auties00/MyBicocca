@@ -38,7 +38,7 @@ internal class RecordEmitter(
                 if (index > 0 && encoding is RecordEncoding.Object) line()
                 doc(field.description)
                 if (encoding is RecordEncoding.Object) {
-                    serializers.of(field, file)?.let { line("@Serializable(with = $it::class)") }
+                    serializers.of(record, field, file)?.let { line("@Serializable(with = $it::class)") }
                     line("@SerialName(${KotlinSyntax.string(field.wireName)})")
                 }
                 val separator = if (index < record.fields.lastIndex) "," else ""
@@ -121,20 +121,22 @@ internal class RecordEmitter(
     private fun type(field: Field, file: KotlinFile): String =
         serializers.render(field.type, file, field.name) + if (field.nullable) "?" else ""
 
-    private fun default(field: Field): String = when (val default = field.default) {
-        null -> ""
-        DefaultValue.Null -> " = null"
-        DefaultValue.EmptyList -> " = emptyList()"
-        DefaultValue.EmptyMap -> " = emptyMap()"
-        is DefaultValue.Literal -> " = " + literal(field.type, default)
-        DefaultValue.Zero -> " = " + when ((field.type as TypeRef.Primitive).kind) {
+    private fun default(field: Field): String = field.default?.let { " = " + defaultValue(field.type, it) }.orEmpty()
+
+    /** The Kotlin expression of [default] as a value of [type]. */
+    fun defaultValue(type: TypeRef, default: DefaultValue): String = when (default) {
+        DefaultValue.Null -> "null"
+        DefaultValue.EmptyList -> "emptyList()"
+        DefaultValue.EmptyMap -> "emptyMap()"
+        is DefaultValue.Literal -> literal(type, default)
+        DefaultValue.Zero -> when ((type as TypeRef.Primitive).kind) {
             PrimitiveKind.STRING -> "\"\""
             PrimitiveKind.INT32 -> "0"
             PrimitiveKind.INT64 -> "0L"
             PrimitiveKind.FLOAT32 -> "0f"
             PrimitiveKind.FLOAT64 -> "0.0"
             PrimitiveKind.BOOLEAN -> "false"
-            else -> error("Field '${field.name}' can't default to zero")
+            else -> error("A ${type.kind} can't default to zero")
         }
     }
 
@@ -144,6 +146,8 @@ internal class RecordEmitter(
             PrimitiveKind.STRING -> KotlinSyntax.string(literal.value)
             PrimitiveKind.INT64 -> "${literal.value}L"
             PrimitiveKind.FLOAT32 -> "${literal.value}f"
+            // A whole number is an Int literal in Kotlin, which a Double can't take.
+            PrimitiveKind.FLOAT64 -> if (literal.value.any { it == '.' || it == 'e' || it == 'E' }) literal.value else "${literal.value}.0"
             else -> literal.value
         }
         is TypeRef.ListOf, is TypeRef.MapOf -> error("Collections can't have a literal default")

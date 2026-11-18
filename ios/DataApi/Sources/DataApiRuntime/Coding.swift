@@ -190,10 +190,61 @@ extension KeyedDecodingContainer {
     }
 }
 
+extension KeyedDecodingContainer {
+    /// A date and time sent as seconds since the Unix epoch, read in the device's time zone;
+    /// nil when the key is missing or holds no number.
+    public func decodeEpochSeconds(forKey key: Key) -> LocalDateTime? {
+        decodeLenient(Int64.self, forKey: key).map { LocalDateTime(epochSeconds: $0) }
+    }
+
+    /// A list of strings sent as one string joining them with `separator`; the elements are
+    /// trimmed and blank ones are left out.
+    public func decodeJoined(forKey key: Key, separator: String) -> [String]? {
+        decodeLenient(String.self, forKey: key).map { text in
+            text.components(separatedBy: separator).map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+        }
+    }
+
+    /// Like ``decodeLenient(_:forKey:)``, also reading the list from an object whose values are
+    /// its elements.
+    public func decodeObjectValues<T: Decodable>(_ type: T.Type, forKey key: Key) -> [T]? {
+        if let value = decodeLenient([T].self, forKey: key) {
+            return value
+        }
+        guard case .object(let object)? = try? decode(JSONValue.self, forKey: key) else { return nil }
+        return try? JSONValue.array(Array(object.values)).decode(as: [T].self)
+    }
+}
+
 extension KeyedEncodingContainer {
     /// Writes a date or time with `pattern`; no value is written as an empty string.
     public mutating func encodeTemporal<T: TemporalValue>(_ value: T?, forKey key: Key, pattern: String) throws {
         try encode(value.map { $0.format(pattern: TemporalPattern(pattern)) } ?? "", forKey: key)
+    }
+
+    /// Writes a date and time as seconds since the Unix epoch, in the device's time zone.
+    public mutating func encodeEpochSeconds(_ value: LocalDateTime?, forKey key: Key) throws {
+        try encodeIfPresent(value?.epochSeconds, forKey: key)
+    }
+}
+
+extension LocalDateTime {
+    /// The date and time `epochSeconds` seconds after the Unix epoch, in the device's time zone.
+    public init(epochSeconds: Int64) {
+        let parts = Calendar.current.dateComponents(in: .current, from: Date(timeIntervalSince1970: TimeInterval(epochSeconds)))
+        self.init(
+            date: LocalDate(year: parts.year ?? 1970, month: parts.month ?? 1, day: parts.day ?? 1),
+            hour: parts.hour ?? 0,
+            minute: parts.minute ?? 0,
+            second: parts.second ?? 0
+        )
+    }
+
+    /// Seconds since the Unix epoch, reading this date and time in the device's time zone.
+    public var epochSeconds: Int64 {
+        var parts = DateComponents(year: date.year, month: date.month, day: date.day, hour: hour, minute: minute, second: second)
+        parts.timeZone = .current
+        return Int64(Calendar.current.date(from: parts)?.timeIntervalSince1970 ?? 0)
     }
 }
 

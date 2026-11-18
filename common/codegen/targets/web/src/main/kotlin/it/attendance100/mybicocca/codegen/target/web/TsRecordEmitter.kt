@@ -107,7 +107,15 @@ internal class TsRecordEmitter(private val layout: TsLayout, private val codecs:
         layout.render(field.type, file) + if (field.nullable) " | null" else ""
 
     private fun decode(record: RecordType, field: Field, file: TsFile): String {
-        val decoded = codecs.decode("object[${TsSyntax.string(field.wireName)}]", field.type, field.codec, file)
+        val json = "object[${TsSyntax.string(field.wireName)}]"
+        if (field.codec is Codec.EmbeddedHtml) {
+            // Lists read as empty and other values as null from a blank fragment, so neither needs a default.
+            val read = layout.htmlFunction(record, field)
+            file.import(read, layout.moduleOf(layout.scrapersFile))
+            val decoded = "${codecs.runtime(file, "decodeEmbeddedHtml")}($json, $read)"
+            return if (field.type is TypeRef.ListOf) "$decoded ?? []" else "$decoded ?? null"
+        }
+        val decoded = codecs.decode(json, field.type, field.codec, file)
         return when (val default = field.default) {
             null -> if (field.nullable) {
                 "$decoded ?? null"

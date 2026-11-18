@@ -70,12 +70,14 @@ sealed interface TypeDeclaration {
  * otherwise.
  *
  * @property fields The fields, in declaration order.
+ * @property scrape How the record is read out of an HTML element, when it is.
  */
 data class RecordType(
     override val name: String,
     val fields: List<Field>,
     override val description: String? = null,
     val encoding: RecordEncoding = RecordEncoding.Object,
+    val scrape: RecordScrape? = null,
 ) : TypeDeclaration
 
 /** How a [RecordType] is written on the wire. */
@@ -101,6 +103,8 @@ sealed interface RecordEncoding {
  *   Null means the key is mandatory.
  * @property codec Non-default wire format of the value, if any. Dates and times without one
  *   are written in ISO 8601 (see [Codec.Temporal.iso]).
+ * @property scrape How the field is read out of its record's HTML element, when the record is
+ *   scraped (see [RecordType.scrape]).
  */
 data class Field(
     val name: String,
@@ -110,6 +114,7 @@ data class Field(
     val default: DefaultValue?,
     val codec: Codec? = null,
     val description: String? = null,
+    val scrape: List<ScrapeStep>? = null,
 )
 
 /** The value a field takes when its key is missing or unusable. */
@@ -204,4 +209,28 @@ sealed interface Codec {
      * no value.
      */
     data object EmbeddedJson : Codec
+
+    /**
+     * A date and time sent as the number of seconds since the Unix epoch, in the device's time
+     * zone. Numbers sent as strings are accepted.
+     */
+    data object EpochSeconds : Codec
+
+    /**
+     * A list of strings sent as one string joining them with [separator] (`"Ada, Bob"`). The
+     * elements are trimmed and blank ones are left out.
+     */
+    data class Joined(val separator: String) : Codec
+
+    /**
+     * A list that may also arrive as an object whose values are its elements. Their order is
+     * the object's where the target's JSON parser keeps it.
+     */
+    data object ObjectValues : Codec
+
+    /**
+     * A value read out of an HTML fragment sent as a string, by [scrape] from the fragment's
+     * document (see [ScrapeStep]). A blank string reads as no value.
+     */
+    data class EmbeddedHtml(val scrape: List<ScrapeStep>) : Codec
 }

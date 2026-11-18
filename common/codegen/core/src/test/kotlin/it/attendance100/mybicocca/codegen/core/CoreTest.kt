@@ -38,7 +38,7 @@ class TextTest {
 }
 
 class OutputSyncTest {
-    private fun generated(path: String, body: String) = GeneratedFile(path, "// $GENERATED_MARKER\n$body\n")
+    private fun generated(path: String, body: String, apiId: String = "demo") = GeneratedFile(path, "// ${generatedMarker(apiId)}. Do not edit.\n$body\n")
 
     @Test
     fun `writes changed files and deletes only stale generated ones`(@TempDir dir: Path) {
@@ -48,7 +48,7 @@ class OutputSyncTest {
         dir.resolve("pkg/HandWritten.kt").writeText("class HandWritten\n")
         val files = listOf(generated("pkg/Same.kt", "same"), generated("pkg/New.kt", "new"))
 
-        val plan = OutputSync.plan(dir, files)
+        val plan = OutputSync.plan(dir, files, "demo")
         assertEquals(listOf("pkg/New.kt"), plan.writes.map { it.path })
         assertEquals(listOf(dir.resolve("pkg/Stale.kt")), plan.deletions)
 
@@ -56,13 +56,20 @@ class OutputSyncTest {
         assertTrue(dir.resolve("pkg/New.kt").readText().contains("new"))
         assertFalse(dir.resolve("pkg/Stale.kt").exists())
         assertTrue(dir.resolve("pkg/HandWritten.kt").exists())
-        assertTrue(OutputSync.plan(dir, files).isUpToDate)
+        assertTrue(OutputSync.plan(dir, files, "demo").isUpToDate)
     }
 
     @Test
     fun `refuses to replace a hand-written file`(@TempDir dir: Path) {
         dir.resolve("Api.kt").writeText("class Api\n")
-        val error = assertThrows<IllegalArgumentException> { OutputSync.plan(dir, listOf(generated("Api.kt", "class Api"))) }
+        val error = assertThrows<IllegalArgumentException> { OutputSync.plan(dir, listOf(generated("Api.kt", "class Api")), "demo") }
         assertContains(error.message.orEmpty(), "hand-written")
+    }
+
+    @Test
+    fun `leaves the files of other APIs sharing the directory`(@TempDir dir: Path) {
+        dir.resolve("DemoPlanningApi.kt").writeText(generated("DemoPlanningApi.kt", "class DemoPlanningApi", apiId = "demo-planning").content)
+        val plan = OutputSync.plan(dir, listOf(generated("DemoApi.kt", "class DemoApi")), "demo")
+        assertTrue(plan.deletions.isEmpty())
     }
 }

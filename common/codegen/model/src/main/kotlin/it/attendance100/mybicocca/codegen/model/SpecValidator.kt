@@ -60,6 +60,56 @@ object SpecValidator {
                 checkField(spec, record, field)
             }
             (record.encoding as? RecordEncoding.Delimited)?.let { checkDelimited(record, it) }
+            checkScrapedRecord(spec, record)
+        }
+    }
+
+    private fun MutableList<String>.checkScrapedRecord(spec: ApiSpec, record: RecordType) {
+        if (record.scrape == null) {
+            for (field in record.fields.filter { it.scrape != null }) {
+                add("Field '${record.name}.${field.name}' has a scrape but its record isn't scraped")
+            }
+            return
+        }
+        if (record.encoding != RecordEncoding.Object) add("Scraped record '${record.name}' isn't an object record")
+        for (field in record.fields) {
+            val where = "Field '${record.name}.${field.name}'"
+            val scrape = field.scrape
+            if (scrape == null) {
+                if (field.default == null) add("$where has neither a scrape nor a default")
+            } else {
+                checkScrape(spec, field.type, scrape, where)
+            }
+        }
+    }
+
+    /** Checks that [steps], read from an element, yield a value of [type]. */
+    private fun MutableList<String>.checkScrape(spec: ApiSpec, type: TypeRef, steps: List<ScrapeStep>, where: String) {
+        val expected = Scrapes.kindFor(type, spec)
+        if (expected == null) {
+            add("$where can't be scraped: only scraped records, scalars, enums and lists of them can")
+            return
+        }
+        if (type is TypeRef.ListOf && !Scrapes.isRecordList(type.element, spec) && Scrapes.kindFor(type.element, spec) != ScrapeKind.TEXT) {
+            add("$where is a scraped list whose elements are neither scraped records nor read from text")
+        }
+        val problems = mutableListOf<String>()
+        when (val actual = Scrapes.output(steps, ScrapeKind.ELEMENT) { problems += it }) {
+            null -> problems.forEach { add("$where: $it") }
+            expected -> Unit
+            else -> add("$where: the scrape yields $actual but the type needs $expected")
+        }
+        for (pattern in patterns(steps)) {
+            runCatching { Regex(pattern) }.onFailure { add("$where has the invalid pattern '$pattern'") }
+        }
+    }
+
+    private fun patterns(steps: List<ScrapeStep>): List<String> = steps.flatMap { step ->
+        when (step) {
+            is ScrapeStep.Regex -> listOf(step.pattern)
+            is ScrapeStep.Where -> patterns(step.test)
+            is ScrapeStep.FirstOf -> step.alternatives.flatMap(::patterns)
+            else -> emptyList()
         }
     }
 
@@ -115,6 +165,18 @@ object SpecValidator {
                 if (!isObjectRecord(spec, field.type)) add("$where may arrive embedded but isn't an object record")
                 if (!field.nullable) add("$where may arrive as a blank string but isn't nullable")
             }
+            Codec.EpochSeconds -> if ((field.type as? TypeRef.Primitive)?.kind != PrimitiveKind.LOCAL_DATE_TIME) {
+                add("$where is sent as epoch seconds but isn't a date and time")
+            }
+            is Codec.Joined -> {
+                if (field.type != TypeRef.ListOf(TypeRef.STRING)) add("$where is sent joined but isn't a list of strings")
+                if (codec.separator.isEmpty()) add("$where is joined with an empty separator")
+            }
+            Codec.ObjectValues -> if (field.type !is TypeRef.ListOf) add("$where may arrive as an object's values but isn't a list")
+            is Codec.EmbeddedHtml -> {
+                if (field.type !is TypeRef.ListOf && !field.nullable) add("$where is read from embedded HTML but isn't nullable")
+                checkScrape(spec, field.type, codec.scrape, where)
+            }
             null -> Unit
         }
     }
@@ -153,8 +215,25 @@ object SpecValidator {
                         }
                         if (parameter.default != null) add("$what is bracket-encoded and has a default")
                     }
+                    ParameterEncoding.REPEATED -> {
+                        if (parameter.location != ParameterLocation.QUERY && parameter.location != ParameterLocation.FORM) {
+                            add("$what is repeated but isn't a query or form parameter")
+                        }
+                        val type = parameter.type
+                        if (type !is TypeRef.ListOf || type.element is TypeRef.ListOf || !isPlain(spec, type.element)) {
+                            add("$what is repeated but isn't a list of plain values")
+                        }
+                        if (parameter.default != null) add("$what is repeated and has a default")
+                    }
                 }
                 if (parameter.location == ParameterLocation.PATH && !parameter.required) add("$what isn't required")
+                if (parameter.pattern != null) {
+                    if ((parameter.type as? TypeRef.Primitive)?.kind?.isTemporal != true) add("$what has a pattern but isn't a date or time")
+                    if (parameter.encoding != ParameterEncoding.PLAIN) add("$what has a pattern but isn't plainly encoded")
+                    if (parameter.location !in setOf(ParameterLocation.QUERY, ParameterLocation.FORM, ParameterLocation.HEADER)) {
+                        add("$what has a pattern but isn't a query, form or header parameter")
+                    }
+                }
             }
             operation.server?.let { server ->
                 if (spec.servers.none { it.name == server }) add("$where targets unknown server '$server'")
@@ -172,16 +251,25 @@ object SpecValidator {
                 val sendsForm = spec.authSchemes.any { it.name in auth.schemes && it.form.isNotEmpty() }
                 if (sendsForm && operation.body != null) add("$where sends a body but accepts credentials sent as form fields")
             }
+            val sendsForm = operation.formParameters.isNotEmpty() || operation.form.isNotEmpty()
             when (val body = operation.body) {
                 is RequestBody.Json -> {
                     checkRef(spec, body.type, "$where body")
-                    if (operation.formParameters.isNotEmpty()) add("$where sends both a JSON body and form parameters")
+                    if (sendsForm) add("$where sends both a JSON body and form fields")
                 }
-                RequestBody.EmptyObject -> if (operation.formParameters.isNotEmpty()) add("$where sends both a JSON body and form parameters")
+                RequestBody.EmptyObject -> if (sendsForm) add("$where sends both a JSON body and form fields")
                 null -> Unit
             }
             when (val response = operation.response) {
                 is ResponseBody.Json -> checkRef(spec, response.type, "$where response")
+                is ResponseBody.ScriptVariable -> {
+                    checkRef(spec, response.type, "$where response")
+                    if (!SCRIPT_IDENTIFIER.matches(response.variable)) add("$where reads '${response.variable}', which isn't a script variable name")
+                }
+                is ResponseBody.Html -> {
+                    checkRef(spec, response.type, "$where response")
+                    checkScrape(spec, response.type, response.scrape, "$where response")
+                }
                 ResponseBody.None, ResponseBody.Binary -> Unit
             }
 
@@ -226,4 +314,5 @@ object SpecValidator {
     }
 
     private val PLACEHOLDER = Regex("""\{([^}]+)}""")
+    private val SCRIPT_IDENTIFIER = Regex("""[A-Za-z_$][\w$]*""")
 }

@@ -6,7 +6,9 @@ import it.attendance100.mybicocca.codegen.model.ApiSpec
 import it.attendance100.mybicocca.codegen.model.AuthRequirement
 import it.attendance100.mybicocca.codegen.model.DefaultValue
 import it.attendance100.mybicocca.codegen.model.EnumType
+import it.attendance100.mybicocca.codegen.model.Field
 import it.attendance100.mybicocca.codegen.model.PrimitiveKind
+import it.attendance100.mybicocca.codegen.model.RecordType
 import it.attendance100.mybicocca.codegen.model.TypeRef
 
 /**
@@ -21,13 +23,16 @@ import it.attendance100.mybicocca.codegen.model.TypeRef
  * | Facade                         | `Esse3Api.swift`             |
  * | Servers, if any                | `Esse3Server.swift` (enum)   |
  * | Auth schemes, if any           | `Esse3AuthTypes.swift`       |
+ * | Scrapers, if any               | `Esse3Scrapers.swift`        |
  *
  * The hand-written runtime:
  * - The shared runtime module ([runtimeModule]): `LocalDate`, `LocalDateTime`, `JSONObject`,
  *   `WireEnum`, `WireMap`, `RestRequest` and the lenient `Codable` helpers.
  * - `Esse3Client`: sends `RestRequest`s and decodes responses and errors, through
  *   `json(_:roles:)`, `jsonList(_:roles:)` (empty on HTTP 404), `data(_:roles:)` and
- *   `send(_:roles:)`.
+ *   `send(_:roles:)`; an API with script or HTML responses also needs `script(_:variable:)`,
+ *   decoding the JSON a script assigns to a variable, and `html(_:scrape:)`, reading the page
+ *   with a function of `Esse3Scrapers` and failing when it returns nil.
  * - `Esse3PermissionLevel`: enum of the role names operations declare, as lowerCamel cases.
  */
 internal class SwiftLayout(private val spec: ApiSpec, val runtimeModule: String) {
@@ -61,6 +66,14 @@ internal class SwiftLayout(private val spec: ApiSpec, val runtimeModule: String)
     }
 
     fun recordsFileName(module: ApiModule): String = "${spec.prefix}${module.name}Types.swift"
+
+    /** The enum of the API's scrapers (see [SwiftScrapeEmitter]). */
+    val scrapers = "${spec.prefix}Scrapers"
+
+    /** The function of [scrapers] reading [field] of [record] out of the HTML fragment it is sent as. */
+    fun htmlFunction(record: RecordType, field: Field): String =
+        record.name.removePrefix(spec.prefix).ifEmpty { record.name }.replaceFirstChar(Char::lowercaseChar) +
+            field.name.replaceFirstChar(Char::uppercaseChar)
 
     fun serviceName(module: ApiModule): String = "${spec.prefix}${module.name}Api"
 

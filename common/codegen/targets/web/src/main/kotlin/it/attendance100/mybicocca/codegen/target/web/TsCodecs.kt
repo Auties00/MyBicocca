@@ -50,6 +50,10 @@ internal class TsCodecs(private val layout: TsLayout) {
         }
         Codec.FoldedObject -> "${runtime(file, "decodeFolded")}($json, ${decoder(type, file)})"
         Codec.EmbeddedJson -> "${runtime(file, "decodeEmbedded")}($json, ${decoder(type, file)})"
+        Codec.EpochSeconds -> "${runtime(file, "decodeEpochSeconds")}($json)"
+        is Codec.Joined -> "${runtime(file, "decodeJoined")}($json, ${TsSyntax.string(codec.separator)})"
+        Codec.ObjectValues -> "${runtime(file, "decodeObjectValues")}($json, ${decoder((type as TypeRef.ListOf).element, file)})"
+        is Codec.EmbeddedHtml -> error("Fields read from HTML are decoded by their record's scraper function")
         null -> when (type) {
             is TypeRef.ListOf -> "${runtime(file, "decodeList")}($json, ${decoder(type.element, file)})"
             is TypeRef.MapOf -> decodeMap(json, type, file)
@@ -75,7 +79,14 @@ internal class TsCodecs(private val layout: TsLayout) {
      * form, or [value] itself when the JSON form is the same.
      */
     fun encode(value: String, type: TypeRef, codec: Codec?, nullable: Boolean, file: TsFile): String {
-        if (codec is Codec.Temporal) return "${runtime(file, "encodeTemporal")}($value, ${TsSyntax.string(codec.pattern)})"
+        when (codec) {
+            is Codec.Temporal -> return "${runtime(file, "encodeTemporal")}($value, ${TsSyntax.string(codec.pattern)})"
+            Codec.EpochSeconds -> return "${runtime(file, "encodeEpochSeconds")}($value)"
+            is Codec.Joined -> return "$value.join(${TsSyntax.string(codec.separator)})"
+            // A value read out of HTML can't be written back; an empty fragment reads as no value.
+            is Codec.EmbeddedHtml -> return "\"\""
+            is Codec.BlankAsNull, Codec.FoldedObject, Codec.EmbeddedJson, Codec.ObjectValues, null -> Unit
+        }
         val encoded = encodeNonNull(value, type, file) ?: return value
         return if (nullable) "$value === null ? null : $encoded" else encoded
     }

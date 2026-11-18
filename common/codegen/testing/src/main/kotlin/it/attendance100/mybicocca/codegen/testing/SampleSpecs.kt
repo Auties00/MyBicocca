@@ -17,9 +17,11 @@ import it.attendance100.mybicocca.codegen.model.ParameterEncoding
 import it.attendance100.mybicocca.codegen.model.ParameterLocation
 import it.attendance100.mybicocca.codegen.model.PrimitiveKind
 import it.attendance100.mybicocca.codegen.model.RecordEncoding
+import it.attendance100.mybicocca.codegen.model.RecordScrape
 import it.attendance100.mybicocca.codegen.model.RecordType
 import it.attendance100.mybicocca.codegen.model.RequestBody
 import it.attendance100.mybicocca.codegen.model.ResponseBody
+import it.attendance100.mybicocca.codegen.model.ScrapeStep
 import it.attendance100.mybicocca.codegen.model.Server
 import it.attendance100.mybicocca.codegen.model.TypeRef
 
@@ -289,6 +291,153 @@ object SampleSpecs {
         ),
     )
 
+    /** A section of a scraped page: a heading and the names listed under it. */
+    val staffGroup = RecordType(
+        name = "DemoStaffGroup",
+        fields = listOf(
+            Field("role", "role", STRING, nullable = false, default = null, scrape = listOf(ScrapeStep.Select("h4"), ScrapeStep.Text())),
+            Field("members", "members", TypeRef.ListOf(STRING), nullable = false, default = DefaultValue.EmptyList, scrape = listOf(ScrapeStep.SelectAll("li"))),
+        ),
+        scrape = RecordScrape(),
+    )
+
+    /** A label's value: the text after the `.label` element reading [label]. */
+    private fun labelled(label: String, vararg read: ScrapeStep): List<ScrapeStep> = listOf(
+        ScrapeStep.SelectAll(".label"),
+        ScrapeStep.Where(listOf(ScrapeStep.Text(), ScrapeStep.Equals(label))),
+        ScrapeStep.First,
+        ScrapeStep.LastSibling,
+    ) + read
+
+    val room = RecordType(
+        name = "DemoRoom",
+        description = "A room, read from its page.",
+        scrape = RecordScrape(missing = listOf("n/a")),
+        fields = listOf(
+            Field("name", "name", STRING, nullable = false, default = null, scrape = listOf(ScrapeStep.Select("h2"), ScrapeStep.OwnText)),
+            Field(
+                "code", "code", STRING, nullable = true, default = DefaultValue.Null,
+                scrape = listOf(ScrapeStep.Select("h2 span"), ScrapeStep.Text(), ScrapeStep.Unwrap("[", "]")),
+            ),
+            Field("capacity", "capacity", INT32, nullable = true, default = DefaultValue.Null, scrape = labelled("Capacity", ScrapeStep.Text(), ScrapeStep.RemoveSuffix(" seats"))),
+            Field(
+                "floor", "floor", INT32, nullable = false, default = DefaultValue.Zero,
+                scrape = labelled("Floor", ScrapeStep.Text(), ScrapeStep.Replace(mapOf("Ground" to "0"))),
+            ),
+            Field("accessible", "accessible", BOOLEAN, nullable = false, default = DefaultValue.Literal("false"), scrape = labelled("Accessible", ScrapeStep.Text(), ScrapeStep.Equals("yes"))),
+            Field("validated", "validated", BOOLEAN, nullable = false, default = null, scrape = listOf(ScrapeStep.Select(".badge"), ScrapeStep.Exists)),
+            Field("closed", "closed", BOOLEAN, nullable = false, default = null, scrape = listOf(ScrapeStep.Select(".open"), ScrapeStep.Exists, ScrapeStep.Not)),
+            Field(
+                "kinds", "kinds", TypeRef.ListOf(TypeRef.Named(kind.name)), nullable = false, default = DefaultValue.EmptyList,
+                scrape = listOf(
+                    ScrapeStep.SelectAll(".equipment span"),
+                    ScrapeStep.Where(listOf(ScrapeStep.Next, ScrapeStep.Text(), ScrapeStep.Contains("available"))),
+                ),
+            ),
+            Field(
+                "website", "website", STRING, nullable = true, default = DefaultValue.Null,
+                scrape = listOf(
+                    ScrapeStep.FirstOf(
+                        listOf(
+                            listOf(ScrapeStep.Select("a.site"), ScrapeStep.Url("href")),
+                            listOf(ScrapeStep.Select(".map"), ScrapeStep.Follow("href"), ScrapeStep.Select("iframe"), ScrapeStep.Attribute("src")),
+                        ),
+                    ),
+                ),
+            ),
+            Field("siteId", "siteId", INT64, nullable = true, default = DefaultValue.Null, scrape = listOf(ScrapeStep.Select("a.site"), ScrapeStep.Url("href"), ScrapeStep.QueryParameter("id"))),
+            Field(
+                "notes", "notes", STRING, nullable = true, default = DefaultValue.Null,
+                scrape = listOf(ScrapeStep.SelectAll(".label"), ScrapeStep.Where(listOf(ScrapeStep.Text(), ScrapeStep.Equals("Notes"))), ScrapeStep.First, ScrapeStep.Lines),
+            ),
+            Field("title", "title", STRING, nullable = true, default = DefaultValue.Null, scrape = listOf(ScrapeStep.Root, ScrapeStep.Select("h1.page"), ScrapeStep.Text(exclude = ".sr-only"), ScrapeStep.NullIf(listOf("Untitled")))),
+            Field("descriptionHtml", "descriptionHtml", STRING, nullable = false, default = DefaultValue.Zero, scrape = listOf(ScrapeStep.Select(".description"), ScrapeStep.Html)),
+            Field("level", "level", TypeRef.Named(priority.name), nullable = true, default = DefaultValue.Null, scrape = listOf(ScrapeStep.Select(".level"), ScrapeStep.Attribute("data-level"), ScrapeStep.RemovePrefix("level-"))),
+            Field("staff", "staff", TypeRef.ListOf(TypeRef.Named(staffGroup.name)), nullable = false, default = DefaultValue.EmptyList, scrape = listOf(ScrapeStep.Select(".staff"), ScrapeStep.Sections("h4"))),
+            Field("lead", "lead", TypeRef.Named(staffGroup.name), nullable = true, default = DefaultValue.Null, scrape = listOf(ScrapeStep.Select(".staff"), ScrapeStep.Sections("h4"), ScrapeStep.First)),
+            Field("note", "note", STRING, nullable = true, default = DefaultValue.Null),
+        ),
+    )
+
+    /** A lesson of a PHP backend's JSON, whose values need the PHP-specific codecs. */
+    val lesson = RecordType(
+        name = "DemoLesson",
+        fields = listOf(
+            Field("start", "timestamp", LOCAL_DATE_TIME, nullable = true, default = DefaultValue.Null, codec = Codec.EpochSeconds),
+            Field("attendance", "percentuale", TypeRef.Primitive(PrimitiveKind.FLOAT64), nullable = false, default = DefaultValue.Literal("0")),
+            Field("teachers", "docente", TypeRef.ListOf(STRING), nullable = false, default = DefaultValue.EmptyList, codec = Codec.Joined(",")),
+            Field("owners", "proprietari", TypeRef.ListOf(TypeRef.Named(owner.name)), nullable = false, default = DefaultValue.EmptyList, codec = Codec.ObjectValues),
+            Field(
+                "mapsUrl", "maps", STRING, nullable = true, default = DefaultValue.Null,
+                codec = Codec.EmbeddedHtml(listOf(ScrapeStep.Select("iframe"), ScrapeStep.Attribute("src"))),
+            ),
+            Field("staff", "staff", TypeRef.Named(staffGroup.name), nullable = true, default = DefaultValue.Null, codec = Codec.EmbeddedHtml(emptyList())),
+            Field("rooms", "aule", TypeRef.ListOf(STRING), nullable = false, default = DefaultValue.EmptyList, codec = Codec.EmbeddedHtml(listOf(ScrapeStep.SelectAll("li")))),
+        ),
+    )
+
+    private val pages = ApiModule(
+        name = "Pages",
+        basePath = "/portal",
+        records = listOf(room, staffGroup, lesson),
+        operations = listOf(
+            Operation(
+                name = "getRooms",
+                method = HttpMethod.POST,
+                path = "/rooms.php",
+                parameters = listOf(
+                    Parameter("buildings", "sede[]", ParameterLocation.FORM, TypeRef.ListOf(STRING), required = true, encoding = ParameterEncoding.REPEATED),
+                    Parameter("day", "date", ParameterLocation.FORM, LOCAL_DATE, required = true, pattern = "dd-MM-yyyy"),
+                    Parameter("from", "start_time", ParameterLocation.QUERY, LOCAL_TIME, required = false, pattern = "HH:mm"),
+                    Parameter("levels", "level[]", ParameterLocation.QUERY, TypeRef.ListOf(TypeRef.Named(priority.name)), required = false, encoding = ParameterEncoding.REPEATED),
+                ),
+                body = null,
+                response = ResponseBody.Html(TypeRef.ListOf(TypeRef.Named(room.name)), listOf(ScrapeStep.SelectAll(".room"))),
+                summary = "Rooms of the given buildings, read from the showcase page.",
+                server = "Main",
+                form = mapOf("view" to "rooms", "list" to ""),
+            ),
+            Operation(
+                name = "getRoom",
+                method = HttpMethod.GET,
+                path = "/room.php",
+                parameters = listOf(Parameter("id", "id", ParameterLocation.QUERY, INT32, required = true)),
+                body = null,
+                response = ResponseBody.Html(TypeRef.Named(room.name), emptyList()),
+                server = "Main",
+            ),
+            Operation(
+                name = "getVideoId",
+                method = HttpMethod.GET,
+                path = "/video.php",
+                parameters = listOf(Parameter("id", "id", ParameterLocation.QUERY, INT32, required = true)),
+                body = null,
+                response = ResponseBody.Html(STRING, listOf(ScrapeStep.Select("iframe"), ScrapeStep.Attribute("src"), ScrapeStep.Regex("""entryid/([\w-]+)"""))),
+                server = "Main",
+            ),
+            Operation(
+                name = "getLessons",
+                method = HttpMethod.POST,
+                path = "/grid_call.php",
+                parameters = emptyList(),
+                body = null,
+                response = ResponseBody.Json(TypeRef.ListOf(TypeRef.Named(lesson.name)), listOf("celle")),
+                server = "Main",
+                form = mapOf("view" to "easycourse"),
+            ),
+            Operation(
+                name = "getOwners",
+                method = HttpMethod.GET,
+                path = "/combo.php",
+                parameters = emptyList(),
+                body = null,
+                response = ResponseBody.ScriptVariable("elenco_sedi", TypeRef.ListOf(TypeRef.Named(owner.name))),
+                server = "Main",
+                query = mapOf("sw" to "rooms_"),
+            ),
+        ),
+    )
+
     private val typesOnly = ApiModule(
         name = "Shared",
         basePath = "/",
@@ -308,7 +457,7 @@ object SampleSpecs {
     val demo = ApiSpec(
         id = "demo",
         prefix = "Demo",
-        modules = listOf(items, search, calendarModule, typesOnly),
+        modules = listOf(items, search, calendarModule, pages, typesOnly),
         enums = listOf(kind, level, priority, status),
         servers = listOf(Server("Main", "https://api.example.com/v1"), Server("Search", "https://search.example.com")),
         authSchemes = listOf(
