@@ -38,11 +38,23 @@ internal class SwiftServiceEmitter(private val spec: ApiSpec, private val layout
             operation.pathParameters.forEach { add("${SwiftSyntax.identifier(it.name)}: ${layout.render(it.type)}") }
             when (val body = operation.body) {
                 is RequestBody.Json -> add("$BODY: ${layout.render(body.type)}")
-                null -> Unit
+                RequestBody.EmptyObject, null -> Unit
             }
             operation.parameters.filter { it.location != ParameterLocation.PATH }.forEach { parameter ->
+                val name = SwiftSyntax.identifier(parameter.name)
                 val type = layout.render(parameter.type)
-                add(if (parameter.required) "${SwiftSyntax.identifier(parameter.name)}: $type" else "${SwiftSyntax.identifier(parameter.name)}: $type? = nil")
+                val default = parameter.default
+                add(
+                    when {
+                        parameter.required -> "$name: $type"
+                        default != null -> "$name: $type = ${layout.literal(parameter.type, default)}"
+                        else -> "$name: $type? = nil"
+                    }
+                )
+            }
+            operation.auth?.let { auth ->
+                val type = layout.authType(auth)
+                add(if (auth.required) "$AUTH: $type" else "$AUTH: ($type)? = nil")
             }
         }
         val returns = when (val response = operation.response) {
@@ -59,7 +71,8 @@ internal class SwiftServiceEmitter(private val spec: ApiSpec, private val layout
                 is ResponseBody.Json -> if (response.type is TypeRef.ListOf) "jsonList" else "json"
             }
             val request = nested { commaList("RestRequest(", requestArguments(module, operation), ")") }
-            commaList("try await client.$method(", listOf(request, "roles: ${roles(operation)}"), ")")
+            val arguments = listOfNotNull(request, if (spec.usesRoles) "roles: ${roles(operation)}" else null)
+            commaList("try await client.$method(", arguments, ")")
         }
         line("}")
     }
@@ -69,7 +82,18 @@ internal class SwiftServiceEmitter(private val spec: ApiSpec, private val layout
         add("path: ${path(module, operation)}")
         operation.queryParameters.takeIf { it.isNotEmpty() }?.let { add("query: ${items(it)}") }
         operation.formParameters.takeIf { it.isNotEmpty() }?.let { add("form: ${items(it)}") }
-        if (operation.body != null) add("body: $BODY")
+        val headers = operation.headers.map { (name, value) -> "(${SwiftSyntax.string(name)}, ${SwiftSyntax.string(value)})" } +
+            operation.headerParameters.map(::pair)
+        if (headers.isNotEmpty()) add("headers: ${array(headers)}")
+        when (operation.body) {
+            is RequestBody.Json -> add("body: $BODY")
+            RequestBody.EmptyObject -> add("body: EmptyObject()")
+            null -> Unit
+        }
+        if (operation.auth != null) add("auth: $AUTH")
+        operation.server?.let { add("server: ${layout.server}.${layout.serverCase(it)}.rawValue") }
+        val envelope = (operation.response as? ResponseBody.Json)?.envelope.orEmpty()
+        if (envelope.isNotEmpty()) add("envelope: ${envelope.joinToString(", ", "[", "]") { SwiftSyntax.string(it) }}")
     }
 
     /** The full path as a string literal, with path parameters interpolated as encoded segments. */
@@ -80,10 +104,12 @@ internal class SwiftServiceEmitter(private val spec: ApiSpec, private val layout
     }
 
     /** Name/value pairs as an array literal, wrapped one per line when there are several. */
-    private fun CodeWriter.items(parameters: List<Parameter>): String {
-        val pairs = parameters.map { "(${SwiftSyntax.string(it.wireName)}, ${SwiftSyntax.identifier(it.name)})" }
-        return if (pairs.size <= INLINE_ITEMS) pairs.joinToString(", ", "[", "]") else nested { commaList("[", pairs, "]") }
-    }
+    private fun CodeWriter.items(parameters: List<Parameter>): String = array(parameters.map(::pair))
+
+    private fun pair(parameter: Parameter): String = "(${SwiftSyntax.string(parameter.wireName)}, ${SwiftSyntax.identifier(parameter.name)})"
+
+    private fun CodeWriter.array(items: List<String>): String =
+        if (items.size <= INLINE_ITEMS) items.joinToString(", ", "[", "]") else nested { commaList("[", items, "]") }
 
     private fun roles(operation: Operation): String =
         operation.roles.joinToString(", ", "[", "]") { ".${layout.role(it)}" }
@@ -93,9 +119,10 @@ internal class SwiftServiceEmitter(private val spec: ApiSpec, private val layout
             operation.pathParameters.forEach { add(it.name to it) }
             operation.body?.let { add(BODY to null) }
             operation.parameters.filter { it.location != ParameterLocation.PATH }.forEach { add(it.name to it) }
+            operation.auth?.let { add(AUTH to null) }
         }
         val documented = inputs.filter { (name, parameter) ->
-            val description = if (name == BODY && parameter == null) operation.body?.description else parameter?.description
+            val description = inputDescription(operation, name, parameter)
             description != null || parameter?.valueDescriptions?.isNotEmpty() == true
         }
         if (operation.summary == null && documented.isEmpty()) return
@@ -105,10 +132,16 @@ internal class SwiftServiceEmitter(private val spec: ApiSpec, private val layout
         if (operation.summary != null) line("///")
         line("/// - Parameters:")
         for ((name, parameter) in documented) {
-            val description = if (parameter == null) operation.body?.description else parameter.description
+            val description = inputDescription(operation, name, parameter)
             line("///   - $name: ${description?.let(SwiftSyntax::docText) ?: "One of the accepted values below."}")
             if (parameter != null) valueDocs(parameter)
         }
+    }
+
+    private fun inputDescription(operation: Operation, name: String, parameter: Parameter?): String? = when {
+        parameter != null -> parameter.description
+        name == AUTH -> operation.auth?.let(layout::authDescription)
+        else -> operation.body?.description
     }
 
     private fun CodeWriter.valueDocs(parameter: Parameter) {
@@ -125,6 +158,7 @@ internal class SwiftServiceEmitter(private val spec: ApiSpec, private val layout
 
     private companion object {
         const val BODY = "body"
+        const val AUTH = "auth"
         const val INLINE_ITEMS = 2
         const val MAX_LINE_LENGTH = 100
         val PLACEHOLDER = Regex("""\{([^}]+)}""")

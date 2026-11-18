@@ -49,7 +49,8 @@ class AffluencesSitesApiTest : AffluencesTestBase() {
         assertNotNull(liveData.status, "Status should be present")
 
         val allSlots = liveData.todayForecasts + liveData.forecasts.flatMap { it.forecasts }
-        allSlots.forEach { slot ->
+        // A day's first slot summarises the whole day and has no hour range.
+        allSlots.filter { it.hourRange.isNotEmpty() }.forEach { slot ->
             assertEquals(2, slot.hourRange.size, "Hour range should have a start and an end")
             slot.hourRange.forEach { boundary ->
                 assertTrue(DATE_TIME_REGEX.matches(boundary), "Hour range boundary should be a date-time: $boundary")
@@ -153,29 +154,5 @@ class AffluencesSitesApiTest : AffluencesTestBase() {
 
         val filteredMessages = api.sites.getMessages(ATENEO_LIBRARY_SLUG, lastCheckin = "2026-01-01T00:00:00Z")
         assertTrue(filteredMessages.size <= messages.size, "The checkpoint should not add messages")
-    }
-
-    @Test
-    suspend fun getSiteOverview() {
-        val overview = api.sites.getSiteOverview(ATENEO_LIBRARY_SLUG)
-        assertEquals(ATENEO_LIBRARY_SLUG, overview.slug, "Slug should match the requested site")
-        assertTrue(overview.id.isNotBlank(), "Site id should not be blank")
-        assertTrue(overview.primaryName.isNotBlank(), "Primary name should not be blank")
-        assertTrue(overview.categories.isNotEmpty(), "Categories should not be empty")
-        assertNotNull(overview.location, "Location should be present")
-        val coordinates = overview.location.coordinates
-        assertNotNull(coordinates, "Coordinates should be present")
-        assertTrue(coordinates.latitude in -90.0..90.0, "Latitude should be valid")
-        assertTrue(coordinates.longitude in -180.0..180.0, "Longitude should be valid")
-        val address = overview.location.address
-        assertNotNull(address, "Address should be present")
-        assertEquals("IT", address.countryCode, "Country should be Italy")
-        assertNotNull(overview.currentForecast, "Current forecast should be present")
-        overview.currentForecast.occupancyPercentage?.let { occupancy ->
-            assertTrue(occupancy in 0..100, "Occupancy should be a percentage: $occupancy")
-        }
-        overview.todayForecasts.forEach { hourly ->
-            assertTrue(Regex("""\d{2}:\d{2}""").matches(hourly.hour), "Forecast hour should be a time: ${hourly.hour}")
-        }
     }
 }

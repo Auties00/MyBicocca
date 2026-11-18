@@ -2,6 +2,7 @@ package it.attendance100.mybicocca.codegen.target.kotlin
 
 import it.attendance100.mybicocca.codegen.model.ApiModule
 import it.attendance100.mybicocca.codegen.model.ApiSpec
+import it.attendance100.mybicocca.codegen.model.AuthRequirement
 import it.attendance100.mybicocca.codegen.model.PrimitiveKind
 import it.attendance100.mybicocca.codegen.model.TypeRef
 
@@ -15,6 +16,8 @@ import it.attendance100.mybicocca.codegen.model.TypeRef
  * | Every enum                      | `…esse3.dto.Esse3EnumTypes.kt`         |
  * | Operations of module `Careers`  | `…esse3.api.Esse3CareersApi`           |
  * | Facade                          | `…esse3.api.Esse3Api`                  |
+ * | Servers, if any                 | `…esse3.api.Esse3Server` (enum)        |
+ * | Auth schemes, if any            | `…esse3.dto.Esse3AuthTypes.kt`         |
  *
  * The runtime the API provides by hand:
  * - `…api.Esse3AbstractApi`: base class of every module, with the `execute*` request helpers.
@@ -32,6 +35,28 @@ internal class KotlinLayout(private val spec: ApiSpec, packageName: String) {
     val abstractApi = "$apiPackage.${spec.prefix}AbstractApi"
     val runtime = "$apiPackage.${spec.prefix}Runtime"
     val roles = "$dtoPackage.${spec.prefix}PermissionLevel"
+    val server = "$apiPackage.${spec.prefix}Server"
+
+    val authFileName = "${spec.prefix}AuthTypes.kt"
+    val authBase = "${spec.prefix}Auth"
+
+    /** The class of the credentials of auth scheme [name]. */
+    fun authClass(name: String): String = "${spec.prefix}${name}Auth"
+
+    /**
+     * The parameter type of [auth]: the scheme's class when there is one, else the interface
+     * every scheme implements.
+     */
+    fun authType(auth: AuthRequirement, file: KotlinFile): String {
+        val type = auth.schemes.singleOrNull()?.let(::authClass) ?: authBase
+        file.import("$dtoPackage.$type")
+        return type
+    }
+
+    fun authDescription(auth: AuthRequirement): String {
+        val schemes = auth.schemes.joinToString(" or ") { "[${authClass(it)}]" }
+        return if (auth.required) "The credentials: $schemes." else "The credentials, if any: $schemes."
+    }
 
     fun recordsFileName(module: ApiModule): String = "${spec.prefix}${module.name}Types.kt"
 
@@ -53,7 +78,9 @@ internal class KotlinLayout(private val spec: ApiSpec, packageName: String) {
             PrimitiveKind.BOOLEAN -> "Boolean"
             PrimitiveKind.LOCAL_DATE -> imported("java.time.LocalDate", file)
             PrimitiveKind.LOCAL_DATE_TIME -> imported("java.time.LocalDateTime", file)
+            PrimitiveKind.LOCAL_TIME -> imported("java.time.LocalTime", file)
             PrimitiveKind.JSON_OBJECT -> imported("kotlinx.serialization.json.JsonObject", file)
+            PrimitiveKind.JSON_VALUE -> imported("kotlinx.serialization.json.JsonElement", file)
             PrimitiveKind.BINARY -> imported("io.ktor.utils.io.ByteReadChannel", file)
         }
     }

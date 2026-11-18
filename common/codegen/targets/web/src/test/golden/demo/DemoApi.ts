@@ -2,15 +2,18 @@
 
 import { DemoClient } from "../client.js";
 import { DemoItemsApi } from "./DemoItemsApi.js";
+import { DemoSearchApi } from "./DemoSearchApi.js";
 import { DemoSharedApi } from "./DemoSharedApi.js";
 
 /** Entry point of the Demo API: one property per module, all sharing one client. */
 export class DemoApi {
   readonly items: DemoItemsApi;
+  readonly search: DemoSearchApi;
   readonly shared: DemoSharedApi;
 
   constructor(readonly client: DemoClient) {
     this.items = new DemoItemsApi(client);
+    this.search = new DemoSearchApi(client);
     this.shared = new DemoSharedApi(client);
   }
 }

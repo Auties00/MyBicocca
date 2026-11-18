@@ -31,14 +31,23 @@ enum class PrimitiveKind {
     /** A date and time without a time zone. */
     LOCAL_DATE_TIME,
 
+    /** A time of day without a time zone. */
+    LOCAL_TIME,
+
     /** An arbitrary JSON object, kept undecoded. */
     JSON_OBJECT,
+
+    /** Any JSON value, kept undecoded. */
+    JSON_VALUE,
 
     /** Raw bytes, streamed when the target supports it. */
     BINARY;
 
     /** Whether values of this kind are dates or times, whose wire format a [Codec.Temporal] can set. */
-    val isTemporal: Boolean get() = this == LOCAL_DATE || this == LOCAL_DATE_TIME
+    val isTemporal: Boolean get() = this == LOCAL_DATE || this == LOCAL_DATE_TIME || this == LOCAL_TIME
+
+    /** Whether values of this kind are JSON strings, numbers or booleans. */
+    val isScalar: Boolean get() = this in setOf(STRING, INT32, INT64, FLOAT32, FLOAT64, BOOLEAN)
 }
 
 /** A named type declared by an API. */
@@ -89,6 +98,12 @@ sealed interface DefaultValue {
 
     /** The zero value of a scalar primitive: an empty string, `0` or `false`. */
     data object Zero : DefaultValue
+
+    /**
+     * A specific value of a scalar primitive or an enum: the text of a string or the wire
+     * value of an enum (unquoted), or a number or boolean as written in JSON.
+     */
+    data class Literal(val value: String) : DefaultValue
 }
 
 /**
@@ -137,6 +152,7 @@ sealed interface Codec {
             fun iso(kind: PrimitiveKind): Temporal = when (kind) {
                 PrimitiveKind.LOCAL_DATE -> Temporal("yyyy-MM-dd", blankAsNull = false)
                 PrimitiveKind.LOCAL_DATE_TIME -> Temporal("yyyy-MM-dd'T'HH:mm:ss", blankAsNull = false)
+                PrimitiveKind.LOCAL_TIME -> Temporal("HH:mm:ss", blankAsNull = false)
                 else -> throw IllegalArgumentException("$kind isn't a date or time")
             }
         }

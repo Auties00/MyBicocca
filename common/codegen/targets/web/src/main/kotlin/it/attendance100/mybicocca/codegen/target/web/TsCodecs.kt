@@ -28,7 +28,9 @@ internal class TsCodecs(private val layout: TsLayout) {
                 PrimitiveKind.BOOLEAN -> "decodeBoolean"
                 PrimitiveKind.LOCAL_DATE -> "decodeLocalDate"
                 PrimitiveKind.LOCAL_DATE_TIME -> "decodeLocalDateTime"
+                PrimitiveKind.LOCAL_TIME -> "decodeLocalTime"
                 PrimitiveKind.JSON_OBJECT -> "decodeJsonObject"
+                PrimitiveKind.JSON_VALUE -> "decodeJsonValue"
                 PrimitiveKind.BINARY -> error("Binary values can't be decoded from JSON")
             },
         )
@@ -38,7 +40,11 @@ internal class TsCodecs(private val layout: TsLayout) {
     fun decode(json: String, type: TypeRef, codec: Codec?, file: TsFile): String = when (codec) {
         is Codec.Temporal -> {
             val kind = (type as TypeRef.Primitive).kind
-            val temporal = if (kind == PrimitiveKind.LOCAL_DATE) "LocalDate" else "LocalDateTime"
+            val temporal = when (kind) {
+                PrimitiveKind.LOCAL_DATE -> "LocalDate"
+                PrimitiveKind.LOCAL_TIME -> "LocalTime"
+                else -> "LocalDateTime"
+            }
             "${runtime(file, "decodeTemporal")}($json, ${runtime(file, temporal)}, ${TsSyntax.string(codec.pattern)}, ${codec.blankAsNull})"
         }
         null -> when (type) {
@@ -66,7 +72,7 @@ internal class TsCodecs(private val layout: TsLayout) {
         }
         is TypeRef.ListOf -> encodeNonNull("item", type.element, file)?.let { "$value.map((item) => $it)" }
         is TypeRef.Primitive -> when (type.kind) {
-            PrimitiveKind.LOCAL_DATE, PrimitiveKind.LOCAL_DATE_TIME -> "${runtime(file, "encodeIsoTemporal")}($value)"
+            PrimitiveKind.LOCAL_DATE, PrimitiveKind.LOCAL_DATE_TIME, PrimitiveKind.LOCAL_TIME -> "${runtime(file, "encodeIsoTemporal")}($value)"
             else -> null
         }
     }

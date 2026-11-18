@@ -1,7 +1,9 @@
 package it.attendance100.mybicocca.codegen.target.kotlin
 
+import it.attendance100.mybicocca.codegen.model.ApiSpec
 import it.attendance100.mybicocca.codegen.model.Codec
 import it.attendance100.mybicocca.codegen.model.DefaultValue
+import it.attendance100.mybicocca.codegen.model.EnumType
 import it.attendance100.mybicocca.codegen.model.Field
 import it.attendance100.mybicocca.codegen.model.PrimitiveKind
 import it.attendance100.mybicocca.codegen.model.RecordType
@@ -10,6 +12,7 @@ import it.attendance100.mybicocca.codegen.target.kotlin.KotlinSyntax.doc
 
 /** Emits records as `@Serializable` data classes. */
 internal class RecordEmitter(
+    private val spec: ApiSpec,
     private val layout: KotlinLayout,
     private val serializers: TemporalSerializers,
 ) {
@@ -40,10 +43,11 @@ internal class RecordEmitter(
     private fun type(field: Field, file: KotlinFile): String =
         layout.render(field.type, file) + if (field.nullable) "?" else ""
 
-    private fun default(field: Field): String = when (field.default) {
+    private fun default(field: Field): String = when (val default = field.default) {
         null -> ""
         DefaultValue.Null -> " = null"
         DefaultValue.EmptyList -> " = emptyList()"
+        is DefaultValue.Literal -> " = " + literal(field.type, default)
         DefaultValue.Zero -> " = " + when ((field.type as TypeRef.Primitive).kind) {
             PrimitiveKind.STRING -> "\"\""
             PrimitiveKind.INT32 -> "0"
@@ -53,6 +57,17 @@ internal class RecordEmitter(
             PrimitiveKind.BOOLEAN -> "false"
             else -> error("Field '${field.name}' can't default to zero")
         }
+    }
+
+    private fun literal(type: TypeRef, literal: DefaultValue.Literal): String = when (type) {
+        is TypeRef.Named -> "${type.name}.${(spec.resolve(type) as EnumType).values.first { it.wireValue == literal.value }.name}"
+        is TypeRef.Primitive -> when (type.kind) {
+            PrimitiveKind.STRING -> KotlinSyntax.string(literal.value)
+            PrimitiveKind.INT64 -> "${literal.value}L"
+            PrimitiveKind.FLOAT32 -> "${literal.value}f"
+            else -> literal.value
+        }
+        is TypeRef.ListOf -> error("Lists can't have a literal default")
     }
 
     /**

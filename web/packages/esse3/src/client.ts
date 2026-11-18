@@ -1,4 +1,4 @@
-import { DecodeError, sendRequest, type RestConfiguration, type RestRequest } from "@mybicocca/data-api-runtime";
+import { DecodeError, sendRequest, unwrapEnvelope, type RestConfiguration, type RestRequest } from "@mybicocca/data-api-runtime";
 
 /** The roles Esse3 operations may require, as declared by their specs. */
 export type Esse3PermissionLevel =
@@ -57,7 +57,7 @@ export class Esse3Client {
 
   async json<T>(request: RestRequest, roles: readonly Esse3PermissionLevel[], decode: (json: unknown) => T | undefined): Promise<T> {
     const response = await this.execute(request, roles);
-    const value = decode(await response.json());
+    const value = decode(unwrapEnvelope(await response.json(), request.envelope ?? []));
     if (value === undefined) throw new DecodeError(`Unexpected response to ${request.method} ${request.path}`);
     return value;
   }
@@ -67,7 +67,7 @@ export class Esse3Client {
     const response = await sendRequest(this.configuration, request);
     if (response.status === 404) return [];
     await ensureSuccess(response, roles);
-    const json: unknown = await response.json();
+    const json = unwrapEnvelope(await response.json(), request.envelope ?? []);
     if (!Array.isArray(json)) throw new DecodeError(`Expected a list in response to ${request.method} ${request.path}`);
     return json.map((item, index) => {
       const value = decodeItem(item);

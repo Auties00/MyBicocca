@@ -1,222 +1,107 @@
 package it.attendance100.mybicocca.data.remote.affluences.api
 
-import io.ktor.client.*
-import io.ktor.client.request.*
-import io.ktor.client.statement.*
-import io.ktor.http.*
-import io.ktor.utils.io.jvm.javaio.*
+import io.ktor.client.HttpClient
+import io.ktor.client.request.HttpRequestBuilder
+import io.ktor.client.request.request
+import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsText
+import io.ktor.http.HttpMethod
+import io.ktor.http.isSuccess
 import it.attendance100.mybicocca.data.remote.affluences.exception.AffluencesException
-import it.attendance100.mybicocca.data.remote.common.exception.ApiRequestException
-import it.attendance100.mybicocca.data.remote.common.util.buildUrl
-import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.contentOrNull
-import kotlinx.serialization.json.decodeFromStream
-import java.time.LocalDate
-import java.time.LocalTime
-import java.time.format.DateTimeFormatter
+import kotlinx.serialization.json.decodeFromJsonElement
+import kotlinx.serialization.json.jsonObject
 
 /**
- * Abstract base class for all Affluences API implementations.
+ * Base class of the generated Affluences modules: sends a request to one of the
+ * [AffluencesServer]s, translates error responses into [AffluencesException] and decodes the
+ * value nested in the response's envelope.
  *
- * This class provides common infrastructure for making requests to the Affluences backends
- * and translating error responses into exceptions:
- * - Structured error bodies become [AffluencesException]
- * - Unparsable error bodies become [ApiRequestException]
- *
- * @param client The shared [HttpClient] instance for making HTTP requests
- * @param json The shared [Json] instance for decoding responses
+ * @param basePath Path prefix of every operation of the module (empty for Affluences).
  */
 abstract class AffluencesAbstractApi(
     protected val client: HttpClient,
-    protected val json: Json
+    @PublishedApi internal val json: Json,
+    private val basePath: String,
 ) {
-    companion object {
-        /**
-         * Base URL of the app API v3, used for search and discovery.
-         */
-        const val APP_API_V3_URL = "https://api.affluences.com/app/v3"
+    protected suspend inline fun <reified T> executeJsonGet(
+        endpoint: String,
+        server: AffluencesServer,
+        envelope: List<String> = emptyList(),
+        noinline block: HttpRequestBuilder.() -> Unit = {},
+    ): T = decode(send(HttpMethod.Get, server, endpoint, block), envelope)
 
-        /**
-         * Base URL of the app API v4, used for site pages.
-         */
-        const val APP_API_V4_URL = "https://api.affluences.com/app/v4"
+    protected suspend inline fun <reified T> executeJsonGetList(
+        endpoint: String,
+        server: AffluencesServer,
+        envelope: List<String> = emptyList(),
+        noinline block: HttpRequestBuilder.() -> Unit = {},
+    ): List<T> = decode(send(HttpMethod.Get, server, endpoint, block), envelope)
 
-        /**
-         * Base URL of the reservation API, used for resources and bookings.
-         */
-        const val RESERVATION_API_URL = "https://reservation.affluences.com/api"
+    protected suspend inline fun <reified T> executeJsonPost(
+        endpoint: String,
+        server: AffluencesServer,
+        envelope: List<String> = emptyList(),
+        noinline block: HttpRequestBuilder.() -> Unit = {},
+    ): T = decode(send(HttpMethod.Post, server, endpoint, block), envelope)
 
-        /**
-         * Name of the header carrying the per-install device api key minted by check-in.
-         */
-        const val USER_IDENTIFIER_HEADER = "user-identifier"
+    protected suspend inline fun <reified T> executeJsonPostList(
+        endpoint: String,
+        server: AffluencesServer,
+        envelope: List<String> = emptyList(),
+        noinline block: HttpRequestBuilder.() -> Unit = {},
+    ): List<T> = decode(send(HttpMethod.Post, server, endpoint, block), envelope)
 
-        /**
-         * Fixed header set identifying the caller as the Affluences mobile app.
-         *
-         * The account-scoped endpoints gate on these headers rather than the user agent. Sending
-         * them (together with [USER_IDENTIFIER_HEADER] and a Bearer `auth_token`) on a reservation
-         * request makes it an authenticated booking, which the server confirms without the email
-         * validation step.
-         */
-        val MOBILE_APP_HEADERS: Map<String, String> = mapOf(
-            "x-app-version" to "202605190",
-            "x-device-type" to "android",
-            "x-service-name" to "mobile_app",
+    protected suspend inline fun <reified T> executeJsonDelete(
+        endpoint: String,
+        server: AffluencesServer,
+        envelope: List<String> = emptyList(),
+        noinline block: HttpRequestBuilder.() -> Unit = {},
+    ): T = decode(send(HttpMethod.Delete, server, endpoint, block), envelope)
+
+    /** Sends the request and returns its body as JSON, throwing on an error status. */
+    @PublishedApi
+    internal suspend fun send(
+        method: HttpMethod,
+        server: AffluencesServer,
+        endpoint: String,
+        block: HttpRequestBuilder.() -> Unit,
+    ): JsonElement {
+        val response = client.request(server.url.trimEnd('/') + basePath + endpoint) {
+            this.method = method
+            block()
+        }
+        val body = response.bodyAsText()
+        if (!response.status.isSuccess()) throw error(response, body)
+        return json.parseToJsonElement(body)
+    }
+
+    @PublishedApi
+    internal inline fun <reified T> decode(body: JsonElement, envelope: List<String>): T =
+        json.decodeFromJsonElement(envelope.fold(body) { value, key -> value.jsonObject[key] ?: JsonObject(emptyMap()) })
+
+    /**
+     * Reads the error envelope of a failed response. The two backends use different ones:
+     * - App API: `{"error": {"code": "…", "message": "…"}}`
+     * - Reservation API: `{"error": "…", "errorMessage": "…"}`, or `error_message`
+     */
+    private fun error(response: HttpResponse, body: String): AffluencesException {
+        val envelope = runCatching { json.parseToJsonElement(body) }.getOrNull() as? JsonObject
+        val (code, message) = when (val error = envelope?.get("error")) {
+            is JsonObject -> error.string("code") to error.string("message")
+            is JsonPrimitive -> error.contentOrNull to (envelope.string("errorMessage") ?: envelope.string("error_message"))
+            else -> null to null
+        }
+        return AffluencesException(
+            statusCode = response.status.value,
+            errorCode = code,
+            errorMessage = message ?: code ?: "Request failed with status ${response.status.value}",
         )
-
-        /**
-         * Date format used by the Affluences APIs (yyyy-MM-dd).
-         */
-        private val DATE_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-
-        /**
-         * Time format used by the Affluences APIs (HH:mm).
-         */
-        private val TIME_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
-
-        /**
-         * Formats a date to the Affluences format (yyyy-MM-dd).
-         *
-         * @param date The date to format
-         * @return The formatted date string
-         */
-        fun formatDate(date: LocalDate): String = date.format(DATE_FORMAT)
-
-        /**
-         * Formats a time to the Affluences format (HH:mm).
-         *
-         * @param time The time to format
-         * @return The formatted time string
-         */
-        fun formatTime(time: LocalTime): String = time.format(TIME_FORMAT)
     }
 
-    /**
-     * Executes a GET request and returns the response body as a deserialized JSON type.
-     *
-     * @param T The JSON type to deserialize the response into
-     * @param baseUrl The base URL of the target backend
-     * @param path The request path (relative to [baseUrl])
-     * @param queryParams Query parameters to append to the URL
-     * @param headers Additional headers to send with the request
-     * @return The deserialized response body
-     * @throws AffluencesException When the server rejects the request with a structured error
-     * @throws ApiRequestException When the server rejects the request without a structured error
-     */
-    protected suspend inline fun <reified T> executeGet(
-        baseUrl: String,
-        path: String,
-        queryParams: Map<String, Any> = emptyMap(),
-        headers: Map<String, String> = emptyMap()
-    ): T {
-        val response = client.get(buildUrl(baseUrl, path, queryParams)) {
-            headers.forEach { (name, value) -> header(name, value) }
-        }
-        return decodeOrThrow(response)
-    }
-
-    /**
-     * Executes a POST request with a JSON body and returns the response body as a deserialized
-     * JSON type.
-     *
-     * @param T The JSON type to deserialize the response into
-     * @param baseUrl The base URL of the target backend
-     * @param path The request path (relative to [baseUrl])
-     * @param body The request body, serialized as JSON
-     * @param headers Additional headers to send with the request
-     * @return The deserialized response body
-     * @throws AffluencesException When the server rejects the request with a structured error
-     * @throws ApiRequestException When the server rejects the request without a structured error
-     */
-    protected suspend inline fun <reified T> executePost(
-        baseUrl: String,
-        path: String,
-        body: Any,
-        headers: Map<String, String> = emptyMap()
-    ): T {
-        val response = client.post(buildUrl(baseUrl, path)) {
-            contentType(ContentType.Application.Json)
-            setBody(body)
-            headers.forEach { (name, value) -> header(name, value) }
-        }
-        return decodeOrThrow(response)
-    }
-
-    /**
-     * Executes a DELETE request and returns the response body as a deserialized JSON type.
-     *
-     * @param T The JSON type to deserialize the response into
-     * @param baseUrl The base URL of the target backend
-     * @param path The request path (relative to [baseUrl])
-     * @param queryParams Query parameters to append to the URL
-     * @return The deserialized response body
-     * @throws AffluencesException When the server rejects the request with a structured error
-     * @throws ApiRequestException When the server rejects the request without a structured error
-     */
-    protected suspend inline fun <reified T> executeDelete(
-        baseUrl: String,
-        path: String,
-        queryParams: Map<String, Any> = emptyMap()
-    ): T {
-        val response = client.delete(buildUrl(baseUrl, path, queryParams))
-        return decodeOrThrow(response)
-    }
-
-    /**
-     * Deserializes a successful response, or translates an error response into an exception.
-     *
-     * @param T The JSON type to deserialize the response into
-     * @param response The HTTP response to process
-     * @return The deserialized response body
-     * @throws AffluencesException When the response carries a structured error
-     * @throws ApiRequestException When the response status is not successful and the body is not
-     * a structured error
-     */
-    @OptIn(ExperimentalSerializationApi::class)
-    protected suspend inline fun <reified T> decodeOrThrow(response: HttpResponse): T {
-        if (!response.status.isSuccess()) {
-            throwApiError(response)
-        }
-        return json.decodeFromStream(response.bodyAsChannel().toInputStream())
-    }
-
-    /**
-     * Translates an error response into the most specific exception possible.
-     *
-     * Two structured error envelopes are recognized:
-     * - App API: `{"error": {"code": "...", "message": "..."}}`
-     * - Reservation API: `{"error": "...", "errorMessage": "..."}`
-     *
-     * @param response The failed HTTP response
-     * @throws AffluencesException When the body matches a structured error envelope
-     * @throws ApiRequestException Otherwise
-     */
-    protected suspend fun throwApiError(response: HttpResponse): Nothing {
-        val errorObject = runCatching { json.parseToJsonElement(response.bodyAsText()) }
-            .getOrNull() as? JsonObject
-        when (val error = errorObject?.get("error")) {
-            is JsonObject -> {
-                val code = (error["code"] as? JsonPrimitive)?.contentOrNull
-                val message = (error["message"] as? JsonPrimitive)?.contentOrNull
-                if (code != null || message != null) {
-                    throw AffluencesException(code, message ?: "Request failed with error code: $code")
-                }
-            }
-
-            is JsonPrimitive -> {
-                if (error.isString) {
-                    val message = (errorObject["errorMessage"] as? JsonPrimitive)?.contentOrNull
-                    throw AffluencesException(error.content, message ?: error.content)
-                }
-            }
-
-            else -> {
-            }
-        }
-        throw ApiRequestException(response.status.value)
-    }
+    private fun JsonObject.string(key: String): String? = (get(key) as? JsonPrimitive)?.contentOrNull
 }
