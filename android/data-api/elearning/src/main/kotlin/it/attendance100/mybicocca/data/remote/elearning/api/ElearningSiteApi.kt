@@ -4,13 +4,12 @@ import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.http.*
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningGetPublicConfigResponse
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningGetSiteInfoRequest
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningGetSiteInfoResponse
 import kotlinx.serialization.json.*
 
 /**
- * API for site-level operations and authentication.
+ * API for site-level operations.
  *
  * @param client The shared [HttpClient] instance
  * @param json The shared [Json] instance

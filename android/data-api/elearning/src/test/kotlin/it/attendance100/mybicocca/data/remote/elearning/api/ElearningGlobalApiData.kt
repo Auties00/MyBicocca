@@ -1,20 +1,18 @@
 package it.attendance100.mybicocca.data.remote.elearning.api
 
 import io.ktor.client.plugins.logging.*
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningLoginResponse
 import kotlinx.coroutines.runBlocking
-import org.junit.jupiter.api.Assertions.fail
 import org.junit.jupiter.api.extension.BeforeAllCallback
 import org.junit.jupiter.api.extension.ExtensionContext
 
+/**
+ * Shared state for the live suites. Logging in is the app's job, so the suites take an already
+ * minted web service token from `ELEARNING_WS_TOKEN`.
+ */
 object ElearningGlobalApiData : BeforeAllCallback, AutoCloseable {
-    val username: String
-        get() = System.getenv("ELEARNING_USERNAME")
-            ?: throw IllegalStateException("Missing username: set ELEARNING_USERNAME environment variable")
-
-    val password: String
-        get() = System.getenv("ELEARNING_PASSWORD")
-            ?: throw IllegalStateException("Missing username: set ELEARNING_PASSWORD environment variable")
+    val wsToken: String
+        get() = System.getenv("ELEARNING_WS_TOKEN")
+            ?: throw IllegalStateException("Missing token: set ELEARNING_WS_TOKEN environment variable")
 
     var session: ElearningAuthSession? = null
     var profile: ElearningUserProfile? = null
@@ -31,22 +29,13 @@ object ElearningGlobalApiData : BeforeAllCallback, AutoCloseable {
         }
 
         if (session == null) {
-            runBlocking {
-                session = performLogin(api!!)
-            }
+            session = ElearningAuthSession(wsToken)
         }
 
         if (profile == null) {
             runBlocking {
                 profile = fetchUserProfile(api!!, session!!)
             }
-        }
-    }
-
-    private suspend fun performLogin(api: ElearningApi): ElearningAuthSession {
-        return when (val result = api.auth.login(username, password)) {
-            is ElearningLoginResponse.Error -> fail(result.message)
-            is ElearningLoginResponse.Success -> result.toSession()
         }
     }
 
@@ -63,6 +52,4 @@ object ElearningGlobalApiData : BeforeAllCallback, AutoCloseable {
         api?.close()
     }
 }
-
-fun ElearningLoginResponse.Success.toSession(): ElearningAuthSession = ElearningAuthSession(wsToken)
 
