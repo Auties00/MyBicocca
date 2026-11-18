@@ -140,16 +140,27 @@ class LiveShapes(catalog: String, private val report: LiveReport) {
 
     fun check(shape: String, response: Observed, envelope: List<String>, variable: String?) {
         val body = response.body ?: return
-        val text = if (variable != null) scriptVariable(body, variable) ?: return else body
-        var value = runCatching { Json.parseToJsonElement(text) }.getOrNull() ?: return
+        val parsed = if (variable != null) scriptVariable(body, variable) else runCatching { Json.parseToJsonElement(body) }.getOrNull()
+        var value = parsed ?: return
         for (key in envelope) value = (value as? JsonObject)?.get(key) ?: return
         visit(value, Json.parseToJsonElement(shape).jsonObject, "", "")
     }
 
-    private fun scriptVariable(script: String, variable: String): String? = script.lineSequence()
-        .map { line -> listOf("var ", "let ", "const ").fold(line.trim()) { statement, keyword -> statement.removePrefix(keyword) } }
-        .firstOrNull { it.startsWith("$variable =") }
-        ?.removePrefix("$variable =")?.trim()?.removeSuffix(";")
+    /**
+     * The JSON a script assigns to [variable]. Other statements may follow the assignment on its
+     * line, so the value ends at a `;` only where what precedes it is whole JSON; searching from the
+     * end tries those statements first.
+     */
+    private fun scriptVariable(script: String, variable: String): JsonElement? {
+        val value = script.lineSequence()
+            .map { line -> listOf("var ", "let ", "const ").fold(line.trim()) { statement, keyword -> statement.removePrefix(keyword) } }
+            .firstOrNull { it.startsWith("$variable =") }
+            ?.removePrefix("$variable =")
+            ?.trim()
+            ?: return null
+        return generateSequence(value.length) { end -> value.lastIndexOf(';', end - 1).takeIf { it > 0 } }
+            .firstNotNullOfOrNull { end -> runCatching { Json.parseToJsonElement(value.substring(0, end)) }.getOrNull() }
+    }
 
     private fun visit(value: JsonElement, shape: JsonObject, type: String, field: String) {
         if (value == JsonNull) return

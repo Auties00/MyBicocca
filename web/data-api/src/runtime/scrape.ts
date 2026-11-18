@@ -20,6 +20,22 @@ function queryRoot(node: ScrapeNode | undefined): ParentNode | undefined {
   return type === Node.ELEMENT_NODE || type === Node.DOCUMENT_NODE ? (node as unknown as ParentNode) : undefined;
 }
 
+/**
+ * The JSON value `text` starts with, which other statements may follow. The value ends at a `;`
+ * only where what precedes it is whole JSON; a `;` inside a string leaves it cut short. Searching
+ * from the end tries the few statements after the value first.
+ */
+function firstJsonValue(text: string): unknown {
+  for (let end = text.length; ; end = text.lastIndexOf(";", end - 1)) {
+    if (end <= 0) return JSON.parse(text);
+    try {
+      return JSON.parse(text.slice(0, end));
+    } catch {
+      // Not whole yet: try the previous `;`.
+    }
+  }
+}
+
 function asElement(node: ScrapeNode | undefined): Element | undefined {
   return node !== undefined && node.nodeType === Node.ELEMENT_NODE ? (node as Element) : undefined;
 }
@@ -53,8 +69,9 @@ export const scrape = {
   },
 
   /**
-   * The JSON a script assigns to `variable` on a line of its own, declaring it (`var name = [...];`)
-   * or not (`window.name = {...};`), or `undefined` when it assigns none.
+   * The JSON a script assigns to `variable` at the start of a line, declaring it
+   * (`var name = [...];`) or not (`window.name = {...};`), or `undefined` when it assigns none.
+   * Other statements may follow the assignment on its line.
    */
   scriptVariable(script: string, variable: string): unknown {
     const prefix = `${variable} =`;
@@ -63,7 +80,7 @@ export const scrape = {
       .map((candidate) => candidate.trim().replace(/^(var|let|const) /, ""))
       .find((candidate) => candidate.startsWith(prefix));
     if (line === undefined) return undefined;
-    return JSON.parse(line.slice(prefix.length).trim().replace(/;$/, ""));
+    return firstJsonValue(line.slice(prefix.length).trim());
   },
 
   select(node: ScrapeNode | undefined, selector: string): ScrapeNode | undefined {

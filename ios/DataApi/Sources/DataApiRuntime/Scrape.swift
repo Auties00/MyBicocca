@@ -22,8 +22,9 @@ public enum Scrape {
         try? SwiftSoup.parseBodyFragment(html)
     }
 
-    /// The JSON a script assigns to `variable` on a line of its own, declaring it
+    /// The JSON a script assigns to `variable` at the start of a line, declaring it
     /// (`var name = [...];`) or not (`window.name = {...};`), or nil when it assigns none.
+    /// Other statements may follow the assignment on its line.
     public static func scriptVariable(_ script: String, _ variable: String) -> Data? {
         let prefix = "\(variable) ="
         let statements = script.split(whereSeparator: \.isNewline).map { line in
@@ -32,9 +33,16 @@ public enum Scrape {
             }
         }
         guard let line = statements.first(where: { $0.hasPrefix(prefix) }) else { return nil }
-        var json = line.dropFirst(prefix.count).trimmingCharacters(in: .whitespaces)
-        if json.hasSuffix(";") { json.removeLast() }
-        return Data(json.utf8)
+        let value = line.dropFirst(prefix.count).trimmingCharacters(in: .whitespaces)
+        // The value ends at a `;` only where what precedes it is whole JSON; a `;` inside a string
+        // leaves it cut short. Searching from the end tries the few statements after the value first.
+        var end = value.endIndex
+        while true {
+            let candidate = Data(value[..<end].utf8)
+            if (try? JSONSerialization.jsonObject(with: candidate, options: .fragmentsAllowed)) != nil { return candidate }
+            guard let separator = value[..<end].lastIndex(of: ";") else { return Data(value.utf8) }
+            end = separator
+        }
     }
 
     public static func select(_ node: ScrapeNode?, _ selector: String) -> ScrapeNode? {

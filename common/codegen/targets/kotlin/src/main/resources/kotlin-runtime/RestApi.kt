@@ -17,9 +17,12 @@ import io.ktor.http.contentType
 import io.ktor.utils.io.ByteReadChannel
 import kotlinx.coroutines.delay
 import kotlinx.serialization.DeserializationStrategy
+import kotlinx.serialization.ExperimentalSerializationApi
+import kotlinx.serialization.json.DecodeSequenceMode
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.decodeToSequence
 import kotlinx.serialization.json.jsonObject
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Node
@@ -104,6 +107,7 @@ abstract class RestApi(
      *
      * @throws HtmlParsingException If no line assigns [variable].
      */
+    @OptIn(ExperimentalSerializationApi::class)
     protected suspend fun <T> script(
         method: HttpMethod,
         endpoint: String,
@@ -119,7 +123,12 @@ abstract class RestApi(
             .map { line -> DECLARATION_KEYWORDS.fold(line.trim()) { statement, keyword -> statement.removePrefix(keyword) } }
             .firstOrNull { it.startsWith(prefix) }
             ?: throw HtmlParsingException("${received.url} assigns no '$variable'")
-        return json.decodeFromJsonElement(deserializer, json.parseToJsonElement(assignment.removePrefix(prefix).trim().removeSuffix(";")))
+        // Only the first JSON value: another statement may follow the assignment on its line.
+        return json.decodeToSequence(
+            assignment.removePrefix(prefix).byteInputStream(),
+            deserializer,
+            DecodeSequenceMode.WHITESPACE_SEPARATED,
+        ).first()
     }
 
     /**

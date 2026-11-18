@@ -293,9 +293,26 @@ function scriptVariable(script: string, variable: string): string | undefined {
   for (const line of script.split("\n")) {
     let statement = line.trim();
     for (const keyword of ["var ", "let ", "const "]) if (statement.startsWith(keyword)) statement = statement.slice(keyword.length);
-    if (statement.startsWith(prefix)) return statement.slice(prefix.length).trim().replace(/;$/, "");
+    if (statement.startsWith(prefix)) return firstJsonText(statement.slice(prefix.length).trim());
   }
   return undefined;
+}
+
+/**
+ * The JSON value `text` starts with, which other statements may follow: it ends at a `;` only
+ * where what precedes it is whole JSON. Searching from the end tries the statements after it first.
+ */
+function firstJsonText(text: string): string {
+  for (let end = text.length; end > 0; end = text.lastIndexOf(";", end - 1)) {
+    const candidate = text.slice(0, end);
+    try {
+      JSON.parse(candidate);
+      return candidate;
+    } catch {
+      // Not whole yet: try the previous `;`.
+    }
+  }
+  return text;
 }
 
 /**
