@@ -251,6 +251,7 @@ abstract class RestApi(
         /** Keywords a script may declare a variable with, before its name. */
         val DECLARATION_KEYWORDS = listOf("var ", "let ", "const ")
 
-        val PLACEHOLDER = Regex("""\{([^}]+)}""")
+        // Both braces escaped: Android's ICU regex engine rejects a bare "}", which the JVM accepts.
+        val PLACEHOLDER = Regex("""\{([^}]+)\}""")
     }
 }
