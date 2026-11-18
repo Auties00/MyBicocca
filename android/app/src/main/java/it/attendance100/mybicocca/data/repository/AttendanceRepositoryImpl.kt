@@ -13,7 +13,7 @@ import it.attendance100.mybicocca.data.mapper.calendar.normalizeSubjectName
 import it.attendance100.mybicocca.data.remote.easystaff.api.EasyStaffApi
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffAttendanceHistoryRequest
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffAttendanceRecord
-import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffCertifyAttendanceRequest
+import it.attendance100.mybicocca.data.easystaff.certifyAttendanceRequest
 import it.attendance100.mybicocca.data.elearning.ElearningAttendanceMarkResult
 import it.attendance100.mybicocca.data.elearning.ElearningAttendanceMarkableSession
 import it.attendance100.mybicocca.data.elearning.ElearningAttendanceSubmittableSession
@@ -430,7 +430,7 @@ class AttendanceRepositoryImpl @Inject constructor(
         val location = locationProvider.lastKnownLatLong()
         return runCatching {
             easyStaffApi.attendance.certifyAttendance(
-                EasyStaffCertifyAttendanceRequest(
+                certifyAttendanceRequest(
                     studentId = studentNumber,
                     lessonCode = lessonCode,
                     deviceToken = deviceId,

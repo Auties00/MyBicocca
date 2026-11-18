@@ -18,7 +18,7 @@
   ],
   "targets": {
     "kotlin": {
-      "outputDir": "../../../android/data-api/esse3/src/main/kotlin",
+      "outputDir": "../../../android/data-api/src/main/kotlin",
       "options": {
         "packageName": "it.attendance100.mybicocca.data.remote.esse3",
         "temporalSerializers": [

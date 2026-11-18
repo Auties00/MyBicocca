@@ -16,9 +16,9 @@ import it.attendance100.mybicocca.data.mapper.appointment.toReservationRequest
 import it.attendance100.mybicocca.data.remote.easystaff.api.EasyStaffPlanningApi
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningEntryFilters
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningIdReference
-import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningPortal
+import it.attendance100.mybicocca.data.easystaff.EasyStaffPlanningPortal
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningReservationDeletion
-import it.attendance100.mybicocca.data.remote.easystaff.dto.entryId
+import it.attendance100.mybicocca.data.easystaff.entryId
 import it.attendance100.mybicocca.data.remote.easystaff.exception.EasyStaffPlanningException
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentForm
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentMonthAvailability
