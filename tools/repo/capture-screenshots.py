@@ -5,10 +5,10 @@ Builds and installs the demo variant, pins the status bar, then walks the catalo
 android/app/src/demo/assets/screenshots.json and saves one PNG per shot, per language, per
 palette and per light/dark mode.
 
-    python scripts/capture-screenshots.py
-    python scripts/capture-screenshots.py --modes dark --only Screenshot_Fees
-    python scripts/capture-screenshots.py --palettes Default Oceano Bosco
-    python scripts/capture-screenshots.py --languages en
+    python tools/repo/capture-screenshots.py
+    python tools/repo/capture-screenshots.py --modes dark --only Screenshot_Fees
+    python tools/repo/capture-screenshots.py --palettes Default Oceano Bosco
+    python tools/repo/capture-screenshots.py --languages en
 
 Output goes to screenshots/demo/<language>/<light|dark>/, with other palettes in
 <language>/<palette>-<mode>/. Languages default to every one the app declares.
@@ -26,7 +26,7 @@ import sys
 import time
 from pathlib import Path
 
-REPO = Path(__file__).resolve().parent.parent
+REPO = Path(__file__).resolve().parents[2]
 ANDROID = REPO / "android"
 CATALOG = ANDROID / "app/src/demo/assets/screenshots.json"
 APK_DIR = ANDROID / "app/build/outputs/apk/demo"
