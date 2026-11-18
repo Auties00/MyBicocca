@@ -25,12 +25,12 @@ internal class TsServiceEmitter(
     private val scrapers: TsScrapeEmitter,
 ) {
     fun emit(module: ApiModule, file: TsFile) {
-        file.import(layout.client, layout.clientModule)
+        file.importFile(layout.client, layout.clientFile)
         file.body.block("export class ${layout.serviceName(module)} {") {
             if (spec.parameters.isEmpty()) {
                 line("constructor(private readonly client: ${layout.client}) {}")
             } else {
-                file.import(layout.parameters, layout.moduleOf(layout.parametersFile))
+                file.importFile(layout.parameters, layout.parametersFile)
                 commaListOrLine(
                     "constructor(",
                     listOf("private readonly client: ${layout.client}", "private readonly parameters: ${layout.parameters}"),
@@ -92,7 +92,7 @@ internal class TsServiceEmitter(
                     "return this.client.script" to listOf(TsSyntax.string(response.variable), codecs.decoder(response.type, file))
                 is ResponseBody.Html -> {
                     val function = scrapers.responseFunction(module, operation)
-                    file.import(function, layout.moduleOf(scrapers.fileName))
+                    file.importFile(function, scrapers.fileName)
                     "return this.client.html" to listOf(function)
                 }
             }
@@ -126,7 +126,7 @@ internal class TsServiceEmitter(
         }
         operation.auth?.let { line(if (it.required) "auth: $AUTH," else "auth: $OPTIONS.$AUTH,") }
         operation.server?.let { server ->
-            file.import(layout.server, layout.moduleOf(layout.serverFile))
+            file.importFile(layout.server, layout.serverFile)
             line("server: ${layout.server}.$server,")
         }
         val envelope = (operation.response as? ResponseBody.Json)?.envelope.orEmpty()

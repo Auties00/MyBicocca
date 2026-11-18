@@ -111,7 +111,7 @@ internal class TsRecordEmitter(private val layout: TsLayout, private val codecs:
         if (field.codec is Codec.EmbeddedHtml) {
             // Lists read as empty and other values as null from a blank fragment, so neither needs a default.
             val read = layout.htmlFunction(record, field)
-            file.import(read, layout.moduleOf(layout.scrapersFile))
+            file.importFile(read, layout.scrapersFile)
             val decoded = "${codecs.runtime(file, "decodeEmbeddedHtml")}($json, $read)"
             return if (field.type is TypeRef.ListOf) "$decoded ?? []" else "$decoded ?? null"
         }
