@@ -1806,3 +1806,32 @@ sealed interface Esse3TypologyCode {
         }
     }
 }
+
+/** The kind of a self-declaration, by Esse3's code. */
+@Serializable(with = Esse3CertificateType.Serializer::class)
+sealed interface Esse3CertificateType {
+    val value: String
+
+    data object Enrolment : Esse3CertificateType { override val value = "I" }
+    data object DegreeAward : Esse3CertificateType { override val value = "L" }
+    data object TuitionFees : Esse3CertificateType { override val value = "TAX" }
+    data class Unknown(override val value: String) : Esse3CertificateType
+
+    object Serializer : KSerializer<Esse3CertificateType> {
+        override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("Esse3CertificateType", PrimitiveKind.STRING)
+
+        override fun deserialize(decoder: Decoder): Esse3CertificateType {
+            val raw = decoder.decodeString()
+            return when (raw) {
+                "I" -> Enrolment
+                "L" -> DegreeAward
+                "TAX" -> TuitionFees
+                else -> Unknown(raw)
+            }
+        }
+
+        override fun serialize(encoder: Encoder, value: Esse3CertificateType) {
+            encoder.encodeString(value.value)
+        }
+    }
+}

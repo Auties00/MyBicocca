@@ -1,4 +1,12 @@
-import { DecodeError, sendRequest, unwrapEnvelope, type RestConfiguration, type RestRequest } from "@mybicocca/data-api-runtime";
+import {
+  DecodeError,
+  scrapeResponse,
+  sendRequest,
+  unwrapEnvelope,
+  type RestConfiguration,
+  type RestRequest,
+  type ScrapeNode,
+} from "@mybicocca/data-api-runtime";
 
 /** The roles Esse3 operations may require, as declared by their specs. */
 export type Esse3PermissionLevel =
@@ -44,7 +52,10 @@ export class Esse3Error extends Error {
   }
 }
 
-/** Sends the generated Esse3 operations' requests and decodes responses and errors. */
+/**
+ * Sends the generated Esse3 operations' requests and decodes responses and errors: the REST API's
+ * JSON, and the web portal's pages, read by one of the scrapers.
+ */
 export class Esse3Client {
   static readonly defaultBaseUrl = "https://s3w.si.unimib.it/e3rest/api";
 
@@ -79,6 +90,10 @@ export class Esse3Client {
   async bytes(request: RestRequest, roles: readonly Esse3PermissionLevel[]): Promise<Uint8Array> {
     const response = await this.execute(request, roles);
     return new Uint8Array(await response.arrayBuffer());
+  }
+
+  async html<T>(request: RestRequest, roles: readonly Esse3PermissionLevel[], scrape: (document: ScrapeNode) => T | undefined): Promise<T> {
+    return scrapeResponse(await this.execute(request, roles), scrape);
   }
 
   async send(request: RestRequest, roles: readonly Esse3PermissionLevel[]): Promise<void> {

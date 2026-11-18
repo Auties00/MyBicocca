@@ -17,13 +17,25 @@ import kotlin.io.path.readText
  * }
  * ```
  *
+ * An API described by several specs, such as a REST API and the web pages of the same site, lists
+ * a reader for each under `readers` instead; their parts are merged into one API (see
+ * [it.attendance100.mybicocca.codegen.model.ApiSpec.merge]).
+ *
  * Output directories are relative to the file.
  */
 @Serializable
 data class CodegenConfig(
-    val reader: ReaderConfig,
+    val reader: ReaderConfig? = null,
+    val readers: List<ReaderConfig> = emptyList(),
     val targets: Map<String, TargetConfig>,
 ) {
+    init {
+        require((reader == null) != readers.isEmpty()) { "Set either reader or readers in ${FILE_NAME}" }
+    }
+
+    /** The readers of the API's specs, in order. */
+    val specReaders: List<ReaderConfig> get() = readers.ifEmpty { listOfNotNull(reader) }
+
     companion object {
         const val FILE_NAME = "codegen.json"
 

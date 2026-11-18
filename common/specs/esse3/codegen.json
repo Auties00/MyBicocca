@@ -1,7 +1,15 @@
 {
-  "reader": {
-    "type": "esse3"
-  },
+  "readers": [
+    {
+      "type": "esse3"
+    },
+    {
+      "type": "openapi",
+      "options": {
+        "spec": "web/certificates.yaml"
+      }
+    }
+  ],
   "targets": {
     "kotlin": {
       "outputDir": "../../../android/data-api/esse3/src/main/kotlin",

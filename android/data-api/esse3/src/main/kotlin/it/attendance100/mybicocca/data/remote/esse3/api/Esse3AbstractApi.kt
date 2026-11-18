@@ -6,18 +6,22 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.utils.io.*
+import it.attendance100.mybicocca.data.remote.common.exception.HtmlParsingException
 import it.attendance100.mybicocca.data.remote.common.util.buildUrl
 import it.attendance100.mybicocca.data.remote.common.util.isRedirect
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3ErrorResponse
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3PermissionLevel
 import it.attendance100.mybicocca.data.remote.esse3.exception.Esse3Exception
 import kotlinx.serialization.json.Json
+import org.jsoup.Jsoup
+import org.jsoup.nodes.Node
 
 /**
- * Abstract base class for all ESSE3 REST API implementations.
+ * Abstract base class for all ESSE3 API implementations.
  *
  * This class provides the common infrastructure for making requests to the
- * ESSE3 REST API. Each concrete API implementation specifies its own service
+ * ESSE3 REST API, and to the web portal pages the REST API doesn't cover, which name their
+ * [Esse3Server]. Each concrete API implementation specifies its own service
  * base path (e.g., `/libretto-service-v2`).
  *
  * @param client The shared [HttpClient] instance for making HTTP requests
@@ -37,11 +41,12 @@ abstract class Esse3AbstractApi(
     }
 
     /**
-     * Builds the full URL for a given endpoint, prepending the service base path.
+     * Builds the full URL for a given endpoint, prepending the service base path, on [server],
+     * or on the REST API when null.
      */
     @PublishedApi
-    internal fun buildServiceUrl(endpoint: String): String {
-        return buildUrl(BASE_URL, "$serviceBasePath$endpoint")
+    internal fun buildServiceUrl(endpoint: String, server: Esse3Server? = null): String {
+        return buildUrl(server?.url ?: BASE_URL, "$serviceBasePath$endpoint")
     }
 
     /**
@@ -291,14 +296,35 @@ abstract class Esse3AbstractApi(
     protected suspend inline fun executeStreamGet(
         endpoint: String,
         expectedPermissionLevels: Set<Esse3PermissionLevel> = emptySet(),
+        server: Esse3Server? = null,
         block: HttpRequestBuilder.() -> Unit = {}
     ): ByteReadChannel {
-        val response = client.get(buildServiceUrl(endpoint)) {
+        val response = client.get(buildServiceUrl(endpoint, server)) {
             accept(ContentType.Application.OctetStream)
             block()
         }
         ensureSuccess(response, expectedPermissionLevels)
         return response.bodyAsChannel()
+    }
+
+    /**
+     * Executes a GET request for a web portal page and returns what [scrape] reads from it,
+     * parsed with the request URL as its base.
+     *
+     * @throws HtmlParsingException If [scrape] finds nothing, typically because the page changed
+     */
+    protected suspend fun <T> executeHtmlGet(
+        endpoint: String,
+        expectedPermissionLevels: Set<Esse3PermissionLevel> = emptySet(),
+        server: Esse3Server? = null,
+        scrape: (Node) -> T?,
+        block: HttpRequestBuilder.() -> Unit = {}
+    ): T {
+        val response = client.get(buildServiceUrl(endpoint, server), block)
+        ensureSuccess(response, expectedPermissionLevels)
+        val url = response.request.url.toString()
+        return scrape(Jsoup.parse(response.bodyAsText(), url))
+            ?: throw HtmlParsingException("$url doesn't hold what was expected; the page may have changed")
     }
 
     /**

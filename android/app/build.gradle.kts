@@ -310,7 +310,6 @@ dependencies {
     implementation("androidx.compose.animation:animation-graphics:1.11.4")
     // Data API modules
     implementation("it.attendance100.mybicocca.data.remote:esse3:0.1")
-    implementation("it.attendance100.mybicocca.data.remote:esse3-scraper:0.1") // Legacy Esse3 web-scrape client (Shibboleth SAML cookie session) for the flows with no REST surface(autocertificazioni)
     implementation("it.attendance100.mybicocca.data.remote:easystaff:0.1")
     implementation("it.attendance100.mybicocca.data.remote:affluences:0.1")
     implementation("it.attendance100.mybicocca.data.remote:elearning:0.1")

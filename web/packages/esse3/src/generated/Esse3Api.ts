@@ -8,6 +8,7 @@ import { Esse3BadgeApi } from "./Esse3BadgeApi.js";
 import { Esse3BadgeImportApi } from "./Esse3BadgeImportApi.js";
 import { Esse3CareerUpdateApi } from "./Esse3CareerUpdateApi.js";
 import { Esse3CareersApi } from "./Esse3CareersApi.js";
+import { Esse3CertificatesApi } from "./Esse3CertificatesApi.js";
 import { Esse3ChoiceRulesApi } from "./Esse3ChoiceRulesApi.js";
 import { Esse3CommunicationsApi } from "./Esse3CommunicationsApi.js";
 import { Esse3CompetitionsApi } from "./Esse3CompetitionsApi.js";
@@ -60,6 +61,7 @@ export class Esse3Api {
   readonly services: Esse3ServicesApi;
   readonly users: Esse3UsersApi;
   readonly appointmentsCalendar: Esse3AppointmentsCalendarApi;
+  readonly certificates: Esse3CertificatesApi;
 
   constructor(readonly client: Esse3Client) {
     this.attachments = new Esse3AttachmentsApi(client);
@@ -90,5 +92,6 @@ export class Esse3Api {
     this.services = new Esse3ServicesApi(client);
     this.users = new Esse3UsersApi(client);
     this.appointmentsCalendar = new Esse3AppointmentsCalendarApi(client);
+    this.certificates = new Esse3CertificatesApi(client);
   }
 }
