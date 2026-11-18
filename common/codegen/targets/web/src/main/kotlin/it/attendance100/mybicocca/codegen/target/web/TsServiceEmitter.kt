@@ -94,7 +94,9 @@ internal class TsServiceEmitter(
         val apiParameters = spec.parameters.groupBy { it.location }
         line("method: ${TsSyntax.string(operation.method.name)},")
         line("path: ${path(module, operation, file)},")
-        (apiParameters[ParameterLocation.QUERY].orEmpty() + operation.queryParameters).takeIf { it.isNotEmpty() }?.let { lines("query: ${pairs(it, optional, file)},") }
+        val fixedQuery = operation.query.map { (name, value) -> "[${TsSyntax.string(name)}, ${TsSyntax.string(value)}]" }
+        val query = apiParameters[ParameterLocation.QUERY].orEmpty() + operation.queryParameters
+        if (fixedQuery.isNotEmpty() || query.isNotEmpty()) lines("query: ${pairs(query, optional, file, fixedQuery)},")
         operation.formParameters.takeIf { it.isNotEmpty() }?.let { lines("form: ${pairs(it, optional, file)},") }
         val headers = operation.headers.map { (name, value) -> "[${TsSyntax.string(name)}, ${template(value)}]" } +
             (apiParameters[ParameterLocation.HEADER].orEmpty() + operation.headerParameters).map { "[${TsSyntax.string(it.wireName)}, ${valueOf(it, optional, file)}]" }
@@ -123,8 +125,17 @@ internal class TsServiceEmitter(
     }
 
     /** Name/value pairs as an array literal, wrapped one per line when there are several. */
-    private fun CodeWriter.pairs(parameters: List<Parameter>, optional: Set<Parameter>, file: TsFile): String =
-        array(parameters.map { "[${TsSyntax.string(it.wireName)}, ${valueOf(it, optional, file)}]" })
+    private fun CodeWriter.pairs(parameters: List<Parameter>, optional: Set<Parameter>, file: TsFile, fixed: List<String> = emptyList()): String =
+        array(fixed + parameters.map { pair(it, optional, file) })
+
+    /** A name/value pair, or for a bracket-encoded parameter the spread of its fields. */
+    private fun pair(parameter: Parameter, optional: Set<Parameter>, file: TsFile): String {
+        if (parameter.encoding != ParameterEncoding.BRACKETS) return "[${TsSyntax.string(parameter.wireName)}, ${valueOf(parameter, optional, file)}]"
+        layout.importRuntime(file, "brackets")
+        val value = if (parameter in optional) "$OPTIONS.${parameter.name}" else TsSyntax.variable(parameter.name)
+        val fields = "brackets(${TsSyntax.string(parameter.wireName)}, ${codecs.encode(value, parameter.type, null, false, file)})"
+        return if (parameter in optional) "...($value == null ? [] : $fields)" else "...$fields"
+    }
 
     private fun CodeWriter.array(items: List<String>): String =
         if (items.size <= INLINE_ITEMS) items.joinToString(", ", "[", "]") else nested { commaList("[", items, "]", trailingComma = true) }

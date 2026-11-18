@@ -14,6 +14,7 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.Url
 import io.ktor.serialization.kotlinx.json.json
 import it.attendance100.mybicocca.data.remote.elearning.api.ElearningAbstractApi.Companion.BASE_URL
+import it.attendance100.mybicocca.data.remote.elearning.api.MoodleRuntime.language
 import kotlinx.serialization.json.Json
 
 /**
@@ -182,6 +183,15 @@ class ElearningApi(
     val files: ElearningFileApi = ElearningFileApi(client, json)
 
     /**
+     * The Moodle web service functions, generated from Moodle's own descriptions; calls are
+     * made in [language]. It has its own HTTP client, since web service calls need no cookies.
+     */
+    val moodle: MoodleApi = MoodleApi(httpClientConfig = {
+        httpClientConfig()
+        language { this@ElearningApi.language }
+    })
+
+    /**
      * Closes the underlying HTTP client and releases resources.
      *
      * After calling this method, the API instance should not be used.
@@ -191,6 +201,7 @@ class ElearningApi(
      */
     override fun close() {
         client.close()
+        moodle.close()
     }
 
     companion object {

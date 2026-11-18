@@ -34,6 +34,28 @@ public struct DemoCalendarApi: Sendable {
         )
     }
 
+    /// - Parameters:
+    ///   - auth: The credentials: ``DemoSessionAuth``.
+    public func runQuery(
+        ids: [Int64],
+        settings: DemoSettings? = nil,
+        tags: [String]? = nil,
+        auth: DemoSessionAuth
+    ) async throws -> [DemoSlot] {
+        try await client.jsonList(
+            RestRequest(
+                method: .post,
+                path: "/rpc",
+                query: [("function", "demo_run_query"), ("format", "json")] + RestRequest.brackets("tags", tags),
+                form: RestRequest.brackets("ids", ids) + RestRequest.brackets("settings", settings),
+                headers: [("X-TENANT", tenant)],
+                auth: auth,
+                server: DemoServer.main.rawValue
+            ),
+            roles: []
+        )
+    }
+
     public func saveLabels(body: WireMap<String, String>) async throws -> WireMap<String, DemoLevel> {
         try await client.json(
             RestRequest(

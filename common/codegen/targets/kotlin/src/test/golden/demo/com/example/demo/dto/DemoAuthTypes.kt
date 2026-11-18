@@ -5,6 +5,9 @@ package com.example.demo.dto
 sealed interface DemoAuth {
     /** The headers that authenticate a request. */
     val headers: Map<String, String>
+
+    /** The form fields that authenticate a request. */
+    val form: Map<String, String> get() = emptyMap()
 }
 
 /** A user's bearer token. */
@@ -23,5 +26,16 @@ data class DemoKeyAuth(
     override val headers: Map<String, String> get() = mapOf(
         "x-api-key" to "${apiKey}",
         "x-signature" to "${apiKey}:${secret}"
+    )
+}
+
+/** A session token, sent as a form field. */
+data class DemoSessionAuth(
+    val token: String
+) : DemoAuth {
+    override val headers: Map<String, String> get() = mapOf(
+    )
+    override val form: Map<String, String> get() = mapOf(
+        "wstoken" to "${token}"
     )
 }
