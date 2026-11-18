@@ -51,10 +51,16 @@ export const scrape = {
     return new DOMParser().parseFromString(html, "text/html");
   },
 
-  /** The JSON a script assigns to `variable` (`var name = [...];`), or `undefined` when it assigns none. */
+  /**
+   * The JSON a script assigns to `variable` on a line of its own, declaring it (`var name = [...];`)
+   * or not (`window.name = {...};`), or `undefined` when it assigns none.
+   */
   scriptVariable(script: string, variable: string): unknown {
-    const prefix = `var ${variable} =`;
-    const line = script.split(/\r?\n/).find((candidate) => candidate.startsWith(prefix));
+    const prefix = `${variable} =`;
+    const line = script
+      .split(/\r?\n/)
+      .map((candidate) => candidate.trim().replace(/^(var|let|const) /, ""))
+      .find((candidate) => candidate.startsWith(prefix));
     if (line === undefined) return undefined;
     return JSON.parse(line.slice(prefix.length).trim().replace(/;$/, ""));
   },

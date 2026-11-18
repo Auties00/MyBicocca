@@ -264,7 +264,7 @@ object SpecValidator {
                 is ResponseBody.Json -> checkRef(spec, response.type, "$where response")
                 is ResponseBody.ScriptVariable -> {
                     checkRef(spec, response.type, "$where response")
-                    if (!SCRIPT_IDENTIFIER.matches(response.variable)) add("$where reads '${response.variable}', which isn't a script variable name")
+                    if (!SCRIPT_IDENTIFIER.matches(response.variable)) add("$where reads '${response.variable}', which isn't a script variable or property path")
                 }
                 is ResponseBody.Html -> {
                     checkRef(spec, response.type, "$where response")
@@ -314,5 +314,6 @@ object SpecValidator {
     }
 
     private val PLACEHOLDER = Regex("""\{([^}]+)}""")
-    private val SCRIPT_IDENTIFIER = Regex("""[A-Za-z_$][\w$]*""")
+    /** A variable, or a property path such as `window.data_to_show`. */
+    private val SCRIPT_IDENTIFIER = Regex("""[A-Za-z_$][\w$]*(\.[A-Za-z_$][\w$]*)*""")
 }

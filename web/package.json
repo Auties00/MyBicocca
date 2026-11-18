@@ -6,7 +6,7 @@
     "packages/*"
   ],
   "scripts": {
-    "typecheck": "tsc -p packages/runtime && tsc -p packages/esse3 && tsc -p packages/affluences && tsc -p packages/easystaff-planning && tsc -p packages/moodle"
+    "typecheck": "tsc -p packages/runtime && tsc -p packages/esse3 && tsc -p packages/affluences && tsc -p packages/easystaff && tsc -p packages/easystaff-planning && tsc -p packages/moodle"
   },
   "devDependencies": {
     "typescript": "^5.8.3"

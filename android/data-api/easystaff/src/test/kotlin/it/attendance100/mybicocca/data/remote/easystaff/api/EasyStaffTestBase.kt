@@ -1,10 +1,8 @@
 package it.attendance100.mybicocca.data.remote.easystaff.api
 
-import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffAcademicYear
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.TestInstance
 import org.junit.jupiter.api.extension.ExtendWith
-import java.time.LocalDate
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @ExtendWith(EasyStaffGlobalApiData::class)
@@ -14,7 +12,7 @@ abstract class EasyStaffTestBase {
         get() = EasyStaffGlobalApiData.api
             ?: throw IllegalStateException("API not initialized. Ensure EasyStaffGlobalApiData#beforeAll has run.")
 
-    protected fun EasyStaffAcademicYear.toStartDate(): LocalDate = LocalDate.of(this.startYear, 1, 1)
-
-    protected fun EasyStaffAcademicYear.toEndDate(): LocalDate = LocalDate.of(this.endYear, 12, 31)
+    protected val planning: EasyStaffPlanningApi
+        get() = EasyStaffGlobalApiData.planning
+            ?: throw IllegalStateException("API not initialized. Ensure EasyStaffGlobalApiData#beforeAll has run.")
 }

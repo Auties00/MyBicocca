@@ -8,9 +8,9 @@ import it.attendance100.mybicocca.data.auth.SessionManager
 import it.attendance100.mybicocca.data.mapper.calendar.normalizeSubjectName
 import it.attendance100.mybicocca.data.mapper.common.Esse3DateFormat
 import it.attendance100.mybicocca.data.remote.easystaff.api.EasyStaffApi
-import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffAcademicYear
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffStudyProgram
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffStudyProgramSubject
+import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffStudyProgramYear
 import it.attendance100.mybicocca.data.remote.esse3.api.Esse3PlansApi
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3ChoiceRegulation
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3ChoiceRuleSchemaWithDetails
@@ -532,7 +532,7 @@ class StudyPlanRepositoryImpl @Inject constructor(
 
     private suspend fun fetchEasyStaffProgram(career: Career): EasyStaffStudyProgram? {
         val code = career.easyStaffProgramCode ?: return null
-        val program = easyStaffApi.core.getStudyPrograms(currentAcademicYear()).firstOrNull { it.code == code }
+        val program = easyStaffApi.core.getStudyPrograms(currentAcademicYear().toString()).firstOrNull { it.code == code }
         if (program == null) Log.w(TAG, "Program $code is not in this year's EasyStaff catalog")
         return program
     }
@@ -544,11 +544,11 @@ class StudyPlanRepositoryImpl @Inject constructor(
      */
     private fun currentYearSubjects(program: EasyStaffStudyProgram, career: Career): List<PlannedCourse> {
         if (program.years.isEmpty()) return emptyList()
-        val elapsed = if (career.academicYear > 0) currentAcademicYear().startYear - career.academicYear + 1 else 1
-        val year = elapsed.coerceIn(program.years.minOf { it.year }, program.years.maxOf { it.year })
+        val elapsed = if (career.academicYear > 0) currentAcademicYear() - career.academicYear + 1 else 1
+        val year = elapsed.coerceIn(program.years.minOf { it.number }, program.years.maxOf { it.number })
         val semesters = semestersByPeriodId(program)
         return program.years
-            .filter { it.year == year }
+            .filter { it.number == year }
             .flatMap { it.subjects }
             .map { subject ->
                 PlannedCourse(
@@ -650,8 +650,12 @@ private fun String?.parseEsse3Date(): LocalDate? = this?.take(10)?.let {
     runCatching { LocalDate.parse(it, Esse3DateFormat) }.getOrNull()
 }
 
-private fun currentAcademicYear(): EasyStaffAcademicYear {
+/** The first calendar year of the current academic year, which rolls over in September. */
+private fun currentAcademicYear(): Int {
     val today = LocalDate.now(AppClock.clock)
-    val startYear = if (today.monthValue >= 9) today.year else today.year - 1
-    return EasyStaffAcademicYear(startYear = startYear)
+    return if (today.monthValue >= 9) today.year else today.year - 1
 }
+
+/** The number of a year of a study program, which ends its code (`E3101Q|1`). */
+private val EasyStaffStudyProgramYear.number: Int
+    get() = code.substringAfter('|').toIntOrNull() ?: 0

@@ -12,7 +12,7 @@ import it.attendance100.mybicocca.core.text.StringResolver
 import it.attendance100.mybicocca.data.local.appointment.AppointmentReservationDao
 import it.attendance100.mybicocca.data.local.appointment.AppointmentReservationEntity
 import it.attendance100.mybicocca.data.mapper.appointment.toDomain
-import it.attendance100.mybicocca.data.remote.easystaff.api.EasyStaffApi
+import it.attendance100.mybicocca.data.remote.easystaff.api.EasyStaffPlanningApi
 import it.attendance100.mybicocca.data.remote.easystaff.api.EasyStaffPlanningCatalogApi
 import it.attendance100.mybicocca.data.remote.easystaff.api.EasyStaffPlanningPortalsApi
 import it.attendance100.mybicocca.data.remote.easystaff.api.EasyStaffPlanningReservationsApi
@@ -56,7 +56,7 @@ import java.time.ZoneId
 class AppointmentRepositoryImplTest {
 
     private val stringResolver: StringResolver = mockk(relaxed = true)
-    private val easyStaffApi: EasyStaffApi = mockk(relaxed = true)
+    private val planningApi: EasyStaffPlanningApi = mockk(relaxed = true)
     private val catalog: EasyStaffPlanningCatalogApi = mockk(relaxed = true)
     private val portals: EasyStaffPlanningPortalsApi = mockk(relaxed = true)
     private val reservations: EasyStaffPlanningReservationsApi = mockk(relaxed = true)
@@ -66,12 +66,12 @@ class AppointmentRepositoryImplTest {
 
     @Before
     fun setUp() {
-        every { easyStaffApi.planning.catalog } returns catalog
-        every { easyStaffApi.planning.portals } returns portals
-        every { easyStaffApi.planning.reservations } returns reservations
+        every { planningApi.catalog } returns catalog
+        every { planningApi.portals } returns portals
+        every { planningApi.reservations } returns reservations
         coEvery { portals.getServiceForm(7) } returns wireForm()
         coEvery { portals.getPortal() } returns portalConfig(captchaRequired = false)
-        repository = AppointmentRepositoryImpl(stringResolver, easyStaffApi, reservationDao)
+        repository = AppointmentRepositoryImpl(stringResolver, planningApi, reservationDao)
     }
 
     private fun service() = AppointmentService(

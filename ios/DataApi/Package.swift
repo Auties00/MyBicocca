@@ -8,6 +8,7 @@ let package = Package(
     platforms: [.iOS(.v15), .macOS(.v12)],
     products: [
         .library(name: "Affluences", targets: ["Affluences"]),
+        .library(name: "EasyStaff", targets: ["EasyStaff"]),
         .library(name: "EasyStaffPlanning", targets: ["EasyStaffPlanning"]),
         .library(name: "Esse3", targets: ["Esse3"]),
         .library(name: "Moodle", targets: ["Moodle"]),
@@ -18,6 +19,7 @@ let package = Package(
     targets: [
         .target(name: "DataApiRuntime", dependencies: ["SwiftSoup"]),
         .target(name: "Affluences", dependencies: ["DataApiRuntime"]),
+        .target(name: "EasyStaff", dependencies: ["DataApiRuntime"]),
         .target(name: "EasyStaffPlanning", dependencies: ["DataApiRuntime"]),
         .target(name: "Esse3", dependencies: ["DataApiRuntime"]),
         .target(name: "Moodle", dependencies: ["DataApiRuntime"]),

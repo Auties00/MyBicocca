@@ -8,6 +8,8 @@ import io.ktor.client.plugins.HttpTimeout
 import it.attendance100.mybicocca.data.observability.HttpMetrics
 import it.attendance100.mybicocca.data.remote.affluences.api.AffluencesApi
 import it.attendance100.mybicocca.data.remote.easystaff.api.EasyStaffApi
+import it.attendance100.mybicocca.data.remote.easystaff.api.EasyStaffPlanningApi
+import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningPortal
 import it.attendance100.mybicocca.data.update.GithubReleaseApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -33,6 +35,18 @@ object RemoteClientModule {
     @Provides
     @Singleton
     fun provideEasyStaffApi(): EasyStaffApi = EasyStaffApi {
+        install(HttpTimeout) {
+            connectTimeoutMillis = HTTP_TIMEOUT_MS
+            socketTimeoutMillis = HTTP_TIMEOUT_MS
+            requestTimeoutMillis = HTTP_TIMEOUT_MS
+        }
+        install(HttpMetrics)
+    }
+
+    /** Portale Planning's information desks, where appointments are booked. */
+    @Provides
+    @Singleton
+    fun provideEasyStaffPlanningApi(): EasyStaffPlanningApi = EasyStaffPlanningApi(EasyStaffPlanningPortal.INFORMATION_DESKS) {
         install(HttpTimeout) {
             connectTimeoutMillis = HTTP_TIMEOUT_MS
             socketTimeoutMillis = HTTP_TIMEOUT_MS

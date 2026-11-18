@@ -1,196 +1,163 @@
 package it.attendance100.mybicocca.data.remote.easystaff.api
 
-import io.ktor.client.*
-import io.ktor.client.request.*
-import io.ktor.client.request.forms.*
-import io.ktor.client.statement.*
-import io.ktor.http.*
-import io.ktor.utils.io.jvm.javaio.*
+import io.ktor.client.HttpClient
+import io.ktor.client.request.HttpRequestBuilder
+import io.ktor.client.request.request
+import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsText
+import io.ktor.client.statement.request
+import io.ktor.http.HttpMethod
+import io.ktor.http.isSuccess
 import it.attendance100.mybicocca.data.remote.common.exception.ApiRequestException
-import it.attendance100.mybicocca.data.remote.common.util.buildUrl
-import it.attendance100.mybicocca.data.remote.common.util.toHtml
-import kotlinx.serialization.ExperimentalSerializationApi
+import it.attendance100.mybicocca.data.remote.common.exception.HtmlParsingException
+import kotlinx.serialization.DeserializationStrategy
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.decodeFromStream
-import org.jsoup.nodes.Document
-import java.time.LocalDate
-import java.time.LocalTime
-import java.time.format.DateTimeFormatter
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.serializer
+import org.jsoup.Jsoup
+import org.jsoup.nodes.Node
 
 /**
- * Abstract base class for all EasyStaff/Agenda Web API implementations.
+ * Base class of the generated Agenda Web and EasyBadge modules: sends a request and reads its
+ * response as JSON, as the JSON a script assigns to a variable (`var elenco_sedi = [...];`, as
+ * `combo.php` declares the options of its forms) or as an HTML page.
  *
- * This class provides common infrastructure for making requests to the
- * Agenda Web application (powered by EasyStaff) and parsing HTML/JSON responses.
+ * Every response is read whatever its content type, since Agenda Web answers JSON as `text/html`.
  *
- * @param client The shared [HttpClient] instance for making HTTP requests
+ * @param basePath Path prefix of every operation of the module (empty for Agenda Web).
  */
 abstract class EasyStaffAbstractApi(
     protected val client: HttpClient,
-    protected val json: Json
+    @PublishedApi internal val json: Json,
+    private val basePath: String,
 ) {
-    companion object {
-        /**
-         * Base URL for all Agenda Web requests.
-         */
-        protected const val BASE_URL = "https://gestioneorari.didattica.unimib.it"
+    protected suspend inline fun <reified T> executeJsonGet(
+        endpoint: String,
+        server: EasyStaffServer,
+        envelope: List<String> = emptyList(),
+        noinline block: HttpRequestBuilder.() -> Unit = {},
+    ): T = executeJsonGet(endpoint, server, envelope, serializer<T>(), block)
 
-        /**
-         * Endpoint to query search options.
-         */
-        protected const val COMBO_ENDPOINT = "/PortaleStudentiUnimib/combo.php"
+    protected suspend fun <T> executeJsonGet(
+        endpoint: String,
+        server: EasyStaffServer,
+        envelope: List<String> = emptyList(),
+        deserializer: DeserializationStrategy<T>,
+        block: HttpRequestBuilder.() -> Unit = {},
+    ): T = decode(execute(HttpMethod.Get, server, endpoint, block).bodyAsText(), envelope, deserializer)
 
-        /**
-         * API endpoint used by Agenda Web.
-         */
-        protected const val AGENDA_WEB_ENDPOINT = "/PortaleStudentiUnimib/index.php"
+    protected suspend inline fun <reified T> executeJsonGetList(
+        endpoint: String,
+        server: EasyStaffServer,
+        envelope: List<String> = emptyList(),
+        noinline block: HttpRequestBuilder.() -> Unit = {},
+    ): List<T> = executeJsonGet(endpoint, server, envelope, serializer<List<T>>(), block)
 
-        /**
-         * Date format used by Agenda Web (DD-MM-YYYY).
-         */
-        private val DATE_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy")
+    protected suspend inline fun <reified T> executeJsonPost(
+        endpoint: String,
+        server: EasyStaffServer,
+        envelope: List<String> = emptyList(),
+        noinline block: HttpRequestBuilder.() -> Unit = {},
+    ): T = executeJsonPost(endpoint, server, envelope, serializer<T>(), block)
 
-        /**
-         * Time format used by Agenda Web (HH:mm).
-         */
-        private val TIME_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("HH:mm")
+    protected suspend fun <T> executeJsonPost(
+        endpoint: String,
+        server: EasyStaffServer,
+        envelope: List<String> = emptyList(),
+        deserializer: DeserializationStrategy<T>,
+        block: HttpRequestBuilder.() -> Unit = {},
+    ): T = decode(execute(HttpMethod.Post, server, endpoint, block).bodyAsText(), envelope, deserializer)
 
-        /**
-         * Formats a date to Agenda Web format (DD-MM-YYYY).
-         *
-         * @param date The date to format
-         * @return The formatted date string
-         */
-        fun formatDate(date: LocalDate): String = date.format(DATE_FORMAT)
+    protected suspend inline fun <reified T> executeJsonPostList(
+        endpoint: String,
+        server: EasyStaffServer,
+        envelope: List<String> = emptyList(),
+        noinline block: HttpRequestBuilder.() -> Unit = {},
+    ): List<T> = executeJsonPost(endpoint, server, envelope, serializer<List<T>>(), block)
 
-        /**
-         * Formats a date to Agenda Web time format (HH:mm).
-         *
-         * @param time The time to format
-         * @return The formatted time string
-         */
-        fun formatTime(time: LocalTime): String = time.format(TIME_FORMAT)
+    protected suspend inline fun <reified T> executeScriptGet(
+        endpoint: String,
+        server: EasyStaffServer,
+        variable: String,
+        noinline block: HttpRequestBuilder.() -> Unit = {},
+    ): T = executeScriptGet(endpoint, server, variable, serializer<T>(), block)
 
-        /**
-         * Extracts JSON content from a JavaScript variable assignment.
-         *
-         * The Agenda Web combo.php endpoint returns data in the format:
-         * `var variable_name = [JSON_DATA];`
-         *
-         * This function extracts the JSON portion.
-         *
-         * @param jsContent The JavaScript content containing the variable assignment
-         * @param variableName The name of the variable to extract
-         * @return The JSON string, or null if not found
-         */
-        fun extractJsonFromJsVariable(jsContent: String, variableName: String): String? =
-            extractJsonFromJsAssignment(jsContent, "var $variableName")
+    protected suspend fun <T> executeScriptGet(
+        endpoint: String,
+        server: EasyStaffServer,
+        variable: String,
+        deserializer: DeserializationStrategy<T>,
+        block: HttpRequestBuilder.() -> Unit = {},
+    ): T = readScript(execute(HttpMethod.Get, server, endpoint, block), variable, deserializer)
 
-        /**
-         * Extracts JSON content from a single-line JavaScript assignment, such as
-         * `window.data_to_show = {JSON_DATA};` in the room showcase page.
-         *
-         * @param jsContent The JavaScript or HTML content containing the assignment
-         * @param target The left-hand side of the assignment, e.g. `window.data_to_show`
-         * @return The JSON string, or null if not found
-         */
-        fun extractJsonFromJsAssignment(jsContent: String, target: String): String? {
-            val prefix = "$target ="
-            return jsContent.lineSequence()
-                .map { it.trimStart() }
-                .firstOrNull { it.startsWith(prefix) }
-                ?.removePrefix(prefix)
-                ?.trim()
-                ?.removeSuffix(";")
-                ?.trim()
-        }
+    protected suspend inline fun <reified T> executeScriptPost(
+        endpoint: String,
+        server: EasyStaffServer,
+        variable: String,
+        noinline block: HttpRequestBuilder.() -> Unit = {},
+    ): T = executeScriptPost(endpoint, server, variable, serializer<T>(), block)
+
+    protected suspend fun <T> executeScriptPost(
+        endpoint: String,
+        server: EasyStaffServer,
+        variable: String,
+        deserializer: DeserializationStrategy<T>,
+        block: HttpRequestBuilder.() -> Unit = {},
+    ): T = readScript(execute(HttpMethod.Post, server, endpoint, block), variable, deserializer)
+
+    protected suspend fun <T> executeHtmlGet(
+        endpoint: String,
+        server: EasyStaffServer,
+        scrape: (Node) -> T?,
+        block: HttpRequestBuilder.() -> Unit = {},
+    ): T = readPage(execute(HttpMethod.Get, server, endpoint, block), scrape)
+
+    protected suspend fun <T> executeHtmlPost(
+        endpoint: String,
+        server: EasyStaffServer,
+        scrape: (Node) -> T?,
+        block: HttpRequestBuilder.() -> Unit = {},
+    ): T = readPage(execute(HttpMethod.Post, server, endpoint, block), scrape)
+
+    private fun <T> decode(body: String, envelope: List<String>, deserializer: DeserializationStrategy<T>): T {
+        val element = envelope.fold(json.parseToJsonElement(body)) { value, key -> value.jsonObject[key] ?: JsonObject(emptyMap()) }
+        return json.decodeFromJsonElement(deserializer, element)
     }
 
-    /**
-     * Executes a GET request and returns the parsed HTML document.
-     *
-     * @param path The request path (relative to BASE_URL)
-     * @param queryParams Query parameters to append to the URL
-     * @return The parsed HTML [Document]
-     */
-    protected suspend fun executeGetHtml(
-        path: String,
-        queryParams: Map<String, List<String>> = emptyMap()
-    ): Document {
-        val url = buildUrl(BASE_URL, path, queryParams)
-        val response = client.get(url)
-        return response.toHtml()
+    private suspend fun <T> readScript(response: HttpResponse, variable: String, deserializer: DeserializationStrategy<T>): T {
+        // The variable is declared (var name = …;) or assigned (window.name = …;) on a line of its own.
+        val prefix = "$variable ="
+        val assignment = response.bodyAsText().lineSequence()
+            .map { line -> DECLARATION_KEYWORDS.fold(line.trim()) { statement, keyword -> statement.removePrefix(keyword) } }
+            .firstOrNull { it.startsWith(prefix) }
+            ?: throw HtmlParsingException("${response.request.url} assigns no '$variable'")
+        val value: JsonElement = json.parseToJsonElement(assignment.removePrefix(prefix).trim().removeSuffix(";"))
+        return json.decodeFromJsonElement(deserializer, value)
     }
 
-    /**
-     * Executes a GET request and returns the raw response body as text.
-     *
-     * Useful for endpoints that return JSON or JavaScript content.
-     *
-     * @param path The request path (relative to BASE_URL)
-     * @param queryParams Query parameters to append to the URL
-     * @return The response body as a string
-     */
-    protected suspend fun executeGetText(
-        path: String,
-        queryParams: Map<String, List<String>> = emptyMap()
-    ): String {
-        val url = buildUrl(BASE_URL, path, queryParams)
-        val response = client.get(url)
-        return response.bodyAsText()
+    private suspend fun <T> readPage(response: HttpResponse, scrape: (Node) -> T?): T {
+        val url = response.request.url.toString()
+        return scrape(Jsoup.parse(response.bodyAsText(), url))
+            ?: throw HtmlParsingException("$url doesn't hold what was expected; the page may have changed")
     }
 
-    /**
-     * Executes a POST request and returns the raw HTTP response.
-     *
-     * @param path The request path (relative to BASE_URL)
-     * @param body Body of the request
-     * @param queryParams Query parameters to append to the URL
-     * @return The [HttpResponse]
-     */
-    @OptIn(ExperimentalSerializationApi::class)
-    protected suspend inline fun <reified T> executePostJson(
-        path: String,
-        body: Any,
-        queryParams: Map<String, List<String>> = emptyMap()
-    ): T {
-        val url = buildUrl(BASE_URL, path, queryParams)
-        val response = client.post(url) {
-            contentType(ContentType.Application.Json)
-            setBody(body)
+    /** Sends the request, throwing [ApiRequestException] on an error status. */
+    private suspend fun execute(
+        method: HttpMethod,
+        server: EasyStaffServer,
+        endpoint: String,
+        block: HttpRequestBuilder.() -> Unit,
+    ): HttpResponse {
+        val response = client.request(server.url.trimEnd('/') + basePath + endpoint) {
+            this.method = method
+            block()
         }
-        if(!response.status.isSuccess()) {
-            throw ApiRequestException(response.status.value)
-        }
-        return json.decodeFromStream(response.bodyAsChannel().toInputStream())
-    }
-
-    /**
-     * Executes a POST request with form parameters and returns the raw response body as a deserialized JSON type.
-     *
-     * @param T the JSON type
-     * @param path The request path (relative to BASE_URL)
-     * @param formParameters The form parameters to send (supports multiple values per key)
-     * @return The response body as a JSON
-     */
-    @OptIn(ExperimentalSerializationApi::class)
-    protected suspend inline fun <reified T> executePostForm(
-        path: String,
-        formParameters: Map<String, List<String>>
-    ): T {
-        val url = buildUrl(BASE_URL, path)
-        val response = client.post(url) {
-            setBody(FormDataContent(Parameters.build {
-                formParameters.forEach { (key, values) ->
-                    values.forEach { value ->
-                        append(key, value)
-                    }
-                }
-            }))
-        }
-        if(!response.status.isSuccess()) {
-            throw ApiRequestException(response.status.value)
-        }
-        return json.decodeFromStream(response.bodyAsChannel().toInputStream())
+        if (!response.status.isSuccess()) throw ApiRequestException(response.status.value)
+        return response
     }
 }
+
+/** Keywords a script may declare a variable with, before its name. */
+private val DECLARATION_KEYWORDS = listOf("var ", "let ", "const ")
