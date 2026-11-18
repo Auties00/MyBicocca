@@ -3,6 +3,7 @@ package it.attendance100.mybicocca.data.remote.easystaff.api
 import io.ktor.client.*
 import io.ktor.client.plugins.*
 import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.client.plugins.cookies.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
@@ -57,12 +58,13 @@ class EasyStaffApi(httpClientConfig: HttpClientConfig<*>.() -> Unit = {}) : Auto
      * Shared HTTP client for all API requests.
      *
      * Configured with:
-     * - Cookie storage for session management (if authenticated)
+     * - Cookie storage, which carries the Portale Planning guest token (`jwt_public`)
      * - Extended timeouts for slow university servers
      * - Automatic redirect following
      */
     private val client = HttpClient {
         httpClientConfig()
+        install(HttpCookies)
         install(HttpTimeout) {
             requestTimeoutMillis = TIMEOUT
             connectTimeoutMillis = TIMEOUT
