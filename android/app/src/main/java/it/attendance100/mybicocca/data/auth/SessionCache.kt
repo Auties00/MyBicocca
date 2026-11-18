@@ -42,9 +42,10 @@ class SessionCache @Inject constructor(
         withContext(Dispatchers.IO) {
             prefs.get().edit {
                 writeString(wsTokenKey(accountId), updated.wsToken)
+                writeString(elearningPrivateTokenKey(accountId), updated.elearningPrivateToken)
                 writeString(moodleSessionCookieKey(accountId), updated.moodleSessionCookie)
                 writeString(jwtKey(accountId), updated.jwt)
-                writeString(esse3LegacyCookiesKey(accountId), updated.esse3LegacyCookies)
+                writeString(esse3WebCookiesKey(accountId), updated.esse3WebCookies)
             }
         }
         updated
@@ -55,9 +56,10 @@ class SessionCache @Inject constructor(
         withContext(Dispatchers.IO) {
             prefs.get().edit {
                 remove(wsTokenKey(accountId))
+                remove(elearningPrivateTokenKey(accountId))
                 remove(moodleSessionCookieKey(accountId))
                 remove(jwtKey(accountId))
-                remove(esse3LegacyCookiesKey(accountId))
+                remove(esse3WebCookiesKey(accountId))
             }
         }
     }
@@ -68,9 +70,10 @@ class SessionCache @Inject constructor(
             val store = prefs.get()
             SessionTokens(
                 wsToken = store.getString(wsTokenKey(accountId), null),
+                elearningPrivateToken = store.getString(elearningPrivateTokenKey(accountId), null),
                 moodleSessionCookie = store.getString(moodleSessionCookieKey(accountId), null),
                 jwt = store.getString(jwtKey(accountId), null),
-                esse3LegacyCookies = store.getString(esse3LegacyCookiesKey(accountId), null),
+                esse3WebCookies = store.getString(esse3WebCookiesKey(accountId), null),
             )
         }
         tokens[accountId] = loaded
@@ -82,7 +85,9 @@ class SessionCache @Inject constructor(
     }
 
     private fun wsTokenKey(id: AccountId) = "session:${id.value}:wsToken"
+    private fun elearningPrivateTokenKey(id: AccountId) = "session:${id.value}:elearningPrivateToken"
     private fun moodleSessionCookieKey(id: AccountId) = "session:${id.value}:moodleSessionCookie"
     private fun jwtKey(id: AccountId) = "session:${id.value}:jwt"
-    private fun esse3LegacyCookiesKey(id: AccountId) = "session:${id.value}:esse3LegacyCookies"
+    /** Keeps the key of the scraper the portal session came from, so stored sessions survive. */
+    private fun esse3WebCookiesKey(id: AccountId) = "session:${id.value}:esse3LegacyCookies"
 }

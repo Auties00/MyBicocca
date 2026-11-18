@@ -9,18 +9,21 @@ import kotlinx.coroutines.flow.Flow
 /**
  * Contract for lecture-video (Kaltura) playback: on-demand stream resolution plus locally
  * persisted, account-scoped watch progress. Observe methods are hot flows from the local
- * cache; stream resolution hits the e-learning platform on every call because the URLs are
- * session-scoped, and throws on failure.
+ * cache; stream resolution checks with Kaltura on every call, since an entry can be withdrawn
+ * at any time, and throws on failure.
  */
 interface VideoPlaybackRepository {
-    /** Resolves the playable stream for a video course module; never cached. Throws on failure. */
+    /**
+     * Resolves the playable stream for a video course module; never cached. Throws
+     * [VideoUnavailableException] when Kaltura no longer serves the video, or another exception
+     * on any other failure.
+     */
     suspend fun resolveStream(cmId: Int): VideoStream
 
     /**
      * Returns the Kaltura thumbnail URL for [cmId], or `null` if the entry id cannot be
      * resolved (e.g. the Moodle session has expired, the cmId isn't a kalvidres module).
-     * Results are cached in-memory for the lifetime of the repository so the same cmId
-     * doesn't hit the network twice.
+     * The entry id behind it is persisted, so each cmId is resolved over the network once.
      */
     suspend fun thumbnailUrl(cmId: Int): String?
 
@@ -48,3 +51,9 @@ interface VideoPlaybackRepository {
     /** Drops every saved video progress of the account. */
     suspend fun clearForAccount(accountId: AccountId)
 }
+
+/**
+ * The video was withdrawn from Kaltura (typically moved to its recycle bin) while the course
+ * still links to it; retrying won't help.
+ */
+class VideoUnavailableException(cmId: Int) : Exception("Video of course module $cmId is no longer available")

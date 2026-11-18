@@ -1,0 +1,47 @@
+# Kaltura's public CDN, which serves the lecture recordings embedded in the university's Moodle
+# (mod/kalvidres; its pages are in specs/moodle-web). Bicocca's entries play without a Kaltura
+# session. See common/codegen/readers/openapi for the x-mb-* extensions.
+#
+# The thumbnail and manifest URLs a player loads itself are built by the app.
+openapi: 3.0.3
+info:
+  title: Kaltura playback
+  version: "1"
+x-mb-id: kaltura
+x-mb-prefix: Kaltura
+x-mb-client:
+  timeoutSeconds: 30
+
+servers:
+  - url: https://cdnapisec.kaltura.com
+    x-mb-name: Cdn
+
+tags:
+  - name: Playback
+    description: The streams of an entry.
+
+paths:
+  /p/{partnerId}/sp/{partnerId}00/playManifest/entryId/{entryId}/protocol/https/format/applehttp/a.m3u8:
+    get:
+      tags: [Playback]
+      operationId: getHlsPlaylist
+      summary: >-
+        The HLS master playlist of an entry, listing its quality renditions. Kaltura answers 404
+        for an entry it no longer serves, such as one moved to the recycle bin.
+      parameters:
+        - name: partnerId
+          in: path
+          required: true
+          description: The institution's Kaltura partner (`2351962` for Bicocca).
+          schema: { type: integer }
+        - name: entryId
+          in: path
+          required: true
+          description: The entry, such as `1_tb2txam7`.
+          schema: { type: string }
+      responses:
+        "200":
+          description: The playlist.
+          content:
+            application/vnd.apple.mpegurl:
+              schema: { type: string }

@@ -1,0 +1,11 @@
+{
+    "Esse3CatalogoApi": "Esse3CatalogApi",
+    "Esse3Voce": "Esse3Entry",
+    "getVoci": "getEntries",
+    "vocId": "entryId",
+    "nome": "name",
+    "dataIni": "startDate",
+    "statoCod": "statusCode",
+    "etichette": "",
+    "stato": "status"
+}

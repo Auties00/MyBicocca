@@ -183,6 +183,13 @@ private fun LezioniTabBody(classroom: ClassroomAttendance?) {
  */
 @Composable
 private fun RegisterTabBody(session: SessionAttendance) {
+    if (session.loadFailed) {
+        TabEmptyState(
+            title = stringResource(R.string.attendance_register_load_failed_title),
+            body = stringResource(R.string.attendance_register_load_failed),
+        )
+        return
+    }
     val recorded = session.recordedPercentage
     if (recorded == null) {
         TabEmptyState(
@@ -203,9 +210,9 @@ private fun RegisterTabBody(session: SessionAttendance) {
             progress = (recorded / 100.0).toFloat(),
             headline = "${recorded.roundToInt()}%",
             caption = stringResource(R.string.registry_caption_recorded),
-            footnote = session.attendedSessions?.let {
-                if (it == 1) stringResource(R.string.registry_presence_one)
-                else stringResource(R.string.registry_presence_many, it)
+            footnote = session.recordedSessions?.let {
+                if (it == 1) stringResource(R.string.registry_recorded_one)
+                else stringResource(R.string.registry_recorded_many, it)
             },
             color = MaterialTheme.colorScheme.primary,
         )

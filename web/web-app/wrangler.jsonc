@@ -1,0 +1,12 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "mybicocca-web",
+	"main": "relay/src/worker.ts",
+	"tsconfig": "relay/tsconfig.json",
+	"compatibility_date": "2026-10-01",
+	"assets": {
+		"directory": "./build",
+		"not_found_handling": "single-page-application",
+		"run_worker_first": ["/relay/*"]
+	}
+}

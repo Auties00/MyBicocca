@@ -5,12 +5,12 @@ import it.attendance100.mybicocca.data.local.elearning.quiz.QuizAttemptEntity
 import it.attendance100.mybicocca.data.local.elearning.quiz.QuizBestGradeEntity
 import it.attendance100.mybicocca.data.local.elearning.quiz.QuizEntity
 import it.attendance100.mybicocca.data.local.elearning.sync.ElearningJson
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningGetAttemptDataResponse
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningGetAttemptReviewResponse
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningGetUserBestGradeResponse
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningQuiz
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningQuizAttempt
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningQuizQuestion
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAttemptDataResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleAttemptReviewResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleUserBestGradeResponse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleQuiz
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleQuizAttempt
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleQuizQuestion
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.domain.model.elearning.quiz.AttemptAnswer
@@ -33,22 +33,22 @@ import java.time.Instant
  * normalizing epoch-second timestamps to milliseconds. Pass grade and review bitmasks
  * are not part of the list payload and store as null.
  */
-internal fun ElearningQuiz.toEntity(accountId: AccountId): QuizEntity =
+internal fun MoodleQuiz.toEntity(accountId: AccountId): QuizEntity =
     QuizEntity(
         accountId = accountId.value,
         quizId = id,
-        courseId = courseId,
-        cmId = courseModuleId,
+        courseId = course,
+        cmId = courseModule,
         name = name,
-        intro = introduction,
-        timeOpenMs = openTimestamp.toMillisOrNullSec(),
-        timeCloseMs = closeTimestamp.toMillisOrNullSec(),
-        timeLimitSeconds = timeLimitSeconds?.toLong(),
-        gracePeriodSeconds = gracePeriodSeconds?.toLong(),
-        maxAttempts = maximumAttempts,
+        intro = intro,
+        timeOpenMs = timeOpen.toMillisOrNullSec(),
+        timeCloseMs = timeClose.toMillisOrNullSec(),
+        timeLimitSeconds = timeLimit,
+        gracePeriodSeconds = gracePeriod?.toLong(),
+        maxAttempts = attempts,
         passGrade = null,
         sumGrades = sumGrades,
-        maxGrade = maximumGrade,
+        maxGrade = grade,
         preferredBehaviour = preferredBehaviour,
         reviewBeforeBitmask = null,
         reviewAfterBitmask = null,
@@ -80,20 +80,20 @@ internal fun QuizEntity.toDomain(): Quiz =
  * absent numeric fields to 0 and the state to the unknown sentinel. The raw `layout`
  * string (slot ids with ",0" page breaks) is stored verbatim.
  */
-internal fun ElearningQuizAttempt.toEntity(accountId: AccountId): QuizAttemptEntity =
+internal fun MoodleQuizAttempt.toEntity(accountId: AccountId): QuizAttemptEntity =
     QuizAttemptEntity(
         accountId = accountId.value,
-        attemptId = id,
-        quizId = quizId ?: 0,
+        attemptId = id ?: 0,
+        quizId = quiz ?: 0,
         userId = userId ?: 0,
-        attemptNumber = attemptNumber ?: 0,
+        attemptNumber = attempt ?: 0,
         stateRaw = state ?: AttemptState.Unknown.raw,
         sumGrades = sumGrades,
-        timeStartMs = startTimestamp.toMillisOrNullSec(),
-        timeFinishMs = finishTimestamp.toMillisOrNullSec(),
-        timeModifiedMs = modifiedTimestamp.toMillisOrNullSec(),
+        timeStartMs = timeStart.toMillisOrNullSec(),
+        timeFinishMs = timeFinish.toMillisOrNullSec(),
+        timeModifiedMs = timeModified.toMillisOrNullSec(),
         layout = layout,
-        previewMode = isPreview == 1,
+        previewMode = preview == 1,
     )
 
 /** Maps a cached attempt row to the domain model, resolving the state from its raw value. */
@@ -118,7 +118,7 @@ internal fun QuizAttemptEntity.toDomain(): QuizAttempt =
  * service reports only the achieved grade and the pass threshold, and the pass threshold is
  * not a maximum.
  */
-internal fun ElearningGetUserBestGradeResponse.toEntity(
+internal fun MoodleUserBestGradeResponse.toEntity(
     accountId: AccountId,
     quizId: QuizId,
     quizMaxGrade: Double?,
@@ -138,7 +138,7 @@ internal fun QuizBestGradeEntity.toDomain(): BestGrade =
  * Maps an attempt-data response to one in-progress attempt page, reading Moodle's -1
  * next-page marker as the end of the quiz.
  */
-internal fun ElearningGetAttemptDataResponse.toDomain(attemptId: AttemptId, page: Int): AttemptPage =
+internal fun MoodleAttemptDataResponse.toDomain(attemptId: AttemptId, page: Int): AttemptPage =
     AttemptPage(
         attemptId = attemptId,
         pageIndex = page,
@@ -151,8 +151,8 @@ internal fun ElearningGetAttemptDataResponse.toDomain(attemptId: AttemptId, page
  * list back into pages by each question's page index. The overall feedback comes from
  * the first additional-data block.
  */
-internal fun ElearningGetAttemptReviewResponse.toDomain(attemptId: AttemptId): AttemptReview {
-    val grouped = questions.groupBy { it.page ?: 0 }.toSortedMap()
+internal fun MoodleAttemptReviewResponse.toDomain(attemptId: AttemptId): AttemptReview {
+    val grouped = questions.groupBy { it.page }.toSortedMap()
     val pages = grouped.map { (pageIndex, qs) ->
         AttemptPage(
             attemptId = attemptId,
@@ -166,8 +166,8 @@ internal fun ElearningGetAttemptReviewResponse.toDomain(attemptId: AttemptId): A
         pages = pages,
         sumGrades = attempt.sumGrades,
         maxGrade = null,
-        gradeFormatted = grade,
-        feedback = additionalData?.firstOrNull()?.content,
+        gradeFormatted = grade.ifEmpty { null },
+        feedback = additionalData.firstOrNull()?.content,
     )
 }
 
@@ -175,16 +175,16 @@ internal fun ElearningGetAttemptReviewResponse.toDomain(attemptId: AttemptId): A
  * Maps one rendered question to the domain model. The sequence check is kept as a
  * string because it must round-trip verbatim into the answer-saving calls.
  */
-internal fun ElearningQuizQuestion.toDomain(pageIndex: Int): AttemptQuestion =
+internal fun MoodleQuizQuestion.toDomain(pageIndex: Int): AttemptQuestion =
     AttemptQuestion(
         slot = slot,
-        type = type ?: "unknown",
+        type = type.ifEmpty { "unknown" },
         pageIndex = pageIndex,
-        html = html.orEmpty(),
+        html = html,
         state = state,
         mark = mark?.toDoubleOrNull(),
-        maxMark = maximumMark,
-        flagged = flagged == true,
+        maxMark = maxMark,
+        flagged = flagged,
         sequenceCheck = sequenceCheck?.toString(),
     )
 

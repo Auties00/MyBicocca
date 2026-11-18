@@ -1,9 +1,9 @@
 package it.attendance100.mybicocca.data.mapper.elearning
 
 import it.attendance100.mybicocca.data.local.elearning.video.VideoProgressEntity
-import it.attendance100.mybicocca.data.remote.elearning.api.ElearningKalturaApi
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningKalturaVideoStreamResponse
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningKalturaVideoVariant
+import it.attendance100.mybicocca.data.elearning.ElearningKaltura
+import it.attendance100.mybicocca.data.elearning.ElearningKalturaVideoStreamResponse
+import it.attendance100.mybicocca.data.elearning.ElearningKalturaVideoVariant
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.elearning.video.VideoProgress
 import it.attendance100.mybicocca.domain.model.elearning.video.VideoStream
@@ -22,19 +22,17 @@ internal fun ElearningKalturaVideoStreamResponse.Success.toDomain(cmId: Int): Vi
         hlsUrl = hlsStreamUrl,
         dashUrl = dashStreamUrl,
         variants = availableVideoVariants.map { it.toDomain() },
-        thumbnailUrl = ElearningKalturaApi.thumbnailUrl(kalturaEntryId, partnerId),
+        thumbnailUrl = ElearningKaltura.thumbnailUrl(kalturaEntryId, partnerId),
     )
 
 /** Maps one Kaltura quality variant (flavor) to the domain model. */
 internal fun ElearningKalturaVideoVariant.toDomain(): VideoVariant =
     VideoVariant(
-        flavorId = flavorId,
+        flavorId = flavorId ?: "${pixelWidth}x$pixelHeight@$bitrateKbps",
         widthPx = pixelWidth,
         heightPx = pixelHeight,
         bitrateKbps = bitrateKbps,
         frameRateFps = frameRateFps,
-        sizeBytes = sizeBytes,
-        fileExtension = fileExtension,
     )
 
 /** Maps a cached playback-progress row to the domain model. */

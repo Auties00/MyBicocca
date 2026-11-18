@@ -11,12 +11,12 @@ import it.attendance100.mybicocca.data.mapper.account.composeDisplayName
 import it.attendance100.mybicocca.data.mapper.account.toDomain
 import it.attendance100.mybicocca.data.mapper.account.toEntity
 import it.attendance100.mybicocca.data.mapper.account.toLearningIdentity
-import it.attendance100.mybicocca.data.remote.elearning.api.ElearningApi
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningGetSiteInfoResponse
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningLoginResponse
+import it.attendance100.mybicocca.data.elearning.ElearningApi
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleSiteInfo
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
 import it.attendance100.mybicocca.data.remote.esse3.api.Esse3Api
 import it.attendance100.mybicocca.data.remote.esse3.dto.Esse3CacheInfo
-import it.attendance100.mybicocca.data.remote.esse3.scraper.api.Esse3Api as Esse3LegacyApi
+import it.attendance100.mybicocca.data.remote.esse3.exception.Esse3Exception
 import io.ktor.http.Cookie
 import io.ktor.http.CookieEncoding
 import it.attendance100.mybicocca.di.ApplicationScope
@@ -58,7 +58,7 @@ import javax.inject.Singleton
  * Owns every authenticated session. Persists accounts and careers at sign-in, exposes the
  * active-account and account-list streams, and builds, caches, and re-authenticates the
  * per-platform API clients: Esse3 REST (HTTP Basic plus JWT), Moodle (wstoken plus
- * `MoodleSession` cookie), and the legacy Esse3 web-SSO scrape session. Per-account auth work
+ * `MoodleSession` cookie), and the Esse3 web portal (SSO session cookies). Per-account auth work
  * is serialized through [AccountKeyedMutexes]; each client cache is guarded by its own mutex.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -69,8 +69,10 @@ class SessionManager @Inject constructor(
     private val credentialsStore: CredentialsStore,
     private val sessionCache: SessionCache,
     private val esse3Factory: Esse3ApiFactory,
-    private val esse3LegacyApiFactory: Esse3LegacyApiFactory,
+    private val esse3WebApiFactory: Esse3WebApiFactory,
+    private val esse3WebAuthenticator: Esse3WebAuthenticator,
     private val elearningApiFactory: ElearningApiFactory,
+    private val elearningAuthenticator: ElearningAuthenticator,
     private val authMutexes: AccountKeyedMutexes,
     private val careerReconciler: CareerReconciler,
     private val accountWiper: AccountWiper,
@@ -91,14 +93,14 @@ class SessionManager @Inject constructor(
     private val esse3Mutex = Mutex()
 
     /**
-     * Legacy Esse3 web-SSO (scrape) sessions, keyed per account. Each is established lazily on
-     * the first access of a feature that needs the scrape surface and kept entirely independent
-     * of the REST [esse3] / [elearning] paths, so a SAML failure here can never break sign-in.
-     * Cookies are minted once via SAML and cached both in memory and in [SessionCache]; the api
-     * re-logs in on expiry.
+     * Esse3 web portal clients, keyed per account, for the pages the REST API doesn't cover.
+     * Each is established lazily on the first access of a feature that needs the portal and kept
+     * entirely independent of the REST [esse3] / [elearning] paths, so a SAML failure here can
+     * never break sign-in. Cookies are minted once via SAML and cached both in memory and in
+     * [SessionCache]; callers re-log in on expiry through [reauthEsse3Web].
      */
-    private val esse3LegacyApis = mutableMapOf<AccountId, Esse3LegacyApi>()
-    private val esse3LegacyMutex = Mutex()
+    private val esse3WebApis = mutableMapOf<AccountId, Esse3Api>()
+    private val esse3WebMutex = Mutex()
 
     /**
      * Account lifecycle events for the single UI consumer. A buffered [Channel] rather than a
@@ -137,8 +139,8 @@ class SessionManager @Inject constructor(
      * The Esse3 client is built before an account id exists, so its retry callbacks await the
      * id through a deferred completed only after the account is persisted: a 401 during
      * sign-in is bad credentials, not an expired session, and must never enter the silent
-     * refresh path. The Moodle client is likewise created up front and adopted as the cached
-     * instance once the account id is known.
+     * refresh path. The Moodle client is built from the login's session cookie and adopted as
+     * the cached instance once the account id is known.
      */
     suspend fun signIn(username: String, password: String): SignInResult = coroutineScope {
         if (username.isBlank() || password.isBlank()) {
@@ -157,16 +159,17 @@ class SessionManager @Inject constructor(
                 Triple(session, careersDto, courseTypeCodes(esse3))
             }
         }
-        val freshElearningApi = elearningApiFactory.create()
         val elearningDeferred = async {
             runCatching {
-                when (val response = freshElearningApi.auth.login(normalizedUsername, password)) {
-                    is ElearningLoginResponse.Success -> {
-                        val siteInfo = freshElearningApi.site.getSiteInfo(response.wsToken)
-                        ElearningLoginOutcome(response.wsToken, response.moodleSessionCookie, siteInfo)
-                    }
-                    is ElearningLoginResponse.Error -> error(response.message)
+                val login = elearningAuthenticator.login(normalizedUsername, password)
+                val api = elearningApiFactory.create(login.moodleSessionCookie)
+                val siteInfo = try {
+                    api.moodle.site.getSiteInfo(auth = MoodleTokenAuth(login.wsToken))
+                } catch (t: Throwable) {
+                    api.close()
+                    throw t
                 }
+                ElearningLoginOutcome(api, login.wsToken, login.privateToken, login.moodleSessionCookie, siteInfo)
             }
         }
 
@@ -175,7 +178,7 @@ class SessionManager @Inject constructor(
 
         if (esse3Result.isFailure || elearningResult.isFailure) {
             esse3.close()
-            freshElearningApi.close()
+            elearningResult.getOrNull()?.api?.close()
             return@coroutineScope SignInResult.Failure(
                 classifySignInFailure(
                     esse3Result.exceptionOrNull(),
@@ -215,6 +218,7 @@ class SessionManager @Inject constructor(
         sessionCache.update(accountId) {
             copy(
                 wsToken = elearning.wsToken,
+                elearningPrivateToken = elearning.privateToken,
                 moodleSessionCookie = elearning.moodleSessionCookie,
                 jwt = esse3Session.jwt,
             )
@@ -226,7 +230,7 @@ class SessionManager @Inject constructor(
             esse3Apis.remove(accountId)?.close()
             esse3Apis[accountId] = esse3
         }
-        adoptElearningApi(accountId, freshElearningApi)
+        adoptElearningApi(accountId, elearning.api)
 
         val requiresPick = academic.careers.count { it.status.isOpen } > 1
         SignInResult.Success(account, requiresCareerPick = requiresPick)
@@ -243,8 +247,8 @@ class SessionManager @Inject constructor(
             esse3Mutex.withLock {
                 esse3Apis.remove(accountId)?.close()
             }
-            esse3LegacyMutex.withLock {
-                esse3LegacyApis.remove(accountId)?.close()
+            esse3WebMutex.withLock {
+                esse3WebApis.remove(accountId)?.close()
             }
             credentialsStore.delete(accountId)
             sessionCache.delete(accountId)
@@ -267,10 +271,10 @@ class SessionManager @Inject constructor(
             toClose.values.forEach { it.close() }
             esse3Apis.keys.removeAll(toClose.keys)
         }
-        esse3LegacyMutex.withLock {
-            val toClose = esse3LegacyApis.filterKeys { it != accountId }
+        esse3WebMutex.withLock {
+            val toClose = esse3WebApis.filterKeys { it != accountId }
             toClose.values.forEach { it.close() }
-            esse3LegacyApis.keys.removeAll(toClose.keys)
+            esse3WebApis.keys.removeAll(toClose.keys)
         }
         activeAccountStore.set(accountId)
         accountDao.updateLastUsed(accountId.value, System.currentTimeMillis())
@@ -336,27 +340,27 @@ class SessionManager @Inject constructor(
     }
 
     /**
-     * Legacy Esse3 web-SSO scrape session for the active account, established lazily: the
-     * first use reseeds from cached cookies when present and otherwise runs the SAML login and
-     * caches the resulting cookies. Independent of [esse3] and [elearning].
+     * Esse3 web portal client for the active account, established lazily: the first use
+     * reseeds from cached cookies when present and otherwise runs the SAML login and caches the
+     * resulting cookies. Independent of [esse3] and [elearning].
      */
-    suspend fun esse3Legacy(): Esse3LegacyApi {
+    suspend fun esse3Web(): Esse3Api {
         val active = activeAccount.value ?: error("No active account.")
-        return esse3LegacyForAccount(active.id)
+        return esse3WebForAccount(active.id)
     }
 
     /**
-     * Forces a fresh SAML login for the active account's legacy session, discarding the cached
-     * cookies and scrape client. Intended for when the scrape layer raises its
-     * AuthenticationException — the session cookie died and Esse3 bounced to the IdP.
+     * Forces a fresh SAML login for the active account's portal session, discarding the cached
+     * cookies and client. Intended for when a portal page reports the session expired: Esse3
+     * bounced to the IdP.
      */
-    suspend fun reauthEsse3Legacy(): Esse3LegacyApi {
+    suspend fun reauthEsse3Web(): Esse3Api {
         val active = activeAccount.value ?: error("No active account.")
-        esse3LegacyMutex.withLock {
-            esse3LegacyApis.remove(active.id)?.close()
+        esse3WebMutex.withLock {
+            esse3WebApis.remove(active.id)?.close()
         }
-        sessionCache.update(active.id) { copy(esse3LegacyCookies = null) }
-        return esse3LegacyForAccount(active.id)
+        sessionCache.update(active.id) { copy(esse3WebCookies = null) }
+        return esse3WebForAccount(active.id)
     }
 
     suspend fun streamPersonPhoto(accountId: AccountId): ByteReadChannel {
@@ -382,17 +386,61 @@ class SessionManager @Inject constructor(
     }
 
     /**
-     * Forces a fresh Elearning login for the active account, updating both the cached
-     * `wsToken` and the `MoodleSession` cookie. Use after an
-     * [it.attendance100.mybicocca.data.remote.elearning.dto.ElearningKalturaVideoStreamResponse.RequiresReauth]
-     * (or equivalent) signal — Moodle has expired the browser session and only a full
-     * SAML round-trip can mint a new one.
+     * Replaces the active account's expired `MoodleSession` cookie. Use after an
+     * [it.attendance100.mybicocca.data.elearning.ElearningKalturaEntryIdResponse.RequiresReauth]
+     * (or equivalent) signal.
+     *
+     * The cookie is first renewed through Moodle's mobile autologin, which keeps the web service
+     * token and needs no credentials. Only if that fails (no private token cached, or Moodle
+     * refusing the key, which it hands out once every 6 minutes) does a full SAML login mint new
+     * tokens and a new cookie.
+     *
+     * Single-flighted per account: callers that hit the same expired session together wait on
+     * one renewal. Passing the [stale] client the expired session was seen on lets a caller that
+     * waited behind another's renewal take the client it produced, instead of asking for another
+     * autologin key (and, refused, falling back to SAML) and closing that client under the
+     * requests now using it. The cached tokens, the private token included, are kept until the
+     * new login succeeds, so a failed login leaves the next caller something to retry with.
+     *
+     * @param stale The client whose browser session expired, or null to always renew
      */
-    suspend fun reauthElearning(): ElearningSession {
+    suspend fun reauthElearning(stale: ElearningApi? = null): ElearningSession {
         val active = activeAccount.value ?: error("No active account.")
-        sessionCache.update(active.id) { copy(wsToken = null, moodleSessionCookie = null) }
-        discardElearningApi()
-        val tokens = refreshElearningTokens(active.id)
+        val tokens = authMutexes.withLock(active.id) {
+            val cached = sessionCache.read(active.id)
+            val current = elearningApiMutex.withLock {
+                elearningApi.takeIf { elearningApiAccountId == active.id }
+            }
+            if (stale != null && current != null && current !== stale && cached.wsToken != null) {
+                return@withLock ElearningTokens(cached.wsToken, cached.moodleSessionCookie)
+            }
+
+            val wsToken = cached.wsToken
+            val privateToken = cached.elearningPrivateToken
+            if (wsToken != null && privateToken != null) {
+                val cookie = runCatching {
+                    elearningAuthenticator.renewSession(wsToken, privateToken, active.learning.lmsUserId)
+                }.getOrNull()
+                if (cookie != null) {
+                    sessionCache.update(active.id) { copy(moodleSessionCookie = cookie) }
+                    adoptElearningApi(active.id, elearningApiFactory.create(cookie))
+                    return@withLock ElearningTokens(wsToken, cookie)
+                }
+            }
+
+            val creds = credentialsStore.read(active.id)
+                ?: error("No stored credentials for ${active.id.value}.")
+            val login = elearningAuthenticator.login(creds.username, creds.password)
+            sessionCache.update(active.id) {
+                copy(
+                    wsToken = login.wsToken,
+                    elearningPrivateToken = login.privateToken,
+                    moodleSessionCookie = login.moodleSessionCookie,
+                )
+            }
+            adoptElearningApi(active.id, elearningApiFactory.create(login.moodleSessionCookie))
+            ElearningTokens(login.wsToken, login.moodleSessionCookie)
+        }
         val api = ensureElearningApiForAccount(active.id, tokens.moodleSessionCookie)
         return ElearningSession(api, tokens.wsToken)
     }
@@ -401,24 +449,24 @@ class SessionManager @Inject constructor(
      * Single-flighted per account under the auth mutexes, so concurrent callers share one SAML
      * round-trip instead of each kicking off their own.
      */
-    private suspend fun esse3LegacyForAccount(accountId: AccountId): Esse3LegacyApi =
+    private suspend fun esse3WebForAccount(accountId: AccountId): Esse3Api =
         authMutexes.withLock(accountId) {
-            esse3LegacyMutex.withLock { esse3LegacyApis[accountId] }?.let { return@withLock it }
+            esse3WebMutex.withLock { esse3WebApis[accountId] }?.let { return@withLock it }
 
             val cached = sessionCache.read(accountId)
-            val cookies = deserializeCookies(cached.esse3LegacyCookies)
+            val cookies = deserializeCookies(cached.esse3WebCookies)
                 ?: run {
                     val creds = credentialsStore.read(accountId)
                         ?: error("No stored credentials for ${accountId.value}.")
-                    val fresh = esse3LegacyApiFactory.login(creds.username, creds.password)
-                    sessionCache.update(accountId) { copy(esse3LegacyCookies = serializeCookies(fresh)) }
+                    val fresh = esse3WebAuthenticator.login(creds.username, creds.password)
+                    sessionCache.update(accountId) { copy(esse3WebCookies = serializeCookies(fresh)) }
                     fresh
                 }
 
-            val api = esse3LegacyApiFactory.create(cookies)
-            esse3LegacyMutex.withLock {
-                esse3LegacyApis.remove(accountId)?.close()
-                esse3LegacyApis[accountId] = api
+            val api = esse3WebApiFactory.create(cookies)
+            esse3WebMutex.withLock {
+                esse3WebApis.remove(accountId)?.close()
+                esse3WebApis[accountId] = api
             }
             api
         }
@@ -481,25 +529,16 @@ class SessionManager @Inject constructor(
             }
             val creds = credentialsStore.read(accountId)
                 ?: error("No stored credentials for ${accountId.value}.")
-            val freshApi = elearningApiFactory.create()
-            val response = try {
-                freshApi.auth.login(creds.username, creds.password)
-            } catch (t: Throwable) {
-                freshApi.close()
-                throw t
-            }
-            val (wsToken, cookie) = when (response) {
-                is ElearningLoginResponse.Success -> response.wsToken to response.moodleSessionCookie
-                is ElearningLoginResponse.Error -> {
-                    freshApi.close()
-                    error("Elearning re-auth failed: ${response.message}")
-                }
-            }
+            val login = elearningAuthenticator.login(creds.username, creds.password)
             sessionCache.update(accountId) {
-                copy(wsToken = wsToken, moodleSessionCookie = cookie)
+                copy(
+                    wsToken = login.wsToken,
+                    elearningPrivateToken = login.privateToken,
+                    moodleSessionCookie = login.moodleSessionCookie,
+                )
             }
-            adoptElearningApi(accountId, freshApi)
-            ElearningTokens(wsToken, cookie)
+            adoptElearningApi(accountId, elearningApiFactory.create(login.moodleSessionCookie))
+            ElearningTokens(login.wsToken, login.moodleSessionCookie)
         }
 
     private suspend fun warmupElearningSilently(accountId: AccountId) {
@@ -533,16 +572,12 @@ class SessionManager @Inject constructor(
             elearningApiAccountId = accountId
         }
 
-    private suspend fun discardElearningApi() = elearningApiMutex.withLock {
-        elearningApi?.close()
-        elearningApi = null
-        elearningApiAccountId = null
-    }
-
     private data class ElearningLoginOutcome(
+        val api: ElearningApi,
         val wsToken: String,
+        val privateToken: String?,
         val moodleSessionCookie: String?,
-        val siteInfo: ElearningGetSiteInfoResponse,
+        val siteInfo: MoodleSiteInfo,
     )
 
     private data class ElearningTokens(
@@ -570,11 +605,8 @@ class SessionManager @Inject constructor(
         /**
          * Collapses raw backend throwables into a UI-friendly [SignInFailure].
          *
-         * The data-api `ApiRequestException`/`Esse3Exception` types live in a module
-         * that isn't on `:app`'s compile classpath, so we sniff stable text in the
-         * generated messages instead of type-checking. Both probes are anchored to
-         * strings emitted by code in this repository (`Esse3Exception.buildMessage`
-         * and the SAML "missing form at step three" branch in `ElearningAuthApi`).
+         * Esse3 refuses bad credentials with an [Esse3Exception]; the Moodle login runs in the
+         * app and reports them through [ElearningLoginException].
          */
         fun classifySignInFailure(esse3: Throwable?, elearning: Throwable?): SignInFailure {
             if (looksLikeBadCredentials(esse3) || looksLikeBadCredentials(elearning)) {
@@ -587,21 +619,15 @@ class SessionManager @Inject constructor(
         }
 
         /**
-         * Walks the cause chain for the three stable bad-credential signatures: the
-         * "Status code: 401" line of an `Esse3Exception` multi-line message, the verbatim
-         * Esse3 `retErrMsg` mentioning "credenziali" when the login is refused, and the
-         * "missing form at step three" failure the Elearning SAML flow raises when the IdP
-         * rejects bad credentials by re-rendering the login page without the auto-submit form.
+         * Walks the cause chain for the bad-credential signatures: an [Esse3Exception] with
+         * status 401 or whose message (Esse3's `retErrMsg`) mentions "credenziali", and an
+         * [ElearningLoginException] flagged as bad credentials.
          */
         private fun looksLikeBadCredentials(t: Throwable?): Boolean {
             var cur: Throwable? = t
             while (cur != null) {
-                val msg = cur.message
-                if (msg != null) {
-                    if ("Status code: 401" in msg) return true
-                    if ("credenziali" in msg.lowercase()) return true
-                    if ("missing form at step three" in msg) return true
-                }
+                if (cur is ElearningLoginException && cur.badCredentials) return true
+                if (cur is Esse3Exception && (cur.statusCode == 401 || "credenziali" in cur.errorMessage.lowercase())) return true
                 cur = cur.cause
             }
             return false

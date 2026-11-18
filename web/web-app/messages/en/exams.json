@@ -1,0 +1,274 @@
+{
+	"$schema": "https://inlang.com/schema/inlang-message-format",
+	"exams_title": "Exam calls",
+	"exams_services": "Services",
+	"exams_upcoming_count": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} upcoming exam",
+				"countPlural=other": "{count} upcoming exams"
+			}
+		}
+	],
+	"exams_none_scheduled": "No exams scheduled",
+	"exams_book_action": "Book an exam",
+	"exams_upcoming_heading": "Upcoming",
+	"exams_past_heading": "Past bookings",
+	"exams_past_description": "Exams you have sat, with the outcome once it is published.",
+	"exams_empty_title": "No exams on the calendar.",
+	"exams_empty_body": "Book an exam call and it shows up here, with everything you need on the day.",
+	"exams_bookings_failed": "Couldn’t load your bookings",
+	"exams_calls_failed": "Couldn’t load the exam calls",
+	"exams_calls_count": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} exam call",
+				"countPlural=other": "{count} exam calls"
+			}
+		}
+	],
+	"exams_exams_count": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} exam",
+				"countPlural=other": "{count} exams"
+			}
+		}
+	],
+	"exams_open_calls": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} exam call open for booking",
+				"countPlural=other": "{count} exam calls open for booking"
+			}
+		}
+	],
+	"exams_open_calls_none": "No exam calls open right now",
+	"exams_next_closing": "{course}: book by {date}",
+	"exams_next_closing_today": "{course}: last day to book",
+	"exams_next_opening": "The next registrations open on {date}",
+	"exams_kind_written": "Written",
+	"exams_kind_oral": "Oral",
+	"exams_kind_written_oral": "Written and oral",
+	"exams_kind_unknown": "Exam",
+	"exams_partial": "Partial exam",
+	"exams_kind_with_partial": "{kind} · partial exam",
+	"exams_call_written": "Written exam",
+	"exams_call_oral": "Oral exam",
+	"exams_call_written_oral": "Written and oral exam",
+	"exams_call_unknown": "Exam call",
+	"exams_room_tbc": "Room to be confirmed",
+	"exams_time_tbc": "Time to be confirmed",
+	"exams_status_open": "Open",
+	"exams_status_closing": "Closing",
+	"exams_status_upcoming": "Not open yet",
+	"exams_status_closed": "Closed",
+	"exams_book_by": "Book by {date}",
+	"exams_book_by_today": "Last day to book",
+	"exams_book_by_tomorrow": "Book by tomorrow",
+	"exams_opens_on": "Opens {date}",
+	"exams_closed_short": "Registrations closed",
+	"exams_window_open_until": "Registrations are open until {date}.",
+	"exams_window_last_day": "Today is the last day to book.",
+	"exams_window_open": "Registrations are open.",
+	"exams_window_opens": "Registrations open {date}.",
+	"exams_window_closed_on": "Registrations closed {date}.",
+	"exams_window_closed": "Registrations are closed.",
+	"exams_window_range": "From {start} to {end}",
+	"exams_window_from": "From {start}",
+	"exams_window_until": "Until {end}",
+	"exams_fact_registrations": "Registrations",
+	"exams_fact_enrolled": "Enrolled",
+	"exams_students": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} student",
+				"countPlural=other": "{count} students"
+			}
+		}
+	],
+	"exams_fact_booking_mode": "Booking mode",
+	"exams_fact_president": "Chairperson",
+	"exams_fact_call": "Exam call",
+	"exams_fact_where": "Where",
+	"exams_fact_student": "Student",
+	"exams_fact_position": "Position",
+	"exams_fact_booked_on": "Booked on",
+	"exams_fact_mode": "Mode",
+	"exams_fact_credits": "Credits",
+	"exams_fact_note": "Your note",
+	"exams_fact_outcome": "Outcome",
+	"exams_call_notes": "Call notes",
+	"exams_published_note": "Note from the examiners",
+	"exams_note_label": "Note for the examiners",
+	"exams_note_hint": "Esse3 attaches it to your booking.",
+	"exams_book_cta": "Book this call…",
+	"exams_book_confirm_title": "Book {course}?",
+	"exams_book_confirm_message": "{when}. You can cancel the booking until {deadline}.",
+	"exams_book_confirm_message_open": "{when}. You can cancel the booking while registrations stay open.",
+	"exams_book_confirm": "Book",
+	"exams_not_now": "Not now",
+	"exams_not_bookable": "Esse3 doesn’t allow booking this call from your record book.",
+	"exams_refused": "Esse3 refused the request: “{reason}”",
+	"exams_questionnaires_link": "Go to questionnaires",
+	"exams_booked_title": "Exam booked",
+	"exams_booked_body": "{course}, {date}. It’s among your bookings now, with everything you need on the day.",
+	"exams_view_booking": "View booking",
+	"exams_add_calendar": "Add to calendar",
+	"exams_all_calls": "All exam calls",
+	"exams_book_title": "Book an exam",
+	"exams_calls_label": "Exam calls by course",
+	"exams_call_label": "Selected exam call",
+	"exams_filter_label": "Filter courses",
+	"exams_filter_placeholder": "Search a course",
+	"exams_only_course": "Only {course}",
+	"exams_show_all": "Show all courses",
+	"exams_no_calls_title": "No exam calls to book.",
+	"exams_no_calls_body": "New calls appear here as soon as Esse3 publishes them.",
+	"exams_no_course_calls_title": "No calls to book for {course}.",
+	"exams_already_booked": "You’re already booked for this call.",
+	"exams_no_match": "No course matches “{query}”.",
+	"exams_call_missing_title": "This exam call can’t be booked any more.",
+	"exams_call_missing_body": "You may have booked it already, or Esse3 withdrew it.",
+	"exams_booking_label": "Booking",
+	"exams_ticket_label": "Booking for {course}",
+	"exams_position_of_total": "{position} of {total} booked",
+	"exams_position_alone": "{position} to book",
+	"exams_receipt": "Receipt",
+	"exams_receipt_failed": "The booking receipt couldn’t be downloaded. Try again in a moment.",
+	"exams_pdf_waiting": "Loading the document…",
+	"exams_presence": "Certificate of attendance",
+	"exams_presence_failed": "The certificate of attendance isn’t available for this exam yet.",
+	"exams_cancel_action": "Cancel booking…",
+	"exams_cancel_title": "Cancel this booking?",
+	"exams_cancel_message": "You’ll lose your place for {course} ({date}). You can book again until {deadline}, but at the end of the list.",
+	"exams_cancel_message_open": "You’ll lose your place for {course} ({date}). You can book again while registrations stay open, but at the end of the list.",
+	"exams_cancel_confirm": "Cancel booking",
+	"exams_keep": "Keep booking",
+	"exams_cancel_closed": "Cancellations closed on {date}.",
+	"exams_cancelled_title": "Booking cancelled",
+	"exams_cancelled_body": "You’re no longer booked for {course} ({date}).",
+	"exams_book_again": "Book again",
+	"exams_not_found_title": "This booking isn’t one of yours.",
+	"exams_not_found_body": "It may have been cancelled, or belong to another career.",
+	"exams_taken_on": "Taken on {date}",
+	"exams_awaiting_result": "Awaiting result",
+	"exams_back_to_bookings": "Back to your bookings",
+	"exams_book_another": "Book another exam",
+	"exams_booked_chip": "Booked",
+	"exams_booking_details": "Booking details",
+	"exams_call_details": "Call details",
+	"exams_cancel_heading": "Cancellation",
+	"exams_cancel_unavailable": "This booking can’t be cancelled from here.",
+	"exams_cancel_until": "You can cancel it until {date}.",
+	"exams_cancel_while_open": "You can cancel it while registrations stay open.",
+	"exams_no_calls_short": "No calls to book",
+	"exams_offline_write": "You’re offline: you can book or cancel once you’re back online.",
+	"exams_refused_title": "Esse3 didn’t accept the booking",
+	"exams_refusal_quote": "“{reason}”",
+	"exams_result_pending": "The outcome shows here once the examiners publish it.",
+	"exams_see_results": "See exam results",
+	"exams_show_all_past": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "Show all ({count})",
+				"countPlural=other": "Show all ({count})"
+			}
+		}
+	],
+	"exams_show_fewer": "Show fewer",
+	"exams_ticket_number": "Student number",
+	"exams_ticket_room": "Room",
+	"exams_ticket_time": "Time",
+	"exams_date_at_time": "{date} at {time}",
+	"exams_add_note": "Add a note for the examiners",
+	"exams_fact_degree": "Degree programme",
+	"exams_outcome_passed": "Passed",
+	"exams_exam_when": "Exam {when}",
+	"exams_closes_when": "Closes {when}",
+	"exams_ics_duration_unknown": "Esse3 doesn’t say how long the exam lasts.",
+	"exams_overview_title": "Calendar of exams",
+	"exams_overview_hint": "Pick a day to see its exams.",
+	"exams_previous_month": "Previous month",
+	"exams_next_month": "Next month",
+	"exams_overview_quiet_month": "No exams this month.",
+	"exams_legend_open": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} open",
+				"countPlural=other": "{count} open"
+			}
+		}
+	],
+	"exams_legend_closing": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} closing",
+				"countPlural=other": "{count} closing"
+			}
+		}
+	],
+	"exams_legend_upcoming": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} not open yet",
+				"countPlural=other": "{count} not open yet"
+			}
+		}
+	],
+	"exams_booked_count": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} booked",
+				"countPlural=other": "{count} booked"
+			}
+		}
+	],
+	"exams_mode_in_person": "In person",
+	"exams_mode_remote": "Online",
+	"exams_view_label": "View",
+	"exams_view_list": "List",
+	"exams_view_calendar": "Calendar",
+	"exams_to_book_count": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} to book",
+				"countPlural=other": "{count} to book"
+			}
+		}
+	],
+	"exams_legend_closed": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} closed",
+				"countPlural=other": "{count} closed"
+			}
+		}
+	],
+	"exams_room_on_map": "on the map",
+	"exams_see_result": "See the result"
+}

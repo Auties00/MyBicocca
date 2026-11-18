@@ -9,16 +9,17 @@ import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncStateDa
 import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncStateEntity
 import it.attendance100.mybicocca.data.mapper.elearning.toDomain
 import it.attendance100.mybicocca.data.mapper.elearning.toEntity
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.elearning.badge.Badge
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.domain.repository.ElearningBadgeRepository
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Badge repository backed by the Moodle user-badges web service and the Room badge
@@ -49,14 +50,13 @@ class ElearningBadgeRepositoryImpl @Inject constructor(
         if (!force && !isStale(accountId, ElearningSyncScope.BADGES, scopeId)) return
         val account = sessionManager.activeAccount.value ?: error("No active account.")
         val (api, token) = sessionManager.elearning()
-        val response = api.badges.getUserBadges(
-            wsToken = token,
+        val response = api.moodle.badge.getUserBadges(
             userId = account.learning.lmsUserId,
             courseId = courseId?.value,
             page = 0,
             perPage = 0,
-            search = null,
             onlyPublic = false,
+            auth = MoodleTokenAuth(token),
         )
         val rows = response.badges.map { it.toEntity(accountId) }
         badgeDao.replaceForCourse(accountId.value, courseId?.value, rows)

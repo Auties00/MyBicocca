@@ -1,0 +1,17 @@
+{
+	"name": "@mybicocca/relay",
+	"version": "0.1.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./src/handler.ts",
+		"./protocol": "./src/protocol.ts",
+		"./vite": "./src/vite.ts"
+	},
+	"devDependencies": {
+		"@types/node": "^24.19.2"
+	},
+	"peerDependencies": {
+		"vite": "^8.0.0"
+	}
+}

@@ -1,0 +1,125 @@
+# The pages of Esse3's web portal (Segreterie OnLine) that its REST API doesn't cover, read out of
+# their HTML. They join the REST API (openapi/) as more modules of the same Esse3 API: see the
+# readers of codegen.json. See common/codegen/readers/openapi for the x-mb-* extensions.
+#
+# The pages need the session of the university's SSO login (the JSESSIONID and _shibsession_*
+# cookies), which the caller sends. Once it expires, Esse3 redirects to the identity provider's
+# login page, which each page record tells apart.
+openapi: 3.0.3
+info:
+  title: Esse3 web portal
+  version: "1"
+x-mb-id: esse3
+x-mb-prefix: Esse3
+
+servers:
+  - url: https://s3w.si.unimib.it
+    x-mb-name: Web
+
+tags:
+  - name: Certificates
+    description: >-
+      The self-declarations (autocertificazioni) a student can print: pre-filled PDFs of their
+      enrolment, degree or tuition fees, which no REST service produces.
+
+paths:
+  /auth/studente/Certificati/ListaCertificati.do:
+    get:
+      tags: [Certificates]
+      operationId: getCertificates
+      summary: The self-declarations the student can print.
+      x-mb-query:
+        menu_opened_cod: menu_link-navbox_studenti_Segreteria
+      responses:
+        "200":
+          description: The list page, or the identity provider's login page once the session expired.
+          content:
+            text/html:
+              schema:
+                $ref: "#/components/schemas/Esse3CertificatesPage"
+  /auth/studente/Certificati/MessaggiCertificato.do:
+    get:
+      tags: [Certificates]
+      operationId: getCertificatePdf
+      summary: >-
+        Prints a self-declaration, with the parameters of its link on the list page. The page
+        streams the PDF; with an expired session it is the identity provider's login page instead.
+      parameters:
+        - name: cert_conf_id
+          in: query
+          required: true
+          x-mb-name: configurationId
+          schema: { type: integer }
+        - name: doc_id
+          in: query
+          required: true
+          x-mb-name: documentId
+          schema: { type: integer }
+        - name: tipo_cert_cod
+          in: query
+          x-mb-name: typeCode
+          schema: { type: string }
+        - name: annosolare
+          in: query
+          x-mb-name: solarYear
+          schema: { type: integer }
+        - name: firma_dig_flg
+          in: query
+          x-mb-name: signatureFlag
+          schema: { type: string }
+      responses:
+        "200":
+          description: The PDF.
+          content:
+            application/pdf:
+              schema: { type: string, format: binary }
+
+components:
+  schemas:
+    Esse3CertificatesPage:
+      type: object
+      x-mb-scrape: {}
+      properties:
+        sessionExpired:
+          description: Whether Esse3 served the identity provider's login page instead, as it does once the session expired.
+          type: boolean
+          default: false
+          x-mb-scrape: [{ select: "input[name=j_username], form[action*=SAML2]" }, exists]
+        certificates:
+          description: The self-declarations; one may be listed twice, in Italian and in English.
+          type: array
+          items: { $ref: "#/components/schemas/Esse3Certificate" }
+          x-mb-scrape: [{ select-all: 'a[href*="MessaggiCertificato.do"], a[href*="cert_conf_id"]' }]
+    Esse3Certificate:
+      description: A self-declaration, read from its link, whose parameters print it (see getCertificatePdf).
+      type: object
+      x-mb-scrape: {}
+      required: [configurationId, documentId]
+      properties:
+        configurationId:
+          type: integer
+          x-mb-scrape: [{ url: href }, { query-parameter: cert_conf_id }]
+        documentId:
+          type: integer
+          x-mb-scrape: [{ url: href }, { query-parameter: doc_id }]
+        description:
+          description: The declaration's name, such as "Autodichiarazione Iscrizione con Esami".
+          type: string
+          default: ""
+          x-mb-scrape: [text]
+        type:
+          x-mb-scrape: [{ url: href }, { query-parameter: tipo_cert_cod }]
+          allOf: [{ $ref: "#/components/schemas/Esse3CertificateType" }]
+        solarYear:
+          description: The year the declaration is about, mainly for tuition fees; none when it is about no year.
+          type: integer
+          x-mb-scrape: [{ url: href }, { query-parameter: annosolare }]
+        signatureFlag:
+          description: The link's `firma_dig_flg`, set when the PDF is digitally signed.
+          type: string
+          x-mb-scrape: [{ url: href }, { query-parameter: firma_dig_flg }]
+    Esse3CertificateType:
+      description: The kind of a self-declaration, by Esse3's code.
+      type: string
+      enum: [I, L, TAX]
+      x-enum-varnames: [Enrolment, DegreeAward, TuitionFees]

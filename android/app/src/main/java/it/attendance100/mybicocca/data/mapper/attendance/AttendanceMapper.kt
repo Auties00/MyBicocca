@@ -4,10 +4,11 @@ import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.text.UiText
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffAttendanceRecord
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffAttendanceStatus
+import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffCertificationResult
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffCertifyAttendanceResult
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceMarkResult
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceMarkableSession
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttendanceSummary
+import it.attendance100.mybicocca.data.elearning.ElearningAttendanceMarkResult
+import it.attendance100.mybicocca.data.elearning.ElearningAttendanceMarkableSession
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleWebAttendanceSummary
 import it.attendance100.mybicocca.domain.model.attendance.AttendanceModuleRef
 import it.attendance100.mybicocca.domain.model.attendance.AttendanceStatusOption
 import it.attendance100.mybicocca.domain.model.attendance.ClassroomAttendance
@@ -23,9 +24,9 @@ fun EasyStaffAttendanceRecord.toDomain(): ClassroomAttendance = ClassroomAttenda
     hoursCompleted = totalHours,
     requirementProgressPercentage = requirementProgressPercentage,
     status = when (state) {
-        EasyStaffAttendanceStatus.ATTENDING -> ClassroomAttendanceStatus.Attending
-        EasyStaffAttendanceStatus.IN_PROGRESS -> ClassroomAttendanceStatus.InProgress
-        EasyStaffAttendanceStatus.NOT_ATTENDING -> ClassroomAttendanceStatus.NotAttending
+        EasyStaffAttendanceStatus.Attending -> ClassroomAttendanceStatus.Attending
+        EasyStaffAttendanceStatus.InProgress -> ClassroomAttendanceStatus.InProgress
+        EasyStaffAttendanceStatus.NotAttending, is EasyStaffAttendanceStatus.Unknown, null -> ClassroomAttendanceStatus.NotAttending
     },
 )
 
@@ -33,9 +34,9 @@ fun EasyStaffAttendanceRecord.toDomain(): ClassroomAttendance = ClassroomAttenda
  * Maps a Moodle mod_attendance summary to a session register, labeled with the attendance
  * activity name it was read from.
  */
-fun ElearningAttendanceSummary.toDomain(label: String): SessionAttendance = SessionAttendance(
+fun MoodleWebAttendanceSummary.toDomain(label: String): SessionAttendance = SessionAttendance(
     label = label,
-    attendedSessions = attendedSessions,
+    recordedSessions = takenSessions,
     recordedPercentage = takenSessionsPercentage,
     totalSessions = totalSessions,
     overallPercentage = allSessionsPercentage,
@@ -48,6 +49,7 @@ fun ElearningAttendanceMarkableSession.toDomain(module: AttendanceModuleRef): Op
     OpenAttendanceSession(
         sessionId = sessionId,
         module = module,
+        time = time,
         requiresPassword = requiresPassword,
         statuses = statuses.map { AttendanceStatusOption(it.id, it.description) },
     )
@@ -88,6 +90,11 @@ fun ElearningAttendanceMarkResult.toOutcome(): PresenceMarkOutcome = when (this)
         )
     }
 
+    ElearningAttendanceMarkResult.Unconfirmed ->
+        PresenceMarkOutcome.Failed(
+            message = UiText.StringResource(R.string.attendance_msg_unconfirmed),
+        )
+
     is ElearningAttendanceMarkResult.Failed ->
         PresenceMarkOutcome.Failed(
             message = UiText.StringResource(R.string.attendance_msg_failed),
@@ -100,7 +107,7 @@ fun ElearningAttendanceMarkResult.toOutcome(): PresenceMarkOutcome = when (this)
  * as a wrong lesson code.
  */
 fun EasyStaffCertifyAttendanceResult.toOutcome(): PresenceMarkOutcome = when {
-    success -> PresenceMarkOutcome.Recorded(
+    result == EasyStaffCertificationResult.Ok -> PresenceMarkOutcome.Recorded(
         message = if (message.isBlank()) UiText.StringResource(R.string.attendance_msg_recorded) else UiText.DynamicString(
             message
         ),

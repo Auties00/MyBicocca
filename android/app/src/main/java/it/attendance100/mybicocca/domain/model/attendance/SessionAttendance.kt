@@ -6,20 +6,35 @@ package it.attendance100.mybicocca.domain.model.attendance
  * been taken so far, so its percentage is the meaningful progress signal during the semester.
  *
  * @property label Display name of the register (the attendance activity name).
- * @property attendedSessions Sessions the student was marked present at.
+ * @property recordedSessions Sessions with a recorded status so far, absences included.
  * @property recordedPercentage Attendance percentage over the sessions taken so far.
  * @property totalSessions Total sessions planned in the register.
  * @property overallPercentage Attendance percentage over all planned sessions.
  * @property pointsLabel Points summary as Moodle renders it, when available.
  * @property bestPossiblePercentage Highest percentage still reachable given the sessions
  *   already taken.
+ * @property loadFailed Whether the register couldn't be read, so every figure is missing
+ *   because of an error rather than because nothing was recorded yet.
  */
 data class SessionAttendance(
     val label: String,
-    val attendedSessions: Int?,
+    val recordedSessions: Int?,
     val recordedPercentage: Double?,
     val totalSessions: Int?,
     val overallPercentage: Double?,
     val pointsLabel: String? = null,
     val bestPossiblePercentage: Double? = null,
-)
+    val loadFailed: Boolean = false,
+) {
+    companion object {
+        /** A register that couldn't be read. */
+        fun failed(label: String): SessionAttendance = SessionAttendance(
+            label = label,
+            recordedSessions = null,
+            recordedPercentage = null,
+            totalSessions = null,
+            overallPercentage = null,
+            loadFailed = true,
+        )
+    }
+}

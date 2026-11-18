@@ -1,0 +1,119 @@
+{
+	"$schema": "https://inlang.com/schema/inlang-message-format",
+	"search_placeholder": "Search courses, rooms, exams, services…",
+	"search_placeholder_short": "Search courses, rooms, exams…",
+	"search_clear": "Clear",
+	"search_loading": "Loading your data…",
+	"search_results": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} result",
+				"countPlural=other": "{count} results"
+			}
+		}
+	],
+	"search_top_hit": "Top hit",
+	"search_category_todo": "To do",
+	"search_category_courses": "Courses",
+	"search_category_assignments": "Assignments",
+	"search_category_quizzes": "Quizzes",
+	"search_category_calendar": "Calendar",
+	"search_category_places": "Places",
+	"search_category_career": "Career",
+	"search_history_clear": "Clear history",
+	"search_history_remove": "Remove from history",
+	"search_history_remove_short": "Remove",
+	"search_grade": "Grade {grade}",
+	"search_due": "Due {date}, {time}",
+	"search_overdue": "Was due {date}",
+	"search_catalog_title": "Search “{query}” in the catalogue",
+	"search_catalog_subtitle": "E-learning · Course catalogue",
+	"search_map_title": "Search “{query}” on the map",
+	"search_map_subtitle": "Map · Buildings and rooms",
+	"search_open_in_calendar": "Open in Calendar",
+	"search_day_today": "Today",
+	"search_day_tomorrow": "Tomorrow",
+	"search_day_after_tomorrow": "The day after tomorrow",
+	"search_exam_aliases": "exam, exams, booked exam, exam call, booking, esame, esami, appello",
+	"search_todo_questionnaire": "Evaluate {course}",
+	"search_todo_questionnaire_aliases": "questionnaire, evaluation, evaluate teaching, opis, questionario, questionari, valuta",
+	"search_todo_result": "Accept or reject {course}",
+	"search_todo_result_aliases": "result, grade, accept, reject, esito, esiti, voto, accetta, rifiuta",
+	"search_todo_booking": "Book {course}",
+	"search_todo_booking_aliases": "exam, exams, exam call, book exam, exam booking, esame, esami, appello, appelli, prenota esame",
+	"search_todo_booking_closes": [
+		{
+			"declarations": ["input date", "input day"],
+			"selectors": ["day"],
+			"match": {
+				"day=*": "Book by {date}"
+			}
+		}
+	],
+	"search_todo_booking_opens": [
+		{
+			"declarations": ["input date", "input day"],
+			"selectors": ["day"],
+			"match": {
+				"day=*": "Booking opens {date}"
+			}
+		}
+	],
+	"search_todo_booking_call": [
+		{
+			"declarations": ["input date", "input day"],
+			"selectors": ["day"],
+			"match": {
+				"day=*": "exam on {date}"
+			}
+		}
+	],
+	"search_todo_fee": "Pay {fee}",
+	"search_todo_fee_aliases": "fees, pay, payment, payments, pagopa, instalment, payment notice, tasse, pagare, pagamento, rata",
+	"search_action_book_exam": "Book an exam",
+	"search_action_book_exam_aliases": "exams, book exam call, sign up for an exam, exam call registration, exam booking, exam session, esami, prenota esame, appello",
+	"search_action_library_seat": "Book a library seat",
+	"search_action_library_seat_aliases": "book seat, book library, study room seat, library booking, biblioteca, prenota posto",
+	"search_action_appointment": "Book a registrar appointment",
+	"search_action_appointment_aliases": "book office, registrar appointment, appointment booking, segreteria, sportello, prenota sportello",
+	"search_action_pay_fees": "Pay fees",
+	"search_action_pay_fees_aliases": "pay, fee payment, pay instalment, pay notice, pagopa, tasse, pagare, paga",
+	"search_action_questionnaire": "Fill in a questionnaire",
+	"search_action_questionnaire_aliases": "evaluate teaching, fill in evaluation, course questionnaire, questionario, valuta la didattica",
+	"search_action_study_plan": "Edit the study plan",
+	"search_action_study_plan_aliases": "edit plan, fill in plan, career plan, choose exams, piano di studi, modifica piano",
+	"search_action_add_course": "Add a course",
+	"search_action_add_course_aliases": "enrol in a course, new course, moodle course enrolment, search course, catalogue, catalog",
+	"search_action_average": "Simulate your average",
+	"search_action_average_aliases": "simulate grade, calculate average, weighted average, average projection, grade calculator, graduation grade, media, calcola media",
+	"search_action_language": "Change language",
+	"search_action_language_aliases": "app language, change language, italiano",
+	"search_category_elsewhere": "Search elsewhere",
+	"search_matched_alias": "Matches “{alias}”",
+	"search_notice_failed": "Partial results: couldn’t load {parts}.",
+	"search_notice_failed_many": "Partial results: some services aren’t responding.",
+	"search_notice_offline": "You’re offline: searching saved data only.",
+	"search_notice_unavailable": "Search is unavailable: only pages are searched.",
+	"search_part_courses": "courses",
+	"search_part_deadlines": "deadlines",
+	"search_part_transcript": "transcript",
+	"search_part_rooms": "rooms",
+	"search_part_questionnaires": "questionnaires",
+	"search_part_results": "exam results",
+	"search_part_bookings": "exam bookings",
+	"search_part_calls": "exam calls",
+	"search_history_cleared": "History cleared",
+	"search_history_restore": "Restore history",
+	"search_kind_exam": "Exam",
+	"search_assignment_aliases": "assignment, assignments, homework, submission, compito, compiti, consegna, consegne",
+	"search_quiz_aliases": "quiz, quizzes, test",
+	"search_empty_partial": "Nothing to show for “{query}”",
+	"search_empty_partial_hint": "Some data isn’t available: try again in a moment.",
+	"search_empty_offline_hint": "The rest arrives when you’re back online.",
+	"search_history_remove_item": "Remove “{title}” from history",
+	"search_voice": "Search by voice",
+	"search_voice_stop": "Stop listening",
+	"search_voice_listening": "Listening…"
+}

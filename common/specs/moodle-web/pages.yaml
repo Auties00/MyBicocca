@@ -1,0 +1,506 @@
+# The pages of the university's Moodle (elearning.unimib.it) that no web service exposes, read
+# out of their HTML: the public course pages, the Kaltura player of a video resource, and the
+# pages and mobile app templates of the attendance plugin; and the catalog of every course,
+# which the SDKs ship as a resource. The web service functions are in specs/moodle. See
+# common/codegen/readers/openapi for the x-mb-* extensions.
+openapi: 3.0.3
+info:
+  title: Moodle web pages
+  version: "1"
+x-mb-id: moodle-web
+x-mb-prefix: MoodleWeb
+# Whether pages are fetched as the user or as an anonymous visitor is up to the cookies of the
+# client the caller configures.
+x-mb-client: {}
+x-mb-resources:
+  catalog:
+    type: MoodleWebCatalog
+    builder: elearning-catalog
+    description: >-
+      The catalog of the courses on the university's Moodle, as its category pages list them,
+      crawled ahead of time: searching it needs no network or account.
+
+servers:
+  - url: https://elearning.unimib.it
+    x-mb-name: Main
+
+tags:
+  - name: Catalog
+    description: >-
+      The public course pages, which need no login. Sent with a session, they render the
+      logged-in user's view instead.
+  - name: Media
+    description: The pages of video resources, which need the user's browser session (the MoodleSession cookie).
+  - name: Attendance
+    description: >-
+      The pages of the attendance plugin, which need the user's browser session, and the templates
+      it renders for the Moodle app, which core_get_mobile_content returns.
+
+paths:
+  /course/info.php:
+    get:
+      tags: [Catalog]
+      operationId: getCourseInfo
+      x-mb-effect: benign
+      summary: >-
+        A course's public page: its syllabus, staff and enrolment methods, for any course,
+        including those the user isn't enrolled in. Its details ("Scheda del corso") come from the
+        course's custom fields instead (core_course_get_courses_by_field).
+      x-mb-scrape:
+        - select: .coursebox.has-info.has-metadata
+      parameters:
+        - name: id
+          in: query
+          required: true
+          x-mb-name: courseId
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: The course's public page.
+          content:
+            text/html:
+              schema:
+                $ref: "#/components/schemas/MoodleWebCourseInfo"
+  /mod/kalvidres/view.php:
+    get:
+      tags: [Media]
+      operationId: getKalturaPlayer
+      x-mb-effect: benign
+      summary: >-
+        The Kaltura player of a video resource. Without a valid session Moodle serves its login page,
+        which has no player.
+      parameters:
+        - name: id
+          in: query
+          required: true
+          x-mb-name: courseModuleId
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: The resource's page.
+          content:
+            text/html:
+              schema:
+                $ref: "#/components/schemas/MoodleWebKalturaPlayer"
+  /mod/attendance/view.php:
+    get:
+      tags: [Attendance]
+      operationId: getAttendanceView
+      x-mb-effect: irreversible
+      summary: >-
+        An attendance activity's page showing every session: the student's statistics and the
+        sessions it offers to submit attendance for. It only reads; marking happens on the pages
+        its links lead to. Without a valid session Moodle serves the page, or the course's enrol
+        page it redirects to, as the guest user (`userId`); a logged-in user it won't show the
+        page to gets another page instead (`shown`), such as the teachers' one. Every load logs a
+        `session_report_viewed` event in the course, which a session marking present every user
+        with any course log entry counts as attending.
+      x-mb-query:
+        view: "5"
+      parameters:
+        - name: id
+          in: query
+          required: true
+          x-mb-name: courseModuleId
+          schema:
+            type: integer
+        - name: lang
+          in: query
+          description: >-
+            The language to render the page in, such as the web services' one, so that its session
+            times read as the mobile templates' do.
+          x-mb-name: language
+          schema:
+            type: string
+      responses:
+        "200":
+          description: The activity's page, or the page Moodle redirected to.
+          content:
+            text/html:
+              schema:
+                $ref: "#/components/schemas/MoodleWebAttendanceView"
+
+components:
+  schemas:
+    MoodleWebCatalog:
+      x-mb-module: Catalog
+      description: The courses on the university's Moodle, by area and then category, as the site nests them.
+      type: object
+      required: [fetched_at, areas]
+      properties:
+        fetched_at:
+          type: string
+          description: When the catalog was crawled, in ISO 8601 (UTC).
+        areas:
+          type: array
+          items: { $ref: "#/components/schemas/MoodleWebCatalogArea" }
+    MoodleWebCatalogArea:
+      x-mb-module: Catalog
+      description: A section of the homepage, such as "Didattica online".
+      type: object
+      required: [name, categories]
+      properties:
+        name: { type: string }
+        categories:
+          type: array
+          items: { $ref: "#/components/schemas/MoodleWebCatalogCategory" }
+    MoodleWebCatalogCategory:
+      x-mb-module: Catalog
+      description: >-
+        A category, such as a study course or one of its years. One reached again through another
+        parent is listed there with neither subcategories nor courses.
+      type: object
+      required: [name, categories, courses]
+      properties:
+        name: { type: string }
+        url: { type: string }
+        categories:
+          type: array
+          items: { $ref: "#/components/schemas/MoodleWebCatalogCategory" }
+        courses:
+          type: array
+          items: { $ref: "#/components/schemas/MoodleWebCatalogCourse" }
+    MoodleWebCatalogCourse:
+      x-mb-module: Catalog
+      type: object
+      required: [id, name, code, url]
+      properties:
+        id: { type: integer, format: int32 }
+        name: { type: string }
+        code:
+          type: string
+          description: The course's short name, such as "CDS-E1805M-DOC"; blank when it has none.
+        url: { type: string }
+    MoodleWebCourseInfo:
+      type: object
+      x-mb-scrape: {}
+      properties:
+        id:
+          type: integer
+          x-mb-scrape: [{ attribute: data-courseid }]
+        name:
+          type: string
+          default: ""
+          x-mb-scrape:
+            - first-of:
+                - [root, { select: "#course-header .coursename .course-fullname" }, text]
+                - [root, { select: .course-fullname }, text]
+        code:
+          type: string
+          default: ""
+          x-mb-scrape:
+            - first-of:
+                - [root, { select: "#course-header .coursename .course-shortname" }, text]
+                - [root, { select: .course-shortname }, text]
+        viewUrl:
+          type: string
+          default: ""
+          x-mb-scrape: [{ select: ".course-access a[href]" }, { url: href }]
+        syllabus:
+          description: The syllabus in each language it is written in.
+          type: array
+          items: { $ref: "#/components/schemas/MoodleWebSyllabus" }
+          x-mb-scrape: [{ select-all: .tab-content > .tab-pane }]
+        staff:
+          type: array
+          items: { $ref: "#/components/schemas/MoodleWebStaffGroup" }
+          x-mb-scrape: [{ select: .course-contacts ul.summary-content.teachers }, { sections: h4.contact-role }]
+        enrolmentMethods:
+          type: array
+          items: { type: string }
+          x-mb-scrape: [{ select-all: .course-enrolments .enrols-data .row.no-gutters .col-6.font-weight-bold }]
+        studentOpinionUrl:
+          type: string
+          x-mb-scrape: [{ select: ".course-opinion .opinion-data a[href]" }, { url: href }]
+        bibliographyUrl:
+          type: string
+          x-mb-scrape: [{ select: ".course-biblio .biblio-data a[href]" }, { url: href }]
+    MoodleWebSyllabus:
+      type: object
+      x-mb-scrape: {}
+      properties:
+        language:
+          description: The syllabus's language, as its tab names it (`it`, `en`).
+          type: string
+          default: unknown
+          x-mb-scrape: [{ attribute: id }]
+        exportPdfUrl:
+          type: string
+          x-mb-scrape: [{ select: '.syllabus-actions a[href*="syllabus/export.php"]' }, { url: href }]
+        fields:
+          type: array
+          items: { $ref: "#/components/schemas/MoodleWebSyllabusField" }
+          x-mb-scrape: [{ select-all: .field }]
+    MoodleWebSyllabusField:
+      type: object
+      x-mb-scrape: {}
+      properties:
+        title:
+          type: string
+          default: ""
+          x-mb-scrape: [{ select: .field-title }, text]
+        htmlContent:
+          type: string
+          default: ""
+          x-mb-scrape: [{ select: .field-content }, html]
+    MoodleWebStaffGroup:
+      type: object
+      x-mb-scrape: {}
+      required: [role]
+      properties:
+        role:
+          type: string
+          x-mb-scrape: [{ select: h4.contact-role }, text]
+        members:
+          type: array
+          items: { $ref: "#/components/schemas/MoodleWebStaffMember" }
+          x-mb-scrape: [{ select-all: li.contact }]
+    MoodleWebStaffMember:
+      type: object
+      x-mb-scrape: {}
+      properties:
+        name:
+          type: string
+          default: ""
+          x-mb-scrape: [{ select: .contact-name }, text]
+        profileUrl:
+          type: string
+          default: ""
+          x-mb-scrape: [{ select: ".contact-picture a[href]" }, { url: href }]
+        userId:
+          type: integer
+          x-mb-scrape: [{ select: ".contact-picture a[href]" }, { url: href }, { query-parameter: id }]
+        initials:
+          type: string
+          x-mb-scrape: [{ select: .userinitials }, text]
+        email:
+          description: The member's address, which the page writes into the row's id (`contact-<address>`).
+          type: string
+          x-mb-scrape: [{ attribute: id }, { regex: "^contact-(.+@.+)$" }]
+
+    MoodleWebKalturaPlayer:
+      description: The Kaltura player of a video resource, whose address names the video's Kaltura entry.
+      type: object
+      x-mb-scrape: {}
+      properties:
+        entryId:
+          description: The video's Kaltura entry, or none when the page has no player, typically because the session expired.
+          type: string
+          x-mb-scrape: [{ select: html }, html, { regex: "entryid(?:/|%2F)([\\w-]+)" }]
+
+    # The attendance plugin's pages: an activity's view.php, which only reads, and the
+    # templates it renders for the Moodle mobile app, which core_get_mobile_content
+    # (tool_mobile_get_content) returns as HTML. The mobile view of an activity isn't read:
+    # rendering it marks the student present in open sessions that assign a status by themselves.
+    MoodleWebAttendanceView:
+      description: >-
+        An attendance activity's `view.php` showing every session (`view=5`): the student's
+        statistics and the sessions it offers to submit attendance for.
+      type: object
+      x-mb-scrape: {}
+      properties:
+        userId:
+          description: >-
+            The user Moodle rendered the page for, from its JavaScript config (`M.cfg`): 1, the
+            guest user, when the session expired.
+          type: integer
+          x-mb-scrape: [{ select: html }, html, { regex: '"userId"\s*:\s*(\d+)' }]
+        shown:
+          description: >-
+            Whether Moodle showed the activity's page, rather than another one: its enrol page (an
+            expired session, or a course the user isn't enrolled in), the teachers' or the report
+            viewers' page, or a policy or access restriction page.
+          type: boolean
+          default: false
+          x-mb-scrape: [{ select: "body#page-mod-attendance-view" }, exists]
+        summary:
+          description: >-
+            The student's statistics, or none when the page shows no table of them, or one
+            without the eight rows it is read by, which means the markup changed.
+          allOf: [{ $ref: "#/components/schemas/MoodleWebAttendanceSummary" }]
+          x-mb-scrape: [{ select: "table.attlist:has(tr:nth-of-type(8)):not(:has(tr:nth-of-type(9)))" }]
+        submittableSessions:
+          description: >-
+            The session log's rows whose status, points and remarks cells are merged into one
+            link to `attendance.php`. Sessions that have a status are left out, even when it can
+            still be updated, and so are rotating QR sessions, shown as a form instead: the
+            plugin's mobile handler only accepts a session's fixed password.
+          type: array
+          items: { $ref: "#/components/schemas/MoodleWebSubmittableSession" }
+          x-mb-scrape: [{ select-all: "table.generaltable tr:has(td[colspan='3'] a[href*='attendance.php'])" }]
+    MoodleWebAttendanceSummary:
+      description: >-
+        A student's attendance in an attendance activity, from the statistics table of `view.php`.
+        Its rows have localized labels, but `construct_user_data_stat` writes them in the same
+        order when every session is shown, so values are read by position. "Taken" sessions are
+        those with a recorded status, absences included. Points are kept as their "earned /
+        maximum" labels, which the plugin formats by locale.
+      type: object
+      x-mb-module: Attendance
+      x-mb-scrape: {}
+      properties:
+        takenSessions:
+          description: >-
+            The sessions with a recorded status, absences included (the plugin's
+            `numtakensessions`, labeled "Sessioni frequentate" in Italian).
+          type: integer
+          x-mb-scrape: [{ select: "tr:nth-of-type(1) > td:nth-of-type(2)" }, text]
+        pointsTakenLabel:
+          type: string
+          x-mb-scrape: [{ select: "tr:nth-of-type(2) > td:nth-of-type(2)" }, text]
+        takenSessionsPercentage:
+          type: number
+          x-mb-scrape:
+            - select: "tr:nth-of-type(3) > td:nth-of-type(2)"
+            - text
+            - remove-suffix: "%"
+            - replace-all: { ",": "." }
+        totalSessions:
+          type: integer
+          x-mb-scrape: [{ select: "tr:nth-of-type(4) > td:nth-of-type(2)" }, text]
+        pointsAllSessionsLabel:
+          type: string
+          x-mb-scrape: [{ select: "tr:nth-of-type(5) > td:nth-of-type(2)" }, text]
+        allSessionsPercentage:
+          type: number
+          x-mb-scrape:
+            - select: "tr:nth-of-type(6) > td:nth-of-type(2)"
+            - text
+            - remove-suffix: "%"
+            - replace-all: { ",": "." }
+        maxPossiblePointsLabel:
+          type: string
+          x-mb-scrape: [{ select: "tr:nth-of-type(7) > td:nth-of-type(2)" }, text]
+        maxPossiblePercentage:
+          description: The best percentage still reachable by attending every remaining session.
+          type: number
+          x-mb-scrape:
+            - select: "tr:nth-of-type(8) > td:nth-of-type(2)"
+            - text
+            - remove-suffix: "%"
+            - replace-all: { ",": "." }
+    MoodleWebSubmittableSession:
+      description: A row of the session log of `view.php` that offers to submit attendance for its session.
+      type: object
+      x-mb-module: Attendance
+      x-mb-scrape: {}
+      required: [id, time]
+      properties:
+        id:
+          type: string
+          x-mb-scrape: [{ select: "td[colspan='3'] a[href*='attendance.php']" }, { attribute: href }, { regex: 'sessid=(\d+)' }]
+        time:
+          description: >-
+            The session's date and time as the plugin writes it in the page's language (e.g.
+            "mer 18 nov 2026 2PM - 4PM"). The mobile view titles each session with the same text.
+          type: string
+          x-mb-scrape: [{ select: td }, text]
+        linkText:
+          description: >-
+            The link's text: "Submit attendance", or "Report future absence"
+            (`submitattendancefuture`) for a session not open yet, whose link leads to a form for
+            reporting an absence in advance.
+          type: string
+          default: ""
+          x-mb-scrape: [{ select: "td[colspan='3'] a[href*='attendance.php']" }, text]
+    MoodleWebAttendanceSessionForm:
+      description: The form of a session a student may mark themselves present at, from the template of `mobile_user_form`.
+      type: object
+      x-mb-module: Attendance
+      x-mb-scrape: {}
+      properties:
+        refusal:
+          description: >-
+            The key of the message the template shows instead of the form when marking is refused
+            right now: "subnetwrong" (not on the classroom network), "preventsharederror" (this
+            network already recorded a presence), "closed" or "attendance_no_status".
+          type: string
+          x-mb-scrape: [{ select: span.messages }, text, { regex: 'plugin\.mod_attendance\.(\w+)' }]
+        requiresPassword:
+          description: Whether the session asks for a password, or the code of a QR code.
+          type: boolean
+          default: false
+          x-mb-scrape: [{ select: "[name=studentpass]" }, exists]
+        statuses:
+          type: array
+          items: { $ref: "#/components/schemas/MoodleWebAttendanceStatusOption" }
+          x-mb-scrape: [{ select-all: ion-radio }]
+    MoodleWebAttendanceStatusOption:
+      description: A status a student may mark themselves with, such as present.
+      type: object
+      x-mb-module: Attendance
+      x-mb-scrape: {}
+      required: [id]
+      properties:
+        id:
+          type: string
+          x-mb-scrape: [{ attribute: value }]
+        description:
+          type: string
+          default: ""
+          x-mb-scrape: [text]
+    MoodleWebAttendanceMarkPage:
+      description: >-
+        The template of `mobile_view_activity` after marking: a message for each reason the
+        presence wasn't recorded, and an item for each session it lists. It only lists the
+        sessions starting between 6 hours ago and 24 hours from now (the site's defaults).
+      type: object
+      x-mb-module: Attendance
+      x-mb-scrape: {}
+      properties:
+        messages:
+          type: array
+          items: { $ref: "#/components/schemas/MoodleWebAttendanceMessage" }
+          x-mb-scrape: [{ select-all: span.messages }]
+        sessions:
+          type: array
+          items: { $ref: "#/components/schemas/MoodleWebAttendanceMarkSession" }
+          x-mb-scrape: [{ select-all: ion-item }]
+    MoodleWebAttendanceMarkSession:
+      description: >-
+        A session's item in the template of `mobile_view_activity`: its date and time, the button
+        marking it while it is open, and the status it was assigned once marked.
+      type: object
+      x-mb-module: Attendance
+      x-mb-scrape: {}
+      required: [time]
+      properties:
+        time:
+          description: >-
+            The session's date and time, as `view.php` writes them in the same language
+            (`MoodleWebSubmittableSession.time`).
+          type: string
+          x-mb-scrape: [{ select: h2 }, text]
+        markActions:
+          type: array
+          items: { $ref: "#/components/schemas/MoodleWebAttendanceMarkAction" }
+          x-mb-scrape: [{ select-all: "ion-button[core-site-plugins-new-content]" }]
+        headings:
+          description: >-
+            The item's headings, in order: the session's group, then the status it was assigned.
+          type: array
+          items: { type: string }
+          x-mb-scrape: [{ select-all: h3 }]
+    MoodleWebAttendanceMessage:
+      description: A message of the plugin, which the template names by its string key (`plugin.mod_attendance.<key>`).
+      type: object
+      x-mb-module: Attendance
+      x-mb-scrape: {}
+      required: [key]
+      properties:
+        key:
+          description: The string key, such as `incorrectpasswordshort`.
+          type: string
+          x-mb-scrape: [text, { regex: 'plugin\.mod_attendance\.(\w+)' }]
+    MoodleWebAttendanceMarkAction:
+      description: The button marking a session, whose arguments name the session.
+      type: object
+      x-mb-module: Attendance
+      x-mb-scrape: {}
+      required: [sessionId]
+      properties:
+        sessionId:
+          type: string
+          x-mb-scrape: [{ attribute: "[args]" }, { regex: 'sessid:\s*(\d+)' }]

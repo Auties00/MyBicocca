@@ -12,8 +12,13 @@ import it.attendance100.mybicocca.data.auth.SessionManager
 import it.attendance100.mybicocca.data.local.settings.DeviceIdentityStore
 import it.attendance100.mybicocca.data.location.DeviceLocationProvider
 import it.attendance100.mybicocca.data.remote.easystaff.api.EasyStaffApi
-import it.attendance100.mybicocca.data.remote.elearning.api.ElearningApi
+import it.attendance100.mybicocca.data.elearning.ElearningApi
+import it.attendance100.mybicocca.data.elearning.ElearningAttendance
+import it.attendance100.mybicocca.data.elearning.ElearningAttendanceMarkableSession
+import it.attendance100.mybicocca.data.elearning.ElearningAttendanceSubmittableSession
+import it.attendance100.mybicocca.data.elearning.ElearningAttendanceViewResponse
 import it.attendance100.mybicocca.domain.model.attendance.AttendanceModuleRef
+import it.attendance100.mybicocca.domain.model.attendance.OpenAttendanceSession
 import it.attendance100.mybicocca.domain.model.attendance.PresenceMarkOutcome
 import it.attendance100.mybicocca.domain.model.attendance.PresenceScan
 import it.attendance100.mybicocca.domain.repository.ElearningCourseRepository
@@ -27,7 +32,8 @@ import org.junit.Test
 /**
  * Network-only attendance marking branches that don't depend on the full pending-course
  * fan-out: the scan-kind dispatch (unrecognized payloads and lesson codes without a matricola
- * fail gracefully), the empty-modules short-circuit, and the catch-all that turns an elearning
+ * fail gracefully), the empty-modules short-circuit, open sessions read from the module page
+ * (renewing an expired browser session once), and the catch-all that turns an elearning
  * failure into a [PresenceMarkOutcome.Failed].
  */
 class AttendanceRepositoryImplTest {
@@ -39,7 +45,10 @@ class AttendanceRepositoryImplTest {
     private val elearningCourseRepository: ElearningCourseRepository = mockk(relaxed = true)
     private val deviceIdentityStore: DeviceIdentityStore = mockk(relaxed = true)
     private val locationProvider: DeviceLocationProvider = mockk(relaxed = true)
-    private val elearningApi: ElearningApi = mockk(relaxed = true)
+    private val attendanceApi: ElearningAttendance = mockk(relaxed = true)
+    private val elearningApi: ElearningApi = mockk(relaxed = true) {
+        every { attendance } returns attendanceApi
+    }
 
     private val careerId = RepositoryTestFixtures.careerId
 
@@ -90,17 +99,95 @@ class AttendanceRepositoryImplTest {
         coVerify(exactly = 0) { sessionManager.elearning() }
     }
 
+    private val open = ElearningAttendanceSubmittableSession("77", "mer 18 nov 2026 2PM - 4PM")
+    private val wrongNetwork = ElearningAttendanceSubmittableSession("78", "mer 18 nov 2026 4PM - 6PM")
+
+    private fun described(session: ElearningAttendanceSubmittableSession, refusal: String? = null) =
+        ElearningAttendanceMarkableSession(
+            sessionId = session.sessionId,
+            time = session.time,
+            requiresPassword = false,
+            statuses = emptyList(),
+            refusal = refusal,
+        )
+
     @Test
-    fun `markSession maps an elearning failure to a Failed outcome`() = runTest {
+    fun `getOpenSessions describes the page's sessions and leaves out the refused ones`() = runTest {
+        coEvery { sessionManager.elearning() } returns ElearningSession(elearningApi, "ws-token")
+        coEvery { attendanceApi.getAttendanceSummary("ws-token", 20) } returns
+            ElearningAttendanceViewResponse.Success(summary = null, submittableSessions = listOf(open, wrongNetwork))
+        coEvery { attendanceApi.getMarkableSessions("ws-token", 10, 20, any()) } returns
+            listOf(described(open), described(wrongNetwork, refusal = "subnetwrong"))
+
+        val sessions = repository.getOpenSessions(listOf(module()))
+
+        assertThat(sessions.map { it.sessionId }).containsExactly("77")
+        assertThat(sessions.single().time).isEqualTo(open.time)
+        coVerify(exactly = 1) { attendanceApi.getMarkableSessions("ws-token", 10, 20, listOf(open, wrongNetwork)) }
+        coVerify(exactly = 0) { sessionManager.reauthElearning(any()) }
+    }
+
+    @Test
+    fun `getOpenSessions reuses a page it just read instead of loading it again`() = runTest {
+        coEvery { sessionManager.elearning() } returns ElearningSession(elearningApi, "ws-token")
+        coEvery { attendanceApi.getAttendanceSummary("ws-token", 20) } returns
+            ElearningAttendanceViewResponse.Success(summary = null, submittableSessions = listOf(open))
+        coEvery { attendanceApi.getMarkableSessions(any(), any(), any(), any()) } returns listOf(described(open))
+
+        repository.getOpenSessions(listOf(module()))
+        repository.getOpenSessions(listOf(module()))
+
+        coVerify(exactly = 1) { attendanceApi.getAttendanceSummary(any(), any()) }
+    }
+
+    @Test
+    fun `an expired browser session is renewed once, through the client that saw it expire`() = runTest {
+        val renewedAttendanceApi: ElearningAttendance = mockk(relaxed = true)
+        val renewedApi: ElearningApi = mockk(relaxed = true) { every { attendance } returns renewedAttendanceApi }
+        coEvery { sessionManager.elearning() } returns ElearningSession(elearningApi, "ws-token")
+        coEvery { sessionManager.reauthElearning(stale = elearningApi) } returns ElearningSession(renewedApi, "new-token")
+        coEvery { attendanceApi.getAttendanceSummary("ws-token", 20) } returns ElearningAttendanceViewResponse.RequiresReauth
+        coEvery { renewedAttendanceApi.getAttendanceSummary("new-token", 20) } returns
+            ElearningAttendanceViewResponse.Success(summary = null, submittableSessions = emptyList())
+
+        val sessions = repository.getOpenSessions(listOf(module()))
+
+        assertThat(sessions).isEmpty()
+        coVerify(exactly = 1) { sessionManager.reauthElearning(stale = elearningApi) }
+        coVerify(exactly = 1) { attendanceApi.getAttendanceSummary(any(), any()) }
+        coVerify(exactly = 1) { renewedAttendanceApi.getAttendanceSummary("new-token", 20) }
+    }
+
+    @Test
+    fun `a page Moodle won't show is not treated as an expired session`() = runTest {
+        coEvery { sessionManager.elearning() } returns ElearningSession(elearningApi, "ws-token")
+        coEvery { attendanceApi.getAttendanceSummary("ws-token", 20) } returns ElearningAttendanceViewResponse.Unavailable
+
+        val sessions = repository.getOpenSessions(listOf(module()))
+
+        assertThat(sessions).isEmpty()
+        coVerify(exactly = 0) { sessionManager.reauthElearning(any()) }
+    }
+
+    @Test
+    fun `markSession passes the session's time and maps an elearning failure to a Failed outcome`() = runTest {
         coEvery { sessionManager.elearning() } returns ElearningSession(elearningApi, "ws-token")
         coEvery {
-            elearningApi.attendance.markSession(any(), any(), any(), any(), any(), any())
+            attendanceApi.markSession(any(), any(), any(), any(), any(), any())
         } throws RuntimeException("boom")
+        val session = OpenAttendanceSession(
+            sessionId = "77",
+            module = module(),
+            time = open.time,
+            requiresPassword = false,
+            statuses = emptyList(),
+        )
 
-        val outcome = repository.markSession(module(), sessionId = "s1", statusId = null, password = null)
+        val outcome = repository.markSession(session, statusId = null, password = null)
 
         assertThat(outcome).isInstanceOf(PresenceMarkOutcome.Failed::class.java)
         assertThat((outcome.message as UiText.StringResource).resId)
             .isEqualTo(R.string.attendance_msg_failed)
+        coVerify { attendanceApi.markSession("ws-token", 10, 20, open, any(), null) }
     }
 }

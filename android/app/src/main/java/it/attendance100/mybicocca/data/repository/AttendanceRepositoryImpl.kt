@@ -11,7 +11,13 @@ import it.attendance100.mybicocca.data.mapper.attendance.toDomain
 import it.attendance100.mybicocca.data.mapper.attendance.toOutcome
 import it.attendance100.mybicocca.data.mapper.calendar.normalizeSubjectName
 import it.attendance100.mybicocca.data.remote.easystaff.api.EasyStaffApi
+import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffAttendanceHistoryRequest
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffAttendanceRecord
+import it.attendance100.mybicocca.data.easystaff.certifyAttendanceRequest
+import it.attendance100.mybicocca.data.elearning.ElearningAttendanceMarkResult
+import it.attendance100.mybicocca.data.elearning.ElearningAttendanceMarkableSession
+import it.attendance100.mybicocca.data.elearning.ElearningAttendanceSubmittableSession
+import it.attendance100.mybicocca.data.elearning.ElearningAttendanceViewResponse
 import it.attendance100.mybicocca.domain.model.attendance.AttendanceModuleRef
 import it.attendance100.mybicocca.domain.model.attendance.ClassroomAttendance
 import it.attendance100.mybicocca.domain.model.attendance.CourseAttendance
@@ -36,7 +42,10 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.first
+import java.time.Duration
+import java.time.Instant
 import java.time.LocalDate
+import java.util.concurrent.ConcurrentHashMap
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -44,9 +53,9 @@ import javax.inject.Singleton
  * Network-only attendance implementation fanning out to three backends: the Esse3 study plan
  * and transcript (which courses are pending), the EasyStaff EasyBadge attendance endpoints
  * (classroom certifications, plus the no-auth GPS-based certify write), and Moodle
- * mod_attendance read through the tool_mobile_get_content bridge (session registers, open
- * sessions, and the self-mark write via the mobile_view_activity bridge — the dedicated
- * mod_attendance_* web services are blocked server-side).
+ * mod_attendance (session registers and open sessions read from each module's view.php page,
+ * take forms and the self-mark write through the tool_mobile_get_content bridge — the
+ * mod_attendance_* web services aren't in the mobile service).
  */
 @Singleton
 class AttendanceRepositoryImpl @Inject constructor(
@@ -65,6 +74,14 @@ class AttendanceRepositoryImpl @Inject constructor(
      */
     @Volatile
     private var cachedModules: List<AttendanceModuleRef> = emptyList()
+
+    /** The sessions each module's page offered on its last read, by course module id. */
+    private val lastReadSessions = ConcurrentHashMap<Int, ReadSessions>()
+
+    private class ReadSessions(
+        val readAt: Instant,
+        val sessions: List<ElearningAttendanceSubmittableSession>,
+    )
 
     /**
      * Builds the pending-course list by joining all sources concurrently. The plan is the
@@ -204,7 +221,10 @@ class AttendanceRepositoryImpl @Inject constructor(
     private suspend fun loadBadgeRecords(careerId: CareerId): List<EasyStaffAttendanceRecord> {
         val studentNumber = activeCareer(careerId)?.studentNumber ?: return emptyList()
         return runCatching {
-            easyStaffApi.attendance.getAttendanceHistory(studentNumber).flatMap { it.records }
+            easyStaffApi.attendance.getAttendanceHistory(EasyStaffAttendanceHistoryRequest(studentId = studentNumber))[studentNumber]
+                .orEmpty()
+                .values
+                .flatten()
         }.getOrDefault(emptyList())
     }
 
@@ -257,10 +277,12 @@ class AttendanceRepositoryImpl @Inject constructor(
             val (api, token) = sessionManager.elearning()
             val modules = api.attendance.getAttendanceModules(token, edition.id.value)
             val refs = modules.map { AttendanceModuleRef(edition.id.value, it.id, it.name) }
-            val sessions = modules.mapNotNull { module ->
-                runCatching { api.attendance.getAttendanceSummary(token, edition.id.value, module.id) }
+            val sessions = modules.map { module ->
+                runCatching { readAttendanceView(module.id) }
                     .getOrNull()
+                    ?.summary
                     ?.toDomain(module.name)
+                    ?: SessionAttendance.failed(module.name)
             }
             EditionAttendance(refs, sessions)
         }.getOrDefault(EditionAttendance(emptyList(), emptyList()))
@@ -268,29 +290,68 @@ class AttendanceRepositoryImpl @Inject constructor(
 
     override suspend fun getOpenSessions(
         modules: List<AttendanceModuleRef>,
-    ): List<OpenAttendanceSession> {
-        if (modules.isEmpty()) return emptyList()
+    ): List<OpenAttendanceSession> = modules.flatMap { module ->
+        runCatching {
+            describeSessions(module, submittableSessions(module))
+                .filter { it.refusal == null }
+                .map { it.toDomain(module) }
+        }.getOrDefault(emptyList())
+    }
+
+    /**
+     * The sessions a module's page offers to submit right now: the ones [getPendingCourses] just
+     * read, while they are fresh, or else the page read again. Every page load logs a course
+     * event, which a session marking automatically on course access counts as presence (see
+     * [it.attendance100.mybicocca.data.remote.elearning.api.ElearningAttendanceApi]), so pages
+     * are not read more often than the user asks for.
+     */
+    private suspend fun submittableSessions(module: AttendanceModuleRef): List<ElearningAttendanceSubmittableSession> {
+        lastReadSessions[module.courseModuleId]
+            ?.takeIf { Duration.between(it.readAt, Instant.now(AppClock.clock)) < READ_REUSE_WINDOW }
+            ?.let { return it.sessions }
+        return readAttendanceView(module.courseModuleId)?.submittableSessions.orEmpty()
+    }
+
+    private suspend fun describeSessions(
+        module: AttendanceModuleRef,
+        sessions: List<ElearningAttendanceSubmittableSession>,
+    ): List<ElearningAttendanceMarkableSession> {
+        if (sessions.isEmpty()) return emptyList()
         val (api, token) = sessionManager.elearning()
-        return modules.flatMap { module ->
-            runCatching {
-                api.attendance.getMarkableSessions(token, module.courseId, module.courseModuleId)
-                    .map { it.toDomain(module) }
-            }.getOrDefault(emptyList())
+        return api.attendance.getMarkableSessions(token, module.courseId, module.courseModuleId, sessions)
+    }
+
+    /**
+     * Reads an attendance module's page, which (unlike the plugin's mobile view) never records a
+     * status itself. An expired Moodle browser session is renewed once, through the client that
+     * saw it expire so that concurrent readers share a single login. Null when the page can't be
+     * read: Moodle sends the user elsewhere (e.g. a teacher's page or an access restriction), or
+     * the session still looks expired after the renewal.
+     */
+    private suspend fun readAttendanceView(moduleId: Int): ElearningAttendanceViewResponse.Success? {
+        val session = sessionManager.elearning()
+        val response = session.api.attendance.getAttendanceSummary(session.wsToken, moduleId)
+            .let { response ->
+                if (response != ElearningAttendanceViewResponse.RequiresReauth) return@let response
+                val renewed = sessionManager.reauthElearning(stale = session.api)
+                renewed.api.attendance.getAttendanceSummary(renewed.wsToken, moduleId)
+            }
+        return (response as? ElearningAttendanceViewResponse.Success)?.also {
+            lastReadSessions[moduleId] = ReadSessions(Instant.now(AppClock.clock), it.submittableSessions)
         }
     }
 
     override suspend fun markSession(
-        module: AttendanceModuleRef,
-        sessionId: String,
+        session: OpenAttendanceSession,
         statusId: String?,
         password: String?,
     ): PresenceMarkOutcome = runCatching {
         val (api, token) = sessionManager.elearning()
         api.attendance.markSession(
             wsToken = token,
-            courseId = module.courseId,
-            moduleId = module.courseModuleId,
-            sessionId = sessionId,
+            courseId = session.module.courseId,
+            moduleId = session.module.courseModuleId,
+            session = ElearningAttendanceSubmittableSession(session.sessionId, session.time),
             statusId = statusId ?: DEFAULT_STATUS_ID,
             studentPass = password,
         ).toOutcome()
@@ -307,8 +368,10 @@ class AttendanceRepositoryImpl @Inject constructor(
     }
 
     /**
-     * A scanned attendance session carries only its id, so the marking resolves which of the
-     * student's attendance modules owns it (by listing each one's open sessions) first.
+     * A scanned attendance session carries only its id, so the marking first resolves which of
+     * the student's attendance modules owns it: among the sessions the screen just read, else by
+     * reading the modules' pages one at a time until the session's own. A session the take form
+     * refuses reports why (wrong network, network already used, closed).
      */
     private suspend fun registerSessionLink(
         sessionId: String,
@@ -318,10 +381,39 @@ class AttendanceRepositoryImpl @Inject constructor(
         if (modules.isEmpty()) {
             return PresenceMarkOutcome.NotOpen(message = UiText.StringResource(R.string.attendance_msg_no_register_found))
         }
-        val target = runCatching { getOpenSessions(modules) }.getOrDefault(emptyList())
-            .firstOrNull { it.sessionId == sessionId }
+        val (module, candidate) = findSubmittableSession(modules, sessionId)
             ?: return PresenceMarkOutcome.NotOpen(message = UiText.StringResource(R.string.attendance_msg_session_not_in_courses))
-        return markSession(target.module, sessionId, target.statuses.firstOrNull()?.id, password)
+        val described = runCatching { describeSessions(module, listOf(candidate)) }.getOrNull()?.firstOrNull()
+            ?: return PresenceMarkOutcome.Failed()
+        described.refusal?.let { refusal ->
+            val result = if (refusal == REFUSAL_NO_STATUS) {
+                ElearningAttendanceMarkResult.Failed(refusal)
+            } else {
+                ElearningAttendanceMarkResult.NotOpen(refusal)
+            }
+            return result.toOutcome()
+        }
+        // The form lists the statuses in the order the teacher set; the first is the one the
+        // plugin's own web form puts first. Auto-assign sessions ignore it.
+        return markSession(described.toDomain(module), described.statuses.firstOrNull()?.id, password)
+    }
+
+    private suspend fun findSubmittableSession(
+        modules: List<AttendanceModuleRef>,
+        sessionId: String,
+    ): Pair<AttendanceModuleRef, ElearningAttendanceSubmittableSession>? {
+        val now = Instant.now(AppClock.clock)
+        for (module in modules) {
+            val read = lastReadSessions[module.courseModuleId]
+                ?.takeIf { Duration.between(it.readAt, now) < READ_REUSE_WINDOW }
+                ?: continue
+            read.sessions.firstOrNull { it.sessionId == sessionId }?.let { return module to it }
+        }
+        for (module in modules) {
+            val read = runCatching { readAttendanceView(module.courseModuleId) }.getOrNull() ?: continue
+            read.submittableSessions.firstOrNull { it.sessionId == sessionId }?.let { return module to it }
+        }
+        return null
     }
 
     /**
@@ -338,11 +430,13 @@ class AttendanceRepositoryImpl @Inject constructor(
         val location = locationProvider.lastKnownLatLong()
         return runCatching {
             easyStaffApi.attendance.certifyAttendance(
-                studentId = studentNumber,
-                lessonCode = lessonCode,
-                deviceToken = deviceId,
-                longitude = location?.second ?: 0.0,
-                latitude = location?.first ?: 0.0,
+                certifyAttendanceRequest(
+                    studentId = studentNumber,
+                    lessonCode = lessonCode,
+                    deviceToken = deviceId,
+                    latitude = location?.first ?: 0.0,
+                    longitude = location?.second ?: 0.0,
+                ),
             ).toOutcome()
         }.getOrElse { PresenceMarkOutcome.Failed() }
     }
@@ -385,6 +479,12 @@ class AttendanceRepositoryImpl @Inject constructor(
          * sessions, so any non-empty value works as a fallback.
          */
         const val DEFAULT_STATUS_ID = "1"
+
+        /** Take-form refusal meaning the session offers no status, which is not a closed session. */
+        const val REFUSAL_NO_STATUS = "attendance_no_status"
+
+        /** How long a module page's sessions are reused instead of reading the page again. */
+        val READ_REUSE_WINDOW: Duration = Duration.ofMinutes(2)
 
         fun academicYearOf(today: LocalDate): Int =
             if (today.monthValue >= 9) today.year else today.year - 1

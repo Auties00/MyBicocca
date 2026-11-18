@@ -1,0 +1,136 @@
+{
+	"$schema": "https://inlang.com/schema/inlang-message-format",
+	"results_title": "Esiti",
+	"results_summary_pending": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "1 esito da decidere",
+				"countPlural=other": "{count} esiti da decidere"
+			}
+		}
+	],
+	"results_summary_archived": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "1 esito archiviato",
+				"countPlural=other": "{count} esiti archiviati"
+			}
+		}
+	],
+	"results_summary_none": "Nessun esito da decidere",
+	"results_pending_heading": "Da decidere",
+	"results_pending_description": "Accetta o rifiuta ogni voto entro la sua scadenza.",
+	"results_archive_heading": "Archivio",
+	"results_archive_description": "Gli esiti accettati, rifiutati o registrati.",
+	"results_hide_absences": "Nascondi assenze e ritiri",
+	"results_only_absences": "In archivio ci sono solo assenze e ritiri.",
+	"results_year_undated": "Senza data",
+	"results_nothing_to_decide": "Niente da decidere.",
+	"results_nothing_to_decide_body": "Quando un docente pubblica un voto da accettare, lo trovi qui.",
+	"results_empty_title": "Nessun esito pubblicato.",
+	"results_empty_body": "Quando un docente pubblica l’esito di un appello, lo trovi qui.",
+	"results_empty_action": "Vai agli appelli",
+	"results_load_failed": "Impossibile caricare gli esiti",
+	"results_list_label": "Elenco degli esiti",
+	"results_detail_label": "Dettaglio dell’esito",
+	"results_decide_by": [
+		{
+			"declarations": ["input date", "input day", "input month"],
+			"selectors": ["day"],
+			"match": {
+				"day=1": "Decidi entro il 1° {month}",
+				"day=8": "Decidi entro l’{date}",
+				"day=11": "Decidi entro l’{date}",
+				"day=*": "Decidi entro il {date}"
+			}
+		}
+	],
+	"results_taken_on": [
+		{
+			"declarations": ["input date", "input day", "input month"],
+			"selectors": ["day"],
+			"match": {
+				"day=1": "Sostenuto il 1° {month}",
+				"day=8": "Sostenuto l’{date}",
+				"day=11": "Sostenuto l’{date}",
+				"day=*": "Sostenuto il {date}"
+			}
+		}
+	],
+	"results_choice_accepted": "Accettato",
+	"results_choice_rejected": "Rifiutato",
+	"results_lapsed": "Non rifiutato",
+	"results_exam_fallback": "Esame",
+	"results_grade": "Voto: {grade}",
+	"results_grade_label": "Voto",
+	"results_cum_laude": "e lode",
+	"results_out_of_thirty": "{grade} su 30",
+	"results_lapsed_on": [
+		{
+			"declarations": ["input date", "input day", "input month"],
+			"selectors": ["day"],
+			"match": {
+				"day=1": "Non rifiutato entro il 1° {month}: il voto resta valido.",
+				"day=8": "Non rifiutato entro l’{date}: il voto resta valido.",
+				"day=11": "Non rifiutato entro l’{date}: il voto resta valido.",
+				"day=*": "Non rifiutato entro il {date}: il voto resta valido."
+			}
+		}
+	],
+	"results_note_label": "Nota del docente",
+	"results_status_pending": "Da decidere",
+	"results_decide_heading": "La tua decisione",
+	"results_decide_hint": "Se non lo rifiuti entro la scadenza, il voto resta valido.",
+	"results_offline_hint": "Sei offline: potrai decidere quando torni online.",
+	"results_accept": "Accetta",
+	"results_reject": "Rifiuta",
+	"results_accept_title": "Accettare l’esito?",
+	"results_accept_body": "Stai per accettare l’esito di {exam}: {grade}. Verrà registrato nel tuo libretto e la scelta non potrà essere annullata.",
+	"results_accept_confirm": "Accetta il voto",
+	"results_reject_title": "Rifiutare l’esito?",
+	"results_reject_body": "Stai per rifiutare l’esito di {exam}: {grade}. Il voto verrà annullato e per superare l’esame dovrai iscriverti a un nuovo appello. La decisione non può essere annullata.",
+	"results_reject_confirm": "Rifiuta il voto",
+	"results_accepted_title": "Esito accettato",
+	"results_accepted_body": "Il voto verrà registrato nel tuo libretto.",
+	"results_rejected_title": "Esito rifiutato",
+	"results_rejected_body": "Per superare l’esame iscriviti a un nuovo appello.",
+	"results_go_transcript": "Vai al libretto",
+	"results_book_call": "Prenota un appello",
+	"results_refused": "Esse3 non ha accettato la richiesta: {reason}",
+	"results_unconfirmed_title": "Esse3 non ha confermato la risposta",
+	"results_unconfirmed_body": "L’esito risulta ancora da decidere. Controlla di nuovo tra poco: se resta così, puoi rispondere ancora.",
+	"results_check_again": "Controlla di nuovo",
+	"results_not_found_title": "Esito non trovato.",
+	"results_not_found_body": "Potrebbe non essere più pubblicato su Esse3.",
+	"results_booking_link": "Dettagli della prenotazione",
+	"results_attempts_heading": "Altri tentativi",
+	"results_back_to_list": "Torna agli esiti",
+	"results_overview_pending": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "Un voto aspetta la tua decisione.",
+				"countPlural=other": "{count} voti aspettano la tua decisione."
+			}
+		}
+	],
+	"results_overview_select": "Scegli un esito dall’elenco per vederne i dettagli.",
+	"results_overview_decide": "Decidi ora",
+	"results_rules_heading": "Come funziona",
+	"results_rule_accept": "Accetti: il voto viene registrato nel libretto.",
+	"results_rule_reject": "Rifiuti: il voto viene annullato e ripeti l’esame a un nuovo appello.",
+	"results_rule_deadline": "Non rispondi: alla scadenza il voto resta valido.",
+	"results_fact_taken_on": "Data dell’esame",
+	"results_fact_call": "Appello",
+	"results_fact_credits": "Peso",
+	"results_fact_booked_on": "Prenotato il",
+	"results_archive_summary_heading": "In archivio",
+	"results_count_passed": "Superati",
+	"results_count_not_passed": "Non superati o rifiutati",
+	"results_count_absences": "Assenze e ritiri"
+}

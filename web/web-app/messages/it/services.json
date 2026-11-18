@@ -1,0 +1,301 @@
+{
+	"$schema": "https://inlang.com/schema/inlang-message-format",
+	"services_subtitle": "Didattica, prenotazioni, documenti e tasse, in un unico posto.",
+	"services_nav_label": "Elenco dei servizi",
+	"services_group_teaching_caption": "Percorso, presenze ed esiti",
+	"services_group_bookings_caption": "Appelli, sportelli e posti studio",
+	"services_group_documents_caption": "Iscrizioni, titoli e certificati",
+	"services_group_fees_caption": "La tua posizione amministrativa",
+	"services_summary_sync_failed": "Sincronizzazione non riuscita",
+	"services_summary_none": "Nessuna scadenza imminente",
+	"services_summary_next": [
+		{
+			"declarations": ["input date", "input day"],
+			"selectors": ["day"],
+			"match": {
+				"day=1": "Prossima l’{date}",
+				"day=8": "Prossima l’{date}",
+				"day=11": "Prossima l’{date}",
+				"day=*": "Prossima il {date}"
+			}
+		}
+	],
+	"services_summary_overdue_on": [
+		{
+			"declarations": ["input date", "input day"],
+			"selectors": ["day"],
+			"match": {
+				"day=1": "Scaduta l’{date}",
+				"day=8": "Scaduta l’{date}",
+				"day=11": "Scaduta l’{date}",
+				"day=*": "Scaduta il {date}"
+			}
+		}
+	],
+	"services_summary_urgent": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} urgente",
+				"countPlural=other": "{count} urgenti"
+			}
+		}
+	],
+	"services_badge_results": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} da decidere",
+				"countPlural=other": "{count} da decidere"
+			}
+		}
+	],
+	"services_badge_fees_overdue": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} scaduta",
+				"countPlural=other": "{count} scadute"
+			}
+		}
+	],
+	"services_badge_fees_due": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} da pagare",
+				"countPlural=other": "{count} da pagare"
+			}
+		}
+	],
+	"services_badge_exams_booked": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} prenotato",
+				"countPlural=other": "{count} prenotati"
+			}
+		}
+	],
+	"services_badge_exams_closing": "In chiusura",
+	"services_upcoming_title": "Prossime scadenze",
+	"services_upcoming_all": "Tutte le scadenze",
+	"services_deadlines_subtitle": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} scadenza nei prossimi 30 giorni",
+				"countPlural=other": "{count} scadenze nei prossimi 30 giorni"
+			}
+		}
+	],
+	"services_deadlines_intro": "Esiti da decidere, tasse da pagare, esami prenotati e iscrizioni agli appelli in chiusura, da una settimana fa ai prossimi 30 giorni.",
+	"services_deadlines_none_title": "Nessuna scadenza imminente.",
+	"services_deadlines_none_body": "Nei prossimi 30 giorni non hai esiti da decidere, tasse da pagare né esami.",
+	"services_deadlines_none_action": "Cerca un appello",
+	"services_deadlines_filtered_none": "Nessuna scadenza di questo tipo.",
+	"services_deadlines_show_all": "Mostra tutte",
+	"services_deadlines_load_failed": "Non è stato possibile caricare le scadenze.",
+	"services_deadlines_refresh_failed": "Non è stato possibile aggiornare le scadenze.",
+	"services_deadlines_partial": "Alcune scadenze potrebbero mancare: non è stato possibile caricare {sources}.",
+	"services_deadlines_filters": "Filtra per tipo",
+	"services_deadlines_timeline": "Scadenze in ordine di data",
+	"services_stream_results": "gli esiti",
+	"services_stream_fees": "le tasse",
+	"services_stream_exams": "gli esami prenotati",
+	"services_stream_bookings": "gli appelli",
+	"services_kind_result": "Esito",
+	"services_kind_fee": "Tasse",
+	"services_kind_exam": "Esame",
+	"services_kind_booking": "Appello",
+	"services_filter_result": "Esiti",
+	"services_filter_fee": "Tasse",
+	"services_filter_exam": "Esami",
+	"services_filter_booking": "Appelli",
+	"services_detail_grade": "Voto {grade}",
+	"services_detail_decide": "resta valido se non lo rifiuti",
+	"services_detail_time": "Ore {time}",
+	"services_detail_booking_closes": "Chiusura iscrizioni",
+	"services_detail_booking_call": [
+		{
+			"declarations": ["input date", "input day"],
+			"selectors": ["day"],
+			"match": {
+				"day=1": "appello dell’{date}",
+				"day=8": "appello dell’{date}",
+				"day=11": "appello dell’{date}",
+				"day=*": "appello del {date}"
+			}
+		}
+	],
+	"services_detail_booking_opens": [
+		{
+			"declarations": ["input date", "input day"],
+			"selectors": ["day"],
+			"match": {
+				"day=1": "Iscrizioni dall’{date}",
+				"day=8": "Iscrizioni dall’{date}",
+				"day=11": "Iscrizioni dall’{date}",
+				"day=*": "Iscrizioni dal {date}"
+			}
+		}
+	],
+	"services_fallback_result": "Esito d’esame",
+	"services_fallback_exam": "Esame prenotato",
+	"services_fallback_booking": "Appello d’esame",
+	"services_fallback_fee_year": "Tasse a.a. {year}",
+	"services_fallback_fee_id": "Fattura {id}",
+	"services_section_overdue": "Scadute",
+	"services_section_week": "Questa settimana",
+	"services_section_next_week": "Settimana prossima",
+	"services_section_later": "Più avanti",
+	"services_calendar_label": "Calendario delle scadenze",
+	"services_legend_overdue": "Scadute",
+	"services_legend_urgent": "Entro 7 giorni",
+	"services_legend_later": "Più avanti",
+	"services_calendar_day": [
+		{
+			"declarations": ["input date", "input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{date}: {count} scadenza",
+				"countPlural=other": "{date}: {count} scadenze"
+			}
+		}
+	],
+	"services_glance_title": "In sintesi",
+	"services_tile_results": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} esito da decidere",
+				"countPlural=other": "{count} esiti da decidere"
+			}
+		}
+	],
+	"services_tile_results_none": "Nessun esito da decidere",
+	"services_tile_results_first": [
+		{
+			"declarations": ["input date", "input day"],
+			"selectors": ["day"],
+			"match": {
+				"day=1": "Il primo rifiutabile fino all’{date}",
+				"day=8": "Il primo rifiutabile fino all’{date}",
+				"day=11": "Il primo rifiutabile fino all’{date}",
+				"day=*": "Il primo rifiutabile fino al {date}"
+			}
+		}
+	],
+	"services_tile_exams": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} esame prenotato",
+				"countPlural=other": "{count} esami prenotati"
+			}
+		}
+	],
+	"services_tile_exams_none": "Nessun esame prenotato",
+	"services_tile_exams_next": "Prossimo: {date}",
+	"services_tile_closing": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} iscrizione in chiusura",
+				"countPlural=other": "{count} iscrizioni in chiusura"
+			}
+		}
+	],
+	"services_tile_fees": "{amount} da pagare",
+	"services_tile_fees_none": "Nessuna tassa da pagare",
+	"services_tile_fees_overdue": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} fattura scaduta",
+				"countPlural=other": "{count} fatture scadute"
+			}
+		}
+	],
+	"services_tile_fees_first": [
+		{
+			"declarations": ["input date", "input day"],
+			"selectors": ["day"],
+			"match": {
+				"day=1": "La prima entro l’{date}",
+				"day=8": "La prima entro l’{date}",
+				"day=11": "La prima entro l’{date}",
+				"day=*": "La prima entro il {date}"
+			}
+		}
+	],
+	"services_tile_due": [
+		{
+			"declarations": ["input date", "input day"],
+			"selectors": ["day"],
+			"match": {
+				"day=1": "Entro l’{date}",
+				"day=8": "Entro l’{date}",
+				"day=11": "Entro l’{date}",
+				"day=*": "Entro il {date}"
+			}
+		}
+	],
+	"services_tile_unavailable": "Non disponibile",
+	"services_tile_unavailable_meta": "Controllo non riuscito",
+	"services_deadlines_subtitle_filtered": [
+		{
+			"declarations": ["input shown", "input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{shown} di {count} scadenza nei prossimi 30 giorni",
+				"countPlural=other": "{shown} di {count} scadenze nei prossimi 30 giorni"
+			}
+		}
+	],
+	"services_deadlines_subtitle_unknown": "Esiti, tasse ed esami dei prossimi 30 giorni",
+	"services_deadlines_unchecked_title": "Non è stato possibile controllare tutte le scadenze.",
+	"services_deadlines_unchecked": "Non è stato possibile caricare {sources}: potresti avere scadenze che qui non compaiono.",
+	"services_summary_partial": "alcune non caricate",
+	"services_badge_unverified": "Non verificato",
+	"services_card_partial": "Incomplete",
+	"services_card_stale": "Non aggiornate",
+	"services_tile_closings_unverified": "Chiusure non verificate",
+	"services_stale_line": "Non aggiornate · dati di {time}",
+	"services_stale_line_now": "Aggiornamento non riuscito",
+	"services_refresh": "Aggiorna le scadenze",
+	"services_badge_questionnaires": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} da compilare",
+				"countPlural=other": "{count} da compilare"
+			}
+		}
+	],
+	"services_badge_seat_now": "Posto in corso",
+	"services_badge_seat_today": "Posto alle {time}",
+	"services_tile_result_due": [
+		{
+			"declarations": ["input date", "input day"],
+			"selectors": ["day"],
+			"match": {
+				"day=1": "Rifiutabile fino all’{date}",
+				"day=8": "Rifiutabile fino all’{date}",
+				"day=11": "Rifiutabile fino all’{date}",
+				"day=*": "Rifiutabile fino al {date}"
+			}
+		}
+	]
+}

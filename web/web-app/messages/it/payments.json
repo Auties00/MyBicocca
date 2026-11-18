@@ -1,0 +1,266 @@
+{
+	"$schema": "https://inlang.com/schema/inlang-message-format",
+	"payments_due_subtitle": "{amount} da pagare",
+	"payments_overdue_count": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} scaduta",
+				"countPlural=other": "{count} scadute"
+			}
+		}
+	],
+	"payments_settled_subtitle": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "In regola · 1 fattura",
+				"countPlural=other": "In regola · {count} fatture"
+			}
+		}
+	],
+	"payments_fees_empty_title": "Nessuna tassa.",
+	"payments_fees_empty_body": "Non risultano fatture per la tua carriera.",
+	"payments_fees_empty_action": "Controlla su Esse3",
+	"payments_fees_load_failed": "Impossibile caricare le tasse",
+	"payments_fees_list_label": "Fatture",
+	"payments_fees_detail_label": "Dettaglio della fattura",
+	"payments_to_pay_heading": "Da pagare",
+	"payments_to_pay_description": "Paga con pagoPA online, oppure con l’avviso in banca o in tabaccheria.",
+	"payments_nothing_due_title": "Nessuna tassa da pagare.",
+	"payments_nothing_due_body": "Non hai pagamenti in sospeso: le nuove rate compariranno qui.",
+	"payments_history_heading": "Storico",
+	"payments_history_description": "Le fatture pagate o annullate, per anno accademico.",
+	"payments_year_paid": "{amount} pagati",
+	"payments_year_unknown": "Anno non indicato",
+	"payments_invoice_number": "Fattura n. {id}",
+	"payments_invoice_fallback": "Tasse a.a. {year}",
+	"payments_status_pending": "Da pagare",
+	"payments_status_expired": "Scaduta",
+	"payments_status_paid": "Pagata",
+	"payments_status_canceled": "Annullata",
+	"payments_paid_on": [
+		{
+			"declarations": ["input date", "input day"],
+			"selectors": ["day"],
+			"match": {
+				"day=8": "Pagata l’{date}",
+				"day=11": "Pagata l’{date}",
+				"day=*": "Pagata il {date}"
+			}
+		}
+	],
+	"payments_due_on": [
+		{
+			"declarations": ["input date", "input day"],
+			"selectors": ["day"],
+			"match": {
+				"day=8": "Entro l’{date}",
+				"day=11": "Entro l’{date}",
+				"day=*": "Entro il {date}"
+			}
+		}
+	],
+	"payments_due_today": "Scade oggi",
+	"payments_due_tomorrow": "Scade domani",
+	"payments_due_in": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "Scade tra {count} giorno",
+				"countPlural=other": "Scade tra {count} giorni"
+			}
+		}
+	],
+	"payments_overdue_by": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "Scaduta da {count} giorno",
+				"countPlural=other": "Scaduta da {count} giorni"
+			}
+		}
+	],
+	"payments_relative_in": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "tra {count} giorno",
+				"countPlural=other": "tra {count} giorni"
+			}
+		}
+	],
+	"payments_relative_today": "oggi",
+	"payments_relative_tomorrow": "domani",
+	"payments_relative_overdue": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "scaduta da {count} giorno",
+				"countPlural=other": "scaduta da {count} giorni"
+			}
+		}
+	],
+	"payments_col_invoice": "Fattura",
+	"payments_col_description": "Descrizione",
+	"payments_col_due": "Scadenza",
+	"payments_col_paid": "Pagamento",
+	"payments_col_amount": "Importo",
+	"payments_col_year": "Anno accademico",
+	"payments_col_status": "Stato",
+	"payments_receipt_label": "Ricevuta della fattura n. {id}",
+	"payments_receipt_issuer": "Università degli Studi di Milano-Bicocca",
+	"payments_year_short": "A.a. {year}",
+	"payments_receipt_items": "Voci",
+	"payments_item_due": "Scadenza {date}",
+	"payments_total": "Totale",
+	"payments_details": "Dettagli",
+	"payments_fact_issued": "Emessa il",
+	"payments_fact_paid": "Pagata il",
+	"payments_fact_notice_code": "Codice avviso",
+	"payments_fact_iuv": "IUV",
+	"payments_copy": "Copia {label}",
+	"payments_copied": "{label} copiato",
+	"payments_copy_failed": "Non è stato possibile copiare {label}",
+	"payments_actions_heading": "Pagamento",
+	"payments_pay": "Paga con pagoPA",
+	"payments_pay_hint": "Si apre il checkout pagoPA in una nuova scheda: carta, conto o app di pagamento.",
+	"payments_notice": "Avviso di pagamento",
+	"payments_notice_hint": "Il PDF con codice avviso e QR, da pagare in banca, in tabaccheria o nell’app della tua banca.",
+	"payments_receipt": "Quietanza",
+	"payments_receipt_hint": "La ricevuta pagoPA del pagamento, in PDF.",
+	"payments_check_status": "Verifica stato pagamento",
+	"payments_pay_confirm_title": "Pagare con pagoPA?",
+	"payments_pay_confirm_message": "Apriremo il checkout pagoPA per la fattura n. {id} ({amount}) in una nuova scheda. Finché la sessione resta aperta, altri tentativi di pagare questa fattura potrebbero essere bloccati.",
+	"payments_pay_confirm": "Vai a pagoPA",
+	"payments_pay_waiting": "Apertura di pagoPA…",
+	"payments_pay_no_link": "pagoPA non ha restituito un link di pagamento. Riprova tra poco.",
+	"payments_pay_started_title": "Pagamento avviato",
+	"payments_pay_started_body": "Completa il pagamento nella scheda di pagoPA, poi verifica qui lo stato.",
+	"payments_pay_blocked": "Il browser non ha aperto una nuova scheda.",
+	"payments_pay_continue": "Continua su pagoPA",
+	"payments_opening_pdf": "Apertura del documento…",
+	"payments_outcome_completed": "Pagamento eseguito",
+	"payments_outcome_pending": "Pagamento in corso",
+	"payments_outcome_failed": "Pagamento non riuscito",
+	"payments_outcome_unknown": "Stato del pagamento non disponibile",
+	"payments_outcome_none": "Nessuna transazione pagoPA",
+	"payments_outcome_none_body": "Per questa fattura non risulta ancora alcun pagamento avviato con pagoPA.",
+	"payments_outcome_paid": [
+		{
+			"declarations": ["input amount", "input date", "input day"],
+			"selectors": ["day"],
+			"match": {
+				"day=8": "{amount} l’{date}",
+				"day=11": "{amount} l’{date}",
+				"day=*": "{amount} il {date}"
+			}
+		}
+	],
+	"payments_outcome_pending_body": "pagoPA non ha ancora confermato il pagamento. Riprova tra qualche minuto.",
+	"payments_outcome_failed_body": "Il pagamento non è andato a buon fine: puoi riprovare.",
+	"payments_offline_actions": "Sei offline: pagamenti e documenti tornano disponibili quando ti riconnetti.",
+	"payments_invoice_missing_title": "Fattura non trovata.",
+	"payments_invoice_missing_body": "Non è tra le fatture di questa carriera.",
+	"payments_back_to_fees": "Torna alle tasse",
+	"payments_isee_years": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "1 anno accademico",
+				"countPlural=other": "{count} anni accademici"
+			}
+		}
+	],
+	"payments_isee_empty_title": "Nessuna dichiarazione ISEE.",
+	"payments_isee_empty_body": "Non risultano dichiarazioni ISEE per la tua carriera.",
+	"payments_isee_load_failed": "Impossibile caricare l’ISEE",
+	"payments_isee_list_label": "Anni con ISEE",
+	"payments_isee_detail_label": "Dettaglio ISEE",
+	"payments_academic_year": "Anno accademico {year}",
+	"payments_isee_indicator": "Indicatore ISEE",
+	"payments_isee_threshold": "Soglia agevolazioni",
+	"payments_isee_course": "Corso",
+	"payments_isee_exemption": "Esonero",
+	"payments_isee_enrollment": "Iscrizione",
+	"payments_isee_course_year": "Anno di corso",
+	"payments_isee_details": "Dettagli",
+	"payments_isee_below": "{amount} sotto la soglia agevolazioni",
+	"payments_isee_above": "{amount} sopra la soglia agevolazioni",
+	"payments_isee_at": "Pari alla soglia agevolazioni",
+	"payments_isee_scale_value": "{isee} su una soglia di {threshold}",
+	"payments_isee_declare_title": "Presenta l’ISEE {year}",
+	"payments_isee_declare_body": "Firma la DSU sul sito INPS entro il 31 dicembre: Bicocca acquisisce l’ISEE in automatico e calcola le tasse dell’anno accademico {year}.",
+	"payments_isee_declare": "Presenta l’ISEE",
+	"payments_isee_guide": "Guida",
+	"payments_isee_missing_title": "Anno non trovato.",
+	"payments_isee_missing_body": "Per quest’anno non risulta un ISEE sulla tua carriera.",
+	"payments_back_to_isee": "Torna all’ISEE",
+	"payments_refunds_count": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "1 rimborso",
+				"countPlural=other": "{count} rimborsi"
+			}
+		}
+	],
+	"payments_refunds_processing_count": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} in lavorazione",
+				"countPlural=other": "{count} in lavorazione"
+			}
+		}
+	],
+	"payments_refunds_empty_title": "Nessun rimborso.",
+	"payments_refunds_empty_body": "Non risultano rimborsi a tuo nome.",
+	"payments_refunds_empty_action": "Vedi le tasse",
+	"payments_refunds_load_failed": "Impossibile caricare i rimborsi",
+	"payments_refunds_list_label": "Rimborsi",
+	"payments_refunds_detail_label": "Dettaglio del rimborso",
+	"payments_refunds_total": "Totale rimborsato",
+	"payments_refunds_processing_total": "In lavorazione",
+	"payments_refund_refunded": "Rimborsato",
+	"payments_refund_processing": "In lavorazione",
+	"payments_refund_fallback": "Rimborso",
+	"payments_refund_amount": "Importo del rimborso",
+	"payments_refund_progress": "Avanzamento",
+	"payments_refund_step_issued": "Emesso",
+	"payments_refund_step_processed": "Elaborato",
+	"payments_refund_step_paid": "Pagato",
+	"payments_refund_step_credited": "Accreditato",
+	"payments_refund_step_waiting": "In attesa",
+	"payments_refund_credited_on": [
+		{
+			"declarations": ["input date", "input day"],
+			"selectors": ["day"],
+			"match": {
+				"day=8": "Accreditato l’{date}",
+				"day=11": "Accreditato l’{date}",
+				"day=*": "Accreditato il {date}"
+			}
+		}
+	],
+	"payments_refund_details": "Dettagli",
+	"payments_refund_reason": "Causale",
+	"payments_reason_isee": "Ricalcolo ISEE",
+	"payments_reason_duplicate": "Pagamento doppio",
+	"payments_refund_mandate": "Mandato",
+	"payments_refund_method": "Modalità",
+	"payments_refund_note": "Nota",
+	"payments_refund_invoice": "Fattura",
+	"payments_refund_missing_title": "Rimborso non trovato.",
+	"payments_refund_missing_body": "Non è tra i rimborsi a tuo nome.",
+	"payments_back_to_refunds": "Torna ai rimborsi"
+}

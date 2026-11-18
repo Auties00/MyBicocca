@@ -1,0 +1,2 @@
+# The SDK covers every function of Moodle's official mobile service (tools/dump-functions.php).
+# Adjust that set here: a function name adds one outside the service, -name leaves one out.

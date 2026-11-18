@@ -9,8 +9,8 @@ import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncStateDa
 import it.attendance100.mybicocca.data.local.elearning.sync.ElearningSyncStateEntity
 import it.attendance100.mybicocca.data.mapper.elearning.toDomain
 import it.attendance100.mybicocca.data.mapper.elearning.toEntity
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningAttemptDataItem
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningGetUserAttemptsRequest.AttemptStatusFilter
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleKeyValue
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleTokenAuth
 import it.attendance100.mybicocca.di.ApplicationScope
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
@@ -23,6 +23,9 @@ import it.attendance100.mybicocca.domain.model.elearning.quiz.Quiz
 import it.attendance100.mybicocca.domain.model.elearning.quiz.QuizAttempt
 import it.attendance100.mybicocca.domain.model.elearning.quiz.QuizId
 import it.attendance100.mybicocca.domain.repository.ElearningQuizRepository
+import java.util.concurrent.ConcurrentHashMap
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Deferred
@@ -32,9 +35,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
-import java.util.concurrent.ConcurrentHashMap
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /**
  * Room-backed quiz repository on top of Moodle's mod_quiz web services.
@@ -105,7 +105,7 @@ class ElearningQuizRepositoryImpl @Inject constructor(
     private suspend fun doRefreshForCourse(accountId: AccountId, courseId: CourseId, force: Boolean) {
         if (!force && !isStale(accountId, ElearningSyncScope.COURSE_QUIZZES, courseId.value.toLong())) return
         val (api, token) = sessionManager.elearning()
-        val response = api.quizzes.getQuizzesForCourse(token, courseId.value)
+        val response = api.moodle.quiz.getQuizzesByCourses(courseIds = listOf(courseId.value), auth = MoodleTokenAuth(token))
         val rows = response.quizzes.map { it.toEntity(accountId) }
         quizDao.replaceForCourse(accountId.value, courseId.value, rows)
         stamp(accountId, ElearningSyncScope.COURSE_QUIZZES, courseId.value.toLong())
@@ -113,17 +113,17 @@ class ElearningQuizRepositoryImpl @Inject constructor(
 
     override suspend fun refreshAttempts(accountId: AccountId, quizId: QuizId) {
         val (api, token) = sessionManager.elearning()
-        val attemptsResp = api.quizzes.getUserAttempts(
-            wsToken = token,
+        val auth = MoodleTokenAuth(token)
+        val attemptsResp = api.moodle.quiz.getUserAttempts(
             quizId = quizId.value,
-            userId = null,
-            status = AttemptStatusFilter.ALL,
+            status = "all",
             includePreviews = false,
+            auth = auth,
         )
         val rows = attemptsResp.attempts.map { it.toEntity(accountId) }
         quizDao.replaceAttempts(accountId.value, quizId.value, rows)
         runCatching {
-            val best = api.quizzes.getUserBestGrade(token, quizId.value, null)
+            val best = api.moodle.quiz.getUserBestGrade(quizId.value, auth = auth)
             val quizMaxGrade = quizDao.observe(accountId.value, quizId.value).firstOrNull()?.maxGrade
             quizDao.upsertBestGrade(best.toEntity(accountId, quizId, quizMaxGrade))
         }
@@ -132,15 +132,15 @@ class ElearningQuizRepositoryImpl @Inject constructor(
 
     override suspend fun startAttempt(accountId: AccountId, quizId: QuizId, force: Boolean): AttemptId {
         val (api, token) = sessionManager.elearning()
-        val response = api.quizzes.startAttempt(
-            wsToken = token,
+        val response = api.moodle.quiz.startAttempt(
             quizId = quizId.value,
             preflightData = emptyList(),
             forceNew = force,
+            auth = MoodleTokenAuth(token),
         )
         val row = response.attempt.toEntity(accountId)
         quizDao.upsertAttempts(listOf(row))
-        return AttemptId(response.attempt.id)
+        return AttemptId(response.attempt.id ?: error("The started attempt has no id"))
     }
 
     override suspend fun loadAttemptPage(
@@ -149,7 +149,7 @@ class ElearningQuizRepositoryImpl @Inject constructor(
         page: Int,
     ): AttemptPage {
         val (api, token) = sessionManager.elearning()
-        val resp = api.quizzes.getAttemptData(token, attemptId.value, page, emptyList())
+        val resp = api.moodle.quiz.getAttemptData(attemptId.value, page, preflightData = emptyList(), auth = MoodleTokenAuth(token))
         quizDao.upsertAttempts(listOf(resp.attempt.toEntity(accountId)))
         return resp.toDomain(attemptId, page)
     }
@@ -162,11 +162,11 @@ class ElearningQuizRepositoryImpl @Inject constructor(
         quizDao.upsertAnswers(answers.map { it.toEntity(accountId, attemptId) })
         val items = answers.toApiItems()
         val (api, token) = sessionManager.elearning()
-        api.quizzes.saveAttempt(
-            wsToken = token,
+        api.moodle.quiz.saveAttempt(
             attemptId = attemptId.value,
             data = items,
             preflightData = emptyList(),
+            auth = MoodleTokenAuth(token),
         )
     }
 
@@ -183,20 +183,20 @@ class ElearningQuizRepositoryImpl @Inject constructor(
     ) {
         val items = answers.toApiItems()
         val (api, token) = sessionManager.elearning()
-        api.quizzes.processAttempt(
-            wsToken = token,
+        api.moodle.quiz.processAttempt(
             attemptId = attemptId.value,
             data = items,
             finishAttempt = true,
             timeUp = timeUp,
             preflightData = emptyList(),
+            auth = MoodleTokenAuth(token),
         )
         quizDao.deleteAnswers(accountId.value, attemptId.value)
     }
 
     override suspend fun loadReview(accountId: AccountId, attemptId: AttemptId): AttemptReview {
         val (api, token) = sessionManager.elearning()
-        val resp = api.quizzes.getAttemptReview(token, attemptId.value, null)
+        val resp = api.moodle.quiz.getAttemptReview(attemptId.value, auth = MoodleTokenAuth(token))
         quizDao.upsertAttempts(listOf(resp.attempt.toEntity(accountId)))
         return resp.toDomain(attemptId)
     }
@@ -206,9 +206,9 @@ class ElearningQuizRepositoryImpl @Inject constructor(
     }
 
     /** Flattens the per-slot field maps into the flat name/value item list the wire expects. */
-    private fun List<AttemptAnswer>.toApiItems(): List<ElearningAttemptDataItem> =
+    private fun List<AttemptAnswer>.toApiItems(): List<MoodleKeyValue> =
         flatMap { answer ->
-            answer.fields.map { (name, value) -> ElearningAttemptDataItem(name = name, value = value) }
+            answer.fields.map { (name, value) -> MoodleKeyValue(name = name, value = value) }
         }
 
     private suspend fun isStale(accountId: AccountId, scope: String, scopeId: Long): Boolean {

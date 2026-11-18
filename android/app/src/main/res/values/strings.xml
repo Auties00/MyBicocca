@@ -483,6 +483,8 @@
     <string name="attendance_easystaff_no_records">EasyStaff non ha ancora registrato presenze per questo corso.</string>
     <string name="attendance_no_detection_available">Nessuna rilevazione disponibile</string>
     <string name="attendance_register_no_records">Il registro non contiene ancora presenze registrate.</string>
+    <string name="attendance_register_load_failed_title">Registro non disponibile</string>
+    <string name="attendance_register_load_failed">Non è stato possibile leggere il registro. Riprova più tardi.</string>
     <string name="attendance_lesson">Lezione</string>
     <string name="attendance_classroom_presence">Presenze in aula</string>
     <string name="attendance_other_activities">Altre attività</string>
@@ -500,6 +502,7 @@
     <string name="attendance_msg_network_prevent_shared">Una presenza è già stata registrata da questa rete</string>
     <string name="attendance_msg_session_closed">La sessione non è più disponibile</string>
     <string name="attendance_msg_failed">Registrazione non riuscita</string>
+    <string name="attendance_msg_unconfirmed">Non è stato possibile confermare la registrazione: controlla il registro su e-learning</string>
     <string name="attendance_msg_code_unrecognized">Codice non riconosciuto</string>
     <string name="attendance_msg_no_register_found">Nessun corso con registro presenze trovato</string>
     <string name="attendance_msg_session_not_in_courses">La sessione non è aperta o non è tra i tuoi corsi</string>
@@ -1402,6 +1405,7 @@
     <string name="elearning_video_course_videos">Video del corso</string>
     <string name="elearning_video_section">Sezione %1$d</string>
     <string name="elearning_video_load_failed">Impossibile caricare il video</string>
+    <string name="elearning_video_unavailable">Questo video non è più disponibile</string>
     <string name="elearning_video_completed_count">%1$d / %2$d completati</string>
     <string name="elearning_video_quality">Qualità</string>
     <string name="elearning_video_quality_auto">Automatica</string>
@@ -1723,6 +1727,7 @@
     <!-- Appointments -->
     <string name="appointment_no_reservation_code">The booking returned no reservation code</string>
     <string name="appointment_booking_email_required">The booking email is required</string>
+    <string name="appointment_booking_captcha_required">Questo sportello si può prenotare solo dal sito del Portale Planning</string>
 
     <!-- Exam types -->
     <string name="exam_type_scritto_e_orale">Scritto e orale</string>
@@ -2052,8 +2057,8 @@
     <string name="registry_caption_frequenza">frequenza</string>
     <string name="registry_footnote_minimum">minimo %1$d%%</string>
     <string name="registry_caption_recorded">sulle registrate</string>
-    <string name="registry_presence_one">1 presenza</string>
-    <string name="registry_presence_many">%1$d presenze</string>
+    <string name="registry_recorded_one">1 sessione registrata</string>
+    <string name="registry_recorded_many">%1$d sessioni registrate</string>
     <string name="registry_students_count">%1$d studenti</string>
     <string name="registry_exam_written">Esame scritto</string>
     <string name="registry_exam_oral">Esame orale</string>

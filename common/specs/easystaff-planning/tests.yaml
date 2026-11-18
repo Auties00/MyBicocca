@@ -1,0 +1,30 @@
+# The live tests of Portale Planning, run on the student information desks' portal, which needs
+# no account: see "Live tests" in common/codegen/README.md.
+account:
+  parameters:
+    portalId: 2
+    portalCode: unimib-segreteria
+limits:
+  requestsPerSecond: 1
+  maxRequests: 200
+defaults:
+  durationSeconds: { from: Catalog.getServices, pick: "[*].durationSeconds" }
+  month: "{today:yyyy-MM}"
+  date: "{today+1}"
+operations:
+  Reservations.createReservation:
+    skip: >-
+      Its body needs the start of a free slot as epoch seconds, and the desk's form filled by
+      field type, which tests.yaml can't express yet.
+    undo:
+      call: Reservations.deleteReservation
+      with:
+        reservationCode: $result.reservationCode
+        primaryValue: $result.primaryValue
+        body: { force: true }
+    verify:
+      call: Reservations.getReservation
+      with:
+        reservationCode: $result.reservationCode
+        primaryValue: $result.primaryValue
+      contains: { path: reservationCode, value: $result.reservationCode }
