@@ -30,8 +30,7 @@ fun main(args: Array<String>) {
         exitProcess(2)
     }
 
-    val generator = Generator()
-    val plans = arguments.specDirs.flatMap { generator.run(it, arguments.targets, arguments.check) }
+    val plans = Generator().run(arguments.specDirs, arguments.targets, arguments.check)
 
     if (arguments.check) {
         val stale = plans.filterNot(SyncPlan::isUpToDate)
