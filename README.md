@@ -351,7 +351,7 @@ Your full libretto with a grade‑trend chart across the whole degree, broken do
 
 ## 📄 License
 
-Released under the [MIT License](LICENSE) © 2025 Alessandro Autiero, Federico Giarrusso, Lorenzo Angelo Lupi, Alessandro Ferrari.
+Released under the [MIT License](LICENSE) © 2026 Alessandro Autiero, Lorenzo Angelo Lupi, Federico Giarrusso, Alessandro Ferrari Pagini.
 
 <div align="center">
 <br />
