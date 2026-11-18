@@ -246,7 +246,7 @@ export class CalendarController {
 		void this.nav.go({ date: day, view: next, event: null });
 	};
 
-	/** Arrows and j/k page, t goes to today, d/w/m switch the view, +/- zoom. */
+	/** Arrows and j/k page (up and down too, in month), t goes to today, d/w/m switch the view, +/- zoom. */
 	keydown = (event: KeyboardEvent): void => {
 		if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey) return;
 		if (isTypingTarget(event.target) || document.querySelector('dialog:modal')) return;
@@ -261,6 +261,8 @@ export class CalendarController {
 		else if (key === 'm' || key === 'M') this.setView('month');
 		else if ((key === 'ArrowLeft' && !inGrid) || key === 'k') this.step(-1);
 		else if ((key === 'ArrowRight' && !inGrid) || key === 'j') this.step(1);
+		else if (key === 'ArrowUp' && this.view === 'month') this.step(-1);
+		else if (key === 'ArrowDown' && this.view === 'month') this.step(1);
 		else if ((key === '+' || key === '=') && zooms) this.zoomBy(1.2);
 		else if (key === '-' && zooms) this.zoomBy(1 / 1.2);
 		else if (key === 'Escape' && this.nav.eventId && this.docked) this.close(true);

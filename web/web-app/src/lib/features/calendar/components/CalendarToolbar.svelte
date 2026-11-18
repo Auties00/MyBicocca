@@ -1,38 +1,30 @@
 <script lang="ts">
 	import IconArrowClockwise from '~icons/ph/arrow-clockwise';
-	import IconCaretDown from '~icons/ph/caret-down';
 	import IconCaretLeft from '~icons/ph/caret-left';
 	import IconCaretRight from '~icons/ph/caret-right';
 	import IconMagnifyingGlassMinus from '~icons/ph/magnifying-glass-minus';
 	import IconMagnifyingGlassPlus from '~icons/ph/magnifying-glass-plus';
-	import type { IsoDate } from '#lib/format/days.ts';
 	import { m } from '#lib/paraglide/messages.js';
 	import Button from '#lib/ui/Button.svelte';
 	import IconButton from '#lib/ui/IconButton.svelte';
-	import Popover from '#lib/ui/Popover.svelte';
 	import SegmentedControl from '#lib/ui/SegmentedControl.svelte';
-	import type { CalendarEvent } from '../model.ts';
 	import type { CalendarView } from '../nav.svelte.ts';
-	import MiniMonth from './MiniMonth.svelte';
 
 	interface Props {
 		view: CalendarView;
 		/** The period on screen, as a title: "Ottobre 2026". */
 		title: string;
-		date: IsoDate;
-		today: IsoDate;
-		range: readonly IsoDate[];
-		byDay: ReadonlyMap<IsoDate, readonly CalendarEvent[]>;
 		/** Whether today is on screen: the Today button rests then. */
 		showsToday: boolean;
 		refreshing: boolean;
+		/** A panel is docked beside the calendar: the views then span the panel's width. */
+		docked: boolean;
 		zoom: number;
 		zoomMin: number;
 		zoomMax: number;
 		onview: (view: CalendarView) => void;
 		onstep: (delta: -1 | 1) => void;
 		ontoday: () => void;
-		onpick: (date: IsoDate) => void;
 		onzoom: (factor: number) => void;
 		onrefresh: () => void;
 	}
@@ -40,24 +32,18 @@
 	let {
 		view,
 		title,
-		date,
-		today,
-		range,
-		byDay,
 		showsToday,
 		refreshing,
+		docked,
 		zoom,
 		zoomMin,
 		zoomMax,
 		onview,
 		onstep,
 		ontoday,
-		onpick,
 		onzoom,
 		onrefresh
 	}: Props = $props();
-
-	let picking = $state(false);
 
 	const views = $derived([
 		{ value: 'day' as const, label: m.calendar_view_day() },
@@ -82,42 +68,11 @@
 </script>
 
 <div class="toolbar">
-	<div class="layout">
+	<div class={['layout', { docked }]}>
 		<div class="period">
 			<h1 class="sr-only">{m.calendar_title()}</h1>
-			<Popover
-				bind:open={picking}
-				label={m.calendar_pick_day()}
-				width="300px"
-				placement="bottom-start"
-			>
-				{#snippet trigger(props)}
-					<button
-						type="button"
-						class="title"
-						{...props}
-						aria-label={`${title}, ${m.calendar_jump_to_date()}`}
-					>
-						<span aria-live="polite">{title}</span>
-						<IconCaretDown aria-hidden="true" />
-					</button>
-				{/snippet}
-				<div class="picker">
-					{#if picking}
-						<MiniMonth
-							selected={date}
-							{today}
-							{range}
-							{byDay}
-							autofocus
-							onpick={(day) => {
-								picking = false;
-								onpick(day);
-							}}
-						/>
-					{/if}
-				</div>
-			</Popover>
+			<!-- Only a title: the side column and, in month, the grid are the date pickers. -->
+			<span class="title" aria-live="polite">{title}</span>
 			<IconButton
 				icon={IconArrowClockwise}
 				label={refreshing ? m.calendar_refreshing() : m.calendar_refresh()}
@@ -145,7 +100,7 @@
 				/>
 			</div>
 		</div>
-		<!-- Month has no density, but keeps the room, so nothing moves between views. -->
+		<!-- Where the side column has no room, the density is here; otherwise it is at its foot. -->
 		<div
 			class={['zoom', { idle: view === 'month' }]}
 			role="group"
@@ -171,6 +126,7 @@
 				options={views}
 				value={view}
 				label={m.calendar_view_label()}
+				full
 				onchange={(value) => onview(value)}
 			/>
 		</div>
@@ -182,8 +138,8 @@
 		container: calendar-toolbar / inline-size;
 	}
 
-	/* Two rows, the same in every view: the period and the density, then the paging and the views.
-	   One row once the whole set fits. */
+	/* Two rows, the same in every view: the period (and the density, where it is here), then the
+	   paging and the views. One row once the whole set fits. */
 	.layout {
 		display: grid;
 		grid-template-columns: minmax(0, 1fr) auto;
@@ -194,10 +150,17 @@
 		gap: 8px 16px;
 	}
 
+	/* The views take the width of the docked panel (set by the calendar), from the handle's line to
+	   the panel's right edge; without a panel they take what they need. */
 	@container calendar-toolbar (width >= 900px) {
 		.layout {
-			grid-template-columns: minmax(0, 1fr) auto auto auto;
+			grid-template-columns: minmax(0, 1fr) auto auto var(--views-w, auto);
 			grid-template-areas: 'period nav zoom views';
+			column-gap: 0;
+		}
+
+		.nav {
+			margin-inline-end: 16px;
 		}
 	}
 
@@ -218,56 +181,18 @@
 
 	.views {
 		grid-area: views;
-		justify-self: end;
+		justify-self: stretch;
 	}
 
 	.title {
-		display: inline-flex;
-		align-items: center;
-		gap: 8px;
 		min-inline-size: 0;
-		margin-inline-start: -8px;
-		padding: 4px 10px 4px 8px;
-		border-radius: var(--r-md);
-		color: var(--text);
-		font: var(--type-title-l);
-		letter-spacing: var(--track-title-l);
-		text-align: start;
-		cursor: pointer;
-	}
-
-	.title span {
+		padding-block: 4px;
 		overflow: hidden;
+		color: var(--text);
+		font: 650 1.625rem / 1.2 var(--font-ui);
+		letter-spacing: -0.02em;
 		text-overflow: ellipsis;
 		white-space: nowrap;
-	}
-
-	.title :global(svg) {
-		flex: none;
-		inline-size: 18px;
-		block-size: 18px;
-		color: var(--text-muted);
-		transition: transform var(--dur-base) var(--ease-out);
-	}
-
-	.title[aria-expanded='true'] :global(svg) {
-		transform: rotate(180deg);
-	}
-
-	@media (hover: hover) {
-		.title:hover {
-			background: var(--state-hover);
-		}
-	}
-
-	.title:focus-visible {
-		outline: 2px solid var(--focus);
-		outline-offset: 2px;
-	}
-
-	.picker {
-		padding: 8px;
-		min-block-size: 300px;
 	}
 
 	.steps,
@@ -276,9 +201,23 @@
 		gap: 2px;
 	}
 
+	/* The density sits at the foot of the side column; this copy is for when that column is hidden. */
 	.zoom {
 		grid-area: zoom;
 		justify-self: end;
+		display: none;
+	}
+
+	@container calendar (width < 1100px) {
+		.layout:not(.docked) .zoom {
+			display: flex;
+		}
+	}
+
+	@container calendar (width < 1460px) {
+		.layout.docked .zoom {
+			display: flex;
+		}
 	}
 
 	.zoom.idle {
@@ -287,6 +226,7 @@
 
 	@container calendar-toolbar (width >= 900px) {
 		.zoom {
+			margin-inline-end: 16px;
 			padding-inline: 4px;
 			border-inline: 1px solid var(--hairline);
 		}

@@ -1,9 +1,10 @@
 <script lang="ts">
-	import { untrack, type Snippet } from 'svelte';
+	import { flushSync, untrack, type Snippet } from 'svelte';
 	import { on } from 'svelte/events';
-	import { addDays, weekdayIndex, type IsoDate } from '#lib/format/days.ts';
+	import { addDays, type IsoDate } from '#lib/format/days.ts';
 	import type { WallClock } from '#lib/format/rome.ts';
 	import { m } from '#lib/paraglide/messages.js';
+	import { reducedMotion } from '#lib/ui/media.ts';
 	import Skeleton from '#lib/ui/Skeleton.svelte';
 	import { clockTime } from '../format.ts';
 	import {
@@ -17,6 +18,7 @@
 		type TimeSpan
 	} from '../layout.ts';
 	import { cardText } from '../measure.ts';
+	import { weekendWeights } from '../weekColumns.ts';
 	import { isInProgress, type CalendarEvent } from '../model.ts';
 	import EventCard from './EventCard.svelte';
 
@@ -81,7 +83,12 @@
 			(_, index) => Math.ceil(span.start / 60) + index
 		)
 	);
-	const minutePx = $derived(zoom);
+	/*
+	 * `zoom` is where the zoom is going; the grid draws `shownZoom`, which glides there, so a press
+	 * of a zoom button or a turn of the wheel is a smooth change rather than a jump.
+	 */
+	let shownZoom = $state(untrack(() => zoom));
+	const minutePx = $derived(shownZoom);
 	const bodyHeight = $derived((span.end - span.start) * minutePx);
 	const oddAlpha = $derived(oddHourAlpha(minutePx));
 	const inset = $derived(step === 1 ? 2 : 1);
@@ -95,10 +102,11 @@
 	let settling = $state(false);
 
 	/* Wider than a phone, an empty Saturday or Sunday takes half a column: the weekdays get the room. */
+	const sharesWeek = (page: readonly IsoDate[]) => !narrow && page.length === 7;
 	function weights(page: readonly IsoDate[]): number[] {
-		return page.map((day) =>
-			!narrow && page.length === 7 && weekdayIndex(day) >= 5 && !byDay.get(day)?.length ? 0.5 : 1
-		);
+		if (!sharesWeek(page)) return page.map(() => 1);
+		const [saturday, sunday] = weekendWeights(page, byDay);
+		return [1, 1, 1, 1, 1, saturday, sunday];
 	}
 	const columns = $derived(
 		new Map(
@@ -108,7 +116,10 @@
 				return [
 					page[0],
 					{
-						template: shares.map((share) => `minmax(0, ${share}fr)`).join(' '),
+						// The week's columns are the calendar's shared ones, which animate with the view.
+						template: sharesWeek(page)
+							? 'var(--wk-tracks)'
+							: shares.map((share) => `minmax(0, ${share}fr)`).join(' '),
 						widths: shares.map((share) => (viewportWidth * share) / total)
 					}
 				] as const;
@@ -142,6 +153,8 @@
 			'scroll',
 			() => {
 				if (performance.now() > quietUntil) scrolledByUser = true;
+				// Scrolling by hand (anywhere but where the glide put it) lets go of the held point.
+				if (hold && Math.abs(element.scrollTop - heldAt) > 1.5) hold = null;
 			},
 			{ passive: true }
 		);
@@ -208,16 +221,61 @@
 		return () => observer.disconnect();
 	}
 
+	/** The spot the zoom keeps still while it glides: where it was on screen, and the scroll it began at. */
+	let hold: { focalY: number; zoom: number; top: number } | null = null;
+	/** The scroll the glide last set: a scroll event that lands elsewhere was the person's. */
+	let heldAt = 0;
+	let glide = 0;
+
+	/** Draws the grid at `value`, with the held spot (if any) where it was. */
+	function show(value: number) {
+		shownZoom = value;
+		const element = scroller;
+		if (!element || !hold) return;
+		// The grid takes its new height before the scroll is set, or the scroll would be cut short.
+		flushSync();
+		const max = Math.max(0, (span.end - span.start) * value + headHeight - element.clientHeight);
+		element.scrollTop = pinchScroll(hold.top, hold.focalY - headHeight, value / hold.zoom, max);
+		heldAt = element.scrollTop;
+	}
+
+	/** Moves the drawn zoom toward `zoom`, closing most of the distance every 70 ms or so. */
+	function follow() {
+		cancelAnimationFrame(glide);
+		if (reducedMotion.current) {
+			show(zoom);
+			hold = null;
+			return;
+		}
+		let last = performance.now();
+		const step = (now: number) => {
+			const elapsed = Math.min(64, now - last);
+			last = now;
+			const target = zoom;
+			const close = Math.abs(target - shownZoom) < target * 0.002;
+			show(close ? target : shownZoom + (target - shownZoom) * (1 - Math.exp(-elapsed / 70)));
+			if (close) hold = null;
+			else glide = requestAnimationFrame(step);
+		};
+		glide = requestAnimationFrame(step);
+	}
+
+	/* A zoom set from outside (restored, or reset) glides too. */
+	$effect(() => {
+		const target = zoom;
+		if (Math.abs(target - untrack(() => shownZoom)) > 1e-6) untrack(follow);
+	});
+
+	$effect(() => () => cancelAnimationFrame(glide));
+
 	/** Zooms by `factor` around `focalY` (px from the scroller's top), keeping that spot still. */
 	function zoomAround(factor: number, focalY: number) {
 		if (!scroller) return;
 		const next = clampZoom(zoom * factor);
-		const applied = next / zoom;
-		if (applied === 1) return;
-		const max = Math.max(0, (span.end - span.start) * next + headHeight - scroller.clientHeight);
-		const top = pinchScroll(scroller.scrollTop, focalY - headHeight, applied, max);
+		if (next === zoom) return;
+		hold = { focalY, zoom: shownZoom, top: scroller.scrollTop };
 		zoom = next;
-		scroller.scrollTop = top;
+		follow();
 	}
 
 	/** Zooms around the middle of the visible grid, as the zoom buttons and keys do. */
@@ -579,6 +637,11 @@
 		touch-action: pan-y;
 	}
 
+	/* The now dot sits half outside its column: on the first one, that is over the hour labels. */
+	.timeline:not(.narrow) .viewport {
+		overflow-clip-margin: 6px;
+	}
+
 	.track {
 		display: grid;
 		grid-template-columns: repeat(var(--pages), 100%);
@@ -609,11 +672,15 @@
 		block-size: var(--body-h);
 	}
 
+	/*
+	 * The grid's hairlines are borders: a 1px box at a fractional position (a zoomed page, a scaled
+	 * display) can round away to nothing, a border is always at least one device pixel.
+	 */
 	.hour {
 		position: absolute;
 		inset-inline: 0;
-		block-size: 1px;
-		background: var(--hairline);
+		block-size: 0;
+		border-block-start: 1px solid var(--hairline);
 	}
 
 	.hour.odd {
@@ -632,8 +699,13 @@
 		min-inline-size: 0;
 	}
 
-	.column:not(.first) {
-		box-shadow: inset 1px 0 0 var(--hairline);
+	.column:not(.first)::before {
+		content: '';
+		position: absolute;
+		inset-block: 0;
+		inset-inline-start: 0;
+		border-inline-start: 1px solid var(--hairline);
+		pointer-events: none;
 	}
 
 	.skeleton {
@@ -646,8 +718,8 @@
 		flex: 1;
 	}
 
-	/* The line runs under the cards, so an event in progress never reads as struck through; the
-	   dot stays on top to mark the time. */
+	/* The line runs over the cards, so it shows through an event in progress; the faint one that
+	   marks the time across the other days of the week stays under them. */
 	.now,
 	.now-faint {
 		position: absolute;
@@ -659,6 +731,7 @@
 	}
 
 	.now {
+		z-index: 4;
 		background: var(--accent);
 	}
 
@@ -675,6 +748,11 @@
 		pointer-events: none;
 	}
 
+	/* Phones swipe between pages that must not show at the edges, so the dot stays in its column. */
+	.narrow .now-dot {
+		inset-inline-start: 0;
+	}
+
 	.now-faint {
 		z-index: 0;
 		block-size: 1px;
@@ -689,6 +767,8 @@
 	}
 
 	.empty {
+		/* How much of the page's colour the middle of the veil keeps, so the grid lines don't cross the text. */
+		--veil: 100%;
 		position: sticky;
 		inset-block-start: calc(var(--head-h) + 30%);
 		display: grid;
@@ -696,6 +776,47 @@
 		gap: 12px;
 		padding: 24px 16px;
 		text-align: center;
+	}
+
+	/*
+	 * The veil: the page's colour at its middle, fading to nothing at its edge, behind the words and
+	 * the button under them (it is centred on both, or on the words alone where there is no button).
+	 */
+	.empty {
+		/* Its own stacking context, so the veil sits behind the words and above the lines. */
+		isolation: isolate;
+	}
+
+	.empty::before {
+		content: '';
+		position: absolute;
+		z-index: -1;
+		inset-block-start: 50%;
+		inset-inline-start: 50%;
+		inline-size: 520px;
+		block-size: 200px;
+		transform: translate(-50%, -50%);
+		/*
+		 * Whole over the words and the button, then a short fade (about 96 px across, 37 px up and down).
+		 * The lines are only about 20 brightness levels above the page, so any fade shows them in steps of
+		 * one level, and the longer the fade, the wider each step: about 5 px here, where fades of 118 px
+		 * and 260 px made them 6 and 18 px wide and the bands came back. So the veil is made smaller, not
+		 * softer: shrink the box, and move the first stop out to keep the fade this long.
+		 */
+		background: radial-gradient(
+			closest-side,
+			color-mix(in oklch, var(--calendar-bg, var(--bg)) var(--veil), transparent) 0%,
+			color-mix(in oklch, var(--calendar-bg, var(--bg)) var(--veil), transparent) 63%,
+			color-mix(in oklch, var(--calendar-bg, var(--bg)) calc(var(--veil) * 0.85), transparent) 72%,
+			color-mix(in oklch, var(--calendar-bg, var(--bg)) calc(var(--veil) * 0.5), transparent) 81%,
+			color-mix(in oklch, var(--calendar-bg, var(--bg)) calc(var(--veil) * 0.15), transparent) 91%,
+			oklch(from var(--calendar-bg, var(--bg)) l c h / 0) 100%
+		);
+		pointer-events: none;
+	}
+
+	.empty > :global(*) {
+		position: relative;
 	}
 
 	.empty p {

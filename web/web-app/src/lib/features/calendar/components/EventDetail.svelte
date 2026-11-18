@@ -245,7 +245,7 @@
 			</div>
 		{/if}
 		{#if actions[0] || actions[1]}
-			<div class={['actions', { pair: actions[0] && actions[1] }]}>
+			<div class={['actions', { dense }]}>
 				{#each actions as action, index (index)}
 					{#if action}
 						<Button
@@ -300,13 +300,13 @@
 	}
 
 	.row:first-child {
-		border-start-start-radius: var(--r-lg);
-		border-start-end-radius: var(--r-lg);
+		border-start-start-radius: var(--tile-radius, var(--r-lg));
+		border-start-end-radius: var(--tile-radius, var(--r-lg));
 	}
 
 	.row:last-child {
-		border-end-start-radius: var(--r-lg);
-		border-end-end-radius: var(--r-lg);
+		border-end-start-radius: var(--tile-radius, var(--r-lg));
+		border-end-end-radius: var(--tile-radius, var(--r-lg));
 	}
 
 	.inset .row {
@@ -381,12 +381,15 @@
 		font: var(--type-meta);
 	}
 
+	/* Side by side while each keeps room to read, one under the other when the panel is narrow. */
 	.actions {
+		--action-min: 10.5rem;
 		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(min(100%, var(--action-min)), 1fr));
 		gap: 6px;
 	}
 
-	.pair {
-		grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+	.actions.dense {
+		--action-min: 8rem;
 	}
 </style>

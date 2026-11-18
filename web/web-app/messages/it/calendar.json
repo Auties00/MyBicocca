@@ -70,6 +70,7 @@
 	"calendar_type_appointment": "Appuntamento",
 	"calendar_type_library": "Biblioteca",
 	"calendar_detail_title_fallback": "Evento",
+	"calendar_cancelled_flag": "Annullato",
 	"calendar_detail_cancelled": "Evento annullato",
 	"calendar_detail_type_lesson": "Lezione",
 	"calendar_detail_type_exam": "Esame",
@@ -133,6 +134,8 @@
 	"calendar_upcoming": "In arrivo",
 	"calendar_show_on_map": "Mostra sulla mappa del campus",
 	"calendar_keys_views": "Vista giorno, settimana o mese",
+	"calendar_keys_step_month": "Mese precedente o successivo",
+	"calendar_pane_resize": "Ridimensiona il pannello dei dettagli",
 	"calendar_keys_step": "Periodo precedente o successivo",
 	"calendar_keys_zoom": "Più o meno dettaglio"
 }

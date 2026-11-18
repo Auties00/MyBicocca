@@ -1,13 +1,13 @@
 <script lang="ts">
 	import IconCalendarDots from '~icons/ph/calendar-dots';
-	import type { IsoDate } from '#lib/format/days.ts';
+	import { weekDays, type IsoDate } from '#lib/format/days.ts';
 	import { m } from '#lib/paraglide/messages.js';
 	import Button from '#lib/ui/Button.svelte';
 	import type { CalendarController } from '../controller.svelte.ts';
 	import { shortDate } from '../format.ts';
 	import DayHeads from './DayHeads.svelte';
 	import Timeline from './Timeline.svelte';
-	import WeekStrip from './WeekStrip.svelte';
+	import WeekHeads from './WeekHeads.svelte';
 
 	interface Props {
 		ctl: CalendarController;
@@ -26,19 +26,18 @@
 </script>
 
 {#snippet weekHeads(page: IsoDate[])}
-	<DayHeads days={page} today={ctl.today} wide={!compact} onpick={(day) => ctl.goTo(day, 'day')} />
+	<DayHeads days={page} today={ctl.today} onpick={(day) => ctl.goTo(day, 'day')} />
 {/snippet}
 
-{#snippet dayStrip(page: IsoDate[])}
-	<div class="strip-head">
-		<WeekStrip
-			date={page[0]}
-			today={ctl.today}
-			byDay={ctl.data.byDay}
-			wide
-			onpick={(day) => ctl.goTo(day)}
-		/>
-	</div>
+{#snippet wideHeads()}
+	<WeekHeads
+		mode={ctl.view === 'month' ? 'week' : ctl.view}
+		days={weekDays(ctl.date)}
+		date={ctl.date}
+		today={ctl.today}
+		byDay={ctl.data.byDay}
+		onpick={(day) => (ctl.view === 'week' ? ctl.goTo(day, 'day') : ctl.goTo(day))}
+	/>
 {/snippet}
 
 {#snippet freePeriod()}
@@ -59,7 +58,7 @@
 	bind:zoom={ctl.zoom}
 	swipe={compact}
 	narrow={compact}
-	header={ctl.view === 'week' ? weekHeads : compact ? undefined : dayStrip}
+	header={compact ? (ctl.view === 'week' ? weekHeads : undefined) : wideHeads}
 	loading={ctl.loading}
 	empty={freePeriod}
 	selectedId={ctl.nav.eventId}
@@ -69,9 +68,3 @@
 	onpage={ctl.step}
 	{ondrag}
 />
-
-<style>
-	.strip-head {
-		padding: var(--sp-1) 0 var(--sp-3);
-	}
-</style>

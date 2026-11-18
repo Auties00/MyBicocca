@@ -54,13 +54,11 @@
 	});
 	let detailPage = $state<'event' | 'courses'>('event');
 
-	function subtitle(event: CalendarEvent, withDate: boolean): string {
+	function when(event: CalendarEvent, withDate: boolean): string {
 		const time = isPointInTime(event)
 			? m.calendar_detail_by_time({ time: clockTime(event.start) })
 			: timeRange(event);
-		return [withDate ? shortDate(event.date) : '', time, locationLine(event)]
-			.filter(Boolean)
-			.join(' · ');
+		return [withDate ? shortDate(event.date) : '', time].filter(Boolean).join(' · ');
 	}
 
 	function activate(event: CalendarEvent, row: HTMLElement) {
@@ -76,6 +74,7 @@
 {#snippet row(event: CalendarEvent, withDate: boolean)}
 	{@const swatch = eventSwatch(event, isInProgress(event, today, minute))}
 	{@const open = expandable && !withDate && expandedId === event.id}
+	{@const place = locationLine(event)}
 	<li
 		class={['row', 'calendar-swatch', { open, selected: event.id === selectedId }]}
 		style:--sw-h={swatch.hue}
@@ -94,8 +93,9 @@
 				<span class="sub">
 					{#if event.cancelled}<span class="cancelled">{m.calendar_detail_cancelled()}</span>
 						·
-					{/if}{subtitle(event, withDate)}
+					{/if}{when(event, withDate)}
 				</span>
+				{#if place}<span class="sub">{place}</span>{/if}
 			</span>
 			{#if expandable && !withDate}
 				<IconCaretDown class="chevron" aria-hidden="true" />
@@ -226,18 +226,18 @@
 	}
 
 	.row:first-child {
-		border-start-start-radius: var(--r-lg);
-		border-start-end-radius: var(--r-lg);
+		border-start-start-radius: var(--tile-radius, var(--r-lg));
+		border-start-end-radius: var(--tile-radius, var(--r-lg));
 	}
 
 	.row:last-child {
-		border-end-start-radius: var(--r-lg);
-		border-end-end-radius: var(--r-lg);
+		border-end-start-radius: var(--tile-radius, var(--r-lg));
+		border-end-end-radius: var(--tile-radius, var(--r-lg));
 	}
 
 	.row.open {
 		margin-block: 4px;
-		border-radius: var(--r-lg);
+		border-radius: var(--tile-radius, var(--r-lg));
 		background: light-dark(var(--g4), var(--g5));
 	}
 
@@ -297,6 +297,7 @@
 	.title {
 		overflow: hidden;
 		font: var(--type-title-s);
+		font-size: 0.9375rem;
 		letter-spacing: var(--track-title-s);
 		text-overflow: ellipsis;
 		white-space: nowrap;

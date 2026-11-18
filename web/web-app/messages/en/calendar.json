@@ -70,6 +70,7 @@
 	"calendar_type_appointment": "Appointment",
 	"calendar_type_library": "Library",
 	"calendar_detail_title_fallback": "Event",
+	"calendar_cancelled_flag": "Cancelled",
 	"calendar_detail_cancelled": "Event cancelled",
 	"calendar_detail_type_lesson": "Lecture",
 	"calendar_detail_type_exam": "Exam",
@@ -133,6 +134,8 @@
 	"calendar_upcoming": "Coming up",
 	"calendar_show_on_map": "Show on the campus map",
 	"calendar_keys_views": "Day, week or month view",
+	"calendar_keys_step_month": "Previous or next month",
+	"calendar_pane_resize": "Resize the details panel",
 	"calendar_keys_step": "Previous or next period",
 	"calendar_keys_zoom": "More or less detail"
 }

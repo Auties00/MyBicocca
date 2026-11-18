@@ -17,6 +17,7 @@
 	import type { AccountModel } from './account.ts';
 	import AccountMenu from './AccountMenu.svelte';
 	import { activeDestination, shellHref } from './nav.ts';
+	import { shownPath } from './pending.svelte.ts';
 	import { shell } from './shell.svelte.ts';
 
 	interface Props {
@@ -30,19 +31,21 @@
 	let { mode, collapsible, account }: Props = $props();
 
 	const active = $derived(activeDestination(page.url.pathname));
-	const primaryIndex = $derived(primaryDestinations.findIndex((d) => d.id === active));
-	const secondaryIndex = $derived(secondaryDestinations.findIndex((d) => d.id === active));
+	/* A click is answered at once: the destination being loaded already shows as current. */
+	const shown = $derived(activeDestination(shownPath()));
+	const primaryIndex = $derived(primaryDestinations.findIndex((d) => d.id === shown));
+	const secondaryIndex = $derived(secondaryDestinations.findIndex((d) => d.id === shown));
 	const me = $derived(account.accounts.find((a) => a.id === account.activeId));
 	const career = $derived(me?.careers.find((c) => c.id === me.selectedCareerId));
 </script>
 
 {#snippet item(destination: Destination)}
-	{@const current = destination.id === active}
+	{@const current = destination.id === shown}
 	<li>
 		<a
 			class={['item', { current }]}
 			href={shellHref(destination.path)}
-			aria-current={current ? 'page' : undefined}
+			aria-current={destination.id === active ? 'page' : undefined}
 		>
 			<span class="icon" aria-hidden="true">
 				<destination.icon class="regular" />
