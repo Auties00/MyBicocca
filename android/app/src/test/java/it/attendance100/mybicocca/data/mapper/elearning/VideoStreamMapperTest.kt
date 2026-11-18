@@ -11,23 +11,17 @@ import java.time.Instant
 
 /**
  * Covers the Kaltura stream response -> domain mapping (stream URLs, variants, and the
- * derived sessionless thumbnail URL), the flavor-variant mapping including the
- * quoted-string size parse, and the local video-progress entity round-trip.
+ * derived sessionless thumbnail URL), the master-playlist variant mapping including the
+ * fallback key for unnamed flavors, and the local video-progress entity round-trip.
  */
 class VideoStreamMapperTest {
 
-    private fun variant(
-        flavorId: String = "1_abc",
-        sizeRaw: String? = "123456",
-    ) = ElearningKalturaVideoVariant(
+    private fun variant(flavorId: String? = "1_abc") = ElearningKalturaVideoVariant(
         flavorId = flavorId,
-        kalturaEntryId = "1_entry",
         pixelWidth = 1280,
         pixelHeight = 720,
         bitrateKbps = 2500,
         frameRateFps = 25f,
-        sizeBytesRaw = sizeRaw,
-        fileExtension = "mp4",
     )
 
     @Test
@@ -35,7 +29,6 @@ class VideoStreamMapperTest {
         val response = ElearningKalturaVideoStreamResponse.Success(
             kalturaEntryId = "1_tb2txam7",
             partnerId = 2351962,
-            kalturaSessionToken = "djJ8...",
             hlsStreamUrl = "https://stream/master.m3u8",
             dashStreamUrl = "https://stream/manifest.mpd",
             availableVideoVariants = listOf(variant()),
@@ -52,40 +45,18 @@ class VideoStreamMapperTest {
     }
 
     @Test
-    fun `stream response toDomain keeps a null dash url`() {
-        val response = ElearningKalturaVideoStreamResponse.Success(
-            kalturaEntryId = "1_x",
-            partnerId = 1,
-            kalturaSessionToken = "ks",
-            hlsStreamUrl = "https://stream/master.m3u8",
-            dashStreamUrl = null,
-            availableVideoVariants = emptyList(),
-        )
-        val stream = response.toDomain(cmId = 1)
-        assertThat(stream.dashUrl).isNull()
-        assertThat(stream.variants).isEmpty()
-    }
-
-    @Test
-    fun `variant toDomain copies the flavor metadata and parses the size string`() {
-        val domain = variant(sizeRaw = "123456").toDomain()
+    fun `variant toDomain copies the rendition metadata`() {
+        val domain = variant().toDomain()
         assertThat(domain.flavorId).isEqualTo("1_abc")
         assertThat(domain.widthPx).isEqualTo(1280)
         assertThat(domain.heightPx).isEqualTo(720)
         assertThat(domain.bitrateKbps).isEqualTo(2500)
         assertThat(domain.frameRateFps).isEqualTo(25f)
-        assertThat(domain.sizeBytes).isEqualTo(123456L)
-        assertThat(domain.fileExtension).isEqualTo("mp4")
     }
 
     @Test
-    fun `variant toDomain yields a null size for a missing raw value`() {
-        assertThat(variant(sizeRaw = null).toDomain().sizeBytes).isNull()
-    }
-
-    @Test
-    fun `variant toDomain yields a null size for a malformed raw value`() {
-        assertThat(variant(sizeRaw = "not-a-number").toDomain().sizeBytes).isNull()
+    fun `variant toDomain derives a key when the flavor is unnamed`() {
+        assertThat(variant(flavorId = null).toDomain().flavorId).isEqualTo("1280x720@2500")
     }
 
     @Test

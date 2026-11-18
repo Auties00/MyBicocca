@@ -6,9 +6,9 @@ import it.attendance100.mybicocca.data.local.elearning.course.CourseModuleEntity
 import it.attendance100.mybicocca.data.local.elearning.course.CourseSectionEntity
 import it.attendance100.mybicocca.data.local.elearning.course.CourseStaffEntity
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningActivityCompletionStatus
+import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningCourseMetadata
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningCourseModule
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningCoursePublicInfo
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningCoursePublicMetadata
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningCourseSection
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningCourseStaffGroup
 import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningCourseStaffMember
@@ -448,7 +448,7 @@ class ElearningCourseMapperTest {
                 ElearningCourseSyllabus(language = "en", exportPdfUrl = "pdf-en", fields = emptyList()),
             ),
         )
-        val entity = info.toSyllabusEntity(account, courseId = 5)
+        val entity = info.toSyllabusEntity(account, courseId = 5, metadata = null)
         assertThat(entity).isNotNull()
         assertThat(entity!!.language).isEqualTo("en")
         assertThat(entity.exportPdfUrl).isEqualTo("pdf-en")
@@ -462,26 +462,27 @@ class ElearningCourseMapperTest {
                 ElearningCourseSyllabus(language = "de", exportPdfUrl = "pdf-de", fields = emptyList()),
             ),
         )
-        assertThat(info.toSyllabusEntity(account, 5)?.language).isEqualTo("fr")
+        assertThat(info.toSyllabusEntity(account, 5, null)?.language).isEqualTo("fr")
     }
 
     @Test
     fun `syllabus entity returns null when the page has no tabs`() {
-        assertThat(publicInfo(syllabus = emptyList()).toSyllabusEntity(account, 5)).isNull()
+        assertThat(publicInfo(syllabus = emptyList()).toSyllabusEntity(account, 5, null)).isNull()
     }
 
     @Test
     fun `syllabus round-trips the metadata-derived facts through the blob`() {
+        val metadata = ElearningCourseMetadata(
+            disciplinarySector = "INF/01",
+            cfu = 8,
+            period = "Primo Semestre",
+            activityType = "Obbligatorio",
+            hours = 64,
+            degreeType = "Laurea Triennale",
+            deliveryMode = null,
+            language = "Italiano",
+        )
         val info = publicInfo(
-            metadata = ElearningCoursePublicMetadata(
-                disciplinarySector = "INF/01",
-                cfu = 8,
-                period = "Primo Semestre",
-                activityType = "Obbligatorio",
-                hours = 64,
-                degreeType = "Laurea Triennale",
-                language = "Italiano",
-            ),
             syllabus = listOf(
                 ElearningCourseSyllabus(
                     language = "en",
@@ -490,7 +491,7 @@ class ElearningCourseMapperTest {
                 ),
             ),
         )
-        val domain = info.toSyllabusEntity(account, 5)!!.toDomain()
+        val domain = info.toSyllabusEntity(account, 5, metadata)!!.toDomain()
         assertThat(domain.info.credits).isEqualTo(8)
         assertThat(domain.info.hours).isEqualTo(64)
         assertThat(domain.info.disciplinarySector).isEqualTo("INF/01")
@@ -502,14 +503,14 @@ class ElearningCourseMapperTest {
 
     @Test
     fun `syllabus matches the magistrale degree type to the master level`() {
+        val metadata = ElearningCourseMetadata(
+            disciplinarySector = null, cfu = null, period = "Secondo semestre", activityType = null,
+            hours = null, degreeType = "Laurea Magistrale", deliveryMode = null, language = null,
+        )
         val info = publicInfo(
-            metadata = ElearningCoursePublicMetadata(
-                disciplinarySector = null, cfu = null, period = "Secondo semestre", activityType = null,
-                hours = null, degreeType = "Laurea Magistrale", language = null,
-            ),
             syllabus = listOf(ElearningCourseSyllabus(language = "en", exportPdfUrl = null, fields = emptyList())),
         )
-        val domain = info.toSyllabusEntity(account, 5)!!.toDomain()
+        val domain = info.toSyllabusEntity(account, 5, metadata)!!.toDomain()
         assertThat(domain.info.level).isEqualTo(CourseLevel.Master)
         assertThat(domain.info.semester).isEqualTo(Semester.Second)
     }
@@ -535,10 +536,6 @@ class ElearningCourseMapperTest {
     )
 
     private fun publicInfo(
-        metadata: ElearningCoursePublicMetadata = ElearningCoursePublicMetadata(
-            disciplinarySector = null, cfu = null, period = null, activityType = null,
-            hours = null, degreeType = null, language = null,
-        ),
         syllabus: List<ElearningCourseSyllabus> = emptyList(),
         staff: List<ElearningCourseStaffGroup> = emptyList(),
     ) = ElearningCoursePublicInfo(
@@ -546,7 +543,6 @@ class ElearningCourseMapperTest {
         name = "Matematica",
         code = "2526-1-E3101Q113",
         viewUrl = "https://elearning/course",
-        metadata = metadata,
         syllabus = syllabus,
         staff = staff,
         enrolmentMethods = emptyList(),

@@ -167,7 +167,7 @@ class SessionManager @Inject constructor(
                     api.close()
                     throw t
                 }
-                ElearningLoginOutcome(api, login.wsToken, login.moodleSessionCookie, siteInfo)
+                ElearningLoginOutcome(api, login.wsToken, login.privateToken, login.moodleSessionCookie, siteInfo)
             }
         }
 
@@ -216,6 +216,7 @@ class SessionManager @Inject constructor(
         sessionCache.update(accountId) {
             copy(
                 wsToken = elearning.wsToken,
+                elearningPrivateToken = elearning.privateToken,
                 moodleSessionCookie = elearning.moodleSessionCookie,
                 jwt = esse3Session.jwt,
             )
@@ -383,19 +384,23 @@ class SessionManager @Inject constructor(
     }
 
     /**
-     * Forces a fresh Elearning login for the active account, updating both the cached
-     * `wsToken` and the `MoodleSession` cookie. Use after an
-     * [it.attendance100.mybicocca.data.remote.elearning.dto.ElearningKalturaVideoStreamResponse.RequiresReauth]
-     * (or equivalent) signal — Moodle has expired the browser session and only a full
-     * SAML round-trip can mint a new one.
+     * Replaces the active account's expired `MoodleSession` cookie. Use after an
+     * [it.attendance100.mybicocca.data.remote.elearning.dto.ElearningKalturaEntryIdResponse.RequiresReauth]
+     * (or equivalent) signal.
+     *
+     * The cookie is first renewed through Moodle's mobile autologin, which keeps the web service
+     * token and needs no credentials. Only if that fails (no private token cached, or Moodle
+     * refusing the key, which it hands out once every 6 minutes) does a full SAML login mint new
+     * tokens and a new cookie.
      *
      * Single-flighted per account: callers that hit the same expired session together wait on
-     * one login. Passing the [stale] client the expired session was seen on lets a caller that
-     * waited behind another's login take the client it produced, instead of logging in again
-     * and closing that client under the requests now using it. The cached tokens are kept until
-     * the new login succeeds, so a failed login leaves the next caller something to retry with.
+     * one renewal. Passing the [stale] client the expired session was seen on lets a caller that
+     * waited behind another's renewal take the client it produced, instead of asking for another
+     * autologin key (and, refused, falling back to SAML) and closing that client under the
+     * requests now using it. The cached tokens, the private token included, are kept until the
+     * new login succeeds, so a failed login leaves the next caller something to retry with.
      *
-     * @param stale The client whose browser session expired, or null to always log in again
+     * @param stale The client whose browser session expired, or null to always renew
      */
     suspend fun reauthElearning(stale: ElearningApi? = null): ElearningSession {
         val active = activeAccount.value ?: error("No active account.")
@@ -407,11 +412,29 @@ class SessionManager @Inject constructor(
             if (stale != null && current != null && current !== stale && cached.wsToken != null) {
                 return@withLock ElearningTokens(cached.wsToken, cached.moodleSessionCookie)
             }
+
+            val wsToken = cached.wsToken
+            val privateToken = cached.elearningPrivateToken
+            if (wsToken != null && privateToken != null) {
+                val cookie = runCatching {
+                    elearningAuthenticator.renewSession(wsToken, privateToken, active.learning.lmsUserId)
+                }.getOrNull()
+                if (cookie != null) {
+                    sessionCache.update(active.id) { copy(moodleSessionCookie = cookie) }
+                    adoptElearningApi(active.id, elearningApiFactory.create(cookie))
+                    return@withLock ElearningTokens(wsToken, cookie)
+                }
+            }
+
             val creds = credentialsStore.read(active.id)
                 ?: error("No stored credentials for ${active.id.value}.")
             val login = elearningAuthenticator.login(creds.username, creds.password)
             sessionCache.update(active.id) {
-                copy(wsToken = login.wsToken, moodleSessionCookie = login.moodleSessionCookie)
+                copy(
+                    wsToken = login.wsToken,
+                    elearningPrivateToken = login.privateToken,
+                    moodleSessionCookie = login.moodleSessionCookie,
+                )
             }
             adoptElearningApi(active.id, elearningApiFactory.create(login.moodleSessionCookie))
             ElearningTokens(login.wsToken, login.moodleSessionCookie)
@@ -506,7 +529,11 @@ class SessionManager @Inject constructor(
                 ?: error("No stored credentials for ${accountId.value}.")
             val login = elearningAuthenticator.login(creds.username, creds.password)
             sessionCache.update(accountId) {
-                copy(wsToken = login.wsToken, moodleSessionCookie = login.moodleSessionCookie)
+                copy(
+                    wsToken = login.wsToken,
+                    elearningPrivateToken = login.privateToken,
+                    moodleSessionCookie = login.moodleSessionCookie,
+                )
             }
             adoptElearningApi(accountId, elearningApiFactory.create(login.moodleSessionCookie))
             ElearningTokens(login.wsToken, login.moodleSessionCookie)
@@ -546,6 +573,7 @@ class SessionManager @Inject constructor(
     private data class ElearningLoginOutcome(
         val api: ElearningApi,
         val wsToken: String,
+        val privateToken: String?,
         val moodleSessionCookie: String?,
         val siteInfo: ElearningGetSiteInfoResponse,
     )
