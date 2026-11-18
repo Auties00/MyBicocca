@@ -138,7 +138,7 @@
 	"settings_about_version": "Versione {version}",
 	"settings_about_build": "build del {date}",
 	"settings_about_tagline": "Lezioni, esami, e-learning, mappa e servizi di Milano-Bicocca, in un posto solo.",
-	"settings_about_licence": "Licenza MIT",
+	"settings_about_licence": "Licenza AGPL-3.0",
 	"settings_update_check_title": "Controlla aggiornamenti",
 	"settings_update_checking": "Controllo in corso…",
 	"settings_update_current": "Sei già all’ultima versione · controllato {time}",
@@ -204,7 +204,7 @@
 	"settings_licences_subtitle": "Software open source",
 	"settings_licences_page_subtitle": "Il software libero su cui è costruita MyBicocca.",
 	"settings_licences_own_title": "MyBicocca è open source",
-	"settings_licences_own_body": "Il codice dell’app Android e del sito è pubblico su GitHub con licenza MIT: puoi leggerlo, usarlo e migliorarlo.",
+	"settings_licences_own_body": "Il codice dell’app Android e del sito è pubblico su GitHub con licenza AGPL-3.0: puoi leggerlo, usarlo e migliorarlo.",
 	"settings_licences_packages": [
 		{
 			"declarations": ["input count", "local countPlural = count: plural"],
