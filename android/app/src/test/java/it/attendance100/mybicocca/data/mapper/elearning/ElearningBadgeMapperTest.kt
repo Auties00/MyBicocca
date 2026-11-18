@@ -2,7 +2,7 @@ package it.attendance100.mybicocca.data.mapper.elearning
 
 import com.google.common.truth.Truth.assertThat
 import it.attendance100.mybicocca.data.local.elearning.badge.BadgeEntity
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningUserBadge
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleUserBadge
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import org.junit.Test
@@ -20,12 +20,12 @@ class ElearningBadgeMapperTest {
     private fun badge(
         id: Int = 7,
         name: String = "Best Student",
-        description: String? = "Awarded for excellence",
-        badgeUrl: String? = "https://moodle/badge.png",
+        description: String = "Awarded for excellence",
+        badgeUrl: String = "https://moodle/badge.png",
         timeCreated: Long? = 1_000L,
-        dateIssued: Long? = 2_000L,
+        dateIssued: Long = 2_000L,
         courseId: Int? = 55,
-    ) = ElearningUserBadge(
+    ) = MoodleUserBadge(
         id = id,
         name = name,
         description = description,
@@ -43,7 +43,7 @@ class ElearningBadgeMapperTest {
 
     @Test
     fun `toEntity falls back to the creation date when issue date is absent`() {
-        val entity = badge(timeCreated = 1_000L, dateIssued = null).toEntity(account)
+        val entity = badge(timeCreated = 1_000L, dateIssued = 0L).toEntity(account)
         assertThat(entity.issuedAtMs).isEqualTo(1_000_000L)
     }
 
@@ -54,8 +54,8 @@ class ElearningBadgeMapperTest {
     }
 
     @Test
-    fun `toEntity reads both timestamps null as absent`() {
-        val entity = badge(timeCreated = null, dateIssued = null).toEntity(account)
+    fun `toEntity reads a missing creation date and no issue date as absent`() {
+        val entity = badge(timeCreated = null, dateIssued = 0L).toEntity(account)
         assertThat(entity.issuedAtMs).isNull()
     }
 

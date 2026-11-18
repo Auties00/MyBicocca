@@ -5,30 +5,31 @@ import it.attendance100.mybicocca.data.local.elearning.course.ActivityCompletion
 import it.attendance100.mybicocca.data.local.elearning.course.CourseModuleEntity
 import it.attendance100.mybicocca.data.local.elearning.course.CourseSectionEntity
 import it.attendance100.mybicocca.data.local.elearning.course.CourseStaffEntity
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningActivityCompletionStatus
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningCourseModule
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningCoursePublicInfo
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningCoursePublicMetadata
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningCourseSection
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningCourseStaffGroup
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningCourseStaffMember
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningCourseSyllabus
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningCourseSyllabusField
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningEnrolledCourse
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningModuleContent
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningModuleDate
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleActivityCompletionStatus
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseCustomField
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseModule
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCourseSection
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleEnrolledCourse
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleModuleContent
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleModuleDate
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleWebCourseInfo
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleWebStaffGroup
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleWebStaffMember
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleWebSyllabus
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleWebSyllabusField
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseLevel
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseStaffRole
 import it.attendance100.mybicocca.domain.model.elearning.course.ModuleType
 import it.attendance100.mybicocca.domain.model.elearning.course.Semester
-import org.junit.After
-import org.junit.Before
-import org.junit.Test
 import java.time.Instant
 import java.time.LocalDate
 import java.util.Locale
+import org.junit.After
+import org.junit.Before
+import org.junit.Test
 
 /**
  * Covers the Moodle course-content mappers: {mlang} resolution, enrolled-course field
@@ -97,24 +98,24 @@ class ElearningCourseMapperTest {
         shortName: String = "MAT",
         fullName: String = "Matematica",
         displayName: String? = null,
-        idNumber: String? = "2526-1-E3101Q113",
+        idNumber: String = "2526-1-E3101Q113",
         completed: Boolean? = null,
         completionEnabled: Boolean? = null,
         isFavourite: Boolean? = null,
         hidden: Boolean? = null,
         startDate: Long? = 1_700_000_000L,
         progress: Double? = 50.0,
-    ) = ElearningEnrolledCourse(
+    ) = MoodleEnrolledCourse(
         id = id,
         shortName = shortName,
         fullName = fullName,
         displayName = displayName,
-        identificationNumber = idNumber,
+        idNumber = idNumber,
         completed = completed,
-        completionEnabled = completionEnabled,
+        enableCompletion = completionEnabled,
         isFavourite = isFavourite,
         hidden = hidden,
-        startDateTimestamp = startDate,
+        startDate = startDate,
         progress = progress,
     )
 
@@ -140,7 +141,7 @@ class ElearningCourseMapperTest {
     @Test
     fun `enrolled course toEntity blanks an empty id number to null`() {
         assertThat(enrolledCourse(idNumber = "  ").toEntity(account, 0).idNumber).isNull()
-        assertThat(enrolledCourse(idNumber = null).toEntity(account, 0).idNumber).isNull()
+        assertThat(enrolledCourse(idNumber = "").toEntity(account, 0).idNumber).isNull()
         assertThat(enrolledCourse(idNumber = "code").toEntity(account, 0).idNumber).isEqualTo("code")
     }
 
@@ -184,30 +185,30 @@ class ElearningCourseMapperTest {
     private fun module(
         id: Int = 100,
         name: String = "Lezione",
-        moduleName: String? = "resource",
+        moduleName: String = "resource",
         visible: Int? = 1,
         userVisible: Boolean? = true,
-        indent: Int? = 0,
+        indent: Int = 0,
         afterLinkHtml: String? = null,
         customData: String? = null,
-        contents: List<ElearningModuleContent>? = null,
-        dates: List<ElearningModuleDate>? = null,
-        modulePluralName: String? = "Risorse",
+        contents: List<MoodleModuleContent> = emptyList(),
+        dates: List<MoodleModuleDate> = emptyList(),
+        modulePluralName: String = "Risorse",
         visibleOnCoursePage: Int? = 1,
-    ) = ElearningCourseModule(
+    ) = MoodleCourseModule(
         id = id,
         name = name,
-        moduleName = moduleName,
+        modName = moduleName,
         visible = visible,
         userVisible = userVisible,
         indent = indent,
-        afterLinkHtml = afterLinkHtml,
+        afterLink = afterLinkHtml,
         customData = customData,
         contents = contents,
         dates = dates,
-        modulePluralName = modulePluralName,
+        modPlural = modulePluralName,
         visibleOnCoursePage = visibleOnCoursePage,
-        instanceId = 200,
+        instance = 200,
     )
 
     private fun section(
@@ -215,11 +216,11 @@ class ElearningCourseMapperTest {
         name: String = "Sezione",
         sectionNumber: Int? = 0,
         visible: Int? = 1,
-        modules: List<ElearningCourseModule> = emptyList(),
-    ) = ElearningCourseSection(
+        modules: List<MoodleCourseModule> = emptyList(),
+    ) = MoodleCourseSection(
         id = id,
         name = name,
-        sectionNumber = sectionNumber,
+        section = sectionNumber,
         visible = visible,
         modules = modules,
     )
@@ -287,8 +288,8 @@ class ElearningCourseMapperTest {
     @Test
     fun `module entities pack dates and contents into the json columns`() {
         val mod = module(
-            contents = listOf(ElearningModuleContent(type = "file", fileName = "a.pdf", fileSize = 10L, timeModifiedTimestamp = 1_000L)),
-            dates = listOf(ElearningModuleDate(label = "Data limite:", timestamp = 2_000L, dataId = "duedate")),
+            contents = listOf(MoodleModuleContent(type = "file", fileName = "a.pdf", fileSize = 10L, timeModified = 1_000L)),
+            dates = listOf(MoodleModuleDate(label = "Data limite:", timestamp = 2_000L, dataId = "duedate")),
         )
         val entity = listOf(section(modules = listOf(mod))).toModuleEntities(account, 5).single()
         assertThat(entity.contentsJson).isNotNull()
@@ -306,7 +307,7 @@ class ElearningCourseMapperTest {
 
     @Test
     fun `module entities drop a date with no timestamp`() {
-        val mod = module(dates = listOf(ElearningModuleDate(label = "x", timestamp = null, dataId = "duedate")))
+        val mod = module(dates = listOf(MoodleModuleDate(label = "x", timestamp = 0L, dataId = "duedate")))
         val entity = listOf(section(modules = listOf(mod))).toModuleEntities(account, 5).single()
         assertThat(entity.datesJson).isNull()
     }
@@ -331,8 +332,8 @@ class ElearningCourseMapperTest {
     fun `module entity toDomain resolves the type and decodes dates and contents`() {
         val mod = module(
             moduleName = "assign",
-            contents = listOf(ElearningModuleContent(type = "file", fileName = "a.pdf", fileSize = 10L)),
-            dates = listOf(ElearningModuleDate(label = "Data limite:", timestamp = 2_000L, dataId = "duedate")),
+            contents = listOf(MoodleModuleContent(type = "file", fileName = "a.pdf", fileSize = 10L)),
+            dates = listOf(MoodleModuleDate(label = "Data limite:", timestamp = 2_000L, dataId = "duedate")),
         )
         val entity = listOf(section(modules = listOf(mod))).toModuleEntities(account, 5).single()
         val domain = entity.toDomain()
@@ -378,7 +379,7 @@ class ElearningCourseMapperTest {
         assertThat(completion(tracking = 1).toEntity(account, 5).isManual).isTrue()
         assertThat(completion(tracking = 1).toEntity(account, 5).isAutomatic).isFalse()
         assertThat(completion(tracking = 2).toEntity(account, 5).isAutomatic).isTrue()
-        assertThat(completion(tracking = null).toEntity(account, 5).isManual).isFalse()
+        assertThat(completion(tracking = 0).toEntity(account, 5).isManual).isFalse()
     }
 
     @Test
@@ -404,11 +405,11 @@ class ElearningCourseMapperTest {
     fun `staff entities are numbered across the role groups`() {
         val info = publicInfo(
             staff = listOf(
-                ElearningCourseStaffGroup(
+                MoodleWebStaffGroup(
                     role = "Docente",
                     members = listOf(staffMember("Mario Rossi"), staffMember("Anna Verdi")),
                 ),
-                ElearningCourseStaffGroup(
+                MoodleWebStaffGroup(
                     role = "Tutor",
                     members = listOf(staffMember("Luca Bianchi")),
                 ),
@@ -444,11 +445,11 @@ class ElearningCourseMapperTest {
     fun `syllabus entity prefers the english tab under an english locale`() {
         val info = publicInfo(
             syllabus = listOf(
-                ElearningCourseSyllabus(language = "it", exportPdfUrl = "pdf-it", fields = emptyList()),
-                ElearningCourseSyllabus(language = "en", exportPdfUrl = "pdf-en", fields = emptyList()),
+                MoodleWebSyllabus(language = "it", exportPdfUrl = "pdf-it", fields = emptyList()),
+                MoodleWebSyllabus(language = "en", exportPdfUrl = "pdf-en", fields = emptyList()),
             ),
         )
-        val entity = info.toSyllabusEntity(account, courseId = 5)
+        val entity = info.toSyllabusEntity(account, courseId = 5, metadata = null)
         assertThat(entity).isNotNull()
         assertThat(entity!!.language).isEqualTo("en")
         assertThat(entity.exportPdfUrl).isEqualTo("pdf-en")
@@ -458,39 +459,40 @@ class ElearningCourseMapperTest {
     fun `syllabus entity falls back to the first tab when neither app language nor english exist`() {
         val info = publicInfo(
             syllabus = listOf(
-                ElearningCourseSyllabus(language = "fr", exportPdfUrl = "pdf-fr", fields = emptyList()),
-                ElearningCourseSyllabus(language = "de", exportPdfUrl = "pdf-de", fields = emptyList()),
+                MoodleWebSyllabus(language = "fr", exportPdfUrl = "pdf-fr", fields = emptyList()),
+                MoodleWebSyllabus(language = "de", exportPdfUrl = "pdf-de", fields = emptyList()),
             ),
         )
-        assertThat(info.toSyllabusEntity(account, 5)?.language).isEqualTo("fr")
+        assertThat(info.toSyllabusEntity(account, 5, null)?.language).isEqualTo("fr")
     }
 
     @Test
     fun `syllabus entity returns null when the page has no tabs`() {
-        assertThat(publicInfo(syllabus = emptyList()).toSyllabusEntity(account, 5)).isNull()
+        assertThat(publicInfo(syllabus = emptyList()).toSyllabusEntity(account, 5, null)).isNull()
     }
 
     @Test
     fun `syllabus round-trips the metadata-derived facts through the blob`() {
+        val metadata = CourseSheetMetadata(
+            disciplinarySector = "INF/01",
+            cfu = 8,
+            period = "Primo Semestre",
+            activityType = "Obbligatorio",
+            hours = 64,
+            degreeType = "Laurea Triennale",
+            deliveryMode = null,
+            language = "Italiano",
+        )
         val info = publicInfo(
-            metadata = ElearningCoursePublicMetadata(
-                disciplinarySector = "INF/01",
-                cfu = 8,
-                period = "Primo Semestre",
-                activityType = "Obbligatorio",
-                hours = 64,
-                degreeType = "Laurea Triennale",
-                language = "Italiano",
-            ),
             syllabus = listOf(
-                ElearningCourseSyllabus(
+                MoodleWebSyllabus(
                     language = "en",
                     exportPdfUrl = null,
-                    fields = listOf(ElearningCourseSyllabusField(title = "Aims", htmlContent = "<p>learn things</p>")),
+                    fields = listOf(MoodleWebSyllabusField(title = "Aims", htmlContent = "<p>learn things</p>")),
                 ),
             ),
         )
-        val domain = info.toSyllabusEntity(account, 5)!!.toDomain()
+        val domain = info.toSyllabusEntity(account, 5, metadata)!!.toDomain()
         assertThat(domain.info.credits).isEqualTo(8)
         assertThat(domain.info.hours).isEqualTo(64)
         assertThat(domain.info.disciplinarySector).isEqualTo("INF/01")
@@ -502,31 +504,51 @@ class ElearningCourseMapperTest {
 
     @Test
     fun `syllabus matches the magistrale degree type to the master level`() {
-        val info = publicInfo(
-            metadata = ElearningCoursePublicMetadata(
-                disciplinarySector = null, cfu = null, period = "Secondo semestre", activityType = null,
-                hours = null, degreeType = "Laurea Magistrale", language = null,
-            ),
-            syllabus = listOf(ElearningCourseSyllabus(language = "en", exportPdfUrl = null, fields = emptyList())),
+        val metadata = CourseSheetMetadata(
+            disciplinarySector = null, cfu = null, period = "Secondo semestre", activityType = null,
+            hours = null, degreeType = "Laurea Magistrale", deliveryMode = null, language = null,
         )
-        val domain = info.toSyllabusEntity(account, 5)!!.toDomain()
+        val info = publicInfo(
+            syllabus = listOf(MoodleWebSyllabus(language = "en", exportPdfUrl = null, fields = emptyList())),
+        )
+        val domain = info.toSyllabusEntity(account, 5, metadata)!!.toDomain()
         assertThat(domain.info.level).isEqualTo(CourseLevel.Master)
         assertThat(domain.info.semester).isEqualTo(Semester.Second)
+    }
+
+    @Test
+    fun `course sheet metadata reads the custom fields leaving blanks and zero hours unset`() {
+        val course = MoodleCourse(
+            customFields = listOf(
+                MoodleCourseCustomField(shortName = "settore", value = " INF/01 "),
+                MoodleCourseCustomField(shortName = "cfu", value = "8"),
+                MoodleCourseCustomField(shortName = "ore", value = "0"),
+                MoodleCourseCustomField(shortName = "erogazione", value = ""),
+                MoodleCourseCustomField(shortName = "tipologiacds", value = "Laurea Triennale"),
+            ),
+        )
+        val metadata = course.toCourseSheetMetadata()
+        assertThat(metadata.disciplinarySector).isEqualTo("INF/01")
+        assertThat(metadata.cfu).isEqualTo(8)
+        assertThat(metadata.hours).isNull()
+        assertThat(metadata.deliveryMode).isNull()
+        assertThat(metadata.degreeType).isEqualTo("Laurea Triennale")
+        assertThat(metadata.period).isNull()
     }
 
     private fun completion(
         cmId: Int = 100,
         state: Int = 2,
-        tracking: Int? = 1,
-        timeCompleted: Long? = 4_000L,
-    ) = ElearningActivityCompletionStatus(
-        courseModuleId = cmId,
+        tracking: Int = 1,
+        timeCompleted: Long = 4_000L,
+    ) = MoodleActivityCompletionStatus(
+        cmId = cmId,
         state = state,
         tracking = tracking,
         timeCompleted = timeCompleted,
     )
 
-    private fun staffMember(name: String) = ElearningCourseStaffMember(
+    private fun staffMember(name: String) = MoodleWebStaffMember(
         name = name,
         profileUrl = "https://moodle/profile",
         userId = 7,
@@ -535,18 +557,13 @@ class ElearningCourseMapperTest {
     )
 
     private fun publicInfo(
-        metadata: ElearningCoursePublicMetadata = ElearningCoursePublicMetadata(
-            disciplinarySector = null, cfu = null, period = null, activityType = null,
-            hours = null, degreeType = null, language = null,
-        ),
-        syllabus: List<ElearningCourseSyllabus> = emptyList(),
-        staff: List<ElearningCourseStaffGroup> = emptyList(),
-    ) = ElearningCoursePublicInfo(
+        syllabus: List<MoodleWebSyllabus> = emptyList(),
+        staff: List<MoodleWebStaffGroup> = emptyList(),
+    ) = MoodleWebCourseInfo(
         id = 5,
         name = "Matematica",
         code = "2526-1-E3101Q113",
         viewUrl = "https://elearning/course",
-        metadata = metadata,
         syllabus = syllabus,
         staff = staff,
         enrolmentMethods = emptyList(),

@@ -1,7 +1,7 @@
 package it.attendance100.mybicocca.data.mapper.elearning
 
 import it.attendance100.mybicocca.data.local.elearning.deadline.DeadlineEntity
-import it.attendance100.mybicocca.data.remote.elearning.dto.ElearningCalendarEvent
+import it.attendance100.mybicocca.data.remote.elearning.dto.MoodleCalendarEvent
 import it.attendance100.mybicocca.domain.model.account.AccountId
 import it.attendance100.mybicocca.domain.model.elearning.assignment.AssignmentId
 import it.attendance100.mybicocca.domain.model.elearning.course.CourseId
@@ -17,7 +17,7 @@ import java.time.Instant
  * The due time prefers `timesort` over `timestart` and is normalized from epoch
  * seconds to milliseconds.
  */
-internal fun ElearningCalendarEvent.toDeadlineEntity(accountId: AccountId): DeadlineEntity? {
+internal fun MoodleCalendarEvent.toDeadlineEntity(accountId: AccountId): DeadlineEntity? {
     val courseId = course?.id ?: return null
     val cmId = instance ?: return null
     val module = moduleName?.lowercase() ?: return null
@@ -26,7 +26,7 @@ internal fun ElearningCalendarEvent.toDeadlineEntity(accountId: AccountId): Dead
         "quiz" -> DeadlineEntity.Kind.QUIZ
         else -> return null
     }
-    val dueAtSec = timeSort ?: timeStart
+    val dueAtSec = timeSort.takeIf { it > 0 } ?: timeStart
     return DeadlineEntity(
         accountId = accountId.value,
         eventId = id,

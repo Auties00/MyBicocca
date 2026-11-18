@@ -28,7 +28,7 @@ import it.attendance100.mybicocca.ui.component.modal.SheetPage
 /**
  * Bottom sheet for picking the video stream quality, headed by the quality in use: an
  * "Automatica" row for adaptive selection followed by the stream's variants from highest to
- * lowest resolution, each labelled with its height (or flavor id) plus bitrate/format details
+ * lowest resolution, each labelled with its height (or flavor id) plus its bitrate
  * and a check mark on the selected row.
  * Choosing a row applies the quality constraint and closes the sheet.
  */
@@ -63,10 +63,7 @@ fun QualityPickerSheet(
                     onClick = { haptic.tap(); onSelect(null); onDismiss() },
                 )
                 variants.asReversed().forEach { variant ->
-                    val detail = listOfNotNull(
-                        variant.bitrateKbps?.let { "${it} kbps" },
-                        variant.fileExtension?.uppercase(),
-                    ).joinToString(" · ").takeIf { it.isNotBlank() }
+                    val detail = variant.bitrateKbps?.let { "${it} kbps" }
                     QualityRow(
                         label = variantLabel(variant),
                         detail = detail,

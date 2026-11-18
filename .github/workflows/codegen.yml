@@ -1,0 +1,77 @@
+name: Codegen
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+    paths:
+      - 'common/**'
+      - 'android/data-api/**'
+      - 'ios/DataApi/**'
+      - 'web/**'
+      - '.github/workflows/codegen.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: codegen-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  generator:
+    name: Generator and generated code
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # The android Gradle wrapper builds common/codegen too; its daemon is pinned to a
+      # JetBrains JDK 21 (see android-ci.yml).
+      - name: Set up the Gradle daemon JDK (JetBrains 21)
+        uses: actions/setup-java@v4
+        with:
+          distribution: jetbrains
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Make gradlew executable
+        run: chmod +x android/gradlew
+
+      - name: Build and test the generator
+        working-directory: common/codegen
+        run: ../../android/gradlew build --stacktrace
+
+      - name: Check that the generated code is up to date
+        working-directory: common/codegen
+        run: ../../android/gradlew :cli:run --args="--check" --stacktrace
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      # The SDK, and its live tests, which need vitest's and Node's types.
+      - name: Type-check the web SDK and its live tests
+        working-directory: web/web-app
+        run: |
+          npm ci
+          npm run typecheck
+
+  swift:
+    name: Swift SDKs
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Also builds the generated live tests, which skip without LIVE_TESTS=1.
+      - name: Build and test
+        working-directory: ios/DataApi
+        run: swift test

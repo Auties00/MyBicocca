@@ -1,0 +1,161 @@
+{
+	"$schema": "https://inlang.com/schema/inlang-message-format",
+	"profile_title": "Profile",
+	"profile_refresh_error": "Couldn’t update your transcript.",
+	"profile_load_error": "Couldn’t load your transcript",
+	"profile_stats_error": "Your averages and totals couldn’t be loaded.",
+	"profile_statistics": "Statistics",
+	"profile_trend": "Trend",
+	"profile_arithmetic_average": "Arithmetic average",
+	"profile_weighted_average": "Weighted average",
+	"profile_exams_taken": "Exams taken",
+	"profile_credits_earned": "Credits earned",
+	"profile_calc_hypothetical": "Calculate a hypothetical average",
+	"profile_base_110": "{value} out of 110",
+	"profile_tile_exams_basis": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "over 1 exam",
+				"countPlural=other": "over {count} exams"
+			}
+		}
+	],
+	"profile_tile_credits_basis": "over {credits}",
+	"profile_tile_no_grades": "No grades yet",
+	"profile_exams_passed_of": "{passed} of {total} passed",
+	"profile_credits_of": "{passed} of {total}",
+	"profile_badge_university": "Università degli Studi",
+	"profile_badge_signature": "Signature",
+	"profile_badge_email": "Institutional email",
+	"profile_badge_photo": "Profile photo",
+	"profile_badge_student": "Student",
+	"profile_card_label": "University card of {name}, student number {number}. Press to flip it.",
+	"profile_card_front": "Front of the card.",
+	"profile_card_back": "Back of the card: signature, photo and institutional email {email}.",
+	"profile_trend_min_exams": "Your trend appears after at least two passed exams.",
+	"profile_grade_label": "Grade: {grade}",
+	"profile_chart_label": "Grade trend: {count} exams from {first} to {last}. Use the arrow keys to step through them.",
+	"profile_chart_point": "{name}, {date}: {grade}",
+	"profile_chart_average": "Arithmetic average {value}",
+	"profile_chart_caption": "Grades of passed exams, by date",
+	"profile_chart_exam": "Exam",
+	"profile_chart_date": "Date",
+	"profile_chart_grade": "Grade",
+	"profile_libretto_title": "Transcript",
+	"profile_libretto_subtitle": "{passed} of {total} exams passed · {credits}",
+	"profile_libretto_open": "Open transcript",
+	"profile_view_label": "Show",
+	"profile_grades": "Grades",
+	"profile_credits": "Credits",
+	"profile_year": "Year {year}",
+	"profile_prerequisites": "Prerequisites",
+	"profile_years_label": "Course years",
+	"profile_year_exams": [
+		{
+			"declarations": ["input passed", "input total", "local totalPlural = total: plural"],
+			"selectors": ["totalPlural"],
+			"match": {
+				"totalPlural=one": "{passed} of {total} exam",
+				"totalPlural=other": "{passed} of {total} exams"
+			}
+		}
+	],
+	"profile_passed": "Passed",
+	"profile_passed_on": "Passed on {date}",
+	"profile_attending": "Attended, exam pending",
+	"profile_pending": "Pending",
+	"profile_course_prereq_unmet_short": "Prerequisites not met",
+	"profile_libretto_empty_title": "Your transcript is still empty.",
+	"profile_libretto_empty_body": "The courses of your study plan will show up here.",
+	"profile_libretto_empty_action": "Open your study plan",
+	"profile_column_course": "Course",
+	"profile_column_date": "Date",
+	"profile_column_credits": "Credits",
+	"profile_column_grade": "Grade",
+	"profile_course_label": "Course",
+	"profile_fact_credits": "Credits",
+	"profile_fact_academic_year": "Academic year",
+	"profile_fact_code": "Code",
+	"profile_course_passed": "Passed",
+	"profile_course_prereq_unmet": "The prerequisites for this course have not been met.",
+	"profile_course_attempts": "Attempts",
+	"profile_course_attempt": "Attempt",
+	"profile_course_no_exams_title": "No recorded attempts.",
+	"profile_course_no_exams_body": "The exams you sit for this course will show up here.",
+	"profile_course_go_to_appelli": "Go to exam calls",
+	"profile_course_bookable": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{count} exam call open for booking",
+				"countPlural=other": "{count} exam calls open for booking"
+			}
+		}
+	],
+	"profile_course_no_appelli": "No exam calls available",
+	"profile_course_simulate": "Simulate your average with this exam",
+	"profile_course_load_failed": "Couldn’t load the attempts.",
+	"profile_course_not_found_title": "Course not found.",
+	"profile_course_not_found_body": "This course isn’t in the transcript of your active career.",
+	"profile_simulator_title": "Average simulator",
+	"profile_simulator_subtitle": "See how your next exam moves your average.",
+	"profile_simulator_kind": "Average",
+	"profile_simulator_arithmetic": "Arithmetic",
+	"profile_simulator_weighted": "Weighted",
+	"profile_hyp_subtitle_arithmetic": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "Over 1 graded exam",
+				"countPlural=other": "Over {count} graded exams"
+			}
+		}
+	],
+	"profile_hyp_subtitle_weighted": "Over {credits} of graded exams",
+	"profile_hyp_now": "Now:",
+	"profile_hyp_then": "With the new exam:",
+	"profile_hyp_grade_label": "Grade",
+	"profile_hyp_grade_placeholder": "18–30",
+	"profile_hyp_laude": "Cum laude",
+	"profile_hyp_laude_hint": "In the simulation cum laude counts as 31, as on the chart.",
+	"profile_hyp_grade_invalid": "Invalid grade: the lowest pass is 18.",
+	"profile_hyp_grade_too_high": "Grade too high: 30 cum laude (31) at most.",
+	"profile_hyp_cfu_label": "Exam credits",
+	"profile_hyp_cfu_placeholder": "6",
+	"profile_hyp_cfu_invalid": "An exam is worth at least 1 credit.",
+	"profile_hyp_prompt": "Enter a grade to see your new average.",
+	"profile_hyp_prompt_credits": "Enter the exam’s credits too.",
+	"profile_hyp_no_average": "You need at least one graded exam to simulate your average.",
+	"profile_hyp_delta_up": "Up by {delta}",
+	"profile_hyp_delta_down": "Down by {delta}",
+	"profile_hyp_delta_same": "Unchanged",
+	"profile_target_title": "What grade do you need?",
+	"profile_target_label": "Average to reach",
+	"profile_target_placeholder": "28.00",
+	"profile_target_invalid": "Enter an average between 18 and 30.",
+	"profile_target_grade": "You need at least {grade}.",
+	"profile_target_grade_credits": "You need at least {grade} in an exam worth {credits}.",
+	"profile_target_laude": "You need 30 cum laude.",
+	"profile_target_laude_credits": "You need 30 cum laude in an exam worth {credits}.",
+	"profile_target_any": "Just pass it: even an 18 gets you to {target}.",
+	"profile_target_unreachable": "One exam can’t get you there, not even with 30 cum laude.",
+	"profile_target_needs_credits": "Enter the exam’s credits first.",
+	"profile_pick_title": "Still to take",
+	"profile_pick_hint": "Pick the one you want to simulate.",
+	"profile_pick_clear": "Clear the picked exam",
+	"profile_graded_exams": "Exams in your average",
+	"profile_graded_exams_summary": [
+		{
+			"declarations": ["input count", "input credits", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "1 exam · {credits}",
+				"countPlural=other": "{count} exams · {credits}"
+			}
+		}
+	]
+}

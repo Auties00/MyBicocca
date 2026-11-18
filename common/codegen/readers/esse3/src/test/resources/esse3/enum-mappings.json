@@ -1,0 +1,10 @@
+{
+    "Voce.statoCod": {
+        "A": "Active",
+        "C": "Closed"
+    },
+    "getVoci.stato": {
+        "A": "Active",
+        "C": "Closed"
+    }
+}

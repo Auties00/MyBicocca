@@ -9,7 +9,7 @@ on:
       - 'android/app/src/main/java/**'
       - 'android/app/src/main/res/**'
       - 'android/app/src/demo/**'
-      - 'scripts/capture-screenshots.py'
+      - 'android/tools/screenshots/capture-screenshots.py'
   # Adding "screenshots" to a pull request captures only the new, changed or missing images on
   # that PR's branch; "screenshots:full" retakes every image. The label is removed afterwards, so
   # adding it again runs it again.
@@ -58,7 +58,7 @@ jobs:
           BASE: ${{ github.event.pull_request.base.ref }}
         run: |
           if [ "$EVENT" = "pull_request" ] && [ "$LABEL" = "screenshots" ]; then
-            CHANGED=$(python3 scripts/capture-screenshots.py --list-changed "origin/$BASE")
+            CHANGED=$(python3 android/tools/screenshots/capture-screenshots.py --list-changed "origin/$BASE")
             if [ -z "$CHANGED" ]; then
               echo "No new, changed or missing screenshots relative to origin/$BASE."
               echo "skip=true" >> "$GITHUB_OUTPUT"
@@ -142,19 +142,19 @@ jobs:
           arch: x86_64
           target: google_apis
           profile: pixel_7_pro
-          script: python3 scripts/capture-screenshots.py --skip-build ${{ steps.target.outputs.flags }}
+          script: python3 android/tools/screenshots/capture-screenshots.py --skip-build ${{ steps.target.outputs.flags }}
 
       - name: Upload the captured screenshots
         if: ${{ always() && steps.target.outputs.skip != 'true' }}
         uses: actions/upload-artifact@v4
         with:
           name: screenshots
-          path: screenshots/demo/
+          path: android/tools/screenshots/
           retention-days: 14
           if-no-files-found: ignore
 
       # The same branch every time: the action force-updates it and keeps one open PR, so reruns
-      # refresh that PR instead of piling up new ones. No diff, no PR. Only screenshots/demo is
+      # refresh that PR instead of piling up new ones. No diff, no PR. Only android/tools/screenshots is
       # added, so nothing else the build touched can end up in the commit.
       - name: Open or update the screenshots PR
         if: ${{ github.event_name != 'pull_request' }}
@@ -162,7 +162,7 @@ jobs:
         with:
           branch: automation/update-screenshots
           base: main
-          add-paths: screenshots/demo/
+          add-paths: android/tools/screenshots/
           commit-message: 'chore(screenshots): retake demo screenshots'
           title: 'chore(screenshots): retake demo screenshots'
           body: |
@@ -189,7 +189,7 @@ jobs:
             gh pr comment "$PR" --body "No new, changed or missing screenshots found relative to \`$BASE\`. Add \`screenshots:full\` to retake every screenshot."
             exit 0
           fi
-          git add screenshots/demo/
+          git add android/tools/screenshots/
           if git diff --cached --quiet; then
             gh pr comment "$PR" --body "Retook the screenshots: nothing changed."
           else
@@ -200,7 +200,7 @@ jobs:
             git push origin "HEAD:$BRANCH"
             gh pr comment "$PR" --body "Retook the screenshots and pushed them to this branch. Check the changed images before merging."
           fi
-          if python3 scripts/capture-screenshots.py --check-missing >/dev/null 2>&1; then
+          if python3 android/tools/screenshots/capture-screenshots.py --check-missing >/dev/null 2>&1; then
             MARKER="<!-- missing-screenshots-reminder -->"
             COMMENT_ID=$(gh api "repos/$REPO/issues/$PR/comments" --paginate --jq ".[] | select(.body | contains(\"$MARKER\")) | .id" | head -n 1 || true)
             if [ -n "$COMMENT_ID" ]; then

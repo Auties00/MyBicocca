@@ -1,0 +1,81 @@
+{
+	"$schema": "https://inlang.com/schema/inlang-message-format",
+	"app_name": "MyBicocca",
+	"common_password": "Password",
+	"common_show_password": "Mostra password",
+	"common_hide_password": "Nascondi password",
+	"common_continue": "Continua",
+	"common_retry": "Riprova",
+	"common_refresh": "Aggiorna",
+	"common_loading": "Caricamento…",
+	"common_sign_out": "Esci",
+	"common_credits": [
+		{
+			"declarations": ["input count", "input value", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "{value} CFU",
+				"countPlural=other": "{value} CFU"
+			}
+		}
+	],
+	"common_grade_passed": "Id.",
+	"common_grade_not_passed": "Resp.",
+	"common_grade_withdrew": "Rit.",
+	"common_grade_absent": "Ass.",
+	"common_grade_passed_full": "Idoneo",
+	"common_grade_not_passed_full": "Respinto",
+	"common_grade_withdrew_full": "Ritirato",
+	"common_grade_absent_full": "Assente",
+	"common_grade_cum_laude_full": "{grade} e lode",
+	"common_due_today": "Entro oggi",
+	"common_due_tomorrow": "Entro domani",
+	"common_due_days": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "Entro {count} giorno",
+				"countPlural=other": "Entro {count} giorni"
+			}
+		}
+	],
+	"common_overdue": "In ritardo",
+	"common_overdue_days": [
+		{
+			"declarations": ["input count", "local countPlural = count: plural"],
+			"selectors": ["countPlural"],
+			"match": {
+				"countPlural=one": "In ritardo di {count} giorno",
+				"countPlural=other": "In ritardo di {count} giorni"
+			}
+		}
+	],
+	"common_error_offline": "Rete non disponibile. Controlla la connessione e riprova.",
+	"common_error_timeout": "Timeout di rete. Riprova tra un momento.",
+	"common_error_network": "Errore di rete. Riprova tra un momento.",
+	"common_error_unavailable": "Il servizio non è disponibile al momento. Riprova più tardi.",
+	"common_error_session_expired": "La sessione è scaduta. Effettua di nuovo l’accesso.",
+	"common_error_forbidden": "Non hai accesso a questo contenuto.",
+	"common_error_not_found": "Contenuto non trovato.",
+	"common_error_rejected": "Il servizio ha rifiutato la richiesta.",
+	"common_error_rejected_reason": "L’e-learning ha rifiutato la richiesta: {reason}",
+	"common_error_no_file": "Il servizio non ha inviato il file. Riprova più tardi.",
+	"common_error_site_changed": "Il servizio ha risposto in modo inatteso. Riprova più tardi.",
+	"common_error_unexpected": "Si è verificato un errore imprevisto.",
+	"auth_tagline": "Accedi con le tue credenziali di Ateneo",
+	"auth_username_label": "Username o Email",
+	"auth_username_placeholder": "m.rossi1",
+	"auth_remember": "Ricorda su questo dispositivo",
+	"auth_remember_hint": "La password resta cifrata in questo browser, così non dovrai inserirla di nuovo.",
+	"auth_sign_in_button": "Accedi",
+	"auth_signing_in": "Accesso in corso…",
+	"auth_offline": "Sei offline. Collegati a internet per accedere.",
+	"auth_error_bad_credentials": "Credenziali non valide. Controlla username e password.",
+	"auth_error_no_connection": "Impossibile raggiungere il server. Controlla la connessione o riprova più tardi.",
+	"auth_error_unknown": "Accesso non riuscito. Riprova tra qualche istante.",
+	"auth_career_title": "Scegli una carriera",
+	"auth_career_instruction": "Seleziona la carriera con cui vuoi iniziare. Potrai cambiarla in qualsiasi momento dal tuo account.",
+	"auth_career_details": "Matricola {number} · A.A. {year}",
+	"auth_career_fallback": "Carriera {id}"
+}

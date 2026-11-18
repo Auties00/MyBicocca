@@ -7,7 +7,6 @@ import it.attendance100.mybicocca.domain.model.appointment.AppointmentArea
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentForm
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentFormField
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentFormOption
-import it.attendance100.mybicocca.domain.model.appointment.AppointmentFormSection
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentMonthAvailability
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentOffering
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentReservation
@@ -101,13 +100,13 @@ class DemoAppointmentRepository @Inject constructor() : AppointmentRepository {
 
     override suspend fun getBookingForm(serviceId: Int): AppointmentForm = AppointmentForm(
         fields = listOf(
-            AppointmentFormField.Email("email", "E-mail", required = true, placeholder = null, section = AppointmentFormSection.User, primary = true),
-            AppointmentFormField.Text("matricola", "Matricola", required = true, placeholder = null, section = AppointmentFormSection.User),
+            AppointmentFormField.Email("email", "E-mail", required = true, placeholder = null, primary = true),
+            AppointmentFormField.Text("matricola", "Matricola", required = true, placeholder = null),
             AppointmentFormField.Select(
-                "motivo", "Motivo della richiesta", required = true, placeholder = null, section = AppointmentFormSection.Service,
+                "motivo", "Motivo della richiesta", required = true, placeholder = null,
                 options = listOf("Iscrizione", "Certificati", "Piano di studi", "Altro").map { AppointmentFormOption(it.lowercase(), it) },
             ),
-            AppointmentFormField.TextArea("note", "Note", required = false, placeholder = "Descrivi brevemente la richiesta", section = AppointmentFormSection.Service),
+            AppointmentFormField.TextArea("note", "Note", required = false, placeholder = "Descrivi brevemente la richiesta"),
             AppointmentFormField.Consent("privacy", "Ho letto l'informativa sulla privacy", required = true, policyUrl = null),
         ),
     )

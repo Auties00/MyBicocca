@@ -1,0 +1,345 @@
+@layer reset {
+	*,
+	*::before,
+	*::after {
+		box-sizing: border-box;
+	}
+
+	* {
+		margin: 0;
+	}
+
+	html {
+		-webkit-text-size-adjust: 100%;
+		text-size-adjust: 100%;
+		tab-size: 4;
+	}
+
+	img,
+	picture,
+	video,
+	canvas,
+	svg {
+		display: block;
+		max-inline-size: 100%;
+	}
+
+	svg {
+		flex-shrink: 0;
+	}
+
+	input,
+	button,
+	textarea,
+	select {
+		font: inherit;
+		color: inherit;
+		letter-spacing: inherit;
+	}
+
+	button {
+		background: none;
+		border: 0;
+		padding: 0;
+		cursor: pointer;
+	}
+
+	fieldset {
+		border: 0;
+		padding: 0;
+		min-inline-size: 0;
+	}
+
+	ul[role='list'],
+	ol[role='list'] {
+		list-style: none;
+		padding: 0;
+	}
+
+	table {
+		border-collapse: collapse;
+	}
+
+	dialog {
+		padding: 0;
+		border: 0;
+		color: inherit;
+		max-inline-size: none;
+		max-block-size: none;
+	}
+
+	[popover] {
+		padding: 0;
+		border: 0;
+		color: inherit;
+		background: none;
+		overflow: visible;
+	}
+
+	[hidden]:not([hidden='until-found']) {
+		display: none !important;
+	}
+}
+
+@layer base {
+	html {
+		font-family: var(--font-ui);
+		accent-color: var(--accent);
+		scrollbar-color: var(--g8) transparent;
+		scrollbar-gutter: stable;
+		scroll-padding-block: calc(var(--topbar-h) + var(--safe-top) + 8px) var(--sp-6);
+		-webkit-tap-highlight-color: transparent;
+		interpolate-size: allow-keywords;
+		hanging-punctuation: first allow-end last;
+	}
+
+	/* Phones: focus and anchor jumps clear the floating tab bar (TabBar carries the attribute). */
+	html:has([data-shell-tabbar]) {
+		scroll-padding-block-end: calc(var(--tabbar-h) + max(10px, var(--safe-bottom)) + var(--sp-4));
+	}
+
+	/* A page that fills the viewport (<Page fill="viewport">) doesn't scroll: no gutter beside it. */
+	html:has([data-page-fill='viewport']) {
+		scrollbar-gutter: auto;
+	}
+
+	/*
+	 * Paper takes dark ink whatever the theme (important: the theme's own scheme is set unlayered in
+	 * app.html). The shell's bars hide themselves.
+	 */
+	@media print {
+		html {
+			color-scheme: light !important;
+			scrollbar-gutter: auto;
+		}
+	}
+
+	body {
+		min-block-size: 100dvh;
+		background: var(--bg);
+		color: var(--text);
+		font: var(--type-body);
+		font-kerning: normal;
+		font-optical-sizing: auto;
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+		text-rendering: optimizeLegibility;
+		overflow-wrap: break-word;
+	}
+
+	:where(h1, h2, h3, h4, h5, h6) {
+		font: inherit;
+		text-wrap: balance;
+	}
+
+	:where(h2) {
+		font: var(--type-title-m);
+		letter-spacing: var(--track-title-m);
+	}
+
+	:where(h3) {
+		font: var(--type-title-s);
+		letter-spacing: var(--track-title-s);
+	}
+
+	:where(p, li, dd, figcaption, blockquote) {
+		text-wrap: pretty;
+	}
+
+	:where(a) {
+		color: var(--accent-text);
+		text-decoration-thickness: from-font;
+		text-underline-offset: 0.18em;
+	}
+
+	:where(strong, b) {
+		font-weight: 600;
+	}
+
+	:where(kbd, code, samp) {
+		font-family: var(--font-ui);
+		font-variant-numeric: tabular-nums slashed-zero;
+	}
+
+	:where(time, data) {
+		font-variant-numeric: tabular-nums;
+	}
+
+	:where(input, textarea, select)::placeholder {
+		color: var(--text-subtle);
+		opacity: 1;
+	}
+
+	:focus-visible {
+		outline: 2px solid var(--focus);
+		outline-offset: 2px;
+	}
+
+	/* The ring snaps in: it starts 2 px further out and settles on the element. */
+	@media (prefers-reduced-motion: no-preference) {
+		:where(a, button, input, select, textarea, summary, [tabindex]) {
+			outline-offset: 4px;
+		}
+
+		:focus-visible {
+			transition: outline-offset var(--dur-fast) var(--ease-out);
+		}
+	}
+
+	::selection {
+		background: var(--c5);
+		color: var(--c12);
+	}
+
+	:where(dialog, [popover])::backdrop {
+		background: transparent;
+	}
+
+	:where(dialog):focus-visible {
+		outline: none;
+	}
+
+	/* The page behind a modal does not scroll. */
+	:root:has(dialog:modal) {
+		overflow: hidden;
+	}
+
+	/* Page transitions. Only the content pane is snapshotted: chrome stays still. */
+	::view-transition-old(root),
+	::view-transition-new(root) {
+		animation: none;
+	}
+
+	::view-transition-group(page) {
+		animation-duration: var(--dur-slow);
+		animation-timing-function: var(--ease-out);
+	}
+
+	::view-transition-old(page) {
+		animation: vt-fade-out 120ms var(--ease-in) both;
+	}
+
+	::view-transition-new(page) {
+		animation: vt-fade-in var(--dur-base) var(--ease-out) 60ms both;
+	}
+
+	@media (prefers-reduced-motion: no-preference) {
+		:active-view-transition-type(forward)::view-transition-old(page) {
+			animation:
+				vt-fade-out 120ms var(--ease-in) both,
+				vt-slide-out-start var(--dur-slow) var(--ease-out) both;
+		}
+
+		:active-view-transition-type(forward)::view-transition-new(page) {
+			animation:
+				vt-fade-in var(--dur-base) var(--ease-out) 60ms both,
+				vt-slide-in-end var(--dur-slow) var(--spring-standard) both;
+		}
+
+		:active-view-transition-type(back)::view-transition-old(page) {
+			animation:
+				vt-fade-out 120ms var(--ease-in) both,
+				vt-slide-out-end var(--dur-slow) var(--ease-out) both;
+		}
+
+		:active-view-transition-type(back)::view-transition-new(page) {
+			animation:
+				vt-fade-in var(--dur-base) var(--ease-out) 60ms both,
+				vt-slide-in-start var(--dur-slow) var(--spring-standard) both;
+		}
+
+		:active-view-transition-type(swap)::view-transition-new(page) {
+			animation:
+				vt-fade-in var(--dur-base) var(--ease-out) 60ms both,
+				vt-rise var(--dur-slow) var(--spring-standard) both;
+		}
+	}
+
+	/* Theme change: the new theme grows as a circle from the control that changed it. */
+	html[data-vt='theme'] * {
+		view-transition-name: none !important;
+	}
+
+	:active-view-transition-type(theme)::view-transition-old(root) {
+		animation: none;
+		z-index: -1;
+	}
+
+	:active-view-transition-type(theme)::view-transition-new(root) {
+		animation: vt-reveal 420ms var(--ease-in-out) both;
+	}
+
+	@keyframes vt-fade-in {
+		from {
+			opacity: 0;
+		}
+	}
+
+	@keyframes vt-fade-out {
+		to {
+			opacity: 0;
+		}
+	}
+
+	@keyframes vt-slide-in-end {
+		from {
+			transform: translateX(32px);
+		}
+	}
+
+	@keyframes vt-slide-in-start {
+		from {
+			transform: translateX(-32px);
+		}
+	}
+
+	@keyframes vt-slide-out-start {
+		to {
+			transform: translateX(-16px);
+		}
+	}
+
+	@keyframes vt-slide-out-end {
+		to {
+			transform: translateX(16px);
+		}
+	}
+
+	@keyframes vt-rise {
+		from {
+			transform: translateY(8px);
+		}
+	}
+
+	@keyframes vt-reveal {
+		from {
+			clip-path: circle(0 at var(--reveal-x, 50%) var(--reveal-y, 50%));
+		}
+		to {
+			clip-path: circle(var(--reveal-r, 150vmax) at var(--reveal-x, 50%) var(--reveal-y, 50%));
+		}
+	}
+}
+
+@layer utilities {
+	.sr-only {
+		position: absolute;
+		inline-size: 1px;
+		block-size: 1px;
+		padding: 0;
+		margin: -1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
+		border: 0;
+	}
+
+	.nums {
+		font-variant-numeric: tabular-nums;
+	}
+
+	.code {
+		font-variant-numeric: tabular-nums slashed-zero;
+		letter-spacing: 0.01em;
+	}
+}

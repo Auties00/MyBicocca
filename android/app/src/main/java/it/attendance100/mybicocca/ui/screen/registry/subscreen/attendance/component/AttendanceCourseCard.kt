@@ -138,8 +138,8 @@ private fun CourseAttendance.statusCaption(): String {
     classroomAttendance?.let {
         return "${it.status.label()} · ${it.lessonsAttended} lezioni · ${it.attendancePercentage.roundToInt()}%"
     }
-    sessionAttendance.firstOrNull { it.attendedSessions != null && it.totalSessions != null }?.let {
-        return "${it.attendedSessions}/${it.totalSessions} sessioni" +
+    sessionAttendance.firstOrNull { it.recordedSessions != null && it.totalSessions != null }?.let {
+        return "${it.recordedSessions}/${it.totalSessions} sessioni" +
             (it.recordedPercentage?.let { pct -> " · ${pct.roundToInt()}% registrate" } ?: "")
     }
     return stringResource(R.string.registry_attendance_no_records)
