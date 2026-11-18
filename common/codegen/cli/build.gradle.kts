@@ -4,6 +4,7 @@ plugins {
 
 dependencies {
     implementation(project(":core"))
+    implementation("com.github.ajalt.clikt:clikt-core:5.1.0")
 
     // Readers and targets are discovered at runtime through ServiceLoader.
     runtimeOnly(project(":readers:esse3"))
