@@ -12,15 +12,11 @@ dependencies {
     implementation("io.ktor:ktor-serialization-kotlinx-json:3.3.3")
     implementation("io.ktor:ktor-client-okhttp:3.3.3")
 
-    // Parse phone numbers
-    implementation("com.googlecode.libphonenumber:libphonenumber:9.0.21")
-
     // Jsoup for HTML parsing
     implementation("org.jsoup:jsoup:1.22.1")
 
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
-    implementation("org.jetbrains.kotlin:kotlin-reflect:2.2.0")
     testImplementation("org.slf4j:slf4j-simple:2.0.17")
 
     // JUnit 5 (Jupiter) for modern Kotlin testing
