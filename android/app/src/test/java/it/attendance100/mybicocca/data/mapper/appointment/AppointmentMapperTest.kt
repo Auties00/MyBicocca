@@ -15,7 +15,6 @@ import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningSlo
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningTimeRange
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentArea
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentFormField
-import it.attendance100.mybicocca.domain.model.appointment.AppointmentFormSection
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentOffering
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentService
 import org.junit.Assert.assertThrows
@@ -147,7 +146,7 @@ class AppointmentMapperTest {
     }
 
     @Test
-    fun `email field maps to Email with its primary flag and section`() {
+    fun `email field maps to Email with its primary flag`() {
         val field = formField(
             code = "email",
             type = EasyStaffPlanningFieldType.Email,
@@ -157,11 +156,10 @@ class AppointmentMapperTest {
         assertThat(field).isInstanceOf(AppointmentFormField.Email::class.java)
         field as AppointmentFormField.Email
         assertThat(field.primary).isTrue()
-        assertThat(field.section).isEqualTo(AppointmentFormSection.User)
     }
 
     @Test
-    fun `service-positioned field carries the Service section`() {
+    fun `textarea field maps to TextArea`() {
         val field = listOf(
             formField(
                 code = "note",
@@ -170,7 +168,6 @@ class AppointmentMapperTest {
             ),
         ).toAppointmentForm().fields.first()
         assertThat(field).isInstanceOf(AppointmentFormField.TextArea::class.java)
-        assertThat(field.section).isEqualTo(AppointmentFormSection.Service)
     }
 
     @Test

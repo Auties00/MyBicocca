@@ -1,12 +1,6 @@
 package it.attendance100.mybicocca.domain.model.appointment
 
 /**
- * Which section of the booking request a field belongs to. The split is a wire detail the
- * repository needs back when submitting, so it travels with the field.
- */
-enum class AppointmentFormSection { User, Service }
-
-/**
  * One choice of a [AppointmentFormField.Select] field.
  *
  * @property value Option key submitted as the field value when the option is chosen.
@@ -34,8 +28,6 @@ sealed interface AppointmentFormField {
     /** Placeholder text supplied by the portal, when any. */
     val placeholder: String?
 
-    /** Booking-request section the value must be submitted under. */
-    val section: AppointmentFormSection
 
     /**
      * An email input.
@@ -48,7 +40,6 @@ sealed interface AppointmentFormField {
         override val label: String,
         override val required: Boolean,
         override val placeholder: String?,
-        override val section: AppointmentFormSection,
         val primary: Boolean,
     ) : AppointmentFormField
 
@@ -58,7 +49,6 @@ sealed interface AppointmentFormField {
         override val label: String,
         override val required: Boolean,
         override val placeholder: String?,
-        override val section: AppointmentFormSection,
     ) : AppointmentFormField
 
     /** A multi-line text input. */
@@ -67,7 +57,6 @@ sealed interface AppointmentFormField {
         override val label: String,
         override val required: Boolean,
         override val placeholder: String?,
-        override val section: AppointmentFormSection,
     ) : AppointmentFormField
 
     /** A phone-number input. */
@@ -76,7 +65,6 @@ sealed interface AppointmentFormField {
         override val label: String,
         override val required: Boolean,
         override val placeholder: String?,
-        override val section: AppointmentFormSection,
     ) : AppointmentFormField
 
     /**
@@ -90,7 +78,6 @@ sealed interface AppointmentFormField {
         override val label: String,
         override val required: Boolean,
         override val placeholder: String?,
-        override val section: AppointmentFormSection,
         val options: List<AppointmentFormOption>,
     ) : AppointmentFormField
 
@@ -106,7 +93,6 @@ sealed interface AppointmentFormField {
         val policyUrl: String?,
     ) : AppointmentFormField {
         override val placeholder: String? get() = null
-        override val section: AppointmentFormSection get() = AppointmentFormSection.User
     }
 }
 

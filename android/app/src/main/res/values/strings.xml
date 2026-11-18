@@ -1723,6 +1723,7 @@
     <!-- Appointments -->
     <string name="appointment_no_reservation_code">The booking returned no reservation code</string>
     <string name="appointment_booking_email_required">The booking email is required</string>
+    <string name="appointment_booking_captcha_required">Questo sportello si può prenotare solo dal sito del Portale Planning</string>
 
     <!-- Exam types -->
     <string name="exam_type_scritto_e_orale">Scritto e orale</string>

@@ -16,7 +16,13 @@ import it.attendance100.mybicocca.data.remote.easystaff.api.EasyStaffApi
 import it.attendance100.mybicocca.data.remote.easystaff.api.EasyStaffPlanningBookingApi
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningArea
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningDetailedService
+import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningFieldPosition
+import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningFieldType
+import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningFormField
+import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningGeneralSettings
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningPortal
+import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningPortalConfig
+import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningPortalSettings
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningReservationRequest
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningReservationResult
 import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningResult
@@ -24,7 +30,6 @@ import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningSer
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentArea
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentForm
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentFormField
-import it.attendance100.mybicocca.domain.model.appointment.AppointmentFormSection
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentOffering
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentService
 import kotlinx.coroutines.runBlocking
@@ -55,6 +60,9 @@ class AppointmentRepositoryImplTest {
     fun setUp() {
         every { easyStaffApi.planning.informationDesks } returns desks
         every { desks.portal } returns EasyStaffPlanningPortal.INFORMATION_DESKS
+        every { desks.buildReservationRequest(any(), any(), any(), any(), any(), any(), any()) } answers { callOriginal() }
+        coEvery { desks.getServiceForm(7) } returns wireForm()
+        coEvery { desks.getPortal() } returns portalConfig(captchaRequired = false)
         repository = AppointmentRepositoryImpl(stringResolver, easyStaffApi, reservationDao)
     }
 
@@ -85,7 +93,6 @@ class AppointmentRepositoryImplTest {
                 label = "Email",
                 required = true,
                 placeholder = null,
-                section = AppointmentFormSection.User,
                 primary = true,
             ),
             AppointmentFormField.Text(
@@ -93,14 +100,12 @@ class AppointmentRepositoryImplTest {
                 label = "Nome",
                 required = true,
                 placeholder = null,
-                section = AppointmentFormSection.User,
             ),
             AppointmentFormField.Text(
                 code = "matricola",
                 label = "Matricola",
                 required = false,
                 placeholder = null,
-                section = AppointmentFormSection.Service,
             ),
             AppointmentFormField.Consent(
                 code = "gdpr",
@@ -108,6 +113,38 @@ class AppointmentRepositoryImplTest {
                 required = true,
                 policyUrl = null,
             ),
+        ),
+    )
+
+    /** The wire form [form] was mapped from, as the portal serves it. */
+    private fun wireForm() = listOf(
+        wireField("email", EasyStaffPlanningFieldType.Email, EasyStaffPlanningFieldPosition.User, primary = true),
+        wireField("nome", EasyStaffPlanningFieldType.Text, EasyStaffPlanningFieldPosition.User),
+        wireField("matricola", EasyStaffPlanningFieldType.Text, EasyStaffPlanningFieldPosition.Service),
+        wireField("gdpr", EasyStaffPlanningFieldType.Checkbox, EasyStaffPlanningFieldPosition.Gdpr),
+    )
+
+    private fun wireField(
+        code: String,
+        type: EasyStaffPlanningFieldType,
+        position: EasyStaffPlanningFieldPosition,
+        primary: Boolean = false,
+    ) = EasyStaffPlanningFormField(
+        id = code.hashCode(),
+        label = code,
+        code = code,
+        type = type,
+        portalId = EasyStaffPlanningPortal.INFORMATION_DESKS.id,
+        primary = primary,
+        position = position,
+    )
+
+    private fun portalConfig(captchaRequired: Boolean) = EasyStaffPlanningPortalConfig(
+        id = EasyStaffPlanningPortal.INFORMATION_DESKS.id,
+        name = "Sportelli",
+        code = EasyStaffPlanningPortal.INFORMATION_DESKS.code,
+        settings = EasyStaffPlanningPortalSettings(
+            general = EasyStaffPlanningGeneralSettings(captchaRequired = captchaRequired),
         ),
     )
 
@@ -217,7 +254,7 @@ class AppointmentRepositoryImplTest {
     }
 
     @Test
-    fun `bookAppointment splits values by section and excludes the consent field`() = runTest {
+    fun `bookAppointment builds the request from the current form and leaves out the consent`() = runTest {
         val request = slot<EasyStaffPlanningReservationRequest>()
         coEvery { desks.createReservation(capture(request)) } returns createResult()
         coEvery { desks.confirmReservation(any()) } returns EasyStaffPlanningResult()
@@ -241,6 +278,26 @@ class AppointmentRepositoryImplTest {
         assertThat(request.captured.primaryValue).isEqualTo("mario@campus.unimib.it")
         assertThat(request.captured.serviceId).isEqualTo(7)
         assertThat(request.captured.areaId).isEqualTo(3)
+        assertThat(request.captured.backofficeFields).isEmpty()
+    }
+
+    @Test
+    fun `bookAppointment refuses portals that require a captcha without creating a hold`() = runTest {
+        coEvery { desks.getPortal() } returns portalConfig(captchaRequired = true)
+
+        assertThrows(IllegalStateException::class.java) {
+            runBlocking {
+                repository.bookAppointment(
+                    service = service(),
+                    offering = offering(),
+                    form = form(),
+                    slotStart = LocalDateTime.of(2026, 6, 15, 10, 0),
+                    values = mapOf("email" to "mario@campus.unimib.it", "gdpr" to "true"),
+                )
+            }
+        }
+
+        coVerify(exactly = 0) { desks.createReservation(any()) }
     }
 
     @Test

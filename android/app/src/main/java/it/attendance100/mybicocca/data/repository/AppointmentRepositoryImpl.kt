@@ -13,16 +13,15 @@ import it.attendance100.mybicocca.data.mapper.appointment.toDomain
 import it.attendance100.mybicocca.data.mapper.appointment.toEntity
 import it.attendance100.mybicocca.data.mapper.appointment.toMonthAvailability
 import it.attendance100.mybicocca.data.remote.easystaff.api.EasyStaffApi
-import it.attendance100.mybicocca.data.remote.easystaff.dto.EasyStaffPlanningReservationRequest
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentForm
-import it.attendance100.mybicocca.domain.model.appointment.AppointmentFormField
-import it.attendance100.mybicocca.domain.model.appointment.AppointmentFormSection
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentMonthAvailability
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentOffering
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentReservation
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentService
 import it.attendance100.mybicocca.domain.model.appointment.AppointmentSlot
 import it.attendance100.mybicocca.domain.repository.AppointmentRepository
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.time.LocalDate
@@ -82,7 +81,9 @@ class AppointmentRepositoryImpl @Inject constructor(
 
     /**
      * Books in two steps with hold semantics: the create call places a provisional hold, the
-     * confirm call finalizes it. The user already reviewed everything in-app, so the hold is
+     * confirm call finalizes it. The request is built by the data API from the service's
+     * current form, which the portal splits by field position; portals that require a
+     * reCAPTCHA are refused up front, since the app can't produce one. The user already reviewed everything in-app, so the hold is
      * confirmed immediately; if confirming fails the hold is force-deleted so the slot is not
      * left blocked. The finalized reservation is then persisted in the device-local store.
      */
@@ -96,22 +97,22 @@ class AppointmentRepositoryImpl @Inject constructor(
         val email = form.primaryField?.code?.let { values[it] }
         require(!email.isNullOrBlank()) { stringResolver.getString(it.attendance100.mybicocca.R.string.appointment_booking_email_required) }
 
-        val slotEnd = slotStart.plusSeconds(offering.durationSeconds.toLong())
+        val (formFields, portalConfig) = coroutineScope {
+            val formFields = async { desks.getServiceForm(service.id) }
+            val portalConfig = async { desks.getPortal() }
+            formFields.await() to portalConfig.await()
+        }
+        check(!portalConfig.settings.general.captchaRequired) {
+            stringResolver.getString(it.attendance100.mybicocca.R.string.appointment_booking_captcha_required)
+        }
         val result = desks.createReservation(
-            EasyStaffPlanningReservationRequest(
-                reservationNumber = 0,
-                portalCode = desks.portal.code,
-                startTimeEpochSeconds = slotStart.atZone(CampusZone).toEpochSecond(),
-                endTimeEpochSeconds = slotEnd.atZone(CampusZone).toEpochSecond(),
-                durationSeconds = offering.durationSeconds,
+            desks.buildReservationRequest(
                 serviceId = service.id,
                 areaId = offering.area.id,
-                primaryValue = email,
-                userFields = sectionValues(form, values, AppointmentFormSection.User),
-                serviceFields = sectionValues(form, values, AppointmentFormSection.Service),
-                resourceId = null,
-                recaptchaToken = null,
-                timeZone = CampusZone.id,
+                slotStart = slotStart,
+                durationSeconds = offering.durationSeconds,
+                formFields = formFields,
+                values = values,
             )
         )
 
@@ -192,19 +193,4 @@ class AppointmentRepositoryImpl @Inject constructor(
         val message = message?.lowercase().orEmpty()
         return "not_found" in message
     }
-
-    /**
-     * Collects the non-blank values of one form section, keyed by field code. The GDPR consent
-     * is validated client-side but never submitted.
-     */
-    private fun sectionValues(
-        form: AppointmentForm,
-        values: Map<String, String>,
-        section: AppointmentFormSection,
-    ): Map<String, String> =
-        form.fields.asSequence()
-            .filterNot { it is AppointmentFormField.Consent }
-            .filter { it.section == section }
-            .mapNotNull { field -> values[field.code]?.takeIf { it.isNotBlank() }?.let { field.code to it } }
-            .toMap()
 }
