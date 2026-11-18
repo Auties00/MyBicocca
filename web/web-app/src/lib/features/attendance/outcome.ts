@@ -40,12 +40,19 @@ export function certifyOutcome(result: EasyStaffCertifyAttendanceResult): CheckI
 	return { kind: 'failed', reason: 'generic', message };
 }
 
+const normalizeSpace = (text: string) => text.trim().replace(/\s+/g, ' ');
+
 /**
  * Reads marking's outcome off the template `mobile_view_activity` renders after it. Every
- * blocking condition is a message; otherwise marking drops the session's button and shows its
- * status, the last heading. A session still offering its button wasn't marked: it closed.
+ * blocking condition is a message; otherwise it comes from the session's own item, found by its
+ * date and time, which `view.php` writes the same way: still offering its button means it wasn't
+ * marked (it closed meanwhile); a status in its last heading, after the group's, means it was.
+ * No item at all means the session is outside the view's time window, so nothing confirms it.
  */
-export function markOutcome(page: MoodleWebAttendanceMarkPage, sessionId: string): CheckInOutcome {
+export function markOutcome(
+	page: MoodleWebAttendanceMarkPage,
+	session: { id: string; time: string }
+): CheckInOutcome {
 	const keys = new Set(page.messages.map((message) => message.key));
 	if (keys.has('incorrectpasswordshort')) return { kind: 'wrong-credential', message: null };
 	if (keys.has('preventsharederror')) return { kind: 'device-already-used' };
@@ -53,8 +60,13 @@ export function markOutcome(page: MoodleWebAttendanceMarkPage, sessionId: string
 	if (keys.has('attendance_no_status') || keys.has('invalidstatus')) {
 		return { kind: 'failed', reason: 'generic', message: null };
 	}
-	if (page.markActions.some((action) => action.sessionId === sessionId)) {
+	const items = page.sessions.filter((item) => normalizeSpace(item.time) === session.time);
+	if (items.some((item) => item.markActions.some((action) => action.sessionId === session.id))) {
 		return { kind: 'not-open', reason: 'closed' };
 	}
-	return { kind: 'recorded', status: page.headings.at(-1)?.trim() || null, message: null };
+	const status = items
+		.map((item) => item.headings.findLast((heading) => heading.trim() !== '')?.trim())
+		.find((heading) => heading !== undefined);
+	if (status === undefined) return { kind: 'failed', reason: 'generic', message: null };
+	return { kind: 'recorded', status, message: null };
 }
