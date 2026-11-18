@@ -63,13 +63,12 @@ data class EasyStaffRoom(
  * Represents the comprehensive details of a university room as extracted from the
  * EasyStaff/Esse3 system.
  *
- * @param roomCode The unique code identifying the room (e.g., "U6-22"), parsed from the
- * showcase card header, or null if the header is missing or malformed.
- * @param roomName The display name of the room as shown in the showcase card header
- * (e.g., "U6-22 con Podio"), or null if the header is missing.
+ * @param roomCode The unique code identifying the room (e.g., "U6-22"), or null if blank.
+ * @param roomName The display name of the room (e.g., "U6-22 con Podio"), or null if blank.
  * @param name The name of the building or site where the room is located (e.g., "Sede Centrale").
  * @param address The physical street address of the location.
- * @param googleMapsLink The URL for the Google Maps iframe or external navigation link.
+ * @param googleMapsLink The URL for the Google Maps embed: the room's own when it has one,
+ * otherwise the building's.
  * @param interactive360Link The URL for the 360-degree interactive panoramic view of the room.
  * @param description A brief textual description of the room's intended use or characteristics.
  * Line breaks from the source markup are preserved.
@@ -99,6 +98,110 @@ data class EasyStaffRoomDetails(
     val accessibilityNotes: String?,
     val isInclusionValidated: Boolean,
     val equipment: List<Esse3RoomEquipment>
+)
+
+/**
+ * A building as listed in the room showcase's `window.data_to_show` object, which is keyed by
+ * building code.
+ *
+ * @property name The building name (e.g., "AGORA' ex U6")
+ * @property address The street address, or blank if unknown
+ * @property googleMapsIframe A Google Maps `<iframe>` element, or blank if unknown
+ * @property rooms The requested rooms of the building
+ */
+@Serializable
+data class EasyStaffRoomShowcaseBuilding(
+    @SerialName("area_name")
+    val name: String,
+
+    @SerialName("address")
+    val address: String? = null,
+
+    @SerialName("area_google_map_link")
+    val googleMapsIframe: String? = null,
+
+    @SerialName("elenco_aule")
+    @Serializable(with = PhpArrayValuesSerializer::class)
+    val rooms: List<EasyStaffRoomShowcaseRoom> = emptyList()
+)
+
+/**
+ * A room as listed in the room showcase's `window.data_to_show` object. Every scalar arrives as
+ * a string, possibly blank or null; [EasyStaffRoomDetails] is the cleaned-up form.
+ *
+ * @property code The room code (e.g., "U6-22")
+ * @property name The room name (e.g., "U6-22 con Podio")
+ * @property description Free-form description, which may contain HTML
+ * @property capacity The seat count
+ * @property typeName The room category, or "non definito"
+ * @property googleMapsIframe A Google Maps `<iframe>` element for the room itself, set mostly
+ * for laboratories
+ * @property floorName The floor as typed by the staff (e.g., "1", "T", "piano terra", "Piano -1")
+ * @property barrierFree "1" if the room has no architectural barriers
+ * @property accessibilityNotes Free-form accessibility notes, which may contain HTML
+ * @property inclusionValidated "1" if validated by the "Spazio B.Inclusion" service
+ * @property interactive360Link Absolute URL of the 360° tour
+ * @property fixedEquipment The fixed equipment of the room
+ * @property mobileEquipment The mobile equipment of the room
+ */
+@Serializable
+data class EasyStaffRoomShowcaseRoom(
+    @SerialName("room_code")
+    val code: String? = null,
+
+    @SerialName("room_name")
+    val name: String? = null,
+
+    @SerialName("room_description")
+    val description: String? = null,
+
+    @SerialName("room_capacity")
+    val capacity: String? = null,
+
+    @SerialName("room_type_name")
+    val typeName: String? = null,
+
+    @SerialName("room_google_map_link")
+    val googleMapsIframe: String? = null,
+
+    @SerialName("room_floor_name")
+    val floorName: String? = null,
+
+    @SerialName("room_senza_barriere_architettoniche")
+    val barrierFree: String? = null,
+
+    @SerialName("note_accessibilita")
+    val accessibilityNotes: String? = null,
+
+    @SerialName("validato")
+    val inclusionValidated: String? = null,
+
+    @SerialName("file_img_360")
+    val interactive360Link: String? = null,
+
+    @SerialName("room_equipment_fixed")
+    @Serializable(with = PhpArrayValuesSerializer::class)
+    val fixedEquipment: List<EasyStaffRoomShowcaseEquipment> = emptyList(),
+
+    @SerialName("room_equipment_mobile")
+    @Serializable(with = PhpArrayValuesSerializer::class)
+    val mobileEquipment: List<EasyStaffRoomShowcaseEquipment> = emptyList()
+)
+
+/**
+ * A piece of equipment of a room in the room showcase.
+ *
+ * @property name The equipment name (e.g., "Rete wifi")
+ * @property status "0" when the equipment is available, which the showcase renders as
+ * "DISPONIBILE"
+ */
+@Serializable
+data class EasyStaffRoomShowcaseEquipment(
+    @SerialName("Nome")
+    val name: String,
+
+    @SerialName("Stato")
+    val status: String? = null
 )
 
 /**
