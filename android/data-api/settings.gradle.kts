@@ -17,6 +17,5 @@ rootProject.name = "MyBicoccaDataAPI"
 include(":elearning")
 include(":esse3-scraper")
 include(":esse3")
-include(":esse3:codegen")
 include(":easystaff")
 include(":affluences")

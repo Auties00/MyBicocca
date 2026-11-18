@@ -1,0 +1,67 @@
+---
+swagger: "2.0"
+info:
+  version: "1.0.0"
+  title: "ESSE3 Catalogo API"
+basePath: "/catalogo-service-v1"
+paths:
+  /voci/{vocId}:
+    get:
+      summary: "recupera le voci"
+      operationId: "getVoci"
+      parameters:
+      - name: "vocId"
+        in: "path"
+        required: true
+        type: "integer"
+        format: "int64"
+      - name: "limit"
+        in: "query"
+        required: false
+        type: "integer"
+      - name: "stato"
+        in: "query"
+        required: false
+        type: "string"
+        enum:
+        - "A"
+        - "C"
+      - name: "q"
+        in: "query"
+        required: true
+        type: "string"
+      x-query-params:
+      - name: "TUTTE"
+        description: "tutte le voci"
+      x-enabled-profiles:
+      - studente:
+          kind: "STUDENTE"
+      responses:
+        "200":
+          description: "ok"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Voce"
+definitions:
+  Voce:
+    type: "object"
+    required:
+    - "nome"
+    - "dataIni"
+    properties:
+      nome:
+        type: "string"
+        description: "nome della voce"
+      dataIni:
+        type: "string"
+        format: "date"
+      statoCod:
+        type: "string"
+        enum:
+        - "A"
+        - "C"
+      etichette:
+        type: "array"
+        items:
+          type: "string"

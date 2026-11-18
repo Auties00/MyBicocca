@@ -753,13 +753,13 @@ class Esse3StructureApiTest : Esse3ApiTestBase() {
             val facultyId = allStructures.first().facultyId
             logger.info("testGetDidacticStructureById: calling getDidacticStructures() with facultyId=$facultyId")
 
-            val result = api.structure.getDidacticStructures(facultyId = facultyId)
+            val result = api.structure.getDidacticStructure(facultyId = facultyId)
             logger.info("testGetDidacticStructureById: facultyId=${result.facultyId}, code=${result.facultyCode}, description=${result.facultyDescription}, descriptionEng=${result.facultyDescriptionEnglish}, siteType=${result.siteType}, city=${result.city}")
             assertNotNull(result.facultyId, "facultyId should not be null")
             assertTrue(result.facultyId == facultyId, "Returned facultyId should match requested id")
 
             logger.info("testGetDidacticStructureById: calling getDidacticStructures() with facultyId=$facultyId and optionalFields")
-            val resultWithOptFields = api.structure.getDidacticStructures(
+            val resultWithOptFields = api.structure.getDidacticStructure(
                 facultyId = facultyId,
                 optionalFields = "sediStruttura"
             )
@@ -767,7 +767,7 @@ class Esse3StructureApiTest : Esse3ApiTestBase() {
         } else {
             logger.info("testGetDidacticStructureById: user lacks required permissions, expecting Esse3Exception")
             assertFailsWith<Esse3Exception> {
-                api.structure.getDidacticStructures(facultyId = 1)
+                api.structure.getDidacticStructure(facultyId = 1)
             }
             logger.info("testGetDidacticStructureById: Esse3Exception thrown as expected")
         }
