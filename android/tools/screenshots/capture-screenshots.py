@@ -39,6 +39,8 @@ STATUS_BAR_TIME = "1030"
 # Titles of the windows Android shows for an unresponsive or crashed app.
 ERROR_DIALOG = "Application Not Responding|Application Error"
 NODE = re.compile(r'text="([^"]*)"[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"')
+# Icon-only controls show no text, so they are found by their content description instead.
+DESCRIBED_NODE = re.compile(r'content-desc="([^"]*)"[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"')
 STRING = re.compile(r'<string name="([^"]+)"[^>]*>(.*?)</string>', re.S)
 
 # Subscreen folders whose name differs from the route class they render.
@@ -82,7 +84,7 @@ class Device:
             self.shell("uiautomator dump /sdcard/window.xml")
             xml = self.shell("cat /sdcard/window.xml")
             # The app may restyle a label (the calendar switcher upper-cases its own), so compare without case.
-            for text, *bounds in NODE.findall(xml):
+            for text, *bounds in NODE.findall(xml) + DESCRIBED_NODE.findall(xml):
                 if html.unescape(text).casefold() == label.casefold():
                     left, top, right, bottom = map(int, bounds)
                     self.shell(f"input tap {(left + right) // 2} {(top + bottom) // 2}")
@@ -305,10 +307,12 @@ def capture(device, shot, folder, where, strings, args, problems):
         print(f"  {shot['name']} (system dialog)")
         return
     for key in shot.get("tap", []):
-        if key not in strings:
+        # "text:..." taps text the app shows that is not a string resource, such as a demo dish name.
+        label = key[len("text:"):] if key.startswith("text:") else strings.get(key)
+        if label is None:
             problems.append(f"{where}: no string resource named {key}")
-        elif not device.tap_label(strings[key]):
-            problems.append(f'{where}: no "{strings[key]}" on screen to tap')
+        elif not device.tap_label(label):
+            problems.append(f'{where}: no "{label}" on screen to tap')
         time.sleep(args.settle)
     if device.crashed():
         problems.append(f"{where}: the app crashed, shot skipped")

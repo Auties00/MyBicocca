@@ -124,6 +124,7 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.certificates.Cert
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.enrollments.EnrollmentsViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.examResults.ExamResultsViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.LibraryViewModel
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.MensaViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.questionnaires.QuestionnairesViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.refunds.RefundsViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.studyPlan.StudyPlanViewModel
@@ -291,6 +292,7 @@ fun MainShell(
      */
     val appointmentsViewModel: AppointmentsViewModel = hiltViewModel()
     val libraryViewModel: LibraryViewModel = hiltViewModel()
+    val mensaViewModel: MensaViewModel = hiltViewModel()
 
     /**
      * Seat totals per exam event, merged off the main thread from the bookable calls, the
@@ -857,6 +859,10 @@ fun MainShell(
                                                         isActive = isActive,
                                                         contentInsets = innerPadding,
                                                         onProvideFilterToggle = onProvideFilterToggle,
+                                                        onOpenMensa = { menuId ->
+                                                            mensaViewModel.preselectMenu(menuId)
+                                                            navigator.navigate(SheetRoute.Mensa)
+                                                        },
                                                     )
 
                                                     ShellTab.Registry -> RegistryScreen(
@@ -1005,6 +1011,7 @@ fun MainShell(
                                     questionnairesViewModel = questionnairesViewModel,
                                     appointmentsViewModel = appointmentsViewModel,
                                     libraryViewModel = libraryViewModel,
+                                    mensaViewModel = mensaViewModel,
                                 )
                                 calendarSheetEntries(
                                     calendarViewModel = calendarViewModel,

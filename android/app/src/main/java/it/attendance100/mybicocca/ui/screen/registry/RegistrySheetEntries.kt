@@ -36,6 +36,8 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.isee.iseeDetailHe
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.isee.iseeHeader
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.LibraryPage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.library.LibraryViewModel
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.MensaPage
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.MensaViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.questionnaires.QuestionnairesPage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.questionnaires.QuestionnairesViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.refunds.RefundDetailPage
@@ -77,6 +79,7 @@ fun EntryProviderScope<NavKey>.registrySheetEntries(
     questionnairesViewModel: QuestionnairesViewModel,
     appointmentsViewModel: AppointmentsViewModel,
     libraryViewModel: LibraryViewModel,
+    mensaViewModel: MensaViewModel,
 ) {
     entry<SheetRoute.Enrollments>(
         metadata = sheetHeader<SheetRoute.Enrollments> {
@@ -212,6 +215,9 @@ fun EntryProviderScope<NavKey>.registrySheetEntries(
     }
     entry<SheetRoute.Library>(metadata = sheetHeaderInPage()) {
         LibraryPage(viewModel = libraryViewModel)
+    }
+    entry<SheetRoute.Mensa>(metadata = sheetHeaderInPage()) {
+        MensaPage(viewModel = mensaViewModel)
     }
 
     // The scadenzario reads the same deadline spine as the landing's Scadenze banner. Its header

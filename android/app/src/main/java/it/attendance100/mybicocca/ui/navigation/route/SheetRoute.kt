@@ -124,6 +124,10 @@ sealed interface SheetRoute : Route {
     @Serializable
     data object Library : SheetRoute
 
+    /** Mensa: daily/weekly canteen menus, dish nutrition/allergens, and takeaway ordering. */
+    @Serializable
+    data object Mensa : SheetRoute
+
     /**
      * In-app/external chooser for a tapped file: pushed while a sheet is open it renders as a page
      * INSIDE that sheet; pushed from a full screen it becomes its own standalone sheet.
