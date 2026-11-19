@@ -1,0 +1,75 @@
+# Live tests for Compass / Fresh & Natural (unibicocca.compasscloud.it).
+# Public menu, dish, allergen, and contract endpoints need no account.
+# Authenticated takeaway, profile, and wallet endpoints use BearerAuth (token from Account.loginBasic).
+limits:
+  requestsPerSecond: 2
+  maxRequests: 200
+defaults:
+  menuId:
+    oneOf: [400, 598, 701, 709, 712]
+  dishId:
+    from: Menu.getMenuDishes
+    with: { menuId: 400 }
+    pick: "dates[*].mealTypes[*].dishTypes[*].dishes[*].id"
+operations:
+  Contract.getContractFrontend:
+    expect:
+      equals: { path: "contract.id", value: 61 }
+  Menu.getMenuDishes:
+    volatile: true
+  Account.isAuthenticated:
+    volatile: true
+  Account.loginBasic:
+    skip: "Requires registered RistoCloud account credentials (verified via FreshAndNatural/.env harness)."
+  Account.validateToken:
+    skip: "Requires a valid RistoCloudToken (verified via FreshAndNatural/.env harness)."
+  Account.getUserProfile:
+    skip: "Requires BearerAuth RistoCloudToken (verified live via FreshAndNatural/.env harness)."
+  Account.getHomeInfo:
+    skip: "Requires BearerAuth RistoCloudToken (verified live via FreshAndNatural/.env harness)."
+  Account.getDeliveryAddresses:
+    skip: "Requires BearerAuth RistoCloudToken (verified live via FreshAndNatural/.env harness)."
+  Account.getFoodDiaryPages:
+    skip: "Requires BearerAuth RistoCloudToken (verified live via FreshAndNatural/.env harness)."
+  Takeaway.getTakeawayServices:
+    volatile: true
+    skip: "Requires BearerAuth RistoCloudToken (verified live via FreshAndNatural/.env harness)."
+  Takeaway.calculateTemporaryCost:
+    skip: "Requires BearerAuth RistoCloudToken (verified live Tier A POST via FreshAndNatural harness)."
+  Takeaway.calculateCfpTotal:
+    skip: "Requires BearerAuth RistoCloudToken (verified live Tier A POST via FreshAndNatural harness)."
+  Takeaway.editFavoriteService:
+    skip: "Reversible mutation verified live with serviceId=279 add/remove restoration; configure COMPASS_TOKEN and LIVE_WRITES=1 in Phase 2."
+  Takeaway.getTakeawayHistory:
+    volatile: true
+    skip: "Requires BearerAuth RistoCloudToken (verified live via FreshAndNatural/.env harness)."
+  Account.calculateMealTypesBalance:
+    skip: "Requires BearerAuth RistoCloudToken (verified live Tier A POST via FreshAndNatural harness)."
+  Account.updateUserDetails:
+    skip: "Reversible mutation verified live with baseline restoration (returns text/plain OK)."
+  Account.updateEmail:
+    skip: "Irreversible mutation; only the validation path (same-address rejection) was exercised live."
+  Account.updatePassword:
+    skip: "Verified live on a disposable account: change then revert (returns text/plain OK)."
+  Account.canDeleteAccount:
+    skip: "Requires BearerAuth RistoCloudToken (verified live; returns deletable=true for a fresh account)."
+  Account.requestAccountDeletion:
+    skip: "Irreversible: files a deletion request that an operator completes by hand. Not exercised live."
+  Account.createDeliveryAddress:
+    skip: "Reversible CRUD verified live with immediate delete restoration (note ID arrives as string on create)."
+  Account.updateDeliveryAddress:
+    skip: "Reversible CRUD verified live with immediate delete restoration."
+  Account.setDefaultDeliveryAddress:
+    skip: "Reversible CRUD verified live with immediate delete restoration."
+  Account.deleteDeliveryAddress:
+    skip: "Reversible CRUD verified live with immediate delete restoration."
+  Wallet.getWalletBalance:
+    volatile: true
+    skip: "Requires BearerAuth RistoCloudToken (verified live via FreshAndNatural/.env harness)."
+  Wallet.getWalletTransactions:
+    volatile: true
+    skip: "Requires BearerAuth RistoCloudToken (verified live via FreshAndNatural/.env harness)."
+  Wallet.getCashierHistory:
+    inputs: { limit: 10, offset: 0 }
+    volatile: true
+    skip: "Requires BearerAuth RistoCloudToken (verified live via FreshAndNatural/.env harness)."
