@@ -5,6 +5,7 @@
   "type": "module",
   "exports": {
     "./affluences": "./src/affluences/index.ts",
+    "./compass": "./src/compass/index.ts",
     "./easystaff": "./src/easystaff/index.ts",
     "./elearning": "./src/elearning/index.ts",
     "./elearning/resources/*": "./src/elearning/resources/*",
