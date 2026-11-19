@@ -1,5 +1,9 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component
 
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.runtime.Composable
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.state.MensaDeletionCheck
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,7 +26,6 @@ import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -34,7 +37,6 @@ import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.ui.component.button.RetryButton
 import it.attendance100.mybicocca.ui.component.modal.SheetMessage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.MensaTestTags
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.state.MensaDeletionCheck
 
 /**
  * Asks the operator to delete the account. The check runs first because some accounts cannot be
@@ -127,5 +129,18 @@ internal fun MensaAccountDeletePage(
                 )
             }
         }
+    }
+}
+
+@Preview(name = "Delete account", widthDp = MENSA_PREVIEW_WIDTH, heightDp = 520)
+@Composable
+private fun AccountDeletePreview(@PreviewParameter(MensaPreviewThemeProvider::class) theme: MensaPreviewTheme) {
+    MensaPreviewHost(theme) {
+        MensaAccountDeletePage(
+            check = MensaDeletionCheck.Allowed,
+            busy = false,
+            onRequest = {},
+            onRetry = {},
+        )
     }
 }

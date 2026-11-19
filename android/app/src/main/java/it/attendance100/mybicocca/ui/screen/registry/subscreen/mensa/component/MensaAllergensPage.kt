@@ -1,5 +1,11 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component
 
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.runtime.Composable
+import it.attendance100.mybicocca.core.state.Loadable
+import it.attendance100.mybicocca.core.state.SyncStatus
+import it.attendance100.mybicocca.domain.model.mensa.MensaAllergenPreferences
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -24,7 +30,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
@@ -33,11 +38,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.rememberHapticManager
-import it.attendance100.mybicocca.core.state.Loadable
-import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
 import it.attendance100.mybicocca.domain.model.mensa.MensaAllergen
-import it.attendance100.mybicocca.domain.model.mensa.MensaAllergenPreferences
 import it.attendance100.mybicocca.ui.component.button.RetryButton
 import it.attendance100.mybicocca.ui.component.feedback.friendlyMessage
 import it.attendance100.mybicocca.ui.component.modal.SheetLoadingIndicator
@@ -157,5 +159,21 @@ internal fun MensaAllergensPage(
                 )
             }
         }
+    }
+}
+
+@Preview(name = "Allergens", widthDp = MENSA_PREVIEW_WIDTH, heightDp = 640)
+@Composable
+private fun AllergensPreview(@PreviewParameter(MensaPreviewThemeProvider::class) theme: MensaPreviewTheme) {
+    MensaPreviewHost(theme) {
+        MensaAllergensPage(
+            allergens = Loadable.Loaded(MensaPreviewData.allergens),
+            status = SyncStatus.Idle,
+            preferences = MensaAllergenPreferences(allergenIds = setOf(1, 7)),
+            onToggleAllergen = { _, _ -> },
+            onHideMatchingChange = {},
+            onClear = {},
+            onRetry = {},
+        )
     }
 }

@@ -25,7 +25,6 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -38,7 +37,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -49,13 +47,13 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
 import it.attendance100.mybicocca.R
@@ -101,7 +99,6 @@ internal fun MensaDishPagerPage(
     val pagerState = rememberPagerState(initialPage = request.startIndex) { dishes.size }
     val current = dishes[pagerState.currentPage.coerceIn(dishes.indices)]
     val density = LocalDensity.current
-    val pageHeight = (LocalConfiguration.current.screenHeightDp * 0.78f).dp.coerceAtMost(700.dp)
 
     // The side plates slide in from the edges once, when the carousel opens.
     val reveal = remember { Animatable(0f) }
@@ -120,8 +117,7 @@ internal fun MensaDishPagerPage(
 
     Column(
         modifier = modifier
-            .fillMaxWidth()
-            .height(pageHeight)
+            .fillMaxSize()
             .testTag(MensaTestTags.DISH_PAGER),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
@@ -167,6 +163,7 @@ internal fun MensaDishPagerPage(
                         art = MensaDishArtwork.forDish(dish),
                         allergenMatch = dish.allergenMatch(allergenPreferences),
                         size = PlateSize,
+                        badgeFraction = 0.25f,
                         sharedElement = page == pagerState.currentPage,
                     )
                 }
@@ -243,7 +240,7 @@ private fun DishInfo(
                 RetryButton(onClick = onRetry)
             }
 
-            else -> Box(modifier = Modifier.fillMaxWidth().height(120.dp)) {
+            else -> Box(modifier = Modifier.fillMaxWidth().height(220.dp)) {
                 SheetLoadingIndicator(
                     label = stringResource(R.string.mensa_loading_dish),
                     modifier = Modifier.align(Alignment.Center),
@@ -360,5 +357,39 @@ private fun StepButton(
 ) {
     androidx.compose.material3.IconButton(onClick = onClick) {
         Icon(icon, contentDescription = null, tint = tint, modifier = Modifier.size(26.dp))
+    }
+}
+
+@Preview(name = "Dish carousel", widthDp = MENSA_PREVIEW_WIDTH, heightDp = MENSA_PREVIEW_HEIGHT)
+@Composable
+private fun DishCarouselPreview(@PreviewParameter(MensaPreviewThemeProvider::class) theme: MensaPreviewTheme) {
+    MensaPreviewHost(theme) {
+        MensaDishPagerPage(
+            request = MensaDishPagerRequest(MensaPreviewData.dishes, startIndex = 1),
+            details = mapOf(MensaPreviewData.containsDish.id to MensaDishDetailState.Loaded(MensaPreviewData.detail)),
+            cartDishes = emptyMap(),
+            allergenPreferences = MensaPreviewData.glutenSelected,
+            onRequestDetail = {},
+            onRetryDetail = {},
+            onAdd = {},
+            onDecrement = {},
+        )
+    }
+}
+
+@Preview(name = "Dish carousel · loading", widthDp = MENSA_PREVIEW_WIDTH, heightDp = MENSA_PREVIEW_HEIGHT)
+@Composable
+private fun DishCarouselLoadingPreview(@PreviewParameter(MensaPreviewThemeProvider::class) theme: MensaPreviewTheme) {
+    MensaPreviewHost(theme) {
+        MensaDishPagerPage(
+            request = MensaDishPagerRequest(MensaPreviewData.dishes, startIndex = 0),
+            details = emptyMap(),
+            cartDishes = mapOf(MensaPreviewData.plainDish.id to MensaCartEntry(MensaPreviewData.plainDish, 2)),
+            allergenPreferences = MensaPreviewData.glutenSelected,
+            onRequestDetail = {},
+            onRetryDetail = {},
+            onAdd = {},
+            onDecrement = {},
+        )
     }
 }

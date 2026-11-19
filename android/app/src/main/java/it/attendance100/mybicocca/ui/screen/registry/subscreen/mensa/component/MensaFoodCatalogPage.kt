@@ -1,9 +1,15 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component
 
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.runtime.Composable
+import it.attendance100.mybicocca.core.state.Loadable
+import it.attendance100.mybicocca.core.state.SyncStatus
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -20,7 +26,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -35,8 +40,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.currentLocale
-import it.attendance100.mybicocca.core.state.Loadable
-import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
 import it.attendance100.mybicocca.domain.model.mensa.MensaAllergenMatch
 import it.attendance100.mybicocca.domain.model.mensa.MensaAllergenPreferences
@@ -77,8 +80,7 @@ internal fun MensaFoodCatalogPage(
 
     Column(
         modifier = modifier
-            .fillMaxWidth()
-            .heightIn(max = 760.dp)
+            .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(bottom = 24.dp)
             .testTag(MensaTestTags.FOOD_CATALOG_PAGE),
@@ -260,3 +262,18 @@ private fun String.normalizedForSearch(): String =
     Normalizer.normalize(lowercase(), Normalizer.Form.NFD)
         .replace(Regex("\\p{InCombiningDiacriticalMarks}+"), "")
         .trim()
+
+@Preview(name = "All dishes", widthDp = MENSA_PREVIEW_WIDTH, heightDp = MENSA_PREVIEW_HEIGHT)
+@Composable
+private fun CatalogPreview(@PreviewParameter(MensaPreviewThemeProvider::class) theme: MensaPreviewTheme) {
+    MensaPreviewHost(theme) {
+        MensaFoodCatalogPage(
+            catalog = Loadable.Loaded(MensaPreviewData.dishes),
+            status = SyncStatus.Idle,
+            eligibility = MensaPreviewData.eligibility,
+            allergenPreferences = MensaPreviewData.glutenSelected,
+            onOpenDishes = { _, _ -> },
+            onRetry = {},
+        )
+    }
+}

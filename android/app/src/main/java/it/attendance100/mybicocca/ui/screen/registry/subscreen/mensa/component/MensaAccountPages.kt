@@ -1,5 +1,8 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component
 
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.runtime.Composable
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -36,7 +39,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -319,4 +321,17 @@ private fun FormField(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
     )
+}
+
+@Preview(name = "Account", widthDp = MENSA_PREVIEW_WIDTH, heightDp = 560)
+@Composable
+private fun AccountPreview(@PreviewParameter(MensaPreviewThemeProvider::class) theme: MensaPreviewTheme) {
+    MensaPreviewHost(theme) {
+        MensaAccountPage(
+            session = MensaPreviewData.session,
+            onEdit = {},
+            onLogout = {},
+            onDeleteAccount = {},
+        )
+    }
 }

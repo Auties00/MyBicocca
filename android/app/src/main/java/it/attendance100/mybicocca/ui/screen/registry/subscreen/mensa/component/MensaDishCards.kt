@@ -1,5 +1,8 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component
 
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.MensaDishArtwork
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -45,6 +48,7 @@ import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Density
@@ -56,6 +60,7 @@ import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.mensa.MensaAllergenMatch
 import it.attendance100.mybicocca.domain.model.mensa.MensaDish
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.MensaArt
+import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
 
 /** Top-down illustration of a dish. It is decorative, so it carries no description. */
 @Composable
@@ -105,7 +110,7 @@ internal fun MensaDishPlateCard(
                 .fillMaxWidth()
                 .padding(top = PlateOverlap),
             shape = cardShape,
-            color = scheme.surfaceContainerHigh,
+            color = dishCardColor(allergenMatch),
         ) {
             Column(
                 modifier = Modifier
@@ -221,6 +226,7 @@ internal fun MensaPlateWithBadge(
     allergenMatch: MensaAllergenMatch,
     size: Dp,
     modifier: Modifier = Modifier,
+    badgeFraction: Float = 0.3f,
     sharedElement: Boolean = true,
 ) {
     val scheme = MaterialTheme.colorScheme
@@ -234,7 +240,7 @@ internal fun MensaPlateWithBadge(
                 contentColor = if (contains) scheme.onError else scheme.onTertiary,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .size(size * 0.3f),
+                    .size(size * badgeFraction),
             ) {
                 Box(contentAlignment = Alignment.Center) {
                     Icon(
@@ -242,7 +248,7 @@ internal fun MensaPlateWithBadge(
                         contentDescription = stringResource(
                             if (contains) R.string.mensa_allergen_match_contains else R.string.mensa_allergen_match_trace,
                         ),
-                        modifier = Modifier.size(size * 0.18f),
+                        modifier = Modifier.size(size * badgeFraction * 0.6f),
                     )
                 }
             }
@@ -295,8 +301,6 @@ internal fun MensaCourseStrip(
     onSelect: (Int?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val scheme = MaterialTheme.colorScheme
-    val haptic = rememberHapticManager()
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -305,44 +309,60 @@ internal fun MensaCourseStrip(
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         tiles.forEach { tile ->
-            val selected = tile.id == selectedId
-            Column(
-                modifier = Modifier
-                    .width(76.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .clickable { haptic.tap(); onSelect(tile.id) },
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(5.dp),
-            ) {
-                Surface(
-                    shape = RoundedCornerShape(20.dp),
-                    color = if (selected) scheme.primaryContainer else scheme.surfaceContainerHigh,
-                    modifier = Modifier.size(64.dp),
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        if (tile.art != null) {
-                            MensaPlate(art = tile.art, size = 48.dp)
-                        } else {
-                            Icon(
-                                imageVector = Icons.Outlined.Restaurant,
-                                contentDescription = null,
-                                tint = if (selected) scheme.onPrimaryContainer else scheme.onSurfaceVariant,
-                                modifier = Modifier.size(28.dp),
-                            )
-                        }
-                    }
+            MensaCourseTileButton(
+                tile = tile,
+                selected = tile.id == selectedId,
+                onClick = { onSelect(tile.id) },
+            )
+        }
+    }
+}
+
+/** One course in the strip: a rounded square with the course's plate and its name underneath. */
+@Composable
+internal fun MensaCourseTileButton(
+    tile: MensaCourseTile,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val scheme = MaterialTheme.colorScheme
+    val haptic = rememberHapticManager()
+    Column(
+        modifier = modifier
+            .width(76.dp)
+            .clip(RoundedCornerShape(8.dp))
+            .clickable { haptic.tap(); onClick() },
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(5.dp),
+    ) {
+        Surface(
+            shape = RoundedCornerShape(20.dp),
+            color = if (selected) scheme.primaryContainer else scheme.surfaceContainerHigh,
+            modifier = Modifier.size(64.dp),
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                if (tile.art != null) {
+                    MensaPlate(art = tile.art, size = 48.dp)
+                } else {
+                    Icon(
+                        imageVector = Icons.Outlined.Restaurant,
+                        contentDescription = null,
+                        tint = if (selected) scheme.onPrimaryContainer else scheme.onSurfaceVariant,
+                        modifier = Modifier.size(28.dp),
+                    )
                 }
-                Text(
-                    text = tile.label.toCourseTileLabel(),
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
-                    color = if (selected) scheme.onSurface else scheme.onSurfaceVariant,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    textAlign = TextAlign.Center,
-                )
             }
         }
+        Text(
+            text = tile.label.toCourseTileLabel(),
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal,
+            color = if (selected) scheme.onSurface else scheme.onSurfaceVariant,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center,
+        )
     }
 }
 
@@ -383,3 +403,104 @@ private val CODES = Regex("\\b(s/g|s/glut|sg|igp|dop|u12|u6|u3)\\b")
 /** Shortens the operator's course names ("Primi Piatti", "Pane e Prodotti da forno") to fit a tile. */
 private fun String.toCourseTileLabel(): String =
     replace(" Piatti", "").substringBefore(",").substringBefore(" e ").trim()
+
+/**
+ * The card's surface, nudged toward red when the dish contains one of the user's allergens and
+ * toward the accent for traces. It is a blend over the theme's own surface, so it follows every
+ * palette and light or dark mode.
+ */
+@Composable
+private fun dishCardColor(allergenMatch: MensaAllergenMatch): Color {
+    val scheme = MaterialTheme.colorScheme
+    // Dark surfaces hide a tint, so it is stronger there.
+    val strength = if (LocalDarkTheme.current) 1.6f else 1f
+    return when (allergenMatch) {
+        MensaAllergenMatch.CONTAINS -> lerp(scheme.surfaceContainerHigh, scheme.error, 0.10f * strength)
+        MensaAllergenMatch.TRACE -> lerp(scheme.surfaceContainerHigh, scheme.tertiary, 0.08f * strength)
+        MensaAllergenMatch.NONE -> scheme.surfaceContainerHigh
+    }
+}
+
+@Composable
+private fun PreviewCard(dish: MensaDish, match: MensaAllergenMatch, qty: Int = 0, modifier: Modifier = Modifier) {
+    MensaDishPlateCard(
+        dish = dish,
+        art = MensaDishArtwork.forDish(dish),
+        allergenMatch = match,
+        cartQty = qty,
+        showAdd = true,
+        onClick = {},
+        onAdd = {},
+        onDecrement = {},
+        modifier = modifier,
+    )
+}
+
+@Preview(name = "Dish card", widthDp = 420, heightDp = 520)
+@Composable
+private fun DishCardPreview(@PreviewParameter(MensaPreviewThemeProvider::class) theme: MensaPreviewTheme) {
+    MensaPreviewHost(theme) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                PreviewCard(MensaPreviewData.plainDish, MensaAllergenMatch.NONE, modifier = Modifier.weight(1f))
+                PreviewCard(MensaPreviewData.containsDish, MensaAllergenMatch.CONTAINS, modifier = Modifier.weight(1f))
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                PreviewCard(MensaPreviewData.traceDish, MensaAllergenMatch.TRACE, modifier = Modifier.weight(1f))
+                PreviewCard(MensaPreviewData.plainDish, MensaAllergenMatch.NONE, qty = 2, modifier = Modifier.weight(1f))
+            }
+        }
+    }
+}
+
+@Preview(name = "Plate badge", widthDp = 420, heightDp = 260)
+@Composable
+private fun PlateBadgePreview(@PreviewParameter(MensaPreviewThemeProvider::class) theme: MensaPreviewTheme) {
+    MensaPreviewHost(theme) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
+        ) {
+            MensaPlateWithBadge(MensaPreviewData.containsDish, MensaArt.PASTA_TOMATO, MensaAllergenMatch.CONTAINS, size = 120.dp, badgeFraction = 0.25f)
+            MensaPlateWithBadge(MensaPreviewData.traceDish, MensaArt.RISOTTO, MensaAllergenMatch.TRACE, size = 120.dp, badgeFraction = 0.25f)
+        }
+    }
+}
+
+@Preview(name = "Course tile", widthDp = 320, heightDp = 140)
+@Composable
+private fun CourseTilePreview(@PreviewParameter(MensaPreviewThemeProvider::class) theme: MensaPreviewTheme) {
+    MensaPreviewHost(theme) {
+        Row(
+            modifier = Modifier.padding(16.dp),
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            MensaCourseTileButton(MensaCourseTile(null, "Tutti", null), selected = true, onClick = {})
+            MensaCourseTileButton(MensaCourseTile(1, "Primi Piatti", MensaArt.PASTA_TOMATO), selected = false, onClick = {})
+            MensaCourseTileButton(MensaCourseTile(2, "Secondi Piatti", MensaArt.MEAT), selected = true, onClick = {})
+        }
+    }
+}
+
+@Preview(name = "Course strip", widthDp = MENSA_PREVIEW_WIDTH, heightDp = 140)
+@Composable
+private fun CourseStripPreview(@PreviewParameter(MensaPreviewThemeProvider::class) theme: MensaPreviewTheme) {
+    MensaPreviewHost(theme) {
+        MensaCourseStrip(
+            tiles = listOf(
+                MensaCourseTile(null, "Tutti", null),
+                MensaCourseTile(1, "Primi Piatti", MensaArt.PASTA_TOMATO),
+                MensaCourseTile(2, "Secondi Piatti", MensaArt.MEAT),
+                MensaCourseTile(14, "Piatto unico", MensaArt.RISOTTO),
+                MensaCourseTile(17, "Insalatone", MensaArt.SALAD),
+                MensaCourseTile(4, "Contorni", MensaArt.VEGETABLES),
+            ),
+            selectedId = 1,
+            onSelect = {},
+            modifier = Modifier.padding(top = 16.dp),
+        )
+    }
+}
