@@ -34,6 +34,7 @@
     <package android:name="com.microsoft.office.word" />
     <package android:name="com.microsoft.office.excel" />
     <package android:name="com.microsoft.office.powerpoint" />
+    <package android:name="com.ristocloudgroup.freshandnatural" />
   </queries>
 
   <uses-sdk tools:overrideLibrary="com.google.mlkit.genai.speechrecognition,com.google.mlkit.genai.common" />

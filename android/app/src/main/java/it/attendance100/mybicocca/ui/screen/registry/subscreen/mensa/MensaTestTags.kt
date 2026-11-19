@@ -1,0 +1,25 @@
+package it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa
+
+object MensaTestTags {
+    const val ROOT = "mensa_root"
+    const val HOME_PAGE = "mensa_home_page"
+    const val HUB_MENU = "mensa_hub_menu"
+    const val HUB_BOOK = "mensa_hub_book"
+    const val HUB_PERSONALIZE = "mensa_hub_personalize"
+    const val HUB_ORDERS = "mensa_hub_orders"
+    const val ACCOUNT_BUTTON = "mensa_account_button"
+    const val CATALOG_BUTTON = "mensa_catalog_button"
+    const val MENU_PAGE = "mensa_menu_page"
+    const val MENU_SETUP_PAGE = "mensa_menu_setup_page"
+    const val MENU_SETUP_CONFIRM = "mensa_menu_setup_confirm"
+    const val DISH_PAGER = "mensa_dish_pager"
+    const val ACCOUNT_DELETE_PAGE = "mensa_account_delete_page"
+    const val FOOD_CATALOG_PAGE = "mensa_food_catalog_page"
+    const val ALLERGENS_PAGE = "mensa_allergens_page"
+    const val ACCOUNT_PAGE = "mensa_account_page"
+    const val DISH_DETAIL_PAGE = "mensa_dish_detail_page"
+    const val LOGIN_PAGE = "mensa_login_page"
+    const val TAKEAWAY_ORDER_PAGE = "mensa_takeaway_order_page"
+    const val RESERVATIONS_PAGE = "mensa_reservations_page"
+    const val RESERVATION_DETAIL_PAGE = "mensa_reservation_detail_page"
+}

@@ -24,9 +24,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material.icons.outlined.Groups
 import androidx.compose.material.icons.outlined.LocationOn
+import androidx.compose.material.icons.outlined.Restaurant
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -67,6 +70,7 @@ import it.attendance100.mybicocca.ui.component.modal.SheetPager
 import it.attendance100.mybicocca.ui.component.shimmer.ShimmerCircle
 import it.attendance100.mybicocca.ui.screen.map.component.labelRes
 import it.attendance100.mybicocca.ui.screen.map.ext.buildingDisplayName
+import it.attendance100.mybicocca.ui.screen.map.ext.canteenMenuIdOrNull
 import it.attendance100.mybicocca.ui.screen.map.ext.openBuildingInMaps
 import it.attendance100.mybicocca.ui.screen.map.subscreen.buildingDetail.state.RoomStatus
 import it.attendance100.mybicocca.ui.screen.map.subscreen.buildingDetail.state.roomStatus
@@ -93,10 +97,12 @@ fun BuildingDetailSheet(
     onCloseRoom: () -> Unit,
     modifier: Modifier = Modifier,
     onRetryRooms: (() -> Unit)? = null,
+    onOpenMensa: ((Int) -> Unit)? = null,
 ) {
     val context = LocalContext.current
     val scheduleMap = (daySchedule as? Loadable.Loaded)?.value
     val buildingTitle = remember(building.name) { buildingDisplayName(building) }
+    val canteenMenuId = remember(building) { building.canteenMenuIdOrNull() }
     val page: BuildingDetailPage = selectedRoom?.let { BuildingDetailPage.Room(it) } ?: BuildingDetailPage.Rooms
 
     SheetPager(
@@ -135,6 +141,11 @@ fun BuildingDetailSheet(
                 onRoomClick = onRoomClick,
                 onDirections = { context.openBuildingInMaps(building) },
                 onRetry = onRetryRooms,
+                onOpenMensa = if (canteenMenuId != null && onOpenMensa != null) {
+                    { onOpenMensa(canteenMenuId) }
+                } else {
+                    null
+                },
             )
 
             is BuildingDetailPage.Room -> RoomDetailPage(
@@ -176,6 +187,7 @@ internal fun BuildingPageBody(
     modifier: Modifier = Modifier,
     onDirections: (() -> Unit)? = null,
     onRetry: (() -> Unit)? = null,
+    onOpenMensa: (() -> Unit)? = null,
 ) {
     val now = remember(daySchedule) { LocalDateTime.now(AppClock.clock) }
     val scheduleMap = (daySchedule as? Loadable.Loaded)?.value
@@ -266,13 +278,91 @@ internal fun BuildingPageBody(
             }
         }
 
-        if (onDirections != null) {
+        if (onDirections != null && onOpenMensa != null) {
+            val haptic = rememberHapticManager()
+            val scheme = MaterialTheme.colorScheme
+            val dark = LocalDarkTheme.current
+            val dirBg = if (dark) scheme.primaryContainer else scheme.primary
+            val dirFg = if (dark) scheme.onPrimaryContainer else scheme.onPrimary
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, end = 16.dp, bottom = 24.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                FilledTonalButton(
+                    onClick = { haptic.tap(); onOpenMensa() },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp),
+                    shape = ButtonGroupDefaults.connectedLeadingButtonShape,
+                    colors = ButtonDefaults.filledTonalButtonColors(
+                        containerColor = scheme.surfaceContainerHighest,
+                        contentColor = scheme.onSurface,
+                    ),
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Restaurant,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                    )
+                    Text(
+                        text = stringResource(R.string.mensa_map_action),
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(start = 8.dp),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+                Button(
+                    onClick = { haptic.tap(); onDirections() },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(48.dp),
+                    shape = ButtonGroupDefaults.connectedTrailingButtonShape,
+                    colors = ButtonDefaults.buttonColors(containerColor = dirBg, contentColor = dirFg),
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.LocationOn,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                    )
+                    Text(
+                        text = stringResource(R.string.map_directions),
+                        fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.padding(start = 8.dp),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
+            }
+        } else if (onDirections != null) {
             DirectionsButton(
                 onClick = onDirections,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(start = 16.dp, end = 16.dp, bottom = 24.dp),
             )
+        } else if (onOpenMensa != null) {
+            val haptic = rememberHapticManager()
+            FilledTonalButton(
+                onClick = { haptic.tap(); onOpenMensa() },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 16.dp, end = 16.dp, bottom = 24.dp)
+                    .height(48.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Outlined.Restaurant,
+                    contentDescription = null,
+                    modifier = Modifier.size(20.dp),
+                )
+                Text(
+                    text = stringResource(R.string.mensa_map_action),
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(start = 8.dp),
+                )
+            }
         }
     }
 }
