@@ -4,9 +4,6 @@ name: Resources
 # their builders, regenerates what the SDKs ship, and opens a pull request when it changed: see
 # "Resources" in common/codegen/README.md.
 on:
-  # Temporary: the first full crawl of the ratings, from this branch.
-  push:
-    branches: [feat/generated-resources]
   schedule:
     # Every Monday night.
     - cron: '0 3 * * 1'
@@ -58,7 +55,6 @@ jobs:
           path: resources.patch
 
       - name: Open a pull request
-        if: github.event_name != 'push'
         uses: peter-evans/create-pull-request@v7
         with:
           branch: chore/refresh-resources
