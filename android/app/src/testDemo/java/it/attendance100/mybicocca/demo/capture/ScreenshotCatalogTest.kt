@@ -67,7 +67,8 @@ class ScreenshotCatalogTest {
         val strings = File("src/main/res/values").listFiles { file -> file.name.startsWith("strings") }.orEmpty()
             .flatMap { STRING_NAME.findAll(it.readText()).map { match -> match.groupValues[1] } }
             .toSet()
-        val unknown = catalog.shots.flatMap { it.tap }.filterNot { it in strings }
+        // "text:..." taps text the app shows that is not a string resource, such as a demo dish name.
+        val unknown = catalog.shots.flatMap { it.tap }.filterNot { it.startsWith("text:") || it in strings }
         assertWithMessage("Tap steps that are not string resource names").that(unknown).isEmpty()
     }
 

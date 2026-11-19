@@ -277,6 +277,7 @@ fun MapScreen(
     isActive: Boolean = true,
     contentInsets: PaddingValues = PaddingValues(),
     onProvideFilterToggle: ((() -> Unit)?) -> Unit = {},
+    onOpenMensa: ((Int) -> Unit)? = null,
     viewModel: MapViewModel = hiltViewModel(
         checkNotNull(LocalViewModelStoreOwner.current) {
             "No ViewModelStoreOwner was provided via LocalViewModelStoreOwner"
@@ -549,6 +550,12 @@ fun MapScreen(
                         onRoomClick = viewModel::selectRoom,
                         onCloseRoom = viewModel::clearRoomSelection,
                         onRetryRooms = viewModel::retryRooms,
+                        onOpenMensa = onOpenMensa?.let { open ->
+                            { menuId ->
+                                viewModel.clearSelection()
+                                open(menuId)
+                            }
+                        },
                     )
                     Spacer(modifier = Modifier.height(with(density) { navBottomPx.toDp() }))
                 }
@@ -571,6 +578,13 @@ fun MapScreen(
             onBack = viewModel::clearSelection,
             onDismiss = viewModel::hideBuildingsList,
             onRetryRooms = viewModel::retryRooms,
+            onOpenMensa = onOpenMensa?.let { open ->
+                { menuId ->
+                    viewModel.clearSelection()
+                    viewModel.hideBuildingsList()
+                    open(menuId)
+                }
+            },
         )
     }
 

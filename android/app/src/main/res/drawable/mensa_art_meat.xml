@@ -1,0 +1,33 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path android:fillColor="#22000000" android:pathData="M 3,56.5 A 51,51 0 1,0 105,56.5 A 51,51 0 1,0 3,56.5 Z" />
+    <path android:fillColor="#F4F0E8" android:pathData="M 4,54 A 50,50 0 1,0 104,54 A 50,50 0 1,0 4,54 Z" />
+    <path android:fillColor="#E8E2D6" android:pathData="M 10,54 A 44,44 0 1,0 98,54 A 44,44 0 1,0 10,54 Z" />
+    <path android:fillColor="#FBF9F4" android:pathData="M 14,54 A 40,40 0 1,0 94,54 A 40,40 0 1,0 14,54 Z" />
+    <group android:scaleX="1.25" android:scaleY="1.25" android:pivotX="54" android:pivotY="54">
+    <path android:fillColor="#5E2F1A" android:pathData="M 83.5,59.9 Q 86.8,66.3 78.6,68.9 Q 70.4,71.6 64.8,76.9 Q 59.3,82.2 52.2,78.1 Q 45.1,74 36.3,73 Q 27.5,71.9 28.6,65.2 Q 29.7,58.4 26.5,52.1 Q 23.2,45.7 31.4,43.1 Q 39.6,40.4 45.2,35.1 Q 50.7,29.8 57.8,33.9 Q 64.9,38 73.7,39 Q 82.5,40.1 81.4,46.8 Q 80.3,53.6 83.5,59.9 Z" />
+    <path android:fillColor="#8B4A2B" android:pathData="M 75.1,65 Q 74.7,70.5 67.1,70.7 Q 59.5,70.8 52.7,73.3 Q 45.9,75.8 41.9,71.1 Q 38,66.4 31.6,63.3 Q 25.3,60.3 28.9,55.4 Q 32.5,50.5 32.9,45 Q 33.3,39.5 40.9,39.3 Q 48.5,39.2 55.3,36.7 Q 62.1,34.2 66.1,38.9 Q 70,43.6 76.4,46.7 Q 82.7,49.7 79.1,54.6 Q 75.5,59.5 75.1,65 Z" />
+    <path android:fillColor="#1A000000" android:pathData="M 26.3,55.5 A 18,11.5 -22 1,0 59.7,42.1 A 18,11.5 -22 1,0 26.3,55.5 Z" />
+    <path android:fillColor="#5E2F1A" android:pathData="M 26.3,53.7 A 18,11.5 -22 1,0 59.7,40.3 A 18,11.5 -22 1,0 26.3,53.7 Z" />
+    <path android:fillColor="#8B4A2B" android:pathData="M 27.4,52.6 A 16.4,10 -22 1,0 57.8,40.4 A 16.4,10 -22 1,0 27.4,52.6 Z" />
+    <path android:fillColor="#B86248" android:pathData="M 29.4,51.6 A 14,7.9 -22 1,0 55.4,41.2 A 14,7.9 -22 1,0 29.4,51.6 Z" />
+    <path android:fillColor="#C98A63" android:pathData="M 34,48 A 7.6,2.9 -22 1,0 48,42.4 A 7.6,2.9 -22 1,0 34,48 Z" />
+    <path android:fillColor="#1A000000" android:pathData="M 35.4,59.8 A 19,12 -12 1,0 72.6,51.8 A 19,12 -12 1,0 35.4,59.8 Z" />
+    <path android:fillColor="#5E2F1A" android:pathData="M 35.4,58 A 19,12 -12 1,0 72.6,50 A 19,12 -12 1,0 35.4,58 Z" />
+    <path android:fillColor="#8B4A2B" android:pathData="M 36.6,57.1 A 17.4,10.5 -12 1,0 70.6,49.9 A 17.4,10.5 -12 1,0 36.6,57.1 Z" />
+    <path android:fillColor="#B86248" android:pathData="M 38.7,56.5 A 15,8.4 -12 1,0 68.1,50.3 A 15,8.4 -12 1,0 38.7,56.5 Z" />
+    <path android:fillColor="#C98A63" android:pathData="M 44.2,53.9 A 8,3 -12 1,0 59.8,50.5 A 8,3 -12 1,0 44.2,53.9 Z" />
+    <path android:fillColor="#1A000000" android:pathData="M 46,63.4 A 18,11.5 -2 1,0 82,62.2 A 18,11.5 -2 1,0 46,63.4 Z" />
+    <path android:fillColor="#5E2F1A" android:pathData="M 46,61.6 A 18,11.5 -2 1,0 82,60.4 A 18,11.5 -2 1,0 46,61.6 Z" />
+    <path android:fillColor="#8B4A2B" android:pathData="M 47.2,61.1 A 16.4,10 -2 1,0 80,59.9 A 16.4,10 -2 1,0 47.2,61.1 Z" />
+    <path android:fillColor="#B86248" android:pathData="M 49.4,60.9 A 14,7.9 -2 1,0 77.4,59.9 A 14,7.9 -2 1,0 49.4,60.9 Z" />
+    <path android:fillColor="#C98A63" android:pathData="M 54.4,59.5 A 7.6,2.9 -2 1,0 69.6,58.9 A 7.6,2.9 -2 1,0 54.4,59.5 Z" />
+    <path android:fillColor="#5E2F1A" android:pathData="M 68.3,45.7 A 16,16 0 0,1 57.4,71.9 A 1,1 0 0,1 57.2,69.9 A 14,14 0 0,0 66.7,47 A 1,1 0 0,1 68.3,45.7 Z" />
+    <path android:fillColor="#FFF8E7" android:pathData="M 35.9,63.8 A 2.2,1 -20 1,0 40.1,62.2 A 2.2,1 -20 1,0 35.9,63.8 Z M 71.9,49 A 1.1,1.1 0 1,0 74.1,49 A 1.1,1.1 0 1,0 71.9,49 Z" />
+    <path android:fillColor="#3E7A33" android:pathData="M 42.5,51.8 L 58.7,39.1 A 0.7,0.7 -38 0,1 59.7,39.2 L 59.7,39.2 A 0.7,0.7 -38 0,1 59.5,40.2 L 43.3,52.9 A 0.7,0.7 -38 0,1 42.3,52.8 L 42.3,52.8 A 0.7,0.7 -38 0,1 42.5,51.8 Z" />
+    <path android:fillColor="#5E9B47" android:pathData="M 45.6,51.6 C 45,49.1 45.8,47 46.9,45.2 C 47.3,47.3 47.1,49.6 45.6,51.6 Z M 40.3,53 C 42.6,52 44.8,52.4 46.8,53.3 C 44.8,54 42.5,54.2 40.3,53 Z M 48.7,49.1 C 48.1,46.7 48.9,44.5 50.1,42.8 C 50.4,44.8 50.3,47.1 48.7,49.1 Z M 43.4,50.6 C 45.7,49.5 48,49.9 49.9,50.8 C 47.9,51.5 45.7,51.7 43.4,50.6 Z M 51.9,46.7 C 51.3,44.2 52.1,42.1 53.2,40.3 C 53.6,42.4 53.4,44.7 51.9,46.7 Z M 46.6,48.1 C 48.9,47.1 51.2,47.5 53.1,48.3 C 51.1,49 48.8,49.3 46.6,48.1 Z M 55,44.2 C 54.4,41.7 55.2,39.6 56.4,37.8 C 56.7,39.9 56.6,42.2 55,44.2 Z M 49.7,45.6 C 52,44.6 54.3,45 56.2,45.9 C 54.2,46.6 52,46.8 49.7,45.6 Z M 58.2,41.7 C 57.6,39.3 58.4,37.1 59.5,35.4 C 59.9,37.4 59.7,39.7 58.2,41.7 Z M 52.9,43.2 C 55.2,42.2 57.5,42.6 59.4,43.4 C 57.4,44.1 55.1,44.4 52.9,43.2 Z" />
+    </group>
+</vector>
