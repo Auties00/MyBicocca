@@ -1,6 +1,7 @@
 package it.attendance100.mybicocca.ui.screen.map.ext
 
 import it.attendance100.mybicocca.domain.model.map.MapBuilding
+import it.attendance100.mybicocca.domain.model.mensa.MensaPlace
 
 /** "ATLAS ex U1" -> "ATLAS" + "U1"; sites without a legacy U-number keep their full name. */
 fun splitLegacyAlias(name: String): Pair<String, String?> {
@@ -9,14 +10,22 @@ fun splitLegacyAlias(name: String): Pair<String, String?> {
     return name.substring(0, idx) to name.substring(idx + " ex ".length)
 }
 
-/** Maps canteen-equipped Bicocca buildings (`U3`, `U6`, `U12`) to their primary Compass menu id. */
-fun MapBuilding.canteenMenuIdOrNull(): Int? {
+/** A place one can open the Mensa on from a building: a canteen or a bar. */
+data class CanteenTarget(val place: MensaPlace) {
+    val isBar: Boolean get() = !place.isCanteen
+}
+
+/** The places served in a Bicocca building: U6 and U12 have a canteen and a bar, U3 only a bar. */
+fun MapBuilding.canteenTargets(): List<CanteenTarget> {
     val alias = splitLegacyAlias(name).second?.uppercase()
     val normalizedCode = code.value.uppercase()
     return when {
-        alias == "U3" || normalizedCode == "U03" || normalizedCode == "U3" -> 701
-        alias == "U12" || normalizedCode == "U12" -> 709
-        alias == "U6" || normalizedCode == "U06" || normalizedCode == "U6" -> 400
-        else -> null
+        alias == "U3" || normalizedCode == "U03" || normalizedCode == "U3" ->
+            listOf(CanteenTarget(MensaPlace.BAR_U3))
+        alias == "U12" || normalizedCode == "U12" ->
+            listOf(CanteenTarget(MensaPlace.CANTEEN_U12), CanteenTarget(MensaPlace.BAR_U12))
+        alias == "U6" || normalizedCode == "U06" || normalizedCode == "U6" ->
+            listOf(CanteenTarget(MensaPlace.CANTEEN_U6), CanteenTarget(MensaPlace.BAR_U6))
+        else -> emptyList()
     }
 }

@@ -17,6 +17,7 @@ import it.attendance100.mybicocca.data.remote.compass.dto.CompassTakeawayPriceDa
 import it.attendance100.mybicocca.data.remote.compass.dto.CompassTakeawayReservation
 import it.attendance100.mybicocca.data.remote.compass.dto.CompassTakeawayService
 import it.attendance100.mybicocca.domain.model.mensa.MensaAllergen
+import it.attendance100.mybicocca.domain.model.mensa.MensaAllergenKind
 import it.attendance100.mybicocca.domain.model.mensa.MensaCartPricing
 import it.attendance100.mybicocca.domain.model.mensa.MensaCourse
 import it.attendance100.mybicocca.domain.model.mensa.MensaDayMealType
@@ -34,14 +35,23 @@ import it.attendance100.mybicocca.domain.model.mensa.MensaReservation
 import it.attendance100.mybicocca.domain.model.mensa.MensaTakeawayDayMealType
 import it.attendance100.mybicocca.domain.model.mensa.MensaTakeawayService
 import it.attendance100.mybicocca.domain.model.mensa.MensaTimeSlot
+import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 private const val COMPASS_BASE_URL = "https://unibicocca.compasscloud.it"
 private val ITALIAN_DATE_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy")
 
+private val CompassZone = ZoneId.of("Europe/Rome")
+
 internal fun parseCompassDate(raw: String?): LocalDate? {
-    val clean = raw?.trim()?.take(10)?.takeIf { it.isNotEmpty() } ?: return null
+    val trimmed = raw?.trim().orEmpty()
+    // The take-away schedule keys its days by a Unix timestamp, taken at the time of the request.
+    if (trimmed.length >= 9 && trimmed.all(Char::isDigit)) {
+        return trimmed.toLongOrNull()?.let { Instant.ofEpochSecond(it).atZone(CompassZone).toLocalDate() }
+    }
+    val clean = trimmed.take(10).takeIf { it.isNotEmpty() } ?: return null
     return runCatching { LocalDate.parse(clean) }.getOrNull()
         ?: runCatching { LocalDate.parse(clean, ITALIAN_DATE_FORMAT) }.getOrNull()
 }
@@ -120,6 +130,7 @@ internal fun CompassAllergen.toDomain(): MensaAllergen = MensaAllergen(
     name = name.trim(),
     shortName = shortName?.trim().takeUnless { it.isNullOrEmpty() } ?: name.trim(),
     iconUrl = normalizeCompassUrl(image?.url),
+    kind = if (type?.trim().equals("contenuto", ignoreCase = true)) MensaAllergenKind.CONTENT else MensaAllergenKind.ALLERGEN,
 )
 
 internal fun CompassCustomLetter.toDomain(): MensaDietaryBadge = MensaDietaryBadge(
@@ -168,7 +179,8 @@ internal fun CompassNutritionalDeclarationItem.toDomain(): MensaGdaItem = MensaG
 )
 
 internal fun CompassTakeawayService.toDomain(): MensaTakeawayService {
-    val locations = locationDelivery?.groups.orEmpty().flatMap { group ->
+    // A service that does not let the user pick a place still lists some; they are not choices.
+    val locations = locationDelivery?.takeIf { it.enabled != false }?.groups.orEmpty().flatMap { group ->
         group.locations.map { loc ->
             MensaPickupLocation(
                 id = loc.id,

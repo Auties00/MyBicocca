@@ -859,8 +859,8 @@ fun MainShell(
                                                         isActive = isActive,
                                                         contentInsets = innerPadding,
                                                         onProvideFilterToggle = onProvideFilterToggle,
-                                                        onOpenMensa = { menuId ->
-                                                            mensaViewModel.preselectMenu(menuId)
+                                                        onOpenMensa = { place ->
+                                                            mensaViewModel.preselectPlace(place)
                                                             navigator.navigate(SheetRoute.Mensa)
                                                         },
                                                     )

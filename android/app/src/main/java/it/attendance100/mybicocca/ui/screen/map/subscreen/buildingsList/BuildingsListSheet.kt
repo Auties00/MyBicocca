@@ -67,12 +67,13 @@ import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
 import it.attendance100.mybicocca.ui.component.modal.SheetPager
 import it.attendance100.mybicocca.ui.screen.map.component.labelRes
 import it.attendance100.mybicocca.ui.screen.map.ext.buildingDisplayName
-import it.attendance100.mybicocca.ui.screen.map.ext.canteenMenuIdOrNull
+import it.attendance100.mybicocca.ui.screen.map.ext.canteenTargets
 import it.attendance100.mybicocca.ui.screen.map.ext.openBuildingInMaps
 import it.attendance100.mybicocca.ui.screen.map.ext.splitLegacyAlias
 import it.attendance100.mybicocca.ui.screen.map.subscreen.buildingDetail.BuildingPageBody
 import it.attendance100.mybicocca.ui.screen.map.subscreen.buildingDetail.RoomDetailPage
 import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
+import it.attendance100.mybicocca.domain.model.mensa.MensaPlace
 
 
 /**
@@ -96,7 +97,7 @@ fun BuildingsListSheet(
     onBack: () -> Unit,
     onDismiss: () -> Unit,
     onRetryRooms: (() -> Unit)? = null,
-    onOpenMensa: ((Int) -> Unit)? = null,
+    onOpenMensa: ((MensaPlace) -> Unit)? = null,
 ) {
     PredictiveModalBottomSheet(
         onDismiss = onDismiss,
@@ -145,18 +146,15 @@ fun BuildingsListSheet(
                 )
 
                 room == null -> {
-                    val menuId = remember(building) { building.canteenMenuIdOrNull() }
+                    val canteens = remember(building) { building.canteenTargets() }
                     BuildingPageBody(
                         rooms = rooms,
                         daySchedule = daySchedule,
                         syncStatus = syncStatus,
                         onRoomClick = onRoomClick,
                         onRetry = onRetryRooms,
-                        onOpenMensa = if (menuId != null && onOpenMensa != null) {
-                            { onOpenMensa(menuId) }
-                        } else {
-                            null
-                        },
+                        canteens = canteens,
+                        onOpenMensa = onOpenMensa,
                     )
                 }
 

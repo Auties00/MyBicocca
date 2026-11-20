@@ -1,21 +1,23 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component
 
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.PreviewParameter
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.MensaDishArtwork
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.indication
+import androidx.compose.material3.ripple
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.height
-import androidx.compose.runtime.remember
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -23,43 +25,43 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Add
-import androidx.compose.material.icons.outlined.Remove
 import androidx.compose.material.icons.outlined.Restaurant
-import androidx.compose.material.icons.outlined.WarningAmber
-import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.RoundRect
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.graphics.Outline
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.RoundRect
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Outline
-import androidx.compose.ui.graphics.lerp
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.mensa.MensaAllergenMatch
 import it.attendance100.mybicocca.domain.model.mensa.MensaDish
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.MensaArt
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.MensaDishArtwork
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.MensaDishDrawings
 import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
 
 /** Top-down illustration of a dish. It is decorative, so it carries no description. */
@@ -68,9 +70,10 @@ internal fun MensaPlate(
     art: MensaArt,
     size: Dp,
     modifier: Modifier = Modifier,
+    @DrawableRes drawable: Int = art.drawable,
 ) {
     Image(
-        painter = painterResource(art.drawable),
+        painter = painterResource(drawable),
         contentDescription = null,
         modifier = modifier
             .size(size)
@@ -99,37 +102,44 @@ internal fun MensaDishPlateCard(
     onAdd: () -> Unit,
     onDecrement: () -> Unit,
     modifier: Modifier = Modifier,
+    onEditQuantity: () -> Unit = {},
 ) {
     val scheme = MaterialTheme.colorScheme
     val haptic = rememberHapticManager()
     val cardShape = remember(showAdd) { NotchedCardShape(notch = if (showAdd) 60.dp else 0.dp) }
+    // The press is taken by the whole card, plate included, and drawn on the card itself.
+    val press = remember { MutableInteractionSource() }
 
-    Box(modifier = modifier) {
+    Box(
+        modifier = modifier.clickable(interactionSource = press, indication = null) { haptic.tap(); onClick() },
+    ) {
         Surface(
             modifier = Modifier
-                .fillMaxWidth()
+                .fillMaxSize()
                 .padding(top = PlateOverlap),
             shape = cardShape,
             color = dishCardColor(allergenMatch),
         ) {
             Column(
                 modifier = Modifier
-                    .clickable { haptic.tap(); onClick() }
-                    .padding(start = 14.dp, end = 14.dp, top = PlateOverlap + 10.dp, bottom = 14.dp),
+                    .indication(press, ripple())
+                    .padding(start = 14.dp, end = 14.dp, top = PlateOverlap + 10.dp, bottom = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 Text(
                     text = dish.name.toDishDisplayName(),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
-                    minLines = 2,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.fillMaxWidth(),
                 )
-                Column(
-                    modifier = Modifier.heightIn(min = 36.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                // Calories and the dietary label share a line; a row's shorter cards are stretched to
+                // its tallest, so this stays right under the name whatever its length.
+                Row(
+                    modifier = if (showAdd) Modifier.heightIn(min = 36.dp) else Modifier,
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     dish.caloricLabel?.let { label ->
                         Row(
@@ -158,6 +168,7 @@ internal fun MensaDishPlateCard(
                             color = scheme.tertiary,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false),
                         )
                     }
                 }
@@ -174,46 +185,14 @@ internal fun MensaDishPlateCard(
         )
 
         if (showAdd) {
-            if (cartQty > 0) {
-                Surface(
-                    shape = CircleShape,
-                    color = scheme.surfaceContainerHighest,
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(end = 70.dp, bottom = 12.dp)
-                        .size(30.dp)
-                        .clickable { haptic.tap(); onDecrement() },
-                ) {
-                    Box(contentAlignment = Alignment.Center) {
-                        Icon(Icons.Outlined.Remove, contentDescription = null, modifier = Modifier.size(16.dp))
-                    }
-                }
-            }
-            Surface(
-                shape = RoundedCornerShape(22.dp),
-                color = scheme.primary,
-                contentColor = scheme.onPrimary,
-                modifier = Modifier
-                    .align(Alignment.BottomEnd)
-                    .size(AddButtonSize)
-                    .clickable { haptic.tap(); onAdd() },
-            ) {
-                Box(contentAlignment = Alignment.Center) {
-                    if (cartQty > 0) {
-                        Text(
-                            text = "$cartQty",
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                        )
-                    } else {
-                        Icon(
-                            Icons.Outlined.Add,
-                            contentDescription = stringResource(R.string.mensa_dish_add_takeaway),
-                            modifier = Modifier.size(24.dp),
-                        )
-                    }
-                }
-            }
+            MensaQuantityStepper(
+                quantity = cartQty,
+                onAdd = onAdd,
+                onDecrement = onDecrement,
+                onEdit = onEditQuantity,
+                modifier = Modifier.align(Alignment.BottomEnd),
+                size = AddButtonSize,
+            )
         }
     }
 }
@@ -228,10 +207,31 @@ internal fun MensaPlateWithBadge(
     modifier: Modifier = Modifier,
     badgeFraction: Float = 0.3f,
     sharedElement: Boolean = true,
+    portionLabel: String? = null,
 ) {
     val scheme = MaterialTheme.colorScheme
     Box(modifier = modifier.size(size)) {
-        MensaPlate(art = art, size = size, modifier = Modifier.mensaPlateElement(dish.id, sharedElement))
+        MensaPlate(
+            art = art,
+            size = size,
+            modifier = Modifier.mensaPlateElement(dish.id, sharedElement),
+            drawable = MensaDishDrawings.of(dish.id) ?: art.drawable,
+        )
+        if (portionLabel != null) {
+            Surface(
+                shape = CircleShape,
+                color = scheme.surfaceContainerHighest,
+                contentColor = scheme.onSurface,
+                modifier = Modifier.align(Alignment.BottomStart),
+            ) {
+                Text(
+                    text = portionLabel,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(horizontal = 9.dp, vertical = 4.dp),
+                )
+            }
+        }
         if (allergenMatch != MensaAllergenMatch.NONE) {
             val contains = allergenMatch == MensaAllergenMatch.CONTAINS
             Surface(
@@ -264,8 +264,8 @@ private class NotchedCardShape(private val notch: Dp) : Shape {
         val h = size.height
         if (notch <= 0.dp) return Outline.Rounded(RoundRect(0f, 0f, w, h, CornerRadius(r)))
         val n = with(density) { notch.toPx() }
-        val f = with(density) { 12.dp.toPx() }
-        val c = with(density) { 16.dp.toPx() }
+        val f = with(density) { 16.dp.toPx() }
+        val c = with(density) { 26.dp.toPx() }
         val path = Path().apply {
             moveTo(r, 0f)
             lineTo(w - r, 0f)
@@ -331,15 +331,15 @@ internal fun MensaCourseTileButton(
     Column(
         modifier = modifier
             .width(76.dp)
-            .clip(RoundedCornerShape(8.dp))
-            .clickable { haptic.tap(); onClick() },
+            .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp, bottomStart = 24.dp, bottomEnd = 24.dp))
+            .clickable { haptic.tap(); onClick() }.padding(bottom = 6.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(5.dp),
     ) {
         Surface(
             shape = RoundedCornerShape(20.dp),
             color = if (selected) scheme.primaryContainer else scheme.surfaceContainerHigh,
-            modifier = Modifier.size(64.dp),
+            modifier = Modifier.height(70.dp).width(64.dp).padding(top = 6.dp),
         ) {
             Box(contentAlignment = Alignment.Center) {
                 if (tile.art != null) {
@@ -379,7 +379,9 @@ internal fun MensaDishGrid(
     ) {
         dishes.chunked(2).forEach { pair ->
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(IntrinsicSize.Max),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 pair.forEach { dish -> content(dish, Modifier.weight(1f)) }

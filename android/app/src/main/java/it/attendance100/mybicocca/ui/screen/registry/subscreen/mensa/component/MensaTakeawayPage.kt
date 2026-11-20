@@ -47,6 +47,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.tooling.preview.Preview
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.currentLocale
 import it.attendance100.mybicocca.core.os.rememberHapticManager
@@ -55,7 +57,9 @@ import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
 import it.attendance100.mybicocca.core.time.AppClock
 import it.attendance100.mybicocca.domain.model.mensa.MensaCartPricing
+import it.attendance100.mybicocca.domain.model.mensa.MensaPlace
 import it.attendance100.mybicocca.domain.model.mensa.MensaTakeawayService
+import it.attendance100.mybicocca.domain.model.mensa.timeLabel
 import it.attendance100.mybicocca.ui.component.button.RetryButton
 import it.attendance100.mybicocca.ui.component.feedback.friendlyMessage
 import it.attendance100.mybicocca.ui.component.modal.SheetLoadingIndicator
@@ -77,7 +81,8 @@ private val TakeawayDateFormat: DateTimeFormatter
 internal fun MensaTakeawayPage(
     services: Loadable<List<MensaTakeawayService>>,
     servicesStatus: SyncStatus,
-    selectedServiceId: Int?,
+    selectedMenuId: Int?,
+    selectedPlace: MensaPlace?,
     selectedDate: LocalDate?,
     selectedMealTypeId: Int?,
     selectedPickupLocationId: Int?,
@@ -86,11 +91,8 @@ internal fun MensaTakeawayPage(
     cartPricing: Loadable<MensaCartPricing>,
     orderNote: String,
     submitting: Boolean,
-    onSelectService: (Int) -> Unit,
-    onToggleFavorite: (MensaTakeawayService) -> Unit,
-    onSelectDate: (LocalDate) -> Unit,
-    onSelectMealType: (Int) -> Unit,
-    onSelectLocation: (Int) -> Unit,
+    pricingError: String?,
+    walletBalance: Double?,
     onSelectTimeSlot: (Int) -> Unit,
     onIncrementDish: (Int) -> Unit,
     onDecrementDish: (Int) -> Unit,
@@ -107,10 +109,10 @@ internal fun MensaTakeawayPage(
     val brandFg = if (dark) scheme.onPrimaryContainer else scheme.onPrimary
 
     val serviceList = services.valueOrNull().orEmpty()
-    val currentService = serviceList.firstOrNull { it.id == selectedServiceId } ?: serviceList.firstOrNull()
-    val dates = remember(currentService) { currentService?.scheduleByDate?.keys?.sorted().orEmpty() }
+    // What is ordered was chosen on the way to the menu; only the time slot is left to pick here.
+    val currentService = serviceList.firstOrNull { it.menuId == selectedMenuId }
     val dayMeals = selectedDate?.let { currentService?.scheduleByDate?.get(it) }.orEmpty()
-    val activeMeal = dayMeals.firstOrNull { it.id == selectedMealTypeId } ?: dayMeals.firstOrNull()
+    val activeMeal = dayMeals.firstOrNull { it.id == selectedMealTypeId }
     val slots = activeMeal?.timeSlots.orEmpty()
     val today = remember { LocalDate.now(AppClock.clock) }
     val tomorrow = remember(today) { today.plusDays(1) }
@@ -150,101 +152,37 @@ internal fun MensaTakeawayPage(
                         .padding(bottom = 12.dp),
                     verticalArrangement = Arrangement.spacedBy(14.dp),
                 ) {
-                    if (serviceList.isNotEmpty()) {
-                        SectionLabel(stringResource(R.string.mensa_takeaway_service))
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .horizontalScroll(rememberScrollState())
-                                .padding(horizontal = 20.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
+                    SectionLabel(stringResource(R.string.mensa_takeaway_pickup_summary))
+                    val pickupName = currentService?.pickupLocations?.firstOrNull { it.id == selectedPickupLocationId }?.name
+                    val dayLabel = selectedDate?.let { date ->
+                        when (date) {
+                            today -> stringResource(R.string.mensa_today)
+                            tomorrow -> stringResource(R.string.mensa_tomorrow)
+                            else -> date.format(dateFormat).replaceFirstChar { it.titlecase(locale) }
+                        }
+                    }
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 20.dp),
+                        shape = RoundedCornerShape(20.dp),
+                        color = scheme.surfaceContainerHigh,
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp),
                         ) {
-                            serviceList.forEach { service ->
-                                FilterChip(
-                                    selected = service.id == currentService?.id,
-                                    onClick = { haptic.tap(); onSelectService(service.id) },
-                                    label = { Text(service.name) },
-                                    trailingIcon = {
-                                        IconButton(
-                                            onClick = { haptic.tap(); onToggleFavorite(service) },
-                                            modifier = Modifier.size(20.dp),
-                                        ) {
-                                            Icon(
-                                                imageVector = if (service.isFavorite) Icons.Rounded.Star else Icons.Outlined.StarOutline,
-                                                contentDescription = null,
-                                                tint = if (service.isFavorite) scheme.primary else scheme.onSurfaceVariant,
-                                                modifier = Modifier.size(16.dp),
-                                            )
-                                        }
-                                    },
-                                )
+                            SummaryLine(stringResource(R.string.mensa_takeaway_location), selectedPlace?.displayName ?: pickupName)
+                            SummaryLine(stringResource(R.string.mensa_takeaway_date), dayLabel)
+                            SummaryLine(stringResource(R.string.mensa_takeaway_meal_type), activeMeal?.name)
+                            if (slots.size == 1) {
+                                SummaryLine(stringResource(R.string.mensa_takeaway_slot), slots.first().timeLabel)
                             }
                         }
                     }
 
-                    if (currentService != null && currentService.pickupLocations.isNotEmpty()) {
-                        SectionLabel(stringResource(R.string.mensa_takeaway_location))
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .horizontalScroll(rememberScrollState())
-                                .padding(horizontal = 20.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            currentService.pickupLocations.forEach { loc ->
-                                FilterChip(
-                                    selected = loc.id == selectedPickupLocationId,
-                                    onClick = { haptic.tap(); onSelectLocation(loc.id) },
-                                    label = { Text(loc.name) },
-                                )
-                            }
-                        }
-                    }
-
-                    if (dates.isNotEmpty()) {
-                        SectionLabel(stringResource(R.string.mensa_takeaway_date))
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .horizontalScroll(rememberScrollState())
-                                .padding(horizontal = 20.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            dates.forEach { date ->
-                                val label = when (date) {
-                                    today -> stringResource(R.string.mensa_today)
-                                    tomorrow -> stringResource(R.string.mensa_tomorrow)
-                                    else -> date.format(dateFormat).replaceFirstChar { it.titlecase(locale) }
-                                }
-                                FilterChip(
-                                    selected = date == selectedDate,
-                                    onClick = { haptic.tap(); onSelectDate(date) },
-                                    label = { Text(label) },
-                                )
-                            }
-                        }
-                    }
-
-                    if (dayMeals.size > 1 && activeMeal != null) {
-                        SectionLabel(stringResource(R.string.mensa_takeaway_meal_type))
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 20.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            dayMeals.forEach { meal ->
-                                FilterChip(
-                                    selected = meal.id == activeMeal.id,
-                                    onClick = { haptic.tap(); onSelectMealType(meal.id) },
-                                    label = { Text(meal.name) },
-                                )
-                            }
-                        }
-                    }
-
-                    if (slots.isNotEmpty()) {
+                    // Several slots (the bars' half hours) are a real choice; one slot is just the time.
+                    if (slots.size > 1) {
                         SectionLabel(stringResource(R.string.mensa_takeaway_slot))
                         Column(
                             modifier = Modifier.padding(horizontal = 20.dp),
@@ -272,7 +210,7 @@ internal fun MensaTakeawayPage(
                                     ) {
                                         Column {
                                             Text(
-                                                text = slot.name,
+                                                text = slot.timeLabel,
                                                 style = MaterialTheme.typography.bodyMedium,
                                                 fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium,
                                                 color = if (slot.bookable) {
@@ -281,10 +219,9 @@ internal fun MensaTakeawayPage(
                                                     scheme.onSurfaceVariant
                                                 },
                                             )
-                                            slot.affluencyCapacity?.let { cap ->
-                                                val count = slot.reservationsCount ?: 0
+                                            if (!slot.bookable) {
                                                 Text(
-                                                    text = if (slot.bookable) "$count / $cap" else stringResource(R.string.mensa_takeaway_slot_full),
+                                                    text = stringResource(R.string.mensa_takeaway_slot_full),
                                                     style = MaterialTheme.typography.labelSmall,
                                                     color = scheme.onSurfaceVariant,
                                                 )
@@ -382,7 +319,7 @@ internal fun MensaTakeawayPage(
                         }
                     }
 
-                    (cartPricing as? Loadable.Loaded)?.value?.let { pricing ->
+                    (cartPricing as? Loadable.Loaded)?.value?.takeIf { currentService?.viewPrices != false }?.let { pricing ->
                         Surface(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -459,7 +396,14 @@ internal fun MensaTakeawayPage(
                     )
                 }
 
-                val canSubmit = LocalIsOnline.current &&
+                // Wallet-paid services refuse an order the balance cannot cover, so it is said here first.
+                val total = (cartPricing as? Loadable.Loaded)?.value?.total
+                val walletShort = currentService?.walletPayment == true && walletBalance != null && total != null && total > walletBalance
+                val problem = pricingError ?: if (walletShort) stringResource(R.string.mensa_takeaway_wallet_short, walletBalance ?: 0.0) else null
+                problem?.let { MensaOrderProblem(text = it, modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 8.dp)) }
+
+                val canSubmit = problem == null &&
+                    LocalIsOnline.current &&
                     !submitting &&
                     currentService != null &&
                     selectedDate != null &&
@@ -493,6 +437,27 @@ internal fun MensaTakeawayPage(
 }
 
 @Composable
+private fun SummaryLine(label: String, value: String?) {
+    if (value.isNullOrBlank()) return
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.SemiBold,
+        )
+    }
+}
+
+@Composable
 private fun SectionLabel(text: String) {
     Text(
         text = text,
@@ -501,4 +466,43 @@ private fun SectionLabel(text: String) {
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(horizontal = 24.dp),
     )
+}
+
+@Composable
+private fun TakeawayPreviewPage(service: MensaTakeawayService, place: MensaPlace, walletBalance: Double?, pricingError: String? = null) {
+    MensaTakeawayPage(
+        services = Loadable.Loaded(listOf(service)),
+        servicesStatus = SyncStatus.Idle,
+        selectedMenuId = service.menuId,
+        selectedPlace = place,
+        selectedDate = MensaPreviewData.today,
+        selectedMealTypeId = 3,
+        selectedPickupLocationId = place.pickupLocation(service)?.id,
+        selectedTimeSlotId = service.scheduleByDate.values.first().first().timeSlots.first().id,
+        cartDishes = MensaPreviewOrders.cart,
+        cartPricing = Loadable.Loaded(MensaPreviewOrders.pricing),
+        orderNote = "",
+        submitting = false,
+        pricingError = pricingError,
+        walletBalance = walletBalance,
+        onSelectTimeSlot = {},
+        onIncrementDish = {},
+        onDecrementDish = {},
+        onNoteChange = {},
+        onBrowseDishes = {},
+        onSubmitOrder = {},
+        onRetry = {},
+    )
+}
+
+@Preview(name = "Order · canteen", widthDp = MENSA_PREVIEW_WIDTH, heightDp = MENSA_PREVIEW_HEIGHT)
+@Composable
+private fun TakeawayCanteenPreview(@PreviewParameter(MensaPreviewThemeProvider::class) theme: MensaPreviewTheme) {
+    MensaPreviewHost(theme) { TakeawayPreviewPage(MensaPreviewOrders.canteenService, MensaPlace.CANTEEN_U12, walletBalance = 12.4) }
+}
+
+@Preview(name = "Order · bar, wallet short", widthDp = MENSA_PREVIEW_WIDTH, heightDp = MENSA_PREVIEW_HEIGHT)
+@Composable
+private fun TakeawayBarPreview(@PreviewParameter(MensaPreviewThemeProvider::class) theme: MensaPreviewTheme) {
+    MensaPreviewHost(theme) { TakeawayPreviewPage(MensaPreviewOrders.barService, MensaPlace.BAR_U12, walletBalance = 4.0) }
 }

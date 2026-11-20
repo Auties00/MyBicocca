@@ -6,6 +6,10 @@ import androidx.compose.runtime.Composable
 import it.attendance100.mybicocca.domain.model.mensa.MensaAllergenPreferences
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.runtime.remember
+import androidx.compose.material3.ripple
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.indication
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -55,7 +59,6 @@ internal fun MensaHubPage(
     session: MensaSession?,
     allergenPreferences: MensaAllergenPreferences,
     onOpenMenu: () -> Unit,
-    onOpenBook: () -> Unit,
     onOpenOrders: () -> Unit,
     onOpenAllergens: () -> Unit,
     onOpenWallet: () -> Unit,
@@ -69,31 +72,16 @@ internal fun MensaHubPage(
             .testTag(MensaTestTags.HOME_PAGE),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Row(
+        HubBox(
+            tag = MensaTestTags.HUB_MENU,
+            title = stringResource(R.string.mensa_hub_menu_title),
+            body = stringResource(R.string.mensa_hub_menu_body),
+            arts = listOf(MensaArt.PASTA_TOMATO, MensaArt.MEAT, MensaArt.SALAD, MensaArt.SANDWICH),
+            container = MaterialTheme.colorScheme.primaryContainer,
+            content = MaterialTheme.colorScheme.onPrimaryContainer,
+            onClick = onOpenMenu,
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-        ) {
-            HubBox(
-                tag = MensaTestTags.HUB_MENU,
-                title = stringResource(R.string.mensa_hub_menu_title),
-                body = stringResource(R.string.mensa_hub_menu_body),
-                art = MensaArt.PASTA_TOMATO,
-                container = MaterialTheme.colorScheme.primaryContainer,
-                content = MaterialTheme.colorScheme.onPrimaryContainer,
-                onClick = onOpenMenu,
-                modifier = Modifier.weight(1f),
-            )
-            HubBox(
-                tag = MensaTestTags.HUB_BOOK,
-                title = stringResource(R.string.mensa_hub_book_title),
-                body = stringResource(R.string.mensa_hub_book_body),
-                art = MensaArt.SANDWICH,
-                container = MaterialTheme.colorScheme.tertiaryContainer,
-                content = MaterialTheme.colorScheme.onTertiaryContainer,
-                onClick = onOpenBook,
-                modifier = Modifier.weight(1f),
-            )
-        }
+        )
 
         HubRow(
             tag = "mensa_hub_wallet",
@@ -136,20 +124,26 @@ internal fun MensaHubPage(
     }
 }
 
-/** Card with an illustration overflowing its top-right corner. */
+/** A wide card with a string of plates overflowing its top edge; the plates answer the tap too. */
 @Composable
 private fun HubBox(
     tag: String,
     title: String,
     body: String,
-    art: MensaArt,
+    arts: List<MensaArt>,
     container: Color,
     content: Color,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val haptic = rememberHapticManager()
-    Box(modifier = modifier.height(184.dp)) {
+    val press = remember { MutableInteractionSource() }
+    Box(
+        modifier = modifier
+            .height(184.dp)
+            .testTag(tag)
+            .clickable(interactionSource = press, indication = null) { haptic.tap(); onClick() },
+    ) {
         Surface(
             modifier = Modifier
                 .fillMaxSize()
@@ -161,8 +155,7 @@ private fun HubBox(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .testTag(tag)
-                    .clickable { haptic.tap(); onClick() }
+                    .indication(press, ripple())
                     .padding(16.dp),
                 verticalArrangement = Arrangement.Bottom,
             ) {
@@ -182,13 +175,21 @@ private fun HubBox(
                 )
             }
         }
-        MensaPlate(
-            art = art,
-            size = 112.dp,
+        Row(
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .offset(x = 6.dp),
-        )
+            horizontalArrangement = Arrangement.spacedBy((-22).dp),
+        ) {
+            arts.forEachIndexed { index, art ->
+                // The plates stagger, so the string reads as a spread of dishes rather than a row.
+                MensaPlate(
+                    art = art,
+                    size = 92.dp,
+                    modifier = Modifier.offset(y = if (index % 2 == 0) 0.dp else 14.dp),
+                )
+            }
+        }
     }
 }
 
@@ -253,8 +254,10 @@ internal fun MensaAccountAction(
     val scheme = MaterialTheme.colorScheme
     val haptic = rememberHapticManager()
     val accountLabel = stringResource(R.string.mensa_account_title)
+    // The header lets trailing actions overhang its end inset, which suits icon buttons; these two
+    // are wider and need the room back.
     if (session == null) {
-        FilledTonalButton(onClick = { haptic.tap(); onLogin() }, modifier = Modifier.testTag(MensaTestTags.ACCOUNT_BUTTON)) {
+        FilledTonalButton(onClick = { haptic.tap(); onLogin() }, modifier = Modifier.padding(end = 12.dp).testTag(MensaTestTags.ACCOUNT_BUTTON)) {
             Icon(Icons.AutoMirrored.Outlined.Login, contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(6.dp))
             Text(stringResource(R.string.mensa_login_action))
@@ -264,6 +267,7 @@ internal fun MensaAccountAction(
             shape = CircleShape,
             color = scheme.primaryContainer,
             modifier = Modifier
+                .padding(end = 12.dp)
                 .size(42.dp)
                 .testTag(MensaTestTags.ACCOUNT_BUTTON)
                 .clickable { haptic.tap(); onOpenAccount() },
@@ -301,7 +305,6 @@ private fun HubSignedInPreview(@PreviewParameter(MensaPreviewThemeProvider::clas
             session = MensaPreviewData.session,
             allergenPreferences = MensaPreviewData.glutenSelected,
             onOpenMenu = {},
-            onOpenBook = {},
             onOpenOrders = {},
             onOpenAllergens = {},
             onOpenWallet = {},
@@ -317,7 +320,6 @@ private fun HubSignedOutPreview(@PreviewParameter(MensaPreviewThemeProvider::cla
             session = null,
             allergenPreferences = MensaAllergenPreferences(),
             onOpenMenu = {},
-            onOpenBook = {},
             onOpenOrders = {},
             onOpenAllergens = {},
             onOpenWallet = {},

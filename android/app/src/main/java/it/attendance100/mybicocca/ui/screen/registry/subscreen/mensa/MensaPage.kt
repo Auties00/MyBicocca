@@ -1,11 +1,14 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.foundation.layout.Row
+import androidx.compose.material.icons.automirrored.outlined.List
 import androidx.compose.material.icons.outlined.RestaurantMenu
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -19,12 +22,15 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.core.os.currentLocale
+import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.time.AppClock
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.state.valueOrNull
 import it.attendance100.mybicocca.domain.model.mensa.MensaDish
+import it.attendance100.mybicocca.domain.model.mensa.MensaMenuKind
+import it.attendance100.mybicocca.domain.model.mensa.identity
 import it.attendance100.mybicocca.domain.model.mensa.MensaReservation
 import it.attendance100.mybicocca.domain.repository.MensaServerMessageException
 import it.attendance100.mybicocca.ui.component.modal.LockSheetWhile
@@ -42,6 +48,8 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component.M
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component.LocalMensaShared
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component.MensaAccountDeletePage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component.MensaDishPagerPage
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component.MensaMenuPickerPage
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component.MensaPlacePickerPage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component.MensaMenuSetupPage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component.MensaSharedScopes
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component.toDishDisplayName
@@ -49,6 +57,7 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component.M
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component.MensaHubPage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component.MensaLoginPage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component.MensaMenuPage
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component.MensaOrderSummaryPage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component.MensaReservationDetailPage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component.MensaReservationsPage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component.MensaTakeawayPage
@@ -83,8 +92,12 @@ fun MensaPage(
     val tomorrowLabel = stringResource(R.string.mensa_tomorrow)
     val locale = currentLocale()
     val context = LocalContext.current
+    val haptic = rememberHapticManager()
 
     DisposableEffectOnPop { viewModel.resetNavigation() }
+
+    // Owned here, not by the menu page, which leaves the composition while the carousel is open.
+    val menuListState = rememberLazyListState()
 
     var outcome by remember { mutableStateOf<SheetOutcome?>(null) }
     var outcomeTitle by remember { mutableStateOf("") }
@@ -94,6 +107,11 @@ fun MensaPage(
     val session by viewModel.session.collectAsStateWithLifecycle()
     val menus by viewModel.menus.collectAsStateWithLifecycle()
     val menusStatus by viewModel.menusStatus.collectAsStateWithLifecycle()
+    val selectedPlace by viewModel.selectedPlace.collectAsStateWithLifecycle()
+    val orderAvailability by viewModel.orderAvailability.collectAsStateWithLifecycle()
+    val signInHintDismissed by viewModel.signInHintDismissed.collectAsStateWithLifecycle()
+    val cartPricingError by viewModel.cartPricingError.collectAsStateWithLifecycle()
+    val bookableDates by viewModel.bookableDates.collectAsStateWithLifecycle()
     val selectedMenuId by viewModel.selectedMenuId.collectAsStateWithLifecycle()
     val selectedDate by viewModel.selectedDate.collectAsStateWithLifecycle()
     val selectedMealTypeId by viewModel.selectedMealTypeId.collectAsStateWithLifecycle()
@@ -105,9 +123,6 @@ fun MensaPage(
     val loginSubmitting by viewModel.loginSubmitting.collectAsStateWithLifecycle()
     val takeawayServices by viewModel.takeawayServices.collectAsStateWithLifecycle()
     val takeawayStatus by viewModel.takeawayStatus.collectAsStateWithLifecycle()
-    val selectedServiceId by viewModel.selectedServiceId.collectAsStateWithLifecycle()
-    val selectedTakeawayDate by viewModel.selectedTakeawayDate.collectAsStateWithLifecycle()
-    val selectedTakeawayMealTypeId by viewModel.selectedTakeawayMealTypeId.collectAsStateWithLifecycle()
     val selectedPickupLocationId by viewModel.selectedPickupLocationId.collectAsStateWithLifecycle()
     val selectedTimeSlotId by viewModel.selectedTimeSlotId.collectAsStateWithLifecycle()
     val orderNote by viewModel.orderNote.collectAsStateWithLifecycle()
@@ -180,9 +195,14 @@ fun MensaPage(
     val depth = backStack.lastIndex
     val busy = loginSubmitting || submittingOrder || accountBusy
     val reservationList = reservations.valueOrNull().orEmpty()
-    val menuContext = remember(menus, selectedMenuId, selectedDate, selectedMealTypeId, schedule, todayLabel, tomorrowLabel, locale) {
+    val menuContext = remember(menus, selectedPlace, selectedMenuId, selectedDate, selectedMealTypeId, schedule, todayLabel, tomorrowLabel, locale) {
         val today = LocalDate.now(AppClock.clock)
-        val canteen = menus.valueOrNull()?.firstOrNull { it.id == selectedMenuId }?.name
+        val menuIdentity = menus.valueOrNull()?.firstOrNull { it.id == selectedMenuId }?.identity()
+        // A canteen's usual menu goes without saying; the place and a variant of it are worth showing.
+        val canteen = listOfNotNull(
+            selectedPlace?.displayName,
+            menuIdentity?.displayName?.takeIf { selectedPlace == null || menuIdentity.kind == MensaMenuKind.GLUTEN_FREE },
+        ).distinct().joinToString(" · ").ifBlank { null }
         val day = selectedDate?.let {
             when (it) {
                 today -> todayLabel
@@ -197,16 +217,25 @@ fun MensaPage(
 
     LockSheetWhile(busy)
 
+    // A different canteen, day or meal is a different list, so it starts from the top.
+    LaunchedEffect(selectedMenuId, selectedDate, selectedMealTypeId) { menuListState.requestScrollToItem(0) }
+
+    // A dish opened from the menu is the menu page with its carousel up, not a page of its own, so
+    // the header and the course strip stay where they are while the content underneath changes.
+    val menuCarousel = current == MensaSubPage.DishPager && pager?.menuRows != null
+    val currentDisplay = MensaDisplay.Page(current, depth, menuCarousel)
+
     val display: MensaDisplay = when {
         outcome != null -> MensaDisplay.Outcome
         pendingCancel != null -> MensaDisplay.ConfirmCancel
-        else -> MensaDisplay.Page(current)
+        else -> currentDisplay
     }
 
     val backTo: MensaDisplay? = when (display) {
-        MensaDisplay.Outcome -> if (pendingCancel != null) MensaDisplay.ConfirmCancel else MensaDisplay.Page(current)
-        MensaDisplay.ConfirmCancel -> MensaDisplay.Page(current)
-        is MensaDisplay.Page -> if (depth > 0 && !busy) MensaDisplay.Page(backStack[depth - 1]) else null
+        MensaDisplay.Outcome -> if (pendingCancel != null) MensaDisplay.ConfirmCancel else currentDisplay
+        MensaDisplay.ConfirmCancel -> currentDisplay
+        // The carousel closes through its own back handler, which scrubs the transition inside the page.
+        is MensaDisplay.Page -> if (depth > 0 && !busy && !display.inMenu) MensaDisplay.Page(backStack[depth - 1], depth - 1) else null
     }
     val shownCancel = rememberLastNonNull(pendingCancel)
 
@@ -230,8 +259,10 @@ fun MensaPage(
                 title = when (target) {
                     MensaDisplay.Outcome -> outcomeTitle.ifBlank { stringResource(R.string.mensa_title) }
                     MensaDisplay.ConfirmCancel -> stringResource(R.string.mensa_order_cancel_confirmation)
-                    is MensaDisplay.Page -> when (val page = target.page) {
+                    is MensaDisplay.Page -> when (val page = if (target.inMenu) MensaSubPage.Menu else target.page) {
                         MensaSubPage.Home -> stringResource(R.string.mensa_title)
+                        MensaSubPage.PlacePicker -> stringResource(R.string.mensa_menu_title)
+                        MensaSubPage.MenuPicker -> stringResource(R.string.mensa_menu_title)
                         MensaSubPage.Menu -> stringResource(R.string.mensa_menu_title)
                         MensaSubPage.FoodCatalog -> stringResource(R.string.mensa_catalog_title)
                         MensaSubPage.Allergens -> stringResource(R.string.mensa_allergens_title)
@@ -245,6 +276,7 @@ fun MensaPage(
                         MensaSubPage.DishPager -> stringResource(R.string.mensa_menu_title)
                         MensaSubPage.AccountDelete -> stringResource(R.string.mensa_delete_action)
                         MensaSubPage.Login -> stringResource(R.string.mensa_login_title)
+                        MensaSubPage.OrderSummary -> stringResource(R.string.mensa_summary_title)
                         MensaSubPage.TakeawayOrder -> stringResource(R.string.mensa_takeaway_title)
                         MensaSubPage.Reservations -> stringResource(R.string.mensa_orders_title)
                         is MensaSubPage.ReservationDetail -> stringResource(R.string.mensa_order_detail_title)
@@ -253,14 +285,12 @@ fun MensaPage(
                 subtitle = when (target) {
                     MensaDisplay.Outcome -> stringResource(R.string.mensa_title)
                     MensaDisplay.ConfirmCancel -> shownCancel?.canteenName ?: shownCancel?.code
-                    is MensaDisplay.Page -> when (val page = target.page) {
+                    is MensaDisplay.Page -> when (val page = if (target.inMenu) MensaSubPage.Menu else target.page) {
                         MensaSubPage.Home -> session?.walletBalance?.let {
                             stringResource(R.string.mensa_subtitle_wallet, it)
-                        } ?: if (session != null) {
-                            stringResource(R.string.mensa_subtitle_logged_in)
-                        } else {
-                            stringResource(R.string.mensa_subtitle_logged_out)
-                        }
+                        } ?: if (session != null) stringResource(R.string.mensa_subtitle_logged_in) else null
+                        MensaSubPage.PlacePicker -> stringResource(R.string.mensa_place_picker_subtitle)
+                        MensaSubPage.MenuPicker -> stringResource(R.string.mensa_picker_subtitle)
                         MensaSubPage.Menu -> menuContext ?: stringResource(R.string.mensa_menu_subtitle)
                         MensaSubPage.MenuSetup -> stringResource(R.string.mensa_setup_subtitle)
                         MensaSubPage.DishPager -> menuContext ?: stringResource(R.string.mensa_catalog_title)
@@ -269,7 +299,8 @@ fun MensaPage(
                         MensaSubPage.Allergens -> stringResource(R.string.mensa_allergens_subtitle)
                         MensaSubPage.Account -> session?.email
                         is MensaSubPage.AccountEdit -> session?.email
-                        MensaSubPage.Login -> stringResource(R.string.mensa_account_prompt_title)
+                        MensaSubPage.Login -> null
+                        MensaSubPage.OrderSummary -> stringResource(R.string.mensa_summary_subtitle)
                         MensaSubPage.TakeawayOrder -> stringResource(R.string.mensa_takeaway_subtitle)
                         MensaSubPage.Reservations -> stringResource(R.string.mensa_orders_subtitle)
                         is MensaSubPage.ReservationDetail -> reservationList
@@ -278,13 +309,13 @@ fun MensaPage(
                             ?: stringResource(R.string.mensa_orders_title)
                     }
                 },
-                onSubtitleClick = if ((target as? MensaDisplay.Page)?.page == MensaSubPage.Menu) viewModel::openMenuSetup else null,
+                onSubtitleClick = if ((target as? MensaDisplay.Page)?.let { it.page == MensaSubPage.Menu && !it.inMenu } == true) viewModel::openMenuSetup else null,
                 showBack = when (target) {
                     MensaDisplay.Outcome -> false
                     MensaDisplay.ConfirmCancel -> true
                     is MensaDisplay.Page -> !busy && depth > 0
                 },
-                trailing = when ((target as? MensaDisplay.Page)?.page) {
+                trailing = when ((target as? MensaDisplay.Page)?.takeUnless { it.inMenu }?.page) {
                     MensaSubPage.Home -> {
                         {
                             MensaAccountAction(
@@ -296,11 +327,19 @@ fun MensaPage(
                     }
                     MensaSubPage.Menu -> {
                         {
-                            IconButton(onClick = viewModel::openFoodCatalog, modifier = Modifier.testTag(MensaTestTags.CATALOG_BUTTON)) {
-                                Icon(
-                                    imageVector = Icons.Outlined.RestaurantMenu,
-                                    contentDescription = stringResource(R.string.mensa_catalog_action),
-                                )
+                            Row {
+                                IconButton(onClick = { haptic.tap(); viewModel.openMenuSetup() }, modifier = Modifier.testTag(MensaTestTags.CHANGE_SELECTION_BUTTON)) {
+                                    Icon(
+                                        imageVector = Icons.Outlined.RestaurantMenu,
+                                        contentDescription = stringResource(R.string.mensa_change_selection_action),
+                                    )
+                                }
+                                IconButton(onClick = { haptic.tap(); viewModel.openFoodCatalog() }, modifier = Modifier.testTag(MensaTestTags.CATALOG_BUTTON)) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Outlined.List,
+                                        contentDescription = stringResource(R.string.mensa_catalog_action),
+                                    )
+                                }
                             }
                         }
                     }
@@ -335,20 +374,32 @@ fun MensaPage(
                     session = session,
                     allergenPreferences = allergenPreferences,
                     onOpenMenu = viewModel::openMenu,
-                    onOpenBook = viewModel::openTakeawayOrder,
                     onOpenOrders = viewModel::openReservations,
                     onOpenAllergens = viewModel::openAllergens,
                     onOpenWallet = { context.openFreshAndNatural() },
                 )
 
+                MensaSubPage.PlacePicker -> MensaPlacePickerPage(onPick = viewModel::pickPlace)
+
+                MensaSubPage.MenuPicker -> MensaMenuPickerPage(
+                    menus = menus,
+                    menusStatus = menusStatus,
+                    place = selectedPlace,
+                    onPick = viewModel::pickMenu,
+                    onRetryMenus = viewModel::refreshMenus,
+                )
+
                 MensaSubPage.MenuSetup -> MensaMenuSetupPage(
                     menus = menus,
                     menusStatus = menusStatus,
+                    selectedPlace = selectedPlace,
                     selectedMenuId = selectedMenuId,
                     selectedDate = selectedDate,
                     selectedMealTypeId = selectedMealTypeId,
                     schedule = schedule,
-                    onSelectMenu = viewModel::selectMenu,
+                    bookableDates = bookableDates,
+                    onChangePlace = viewModel::openPlacePicker,
+                    onChangeMenu = viewModel::openMenuPicker,
                     onSelectDate = viewModel::selectDate,
                     onSelectMealType = viewModel::selectMealType,
                     onConfirm = viewModel::confirmMenuSetup,
@@ -356,30 +407,83 @@ fun MensaPage(
                 )
 
                 MensaSubPage.Menu -> MensaMenuPage(
+                    carouselOpen = false,
+                    pager = pager,
                     selectedDate = selectedDate,
                     selectedMealTypeId = selectedMealTypeId,
                     schedule = schedule,
                     scheduleStatus = scheduleStatus,
                     cartDishes = cartDishes,
                     allergenPreferences = allergenPreferences,
-                    onOpenDishes = viewModel::openDishPager,
+                    dishDetails = dishDetails,
+                    listState = menuListState,
+                    onOpenDishes = { dishes, index, rows -> viewModel.openDishPager(dishes, index, rows) },
+                    onCloseCarousel = viewModel::back,
+                    onRequestDetail = viewModel::requestDishDetail,
+                    onRetryDetail = viewModel::retryDishDetail,
                     onAddDishToCart = viewModel::addDishToCart,
                     onDecrementDish = viewModel::decrementCartDish,
-                    onOpenTakeaway = viewModel::openTakeawayOrder,
+                    onSetQuantity = viewModel::setCartQuantity,
+                    onOpenOrder = viewModel::openOrderSummary,
                     onRetrySchedule = viewModel::retrySchedule,
+                    orderAvailability = orderAvailability,
+                    onSignIn = viewModel::openLogin,
+                    signInHintDismissed = signInHintDismissed,
+                    onDismissSignInHint = viewModel::dismissSignInHint,
                 )
 
-                MensaSubPage.DishPager -> pager?.let { request ->
-                    MensaDishPagerPage(
-                        request = request,
-                        details = dishDetails,
+                MensaSubPage.OrderSummary -> MensaOrderSummaryPage(
+                    cartDishes = cartDishes,
+                    cartPricing = cartPricing,
+                    signedIn = session != null,
+                    pricingError = cartPricingError,
+                    onIncrement = viewModel::incrementCartDish,
+                    onDecrement = viewModel::decrementCartDish,
+                    onBrowseDishes = viewModel::browseDishes,
+                    onContinue = viewModel::openTakeawayOrder,
+                )
+
+                MensaSubPage.DishPager -> if (shown.inMenu) {
+                    // The carousel of the menu page, which hosts it under its own course strip.
+                    MensaMenuPage(
+                        carouselOpen = true,
+                        pager = pager,
+                        selectedDate = selectedDate,
+                        selectedMealTypeId = selectedMealTypeId,
+                        schedule = schedule,
+                        scheduleStatus = scheduleStatus,
                         cartDishes = cartDishes,
                         allergenPreferences = allergenPreferences,
+                        dishDetails = dishDetails,
+                        listState = menuListState,
+                        onOpenDishes = { dishes, index, rows -> viewModel.openDishPager(dishes, index, rows) },
+                        onCloseCarousel = viewModel::back,
                         onRequestDetail = viewModel::requestDishDetail,
                         onRetryDetail = viewModel::retryDishDetail,
-                        onAdd = viewModel::addDishToCart,
-                        onDecrement = viewModel::decrementCartDish,
+                        onAddDishToCart = viewModel::addDishToCart,
+                        onDecrementDish = viewModel::decrementCartDish,
+                        onSetQuantity = viewModel::setCartQuantity,
+                        onOpenOrder = viewModel::openOrderSummary,
+                        onRetrySchedule = viewModel::retrySchedule,
+                        orderAvailability = orderAvailability,
+                        onSignIn = viewModel::openLogin,
+                        signInHintDismissed = signInHintDismissed,
+                        onDismissSignInHint = viewModel::dismissSignInHint,
                     )
+                } else {
+                    pager?.let { request ->
+                        MensaDishPagerPage(
+                            request = request,
+                            details = dishDetails,
+                            cartDishes = cartDishes,
+                            allergenPreferences = allergenPreferences,
+                            onRequestDetail = viewModel::requestDishDetail,
+                            onRetryDetail = viewModel::retryDishDetail,
+                            onAdd = viewModel::addDishToCart,
+                            onDecrement = viewModel::decrementCartDish,
+                            canOrder = false,
+                        )
+                    }
                 }
 
                 MensaSubPage.FoodCatalog -> MensaFoodCatalogPage(
@@ -387,7 +491,7 @@ fun MensaPage(
                     status = catalogStatus,
                     eligibility = eligibility,
                     allergenPreferences = allergenPreferences,
-                    onOpenDishes = viewModel::openDishPager,
+                    onOpenDishes = { dishes, index -> viewModel.openDishPager(dishes, index) },
                     onRetry = viewModel::retryCatalog,
                 )
 
@@ -437,20 +541,18 @@ fun MensaPage(
                 MensaSubPage.TakeawayOrder -> MensaTakeawayPage(
                     services = takeawayServices,
                     servicesStatus = takeawayStatus,
-                    selectedServiceId = selectedServiceId,
-                    selectedDate = selectedTakeawayDate,
-                    selectedMealTypeId = selectedTakeawayMealTypeId,
+                    selectedMenuId = selectedMenuId,
+                    selectedPlace = selectedPlace,
+                    selectedDate = selectedDate,
+                    selectedMealTypeId = selectedMealTypeId,
                     selectedPickupLocationId = selectedPickupLocationId,
                     selectedTimeSlotId = selectedTimeSlotId,
                     cartDishes = cartDishes,
                     cartPricing = cartPricing,
                     orderNote = orderNote,
                     submitting = submittingOrder,
-                    onSelectService = viewModel::selectTakeawayService,
-                    onToggleFavorite = viewModel::toggleFavoriteService,
-                    onSelectDate = viewModel::selectTakeawayDate,
-                    onSelectMealType = viewModel::selectTakeawayMealType,
-                    onSelectLocation = viewModel::selectPickupLocation,
+                    pricingError = cartPricingError,
+                    walletBalance = session?.walletBalance,
                     onSelectTimeSlot = viewModel::selectTimeSlot,
                     onIncrementDish = viewModel::incrementCartDish,
                     onDecrementDish = viewModel::decrementCartDish,
@@ -485,28 +587,23 @@ fun MensaPage(
 }
 
 private sealed interface MensaDisplay {
-    data class Page(val page: MensaSubPage) : MensaDisplay
+    /**
+     * A back-stack page at [level] (its place in the stack, which sets the direction of the slide).
+     * [inMenu] marks a dish carousel that is part of the menu page rather than a page of its own.
+     */
+    data class Page(val page: MensaSubPage, val level: Int, val inMenu: Boolean = false) : MensaDisplay
     data object ConfirmCancel : MensaDisplay
     data object Outcome : MensaDisplay
 }
 
 private fun displayDepth(display: MensaDisplay): Int = when (display) {
-    is MensaDisplay.Page -> pageDepth(display.page)
-    MensaDisplay.ConfirmCancel -> 4
-    MensaDisplay.Outcome -> 5
+    is MensaDisplay.Page -> display.level
+    MensaDisplay.ConfirmCancel -> 100
+    MensaDisplay.Outcome -> 101
 }
 
 private fun displayKey(display: MensaDisplay): String = when (display) {
-    is MensaDisplay.Page -> display.page.key
+    is MensaDisplay.Page -> if (display.inMenu) MensaSubPage.Menu.key else display.page.key
     MensaDisplay.ConfirmCancel -> "confirm_cancel"
     MensaDisplay.Outcome -> "outcome"
-}
-
-private fun pageDepth(page: MensaSubPage): Int = when (page) {
-    MensaSubPage.Home -> 0
-    MensaSubPage.Menu, MensaSubPage.MenuSetup, MensaSubPage.Allergens, MensaSubPage.Account,
-    MensaSubPage.Reservations -> 1
-    MensaSubPage.FoodCatalog, MensaSubPage.TakeawayOrder, is MensaSubPage.AccountEdit,
-    MensaSubPage.AccountDelete, is MensaSubPage.ReservationDetail -> 2
-    MensaSubPage.DishPager, MensaSubPage.Login -> 3
 }

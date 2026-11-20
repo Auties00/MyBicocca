@@ -28,6 +28,25 @@ class MensaAllergenPreferencesTest {
     }
 
     @Test
+    fun `the frozen-ingredients notice is never a match, even when its id was selected`() {
+        val frozen = MensaAllergen(19, "Contiene ingredienti surgelati/congelati", "Contiene", null, MensaAllergenKind.CONTENT)
+        val dish = plain.copy(majorAllergens = listOf(frozen))
+
+        assertThat(frozen.isFrozenNotice).isTrue()
+        assertThat(dish.allergenMatch(MensaAllergenPreferences(allergenIds = setOf(19)))).isEqualTo(MensaAllergenMatch.NONE)
+    }
+
+    @Test
+    fun `pork is a content notice that matches only when the user chose it`() {
+        val pork = MensaAllergen(18, "Contiene Carne di Maiale", "Maiale", null, MensaAllergenKind.CONTENT)
+        val dish = plain.copy(majorAllergens = listOf(pork))
+
+        assertThat(pork.isFrozenNotice).isFalse()
+        assertThat(dish.allergenMatch(MensaAllergenPreferences(allergenIds = setOf(18)))).isEqualTo(MensaAllergenMatch.CONTAINS)
+        assertThat(dish.allergenMatch(MensaAllergenPreferences(allergenIds = setOf(1)))).isEqualTo(MensaAllergenMatch.NONE)
+    }
+
+    @Test
     fun `only traces of a selected allergen give a trace match`() {
         val dish = plain.copy(traceAllergens = listOf(milk))
         assertThat(dish.allergenMatch(MensaAllergenPreferences(allergenIds = setOf(7)))).isEqualTo(MensaAllergenMatch.TRACE)

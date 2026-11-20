@@ -13,8 +13,13 @@ import it.attendance100.mybicocca.domain.model.mensa.MensaCartPricing
 import it.attendance100.mybicocca.domain.model.mensa.MensaDaySchedule
 import it.attendance100.mybicocca.domain.model.mensa.MensaDish
 import it.attendance100.mybicocca.domain.model.mensa.MensaEligibility
+import it.attendance100.mybicocca.domain.model.mensa.MensaMenuIds
+import it.attendance100.mybicocca.domain.model.mensa.MensaMenuKind
 import it.attendance100.mybicocca.domain.model.mensa.MensaMenuSummary
+import it.attendance100.mybicocca.domain.model.mensa.MensaPlace
 import it.attendance100.mybicocca.domain.model.mensa.MensaReservation
+import it.attendance100.mybicocca.domain.model.mensa.asMensaLoginEmail
+import it.attendance100.mybicocca.domain.model.mensa.identity
 import it.attendance100.mybicocca.domain.model.mensa.MensaSession
 import it.attendance100.mybicocca.domain.model.mensa.MensaTakeawayService
 import it.attendance100.mybicocca.domain.repository.MensaAllergenPreferencesRepository
@@ -27,6 +32,7 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.state.Mensa
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.state.MensaDishDetailState
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.state.MensaDishPagerRequest
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.state.MensaEvent
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.state.MensaOrderAvailability
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.state.MensaSubPage
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -35,6 +41,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -87,6 +94,9 @@ class MensaViewModel @Inject constructor(
     private val _menusStatus = MutableStateFlow<SyncStatus>(SyncStatus.Idle)
     val menusStatus: StateFlow<SyncStatus> = _menusStatus.asStateFlow()
 
+    private val _selectedPlace = MutableStateFlow<MensaPlace?>(null)
+    val selectedPlace: StateFlow<MensaPlace?> = _selectedPlace.asStateFlow()
+
     private val _selectedMenuId = MutableStateFlow<Int?>(null)
     val selectedMenuId: StateFlow<Int?> = _selectedMenuId.asStateFlow()
 
@@ -111,6 +121,14 @@ class MensaViewModel @Inject constructor(
 
     private val _menuContextConfirmed = MutableStateFlow(false)
 
+    private val _signInHintDismissed = MutableStateFlow(false)
+    val signInHintDismissed: StateFlow<Boolean> = _signInHintDismissed.asStateFlow()
+
+    /** The "sign in to order" note was swiped away; it stays away until the sheet is closed. */
+    fun dismissSignInHint() {
+        _signInHintDismissed.value = true
+    }
+
     private val _deletionCheck = MutableStateFlow<MensaDeletionCheck>(MensaDeletionCheck.Checking)
     val deletionCheck: StateFlow<MensaDeletionCheck> = _deletionCheck.asStateFlow()
 
@@ -122,15 +140,6 @@ class MensaViewModel @Inject constructor(
 
     private val _takeawayStatus = MutableStateFlow<SyncStatus>(SyncStatus.Idle)
     val takeawayStatus: StateFlow<SyncStatus> = _takeawayStatus.asStateFlow()
-
-    private val _selectedServiceId = MutableStateFlow<Int?>(null)
-    val selectedServiceId: StateFlow<Int?> = _selectedServiceId.asStateFlow()
-
-    private val _selectedTakeawayDate = MutableStateFlow<LocalDate?>(null)
-    val selectedTakeawayDate: StateFlow<LocalDate?> = _selectedTakeawayDate.asStateFlow()
-
-    private val _selectedTakeawayMealTypeId = MutableStateFlow<Int?>(null)
-    val selectedTakeawayMealTypeId: StateFlow<Int?> = _selectedTakeawayMealTypeId.asStateFlow()
 
     private val _selectedPickupLocationId = MutableStateFlow<Int?>(null)
     val selectedPickupLocationId: StateFlow<Int?> = _selectedPickupLocationId.asStateFlow()
@@ -146,6 +155,56 @@ class MensaViewModel @Inject constructor(
 
     private val _cartPricing = MutableStateFlow<Loadable<MensaCartPricing>>(Loadable.NotYetLoaded)
     val cartPricing: StateFlow<Loadable<MensaCartPricing>> = _cartPricing.asStateFlow()
+
+    /** Whether the day and meal on the menu can be ordered, which decides if the menu offers to. */
+    // Built on first use, as it reads state declared further down.
+    val orderAvailability: StateFlow<MensaOrderAvailability> by lazy {
+        combine(
+            combine(session, _takeawayServices, _selectedPlace, _reservations) { session, services, place, reservations ->
+                OrderInputs(session, services, place, reservations.valueOrNull().orEmpty())
+            },
+            combine(_selectedMenuId, _selectedDate, _selectedMealTypeId, _currentSchedule) { menuId, date, mealId, schedule ->
+                val mealName = date?.let { schedule.valueOrNull()?.get(it) }?.mealTypes?.firstOrNull { it.id == mealId }?.name
+                MenuInputs(menuId, date, mealId, mealName)
+            },
+        ) { order, menu ->
+            // The canteen takes one booking per day and meal, whatever the menu.
+            val booked = order.reservations.firstOrNull { r ->
+                (r.active || r.deletable) && !r.provided && r.date == menu.date &&
+                    menu.mealName != null && r.mealTypeName.equals(menu.mealName, ignoreCase = true)
+            }
+            when {
+                order.session == null -> MensaOrderAvailability.SignedOut
+                order.services !is Loadable.Loaded -> MensaOrderAvailability.Checking
+                booked != null -> MensaOrderAvailability.AlreadyBooked(booked)
+                else -> orderableService(order.services.value, order.place, menu.menuId, menu.date, menu.mealId)
+                    ?.let { MensaOrderAvailability.Available(it) } ?: MensaOrderAvailability.Unavailable
+            }
+        }.stateIn(viewModelScope, SharingStarted.Eagerly, MensaOrderAvailability.Checking)
+    }
+
+    private data class OrderInputs(
+        val session: MensaSession?,
+        val services: Loadable<List<MensaTakeawayService>>,
+        val place: MensaPlace?,
+        val reservations: List<MensaReservation>,
+    )
+
+    private data class MenuInputs(val menuId: Int?, val date: LocalDate?, val mealId: Int?, val mealName: String?)
+
+    private val _cartPricingError = MutableStateFlow<String?>(null)
+
+    /** Why the server will not price the cart, usually a combination of dishes it does not allow. */
+    val cartPricingError: StateFlow<String?> = _cartPricingError.asStateFlow()
+
+    /** Days the chosen menu can be ordered for, to mark them in the day step. */
+    val bookableDates: StateFlow<Set<LocalDate>> = combine(_takeawayServices, _selectedMenuId, _selectedPlace) { services, menuId, place ->
+        val service = services.valueOrNull()?.firstOrNull { it.menuId == menuId } ?: return@combine emptySet()
+        service.scheduleByDate.filter { (_, meals) ->
+            val offered = place?.mealsOf(meals, { meals.indexOf(it) }, place.pickupLocation(service)) ?: meals
+            offered.any { meal -> meal.timeSlots.any { it.bookable } }
+        }.keys
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
 
     private val _submittingOrder = MutableStateFlow(false)
     val submittingOrder: StateFlow<Boolean> = _submittingOrder.asStateFlow()
@@ -189,8 +248,15 @@ class MensaViewModel @Inject constructor(
 
     private fun busy() = _submittingOrder.value || _loginSubmitting.value || _accountBusy.value
 
+    /**
+     * Back to the hub, and the choice of place, menu, day and meal is forgotten: a sheet that is
+     * closed and opened again starts from the questions, not from the answers of last time.
+     */
     fun resetNavigation() {
         pendingAfterLogin = null
+        _menuContextConfirmed.value = false
+        _selectedPlace.value = null
+        _signInHintDismissed.value = false
         _backStack.value = listOf(MensaSubPage.Home)
         _pager.value = null
     }
@@ -221,6 +287,7 @@ class MensaViewModel @Inject constructor(
         val list = _menus.value.valueOrNull()
         if (list != null && list.none { it.id == menuId }) return
         if (_selectedMenuId.value == menuId && _currentSchedule.value is Loadable.Loaded) return
+        if (_selectedMenuId.value != menuId) clearCart()
         _selectedMenuId.value = menuId
         val menuSummary = list?.firstOrNull { it.id == menuId }
         val today = LocalDate.now(AppClock.clock)
@@ -230,7 +297,7 @@ class MensaViewModel @Inject constructor(
         } else {
             val defaultDate = menuSummary?.activeDays?.let { pickBestDate(it, today) }
             _selectedDate.value = defaultDate
-            _selectedMealTypeId.value = defaultMeal(menuSummary?.mealTypes.orEmpty().map { it.id })
+            _selectedMealTypeId.value = defaultMeal(forPlace(menuSummary?.mealTypes.orEmpty()) { it.order }.map { it.id })
             loadSchedule(menuId, today)
         }
     }
@@ -270,7 +337,7 @@ class MensaViewModel @Inject constructor(
             ?: pickBestDate(availableDates, today)
         _selectedDate.value = pickedDate
         val day = pickedDate?.let { schedule[it] }
-        val availableMeals = day?.mealTypes.orEmpty()
+        val availableMeals = forPlace(day?.mealTypes.orEmpty()) { it.order }
         if (_selectedMealTypeId.value == null || availableMeals.none { it.id == _selectedMealTypeId.value }) {
             _selectedMealTypeId.value = defaultMeal(availableMeals.map { it.id })
         }
@@ -280,49 +347,118 @@ class MensaViewModel @Inject constructor(
     private fun defaultMeal(mealIds: List<Int>): Int? =
         if (mealIds.size > 1 && java.time.LocalTime.now(AppClock.clock).hour >= 15) mealIds.last() else mealIds.firstOrNull()
 
+    /** The meals a place offers out of those a day has: the lunch-only places leave dinner out. */
+    private fun <T> forPlace(meals: List<T>, order: (T) -> Int): List<T> =
+        _selectedPlace.value?.mealsOf(meals, order) ?: meals
+
+    /** Keeps the chosen meal one the place serves, after the place or the day changes. */
+    private fun ensureMealAllowed() {
+        val day = _selectedDate.value?.let { _currentSchedule.value.valueOrNull()?.get(it) } ?: return
+        val allowed = forPlace(day.mealTypes) { it.order }
+        if (allowed.none { it.id == _selectedMealTypeId.value }) _selectedMealTypeId.value = allowed.firstOrNull()?.id
+    }
+
     fun selectDate(date: LocalDate) {
+        if (_selectedDate.value != date) clearCart()
         _selectedDate.value = date
-        val schedule = _currentSchedule.value.valueOrNull().orEmpty()
-        val meals = schedule[date]?.mealTypes.orEmpty()
-        if (_selectedMealTypeId.value == null || meals.none { it.id == _selectedMealTypeId.value }) {
-            _selectedMealTypeId.value = meals.firstOrNull()?.id
-        }
+        ensureMealAllowed()
     }
 
     fun selectMealType(mealTypeId: Int) {
+        if (_selectedMealTypeId.value != mealTypeId) clearCart()
         _selectedMealTypeId.value = mealTypeId
     }
 
-    /** Opens the menu, asking for canteen, day and meal first unless they were already chosen. */
+    /**
+     * Opens the menu, asking where first (a canteen or a bar), then which menu when the place has
+     * more than one, then the day and meal, unless they were already chosen.
+     */
     fun openMenu() {
-        push(if (_menuContextConfirmed.value) MensaSubPage.Menu else MensaSubPage.MenuSetup)
+        push(if (_menuContextConfirmed.value) MensaSubPage.Menu else MensaSubPage.PlacePicker)
     }
 
+    /** The day and meal step, reached from the menu's header to change either. */
     fun openMenuSetup() {
         push(MensaSubPage.MenuSetup)
     }
 
-    /** Leaves the setup step for the menu; the setup page is replaced, so back goes to where it began. */
-    fun confirmMenuSetup() {
-        _menuContextConfirmed.value = true
+    fun openPlacePicker() {
+        push(MensaSubPage.PlacePicker)
+    }
+
+    fun openMenuPicker() {
+        push(MensaSubPage.MenuPicker)
+    }
+
+    /** The menu a place opens on: its only one, or for a canteen the gluten-free one for those who avoid gluten. */
+    private fun defaultMenuFor(place: MensaPlace): Int {
+        if (!place.hasMenuChoice) return place.menuIds.first()
+        val available = _menus.value.valueOrNull()?.map { it.id }.orEmpty()
+        val glutenFree = place.menuIds.firstOrNull { id -> id != MensaMenuIds.CANTEEN && (available.isEmpty() || id in available) }
+        val avoidsGluten = allergenPreferences.value.avoidsGluten(_allergens.value.valueOrNull().orEmpty())
+        return if (avoidsGluten && glutenFree != null) glutenFree else MensaMenuIds.CANTEEN
+    }
+
+    /**
+     * Chooses where, and moves on: to the menu when the place has more than one, otherwise to the
+     * day. Each step is pushed on top of the last, so back returns to the one before. From the day
+     * step (changing the place) it comes back there, unless the menu it had no longer exists at the
+     * new place.
+     */
+    fun pickPlace(place: MensaPlace) {
+        val before = _selectedMenuId.value
+        _selectedPlace.value = place
+        val keepMenu = before != null && before in place.menuIds
+        selectMenu(if (keepMenu) before!! else defaultMenuFor(place))
+        ensureMealAllowed()
         val stack = _backStack.value
+        if (stack.lastOrNull() != MensaSubPage.PlacePicker) return
+        val setupAt = stack.lastIndexOf(MensaSubPage.MenuSetup)
         _backStack.value = when {
-            stack.getOrNull(stack.lastIndex - 1) == MensaSubPage.Menu -> stack.dropLast(1)
-            stack.lastOrNull() == MensaSubPage.MenuSetup -> stack.dropLast(1) + MensaSubPage.Menu
-            else -> stack + MensaSubPage.Menu
+            place.hasMenuChoice && (!keepMenu || setupAt < 0) -> stack + MensaSubPage.MenuPicker
+            setupAt >= 0 -> stack.take(setupAt + 1)
+            else -> stack + MensaSubPage.MenuSetup
         }
     }
 
-    /** Pre-selects a canteen from the Campus Map; the menu then opens without the setup step. */
-    fun preselectMenu(menuId: Int) {
+    /**
+     * Chooses a menu of the place and moves on to the day, on top of the menu step. From the day
+     * step (changing the menu) it goes back to it.
+     */
+    fun pickMenu(menuId: Int) {
         selectMenu(menuId)
+        ensureMealAllowed()
+        val stack = _backStack.value
+        if (stack.lastOrNull() != MensaSubPage.MenuPicker) return
+        val setupAt = stack.lastIndexOf(MensaSubPage.MenuSetup)
+        _backStack.value = if (setupAt >= 0) stack.take(setupAt + 1) else stack + MensaSubPage.MenuSetup
+    }
+
+    /** Leaves the selection steps for the menu, which takes their place above wherever it began. */
+    fun confirmMenuSetup() {
         _menuContextConfirmed.value = true
+        val steps = setOf(MensaSubPage.PlacePicker, MensaSubPage.MenuPicker, MensaSubPage.MenuSetup)
+        val base = _backStack.value.takeWhile { it !in steps }
+        _backStack.value = if (base.lastOrNull() == MensaSubPage.Menu) base else base + MensaSubPage.Menu
+    }
+
+    /**
+     * Pre-selects a place from the Campus Map and opens the sheet on the day step, since the place
+     * and its menu are known. Someone who avoids gluten gets the gluten-free menu in the canteen's place.
+     */
+    fun preselectPlace(place: MensaPlace) {
+        _selectedPlace.value = place
+        selectMenu(defaultMenuFor(place))
+        ensureMealAllowed()
+        _menuContextConfirmed.value = false
+        _backStack.value = listOf(MensaSubPage.Home, MensaSubPage.MenuSetup)
     }
 
     /** Opens the Menu so dishes can be added to the order; goes back when it is already underneath. */
     fun browseDishes() {
         val stack = _backStack.value
-        if (stack.getOrNull(stack.lastIndex - 1) == MensaSubPage.Menu) back() else push(MensaSubPage.Menu)
+        val menuAt = stack.lastIndexOf(MensaSubPage.Menu)
+        if (menuAt >= 0) _backStack.value = stack.take(menuAt + 1) else push(MensaSubPage.Menu)
     }
 
     fun openFoodCatalog() {
@@ -459,10 +595,10 @@ class MensaViewModel @Inject constructor(
         }
     }
 
-    fun openDishPager(dishes: List<MensaDish>, startIndex: Int) {
+    fun openDishPager(dishes: List<MensaDish>, startIndex: Int, menuRows: List<Int>? = null) {
         if (dishes.isEmpty()) return
         val index = startIndex.coerceIn(dishes.indices)
-        _pager.value = MensaDishPagerRequest(dishes, index)
+        _pager.value = MensaDishPagerRequest(dishes, index, menuRows?.takeIf { it.size == dishes.size })
         push(MensaSubPage.DishPager)
     }
 
@@ -498,7 +634,7 @@ class MensaViewModel @Inject constructor(
         if (_loginSubmitting.value || email.isBlank() || password.isBlank()) return
         _loginSubmitting.value = true
         viewModelScope.launch {
-            runCatching { repository.login(email, password) }.fold(
+            runCatching { repository.login(email.asMensaLoginEmail(), password) }.fold(
                 onSuccess = {
                     if (_backStack.value.lastOrNull() == MensaSubPage.Login) {
                         _backStack.value = _backStack.value.dropLast(1)
@@ -533,7 +669,7 @@ class MensaViewModel @Inject constructor(
     fun addDishToCart(dish: MensaDish) {
         val current = _cartDishes.value.toMutableMap()
         val existing = current[dish.id]
-        val nextQty = (existing?.quantity ?: 0) + 1
+        val nextQty = ((existing?.quantity ?: 0) + 1).coerceAtMost(MENSA_MAX_CART_QUANTITY)
         current[dish.id] = MensaCartEntry(dish = dish, quantity = nextQty)
         _cartDishes.value = current
         recalculateCartPricing()
@@ -542,7 +678,7 @@ class MensaViewModel @Inject constructor(
     fun incrementCartDish(dishId: Int) {
         val existing = _cartDishes.value[dishId] ?: return
         val current = _cartDishes.value.toMutableMap()
-        current[dishId] = existing.copy(quantity = existing.quantity + 1)
+        current[dishId] = existing.copy(quantity = (existing.quantity + 1).coerceAtMost(MENSA_MAX_CART_QUANTITY))
         _cartDishes.value = current
         recalculateCartPricing()
     }
@@ -559,9 +695,27 @@ class MensaViewModel @Inject constructor(
         recalculateCartPricing()
     }
 
+    /** Sets how many of a dish are in the order; zero takes it out. */
+    fun setCartQuantity(dish: MensaDish, quantity: Int) {
+        val current = _cartDishes.value.toMutableMap()
+        if (quantity <= 0) {
+            current.remove(dish.id)
+        } else {
+            current[dish.id] = MensaCartEntry(dish = dish, quantity = quantity.coerceAtMost(MENSA_MAX_CART_QUANTITY))
+        }
+        _cartDishes.value = current
+        recalculateCartPricing()
+    }
+
     fun clearCart() {
         _cartDishes.value = emptyMap()
         _cartPricing.value = Loadable.NotYetLoaded
+        _cartPricingError.value = null
+    }
+
+    /** Opens the order recap. It needs no account, so a signed-out user can review the order first. */
+    fun openOrderSummary() {
+        push(MensaSubPage.OrderSummary)
     }
 
     fun openTakeawayOrder() {
@@ -574,12 +728,8 @@ class MensaViewModel @Inject constructor(
 
     private fun enterTakeawayOrder() {
         push(MensaSubPage.TakeawayOrder)
-        if (_takeawayServices.value !is Loadable.Loaded) {
-            refreshTakeawayServices()
-        } else {
-            syncServiceForSelectedMenu()
-            recalculateCartPricing()
-        }
+        if (_takeawayServices.value !is Loadable.Loaded) refreshTakeawayServices() else applyOrderContext()
+        recalculateCartPricing()
     }
 
     fun refreshTakeawayServices() {
@@ -592,9 +742,7 @@ class MensaViewModel @Inject constructor(
             onSuccess = { services ->
                 _takeawayServices.value = Loadable.Loaded(services)
                 _takeawayStatus.value = SyncStatus.Idle
-                if (_selectedServiceId.value == null || services.none { it.id == _selectedServiceId.value }) {
-                    syncServiceForSelectedMenu()
-                }
+                applyOrderContext()
                 recalculateCartPricing()
             },
             onFailure = { cause ->
@@ -603,49 +751,37 @@ class MensaViewModel @Inject constructor(
         )
     }
 
-    private fun syncServiceForSelectedMenu() {
-        val services = _takeawayServices.value.valueOrNull().orEmpty()
-        if (services.isEmpty()) return
-        val menuId = _selectedMenuId.value
-        val match = services.firstOrNull { it.menuId == menuId } ?: services.firstOrNull { it.isFavorite } ?: services.first()
-        selectTakeawayService(match.id)
+    /** The booking service of the menu being browsed, if it takes bookings. */
+    private fun currentTakeawayService(): MensaTakeawayService? =
+        _takeawayServices.value.valueOrNull()?.firstOrNull { it.menuId == _selectedMenuId.value }
+
+    /** The service that can take an order for [menuId] on [date] at [mealId], if any; else null. */
+    private fun orderableService(
+        services: List<MensaTakeawayService>,
+        place: MensaPlace?,
+        menuId: Int?,
+        date: LocalDate?,
+        mealId: Int?,
+    ): MensaTakeawayService? {
+        val service = services.firstOrNull { it.menuId == menuId } ?: return null
+        val dayMeals = date?.let { service.scheduleByDate[it] }.orEmpty()
+        val offered = place?.mealsOf(dayMeals, { dayMeals.indexOf(it) }, place.pickupLocation(service)) ?: dayMeals
+        val meal = offered.firstOrNull { it.id == mealId } ?: return null
+        return service.takeIf { meal.timeSlots.any { it.bookable } }
     }
 
-    fun selectTakeawayService(serviceId: Int) {
-        val services = _takeawayServices.value.valueOrNull().orEmpty()
-        val service = services.firstOrNull { it.id == serviceId } ?: return
-        _selectedServiceId.value = serviceId
-        _selectedPickupLocationId.value = service.pickupLocations.firstOrNull()?.id
-        val today = LocalDate.now(AppClock.clock)
-        val dates = service.scheduleByDate.keys.sorted()
-        val defaultDate = pickBestDate(dates, today)
-        selectTakeawayDate(defaultDate)
-        recalculateCartPricing()
-    }
-
-    fun selectTakeawayDate(date: LocalDate?) {
-        _selectedTakeawayDate.value = date
-        val service = currentTakeawayService()
-        val dayMeals = date?.let { service?.scheduleByDate?.get(it) }.orEmpty()
-        val defaultMeal = dayMeals.firstOrNull()
-        _selectedTakeawayMealTypeId.value = defaultMeal?.id
-        _selectedTimeSlotId.value = defaultMeal?.timeSlots?.firstOrNull { it.bookable }?.id
-            ?: defaultMeal?.timeSlots?.firstOrNull()?.id
-    }
-
-    fun selectTakeawayMealType(mealTypeId: Int) {
-        _selectedTakeawayMealTypeId.value = mealTypeId
-        val service = currentTakeawayService()
-        val date = _selectedTakeawayDate.value
-        val slots = date?.let { service?.scheduleByDate?.get(it) }
-            ?.firstOrNull { it.id == mealTypeId }
+    /** Takes the pickup place and first open time slot from what the menu was set to. */
+    private fun applyOrderContext() {
+        val service = currentTakeawayService() ?: return
+        _selectedPickupLocationId.value = _selectedPlace.value?.pickupLocation(service)?.id
+            ?: service.pickupLocations.firstOrNull()?.id
+        val slots = _selectedDate.value?.let { service.scheduleByDate[it] }
+            ?.firstOrNull { it.id == _selectedMealTypeId.value }
             ?.timeSlots
             .orEmpty()
-        _selectedTimeSlotId.value = slots.firstOrNull { it.bookable }?.id ?: slots.firstOrNull()?.id
-    }
-
-    fun selectPickupLocation(locationId: Int) {
-        _selectedPickupLocationId.value = locationId
+        if (slots.none { it.id == _selectedTimeSlotId.value }) {
+            _selectedTimeSlotId.value = slots.firstOrNull { it.bookable }?.id ?: slots.firstOrNull()?.id
+        }
     }
 
     fun selectTimeSlot(slotId: Int) {
@@ -670,6 +806,7 @@ class MensaViewModel @Inject constructor(
         val qtyMap = _cartDishes.value.mapValues { it.value.quantity }.filterValues { it > 0 }
         if (qtyMap.isEmpty()) {
             _cartPricing.value = Loadable.NotYetLoaded
+            _cartPricingError.value = null
             return
         }
         if (session.value == null) return
@@ -681,17 +818,26 @@ class MensaViewModel @Inject constructor(
                     ageRangeId = service.ageRangeId,
                     dishesQty = qtyMap,
                 )
-            }.onSuccess { pricing ->
-                _cartPricing.value = Loadable.Loaded(pricing)
-            }
+            }.fold(
+                onSuccess = { pricing ->
+                    _cartPricing.value = Loadable.Loaded(pricing)
+                    _cartPricingError.value = null
+                },
+                onFailure = { cause ->
+                    _cartPricing.value = Loadable.NotYetLoaded
+                    // The first paragraph names what is wrong; the rest repeats the service's rules.
+                    _cartPricingError.value = (cause as? MensaServerMessageException)?.serverMessage
+                        ?.substringBefore("\n\n")?.trim()?.takeIf { it.isNotEmpty() }
+                },
+            )
         }
     }
 
     fun submitTakeawayOrder() {
         if (_submittingOrder.value) return
         val service = currentTakeawayService() ?: return
-        val date = _selectedTakeawayDate.value ?: return
-        val mealTypeId = _selectedTakeawayMealTypeId.value ?: return
+        val date = _selectedDate.value ?: return
+        val mealTypeId = _selectedMealTypeId.value ?: return
         val turnId = _selectedTimeSlotId.value ?: return
         val qtyMap = _cartDishes.value.mapValues { it.value.quantity }.filterValues { it > 0 }
         if (qtyMap.isEmpty()) return
@@ -773,14 +919,14 @@ class MensaViewModel @Inject constructor(
         }
     }
 
-    private fun currentTakeawayService(): MensaTakeawayService? =
-        _takeawayServices.value.valueOrNull()?.firstOrNull { it.id == _selectedServiceId.value }
-
     private fun pickBestDate(dates: List<LocalDate>, today: LocalDate): LocalDate? =
         dates.firstOrNull { !it.isBefore(today) } ?: dates.lastOrNull()
 }
 
 /** Cart entry pairing a dish from the daily menu with its selected quantity. */
+/** Most portions of one dish an order can hold. */
+const val MENSA_MAX_CART_QUANTITY = 99
+
 data class MensaCartEntry(
     val dish: MensaDish,
     val quantity: Int,

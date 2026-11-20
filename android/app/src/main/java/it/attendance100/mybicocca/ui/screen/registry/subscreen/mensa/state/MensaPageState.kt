@@ -28,6 +28,17 @@ sealed interface MensaSubPage {
         override val key: String = "account_edit_${field.name.lowercase()}"
     }
 
+    /** First step: where (one of the two canteens or the three bars). */
+    data object PlacePicker : MensaSubPage {
+        override val key: String = "place_picker"
+    }
+
+    /** Second step, for the canteens only: the menu or its gluten-free variant. */
+    data object MenuPicker : MensaSubPage {
+        override val key: String = "menu_picker"
+    }
+
+    /** Third step: which day, and which meal when the place serves more than one. */
     data object MenuSetup : MensaSubPage {
         override val key: String = "menu_setup"
     }
@@ -42,6 +53,10 @@ sealed interface MensaSubPage {
 
     data object Login : MensaSubPage {
         override val key: String = "login"
+    }
+
+    data object OrderSummary : MensaSubPage {
+        override val key: String = "order_summary"
     }
 
     data object TakeawayOrder : MensaSubPage {
@@ -61,6 +76,8 @@ sealed interface MensaSubPage {
 data class MensaDishPagerRequest(
     val dishes: List<it.attendance100.mybicocca.domain.model.mensa.MensaDish>,
     val startIndex: Int,
+    /** When opened from the menu: the list item of each dish, so the menu can follow the carousel. */
+    val menuRows: List<Int>? = null,
 )
 
 /** Loading state of one dish's full detail, fetched as the carousel reaches it. */

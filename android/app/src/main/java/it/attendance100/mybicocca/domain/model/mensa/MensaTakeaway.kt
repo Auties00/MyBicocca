@@ -80,3 +80,12 @@ data class MensaReservation(
     val cfpFinalValue: String?,
     val cfpUnit: String?,
 )
+
+private val TimeRange = Regex("""\d{1,2}:\d{2}(\s*-\s*\d{1,2}:\d{2})?""")
+
+/**
+ * The slot's time as the operator wrote it, without the line breaks and meal names it adds
+ * ("Pranzo\n11:45 - 14:30" is "11:45 - 14:30"; an open-ended "12:00 -" is "12:00").
+ */
+val MensaTimeSlot.timeLabel: String
+    get() = TimeRange.find(name)?.value?.replace(Regex("\\s+"), " ") ?: name.replace("\n", " ").trim()

@@ -97,37 +97,43 @@ class DemoMensaRepository @Inject constructor() : MensaRepository {
         )
     }
 
-    override suspend fun getTakeawayServices(): List<MensaTakeawayService> = listOf(
-        MensaTakeawayService(
-            id = 279,
-            name = "Prenotazione ristorazione base",
-            menuId = 400,
-            menuName = "Menù Bicocca",
-            ageRangeId = 5,
-            viewPrices = false,
-            walletPayment = false,
-            userRequestsEnabled = true,
-            infoText = null,
-            descriptionText = null,
-            maxDaysAhead = 5,
-            isFavorite = true,
-            pickupLocations = listOf(
-                MensaPickupLocation(141, "Mensa U12", "Ristorazione base"),
-                MensaPickupLocation(146, "Mensa U6 -1", "Ristorazione base"),
-            ),
-            scheduleByDate = DemoMensa.serviceDays().associateWith {
-                listOf(
-                    MensaTakeawayDayMealType(
-                        id = 3,
-                        name = "Pranzo",
-                        timeSlots = listOf(
-                            MensaTimeSlot(1116, "Pranzo\n11:45 - 14:30", true, 6, 60, 10.0),
-                        ),
-                    ),
-                )
-            },
-        ),
-    )
+    override suspend fun getTakeawayServices(): List<MensaTakeawayService> {
+        val canteenPlaces = listOf(
+            MensaPickupLocation(141, "Mensa U12", "Ristorazione base"),
+            MensaPickupLocation(146, "Mensa U6 -1 (solo pranzo)", "Ristorazione base"),
+        )
+        val canteenMeals = listOf(
+            MensaTakeawayDayMealType(3, "Pranzo", listOf(MensaTimeSlot(1116, "Pranzo\n11:45 - 14:30", true, 6, 60, 10.0))),
+            MensaTakeawayDayMealType(5, "Cena", listOf(MensaTimeSlot(1274, "\n19:00 - 21:00", true, 2, 60, 3.0))),
+        )
+        val barSlots = listOf("12:00 - 12:30", "12:30 - 13:00", "13:00 - 13:30", "13:30 - 14:00")
+            .mapIndexed { i, label -> MensaTimeSlot(1500 + i, "\n$label", true, i, 20, i * 5.0) }
+        val barMeals = listOf(MensaTakeawayDayMealType(3, "Pranzo", barSlots))
+        fun service(id: Int, name: String, menuId: Int, menuName: String, places: List<MensaPickupLocation>, meals: List<MensaTakeawayDayMealType>, prices: Boolean) =
+            MensaTakeawayService(
+                id = id,
+                name = name,
+                menuId = menuId,
+                menuName = menuName,
+                ageRangeId = 5,
+                viewPrices = prices,
+                walletPayment = false,
+                userRequestsEnabled = true,
+                infoText = null,
+                descriptionText = null,
+                maxDaysAhead = 5,
+                isFavorite = false,
+                pickupLocations = places,
+                scheduleByDate = DemoMensa.serviceDays().associateWith { meals },
+            )
+        return listOf(
+            service(279, "Prenotazione ristorazione base", 400, "Menù Bicocca", canteenPlaces, canteenMeals, prices = false),
+            service(431, "Bicocca - Pasto senza glutine", 598, "Menu Bicocca Senza Glutine", canteenPlaces, canteenMeals, prices = false),
+            service(429, "Prenotazione Lunch box U3", 701, "Ristorazione complementare U3", emptyList(), barMeals, prices = true),
+            service(435, "Prenotazione Lunch box U12", 709, "Ristorazione complementare U12", emptyList(), barMeals, prices = true),
+            service(436, "Prenotazione Lunch box U6PT", 712, "Ristorazione complementare U6PT", emptyList(), barMeals, prices = true),
+        )
+    }
 
     override suspend fun toggleFavoriteService(serviceId: Int, isCurrentlyFavorite: Boolean) = Unit
 
@@ -173,7 +179,7 @@ class DemoMensaRepository @Inject constructor() : MensaRepository {
             provided = false,
             statusDescription = "confermata",
             statusColorHex = "#66bb6a",
-            dishes = DemoMensa.allDishes.filter { it.id in listOf(1001, 1101, 1201, 1301) },
+            dishes = DemoMensa.allDishes.filter { it.id in listOf(38612, 42239, 101027, 69399) },
             barcodeValue = "P-1201989",
             cfpFinalValue = null,
             cfpUnit = null,

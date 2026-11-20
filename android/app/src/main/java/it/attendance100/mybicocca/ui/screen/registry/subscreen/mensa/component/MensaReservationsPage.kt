@@ -64,6 +64,8 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.MensaTestTa
 import it.attendance100.mybicocca.ui.theme.LocalIsOnline
 import java.net.URLEncoder
 import java.time.format.DateTimeFormatter
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
 
 private val ReservationDateFormat: DateTimeFormatter
     @Composable
@@ -344,5 +346,26 @@ internal fun MensaReservationDetailPage(
                 }
             }
         }
+    }
+}
+
+@Preview(name = "My orders", widthDp = MENSA_PREVIEW_WIDTH, heightDp = 520)
+@Composable
+private fun ReservationsPreview(@PreviewParameter(MensaPreviewThemeProvider::class) theme: MensaPreviewTheme) {
+    MensaPreviewHost(theme) {
+        MensaReservationsPage(
+            reservations = Loadable.Loaded(listOf(MensaPreviewOrders.reservation)),
+            status = SyncStatus.Idle,
+            onOpenReservation = {},
+            onRetry = {},
+        )
+    }
+}
+
+@Preview(name = "Order detail", widthDp = MENSA_PREVIEW_WIDTH, heightDp = MENSA_PREVIEW_HEIGHT)
+@Composable
+private fun ReservationDetailPreview(@PreviewParameter(MensaPreviewThemeProvider::class) theme: MensaPreviewTheme) {
+    MensaPreviewHost(theme) {
+        MensaReservationDetailPage(reservation = MensaPreviewOrders.reservation, isCancelling = false, onCancel = {})
     }
 }

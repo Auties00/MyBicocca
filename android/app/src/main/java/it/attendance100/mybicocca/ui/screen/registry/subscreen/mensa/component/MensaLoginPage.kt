@@ -118,6 +118,7 @@ internal fun MensaLoginPage(
                 singleLine = true,
                 label = { Text(stringResource(R.string.mensa_login_email)) },
                 leadingIcon = { Icon(Icons.Outlined.AlternateEmail, contentDescription = null) },
+                supportingText = { Text(stringResource(R.string.mensa_login_email_hint)) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
@@ -130,7 +131,7 @@ internal fun MensaLoginPage(
                 label = { Text(stringResource(R.string.mensa_login_password)) },
                 leadingIcon = { Icon(Icons.Outlined.Lock, contentDescription = null) },
                 trailingIcon = {
-                    IconButton(onClick = { showPassword = !showPassword }) {
+                    IconButton(onClick = { haptic.tap(); showPassword = !showPassword }) {
                         Icon(
                             imageVector = if (showPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
                             contentDescription = null,

@@ -26,6 +26,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -202,10 +204,14 @@ private fun EligibilityCard(eligibility: MensaEligibility, modifier: Modifier = 
             eligibility.rules.forEach { rule ->
                 RuleRow(rule = rule, locale = locale)
             }
+            // One line, whatever the font size the user has chosen: it shrinks to fit rather than wrapping.
+            val noteStyle = MaterialTheme.typography.bodySmall
             Text(
                 text = stringResource(R.string.mensa_eligibility_note, verified),
-                style = MaterialTheme.typography.bodySmall,
+                style = noteStyle,
                 color = scheme.onSurfaceVariant,
+                maxLines = 1,
+                autoSize = TextAutoSize.StepBased(minFontSize = 7.sp, maxFontSize = noteStyle.fontSize, stepSize = 0.25.sp),
             )
         }
     }

@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.domain.model.mensa.MensaAllergen
+import it.attendance100.mybicocca.domain.model.mensa.MensaAllergenKind
 import it.attendance100.mybicocca.domain.model.mensa.MensaAllergenPreferences
 import it.attendance100.mybicocca.domain.model.mensa.MensaCourse
 import it.attendance100.mybicocca.domain.model.mensa.MensaDayMealType
@@ -26,6 +27,13 @@ import it.attendance100.mybicocca.domain.model.mensa.MensaNutritionRow
 import it.attendance100.mybicocca.domain.model.mensa.MensaSession
 import it.attendance100.mybicocca.domain.model.settings.AppTheme
 import it.attendance100.mybicocca.ui.theme.BicoccaTheme
+import it.attendance100.mybicocca.domain.model.mensa.MensaCartPricing
+import it.attendance100.mybicocca.domain.model.mensa.MensaPickupLocation
+import it.attendance100.mybicocca.domain.model.mensa.MensaReservation
+import it.attendance100.mybicocca.domain.model.mensa.MensaTakeawayDayMealType
+import it.attendance100.mybicocca.domain.model.mensa.MensaTakeawayService
+import it.attendance100.mybicocca.domain.model.mensa.MensaTimeSlot
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.MensaCartEntry
 import java.time.LocalDate
 
 /** Width and height of a full-page preview, close to a phone's modal sheet. */
@@ -65,11 +73,40 @@ internal fun MensaPreviewHost(
 internal object MensaPreviewData {
     val today: LocalDate = LocalDate.of(2026, 6, 18)
 
-    val gluten = MensaAllergen(1, "Glutine", "Glutine", null)
-    val glutenSelected = MensaAllergenPreferences(allergenIds = setOf(1))
-    val milk = MensaAllergen(7, "Latte", "Latte", null)
-    val allergens = listOf("Glutine", "Crostacei", "Uova", "Pesce", "Arachidi", "Soia", "Latte", "Frutta a guscio")
-        .mapIndexed { index, name -> MensaAllergen(index + 1, name, name, null) }
+    /** The allergen list as Compass publishes it. */
+    val allergens: List<MensaAllergen> = listOf(
+        MensaAllergen(2, "Crostacei e prodotti a base di Crostacei", "Crostacei", null),
+        MensaAllergen(3, "Uova e prodotti a base di Uova", "Uova", null),
+        MensaAllergen(4, "Pesce e prodotti a base di Pesce", "Pesce", null),
+        MensaAllergen(5, "Arachidi e prodotti a base di arachidi", "Arachidi", null),
+        MensaAllergen(6, "Soia e prodotti a base di Soia", "Soia", null),
+        MensaAllergen(7, "Latte e prodotti a base di Latte", "Latte", null),
+        MensaAllergen(9, "Sedano e prodotti a base di Sedano", "Sedano", null),
+        MensaAllergen(10, "Senape e prodotti a base di Senape", "Senape", null),
+        MensaAllergen(11, "Semi di Sesamo e prodotti a base di Sesamo", "Sesamo", null),
+        MensaAllergen(13, "Lupini e prodotti a base di Lupini", "Lupini", null),
+        MensaAllergen(14, "Molluschi e prodotti a base di Molluschi", "Molluschi", null),
+        MensaAllergen(18, "Contiene Carne di Maiale", "Maiale", null, MensaAllergenKind.CONTENT),
+        MensaAllergen(19, "Contiene ingredienti surgelati/congelati", "Contiene ingredienti gelo", null, MensaAllergenKind.CONTENT),
+        MensaAllergen(24, "Anidride Solforosa e Solfiti >10 mg/l", "Solfiti", null),
+        MensaAllergen(37, "Cereali contenenti glutine: <strong>Grano</strong>", "Grano", null),
+        MensaAllergen(38, "Frutta a guscio: <strong>Pistacchio</strong>", "Pistacchio", null),
+        MensaAllergen(39, "Frutta a guscio: <strong>Noci di Macadamia</strong>", "Macadam.", null),
+        MensaAllergen(40, "Frutta a guscio: <strong>Noci Pecan</strong>", "Pecan", null),
+        MensaAllergen(41, "Frutta a guscio: <strong>Noci del Brasile</strong>", "N. brasile", null),
+        MensaAllergen(42, "Frutta a guscio: <strong>Noce di Acagiù</strong>", "Anacardi", null),
+        MensaAllergen(43, "Frutta a guscio: <strong>Noci</strong>", "Noci", null),
+        MensaAllergen(44, "Frutta a guscio: <strong>Nocciole</strong>", "Nocciole", null),
+        MensaAllergen(45, "Frutta a guscio: <strong>Mandorle</strong>", "Mandorle", null),
+        MensaAllergen(46, "Cereali contenenti glutine: <strong>Farro</strong>", "Farro", null),
+        MensaAllergen(47, "Cereali contenenti glutine: <strong>Grano Khorasan</strong>", "Khorasan", null),
+        MensaAllergen(48, "Cereali contenenti glutine: <strong>Segale</strong>", "Segale", null),
+        MensaAllergen(49, "Cereali contenenti glutine: <strong>Orzo</strong>", "Orzo", null),
+        MensaAllergen(50, "Cereali contenenti glutine: <strong>Avena</strong>", "Avena", null),
+    )
+    val gluten = allergens.first { it.id == 37 }
+    val glutenSelected = MensaAllergenPreferences(allergenIds = setOf(37))
+    val milk = allergens.first { it.id == 7 }
 
     private fun dish(
         id: Int,
@@ -113,7 +150,22 @@ internal object MensaPreviewData {
             mealTypes = listOf(MensaMealType(3, "Pranzo", "Pr", 1), MensaMealType(5, "Cena", "Ce", 2)),
         ),
         MensaMenuSummary(
+            id = 598, name = "Menu Bicocca Senza Glutine", shortName = "Senza Glutine", description = "",
+            cateringTypeDescription = "Mensa", activeDays = listOf(today, today.plusDays(1), today.plusDays(4)),
+            mealTypes = listOf(MensaMealType(3, "Pranzo", "Pr", 1), MensaMealType(5, "Cena", "Ce", 2)),
+        ),
+        MensaMenuSummary(
             id = 701, name = "Ristorazione complementare U3", shortName = "U3", description = "Edificio U3",
+            cateringTypeDescription = "Bar", activeDays = listOf(today, today.plusDays(1)),
+            mealTypes = listOf(MensaMealType(3, "Pranzo", "Pr", 1)),
+        ),
+        MensaMenuSummary(
+            id = 709, name = "Ristorazione complementare U12", shortName = "U12", description = "",
+            cateringTypeDescription = "Bar", activeDays = listOf(today, today.plusDays(1)),
+            mealTypes = listOf(MensaMealType(3, "Pranzo", "Pr", 1)),
+        ),
+        MensaMenuSummary(
+            id = 712, name = "Ristorazione complementare U6PT", shortName = "U6PT", description = "",
             cateringTypeDescription = "Bar", activeDays = listOf(today, today.plusDays(1)),
             mealTypes = listOf(MensaMealType(3, "Pranzo", "Pr", 1)),
         ),
@@ -164,5 +216,55 @@ internal object MensaPreviewData {
         ),
         gdaItems = listOf(MensaGdaItem("Energia", "420 kcal", 21.0, null), MensaGdaItem("Grassi", "9 g", 13.0, null)),
         dietaryBadges = listOf(vegan),
+    )
+}
+
+/** Booking data for the order and reservation previews, shaped like what Compass returns. */
+internal object MensaPreviewOrders {
+    private val day = MensaPreviewData.today
+
+    val canteenService = MensaTakeawayService(
+        id = 279, name = "Prenotazione ristorazione base", menuId = 400, menuName = "Menù Bicocca", ageRangeId = 5,
+        viewPrices = false, walletPayment = false, userRequestsEnabled = true, infoText = null, descriptionText = null,
+        maxDaysAhead = 5, isFavorite = false,
+        pickupLocations = listOf(
+            MensaPickupLocation(141, "Mensa U12", "Ristorazione base"),
+            MensaPickupLocation(146, "Mensa U6 -1 (solo pranzo)", "Ristorazione base"),
+        ),
+        scheduleByDate = mapOf(
+            day to listOf(MensaTakeawayDayMealType(3, "Pranzo", listOf(MensaTimeSlot(1116, "Pranzo\n11:45 - 14:30", true, 6, 60, 10.0)))),
+        ),
+    )
+
+    val barService = MensaTakeawayService(
+        id = 435, name = "Prenotazione Lunch box U12", menuId = 709, menuName = "Ristorazione complementare U12", ageRangeId = 5,
+        viewPrices = true, walletPayment = true, userRequestsEnabled = true, infoText = null, descriptionText = null,
+        maxDaysAhead = 5, isFavorite = false, pickupLocations = emptyList(),
+        scheduleByDate = mapOf(
+            day to listOf(
+                MensaTakeawayDayMealType(
+                    3, "Pranzo",
+                    listOf("12:00 - 12:30", "12:30 - 13:00", "13:00 - 13:30", "13:30 - 14:00")
+                        .mapIndexed { i, label -> MensaTimeSlot(1508 + i, "\n$label", i != 2, i, 20, null) },
+                ),
+            ),
+        ),
+    )
+
+    val cart = mapOf(
+        MensaPreviewData.plainDish.id to MensaCartEntry(MensaPreviewData.plainDish, 1),
+        MensaPreviewData.containsDish.id to MensaCartEntry(MensaPreviewData.containsDish, 2),
+    )
+
+    val pricing = MensaCartPricing("€", 15.0, 0.0, 0.0, 15.0, 0.0, "0.42", "KgCO2e", null)
+
+    val reservation = MensaReservation(
+        id = 1203341, code = "2026-MA111203341", date = day, rawDate = day.toString(), createdAt = null,
+        deliveryAddress = "Mensa U12", menuName = "Menù Bicocca", mealTypeName = "Pranzo",
+        canteenName = "Prenotazione ristorazione base", shiftName = "Pranzo (11:45 - 14:30)",
+        confirmed = true, deletable = true, active = true, provided = false,
+        statusDescription = "Confermata", statusColorHex = "#66BB6A",
+        dishes = listOf(MensaPreviewData.plainDish, MensaPreviewData.containsDish),
+        barcodeValue = "P-1203341", cfpFinalValue = "0.42", cfpUnit = "KgCO2e",
     )
 }

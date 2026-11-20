@@ -23,6 +23,7 @@ import it.attendance100.mybicocca.domain.model.mensa.MensaMealRuleId
 import it.attendance100.mybicocca.domain.model.mensa.MensaMealType
 import it.attendance100.mybicocca.domain.model.mensa.MensaMenuSummary
 import it.attendance100.mybicocca.domain.model.mensa.MensaPickupLocation
+import it.attendance100.mybicocca.domain.model.mensa.MensaPlace
 import it.attendance100.mybicocca.domain.model.mensa.MensaReservation
 import it.attendance100.mybicocca.domain.model.mensa.MensaSession
 import it.attendance100.mybicocca.domain.model.mensa.MensaTakeawayDayMealType
@@ -37,6 +38,7 @@ import it.attendance100.mybicocca.testing.MainDispatcherRule
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.state.MensaDeletionCheck
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.state.MensaDishDetailState
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.state.MensaEvent
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.state.MensaOrderAvailability
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.state.MensaSubPage
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -94,6 +96,15 @@ class MensaViewModelTest {
             shortName = "U3",
             description = "Mensa U3",
             cateringTypeDescription = "Bar",
+            activeDays = listOf(today),
+            mealTypes = listOf(MensaMealType(3, "Pranzo", "Pr", 1)),
+        ),
+        MensaMenuSummary(
+            id = 598,
+            name = "Menu Bicocca Senza Glutine",
+            shortName = "Senza Glutine",
+            description = "",
+            cateringTypeDescription = "Mensa",
             activeDays = listOf(today),
             mealTypes = listOf(MensaMealType(3, "Pranzo", "Pr", 1)),
         ),
@@ -168,14 +179,26 @@ class MensaViewModelTest {
         cfpUnit = null,
     )
 
-    private fun createViewModel(loggedIn: Boolean = false): MensaViewModel {
+    private fun withDinner(menu: MensaMenuSummary) =
+        menu.copy(mealTypes = menu.mealTypes + MensaMealType(5, "Cena", "Ce", 2))
+
+    private fun withDinner(schedule: Map<LocalDate, MensaDaySchedule>) = schedule.mapValues { (_, day) ->
+        day.copy(mealTypes = day.mealTypes + MensaDayMealType(5, "Cena", 2, day.mealTypes.first().courses))
+    }
+
+    private fun createViewModel(
+        loggedIn: Boolean = false,
+        dinner: Boolean = false,
+        reservations: List<MensaReservation> = listOf(sampleReservation),
+    ): MensaViewModel {
         every { repository.observeSession() } returns sessionFlow
         coEvery { repository.isLoggedIn() } returns loggedIn
-        coEvery { repository.getMenus() } returns menus
-        coEvery { repository.getMenuSchedule(400) } returns daySchedule(400)
+        coEvery { repository.getMenus() } returns if (dinner) menus.map { if (it.id == 400) withDinner(it) else it } else menus
+        coEvery { repository.getMenuSchedule(400) } returns if (dinner) withDinner(daySchedule(400)) else daySchedule(400)
         coEvery { repository.getMenuSchedule(701) } returns daySchedule(701)
+        coEvery { repository.getMenuSchedule(598) } returns daySchedule(598)
         coEvery { repository.getTakeawayServices() } returns listOf(sampleService)
-        coEvery { repository.getTakeawayReservations() } returns listOf(sampleReservation)
+        coEvery { repository.getTakeawayReservations() } returns reservations
         every { preferencesRepository.observe() } returns preferencesFlow
         coEvery { eligibilityProvider.getEligibility() } returns eligibility
         return MensaViewModel(repository, preferencesRepository, eligibilityProvider)
@@ -186,7 +209,7 @@ class MensaViewModelTest {
         val vm = createViewModel()
         advanceUntilIdle()
 
-        assertThat((vm.menus.value as Loadable.Loaded).value).hasSize(2)
+        assertThat((vm.menus.value as Loadable.Loaded).value).hasSize(3)
         assertThat(vm.selectedMenuId.value).isEqualTo(400)
         assertThat(vm.selectedDate.value).isEqualTo(today)
         assertThat(vm.selectedMealTypeId.value).isEqualTo(3)
@@ -245,12 +268,18 @@ class MensaViewModelTest {
     }
 
     @Test
-    fun `the menu asks for canteen day and meal first, then opens directly`() = runTest {
+    fun `the menu asks where first, then opens a bar on its day step`() = runTest {
         val vm = createViewModel()
         advanceUntilIdle()
 
         vm.openMenu()
-        assertThat(vm.backStack.value.last()).isEqualTo(MensaSubPage.MenuSetup)
+        assertThat(vm.backStack.value.last()).isEqualTo(MensaSubPage.PlacePicker)
+
+        vm.pickPlace(MensaPlace.BAR_U3)
+        assertThat(vm.selectedPlace.value).isEqualTo(MensaPlace.BAR_U3)
+        assertThat(vm.selectedMenuId.value).isEqualTo(701)
+        assertThat(vm.backStack.value)
+            .containsExactly(MensaSubPage.Home, MensaSubPage.PlacePicker, MensaSubPage.MenuSetup).inOrder()
 
         vm.confirmMenuSetup()
         assertThat(vm.backStack.value).containsExactly(MensaSubPage.Home, MensaSubPage.Menu).inOrder()
@@ -261,12 +290,92 @@ class MensaViewModelTest {
     }
 
     @Test
-    fun `editing the context from the menu returns to the menu`() = runTest {
+    fun `a canteen asks which menu after the place`() = runTest {
         val vm = createViewModel()
         advanceUntilIdle()
-        vm.preselectMenu(400)
 
         vm.openMenu()
+        vm.pickPlace(MensaPlace.CANTEEN_U12)
+        assertThat(vm.backStack.value.last()).isEqualTo(MensaSubPage.MenuPicker)
+
+        vm.pickMenu(598)
+        assertThat(vm.selectedMenuId.value).isEqualTo(598)
+        assertThat(vm.backStack.value).containsExactly(
+            MensaSubPage.Home, MensaSubPage.PlacePicker, MensaSubPage.MenuPicker, MensaSubPage.MenuSetup,
+        ).inOrder()
+    }
+
+    @Test
+    fun `back from each selection step returns to the step before it`() = runTest {
+        val vm = createViewModel()
+        advanceUntilIdle()
+        vm.openMenu()
+        vm.pickPlace(MensaPlace.CANTEEN_U6)
+        vm.pickMenu(598)
+
+        vm.back()
+        assertThat(vm.backStack.value.last()).isEqualTo(MensaSubPage.MenuPicker)
+        vm.back()
+        assertThat(vm.backStack.value.last()).isEqualTo(MensaSubPage.PlacePicker)
+        vm.back()
+        assertThat(vm.backStack.value).containsExactly(MensaSubPage.Home)
+    }
+
+    @Test
+    fun `closing the sheet forgets the choices, so the next opening starts from the place`() = runTest {
+        val vm = createViewModel()
+        advanceUntilIdle()
+        vm.openMenu()
+        vm.pickPlace(MensaPlace.BAR_U3)
+        vm.confirmMenuSetup()
+        vm.back()
+        vm.openMenu()
+        assertThat(vm.backStack.value.last()).isEqualTo(MensaSubPage.Menu)
+
+        vm.resetNavigation()
+        vm.openMenu()
+
+        assertThat(vm.selectedPlace.value).isNull()
+        assertThat(vm.backStack.value).containsExactly(MensaSubPage.Home, MensaSubPage.PlacePicker).inOrder()
+    }
+
+    @Test
+    fun `changing the place from the day step comes back to it, asking the menu only when it no longer fits`() = runTest {
+        val vm = createViewModel()
+        advanceUntilIdle()
+        vm.openMenu()
+        vm.pickPlace(MensaPlace.CANTEEN_U12)
+        vm.pickMenu(598)
+
+        // Same kind of place: the menu chosen stays.
+        vm.openPlacePicker()
+        vm.pickPlace(MensaPlace.CANTEEN_U6)
+        assertThat(vm.selectedMenuId.value).isEqualTo(598)
+        assertThat(vm.backStack.value.last()).isEqualTo(MensaSubPage.MenuSetup)
+
+        // A bar has its own menu.
+        vm.openPlacePicker()
+        vm.pickPlace(MensaPlace.BAR_U3)
+        assertThat(vm.selectedMenuId.value).isEqualTo(701)
+        assertThat(vm.backStack.value.last()).isEqualTo(MensaSubPage.MenuSetup)
+
+        // And back to a canteen, which asks again.
+        vm.openPlacePicker()
+        vm.pickPlace(MensaPlace.CANTEEN_U12)
+        assertThat(vm.backStack.value.last()).isEqualTo(MensaSubPage.MenuPicker)
+        vm.pickMenu(400)
+        assertThat(vm.backStack.value.last()).isEqualTo(MensaSubPage.MenuSetup)
+    }
+
+    @Test
+    fun `editing the day from the menu returns to the menu`() = runTest {
+        val vm = createViewModel()
+        advanceUntilIdle()
+        vm.openMenu()
+        vm.pickPlace(MensaPlace.CANTEEN_U12)
+        vm.pickMenu(400)
+        vm.confirmMenuSetup()
+
         vm.openMenuSetup()
         vm.confirmMenuSetup()
 
@@ -274,16 +383,138 @@ class MensaViewModelTest {
     }
 
     @Test
-    fun `a canteen picked on the campus map skips the setup step`() = runTest {
+    fun `changing the menu from the day step comes back to the day step`() = runTest {
+        val vm = createViewModel()
+        advanceUntilIdle()
+        vm.openMenu()
+        vm.pickPlace(MensaPlace.CANTEEN_U12)
+        vm.pickMenu(400)
+
+        vm.openMenuPicker()
+        vm.pickMenu(598)
+
+        assertThat(vm.selectedMenuId.value).isEqualTo(598)
+        assertThat(vm.backStack.value.last()).isEqualTo(MensaSubPage.MenuSetup)
+    }
+
+    @Test
+    fun `a place picked on the campus map opens on the day step`() = runTest {
         val vm = createViewModel()
         advanceUntilIdle()
 
-        vm.preselectMenu(701)
+        vm.preselectPlace(MensaPlace.BAR_U3)
         advanceUntilIdle()
-        vm.openMenu()
 
         assertThat(vm.selectedMenuId.value).isEqualTo(701)
-        assertThat(vm.backStack.value.last()).isEqualTo(MensaSubPage.Menu)
+        assertThat(vm.backStack.value).containsExactly(MensaSubPage.Home, MensaSubPage.MenuSetup).inOrder()
+
+        vm.confirmMenuSetup()
+        assertThat(vm.backStack.value).containsExactly(MensaSubPage.Home, MensaSubPage.Menu).inOrder()
+    }
+
+    @Test
+    fun `the canteen from the map becomes the gluten-free menu for someone avoiding gluten`() = runTest {
+        preferencesFlow.value = MensaAllergenPreferences(allergenIds = setOf(37))
+        val vm = createViewModel()
+        advanceUntilIdle()
+
+        vm.preselectPlace(MensaPlace.CANTEEN_U12)
+        advanceUntilIdle()
+        assertThat(vm.selectedMenuId.value).isEqualTo(598)
+
+        // A bar has no gluten-free variant, so it stays what was asked for.
+        vm.preselectPlace(MensaPlace.BAR_U3)
+        advanceUntilIdle()
+        assertThat(vm.selectedMenuId.value).isEqualTo(701)
+    }
+
+    @Test
+    fun `the canteen from the map stays the canteen without a gluten selection`() = runTest {
+        preferencesFlow.value = MensaAllergenPreferences(allergenIds = setOf(7))
+        val vm = createViewModel()
+        advanceUntilIdle()
+
+        vm.preselectPlace(MensaPlace.CANTEEN_U6)
+        advanceUntilIdle()
+        assertThat(vm.selectedMenuId.value).isEqualTo(400)
+    }
+
+    @Test
+    fun `a lunch-only place leaves dinner out and a canteen that serves it keeps it`() = runTest {
+        val vm = createViewModel(dinner = true)
+        advanceUntilIdle()
+        vm.openMenu()
+        vm.pickPlace(MensaPlace.CANTEEN_U12)
+        vm.pickMenu(400)
+
+        vm.selectMealType(5)
+        assertThat(vm.selectedMealTypeId.value).isEqualTo(5)
+
+        vm.openPlacePicker()
+        vm.pickPlace(MensaPlace.CANTEEN_U6)
+        assertThat(vm.selectedMealTypeId.value).isEqualTo(3)
+    }
+
+    @Test
+    fun `the menu can be ordered from only when signed in and a booking is open for the day and meal`() = runTest {
+        val vm = createViewModel(loggedIn = true, reservations = emptyList())
+        advanceUntilIdle()
+        vm.preselectPlace(MensaPlace.CANTEEN_U12)
+        advanceUntilIdle()
+        assertThat(vm.orderAvailability.value).isEqualTo(MensaOrderAvailability.SignedOut)
+
+        sessionFlow.value = MensaSession("a@b.it", "A", "U-1", 0.0)
+        advanceUntilIdle()
+        assertThat(vm.orderAvailability.value).isEqualTo(MensaOrderAvailability.Available(sampleService))
+        assertThat(vm.bookableDates.value).containsExactly(today)
+
+        // The bar has no booking service in this data.
+        vm.pickPlace(MensaPlace.BAR_U3)
+        advanceUntilIdle()
+        assertThat(vm.orderAvailability.value).isEqualTo(MensaOrderAvailability.Unavailable)
+        assertThat(vm.bookableDates.value).isEmpty()
+    }
+
+    @Test
+    fun `a day and meal already booked is not offered again`() = runTest {
+        val vm = createViewModel(loggedIn = true)
+        sessionFlow.value = MensaSession("a@b.it", "A", "U-1", 0.0)
+        advanceUntilIdle()
+        vm.preselectPlace(MensaPlace.CANTEEN_U12)
+        advanceUntilIdle()
+
+        assertThat(vm.orderAvailability.value).isEqualTo(MensaOrderAvailability.AlreadyBooked(sampleReservation))
+    }
+
+    @Test
+    fun `a combination the canteen refuses is reported with its first paragraph`() = runTest {
+        sessionFlow.value = MensaSession("a@b.it", "A", "U-1", 0.0)
+        coEvery { repository.calculateCartPricing(any(), any(), any()) } throws MensaServerMessageException(
+            "I seguenti extra non possono essere prenotati: PASTA (Primi Piatti).\n\nCOMBINAZIONI CONSENTITE ...",
+            RuntimeException(),
+        )
+        val vm = createViewModel(loggedIn = true)
+        advanceUntilIdle()
+
+        vm.addDishToCart(sampleDish)
+        advanceUntilIdle()
+
+        assertThat(vm.cartPricingError.value).isEqualTo("I seguenti extra non possono essere prenotati: PASTA (Primi Piatti).")
+        vm.clearCart()
+        assertThat(vm.cartPricingError.value).isNull()
+    }
+
+    @Test
+    fun `the cart belongs to the menu, so changing the menu empties it`() = runTest {
+        val vm = createViewModel()
+        advanceUntilIdle()
+        vm.addDishToCart(sampleDish)
+        assertThat(vm.cartDishes.value).isNotEmpty()
+
+        vm.selectMenu(701)
+        advanceUntilIdle()
+
+        assertThat(vm.cartDishes.value).isEmpty()
     }
 
     @Test
@@ -391,12 +622,12 @@ class MensaViewModelTest {
     }
 
     @Test
-    fun `openMenu pushes the menu above the hub`() = runTest {
+    fun `confirming the day step opens the menu above the hub`() = runTest {
         val vm = createViewModel()
         advanceUntilIdle()
-        vm.preselectMenu(400)
+        vm.preselectPlace(MensaPlace.CANTEEN_U12)
 
-        vm.openMenu()
+        vm.confirmMenuSetup()
 
         assertThat(vm.backStack.value).containsExactly(MensaSubPage.Home, MensaSubPage.Menu).inOrder()
     }
@@ -412,8 +643,8 @@ class MensaViewModelTest {
         assertThat(vm.backStack.value.last()).isEqualTo(MensaSubPage.Menu)
 
         vm.resetNavigation()
-        vm.preselectMenu(400)
-        vm.openMenu()
+        vm.preselectPlace(MensaPlace.CANTEEN_U12)
+        vm.confirmMenuSetup()
         vm.openTakeawayOrder()
         vm.browseDishes()
         assertThat(vm.backStack.value).containsExactly(MensaSubPage.Home, MensaSubPage.Menu).inOrder()
@@ -436,6 +667,78 @@ class MensaViewModelTest {
         advanceUntilIdle()
 
         assertThat(vm.backStack.value.last()).isEqualTo(MensaSubPage.TakeawayOrder)
+    }
+
+    @Test
+    fun `the order recap needs no account, and continuing signs in before the pickup page`() = runTest {
+        val vm = createViewModel()
+        advanceUntilIdle()
+        val signedIn = MensaSession("a@b.it", "A", "U-1", 0.0)
+        coEvery { repository.login("a@b.it", "pw") } coAnswers {
+            sessionFlow.value = signedIn
+            signedIn
+        }
+        vm.preselectPlace(MensaPlace.CANTEEN_U12)
+        vm.confirmMenuSetup()
+        vm.addDishToCart(sampleDish)
+
+        vm.openOrderSummary()
+        assertThat(vm.backStack.value)
+            .containsExactly(MensaSubPage.Home, MensaSubPage.Menu, MensaSubPage.OrderSummary).inOrder()
+
+        vm.openTakeawayOrder()
+        assertThat(vm.backStack.value.last()).isEqualTo(MensaSubPage.Login)
+        vm.login("a@b.it", "pw")
+        advanceUntilIdle()
+
+        assertThat(vm.backStack.value).containsExactly(
+            MensaSubPage.Home, MensaSubPage.Menu, MensaSubPage.OrderSummary, MensaSubPage.TakeawayOrder,
+        ).inOrder()
+        assertThat(vm.cartDishes.value[101015]?.quantity).isEqualTo(1)
+    }
+
+    @Test
+    fun `browseDishes from the recap goes back to the menu underneath`() = runTest {
+        val vm = createViewModel()
+        advanceUntilIdle()
+        vm.preselectPlace(MensaPlace.CANTEEN_U12)
+        vm.confirmMenuSetup()
+        vm.openOrderSummary()
+
+        vm.browseDishes()
+
+        assertThat(vm.backStack.value).containsExactly(MensaSubPage.Home, MensaSubPage.Menu).inOrder()
+    }
+
+    @Test
+    fun `setCartQuantity sets an exact amount, caps it and removes at zero`() = runTest {
+        val vm = createViewModel()
+        advanceUntilIdle()
+
+        vm.setCartQuantity(sampleDish, 7)
+        assertThat(vm.cartDishes.value[101015]?.quantity).isEqualTo(7)
+
+        vm.setCartQuantity(sampleDish, 500)
+        assertThat(vm.cartDishes.value[101015]?.quantity).isEqualTo(MENSA_MAX_CART_QUANTITY)
+
+        vm.incrementCartDish(101015)
+        assertThat(vm.cartDishes.value[101015]?.quantity).isEqualTo(MENSA_MAX_CART_QUANTITY)
+
+        vm.setCartQuantity(sampleDish, 0)
+        assertThat(vm.cartDishes.value).isEmpty()
+    }
+
+    @Test
+    fun `the carousel remembers which menu row each dish was on`() = runTest {
+        val vm = createViewModel()
+        advanceUntilIdle()
+
+        vm.openDishPager(listOf(sampleDish, sampleDish.copy(id = 2)), 1, listOf(3, 5))
+        assertThat(vm.pager.value?.menuRows).containsExactly(3, 5).inOrder()
+
+        // Rows that do not line up with the dishes are dropped rather than trusted.
+        vm.openDishPager(listOf(sampleDish), 0, listOf(3, 5))
+        assertThat(vm.pager.value?.menuRows).isNull()
     }
 
     @Test

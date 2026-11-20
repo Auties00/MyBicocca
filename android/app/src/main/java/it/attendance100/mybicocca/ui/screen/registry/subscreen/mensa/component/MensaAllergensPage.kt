@@ -6,12 +6,14 @@ import androidx.compose.runtime.Composable
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.domain.model.mensa.MensaAllergenPreferences
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -23,7 +25,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material.icons.outlined.Info
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -32,14 +33,24 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.state.valueOrNull
 import it.attendance100.mybicocca.domain.model.mensa.MensaAllergen
+import it.attendance100.mybicocca.domain.model.mensa.MensaAllergenKind
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.cleanAllergenName
 import it.attendance100.mybicocca.ui.component.button.RetryButton
 import it.attendance100.mybicocca.ui.component.feedback.friendlyMessage
 import it.attendance100.mybicocca.ui.component.modal.SheetLoadingIndicator
@@ -67,6 +78,8 @@ internal fun MensaAllergensPage(
         modifier = modifier
             .fillMaxWidth()
             .heightIn(max = 760.dp)
+            // The rounded top edge clips what scrolls under the header, like the other sheet lists.
+            .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp))
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 20.dp)
             .padding(bottom = 24.dp)
@@ -104,18 +117,26 @@ internal fun MensaAllergensPage(
             }
 
             else -> {
-                FlowRow(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                ) {
-                    list.forEach { allergen ->
-                        val selected = allergen.id in preferences.allergenIds
-                        FilterChip(
-                            selected = selected,
-                            onClick = { haptic.tap(); onToggleAllergen(allergen.id, !selected) },
-                            label = { Text(allergen.shortName.ifBlank { allergen.name }) },
-                        )
-                    }
+                // The frozen-ingredients notice is not something to avoid, so it is not offered.
+                val offered = list.filterNot { it.isFrozenNotice }
+                val sections = listOf(
+                    R.string.mensa_allergens_section_allergens to offered.filter { it.kind == MensaAllergenKind.ALLERGEN },
+                    R.string.mensa_allergens_section_diet to offered.filter { it.kind == MensaAllergenKind.CONTENT },
+                ).filter { it.second.isNotEmpty() }
+                sections.forEach { (title, items) ->
+                    Text(
+                        text = stringResource(title),
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
+                    )
+                    AllergenBento(
+                        allergens = items,
+                        selectedIds = preferences.allergenIds,
+                        onToggle = { allergen ->
+                            haptic.tap()
+                            onToggleAllergen(allergen.id, allergen.id !in preferences.allergenIds)
+                        },
+                    )
                 }
 
                 Surface(shape = RoundedCornerShape(20.dp), color = scheme.surfaceContainerHigh) {
@@ -169,7 +190,7 @@ private fun AllergensPreview(@PreviewParameter(MensaPreviewThemeProvider::class)
         MensaAllergensPage(
             allergens = Loadable.Loaded(MensaPreviewData.allergens),
             status = SyncStatus.Idle,
-            preferences = MensaAllergenPreferences(allergenIds = setOf(1, 7)),
+            preferences = MensaAllergenPreferences(allergenIds = setOf(37, 7)),
             onToggleAllergen = { _, _ -> },
             onHideMatchingChange = {},
             onClear = {},

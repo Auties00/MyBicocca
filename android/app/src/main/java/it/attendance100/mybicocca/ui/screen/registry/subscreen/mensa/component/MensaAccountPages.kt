@@ -241,7 +241,7 @@ internal fun MensaAccountEditPage(
                 MensaAccountField.PASSWORD -> {
                     val transformation = if (showPasswords) VisualTransformation.None else PasswordVisualTransformation()
                     val toggle: @Composable () -> Unit = {
-                        IconButton(onClick = { showPasswords = !showPasswords }) {
+                        IconButton(onClick = { haptic.tap(); showPasswords = !showPasswords }) {
                             Icon(if (showPasswords) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility, contentDescription = null)
                         }
                     }

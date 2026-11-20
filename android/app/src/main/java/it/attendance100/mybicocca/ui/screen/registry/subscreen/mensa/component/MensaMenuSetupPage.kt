@@ -22,9 +22,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CloudOff
-import androidx.compose.material.icons.outlined.RadioButtonChecked
-import androidx.compose.material.icons.outlined.RadioButtonUnchecked
 import androidx.compose.material.icons.outlined.Restaurant
+import androidx.compose.material.icons.outlined.ShoppingBag
+import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ButtonGroupDefaults
@@ -35,6 +35,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -50,7 +51,11 @@ import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.state.valueOrNull
 import it.attendance100.mybicocca.core.time.AppClock
 import it.attendance100.mybicocca.domain.model.mensa.MensaDaySchedule
+import it.attendance100.mybicocca.domain.model.mensa.MensaMenuIdentity
 import it.attendance100.mybicocca.domain.model.mensa.MensaMenuSummary
+import it.attendance100.mybicocca.domain.model.mensa.MensaPlace
+import it.attendance100.mybicocca.domain.model.mensa.identity
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.MensaMenuCard
 import it.attendance100.mybicocca.ui.component.button.RetryButton
 import it.attendance100.mybicocca.ui.component.feedback.EmptyState
 import it.attendance100.mybicocca.ui.component.feedback.friendlyMessage
@@ -66,17 +71,20 @@ private val DateChipFormatter: DateTimeFormatter
     @ReadOnlyComposable
     get() = DateTimeFormatter.ofPattern("EEE d MMM", currentLocale())
 
-/** The step before the menu: which canteen, which day, lunch or dinner. */
+/** The step before the menu: which day, and lunch or dinner where the place serves both. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun MensaMenuSetupPage(
     menus: Loadable<List<MensaMenuSummary>>,
     menusStatus: SyncStatus,
+    selectedPlace: MensaPlace?,
     selectedMenuId: Int?,
     selectedDate: LocalDate?,
     selectedMealTypeId: Int?,
     schedule: Loadable<Map<LocalDate, MensaDaySchedule>>,
-    onSelectMenu: (Int) -> Unit,
+    bookableDates: Set<LocalDate>,
+    onChangePlace: () -> Unit,
+    onChangeMenu: () -> Unit,
     onSelectDate: (LocalDate) -> Unit,
     onSelectMealType: (Int) -> Unit,
     onConfirm: () -> Unit,
@@ -95,7 +103,11 @@ internal fun MensaMenuSetupPage(
     val dates = remember(scheduleMap, currentMenu) {
         if (scheduleMap.isNotEmpty()) scheduleMap.keys.sorted() else currentMenu?.activeDays.orEmpty()
     }
-    val meals = selectedDate?.let { scheduleMap[it] }?.mealTypes.orEmpty()
+    // Until the day's schedule arrives the menu's own meals stand in, so a canteen that serves
+    // dinner shows both buttons straight away instead of growing them a moment later.
+    val dayMeals = selectedDate?.let { scheduleMap[it] }?.mealTypes?.map { Triple(it.id, it.name, it.order) }
+    val allMeals = dayMeals ?: currentMenu?.mealTypes?.map { Triple(it.id, it.name, it.order) }.orEmpty()
+    val meals = selectedPlace?.mealsOf(allMeals, { it.third }) ?: allMeals
 
     Column(
         modifier = modifier
@@ -137,27 +149,49 @@ internal fun MensaMenuSetupPage(
                         .padding(bottom = 8.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    StepLabel(stringResource(R.string.mensa_setup_where))
-                    Column(
-                        modifier = Modifier.padding(horizontal = 20.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        menuList.forEach { menu ->
-                            CanteenRow(
-                                menu = menu,
-                                selected = menu.id == selectedMenuId,
-                                onClick = { haptic.tap(); onSelectMenu(menu.id) },
+                    selectedPlace?.let { place ->
+                        ChosenRow(
+                            identity = place.identity(),
+                            label = stringResource(R.string.mensa_setup_place),
+                            name = place.displayName,
+                            tag = MensaTestTags.MENU_SETUP_CHANGE_PLACE,
+                            onChange = { haptic.tap(); onChangePlace() },
+                            modifier = Modifier.padding(horizontal = 20.dp),
+                        )
+                    }
+                    if (selectedPlace?.hasMenuChoice != false) {
+                        currentMenu?.let { menu ->
+                            ChosenRow(
+                                identity = menu.identity(),
+                                label = stringResource(R.string.mensa_setup_menu),
+                                name = menu.identity().displayName,
+                                tag = MensaTestTags.MENU_SETUP_CHANGE,
+                                onChange = { haptic.tap(); onChangeMenu() },
+                                modifier = Modifier.padding(horizontal = 20.dp),
                             )
                         }
                     }
 
                     StepLabel(stringResource(R.string.mensa_setup_when))
-                    DateStrip(dates = dates, selectedDate = selectedDate, onSelectDate = onSelectDate)
+                    DateStrip(
+                        dates = dates,
+                        selectedDate = selectedDate,
+                        bookableDates = bookableDates,
+                        onSelectDate = onSelectDate,
+                    )
+                    if (bookableDates.isNotEmpty()) {
+                        Text(
+                            text = stringResource(R.string.mensa_setup_bookable_hint),
+                            style = MaterialTheme.typography.labelMedium,
+                            color = scheme.onSurfaceVariant,
+                            modifier = Modifier.padding(horizontal = 24.dp),
+                        )
+                    }
 
                     if (meals.size > 1) {
                         StepLabel(stringResource(R.string.mensa_setup_meal))
                         MealToggle(
-                            mealTypes = meals.map { it.id to it.name },
+                            mealTypes = meals.map { it.first to it.second },
                             selectedMealTypeId = selectedMealTypeId,
                             onSelectMealType = onSelectMealType,
                             modifier = Modifier.padding(horizontal = 20.dp),
@@ -198,44 +232,47 @@ private fun StepLabel(text: String) {
     )
 }
 
+/** A choice made in an earlier step, with a way back to change it. */
 @Composable
-private fun CanteenRow(menu: MensaMenuSummary, selected: Boolean, onClick: () -> Unit) {
+private fun ChosenRow(
+    identity: MensaMenuIdentity,
+    label: String,
+    name: String,
+    tag: String,
+    onChange: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val scheme = MaterialTheme.colorScheme
     Surface(
+        modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(20.dp),
-        color = if (selected) scheme.primaryContainer else scheme.surfaceContainerHigh,
-        contentColor = if (selected) scheme.onPrimaryContainer else scheme.onSurface,
+        color = scheme.surfaceContainerHigh,
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable(onClick = onClick)
-                .padding(horizontal = 16.dp, vertical = 14.dp),
+                .clickable(onClick = onChange)
+                .testTag(tag)
+                .padding(10.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            MensaMenuCard(identity, Modifier.height(64.dp), showLabels = false, corner = 0.dp)
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
-                    text = menu.name,
-                    style = MaterialTheme.typography.titleSmall,
+                    text = label,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = scheme.onSurfaceVariant,
+                )
+                Text(
+                    text = name,
+                    style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
-                if (menu.description.isNotBlank()) {
-                    Text(
-                        text = menu.description,
-                        style = MaterialTheme.typography.bodySmall,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                }
             }
-            Icon(
-                imageVector = if (selected) Icons.Outlined.RadioButtonChecked else Icons.Outlined.RadioButtonUnchecked,
-                contentDescription = null,
-                modifier = Modifier.size(22.dp),
-            )
+            TextButton(onClick = onChange) { Text(stringResource(R.string.mensa_setup_change)) }
         }
     }
 }
@@ -244,6 +281,7 @@ private fun CanteenRow(menu: MensaMenuSummary, selected: Boolean, onClick: () ->
 private fun DateStrip(
     dates: List<LocalDate>,
     selectedDate: LocalDate?,
+    bookableDates: Set<LocalDate>,
     onSelectDate: (LocalDate) -> Unit,
 ) {
     val haptic = rememberHapticManager()
@@ -268,6 +306,11 @@ private fun DateStrip(
                 selected = date == selectedDate,
                 onClick = { haptic.tap(); onSelectDate(date) },
                 label = { Text(label) },
+                leadingIcon = if (date in bookableDates) {
+                    { Icon(Icons.Outlined.ShoppingBag, contentDescription = null, modifier = Modifier.size(FilterChipDefaults.IconSize)) }
+                } else {
+                    null
+                },
             )
         }
     }
@@ -331,11 +374,14 @@ private fun MenuSetupPreview(@PreviewParameter(MensaPreviewThemeProvider::class)
         MensaMenuSetupPage(
             menus = Loadable.Loaded(MensaPreviewData.menus),
             menusStatus = SyncStatus.Idle,
+            selectedPlace = MensaPlace.CANTEEN_U12,
             selectedMenuId = 400,
             selectedDate = MensaPreviewData.today,
             selectedMealTypeId = 3,
             schedule = MensaPreviewData.schedule,
-            onSelectMenu = {},
+            bookableDates = setOf(MensaPreviewData.today),
+            onChangePlace = {},
+            onChangeMenu = {},
             onSelectDate = {},
             onSelectMealType = {},
             onConfirm = {},

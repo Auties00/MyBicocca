@@ -1,0 +1,758 @@
+{
+"101004": {
+"en": "Mixed salad with red cabbage, sweetcorn and tuna in olive oil.",
+"it": "Insalata mista con cavolo rosso, mais dolce e tonno sott'olio."
+},
+"101006": {
+"en": "Mixed salad with julienned carrots, yellow peppers and cooked ham.",
+"it": "Insalata mista con carote alla julienne, peperoni gialli e prosciutto cotto."
+},
+"101007": {
+"en": "Mixed salad with julienned carrots, yellow peppers and borlotti beans.",
+"it": "Insalata mista con carote alla julienne, peperoni gialli e fagioli borlotti."
+},
+"101010": {
+"en": "Mixed salad with cucumber, tomatoes and egg frittata.",
+"it": "Insalata mista con cetrioli, pomodori e frittata di uova."
+},
+"101013": {
+"en": "Basmati rice poke bowl with egg frittata, tomatoes, sesame seeds and mayonnaise.",
+"it": "Poke bowl di riso basmati con frittata di uova, pomodori, semi di sesamo e maionese."
+},
+"101015": {
+"en": "Black Venere rice poke bowl with smoked salmon, julienned courgettes and cherry tomatoes.",
+"it": "Poke bowl di riso nero Venere con salmone affumicato, zucchine alla julienne e pomodorini."
+},
+"101018": {
+"en": "Rice poke bowl with lentils, cauliflower and soy sauce.",
+"it": "Poke bowl a base di riso con lenticchie, cavolfiore e salsa di soia."
+},
+"101027": {
+"en": "Rustic potatoes seasoned with extra virgin olive oil and mixed aromatic herbs.",
+"it": "Patate rustiche condite con olio extravergine d'oliva e un mix di erbe aromatiche."
+},
+"101105": {
+"en": "Durum wheat pasta with tomato sauce, basil, onion and extra virgin olive oil.",
+"it": "Pasta di semola con sugo di pomodoro, basilico, cipolla e olio extravergine d'oliva."
+},
+"101106": {
+"en": "Spinach spätzle dumplings tossed in butter, fresh sage and a pinch of nutmeg.",
+"it": "Spätzle agli spinaci conditi con burro, salvia fresca e un pizzico di noce moscata."
+},
+"101110": {
+"en": "Durum wheat pasta with tomato sauce, aubergines, onion and basil.",
+"it": "Pasta di semola con sugo di pomodoro, melanzane, cipolla e basilico."
+},
+"101124": {
+"en": "Beef stew with potatoes, button mushrooms, tomato sauce and soffritto vegetables.",
+"it": "Spezzatino di manzo in umido con patate, funghi champignon, pomodoro e verdure per soffritto."
+},
+"101335": {
+"en": "Durum wheat pasta with a smooth artichoke sauce and extra virgin olive oil.",
+"it": "Pasta di semola condita con crema di carciofi e olio extravergine d'oliva."
+},
+"101413": {
+"en": "Brussels sprouts and potato soup dressed with extra virgin olive oil.",
+"it": "Zuppa di cavoletti di Bruxelles e patate condita con olio extravergine d'oliva."
+},
+"101419": {
+"en": "Durum wheat pasta with tomato sauce, courgettes and provola cheese.",
+"it": "Pasta di semola con sugo di pomodoro, zucchine e provola."
+},
+"101631": {
+"en": "Piadina romagnola filled with chickpea hummus (with sesame, lemon and turmeric) and grilled peppers.",
+"it": "Piadina romagnola farcita con hummus di ceci (con sesamo, limone e curcuma) e peperoni grigliati."
+},
+"101632": {
+"en": "Roast pork porchetta flavoured with pale beer and mustard sauce.",
+"it": "Arrosto di maiale (porchetta) insaporito con birra chiara e salsa di senape."
+},
+"101633": {
+"en": "Mackerel fillet flavoured with orange, lemon juice, parsley and extra virgin olive oil.",
+"it": "Filetto di sgombro insaporito con arancia, succo di limone, prezzemolo e olio extravergine d'oliva."
+},
+"101634": {
+"en": "Green asparagus and potato flan made with extra virgin olive oil.",
+"it": "Flan di asparagi verdi e patate condito con olio extravergine d'oliva."
+},
+"102038": {
+"en": "Courgette flan made with eggs, milk and grated Grana Padano cheese.",
+"it": "Flan di zucchine preparato con uova, latte e Grana Padano grattugiato."
+},
+"102044": {
+"en": "Potatoes seasoned with curry spices and extra virgin olive oil.",
+"it": "Patate insaporite con curry e olio extravergine d'oliva."
+},
+"102193": {
+"en": "Potatoes gratinated with breadcrumbs, mustard sauce and extra virgin olive oil.",
+"it": "Patate gratinate con pangrattato, salsa di senape e olio extravergine d'oliva."
+},
+"102203": {
+"en": "Spaghetti in a smooth tomato and onion sauce, topped with breadcrumbs and extra virgin olive oil.",
+"it": "Spaghetti con crema di pomodoro e cipolla, completati con pangrattato e olio extravergine d'oliva."
+},
+"102204": {
+"en": "Risotto made with pears, Taleggio cheese, butter and milk.",
+"it": "Risotto preparato con pere e formaggio Taleggio, mantecato con burro e latte."
+},
+"102205": {
+"en": "Green asparagus flan made with eggs, milk, potatoes and Grana Padano cheese.",
+"it": "Tortino di asparagi verdi preparato con uova, latte, patate e Grana Padano."
+},
+"102206": {
+"en": "Aubergine bake made with eggs, milk, Grana Padano cheese and tomato paste.",
+"it": "Sformato di melanzane preparato con uova, latte, Grana Padano e concentrato di pomodoro."
+},
+"102719": {
+"en": "Gluten-free mixed salad with julienned carrots, yellow peppers and borlotti beans.",
+"it": "Insalata mista senza glutine con carote alla julienne, peperoni gialli e fagioli borlotti."
+},
+"102720": {
+"en": "Gluten-free lentil and mashed potato bake made with extra virgin olive oil.",
+"it": "Versione senza glutine dello sformato di lenticchie e purè di patate con olio extravergine d'oliva."
+},
+"102721": {
+"en": "Gluten-free pasta with tomato sauce, aubergines, onion and basil.",
+"it": "Pasta senza glutine con sugo di pomodoro, melanzane, cipolla e basilico."
+},
+"102722": {
+"en": "Gluten-free pumpkin risotto with onion, butter, milk and Grana Padano cheese.",
+"it": "Versione senza glutine del risotto alla zucca gialla, con cipolla, burro, latte e Grana Padano."
+},
+"102726": {
+"en": "Gluten-free piadina filled with chickpea hummus (with sesame, lemon and turmeric) and grilled peppers.",
+"it": "Piadina senza glutine farcita con hummus di ceci (con sesamo, limone e curcuma) e peperoni grigliati."
+},
+"102727": {
+"en": "Gluten-free potatoes coated in gluten-free breadcrumbs and extra virgin olive oil.",
+"it": "Versione senza glutine delle patate sabbiose, ricoperte di pangrattato senza glutine e olio extravergine d'oliva."
+},
+"102728": {
+"en": "Gluten-free pasta alla carbonara made with eggs, pancetta, Pecorino Romano and Grana Padano cheese.",
+"it": "Versione senza glutine della pasta alla carbonara, con uova, pancetta, Pecorino Romano e Grana Padano."
+},
+"102739": {
+"en": "Gluten-free pear and Taleggio cheese risotto finished with butter and milk.",
+"it": "Versione senza glutine del risotto pere e Taleggio, mantecato con burro e latte."
+},
+"102740": {
+"en": "Gluten-free gratinated potatoes made with gluten-free breadcrumbs, mustard sauce and extra virgin olive oil.",
+"it": "Versione senza glutine delle patate gratinate, con pangrattato senza glutine, salsa di senape e olio extravergine d'oliva."
+},
+"102741": {
+"en": "Gluten-free green asparagus flan made with eggs, milk, potatoes and Grana Padano cheese.",
+"it": "Versione senza glutine del tortino agli asparagi verdi, con uova, latte, patate e Grana Padano."
+},
+"102742": {
+"en": "Gluten-free spaghetti in tomato sauce with tuna, black olives, capers and parsley.",
+"it": "Spaghetti senza glutine con sugo di pomodoro, tonno, olive nere, capperi e prezzemolo."
+},
+"104731": {
+"en": "Gluten-free spicy chicken drumsticks seasoned with chilli and aromatic herbs.",
+"it": "Versione senza glutine delle cosce di pollo alla diavola, insaporite con peperoncino ed erbe aromatiche."
+},
+"104733": {
+"en": "Gluten-free roast pork porchetta flavoured with mustard sauce and extra virgin olive oil.",
+"it": "Versione senza glutine dell'arrosto di maiale (porchetta), insaporito con salsa di senape e olio extravergine d'oliva."
+},
+"104794": {
+"en": "Gluten-free vegetarian grill option featuring tomino cheese, served only at the U12 canteen.",
+"it": "Versione senza glutine della griglia vegetariana a base di formaggio tomino, servita solo alla mensa U12."
+},
+"104888": {
+"en": "Gluten-free rice poke bowl with lentils and cauliflower.",
+"it": "Poke bowl senza glutine a base di riso con lenticchie e cavolfiore."
+},
+"38577": {
+"en": "Smooth carrot and potato soup flavoured with ginger and extra virgin olive oil.",
+"it": "Vellutata di carote e patate aromatizzata con zenzero e condita con olio extravergine d'oliva."
+},
+"38609": {
+"en": "Plain rice dressed with extra virgin olive oil.",
+"it": "Riso semplice condito con olio extravergine d'oliva."
+},
+"38610": {
+"en": "Plain durum wheat pasta dressed with extra virgin olive oil.",
+"it": "Pasta di semola semplice condita con olio extravergine d'oliva."
+},
+"38611": {
+"en": "Rice served with tomato sauce, onion and extra virgin olive oil.",
+"it": "Riso condito con sugo di pomodoro, cipolla e olio extravergine d'oliva."
+},
+"38612": {
+"en": "Durum wheat pasta with tomato sauce, onion and extra virgin olive oil.",
+"it": "Pasta di semola condita con sugo di pomodoro, cipolla e olio extravergine d'oliva."
+},
+"38613": {
+"en": "Wholemeal pasta with tomato sauce, onion and extra virgin olive oil.",
+"it": "Pasta integrale condita con sugo di pomodoro, cipolla e olio extravergine d'oliva."
+},
+"38614": {
+"en": "Plain wholemeal pasta dressed with extra virgin olive oil.",
+"it": "Pasta integrale semplice condita con olio extravergine d'oliva."
+},
+"38615": {
+"en": "Plain brown rice dressed with extra virgin olive oil.",
+"it": "Riso integrale semplice condito con olio extravergine d'oliva."
+},
+"38616": {
+"en": "Brown rice with tomato sauce, onion and extra virgin olive oil.",
+"it": "Riso integrale condito con sugo di pomodoro, cipolla e olio extravergine d'oliva."
+},
+"38622": {
+"en": "Packaged portion of wheat breadsticks.",
+"it": "Porzione confezionata di grissini di grano."
+},
+"38623": {
+"en": "Portion of rotating fresh seasonal fruit.",
+"it": "Porzione di frutta fresca di stagione a rotazione."
+},
+"38624": {
+"en": "Organic fruit yoghurt made with whole milk.",
+"it": "Yogurt biologico alla frutta prodotto con latte intero."
+},
+"38625": {
+"en": "A 100 g portion of the dessert of the day.",
+"it": "Porzione da 100 g di dessert del giorno."
+},
+"38626": {
+"en": "Half-litre bottle of still mineral water.",
+"it": "Bottiglia d'acqua minerale naturale da mezzo litro."
+},
+"38627": {
+"en": "Half-litre bottle of sparkling mineral water.",
+"it": "Bottiglia d'acqua minerale frizzante da mezzo litro."
+},
+"38628": {
+"en": "A 150 g portion of fruit salad made with rotating seasonal fruit.",
+"it": "Porzione da 150 g di macedonia preparata con frutta di stagione a rotazione."
+},
+"38661": {
+"en": "Broccoli dressed with extra virgin olive oil.",
+"it": "Broccoli conditi con olio extravergine d'oliva."
+},
+"38673": {
+"en": "Pasta all'amatriciana with tomato sauce, pancetta, onion and black pepper.",
+"it": "Pasta all'amatriciana con sugo di pomodoro, pancetta, cipolla e pepe nero."
+},
+"38684": {
+"en": "Wholemeal pasta with tomato sauce, button mushrooms, onion and parsley.",
+"it": "Pasta integrale con sugo di pomodoro, funghi champignon, cipolla e prezzemolo."
+},
+"38715": {
+"en": "Steamed broccoli dressed with extra virgin olive oil.",
+"it": "Broccoli cotti al vapore e conditi con olio extravergine d'oliva."
+},
+"38755": {
+"en": "Steamed fennel dressed with extra virgin olive oil.",
+"it": "Finocchi cotti al vapore e conditi con olio extravergine d'oliva."
+},
+"38772": {
+"en": "Chickpea flour farinata seasoned with extra virgin olive oil, rosemary and black pepper.",
+"it": "Farinata preparata con farina di ceci, acqua, olio extravergine d'oliva, rosmarino e pepe nero."
+},
+"38782": {
+"en": "Portion of organic wholemeal wheat bread.",
+"it": "Porzione di pane di grano integrale biologico."
+},
+"38799": {
+"en": "Pasta alla carbonara made with eggs, pancetta, Pecorino Romano, Grana Padano and black pepper.",
+"it": "Pasta alla carbonara preparata con uova, pancetta, Pecorino Romano, Grana Padano e pepe nero."
+},
+"38817": {
+"en": "Gluten-free cauliflower gratinated with gluten-free breadcrumbs and extra virgin olive oil.",
+"it": "Versione senza glutine del cavolfiore gratinato, con pangrattato senza glutine e olio extravergine d'oliva."
+},
+"39133": {
+"en": "Blended mixed vegetable soup dressed with extra virgin olive oil.",
+"it": "Passato di verdure miste condito con olio extravergine d'oliva."
+},
+"42236": {
+"en": "Stewed lentils cooked with tomato sauce and extra virgin olive oil.",
+"it": "Lenticchie in umido cotte con salsa di pomodoro e olio extravergine d'oliva."
+},
+"42239": {
+"en": "Chicken drumsticks seasoned with paprika, rosemary and extra virgin olive oil.",
+"it": "Cosce di pollo insaporite con paprika, rosmarino e olio extravergine d'oliva."
+},
+"42290": {
+"en": "A 200 g portion of raw seasonal vegetables.",
+"it": "Porzione da 200 g di verdura cruda di stagione."
+},
+"42455": {
+"en": "Durum wheat pasta with speck in a saffron sauce made with milk, butter and black pepper.",
+"it": "Pasta di semola con speck e salsa allo zafferano preparata con latte, burro e pepe nero."
+},
+"42494": {
+"en": "Swiss chard dressed with extra virgin olive oil.",
+"it": "Bietole condite con olio extravergine d'oliva."
+},
+"42536": {
+"en": "Spinach dressed with extra virgin olive oil.",
+"it": "Spinaci conditi con olio extravergine d'oliva."
+},
+"50855": {
+"en": "Smooth cauliflower and potato soup dressed with extra virgin olive oil.",
+"it": "Crema di cavolfiore e patate condita con olio extravergine d'oliva."
+},
+"51280": {
+"en": "Portion of Valtellina bresaola (air-dried cured beef), served only at the U6-1 canteen.",
+"it": "Porzione di bresaola della Valtellina, servita solo alla mensa U6-1."
+},
+"61106": {
+"en": "Mixed vegetable side dish of potatoes, carrots and peas dressed with extra virgin olive oil.",
+"it": "Contorno di verdure miste con patate, carote e piselli conditi con olio extravergine d'oliva."
+},
+"61283": {
+"en": "Pumpkin risotto with onion, finished with butter, milk and Grana Padano cheese.",
+"it": "Risotto alla zucca gialla con cipolla, mantecato con burro, latte e Grana Padano."
+},
+"61290": {
+"en": "Pasta e fagioli made with durum wheat pasta, borlotti beans, potatoes and mixed soffritto vegetables.",
+"it": "Pasta e fagioli preparata con pasta di semola, fagioli borlotti, patate e verdure per soffritto."
+},
+"62283": {
+"en": "Braised beef cooked with red wine, tomato, soffritto vegetables and aromatic herbs.",
+"it": "Brasato di manzo cotto con vino rosso, pomodoro, verdure per soffritto ed erbe aromatiche."
+},
+"69397": {
+"en": "Stewed peas cooked with onion and extra virgin olive oil.",
+"it": "Piselli stufati con cipolla e olio extravergine d'oliva."
+},
+"69398": {
+"en": "Potatoes coated in breadcrumbs and extra virgin olive oil.",
+"it": "Patate sabbiose ricoperte di pangrattato e condite con olio extravergine d'oliva."
+},
+"69399": {
+"en": "A 150 g portion of rotating fresh fruit.",
+"it": "Porzione da 150 g di frutta fresca a rotazione."
+},
+"69406": {
+"en": "Plant-based burger made with chickpeas, wholegrain spelt, semi-dried tomatoes, onions, carrots and herbs.",
+"it": "Burger vegetale a base di ceci e farro integrale con pomodori semi-secchi, cipolle, carote ed erbe aromatiche."
+},
+"69408": {
+"en": "Pasta all'arrabbiata with a spicy tomato sauce, garlic, chilli and parsley.",
+"it": "Pasta condita con sugo piccante di pomodoro, aglio, peperoncino e prezzemolo."
+},
+"69409": {
+"en": "Mixed vegetable minestrone soup dressed with extra virgin olive oil.",
+"it": "Minestrone di verdure miste condito con olio extravergine d'oliva."
+},
+"69415": {
+"en": "Steamed spinach dressed with extra virgin olive oil.",
+"it": "Spinaci cotti al vapore e conditi con olio extravergine d'oliva."
+},
+"69427": {
+"en": "Egg frittata made with artichokes, milk and grated Grana Padano cheese.",
+"it": "Frittata di uova con carciofi, latte e Grana Padano grattugiato."
+},
+"69429": {
+"en": "Steamed green beans dressed with extra virgin olive oil.",
+"it": "Fagiolini cotti al vapore e conditi con olio extravergine d'oliva."
+},
+"70780": {
+"en": "Spicy chicken drumsticks seasoned with chilli, black pepper and aromatic herbs.",
+"it": "Cosce di pollo alla diavola insaporite con peperoncino, pepe nero ed erbe aromatiche."
+},
+"73460": {
+"en": "Wholemeal pasta served with the sauce of the day, available on request.",
+"it": "Pasta integrale condita con il sugo del giorno, disponibile su richiesta."
+},
+"73461": {
+"en": "Brown rice served with the sauce of the day, available on request.",
+"it": "Riso integrale condito con il sugo del giorno, disponibile su richiesta."
+},
+"73925": {
+"en": "Gluten-free pasta alla Portofino with tomato sauce, Genoese basil pesto and soffritto vegetables.",
+"it": "Pasta senza glutine alla Portofino con sugo di pomodoro, pesto alla genovese e verdure per soffritto."
+},
+"73927": {
+"en": "Gluten-free pasta all'amatriciana with tomato sauce, pancetta and soffritto vegetables.",
+"it": "Versione senza glutine della pasta all'amatriciana, con sugo di pomodoro, pancetta e verdure per soffritto."
+},
+"73952": {
+"en": "Gluten-free pasta all'arrabbiata with spicy tomato and chilli sauce.",
+"it": "Versione senza glutine della pasta all'arrabbiata, condita con sugo di pomodoro e peperoncino."
+},
+"73968": {
+"en": "Packaged portion of gluten-free bread.",
+"it": "Porzione confezionata di pane senza glutine."
+},
+"74031": {
+"en": "Gluten-free gnocchi tossed in butter and fresh sage.",
+"it": "Gnocchi senza glutine conditi con burro e salvia fresca."
+},
+"74038": {
+"en": "Gluten-free pasta alla boscaiola with tomato sauce, mixed mushrooms, soffritto vegetables and parsley.",
+"it": "Pasta senza glutine alla boscaiola con sugo di pomodoro, funghi misti, verdure per soffritto e prezzemolo."
+},
+"74054": {
+"en": "Gluten-free pasta with courgettes, provola cheese, milk and onion.",
+"it": "Pasta senza glutine con zucchine, provola, latte e cipolla."
+},
+"74196": {
+"en": "Mixed salad with tomatoes, black olives and roast pork porchetta.",
+"it": "Insalata mista con pomodori, olive nere e porchetta."
+},
+"74197": {
+"en": "Mixed salad with tomatoes, black olives and mozzarella.",
+"it": "Insalata mista con pomodori, olive nere e mozzarella."
+},
+"77064": {
+"en": "Stewed mixed pulses with cannellini beans, chickpeas and lentils in tomato and onion sauce.",
+"it": "Legumi misti in umido con fagioli cannellini, ceci e lenticchie in sugo di pomodoro e cipolla."
+},
+"78320": {
+"en": "Pack of organic wheat crackers.",
+"it": "Confezione di crackers di grano biologico."
+},
+"78890": {
+"en": "Portion of multigrain bread made with wheat and barley.",
+"it": "Porzione di pane multicereali con grano e orzo."
+},
+"78891": {
+"en": "Small wheat bread roll.",
+"it": "Piccolo panino bocconcino preparato con farina di grano."
+},
+"80516": {
+"en": "Smooth potato and spinach soup with onion and extra virgin olive oil.",
+"it": "Crema di patate e spinaci con cipolla e olio extravergine d'oliva."
+},
+"80522": {
+"en": "Mackerel fillet dressed with lemon, parsley and extra virgin olive oil.",
+"it": "Filetto di sgombro condito con limone, prezzemolo e olio extravergine d'oliva."
+},
+"80525": {
+"en": "Stewed trout fillet cooked with tomato sauce, parsley and extra virgin olive oil.",
+"it": "Filetto di trota in umido con salsa di pomodoro, prezzemolo e olio extravergine d'oliva."
+},
+"80540": {
+"en": "Mixed salad with red cabbage, sweetcorn and Fontina cheese.",
+"it": "Insalata mista con cavolo rosso, mais dolce e formaggio Fontina."
+},
+"80541": {
+"en": "Brown rice poke bowl with tuna in olive oil, broccoli and carrots.",
+"it": "Poke bowl a base di riso integrale con tonno sott'olio, broccoli e carote."
+},
+"80550": {
+"en": "Cornmeal bake made with onions, mozzarella and Grana Padano cheese.",
+"it": "Tortino a base di farina di mais con cipolle, mozzarella e Grana Padano."
+},
+"80927": {
+"en": "Grill dish with rotating meats (chicken, turkey, pork, beef, sausage or frankfurter) and tomino cheese, served only at the U12 canteen.",
+"it": "Piatto alla griglia con proposte a rotazione tra carne (pollo, tacchino, maiale, manzo, salsiccia o würstel) e tomino, servito solo alla mensa U12."
+},
+"81675": {
+"en": "Cauliflower gratinated with breadcrumbs and extra virgin olive oil.",
+"it": "Cavolfiore gratinato con pangrattato e olio extravergine d'oliva."
+},
+"81793": {
+"en": "Pork and pork sausage dish cooked with potatoes, red peppers and aromatic herbs.",
+"it": "Rosticciata di carne di maiale e salsiccia con patate, peperoni rossi ed erbe aromatiche."
+},
+"82891": {
+"en": "Spaghetti in tomato sauce with tuna, black olives, capers and parsley.",
+"it": "Spaghetti con sugo di pomodoro, tonno, olive nere, capperi e prezzemolo."
+},
+"88256": {
+"en": "Gluten-free burger made with chickpeas, potatoes and gluten-free breadcrumbs.",
+"it": "Burger senza glutine preparato con ceci, patate e pangrattato senza glutine."
+},
+"88258": {
+"en": "Gluten-free stewed mixed beans with cannellini and borlotti beans, tomato sauce and soffritto vegetables.",
+"it": "Versione senza glutine dei legumi misti in umido con fagioli cannellini, borlotti, pomodoro e verdure per soffritto."
+},
+"88374": {
+"en": "Portion of plain soy tofu.",
+"it": "Porzione di tofu naturale a base di soia."
+},
+"88375": {
+"en": "Rotating portion of cheese, such as mozzarella, ricotta, stracchino, robiola, Asiago, Gorgonzola or Fontina.",
+"it": "Porzione di formaggio a rotazione, come mozzarella, ricotta, stracchino, robiola, Asiago, Gorgonzola o Fontina."
+},
+"88376": {
+"en": "Rotating portion of sliced cured meats, such as cooked ham, Parma ham, speck or mortadella.",
+"it": "Porzione di salumi affettati a rotazione, tra cui prosciutto cotto, prosciutto di Parma, speck o mortadella."
+},
+"88465": {
+"en": "Margherita pizza topped with tomato sauce, mozzarella and basil.",
+"it": "Pizza margherita con salsa di pomodoro, mozzarella e basilico."
+},
+"88466": {
+"en": "Pizza topped with tomato sauce, mozzarella, spicy salami and basil.",
+"it": "Pizza con salsa di pomodoro, mozzarella, salame piccante e basilico."
+},
+"88467": {
+"en": "Pizza topped with tomato sauce, mozzarella, tuna and basil.",
+"it": "Pizza con salsa di pomodoro, mozzarella, tonno al naturale e basilico."
+},
+"88468": {
+"en": "Pizza topped with tomato sauce, mozzarella, cooked ham and basil.",
+"it": "Pizza con salsa di pomodoro, mozzarella, prosciutto cotto e basilico."
+},
+"88469": {
+"en": "Pizza topped with tomato sauce, mozzarella, olives and basil.",
+"it": "Pizza con salsa di pomodoro, mozzarella, olive e basilico."
+},
+"88470": {
+"en": "Pizza topped with tomato sauce, mozzarella, speck and fresh basil.",
+"it": "Pizza con salsa di pomodoro, mozzarella, speck e basilico fresco."
+},
+"88471": {
+"en": "Pizza topped with tomato sauce, mozzarella, Gorgonzola cheese and basil.",
+"it": "Pizza con salsa di pomodoro, mozzarella, Gorgonzola e basilico."
+},
+"88472": {
+"en": "Pizza topped with tomato sauce, mozzarella, artichokes in oil and basil.",
+"it": "Pizza con salsa di pomodoro, mozzarella, carciofi sott'olio e basilico."
+},
+"88473": {
+"en": "Pizza topped with tomato sauce, mozzarella, cooked ham, artichokes in oil and basil.",
+"it": "Pizza con salsa di pomodoro, mozzarella, prosciutto cotto, carciofi sott'olio e basilico."
+},
+"88474": {
+"en": "Pizza topped with tomato sauce, mozzarella, button mushrooms and basil.",
+"it": "Pizza con salsa di pomodoro, mozzarella, funghi champignon e basilico."
+},
+"88475": {
+"en": "Pizza topped with tomato sauce, mozzarella, cooked ham, button mushrooms and basil.",
+"it": "Pizza con salsa di pomodoro, mozzarella, prosciutto cotto, funghi champignon e basilico."
+},
+"88477": {
+"en": "Pizza topped with tomato sauce, mozzarella, sliced frankfurters and basil.",
+"it": "Pizza con salsa di pomodoro, mozzarella, würstel e basilico."
+},
+"88478": {
+"en": "Vegetarian pizza topped with tomato sauce, mozzarella, basil and grilled peppers, aubergines and courgettes.",
+"it": "Pizza vegetariana con pomodoro, mozzarella, basilico e verdure grigliate: peperoni, melanzane e zucchine."
+},
+"88480": {
+"en": "Capricciosa pizza topped with tomato sauce, mozzarella, cooked ham, mushrooms, artichokes, black olives and anchovies.",
+"it": "Pizza capricciosa con pomodoro, mozzarella, prosciutto cotto, funghi, carciofi, olive nere e acciughe."
+},
+"88481": {
+"en": "Four-seasons pizza topped with tomato sauce, mozzarella, cooked ham, mushrooms, artichokes and black olives.",
+"it": "Pizza quattro stagioni con pomodoro, mozzarella, prosciutto cotto, funghi, carciofi e olive nere."
+},
+"88483": {
+"en": "Bread roll filled with Milano salami.",
+"it": "Panino farcito con salame tipo Milano."
+},
+"88484": {
+"en": "Bread roll filled with cooked ham.",
+"it": "Panino farcito con prosciutto cotto."
+},
+"88485": {
+"en": "Bread roll filled with cured prosciutto crudo.",
+"it": "Panino farcito con prosciutto crudo."
+},
+"88486": {
+"en": "Bread roll filled with roast pork porchetta.",
+"it": "Panino farcito con porchetta di Ariccia."
+},
+"88487": {
+"en": "Bread roll filled with cured speck ham.",
+"it": "Panino farcito con speck dell'Alto Adige."
+},
+"88488": {
+"en": "Bread roll filled with a breaded chicken breast cutlet.",
+"it": "Panino farcito con cotoletta impanata di petto di pollo."
+},
+"88489": {
+"en": "Bread roll filled with grilled aubergines and courgettes, robiola cheese and sun-dried tomatoes.",
+"it": "Panino farcito con melanzane e zucchine grigliate, formaggio robiola e pomodori secchi."
+},
+"88490": {
+"en": "Bread roll filled with speck, brie cheese and mixed salad.",
+"it": "Panino farcito con speck, formaggio brie e insalata mista."
+},
+"88491": {
+"en": "Bread roll filled with cured prosciutto crudo, mozzarella, tomato and salad.",
+"it": "Panino farcito con prosciutto crudo, mozzarella, pomodoro e insalata."
+},
+"88492": {
+"en": "Bread roll filled with roast pork porchetta, tomato and mixed salad.",
+"it": "Panino farcito con porchetta di Ariccia, pomodoro e insalata mista."
+},
+"88493": {
+"en": "Bread roll filled with bresaola, Asiago cheese and mixed salad.",
+"it": "Panino farcito con bresaola, formaggio Asiago e insalata mista."
+},
+"88494": {
+"en": "Large toasted sandwich made with sliced bread, filled with cooked ham and Asiago cheese.",
+"it": "Toast grande preparato con pane da tramezzino, farcito con prosciutto cotto e formaggio Asiago."
+},
+"88495": {
+"en": "Piadina flatbread filled with cured prosciutto crudo, robiola cheese and mixed salad.",
+"it": "Piadina farcita con prosciutto crudo, formaggio robiola e insalata mista."
+},
+"88496": {
+"en": "Piadina flatbread filled with cooked ham, robiola cheese and mixed salad.",
+"it": "Piadina farcita con prosciutto cotto, formaggio robiola e insalata mista."
+},
+"88497": {
+"en": "Bread roll filled with a chicken cutlet, tomato and mixed salad.",
+"it": "Panino farcito con cotoletta di pollo, pomodoro e insalata mista."
+},
+"88498": {
+"en": "Caprese bread roll filled with mozzarella and tomato.",
+"it": "Panino alla caprese farcito con mozzarella e pomodoro."
+},
+"88499": {
+"en": "Bread roll filled with roast pork porchetta and brie cheese.",
+"it": "Panino farcito con porchetta di Ariccia e formaggio brie."
+},
+"88500": {
+"en": "Focaccia filled with cooked ham, Asiago cheese and tomato.",
+"it": "Focaccia farcita con prosciutto cotto, formaggio Asiago e pomodoro."
+},
+"88501": {
+"en": "Focaccia filled with Milano salami and Asiago cheese.",
+"it": "Focaccia farcita con salame tipo Milano e formaggio Asiago."
+},
+"88502": {
+"en": "Bari-style focaccia topped with tomato, black olives and oregano.",
+"it": "Focaccia barese condita con pomodoro, olive nere e origano."
+},
+"88503": {
+"en": "Roman-style pinsa flatbread filled with cooked ham and mozzarella.",
+"it": "Schiacciata su base di pinsa romana farcita con prosciutto cotto e mozzarella."
+},
+"88504": {
+"en": "Roman-style pinsa flatbread filled with cured prosciutto crudo.",
+"it": "Schiacciata su base di pinsa romana farcita con prosciutto crudo."
+},
+"88505": {
+"en": "Roman-style pinsa flatbread filled with mortadella.",
+"it": "Schiacciata su base di pinsa romana farcita con mortadella."
+},
+"88506": {
+"en": "Focaccia filled with grilled peppers, aubergines and courgettes.",
+"it": "Focaccia farcita con verdure grigliate: peperoni, melanzane e zucchine."
+},
+"88507": {
+"en": "Plain focaccia made with wheat flour, yeast and extra virgin olive oil.",
+"it": "Focaccia semplice preparata con farina di grano, lievito e olio extravergine d'oliva."
+},
+"88508": {
+"en": "A soft drink from the available selection.",
+"it": "Bibita a scelta tra quelle disponibili."
+},
+"88510": {
+"en": "A cup of coffee brewed from ground roasted coffee.",
+"it": "Tazzina di caffè preparato con miscela di caffè tostato macinato."
+},
+"88543": {
+"en": "Gluten-free pasta e fagioli made with borlotti beans and mixed soffritto vegetables.",
+"it": "Versione senza glutine della pasta e fagioli, preparata con fagioli borlotti e verdure per soffritto."
+},
+"88600": {
+"en": "Gluten-free mixed pulse soup made with cannellini beans, borlotti beans, chickpeas and soffritto vegetables.",
+"it": "Versione senza glutine della zuppa di legumi, con fagioli cannellini, borlotti, ceci e verdure per soffritto."
+},
+"88762": {
+"en": "Margherita pizza topped with tomato sauce, mozzarella and fresh basil.",
+"it": "Pizza margherita con salsa di pomodoro, mozzarella e basilico fresco."
+},
+"88768": {
+"en": "Pizza topped with tomato sauce, mozzarella, cooked ham and fresh basil.",
+"it": "Pizza con salsa di pomodoro, mozzarella, prosciutto cotto e basilico fresco."
+},
+"88771": {
+"en": "Pizza topped with tomato sauce, mozzarella, spicy salami and fresh basil.",
+"it": "Pizza con salsa di pomodoro, mozzarella, salame piccante e basilico fresco."
+},
+"88779": {
+"en": "Pizza topped with tomato sauce, mozzarella, basil and grilled aubergines, courgettes and peppers.",
+"it": "Pizza con salsa di pomodoro, mozzarella, basilico e verdure grigliate: melanzane, zucchine e peperoni."
+},
+"88893": {
+"en": "Gluten-free pasta with tomato sauce, onion and extra virgin olive oil.",
+"it": "Pasta senza glutine condita con sugo di pomodoro, cipolla e olio extravergine d'oliva."
+},
+"88894": {
+"en": "Packaged portion of gluten-free breadsticks.",
+"it": "Porzione confezionata di grissini senza glutine."
+},
+"88895": {
+"en": "Pack of gluten-free corn crackers.",
+"it": "Confezione di crackers di mais senza glutine."
+},
+"90660": {
+"en": "Cod fillets seasoned with white wine, thyme and extra virgin olive oil.",
+"it": "Cuori di filetto di merluzzo insaporiti con vino bianco, timo e olio extravergine d'oliva."
+},
+"90748": {
+"en": "Packaged portion of organic wheat breadsticks.",
+"it": "Porzione confezionata di grissini di grano biologico."
+},
+"90989": {
+"en": "Mixed pulse soup made with borlotti beans, cannellini beans, chickpeas and soffritto vegetables.",
+"it": "Zuppa di legumi con fagioli borlotti, cannellini, ceci e verdure per soffritto."
+},
+"90998": {
+"en": "Sicilian-style scorpionfish fillet with tomato sauce, black olives and capers.",
+"it": "Filetto di scorfano preparato alla siciliana con pomodoro, olive nere e capperi."
+},
+"91031": {
+"en": "Mixed salad with cucumber, tomatoes and feta cheese.",
+"it": "Insalata mista con cetrioli, pomodori e formaggio feta."
+},
+"91057": {
+"en": "Cod fillet coated in breadcrumbs with extra virgin olive oil.",
+"it": "Filetto di merluzzo impanato con pangrattato e olio extravergine d'oliva."
+},
+"91065": {
+"en": "Pasta tossed in a walnut sauce made with milk, butter, Grana Padano cheese and garlic.",
+"it": "Pasta condita con salsa di noci, latte, burro, Grana Padano e un tocco d'aglio."
+},
+"91616": {
+"en": "Vegetarian grill option with tomino cheese, spinach burger or spelt and chickpea burger, served only at the U12 canteen.",
+"it": "Piatto vegetariano alla griglia con tomino, burger di spinaci o burger di farro e ceci, servito solo alla mensa U12."
+},
+"91617": {
+"en": "Pack of salted wheat crackers.",
+"it": "Confezione di crackers salati di grano."
+},
+"91704": {
+"en": "Rolled piadina romagnola filled with stracchino cheese and grilled peppers, aubergines and courgettes.",
+"it": "Piadina romagnola arrotolata con formaggio stracchino e verdure grigliate: peperoni, melanzane e zucchine."
+},
+"91812": {
+"en": "Gluten-free pasta with a smooth artichoke sauce, onion and extra virgin olive oil.",
+"it": "Pasta senza glutine condita con crema di carciofi, cipolla e olio extravergine d'oliva."
+},
+"91825": {
+"en": "Gluten-free pasta with speck in a saffron sauce made with milk, butter and onion.",
+"it": "Pasta senza glutine con speck e salsa allo zafferano preparata con latte, burro e cipolla."
+},
+"91826": {
+"en": "Gluten-free cod fillet coated in gluten-free breadcrumbs with extra virgin olive oil.",
+"it": "Versione senza glutine del filetto di merluzzo dorato, impanato con pangrattato senza glutine e olio extravergine d'oliva."
+},
+"91827": {
+"en": "Gluten-free pasta in a walnut sauce made with milk, butter, Grana Padano cheese and garlic.",
+"it": "Pasta senza glutine con salsa di noci preparata con latte, burro, Grana Padano e aglio."
+},
+"92337": {
+"en": "Gluten-free rolled piadina filled with stracchino cheese and grilled peppers, aubergines and courgettes.",
+"it": "Versione senza glutine del rotolo romagnolo, con piadina senza glutine, stracchino e verdure grigliate."
+},
+"92871": {
+"en": "Pizza topped with tomato sauce, mozzarella, button mushrooms and fresh basil.",
+"it": "Pizza con salsa di pomodoro, mozzarella, funghi champignon e basilico fresco."
+},
+"92875": {
+"en": "White pizza without tomato sauce, topped with mozzarella, Gorgonzola and Fontina.",
+"it": "Pizza bianca senza pomodoro farcita con mozzarella, Gorgonzola e Fontina."
+},
+"92887": {
+"en": "Lentil and mashed potato bake made with extra virgin olive oil.",
+"it": "Sformato di lenticchie e purè di patate condito con olio extravergine d'oliva."
+},
+"95424": {
+"en": "Potato wedges with rosemary, aromatic herbs and extra virgin olive oil. Available only with pizza at the U12 canteen.",
+"it": "Patate a spicchi con rosmarino, erbe aromatiche e olio extravergine d'oliva. Disponibili solo in abbinamento alla pizza alla mensa U12."
+}
+}
