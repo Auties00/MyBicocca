@@ -58,6 +58,9 @@ import it.unimib.indoornav.lab.data.SetupConfig
 import it.unimib.indoornav.lab.survey.BeaconInventoryItem
 import it.unimib.indoornav.lab.survey.SurveyManager
 import it.unimib.indoornav.lab.survey.SurveyUiState
+import it.unimib.indoornav.lab.survey.WifiSurveyAp
+import android.annotation.SuppressLint
+import android.net.wifi.ScanResult as WifiScanResult
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -331,6 +334,117 @@ private fun BeaconSnapshotContent(
     }
 }
 
+private data class WifiSnapshot(val aps: List<WifiSurveyAp>, val takenAtMs: Long)
+
+@Composable
+private fun WifiApCard(ap: WifiSurveyAp) {
+    val containerColor = if (ap.isConnected) {
+        MaterialTheme.colorScheme.primaryContainer
+    } else {
+        MaterialTheme.colorScheme.surface
+    }
+    Card(
+        colors = CardDefaults.cardColors(containerColor = containerColor),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(
+                    ap.ssid.ifEmpty { "<hidden>" },
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    "${ap.rssi} dBm",
+                    fontFamily = FontFamily.Monospace,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+            Text(
+                "${ap.bssid} • ${ap.freqMhz} MHz • ${ap.channelWidth} MHz",
+                style = MaterialTheme.typography.bodySmall,
+                fontFamily = FontFamily.Monospace,
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                if (ap.isConnected) AssistChip(onClick = {}, label = { Text("CONNECTED") })
+                if (ap.rttResponder) AssistChip(onClick = {}, label = { Text("802.11mc RTT") })
+                if (ap.azResponder) AssistChip(onClick = {}, label = { Text("802.11az") })
+                if (ap.laBit) AssistChip(onClick = {}, label = { Text("LA bit") })
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun WifiSnapshotSheet(
+    snapshot: WifiSnapshot,
+    universitySsids: Set<String>,
+    onSave: (checkpointLabel: String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+    ) {
+        WifiSnapshotContent(snapshot, universitySsids, onSave, onDismiss)
+    }
+}
+
+@Composable
+private fun WifiSnapshotContent(
+    snapshot: WifiSnapshot,
+    universitySsids: Set<String>,
+    onSave: (checkpointLabel: String) -> Unit,
+    onCancel: () -> Unit,
+) {
+    var label by remember { mutableStateOf("CP1") }
+    val time = remember(snapshot.takenAtMs) {
+        SimpleDateFormat("HH:mm:ss", Locale.US).format(Date(snapshot.takenAtMs))
+    }
+    val saved = remember(snapshot, universitySsids) { snapshot.aps.filter { it.ssid in universitySsids } }
+    val skipped = snapshot.aps.size - saved.size
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text("Save Wi-Fi snapshot", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+        Text(
+            "Scan as at $time. ${saved.size} university network(s) will be saved" +
+                (if (skipped > 0) "; $skipped other network(s) are not saved." else "."),
+            style = MaterialTheme.typography.bodySmall,
+        )
+        OutlinedTextField(
+            value = label,
+            onValueChange = { label = it },
+            label = { Text("Checkpoint label (e.g. CP3)") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+        ) {
+            TextButton(onClick = onCancel) { Text("Cancel") }
+            Button(onClick = { onSave(label.trim().ifEmpty { "CP" }) }, enabled = saved.isNotEmpty()) {
+                Text("Append CSV")
+            }
+        }
+        LazyColumn(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+            contentPadding = PaddingValues(bottom = 24.dp),
+        ) {
+            items(saved, key = { "${it.bssid}_${it.freqMhz}" }) { ap -> WifiApCard(ap) }
+        }
+    }
+}
+
 private val previewBeacons = listOf(
     BeaconInventoryItem(
         key = "ed_uid|a08c", frameType = BeaconFrameType.ED_UID,
@@ -387,7 +501,8 @@ private fun WifiSurveyTab(
     manager: SurveyManager,
     onUpdateConfig: ((SetupConfig) -> SetupConfig) -> Unit,
 ) {
-    var showSnapshotDialog by remember { mutableStateOf(false) }
+    // The scan results as they were when Snapshot was pressed; the live list keeps changing underneath.
+    var frozenSnapshot by remember { mutableStateOf<WifiSnapshot?>(null) }
     var showSsidEditor by remember { mutableStateOf(false) }
 
     Column(
@@ -409,7 +524,10 @@ private fun WifiSurveyTab(
                 Spacer(Modifier.width(4.dp))
                 Text("Scan")
             }
-            OutlinedButton(onClick = { showSnapshotDialog = true }, enabled = state.wifiAps.isNotEmpty()) {
+            OutlinedButton(
+                onClick = { frozenSnapshot = WifiSnapshot(state.wifiAps, System.currentTimeMillis()) },
+                enabled = state.wifiAps.isNotEmpty(),
+            ) {
                 Icon(Icons.Default.Save, contentDescription = null)
                 Spacer(Modifier.width(4.dp))
                 Text("Snapshot")
@@ -465,71 +583,19 @@ private fun WifiSurveyTab(
             modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            items(state.wifiAps, key = { "${it.bssid}_${it.freqMhz}" }) { ap ->
-                val containerColor = if (ap.isConnected) {
-                    MaterialTheme.colorScheme.primaryContainer
-                } else {
-                    MaterialTheme.colorScheme.surface
-                }
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = containerColor),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                        ) {
-                            Text(
-                                ap.ssid.ifEmpty { "<hidden>" },
-                                fontWeight = FontWeight.Bold,
-                            )
-                            Text(
-                                "${ap.rssi} dBm",
-                                fontFamily = FontFamily.Monospace,
-                                fontWeight = FontWeight.Bold,
-                            )
-                        }
-                        Text(
-                            "${ap.bssid} • ${ap.freqMhz} MHz • ${ap.channelWidth} MHz",
-                            style = MaterialTheme.typography.bodySmall,
-                            fontFamily = FontFamily.Monospace,
-                        )
-                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            if (ap.isConnected) AssistChip(onClick = {}, label = { Text("CONNECTED") })
-                            if (ap.rttResponder) AssistChip(onClick = {}, label = { Text("802.11mc RTT") })
-                            if (ap.azResponder) AssistChip(onClick = {}, label = { Text("802.11az") })
-                            if (ap.laBit) AssistChip(onClick = {}, label = { Text("LA bit") })
-                        }
-                    }
-                }
-            }
+            items(state.wifiAps, key = { "${it.bssid}_${it.freqMhz}" }) { ap -> WifiApCard(ap) }
         }
     }
 
-    if (showSnapshotDialog) {
-        var cp by remember { mutableStateOf("CP1") }
-        AlertDialog(
-            onDismissRequest = { showSnapshotDialog = false },
-            title = { Text("Save Wi-Fi Snapshot") },
-            text = {
-                OutlinedTextField(
-                    value = cp,
-                    onValueChange = { cp = it },
-                    label = { Text("Checkpoint label (e.g. CP3)") },
-                    singleLine = true,
-                )
+    frozenSnapshot?.let { snap ->
+        WifiSnapshotSheet(
+            snapshot = snap,
+            universitySsids = config.universitySsids.toSet(),
+            onSave = { label ->
+                manager.saveWifiSnapshot(label, snap.aps, snap.takenAtMs)
+                frozenSnapshot = null
             },
-            confirmButton = {
-                TextButton(onClick = {
-                    manager.saveWifiSnapshot(cp.trim().ifEmpty { "CP" })
-                    showSnapshotDialog = false
-                }) { Text("Append CSV") }
-            },
-            dismissButton = {
-                TextButton(onClick = { showSnapshotDialog = false }) { Text("Cancel") }
-            },
+            onDismiss = { frozenSnapshot = null },
         )
     }
 
@@ -715,6 +781,31 @@ private fun ConnectedApTab(
                     }
                 }
             }
+        }
+    }
+}
+
+@SuppressLint("NewApi")
+private val previewAps = listOf(
+    WifiSurveyAp("00:00:5e:00:53:10", "eduroam", -44, 2412, "20", laBit = false, rttResponder = false,
+        isConnected = true, rawScanResult = WifiScanResult()),
+    WifiSurveyAp("00:00:5e:00:53:11", "unimib", -52, 5200, "20", laBit = true, rttResponder = false,
+        isConnected = false, rawScanResult = WifiScanResult()),
+    WifiSurveyAp("00:00:5e:00:53:20", "home-network", -60, 2437, "20", laBit = false, rttResponder = false,
+        isConnected = false, rawScanResult = WifiScanResult()),
+)
+
+@Preview(showBackground = true, heightDp = 640)
+@Composable
+private fun WifiSnapshotContentPreview() {
+    LabTheme {
+        Surface {
+            WifiSnapshotContent(
+                snapshot = WifiSnapshot(previewAps, 1_795_220_000_000L),
+                universitySsids = setOf("eduroam", "unimib"),
+                onSave = {},
+                onCancel = {},
+            )
         }
     }
 }

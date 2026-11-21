@@ -533,13 +533,16 @@ class SurveyManager(
         )
     }
 
-    fun saveWifiSnapshot(checkpointLabel: String) {
+    /** Saves [allAps] as they were at [ts], which is when the user pressed Snapshot, not when they confirmed. */
+    fun saveWifiSnapshot(
+        checkpointLabel: String,
+        allAps: List<WifiSurveyAp> = _state.value.wifiAps,
+        ts: Long = System.currentTimeMillis(),
+    ) {
         // Only university networks are saved, as in the recording's Wi-Fi stream; the rest stay on screen only.
         val univSsids = preferences.config.value.universitySsids.toSet()
-        val allAps = _state.value.wifiAps
         val aps = allAps.filter { it.ssid in univSsids }
         val skipped = allAps.size - aps.size
-        val ts = System.currentTimeMillis()
         scope.launch(Dispatchers.IO) {
             val file = File(sessionRepository.surveyDir(), "wifi_survey.csv")
             val msg = runCatching {
