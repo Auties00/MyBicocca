@@ -422,9 +422,12 @@ class SurveyManager(
         )
     }
 
-    fun saveBeaconSnapshot(locationNote: String) {
-        val beacons = _state.value.beacons
-        val ts = System.currentTimeMillis()
+    /** Saves [beacons] as they were at [ts], which is when the user pressed Snapshot, not when they confirmed. */
+    fun saveBeaconSnapshot(
+        locationNote: String,
+        beacons: List<BeaconInventoryItem> = _state.value.beacons,
+        ts: Long = System.currentTimeMillis(),
+    ) {
         scope.launch(Dispatchers.IO) {
             val sdf = SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US)
             val file = File(sessionRepository.surveyDir(), "ble_inventory_${sdf.format(Date(ts))}.csv")

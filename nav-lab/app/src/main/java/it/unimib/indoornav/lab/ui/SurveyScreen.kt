@@ -1,6 +1,15 @@
 package it.unimib.indoornav.lab.ui
 
+import android.content.res.Configuration
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.Surface
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.ui.tooling.preview.Preview
+import it.unimib.indoornav.lab.format.BeaconFrameType
+import it.unimib.indoornav.lab.ui.theme.LabTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -100,7 +109,8 @@ private fun BeaconInventoryTab(
     manager: SurveyManager,
 ) {
     var selectedBeacon by remember { mutableStateOf<BeaconInventoryItem?>(null) }
-    var showSnapshotDialog by remember { mutableStateOf(false) }
+    // The list as it was when Snapshot was pressed; the live list keeps changing underneath.
+    var frozenSnapshot by remember { mutableStateOf<BeaconSnapshot?>(null) }
 
     Column(
         modifier = Modifier
@@ -127,7 +137,7 @@ private fun BeaconInventoryTab(
                 Text(if (state.beaconScanning) "Stop Scan" else "Start Inventory")
             }
             OutlinedButton(
-                onClick = { showSnapshotDialog = true },
+                onClick = { frozenSnapshot = BeaconSnapshot(state.beacons, System.currentTimeMillis()) },
                 enabled = state.beacons.isNotEmpty(),
             ) {
                 Icon(Icons.Default.Save, contentDescription = null)
@@ -159,61 +169,7 @@ private fun BeaconInventoryTab(
             verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             items(state.beacons, key = { it.key }) { item ->
-                ElevatedCard(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable { selectedBeacon = item },
-                ) {
-                    Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    item.projectLabel ?: item.frameType.wireName,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = if (item.projectLabel != null) MaterialTheme.colorScheme.primary else Color.Unspecified,
-                                )
-                                Text(
-                                    item.frameType.wireName,
-                                    style = MaterialTheme.typography.labelMedium,
-                                )
-                            }
-                            Text(
-                                "${item.currentRssi} dBm (med ${item.medianRssi})",
-                                fontFamily = FontFamily.Monospace,
-                                fontWeight = FontWeight.Bold,
-                            )
-                        }
-                        if (item.canonicalId.isNotEmpty()) {
-                            Text(
-                                item.canonicalId,
-                                style = MaterialTheme.typography.bodySmall,
-                                fontFamily = FontFamily.Monospace,
-                            )
-                        }
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                        ) {
-                            Text("addr ${item.addr}", style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace)
-                            Text(
-                                "%.1f pkt/s • tx ${item.txPowerAdv ?: "-"}".format(Locale.US, item.packetsPerSec),
-                                style = MaterialTheme.typography.bodySmall,
-                            )
-                        }
-                        if (item.tlmBattMv != null || item.tlmTempC != null) {
-                            Text(
-                                "TLM: ${item.tlmBattMv ?: "-"} mV, ${item.tlmTempC?.let { "%.1f °C".format(Locale.US, it) } ?: "-"}",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.secondary,
-                            )
-                        }
-                    }
-                }
+                BeaconCard(item, onClick = { selectedBeacon = item })
             }
         }
     }
@@ -241,29 +197,186 @@ private fun BeaconInventoryTab(
         )
     }
 
-    if (showSnapshotDialog) {
-        var note by remember { mutableStateOf("") }
-        AlertDialog(
-            onDismissRequest = { showSnapshotDialog = false },
-            title = { Text("Save Beacon Snapshot") },
-            text = {
-                OutlinedTextField(
-                    value = note,
-                    onValueChange = { note = it },
-                    label = { Text("Location note (e.g. U14 F1 CP3)") },
-                    singleLine = true,
-                )
+    frozenSnapshot?.let { snap ->
+        BeaconSnapshotSheet(
+            snapshot = snap,
+            onSave = { note ->
+                manager.saveBeaconSnapshot(note, snap.beacons, snap.takenAtMs)
+                frozenSnapshot = null
             },
-            confirmButton = {
-                TextButton(onClick = {
-                    manager.saveBeaconSnapshot(note.trim())
-                    showSnapshotDialog = false
-                }) { Text("Save CSV") }
-            },
-            dismissButton = {
-                TextButton(onClick = { showSnapshotDialog = false }) { Text("Cancel") }
-            },
+            onDismiss = { frozenSnapshot = null },
         )
+    }
+}
+
+private data class BeaconSnapshot(val beacons: List<BeaconInventoryItem>, val takenAtMs: Long)
+
+@Composable
+private fun BeaconCard(item: BeaconInventoryItem, onClick: (() -> Unit)? = null) {
+    ElevatedCard(
+        modifier = Modifier
+            .fillMaxWidth()
+            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
+    ) {
+        Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        item.projectLabel ?: item.frameType.wireName,
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = if (item.projectLabel != null) MaterialTheme.colorScheme.primary else Color.Unspecified,
+                    )
+                    Text(
+                        item.frameType.wireName,
+                        style = MaterialTheme.typography.labelMedium,
+                    )
+                }
+                Text(
+                    "${item.currentRssi} dBm (med ${item.medianRssi})",
+                    fontFamily = FontFamily.Monospace,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+            if (item.canonicalId.isNotEmpty()) {
+                Text(
+                    item.canonicalId,
+                    style = MaterialTheme.typography.bodySmall,
+                    fontFamily = FontFamily.Monospace,
+                )
+            }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text("addr ${item.addr}", style = MaterialTheme.typography.bodySmall, fontFamily = FontFamily.Monospace)
+                Text(
+                    "%.1f pkt/s • tx ${item.txPowerAdv ?: "-"}".format(Locale.US, item.packetsPerSec),
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+            if (item.tlmBattMv != null || item.tlmTempC != null) {
+                Text(
+                    "TLM: ${item.tlmBattMv ?: "-"} mV, ${item.tlmTempC?.let { "%.1f °C".format(Locale.US, it) } ?: "-"}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.secondary,
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun BeaconSnapshotSheet(
+    snapshot: BeaconSnapshot,
+    onSave: (note: String) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+    ) {
+        BeaconSnapshotContent(snapshot, onSave, onDismiss)
+    }
+}
+
+@Composable
+private fun BeaconSnapshotContent(
+    snapshot: BeaconSnapshot,
+    onSave: (note: String) -> Unit,
+    onCancel: () -> Unit,
+) {
+    var note by remember { mutableStateOf("") }
+    val time = remember(snapshot.takenAtMs) {
+        SimpleDateFormat("HH:mm:ss", Locale.US).format(Date(snapshot.takenAtMs))
+    }
+    // Note and buttons sit above the list, so the keyboard never hides them.
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text("Save beacon snapshot", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+        Text(
+            "${snapshot.beacons.size} beacon message(s) as at $time. This list is frozen; the scan keeps running behind it.",
+            style = MaterialTheme.typography.bodySmall,
+        )
+        OutlinedTextField(
+            value = note,
+            onValueChange = { note = it },
+            label = { Text("Location note (e.g. U14 F1 CP3)") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+        ) {
+            TextButton(onClick = onCancel) { Text("Cancel") }
+            Button(onClick = { onSave(note.trim()) }) { Text("Save CSV") }
+        }
+        LazyColumn(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+            contentPadding = PaddingValues(bottom = 24.dp),
+        ) {
+            items(snapshot.beacons, key = { it.key }) { item -> BeaconCard(item) }
+        }
+    }
+}
+
+private val previewBeacons = listOf(
+    BeaconInventoryItem(
+        key = "ed_uid|a08c", frameType = BeaconFrameType.ED_UID,
+        canonicalId = "ed:8b9cc73c3ae747ef65bc:00000001a08c", projectLabel = null,
+        addr = "00:00:5E:00:53:01", currentRssi = -58, medianRssi = -60, packetsPerSec = 0.9,
+        txPowerAdv = -40, tlmBattMv = null, tlmTempC = null, advHex = "", lastSeenMs = 0L,
+    ),
+    BeaconInventoryItem(
+        key = "ed_tlm|a08c", frameType = BeaconFrameType.ED_TLM,
+        canonicalId = "ed:8b9cc73c3ae747ef65bc:00000001a08c", projectLabel = null,
+        addr = "00:00:5E:00:53:01", currentRssi = -61, medianRssi = -61, packetsPerSec = 0.1,
+        txPowerAdv = null, tlmBattMv = 3300, tlmTempC = 21.5, advHex = "", lastSeenMs = 0L,
+    ),
+    BeaconInventoryItem(
+        key = "ib|b16", frameType = BeaconFrameType.IBEACON,
+        canonicalId = "ib:515b8618-bead-46de-ba72-5cea0ec01b22:14:16", projectLabel = "B16",
+        addr = "00:00:5E:00:53:02", currentRssi = -72, medianRssi = -70, packetsPerSec = 3.1,
+        txPowerAdv = -59, tlmBattMv = null, tlmTempC = null, advHex = "", lastSeenMs = 0L,
+    ),
+)
+
+@Preview(showBackground = true, heightDp = 640)
+@Composable
+private fun BeaconSnapshotContentPreview() {
+    LabTheme {
+        Surface {
+            BeaconSnapshotContent(
+                snapshot = BeaconSnapshot(previewBeacons, 1_795_220_000_000L),
+                onSave = {},
+                onCancel = {},
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, heightDp = 640)
+@Composable
+private fun BeaconSnapshotContentDarkPreview() {
+    LabTheme(darkTheme = true) {
+        Surface {
+            BeaconSnapshotContent(
+                snapshot = BeaconSnapshot(previewBeacons, 1_795_220_000_000L),
+                onSave = {},
+                onCancel = {},
+            )
+        }
     }
 }
 
