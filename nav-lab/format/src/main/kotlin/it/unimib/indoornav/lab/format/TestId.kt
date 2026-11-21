@@ -212,6 +212,12 @@ object RouteCheckpoints {
         return emptyList()
     }
 
+    /** True once every checkpoint of a known route has been marked; unknown routes never complete. */
+    fun isComplete(route: String?, index: Int): Boolean {
+        val seq = sequenceFor(route)
+        return seq.isNotEmpty() && index >= seq.size
+    }
+
     fun labelAt(route: String?, index: Int): String {
         val safeIndex = index.coerceAtLeast(0)
         val seq = sequenceFor(route)

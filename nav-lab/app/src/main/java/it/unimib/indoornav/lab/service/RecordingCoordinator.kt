@@ -52,6 +52,9 @@ data class RecordingUiState(
 ) {
     val nextCheckpointLabel: String
         get() = RouteCheckpoints.labelAt(routeName, nextCheckpointIndex)
+
+    val routeComplete: Boolean
+        get() = RouteCheckpoints.isComplete(routeName, nextCheckpointIndex)
 }
 
 class RecordingCoordinator(private val context: Context) {

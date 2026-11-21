@@ -169,14 +169,20 @@ fun LiveRecordingScreen(
             if (showCheckpoint) {
                 Button(
                     onClick = onCheckpoint,
+                    enabled = !state.routeComplete,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(104.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("CHECKPOINT", style = MaterialTheme.typography.labelLarge)
-                        Text(state.nextCheckpointLabel, fontSize = 32.sp, fontWeight = FontWeight.ExtraBold)
+                        if (state.routeComplete) {
+                            Text("ALL CHECKPOINTS MARKED", style = MaterialTheme.typography.labelLarge)
+                            Text("Press FINISH", fontSize = 28.sp, fontWeight = FontWeight.ExtraBold)
+                        } else {
+                            Text("CHECKPOINT", style = MaterialTheme.typography.labelLarge)
+                            Text(state.nextCheckpointLabel, fontSize = 32.sp, fontWeight = FontWeight.ExtraBold)
+                        }
                     }
                 }
             }

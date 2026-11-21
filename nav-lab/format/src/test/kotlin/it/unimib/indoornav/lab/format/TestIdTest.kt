@@ -158,6 +158,15 @@ class TestIdTest {
     }
 
     @Test
+    fun `a known route completes after its last checkpoint, an unknown one never does`() {
+        assertEquals(false, RouteCheckpoints.isComplete("R1", 8))
+        assertEquals(true, RouteCheckpoints.isComplete("R1", 9))
+        assertEquals(true, RouteCheckpoints.isComplete("S1", 3))
+        assertEquals(false, RouteCheckpoints.isComplete("R2", 50))
+        assertEquals(false, RouteCheckpoints.isComplete("still", 0))
+    }
+
+    @Test
     fun `splits hyphenated values only on -key= boundaries`() {
         val id = "E4-d=5-setting=int100-pwr0-both"
         val parsed = TestIdCodec.parse(id)

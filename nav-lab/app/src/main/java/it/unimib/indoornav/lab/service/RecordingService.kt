@@ -396,6 +396,8 @@ class RecordingService : Service() {
 
     fun recordCheckpointMark(source: String) {
         if (!isRunning) return
+        // A mark past the route's last checkpoint has no position, and would confuse the ground truth.
+        if (RouteCheckpoints.isComplete(currentRouteName, nextCheckpointIndex)) return
         val label = RouteCheckpoints.labelAt(currentRouteName, nextCheckpointIndex)
         marksCapture?.recordMark("checkpoint", label, source)
         val item = MarkHistoryItem("checkpoint", label, source)
