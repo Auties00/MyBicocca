@@ -82,6 +82,7 @@ data class WifiSurveyAp(
     val channelWidth: String,
     val laBit: Boolean,
     val rttResponder: Boolean,
+    val azResponder: Boolean = false,
     val isConnected: Boolean,
     val rawScanResult: WifiScanResult,
 )
@@ -516,6 +517,7 @@ class SurveyManager(
                 channelWidth = WifiCapture.channelWidthLabel(sr.channelWidth),
                 laBit = WifiCapture.isLocallyAdministered(bssid),
                 rttResponder = sr.is80211mcResponder,
+                azResponder = WifiCapture.isAzResponder(sr),
                 isConnected = connected != null && connected.first.equals(bssid, ignoreCase = true),
                 rawScanResult = sr,
             )
@@ -559,6 +561,7 @@ class SurveyManager(
                                 ap.channelWidth,
                                 if (ap.laBit) 1 else 0,
                                 if (ap.rttResponder) 1 else 0,
+                                if (ap.azResponder) 1 else 0,
                                 if (ap.isConnected) 1 else 0,
                             ),
                         )
@@ -585,6 +588,18 @@ class SurveyManager(
         }
         if (!hasWifiPermission()) {
             setStatus("Missing Wi-Fi/Location permission")
+            return
+        }
+        if (_state.value.wifiAps.isEmpty()) refreshWifiResults()
+        val aps = _state.value.wifiAps
+        if (aps.none { it.rttResponder }) {
+            // Ranging needs the access point's cooperation; without a responder there is nothing to range to.
+            val az = aps.count { it.azResponder }
+            setStatus(
+                "No 802.11mc ranging responders among the ${aps.size} access points in the last scan" +
+                    (if (az > 0) " ($az support 802.11az, which Lab does not range to yet)" else "") +
+                    ". Press Scan APs to rescan.",
+            )
             return
         }
 

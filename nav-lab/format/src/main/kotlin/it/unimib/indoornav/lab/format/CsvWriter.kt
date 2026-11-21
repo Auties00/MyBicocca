@@ -93,6 +93,7 @@ enum class StreamSpec(
             "channel_width",
             "la_bit",
             "rtt_responder",
+            "az_responder",
         ),
         timeBaseExempt = true,
     ),
@@ -230,6 +231,7 @@ object SurveyCsvHeaders {
         "channel_width",
         "la_bit",
         "rtt_responder",
+        "az_responder",
         "connected",
     )
 

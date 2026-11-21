@@ -22,7 +22,7 @@ class CsvWriterTest {
             StreamSpec.BLE.headerLine,
         )
         assertEquals(
-            "t_ns,rx_ns,scan_id,bssid,ssid,rssi,freq_mhz,channel_width,la_bit,rtt_responder",
+            "t_ns,rx_ns,scan_id,bssid,ssid,rssi,freq_mhz,channel_width,la_bit,rtt_responder,az_responder",
             StreamSpec.WIFI.headerLine,
         )
         assertEquals(

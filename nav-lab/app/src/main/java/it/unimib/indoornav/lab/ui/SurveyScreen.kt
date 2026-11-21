@@ -499,6 +499,7 @@ private fun WifiSurveyTab(
                         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                             if (ap.isConnected) AssistChip(onClick = {}, label = { Text("CONNECTED") })
                             if (ap.rttResponder) AssistChip(onClick = {}, label = { Text("802.11mc RTT") })
+                            if (ap.azResponder) AssistChip(onClick = {}, label = { Text("802.11az") })
                             if (ap.laBit) AssistChip(onClick = {}, label = { Text("LA bit") })
                         }
                     }
@@ -567,6 +568,7 @@ private fun RttSurveyTab(
 ) {
     var logToCsv by remember { mutableStateOf(true) }
     val responderCount = state.wifiAps.count { it.rttResponder }
+    val azCount = state.wifiAps.count { it.azResponder }
 
     Column(
         modifier = Modifier
@@ -575,10 +577,21 @@ private fun RttSurveyTab(
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         Text(
-            "Phone Wi-Fi RTT: ${if (state.wifiRttSupported) "Supported" else "Not supported"} • Responders in scan: $responderCount",
+            "Phone Wi-Fi RTT: ${if (state.wifiRttSupported) "Supported" else "Not supported"}",
             style = MaterialTheme.typography.titleSmall,
             fontWeight = FontWeight.SemiBold,
         )
+        Text(
+            "Last scan: ${state.wifiAps.size} access points • 802.11mc responders: $responderCount • 802.11az: $azCount",
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        if (state.wifiAps.isNotEmpty() && responderCount == 0) {
+            Text(
+                "None of these access points supports ranging, so there is nothing to range to here.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+            )
+        }
 
         Row(
             modifier = Modifier.fillMaxWidth(),

@@ -108,6 +108,7 @@ class WifiCapture(
                 val bssid = sr.BSSID ?: ""
                 val laBit = if (isLocallyAdministered(bssid)) 1 else 0
                 val rttFlag = if (sr.is80211mcResponder) 1 else 0
+                val azFlag = if (isAzResponder(sr)) 1 else 0
                 val width = channelWidthLabel(sr.channelWidth)
                 writer.writeRow(
                     StreamSpec.WIFI,
@@ -123,6 +124,7 @@ class WifiCapture(
                     width,
                     laBit,
                     rttFlag,
+                    azFlag,
                 )
             } else {
                 otherCount++
@@ -154,6 +156,10 @@ class WifiCapture(
                 sr.SSID ?: ""
             }
         }
+
+        /** 802.11az (next-generation ranging) responder; Android only reports it from API 35. */
+        fun isAzResponder(sr: ScanResult): Boolean =
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.VANILLA_ICE_CREAM && sr.is80211azNtbResponder
 
         fun isLocallyAdministered(bssid: String): Boolean {
             val firstOctet = bssid.split(':').firstOrNull()?.toIntOrNull(16) ?: return false
