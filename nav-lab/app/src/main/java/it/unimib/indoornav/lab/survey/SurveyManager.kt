@@ -24,6 +24,7 @@ import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
 import androidx.core.content.ContextCompat
+import it.unimib.indoornav.lab.capture.BleCapture
 import it.unimib.indoornav.lab.capture.WifiCapture
 import it.unimib.indoornav.lab.data.LabPreferences
 import it.unimib.indoornav.lab.data.SessionRepository
@@ -162,10 +163,13 @@ class SurveyManager(
         val packetTimestampsMs = ArrayDeque<Long>()
 
         fun addRssi(rssi: Int, nowMs: Long) {
-            currentRssi = rssi
             lastSeenMs = nowMs
-            rssiSamples.addLast(rssi)
-            if (rssiSamples.size > 31) rssiSamples.removeFirst()
+            // The packet still counts towards the rate; its RSSI of 127 means "not available".
+            if (rssi != BleCapture.RSSI_UNAVAILABLE) {
+                currentRssi = rssi
+                rssiSamples.addLast(rssi)
+                if (rssiSamples.size > 31) rssiSamples.removeFirst()
+            }
             packetTimestampsMs.addLast(nowMs)
             trimWindow(nowMs)
         }

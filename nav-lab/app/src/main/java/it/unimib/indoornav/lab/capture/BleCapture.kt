@@ -151,6 +151,8 @@ class BleCapture(
         val tNs = result.timestampNanos
         val addr = result.device?.address ?: ""
         val rssi = result.rssi
+        // Android reports 127 when it has no RSSI for the packet; such a row would read as a very strong signal.
+        if (rssi == RSSI_UNAVAILABLE) return
         val rawBytes = result.scanRecord?.bytes ?: ByteArray(0)
         val parsed = BeaconFrameParser.parseRawAdvertisement(rawBytes)
 
@@ -226,6 +228,7 @@ class BleCapture(
 
     companion object {
         const val SCAN_RESTART_INTERVAL_MS = 20L * 60_000L
+        const val RSSI_UNAVAILABLE = 127
         private val EDDYSTONE_UUID = ParcelUuid.fromString("0000FEAA-0000-1000-8000-00805F9B34FB")
 
         fun defaultNormalFilters(): List<ScanFilter> = listOf(
