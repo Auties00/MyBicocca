@@ -65,6 +65,8 @@ enum class ExperimentTemplate(
                 "int100-pwr0-both",
                 listOf("int100-pwr0-both", "int300-pwr0-both", "int1000-pwr0-both", "int300-pwr0-ibeacon"),
             ),
+            // Several beacons are usually in range; labtools analyses the one named here.
+            TemplateFieldDef("beacon", "Beacon", "B01", listOf("B01", "B02", "B03", "B04")),
         ),
     ),
     E4B(
