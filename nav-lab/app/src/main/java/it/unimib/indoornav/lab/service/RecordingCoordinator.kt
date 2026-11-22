@@ -8,8 +8,10 @@ import it.unimib.indoornav.lab.capture.SessionWriter
 import it.unimib.indoornav.lab.data.SetupConfig
 import it.unimib.indoornav.lab.format.ExperimentTemplate
 import it.unimib.indoornav.lab.format.RouteCheckpoints
+import it.unimib.indoornav.lab.format.RecordingEdits
+import it.unimib.indoornav.lab.format.SessionEditor
+import it.unimib.indoornav.lab.format.SessionHealthReport
 import it.unimib.indoornav.lab.format.SessionManifest
-import it.unimib.indoornav.lab.format.TestIdCodec
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -25,10 +27,13 @@ data class MarkHistoryItem(
     val source: String,
 )
 
-data class PendingAfterWalkPrompt(
+/** A finished recording, shown to the user once so they can correct its details or delete it. */
+data class RecordingSummary(
     val sessionDir: File,
-    val template: ExperimentTemplate,
-    val currentFields: Map<String, String>,
+    val template: ExperimentTemplate?,
+    val manifest: SessionManifest,
+    val health: SessionHealthReport,
+    val checkpointMarks: Int,
 )
 
 data class RecordingUiState(
@@ -48,7 +53,7 @@ data class RecordingUiState(
     val touchLocked: Boolean = false,
     val allowScreenOff: Boolean = false,
     val inventoryMode: Boolean = false,
-    val pendingAfterWalk: PendingAfterWalkPrompt? = null,
+    val pendingSummary: RecordingSummary? = null,
 ) {
     val nextCheckpointLabel: String
         get() = RouteCheckpoints.labelAt(routeName, nextCheckpointIndex)
@@ -115,31 +120,37 @@ class RecordingCoordinator(private val context: Context) {
         _uiState.value = transform(_uiState.value)
     }
 
-    fun applyAfterWalkFields(values: Map<String, String>) {
-        val pending = _uiState.value.pendingAfterWalk ?: return
-        _uiState.value = _uiState.value.copy(pendingAfterWalk = null)
-        val manifestFile = File(pending.sessionDir, "manifest.json")
+    /** Writes [edits] into the manifest and renames the folder if the test ID or phone label changed. */
+    fun applySummaryEdits(edits: RecordingEdits, onDone: (String) -> Unit = {}) {
+        val summary = _uiState.value.pendingSummary ?: return
+        _uiState.value = _uiState.value.copy(pendingSummary = null)
         ioScope.launch {
-            if (manifestFile.exists()) {
-                runCatching {
-                    val old = SessionManifest.fromJsonString(manifestFile.readText())
-                    val mergedFields = old.setup.template_fields.toMutableMap().apply {
-                        putAll(values.filterValues { it.isNotBlank() })
-                    }
-                    val newTestId = TestIdCodec.build(pending.template, mergedFields)
-                    val updated = old.copy(
-                        setup = old.setup.copy(
-                            test_id = newTestId,
-                            template_fields = mergedFields,
-                        ),
-                    )
-                    manifestFile.writeText(updated.toJsonString())
+            val msg = runCatching {
+                val updated = SessionEditor.apply(summary.manifest, summary.template, edits)
+                if (updated == summary.manifest) return@runCatching "Recording kept as it was"
+                File(summary.sessionDir, "manifest.json").writeText(updated.toJsonString())
+                val target = File(summary.sessionDir.parentFile, SessionEditor.folderNameFor(updated))
+                when {
+                    target == summary.sessionDir -> "Recording details updated"
+                    target.exists() -> "Details updated; folder not renamed because ${target.name} already exists"
+                    summary.sessionDir.renameTo(target) -> "Details updated; saved as ${target.name}"
+                    else -> "Details updated; the folder could not be renamed"
                 }
-            }
+            }.getOrElse { "Could not update the recording: ${it.message}" }
+            onDone(msg)
         }
     }
 
-    fun dismissAfterWalkPrompt() {
-        _uiState.value = _uiState.value.copy(pendingAfterWalk = null)
+    fun deleteSummarySession(onDone: (String) -> Unit = {}) {
+        val summary = _uiState.value.pendingSummary ?: return
+        _uiState.value = _uiState.value.copy(pendingSummary = null)
+        ioScope.launch {
+            val ok = summary.sessionDir.deleteRecursively()
+            onDone(if (ok) "Recording deleted" else "Could not delete ${summary.sessionDir.name}")
+        }
+    }
+
+    fun dismissSummary() {
+        _uiState.value = _uiState.value.copy(pendingSummary = null)
     }
 }

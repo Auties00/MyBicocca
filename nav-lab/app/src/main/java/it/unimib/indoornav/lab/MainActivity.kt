@@ -1,6 +1,7 @@
 package it.unimib.indoornav.lab
 
 import android.os.Bundle
+import android.widget.Toast
 import android.view.KeyEvent
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
@@ -36,7 +37,7 @@ import androidx.navigation.compose.rememberNavController
 import it.unimib.indoornav.lab.data.DeviceCapabilities
 import it.unimib.indoornav.lab.data.WifiThrottleCheckState
 import it.unimib.indoornav.lab.format.ExperimentTemplate
-import it.unimib.indoornav.lab.ui.AfterWalkFieldsDialog
+import it.unimib.indoornav.lab.ui.RecordingSummarySheet
 import it.unimib.indoornav.lab.ui.LiveRecordingScreen
 import it.unimib.indoornav.lab.ui.PermissionsHelper
 import it.unimib.indoornav.lab.ui.SessionsScreen
@@ -220,11 +221,15 @@ class MainActivity : ComponentActivity() {
                         }
                     }
 
-                    recordingState.pendingAfterWalk?.let { prompt ->
-                        AfterWalkFieldsDialog(
-                            prompt = prompt,
-                            onSave = { values -> app.recordingCoordinator.applyAfterWalkFields(values) },
-                            onDismiss = { app.recordingCoordinator.dismissAfterWalkPrompt() },
+                    recordingState.pendingSummary?.let { summary ->
+                        val showResult: (String) -> Unit = { msg ->
+                            runOnUiThread { Toast.makeText(this@MainActivity, msg, Toast.LENGTH_LONG).show() }
+                        }
+                        RecordingSummarySheet(
+                            summary = summary,
+                            onSave = { edits -> app.recordingCoordinator.applySummaryEdits(edits, showResult) },
+                            onDelete = { app.recordingCoordinator.deleteSummarySession(showResult) },
+                            onDismiss = { app.recordingCoordinator.dismissSummary() },
                         )
                     }
                 }

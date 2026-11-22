@@ -44,6 +44,7 @@ import it.unimib.indoornav.lab.data.SetupConfig
 import it.unimib.indoornav.lab.format.ClockInfo
 import it.unimib.indoornav.lab.format.ExperimentTemplate
 import it.unimib.indoornav.lab.format.RouteCheckpoints
+import it.unimib.indoornav.lab.format.SessionEvaluator
 import it.unimib.indoornav.lab.format.SessionManifest
 import it.unimib.indoornav.lab.format.SessionNaming
 import it.unimib.indoornav.lab.format.SetupManifestInfo
@@ -331,7 +332,7 @@ class RecordingService : Service() {
                 touchLocked = defaultTouchLock,
                 allowScreenOff = config.allowScreenOff,
                 inventoryMode = config.bleInventoryMode,
-                pendingAfterWalk = null,
+                pendingSummary = null,
             )
         }
 
@@ -470,14 +471,7 @@ class RecordingService : Service() {
         initialManifest = null
         val startId = lastStartId
 
-        val hasAfterWalk = currentTemplate.fields.any { it.afterWalk }
-        val pendingPrompt = if (stoppedCleanly && hasAfterWalk && dir != null &&
-            (currentConfig.recordingMode == "guided" || currentConfig.recordingMode == "marker_only")
-        ) {
-            PendingAfterWalkPrompt(dir, currentTemplate, currentConfig.templateFields)
-        } else {
-            null
-        }
+        val template = currentTemplate
 
         app.recordingCoordinator.activeService = null
         app.recordingCoordinator.updateState {
@@ -485,6 +479,7 @@ class RecordingService : Service() {
         }
 
         fileIoScope.launch {
+            var summary: RecordingSummary? = null
             fileIoMutex.withLock {
                 val stats: Map<String, StreamStats> = sessionWriter?.close() ?: emptyMap()
                 if (app.recordingCoordinator.activeWriter === sessionWriter) {
@@ -498,20 +493,40 @@ class RecordingService : Service() {
                         stopped_cleanly = stoppedCleanly,
                     )
                     writeManifest(dir, finalManifest)
+                    summary = runCatching {
+                        RecordingSummary(
+                            sessionDir = dir,
+                            template = template,
+                            manifest = finalManifest,
+                            health = SessionEvaluator.evaluateDirectory(dir, finalManifest),
+                            checkpointMarks = countCheckpointMarks(dir),
+                        )
+                    }.getOrNull()
                 }
             }
             withContext(Dispatchers.Main) {
                 if (!isRunning) {
-                    if (pendingPrompt != null) {
-                        app.recordingCoordinator.updateState {
-                            it.copy(pendingAfterWalk = pendingPrompt)
-                        }
-                    }
+                    summary?.let { s -> app.recordingCoordinator.updateState { it.copy(pendingSummary = s) } }
                     stopForeground(STOP_FOREGROUND_REMOVE)
                     stopSelfResult(startId)
                 }
             }
         }
+    }
+
+    /** Checkpoint marks left after undos, which is what the ground truth will use. */
+    private fun countCheckpointMarks(sessionDir: File): Int {
+        val rows = File(sessionDir, "marks.csv").takeIf { it.exists() }?.readLines()?.drop(1) ?: return 0
+        val labels = mutableListOf<String>()
+        for (row in rows) {
+            val cols = row.split(',')
+            if (cols.size < 4) continue
+            when (cols[2]) {
+                "checkpoint" -> labels.add(cols[3])
+                "undo" -> labels.lastIndexOf(cols[3]).takeIf { it >= 0 }?.let { labels.removeAt(it) }
+            }
+        }
+        return labels.size
     }
 
     private fun writeManifest(sessionDir: File, manifest: SessionManifest) {

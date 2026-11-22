@@ -53,7 +53,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import it.unimib.indoornav.lab.format.ExperimentTemplate
-import it.unimib.indoornav.lab.service.PendingAfterWalkPrompt
 import it.unimib.indoornav.lab.service.ProtocolPhase
 import it.unimib.indoornav.lab.service.RecordingUiState
 import kotlinx.coroutines.delay
@@ -381,51 +380,6 @@ private fun TouchLockOverlay(
             }
         }
     }
-}
-
-@Composable
-fun AfterWalkFieldsDialog(
-    prompt: PendingAfterWalkPrompt,
-    onSave: (Map<String, String>) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    val afterFields = prompt.template.fields.filter { it.afterWalk }
-    var values by remember {
-        mutableStateOf(
-            afterFields.associate { it.key to (prompt.currentFields[it.key] ?: "") },
-        )
-    }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Post-Walk Fields (${prompt.template.code})") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Enter values collected at the end of the walk:")
-                afterFields.forEach { field ->
-                    OutlinedTextField(
-                        value = values[field.key] ?: "",
-                        onValueChange = { v ->
-                            values = values.toMutableMap().apply { put(field.key, v) }
-                        },
-                        label = { Text(field.label) },
-                        singleLine = true,
-                        keyboardOptions = if (field.key == "steps") {
-                            KeyboardOptions(keyboardType = KeyboardType.Number)
-                        } else {
-                            KeyboardOptions.Default
-                        },
-                    )
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = { onSave(values) }) { Text("Update Manifest") }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Skip") }
-        },
-    )
 }
 
 private fun formatElapsed(sec: Long): String {
