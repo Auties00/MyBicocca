@@ -62,7 +62,6 @@ internal data class HeroLook(
     val subLabel: String,
     val online: Boolean,
     val cardShape: SmoothCookieShape,
-    val detailHaloRotation: Float,
 )
 
 /**
@@ -76,6 +75,9 @@ class BeaconHeroState internal constructor(
     internal val cardRects = mutableStateMapOf<String, Rect>()
     internal val detailRects = mutableStateMapOf<String, Rect>()
     internal val looks = mutableStateMapOf<String, HeroLook>()
+
+    // Written only by the detail copy: the card copy recomposing on the way back must not reset it.
+    internal val detailHaloRotations = mutableStateMapOf<String, Float>()
 
     internal fun flightRects(): Pair<Rect, Rect>? {
         val k = key ?: return null
@@ -140,6 +142,7 @@ fun BeaconDetailHost(
                 next.cardRects.putAll(old.cardRects)
                 next.detailRects.putAll(old.detailRects)
                 next.looks.putAll(old.looks)
+                next.detailHaloRotations.putAll(old.detailHaloRotations)
             }
         }
     }
@@ -164,6 +167,7 @@ fun BeaconDetailHost(
             HeroVisual(
                 look = look,
                 progress = p,
+                detailHaloRotation = hero.detailHaloRotations[hero.key] ?: 0f,
                 modifier = Modifier
                     .offset {
                         IntOffset(
@@ -194,8 +198,13 @@ fun BeaconHero(
     haloRotation: Float = 0f,
 ) {
     val hero = LocalBeaconHero.current
-    val look = HeroLook(label, subLabel, online, cardShape, haloRotation)
-    if (hero != null) SideEffect { hero.looks[tileKey] = look }
+    val look = HeroLook(label, subLabel, online, cardShape)
+    if (hero != null) {
+        SideEffect {
+            hero.looks[tileKey] = look
+            if (inDetail) hero.detailHaloRotations[tileKey] = haloRotation
+        }
+    }
     val hidden = hero?.isFlying(tileKey) == true
     Box(
         modifier = modifier
@@ -207,12 +216,17 @@ fun BeaconHero(
             }
             .alpha(if (hidden) 0f else 1f),
     ) {
-        HeroVisual(look = look, progress = if (inDetail) 1f else 0f, modifier = Modifier.fillMaxSize())
+        HeroVisual(
+            look = look,
+            progress = if (inDetail) 1f else 0f,
+            detailHaloRotation = haloRotation,
+            modifier = Modifier.fillMaxSize(),
+        )
     }
 }
 
 @Composable
-private fun HeroVisual(look: HeroLook, progress: Float, modifier: Modifier) {
+private fun HeroVisual(look: HeroLook, progress: Float, detailHaloRotation: Float, modifier: Modifier) {
     val shape = when {
         progress <= 0f -> look.cardShape
         progress >= 1f -> OrganicShapes.SmoothCookie12
@@ -226,7 +240,7 @@ private fun HeroVisual(look: HeroLook, progress: Float, modifier: Modifier) {
             modifier = Modifier
                 .fillMaxSize(CARD_HALO_FRACTION + (1f - CARD_HALO_FRACTION) * progress)
                 // The detail halo turns as the page scrolls; in flight it unwinds towards the card.
-                .graphicsLayer { rotationZ = look.detailHaloRotation * progress },
+                .graphicsLayer { rotationZ = detailHaloRotation * progress },
         )
         BeaconModelView(
             label = look.label,
