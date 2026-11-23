@@ -1,5 +1,7 @@
 package it.unimib.indoornav.lab.ui.beacons
 
+import it.unimib.indoornav.lab.ui.components.BatteryBadge
+import it.unimib.indoornav.lab.inventory.BeaconBattery
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -125,6 +127,9 @@ fun BeaconCardList(
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
+                    tile.savedEntry?.let { BeaconBattery.estimate(it, System.currentTimeMillis()) }?.let {
+                        BatteryBadge(it.remainingFraction)
+                    }
                     if (tile.isOnline && tile.currentRssi != null) {
                         val ppsText = "%.1f pkt/s".format(Locale.US, tile.packetsPerSec ?: 0.0)
                         Text(

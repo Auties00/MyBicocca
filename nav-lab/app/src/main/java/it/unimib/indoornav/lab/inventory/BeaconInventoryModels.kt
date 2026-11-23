@@ -24,6 +24,11 @@ data class SavedBeaconEntry(
     val lastSeenMs: Long = 0L,
     val createdAtMs: Long = 0L,
     val updatedAtMs: Long = 0L,
+    /** When the battery was last replaced; null until the first reset in the app. */
+    val batteryResetAtMs: Long? = null,
+    val advIntervalMs: Int = BeaconBattery.DEFAULT_INTERVAL_MS,
+    /** Slots switched on in the beacon's settings; empty means "use the frames we have seen". */
+    val activeSlots: Set<BeaconSlot> = emptySet(),
 )
 
 data class GroupedLiveBeacon(

@@ -76,6 +76,21 @@ class BeaconInventoryRepository(context: Context) {
         persistAsync(updatedList)
     }
 
+    /** Adds the entries no saved beacon already covers (by ID or linked ID); returns how many were added. */
+    fun importNew(imported: List<SavedBeaconEntry>): Int {
+        val (updatedList, added) = synchronized(lock) {
+            val current = _entries.value
+            val knownKeys = current.flatMap { it.linkedKeys + it.canonicalKey }.filter { it.isNotBlank() }.toSet()
+            val fresh = imported.filter { entry -> (entry.linkedKeys + entry.canonicalKey).none { it in knownKeys } }
+            (current + fresh) to fresh.size
+        }
+        if (added > 0) {
+            _entries.value = updatedList
+            persistAsync(updatedList)
+        }
+        return added
+    }
+
     fun remove(id: String) {
         val updatedList = synchronized(lock) {
             _entries.value.filterNot { it.id == id }

@@ -1,5 +1,12 @@
 package it.unimib.indoornav.lab.ui
 
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
+import it.unimib.indoornav.lab.inventory.LayoutCsvImporter
+import androidx.compose.material3.IconButton
+import androidx.compose.material.icons.filled.FileUpload
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.compose.rememberLauncherForActivityResult
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
@@ -89,6 +96,20 @@ fun InventoryScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri == null) return@rememberLauncherForActivityResult
+        scope.launch {
+            val message = withContext(Dispatchers.IO) {
+                runCatching {
+                    val text = context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { it.readText() }.orEmpty()
+                    val entries = LayoutCsvImporter.parse(text, config.building, System.currentTimeMillis())
+                    val added = inventoryRepository.importNew(entries)
+                    "Imported $added beacons" + if (added < entries.size) " (${entries.size - added} already saved)" else ""
+                }.getOrElse { "Could not read the layout: ${it.message}" }
+            }
+            Toast.makeText(context, message, Toast.LENGTH_LONG).show()
+        }
+    }
     val savedEntries by inventoryRepository.entries.collectAsState()
     val latestIsRecording by rememberUpdatedState(isRecording)
 
@@ -144,6 +165,7 @@ fun InventoryScreen(
                 statusMessage = surveyState.statusMessage,
                 onViewModeChange = { viewMode = it },
                 onSortOptionChange = { sortOption = it },
+                onImportLayout = { importLauncher.launch(arrayOf("text/*", "application/octet-stream")) },
                 onExportCsv = {
                     scope.launch {
                         val file = inventoryRepository.exportCatalogCsv(sessionRepository.surveyDir())
@@ -200,6 +222,7 @@ private fun InventoryContent(
     statusMessage: String?,
     onViewModeChange: (BeaconViewMode) -> Unit,
     onSortOptionChange: (InventorySortOption) -> Unit,
+    onImportLayout: () -> Unit,
     onExportCsv: () -> Unit,
     onSelectTile: (ResolvedBeaconTile) -> Unit,
     listState: LazyListState,
@@ -230,6 +253,9 @@ private fun InventoryContent(
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+            }
+            IconButton(onClick = onImportLayout) {
+                Icon(Icons.Default.FileUpload, contentDescription = "Import layout CSV")
             }
             OutlinedButton(
                 onClick = onExportCsv,
@@ -499,6 +525,7 @@ private fun InventoryContentPreview() {
                 statusMessage = null,
                 onViewModeChange = {},
                 onSortOptionChange = {},
+                onImportLayout = {},
                 onExportCsv = {},
                 onSelectTile = {},
                 listState = rememberLazyListState(),

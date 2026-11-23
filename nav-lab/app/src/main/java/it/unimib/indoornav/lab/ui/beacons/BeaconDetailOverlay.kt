@@ -1,5 +1,9 @@
 package it.unimib.indoornav.lab.ui.beacons
 
+import it.unimib.indoornav.lab.ui.components.rememberReduceMotion
+import it.unimib.indoornav.lab.ui.components.BatteryBadge
+import it.unimib.indoornav.lab.inventory.SavedBeaconEntry
+import it.unimib.indoornav.lab.inventory.BeaconBattery
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -138,7 +142,8 @@ fun BeaconDetailOverlay(
     // The label joins the title once the top half of the model has scrolled under the bar.
     val titleFadeStartPx = with(density) { (HERO_TOP + HERO_SIZE / 2).toPx() }
     val titleFadePx = with(density) { TITLE_FADE.toPx() }
-    val haloRotation = scrollState.value / density.density * HALO_DEGREES_PER_DP
+    val reduceMotion = rememberReduceMotion()
+    val haloRotation = if (reduceMotion) 0f else scrollState.value / density.density * HALO_DEGREES_PER_DP
 
     Surface(
         modifier = modifier.fillMaxSize(),
@@ -426,6 +431,47 @@ fun BeaconDetailOverlay(
 }
 
 @Composable
+private fun BatteryCard(entry: SavedBeaconEntry, liveBattMv: Int?) {
+    val estimate = BeaconBattery.estimate(entry, System.currentTimeMillis())
+    val lifeDays = BeaconBattery.lifeDays(entry.advIntervalMs, BeaconBattery.slotsOf(entry))
+    val dateFormat = remember { SimpleDateFormat("d MMM yyyy", Locale.getDefault()) }
+    val slots = BeaconBattery.slotsOf(entry).joinToString(" + ") { it.label }.ifBlank { "no slots" }
+    val voltage = (liveBattMv ?: entry.lastBattMv)?.let { " · %.2f V".format(Locale.US, it / 1000.0) } ?: ""
+    Surface(
+        shape = RoundedCornerShape(20.dp),
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(modifier = Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(
+                    text = "BATTERY",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.weight(1f),
+                )
+                estimate?.let { BatteryBadge(it.remainingFraction) }
+            }
+            Text(
+                text = if (estimate != null) {
+                    "Replace by about ${dateFormat.format(Date(estimate.replaceByMs))}"
+                } else {
+                    "Not tracked yet. Use ⋮ → Edit → Reset battery expectancy when a new battery goes in."
+                },
+                fontSize = 13.sp,
+            )
+            Text(
+                text = "CR2477 · $slots every ${entry.advIntervalMs} ms · about ${formatLife(lifeDays)}$voltage",
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Composable
 private fun CornerPill(
     text: String,
     highlighted: Boolean,
@@ -494,6 +540,8 @@ private fun GeneralTabContent(tile: ResolvedBeaconTile) {
             FactRow("Last Seen", lastSeenLine),
         ),
     )
+
+    tile.savedEntry?.let { BatteryCard(it, tile.tlmBattMv) }
 
     Surface(
         shape = RoundedCornerShape(20.dp),

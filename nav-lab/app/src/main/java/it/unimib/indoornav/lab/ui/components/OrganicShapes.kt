@@ -101,7 +101,10 @@ fun OrganicBeaconHalo(
         animationSpec = tween(durationMillis = 300),
         label = "haloStale",
     )
-    val pulse = if (stale || breath > 0f) {
+    val reduceMotion = rememberReduceMotion()
+    val pulse = if (reduceMotion) {
+        if (stale) 0.5f else 0f
+    } else if (stale || breath > 0f) {
         rememberInfiniteTransition(label = "haloPulse").animateFloat(
             initialValue = 0f,
             targetValue = 0.85f,

@@ -43,6 +43,19 @@ import it.unimib.indoornav.lab.ui.components.BeaconModelView
 import it.unimib.indoornav.lab.ui.components.OrganicBeaconHalo
 import it.unimib.indoornav.lab.ui.components.OrganicShapes
 import it.unimib.indoornav.lab.ui.theme.LabTheme
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.ui.text.input.KeyboardType
+import it.unimib.indoornav.lab.inventory.BeaconBattery
+import it.unimib.indoornav.lab.inventory.BeaconSlot
+import it.unimib.indoornav.lab.ui.components.BatteryBadge
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import java.util.UUID
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -92,6 +105,16 @@ private fun SaveBeaconSheetContent(
     var floor by remember(tile.tileKey) { mutableStateOf(initialFloor) }
     var position by remember(tile.tileKey) { mutableStateOf(existing?.positionDescription ?: "") }
     var confirmRemove by remember { mutableStateOf(false) }
+    var intervalText by remember(tile.tileKey) {
+        mutableStateOf((existing?.advIntervalMs ?: BeaconBattery.DEFAULT_INTERVAL_MS).toString())
+    }
+    var slots by remember(tile.tileKey) {
+        mutableStateOf(
+            existing?.let { BeaconBattery.slotsOf(it.copy(seenFrameTypes = it.seenFrameTypes + tile.frameTypes)) }
+                ?: BeaconBattery.slotsFromFrames(tile.frameTypes),
+        )
+    }
+    var batteryResetAt by remember(tile.tileKey) { mutableStateOf(existing?.batteryResetAtMs) }
 
     val focusManager = LocalFocusManager.current
     val closeWith: (() -> Unit) -> Unit = { action ->
@@ -193,6 +216,15 @@ private fun SaveBeaconSheetContent(
             modifier = Modifier.fillMaxWidth(),
         )
 
+        BatterySection(
+            intervalText = intervalText,
+            onIntervalChange = { intervalText = it.filter(Char::isDigit).take(5) },
+            slots = slots,
+            onSlotsChange = { slots = it },
+            batteryResetAt = batteryResetAt,
+            onReset = { batteryResetAt = System.currentTimeMillis() },
+        )
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -236,6 +268,10 @@ private fun SaveBeaconSheetContent(
                         lastSeenMs = maxOf(tile.lastSeenMs, existing?.lastSeenMs ?: 0L),
                         createdAtMs = existing?.createdAtMs ?: now,
                         updatedAtMs = now,
+                        batteryResetAtMs = batteryResetAt,
+                        advIntervalMs = intervalText.toIntOrNull()?.coerceIn(20, 10_000)
+                            ?: BeaconBattery.DEFAULT_INTERVAL_MS,
+                        activeSlots = slots,
                     )
                     closeWith { onSave(entry) }
                 },
@@ -268,6 +304,89 @@ private fun SaveBeaconSheetContent(
             },
         )
     }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun BatterySection(
+    intervalText: String,
+    onIntervalChange: (String) -> Unit,
+    slots: Set<BeaconSlot>,
+    onSlotsChange: (Set<BeaconSlot>) -> Unit,
+    batteryResetAt: Long?,
+    onReset: () -> Unit,
+) {
+    val interval = intervalText.toIntOrNull()?.coerceIn(20, 10_000) ?: BeaconBattery.DEFAULT_INTERVAL_MS
+    val lifeDays = BeaconBattery.lifeDays(interval, slots)
+    val estimate = batteryResetAt?.let {
+        BeaconBattery.estimate(
+            SavedBeaconEntry(
+                id = "", canonicalKey = "", macAddress = "", label = "", building = "", floor = "",
+                batteryResetAtMs = it, advIntervalMs = interval, activeSlots = slots,
+            ),
+            System.currentTimeMillis(),
+        )
+    }
+    val dateFormat = remember { SimpleDateFormat("d MMM yyyy", Locale.getDefault()) }
+
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Battery (CR2477)", fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                estimate?.let { BatteryBadge(it.remainingFraction) }
+            }
+            Text(
+                "Slots switched on in Runestone and their interval set the expected life.",
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                BeaconSlot.entries.forEach { slot ->
+                    FilterChip(
+                        selected = slot in slots,
+                        onClick = { onSlotsChange(if (slot in slots) slots - slot else slots + slot) },
+                        label = { Text(slot.label) },
+                    )
+                }
+            }
+            OutlinedTextField(
+                value = intervalText,
+                onValueChange = onIntervalChange,
+                label = { Text("Advertising interval (ms)") },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Text(
+                "Expected life: about ${formatLife(lifeDays)}",
+                fontSize = 13.sp,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                text = when {
+                    batteryResetAt == null -> "Not tracked yet. Reset when you fit a new battery."
+                    estimate == null -> ""
+                    else -> "Battery reset on ${dateFormat.format(Date(batteryResetAt))}, " +
+                        "replace by about ${dateFormat.format(Date(estimate.replaceByMs))}"
+                },
+                fontSize = 12.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            OutlinedButton(onClick = onReset, modifier = Modifier.fillMaxWidth()) {
+                Text("Reset battery expectancy (new battery fitted)")
+            }
+        }
+    }
+}
+
+internal fun formatLife(days: Double): String = when {
+    days >= 365.25 -> "%.1f years".format(Locale.US, days / 365.25)
+    days >= 60 -> "%.0f months".format(Locale.US, days / 30.44)
+    else -> "%.0f days".format(Locale.US, days)
 }
 
 @Preview(showBackground = true)
