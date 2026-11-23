@@ -94,8 +94,8 @@ private const val QUICK_ZOOM_PX_PER_E = 750f
 
 // How short the first tap must be, and how soon the second must follow it, for the one-handed zoom.
 // Tighter than Android's double tap (400 and 300 ms), so a tap followed by a pan stays a pan.
-private const val QUICK_ZOOM_TAP_MS = 150L
-private const val QUICK_ZOOM_GAP_MS = 150L
+private const val QUICK_ZOOM_TAP_MS = 200L
+private const val QUICK_ZOOM_GAP_MS = 200L
 
 /**
  * Where the plan sits on screen. In a portrait view the plan is turned a quarter clockwise, so the
@@ -431,10 +431,17 @@ private fun MapContent(
                         val first = awaitFirstDown(requireUnconsumed = false)
                         // Not waitForUpOrCancellation: the tap detector below consumes the up, which that
                         // function would take as a cancellation.
-                        withTimeoutOrNull(QUICK_ZOOM_TAP_MS) {
-                            while (awaitPointerEvent().changes.any { it.pressed }) Unit
-                            true
-                        } ?: return@awaitEachGesture
+                        // A first touch that moves is a pan or drag, not the first tap of the gesture.
+                        val tapped: Boolean? = withTimeoutOrNull(QUICK_ZOOM_TAP_MS) {
+                            while (true) {
+                                val changes = awaitPointerEvent().changes
+                                if (changes.any { (it.position - first.position).getDistance() > viewConfiguration.touchSlop }) {
+                                    return@withTimeoutOrNull false
+                                }
+                                if (changes.none { it.pressed }) return@withTimeoutOrNull true
+                            }
+                        }
+                        if (tapped != true) return@awaitEachGesture
                         val second = withTimeoutOrNull(QUICK_ZOOM_GAP_MS) {
                             awaitFirstDown(requireUnconsumed = false)
                         } ?: return@awaitEachGesture
