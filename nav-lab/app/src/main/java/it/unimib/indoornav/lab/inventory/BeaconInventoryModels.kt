@@ -86,6 +86,9 @@ data class ResolvedBeaconTile(
 ) {
     val isSaved: Boolean
         get() = savedEntry != null
+
+    /** The survey tracker keys behind this tile's live frames. */
+    fun trackerKeys(): Set<String> = liveBeacon?.framesByType?.values?.mapTo(HashSet()) { it.key }.orEmpty()
 }
 
 enum class InventorySortOption(val label: String) {

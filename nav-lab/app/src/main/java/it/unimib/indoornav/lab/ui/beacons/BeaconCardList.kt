@@ -3,6 +3,7 @@ package it.unimib.indoornav.lab.ui.beacons
 import it.unimib.indoornav.lab.ui.components.SlotBadge
 import it.unimib.indoornav.lab.inventory.SlotPills
 import it.unimib.indoornav.lab.ui.components.BatteryBadge
+import it.unimib.indoornav.lab.ui.components.PacketRateText
 import it.unimib.indoornav.lab.inventory.BeaconBattery
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -131,11 +132,9 @@ fun BeaconCardList(
                         BatteryBadge(it.remainingFraction)
                     }
                     if (tile.isOnline && tile.currentRssi != null) {
-                        val ppsText = "%.1f pkt/s".format(Locale.US, tile.packetsPerSec ?: 0.0)
-                        Text(
-                            text = ppsText,
-                            fontSize = 11.sp,
-                            fontWeight = FontWeight.Bold,
+                        PacketRateText(
+                            packetsPerSec = tile.packetsPerSec ?: 0.0,
+                            trackerKeys = tile.trackerKeys(),
                             color = MaterialTheme.colorScheme.onPrimaryContainer,
                             modifier = Modifier
                                 .clip(RoundedCornerShape(999.dp))

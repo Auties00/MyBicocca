@@ -43,7 +43,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -154,6 +156,11 @@ class SurveyManager(
         ),
     )
     val state: StateFlow<SurveyUiState> = _state.asStateFlow()
+
+    private val _packets = MutableSharedFlow<String>(extraBufferCapacity = 64)
+
+    /** The tracker key of every beacon packet as it arrives, for UI that reacts per packet. */
+    val packets: SharedFlow<String> = _packets
 
     private class MutableBeaconTracker(
         val key: String,
@@ -446,6 +453,7 @@ class SurveyManager(
                     tracker.tlmUptimeSec = tlm.uptimeSec
                 }
                 tracker.addRssi(result.rssi, nowMs)
+                _packets.tryEmit(tracker.key)
             }
             BeaconFrameType.ED_TLM -> {
                 val tlmExtras: EddystoneTlmExtras? = EddystoneTlmExtrasParser.parse(rawBytes)
@@ -480,6 +488,7 @@ class SurveyManager(
                 tracker.tlmUptimeSec = tlmExtras?.uptimeSec ?: tracker.tlmUptimeSec
                 tracker.advHex = parsed.advHex
                 tracker.addRssi(result.rssi, nowMs)
+                _packets.tryEmit(tracker.key)
 
                 beaconTrackers.values.filter { it.addr == addr && it.frameType == BeaconFrameType.ED_UID }.forEach {
                     it.tlmBattMv = parsed.tlmBattMv
@@ -510,6 +519,7 @@ class SurveyManager(
                 tracker.txPowerAdv = parsed.txPowerAdv
                 tracker.advHex = parsed.advHex
                 tracker.addRssi(result.rssi, nowMs)
+                _packets.tryEmit(tracker.key)
             }
         }
     }
