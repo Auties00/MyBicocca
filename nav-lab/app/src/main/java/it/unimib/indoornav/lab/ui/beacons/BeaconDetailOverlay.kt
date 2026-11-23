@@ -118,9 +118,7 @@ fun BeaconDetailOverlay(
     val ibeaconCanonical = remember(tile) { findCanonical(tile, "ib:", BeaconFrameType.IBEACON) }
     val hasUid = BeaconFrameType.ED_UID in tile.frameTypes || uidCanonical != null
     val hasIBeacon = BeaconFrameType.IBEACON in tile.frameTypes || ibeaconCanonical != null
-    val hasTelemetry = BeaconFrameType.ED_TLM in tile.frameTypes ||
-        tile.tlmBattMv != null ||
-        tile.tlmTempC != null
+    val hasTelemetry = BeaconFrameType.ED_TLM in tile.frameTypes || tile.tlmBattMv != null
 
     val visibleTabs = remember(hasUid, hasIBeacon, hasTelemetry) {
         buildList {
@@ -654,13 +652,6 @@ private fun IBeaconTabContent(
 private fun TelemetryTabContent(tile: ResolvedBeaconTile) {
     val rows = buildList {
         add(FactRow("Battery", tile.tlmBattMv?.let { "$it mV" } ?: "Unavailable", mono = true))
-        add(
-            FactRow(
-                "Temperature",
-                tile.tlmTempC?.let { "%.2f °C".format(Locale.US, it) } ?: "Unavailable",
-                mono = true,
-            ),
-        )
         tile.tlmAdvCount?.let { count ->
             add(FactRow("Advertising Count", "%,d".format(Locale.US, count), mono = true))
         }
