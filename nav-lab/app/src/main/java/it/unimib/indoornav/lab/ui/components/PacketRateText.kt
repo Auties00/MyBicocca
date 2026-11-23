@@ -1,7 +1,7 @@
 package it.unimib.indoornav.lab.ui.components
 
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.MaterialTheme
@@ -11,8 +11,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.TransformOrigin
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.TextStyle
@@ -21,13 +19,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
 import it.unimib.indoornav.lab.LabApp
+import it.unimib.indoornav.lab.ui.theme.LabStatusColors
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import java.util.Locale
 
 /**
- * "1.0 pkt/s" whose decimal point pulses each time a packet from one of [trackerKeys] arrives.
+ * "1.0 pkt/s" whose decimal point blinks green, like an RX LED, each time a packet from one of [trackerKeys] arrives.
  * [packets] defaults to the live survey stream; previews pass none and show a still dot.
  */
 @Composable
@@ -43,14 +43,18 @@ fun PacketRateText(
 ) {
     val reduceMotion = rememberReduceMotion()
     val pulse = remember { Animatable(0f) }
-    val pulseColor = MaterialTheme.colorScheme.primary
 
     LaunchedEffect(packets, trackerKeys) {
         packets ?: return@LaunchedEffect
         packets.filter { it in trackerKeys }.collect {
             launch {
                 pulse.snapTo(1f)
-                pulse.animateTo(0f, tween(if (reduceMotion) 0 else 350, easing = FastOutSlowInEasing))
+                if (reduceMotion) {
+                    delay(300)
+                    pulse.snapTo(0f)
+                } else {
+                    pulse.animateTo(0f, tween(durationMillis = 450, delayMillis = 150, easing = LinearEasing))
+                }
             }
         }
     }
@@ -64,18 +68,7 @@ fun PacketRateText(
     )
     Row(modifier) {
         Text(whole, style = style, maxLines = 1)
-        Text(
-            ".",
-            style = style.copy(color = lerp(color, pulseColor, pulse.value)),
-            maxLines = 1,
-            modifier = Modifier.graphicsLayer {
-                val s = 1f + 1.6f * pulse.value
-                scaleX = s
-                scaleY = s
-                // Scale around the dot itself, which sits on the baseline.
-                transformOrigin = TransformOrigin(0.5f, 0.8f)
-            },
-        )
+        Text(".", style = style.copy(color = lerp(color, LabStatusColors.Green, pulse.value)), maxLines = 1)
         Text("$fraction pkt/s$suffix", style = style, maxLines = 1)
     }
 }
