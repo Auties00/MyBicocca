@@ -90,7 +90,7 @@ private const val MIN_PX_PER_M = 4f
 private const val MAX_PX_PER_M = 400f
 
 // Drag distance that multiplies the zoom by e (about 2.7x) during the one-handed zoom.
-private const val QUICK_ZOOM_PX_PER_E = 300f
+private const val QUICK_ZOOM_PX_PER_E = 750f
 
 /**
  * Where the plan sits on screen. In a portrait view the plan is turned a quarter clockwise, so the
