@@ -1,27 +1,28 @@
 package it.unimib.indoornav.lab.ui
 
-import android.content.res.Configuration
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Surface
-import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.ui.tooling.preview.Preview
-import it.unimib.indoornav.lab.format.BeaconFrameType
-import it.unimib.indoornav.lab.ui.theme.LabTheme
+import android.annotation.SuppressLint
+import android.net.wifi.ScanResult as WifiScanResult
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.FormatListBulleted
+import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Save
@@ -32,17 +33,22 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SecondaryTabRow
 import androidx.compose.material3.Slider
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -53,14 +59,27 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import it.unimib.indoornav.lab.data.SetupConfig
+import it.unimib.indoornav.lab.format.BeaconFrameType
+import it.unimib.indoornav.lab.inventory.BeaconGrouping
+import it.unimib.indoornav.lab.inventory.BeaconInventoryRepository
+import it.unimib.indoornav.lab.inventory.BeaconViewMode
+import it.unimib.indoornav.lab.inventory.ResolvedBeaconTile
 import it.unimib.indoornav.lab.survey.BeaconInventoryItem
 import it.unimib.indoornav.lab.survey.SurveyManager
 import it.unimib.indoornav.lab.survey.SurveyUiState
 import it.unimib.indoornav.lab.survey.WifiSurveyAp
-import android.annotation.SuppressLint
-import android.net.wifi.ScanResult as WifiScanResult
+import it.unimib.indoornav.lab.ui.beacons.BeaconCardGrid
+import it.unimib.indoornav.lab.ui.beacons.BeaconCardList
+import it.unimib.indoornav.lab.ui.beacons.BeaconDetailHost
+import it.unimib.indoornav.lab.ui.beacons.BeaconDetailOverlay
+import it.unimib.indoornav.lab.ui.beacons.SaveBeaconBottomSheet
+import it.unimib.indoornav.lab.ui.components.SegmentedSwitch
+import it.unimib.indoornav.lab.ui.theme.LabStatusColors
+import it.unimib.indoornav.lab.ui.theme.LabTheme
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -70,6 +89,7 @@ fun SurveyScreen(
     surveyState: SurveyUiState,
     config: SetupConfig,
     surveyManager: SurveyManager,
+    inventoryRepository: BeaconInventoryRepository,
     onUpdateConfig: ((SetupConfig) -> SetupConfig) -> Unit,
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
@@ -98,7 +118,7 @@ fun SurveyScreen(
         }
 
         when (selectedTab) {
-            0 -> BeaconInventoryTab(surveyState, surveyManager)
+            0 -> BeaconInventoryTab(surveyState, config, surveyManager, inventoryRepository)
             1 -> WifiSurveyTab(surveyState, config, surveyManager, onUpdateConfig)
             2 -> RttSurveyTab(surveyState, surveyManager)
             3 -> ConnectedApTab(surveyState, surveyManager)
@@ -109,94 +129,173 @@ fun SurveyScreen(
 @Composable
 private fun BeaconInventoryTab(
     state: SurveyUiState,
+    config: SetupConfig,
     manager: SurveyManager,
+    inventoryRepository: BeaconInventoryRepository,
 ) {
-    var selectedBeacon by remember { mutableStateOf<BeaconInventoryItem?>(null) }
+    val savedEntries by inventoryRepository.entries.collectAsState()
+    var viewMode by remember { mutableStateOf(BeaconViewMode.LIST) }
+    var detailTileKey by remember { mutableStateOf<String?>(null) }
+    var editingTile by remember { mutableStateOf<ResolvedBeaconTile?>(null) }
     // The list as it was when Snapshot was pressed; the live list keeps changing underneath.
     var frozenSnapshot by remember { mutableStateOf<BeaconSnapshot?>(null) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(12.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Button(
-                onClick = {
-                    if (state.beaconScanning) manager.stopBeaconInventory()
-                    else manager.startBeaconInventory()
-                },
-                modifier = Modifier.weight(1f),
-            ) {
-                Icon(
-                    if (state.beaconScanning) Icons.Default.Stop else Icons.Default.PlayArrow,
-                    contentDescription = null,
-                )
-                Spacer(Modifier.width(6.dp))
-                Text(if (state.beaconScanning) "Stop Scan" else "Start Inventory")
-            }
-            OutlinedButton(
-                onClick = { frozenSnapshot = BeaconSnapshot(state.beacons, System.currentTimeMillis()) },
-                enabled = state.beacons.isNotEmpty(),
-            ) {
-                Icon(Icons.Default.Save, contentDescription = null)
-                Spacer(Modifier.width(4.dp))
-                Text("Snapshot")
-            }
-        }
-
-        Column {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Text("Min RSSI: ${state.minRssiFilter} dBm", style = MaterialTheme.typography.labelLarge)
-                Text(
-                    "Beacons: ${state.beacons.size} | Other BLE/s: ${state.otherBlePerSec}",
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
-            Slider(
-                value = state.minRssiFilter.toFloat(),
-                onValueChange = { manager.setMinRssiFilter(it.toInt()) },
-                valueRange = -100f..-30f,
-            )
-        }
-
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            items(state.beacons, key = { it.key }) { item ->
-                BeaconCard(item, onClick = { selectedBeacon = item })
-            }
-        }
+    val grouped = remember(state.beacons) {
+        BeaconGrouping.groupByPhysicalBeacon(state.beacons)
     }
+    val tiles = remember(grouped, savedEntries) {
+        BeaconGrouping.resolveSurveyTiles(grouped, savedEntries, System.currentTimeMillis())
+    }
+    // Keeps the detail drawable while it animates out after its beacon stopped transmitting.
+    val lastKnownTiles = remember { mutableMapOf<String, ResolvedBeaconTile>() }
+    remember(tiles) { tiles.forEach { lastKnownTiles[it.tileKey] = it } }
+    val listState = rememberLazyListState()
+    val gridState = rememberLazyGridState()
 
-    selectedBeacon?.let { b ->
-        AlertDialog(
-            onDismissRequest = { selectedBeacon = null },
-            title = { Text(b.projectLabel ?: b.frameType.wireName) },
-            text = {
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Text("Frame: ${b.frameType.wireName}")
-                    Text("Canonical ID: ${b.canonicalId.ifEmpty { "(TLM without prior UID)" }}")
-                    Text("Address: ${b.addr}")
-                    Text("RSSI: ${b.currentRssi} dBm (median ${b.medianRssi} dBm)")
-                    Text("Rate: %.2f packets/s".format(Locale.US, b.packetsPerSec))
-                    Text("Tx Power: ${b.txPowerAdv ?: "n/a"}")
-                    Text("TLM Battery: ${b.tlmBattMv?.let { "$it mV" } ?: "n/a"}")
-                    Text("TLM Temp: ${b.tlmTempC?.let { "%.2f °C".format(Locale.US, it) } ?: "n/a"}")
-                    Text("Adv hex: ${b.advHex}", fontFamily = FontFamily.Monospace, style = MaterialTheme.typography.bodySmall)
+    BeaconDetailHost(
+        detailKey = detailTileKey,
+        onClose = { detailTileKey = null },
+        list = {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(12.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Button(
+                        onClick = {
+                            if (state.beaconScanning) manager.stopBeaconInventory()
+                            else manager.startBeaconInventory()
+                        },
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        Icon(
+                            if (state.beaconScanning) Icons.Default.Stop else Icons.Default.PlayArrow,
+                            contentDescription = null,
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            when {
+                                state.beaconScanning -> "Stop Scan"
+                                state.beaconScanPending -> "Starting..."
+                                else -> "Start Inventory"
+                            },
+                        )
+                    }
+                    OutlinedButton(
+                        onClick = { frozenSnapshot = BeaconSnapshot(state.beacons, System.currentTimeMillis()) },
+                        enabled = state.beacons.isNotEmpty(),
+                    ) {
+                        Icon(Icons.Default.Save, contentDescription = null)
+                        Spacer(Modifier.width(4.dp))
+                        Text("Snapshot")
+                    }
                 }
+
+                SegmentedSwitch(
+                    options = BeaconViewMode.entries,
+                    selected = viewMode,
+                    onSelected = { viewMode = it },
+                    label = { it.label },
+                    leadingIcon = { mode, tint ->
+                        Icon(
+                            imageVector = if (mode == BeaconViewMode.LIST) {
+                                Icons.AutoMirrored.Filled.FormatListBulleted
+                            } else {
+                                Icons.Default.GridView
+                            },
+                            contentDescription = null,
+                            tint = tint,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    },
+                )
+
+                Column {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Text("Min RSSI: ${state.minRssiFilter} dBm", style = MaterialTheme.typography.labelLarge)
+                        Text(
+                            "Beacons: ${tiles.size} (${state.beacons.size} frames) | Other/s: ${state.otherBlePerSec}",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Slider(
+                        value = state.minRssiFilter.toFloat(),
+                        onValueChange = { manager.setMinRssiFilter(it.toInt()) },
+                        valueRange = -100f..-30f,
+                    )
+                }
+
+                if (viewMode == BeaconViewMode.LIST) {
+                    LazyColumn(
+                        state = listState,
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(7.dp),
+                        contentPadding = PaddingValues(bottom = 16.dp),
+                    ) {
+                        itemsIndexed(tiles, key = { _, tile -> tile.tileKey }) { idx, tile ->
+                            BeaconCardList(
+                                tile = tile,
+                                index = idx,
+                                onClick = { detailTileKey = tile.tileKey },
+                            )
+                        }
+                    }
+                } else {
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(3),
+                        state = gridState,
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        contentPadding = PaddingValues(bottom = 16.dp),
+                    ) {
+                        itemsIndexed(tiles, key = { _, tile -> tile.tileKey }) { idx, tile ->
+                            BeaconCardGrid(
+                                tile = tile,
+                                index = idx,
+                                onClick = { detailTileKey = tile.tileKey },
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        detail = { key ->
+            val tile = tiles.firstOrNull { it.tileKey == key } ?: lastKnownTiles[key]
+            if (tile != null) {
+                BeaconDetailOverlay(
+                    tile = tile,
+                    onClose = { detailTileKey = null },
+                    onEdit = { editingTile = tile },
+                    onRemove = { tile.savedEntry?.let { inventoryRepository.remove(it.id) } },
+                )
+            }
+        },
+    )
+
+    editingTile?.let { tile ->
+        SaveBeaconBottomSheet(
+            tile = tile,
+            defaultBuilding = config.building,
+            defaultFloor = config.floor,
+            onSave = { entry ->
+                inventoryRepository.upsert(entry)
+                editingTile = null
             },
-            confirmButton = {
-                TextButton(onClick = { selectedBeacon = null }) { Text("Close") }
+            onRemove = { id ->
+                inventoryRepository.remove(id)
+                editingTile = null
             },
+            onDismiss = { editingTile = null },
         )
     }
 
@@ -215,12 +314,8 @@ private fun BeaconInventoryTab(
 private data class BeaconSnapshot(val beacons: List<BeaconInventoryItem>, val takenAtMs: Long)
 
 @Composable
-private fun BeaconCard(item: BeaconInventoryItem, onClick: (() -> Unit)? = null) {
-    ElevatedCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier),
-    ) {
+private fun SnapshotBeaconCard(item: BeaconInventoryItem) {
+    ElevatedCard(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(10.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -329,7 +424,7 @@ private fun BeaconSnapshotContent(
             verticalArrangement = Arrangement.spacedBy(6.dp),
             contentPadding = PaddingValues(bottom = 24.dp),
         ) {
-            items(snapshot.beacons, key = { it.key }) { item -> BeaconCard(item) }
+            items(snapshot.beacons, key = { it.key }) { item -> SnapshotBeaconCard(item) }
         }
     }
 }
@@ -480,20 +575,6 @@ private fun BeaconSnapshotContentPreview() {
     }
 }
 
-@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, heightDp = 640)
-@Composable
-private fun BeaconSnapshotContentDarkPreview() {
-    LabTheme(darkTheme = true) {
-        Surface {
-            BeaconSnapshotContent(
-                snapshot = BeaconSnapshot(previewBeacons, 1_795_220_000_000L),
-                onSave = {},
-                onCancel = {},
-            )
-        }
-    }
-}
-
 @Composable
 private fun WifiSurveyTab(
     state: SurveyUiState,
@@ -542,7 +623,7 @@ private fun WifiSurveyTab(
             Text(
                 "Wi-Fi RTT: ${if (state.wifiRttSupported) "SUPPORTED" else "Not supported"}",
                 style = MaterialTheme.typography.labelLarge,
-                color = if (state.wifiRttSupported) Color(0xFF2E7D32) else MaterialTheme.colorScheme.error,
+                color = if (state.wifiRttSupported) LabStatusColors.Green else MaterialTheme.colorScheme.error,
             )
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("Auto scan", style = MaterialTheme.typography.bodySmall)

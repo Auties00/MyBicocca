@@ -115,7 +115,7 @@ fun LiveRecordingScreen(
 
                     if (state.twentyMinuteWarning) {
                         Card(
-                            colors = CardDefaults.cardColors(containerColor = Color(0xFFFFF3E0)),
+                            colors = CardDefaults.cardColors(containerColor = Color(0xFF4E1F06)),
                             modifier = Modifier.fillMaxWidth(),
                         ) {
                             Row(
@@ -123,10 +123,10 @@ fun LiveRecordingScreen(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                             ) {
-                                Icon(Icons.Default.Warning, contentDescription = null, tint = Color(0xFFE65100))
+                                Icon(Icons.Default.Warning, contentDescription = null, tint = Color(0xFFFB923C))
                                 Text(
                                     "20 minutes elapsed — BLE scan restarted; finish walk soon.",
-                                    color = Color(0xFFE65100),
+                                    color = Color(0xFFFFB58A),
                                     style = MaterialTheme.typography.bodySmall,
                                     fontWeight = FontWeight.Bold,
                                 )

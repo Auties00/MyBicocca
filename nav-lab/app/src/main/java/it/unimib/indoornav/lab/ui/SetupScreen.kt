@@ -60,6 +60,7 @@ import it.unimib.indoornav.lab.data.SetupConfig
 import it.unimib.indoornav.lab.data.WifiThrottleCheckState
 import it.unimib.indoornav.lab.format.ExperimentTemplate
 import it.unimib.indoornav.lab.format.TestIdCodec
+import it.unimib.indoornav.lab.ui.theme.LabStatusColors
 import java.util.Locale
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -609,9 +610,9 @@ private fun ReadinessRow(
             },
             contentDescription = null,
             tint = when {
-                ok -> Color(0xFF2E7D32)
-                isWarning -> Color(0xFFED6C02)
-                else -> Color(0xFFC62828)
+                ok -> LabStatusColors.Green
+                isWarning -> LabStatusColors.Amber
+                else -> LabStatusColors.Red
             },
         )
         Text(label, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))

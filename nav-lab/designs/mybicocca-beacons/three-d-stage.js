@@ -157,6 +157,7 @@
       const note = document.createElement('div');
       note.className = 'note';
       note.textContent = 'Drag to orbit · scroll to zoom · right-drag to pan';
+      this._note = note;
       root.appendChild(note);
       this._toolbar = document.createElement('div');
       this._toolbar.className = 'toolbar';
@@ -182,6 +183,11 @@
 
     connectedCallback() {
       if (this._booted) {
+        if (this._softwareMode) {
+          this._ro && this._ro.observe(this);
+          this._startSwLoop && this._startSwLoop();
+          return;
+        }
         // Re-attached after a removal — resume what disconnected stopped.
         if (this._renderer) {
           this._renderer.setAnimationLoop(this._loop);
@@ -209,14 +215,33 @@
         import('three/addons/controls/OrbitControls.js'),
       ]);
       this._THREE = THREE;
-      // preserveDrawingBuffer keeps the last frame readable after
-      // compositing (toDataURL / drawImage) — it's what lets the
-      // screenshot tools capture the scene instead of a blank canvas.
-      const renderer = new THREE.WebGLRenderer({
-        antialias: true,
-        alpha: true,
-        preserveDrawingBuffer: true,
-      });
+
+      let renderer = null;
+      try {
+        renderer = new THREE.WebGLRenderer({
+          antialias: true,
+          alpha: true,
+          preserveDrawingBuffer: true,
+        });
+      } catch (e1) {
+        try {
+          renderer = new THREE.WebGLRenderer({
+            antialias: false,
+            alpha: false,
+            powerPreference: 'default',
+          });
+        } catch (e2) {
+          renderer = null;
+        }
+      }
+
+      if (!renderer) {
+        this._bootSoftwareFallback(THREE);
+        this._readyResolve({ THREE });
+        return;
+      }
+
+      this._softwareMode = false;
       renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
       renderer.shadowMap.enabled = true;
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -242,6 +267,8 @@
       key.position.set(4, 7, 5);
       key.castShadow = true;
       key.shadow.mapSize.set(2048, 2048);
+      key.shadow.camera.near = 0.5;
+      key.shadow.camera.far = 25;
       key.shadow.bias = -0.0002;
       this._key = key;
       scene.add(key);
@@ -278,9 +305,6 @@
         controls.update();
         renderer.render(scene, camera);
       };
-      // Detached while three.js was fetching? Stay idle — the
-      // connectedCallback resume starts the loop and observer on
-      // reattach.
       if (this.isConnected) {
         this._ro.observe(this);
         renderer.setAnimationLoop(this._loop);
@@ -289,11 +313,100 @@
       this._readyResolve({ THREE });
     }
 
+    setSoftwareViewOpts(opts) {
+      this._swOpts = Object.assign({}, this._swOpts || {}, opts || {});
+    }
+
+    _bootSoftwareFallback(THREE) {
+      this._softwareMode = true;
+      if (this._note) {
+        this._note.textContent = 'Software 3D fallback (WebGL unavailable) · Drag to orbit · scroll to zoom';
+      }
+      const swCanvas = document.createElement('canvas');
+      swCanvas.style.width = '100%';
+      swCanvas.style.height = '100%';
+      this._swCanvas = swCanvas;
+      this.shadowRoot.insertBefore(swCanvas, this._err);
+
+      this._camera = new THREE.PerspectiveCamera(45, 1, 0.01, 500);
+      this._camera.position.set(0, 0, 0.165);
+      this._ground = { position: new THREE.Vector3() };
+      this._controls = { target: new THREE.Vector3(), update: () => {} };
+      this._orbitYaw = 0;
+      this._orbitPitch = 0;
+      this._swScale = 0.62;
+
+      let dragging = false;
+      let lastX = 0;
+      let lastY = 0;
+      swCanvas.addEventListener('pointerdown', (e) => {
+        dragging = true;
+        lastX = e.clientX;
+        lastY = e.clientY;
+        swCanvas.setPointerCapture(e.pointerId);
+      });
+      swCanvas.addEventListener('pointermove', (e) => {
+        if (!dragging) return;
+        this._orbitYaw += (e.clientX - lastX) * 0.45;
+        this._orbitPitch += (e.clientY - lastY) * 0.45;
+        lastX = e.clientX;
+        lastY = e.clientY;
+      });
+      swCanvas.addEventListener('pointerup', () => { dragging = false; });
+      swCanvas.addEventListener('pointercancel', () => { dragging = false; });
+      swCanvas.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        this._swScale = Math.max(0.5, Math.min(2.2, this._swScale * (e.deltaY > 0 ? 0.92 : 1.08)));
+      }, { passive: false });
+
+      let lastSig = '';
+      const renderSw = () => {
+        if (!this.isConnected) {
+          this._swRaf = null;
+          return;
+        }
+        const w = this.clientWidth || 1;
+        const h = this.clientHeight || 1;
+        if (window.Beacon3D && this._object) {
+          const rot = this._object.rotation;
+          const opts = this._swOpts || {};
+          const sig = `${w}|${h}|${rot.x.toFixed(4)}|${rot.y.toFixed(4)}|${rot.z.toFixed(4)}|${this._orbitPitch.toFixed(2)}|${this._orbitYaw.toFixed(2)}|${this._swScale.toFixed(3)}|${opts.label}|${opts.subLabel}|${opts.labelStyle}|${opts.dark}|${opts.themePalette?.primary}`;
+          if (sig !== lastSig) {
+            lastSig = sig;
+            const radToDeg = 180 / Math.PI;
+            const cap = Math.min(1, 2200 / Math.max(w, h, 1));
+            window.Beacon3D.renderBeaconCanvas(swCanvas, {
+              label: opts.label || 'B2',
+              subLabel: opts.subLabel || 'U14 - Floor 1',
+              labelStyle: opts.labelStyle || 'printed',
+              themePalette: opts.themePalette,
+              dark: opts.dark,
+              pitch: rot.x * radToDeg + this._orbitPitch,
+              yaw: rot.y * radToDeg + this._orbitYaw,
+              roll: rot.z * radToDeg,
+              width: w,
+              height: h,
+              zoom: this._swScale,
+              fixedBufferW: Math.max(1, Math.round(w * cap)),
+              fixedBufferH: Math.max(1, Math.round(h * cap)),
+            });
+          }
+        }
+        this._swRaf = requestAnimationFrame(renderSw);
+      };
+      this._startSwLoop = () => {
+        if (!this._swRaf) this._swRaf = requestAnimationFrame(renderSw);
+      };
+      this._ro = new ResizeObserver(() => {});
+      if (this.isConnected) {
+        this._ro.observe(this);
+        this._startSwLoop();
+      }
+    }
+
     disconnectedCallback() {
-      // Stop rendering and observing while detached; connectedCallback
-      // resumes both. (The renderer itself is kept — a move within the
-      // document must not rebuild the scene.)
       if (this._renderer) this._renderer.setAnimationLoop(null);
+      if (this._swRaf) { cancelAnimationFrame(this._swRaf); this._swRaf = null; }
       if (this._ro) this._ro.disconnect();
     }
 
@@ -303,12 +416,20 @@
     setObject(object) {
       const THREE = this._THREE;
       if (!THREE) throw new Error('three-d-stage: not ready — await stage.ready first');
+      if (this._softwareMode) {
+        this._object = object;
+        this._orbitYaw = 0;
+        this._orbitPitch = 0;
+        this._setButtonsEnabled(true);
+        if (this._startSwLoop) this._startSwLoop();
+        return;
+      }
       if (this._object) this._scene.remove(this._object);
       this._object = object;
       object.traverse((o) => {
         if (o.isMesh) {
           o.castShadow = true;
-          o.receiveShadow = true;
+          o.receiveShadow = false;
         }
       });
       const box = new THREE.Box3().setFromObject(object);

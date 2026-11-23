@@ -1,13 +1,10 @@
 /**
- * beacon-3d.js — Parametric 3D BLE Beacon Renderer (HTML5 Canvas) + Lottie JSON Exporter.
- * Models the sleek, elongated white BLE beacon (~27 x 84 x 13 mm):
- *   - Slim stadium main housing (~57 mm body) + smooth perimeter chamfer + flat top plateau
- *   - Elongated north & south mounting flanges ("ears") with flush recessed through-holes
- *   - Smooth concave V-notched shoulder bevels flanking both mounting holes
- *   - Edge-to-edge center label band ("tape" | "printed" | "tonal") with minimal side padding
+ * beacon-3d.js — Confidex Viking Slim 3D Canvas Renderer + Lottie JSON Exporter.
+ * Uses the cleaned Blender mesh exported to window.VIKING_SLIM_MESH
+ * (32.00 × 74.63 × 14.37 mm) plus programmatic wrap band & dynamic label decal:
  *   - Rotation order Ry(yaw) * Rx(pitch) * Rz(roll):
  *       0° front card view = (0, 0, 0) vertical upright
- *       3/4 table-top hero view = (pitch: -48°, yaw: 14°, roll: -62°) laying horizontally on a table
+ *       3/4 table-top hero view = (pitch: -58°, yaw: -12°, roll: 56°)
  *
  * Exports to window.Beacon3D.
  */
@@ -35,25 +32,22 @@
     return `rgba(${c.r},${c.g},${c.b},${alpha.toFixed(3)})`;
   }
 
-  function sub3(a, b) { return [a[0] - b[0], a[1] - b[1], a[2] - b[2]]; }
-  function cross3(a, b) {
-    return [
-      a[1] * b[2] - a[2] * b[1],
-      a[2] * b[0] - a[0] * b[2],
-      a[0] * b[1] - a[1] * b[0],
-    ];
-  }
   function dot3(a, b) { return a[0] * b[0] + a[1] * b[1] + a[2] * b[2]; }
   function norm3(v) {
     const l = Math.hypot(v[0], v[1], v[2]) || 1;
     return [v[0] / l, v[1] / l, v[2] / l];
   }
+  function signedArea2D(pts) {
+    let area2 = 0;
+    const n = pts.length;
+    for (let i = 0; i < n; i++) {
+      const a = pts[i];
+      const b = pts[(i + 1) % n];
+      area2 += a.x * b.y - b.x * a.y;
+    }
+    return area2;
+  }
 
-  /**
-   * Rotation order: Ry(yaw) * Rx(pitch) * Rz(roll).
-   * Applying roll first lets a vertical upright beacon rotate horizontally on the XY plane,
-   * then pitch tilts it back to lay flat on a horizontal table surface viewed from above.
-   */
   function makeRotationMatrix(pitchDeg, yawDeg, rollDeg) {
     const px = pitchDeg * DEG;
     const py = yawDeg * DEG;
@@ -76,202 +70,43 @@
     ];
   }
 
-  // Smooth cubic Hermite / Bezier sampler helper
-  function sampleCubicBezier(p0, p1, p2, p3, steps) {
-    const out = [];
-    for (let i = 1; i <= steps; i++) {
-      const t = i / steps;
-      const u = 1 - t;
-      const x = u * u * u * p0[0] + 3 * u * u * t * p1[0] + 3 * u * t * t * p2[0] + t * t * t * p3[0];
-      const y = u * u * u * p0[1] + 3 * u * u * t * p1[1] + 3 * u * t * t * p2[1] + t * t * t * p3[1];
-      out.push([x, y]);
-    }
-    return out;
-  }
-
-  /**
-   * Generates smooth CCW outer footprint in mm:
-   * Sleek elongated body: 27mm wide (x in [-13.5, +13.5]), 84mm tall (y in [-42, +42]).
-   * Screw holes sit at (0, +-34.5).
-   */
-  function sampleOuterContour() {
+  // Fallback silhouette paths matched to Confidex Viking Slim (32 x 74.63 mm) for Lottie export
+  function sampleVikingSilhouette(inset = 0) {
     const pts = [];
-    const earCy = 34.4;
-    const earR = 7.6; // Top tip reaches 34.4 + 7.6 = 42.0mm
-
-    // Top semi-circular ear tab (from right side a=0.14*PI around top to left side a=0.86*PI)
-    const earSegs = 22;
-    for (let i = 0; i <= earSegs; i++) {
-      const a = 0.10 * Math.PI + (i / earSegs) * (0.80 * Math.PI);
+    const hw = 16.0 - inset;
+    const earR = 8.4 - inset * 0.5;
+    const earCy = 28.9;
+    for (let i = 0; i <= 14; i++) {
+      const a = 0.08 * Math.PI + (i / 14) * (0.84 * Math.PI);
       pts.push([Math.cos(a) * earR, earCy + Math.sin(a) * earR]);
     }
-
-    // Left shoulder smooth S-curve down to left sidewall (x=-13.5, y=22)
-    const topLeftStart = pts[pts.length - 1];
-    pts.push(...sampleCubicBezier(
-      topLeftStart,
-      [-8.8, 31.2],
-      [-13.4, 29.0],
-      [-13.5, 22.0],
-      10
-    ));
-
-    // Left straight sidewall
-    pts.push([-13.5, 16.0]);
-    pts.push([-13.5, 0.0]);
-    pts.push([-13.5, -16.0]);
-    pts.push([-13.5, -22.0]);
-
-    // Bottom-left shoulder curve to bottom ear start
-    const botLeftEnd = [Math.cos(1.10 * Math.PI) * earR, -earCy + Math.sin(1.10 * Math.PI) * earR];
-    pts.push(...sampleCubicBezier(
-      [-13.5, -22.0],
-      [-13.4, -29.0],
-      [-8.8, -31.2],
-      botLeftEnd,
-      10
-    ));
-
-    // Bottom semi-circular ear tab
-    for (let i = 1; i <= earSegs; i++) {
-      const a = 1.10 * Math.PI + (i / earSegs) * (0.80 * Math.PI);
+    pts.push([-hw * 0.86, 26.8 - inset * 0.5]);
+    pts.push([-hw, 21.0 - inset * 0.5]);
+    pts.push([-hw, -21.0 + inset * 0.5]);
+    pts.push([-hw * 0.86, -26.8 + inset * 0.5]);
+    for (let i = 0; i <= 14; i++) {
+      const a = 1.08 * Math.PI + (i / 14) * (0.84 * Math.PI);
       pts.push([Math.cos(a) * earR, -earCy + Math.sin(a) * earR]);
     }
-
-    // Bottom-right shoulder curve up to right sidewall
-    const botRightStart = pts[pts.length - 1];
-    pts.push(...sampleCubicBezier(
-      botRightStart,
-      [8.8, -31.2],
-      [13.4, -29.0],
-      [13.5, -22.0],
-      10
-    ));
-
-    // Right straight sidewall
-    pts.push([13.5, -16.0]);
-    pts.push([13.5, 0.0]);
-    pts.push([13.5, 16.0]);
-    pts.push([13.5, 22.0]);
-
-    // Top-right shoulder curve back to top ear start
-    pts.push(...sampleCubicBezier(
-      [13.5, 22.0],
-      [13.4, 29.0],
-      [8.8, 31.2],
-      pts[0],
-      10
-    ).slice(0, -1));
-
+    pts.push([hw * 0.86, -26.8 + inset * 0.5]);
+    pts.push([hw, -21.0 + inset * 0.5]);
+    pts.push([hw, 21.0 - inset * 0.5]);
+    pts.push([hw * 0.86, 26.8 - inset * 0.5]);
     return pts;
   }
 
-  /**
-   * Generates smooth CCW raised body contour (mid-wall or top plateau),
-   * featuring the signature concave U-notch hugging the mounting holes at y = +-34.4.
-   */
-  function sampleBodyTopContour(insetMm = 0) {
-    const halfW = 13.15 - insetMm;
-    const cornerY = 23.8 - insetMm * 0.65;
-    const peakY = 29.2 - insetMm * 0.95;
-    const notchCenterY = 25.4 - insetMm * 0.9;
-    const shoulderX = 8.4 - insetMm * 0.65;
-    const pts = [];
+  const OUTER_BASE = sampleVikingSilhouette(0);
+  const BODY_MID = sampleVikingSilhouette(0.6);
+  const BODY_PLATEAU = sampleVikingSilhouette(2.15);
 
-    // Top concave U-notch (right-to-left CCW: x = +shoulderX -> 0 -> -shoulderX)
-    const notchSegs = 16;
-    for (let i = 0; i <= notchSegs; i++) {
-      const t = 1 - (i / notchSegs) * 2; // +1 to -1
-      const x = t * shoulderX;
-      const absT = Math.abs(t);
-      const y = notchCenterY + Math.pow(absT, 1.55) * (peakY - notchCenterY);
-      pts.push([x, y]);
-    }
-
-    // Top-left rounded cheek curve down to left straight wall
-    pts.push(...sampleCubicBezier(
-      [-shoulderX, peakY],
-      [-halfW + 0.6, peakY - 0.6],
-      [-halfW, cornerY + 2.8],
-      [-halfW, cornerY],
-      8
-    ));
-
-    // Left straight sidewall
-    pts.push([-halfW, 16.0]);
-    pts.push([-halfW, 0.0]);
-    pts.push([-halfW, -16.0]);
-    pts.push([-halfW, -cornerY]);
-
-    // Bottom-left rounded cheek curve
-    pts.push(...sampleCubicBezier(
-      [-halfW, -cornerY],
-      [-halfW, -cornerY - 2.8],
-      [-halfW + 0.6, -peakY + 0.6],
-      [-shoulderX, -peakY],
-      8
-    ));
-
-    // Bottom concave U-notch (left-to-right CCW: x = -shoulderX -> 0 -> +shoulderX)
-    for (let i = 1; i <= notchSegs; i++) {
-      const t = -1 + (i / notchSegs) * 2; // -1 to +1
-      const x = t * shoulderX;
-      const absT = Math.abs(t);
-      const y = -(notchCenterY + Math.pow(absT, 1.55) * (peakY - notchCenterY));
-      pts.push([x, y]);
-    }
-
-    // Bottom-right rounded cheek curve
-    pts.push(...sampleCubicBezier(
-      [shoulderX, -peakY],
-      [halfW - 0.6, -peakY + 0.6],
-      [halfW, -cornerY - 2.8],
-      [halfW, -cornerY],
-      8
-    ));
-
-    // Right straight sidewall
-    pts.push([halfW, -16.0]);
-    pts.push([halfW, 0.0]);
-    pts.push([halfW, 16.0]);
-    pts.push([halfW, cornerY]);
-
-    // Top-right rounded cheek curve back to start
-    pts.push(...sampleCubicBezier(
-      [halfW, cornerY],
-      [halfW, cornerY + 2.8],
-      [halfW - 0.6, peakY - 0.6],
-      [shoulderX, peakY],
-      8
-    ).slice(0, -1));
-
-    return pts;
-  }
-
-  const OUTER_BASE = sampleOuterContour();
-  const BODY_MID = sampleBodyTopContour(0);
-  const BODY_PLATEAU = sampleBodyTopContour(1.65);
-
-  // Label canvas cache (offscreen 360x440 transparent decal with minimal side padding)
   const labelCache = new Map();
 
-  function getLabelDecalCanvas(labelText, labelStyle, themePalette) {
-    const key = `${labelText}|${labelStyle}|${themePalette.primary}|${themePalette.primaryContainer}|${themePalette.onPrimaryContainer}`;
-    if (labelCache.has(key)) return labelCache.get(key);
-    if (labelCache.size > 100) labelCache.clear();
-
-    const W = 360;
-    const H = 440;
-    const c = document.createElement('canvas');
-    c.width = W;
-    c.height = H;
-    const g = c.getContext('2d');
-
+  function drawLabelContent(g, W, H, labelText, labelStyle, themePalette, subLabel = 'U14 - Floor 1') {
     const text = (labelText || 'B2').trim() || 'B2';
+    const floorSubText = (subLabel || 'U14 - Floor 1').trim() || 'U14 - Floor 1';
 
-    // Measure text and dynamically size so horizontal side padding is minimal (~6% each side)
-    function drawFittedLabel(fontFamily, weight, color, maxWidthFrac = 0.90, maxH = 190, yOffset = 0, shadowColor = null) {
-      let size = 180;
+    function drawFittedLabel(fontFamily, weight, color, maxWidthFrac = 0.90, maxH = 195, yOffset = 0, shadowColor = null) {
+      const size = 180;
       g.font = `${weight} ${size}px ${fontFamily}`;
       const measured = Math.max(1, g.measureText(text).width);
       const targetW = W * maxWidthFrac;
@@ -287,11 +122,9 @@
       }
       g.fillStyle = color;
       g.fillText(text, W * 0.5, cy);
-      return fittedSize;
     }
 
     if (labelStyle === 'tape') {
-      // Subtle full-width crepe texture grain lines (edge-to-edge)
       g.strokeStyle = 'rgba(130, 118, 92, 0.13)';
       g.lineWidth = 1.6;
       for (let y = 8; y < H - 4; y += 8) {
@@ -311,15 +144,14 @@
         '700',
         '#24211F',
         0.90,
-        185,
+        190,
         2,
         'rgba(32, 29, 27, 0.16)'
       );
       g.restore();
     } else if (labelStyle === 'printed') {
-      // Minimal alignment corner ticks hugging the edge
-      g.strokeStyle = 'rgba(28, 27, 30, 0.24)';
-      g.lineWidth = 2.5;
+      g.strokeStyle = 'rgba(24, 22, 26, 0.30)';
+      g.lineWidth = 3.0;
       g.beginPath();
       g.moveTo(14, 34); g.lineTo(14, 16); g.lineTo(32, 16);
       g.moveTo(W - 14, 34); g.lineTo(W - 14, 16); g.lineTo(W - 32, 16);
@@ -330,17 +162,22 @@
       drawFittedLabel(
         '"Plus Jakarta Sans", "Inter", system-ui, -apple-system, sans-serif',
         '800',
-        '#1B191C',
-        0.90,
-        175,
-        -12
+        '#171518',
+        0.92,
+        200,
+        -28
       );
 
-      g.font = '700 24px "JetBrains Mono", ui-monospace, monospace';
+      const subBaseSize = 48;
+      const subFontFamily = '"Plus Jakarta Sans", "Inter", system-ui, -apple-system, sans-serif';
+      g.font = `800 ${subBaseSize}px ${subFontFamily}`;
+      const subMeasured = Math.max(1, g.measureText(floorSubText).width);
+      const subFitted = Math.min(40, Math.max(24, Math.floor(subBaseSize * ((W * 0.72) / subMeasured))));
+      g.font = `800 ${subFitted}px ${subFontFamily}`;
       g.textAlign = 'center';
       g.textBaseline = 'middle';
-      g.fillStyle = 'rgba(27, 25, 28, 0.45)';
-      g.fillText('BLE · U14', W * 0.5, H - 38);
+      g.fillStyle = 'rgba(23, 21, 24, 0.86)';
+      g.fillText(floorSubText, W * 0.5, H - 56);
     } else {
       const ink = themePalette.onPrimaryContainer || '#400014';
       const accent = themePalette.primary || '#D81648';
@@ -353,213 +190,130 @@
         '800',
         ink,
         0.90,
-        180,
+        185,
         0
       );
     }
+  }
+
+  function getLabelDecalCanvas(labelText, labelStyle, themePalette, subLabel = 'U14 - Floor 1') {
+    const key = `${labelText}|${subLabel}|${labelStyle}|${themePalette.primary}|${themePalette.primaryContainer}|${themePalette.onPrimaryContainer}`;
+    if (labelCache.has(key)) return labelCache.get(key);
+    if (labelCache.size > 100) labelCache.clear();
+
+    const W = 380;
+    const H = 440;
+    const c = document.createElement('canvas');
+    c.width = W;
+    c.height = H;
+    const g = c.getContext('2d');
+
+    drawLabelContent(g, W, H, labelText, labelStyle, themePalette, subLabel);
 
     labelCache.set(key, c);
     return c;
   }
 
+  function drawVectorLabelOnPlateau(ctx, labelText, labelStyle, themePalette, corners, subLabel = 'U14 - Floor 1') {
+    if (signedArea2D(corners) <= 0.5) return;
+    const [pTL, pTR, pBR, pBL] = corners;
+    const W = 380;
+    const H = 440;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(pTL.x, pTL.y);
+    ctx.lineTo(pTR.x, pTR.y);
+    ctx.lineTo(pBR.x, pBR.y);
+    ctx.lineTo(pBL.x, pBL.y);
+    ctx.closePath();
+    ctx.clip();
+
+    const cScreenX = (pTL.x + pTR.x + pBR.x + pBL.x) * 0.25;
+    const cScreenY = (pTL.y + pTR.y + pBR.y + pBL.y) * 0.25;
+    const uVecX = ((pTR.x + pBR.x) - (pTL.x + pBL.x)) * 0.5 / W;
+    const uVecY = ((pTR.y + pBR.y) - (pTL.y + pBL.y)) * 0.5 / W;
+    const vVecX = ((pBL.x + pBR.x) - (pTL.x + pTR.x)) * 0.5 / H;
+    const vVecY = ((pBL.y + pBR.y) - (pTL.y + pTR.y)) * 0.5 / H;
+    const oScreenX = cScreenX - uVecX * (W * 0.5) - vVecX * (H * 0.5);
+    const oScreenY = cScreenY - uVecY * (W * 0.5) - vVecY * (H * 0.5);
+
+    ctx.transform(uVecX, uVecY, vVecX, vVecY, oScreenX, oScreenY);
+    drawLabelContent(ctx, W, H, labelText, labelStyle, themePalette, subLabel);
+    ctx.restore();
+  }
+
   /**
-   * Builds all 3D polygons (faces) for the beacon in local space (mm, centered at 0,0,0).
+   * Builds the programmatic wrap-around center band hugging the exact Viking Slim cross-section:
+   *   plateau (x=+-13.88, z=6.97) -> chamfer (x=+-15.44, z=3.60) -> sidewall (x=+-16.12, z=-6.95)
    */
-  function buildBeaconFaces(labelStyle, themePalette) {
-    const faces = [];
-    const whiteMat = { base: '#F5F6F8', rough: 0.42, spec: 0.24 };
-    const bevelMat = { base: '#ECEEF2', rough: 0.34, spec: 0.34 };
-    const earMat = { base: '#EEF0F4', rough: 0.48, spec: 0.18 };
-    const holeWallMat = { base: '#B4B9C2', rough: 0.72, spec: 0.05 };
+  function buildBandFaces(labelStyle, themePalette) {
+    if (labelStyle !== 'tape' && labelStyle !== 'tonal') return [];
+    const bandColor = labelStyle === 'tape'
+      ? '#F2EDE0'
+      : (themePalette.primaryContainer || '#FFD9DF');
+    const bandMat = {
+      base: bandColor,
+      rough: labelStyle === 'tape' ? 0.78 : 0.35,
+      spec: labelStyle === 'tape' ? 0.08 : 0.22,
+    };
 
-    // 1. Lower ear deck & base shell (z = -6.4 to -1.6, layer 0)
-    const zBaseBot = -6.4;
-    const zBaseTop = -1.6;
-    for (let i = 0; i < OUTER_BASE.length; i++) {
-      const p0 = OUTER_BASE[i];
-      const p1 = OUTER_BASE[(i + 1) % OUTER_BASE.length];
-      faces.push({
-        pts: [
-          [p0[0], p0[1], zBaseBot],
-          [p1[0], p1[1], zBaseBot],
-          [p1[0], p1[1], zBaseTop],
-          [p0[0], p0[1], zBaseTop],
-        ],
-        mat: earMat,
-        layer: 0,
-      });
-    }
+    const p = (window.VIKING_SLIM_MESH && window.VIKING_SLIM_MESH.profile) || {
+      plateauZ: 6.79,
+      plateauHalfW: 13.84,
+      midZ: 3.57,
+      midHalfW: 15.36,
+      baseZ: -7.18,
+      baseHalfW: 16.00,
+      bandHalfH: 16.5,
+    };
 
-    // Complete ear deck polygon so no crescent gaps appear at steep 3/4 angles
-    faces.push({
-      pts: OUTER_BASE.map((p) => [p[0], p[1], zBaseTop]),
-      mat: earMat,
-      localNormal: [0, 0, 1],
-      layer: 0,
-    });
+    const yT = p.bandHalfH;
+    const yB = -p.bandHalfH;
+    const xPlat = p.plateauHalfW + 0.12;
+    const zPlat = p.plateauZ + 0.20;
+    const xMid = p.midHalfW + 0.24;
+    const zMid = p.midZ + 0.14;
+    const xBot = p.baseHalfW + 0.24;
+    const zBot = p.baseZ + 0.25;
 
-    // Flush chamfered hole lip + inner bore wall around (0, +-34.4)
-    const holeR = 3.1;
-    const collarR = 4.3;
-    const holeSegs = 20;
-
-    function addHoleRing(sign) {
-      const cy = sign * 34.4;
-      for (let i = 0; i < holeSegs; i++) {
-        const th0 = (i / holeSegs) * Math.PI * 2;
-        const th1 = ((i + 1) / holeSegs) * Math.PI * 2;
-        const x0c = Math.cos(th0) * collarR, y0c = cy + Math.sin(th0) * collarR;
-        const x1c = Math.cos(th1) * collarR, y1c = cy + Math.sin(th1) * collarR;
-        const x0h = Math.cos(th0) * holeR, y0h = cy + Math.sin(th0) * holeR;
-        const x1h = Math.cos(th1) * holeR, y1h = cy + Math.sin(th1) * holeR;
-
-        faces.push({
-          pts: [
-            [x0h, y0h, zBaseTop - 0.35],
-            [x0c, y0c, zBaseTop],
-            [x1c, y1c, zBaseTop],
-            [x1h, y1h, zBaseTop - 0.35],
-          ],
-          mat: bevelMat,
-          localNormal: [0, 0, 1],
-          layer: 0,
-        });
-        faces.push({
-          pts: [
-            [x0h, y0h, zBaseTop - 0.35],
-            [x1h, y1h, zBaseTop - 0.35],
-            [x1h, y1h, zBaseBot],
-            [x0h, y0h, zBaseBot],
-          ],
-          mat: holeWallMat,
-          doubleSided: true,
-          isHoleWall: true,
-          layer: 0,
-        });
-      }
-    }
-    addHoleRing(1);
-    addHoleRing(-1);
-
-    // Bottom shell cap
-    faces.push({
-      pts: [...OUTER_BASE].reverse().map((p) => [p[0], p[1], zBaseBot]),
-      mat: { base: '#D8DCE3', rough: 0.7, spec: 0.05 },
-      localNormal: [0, 0, -1],
-      layer: 0,
-    });
-
-    // 2. Main raised body walls (zBaseTop -> zMid -> zPlateau, layer 1)
-    const zMid = 4.3;
-    const zPlateau = 6.4;
-    for (let i = 0; i < BODY_MID.length; i++) {
-      const m0 = BODY_MID[i];
-      const m1 = BODY_MID[(i + 1) % BODY_MID.length];
-      const t0 = BODY_PLATEAU[i];
-      const t1 = BODY_PLATEAU[(i + 1) % BODY_PLATEAU.length];
-
-      faces.push({
-        pts: [
-          [m0[0], m0[1], zBaseTop],
-          [m1[0], m1[1], zBaseTop],
-          [m1[0], m1[1], zMid],
-          [m0[0], m0[1], zMid],
-        ],
-        mat: whiteMat,
+    return [
+      // Top plateau band surface (layer 2 prevents coplanar Z-fighting against subdivided hull plateau)
+      {
+        pts: [[-xPlat, yT, zPlat], [-xPlat, yB, zPlat], [xPlat, yB, zPlat], [xPlat, yT, zPlat]],
+        normal: [0, 0, 1],
+        mat: bandMat,
+        layer: 2,
+      },
+      // Right chamfer wrap
+      {
+        pts: [[xPlat, yT, zPlat], [xPlat, yB, zPlat], [xMid, yB, zMid], [xMid, yT, zMid]],
+        normal: norm3([zPlat - zMid, 0, xMid - xPlat]),
+        mat: bandMat,
         layer: 1,
-      });
-      faces.push({
-        pts: [
-          [m0[0], m0[1], zMid],
-          [m1[0], m1[1], zMid],
-          [t1[0], t1[1], zPlateau],
-          [t0[0], t0[1], zPlateau],
-        ],
-        mat: bevelMat,
+      },
+      // Right drafted sidewall wrap
+      {
+        pts: [[xMid, yT, zMid], [xMid, yB, zMid], [xBot, yB, zBot], [xBot, yT, zBot]],
+        normal: norm3([zMid - zBot, 0, xBot - xMid]),
+        mat: bandMat,
         layer: 1,
-      });
-    }
-
-    // 3. Top Plateau (layer 1)
-    faces.push({
-      pts: BODY_PLATEAU.map((p) => [p[0], p[1], zPlateau]),
-      mat: whiteMat,
-      localNormal: [0, 0, 1],
-      layer: 1,
-    });
-
-    // 4. Center Wrap Band (Masking Tape or Bicocca Tonal Band, layer 2)
-    if (labelStyle === 'tape' || labelStyle === 'tonal') {
-      const bandColor = labelStyle === 'tape'
-        ? '#F2EDE0'
-        : (themePalette.primaryContainer || '#FFD9DF');
-      const bandMat = {
-        base: bandColor,
-        rough: labelStyle === 'tape' ? 0.78 : 0.35,
-        spec: labelStyle === 'tape' ? 0.08 : 0.25,
-      };
-      const bandY = 16.0;
-      const off = 0.22;
-      const xPlat = 11.50 + off;
-      const xMid = 13.15 + off;
-
-      // Single undivided plateau band surface (layer 2 prevents plateau Z-fighting)
-      faces.push({
-        pts: [
-          [-xPlat, bandY, zPlateau + off],
-          [-xPlat, -bandY, zPlateau + off],
-          [xPlat, -bandY, zPlateau + off],
-          [xPlat, bandY, zPlateau + off],
-        ],
+      },
+      // Left chamfer wrap
+      {
+        pts: [[-xMid, yT, zMid], [-xMid, yB, zMid], [-xPlat, yB, zPlat], [-xPlat, yT, zPlat]],
+        normal: norm3([-(zPlat - zMid), 0, xMid - xPlat]),
         mat: bandMat,
-        localNormal: [0, 0, 1],
-        layer: 2,
-      });
-      // Right chamfer & sidewall wrap flush with hull_main_body (z >= -1.2)
-      faces.push({
-        pts: [
-          [xPlat, bandY, zPlateau + off],
-          [xPlat, -bandY, zPlateau + off],
-          [xMid, -bandY, zMid + off],
-          [xMid, bandY, zMid + off],
-        ],
+        layer: 1,
+      },
+      // Left drafted sidewall wrap
+      {
+        pts: [[-xBot, yT, zBot], [-xBot, yB, zBot], [-xMid, yB, zMid], [-xMid, yT, zMid]],
+        normal: norm3([-(zMid - zBot), 0, xBot - xMid]),
         mat: bandMat,
-        layer: 2,
-      });
-      faces.push({
-        pts: [
-          [xMid, bandY, zMid + off],
-          [xMid, -bandY, zMid + off],
-          [xMid, -bandY, zBaseTop + 0.35],
-          [xMid, bandY, zBaseTop + 0.35],
-        ],
-        mat: bandMat,
-        layer: 2,
-      });
-      // Left chamfer & sidewall wrap flush with hull_main_body
-      faces.push({
-        pts: [
-          [-xMid, bandY, zMid + off],
-          [-xMid, -bandY, zMid + off],
-          [-xPlat, -bandY, zPlateau + off],
-          [-xPlat, bandY, zPlateau + off],
-        ],
-        mat: bandMat,
-        layer: 2,
-      });
-      faces.push({
-        pts: [
-          [-xMid, bandY, zBaseTop + 0.35],
-          [-xMid, -bandY, zBaseTop + 0.35],
-          [-xMid, -bandY, zMid + off],
-          [-xMid, bandY, zMid + off],
-        ],
-        mat: bandMat,
-        layer: 2,
-      });
-    }
-
-    return faces;
+        layer: 1,
+      },
+    ];
   }
 
   function projectPoint(p3, rotM, camDist, fovScale, cx, cy) {
@@ -570,54 +324,116 @@
       x: cx + tp[0] * k,
       y: cy - tp[1] * k,
       z: tp[2],
-      k,
-      tp,
     };
   }
 
-  function drawMappedTriangle(ctx, img, s0, s1, s2, d0, d1, d2) {
-    const cx = (d0.x + d1.x + d2.x) / 3;
-    const cy = (d0.y + d1.y + d2.y) / 3;
-    function pad(p) {
-      const vx = p.x - cx, vy = p.y - cy;
-      const l = Math.hypot(vx, vy) || 1;
-      return { x: p.x + (vx / l) * 0.45, y: p.y + (vy / l) * 0.45 };
+  let rasCanvas = null;
+  let rasCtx = null;
+  let rasW = 0;
+  let rasH = 0;
+  let rasImgData = null;
+  let rasPix32 = null;
+  let rasZBuf = null;
+
+  function ensureRasterBuffer(w, h) {
+    if (!rasCanvas) {
+      rasCanvas = document.createElement('canvas');
+      rasCtx = rasCanvas.getContext('2d');
     }
-    const p0 = pad(d0), p1 = pad(d1), p2 = pad(d2);
-
-    ctx.save();
-    ctx.beginPath();
-    ctx.moveTo(p0.x, p0.y);
-    ctx.lineTo(p1.x, p1.y);
-    ctx.lineTo(p2.x, p2.y);
-    ctx.closePath();
-    ctx.clip();
-
-    const denom = s0.u * (s1.v - s2.v) + s1.u * (s2.v - s0.v) + s2.u * (s0.v - s1.v);
-    if (Math.abs(denom) < 1e-6) {
-      ctx.restore();
-      return;
+    if (rasW !== w || rasH !== h) {
+      rasW = w;
+      rasH = h;
+      rasCanvas.width = w;
+      rasCanvas.height = h;
+      rasImgData = rasCtx.createImageData(w, h);
+      rasPix32 = new Uint32Array(rasImgData.data.buffer);
+      rasZBuf = new Float32Array(w * h);
     }
+    rasPix32.fill(0);
+    rasZBuf.fill(0);
+  }
 
-    const a = (d0.x * (s1.v - s2.v) + d1.x * (s2.v - s0.v) + d2.x * (s0.v - s1.v)) / denom;
-    const b = (d0.y * (s1.v - s2.v) + d1.y * (s2.v - s0.v) + d2.y * (s0.v - s1.v)) / denom;
-    const c = (d0.x * (s2.u - s1.u) + d1.x * (s0.u - s2.u) + d2.x * (s1.u - s0.u)) / denom;
-    const d = (d0.y * (s2.u - s1.u) + d1.y * (s0.u - s2.u) + d2.y * (s1.u - s0.u)) / denom;
-    const e = (d0.x * (s1.u * s2.v - s2.u * s1.v) + d1.x * (s2.u * s0.v - s0.u * s2.v) + d2.x * (s0.u * s1.v - s1.u * s0.v)) / denom;
-    const f = (d0.y * (s1.u * s2.v - s2.u * s1.v) + d1.y * (s2.u * s0.v - s0.u * s2.v) + d2.y * (s0.u * s1.v - s1.u * s0.v)) / denom;
+  function rasterizeGouraudTriangle(
+    x0, y0, z0, r0, g0, b0,
+    x1, y1, z1, r1, g1, b1,
+    x2, y2, z2, r2, g2, b2,
+    zBias
+  ) {
+    const area = (x1 - x0) * (y2 - y0) - (y1 - y0) * (x2 - x0);
+    if (area >= -1e-3) return;
+    const invArea = 1.0 / area;
 
-    ctx.transform(a, b, c, d, e, f);
-    ctx.drawImage(img, 0, 0);
-    ctx.restore();
+    const minX = Math.max(0, Math.floor(Math.min(x0, x1, x2)));
+    const maxX = Math.min(rasW - 1, Math.ceil(Math.max(x0, x1, x2)));
+    const minY = Math.max(0, Math.floor(Math.min(y0, y1, y2)));
+    const maxY = Math.min(rasH - 1, Math.ceil(Math.max(y0, y1, y2)));
+    if (minX > maxX || minY > maxY) return;
+
+    const e0dx = -(y2 - y1) * invArea;
+    const e0dy = (x2 - x1) * invArea;
+    const e1dx = -(y0 - y2) * invArea;
+    const e1dy = (x0 - x2) * invArea;
+
+    const startPx = minX + 0.5;
+    const startPy = minY + 0.5;
+    let w0Row = ((x1 - startPx) * (y2 - startPy) - (y1 - startPy) * (x2 - startPx)) * invArea;
+    let w1Row = ((x2 - startPx) * (y0 - startPy) - (y2 - startPy) * (x0 - startPx)) * invArea;
+
+    for (let y = minY; y <= maxY; y++) {
+      let w0 = w0Row;
+      let w1 = w1Row;
+      let rowIdx = y * rasW + minX;
+      for (let x = minX; x <= maxX; x++, rowIdx++) {
+        const w2 = 1.0 - w0 - w1;
+        if (w0 >= -1e-4 && w1 >= -1e-4 && w2 >= -1e-4) {
+          const z = w0 * z0 + w1 * z1 + w2 * z2 + zBias;
+          if (z > rasZBuf[rowIdx]) {
+            rasZBuf[rowIdx] = z;
+            const rRaw = (w0 * r0 + w1 * r1 + w2 * r2 + 0.5) | 0;
+            const gRaw = (w0 * g0 + w1 * g1 + w2 * g2 + 0.5) | 0;
+            const bRaw = (w0 * b0 + w1 * b1 + w2 * b2 + 0.5) | 0;
+            const r = rRaw < 0 ? 0 : rRaw > 255 ? 255 : rRaw;
+            const g = gRaw < 0 ? 0 : gRaw > 255 ? 255 : gRaw;
+            const b = bRaw < 0 ? 0 : bRaw > 255 ? 255 : bRaw;
+            rasPix32[rowIdx] = (255 << 24) | (b << 16) | (g << 8) | r;
+          }
+        }
+        w0 += e0dx;
+        w1 += e1dx;
+      }
+      w0Row += e0dy;
+      w1Row += e1dy;
+    }
+  }
+
+  let vBufCount = 0;
+  let vScreenX = null;
+  let vScreenY = null;
+  let vWorldZ = null;
+  let vColR = null;
+  let vColG = null;
+  let vColB = null;
+
+  function ensureVertexBuffers(count) {
+    if (vBufCount < count) {
+      vBufCount = count;
+      vScreenX = new Float32Array(count);
+      vScreenY = new Float32Array(count);
+      vWorldZ = new Float32Array(count);
+      vColR = new Uint8Array(count);
+      vColG = new Uint8Array(count);
+      vColB = new Uint8Array(count);
+    }
   }
 
   function renderBeaconCanvas(canvas, opts = {}) {
     if (!canvas) return;
-    const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
     const rectW = opts.width || canvas.clientWidth || parseFloat(canvas.style.width) || 120;
     const rectH = opts.height || canvas.clientHeight || parseFloat(canvas.style.height) || 160;
-    const targetW = Math.max(1, Math.round(rectW * dpr));
-    const targetH = Math.max(1, Math.round(rectH * dpr));
+    const hasFixedBuf = Boolean(opts.fixedBufferW && opts.fixedBufferH);
+    const dpr = Math.min(window.devicePixelRatio || 1, opts.isHeroFlight ? 2.0 : 2.5);
+    const targetW = Math.max(1, Math.round((opts.fixedBufferW || rectW) * dpr));
+    const targetH = Math.max(1, Math.round((opts.fixedBufferH || rectH) * dpr));
 
     if (canvas.width !== targetW || canvas.height !== targetH) {
       canvas.width = targetW;
@@ -626,14 +442,15 @@
 
     const ctx = canvas.getContext('2d');
     ctx.save();
-    ctx.scale(dpr, dpr);
-    ctx.clearRect(0, 0, rectW, rectH);
+    ctx.clearRect(0, 0, targetW, targetH);
+    ctx.scale(targetW / Math.max(1, rectW), targetH / Math.max(1, rectH));
 
     const pitch = opts.pitch ?? 0;
     const yaw = opts.yaw ?? 0;
     const roll = opts.roll ?? 0;
     const label = opts.label || 'B2';
-    const labelStyle = opts.labelStyle || 'tape';
+    const subLabel = opts.subLabel ?? 'U14 - Floor 1';
+    const labelStyle = opts.labelStyle || 'printed';
     const dark = Boolean(opts.dark);
     const themePalette = opts.themePalette || {
       primary: '#D81648',
@@ -645,12 +462,12 @@
     const rotM = makeRotationMatrix(pitch, yaw, roll);
     const camDist = 250;
 
-    // Auto-compute exact scale from projected bounding box so tall OR horizontal table-top poses fit cleanly
+    // Auto-compute exact scale from Confidex Viking Slim bounds (32.00 x 74.63 x 14.37 mm)
     const bbox = [
-      [-14.0, -42.5, -6.8], [14.0, -42.5, -6.8],
-      [-14.0,  42.5, -6.8], [14.0,  42.5, -6.8],
-      [-14.0, -42.5,  6.8], [14.0, -42.5,  6.8],
-      [-14.0,  42.5,  6.8], [14.0,  42.5,  6.8],
+      [-16.2, -37.5, -7.3], [16.2, -37.5, -7.3],
+      [-16.2,  37.5, -7.3], [16.2,  37.5, -7.3],
+      [-16.2, -37.5,  7.2], [16.2, -37.5,  7.2],
+      [-16.2,  37.5,  7.2], [16.2,  37.5,  7.2],
     ];
     let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
     for (const pt of bbox) {
@@ -665,30 +482,29 @@
     }
     const spanX = Math.max(10, maxX - minX);
     const spanY = Math.max(10, maxY - minY);
-    const pxPerMm = Math.min((rectW * 0.90) / spanX, (rectH * 0.88) / spanY);
+    const zoom = opts.zoom || 1;
+    const pxPerMm = Math.min((rectW * 0.90) / spanX, (rectH * 0.88) / spanY) * zoom;
     const fovScale = pxPerMm * camDist;
 
-    // Center the projected bounding box inside the canvas
     const midProjX = ((minX + maxX) * 0.5) * pxPerMm;
     const midProjY = ((minY + maxY) * 0.5) * pxPerMm;
     const cx = rectW * 0.5 - midProjX;
     const cy = rectH * 0.5 - midProjY;
 
-    // Contact shadow: vertical footing when upright, full table contact shadow when laying flat
+    // Table contact shadow when laying flat, subtle floor shadow when upright
     if (opts.shadow !== false) {
       const layProgress = clamp((Math.abs(pitch) + Math.abs(roll)) / 95, 0, 1);
       ctx.save();
-      const topP = projectPoint([0, 32, -6.4], rotM, camDist, fovScale, cx, cy);
-      const botP = projectPoint([0, -32, -6.4], rotM, camDist, fovScale, cx, cy);
-      const midS = projectPoint([0, 0, -6.4], rotM, camDist, fovScale, cx, cy);
+      const topP = projectPoint([0, 29, -7.18], rotM, camDist, fovScale, cx, cy);
+      const botP = projectPoint([0, -29, -7.18], rotM, camDist, fovScale, cx, cy);
+      const midS = projectPoint([0, 0, -7.18], rotM, camDist, fovScale, cx, cy);
       const shAlpha = dark ? 0.50 : 0.22;
 
       if (layProgress > 0.25) {
-        // Table-top contact shadow stretched along the beacon's horizontal axis
         const ang = Math.atan2(botP.y - topP.y, botP.x - topP.x);
-        const len = Math.max(pxPerMm * 18, Math.hypot(botP.x - topP.x, botP.y - topP.y) * 0.62);
-        const thick = pxPerMm * 14.5;
-        ctx.translate(midS.x + pxPerMm * 1.5, midS.y + pxPerMm * 4.2);
+        const len = Math.max(pxPerMm * 18, Math.hypot(botP.x - topP.x, botP.y - topP.y) * 0.65);
+        const thick = pxPerMm * 16.5;
+        ctx.translate(midS.x + pxPerMm * 1.4, midS.y + pxPerMm * 4.5);
         ctx.rotate(ang);
         ctx.scale(1, thick / len);
         const grad = ctx.createRadialGradient(0, 0, len * 0.1, 0, 0, len);
@@ -701,177 +517,170 @@
         ctx.fill();
       } else {
         const shY = rectH * 0.5 + (spanY * 0.5) * pxPerMm + 2;
-        const shRx = pxPerMm * 12;
+        const shRx = pxPerMm * 13.5;
         const grad = ctx.createRadialGradient(rectW * 0.5, shY, 1, rectW * 0.5, shY, shRx);
         grad.addColorStop(0, `rgba(0,0,0,${shAlpha * 0.7})`);
         grad.addColorStop(1, 'rgba(0,0,0,0)');
         ctx.fillStyle = grad;
         ctx.beginPath();
-        ctx.ellipse(rectW * 0.5, shY, shRx, pxPerMm * 3.5, 0, 0, Math.PI * 2);
+        ctx.ellipse(rectW * 0.5, shY, shRx, pxPerMm * 3.8, 0, 0, Math.PI * 2);
         ctx.fill();
       }
       ctx.restore();
     }
 
-    const faces = buildBeaconFaces(labelStyle, themePalette);
-
     const keyLight = norm3([0.45, 0.62, 0.65]);
     const fillLight = norm3([-0.6, -0.22, 0.48]);
     const rimLight = norm3([-0.3, 0.4, -0.85]);
+    const halfVec = norm3([keyLight[0], keyLight[1], keyLight[2] + 1]);
 
-    const projectedFaces = [];
-    for (const face of faces) {
-      const worldPts = face.pts.map((p) => transformPoint(p, rotM));
-      let normal;
-      if (face.localNormal) {
-        normal = norm3(transformPoint(face.localNormal, rotM));
-      } else {
-        const e1 = sub3(worldPts[1], worldPts[0]);
-        const e2 = sub3(worldPts[2], worldPts[0]);
-        normal = norm3(cross3(e1, e2));
-      }
+    const whiteRgb = hexToRgb('#F3F4F6');
 
-      const centroid = worldPts.reduce((acc, p) => [acc[0] + p[0], acc[1] + p[1], acc[2] + p[2]], [0, 0, 0])
-        .map((v) => v / worldPts.length);
-      const toCam = norm3([0 - centroid[0], 0 - centroid[1], camDist - centroid[2]]);
-      const facing = dot3(normal, toCam);
+    function shadeVertex(nx, ny, nz, baseRgb, specStrength) {
+      const nDotK = nx * keyLight[0] + ny * keyLight[1] + nz * keyLight[2];
+      const nDotF = nx * fillLight[0] + ny * fillLight[1] + nz * fillLight[2];
+      const nDotR = nx * rimLight[0] + ny * rimLight[1] + nz * rimLight[2];
+      const nDotH = nx * halfVec[0] + ny * halfVec[1] + nz * halfVec[2];
+      const hemi = 0.58 + 0.42 * ny;
+      const spec = nDotH > 0 ? Math.pow(nDotH, 26) * specStrength * 255 : 0;
 
-      if (!face.doubleSided && facing <= -0.02) continue;
-      if (face.doubleSided && facing < 0) {
-        normal = [-normal[0], -normal[1], -normal[2]];
-      }
-
-      const baseRgb = hexToRgb(face.mat.base);
-      const nDotK = Math.max(0, dot3(normal, keyLight));
-      const nDotF = Math.max(0, dot3(normal, fillLight));
-      const nDotR = Math.max(0, dot3(normal, rimLight));
-      const hemi = 0.5 + 0.5 * normal[1];
-
-      const halfVec = norm3([keyLight[0], keyLight[1], keyLight[2] + 1]);
-      const spec = Math.pow(Math.max(0, dot3(normal, halfVec)), 28) * (face.mat.spec || 0.2);
-
-      let lit = 0.54 + hemi * 0.14 + nDotK * 0.34 + nDotF * 0.12 + nDotR * 0.10;
-      if (face.isHoleWall) lit *= 0.68;
+      let lit = 0.56
+        + hemi * 0.14
+        + (nDotK > 0 ? nDotK * 0.34 : 0)
+        + (nDotF > 0 ? nDotF * 0.12 : 0)
+        + (nDotR > 0 ? nDotR * 0.10 : 0);
       if (dark) lit *= 0.94;
 
-      const shaded = {
-        r: clamp(Math.round(baseRgb.r * lit + spec * 255), 0, 255),
-        g: clamp(Math.round(baseRgb.g * lit + spec * 255), 0, 255),
-        b: clamp(Math.round(baseRgb.b * lit + spec * 255), 0, 255),
-      };
-
-      const screenPts = face.pts.map((p) => projectPoint(p, rotM, camDist, fovScale, cx, cy));
-      projectedFaces.push({ screenPts, shaded, avgZ: centroid[2], layer: face.layer ?? 0 });
+      return [
+        clamp(Math.round(baseRgb.r * lit + spec), 0, 255),
+        clamp(Math.round(baseRgb.g * lit + spec), 0, 255),
+        clamp(Math.round(baseRgb.b * lit + spec), 0, 255),
+      ];
     }
 
-    projectedFaces.sort((a, b) => (a.layer - b.layer) || (a.avgZ - b.avgZ));
+    const maxRasDim = opts.isHeroFlight ? 1100 : 2200;
+    const desiredScale = dpr * (opts.isHeroFlight ? 1.5 : 1.85);
+    const ss = clamp(Math.min(maxRasDim / Math.max(rectW, rectH, 1), desiredScale), dpr, 3.0);
+    const rw = Math.max(64, Math.round(rectW * ss));
+    const rh = Math.max(64, Math.round(rectH * ss));
+    ensureRasterBuffer(rw, rh);
 
-    for (const pf of projectedFaces) {
-      ctx.beginPath();
-      ctx.moveTo(pf.screenPts[0].x, pf.screenPts[0].y);
-      for (let i = 1; i < pf.screenPts.length; i++) {
-        ctx.lineTo(pf.screenPts[i].x, pf.screenPts[i].y);
+    const fovScaleRas = fovScale * ss;
+    const cxRas = cx * ss;
+    const cyRas = cy * ss;
+
+    const m0 = rotM[0], m1 = rotM[1], m2 = rotM[2];
+    const m3 = rotM[3], m4 = rotM[4], m5 = rotM[5];
+    const m6 = rotM[6], m7 = rotM[7], m8 = rotM[8];
+
+    // 1. Per-pixel Z-buffered Gouraud rasterization of Blender Viking Slim mesh (.three indexed triangles)
+    const meshSrc = window.VIKING_SLIM_MESH && window.VIKING_SLIM_MESH.three;
+    if (meshSrc) {
+      const pos = meshSrc.positions;
+      const norm = meshSrc.normals;
+      const idx = meshSrc.indices;
+      const vCount = (pos.length / 3) | 0;
+      ensureVertexBuffers(vCount);
+
+      for (let i = 0; i < vCount; i++) {
+        const i3 = i * 3;
+        const x = pos[i3] * 1000;
+        const y = pos[i3 + 1] * 1000;
+        const z = pos[i3 + 2] * 1000;
+        const tx = m0 * x + m1 * y + m2 * z;
+        const ty = m3 * x + m4 * y + m5 * z;
+        const tz = m6 * x + m7 * y + m8 * z;
+        const zCam = Math.max(camDist - tz, 20);
+        const k = fovScaleRas / zCam;
+        vScreenX[i] = cxRas + tx * k;
+        vScreenY[i] = cyRas - ty * k;
+        vWorldZ[i] = 1.0 / zCam;
+
+        const lnx = norm[i3], lny = norm[i3 + 1], lnz = norm[i3 + 2];
+        const nx = m0 * lnx + m1 * lny + m2 * lnz;
+        const ny = m3 * lnx + m4 * lny + m5 * lnz;
+        const nz = m6 * lnx + m7 * lny + m8 * lnz;
+        const [r, g, b] = shadeVertex(nx, ny, nz, whiteRgb, 0.20);
+        vColR[i] = r;
+        vColG[i] = g;
+        vColB[i] = b;
       }
-      ctx.closePath();
-      const fill = rgbStr(pf.shaded);
-      ctx.fillStyle = fill;
-      ctx.fill();
-      ctx.strokeStyle = fill;
-      ctx.lineWidth = 0.55;
-      ctx.stroke();
-    }
 
-    // Punch crisp dark/background inner circles for the 2 mounting through-holes
-    const holeBg = opts.holeColor || (dark ? '#171113' : '#DCD6D8');
-    for (const sign of [1, -1]) {
-      const cyMm = sign * 34.4;
-      const holePtsFront = [];
-      const holePtsBack = [];
-      const segs = 20;
-      for (let i = 0; i < segs; i++) {
-        const th = (i / segs) * Math.PI * 2;
-        const hx = Math.cos(th) * 3.05;
-        const hy = cyMm + Math.sin(th) * 3.05;
-        holePtsFront.push(projectPoint([hx, hy, -1.6], rotM, camDist, fovScale, cx, cy));
-        holePtsBack.push(projectPoint([hx, hy, -6.4], rotM, camDist, fovScale, cx, cy));
-      }
-      ctx.save();
-      ctx.beginPath();
-      holePtsFront.forEach((p, idx) => (idx === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)));
-      ctx.closePath();
-      ctx.clip();
-
-      ctx.fillStyle = dark ? '#3B3438' : '#9E9AA0';
-      ctx.fillRect(0, 0, rectW, rectH);
-
-      ctx.beginPath();
-      holePtsBack.forEach((p, idx) => (idx === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)));
-      ctx.closePath();
-      ctx.fillStyle = holeBg;
-      ctx.fill();
-      ctx.restore();
-    }
-
-    // Crisp rim crease around top plateau
-    ctx.save();
-    ctx.strokeStyle = dark ? 'rgba(0,0,0,0.22)' : 'rgba(90, 95, 110, 0.16)';
-    ctx.lineWidth = Math.max(0.65, pxPerMm * 0.22);
-    ctx.beginPath();
-    BODY_PLATEAU.forEach((p, idx) => {
-      const sp = projectPoint([p[0], p[1], 6.4], rotM, camDist, fovScale, cx, cy);
-      if (idx === 0) ctx.moveTo(sp.x, sp.y);
-      else ctx.lineTo(sp.x, sp.y);
-    });
-    ctx.closePath();
-    ctx.stroke();
-    ctx.restore();
-
-    // 5. Project edge-to-edge label decal onto the top plateau (true 3D foreshortened 4x4 mesh)
-    const decal = getLabelDecalCanvas(label, labelStyle, themePalette);
-    const zDecal = labelStyle === 'printed' ? 6.45 : 6.66;
-    const bandHalfW = 11.45;
-    const bandHalfH = 15.8;
-    const gridN = 4;
-
-    const meshVerts = [];
-    for (let gy = 0; gy <= gridN; gy++) {
-      const row = [];
-      const vNorm = gy / gridN;
-      const yMm = lerp(bandHalfH, -bandHalfH, vNorm);
-      for (let gx = 0; gx <= gridN; gx++) {
-        const uNorm = gx / gridN;
-        const xMm = lerp(-bandHalfW, bandHalfW, uNorm);
-        const sp = projectPoint([xMm, yMm, zDecal], rotM, camDist, fovScale, cx, cy);
-        row.push({
-          screen: sp,
-          uv: { u: uNorm * decal.width, v: vNorm * decal.height },
-        });
-      }
-      meshVerts.push(row);
-    }
-
-    for (let gy = 0; gy < gridN; gy++) {
-      for (let gx = 0; gx < gridN; gx++) {
-        const v00 = meshVerts[gy][gx];
-        const v10 = meshVerts[gy][gx + 1];
-        const v01 = meshVerts[gy + 1][gx];
-        const v11 = meshVerts[gy + 1][gx + 1];
-        drawMappedTriangle(ctx, decal, v00.uv, v10.uv, v11.uv, v00.screen, v10.screen, v11.screen);
-        drawMappedTriangle(ctx, decal, v00.uv, v11.uv, v01.uv, v00.screen, v11.screen, v01.screen);
+      const iLen = idx.length;
+      for (let t = 0; t < iLen; t += 3) {
+        const i0 = idx[t];
+        const i1 = idx[t + 1];
+        const i2 = idx[t + 2];
+        rasterizeGouraudTriangle(
+          vScreenX[i0], vScreenY[i0], vWorldZ[i0], vColR[i0], vColG[i0], vColB[i0],
+          vScreenX[i1], vScreenY[i1], vWorldZ[i1], vColR[i1], vColG[i1], vColB[i1],
+          vScreenX[i2], vScreenY[i2], vWorldZ[i2], vColR[i2], vColG[i2], vColB[i2],
+          0
+        );
       }
     }
+
+    // 2. Z-buffered rasterization of programmatic center wrap band
+    const bandFaces = buildBandFaces(labelStyle, themePalette);
+    const bandInvZ = (p) => 1.0 / Math.max(camDist - (p.z + 0.45), 20);
+    for (const bf of bandFaces) {
+      const baseRgb = hexToRgb(bf.mat.base);
+      const wn = norm3(transformPoint(bf.normal, rotM));
+      const [br, bg, bb] = shadeVertex(wn[0], wn[1], wn[2], baseRgb, bf.mat.spec || 0.15);
+      const pts = bf.pts;
+      const p0 = projectPoint(pts[0], rotM, camDist, fovScaleRas, cxRas, cyRas);
+      const p1 = projectPoint(pts[1], rotM, camDist, fovScaleRas, cxRas, cyRas);
+      const p2 = projectPoint(pts[2], rotM, camDist, fovScaleRas, cxRas, cyRas);
+      const p3 = projectPoint(pts[3], rotM, camDist, fovScaleRas, cxRas, cyRas);
+      const z0 = bandInvZ(p0);
+      const z1 = bandInvZ(p1);
+      const z2 = bandInvZ(p2);
+      const z3 = bandInvZ(p3);
+      rasterizeGouraudTriangle(
+        p0.x, p0.y, z0, br, bg, bb,
+        p1.x, p1.y, z1, br, bg, bb,
+        p2.x, p2.y, z2, br, bg, bb,
+        0
+      );
+      rasterizeGouraudTriangle(
+        p0.x, p0.y, z0, br, bg, bb,
+        p2.x, p2.y, z2, br, bg, bb,
+        p3.x, p3.y, z3, br, bg, bb,
+        0
+      );
+    }
+
+    rasCtx.putImageData(rasImgData, 0, 0);
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(rasCanvas, 0, 0, rw, rh, 0, 0, rectW, rectH);
+
+    // 3. Draw resolution-independent vector label directly onto the projected top plateau
+    const prof = (window.VIKING_SLIM_MESH && window.VIKING_SLIM_MESH.profile) || {
+      plateauZ: 6.79,
+      plateauHalfW: 13.84,
+      bandHalfH: 16.5,
+    };
+    const zDecal = labelStyle === 'printed' ? prof.plateauZ + 0.07 : prof.plateauZ + 0.24;
+    const bandHalfW = prof.plateauHalfW - 0.10;
+    const bandHalfH = prof.bandHalfH - 0.20;
+    const pTL = projectPoint([-bandHalfW, bandHalfH, zDecal], rotM, camDist, fovScale, cx, cy);
+    const pTR = projectPoint([bandHalfW, bandHalfH, zDecal], rotM, camDist, fovScale, cx, cy);
+    const pBR = projectPoint([bandHalfW, -bandHalfH, zDecal], rotM, camDist, fovScale, cx, cy);
+    const pBL = projectPoint([-bandHalfW, -bandHalfH, zDecal], rotM, camDist, fovScale, cx, cy);
+    drawVectorLabelOnPlateau(ctx, label, labelStyle, themePalette, [pTL, pTR, pBR, pBL], subLabel);
 
     ctx.restore();
   }
 
   /**
    * Generates a valid Lottie JSON animation (512x512, 60fps, 60 frames)
-   * animating the tall BLE beacon from vertical front-facing (frame 0)
+   * animating the Viking Slim beacon from vertical front-facing (frame 0)
    * to table-top 3/4 perspective view (frame 60).
    */
   function generateBeaconLottieJson(opts = {}) {
     const label = opts.label || 'B2';
-    const labelStyle = opts.labelStyle || 'tape';
+    const labelStyle = opts.labelStyle || 'printed';
     const themePalette = opts.themePalette || {
       primary: '#D81648',
       primaryContainer: '#FFD9DF',
@@ -933,7 +742,7 @@
       : '#F5F6F8';
     const textHex = labelStyle === 'tonal' ? (themePalette.onPrimaryContainer || '#400014') : '#23201E';
 
-    const bandPts = [[-11.5, 16.0], [11.5, 16.0], [11.5, -16.0], [-11.5, -16.0]];
+    const bandPts = [[-13.84, 16.5], [13.84, 16.5], [13.84, -16.5], [-13.84, -16.5]];
 
     const layers = [
       {
@@ -947,7 +756,7 @@
           rx: { a: 1, k: [{ t: 0, s: [0], i: { x: [0.42], y: [1] }, o: { x: [0.58], y: [0] } }, { t: 60, s: [-58] }] },
           ry: { a: 1, k: [{ t: 0, s: [0], i: { x: [0.42], y: [1] }, o: { x: [0.58], y: [0] } }, { t: 60, s: [-12] }] },
           rz: { a: 1, k: [{ t: 0, s: [0], i: { x: [0.42], y: [1] }, o: { x: [0.58], y: [0] } }, { t: 60, s: [56] }] },
-          p: { a: 0, k: [256, 256, -28] },
+          p: { a: 0, k: [256, 256, -30] },
           a: { a: 0, k: [0, -14, 0] },
           s: { a: 0, k: [100, 100, 100] },
         },
@@ -955,12 +764,12 @@
           d: {
             k: [{
               s: {
-                s: 42,
+                s: 44,
                 f: 'sans-serif',
                 t: label,
                 j: 2,
                 tr: 0,
-                lh: 48,
+                lh: 50,
                 ls: 0,
                 fc: rgb01(textHex).slice(0, 3),
               },
@@ -986,7 +795,7 @@
           ty: 'gr',
           nm: 'BandGroup',
           it: [
-            { ty: 'sh', nm: 'BandPath', ks: { a: 1, k: buildKeyframedShape(bandPts, 6.6) } },
+            { ty: 'sh', nm: 'BandPath', ks: { a: 1, k: buildKeyframedShape(bandPts, 6.97) } },
             { ty: 'fl', nm: 'BandFill', c: { a: 0, k: rgb01(bandHex) }, o: { a: 0, k: 100 } },
             { ty: 'tr', p: { a: 0, k: [0, 0] }, a: { a: 0, k: [0, 0] }, s: { a: 0, k: [100, 100] }, r: { a: 0, k: 0 }, o: { a: 0, k: 100 } },
           ],
@@ -1006,7 +815,7 @@
           ty: 'gr',
           nm: 'PlateauGroup',
           it: [
-            { ty: 'sh', nm: 'PlateauPath', ks: { a: 1, k: buildKeyframedShape(BODY_PLATEAU, 6.4) } },
+            { ty: 'sh', nm: 'PlateauPath', ks: { a: 1, k: buildKeyframedShape(BODY_PLATEAU, 6.79) } },
             { ty: 'fl', nm: 'PlateauFill', c: { a: 0, k: rgb01('#F8F9FA') }, o: { a: 0, k: 100 } },
             { ty: 'st', nm: 'PlateauStroke', c: { a: 0, k: rgb01('#D5D9E0') }, o: { a: 0, k: 100 }, w: { a: 0, k: 1.5 } },
             { ty: 'tr', p: { a: 0, k: [0, 0] }, a: { a: 0, k: [0, 0] }, s: { a: 0, k: [100, 100] }, r: { a: 0, k: 0 }, o: { a: 0, k: 100 } },
@@ -1040,35 +849,15 @@
         ddd: 0,
         ind: 5,
         ty: 4,
-        nm: 'Mounting_Ears_Shell',
+        nm: 'Outer_Shell_Profile',
         sr: 1,
         ks: { o: { a: 0, k: 100 }, r: { a: 0, k: 0 }, p: { a: 0, k: [256, 256, 0] }, a: { a: 0, k: [0, 0, 0] }, s: { a: 0, k: [100, 100, 100] } },
         shapes: [{
           ty: 'gr',
           nm: 'EarsGroup',
           it: [
-            { ty: 'sh', nm: 'OuterPath', ks: { a: 1, k: buildKeyframedShape(OUTER_BASE, -2.5) } },
-            { ty: 'fl', nm: 'EarsFill', c: { a: 0, k: rgb01('#DCE0E8') }, o: { a: 0, k: 100 } },
-            { ty: 'tr', p: { a: 0, k: [0, 0] }, a: { a: 0, k: [0, 0] }, s: { a: 0, k: [100, 100] }, r: { a: 0, k: 0 }, o: { a: 0, k: 100 } },
-          ],
-        }],
-        ip: 0,
-        op: 60,
-        st: 0,
-      },
-      {
-        ddd: 0,
-        ind: 6,
-        ty: 4,
-        nm: 'Rear_Shell_Depth',
-        sr: 1,
-        ks: { o: { a: 0, k: 100 }, r: { a: 0, k: 0 }, p: { a: 0, k: [256, 256, 0] }, a: { a: 0, k: [0, 0, 0] }, s: { a: 0, k: [100, 100, 100] } },
-        shapes: [{
-          ty: 'gr',
-          nm: 'BackGroup',
-          it: [
-            { ty: 'sh', nm: 'BackPath', ks: { a: 1, k: buildKeyframedShape(OUTER_BASE, -6.4) } },
-            { ty: 'fl', nm: 'BackFill', c: { a: 0, k: rgb01('#C3C9D4') }, o: { a: 0, k: 100 } },
+            { ty: 'sh', nm: 'OuterPath', ks: { a: 1, k: buildKeyframedShape(OUTER_BASE, -7.18) } },
+            { ty: 'fl', nm: 'EarsFill', c: { a: 0, k: rgb01('#CFD5E0') }, o: { a: 0, k: 100 } },
             { ty: 'tr', p: { a: 0, k: [0, 0] }, a: { a: 0, k: [0, 0] }, s: { a: 0, k: [100, 100] }, r: { a: 0, k: 0 }, o: { a: 0, k: 100 } },
           ],
         }],
@@ -1085,7 +874,7 @@
       op: frames,
       w: 512,
       h: 512,
-      nm: `BLE_Beacon_${label}_Table_Turn`,
+      nm: `Viking_Slim_${label}_Table_Turn`,
       ddd: 1,
       assets: [],
       layers,
@@ -1098,7 +887,7 @@
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `ble_beacon_${(opts.label || 'b2').toLowerCase()}_turn.json`;
+    a.download = `viking_slim_${(opts.label || 'b2').toLowerCase()}_turn.json`;
     document.body.appendChild(a);
     a.click();
     a.remove();
