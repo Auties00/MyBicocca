@@ -1,5 +1,11 @@
 package it.unimib.indoornav.lab.ui.map
 
+import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.geometry.Size
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.Button
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
@@ -34,7 +40,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -124,6 +129,8 @@ fun MapScreen(
     isRecording: Boolean,
     surveyManager: SurveyManager,
     inventoryRepository: BeaconInventoryRepository,
+    editSession: MapEditSession,
+    onRequestLeaveEdit: () -> Unit,
 ) {
     val context = LocalContext.current
     val savedEntries by inventoryRepository.entries.collectAsState()
@@ -149,7 +156,6 @@ fun MapScreen(
     if (floors.isNotEmpty() && floor !in floors) floor = floors.first()
     val plan = remember(building, floor) { FloorPlan.load(context, building, floor) }
 
-    var editMode by rememberSaveable { mutableStateOf(false) }
     var placingKey by remember { mutableStateOf<String?>(null) }
     var detailKey by remember { mutableStateOf<String?>(null) }
     var editingTile by remember { mutableStateOf<ResolvedBeaconTile?>(null) }
@@ -170,17 +176,24 @@ fun MapScreen(
                 tiles = tiles.filter { it.building.trim() == building },
                 view = view,
                 onViewChange = { view = it },
-                editMode = editMode,
-                onEditModeChange = {
-                    editMode = it
+                editMode = editSession.editing,
+                moves = editSession.moves,
+                onStartEdit = {
+                    editSession.start()
+                    placingKey = null
+                },
+                onSaveEdit = {
+                    editSession.save(inventoryRepository)
+                    placingKey = null
+                },
+                onCancelEdit = {
+                    editSession.discard()
                     placingKey = null
                 },
                 placingKey = placingKey,
                 onPlacingKeyChange = { placingKey = it },
                 onOpen = { detailKey = it.tileKey },
-                onMove = { tile, x, y ->
-                    tile.savedEntry?.let { inventoryRepository.updatePosition(it.id, x, y) }
-                },
+                onMove = { tile, x, y -> tile.savedEntry?.let { editSession.move(it.id, x, y) } },
             )
         },
         detail = { key ->
@@ -198,6 +211,9 @@ fun MapScreen(
             }
         },
     )
+
+    // Back while editing asks what to do with the moves instead of dropping them.
+    BackHandler(enabled = editSession.editing && detailKey == null) { onRequestLeaveEdit() }
 
     editingTile?.let { tile ->
         SaveBeaconBottomSheet(
@@ -228,7 +244,10 @@ private fun MapContent(
     view: PlanView?,
     onViewChange: (PlanView) -> Unit,
     editMode: Boolean,
-    onEditModeChange: (Boolean) -> Unit,
+    moves: Map<String, Pair<Double, Double>>,
+    onStartEdit: () -> Unit,
+    onSaveEdit: () -> Unit,
+    onCancelEdit: () -> Unit,
     placingKey: String?,
     onPlacingKeyChange: (String?) -> Unit,
     onOpen: (ResolvedBeaconTile) -> Unit,
@@ -238,13 +257,25 @@ private fun MapContent(
     val markerPx = with(density) { MARKER_SIZE.toPx() }
     var viewport by remember { mutableStateOf(IntSize.Zero) }
     val onFloor = tiles.filter { planFloorOf(it.floor) == floor }
-    val placed = onFloor.filter { it.savedEntry?.x != null && it.savedEntry.y != null }
-    val unplaced = onFloor.filter { it.savedEntry != null && (it.savedEntry.x == null || it.savedEntry.y == null) }
-    // While a beacon is dragged its marker follows the finger; the position is saved when it is dropped.
-    val dragPositions = remember { mutableStateMapOf<String, Offset>() }
+    // Where each beacon is shown: its staged move if it has one, else its saved position.
+    fun positionOf(tile: ResolvedBeaconTile): Pair<Double, Double>? {
+        val entry = tile.savedEntry ?: return null
+        moves[entry.id]?.let { return it }
+        val x = entry.x ?: return null
+        val y = entry.y ?: return null
+        return x to y
+    }
+    val placed = onFloor.filter { positionOf(it) != null }
+    val unplaced = onFloor.filter { it.savedEntry != null && positionOf(it) == null }
+    // The beacon being dragged, and where the finger grabbed it relative to its centre, so it keeps that
+    // offset instead of jumping onto the finger.
+    var draggingKey by remember { mutableStateOf<String?>(null) }
+    var dragCenter by remember { mutableStateOf(Offset.Zero) }
+    var grabOffset by remember { mutableStateOf(Offset.Zero) }
     val latestView by rememberUpdatedState(view)
     val latestPlacing by rememberUpdatedState(placingKey)
     val latestPlaced by rememberUpdatedState(placed)
+    val latestPositionOf by rememberUpdatedState(::positionOf)
 
     val colors = MaterialTheme.colorScheme
     Column(modifier = Modifier.fillMaxSize()) {
@@ -266,19 +297,23 @@ private fun MapContent(
             IconButton(onClick = { plan?.let { p -> if (viewport != IntSize.Zero) onViewChange(PlanView.fitting(p, viewport)) } }) {
                 Icon(Icons.Default.MyLocation, contentDescription = "Fit the floor")
             }
-            FilterChip(
-                selected = editMode,
-                onClick = { onEditModeChange(!editMode) },
-                label = { Text(if (editMode) "Done" else "Edit positions") },
-                leadingIcon = {
-                    Icon(
-                        if (editMode) Icons.Default.Check else Icons.Default.EditLocationAlt,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp),
-                    )
-                },
-                modifier = Modifier.padding(end = 8.dp),
-            )
+            if (editMode) {
+                TextButton(onClick = onCancelEdit) { Text("Cancel") }
+                Button(onClick = onSaveEdit, modifier = Modifier.padding(end = 8.dp)) {
+                    Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Text(if (moves.isEmpty()) " Done" else " Save ${moves.size}")
+                }
+            } else {
+                FilterChip(
+                    selected = false,
+                    onClick = onStartEdit,
+                    label = { Text("Edit positions") },
+                    leadingIcon = {
+                        Icon(Icons.Default.EditLocationAlt, contentDescription = null, modifier = Modifier.size(18.dp))
+                    },
+                    modifier = Modifier.padding(end = 8.dp),
+                )
+            }
         }
         Row(
             modifier = Modifier
@@ -310,6 +345,45 @@ private fun MapContent(
                         onViewChange(v.zoomedAround(centroid, zoom).let { it.copy(origin = it.origin + pan) })
                     }
                 }
+                .pointerInput(plan, editMode) {
+                    if (!editMode) return@pointerInput
+                    detectDragGesturesAfterLongPress(
+                        onDragStart = { touch ->
+                            val v = latestView ?: return@detectDragGesturesAfterLongPress
+                            val p = plan ?: return@detectDragGesturesAfterLongPress
+                            // The marker's body sits just below its anchor point; grab the nearest within reach.
+                            val hit = latestPlaced.mapNotNull { tile ->
+                                val (x, y) = latestPositionOf(tile) ?: return@mapNotNull null
+                                val c = v.toScreen(p, x.toFloat(), y.toFloat())
+                                tile to c
+                            }.minByOrNull { (_, c) -> (c - touch).getDistance() }
+                                ?.takeIf { (_, c) -> (c - touch).getDistance() < markerPx * 0.9f }
+                            if (hit != null) {
+                                draggingKey = hit.first.tileKey
+                                dragCenter = hit.second
+                                grabOffset = touch - hit.second
+                            }
+                        },
+                        onDrag = { change, _ ->
+                            if (draggingKey != null) {
+                                change.consume()
+                                dragCenter = change.position - grabOffset
+                            }
+                        },
+                        onDragEnd = {
+                            val key = draggingKey
+                            val v = latestView
+                            if (key != null && v != null && plan != null) {
+                                val at = v.toPlan(plan, dragCenter)
+                                latestPlaced.firstOrNull { it.tileKey == key }?.let {
+                                    onMove(it, at.x.toDouble(), at.y.toDouble())
+                                }
+                            }
+                            draggingKey = null
+                        },
+                        onDragCancel = { draggingKey = null },
+                    )
+                }
                 .pointerInput(plan) {
                     detectTapGestures { tap ->
                         val v = latestView ?: return@detectTapGestures
@@ -330,10 +404,20 @@ private fun MapContent(
             Canvas(modifier = Modifier.fillMaxSize()) {
                 drawPlan(plan, v, walls = colors.onSurface.copy(alpha = 0.75f), openings = colors.outline, stairs = colors.tertiary)
                 drawRooms(plan, v, colors.onSurfaceVariant.copy(alpha = 0.6f))
+                // A dotted outline marks where a moved beacon is saved, until the move is saved or discarded.
+                placed.forEach { tile ->
+                    val entry = tile.savedEntry ?: return@forEach
+                    val moved = entry.id in moves || tile.tileKey == draggingKey
+                    val ox = entry.x ?: return@forEach
+                    val oy = entry.y ?: return@forEach
+                    if (moved) {
+                        drawDottedHalo(v.toScreen(plan, ox.toFloat(), oy.toFloat()), markerPx * 0.86f, colors.onSurfaceVariant)
+                    }
+                }
             }
             placed.forEach { tile ->
-                val entry = tile.savedEntry ?: return@forEach
-                val center = dragPositions[tile.tileKey] ?: v.toScreen(plan, entry.x!!.toFloat(), entry.y!!.toFloat())
+                val (px, py) = positionOf(tile) ?: return@forEach
+                val center = if (tile.tileKey == draggingKey) dragCenter else v.toScreen(plan, px.toFloat(), py.toFloat())
                 // Skip markers far off screen; the map can hold a whole building.
                 if (center.x < -markerPx || center.y < -markerPx * 2 ||
                     center.x > viewport.width + markerPx || center.y > viewport.height + markerPx
@@ -346,28 +430,7 @@ private fun MapContent(
                     modifier = Modifier
                         .offset { IntOffset((center.x - markerPx / 2).roundToInt(), (center.y - markerPx * 0.8f).roundToInt()) }
                         .pointerInput(tile.tileKey, editMode) {
-                            if (editMode) {
-                                detectDragGesturesAfterLongPress(
-                                    onDragStart = { dragPositions[tile.tileKey] = center },
-                                    onDrag = { change, amount ->
-                                        change.consume()
-                                        dragPositions[tile.tileKey] = (dragPositions[tile.tileKey] ?: center) + amount
-                                    },
-                                    onDragEnd = {
-                                        val drop = dragPositions.remove(tile.tileKey)
-                                        val vv = latestView
-                                        if (drop != null && vv != null) {
-                                            val at = vv.toPlan(plan, drop)
-                                            latestPlaced.firstOrNull { it.tileKey == tile.tileKey }?.let {
-                                                onMove(it, at.x.toDouble(), at.y.toDouble())
-                                            }
-                                        }
-                                    },
-                                    onDragCancel = { dragPositions.remove(tile.tileKey) },
-                                )
-                            } else {
-                                detectTapGestures { onOpen(tile) }
-                            }
+                            if (!editMode) detectTapGestures { onOpen(tile) }
                         },
                 )
             }
@@ -443,6 +506,14 @@ private fun MapMarker(tile: ResolvedBeaconTile, editMode: Boolean, modifier: Mod
             inDetail = false,
             size = MARKER_SIZE,
         )
+    }
+}
+
+private fun DrawScope.drawDottedHalo(center: Offset, size: Float, color: Color) {
+    val outline = OrganicShapes.SmoothCookie8.createOutline(Size(size, size), layoutDirection, this)
+    val path = (outline as? androidx.compose.ui.graphics.Outline.Generic)?.path ?: return
+    translate(center.x - size / 2, center.y - size / 2) {
+        drawPath(path, color, style = Stroke(width = 3f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(14f, 10f))))
     }
 }
 

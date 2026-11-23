@@ -1,5 +1,6 @@
 package it.unimib.indoornav.lab
 
+import it.unimib.indoornav.lab.ui.map.MapEditSession
 import android.app.Application
 import it.unimib.indoornav.lab.data.LabPreferences
 import it.unimib.indoornav.lab.data.SessionRepository
@@ -15,6 +16,7 @@ class LabApp : Application() {
         private set
     lateinit var beaconInventoryRepository: BeaconInventoryRepository
         private set
+    val mapEditSession = MapEditSession()
     lateinit var recordingCoordinator: RecordingCoordinator
         private set
     lateinit var surveyManager: SurveyManager
