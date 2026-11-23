@@ -78,6 +78,7 @@ class RecordingCoordinator(private val context: Context) {
     }
 
     fun startRecording(config: SetupConfig) {
+        aborting = false
         val intent = Intent(context, RecordingService::class.java).apply {
             action = RecordingService.ACTION_START
         }
@@ -89,6 +90,16 @@ class RecordingCoordinator(private val context: Context) {
     }
 
     fun requestImmediateStop() {
+        activeService?.requestImmediateStop()
+    }
+
+    // Set by abort(): the session that the stop produces is deleted instead of summarised.
+    @Volatile
+    private var aborting = false
+
+    /** Stops at once, skipping the end of the protocol, and deletes the recording. */
+    fun abort() {
+        aborting = true
         activeService?.requestImmediateStop()
     }
 
@@ -117,7 +128,15 @@ class RecordingCoordinator(private val context: Context) {
     }
 
     fun updateState(transform: (RecordingUiState) -> RecordingUiState) {
-        _uiState.value = transform(_uiState.value)
+        val next = transform(_uiState.value)
+        val summary = next.pendingSummary
+        if (aborting && summary != null) {
+            aborting = false
+            _uiState.value = next.copy(pendingSummary = null)
+            ioScope.launch { summary.sessionDir.deleteRecursively() }
+            return
+        }
+        _uiState.value = next
     }
 
     /** Writes [edits] into the manifest and renames the folder if the test ID or phone label changed. */

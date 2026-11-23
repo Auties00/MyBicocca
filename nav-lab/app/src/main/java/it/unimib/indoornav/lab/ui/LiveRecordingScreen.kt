@@ -1,5 +1,6 @@
 package it.unimib.indoornav.lab.ui
 
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -66,6 +67,7 @@ fun LiveRecordingScreen(
     onUndoMark: () -> Unit,
     onEventMark: (kind: String, label: String) -> Unit,
     onFinish: () -> Unit,
+    onAbort: () -> Unit = {},
     onToggleTouchLock: (Boolean) -> Unit,
     onToggleAllowScreenOff: (Boolean) -> Unit,
 ) {
@@ -247,6 +249,30 @@ fun LiveRecordingScreen(
                         else -> "STOP RECORDING"
                     },
                     fontWeight = FontWeight.Bold,
+                )
+            }
+
+            var confirmAbort by remember { mutableStateOf(false) }
+            OutlinedButton(
+                onClick = { confirmAbort = true },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Icon(Icons.Default.Close, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+                Spacer(Modifier.width(8.dp))
+                Text("ABORT (discard this recording)", color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold)
+            }
+            if (confirmAbort) {
+                AlertDialog(
+                    onDismissRequest = { confirmAbort = false },
+                    title = { Text("Abort this recording?") },
+                    text = { Text("It stops now, skips the end of the protocol and is deleted.") },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            confirmAbort = false
+                            onAbort()
+                        }) { Text("Abort", color = MaterialTheme.colorScheme.error) }
+                    },
+                    dismissButton = { TextButton(onClick = { confirmAbort = false }) { Text("Keep recording") } },
                 )
             }
 

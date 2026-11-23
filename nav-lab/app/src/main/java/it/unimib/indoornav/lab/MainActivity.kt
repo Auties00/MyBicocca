@@ -224,6 +224,10 @@ class MainActivity : ComponentActivity() {
                                     app.recordingCoordinator.markEvent(kind, label, "button")
                                 },
                                 onFinish = { app.recordingCoordinator.requestFinish() },
+                                onAbort = {
+                                    app.recordingCoordinator.abort()
+                                    Toast.makeText(this@MainActivity, "Recording aborted and deleted", Toast.LENGTH_SHORT).show()
+                                },
                                 onToggleTouchLock = { app.recordingCoordinator.setTouchLocked(it) },
                                 onToggleAllowScreenOff = { app.recordingCoordinator.setAllowScreenOff(it) },
                             )
