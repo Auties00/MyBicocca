@@ -433,13 +433,16 @@ private fun MapContent(
                         // function would take as a cancellation.
                         // A first touch that moves is a pan or drag, not the first tap of the gesture.
                         val tapped: Boolean? = withTimeoutOrNull(QUICK_ZOOM_TAP_MS) {
-                            while (true) {
+                            var result: Boolean? = null
+                            while (result == null) {
                                 val changes = awaitPointerEvent().changes
-                                if (changes.any { (it.position - first.position).getDistance() > viewConfiguration.touchSlop }) {
-                                    return@withTimeoutOrNull false
+                                result = when {
+                                    changes.any { (it.position - first.position).getDistance() > viewConfiguration.touchSlop } -> false
+                                    changes.none { it.pressed } -> true
+                                    else -> null
                                 }
-                                if (changes.none { it.pressed }) return@withTimeoutOrNull true
                             }
+                            result
                         }
                         if (tapped != true) return@awaitEachGesture
                         val second = withTimeoutOrNull(QUICK_ZOOM_GAP_MS) {
