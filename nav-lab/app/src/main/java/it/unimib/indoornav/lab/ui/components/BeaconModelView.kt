@@ -72,10 +72,16 @@ private object BeaconBitmapCache {
         override fun sizeOf(key: BeaconBitmapKey, value: ImageBitmap): Int = value.width * value.height * 4
     }
 
+    // The latest render of each end pose at any size, so a newly composed copy has something to show at once.
+    private val latest = ConcurrentHashMap<Triple<String, String, Int>, ImageBitmap>()
+
     fun get(key: BeaconBitmapKey): ImageBitmap? = synchronized(cache) { cache.get(key) }
+
+    fun latest(label: String, subLabel: String, step: Int): ImageBitmap? = latest[Triple(label, subLabel, step)]
 
     fun put(key: BeaconBitmapKey, bitmap: ImageBitmap) {
         synchronized(cache) { cache.put(key, bitmap) }
+        if (key.step == 0 || key.step == TRANSITION_STEPS) latest[Triple(key.label, key.subLabel, key.step)] = bitmap
     }
 }
 
@@ -175,7 +181,8 @@ fun BeaconModelView(
         // At either end the sharp render at the box's size wins; in between, the nearest end stands in
         // until the first frame of the transition arrives.
         val atEnd = progress <= 0f || progress >= 1f
-        val shown = if (atEnd) restBitmap ?: liveBitmap else liveBitmap ?: restBitmap
+        val shown = (if (atEnd) restBitmap ?: liveBitmap else liveBitmap ?: restBitmap)
+            ?: BeaconBitmapCache.latest(label, subLabel, restStep)
         if (shown != null) {
             Image(
                 bitmap = shown,

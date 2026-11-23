@@ -54,6 +54,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -142,8 +145,13 @@ fun BeaconDetailOverlay(
         color = MaterialTheme.colorScheme.surface,
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
+            val hero = LocalBeaconHero.current
+            var barHeightPx by remember { mutableIntStateOf(0) }
             TopAppBar(
-                modifier = Modifier.heroCeiling(),
+                modifier = Modifier
+                    .heroCeiling()
+                    .onSizeChanged { barHeightPx = it.height }
+                    .clipToBounds(),
                 // The screen around it already sits below the status bar.
                 windowInsets = WindowInsets(0, 0, 0, 0),
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -157,6 +165,12 @@ fun BeaconDetailOverlay(
                 },
                 title = {
                     Row(
+                        // The flying halo is cut at an edge that rises from the bar's bottom to its top
+                        // while the detail closes; the title rises with it so the halo never covers it.
+                        modifier = Modifier.graphicsLayer {
+                            val p = hero?.takeIf { it.key == tile.tileKey }?.progress?.value ?: 1f
+                            translationY = -(1f - p) * barHeightPx
+                        },
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
