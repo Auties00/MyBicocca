@@ -1,5 +1,10 @@
 package it.unimib.indoornav.lab.ui.map
 
+import kotlin.math.exp
+import kotlin.math.abs
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.geometry.Size
@@ -84,6 +89,9 @@ import kotlin.math.roundToInt
 private val MARKER_SIZE = 56.dp
 private const val MIN_PX_PER_M = 4f
 private const val MAX_PX_PER_M = 400f
+
+// Drag distance that multiplies the zoom by e (about 2.7x) during the one-handed zoom.
+private const val QUICK_ZOOM_PX_PER_E = 300f
 
 /**
  * Where the plan sits on screen. In a portrait view the plan is turned a quarter clockwise, so the
@@ -411,6 +419,34 @@ private fun MapContent(
                         },
                         onDragCancel = { draggingKey = null },
                     )
+                }
+                .pointerInput(plan) {
+                    // One-handed zoom: tap, then hold the second tap and drag down to zoom in, up to zoom out,
+                    // around the centre of the map.
+                    awaitEachGesture {
+                        val first = awaitFirstDown(requireUnconsumed = false)
+                        withTimeoutOrNull(viewConfiguration.longPressTimeoutMillis) { waitForUpOrCancellation() }
+                            ?: return@awaitEachGesture
+                        val second = withTimeoutOrNull(viewConfiguration.doubleTapTimeoutMillis) {
+                            awaitFirstDown(requireUnconsumed = false)
+                        } ?: return@awaitEachGesture
+                        if ((second.position - first.position).getDistance() > viewConfiguration.touchSlop * 4) {
+                            return@awaitEachGesture
+                        }
+                        val start = latestView ?: return@awaitEachGesture
+                        val center = Offset(size.width / 2f, size.height / 2f)
+                        var zooming = false
+                        while (true) {
+                            val change = awaitPointerEvent().changes.firstOrNull { it.id == second.id } ?: break
+                            if (!change.pressed) break
+                            val dy = change.position.y - second.position.y
+                            if (!zooming && abs(dy) > viewConfiguration.touchSlop) zooming = true
+                            if (zooming) {
+                                change.consume()
+                                onViewChange(start.zoomedAround(center, exp(dy / QUICK_ZOOM_PX_PER_E)))
+                            }
+                        }
+                    }
                 }
                 .pointerInput(plan) {
                     detectTapGestures { tap ->
