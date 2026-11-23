@@ -1,5 +1,7 @@
 package it.unimib.indoornav.lab.ui.beacons
 
+import it.unimib.indoornav.lab.ui.components.SlotBadge
+import it.unimib.indoornav.lab.inventory.SlotPills
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -72,9 +74,7 @@ fun BeaconCardGrid(
                     horizontalArrangement = Arrangement.spacedBy(3.dp),
                     verticalArrangement = Arrangement.spacedBy(3.dp),
                 ) {
-                    tile.frameTypes.forEach { ft ->
-                        SignalTypeBadge(frameType = ft, compact = true)
-                    }
+                    SlotPills.of(tile).forEach { (slot, state) -> SlotBadge(slot, state, compact = true) }
                 }
             }
 

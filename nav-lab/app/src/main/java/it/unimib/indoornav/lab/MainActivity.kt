@@ -279,6 +279,7 @@ class MainActivity : ComponentActivity() {
                                         onRequestLeaveEdit = { leaveMapEditTo = LEAVE_EDIT_STAY },
                                         focus = app.mapFocus,
                                         cameraStore = app.mapCamera,
+                                        checkpointStore = app.checkpointStore,
                                     )
                                 }
                                 composable("inventory") {
@@ -311,7 +312,7 @@ class MainActivity : ComponentActivity() {
                             text = { Text("You moved ${mapEdit.moves.size} beacon(s) on the map without saving.") },
                             confirmButton = {
                                 TextButton(onClick = {
-                                    mapEdit.save(app.beaconInventoryRepository)
+                                    mapEdit.save(app.beaconInventoryRepository, app.checkpointStore)
                                     finish()
                                 }) { Text("Save") }
                             },

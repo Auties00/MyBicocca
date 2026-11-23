@@ -1,5 +1,7 @@
 package it.unimib.indoornav.lab.ui.map
 
+import it.unimib.indoornav.lab.format.RouteCheckpoints
+import it.unimib.indoornav.lab.format.ExperimentTemplate
 import kotlin.math.exp
 import kotlin.math.abs
 import androidx.compose.foundation.gestures.awaitFirstDown
@@ -190,6 +192,7 @@ fun MapScreen(
     onRequestLeaveEdit: () -> Unit,
     focus: MapFocusRequest,
     cameraStore: MapCameraStore,
+    checkpointStore: CheckpointStore,
 ) {
     val context = LocalContext.current
     val savedEntries by inventoryRepository.entries.collectAsState()
@@ -246,6 +249,12 @@ fun MapScreen(
         detailKey = null
         planFloorOf(tile.floor).takeIf { it in floors }?.let { floor = it }
     }
+    // The route of the test chosen in the Record tab; its checkpoints are drawn on the map. In edit mode
+    // every checkpoint is shown so any of them can be moved to its measured spot.
+    val allCheckpoints by checkpointStore.checkpoints.collectAsState()
+    val template = ExperimentTemplate.entries.firstOrNull { it.code == config.templateCode }
+    val route = if (template?.fields?.any { it.key == "route" } == true) config.templateFields["route"] else null
+    val routeOrder = RouteCheckpoints.sequenceFor(route)
     val lastKnownTiles = remember { mutableMapOf<String, ResolvedBeaconTile>() }
     remember(tiles) { tiles.forEach { lastKnownTiles[it.tileKey] = it } }
 
@@ -268,7 +277,7 @@ fun MapScreen(
                     placingKey = null
                 },
                 onSaveEdit = {
-                    editSession.save(inventoryRepository)
+                    editSession.save(inventoryRepository, checkpointStore)
                     placingKey = null
                 },
                 onCancelEdit = {
@@ -283,6 +292,15 @@ fun MapScreen(
                     if (e.x != null && e.y != null && planFloorOf(focusTile.floor) == floor) Offset(e.x.toFloat(), e.y.toFloat()) else null
                 },
                 onFocusDone = { focus.beaconId = null },
+                checkpoints = allCheckpoints
+                    .filter { it.building == building && it.floor == floor && (editSession.editing || it.id in routeOrder) }
+                    .map { cp ->
+                        val moved = editSession.moves[CHECKPOINT_KEY + cp.id]
+                        cp to Offset((moved?.first ?: cp.x).toFloat(), (moved?.second ?: cp.y).toFloat())
+                    },
+                routeOrder = routeOrder,
+                routeName = route?.takeIf { routeOrder.isNotEmpty() },
+                onMoveCheckpoint = { id, x, y -> editSession.move(CHECKPOINT_KEY + id, x, y) },
                 placeKey = placeTile?.tileKey?.takeIf { planFloorOf(placeTile.floor) == floor && editSession.editing },
                 onPlaceDone = { focus.placeBeaconId = null },
             )
@@ -352,6 +370,10 @@ private fun MapContent(
     onFocusDone: () -> Unit,
     placeKey: String?,
     onPlaceDone: () -> Unit,
+    checkpoints: List<Pair<Checkpoint, Offset>>,
+    routeOrder: List<String>,
+    routeName: String?,
+    onMoveCheckpoint: (String, Double, Double) -> Unit,
 ) {
     val density = LocalDensity.current
     val markerPx = with(density) { MARKER_SIZE.toPx() }
@@ -376,6 +398,7 @@ private fun MapContent(
     val latestPlacing by rememberUpdatedState(placingKey)
     val latestPlaced by rememberUpdatedState(placed)
     val latestPositionOf by rememberUpdatedState(::positionOf)
+    val latestCheckpoints by rememberUpdatedState(checkpoints)
 
     LaunchedEffect(focusTarget, plan, viewport) {
         val target = focusTarget ?: return@LaunchedEffect
@@ -479,7 +502,16 @@ private fun MapContent(
                                 tile to c
                             }.minByOrNull { (_, c) -> (c - touch).getDistance() }
                                 ?.takeIf { (_, c) -> (c - touch).getDistance() < markerPx * 0.9f }
-                            if (hit != null) {
+                            val cpHit = latestCheckpoints.map { (cp, at) -> cp to v.toScreen(p, at.x, at.y) }
+                                .minByOrNull { (_, c) -> (c - touch).getDistance() }
+                                ?.takeIf { (_, c) -> (c - touch).getDistance() < markerPx * 0.6f }
+                            val beaconDistance = hit?.let { (it.second - touch).getDistance() } ?: Float.MAX_VALUE
+                            val cpDistance = cpHit?.let { (it.second - touch).getDistance() } ?: Float.MAX_VALUE
+                            if (cpHit != null && cpDistance < beaconDistance) {
+                                draggingKey = CHECKPOINT_KEY + cpHit.first.id
+                                dragCenter = cpHit.second
+                                grabOffset = touch - cpHit.second
+                            } else if (hit != null) {
                                 draggingKey = hit.first.tileKey
                                 dragCenter = hit.second
                                 grabOffset = touch - hit.second
@@ -496,8 +528,12 @@ private fun MapContent(
                             val v = latestView
                             if (key != null && v != null && plan != null) {
                                 val at = v.toPlan(plan, dragCenter)
-                                latestPlaced.firstOrNull { it.tileKey == key }?.let {
-                                    onMove(it, at.x.toDouble(), at.y.toDouble())
+                                if (key.startsWith(CHECKPOINT_KEY)) {
+                                    onMoveCheckpoint(key.removePrefix(CHECKPOINT_KEY), at.x.toDouble(), at.y.toDouble())
+                                } else {
+                                    latestPlaced.firstOrNull { it.tileKey == key }?.let {
+                                        onMove(it, at.x.toDouble(), at.y.toDouble())
+                                    }
                                 }
                             }
                             draggingKey = null
@@ -564,6 +600,7 @@ private fun MapContent(
                 return@Box
             }
             val v = view ?: return@Box
+            val cpColor = Color(0xFFFACC15)
             Canvas(modifier = Modifier.fillMaxSize()) {
                 drawPlan(plan, v, walls = colors.onSurface.copy(alpha = 0.75f), openings = colors.outline, stairs = colors.tertiary)
                 drawRooms(plan, v, colors.onSurfaceVariant.copy(alpha = 0.6f))
@@ -576,6 +613,13 @@ private fun MapContent(
                     if (moved) {
                         drawDottedHalo(v.toScreen(plan, ox.toFloat(), oy.toFloat()), markerPx * 0.86f, colors.onSurfaceVariant)
                     }
+                }
+                val cpScreen = checkpoints.associate { (cp, at) ->
+                    cp.id to if (CHECKPOINT_KEY + cp.id == draggingKey) dragCenter else v.toScreen(plan, at.x, at.y)
+                }
+                drawRoute(routeOrder, cpScreen, cpColor)
+                checkpoints.forEach { (cp, _) ->
+                    drawCheckpoint(cp, cpScreen.getValue(cp.id), cpColor, markerPx * 0.22f)
                 }
             }
             placed.forEach { tile ->
@@ -670,6 +714,33 @@ private fun MapMarker(tile: ResolvedBeaconTile, editMode: Boolean, modifier: Mod
             size = MARKER_SIZE,
         )
     }
+}
+
+/** The route as a dashed line through its checkpoints, in walking order. */
+private fun DrawScope.drawRoute(order: List<String>, at: Map<String, Offset>, color: Color) {
+    val points = order.mapNotNull { at[it] }
+    for (i in 0 until points.size - 1) {
+        drawLine(
+            color.copy(alpha = 0.5f),
+            points[i],
+            points[i + 1],
+            strokeWidth = 3f,
+            pathEffect = PathEffect.dashPathEffect(floatArrayOf(12f, 10f)),
+        )
+    }
+}
+
+/** A tape cross with its name; faded and marked "?" until moved to its measured spot. */
+private fun DrawScope.drawCheckpoint(cp: Checkpoint, center: Offset, color: Color, arm: Float) {
+    val c = if (cp.measured) color else color.copy(alpha = 0.55f)
+    drawLine(c, center + Offset(-arm, -arm), center + Offset(arm, arm), strokeWidth = 5f)
+    drawLine(c, center + Offset(-arm, arm), center + Offset(arm, -arm), strokeWidth = 5f)
+    val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG).apply {
+        this.color = c.toArgb()
+        textSize = 30f
+        isFakeBoldText = true
+    }
+    drawContext.canvas.nativeCanvas.drawText(if (cp.measured) cp.id else "${cp.id}?", center.x + arm + 6f, center.y - arm, paint)
 }
 
 private fun DrawScope.drawDottedHalo(center: Offset, size: Float, color: Color) {

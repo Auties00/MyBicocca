@@ -11,6 +11,9 @@ import it.unimib.indoornav.lab.inventory.BeaconInventoryRepository
  * Beacon moves made in the map's edit mode, held until the user saves or discards them. It lives in
  * the app, not the screen, so leaving the map can ask what to do with them instead of losing them.
  */
+/** Staged moves of checkpoints are keyed by this prefix plus the checkpoint id; beacons by their id. */
+const val CHECKPOINT_KEY = "cp:"
+
 class MapEditSession {
     var editing by mutableStateOf(false)
         private set
@@ -28,8 +31,14 @@ class MapEditSession {
         moves[entryId] = x to y
     }
 
-    fun save(repository: BeaconInventoryRepository) {
-        moves.forEach { (id, xy) -> repository.updatePosition(id, xy.first, xy.second) }
+    fun save(repository: BeaconInventoryRepository, checkpoints: CheckpointStore) {
+        moves.forEach { (id, xy) ->
+            if (id.startsWith(CHECKPOINT_KEY)) {
+                checkpoints.move(id.removePrefix(CHECKPOINT_KEY), xy.first, xy.second)
+            } else {
+                repository.updatePosition(id, xy.first, xy.second)
+            }
+        }
         moves.clear()
         editing = false
     }

@@ -1,5 +1,7 @@
 package it.unimib.indoornav.lab.ui.beacons
 
+import it.unimib.indoornav.lab.ui.components.SlotBadge
+import it.unimib.indoornav.lab.inventory.SlotPills
 import it.unimib.indoornav.lab.ui.components.BatteryBadge
 import it.unimib.indoornav.lab.inventory.BeaconBattery
 import androidx.compose.foundation.BorderStroke
@@ -110,9 +112,7 @@ fun BeaconCardList(
                                 .padding(horizontal = 6.dp, vertical = 2.dp),
                         )
                     }
-                    tile.frameTypes.forEach { ft ->
-                        SignalTypeBadge(frameType = ft, compact = false)
-                    }
+                    SlotPills.of(tile).forEach { (slot, state) -> SlotBadge(slot, state) }
                 }
 
                 Text(

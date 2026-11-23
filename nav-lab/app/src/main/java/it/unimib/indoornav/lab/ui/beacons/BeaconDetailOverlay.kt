@@ -1,5 +1,7 @@
 package it.unimib.indoornav.lab.ui.beacons
 
+import it.unimib.indoornav.lab.ui.components.SlotBadge
+import it.unimib.indoornav.lab.inventory.SlotPills
 import androidx.compose.material.icons.filled.Map
 import it.unimib.indoornav.lab.inventory.BeaconPhotos
 import androidx.compose.ui.window.DialogProperties
@@ -321,9 +323,7 @@ fun BeaconDetailOverlay(
                             horizontalArrangement = Arrangement.spacedBy(4.dp),
                             verticalArrangement = Arrangement.spacedBy(4.dp),
                         ) {
-                            tile.frameTypes.forEach { ft ->
-                                SignalTypeBadge(frameType = ft, compact = false)
-                            }
+                            SlotPills.of(tile).forEach { (slot, state) -> SlotBadge(slot, state) }
                         }
 
                         val telemetryText = if (tile.isOnline && tile.currentRssi != null) {

@@ -1,5 +1,6 @@
 package it.unimib.indoornav.lab
 
+import it.unimib.indoornav.lab.ui.map.CheckpointStore
 import it.unimib.indoornav.lab.ui.map.MapCameraStore
 import it.unimib.indoornav.lab.ui.map.MapFocusRequest
 import it.unimib.indoornav.lab.ui.map.MapEditSession
@@ -21,6 +22,7 @@ class LabApp : Application() {
     val mapEditSession = MapEditSession()
     val mapFocus = MapFocusRequest()
     val mapCamera by lazy { MapCameraStore(this) }
+    val checkpointStore by lazy { CheckpointStore(this) { sessionRepository.surveyDir() } }
     lateinit var recordingCoordinator: RecordingCoordinator
         private set
     lateinit var surveyManager: SurveyManager
