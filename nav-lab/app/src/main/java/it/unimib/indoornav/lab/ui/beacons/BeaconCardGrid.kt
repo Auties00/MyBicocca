@@ -14,10 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Bookmark
-import androidx.compose.material.icons.filled.BookmarkBorder
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -47,7 +43,6 @@ fun BeaconCardGrid(
     tile: ResolvedBeaconTile,
     index: Int,
     onClick: () -> Unit,
-    onBookmarkClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val haloShape = if (index % 2 == 0) OrganicShapes.SmoothCookie6 else OrganicShapes.SmoothCookie8
@@ -95,37 +90,24 @@ fun BeaconCardGrid(
                                 if (tile.isOnline) LabStatusColors.Green else MaterialTheme.colorScheme.outline,
                             ),
                     )
-                    Icon(
-                        imageVector = if (tile.isSaved) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
-                        contentDescription = if (tile.isSaved) "Edit saved beacon" else "Save beacon",
-                        tint = if (tile.isSaved) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        },
-                        modifier = Modifier
-                            .size(18.dp)
-                            .clip(CircleShape)
-                            .clickable(onClick = onBookmarkClick),
-                    )
                 }
             }
 
             Box(
-                modifier = Modifier.size(width = 78.dp, height = 92.dp),
+                modifier = Modifier.size(width = 104.dp, height = 116.dp).beaconHero(tile.tileKey),
                 contentAlignment = Alignment.Center,
             ) {
                 OrganicBeaconHalo(
                     online = tile.isOnline,
                     shape = haloShape,
-                    modifier = Modifier.size(74.dp),
+                    modifier = Modifier.size(100.dp),
                 )
                 BeaconModelView(
                     label = tile.displayLabel,
                     subLabel = subLabel,
                     pose = BeaconPose.CARD,
                     online = tile.isOnline,
-                    modifier = Modifier.size(width = 44.dp, height = 88.dp),
+                    modifier = Modifier.size(width = 58.dp, height = 112.dp),
                 )
             }
 
@@ -199,7 +181,6 @@ private fun BeaconCardGridPreview() {
                     ),
                     index = 0,
                     onClick = {},
-                    onBookmarkClick = {},
                     modifier = Modifier.weight(1f),
                 )
                 BeaconCardGrid(
@@ -230,7 +211,6 @@ private fun BeaconCardGridPreview() {
                     ),
                     index = 1,
                     onClick = {},
-                    onBookmarkClick = {},
                     modifier = Modifier.weight(1f),
                 )
             }

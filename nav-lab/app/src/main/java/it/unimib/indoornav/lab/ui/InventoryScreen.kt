@@ -15,10 +15,14 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.FormatListBulleted
@@ -66,6 +70,7 @@ import it.unimib.indoornav.lab.survey.SurveyManager
 import it.unimib.indoornav.lab.survey.SurveyUiState
 import it.unimib.indoornav.lab.ui.beacons.BeaconCardGrid
 import it.unimib.indoornav.lab.ui.beacons.BeaconCardList
+import it.unimib.indoornav.lab.ui.beacons.BeaconDetailHost
 import it.unimib.indoornav.lab.ui.beacons.BeaconDetailOverlay
 import it.unimib.indoornav.lab.ui.beacons.SaveBeaconBottomSheet
 import it.unimib.indoornav.lab.ui.components.SegmentedSwitch
@@ -120,36 +125,51 @@ fun InventoryScreen(
     val sortedTiles = remember(resolvedTiles, sortOption) {
         BeaconGrouping.sortInventoryTiles(resolvedTiles, sortOption)
     }
-    val activeDetailTile = detailTileKey?.let { key ->
-        sortedTiles.firstOrNull { it.tileKey == key }
-    }
+    // Keeps the detail drawable while it animates out after its beacon was removed.
+    val lastKnownTiles = remember { mutableMapOf<String, ResolvedBeaconTile>() }
+    remember(sortedTiles) { sortedTiles.forEach { lastKnownTiles[it.tileKey] = it } }
+    val listState = rememberLazyListState()
+    val gridState = rememberLazyGridState()
 
-    InventoryContent(
-        tiles = sortedTiles,
-        viewMode = viewMode,
-        sortOption = sortOption,
-        isRecording = isRecording,
-        scanPending = surveyState.beaconScanPending,
-        statusMessage = surveyState.statusMessage,
-        onViewModeChange = { viewMode = it },
-        onSortOptionChange = { sortOption = it },
-        onExportCsv = {
-            scope.launch {
-                val file = inventoryRepository.exportCatalogCsv(sessionRepository.surveyDir())
-                Toast.makeText(context, "Exported ${file.name}", Toast.LENGTH_SHORT).show()
+    BeaconDetailHost(
+        detailKey = detailTileKey,
+        onClose = { detailTileKey = null },
+        list = {
+            InventoryContent(
+                tiles = sortedTiles,
+                viewMode = viewMode,
+                sortOption = sortOption,
+                isRecording = isRecording,
+                scanPending = surveyState.beaconScanPending,
+                statusMessage = surveyState.statusMessage,
+                onViewModeChange = { viewMode = it },
+                onSortOptionChange = { sortOption = it },
+                onExportCsv = {
+                    scope.launch {
+                        val file = inventoryRepository.exportCatalogCsv(sessionRepository.surveyDir())
+                        Toast.makeText(context, "Exported ${file.name}", Toast.LENGTH_SHORT).show()
+                    }
+                },
+                onSelectTile = { detailTileKey = it.tileKey },
+                listState = listState,
+                gridState = gridState,
+            )
+        },
+        detail = { key ->
+            val tile = sortedTiles.firstOrNull { it.tileKey == key } ?: lastKnownTiles[key]
+            if (tile != null) {
+                BeaconDetailOverlay(
+                    tile = tile,
+                    onClose = { detailTileKey = null },
+                    onEdit = { editingTile = tile },
+                    onRemove = {
+                        detailTileKey = null
+                        tile.savedEntry?.let { inventoryRepository.remove(it.id) }
+                    },
+                )
             }
         },
-        onSelectTile = { detailTileKey = it.tileKey },
-        onBookmarkTile = { editingTile = it },
     )
-
-    activeDetailTile?.let { tile ->
-        BeaconDetailOverlay(
-            tile = tile,
-            onClose = { detailTileKey = null },
-            onEdit = { editingTile = tile },
-        )
-    }
 
     editingTile?.let { tile ->
         SaveBeaconBottomSheet(
@@ -161,8 +181,8 @@ fun InventoryScreen(
                 editingTile = null
             },
             onRemove = { id ->
+                detailTileKey = null
                 inventoryRepository.remove(id)
-                if (detailTileKey == id) detailTileKey = null
                 editingTile = null
             },
             onDismiss = { editingTile = null },
@@ -182,7 +202,8 @@ private fun InventoryContent(
     onSortOptionChange: (InventorySortOption) -> Unit,
     onExportCsv: () -> Unit,
     onSelectTile: (ResolvedBeaconTile) -> Unit,
-    onBookmarkTile: (ResolvedBeaconTile) -> Unit,
+    listState: LazyListState,
+    gridState: LazyGridState,
 ) {
     var sortMenuExpanded by remember { mutableStateOf(false) }
     val onlineCount = tiles.count { it.isOnline }
@@ -353,7 +374,7 @@ private fun InventoryContent(
                             fontWeight = FontWeight.Bold,
                         )
                         Text(
-                            text = "Open Survey → Beacons, start scanning, and tap the bookmark icon on any heard beacon to save it to your persistent inventory.",
+                            text = "Open Survey → Beacons, start scanning, open a beacon and choose Save to inventory in its ⋮ menu.",
                             fontSize = 13.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center,
@@ -363,6 +384,7 @@ private fun InventoryContent(
             }
         } else if (viewMode == BeaconViewMode.LIST) {
             LazyColumn(
+                state = listState,
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(7.dp),
                 contentPadding = PaddingValues(bottom = 16.dp),
@@ -372,13 +394,13 @@ private fun InventoryContent(
                         tile = tile,
                         index = idx,
                         onClick = { onSelectTile(tile) },
-                        onBookmarkClick = { onBookmarkTile(tile) },
                     )
                 }
             }
         } else {
             LazyVerticalGrid(
                 columns = GridCells.Fixed(3),
+                state = gridState,
                 modifier = Modifier.fillMaxSize(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -389,7 +411,6 @@ private fun InventoryContent(
                         tile = tile,
                         index = idx,
                         onClick = { onSelectTile(tile) },
-                        onBookmarkClick = { onBookmarkTile(tile) },
                     )
                 }
             }
@@ -480,7 +501,8 @@ private fun InventoryContentPreview() {
                 onSortOptionChange = {},
                 onExportCsv = {},
                 onSelectTile = {},
-                onBookmarkTile = {},
+                listState = rememberLazyListState(),
+                gridState = rememberLazyGridState(),
             )
         }
     }

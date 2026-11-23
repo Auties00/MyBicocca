@@ -15,7 +15,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.PlatformTextStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -36,7 +39,7 @@ fun SignalTypeBadge(
             .background(style.containerColor)
             .padding(
                 horizontal = if (compact) 6.dp else 7.dp,
-                vertical = if (compact) 2.dp else 3.dp,
+                vertical = if (compact) 1.dp else 2.dp,
             ),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -53,9 +56,17 @@ fun SignalTypeBadge(
             fontSize = 11.sp,
             fontWeight = FontWeight.Bold,
             maxLines = 1,
+            style = TightLineStyle,
         )
     }
 }
+
+// Without this the text keeps its font padding and the pill ends up much taller than the label.
+private val TightLineStyle = TextStyle(
+    lineHeight = 13.sp,
+    platformStyle = PlatformTextStyle(includeFontPadding = false),
+    lineHeightStyle = LineHeightStyle(LineHeightStyle.Alignment.Center, LineHeightStyle.Trim.Both),
+)
 
 @Preview(showBackground = true)
 @Composable

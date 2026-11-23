@@ -84,8 +84,10 @@ private fun SaveBeaconSheetContent(
     val initialFloor = existing?.floor?.takeIf { it.isNotBlank() } ?: "Floor $defaultFloor"
     val initialBuilding = existing?.building?.takeIf { it.isNotBlank() } ?: defaultBuilding
 
-    var label by remember(tile.tileKey) { mutableStateOf(existing?.label ?: tile.displayLabel) }
-    var code by remember(tile.tileKey) { mutableStateOf(existing?.alphanumericCode ?: "") }
+    // An unsaved tile's display label is its beacon ID (e.g. 01A08C); its last 4 characters are the code.
+    val suggestedCode = tile.displayLabel.filter { it.isLetterOrDigit() }.takeLast(4).uppercase()
+    var label by remember(tile.tileKey) { mutableStateOf(existing?.label ?: "") }
+    var code by remember(tile.tileKey) { mutableStateOf(existing?.alphanumericCode ?: suggestedCode) }
     var building by remember(tile.tileKey) { mutableStateOf(initialBuilding) }
     var floor by remember(tile.tileKey) { mutableStateOf(initialFloor) }
     var position by remember(tile.tileKey) { mutableStateOf(existing?.positionDescription ?: "") }
@@ -97,7 +99,7 @@ private fun SaveBeaconSheetContent(
         action()
     }
 
-    val previewLabel = label.trim().ifBlank { tile.displayLabel }
+    val previewLabel = label.trim().ifBlank { code.trim() }
     val previewSubLabel = listOf(building.trim(), floor.trim()).filter { it.isNotBlank() }.joinToString(" - ")
 
     Column(
@@ -150,7 +152,7 @@ private fun SaveBeaconSheetContent(
                 value = label,
                 onValueChange = { label = it },
                 label = { Text("Label") },
-                placeholder = { Text("B07") },
+                placeholder = { Text("B1") },
                 singleLine = true,
                 modifier = Modifier.weight(1f),
             )
@@ -220,7 +222,7 @@ private fun SaveBeaconSheetContent(
                             ?: existing?.macAddress
                             ?: tile.macAddress,
                         linkedKeys = linked,
-                        label = label.trim().ifBlank { tile.displayLabel },
+                        label = label.trim().ifBlank { code.trim().uppercase() },
                         alphanumericCode = code.trim().uppercase(),
                         building = building.trim().ifBlank { defaultBuilding },
                         floor = floor.trim().ifBlank { initialFloor },

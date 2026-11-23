@@ -16,8 +16,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.FormatListBulleted
 import androidx.compose.material.icons.filled.GridView
@@ -72,6 +74,7 @@ import it.unimib.indoornav.lab.survey.SurveyUiState
 import it.unimib.indoornav.lab.survey.WifiSurveyAp
 import it.unimib.indoornav.lab.ui.beacons.BeaconCardGrid
 import it.unimib.indoornav.lab.ui.beacons.BeaconCardList
+import it.unimib.indoornav.lab.ui.beacons.BeaconDetailHost
 import it.unimib.indoornav.lab.ui.beacons.BeaconDetailOverlay
 import it.unimib.indoornav.lab.ui.beacons.SaveBeaconBottomSheet
 import it.unimib.indoornav.lab.ui.components.SegmentedSwitch
@@ -143,130 +146,141 @@ private fun BeaconInventoryTab(
     val tiles = remember(grouped, savedEntries) {
         BeaconGrouping.resolveSurveyTiles(grouped, savedEntries)
     }
-    val activeDetailTile = detailTileKey?.let { key ->
-        tiles.firstOrNull { it.tileKey == key }
-    }
+    // Keeps the detail drawable while it animates out after its beacon stopped transmitting.
+    val lastKnownTiles = remember { mutableMapOf<String, ResolvedBeaconTile>() }
+    remember(tiles) { tiles.forEach { lastKnownTiles[it.tileKey] = it } }
+    val listState = rememberLazyListState()
+    val gridState = rememberLazyGridState()
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(12.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Button(
-                onClick = {
-                    if (state.beaconScanning) manager.stopBeaconInventory()
-                    else manager.startBeaconInventory()
-                },
-                modifier = Modifier.weight(1f),
-            ) {
-                Icon(
-                    if (state.beaconScanning) Icons.Default.Stop else Icons.Default.PlayArrow,
-                    contentDescription = null,
-                )
-                Spacer(Modifier.width(6.dp))
-                Text(
-                    when {
-                        state.beaconScanning -> "Stop Scan"
-                        state.beaconScanPending -> "Starting..."
-                        else -> "Start Inventory"
-                    },
-                )
-            }
-            OutlinedButton(
-                onClick = { frozenSnapshot = BeaconSnapshot(state.beacons, System.currentTimeMillis()) },
-                enabled = state.beacons.isNotEmpty(),
-            ) {
-                Icon(Icons.Default.Save, contentDescription = null)
-                Spacer(Modifier.width(4.dp))
-                Text("Snapshot")
-            }
-        }
-
-        SegmentedSwitch(
-            options = BeaconViewMode.entries,
-            selected = viewMode,
-            onSelected = { viewMode = it },
-            label = { it.label },
-            leadingIcon = { mode, tint ->
-                Icon(
-                    imageVector = if (mode == BeaconViewMode.LIST) {
-                        Icons.AutoMirrored.Filled.FormatListBulleted
-                    } else {
-                        Icons.Default.GridView
-                    },
-                    contentDescription = null,
-                    tint = tint,
-                    modifier = Modifier.size(18.dp),
-                )
-            },
-        )
-
-        Column {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-            ) {
-                Text("Min RSSI: ${state.minRssiFilter} dBm", style = MaterialTheme.typography.labelLarge)
-                Text(
-                    "Beacons: ${tiles.size} (${state.beacons.size} frames) | Other/s: ${state.otherBlePerSec}",
-                    fontSize = 11.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            Slider(
-                value = state.minRssiFilter.toFloat(),
-                onValueChange = { manager.setMinRssiFilter(it.toInt()) },
-                valueRange = -100f..-30f,
-            )
-        }
-
-        if (viewMode == BeaconViewMode.LIST) {
-            LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.spacedBy(7.dp),
-                contentPadding = PaddingValues(bottom = 16.dp),
-            ) {
-                itemsIndexed(tiles, key = { _, tile -> tile.tileKey }) { idx, tile ->
-                    BeaconCardList(
-                        tile = tile,
-                        index = idx,
-                        onClick = { detailTileKey = tile.tileKey },
-                        onBookmarkClick = { editingTile = tile },
-                    )
-                }
-            }
-        } else {
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(3),
-                modifier = Modifier.fillMaxSize(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+    BeaconDetailHost(
+        detailKey = detailTileKey,
+        onClose = { detailTileKey = null },
+        list = {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(12.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
-                contentPadding = PaddingValues(bottom = 16.dp),
             ) {
-                itemsIndexed(tiles, key = { _, tile -> tile.tileKey }) { idx, tile ->
-                    BeaconCardGrid(
-                        tile = tile,
-                        index = idx,
-                        onClick = { detailTileKey = tile.tileKey },
-                        onBookmarkClick = { editingTile = tile },
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Button(
+                        onClick = {
+                            if (state.beaconScanning) manager.stopBeaconInventory()
+                            else manager.startBeaconInventory()
+                        },
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        Icon(
+                            if (state.beaconScanning) Icons.Default.Stop else Icons.Default.PlayArrow,
+                            contentDescription = null,
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Text(
+                            when {
+                                state.beaconScanning -> "Stop Scan"
+                                state.beaconScanPending -> "Starting..."
+                                else -> "Start Inventory"
+                            },
+                        )
+                    }
+                    OutlinedButton(
+                        onClick = { frozenSnapshot = BeaconSnapshot(state.beacons, System.currentTimeMillis()) },
+                        enabled = state.beacons.isNotEmpty(),
+                    ) {
+                        Icon(Icons.Default.Save, contentDescription = null)
+                        Spacer(Modifier.width(4.dp))
+                        Text("Snapshot")
+                    }
+                }
+
+                SegmentedSwitch(
+                    options = BeaconViewMode.entries,
+                    selected = viewMode,
+                    onSelected = { viewMode = it },
+                    label = { it.label },
+                    leadingIcon = { mode, tint ->
+                        Icon(
+                            imageVector = if (mode == BeaconViewMode.LIST) {
+                                Icons.AutoMirrored.Filled.FormatListBulleted
+                            } else {
+                                Icons.Default.GridView
+                            },
+                            contentDescription = null,
+                            tint = tint,
+                            modifier = Modifier.size(18.dp),
+                        )
+                    },
+                )
+
+                Column {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Text("Min RSSI: ${state.minRssiFilter} dBm", style = MaterialTheme.typography.labelLarge)
+                        Text(
+                            "Beacons: ${tiles.size} (${state.beacons.size} frames) | Other/s: ${state.otherBlePerSec}",
+                            fontSize = 11.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Slider(
+                        value = state.minRssiFilter.toFloat(),
+                        onValueChange = { manager.setMinRssiFilter(it.toInt()) },
+                        valueRange = -100f..-30f,
                     )
                 }
-            }
-        }
-    }
 
-    activeDetailTile?.let { tile ->
-        BeaconDetailOverlay(
-            tile = tile,
-            onClose = { detailTileKey = null },
-            onEdit = { editingTile = tile },
-        )
-    }
+                if (viewMode == BeaconViewMode.LIST) {
+                    LazyColumn(
+                        state = listState,
+                        modifier = Modifier.fillMaxSize(),
+                        verticalArrangement = Arrangement.spacedBy(7.dp),
+                        contentPadding = PaddingValues(bottom = 16.dp),
+                    ) {
+                        itemsIndexed(tiles, key = { _, tile -> tile.tileKey }) { idx, tile ->
+                            BeaconCardList(
+                                tile = tile,
+                                index = idx,
+                                onClick = { detailTileKey = tile.tileKey },
+                            )
+                        }
+                    }
+                } else {
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(3),
+                        state = gridState,
+                        modifier = Modifier.fillMaxSize(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        contentPadding = PaddingValues(bottom = 16.dp),
+                    ) {
+                        itemsIndexed(tiles, key = { _, tile -> tile.tileKey }) { idx, tile ->
+                            BeaconCardGrid(
+                                tile = tile,
+                                index = idx,
+                                onClick = { detailTileKey = tile.tileKey },
+                            )
+                        }
+                    }
+                }
+            }
+        },
+        detail = { key ->
+            val tile = tiles.firstOrNull { it.tileKey == key } ?: lastKnownTiles[key]
+            if (tile != null) {
+                BeaconDetailOverlay(
+                    tile = tile,
+                    onClose = { detailTileKey = null },
+                    onEdit = { editingTile = tile },
+                    onRemove = { tile.savedEntry?.let { inventoryRepository.remove(it.id) } },
+                )
+            }
+        },
+    )
 
     editingTile?.let { tile ->
         SaveBeaconBottomSheet(

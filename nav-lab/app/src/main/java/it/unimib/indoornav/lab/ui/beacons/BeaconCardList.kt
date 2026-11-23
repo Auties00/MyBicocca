@@ -14,11 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Bookmark
-import androidx.compose.material.icons.filled.BookmarkBorder
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -49,7 +44,6 @@ fun BeaconCardList(
     tile: ResolvedBeaconTile,
     index: Int,
     onClick: () -> Unit,
-    onBookmarkClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val haloShape = if (index % 2 == 0) OrganicShapes.SmoothCookie6 else OrganicShapes.SmoothCookie8
@@ -76,20 +70,20 @@ fun BeaconCardList(
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
             Box(
-                modifier = Modifier.size(width = 56.dp, height = 70.dp),
+                modifier = Modifier.size(width = 78.dp, height = 92.dp).beaconHero(tile.tileKey),
                 contentAlignment = Alignment.Center,
             ) {
                 OrganicBeaconHalo(
                     online = tile.isOnline,
                     shape = haloShape,
-                    modifier = Modifier.size(62.dp),
+                    modifier = Modifier.size(84.dp),
                 )
                 BeaconModelView(
                     label = tile.displayLabel,
                     subLabel = subLabel,
                     pose = BeaconPose.CARD,
                     online = tile.isOnline,
-                    modifier = Modifier.size(width = 34.dp, height = 68.dp),
+                    modifier = Modifier.size(width = 46.dp, height = 90.dp),
                 )
             }
 
@@ -185,18 +179,6 @@ fun BeaconCardList(
                     }
                 }
             }
-
-            IconButton(onClick = onBookmarkClick) {
-                Icon(
-                    imageVector = if (tile.isSaved) Icons.Default.Bookmark else Icons.Default.BookmarkBorder,
-                    contentDescription = if (tile.isSaved) "Edit saved beacon" else "Save beacon",
-                    tint = if (tile.isSaved) {
-                        MaterialTheme.colorScheme.primary
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    },
-                )
-            }
         }
     }
 }
@@ -238,7 +220,6 @@ private fun BeaconCardListPreview() {
                     ),
                     index = 0,
                     onClick = {},
-                    onBookmarkClick = {},
                 )
                 BeaconCardList(
                     tile = ResolvedBeaconTile(
@@ -268,7 +249,6 @@ private fun BeaconCardListPreview() {
                     ),
                     index = 1,
                     onClick = {},
-                    onBookmarkClick = {},
                 )
             }
         }

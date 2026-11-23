@@ -4,12 +4,14 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.widget.Toast
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -27,8 +29,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -38,6 +42,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -45,6 +50,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -71,6 +77,7 @@ import it.unimib.indoornav.lab.ui.theme.SignalBadgeTokens
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlinx.coroutines.launch
 
 private enum class DetailTab(val title: String, val dotColor: Color?) {
     GENERAL("General", null),
@@ -85,12 +92,13 @@ fun BeaconDetailOverlay(
     tile: ResolvedBeaconTile,
     onClose: () -> Unit,
     onEdit: () -> Unit,
+    onRemove: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    BackHandler(onBack = onClose)
-
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     var menuOpen by remember { mutableStateOf(false) }
+    var confirmRemove by remember { mutableStateOf(false) }
 
     val uidCanonical = remember(tile) { findCanonical(tile, "ed:", BeaconFrameType.ED_UID) }
     val ibeaconCanonical = remember(tile) { findCanonical(tile, "ib:", BeaconFrameType.IBEACON) }
@@ -109,12 +117,8 @@ fun BeaconDetailOverlay(
         }
     }
 
-    var selectedTab by remember(tile.tileKey) { mutableStateOf(DetailTab.GENERAL) }
-    LaunchedEffect(visibleTabs) {
-        if (selectedTab !in visibleTabs) {
-            selectedTab = DetailTab.GENERAL
-        }
-    }
+    val pagerState = rememberPagerState(pageCount = { visibleTabs.size })
+    val selectedTab = visibleTabs.getOrElse(pagerState.currentPage) { DetailTab.GENERAL }
 
     val tabScrollState = rememberScrollState()
     val subLabel = listOf(tile.building, tile.floor).filter { it.isNotBlank() }.joinToString(" - ")
@@ -126,6 +130,8 @@ fun BeaconDetailOverlay(
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             TopAppBar(
+                // The screen around it already sits below the status bar.
+                windowInsets = WindowInsets(0, 0, 0, 0),
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.surfaceContainer,
                     titleContentColor = MaterialTheme.colorScheme.onSurface,
@@ -154,7 +160,7 @@ fun BeaconDetailOverlay(
                             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                         ) {
                             DropdownMenuItem(
-                                text = { Text("Edit") },
+                                text = { Text(if (tile.isSaved) "Edit" else "Save to inventory") },
                                 leadingIcon = {
                                     Icon(
                                         Icons.Default.Edit,
@@ -178,6 +184,22 @@ fun BeaconDetailOverlay(
                                     copyMacToClipboard(context, tile.macAddress)
                                 },
                             )
+                            if (tile.isSaved) {
+                                DropdownMenuItem(
+                                    text = { Text("Remove beacon", color = MaterialTheme.colorScheme.error) },
+                                    leadingIcon = {
+                                        Icon(
+                                            Icons.Default.Delete,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.error,
+                                        )
+                                    },
+                                    onClick = {
+                                        menuOpen = false
+                                        confirmRemove = true
+                                    },
+                                )
+                            }
                         }
                     }
                 },
@@ -191,7 +213,7 @@ fun BeaconDetailOverlay(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(250.dp)
+                        .height(380.dp)
                         .background(
                             Brush.verticalGradient(
                                 listOf(
@@ -204,20 +226,22 @@ fun BeaconDetailOverlay(
                     Box(
                         modifier = Modifier
                             .align(Alignment.Center)
-                            .padding(bottom = 16.dp),
+                            .padding(bottom = 16.dp)
+                            .size(320.dp)
+                            .beaconHero(tile.tileKey),
                         contentAlignment = Alignment.Center,
                     ) {
                         OrganicBeaconHalo(
                             online = tile.isOnline,
                             shape = OrganicShapes.SmoothCookie12,
-                            modifier = Modifier.size(190.dp),
+                            modifier = Modifier.fillMaxSize(),
                         )
                         BeaconModelView(
                             label = tile.displayLabel,
                             subLabel = subLabel,
                             pose = BeaconPose.DETAIL,
                             online = tile.isOnline,
-                            modifier = Modifier.size(width = 96.dp, height = 176.dp),
+                            modifier = Modifier.fillMaxSize(),
                         )
                     }
 
@@ -279,7 +303,7 @@ fun BeaconDetailOverlay(
                         .padding(horizontal = 12.dp, vertical = 6.dp),
                     horizontalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
-                    visibleTabs.forEach { tab ->
+                    visibleTabs.forEachIndexed { index, tab ->
                         val active = selectedTab == tab
                         Surface(
                             shape = RoundedCornerShape(12.dp),
@@ -290,7 +314,7 @@ fun BeaconDetailOverlay(
                             },
                             modifier = Modifier
                                 .clip(RoundedCornerShape(12.dp))
-                                .clickable { selectedTab = tab },
+                                .clickable { scope.launch { pagerState.animateScrollToPage(index) } },
                         ) {
                             Row(
                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
@@ -322,21 +346,42 @@ fun BeaconDetailOverlay(
 
                 HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp),
-                ) {
-                    when (selectedTab) {
-                        DetailTab.GENERAL -> GeneralTabContent(tile)
-                        DetailTab.ED_UID -> EddystoneUidTabContent(tile, uidCanonical)
-                        DetailTab.IBEACON -> IBeaconTabContent(tile, ibeaconCanonical)
-                        DetailTab.TELEMETRY -> TelemetryTabContent(tile)
+                HorizontalPager(
+                    state = pagerState,
+                    verticalAlignment = Alignment.Top,
+                    modifier = Modifier.fillMaxWidth(),
+                ) { page ->
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        when (visibleTabs.getOrElse(page) { DetailTab.GENERAL }) {
+                            DetailTab.GENERAL -> GeneralTabContent(tile)
+                            DetailTab.ED_UID -> EddystoneUidTabContent(tile, uidCanonical)
+                            DetailTab.IBEACON -> IBeaconTabContent(tile, ibeaconCanonical)
+                            DetailTab.TELEMETRY -> TelemetryTabContent(tile)
+                        }
                     }
                 }
             }
         }
+    }
+
+    if (confirmRemove) {
+        AlertDialog(
+            onDismissRequest = { confirmRemove = false },
+            title = { Text("Remove this beacon?") },
+            text = { Text("${tile.displayLabel} is removed from the inventory. It still shows in Survey while it transmits.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmRemove = false
+                    onRemove()
+                }) { Text("Remove", color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = { TextButton(onClick = { confirmRemove = false }) { Text("Cancel") } },
+        )
     }
 }
 
@@ -663,6 +708,7 @@ private fun BeaconDetailOverlayPreview() {
             ),
             onClose = {},
             onEdit = {},
+            onRemove = {},
         )
     }
 }
