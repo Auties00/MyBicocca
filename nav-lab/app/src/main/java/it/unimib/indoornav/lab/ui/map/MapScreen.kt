@@ -92,6 +92,11 @@ private const val MAX_PX_PER_M = 400f
 // Drag distance that multiplies the zoom by e (about 2.7x) during the one-handed zoom.
 private const val QUICK_ZOOM_PX_PER_E = 750f
 
+// How short the first tap must be, and how soon the second must follow it, for the one-handed zoom.
+// Tighter than Android's double tap (400 and 300 ms), so a tap followed by a pan stays a pan.
+private const val QUICK_ZOOM_TAP_MS = 200L
+private const val QUICK_ZOOM_GAP_MS = 200L
+
 /**
  * Where the plan sits on screen. In a portrait view the plan is turned a quarter clockwise, so the
  * building's long axis (x) runs down the screen and a 106 x 13 m floor fills the phone; y then runs left
@@ -426,11 +431,11 @@ private fun MapContent(
                         val first = awaitFirstDown(requireUnconsumed = false)
                         // Not waitForUpOrCancellation: the tap detector below consumes the up, which that
                         // function would take as a cancellation.
-                        withTimeoutOrNull(viewConfiguration.longPressTimeoutMillis) {
+                        withTimeoutOrNull(QUICK_ZOOM_TAP_MS) {
                             while (awaitPointerEvent().changes.any { it.pressed }) Unit
                             true
                         } ?: return@awaitEachGesture
-                        val second = withTimeoutOrNull(viewConfiguration.doubleTapTimeoutMillis) {
+                        val second = withTimeoutOrNull(QUICK_ZOOM_GAP_MS) {
                             awaitFirstDown(requireUnconsumed = false)
                         } ?: return@awaitEachGesture
                         if ((second.position - first.position).getDistance() > viewConfiguration.touchSlop * 4) {
