@@ -1,8 +1,6 @@
 package it.unimib.indoornav.lab.ui.model
 
-import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.SurfaceTexture
 import android.opengl.EGL14
 import android.opengl.EGLConfig
 import android.opengl.EGLContext
@@ -14,13 +12,11 @@ import android.opengl.GLUtils
 import android.os.Handler
 import android.os.HandlerThread
 import android.util.Log
-import android.view.TextureView
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.FloatBuffer
 import java.nio.ShortBuffer
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.max
 import kotlin.math.min
@@ -425,19 +421,6 @@ private class EglHelper {
         return if (ok && numConfigs[0] > 0) configs[0] else null
     }
 
-    fun createWindowSurface(surfaceTexture: SurfaceTexture): EGLSurface {
-        val cfg = config ?: error("EGL not initialized")
-        val surf = EGL14.eglCreateWindowSurface(
-            display,
-            cfg,
-            surfaceTexture,
-            intArrayOf(EGL14.EGL_NONE),
-            0,
-        )
-        check(surf != EGL14.EGL_NO_SURFACE) { "eglCreateWindowSurface failed" }
-        return surf
-    }
-
     fun createPbufferSurface(width: Int, height: Int): EGLSurface {
         val cfg = config ?: error("EGL not initialized")
         val surf = EGL14.eglCreatePbufferSurface(
@@ -479,125 +462,6 @@ private class EglHelper {
         display = EGL14.EGL_NO_DISPLAY
         context = EGL14.EGL_NO_CONTEXT
         config = null
-    }
-}
-
-class GlBeaconTextureView(
-    context: Context,
-    private val mesh: VikingMesh,
-) : TextureView(context), TextureView.SurfaceTextureListener {
-
-    private data class RenderRequest(
-        val label: String,
-        val subLabel: String,
-        val pose: PoseAngles,
-        val zoom: Float,
-        val width: Int,
-        val height: Int,
-    )
-
-    private var thread: HandlerThread? = null
-    private var handler: Handler? = null
-    private val egl = EglHelper()
-    private var eglSurface: EGLSurface = EGL14.EGL_NO_SURFACE
-    private var scene: GlSceneResources? = null
-    private val renderScheduled = AtomicBoolean(false)
-    private val latestRequest = AtomicReference(
-        RenderRequest("B07", "U14 - Floor 1", BeaconRenderSpec.DETAIL_POSE, 1f, 1, 1),
-    )
-    private var onFrameTimeNs: ((Long) -> Unit)? = null
-    private var surfaceWidth = 0
-    private var surfaceHeight = 0
-
-    init {
-        isOpaque = false
-        surfaceTextureListener = this
-    }
-
-    fun updateScene(
-        label: String,
-        subLabel: String,
-        pose: PoseAngles,
-        zoom: Float = 1f,
-        onFrameTimeNs: ((Long) -> Unit)? = null,
-    ) {
-        this.onFrameTimeNs = onFrameTimeNs
-        val w = surfaceWidth.coerceAtLeast(width).coerceAtLeast(1)
-        val h = surfaceHeight.coerceAtLeast(height).coerceAtLeast(1)
-        latestRequest.set(RenderRequest(label, subLabel, pose, zoom, w, h))
-        scheduleDraw()
-    }
-
-    override fun onSurfaceTextureAvailable(surface: SurfaceTexture, width: Int, height: Int) {
-        surfaceWidth = width
-        surfaceHeight = height
-        val ht = HandlerThread("LabGlBeaconThread").apply { start() }
-        thread = ht
-        handler = Handler(ht.looper)
-        handler?.post {
-            try {
-                egl.init(EGL14.EGL_WINDOW_BIT, preferMsaa = true)
-                eglSurface = egl.createWindowSurface(surface)
-                egl.makeCurrent(eglSurface)
-                scene = GlSceneResources(mesh).also { it.init() }
-                latestRequest.updateAndGet { it.copy(width = width, height = height) }
-                drawFrameInternal()
-            } catch (t: Throwable) {
-                Log.e(TAG, "Failed to initialize GL TextureView", t)
-            }
-        }
-    }
-
-    override fun onSurfaceTextureSizeChanged(surface: SurfaceTexture, width: Int, height: Int) {
-        surfaceWidth = width
-        surfaceHeight = height
-        latestRequest.updateAndGet { it.copy(width = width, height = height) }
-        scheduleDraw()
-    }
-
-    override fun onSurfaceTextureUpdated(surface: SurfaceTexture) = Unit
-
-    override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean {
-        val h = handler ?: return true
-        val latch = CountDownLatch(1)
-        h.post {
-            scene?.release()
-            scene = null
-            egl.destroySurface(eglSurface)
-            eglSurface = EGL14.EGL_NO_SURFACE
-            egl.release()
-            latch.countDown()
-        }
-        runCatching { latch.await() }
-        thread?.quitSafely()
-        thread = null
-        handler = null
-        return true
-    }
-
-    private fun scheduleDraw() {
-        val h = handler ?: return
-        if (renderScheduled.compareAndSet(false, true)) {
-            h.post {
-                renderScheduled.set(false)
-                drawFrameInternal()
-            }
-        }
-    }
-
-    private fun drawFrameInternal() {
-        val s = scene ?: return
-        if (eglSurface == EGL14.EGL_NO_SURFACE) return
-        val req = latestRequest.get()
-        if (req.width <= 0 || req.height <= 0) return
-
-        val startNs = System.nanoTime()
-        s.draw(req.width, req.height, req.pose, req.label, req.subLabel, req.zoom)
-        // Wait for GPU completion so timing reflects full GL rendering work.
-        GLES30.glFinish()
-        val elapsedNs = System.nanoTime() - startNs
-        egl.swapBuffers(eglSurface)
-        onFrameTimeNs?.invoke(elapsedNs)
     }
 }
 
@@ -674,57 +538,6 @@ object GlBeaconOffscreenRenderer {
 
                     val bitmap = rgbaBufferToTopDownBitmap(pixelBuf, w, h)
                     GlRenderResult(bitmap = bitmap, renderTimeNs = renderNs)
-                },
-            )
-            latch.countDown()
-        }
-        latch.await()
-        return resultRef.get().getOrThrow()
-    }
-
-    fun benchmarkFrames(
-        mesh: VikingMesh,
-        frameCount: Int,
-        widthPx: Int,
-        heightPx: Int,
-        label: String = "B07",
-        subLabel: String = "U14 - Floor 1",
-        onProgress: (Int) -> Unit = {},
-    ): LongArray {
-        val w = widthPx.coerceAtLeast(1)
-        val h = heightPx.coerceAtLeast(1)
-        val worker = ensureWorker()
-        val resultRef = AtomicReference<Result<LongArray>>()
-        val latch = CountDownLatch(1)
-
-        worker.post {
-            resultRef.set(
-                runCatching {
-                    ensureContextAndFbo(mesh, w, h)
-                    val s = scene!!
-                    val times = LongArray(frameCount)
-                    for (i in 0 until frameCount) {
-                        val yaw = -12f + (i * 360f / max(1, frameCount))
-                        val pose = PoseAngles(-58f, yaw, 56f)
-                        val startNs = System.nanoTime()
-                        GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, msaaFbo)
-                        s.draw(w, h, pose, label, subLabel, 1f)
-                        GLES30.glBindFramebuffer(GLES30.GL_READ_FRAMEBUFFER, msaaFbo)
-                        GLES30.glBindFramebuffer(GLES30.GL_DRAW_FRAMEBUFFER, resolveFbo)
-                        GLES30.glBlitFramebuffer(
-                            0, 0, w, h,
-                            0, 0, w, h,
-                            GLES30.GL_COLOR_BUFFER_BIT,
-                            GLES30.GL_NEAREST,
-                        )
-                        GLES30.glFinish()
-                        times[i] = System.nanoTime() - startNs
-                        GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0)
-                        if (i % 15 == 14 || i == frameCount - 1) {
-                            onProgress(i + 1)
-                        }
-                    }
-                    times
                 },
             )
             latch.countDown()

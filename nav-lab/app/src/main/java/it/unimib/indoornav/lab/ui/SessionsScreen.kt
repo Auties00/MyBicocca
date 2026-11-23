@@ -18,13 +18,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Share
-import androidx.compose.material.icons.filled.Speed
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -51,18 +47,13 @@ import androidx.core.content.FileProvider
 import it.unimib.indoornav.lab.data.SessionItem
 import it.unimib.indoornav.lab.data.SessionRepository
 import it.unimib.indoornav.lab.format.QuickLookStatus
-import it.unimib.indoornav.lab.ui.model.ModelRenderer
 import it.unimib.indoornav.lab.ui.theme.LabStatusColors
 import kotlinx.coroutines.launch
 import java.io.File
 import java.util.Locale
 
 @Composable
-fun SessionsScreen(
-    repository: SessionRepository,
-    currentRenderer: ModelRenderer = ModelRenderer.GL,
-    onOpenRendererBenchmark: () -> Unit = {},
-) {
+fun SessionsScreen(repository: SessionRepository) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
@@ -70,7 +61,6 @@ fun SessionsScreen(
     var surveyFiles by remember { mutableStateOf<List<File>>(emptyList()) }
     var pendingDeleteSession by remember { mutableStateOf<SessionItem?>(null) }
     var pendingDeleteSurvey by remember { mutableStateOf<File?>(null) }
-    var overflowOpen by remember { mutableStateOf(false) }
 
     fun reload() {
         scope.launch {
@@ -94,39 +84,11 @@ fun SessionsScreen(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                "Recorded Sessions (${sessions.size})",
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.weight(1f),
-            )
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                OutlinedButton(onClick = { reload() }) {
-                    Icon(Icons.Default.Refresh, contentDescription = null)
-                    Spacer(Modifier.width(4.dp))
-                    Text("Refresh")
-                }
-                Box {
-                    IconButton(onClick = { overflowOpen = true }) {
-                        Icon(Icons.Default.MoreVert, contentDescription = "More options")
-                    }
-                    DropdownMenu(
-                        expanded = overflowOpen,
-                        onDismissRequest = { overflowOpen = false },
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text("Renderer (${currentRenderer.label})") },
-                            leadingIcon = {
-                                Icon(Icons.Default.Speed, contentDescription = null)
-                            },
-                            onClick = {
-                                overflowOpen = false
-                                onOpenRendererBenchmark()
-                            },
-                        )
-                    }
-                }
+            Text("Recorded Sessions (${sessions.size})", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+            OutlinedButton(onClick = { reload() }) {
+                Icon(Icons.Default.Refresh, contentDescription = null)
+                Spacer(Modifier.width(4.dp))
+                Text("Refresh")
             }
         }
 

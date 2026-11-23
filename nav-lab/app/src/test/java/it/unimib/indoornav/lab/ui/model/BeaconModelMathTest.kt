@@ -31,7 +31,7 @@ class BeaconModelMathTest {
     }
 
     @Test
-    fun `cpu projection and gl viewProj matrix produce matching screen coordinates`() {
+    fun `projected points and the gl viewProj matrix produce matching screen coordinates`() {
         val width = 288f
         val height = 528f
         val pose = BeaconRenderSpec.DETAIL_POSE
@@ -76,16 +76,5 @@ class BeaconModelMathTest {
         assertTrue(areaFor(BeaconRenderSpec.CARD_POSE) > 0f)
         assertTrue(areaFor(BeaconRenderSpec.DETAIL_POSE) > 0f)
         assertTrue(areaFor(PoseAngles(0f, 180f, 0f)) < 0f)
-    }
-
-    @Test
-    fun `benchmark stats calculator summarizes median p95 and max accurately`() {
-        val samplesMs = (1..100).map { it * 1_000_000L }
-        val stats = BenchmarkStatsCalculator.summarizeNs(samplesMs, firstCardMs = 4.25)
-        assertEquals(50.5, stats.medianMs!!, 0.001)
-        assertEquals(95.0, stats.p95Ms!!, 0.001)
-        assertEquals(100.0, stats.maxMs!!, 0.001)
-        assertEquals(4.25, stats.firstCardMs!!, 0.001)
-        assertEquals(100, stats.sampleCount)
     }
 }
