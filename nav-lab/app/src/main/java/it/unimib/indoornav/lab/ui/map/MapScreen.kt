@@ -92,6 +92,9 @@ private const val MAX_PX_PER_M = 400f
 // Drag distance that multiplies the zoom by e (about 2.7x) during the one-handed zoom.
 private const val QUICK_ZOOM_PX_PER_E = 750f
 
+// How much closer than the fitted view "Show on map" zooms in on a beacon.
+private const val FOCUS_ZOOM = 2.5f
+
 // How short the first tap must be, and how soon the second must follow it, for the one-handed zoom.
 // Tighter than Android's double tap (400 and 300 ms), so a tap followed by a pan stays a pan.
 private const val QUICK_ZOOM_TAP_MS = 200L
@@ -143,6 +146,14 @@ private data class PlanView(val rotated: Boolean, val pxPerM: Float, val origin:
             }
         }
 
+        /** Centred on the plan point ([x], [y]), [zoom] times closer than the fitted view. */
+        fun centredOn(plan: FloorPlan, viewport: IntSize, x: Float, y: Float, zoom: Float): PlanView {
+            val fit = fitting(plan, viewport)
+            val scaled = fit.copy(pxPerM = (fit.pxPerM * zoom).coerceIn(MIN_PX_PER_M, MAX_PX_PER_M), origin = Offset.Zero)
+            val atZero = scaled.toScreen(plan, x, y)
+            return scaled.copy(origin = Offset(viewport.width / 2f, viewport.height / 2f) - atZero)
+        }
+
         fun fitting(plan: FloorPlan, viewport: IntSize): PlanView {
             val rotated = viewport.height > viewport.width
             val margin = 24f
@@ -170,6 +181,7 @@ fun MapScreen(
     inventoryRepository: BeaconInventoryRepository,
     editSession: MapEditSession,
     onRequestLeaveEdit: () -> Unit,
+    focus: MapFocusRequest,
 ) {
     val context = LocalContext.current
     val savedEntries by inventoryRepository.entries.collectAsState()
@@ -201,6 +213,14 @@ fun MapScreen(
     // Kept outside the detail host, which drops the map while a beacon's detail is open. Not reset on a
     // floor change: all floors share one frame, so the same view shows the same spot one floor up or down.
     var view by remember(building) { mutableStateOf<PlanView?>(null) }
+
+    // Asked to show a beacon: close any detail, go to its floor; MapContent centres on it once laid out.
+    val focusTile = focus.beaconId?.let { id -> tiles.firstOrNull { it.savedEntry?.id == id } }
+    LaunchedEffect(focusTile?.tileKey) {
+        val tile = focusTile ?: return@LaunchedEffect
+        detailKey = null
+        planFloorOf(tile.floor).takeIf { it in floors }?.let { floor = it }
+    }
     val lastKnownTiles = remember { mutableMapOf<String, ResolvedBeaconTile>() }
     remember(tiles) { tiles.forEach { lastKnownTiles[it.tileKey] = it } }
 
@@ -234,6 +254,10 @@ fun MapScreen(
                 onPlacingKeyChange = { placingKey = it },
                 onOpen = { detailKey = it.tileKey },
                 onMove = { tile, x, y -> tile.savedEntry?.let { editSession.move(it.id, x, y) } },
+                focusTarget = focusTile?.savedEntry?.let { e ->
+                    if (e.x != null && e.y != null && planFloorOf(focusTile.floor) == floor) Offset(e.x.toFloat(), e.y.toFloat()) else null
+                },
+                onFocusDone = { focus.beaconId = null },
             )
         },
         detail = { key ->
@@ -243,6 +267,7 @@ fun MapScreen(
                     tile = tile,
                     onClose = { detailKey = null },
                     onEdit = { editingTile = tile },
+                    onShowOnMap = tile.savedEntry?.let { entry -> { focus.beaconId = entry.id } },
                     onRemove = {
                         detailKey = null
                         tile.savedEntry?.let { inventoryRepository.remove(it.id) }
@@ -292,6 +317,8 @@ private fun MapContent(
     onPlacingKeyChange: (String?) -> Unit,
     onOpen: (ResolvedBeaconTile) -> Unit,
     onMove: (ResolvedBeaconTile, Double, Double) -> Unit,
+    focusTarget: Offset?,
+    onFocusDone: () -> Unit,
 ) {
     val density = LocalDensity.current
     val markerPx = with(density) { MARKER_SIZE.toPx() }
@@ -316,6 +343,14 @@ private fun MapContent(
     val latestPlacing by rememberUpdatedState(placingKey)
     val latestPlaced by rememberUpdatedState(placed)
     val latestPositionOf by rememberUpdatedState(::positionOf)
+
+    LaunchedEffect(focusTarget, plan, viewport) {
+        val target = focusTarget ?: return@LaunchedEffect
+        val p = plan ?: return@LaunchedEffect
+        if (viewport == IntSize.Zero) return@LaunchedEffect
+        onViewChange(PlanView.centredOn(p, viewport, target.x, target.y, zoom = FOCUS_ZOOM))
+        onFocusDone()
+    }
 
     val colors = MaterialTheme.colorScheme
     Column(modifier = Modifier.fillMaxSize()) {

@@ -1,5 +1,6 @@
 package it.unimib.indoornav.lab.ui.beacons
 
+import androidx.compose.material.icons.filled.Map
 import it.unimib.indoornav.lab.inventory.BeaconPhotos
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.Dialog
@@ -122,6 +123,7 @@ fun BeaconDetailOverlay(
     onEdit: () -> Unit,
     onRemove: () -> Unit,
     modifier: Modifier = Modifier,
+    onShowOnMap: (() -> Unit)? = null,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -212,6 +214,11 @@ fun BeaconDetailOverlay(
                     }
                 },
                 actions = {
+                    if (onShowOnMap != null && tile.savedEntry?.x != null && tile.savedEntry.y != null) {
+                        IconButton(onClick = onShowOnMap) {
+                            Icon(Icons.Default.Map, contentDescription = "Show on map")
+                        }
+                    }
                     Box {
                         IconButton(onClick = { menuOpen = true }) {
                             Icon(Icons.Default.MoreVert, contentDescription = "More options")

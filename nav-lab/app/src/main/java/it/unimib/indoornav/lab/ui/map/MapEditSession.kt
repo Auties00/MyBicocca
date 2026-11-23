@@ -38,3 +38,8 @@ class MapEditSession {
         editing = false
     }
 }
+
+/** A beacon another screen asked the map to show: the map switches floor, centres and zooms on it. */
+class MapFocusRequest {
+    var beaconId by mutableStateOf<String?>(null)
+}

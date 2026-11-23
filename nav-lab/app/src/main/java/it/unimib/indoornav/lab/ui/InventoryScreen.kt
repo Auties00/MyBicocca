@@ -101,6 +101,7 @@ fun InventoryScreen(
     surveyManager: SurveyManager,
     inventoryRepository: BeaconInventoryRepository,
     sessionRepository: SessionRepository,
+    onShowOnMap: (String) -> Unit = {},
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -225,6 +226,7 @@ fun InventoryScreen(
                     tile = tile,
                     onClose = { detailTileKey = null },
                     onEdit = { editingTile = tile },
+                    onShowOnMap = tile.savedEntry?.let { entry -> { onShowOnMap(entry.id) } },
                     onRemove = {
                         detailTileKey = null
                         tile.savedEntry?.let { inventoryRepository.remove(it.id) }
