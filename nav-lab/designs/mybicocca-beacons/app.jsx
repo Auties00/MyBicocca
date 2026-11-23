@@ -55,9 +55,56 @@ function getOrganicCardMeta(idx, viewMode, palette) {
   return {
     lobes: even ? 6 : 8,
     dip: viewMode === 'grid' ? (even ? 0.18 : 0.14) : 0.18,
-    size: viewMode === 'grid' ? 108 : 76,
+    size: viewMode === 'grid' ? 74 : 62,
     rotation: idx * (viewMode === 'grid' ? 0.4 : 0.35),
-    color: even ? palette.primaryContainer : palette.secondaryContainer,
+    color: palette.primaryContainer,
+  };
+}
+
+function getSignalBadgeStyle(frameType) {
+  const t = (frameType || '').toLowerCase();
+  if (t.includes('uid')) {
+    return {
+      shortLabel: 'UID',
+      fullLabel: 'ED-UID',
+      bg: '#123C25',
+      fg: '#79E8AA',
+      dot: '#4ADE80',
+    };
+  }
+  if (t.includes('url')) {
+    return {
+      shortLabel: 'URL',
+      fullLabel: 'ED-URL',
+      bg: '#143840',
+      fg: '#7CE8FF',
+      dot: '#22D3EE',
+    };
+  }
+  if (t.includes('tlm')) {
+    return {
+      shortLabel: 'TLM',
+      fullLabel: 'ED-TLM',
+      bg: '#4E1F06',
+      fg: '#FFB58A',
+      dot: '#FB923C',
+    };
+  }
+  if (t.includes('alt')) {
+    return {
+      shortLabel: 'Alt',
+      fullLabel: 'AltBeacon',
+      bg: '#341B59',
+      fg: '#D2B8FF',
+      dot: '#C084FC',
+    };
+  }
+  return {
+    shortLabel: 'iB',
+    fullLabel: 'iBeacon',
+    bg: '#103457',
+    fg: '#8DC8FF',
+    dot: '#60A5FA',
   };
 }
 
@@ -198,6 +245,21 @@ function IconSvg({ name, size = 20, color = 'currentColor', filled = false }) {
           <circle cx="11" cy="18" r="2.2" fill="currentColor" stroke="none" />
         </svg>
       );
+    case 'more-vert':
+      return (
+        <svg style={s} viewBox="0 0 24 24" fill={color}>
+          <circle cx="12" cy="5.5" r="1.75" />
+          <circle cx="12" cy="12" r="1.75" />
+          <circle cx="12" cy="18.5" r="1.75" />
+        </svg>
+      );
+    case 'edit':
+      return (
+        <svg style={s} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 20h9" />
+          <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+        </svg>
+      );
     default:
       return null;
   }
@@ -294,12 +356,15 @@ function MorphingOrganicHalo({
  */
 function BeaconCanvas({
   label,
+  subLabel = 'U14 - Floor 1',
   labelStyle,
   pitch = 0,
   yaw = 0,
   roll = 0,
   width = 64,
   height = 96,
+  fixedBufferW = null,
+  fixedBufferH = null,
   palette,
   dark,
   hidden = false,
@@ -319,18 +384,22 @@ function BeaconCanvas({
     if (!localRef.current || !window.Beacon3D) return;
     window.Beacon3D.renderBeaconCanvas(localRef.current, {
       label,
+      subLabel,
       labelStyle,
       pitch,
       yaw,
       roll,
       width,
       height,
+      fixedBufferW,
+      fixedBufferH,
+      isHeroFlight: Boolean(fixedBufferW && fixedBufferH),
       themePalette: palette,
       dark,
       holeColor,
       shadow,
     });
-  }, [label, labelStyle, pitch, yaw, roll, width, height, palette, dark, holeColor, shadow]);
+  }, [label, subLabel, labelStyle, pitch, yaw, roll, width, height, fixedBufferW, fixedBufferH, palette, dark, holeColor, shadow]);
 
   return (
     <canvas
@@ -361,14 +430,18 @@ function MyBicoccaTopBar({
   onBack,
   subPageTitle,
   palette,
-  isFav,
-  onToggleFav,
+  onEditBeacon,
   liveScanning,
   onToggleLiveScan,
 }) {
+  const [menuOpen, setMenuOpen] = useState(false);
   const p = clamp01(Math.max(navProgress, searchOpen ? 1 : 0));
   const isSubPage = navProgress > 0.05;
   const isSearchMode = searchOpen && !isSubPage;
+
+  useEffect(() => {
+    if (!isSubPage && menuOpen) setMenuOpen(false);
+  }, [isSubPage, menuOpen]);
 
   const hMargin = lerp(16, 0, p);
   const topGap = lerp(12, 0, p);
@@ -571,23 +644,119 @@ function MyBicoccaTopBar({
             </button>
           )}
           {isSubPage && (
-            <button
-              type="button"
-              className="m3-icon-btn"
-              aria-label="Favorite beacon"
-              onClick={onToggleFav}
-              style={{
-                opacity: expandedAlpha,
-                color: isFav ? palette.primary : palette.onSurfaceVariant,
-              }}
-            >
-              <IconSvg
-                name="star"
-                size={20}
-                color={isFav ? palette.primary : palette.onSurfaceVariant}
-                filled={isFav}
-              />
-            </button>
+            <div style={{ position: 'relative' }}>
+              <button
+                id="btnDetailMoreMenu"
+                type="button"
+                className="m3-icon-btn"
+                aria-label="More options"
+                onClick={() => setMenuOpen((o) => !o)}
+                style={{
+                  opacity: expandedAlpha,
+                  color: palette.onSurfaceVariant,
+                }}
+              >
+                <IconSvg
+                  name="more-vert"
+                  size={20}
+                  color={palette.onSurfaceVariant}
+                />
+              </button>
+
+              {menuOpen && (
+                <>
+                  <div
+                    style={{ position: 'fixed', inset: 0, zIndex: 49 }}
+                    onClick={() => setMenuOpen(false)}
+                  />
+                  <div
+                    id="detailMoreDropdown"
+                    style={{
+                      position: 'absolute',
+                      top: 44,
+                      right: 2,
+                      minWidth: 184,
+                      backgroundColor: palette.surfaceContainerHigh,
+                      border: `1px solid ${palette.outlineVariant}`,
+                      borderRadius: 16,
+                      padding: '6px 0',
+                      boxShadow: '0 12px 32px rgba(0,0,0,0.6)',
+                      zIndex: 55,
+                      display: 'flex',
+                      flexDirection: 'column',
+                    }}
+                  >
+                    <button
+                      id="menuItemEditBeacon"
+                      type="button"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        if (onEditBeacon) onEditBeacon();
+                      }}
+                      style={{
+                        border: 'none',
+                        background: 'transparent',
+                        padding: '10px 14px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 10,
+                        fontSize: 13.5,
+                        fontWeight: 700,
+                        color: palette.onSurface,
+                        fontFamily: 'inherit',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                      }}
+                    >
+                      <IconSvg name="edit" size={16} color={palette.primary} />
+                      <span>Edit</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMenuOpen(false)}
+                      style={{
+                        border: 'none',
+                        background: 'transparent',
+                        padding: '10px 14px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 10,
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: palette.onSurfaceVariant,
+                        fontFamily: 'inherit',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                      }}
+                    >
+                      <IconSvg name="chip" size={16} color={palette.onSurfaceVariant} />
+                      <span>Copy MAC Address</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setMenuOpen(false)}
+                      style={{
+                        border: 'none',
+                        background: 'transparent',
+                        padding: '10px 14px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 10,
+                        fontSize: 13,
+                        fontWeight: 600,
+                        color: palette.onSurfaceVariant,
+                        fontFamily: 'inherit',
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                      }}
+                    >
+                      <IconSvg name="signal" size={16} color={palette.onSurfaceVariant} />
+                      <span>Refresh Telemetry</span>
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           )}
         </div>
       </div>
@@ -727,6 +896,291 @@ function DetailFactCard({ icon, label, value, mono = false, palette }) {
   );
 }
 
+function DetailSlotPlaceholder({ title, slotColor, fields, palette }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div
+        style={{
+          backgroundColor: palette.surfaceContainer,
+          border: `1px solid ${palette.outlineVariant}`,
+          borderRadius: 18,
+          padding: '12px 14px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+        }}
+      >
+        <div
+          style={{
+            width: 10,
+            height: 10,
+            borderRadius: '50%',
+            backgroundColor: slotColor,
+            flexShrink: 0,
+          }}
+        />
+        <div style={{ minWidth: 0, flex: 1 }}>
+          <div style={{ fontSize: 12.5, fontWeight: 800, color: palette.onSurface }}>
+            {title} — Cipher Reader Pending
+          </div>
+          <div style={{ fontSize: 11, color: palette.onSurfaceVariant, marginTop: 2, lineHeight: 1.35 }}>
+            Encrypted Confidex Viking Slim slot registers require the cipher reader module (placeholder schema below).
+          </div>
+        </div>
+      </div>
+
+      <div
+        style={{
+          backgroundColor: palette.surfaceContainer,
+          borderRadius: 20,
+          padding: '6px 14px',
+          border: `1px solid ${palette.outlineVariant}`,
+        }}
+      >
+        {fields.map((f, idx) => (
+          <div
+            key={f.label}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 10,
+              padding: '10px 0',
+              borderBottom: idx < fields.length - 1 ? `1px solid ${palette.outlineVariant}` : 'none',
+            }}
+          >
+            <span style={{ fontSize: 12, fontWeight: 600, color: palette.onSurfaceVariant }}>
+              {f.label}
+            </span>
+            <span
+              style={{
+                fontSize: 12,
+                fontWeight: 700,
+                fontFamily: f.mono ? "'JetBrains Mono', ui-monospace, monospace" : 'inherit',
+                color: f.pending ? palette.onSurfaceVariant : palette.onSurface,
+                textAlign: 'right',
+                wordBreak: 'break-all',
+                maxWidth: '58%',
+              }}
+            >
+              {f.value}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SaveBeaconModalSheet({ beacon, palette, labelStyle, dark, onSave, onClose }) {
+  const [label, setLabel] = useState(beacon.label || '');
+  const [code, setCode] = useState(beacon.code || '');
+  const [building, setBuilding] = useState(beacon.building || 'U14');
+  const [floor, setFloor] = useState(beacon.floor || 'Floor 1');
+  const [positionDescription, setPositionDescription] = useState(beacon.positionDescription || beacon.zone || '');
+
+  const inputStyle = {
+    width: '100%',
+    borderRadius: 12,
+    border: `1px solid ${palette.outline}`,
+    backgroundColor: palette.surfaceContainer,
+    color: palette.onSurface,
+    padding: '7px 10px',
+    fontSize: 13,
+    fontWeight: 600,
+    fontFamily: 'inherit',
+    outline: 'none',
+  };
+
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        inset: 0,
+        zIndex: 60,
+        backgroundColor: 'rgba(0, 0, 0, 0.64)',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'flex-end',
+      }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        id="saveBeaconModalSheet"
+        style={{
+          backgroundColor: palette.surfaceContainerLow,
+          borderTop: `1px solid ${palette.outlineVariant}`,
+          borderRadius: '26px 26px 0 0',
+          padding: '8px 16px 14px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 8,
+          maxHeight: '88%',
+          overflowY: 'auto',
+          boxShadow: '0 -12px 40px rgba(0,0,0,0.65)',
+        }}
+      >
+        <div style={{ width: 38, height: 4, borderRadius: 99, backgroundColor: palette.outlineVariant, alignSelf: 'center', marginBottom: 2 }} />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ position: 'relative', width: 58, height: 74, display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+            <OrganicHalo lobes={6} dip={0.18} size={66} color={palette.primaryContainer} />
+            <div style={{ position: 'relative', zIndex: 1 }}>
+              <BeaconCanvas
+                label={(label || beacon.label || 'B2').trim()}
+                subLabel={`${building.trim() || 'U14'} - ${floor.trim() || 'Floor 1'}`}
+                labelStyle={labelStyle}
+                width={36}
+                height={70}
+                palette={palette}
+                dark={dark}
+                holeColor={palette.primaryContainer}
+                shadow={false}
+              />
+            </div>
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 16, fontWeight: 800, color: palette.onSurface }}>
+              Save Beacon to Inventory
+            </div>
+            <div style={{ fontSize: 11.5, color: palette.onSurfaceVariant, marginTop: 2 }}>
+              {labelStyle === 'printed' ? 'Live printed-label preview' : 'Live label preview'} · {beacon.mac}
+            </div>
+          </div>
+          <button
+            type="button"
+            className="m3-icon-btn"
+            onClick={onClose}
+            aria-label="Close modal"
+            style={{ color: palette.onSurfaceVariant }}
+          >
+            <IconSvg name="close" size={18} color={palette.onSurfaceVariant} />
+          </button>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+          <div>
+            <div style={{ fontSize: 10.5, fontWeight: 700, color: palette.onSurfaceVariant, marginBottom: 4 }}>
+              Label (on 3D Model)
+            </div>
+            <input
+              type="text"
+              value={label}
+              onChange={(e) => setLabel(e.target.value)}
+              placeholder="B2"
+              style={inputStyle}
+            />
+          </div>
+          <div>
+            <div style={{ fontSize: 10.5, fontWeight: 700, color: palette.onSurfaceVariant, marginBottom: 4 }}>
+              Alphanumeric Code
+            </div>
+            <input
+              type="text"
+              value={code}
+              onChange={(e) => setCode(e.target.value.toUpperCase())}
+              placeholder="K4M2"
+              style={{ ...inputStyle, fontFamily: "'JetBrains Mono', ui-monospace, monospace" }}
+            />
+          </div>
+          <div>
+            <div style={{ fontSize: 10.5, fontWeight: 700, color: palette.onSurfaceVariant, marginBottom: 4 }}>
+              Building
+            </div>
+            <input
+              type="text"
+              value={building}
+              onChange={(e) => setBuilding(e.target.value)}
+              placeholder="U14"
+              style={inputStyle}
+            />
+          </div>
+          <div>
+            <div style={{ fontSize: 10.5, fontWeight: 700, color: palette.onSurfaceVariant, marginBottom: 4 }}>
+              Floor
+            </div>
+            <input
+              type="text"
+              value={floor}
+              onChange={(e) => setFloor(e.target.value)}
+              placeholder="Floor 1"
+              style={inputStyle}
+            />
+          </div>
+        </div>
+
+        <div>
+          <div style={{ fontSize: 10.5, fontWeight: 700, color: palette.onSurfaceVariant, marginBottom: 4 }}>
+            Position / Description
+          </div>
+          <input
+            type="text"
+            value={positionDescription}
+            onChange={(e) => setPositionDescription(e.target.value)}
+            placeholder="Near Lab 102 door (2.2 m pillar)"
+            style={inputStyle}
+          />
+        </div>
+
+        <div style={{ display: 'flex', gap: 6, marginTop: 2 }}>
+          <button
+            type="button"
+            onClick={onClose}
+            style={{
+              flex: 1,
+              border: `1px solid ${palette.outlineVariant}`,
+              borderRadius: 14,
+              padding: '10px 12px',
+              backgroundColor: palette.surfaceContainer,
+              color: palette.onSurfaceVariant,
+              fontWeight: 700,
+              fontSize: 13,
+              fontFamily: 'inherit',
+              cursor: 'pointer',
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              const cleanLabel = label.trim() || beacon.label;
+              const cleanCode = code.trim() || beacon.code;
+              const cleanBuilding = building.trim() || 'U14';
+              const cleanFloor = floor.trim() || 'Floor 1';
+              const cleanPos = positionDescription.trim() || beacon.zone;
+              onSave({
+                ...beacon,
+                label: cleanLabel,
+                code: cleanCode,
+                building: cleanBuilding,
+                floor: cleanFloor,
+                positionDescription: cleanPos,
+                zone: `${cleanBuilding} · ${cleanFloor} · ${cleanPos.split('—')[0].trim()}`,
+              });
+            }}
+            style={{
+              flex: 1.5,
+              border: 'none',
+              borderRadius: 14,
+              padding: '10px 12px',
+              backgroundColor: palette.primary,
+              color: palette.onPrimary,
+              fontWeight: 800,
+              fontSize: 13,
+              fontFamily: 'inherit',
+              cursor: 'pointer',
+            }}
+          >
+            Save to Inventory
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /**
  * Renders either List View (Beacon + Label, pkt/s, Power)
  * or Grid View (ONLY Beacon + Label) in one of the 4 MyBicocca layout variants.
@@ -817,6 +1271,7 @@ function BeaconCollection({
                       <div ref={(el) => registerBeaconRef(b.id, el)}>
                         <BeaconCanvas
                           label={b.label}
+                          subLabel={`${b.building || 'U14'} - ${b.floor || 'Floor 1'}`}
                           labelStyle={labelStyle}
                           width={64}
                           height={140}
@@ -868,6 +1323,7 @@ function BeaconCollection({
                 <div ref={(el) => registerBeaconRef(b.id, el)}>
                   <BeaconCanvas
                     label={b.label}
+                    subLabel={`${b.building || 'U14'} - ${b.floor || 'Floor 1'}`}
                     labelStyle={labelStyle}
                     width={64}
                     height={140}
@@ -899,67 +1355,100 @@ function BeaconCollection({
 
     if (layoutId === 'organic') {
       return (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 12 }}>
-          {beacons.map((b, idx) => (
-            <button
-              key={b.id}
-              type="button"
-              className="m3-card-btn"
-              onClick={() => onSelectBeacon(b)}
-              style={{
-                backgroundColor: palette.surfaceContainerLow,
-                border: `1px solid ${palette.outlineVariant}`,
-                borderRadius: 26,
-                padding: '16px 10px 14px',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: 10,
-              }}
-            >
-              <div style={{ position: 'relative', width: 106, height: 142, display: 'grid', placeItems: 'center' }}>
-                {(() => {
-                  const meta = getOrganicCardMeta(idx, 'grid', palette);
-                  return (
-                    <>
-                      <OrganicHalo
-                        lobes={meta.lobes}
-                        dip={meta.dip}
-                        size={meta.size}
-                        color={meta.color}
-                        rotation={meta.rotation}
-                        hidden={hiddenBeaconId === b.id}
-                      />
-                      <div ref={(el) => registerBeaconRef(b.id, el)} style={{ position: 'relative', zIndex: 1 }}>
-                        <BeaconCanvas
-                          label={b.label}
-                          labelStyle={labelStyle}
-                          width={64}
-                          height={138}
-                          palette={palette}
-                          dark={dark}
-                          holeColor={meta.color}
-                          hidden={hiddenBeaconId === b.id}
-                        />
-                      </div>
-                    </>
-                  );
-                })()}
-              </div>
-              <span
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8 }}>
+          {beacons.map((b, idx) => {
+            const sig = getSignalBadgeStyle(b.frameType);
+            const meta = getOrganicCardMeta(idx, 'grid', palette);
+            return (
+              <button
+                key={b.id}
+                type="button"
+                className="m3-card-btn"
+                onClick={() => onSelectBeacon(b)}
                 style={{
-                  fontSize: 15,
-                  fontWeight: 800,
-                  color: palette.onPrimaryContainer,
-                  backgroundColor: palette.primaryContainer,
-                  padding: '4px 14px',
-                  borderRadius: 999,
+                  backgroundColor: palette.surfaceContainerLow,
+                  border: `1px solid ${palette.outlineVariant}`,
+                  borderRadius: 20,
+                  padding: '8px 6px 8px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: 6,
                 }}
               >
-                {b.label}
-              </span>
-            </button>
-          ))}
+                <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 2px' }}>
+                  <span
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      padding: '2px 6px',
+                      borderRadius: 999,
+                      backgroundColor: sig.bg,
+                      color: sig.fg,
+                      fontSize: 9.5,
+                      fontWeight: 800,
+                      letterSpacing: '0.02em',
+                    }}
+                  >
+                    <span style={{ width: 5, height: 5, borderRadius: '50%', backgroundColor: sig.dot }} />
+                    {sig.shortLabel}
+                  </span>
+                  <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: palette.primary }} />
+                </div>
+
+                <div style={{ position: 'relative', width: 78, height: 92, display: 'grid', placeItems: 'center' }}>
+                  <OrganicHalo
+                    lobes={meta.lobes}
+                    dip={meta.dip}
+                    size={meta.size}
+                    color={meta.color}
+                    rotation={meta.rotation}
+                    hidden={hiddenBeaconId === b.id}
+                  />
+                  <div ref={(el) => registerBeaconRef(b.id, el)} style={{ position: 'relative', zIndex: 1 }}>
+                    <BeaconCanvas
+                      label={b.label}
+                      subLabel={`${b.building || 'U14'} - ${b.floor || 'Floor 1'}`}
+                      labelStyle={labelStyle}
+                      width={44}
+                      height={88}
+                      palette={palette}
+                      dark={dark}
+                      holeColor={meta.color}
+                      hidden={hiddenBeaconId === b.id}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 4, padding: '0 2px' }}>
+                  <span
+                    style={{
+                      fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+                      fontSize: 11.5,
+                      fontWeight: 700,
+                      letterSpacing: '0.03em',
+                      color: palette.onSurface,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {b.code}
+                  </span>
+                  <span
+                    style={{
+                      fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+                      fontSize: 10,
+                      fontWeight: 700,
+                      color: palette.onSurfaceVariant,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {b.rssi} dBm
+                  </span>
+                </div>
+              </button>
+            );
+          })}
         </div>
       );
     }
@@ -987,6 +1476,7 @@ function BeaconCollection({
             <div ref={(el) => registerBeaconRef(b.id, el)}>
               <BeaconCanvas
                 label={b.label}
+                subLabel={`${b.building || 'U14'} - ${b.floor || 'Floor 1'}`}
                 labelStyle={labelStyle}
                 width={50}
                 height={112}
@@ -1049,6 +1539,7 @@ function BeaconCollection({
                   <div ref={(el) => registerBeaconRef(b.id, el)}>
                     <BeaconCanvas
                       label={b.label}
+                      subLabel={`${b.building || 'U14'} - ${b.floor || 'Floor 1'}`}
                       labelStyle={labelStyle}
                       width={38}
                       height={100}
@@ -1118,6 +1609,7 @@ function BeaconCollection({
               <div ref={(el) => registerBeaconRef(b.id, el)}>
                 <BeaconCanvas
                   label={b.label}
+                  subLabel={`${b.building || 'U14'} - ${b.floor || 'Floor 1'}`}
                   labelStyle={labelStyle}
                   width={38}
                   height={102}
@@ -1176,7 +1668,7 @@ function BeaconCollection({
 
   if (layoutId === 'organic') {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
         {beacons.map((b, idx) => (
           <button
             key={b.id}
@@ -1186,15 +1678,15 @@ function BeaconCollection({
             style={{
               backgroundColor: palette.surfaceContainerLow,
               border: `1px solid ${palette.outlineVariant}`,
-              borderRadius: 24,
-              padding: '10px 14px',
+              borderRadius: 18,
+              padding: '6px 12px',
               display: 'flex',
               alignItems: 'center',
-              gap: 12,
+              gap: 10,
               textAlign: 'left',
             }}
           >
-            <div style={{ position: 'relative', width: 66, height: 100, display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+            <div style={{ position: 'relative', width: 56, height: 70, display: 'grid', placeItems: 'center', flexShrink: 0 }}>
               {(() => {
                 const meta = getOrganicCardMeta(idx, 'list', palette);
                 return (
@@ -1210,9 +1702,10 @@ function BeaconCollection({
                     <div ref={(el) => registerBeaconRef(b.id, el)} style={{ position: 'relative', zIndex: 1 }}>
                       <BeaconCanvas
                         label={b.label}
+                        subLabel={`${b.building || 'U14'} - ${b.floor || 'Floor 1'}`}
                         labelStyle={labelStyle}
-                        width={38}
-                        height={98}
+                        width={34}
+                        height={68}
                         palette={palette}
                         dark={dark}
                         holeColor={meta.color}
@@ -1224,16 +1717,61 @@ function BeaconCollection({
               })()}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                <span style={{ fontSize: 17, fontWeight: 800, color: palette.onSurface }}>{b.label}</span>
-                <span style={{ fontSize: 11.5, color: palette.onSurfaceVariant }}>{b.frameType}</span>
-              </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                <span style={{ fontSize: 15.5, fontWeight: 800, color: palette.onSurface }}>{b.label}</span>
                 <span
                   style={{
-                    fontSize: 11.5,
+                    fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+                    fontSize: 10.5,
                     fontWeight: 700,
-                    padding: '3px 9px',
+                    padding: '1px 6px',
+                    borderRadius: 6,
+                    backgroundColor: palette.surfaceContainerHigh,
+                    color: palette.onSurfaceVariant,
+                  }}
+                >
+                  {b.code}
+                </span>
+                {(() => {
+                  const sig = getSignalBadgeStyle(b.frameType);
+                  return (
+                    <span
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 4,
+                        fontSize: 10.5,
+                        fontWeight: 700,
+                        padding: '1px 7px',
+                        borderRadius: 999,
+                        backgroundColor: sig.bg,
+                        color: sig.fg,
+                      }}
+                    >
+                      <span style={{ width: 5, height: 5, borderRadius: '50%', backgroundColor: sig.dot }} />
+                      {sig.fullLabel}
+                    </span>
+                  );
+                })()}
+              </div>
+              <div
+                style={{
+                  fontSize: 11.5,
+                  color: palette.onSurfaceVariant,
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  marginBottom: 4,
+                }}
+              >
+                {b.zone}
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                <span
+                  style={{
+                    fontSize: 10.5,
+                    fontWeight: 700,
+                    padding: '2px 7px',
                     borderRadius: 999,
                     backgroundColor: palette.primaryContainer,
                     color: palette.onPrimaryContainer,
@@ -1243,9 +1781,9 @@ function BeaconCollection({
                 </span>
                 <span
                   style={{
-                    fontSize: 11.5,
+                    fontSize: 10.5,
                     fontWeight: 700,
-                    padding: '3px 9px',
+                    padding: '2px 7px',
                     borderRadius: 999,
                     backgroundColor: palette.surfaceContainerHigh,
                     color: palette.onSurface,
@@ -1255,7 +1793,7 @@ function BeaconCollection({
                 </span>
               </div>
             </div>
-            <IconSvg name="chevron" size={18} color={palette.onSurfaceVariant} />
+            <IconSvg name="chevron" size={16} color={palette.onSurfaceVariant} />
           </button>
         ))}
       </div>
@@ -1287,6 +1825,7 @@ function BeaconCollection({
             <div ref={(el) => registerBeaconRef(b.id, el)}>
               <BeaconCanvas
                 label={b.label}
+                subLabel={`${b.building || 'U14'} - ${b.floor || 'Floor 1'}`}
                 labelStyle={labelStyle}
                 width={36}
                 height={96}
@@ -1352,6 +1891,7 @@ function BeaconPhoneExperience({
   heroProgress,
   onOpenBeacon,
   onBackFromDetail,
+  onSaveBeacon,
   compactScale = 1,
 }) {
   const [searchOpen, setSearchOpen] = useState(false);
@@ -1359,11 +1899,22 @@ function BeaconPhoneExperience({
   const [floorFilter, setFloorFilter] = useState('All');
   const [favorites, setFavorites] = useState(() => ({ b2: true }));
   const [liveScanning, setLiveScanning] = useState(true);
+  const [detailScrollTop, setDetailScrollTop] = useState(0);
+  const [detailTab, setDetailTab] = useState('general');
+  const [editingBeacon, setEditingBeacon] = useState(null);
 
   const phoneRef = useRef(null);
   const cardRefs = useRef({});
   const targetRef = useRef(null);
   const capturedFromRect = useRef(null);
+  const tabStripRef = useRef(null);
+
+  useEffect(() => {
+    setDetailScrollTop(0);
+    setDetailTab('general');
+    setEditingBeacon(null);
+    if (tabStripRef.current) tabStripRef.current.scrollLeft = 0;
+  }, [selectedBeaconId]);
 
   const registerBeaconRef = useCallback((id, el) => {
     if (el) cardRefs.current[id] = el;
@@ -1416,13 +1967,13 @@ function BeaconPhoneExperience({
 
   const p = clamp01(heroProgress);
   const eased = m3Ease(p);
-  const inHeroFlight = Boolean(activeBeacon && p > 0 && p < 1);
+  const showHeroOverlay = Boolean(activeBeacon && p > 0);
   const showDetailLayer = Boolean(activeBeacon && p > 0.001);
 
-  // Measure target bounding box for the 3D Hero flight
+  // Measure target bounding box for the 3D Hero flight (tracks Detail scroll automatically via detailScrollTop re-render)
   const toRect = (targetRef.current && phoneRef.current)
     ? getLocalRect(targetRef.current, phoneRef.current)
-    : { left: 52, top: 72, width: 286, height: 214 };
+    : { left: 55, top: 76 - detailScrollTop, width: 280, height: 190 };
 
   const fromRect = capturedFromRect.current || (
     (activeBeacon && cardRefs.current[activeBeacon.id] && phoneRef.current)
@@ -1430,7 +1981,7 @@ function BeaconPhoneExperience({
       : { left: 28, top: 230, width: 44, height: 104 }
   );
 
-  const heroBox = inHeroFlight && fromRect && toRect ? {
+  const heroBox = showHeroOverlay && fromRect && toRect ? {
     left: lerp(fromRect.left, toRect.left, eased),
     top: lerp(fromRect.top, toRect.top, eased),
     width: lerp(fromRect.width, toRect.width, eased),
@@ -1438,7 +1989,7 @@ function BeaconPhoneExperience({
     pitch: lerp(0, -58, eased),
     yaw: lerp(0, -12, eased),
     roll: lerp(0, 56, eased),
-    haloSize: lerp(organicCardMeta.size, 218, eased),
+    haloSize: lerp(organicCardMeta.size, 190, eased),
     haloColor: mixHex(organicCardMeta.color, palette.primaryContainer, eased),
   } : null;
 
@@ -1464,12 +2015,10 @@ function BeaconPhoneExperience({
           if (!open) setSearchQuery('');
         }}
         onBack={onBackFromDetail}
-        subPageTitle={activeBeacon ? `Beacon ${activeBeacon.label}` : ''}
+        subPageTitle={activeBeacon ? activeBeacon.code : ''}
         palette={palette}
-        isFav={activeBeacon ? Boolean(favorites[activeBeacon.id]) : false}
-        onToggleFav={() => {
-          if (!activeBeacon) return;
-          setFavorites((f) => ({ ...f, [activeBeacon.id]: !f[activeBeacon.id] }));
+        onEditBeacon={() => {
+          if (activeBeacon) setEditingBeacon(activeBeacon);
         }}
         liveScanning={liveScanning}
         onToggleLiveScan={() => setLiveScanning((v) => !v)}
@@ -1566,24 +2115,26 @@ function BeaconPhoneExperience({
           />
         </div>
 
-        {/* LAYER 2: Detail Screen (3/4 3D Hero Stage + DetailFactCards) */}
+        {/* LAYER 2: Detail Screen (3/4 3D Hero Stage Target + DetailFactCards) */}
         {showDetailLayer && activeBeacon && (
           <div
             className="phone-scroll"
+            onScroll={(e) => setDetailScrollTop(e.currentTarget.scrollTop)}
             style={{
               position: 'absolute',
               inset: 0,
+              zIndex: 10,
               backgroundColor: palette.surface,
               opacity: clamp01((p - 0.12) / 0.48),
               pointerEvents: p > 0.65 ? 'auto' : 'none',
               paddingBottom: 28,
             }}
           >
-            {/* 3D Hero Stage at top of Detail Screen (Locked 3/4 View) */}
+            {/* 3D Hero Stage at top of Detail Screen (Landing Target for persistent Layer 3) */}
             <div
               style={{
                 position: 'relative',
-                height: 244,
+                height: 250,
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
@@ -1593,62 +2144,187 @@ function BeaconPhoneExperience({
                 overflow: 'hidden',
               }}
             >
-              {layoutId === 'organic' && p >= 0.999 && (
-                <OrganicHalo
-                  lobes={12}
-                  dip={0.10}
-                  size={218}
-                  color={palette.primaryContainer}
-                />
-              )}
               <div
                 ref={targetRef}
                 style={{
-                  width: 286,
-                  height: 214,
-                  display: 'grid',
-                  placeItems: 'center',
+                  width: 280,
+                  height: 190,
+                  marginBottom: 16,
                   position: 'relative',
                   zIndex: 1,
                 }}
-              >
-                <BeaconCanvas
-                  label={activeBeacon.label}
-                  labelStyle={labelStyle}
-                  pitch={-58}
-                  yaw={-12}
-                  roll={56}
-                  width={286}
-                  height={214}
-                  palette={palette}
-                  dark={dark}
-                  holeColor={layoutId === 'organic' ? palette.primaryContainer : palette.surfaceContainerLow}
-                  hidden={p < 0.999}
-                />
-              </div>
+              />
 
+              {/* Top-Left Corner: Building */}
               <div
                 style={{
                   position: 'absolute',
-                  bottom: 12,
-                  right: 14,
-                  fontSize: 10.5,
-                  fontWeight: 700,
-                  padding: '4px 9px',
+                  top: 10,
+                  left: 12,
+                  fontSize: 11,
+                  fontWeight: 800,
+                  padding: '3px 10px',
                   borderRadius: 999,
                   backgroundColor: palette.surfaceContainerHigh,
+                  border: `1px solid ${palette.outlineVariant}`,
+                  color: palette.onSurface,
+                  zIndex: 2,
+                }}
+              >
+                {activeBeacon.building || 'U14'}
+              </div>
+
+              {/* Top-Right Corner: Floor */}
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 10,
+                  right: 12,
+                  fontSize: 11,
+                  fontWeight: 700,
+                  padding: '3px 10px',
+                  borderRadius: 999,
+                  backgroundColor: palette.surfaceContainerHigh,
+                  border: `1px solid ${palette.outlineVariant}`,
                   color: palette.onSurfaceVariant,
                   zIndex: 2,
                 }}
               >
-                3/4 Table View · {activeBeacon.frameType}
+                {activeBeacon.floor}
+              </div>
+
+              {/* Bottom Bar: Colored Signal Type Badges (Left) + Packet Rate, Tx Power, Live RSSI (Right) */}
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: 10,
+                  left: 12,
+                  right: 12,
+                  display: 'flex',
+                  alignItems: 'flex-end',
+                  justifyContent: 'space-between',
+                  gap: 6,
+                  zIndex: 2,
+                }}
+              >
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                  {[
+                    activeBeacon.activeSlots?.UID && getSignalBadgeStyle('uid'),
+                    activeBeacon.activeSlots?.UUID && getSignalBadgeStyle('ibeacon'),
+                    activeBeacon.activeSlots?.TLM && getSignalBadgeStyle('tlm'),
+                    activeBeacon.activeSlots?.URL && getSignalBadgeStyle('url'),
+                  ].filter(Boolean).map((sig) => (
+                    <span
+                      key={sig.shortLabel}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 4,
+                        fontSize: 9.5,
+                        fontWeight: 800,
+                        padding: '3px 7px',
+                        borderRadius: 999,
+                        backgroundColor: sig.bg,
+                        color: sig.fg,
+                      }}
+                    >
+                      <span style={{ width: 5, height: 5, borderRadius: '50%', backgroundColor: sig.dot }} />
+                      {sig.fullLabel}
+                    </span>
+                  ))}
+                </div>
+
+                <div
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 5,
+                    fontSize: 10,
+                    fontWeight: 700,
+                    fontFamily: "'JetBrains Mono', ui-monospace, monospace",
+                    padding: '3px 8px',
+                    borderRadius: 999,
+                    backgroundColor: palette.surfaceContainerHigh,
+                    border: `1px solid ${palette.outlineVariant}`,
+                    color: palette.onSurfaceVariant,
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
+                  }}
+                >
+                  <span style={{ color: palette.onSurface }}>{activeBeacon.packetsPerSec.toFixed(1)} pkt/s</span>
+                  <span style={{ opacity: 0.45 }}>·</span>
+                  <span>Tx {activeBeacon.txPower}</span>
+                  <span style={{ opacity: 0.45 }}>·</span>
+                  <span style={{ color: palette.onPrimaryContainer, fontWeight: 800 }}>{activeBeacon.rssi} dBm</span>
+                </div>
               </div>
             </div>
 
-            {/* Detail Content choreographs smoothly upward */}
+            {/* 5 Detail Tabs under the 3D Model */}
+            <div
+              ref={tabStripRef}
+              className="phone-scroll"
+              style={{
+                position: 'relative',
+                display: 'flex',
+                gap: 6,
+                overflowX: 'auto',
+                padding: '10px 16px 2px',
+                borderBottom: `1px solid ${palette.outlineVariant}`,
+              }}
+            >
+              {[
+                { id: 'general', label: 'General', dot: null },
+                { id: 'uid', label: 'Eddystone UID', dot: '#4ADE80' },
+                { id: 'ibeacon', label: 'iBeacon (UUID)', dot: '#60A5FA' },
+                { id: 'tlm', label: 'Eddystone TLM', dot: '#FB923C' },
+                { id: 'url', label: 'Eddystone URL', dot: '#22D3EE' },
+              ].map((tb) => {
+                const active = detailTab === tb.id;
+                return (
+                  <button
+                    key={tb.id}
+                    type="button"
+                    data-detail-tab={tb.id}
+                    onClick={(e) => {
+                      setDetailTab(tb.id);
+                      const btn = e.currentTarget;
+                      const strip = tabStripRef.current || btn.parentElement;
+                      if (strip) {
+                        const targetLeft = btn.offsetLeft - (strip.clientWidth - btn.offsetWidth) / 2;
+                        strip.scrollTo({ left: Math.max(0, targetLeft), behavior: 'smooth' });
+                      }
+                    }}
+                    style={{
+                      border: 'none',
+                      borderBottom: `2.5px solid ${active ? palette.primary : 'transparent'}`,
+                      background: 'transparent',
+                      padding: '6px 8px 9px',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 5,
+                      fontSize: 12,
+                      fontWeight: active ? 800 : 600,
+                      color: active ? palette.onSurface : palette.onSurfaceVariant,
+                      fontFamily: 'inherit',
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {tb.dot && (
+                      <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: tb.dot }} />
+                    )}
+                    {tb.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Detail Tab Content */}
             <div
               style={{
-                padding: '14px 16px 0',
+                padding: '12px 16px 0',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: 10,
@@ -1656,145 +2332,350 @@ function BeaconPhoneExperience({
                 transform: `translateY(${lerp(26, 0, clamp01((p - 0.35) / 0.65))}px)`,
               }}
             >
-              {/* Quick Telemetry KPI Row */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 8 }}>
-                <div style={{ backgroundColor: palette.primaryContainer, color: palette.onPrimaryContainer, borderRadius: 18, padding: '10px 10px' }}>
-                  <div style={{ fontSize: 10.5, fontWeight: 700, opacity: 0.8 }}>Packet Rate</div>
-                  <div style={{ fontSize: 16, fontWeight: 800, marginTop: 2 }}>{activeBeacon.packetsPerSec.toFixed(1)} pkt/s</div>
-                </div>
-                <div style={{ backgroundColor: palette.surfaceContainer, color: palette.onSurface, borderRadius: 18, padding: '10px 10px' }}>
-                  <div style={{ fontSize: 10.5, fontWeight: 700, color: palette.onSurfaceVariant }}>Tx Power</div>
-                  <div style={{ fontSize: 16, fontWeight: 800, marginTop: 2 }}>{activeBeacon.txPower} dBm</div>
-                </div>
-                <div style={{ backgroundColor: palette.surfaceContainer, color: palette.onSurface, borderRadius: 18, padding: '10px 10px' }}>
-                  <div style={{ fontSize: 10.5, fontWeight: 700, color: palette.onSurfaceVariant }}>Live RSSI</div>
-                  <div style={{ fontSize: 16, fontWeight: 800, marginTop: 2 }}>{activeBeacon.rssi} dBm</div>
-                </div>
-              </div>
+              {detailTab === 'general' && (
+                <>
+                  {/* General Slot & Radio Config Card */}
+                  <div
+                    style={{
+                      backgroundColor: palette.surfaceContainer,
+                      border: `1px solid ${palette.outlineVariant}`,
+                      borderRadius: 20,
+                      padding: 13,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 9,
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <span style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: '0.05em', color: palette.onSurfaceVariant }}>
+                        GENERAL
+                      </span>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: palette.onSurfaceVariant }}>
+                        Confidex Viking Slim
+                      </span>
+                    </div>
 
-              {/* MyBicocca DetailFactCards */}
-              <DetailFactCard
-                icon="pin"
-                label="Location & Zone"
-                value={activeBeacon.zone}
-                palette={palette}
-              />
-              <DetailFactCard
-                icon="bluetooth"
-                label="Canonical Beacon ID"
-                value={activeBeacon.canonicalId}
-                mono
-                palette={palette}
-              />
-              <DetailFactCard
-                icon="chip"
-                label="Hardware MAC & Median RSSI"
-                value={`${activeBeacon.mac} · med ${activeBeacon.medianRssi} dBm`}
-                mono
-                palette={palette}
-              />
-              <DetailFactCard
-                icon="battery"
-                label="Telemetry (TLM Battery & Temp)"
-                value={`${activeBeacon.batteryMv} mV · ${activeBeacon.tempC.toFixed(1)} °C`}
-                palette={palette}
-              />
-              <DetailFactCard
-                icon="code"
-                label="Raw Advertisement Hex"
-                value={activeBeacon.advHex}
-                mono
-                palette={palette}
-              />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: 12, color: palette.onSurfaceVariant, fontWeight: 600 }}>Power Mode</span>
+                      <span
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: 5,
+                          fontSize: 11,
+                          fontWeight: 800,
+                          padding: '2px 9px',
+                          borderRadius: 999,
+                          backgroundColor: activeBeacon.powerMode === false ? palette.surfaceContainerHigh : '#123C25',
+                          color: activeBeacon.powerMode === false ? palette.onSurfaceVariant : '#79E8AA',
+                        }}
+                      >
+                        <span
+                          style={{
+                            width: 6,
+                            height: 6,
+                            borderRadius: '50%',
+                            backgroundColor: activeBeacon.powerMode === false ? palette.outline : '#4ADE80',
+                          }}
+                        />
+                        {activeBeacon.powerMode === false ? 'OFF' : 'ON'}
+                      </span>
+                    </div>
 
-              {/* Asset Export Strip */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 2 }}>
-                <button
-                  type="button"
-                  onClick={() => window.Beacon3D.downloadLottie({
-                    label: activeBeacon.label,
-                    labelStyle,
-                    themePalette: palette,
-                  })}
-                  style={{
-                    border: 'none',
-                    borderRadius: 16,
-                    padding: '11px 12px',
-                    backgroundColor: palette.primary,
-                    color: palette.onPrimary,
-                    fontWeight: 700,
-                    fontSize: 12.5,
-                    fontFamily: 'inherit',
-                    cursor: 'pointer',
-                  }}
-                >
-                  Export Lottie (.json)
-                </button>
-                <a
-                  href="Beacon%203D%20Model.html"
-                  style={{
-                    textDecoration: 'none',
-                    borderRadius: 16,
-                    padding: '11px 12px',
-                    backgroundColor: palette.surfaceContainerHigh,
-                    color: palette.onSurface,
-                    fontWeight: 700,
-                    fontSize: 12.5,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 6,
-                  }}
-                >
-                  <IconSvg name="cube" size={16} color={palette.onSurface} />
-                  <span>GLB / OBJ</span>
-                </a>
-              </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: `1px solid ${palette.outlineVariant}`, paddingTop: 8 }}>
+                      <span style={{ fontSize: 12, color: palette.onSurfaceVariant, fontWeight: 600 }}>MAC Address</span>
+                      <span style={{ fontSize: 12.5, fontWeight: 700, fontFamily: "'JetBrains Mono', ui-monospace, monospace", color: palette.onSurface }}>
+                        {activeBeacon.mac}
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: `1px solid ${palette.outlineVariant}`, paddingTop: 8 }}>
+                      <span style={{ fontSize: 12, color: palette.onSurfaceVariant, fontWeight: 600 }}>BLE Tx interval (ms)</span>
+                      <span style={{ fontSize: 12.5, fontWeight: 700, fontFamily: "'JetBrains Mono', ui-monospace, monospace", color: palette.onSurface }}>
+                        {activeBeacon.txIntervalMs || 200} ms
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: `1px solid ${palette.outlineVariant}`, paddingTop: 8 }}>
+                      <span style={{ fontSize: 12, color: palette.onSurfaceVariant, fontWeight: 600 }}>Connectable mode</span>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: palette.onSurface }}>
+                        {activeBeacon.connectableMode || 'Non-connectable (Locked)'}
+                      </span>
+                    </div>
+
+                    <div style={{ borderTop: `1px solid ${palette.outlineVariant}`, paddingTop: 8 }}>
+                      <div style={{ fontSize: 12, color: palette.onSurfaceVariant, fontWeight: 600, marginBottom: 6 }}>
+                        Active slots
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 6 }}>
+                        {[
+                          { key: 'UID', style: getSignalBadgeStyle('uid') },
+                          { key: 'URL', style: getSignalBadgeStyle('url') },
+                          { key: 'TLM', style: getSignalBadgeStyle('tlm') },
+                          { key: 'UUID', style: getSignalBadgeStyle('ibeacon') },
+                        ].map((sl) => {
+                          const isOn = Boolean(activeBeacon.activeSlots?.[sl.key]);
+                          return (
+                            <div
+                              key={sl.key}
+                              style={{
+                                borderRadius: 10,
+                                padding: '6px 4px',
+                                backgroundColor: isOn ? sl.style.bg : palette.surfaceContainerLow,
+                                border: `1px solid ${isOn ? sl.style.dot + '66' : palette.outlineVariant}`,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: 4,
+                                fontSize: 11,
+                                fontWeight: 800,
+                                color: isOn ? sl.style.fg : palette.onSurfaceVariant,
+                                opacity: isOn ? 1 : 0.6,
+                              }}
+                            >
+                              <span
+                                style={{
+                                  width: 6,
+                                  height: 6,
+                                  borderRadius: '50%',
+                                  backgroundColor: isOn ? sl.style.dot : palette.outline,
+                                }}
+                              />
+                              {sl.key}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      disabled
+                      style={{
+                        border: `1px solid ${palette.outlineVariant}`,
+                        borderRadius: 12,
+                        padding: '9px 10px',
+                        backgroundColor: palette.surfaceContainerHigh,
+                        color: palette.onSurfaceVariant,
+                        fontSize: 11.5,
+                        fontWeight: 700,
+                        fontFamily: 'inherit',
+                        opacity: 0.72,
+                        cursor: 'not-allowed',
+                      }}
+                    >
+                      Restore Slot Configurations (Cipher Pending)
+                    </button>
+                  </div>
+
+                  {/* Hardware IDs & Advertisement */}
+                  <DetailFactCard
+                    icon="bluetooth"
+                    label="Canonical Beacon ID & Median RSSI"
+                    value={`${activeBeacon.canonicalId} · med ${activeBeacon.medianRssi} dBm`}
+                    mono
+                    palette={palette}
+                  />
+                  <DetailFactCard
+                    icon="battery"
+                    label="Telemetry (TLM Battery & Temp)"
+                    value={`${activeBeacon.batteryMv} mV · ${activeBeacon.tempC.toFixed(1)} °C`}
+                    palette={palette}
+                  />
+                  <DetailFactCard
+                    icon="code"
+                    label="Raw Advertisement Hex"
+                    value={activeBeacon.advHex}
+                    mono
+                    palette={palette}
+                  />
+
+                  {/* Position / Description (Bottom of General Tab) */}
+                  <div
+                    style={{
+                      backgroundColor: palette.surfaceContainer,
+                      border: `1px solid ${palette.outlineVariant}`,
+                      borderRadius: 20,
+                      padding: 13,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: 7,
+                    }}
+                  >
+                    <span style={{ fontSize: 10.5, fontWeight: 800, letterSpacing: '0.05em', color: palette.onSurfaceVariant }}>
+                      POSITION / DESCRIPTION
+                    </span>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: palette.onSurface, lineHeight: 1.4 }}>
+                      {activeBeacon.positionDescription || activeBeacon.zone}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {detailTab === 'uid' && (
+                <DetailSlotPlaceholder
+                  title="Eddystone UID"
+                  slotColor="#4ADE80"
+                  palette={palette}
+                  fields={[
+                    { label: 'UID Tx power (dBm)', value: 'Pending cipher reader', pending: true },
+                    {
+                      label: 'UID Calibrated Tx Power (dBm)',
+                      value: activeBeacon.frameType === 'Eddystone-UID' ? `${activeBeacon.txPower} dBm (adv)` : 'Pending cipher reader',
+                      pending: activeBeacon.frameType !== 'Eddystone-UID',
+                    },
+                    {
+                      label: 'UID namespace',
+                      value: activeBeacon.canonicalId.startsWith('ed:') ? activeBeacon.canonicalId.split(':')[1] : 'Pending cipher reader',
+                      mono: true,
+                      pending: !activeBeacon.canonicalId.startsWith('ed:'),
+                    },
+                    {
+                      label: 'UID instance',
+                      value: activeBeacon.canonicalId.startsWith('ed:') ? activeBeacon.canonicalId.split(':')[2] : 'Pending cipher reader',
+                      mono: true,
+                      pending: !activeBeacon.canonicalId.startsWith('ed:'),
+                    },
+                  ]}
+                />
+              )}
+
+              {detailTab === 'ibeacon' && (
+                <DetailSlotPlaceholder
+                  title="iBeacon (UUID)"
+                  slotColor="#60A5FA"
+                  palette={palette}
+                  fields={[
+                    { label: 'UUID Tx power (dBm)', value: 'Pending cipher reader', pending: true },
+                    {
+                      label: 'UUID Calibrated Tx power',
+                      value: activeBeacon.canonicalId.startsWith('ib:') ? `${activeBeacon.txPower} dBm (adv)` : 'Pending cipher reader',
+                      pending: !activeBeacon.canonicalId.startsWith('ib:'),
+                    },
+                    {
+                      label: 'UUID',
+                      value: activeBeacon.canonicalId.startsWith('ib:') ? activeBeacon.canonicalId.split(':')[1] : 'Pending cipher reader',
+                      mono: true,
+                      pending: !activeBeacon.canonicalId.startsWith('ib:'),
+                    },
+                    {
+                      label: 'UUID Major',
+                      value: activeBeacon.canonicalId.startsWith('ib:') ? activeBeacon.canonicalId.split(':')[2] : 'Pending cipher reader',
+                      mono: true,
+                      pending: !activeBeacon.canonicalId.startsWith('ib:'),
+                    },
+                    {
+                      label: 'UUID Minor',
+                      value: activeBeacon.canonicalId.startsWith('ib:') ? activeBeacon.canonicalId.split(':')[3] : 'Pending cipher reader',
+                      mono: true,
+                      pending: !activeBeacon.canonicalId.startsWith('ib:'),
+                    },
+                  ]}
+                />
+              )}
+
+              {detailTab === 'tlm' && (
+                <DetailSlotPlaceholder
+                  title="Eddystone TLM"
+                  slotColor="#FB923C"
+                  palette={palette}
+                  fields={[
+                    { label: 'TLM Tx interval factor', value: 'Pending cipher reader', pending: true },
+                    { label: 'TLM Tx power (dBm)', value: 'Pending cipher reader', pending: true },
+                    { label: 'TLM Calibrated Tx Power (dBm)', value: 'Pending cipher reader', pending: true },
+                    {
+                      label: 'Proprietary TLM mode',
+                      value: activeBeacon.batteryMv ? `Standard TLM (${activeBeacon.batteryMv} mV · ${activeBeacon.tempC.toFixed(1)} °C)` : 'Pending cipher reader',
+                      pending: !activeBeacon.batteryMv,
+                    },
+                  ]}
+                />
+              )}
+
+              {detailTab === 'url' && (
+                <DetailSlotPlaceholder
+                  title="Eddystone URL"
+                  slotColor="#22D3EE"
+                  palette={palette}
+                  fields={[
+                    { label: 'URL Tx power (dBm)', value: 'Pending cipher reader', pending: true },
+                    { label: 'URL', value: 'Pending cipher reader', pending: true },
+                    { label: 'URL Calibrated Tx power (dBm)', value: 'Pending cipher reader', pending: true },
+                  ]}
+                />
+              )}
             </div>
           </div>
         )}
       </div>
 
-      {/* LAYER 3: Shared Floating 3D Hero Beacon (+ Morphing Organic Halo) during Transition / Scrub */}
-      {inHeroFlight && heroBox && activeBeacon && (
+      {/* Modal Bottom Sheet for Saving / Editing Inventory Metadata */}
+      {editingBeacon && (
+        <SaveBeaconModalSheet
+          beacon={editingBeacon}
+          palette={palette}
+          labelStyle={labelStyle}
+          dark={dark}
+          onSave={(updated) => {
+            if (onSaveBeacon) onSaveBeacon(updated);
+            setEditingBeacon(null);
+          }}
+          onClose={() => setEditingBeacon(null)}
+        />
+      )}
+
+      {/* LAYER 3: Persistent Shared 3D Hero Beacon (+ Morphing Organic Halo) for ALL 0 < p <= 1 */}
+      {showHeroOverlay && heroBox && activeBeacon && (
         <div
           style={{
             position: 'absolute',
-            left: `${heroBox.left}px`,
-            top: `${heroBox.top}px`,
-            width: `${heroBox.width}px`,
-            height: `${heroBox.height}px`,
-            zIndex: 45,
+            inset: 0,
+            zIndex: p >= 0.9 ? 25 : 45,
             pointerEvents: 'none',
+            clipPath: p >= 0.9 ? 'inset(57px 0px 0px 0px)' : 'none',
           }}
         >
-          {layoutId === 'organic' && (
-            <MorphingOrganicHalo
-              fromLobes={organicCardMeta.lobes}
-              fromDip={organicCardMeta.dip}
-              fromRot={organicCardMeta.rotation}
-              fromColor={organicCardMeta.color}
-              toLobes={12}
-              toDip={0.10}
-              toRot={0}
-              toColor={palette.primaryContainer}
-              size={heroBox.haloSize}
-              t={eased}
-            />
-          )}
-          <div style={{ position: 'relative', zIndex: 1 }}>
-            <BeaconCanvas
-              label={activeBeacon.label}
-              labelStyle={labelStyle}
-              pitch={heroBox.pitch}
-              yaw={heroBox.yaw}
-              roll={heroBox.roll}
-              width={Math.max(24, heroBox.width)}
-              height={Math.max(32, heroBox.height)}
-              palette={palette}
-              dark={dark}
-              holeColor={layoutId === 'organic' ? heroBox.haloColor : palette.surfaceContainerLow}
-            />
+          <div
+            style={{
+              position: 'absolute',
+              left: `${heroBox.left}px`,
+              top: `${heroBox.top}px`,
+              width: `${heroBox.width}px`,
+              height: `${heroBox.height}px`,
+              pointerEvents: 'none',
+            }}
+          >
+            {layoutId === 'organic' && (
+              <MorphingOrganicHalo
+                fromLobes={organicCardMeta.lobes}
+                fromDip={organicCardMeta.dip}
+                fromRot={organicCardMeta.rotation}
+                fromColor={organicCardMeta.color}
+                toLobes={12}
+                toDip={0.10}
+                toRot={0}
+                toColor={palette.primaryContainer}
+                size={heroBox.haloSize}
+                t={eased}
+              />
+            )}
+            <div style={{ position: 'relative', zIndex: 1 }}>
+              <BeaconCanvas
+                label={activeBeacon.label}
+                subLabel={`${activeBeacon.building || 'U14'} - ${activeBeacon.floor || 'Floor 1'}`}
+                labelStyle={labelStyle}
+                pitch={heroBox.pitch}
+                yaw={heroBox.yaw}
+                roll={heroBox.roll}
+                width={Math.max(24, heroBox.width)}
+                height={Math.max(32, heroBox.height)}
+                fixedBufferW={290}
+                fixedBufferH={220}
+                palette={palette}
+                dark={dark}
+                holeColor={layoutId === 'organic' ? heroBox.haloColor : palette.surfaceContainerLow}
+              />
+            </div>
           </div>
         </div>
       )}
@@ -1809,10 +2690,10 @@ function BeaconPhoneExperience({
 function App() {
   const [workspaceMode, setWorkspaceMode] = useState('phone'); // 'phone' | 'canvas'
   const [paletteKey, setPaletteKey] = useState('default');
-  const [dark, setDark] = useState(false);
+  const [dark, setDark] = useState(true);
   const [layoutId, setLayoutId] = useState('organic');
   const [viewMode, setViewMode] = useState('list');
-  const [labelStyle, setLabelStyle] = useState('tape');
+  const [labelStyle, setLabelStyle] = useState('printed');
   const [tweaksOpen, setTweaksOpen] = useState(true);
 
   const [beacons, setBeacons] = useState(INITIAL_BEACONS);
@@ -1867,6 +2748,10 @@ function App() {
       setSelectedBeaconId(null);
     });
   }, [animateHeroTo, heroProgress]);
+
+  const handleSaveBeacon = useCallback((updated) => {
+    setBeacons((prev) => prev.map((b) => (b.id === updated.id ? updated : b)));
+  }, []);
 
   const handleScrubChange = (val) => {
     if (animRef.current) {
@@ -1978,6 +2863,7 @@ function App() {
                 heroProgress={heroProgress}
                 onOpenBeacon={handleOpenBeacon}
                 onBackFromDetail={handleBackFromDetail}
+                onSaveBeacon={handleSaveBeacon}
               />
             </div>
           </div>
@@ -2038,6 +2924,7 @@ function App() {
                     heroProgress={heroProgress}
                     onOpenBeacon={handleOpenBeacon}
                     onBackFromDetail={handleBackFromDetail}
+                    onSaveBeacon={handleSaveBeacon}
                     compactScale={0.8}
                   />
                 </div>

@@ -223,8 +223,8 @@
     <div class="ref-row">
       <img src="beacon-ref.jpg" alt="Physical BLE beacon photo">
       <div class="ref-meta">
-        <strong>Sleek Parametric Mesh (27 × 84 × 13 mm)</strong>
-        Y-up meters · Named nodes for Blender &amp; Android Sceneview
+        <strong>Confidex Viking Slim (.blend)</strong>
+        32 × 74.6 × 14.4 mm · Y-up meters · Programmatic tape &amp; label
       </div>
     </div>
 
@@ -239,8 +239,8 @@
     <div>
       <span class="field-label">Label Visual Style</span>
       <div class="seg" id="styleSeg">
-        <button type="button" data-style="tape" class="active">Masking Tape</button>
-        <button type="button" data-style="printed">Printed</button>
+        <button type="button" data-style="tape">Masking Tape</button>
+        <button type="button" data-style="printed" class="active">Printed</button>
         <button type="button" data-style="tonal">Tonal Band</button>
       </div>
     </div>
@@ -277,8 +277,9 @@
     </div>
   </aside>
 
-  <script src="three-d-stage.js"></script>
-  <script src="beacon-3d.js?v=4"></script>
+  <script src="three-d-stage.js?v=18"></script>
+  <script src="viking-slim-mesh.js?v=18"></script>
+  <script src="beacon-3d.js?v=18"></script>
   <script type="module">
     const stage = document.getElementById('stage');
     const { THREE } = await stage.ready;
@@ -301,54 +302,22 @@
 
     const state = {
       label: 'B2',
-      labelStyle: 'tape',
+      subLabel: 'U14 - Floor 1',
+      labelStyle: 'printed',
       paletteKey: 'default',
-      dark: false,
+      dark: true,
       pose: 'tableThreeQuarter', // 'front' | 'tableThreeQuarter'
       customGlbBuffer: null,
       customGlbName: '',
     };
 
-    function createOuterFootprintShape() {
-      const s = new THREE.Shape();
-      const pts = window.Beacon3D.OUTER_BASE;
-      pts.forEach(([x, y], idx) => {
-        const xm = x * 0.001;
-        const ym = y * 0.001;
-        if (idx === 0) s.moveTo(xm, ym);
-        else s.lineTo(xm, ym);
-      });
-      s.closePath();
-
-      for (const sign of [1, -1]) {
-        const hole = new THREE.Path();
-        hole.absarc(0, sign * 0.0344, 0.0031, 0, Math.PI * 2, true);
-        s.holes.push(hole);
-      }
-      return s;
-    }
-
-    function createMainBodyPlateauShape() {
-      // Uses BODY_PLATEAU so ExtrudeGeometry bevel expands neatly out to BODY_MID (26.3mm width)
-      const s = new THREE.Shape();
-      const pts = window.Beacon3D.BODY_PLATEAU;
-      pts.forEach(([x, y], idx) => {
-        const xm = x * 0.001;
-        const ym = y * 0.001;
-        if (idx === 0) s.moveTo(xm, ym);
-        else s.lineTo(xm, ym);
-      });
-      s.closePath();
-      return s;
-    }
-
     function createDecalTexture() {
       const pal = PALETTES[state.paletteKey][state.dark ? 'dark' : 'light'];
-      const src = window.Beacon3D.getLabelDecalCanvas(state.label, state.labelStyle, pal);
+      const src = window.Beacon3D.getLabelDecalCanvas(state.label, state.labelStyle, pal, state.subLabel);
 
       const texCanvas = document.createElement('canvas');
       texCanvas.width = 512;
-      texCanvas.height = 626;
+      texCanvas.height = 592;
       const g = texCanvas.getContext('2d');
 
       if (state.labelStyle === 'tape') {
@@ -510,11 +479,10 @@
       const topNodes = scene ? scene.nodes : json.nodes.map((_, i) => i);
       topNodes.forEach((nIdx) => root.add(buildNode(nIdx)));
 
-      // Normalize scale to ~0.084m tall & center at origin
       const box = new THREE.Box3().setFromObject(root);
       const size = box.getSize(new THREE.Vector3());
       const maxDim = Math.max(size.x, size.y, size.z) || 1;
-      const scaleFactor = 0.084 / maxDim;
+      const scaleFactor = 0.075 / maxDim;
       root.scale.multiplyScalar(scaleFactor);
       const center = new THREE.Box3().setFromObject(root).getCenter(new THREE.Vector3());
       root.position.sub(center);
@@ -525,19 +493,13 @@
     function buildBuiltinBeaconGroup(decalTex) {
       const pal = PALETTES[state.paletteKey][state.dark ? 'dark' : 'light'];
       const group = new THREE.Group();
-      group.name = `ble_beacon_${state.label.toLowerCase()}`;
+      group.name = `viking_slim_${state.label.toLowerCase()}`;
 
       const absWhiteMat = new THREE.MeshStandardMaterial({
         name: 'abs_white_matte',
         color: 0xf4f5f7,
-        roughness: 0.42,
+        roughness: 0.40,
         metalness: 0.04,
-      });
-      const absBevelMat = new THREE.MeshStandardMaterial({
-        name: 'abs_white_bevel',
-        color: 0xebedf1,
-        roughness: 0.32,
-        metalness: 0.05,
       });
       const bandColor = state.labelStyle === 'tape'
         ? 0xf2ede0
@@ -551,95 +513,76 @@
         metalness: 0.02,
       });
 
-      // 1. Slim base shell & flush mounting ears with true circular through-holes
-      const baseGeo = new THREE.ExtrudeGeometry(createOuterFootprintShape(), {
-        depth: 0.0040,
-        bevelEnabled: true,
-        bevelThickness: 0.00045,
-        bevelSize: 0.00035,
-        bevelSegments: 5,
-        curveSegments: 48,
-      });
-      baseGeo.translate(0, 0, -0.0060);
-      const baseMesh = new THREE.Mesh(baseGeo, absWhiteMat);
-      baseMesh.name = 'mounting_ears_base';
-      group.add(baseMesh);
+      // 1. Real Confidex Viking Slim mesh exported from Blender (.blend)
+      const meshSrc = window.VIKING_SLIM_MESH && window.VIKING_SLIM_MESH.three;
+      const hullGeo = new THREE.BufferGeometry();
+      hullGeo.setAttribute('position', new THREE.Float32BufferAttribute(meshSrc.positions, 3));
+      hullGeo.setAttribute('normal', new THREE.Float32BufferAttribute(meshSrc.normals, 3));
+      hullGeo.setIndex(meshSrc.indices);
+      const hullMesh = new THREE.Mesh(hullGeo, absWhiteMat);
+      hullMesh.name = 'hull_viking_slim';
+      group.add(hullMesh);
 
-      // 2. Smooth recessed chamfer lip around each screw hole (no bulky raised donut!)
-      for (const [sign, name] of [[1, 'hole_chamfer_top'], [-1, 'hole_chamfer_bottom']]) {
-        const ringShape = new THREE.Shape();
-        ringShape.absarc(0, 0, 0.0042, 0, Math.PI * 2, false);
-        const hole = new THREE.Path();
-        hole.absarc(0, 0, 0.0031, 0, Math.PI * 2, true);
-        ringShape.holes.push(hole);
-        const collarGeo = new THREE.ExtrudeGeometry(ringShape, {
-          depth: 0.0002,
-          bevelEnabled: true,
-          bevelThickness: 0.00018,
-          bevelSize: 0.00018,
-          bevelSegments: 3,
-          curveSegments: 40,
-        });
-        collarGeo.translate(0, sign * 0.0344, -0.00175);
-        const collarMesh = new THREE.Mesh(collarGeo, absBevelMat);
-        collarMesh.name = name;
-        group.add(collarMesh);
-      }
+      // 2. Programmatic wrap-around center band hugging the exact Viking Slim cross-section
+      const prof = window.VIKING_SLIM_MESH.profile;
+      const bandHalfH = prof.bandHalfH * 0.001;
+      const xPlat = (prof.plateauHalfW + 0.04) * 0.001;
+      const zPlat = (prof.plateauZ + 0.18) * 0.001;
+      const xMid = (prof.midHalfW + 0.10) * 0.001;
+      const zMid = (prof.midZ + 0.05) * 0.001;
+      const xBot = (prof.baseHalfW + 0.12) * 0.001;
+      const zBot = (prof.baseZ + 0.25) * 0.001;
 
-      // 3. Sleek tall raised main body (ExtrudeGeometry bevel expands plateau to exact 26.3mm width)
-      const bodyGeo = new THREE.ExtrudeGeometry(createMainBodyPlateauShape(), {
-        depth: 0.0041,
-        bevelEnabled: true,
-        bevelThickness: 0.0019,
-        bevelSize: 0.00165,
-        bevelSegments: 6,
-        curveSegments: 48,
-      });
-      bodyGeo.translate(0, 0, 0.0004);
-      const bodyMesh = new THREE.Mesh(bodyGeo, absBevelMat);
-      bodyMesh.name = 'hull_main_body';
-      group.add(bodyMesh);
-
-      // 4. Edge-to-edge wrap-around center band flush with hull_main_body (z >= -0.0012m)
       if (state.labelStyle !== 'printed') {
+        const t = 0.00028;
         const wrapShape = new THREE.Shape();
-        wrapShape.moveTo(-0.01325, -0.0012);
-        wrapShape.lineTo(-0.01325, 0.00455);
-        wrapShape.lineTo(-0.01155, 0.00648);
-        wrapShape.lineTo(0.01155, 0.00648);
-        wrapShape.lineTo(0.01325, 0.00455);
-        wrapShape.lineTo(0.01325, -0.0012);
-        wrapShape.lineTo(0.01285, -0.0012);
-        wrapShape.lineTo(0.01285, 0.00435);
-        wrapShape.lineTo(0.01125, 0.00612);
-        wrapShape.lineTo(-0.01125, 0.00612);
-        wrapShape.lineTo(-0.01285, 0.00435);
-        wrapShape.lineTo(-0.01285, -0.0012);
+        wrapShape.moveTo(-xBot, zBot);
+        wrapShape.lineTo(-xMid, zMid);
+        wrapShape.lineTo(-xPlat, zPlat);
+        wrapShape.lineTo(xPlat, zPlat);
+        wrapShape.lineTo(xMid, zMid);
+        wrapShape.lineTo(xBot, zBot);
+        wrapShape.lineTo(xBot - t, zBot);
+        wrapShape.lineTo(xMid - t, zMid - t * 0.4);
+        wrapShape.lineTo(xPlat - t * 0.5, zPlat - t);
+        wrapShape.lineTo(-xPlat + t * 0.5, zPlat - t);
+        wrapShape.lineTo(-xMid + t, zMid - t * 0.4);
+        wrapShape.lineTo(-xBot + t, zBot);
         wrapShape.closePath();
 
         const wrapGeo = new THREE.ExtrudeGeometry(wrapShape, {
-          depth: 0.0320,
+          depth: bandHalfH * 2,
           bevelEnabled: false,
           curveSegments: 16,
         });
-        wrapGeo.rotateX(-Math.PI / 2);
-        wrapGeo.translate(0, -0.0160, 0);
+        wrapGeo.rotateX(Math.PI / 2);
+        wrapGeo.translate(0, bandHalfH, 0);
         const wrapMesh = new THREE.Mesh(wrapGeo, bandMat);
         wrapMesh.name = 'center_label_band';
         group.add(wrapMesh);
       }
 
-      // 5. Full-width edge-to-edge plateau decal plane (minimal horizontal side padding)
+      // 3. Programmatic dynamic label decal on top plateau
       const decalMat = new THREE.MeshStandardMaterial({
         name: 'label_decal_material',
         map: decalTex,
         roughness: state.labelStyle === 'tape' ? 0.84 : 0.36,
         metalness: 0.02,
+        polygonOffset: true,
+        polygonOffsetFactor: -4,
+        polygonOffsetUnits: -4,
+        side: THREE.DoubleSide,
       });
-      const decalGeo = new THREE.PlaneGeometry(0.0230, 0.0318);
+      const decalW = (prof.plateauHalfW * 2 - 0.16) * 0.001;
+      const decalH = (prof.bandHalfH * 2 - 0.24) * 0.001;
+      const decalGeo = new THREE.PlaneGeometry(decalW, decalH);
       const decalMesh = new THREE.Mesh(decalGeo, decalMat);
       decalMesh.name = 'label_face_decal';
-      decalMesh.position.set(0, 0, state.labelStyle === 'printed' ? 0.00642 : 0.00656);
+      decalMesh.position.set(
+        0,
+        0,
+        state.labelStyle === 'printed' ? (prof.plateauZ + 0.08) * 0.001 : (prof.plateauZ + 0.34) * 0.001
+      );
       group.add(decalMesh);
 
       return group;
@@ -708,6 +651,16 @@
     function rebuildModel(preserveCamera = false) {
       const camPos = stage._camera ? stage._camera.position.clone() : null;
       const target = stage._controls ? stage._controls.target.clone() : null;
+      const pal = PALETTES[state.paletteKey][state.dark ? 'dark' : 'light'];
+      if (stage.setSoftwareViewOpts) {
+        stage.setSoftwareViewOpts({
+          label: state.label,
+          subLabel: state.subLabel,
+          labelStyle: state.labelStyle,
+          themePalette: pal,
+          dark: state.dark,
+        });
+      }
       stage.setAttribute('name', `ble_beacon_${(state.label || 'b2').toLowerCase()}`);
 
       const decalTex = createDecalTexture();
@@ -741,6 +694,15 @@
       document.documentElement.style.setProperty('--primary-container', pal.primaryContainer);
       document.documentElement.style.setProperty('--on-primary-container', pal.onPrimaryContainer);
       stage.style.setProperty('--stage-bg', pal.bg);
+      if (stage.setSoftwareViewOpts) {
+        stage.setSoftwareViewOpts({
+          label: state.label,
+          subLabel: state.subLabel,
+          labelStyle: state.labelStyle,
+          themePalette: pal,
+          dark: state.dark,
+        });
+      }
       document.getElementById('themeBtn').textContent = state.dark ? 'Light' : 'Dark';
     }
 
