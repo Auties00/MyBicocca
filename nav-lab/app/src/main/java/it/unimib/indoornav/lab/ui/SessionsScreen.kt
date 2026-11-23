@@ -47,6 +47,7 @@ import androidx.core.content.FileProvider
 import it.unimib.indoornav.lab.data.SessionItem
 import it.unimib.indoornav.lab.data.SessionRepository
 import it.unimib.indoornav.lab.format.QuickLookStatus
+import it.unimib.indoornav.lab.ui.theme.LabStatusColors
 import kotlinx.coroutines.launch
 import java.io.File
 import java.util.Locale
@@ -210,9 +211,9 @@ private fun SessionCard(
 ) {
     var expanded by remember { mutableStateOf(false) }
     val statusColor = when (item.health.status) {
-        QuickLookStatus.GREEN -> Color(0xFF2E7D32)
-        QuickLookStatus.AMBER -> Color(0xFFED6C02)
-        QuickLookStatus.RED -> Color(0xFFC62828)
+        QuickLookStatus.GREEN -> LabStatusColors.Green
+        QuickLookStatus.AMBER -> LabStatusColors.Amber
+        QuickLookStatus.RED -> LabStatusColors.Red
     }
 
     ElevatedCard(modifier = Modifier.fillMaxWidth()) {

@@ -5,7 +5,9 @@ import android.widget.Toast
 import android.view.KeyEvent
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,8 +15,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FiberManualRecord
 import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.Inventory2
 import androidx.compose.material.icons.filled.Radar
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -37,6 +41,8 @@ import androidx.navigation.compose.rememberNavController
 import it.unimib.indoornav.lab.data.DeviceCapabilities
 import it.unimib.indoornav.lab.data.WifiThrottleCheckState
 import it.unimib.indoornav.lab.format.ExperimentTemplate
+import it.unimib.indoornav.lab.inventory.BeaconGrouping
+import it.unimib.indoornav.lab.ui.InventoryScreen
 import it.unimib.indoornav.lab.ui.RecordingSummarySheet
 import it.unimib.indoornav.lab.ui.LiveRecordingScreen
 import it.unimib.indoornav.lab.ui.PermissionsHelper
@@ -64,6 +70,10 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.dark(0xFF0B0808.toInt()),
+            navigationBarStyle = SystemBarStyle.dark(0xFF140A0C.toInt()),
+        )
 
         setContent {
             LabTheme {
@@ -116,15 +126,24 @@ class MainActivity : ComponentActivity() {
                 val currentRoute = backStack?.destination?.route ?: "record"
 
                 LaunchedEffect(currentRoute) {
-                    if (currentRoute != "survey") {
+                    if (currentRoute != "survey" && currentRoute != "inventory") {
                         app.surveyManager.release()
+                    }
+                }
+
+                LaunchedEffect(surveyState.allBeacons) {
+                    if (surveyState.allBeacons.isNotEmpty()) {
+                        val grouped = BeaconGrouping.groupByPhysicalBeacon(surveyState.allBeacons)
+                        app.beaconInventoryRepository.updateLiveTelemetry(grouped)
                     }
                 }
 
                 Scaffold(
                     bottomBar = {
                         if (!recordingState.isRecording) {
-                            NavigationBar {
+                            NavigationBar(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                            ) {
                                 NavigationBarItem(
                                     selected = currentRoute == "record",
                                     onClick = {
@@ -144,6 +163,16 @@ class MainActivity : ComponentActivity() {
                                     },
                                     icon = { Icon(Icons.Default.Radar, contentDescription = null) },
                                     label = { Text("Survey") },
+                                )
+                                NavigationBarItem(
+                                    selected = currentRoute == "inventory",
+                                    onClick = {
+                                        navController.navigate("inventory") {
+                                            popUpTo("record")
+                                        }
+                                    },
+                                    icon = { Icon(Icons.Default.Inventory2, contentDescription = null) },
+                                    label = { Text("Inventory") },
                                 )
                                 NavigationBarItem(
                                     selected = currentRoute == "sessions",
@@ -211,7 +240,18 @@ class MainActivity : ComponentActivity() {
                                         surveyState = surveyState,
                                         config = config,
                                         surveyManager = app.surveyManager,
+                                        inventoryRepository = app.beaconInventoryRepository,
                                         onUpdateConfig = { app.preferences.update(it) },
+                                    )
+                                }
+                                composable("inventory") {
+                                    InventoryScreen(
+                                        surveyState = surveyState,
+                                        config = config,
+                                        isRecording = recordingState.isRecording,
+                                        surveyManager = app.surveyManager,
+                                        inventoryRepository = app.beaconInventoryRepository,
+                                        sessionRepository = app.sessionRepository,
                                     )
                                 }
                                 composable("sessions") {

@@ -3,6 +3,7 @@ package it.unimib.indoornav.lab
 import android.app.Application
 import it.unimib.indoornav.lab.data.LabPreferences
 import it.unimib.indoornav.lab.data.SessionRepository
+import it.unimib.indoornav.lab.inventory.BeaconInventoryRepository
 import it.unimib.indoornav.lab.service.RecordingCoordinator
 import it.unimib.indoornav.lab.service.VoicePrompter
 import it.unimib.indoornav.lab.survey.SurveyManager
@@ -11,6 +12,8 @@ class LabApp : Application() {
     lateinit var preferences: LabPreferences
         private set
     lateinit var sessionRepository: SessionRepository
+        private set
+    lateinit var beaconInventoryRepository: BeaconInventoryRepository
         private set
     lateinit var recordingCoordinator: RecordingCoordinator
         private set
@@ -23,6 +26,7 @@ class LabApp : Application() {
         super.onCreate()
         preferences = LabPreferences(this)
         sessionRepository = SessionRepository(this)
+        beaconInventoryRepository = BeaconInventoryRepository(this)
         recordingCoordinator = RecordingCoordinator(this)
         surveyManager = SurveyManager(this, preferences, sessionRepository)
         voicePrompter = VoicePrompter(this)

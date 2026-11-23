@@ -35,6 +35,8 @@ import it.unimib.indoornav.lab.format.CsvCodec
 import it.unimib.indoornav.lab.format.ProjectConstants
 import it.unimib.indoornav.lab.format.StreamSpec
 import it.unimib.indoornav.lab.format.SurveyCsvHeaders
+import it.unimib.indoornav.lab.inventory.EddystoneTlmExtras
+import it.unimib.indoornav.lab.inventory.EddystoneTlmExtrasParser
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -72,6 +74,9 @@ data class BeaconInventoryItem(
     val tlmTempC: Double?,
     val advHex: String,
     val lastSeenMs: Long,
+    val interArrivalSamplesMs: List<Long> = emptyList(),
+    val tlmAdvCount: Long? = null,
+    val tlmUptimeSec: Double? = null,
 )
 
 data class WifiSurveyAp(
@@ -110,8 +115,10 @@ data class ConnectedApEntry(
 
 data class SurveyUiState(
     val beaconScanning: Boolean = false,
+    val beaconScanPending: Boolean = false,
     val minRssiFilter: Int = -70,
     val beacons: List<BeaconInventoryItem> = emptyList(),
+    val allBeacons: List<BeaconInventoryItem> = emptyList(),
     val otherBlePerSec: Int = 0,
     val wifiScanning: Boolean = false,
     val wifiRttSupported: Boolean = false,
@@ -156,15 +163,27 @@ class SurveyManager(
         var txPowerAdv: Int?,
         var tlmBattMv: Int?,
         var tlmTempC: Double?,
+        var tlmAdvCount: Long?,
+        var tlmUptimeSec: Double?,
         var advHex: String,
     ) {
         var currentRssi: Int = -100
         var lastSeenMs: Long = 0L
+        var prevPacketMs: Long = 0L
         val rssiSamples = ArrayDeque<Int>()
         val packetTimestampsMs = ArrayDeque<Long>()
+        val interArrivalSamplesMs = ArrayDeque<Long>()
 
         fun addRssi(rssi: Int, nowMs: Long) {
             lastSeenMs = nowMs
+            if (prevPacketMs > 0L) {
+                val delta = nowMs - prevPacketMs
+                if (delta > 0L) {
+                    interArrivalSamplesMs.addLast(delta)
+                    if (interArrivalSamplesMs.size > 31) interArrivalSamplesMs.removeFirst()
+                }
+            }
+            prevPacketMs = nowMs
             // The packet still counts towards the rate; its RSSI of 127 means "not available".
             if (rssi != BleCapture.RSSI_UNAVAILABLE) {
                 currentRssi = rssi
@@ -193,13 +212,24 @@ class SurveyManager(
         }
     }
 
+    private data class CachedTlm(
+        val battMv: Int?,
+        val tempC: Double?,
+        val advCount: Long?,
+        val uptimeSec: Double?,
+    )
+
     private val beaconTrackers = ConcurrentHashMap<String, MutableBeaconTracker>()
     private val lastUidByAddr = ConcurrentHashMap<String, String>()
-    private val tlmByAddr = ConcurrentHashMap<String, Pair<Int?, Double?>>()
+    private val tlmByAddr = ConcurrentHashMap<String, CachedTlm>()
     private var otherBleCounter = 0
 
     private var bleScanner: BluetoothLeScanner? = null
     private var beaconRefreshJob: Job? = null
+    private var pendingBeaconStartJob: Job? = null
+    private var manualBeaconScanWanted = false
+    private var inventoryTabActive = false
+    private var lastBeaconScanStartElapsedMs = 0L
     private var wifiAutoJob: Job? = null
     private var rttJob: Job? = null
     private var connectedApJob: Job? = null
@@ -242,16 +272,79 @@ class SurveyManager(
         publishBeaconSnapshot()
     }
 
-    @SuppressLint("MissingPermission")
+    fun setInventoryTabActive(active: Boolean, isRecording: Boolean) {
+        inventoryTabActive = active
+        syncBeaconScanning(isRecording)
+    }
+
     fun startBeaconInventory() {
+        manualBeaconScanWanted = true
+        syncBeaconScanning(isRecording = false)
+    }
+
+    fun stopBeaconInventory() {
+        manualBeaconScanWanted = false
+        syncBeaconScanning(isRecording = false)
+    }
+
+    private fun syncBeaconScanning(isRecording: Boolean) {
+        if (isRecording) {
+            inventoryTabActive = false
+            manualBeaconScanWanted = false
+            stopBeaconScanInternal()
+            return
+        }
+        val wantsScan = inventoryTabActive || manualBeaconScanWanted
+        if (!wantsScan) {
+            stopBeaconScanInternal()
+            return
+        }
+        if (_state.value.beaconScanning) {
+            pendingBeaconStartJob?.cancel()
+            pendingBeaconStartJob = null
+            if (_state.value.beaconScanPending) {
+                _state.value = _state.value.copy(beaconScanPending = false)
+            }
+            return
+        }
+
+        val elapsed = SystemClock.elapsedRealtime() - lastBeaconScanStartElapsedMs
+        val remainingMs = if (lastBeaconScanStartElapsedMs == 0L) 0L else MIN_BEACON_SCAN_RESTART_MS - elapsed
+        if (remainingMs <= 0L) {
+            pendingBeaconStartJob?.cancel()
+            pendingBeaconStartJob = null
+            startBeaconScanInternal()
+        } else if (pendingBeaconStartJob?.isActive != true) {
+            _state.value = _state.value.copy(beaconScanPending = true)
+            pendingBeaconStartJob = scope.launch {
+                delay(remainingMs)
+                if (inventoryTabActive || manualBeaconScanWanted) {
+                    startBeaconScanInternal()
+                } else {
+                    _state.value = _state.value.copy(beaconScanPending = false)
+                }
+            }
+        }
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun startBeaconScanInternal() {
         if (_state.value.beaconScanning) return
         val adapter = bluetoothManager?.adapter
         if (adapter == null || !adapter.isEnabled || !hasBlePermission()) {
-            setStatus("Bluetooth off or permission missing")
+            manualBeaconScanWanted = false
+            _state.value = _state.value.copy(
+                beaconScanPending = false,
+                statusMessage = "Bluetooth off or permission missing",
+            )
             return
         }
         val scanner = adapter.bluetoothLeScanner ?: run {
-            setStatus("BLE scanner unavailable")
+            manualBeaconScanWanted = false
+            _state.value = _state.value.copy(
+                beaconScanPending = false,
+                statusMessage = "BLE scanner unavailable",
+            )
             return
         }
         bleScanner = scanner
@@ -270,9 +363,18 @@ class SurveyManager(
 
         runCatching {
             scanner.startScan(emptyList(), settings, bleScanCallback)
-            _state.value = _state.value.copy(beaconScanning = true, statusMessage = null)
+            lastBeaconScanStartElapsedMs = SystemClock.elapsedRealtime()
+            _state.value = _state.value.copy(
+                beaconScanning = true,
+                beaconScanPending = false,
+                statusMessage = null,
+            )
         }.onFailure {
-            setStatus("Failed to start BLE inventory: ${it.message}")
+            manualBeaconScanWanted = false
+            _state.value = _state.value.copy(
+                beaconScanPending = false,
+                statusMessage = "Failed to start BLE inventory: ${it.message}",
+            )
             return
         }
 
@@ -287,12 +389,19 @@ class SurveyManager(
     }
 
     @SuppressLint("MissingPermission")
-    fun stopBeaconInventory() {
-        if (!_state.value.beaconScanning) return
+    private fun stopBeaconScanInternal() {
+        pendingBeaconStartJob?.cancel()
+        pendingBeaconStartJob = null
+        if (!_state.value.beaconScanning) {
+            if (_state.value.beaconScanPending) {
+                _state.value = _state.value.copy(beaconScanPending = false)
+            }
+            return
+        }
         beaconRefreshJob?.cancel()
         beaconRefreshJob = null
         runCatching { bleScanner?.stopScan(bleScanCallback) }
-        _state.value = _state.value.copy(beaconScanning = false)
+        _state.value = _state.value.copy(beaconScanning = false, beaconScanPending = false)
     }
 
     private fun processBleResult(result: ScanResult) {
@@ -321,22 +430,32 @@ class SurveyManager(
                         canonicalId = id,
                         addr = addr,
                         txPowerAdv = parsed.txPowerAdv,
-                        tlmBattMv = tlm?.first,
-                        tlmTempC = tlm?.second,
+                        tlmBattMv = tlm?.battMv,
+                        tlmTempC = tlm?.tempC,
+                        tlmAdvCount = tlm?.advCount,
+                        tlmUptimeSec = tlm?.uptimeSec,
                         advHex = parsed.advHex,
                     )
                 }
                 tracker.txPowerAdv = parsed.txPowerAdv
                 tracker.advHex = parsed.advHex
                 if (tlm != null) {
-                    tracker.tlmBattMv = tlm.first
-                    tracker.tlmTempC = tlm.second
+                    tracker.tlmBattMv = tlm.battMv
+                    tracker.tlmTempC = tlm.tempC
+                    tracker.tlmAdvCount = tlm.advCount
+                    tracker.tlmUptimeSec = tlm.uptimeSec
                 }
                 tracker.addRssi(result.rssi, nowMs)
             }
             BeaconFrameType.ED_TLM -> {
+                val tlmExtras: EddystoneTlmExtras? = EddystoneTlmExtrasParser.parse(rawBytes)
                 if (addr.isNotEmpty()) {
-                    tlmByAddr[addr] = parsed.tlmBattMv to parsed.tlmTempC
+                    tlmByAddr[addr] = CachedTlm(
+                        battMv = parsed.tlmBattMv,
+                        tempC = parsed.tlmTempC,
+                        advCount = tlmExtras?.advCount,
+                        uptimeSec = tlmExtras?.uptimeSec,
+                    )
                 }
                 val id = lastUidByAddr[addr] ?: ""
                 val key = "${parsed.frameType.wireName}:$addr"
@@ -349,18 +468,26 @@ class SurveyManager(
                         txPowerAdv = null,
                         tlmBattMv = parsed.tlmBattMv,
                         tlmTempC = parsed.tlmTempC,
+                        tlmAdvCount = tlmExtras?.advCount,
+                        tlmUptimeSec = tlmExtras?.uptimeSec,
                         advHex = parsed.advHex,
                     )
                 }
                 tracker.canonicalId = id
                 tracker.tlmBattMv = parsed.tlmBattMv
                 tracker.tlmTempC = parsed.tlmTempC
+                tracker.tlmAdvCount = tlmExtras?.advCount ?: tracker.tlmAdvCount
+                tracker.tlmUptimeSec = tlmExtras?.uptimeSec ?: tracker.tlmUptimeSec
                 tracker.advHex = parsed.advHex
                 tracker.addRssi(result.rssi, nowMs)
 
                 beaconTrackers.values.filter { it.addr == addr && it.frameType == BeaconFrameType.ED_UID }.forEach {
                     it.tlmBattMv = parsed.tlmBattMv
                     it.tlmTempC = parsed.tlmTempC
+                    if (tlmExtras != null) {
+                        it.tlmAdvCount = tlmExtras.advCount
+                        it.tlmUptimeSec = tlmExtras.uptimeSec
+                    }
                 }
             }
             BeaconFrameType.IBEACON, BeaconFrameType.ALTBEACON, BeaconFrameType.VENDOR -> {
@@ -375,6 +502,8 @@ class SurveyManager(
                         txPowerAdv = parsed.txPowerAdv,
                         tlmBattMv = null,
                         tlmTempC = null,
+                        tlmAdvCount = null,
+                        tlmUptimeSec = null,
                         advHex = parsed.advHex,
                     )
                 }
@@ -390,9 +519,8 @@ class SurveyManager(
         val minRssi = _state.value.minRssiFilter
         val buildingCode = preferences.config.value.buildingCode
 
-        val list = beaconTrackers.values
+        val allList = beaconTrackers.values
             .filter { nowMs - it.lastSeenMs <= 30_000L }
-            .filter { it.currentRssi >= minRssi }
             .map { t ->
                 val label = if (t.canonicalId.isNotEmpty()) {
                     ProjectConstants.matchProjectLabel(t.canonicalId, buildingCode)
@@ -413,12 +541,18 @@ class SurveyManager(
                     tlmTempC = t.tlmTempC,
                     advHex = t.advHex,
                     lastSeenMs = t.lastSeenMs,
+                    interArrivalSamplesMs = t.interArrivalSamplesMs.toList(),
+                    tlmAdvCount = t.tlmAdvCount,
+                    tlmUptimeSec = t.tlmUptimeSec,
                 )
             }
             .sortedByDescending { it.currentRssi }
 
+        val filteredList = allList.filter { it.currentRssi >= minRssi }
+
         _state.value = _state.value.copy(
-            beacons = list,
+            beacons = filteredList,
+            allBeacons = allList,
             otherBlePerSec = otherBleCounter,
         )
     }
@@ -855,7 +989,9 @@ class SurveyManager(
     fun release() {
         throttleJob?.cancel()
         throttleJob = null
-        stopBeaconInventory()
+        inventoryTabActive = false
+        manualBeaconScanWanted = false
+        stopBeaconScanInternal()
         toggleWifiContinuousScan(false)
         toggleRttRanging(false, false)
         toggleConnectedApLogging(false)
@@ -955,5 +1091,10 @@ class SurveyManager(
 
     private fun setStatus(msg: String) {
         _state.value = _state.value.copy(statusMessage = msg)
+    }
+
+    private companion object {
+        // Android throttles >5 BLE scan starts per 30 s, so tab switches are debounced to >=7 s.
+        const val MIN_BEACON_SCAN_RESTART_MS = 7_000L
     }
 }

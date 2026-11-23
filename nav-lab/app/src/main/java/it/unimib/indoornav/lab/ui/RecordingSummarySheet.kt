@@ -1,6 +1,5 @@
 package it.unimib.indoornav.lab.ui
 
-import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -51,6 +50,7 @@ import it.unimib.indoornav.lab.format.SessionHealthReport
 import it.unimib.indoornav.lab.format.SessionManifest
 import it.unimib.indoornav.lab.format.SetupManifestInfo
 import it.unimib.indoornav.lab.service.RecordingSummary
+import it.unimib.indoornav.lab.ui.theme.LabStatusColors
 import it.unimib.indoornav.lab.ui.theme.LabTheme
 import java.io.File
 import java.util.Locale
@@ -201,9 +201,9 @@ private fun RecordingSummaryContent(
 private fun HealthCard(summary: RecordingSummary) {
     val health = summary.health
     val (color, word) = when (health.status) {
-        QuickLookStatus.GREEN -> Color(0xFF2E7D32) to "Looks good"
-        QuickLookStatus.AMBER -> Color(0xFFED6C02) to "Usable, check the notes below"
-        QuickLookStatus.RED -> Color(0xFFC62828) to "Problem"
+        QuickLookStatus.GREEN -> LabStatusColors.Green to "Looks good"
+        QuickLookStatus.AMBER -> LabStatusColors.Amber to "Usable, check the notes below"
+        QuickLookStatus.RED -> LabStatusColors.Red to "Problem"
     }
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -276,16 +276,8 @@ private fun previewSummary(status: QuickLookStatus, findings: List<String>) = Re
 
 @Preview(showBackground = true, heightDp = 900)
 @Composable
-private fun RecordingSummaryGreenPreview() {
+private fun RecordingSummaryAmberPreview() {
     LabTheme {
-        Surface { RecordingSummaryContent(previewSummary(QuickLookStatus.GREEN, emptyList()), {}, {}, {}) }
-    }
-}
-
-@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES, heightDp = 900)
-@Composable
-private fun RecordingSummaryAmberDarkPreview() {
-    LabTheme(darkTheme = true) {
         Surface {
             RecordingSummaryContent(
                 previewSummary(QuickLookStatus.AMBER, listOf("ble gap 3000 ms (>2s)", "Session did not stop cleanly")),
