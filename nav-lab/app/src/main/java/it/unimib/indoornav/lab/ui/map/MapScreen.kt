@@ -86,18 +86,19 @@ private const val MIN_PX_PER_M = 4f
 private const val MAX_PX_PER_M = 400f
 
 /**
- * Where the plan sits on screen. In a portrait view the building's long axis (x) runs down the screen,
- * so a 106 x 13 m floor fills the phone instead of being a thin strip.
+ * Where the plan sits on screen. In a portrait view the plan is turned a quarter clockwise, so the
+ * building's long axis (x) runs down the screen and a 106 x 13 m floor fills the phone; y then runs left
+ * to right. It is a turn, not a mirror: rooms keep their real left/right order.
  */
 private data class PlanView(val rotated: Boolean, val pxPerM: Float, val origin: Offset) {
     fun toScreen(plan: FloorPlan, x: Float, y: Float): Offset = if (rotated) {
-        Offset(origin.x + (plan.y1 - y) * pxPerM, origin.y + (x - plan.x0) * pxPerM)
+        Offset(origin.x + (y - plan.y0) * pxPerM, origin.y + (x - plan.x0) * pxPerM)
     } else {
         Offset(origin.x + (x - plan.x0) * pxPerM, origin.y + (plan.y1 - y) * pxPerM)
     }
 
     fun toPlan(plan: FloorPlan, p: Offset): Offset = if (rotated) {
-        Offset(plan.x0 + (p.y - origin.y) / pxPerM, plan.y1 - (p.x - origin.x) / pxPerM)
+        Offset(plan.x0 + (p.y - origin.y) / pxPerM, plan.y0 + (p.x - origin.x) / pxPerM)
     } else {
         Offset(plan.x0 + (p.x - origin.x) / pxPerM, plan.y1 - (p.y - origin.y) / pxPerM)
     }
@@ -521,9 +522,10 @@ private fun DrawScope.drawPlan(plan: FloorPlan, v: PlanView, walls: Color, openi
     withTransform({
         translate(v.origin.x, v.origin.y)
         if (v.rotated) {
+            // Plan y points up and screen y down, so a quarter turn plus that flip swaps the axes.
             rotate(90f, Offset.Zero)
-            scale(v.pxPerM, v.pxPerM, Offset.Zero)
-            translate(-plan.x0, -plan.y1)
+            scale(v.pxPerM, -v.pxPerM, Offset.Zero)
+            translate(-plan.x0, -plan.y0)
         } else {
             scale(v.pxPerM, -v.pxPerM, Offset.Zero)
             translate(-plan.x0, -plan.y1)
