@@ -57,7 +57,13 @@ private const val CARD_HALO_FRACTION = 0.86f
 // The model is always laid out at the detail size and scaled, so a frame rendered for one size serves all.
 private val MODEL_LAYOUT_SIZE = 240.dp
 
-internal data class HeroLook(val label: String, val subLabel: String, val online: Boolean, val cardShape: SmoothCookieShape)
+internal data class HeroLook(
+    val label: String,
+    val subLabel: String,
+    val online: Boolean,
+    val cardShape: SmoothCookieShape,
+    val detailHaloRotation: Float,
+)
 
 /**
  * Where each beacon's halo sits on its card and in the detail screen, and the beacon flying between
@@ -185,9 +191,10 @@ fun BeaconHero(
     inDetail: Boolean,
     size: Dp,
     modifier: Modifier = Modifier,
+    haloRotation: Float = 0f,
 ) {
     val hero = LocalBeaconHero.current
-    val look = HeroLook(label, subLabel, online, cardShape)
+    val look = HeroLook(label, subLabel, online, cardShape, haloRotation)
     if (hero != null) SideEffect { hero.looks[tileKey] = look }
     val hidden = hero?.isFlying(tileKey) == true
     Box(
@@ -216,7 +223,10 @@ private fun HeroVisual(look: HeroLook, progress: Float, modifier: Modifier) {
         OrganicBeaconHalo(
             online = look.online,
             shape = shape,
-            modifier = Modifier.fillMaxSize(CARD_HALO_FRACTION + (1f - CARD_HALO_FRACTION) * progress),
+            modifier = Modifier
+                .fillMaxSize(CARD_HALO_FRACTION + (1f - CARD_HALO_FRACTION) * progress)
+                // The detail halo turns as the page scrolls; in flight it unwinds towards the card.
+                .graphicsLayer { rotationZ = look.detailHaloRotation * progress },
         )
         BeaconModelView(
             label = look.label,

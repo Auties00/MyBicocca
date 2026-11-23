@@ -58,6 +58,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -77,6 +79,12 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import kotlinx.coroutines.launch
+
+private val STAGE_HEIGHT = 285.dp
+private val HERO_SIZE = 240.dp
+private val HERO_TOP = 16.dp
+private val TITLE_FADE = 48.dp
+private const val HALO_DEGREES_PER_DP = 0.25f
 
 private enum class DetailTab(val title: String, val dotColor: Color?) {
     GENERAL("General", null),
@@ -122,6 +130,12 @@ fun BeaconDetailOverlay(
     val tabScrollState = rememberScrollState()
     val subLabel = listOf(tile.building, tile.floor).filter { it.isNotBlank() }.joinToString(" - ")
     val topTitle = tile.alphanumericCode.ifBlank { tile.displayLabel }
+    val scrollState = rememberScrollState()
+    val density = LocalDensity.current
+    // The label joins the title once the top half of the model has scrolled under the bar.
+    val titleFadeStartPx = with(density) { (HERO_TOP + HERO_SIZE / 2).toPx() }
+    val titleFadePx = with(density) { TITLE_FADE.toPx() }
+    val haloRotation = scrollState.value / density.density * HALO_DEGREES_PER_DP
 
     Surface(
         modifier = modifier.fillMaxSize(),
@@ -141,12 +155,28 @@ fun BeaconDetailOverlay(
                     }
                 },
                 title = {
-                    Text(
-                        text = topTitle,
-                        fontWeight = FontWeight.Bold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        Text(
+                            text = topTitle,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        if (topTitle != tile.displayLabel) {
+                            Text(
+                                text = tile.displayLabel,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier.graphicsLayer {
+                                    alpha = ((scrollState.value - titleFadeStartPx) / titleFadePx).coerceIn(0f, 1f)
+                                },
+                            )
+                        }
+                    }
                 },
                 actions = {
                     Box {
@@ -204,15 +234,16 @@ fun BeaconDetailOverlay(
                 },
             )
 
+            Box(modifier = Modifier.weight(1f)) {
             Column(
                 modifier = Modifier
-                    .weight(1f)
-                    .verticalScroll(rememberScrollState()),
+                    .fillMaxSize()
+                    .verticalScroll(scrollState),
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(285.dp)
+                        .height(STAGE_HEIGHT)
                         .background(
                             Brush.verticalGradient(
                                 listOf(
@@ -229,25 +260,11 @@ fun BeaconDetailOverlay(
                         online = tile.isOnline,
                         cardShape = OrganicShapes.cardShapeFor(tile.tileKey),
                         inDetail = true,
-                        size = 240.dp,
+                        size = HERO_SIZE,
+                        haloRotation = haloRotation,
                         modifier = Modifier
-                            .align(Alignment.Center)
-                            .padding(bottom = 12.dp),
-                    )
-
-                    CornerPill(
-                        text = tile.building.ifBlank { "—" },
-                        highlighted = tile.building.isNotBlank(),
-                        modifier = Modifier
-                            .align(Alignment.TopStart)
-                            .padding(start = 12.dp, top = 10.dp),
-                    )
-                    CornerPill(
-                        text = tile.floor.ifBlank { if (tile.isSaved) "—" else "Unsaved" },
-                        highlighted = false,
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .padding(end = 12.dp, top = 10.dp),
+                            .align(Alignment.TopCenter)
+                            .padding(top = HERO_TOP),
                     )
 
                     Row(
@@ -355,6 +372,23 @@ fun BeaconDetailOverlay(
                         }
                     }
                 }
+            }
+
+            // Outside the scrolling column, so they stay right under the bar while the page scrolls.
+            CornerPill(
+                text = tile.building.ifBlank { "—" },
+                highlighted = tile.building.isNotBlank(),
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(start = 12.dp, top = 10.dp),
+            )
+            CornerPill(
+                text = tile.floor.ifBlank { if (tile.isSaved) "—" else "Unsaved" },
+                highlighted = false,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(end = 12.dp, top = 10.dp),
+            )
             }
         }
     }
