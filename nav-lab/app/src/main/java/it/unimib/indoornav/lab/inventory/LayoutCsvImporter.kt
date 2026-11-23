@@ -7,7 +7,8 @@ import java.util.UUID
 /**
  * Reads a labtools venue layout (`layouts.csv`: layout, label, beacon_id, alt_ids, floor, x, y, z, wall,
  * tx_power, interval_ms, frames, status) into inventory entries. Rows without a layout are planned IDs,
- * not physical beacons, and excluded rows are other people's devices; both are skipped.
+ * not physical beacons, and excluded rows are other people's devices; both are skipped. Spares are
+ * the home test set and are labelled H1, H2, ... in file order instead of by instance.
  */
 object LayoutCsvImporter {
     // Our numbering: the Confidex instance A079 is B1, A07A is B2, up to A091 = B25.
@@ -19,6 +20,7 @@ object LayoutCsvImporter {
         val header = lines.first().split(',').map { it.trim().lowercase(Locale.ROOT) }
         fun col(row: List<String>, name: String) = header.indexOf(name).let { if (it in row.indices) row[it].trim() else "" }
 
+        var spareCount = 0
         return lines.drop(1).mapNotNull { line ->
             val row = line.split(',')
             val id = col(row, "beacon_id")
@@ -33,9 +35,9 @@ object LayoutCsvImporter {
                 canonicalKey = id,
                 macAddress = "",
                 linkedKeys = (listOf(id) + col(row, "alt_ids").split(';')).map { it.trim() }.filter { it.isNotEmpty() },
-                label = labelFor(code) ?: code,
+                label = if (status == "spare") "H${++spareCount}" else labelFor(code) ?: code,
                 alphanumericCode = code,
-                building = building,
+                building = if (status == "spare") "Home" else building,
                 floor = if (floor.isNotEmpty()) "Floor $floor" else "",
                 positionDescription = positionOf(row = row, col = ::col, status = status),
                 seenFrameTypes = frames.mapNotNull { frameOf(it) }.toSet(),

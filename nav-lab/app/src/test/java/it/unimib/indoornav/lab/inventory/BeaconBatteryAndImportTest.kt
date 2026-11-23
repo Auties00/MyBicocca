@@ -56,7 +56,7 @@ class BeaconBatteryAndImportTest {
         val entries = LayoutCsvImporter.parse(csv, building = "U14", nowMs = 1L)
 
         assertEquals(listOf("A07D", "A084", "A08C"), entries.map { it.alphanumericCode })
-        assertEquals(listOf("B5", "B12", "B20"), entries.map { it.label })
+        assertEquals(listOf("B5", "B12", "H1"), entries.map { it.label })
         val mounted = entries[0]
         assertEquals("Floor 1", mounted.floor)
         assertEquals("x 19.31 m, y 6.16 m, lab-side wall", mounted.positionDescription)

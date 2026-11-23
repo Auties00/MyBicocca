@@ -1,5 +1,10 @@
 package it.unimib.indoornav.lab.ui
 
+import it.unimib.indoornav.lab.inventory.NaturalOrderComparator
+import it.unimib.indoornav.lab.ui.components.BuildingChips
+import it.unimib.indoornav.lab.ui.components.BeaconFilterField
+import it.unimib.indoornav.lab.inventory.BeaconFilter
+import androidx.compose.runtime.saveable.rememberSaveable
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
 import it.unimib.indoornav.lab.inventory.LayoutCsvImporter
@@ -142,9 +147,19 @@ fun InventoryScreen(
     var sortOption by remember { mutableStateOf(InventorySortOption.AVAILABILITY_THEN_LABEL) }
     var detailTileKey by remember { mutableStateOf<String?>(null) }
     var editingTile by remember { mutableStateOf<ResolvedBeaconTile?>(null) }
+    var filterQuery by rememberSaveable { mutableStateOf("") }
+    var filterRegex by rememberSaveable { mutableStateOf(false) }
+    var buildingFilter by rememberSaveable { mutableStateOf<String?>(null) }
 
     val sortedTiles = remember(resolvedTiles, sortOption) {
         BeaconGrouping.sortInventoryTiles(resolvedTiles, sortOption)
+    }
+    val buildings = remember(sortedTiles) {
+        sortedTiles.map { it.building.trim() }.filter { it.isNotEmpty() }.distinct().sortedWith(NaturalOrderComparator)
+    }
+    val filteredTiles = remember(sortedTiles, filterQuery, filterRegex, buildingFilter) {
+        val inBuilding = buildingFilter?.let { b -> sortedTiles.filter { it.building.trim() == b } } ?: sortedTiles
+        BeaconFilter.apply(inBuilding, filterQuery, filterRegex)
     }
     // Keeps the detail drawable while it animates out after its beacon was removed.
     val lastKnownTiles = remember { mutableMapOf<String, ResolvedBeaconTile>() }
@@ -157,7 +172,20 @@ fun InventoryScreen(
         onClose = { detailTileKey = null },
         list = {
             InventoryContent(
-                tiles = sortedTiles,
+                tiles = filteredTiles ?: emptyList(),
+                totalCount = sortedTiles.size,
+                filter = {
+                    if (buildings.size > 1 || buildingFilter != null) {
+                        BuildingChips(buildings = buildings, selected = buildingFilter, onSelect = { buildingFilter = it })
+                    }
+                    BeaconFilterField(
+                        query = filterQuery,
+                        onQueryChange = { filterQuery = it },
+                        regex = filterRegex,
+                        onRegexChange = { filterRegex = it },
+                        invalid = filteredTiles == null,
+                    )
+                },
                 viewMode = viewMode,
                 sortOption = sortOption,
                 isRecording = isRecording,
@@ -215,6 +243,8 @@ fun InventoryScreen(
 @Composable
 private fun InventoryContent(
     tiles: List<ResolvedBeaconTile>,
+    totalCount: Int,
+    filter: @Composable () -> Unit,
     viewMode: BeaconViewMode,
     sortOption: InventorySortOption,
     isRecording: Boolean,
@@ -249,7 +279,11 @@ private fun InventoryContent(
                     fontWeight = FontWeight.Bold,
                 )
                 Text(
-                    text = "$onlineCount online · ${tiles.size} saved",
+                    text = if (tiles.size < totalCount) {
+                "$onlineCount online · ${tiles.size} of $totalCount shown"
+            } else {
+                "$onlineCount online · ${tiles.size} saved"
+            },
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -372,7 +406,16 @@ private fun InventoryContent(
             )
         }
 
-        if (tiles.isEmpty()) {
+        if (totalCount > 0) filter()
+
+        if (tiles.isEmpty() && totalCount > 0) {
+            Text(
+                text = "No saved beacon matches the filter.",
+                fontSize = 13.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 8.dp),
+            )
+        } else if (tiles.isEmpty()) {
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center,
@@ -517,6 +560,8 @@ private fun InventoryContentPreview() {
     LabTheme {
         Surface {
             InventoryContent(
+                totalCount = sampleTiles.size,
+                filter = {},
                 tiles = sampleTiles,
                 viewMode = BeaconViewMode.LIST,
                 sortOption = InventorySortOption.AVAILABILITY_THEN_LABEL,

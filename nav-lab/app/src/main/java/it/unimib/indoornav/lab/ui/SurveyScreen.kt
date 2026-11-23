@@ -1,5 +1,8 @@
 package it.unimib.indoornav.lab.ui
 
+import it.unimib.indoornav.lab.ui.components.BeaconFilterField
+import it.unimib.indoornav.lab.inventory.BeaconFilter
+import androidx.compose.runtime.saveable.rememberSaveable
 import android.annotation.SuppressLint
 import android.net.wifi.ScanResult as WifiScanResult
 import androidx.compose.foundation.layout.Arrangement
@@ -143,12 +146,18 @@ private fun BeaconInventoryTab(
     val grouped = remember(state.beacons) {
         BeaconGrouping.groupByPhysicalBeacon(state.beacons)
     }
-    val tiles = remember(grouped, savedEntries) {
+    var filterQuery by rememberSaveable { mutableStateOf("") }
+    var filterRegex by rememberSaveable { mutableStateOf(false) }
+    val allTiles = remember(grouped, savedEntries) {
         BeaconGrouping.resolveSurveyTiles(grouped, savedEntries, System.currentTimeMillis())
     }
+    val filteredTiles = remember(allTiles, filterQuery, filterRegex) {
+        BeaconFilter.apply(allTiles, filterQuery, filterRegex)
+    }
+    val tiles = filteredTiles ?: emptyList()
     // Keeps the detail drawable while it animates out after its beacon stopped transmitting.
     val lastKnownTiles = remember { mutableMapOf<String, ResolvedBeaconTile>() }
-    remember(tiles) { tiles.forEach { lastKnownTiles[it.tileKey] = it } }
+    remember(allTiles) { allTiles.forEach { lastKnownTiles[it.tileKey] = it } }
     val listState = rememberLazyListState()
     val gridState = rememberLazyGridState()
 
@@ -234,6 +243,14 @@ private fun BeaconInventoryTab(
                     )
                 }
 
+                BeaconFilterField(
+                    query = filterQuery,
+                    onQueryChange = { filterQuery = it },
+                    regex = filterRegex,
+                    onRegexChange = { filterRegex = it },
+                    invalid = filteredTiles == null,
+                )
+
                 if (viewMode == BeaconViewMode.LIST) {
                     LazyColumn(
                         state = listState,
@@ -270,7 +287,7 @@ private fun BeaconInventoryTab(
             }
         },
         detail = { key ->
-            val tile = tiles.firstOrNull { it.tileKey == key } ?: lastKnownTiles[key]
+            val tile = allTiles.firstOrNull { it.tileKey == key } ?: lastKnownTiles[key]
             if (tile != null) {
                 BeaconDetailOverlay(
                     tile = tile,
