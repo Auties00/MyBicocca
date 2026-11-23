@@ -191,6 +191,12 @@ class BeaconInventoryRepository(context: Context) {
                     "last_seen_ms",
                     "created_at_ms",
                     "updated_at_ms",
+                    "x",
+                    "y",
+                    "adv_interval_ms",
+                    "active_slots",
+                    "battery_reset_at_ms",
+                    "photo_file",
                 ).joinToString(","),
             )
             bw.newLine()
@@ -215,6 +221,12 @@ class BeaconInventoryRepository(context: Context) {
                         e.lastSeenMs,
                         e.createdAtMs,
                         e.updatedAtMs,
+                        e.x ?: "",
+                        e.y ?: "",
+                        e.advIntervalMs,
+                        e.activeSlots.joinToString(";") { it.name },
+                        e.batteryResetAtMs ?: "",
+                        e.photoFile ?: "",
                     ),
                 )
                 bw.newLine()
