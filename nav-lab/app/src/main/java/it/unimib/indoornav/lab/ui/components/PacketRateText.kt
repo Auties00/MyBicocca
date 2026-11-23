@@ -27,7 +27,7 @@ import kotlinx.coroutines.launch
 import java.util.Locale
 
 /**
- * "1.0 pkt/s" whose decimal point blinks green, like an RX LED, each time a packet from one of [trackerKeys] arrives.
+ * "1.0 pkt/s" whose number blinks red, like an RX LED, each time a packet from one of [trackerKeys] arrives.
  * [packets] defaults to the live survey stream; previews pass none and show a still dot.
  */
 @Composable
@@ -59,7 +59,6 @@ fun PacketRateText(
         }
     }
 
-    val (whole, fraction) = "%.1f".format(Locale.US, packetsPerSec).split('.')
     val style = TextStyle(
         fontSize = fontSize.sp,
         fontWeight = FontWeight.Bold,
@@ -67,9 +66,12 @@ fun PacketRateText(
         color = color,
     )
     Row(modifier) {
-        Text(whole, style = style, maxLines = 1)
-        Text(".", style = style.copy(color = lerp(color, LabStatusColors.Green, pulse.value)), maxLines = 1)
-        Text("$fraction pkt/s$suffix", style = style, maxLines = 1)
+        Text(
+            "%.1f".format(Locale.US, packetsPerSec),
+            style = style.copy(color = lerp(color, LabStatusColors.Red, pulse.value)),
+            maxLines = 1,
+        )
+        Text(" pkt/s$suffix", style = style, maxLines = 1)
     }
 }
 
