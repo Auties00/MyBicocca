@@ -52,6 +52,8 @@ data class ResolvedBeaconTile(
     val savedEntry: SavedBeaconEntry?,
     val liveBeacon: GroupedLiveBeacon?,
     val isOnline: Boolean,
+    /** Still online, but nothing has been heard from it for [STALE_AFTER_MS]. */
+    val isStale: Boolean = false,
     val displayLabel: String,
     val alphanumericCode: String,
     val building: String,

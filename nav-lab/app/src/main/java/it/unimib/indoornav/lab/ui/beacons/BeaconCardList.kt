@@ -72,6 +72,7 @@ fun BeaconCardList(
                 label = tile.displayLabel,
                 subLabel = subLabel,
                 online = tile.isOnline,
+                stale = tile.isStale,
                 cardShape = OrganicShapes.cardShapeFor(tile.tileKey),
                 inDetail = false,
                 size = 96.dp,

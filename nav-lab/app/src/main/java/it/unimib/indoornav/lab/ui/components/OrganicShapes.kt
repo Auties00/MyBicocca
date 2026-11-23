@@ -1,5 +1,12 @@
 package it.unimib.indoornav.lab.ui.components
 
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -81,12 +88,30 @@ fun OrganicBeaconHalo(
     online: Boolean,
     shape: Shape,
     modifier: Modifier = Modifier,
+    stale: Boolean = false,
 ) {
-    val fillColor by animateColorAsState(
+    val settledFill by animateColorAsState(
         targetValue = if (online) BeaconHaloTokens.OnlineFill else BeaconHaloTokens.OfflineFill,
         animationSpec = tween(durationMillis = 300),
         label = "haloFill",
     )
+    // A beacon gone quiet breathes towards grey until it is declared offline.
+    val breath by animateFloatAsState(
+        targetValue = if (stale) 1f else 0f,
+        animationSpec = tween(durationMillis = 300),
+        label = "haloStale",
+    )
+    val pulse = if (stale || breath > 0f) {
+        rememberInfiniteTransition(label = "haloPulse").animateFloat(
+            initialValue = 0f,
+            targetValue = 0.85f,
+            animationSpec = infiniteRepeatable(tween(1400, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+            label = "haloPulseFraction",
+        ).value
+    } else {
+        0f
+    }
+    val fillColor = lerp(settledFill, BeaconHaloTokens.OfflineFill, pulse * breath)
     val strokeColor by animateColorAsState(
         targetValue = if (online) BeaconHaloTokens.OnlineStroke else BeaconHaloTokens.OfflineStroke,
         animationSpec = tween(durationMillis = 300),
@@ -113,6 +138,12 @@ private fun OrganicBeaconHaloPreview() {
                 OrganicBeaconHalo(
                     online = true,
                     shape = OrganicShapes.SmoothCookie6,
+                    modifier = Modifier.size(64.dp),
+                )
+                OrganicBeaconHalo(
+                    online = true,
+                    stale = true,
+                    shape = OrganicShapes.SmoothCookie8,
                     modifier = Modifier.size(64.dp),
                 )
                 OrganicBeaconHalo(

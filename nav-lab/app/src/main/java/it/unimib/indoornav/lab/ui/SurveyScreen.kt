@@ -144,7 +144,7 @@ private fun BeaconInventoryTab(
         BeaconGrouping.groupByPhysicalBeacon(state.beacons)
     }
     val tiles = remember(grouped, savedEntries) {
-        BeaconGrouping.resolveSurveyTiles(grouped, savedEntries)
+        BeaconGrouping.resolveSurveyTiles(grouped, savedEntries, System.currentTimeMillis())
     }
     // Keeps the detail drawable while it animates out after its beacon stopped transmitting.
     val lastKnownTiles = remember { mutableMapOf<String, ResolvedBeaconTile>() }

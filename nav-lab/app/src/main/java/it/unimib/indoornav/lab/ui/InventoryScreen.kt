@@ -105,7 +105,7 @@ fun InventoryScreen(
     var nowMs by remember { mutableLongStateOf(System.currentTimeMillis()) }
     LaunchedEffect(Unit) {
         while (true) {
-            delay(2_000L)
+            delay(1_000L)
             nowMs = System.currentTimeMillis()
         }
     }

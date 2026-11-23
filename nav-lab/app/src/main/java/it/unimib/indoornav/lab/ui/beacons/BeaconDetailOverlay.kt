@@ -273,6 +273,7 @@ fun BeaconDetailOverlay(
                         label = tile.displayLabel,
                         subLabel = subLabel,
                         online = tile.isOnline,
+                        stale = tile.isStale,
                         cardShape = OrganicShapes.cardShapeFor(tile.tileKey),
                         inDetail = true,
                         size = HERO_SIZE,

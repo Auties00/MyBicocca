@@ -6,6 +6,7 @@ import it.unimib.indoornav.lab.survey.BeaconInventoryItem
 import kotlin.math.roundToInt
 
 const val OFFLINE_TIMEOUT_MS = 20_000L
+const val STALE_AFTER_MS = 10_000L
 
 data class EddystoneTlmExtras(
     val advCount: Long,
@@ -192,6 +193,7 @@ object BeaconGrouping {
             val live = liveGrouped.firstOrNull { matchesSavedEntry(saved, it) }
             val effectiveLastSeen = maxOf(saved.lastSeenMs, live?.lastSeenMs ?: 0L)
             val isOnline = live != null && (nowMs - live.lastSeenMs) <= offlineTimeoutMs
+            val isStale = isOnline && (nowMs - live.lastSeenMs) > STALE_AFTER_MS
             val frameTypes = if (live != null) {
                 (saved.seenFrameTypes + live.frameTypes).distinctByFramePriority()
             } else {
@@ -202,6 +204,7 @@ object BeaconGrouping {
                 savedEntry = saved,
                 liveBeacon = live,
                 isOnline = isOnline,
+                isStale = isStale,
                 displayLabel = saved.label,
                 alphanumericCode = saved.alphanumericCode,
                 building = saved.building,
@@ -228,8 +231,10 @@ object BeaconGrouping {
     fun resolveSurveyTiles(
         liveGrouped: List<GroupedLiveBeacon>,
         savedEntries: List<SavedBeaconEntry>,
+        nowMs: Long,
     ): List<ResolvedBeaconTile> {
         return liveGrouped.map { live ->
+            val silentMs = nowMs - live.lastSeenMs
             val saved = savedEntries.firstOrNull { matchesSavedEntry(it, live) }
             val fallbackLabel = live.projectLabel
                 ?: shortIdentityLabel(live)
@@ -237,7 +242,8 @@ object BeaconGrouping {
                 tileKey = live.macAddress.ifBlank { live.identityKey },
                 savedEntry = saved,
                 liveBeacon = live,
-                isOnline = true,
+                isOnline = silentMs <= OFFLINE_TIMEOUT_MS,
+                isStale = silentMs in (STALE_AFTER_MS + 1)..OFFLINE_TIMEOUT_MS,
                 displayLabel = saved?.label?.ifBlank { null } ?: fallbackLabel,
                 alphanumericCode = saved?.alphanumericCode ?: "",
                 building = saved?.building ?: "",
