@@ -90,17 +90,21 @@ private const val MAX_PX_PER_M = 400f
  * building's long axis (x) runs down the screen and a 106 x 13 m floor fills the phone; y then runs left
  * to right. It is a turn, not a mirror: rooms keep their real left/right order.
  */
+// [origin] is where the frame's (0, 0) lands on screen. Every floor shares that frame, so a view shows
+// the same spot on any floor; anchoring to a floor's own outline would shift floors whose walls differ.
 private data class PlanView(val rotated: Boolean, val pxPerM: Float, val origin: Offset) {
+    @Suppress("UNUSED_PARAMETER")
     fun toScreen(plan: FloorPlan, x: Float, y: Float): Offset = if (rotated) {
-        Offset(origin.x + (y - plan.y0) * pxPerM, origin.y + (x - plan.x0) * pxPerM)
+        Offset(origin.x + y * pxPerM, origin.y + x * pxPerM)
     } else {
-        Offset(origin.x + (x - plan.x0) * pxPerM, origin.y + (plan.y1 - y) * pxPerM)
+        Offset(origin.x + x * pxPerM, origin.y - y * pxPerM)
     }
 
+    @Suppress("UNUSED_PARAMETER")
     fun toPlan(plan: FloorPlan, p: Offset): Offset = if (rotated) {
-        Offset(plan.x0 + (p.y - origin.y) / pxPerM, plan.y0 + (p.x - origin.x) / pxPerM)
+        Offset((p.y - origin.y) / pxPerM, (p.x - origin.x) / pxPerM)
     } else {
-        Offset(plan.x0 + (p.x - origin.x) / pxPerM, plan.y1 - (p.y - origin.y) / pxPerM)
+        Offset((p.x - origin.x) / pxPerM, (origin.y - p.y) / pxPerM)
     }
 
     fun zoomedAround(centroid: Offset, zoom: Float): PlanView {
@@ -133,9 +137,14 @@ private data class PlanView(val rotated: Boolean, val pxPerM: Float, val origin:
             val (planW, planH) = if (rotated) plan.height to plan.width else plan.width to plan.height
             // Fit the short side; the long side scrolls.
             val s = ((viewport.width - 2 * margin) / planW).coerceIn(MIN_PX_PER_M, MAX_PX_PER_M)
-            return PlanView(rotated, s, Offset(margin, margin)).let { v ->
-                if (planH * s < viewport.height) v.copy(origin = Offset(margin, (viewport.height - planH * s) / 2)) else v
+            // Put the floor's top-left corner at the margin, or centre it vertically if it is short.
+            val top = if (planH * s < viewport.height) (viewport.height - planH * s) / 2 else margin
+            val origin = if (rotated) {
+                Offset(margin - plan.y0 * s, top - plan.x0 * s)
+            } else {
+                Offset(margin - plan.x0 * s, top + plan.y1 * s)
             }
+            return PlanView(rotated, s, origin)
         }
     }
 }
@@ -543,10 +552,8 @@ private fun DrawScope.drawPlan(plan: FloorPlan, v: PlanView, walls: Color, openi
             // Plan y points up and screen y down, so a quarter turn plus that flip swaps the axes.
             rotate(90f, Offset.Zero)
             scale(v.pxPerM, -v.pxPerM, Offset.Zero)
-            translate(-plan.x0, -plan.y0)
         } else {
             scale(v.pxPerM, -v.pxPerM, Offset.Zero)
-            translate(-plan.x0, -plan.y1)
         }
     }) {
         val hair = 1.2f / v.pxPerM
