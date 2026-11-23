@@ -34,28 +34,46 @@ class SmoothCookieShape(
     private val samples: Int = 144,
     private val rotationRadians: Float = 0f,
 ) : Shape {
-    override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline {
-        val path = Path()
-        val cx = size.width / 2f
-        val cy = size.height / 2f
-        val rx = size.width / 2f
-        val ry = size.height / 2f
-        for (i in 0 until samples) {
-            val a = (i.toFloat() / samples) * (2 * PI.toFloat()) - PI.toFloat() / 2f + rotationRadians
-            val r = 1f - dip * (1f - cos(lobes * (a - rotationRadians))) / 2f
-            val x = cx + cos(a) * rx * r
-            val y = cy + sin(a) * ry * r
-            if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
-        }
-        path.close()
-        return Outline.Generic(path)
+    /** Radius at absolute angle [a], as a fraction of the half size. */
+    fun radiusAt(a: Float): Float = 1f - dip * (1f - cos(lobes * (a - rotationRadians))) / 2f
+
+    override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline =
+        cookieOutline(size, samples, ::radiusAt)
+}
+
+/** Blends two cookie shapes radius by radius, so the lobes melt into each other as [fraction] goes 0 to 1. */
+class MorphingCookieShape(
+    private val from: SmoothCookieShape,
+    private val to: SmoothCookieShape,
+    private val fraction: Float,
+) : Shape {
+    override fun createOutline(size: Size, layoutDirection: LayoutDirection, density: Density): Outline =
+        cookieOutline(size, 192) { a -> from.radiusAt(a) + (to.radiusAt(a) - from.radiusAt(a)) * fraction }
+}
+
+private fun cookieOutline(size: Size, samples: Int, radiusAt: (Float) -> Float): Outline {
+    val path = Path()
+    val cx = size.width / 2f
+    val cy = size.height / 2f
+    for (i in 0 until samples) {
+        val a = (i.toFloat() / samples) * (2 * PI.toFloat())
+        val r = radiusAt(a)
+        val x = cx + cos(a) * cx * r
+        val y = cy + sin(a) * cy * r
+        if (i == 0) path.moveTo(x, y) else path.lineTo(x, y)
     }
+    path.close()
+    return Outline.Generic(path)
 }
 
 object OrganicShapes {
-    val SmoothCookie6: Shape = SmoothCookieShape(lobes = 6, dip = 0.20f, rotationRadians = (PI / 2).toFloat())
-    val SmoothCookie8: Shape = SmoothCookieShape(lobes = 8, dip = 0.16f, rotationRadians = 0.35f)
-    val SmoothCookie12: Shape = SmoothCookieShape(lobes = 12, dip = 0.10f, samples = 192)
+    val SmoothCookie6 = SmoothCookieShape(lobes = 6, dip = 0.20f, rotationRadians = (PI / 2).toFloat())
+    val SmoothCookie8 = SmoothCookieShape(lobes = 8, dip = 0.16f, rotationRadians = 0.35f)
+    val SmoothCookie12 = SmoothCookieShape(lobes = 12, dip = 0.10f, samples = 192)
+
+    /** A beacon's card halo, fixed per beacon so its card and its detail transition agree. */
+    fun cardShapeFor(tileKey: String): SmoothCookieShape =
+        if (tileKey.hashCode() % 2 == 0) SmoothCookie6 else SmoothCookie8
 }
 
 @Composable

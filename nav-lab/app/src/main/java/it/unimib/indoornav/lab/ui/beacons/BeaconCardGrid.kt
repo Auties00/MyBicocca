@@ -30,7 +30,6 @@ import androidx.compose.ui.unit.sp
 import it.unimib.indoornav.lab.format.BeaconFrameType
 import it.unimib.indoornav.lab.inventory.ResolvedBeaconTile
 import it.unimib.indoornav.lab.ui.components.BeaconModelView
-import it.unimib.indoornav.lab.ui.components.BeaconPose
 import it.unimib.indoornav.lab.ui.components.OrganicBeaconHalo
 import it.unimib.indoornav.lab.ui.components.OrganicShapes
 import it.unimib.indoornav.lab.ui.components.SignalTypeBadge
@@ -45,7 +44,6 @@ fun BeaconCardGrid(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val haloShape = if (index % 2 == 0) OrganicShapes.SmoothCookie6 else OrganicShapes.SmoothCookie8
     val subLabel = listOf(tile.building, tile.floor).filter { it.isNotBlank() }.joinToString(" - ")
 
     Surface(
@@ -78,38 +76,17 @@ fun BeaconCardGrid(
                         SignalTypeBadge(frameType = ft, compact = true)
                     }
                 }
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(7.dp)
-                            .clip(CircleShape)
-                            .background(
-                                if (tile.isOnline) LabStatusColors.Green else MaterialTheme.colorScheme.outline,
-                            ),
-                    )
-                }
             }
 
-            Box(
-                modifier = Modifier.size(width = 104.dp, height = 116.dp).beaconHero(tile.tileKey),
-                contentAlignment = Alignment.Center,
-            ) {
-                OrganicBeaconHalo(
-                    online = tile.isOnline,
-                    shape = haloShape,
-                    modifier = Modifier.size(100.dp),
-                )
-                BeaconModelView(
-                    label = tile.displayLabel,
-                    subLabel = subLabel,
-                    pose = BeaconPose.CARD,
-                    online = tile.isOnline,
-                    modifier = Modifier.size(width = 58.dp, height = 112.dp),
-                )
-            }
+            BeaconHero(
+                tileKey = tile.tileKey,
+                label = tile.displayLabel,
+                subLabel = subLabel,
+                online = tile.isOnline,
+                cardShape = OrganicShapes.cardShapeFor(tile.tileKey),
+                inDetail = false,
+                size = 112.dp,
+            )
 
             Row(
                 modifier = Modifier

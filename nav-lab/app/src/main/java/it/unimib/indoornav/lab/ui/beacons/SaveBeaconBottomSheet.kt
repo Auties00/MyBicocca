@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
@@ -39,7 +40,6 @@ import it.unimib.indoornav.lab.format.BeaconFrameType
 import it.unimib.indoornav.lab.inventory.ResolvedBeaconTile
 import it.unimib.indoornav.lab.inventory.SavedBeaconEntry
 import it.unimib.indoornav.lab.ui.components.BeaconModelView
-import it.unimib.indoornav.lab.ui.components.BeaconPose
 import it.unimib.indoornav.lab.ui.components.OrganicBeaconHalo
 import it.unimib.indoornav.lab.ui.components.OrganicShapes
 import it.unimib.indoornav.lab.ui.theme.LabTheme
@@ -116,20 +116,20 @@ private fun SaveBeaconSheetContent(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Box(
-                modifier = Modifier.size(width = 58.dp, height = 74.dp),
+                modifier = Modifier.size(76.dp),
                 contentAlignment = Alignment.Center,
             ) {
                 OrganicBeaconHalo(
                     online = true,
-                    shape = OrganicShapes.SmoothCookie6,
-                    modifier = Modifier.size(66.dp),
+                    shape = OrganicShapes.cardShapeFor(tile.tileKey),
+                    modifier = Modifier.fillMaxSize(0.86f),
                 )
                 BeaconModelView(
                     label = previewLabel,
                     subLabel = previewSubLabel,
-                    pose = BeaconPose.CARD,
+                    progress = 0f,
                     online = true,
-                    modifier = Modifier.size(width = 36.dp, height = 70.dp),
+                    modifier = Modifier.fillMaxSize(),
                 )
             }
             Column(modifier = Modifier.weight(1f)) {

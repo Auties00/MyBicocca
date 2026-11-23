@@ -558,7 +558,10 @@ object GlBeaconOffscreenRenderer {
             egl.makeCurrent(pbufferSurface)
         }
 
-        if (fboW == w && fboH == h && msaaFbo != 0 && resolveFbo != 0) return
+        // Buffers only grow: smaller renders use their lower-left corner, so mixing sizes costs nothing.
+        if (fboW >= w && fboH >= h && msaaFbo != 0 && resolveFbo != 0) return
+        val allocW = max(w, fboW)
+        val allocH = max(h, fboH)
         deleteFbos()
 
         val maxSamplesArr = IntArray(1)
@@ -578,28 +581,28 @@ object GlBeaconOffscreenRenderer {
 
         GLES30.glBindRenderbuffer(GLES30.GL_RENDERBUFFER, msaaColorRb)
         if (samples > 1) {
-            GLES30.glRenderbufferStorageMultisample(GLES30.GL_RENDERBUFFER, samples, GLES30.GL_RGBA8, w, h)
+            GLES30.glRenderbufferStorageMultisample(GLES30.GL_RENDERBUFFER, samples, GLES30.GL_RGBA8, allocW, allocH)
         } else {
-            GLES30.glRenderbufferStorage(GLES30.GL_RENDERBUFFER, GLES30.GL_RGBA8, w, h)
+            GLES30.glRenderbufferStorage(GLES30.GL_RENDERBUFFER, GLES30.GL_RGBA8, allocW, allocH)
         }
         GLES30.glBindRenderbuffer(GLES30.GL_RENDERBUFFER, msaaDepthRb)
         if (samples > 1) {
-            GLES30.glRenderbufferStorageMultisample(GLES30.GL_RENDERBUFFER, samples, GLES30.GL_DEPTH_COMPONENT24, w, h)
+            GLES30.glRenderbufferStorageMultisample(GLES30.GL_RENDERBUFFER, samples, GLES30.GL_DEPTH_COMPONENT24, allocW, allocH)
         } else {
-            GLES30.glRenderbufferStorage(GLES30.GL_RENDERBUFFER, GLES30.GL_DEPTH_COMPONENT24, w, h)
+            GLES30.glRenderbufferStorage(GLES30.GL_RENDERBUFFER, GLES30.GL_DEPTH_COMPONENT24, allocW, allocH)
         }
         GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, msaaFbo)
         GLES30.glFramebufferRenderbuffer(GLES30.GL_FRAMEBUFFER, GLES30.GL_COLOR_ATTACHMENT0, GLES30.GL_RENDERBUFFER, msaaColorRb)
         GLES30.glFramebufferRenderbuffer(GLES30.GL_FRAMEBUFFER, GLES30.GL_DEPTH_ATTACHMENT, GLES30.GL_RENDERBUFFER, msaaDepthRb)
 
         GLES30.glBindRenderbuffer(GLES30.GL_RENDERBUFFER, resolveColorRb)
-        GLES30.glRenderbufferStorage(GLES30.GL_RENDERBUFFER, GLES30.GL_RGBA8, w, h)
+        GLES30.glRenderbufferStorage(GLES30.GL_RENDERBUFFER, GLES30.GL_RGBA8, allocW, allocH)
         GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, resolveFbo)
         GLES30.glFramebufferRenderbuffer(GLES30.GL_FRAMEBUFFER, GLES30.GL_COLOR_ATTACHMENT0, GLES30.GL_RENDERBUFFER, resolveColorRb)
 
         GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, 0)
-        fboW = w
-        fboH = h
+        fboW = allocW
+        fboH = allocH
     }
 
     private fun deleteFbos() {

@@ -30,7 +30,6 @@ import androidx.compose.ui.unit.sp
 import it.unimib.indoornav.lab.format.BeaconFrameType
 import it.unimib.indoornav.lab.inventory.ResolvedBeaconTile
 import it.unimib.indoornav.lab.ui.components.BeaconModelView
-import it.unimib.indoornav.lab.ui.components.BeaconPose
 import it.unimib.indoornav.lab.ui.components.OrganicBeaconHalo
 import it.unimib.indoornav.lab.ui.components.OrganicShapes
 import it.unimib.indoornav.lab.ui.components.SignalTypeBadge
@@ -46,7 +45,6 @@ fun BeaconCardList(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val haloShape = if (index % 2 == 0) OrganicShapes.SmoothCookie6 else OrganicShapes.SmoothCookie8
     val subLabel = listOf(tile.building, tile.floor).filter { it.isNotBlank() }.joinToString(" - ")
     val locationLine = listOf(tile.building, tile.floor, tile.positionDescription)
         .filter { it.isNotBlank() }
@@ -69,23 +67,15 @@ fun BeaconCardList(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            Box(
-                modifier = Modifier.size(width = 78.dp, height = 92.dp).beaconHero(tile.tileKey),
-                contentAlignment = Alignment.Center,
-            ) {
-                OrganicBeaconHalo(
-                    online = tile.isOnline,
-                    shape = haloShape,
-                    modifier = Modifier.size(84.dp),
-                )
-                BeaconModelView(
-                    label = tile.displayLabel,
-                    subLabel = subLabel,
-                    pose = BeaconPose.CARD,
-                    online = tile.isOnline,
-                    modifier = Modifier.size(width = 46.dp, height = 90.dp),
-                )
-            }
+            BeaconHero(
+                tileKey = tile.tileKey,
+                label = tile.displayLabel,
+                subLabel = subLabel,
+                online = tile.isOnline,
+                cardShape = OrganicShapes.cardShapeFor(tile.tileKey),
+                inDetail = false,
+                size = 96.dp,
+            )
 
             Column(
                 modifier = Modifier.weight(1f),
@@ -117,14 +107,6 @@ fun BeaconCardList(
                                 .padding(horizontal = 6.dp, vertical = 2.dp),
                         )
                     }
-                    Box(
-                        modifier = Modifier
-                            .size(7.dp)
-                            .clip(CircleShape)
-                            .background(
-                                if (tile.isOnline) LabStatusColors.Green else MaterialTheme.colorScheme.outline,
-                            ),
-                    )
                     tile.frameTypes.forEach { ft ->
                         SignalTypeBadge(frameType = ft, compact = false)
                     }

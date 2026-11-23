@@ -53,7 +53,7 @@ data class SignalBadgeStyle(
 
 object SignalBadgeTokens {
     val EdUid = SignalBadgeStyle(
-        fullLabel = "ED-UID",
+        fullLabel = "UID",
         shortLabel = "UID",
         containerColor = Color(0xFF123C25),
         contentColor = Color(0xFF79E8AA),
@@ -67,7 +67,7 @@ object SignalBadgeTokens {
         dotColor = Color(0xFF60A5FA),
     )
     val EdTlm = SignalBadgeStyle(
-        fullLabel = "ED-TLM",
+        fullLabel = "TLM",
         shortLabel = "TLM",
         containerColor = Color(0xFF4E1F06),
         contentColor = Color(0xFFFFB58A),

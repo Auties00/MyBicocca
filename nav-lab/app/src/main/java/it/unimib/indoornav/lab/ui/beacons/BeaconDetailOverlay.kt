@@ -68,7 +68,6 @@ import it.unimib.indoornav.lab.format.BeaconFrameType
 import it.unimib.indoornav.lab.format.CanonicalBeaconId
 import it.unimib.indoornav.lab.inventory.ResolvedBeaconTile
 import it.unimib.indoornav.lab.ui.components.BeaconModelView
-import it.unimib.indoornav.lab.ui.components.BeaconPose
 import it.unimib.indoornav.lab.ui.components.OrganicBeaconHalo
 import it.unimib.indoornav.lab.ui.components.OrganicShapes
 import it.unimib.indoornav.lab.ui.components.SignalTypeBadge
@@ -213,7 +212,7 @@ fun BeaconDetailOverlay(
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(380.dp)
+                        .height(285.dp)
                         .background(
                             Brush.verticalGradient(
                                 listOf(
@@ -223,27 +222,18 @@ fun BeaconDetailOverlay(
                             ),
                         ),
                 ) {
-                    Box(
+                    BeaconHero(
+                        tileKey = tile.tileKey,
+                        label = tile.displayLabel,
+                        subLabel = subLabel,
+                        online = tile.isOnline,
+                        cardShape = OrganicShapes.cardShapeFor(tile.tileKey),
+                        inDetail = true,
+                        size = 240.dp,
                         modifier = Modifier
                             .align(Alignment.Center)
-                            .padding(bottom = 16.dp)
-                            .size(320.dp)
-                            .beaconHero(tile.tileKey),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        OrganicBeaconHalo(
-                            online = tile.isOnline,
-                            shape = OrganicShapes.SmoothCookie12,
-                            modifier = Modifier.fillMaxSize(),
-                        )
-                        BeaconModelView(
-                            label = tile.displayLabel,
-                            subLabel = subLabel,
-                            pose = BeaconPose.DETAIL,
-                            online = tile.isOnline,
-                            modifier = Modifier.fillMaxSize(),
-                        )
-                    }
+                            .padding(bottom = 12.dp),
+                    )
 
                     CornerPill(
                         text = tile.building.ifBlank { "—" },

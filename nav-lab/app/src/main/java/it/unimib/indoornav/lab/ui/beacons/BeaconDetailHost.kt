@@ -1,41 +1,98 @@
 package it.unimib.indoornav.lab.ui.beacons
 
 import androidx.activity.compose.PredictiveBackHandler
-import androidx.compose.animation.AnimatedVisibilityScope
-import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.animation.SharedTransitionLayout
-import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.SeekableTransitionState
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.rememberTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
-import androidx.compose.animation.AnimatedContent
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.geometry.lerp
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.toSize
+import it.unimib.indoornav.lab.ui.components.BeaconModelView
+import it.unimib.indoornav.lab.ui.components.MorphingCookieShape
+import it.unimib.indoornav.lab.ui.components.OrganicBeaconHalo
+import it.unimib.indoornav.lab.ui.components.OrganicShapes
+import it.unimib.indoornav.lab.ui.components.SmoothCookieShape
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 private const val HERO_DURATION_MS = 450
+private const val CARD_HALO_FRACTION = 0.86f
 
-@OptIn(ExperimentalSharedTransitionApi::class)
-val LocalBeaconSharedScope = compositionLocalOf<SharedTransitionScope?> { null }
-val LocalBeaconAnimatedScope = compositionLocalOf<AnimatedVisibilityScope?> { null }
+// The model is always laid out at the detail size and scaled, so a frame rendered for one size serves all.
+private val MODEL_LAYOUT_SIZE = 240.dp
+
+internal data class HeroLook(val label: String, val subLabel: String, val online: Boolean, val cardShape: SmoothCookieShape)
 
 /**
- * Shows [list] or the detail of the beacon [detailKey], morphing the beacon model between them. The
- * back gesture scrubs the morph and only closes the detail once released.
+ * Where each beacon's halo sits on its card and in the detail screen, and the beacon flying between
+ * them. While it flies, both resting copies are hidden and the host draws the one moving copy.
+ */
+class BeaconHeroState internal constructor(
+    val key: String?,
+    val progress: State<Float>,
+) {
+    internal val cardRects = mutableStateMapOf<String, Rect>()
+    internal val detailRects = mutableStateMapOf<String, Rect>()
+    internal val looks = mutableStateMapOf<String, HeroLook>()
+
+    internal fun flightRects(): Pair<Rect, Rect>? {
+        val k = key ?: return null
+        val p = progress.value
+        if (p <= 0f || p >= 1f) return null
+        val from = cardRects[k] ?: return null
+        val to = detailRects[k] ?: return null
+        return from to to
+    }
+
+    internal fun isFlying(tileKey: String) = key == tileKey && flightRects() != null
+}
+
+val LocalBeaconHero = compositionLocalOf<BeaconHeroState?> { null }
+
+/**
+ * Shows [list] or the detail of the beacon [detailKey]. On the way between them the beacon's halo
+ * flies from its card to the detail stage, melting from the card's cookie shape into the 12-lobe one,
+ * while the model turns from upright to its three-quarter pose. The back gesture scrubs all of it and
+ * only closes the detail once released.
  *
  * The list leaves composition while the detail is shown, so callers keep its scroll state outside.
  */
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun BeaconDetailHost(
     detailKey: String?,
@@ -65,33 +122,113 @@ fun BeaconDetailHost(
     }
 
     val transition = rememberTransition(seekState, label = "beaconDetail")
-    SharedTransitionLayout(modifier = modifier) {
+    val heroProgress = transition.animateFloat(
+        transitionSpec = { tween(HERO_DURATION_MS, easing = FastOutSlowInEasing) },
+        label = "heroProgress",
+    ) { if (it == null) 0f else 1f }
+    val heroKey = transition.targetState ?: transition.currentState
+    val previous = remember { mutableStateOf<BeaconHeroState?>(null) }
+    val hero = remember(heroKey) {
+        BeaconHeroState(heroKey, heroProgress).also { next ->
+            previous.value?.let { old ->
+                next.cardRects.putAll(old.cardRects)
+                next.detailRects.putAll(old.detailRects)
+                next.looks.putAll(old.looks)
+            }
+        }
+    }
+    SideEffect { previous.value = hero }
+    var hostOrigin by remember { mutableStateOf(Offset.Zero) }
+
+    Box(modifier = modifier.onGloballyPositioned { hostOrigin = it.positionInRoot() }) {
         transition.AnimatedContent(
             transitionSpec = { fadeIn(tween(300, delayMillis = 90)) togetherWith fadeOut(tween(250)) },
         ) { key ->
-            CompositionLocalProvider(
-                LocalBeaconSharedScope provides this@SharedTransitionLayout,
-                LocalBeaconAnimatedScope provides this@AnimatedContent,
-            ) {
+            CompositionLocalProvider(LocalBeaconHero provides hero) {
                 if (key == null) list() else detail(key)
             }
+        }
+
+        val flight = hero.flightRects()
+        val look = hero.key?.let { hero.looks[it] }
+        if (flight != null && look != null) {
+            val p = heroProgress.value
+            val rect = lerp(flight.first, flight.second, p)
+            val density = LocalDensity.current
+            HeroVisual(
+                look = look,
+                progress = p,
+                modifier = Modifier
+                    .offset {
+                        IntOffset(
+                            (rect.left - hostOrigin.x).roundToInt(),
+                            (rect.top - hostOrigin.y).roundToInt(),
+                        )
+                    }
+                    .size(with(density) { rect.width.toDp() }, with(density) { rect.height.toDp() }),
+            )
         }
     }
 }
 
-/** Marks the halo and model box of one beacon as the element that flies between card and detail. */
-@OptIn(ExperimentalSharedTransitionApi::class)
+/**
+ * The halo and model of one beacon, resting on its card ([inDetail] false) or on the detail stage.
+ * Its place is reported to the host so the flying copy can start and land exactly on it.
+ */
 @Composable
-fun Modifier.beaconHero(tileKey: String): Modifier {
-    val shared = LocalBeaconSharedScope.current ?: return this
-    val animated = LocalBeaconAnimatedScope.current ?: return this
-    return with(shared) {
-        this@beaconHero.sharedBounds(
-            sharedContentState = rememberSharedContentState("beacon-hero-$tileKey"),
-            animatedVisibilityScope = animated,
-            boundsTransform = { _, _ -> tween(HERO_DURATION_MS, easing = FastOutSlowInEasing) },
-            // Scaling keeps the model at its laid-out size, so no new bitmap is rendered per frame.
-            resizeMode = SharedTransitionScope.ResizeMode.scaleToBounds(),
+fun BeaconHero(
+    tileKey: String,
+    label: String,
+    subLabel: String,
+    online: Boolean,
+    cardShape: SmoothCookieShape,
+    inDetail: Boolean,
+    size: Dp,
+    modifier: Modifier = Modifier,
+) {
+    val hero = LocalBeaconHero.current
+    val look = HeroLook(label, subLabel, online, cardShape)
+    if (hero != null) SideEffect { hero.looks[tileKey] = look }
+    val hidden = hero?.isFlying(tileKey) == true
+    Box(
+        modifier = modifier
+            .size(size)
+            .onGloballyPositioned { coords ->
+                if (hero == null) return@onGloballyPositioned
+                val rect = Rect(coords.positionInRoot(), coords.size.toSize())
+                if (inDetail) hero.detailRects[tileKey] = rect else hero.cardRects[tileKey] = rect
+            }
+            .alpha(if (hidden) 0f else 1f),
+    ) {
+        HeroVisual(look = look, progress = if (inDetail) 1f else 0f, modifier = Modifier.fillMaxSize())
+    }
+}
+
+@Composable
+private fun HeroVisual(look: HeroLook, progress: Float, modifier: Modifier) {
+    val shape = when {
+        progress <= 0f -> look.cardShape
+        progress >= 1f -> OrganicShapes.SmoothCookie12
+        else -> MorphingCookieShape(look.cardShape, OrganicShapes.SmoothCookie12, progress)
+    }
+    BoxWithConstraints(modifier = modifier, contentAlignment = Alignment.Center) {
+        val scale = maxWidth / MODEL_LAYOUT_SIZE
+        OrganicBeaconHalo(
+            online = look.online,
+            shape = shape,
+            modifier = Modifier.fillMaxSize(CARD_HALO_FRACTION + (1f - CARD_HALO_FRACTION) * progress),
+        )
+        BeaconModelView(
+            label = look.label,
+            subLabel = look.subLabel,
+            progress = progress,
+            online = look.online,
+            modifier = Modifier
+                .requiredSize(MODEL_LAYOUT_SIZE)
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                },
         )
     }
 }
