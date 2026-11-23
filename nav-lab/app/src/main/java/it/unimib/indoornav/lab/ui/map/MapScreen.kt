@@ -2,7 +2,6 @@ package it.unimib.indoornav.lab.ui.map
 
 import kotlin.math.exp
 import kotlin.math.abs
-import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.ui.graphics.drawscope.translate
@@ -425,8 +424,12 @@ private fun MapContent(
                     // around the centre of the map.
                     awaitEachGesture {
                         val first = awaitFirstDown(requireUnconsumed = false)
-                        withTimeoutOrNull(viewConfiguration.longPressTimeoutMillis) { waitForUpOrCancellation() }
-                            ?: return@awaitEachGesture
+                        // Not waitForUpOrCancellation: the tap detector below consumes the up, which that
+                        // function would take as a cancellation.
+                        withTimeoutOrNull(viewConfiguration.longPressTimeoutMillis) {
+                            while (awaitPointerEvent().changes.any { it.pressed }) Unit
+                            true
+                        } ?: return@awaitEachGesture
                         val second = withTimeoutOrNull(viewConfiguration.doubleTapTimeoutMillis) {
                             awaitFirstDown(requireUnconsumed = false)
                         } ?: return@awaitEachGesture
