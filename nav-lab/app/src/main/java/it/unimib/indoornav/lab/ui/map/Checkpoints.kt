@@ -75,11 +75,12 @@ class CheckpointStore(context: Context, private val csvDir: () -> File) {
     }
 
     companion object {
-        // Visit 2 plan: every 5 m on the corridor centreline (y 7.0) from x 5 to 45, T1 for the U-turn after
+        // Visit 2: every 5 m on the corridor centreline (y 7.0) from x 5 to 45, T1 for the U-turn after
         // CP3, the main staircase (ST, floors T/1/2) and the spot outside the lift next to it (LF).
+        // CP0-CP8 and T1 were taped exactly at these spots on visit 2, so they count as measured.
         private val PLANNED_U14: List<Checkpoint> =
-            (0..8).map { Checkpoint("CP$it", "U14", "1", 5.0 + 5.0 * it, 7.0, "corridor centreline") } +
-                Checkpoint("T1", "U14", "1", 23.0, 7.0, "U-turn point", temporary = true) +
+            (0..8).map { Checkpoint("CP$it", "U14", "1", 5.0 + 5.0 * it, 7.0, "corridor centreline", measured = true) } +
+                Checkpoint("T1", "U14", "1", 23.0, 7.0, "U-turn point", temporary = true, measured = true) +
                 listOf("T", "1", "2").mapIndexed { i, f -> Checkpoint("ST$i", "U14", f, 64.4, 11.0, "main staircase") } +
                 listOf("T", "1", "2").mapIndexed { i, f -> Checkpoint("LF$i", "U14", f, 62.8, 8.3, "outside the lift") }
     }
