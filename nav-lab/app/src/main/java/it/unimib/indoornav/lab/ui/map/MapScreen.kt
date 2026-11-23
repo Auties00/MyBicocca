@@ -110,6 +110,23 @@ private data class PlanView(val rotated: Boolean, val pxPerM: Float, val origin:
     }
 
     companion object {
+        /** The team's lab, where the camera goes home to. */
+        const val HOME_ROOM = "1040"
+
+        /** Fitted to the floor's width and centred on [HOME_ROOM] if this floor has it. */
+        fun home(plan: FloorPlan, viewport: IntSize): PlanView {
+            val fit = fitting(plan, viewport)
+            val room = plan.rooms.firstOrNull { it.number == HOME_ROOM } ?: return fit
+            val atZero = fit.copy(origin = Offset.Zero).toScreen(plan, room.x, room.y)
+            val center = Offset(viewport.width / 2f, viewport.height / 2f)
+            // Keep the fitted sideways position; only scroll along the building to the room.
+            return if (fit.rotated) {
+                fit.copy(origin = Offset(fit.origin.x, center.y - atZero.y))
+            } else {
+                fit.copy(origin = Offset(center.x - atZero.x, fit.origin.y))
+            }
+        }
+
         fun fitting(plan: FloorPlan, viewport: IntSize): PlanView {
             val rotated = viewport.height > viewport.width
             val margin = 24f
@@ -295,8 +312,8 @@ private fun MapContent(
                     color = colors.onSurfaceVariant,
                 )
             }
-            IconButton(onClick = { plan?.let { p -> if (viewport != IntSize.Zero) onViewChange(PlanView.fitting(p, viewport)) } }) {
-                Icon(Icons.Default.MyLocation, contentDescription = "Fit the floor")
+            IconButton(onClick = { plan?.let { p -> if (viewport != IntSize.Zero) onViewChange(PlanView.home(p, viewport)) } }) {
+                Icon(Icons.Default.MyLocation, contentDescription = "Go to room ${PlanView.HOME_ROOM}")
             }
             if (editMode) {
                 TextButton(onClick = onCancelEdit) { Text("Cancel") }
