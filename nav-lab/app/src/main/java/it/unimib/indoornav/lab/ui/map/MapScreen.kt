@@ -146,6 +146,13 @@ private data class PlanView(val rotated: Boolean, val pxPerM: Float, val origin:
             }
         }
 
+        /**
+         * Where a beacon being placed first appears: the corridor in front of U14's main staircase (1052),
+         * the middle of the building, the same point on every floor; elsewhere the floor's centre.
+         */
+        fun spawnPoint(plan: FloorPlan): Offset =
+            if (plan.building == "U14") Offset(63.5f, 7.0f) else Offset((plan.x0 + plan.x1) / 2, (plan.y0 + plan.y1) / 2)
+
         /** Centred on the plan point ([x], [y]), [zoom] times closer than the fitted view. */
         fun centredOn(plan: FloorPlan, viewport: IntSize, x: Float, y: Float, zoom: Float): PlanView {
             val fit = fitting(plan, viewport)
@@ -182,6 +189,7 @@ fun MapScreen(
     editSession: MapEditSession,
     onRequestLeaveEdit: () -> Unit,
     focus: MapFocusRequest,
+    cameraStore: MapCameraStore,
 ) {
     val context = LocalContext.current
     val savedEntries by inventoryRepository.entries.collectAsState()
@@ -203,7 +211,7 @@ fun MapScreen(
 
     val building = config.building.ifBlank { "U14" }
     val floors = remember(building) { FloorPlan.floorsOf(context, building) }
-    var floor by rememberSaveable { mutableStateOf(config.floor.toString()) }
+    var floor by rememberSaveable { mutableStateOf(cameraStore.floor ?: config.floor.toString()) }
     if (floors.isNotEmpty() && floor !in floors) floor = floors.first()
     val plan = remember(building, floor) { FloorPlan.load(context, building, floor) }
 
@@ -212,7 +220,15 @@ fun MapScreen(
     var editingTile by remember { mutableStateOf<ResolvedBeaconTile?>(null) }
     // Kept outside the detail host, which drops the map while a beacon's detail is open. Not reset on a
     // floor change: all floors share one frame, so the same view shows the same spot one floor up or down.
-    var view by remember(building) { mutableStateOf<PlanView?>(null) }
+    var view by remember(building) {
+        mutableStateOf(cameraStore.camera?.let { PlanView(it.rotated, it.pxPerM, Offset(it.originX, it.originY)) })
+    }
+    // Saved once the view settles, so leaving the tab or restarting comes back to the same spot.
+    LaunchedEffect(view, floor) {
+        val v = view ?: return@LaunchedEffect
+        delay(400)
+        cameraStore.save(floor, MapCameraStore.Camera(v.rotated, v.pxPerM, v.origin.x, v.origin.y))
+    }
 
     // Asked to place a beacon: close any detail, open its floor in edit mode; MapContent drops it at the centre.
     val placeTile = focus.placeBeaconId?.let { id -> tiles.firstOrNull { it.savedEntry?.id == id } }
@@ -369,13 +385,13 @@ private fun MapContent(
         onFocusDone()
     }
 
-    LaunchedEffect(placeKey, plan, viewport, view != null) {
+    LaunchedEffect(placeKey, plan, viewport) {
         val key = placeKey ?: return@LaunchedEffect
         val p = plan ?: return@LaunchedEffect
-        val v = view ?: return@LaunchedEffect
         if (viewport == IntSize.Zero) return@LaunchedEffect
         val tile = tiles.firstOrNull { it.tileKey == key } ?: return@LaunchedEffect
-        val at = v.toPlan(p, Offset(viewport.width / 2f, viewport.height / 2f))
+        val at = PlanView.spawnPoint(p)
+        onViewChange(PlanView.centredOn(p, viewport, at.x, at.y, zoom = FOCUS_ZOOM))
         onMove(tile, at.x.toDouble(), at.y.toDouble())
         onPlaceDone()
     }
@@ -440,7 +456,9 @@ private fun MapContent(
                 .clipToBounds()
                 .onSizeChanged {
                     viewport = it
-                    if (view == null && plan != null && it != IntSize.Zero) onViewChange(PlanView.fitting(plan, it))
+                    val portrait = it.height > it.width
+                    val stale = view?.let { v -> v.rotated != portrait } ?: true
+                    if (stale && plan != null && it != IntSize.Zero) onViewChange(PlanView.fitting(plan, it))
                 }
                 .pointerInput(plan) {
                     detectTransformGestures { centroid, pan, zoom, _ ->

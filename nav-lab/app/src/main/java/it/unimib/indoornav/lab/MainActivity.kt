@@ -278,6 +278,7 @@ class MainActivity : ComponentActivity() {
                                         editSession = app.mapEditSession,
                                         onRequestLeaveEdit = { leaveMapEditTo = LEAVE_EDIT_STAY },
                                         focus = app.mapFocus,
+                                        cameraStore = app.mapCamera,
                                     )
                                 }
                                 composable("inventory") {
