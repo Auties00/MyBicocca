@@ -94,8 +94,8 @@ private const val QUICK_ZOOM_PX_PER_E = 750f
 
 // How short the first tap must be, and how soon the second must follow it, for the one-handed zoom.
 // Tighter than Android's double tap (400 and 300 ms), so a tap followed by a pan stays a pan.
-private const val QUICK_ZOOM_TAP_MS = 200L
-private const val QUICK_ZOOM_GAP_MS = 200L
+private const val QUICK_ZOOM_TAP_MS = 150L
+private const val QUICK_ZOOM_GAP_MS = 150L
 
 /**
  * Where the plan sits on screen. In a portrait view the plan is turned a quarter clockwise, so the
