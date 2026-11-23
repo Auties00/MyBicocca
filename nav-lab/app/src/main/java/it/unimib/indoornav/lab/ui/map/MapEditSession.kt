@@ -42,4 +42,7 @@ class MapEditSession {
 /** A beacon another screen asked the map to show: the map switches floor, centres and zooms on it. */
 class MapFocusRequest {
     var beaconId by mutableStateOf<String?>(null)
+
+    /** A beacon to place: the map opens its floor in edit mode with the beacon at the centre of the view. */
+    var placeBeaconId by mutableStateOf<String?>(null)
 }

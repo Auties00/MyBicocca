@@ -214,6 +214,15 @@ fun MapScreen(
     // floor change: all floors share one frame, so the same view shows the same spot one floor up or down.
     var view by remember(building) { mutableStateOf<PlanView?>(null) }
 
+    // Asked to place a beacon: close any detail, open its floor in edit mode; MapContent drops it at the centre.
+    val placeTile = focus.placeBeaconId?.let { id -> tiles.firstOrNull { it.savedEntry?.id == id } }
+    LaunchedEffect(placeTile?.tileKey) {
+        val tile = placeTile ?: return@LaunchedEffect
+        detailKey = null
+        planFloorOf(tile.floor).takeIf { it in floors }?.let { floor = it }
+        editSession.start()
+    }
+
     // Asked to show a beacon: close any detail, go to its floor; MapContent centres on it once laid out.
     val focusTile = focus.beaconId?.let { id -> tiles.firstOrNull { it.savedEntry?.id == id } }
     LaunchedEffect(focusTile?.tileKey) {
@@ -258,6 +267,8 @@ fun MapScreen(
                     if (e.x != null && e.y != null && planFloorOf(focusTile.floor) == floor) Offset(e.x.toFloat(), e.y.toFloat()) else null
                 },
                 onFocusDone = { focus.beaconId = null },
+                placeKey = placeTile?.tileKey?.takeIf { planFloorOf(placeTile.floor) == floor && editSession.editing },
+                onPlaceDone = { focus.placeBeaconId = null },
             )
         },
         detail = { key ->
@@ -295,6 +306,10 @@ fun MapScreen(
                 editingTile = null
             },
             onDismiss = { editingTile = null },
+            onSetPositionOnMap = { id ->
+                editingTile = null
+                focus.placeBeaconId = id
+            },
         )
     }
 }
@@ -319,6 +334,8 @@ private fun MapContent(
     onMove: (ResolvedBeaconTile, Double, Double) -> Unit,
     focusTarget: Offset?,
     onFocusDone: () -> Unit,
+    placeKey: String?,
+    onPlaceDone: () -> Unit,
 ) {
     val density = LocalDensity.current
     val markerPx = with(density) { MARKER_SIZE.toPx() }
@@ -350,6 +367,17 @@ private fun MapContent(
         if (viewport == IntSize.Zero) return@LaunchedEffect
         onViewChange(PlanView.centredOn(p, viewport, target.x, target.y, zoom = FOCUS_ZOOM))
         onFocusDone()
+    }
+
+    LaunchedEffect(placeKey, plan, viewport, view != null) {
+        val key = placeKey ?: return@LaunchedEffect
+        val p = plan ?: return@LaunchedEffect
+        val v = view ?: return@LaunchedEffect
+        if (viewport == IntSize.Zero) return@LaunchedEffect
+        val tile = tiles.firstOrNull { it.tileKey == key } ?: return@LaunchedEffect
+        val at = v.toPlan(p, Offset(viewport.width / 2f, viewport.height / 2f))
+        onMove(tile, at.x.toDouble(), at.y.toDouble())
+        onPlaceDone()
     }
 
     val colors = MaterialTheme.colorScheme

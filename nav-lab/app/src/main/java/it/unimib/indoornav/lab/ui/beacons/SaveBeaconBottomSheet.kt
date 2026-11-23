@@ -77,6 +77,7 @@ fun SaveBeaconBottomSheet(
     onSave: (SavedBeaconEntry) -> Unit,
     onRemove: ((String) -> Unit)? = null,
     onDismiss: () -> Unit,
+    onSetPositionOnMap: ((String) -> Unit)? = null,
 ) {
     ModalBottomSheet(
         onDismissRequest = onDismiss,
@@ -90,6 +91,7 @@ fun SaveBeaconBottomSheet(
             onSave = onSave,
             onRemove = onRemove,
             onCancel = onDismiss,
+            onSetPositionOnMap = onSetPositionOnMap,
         )
     }
 }
@@ -101,6 +103,7 @@ private fun SaveBeaconSheetContent(
     defaultFloor: Int,
     onSave: (SavedBeaconEntry) -> Unit,
     onRemove: ((String) -> Unit)?,
+    onSetPositionOnMap: ((String) -> Unit)? = null,
     onCancel: () -> Unit,
 ) {
     val existing = tile.savedEntry
@@ -138,6 +141,53 @@ private fun SaveBeaconSheetContent(
     val closeWith: (() -> Unit) -> Unit = { action ->
         focusManager.clearFocus()
         action()
+    }
+
+    val buildEntry: () -> SavedBeaconEntry = {
+        val live = tile.liveBeacon
+        val linked = buildList {
+            existing?.linkedKeys?.let { addAll(it) }
+            live?.canonicalKeys?.let { addAll(it) }
+            if (tile.canonicalKey.isNotBlank()) add(tile.canonicalKey)
+        }.filter { it.isNotBlank() }.distinct()
+        val now = System.currentTimeMillis()
+        SavedBeaconEntry(
+            id = entryId,
+            canonicalKey = live?.identityKey ?: existing?.canonicalKey ?: tile.canonicalKey,
+            macAddress = live?.macAddress?.ifBlank { existing?.macAddress ?: "" }
+                ?: existing?.macAddress
+                ?: tile.macAddress,
+            linkedKeys = linked,
+            label = label.trim().ifBlank { code.trim().uppercase() },
+            alphanumericCode = code.trim().uppercase(),
+            building = building.trim().ifBlank { defaultBuilding },
+            floor = floor.trim().ifBlank { initialFloor },
+            positionDescription = position.trim(),
+            seenFrameTypes = (existing?.seenFrameTypes ?: emptySet()) + tile.frameTypes,
+            lastRssi = tile.currentRssi ?: existing?.lastRssi,
+            lastMedianRssi = tile.medianRssi ?: existing?.lastMedianRssi,
+            lastTxPowerAdv = tile.txPowerAdv ?: existing?.lastTxPowerAdv,
+            lastBattMv = tile.tlmBattMv ?: existing?.lastBattMv,
+            lastTempC = tile.tlmTempC ?: existing?.lastTempC,
+            lastSeenMs = maxOf(tile.lastSeenMs, existing?.lastSeenMs ?: 0L),
+            createdAtMs = existing?.createdAtMs ?: now,
+            updatedAtMs = now,
+            batteryResetAtMs = batteryResetAt,
+            advIntervalMs = intervalText.toIntOrNull()?.coerceIn(20, 10_000)
+                ?: BeaconBattery.DEFAULT_INTERVAL_MS,
+            activeSlots = slots,
+            x = existing?.x,
+            y = existing?.y,
+            photoFile = photoFile,
+        )
+    }
+    val saveAnd: (afterSave: (SavedBeaconEntry) -> Unit) -> Unit = { after ->
+        val entry = buildEntry()
+        if (existing?.photoFile != photoFile) BeaconPhotos.delete(context, existing?.photoFile)
+        closeWith {
+            onSave(entry)
+            after(entry)
+        }
     }
 
     val previewLabel = label.trim().ifBlank { code.trim() }
@@ -234,6 +284,15 @@ private fun SaveBeaconSheetContent(
             modifier = Modifier.fillMaxWidth(),
         )
 
+        if (onSetPositionOnMap != null) {
+            OutlinedButton(
+                onClick = { saveAnd { onSetPositionOnMap(it.id) } },
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(if (existing?.x != null) "Move on map" else "Set position on map")
+            }
+        }
+
         PhotoSection(
             photoFile = photoFile,
             onPick = {
@@ -265,46 +324,7 @@ private fun SaveBeaconSheetContent(
                 Text("Cancel")
             }
             Button(
-                onClick = {
-                    val live = tile.liveBeacon
-                    val linked = buildList {
-                        existing?.linkedKeys?.let { addAll(it) }
-                        live?.canonicalKeys?.let { addAll(it) }
-                        if (tile.canonicalKey.isNotBlank()) add(tile.canonicalKey)
-                    }.filter { it.isNotBlank() }.distinct()
-                    val now = System.currentTimeMillis()
-                    val entry = SavedBeaconEntry(
-                        id = entryId,
-                        canonicalKey = live?.identityKey ?: existing?.canonicalKey ?: tile.canonicalKey,
-                        macAddress = live?.macAddress?.ifBlank { existing?.macAddress ?: "" }
-                            ?: existing?.macAddress
-                            ?: tile.macAddress,
-                        linkedKeys = linked,
-                        label = label.trim().ifBlank { code.trim().uppercase() },
-                        alphanumericCode = code.trim().uppercase(),
-                        building = building.trim().ifBlank { defaultBuilding },
-                        floor = floor.trim().ifBlank { initialFloor },
-                        positionDescription = position.trim(),
-                        seenFrameTypes = (existing?.seenFrameTypes ?: emptySet()) + tile.frameTypes,
-                        lastRssi = tile.currentRssi ?: existing?.lastRssi,
-                        lastMedianRssi = tile.medianRssi ?: existing?.lastMedianRssi,
-                        lastTxPowerAdv = tile.txPowerAdv ?: existing?.lastTxPowerAdv,
-                        lastBattMv = tile.tlmBattMv ?: existing?.lastBattMv,
-                        lastTempC = tile.tlmTempC ?: existing?.lastTempC,
-                        lastSeenMs = maxOf(tile.lastSeenMs, existing?.lastSeenMs ?: 0L),
-                        createdAtMs = existing?.createdAtMs ?: now,
-                        updatedAtMs = now,
-                        batteryResetAtMs = batteryResetAt,
-                        advIntervalMs = intervalText.toIntOrNull()?.coerceIn(20, 10_000)
-                            ?: BeaconBattery.DEFAULT_INTERVAL_MS,
-                        activeSlots = slots,
-                        x = existing?.x,
-                        y = existing?.y,
-                        photoFile = photoFile,
-                    )
-                    if (existing?.photoFile != photoFile) BeaconPhotos.delete(context, existing?.photoFile)
-                    closeWith { onSave(entry) }
-                },
+                onClick = { saveAnd {} },
             ) {
                 Text(if (existing != null) "Update" else "Save")
             }

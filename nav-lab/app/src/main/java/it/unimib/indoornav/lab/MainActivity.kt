@@ -152,6 +152,10 @@ class MainActivity : ComponentActivity() {
                     app.mapFocus.beaconId = beaconId
                     goTo("map")
                 }
+                val placeOnMap: (String) -> Unit = { beaconId ->
+                    app.mapFocus.placeBeaconId = beaconId
+                    goTo("map")
+                }
 
                 LaunchedEffect(currentRoute) {
                     if (currentRoute != "survey" && currentRoute != "inventory" && currentRoute != "map") {
@@ -261,6 +265,7 @@ class MainActivity : ComponentActivity() {
                                         inventoryRepository = app.beaconInventoryRepository,
                                         onUpdateConfig = { app.preferences.update(it) },
                                         onShowOnMap = showOnMap,
+                                        onPlaceOnMap = placeOnMap,
                                     )
                                 }
                                 composable("map") {
@@ -284,6 +289,7 @@ class MainActivity : ComponentActivity() {
                                         inventoryRepository = app.beaconInventoryRepository,
                                         sessionRepository = app.sessionRepository,
                                         onShowOnMap = showOnMap,
+                                        onPlaceOnMap = placeOnMap,
                                     )
                                 }
                                 composable("sessions") {

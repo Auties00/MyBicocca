@@ -102,6 +102,7 @@ fun InventoryScreen(
     inventoryRepository: BeaconInventoryRepository,
     sessionRepository: SessionRepository,
     onShowOnMap: (String) -> Unit = {},
+    onPlaceOnMap: (String) -> Unit = {},
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -251,6 +252,10 @@ fun InventoryScreen(
                 editingTile = null
             },
             onDismiss = { editingTile = null },
+            onSetPositionOnMap = { id ->
+                editingTile = null
+                onPlaceOnMap(id)
+            },
         )
     }
 }

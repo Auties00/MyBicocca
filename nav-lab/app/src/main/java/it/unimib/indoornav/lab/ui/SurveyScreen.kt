@@ -95,6 +95,7 @@ fun SurveyScreen(
     inventoryRepository: BeaconInventoryRepository,
     onUpdateConfig: ((SetupConfig) -> SetupConfig) -> Unit,
     onShowOnMap: (String) -> Unit = {},
+    onPlaceOnMap: (String) -> Unit = {},
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }
     val tabs = listOf("Beacons", "Wi-Fi", "RTT", "Conn. AP")
@@ -122,7 +123,7 @@ fun SurveyScreen(
         }
 
         when (selectedTab) {
-            0 -> BeaconInventoryTab(surveyState, config, surveyManager, inventoryRepository, onShowOnMap)
+            0 -> BeaconInventoryTab(surveyState, config, surveyManager, inventoryRepository, onShowOnMap, onPlaceOnMap)
             1 -> WifiSurveyTab(surveyState, config, surveyManager, onUpdateConfig)
             2 -> RttSurveyTab(surveyState, surveyManager)
             3 -> ConnectedApTab(surveyState, surveyManager)
@@ -137,6 +138,7 @@ private fun BeaconInventoryTab(
     manager: SurveyManager,
     inventoryRepository: BeaconInventoryRepository,
     onShowOnMap: (String) -> Unit,
+    onPlaceOnMap: (String) -> Unit,
 ) {
     val savedEntries by inventoryRepository.entries.collectAsState()
     var viewMode by remember { mutableStateOf(BeaconViewMode.LIST) }
@@ -316,6 +318,10 @@ private fun BeaconInventoryTab(
                 editingTile = null
             },
             onDismiss = { editingTile = null },
+            onSetPositionOnMap = { id ->
+                editingTile = null
+                onPlaceOnMap(id)
+            },
         )
     }
 
