@@ -32,7 +32,7 @@ class BeaconInventoryRepository(context: Context) {
     private fun loadFromDisk(): List<SavedBeaconEntry> {
         if (!storeFile.exists()) return emptyList()
         return runCatching {
-            json.decodeFromString<List<SavedBeaconEntry>>(storeFile.readText())
+            json.decodeFromString<List<SavedBeaconEntry>>(storeFile.readText()).map(::withNumericPosition)
         }.getOrDefault(emptyList())
     }
 
@@ -89,6 +89,18 @@ class BeaconInventoryRepository(context: Context) {
             persistAsync(updatedList)
         }
         return added
+    }
+
+    fun updatePosition(id: String, x: Double?, y: Double?) = modify(id) { it.copy(x = x, y = y) }
+
+    fun setPhoto(id: String, photoFile: String?) = modify(id) { it.copy(photoFile = photoFile) }
+
+    private fun modify(id: String, change: (SavedBeaconEntry) -> SavedBeaconEntry) {
+        val updatedList = synchronized(lock) {
+            _entries.value.map { if (it.id == id) change(it).copy(updatedAtMs = System.currentTimeMillis()) else it }
+        }
+        _entries.value = updatedList
+        persistAsync(updatedList)
     }
 
     fun remove(id: String) {
@@ -240,4 +252,17 @@ class BeaconInventoryRepository(context: Context) {
         const val CATALOG_CSV_NAME = "beacon_inventory_catalog.csv"
         const val TELEMETRY_PERSIST_INTERVAL_MS = 10_000L
     }
+}
+
+// Entries imported before positions were numeric carry them in the description as "x 19.31 m, y 6.16 m, ...".
+private val TEXT_POSITION = Regex("""^x (-?\d+(?:\.\d+)?) m, y (-?\d+(?:\.\d+)?) m(?:, (.*))?$""")
+
+internal fun withNumericPosition(entry: SavedBeaconEntry): SavedBeaconEntry {
+    if (entry.x != null) return entry
+    val match = TEXT_POSITION.matchEntire(entry.positionDescription.trim()) ?: return entry
+    return entry.copy(
+        x = match.groupValues[1].toDouble(),
+        y = match.groupValues[2].toDouble(),
+        positionDescription = match.groupValues[3],
+    )
 }

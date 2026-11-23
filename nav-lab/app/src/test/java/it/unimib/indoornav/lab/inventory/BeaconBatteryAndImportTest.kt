@@ -59,11 +59,26 @@ class BeaconBatteryAndImportTest {
         assertEquals(listOf("B5", "B12", "H1"), entries.map { it.label })
         val mounted = entries[0]
         assertEquals("Floor 1", mounted.floor)
-        assertEquals("x 19.31 m, y 6.16 m, lab-side wall", mounted.positionDescription)
+        assertEquals("lab-side wall", mounted.positionDescription)
+        assertEquals(19.31, mounted.x!!, 1e-9)
+        assertEquals(6.16, mounted.y!!, 1e-9)
         assertEquals(setOf(BeaconSlot.UID, BeaconSlot.TLM), mounted.activeSlots)
         assertEquals(setOf(BeaconFrameType.ED_UID, BeaconFrameType.ED_TLM), mounted.seenFrameTypes)
         assertEquals("Mounted, position not known yet", entries[1].positionDescription)
         assertTrue("ib:8b9cc73c-3ae7-47ef-65bc-000000000000:2:6636" in entries[2].linkedKeys)
         assertEquals(4, entries[2].activeSlots.size)
+    }
+
+    @Test
+    fun `positions written as text by earlier imports become numbers`() {
+        val old = SavedBeaconEntry(
+            id = "1", canonicalKey = "ed:x", macAddress = "", label = "B5", building = "U14", floor = "Floor 1",
+            positionDescription = "x 19.31 m, y 6.16 m, lab-side wall",
+        )
+        val migrated = withNumericPosition(old)
+        assertEquals(19.31, migrated.x!!, 1e-9)
+        assertEquals(6.16, migrated.y!!, 1e-9)
+        assertEquals("lab-side wall", migrated.positionDescription)
+        assertEquals(migrated, withNumericPosition(migrated))
     }
 }

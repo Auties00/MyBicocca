@@ -29,6 +29,11 @@ data class SavedBeaconEntry(
     val advIntervalMs: Int = BeaconBattery.DEFAULT_INTERVAL_MS,
     /** Slots switched on in the beacon's settings; empty means "use the frames we have seen". */
     val activeSlots: Set<BeaconSlot> = emptySet(),
+    /** Position in the building's plan frame, metres; null until placed. */
+    val x: Double? = null,
+    val y: Double? = null,
+    /** Reference photo of where the beacon is mounted, a file name in filesDir/beacon_photos. */
+    val photoFile: String? = null,
 )
 
 data class GroupedLiveBeacon(

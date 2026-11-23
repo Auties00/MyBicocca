@@ -1,5 +1,19 @@
 package it.unimib.indoornav.lab.ui.beacons
 
+import it.unimib.indoornav.lab.inventory.BeaconPhotos
+import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.border
+import androidx.compose.foundation.Image
+import android.graphics.BitmapFactory
 import it.unimib.indoornav.lab.ui.components.rememberReduceMotion
 import it.unimib.indoornav.lab.ui.components.BatteryBadge
 import it.unimib.indoornav.lab.inventory.SavedBeaconEntry
@@ -113,6 +127,7 @@ fun BeaconDetailOverlay(
     val scope = rememberCoroutineScope()
     var menuOpen by remember { mutableStateOf(false) }
     var confirmRemove by remember { mutableStateOf(false) }
+    var photoOpen by remember { mutableStateOf(false) }
 
     val uidCanonical = remember(tile) { findCanonical(tile, "ed:", BeaconFrameType.ED_UID) }
     val ibeaconCanonical = remember(tile) { findCanonical(tile, "ib:", BeaconFrameType.IBEACON) }
@@ -393,21 +408,48 @@ fun BeaconDetailOverlay(
                 }
             }
 
-            // Outside the scrolling column, so they stay right under the bar while the page scrolls.
-            CornerPill(
-                text = tile.building.ifBlank { "—" },
-                highlighted = tile.building.isNotBlank(),
+            // Outside the scrolling column, so they stay right under the bar while the page scrolls. With a
+            // reference photo, its preview takes the top-right corner and the floor moves under the building.
+            val photo = tile.savedEntry?.photoFile
+            val photoBitmap = remember(photo) {
+                photo?.let { runCatching { BitmapFactory.decodeFile(BeaconPhotos.file(context, it).path)?.asImageBitmap() }.getOrNull() }
+            }
+            Column(
                 modifier = Modifier
                     .align(Alignment.TopStart)
                     .padding(start = 12.dp, top = 10.dp),
-            )
-            CornerPill(
-                text = tile.floor.ifBlank { if (tile.isSaved) "—" else "Unsaved" },
-                highlighted = false,
-                modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .padding(end = 12.dp, top = 10.dp),
-            )
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                CornerPill(text = tile.building.ifBlank { "—" }, highlighted = tile.building.isNotBlank())
+                if (photoBitmap != null) {
+                    CornerPill(text = tile.floor.ifBlank { "—" }, highlighted = false)
+                }
+            }
+            if (photoBitmap != null) {
+                Image(
+                    bitmap = photoBitmap,
+                    contentDescription = "Reference photo",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(end = 12.dp, top = 10.dp)
+                        .size(64.dp)
+                        .clip(RoundedCornerShape(12.dp))
+                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp))
+                        .clickable { photoOpen = true },
+                )
+            } else {
+                CornerPill(
+                    text = tile.floor.ifBlank { if (tile.isSaved) "—" else "Unsaved" },
+                    highlighted = false,
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(end = 12.dp, top = 10.dp),
+                )
+            }
+            if (photoOpen && photoBitmap != null) {
+                PhotoViewer(photoBitmap, onDismiss = { photoOpen = false })
+            }
             }
         }
     }
@@ -425,6 +467,41 @@ fun BeaconDetailOverlay(
             },
             dismissButton = { TextButton(onClick = { confirmRemove = false }) { Text("Cancel") } },
         )
+    }
+}
+
+/** The reference photo full screen; pinch to zoom, tap outside or back to close. */
+@Composable
+private fun PhotoViewer(bitmap: ImageBitmap, onDismiss: () -> Unit) {
+    var scale by remember { mutableFloatStateOf(1f) }
+    var offset by remember { mutableStateOf(Offset.Zero) }
+    Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black)
+                .pointerInput(Unit) {
+                    detectTransformGestures { _, pan, zoom, _ ->
+                        scale = (scale * zoom).coerceIn(1f, 6f)
+                        offset = if (scale == 1f) Offset.Zero else offset + pan
+                    }
+                }
+                .pointerInput(Unit) { detectTapGestures { if (scale == 1f) onDismiss() } },
+        ) {
+            Image(
+                bitmap = bitmap,
+                contentDescription = "Reference photo",
+                contentScale = ContentScale.Fit,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer {
+                        scaleX = scale
+                        scaleY = scale
+                        translationX = offset.x
+                        translationY = offset.y
+                    },
+            )
+        }
     }
 }
 

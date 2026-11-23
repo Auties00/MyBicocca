@@ -13,23 +13,23 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import it.unimib.indoornav.lab.ui.theme.LabTheme
 
-/** "All" plus one chip per building; [selected] null means all. */
+/** "All" plus one chip per building, several at once; an empty [selected] means all. */
 @Composable
 fun BuildingChips(
     buildings: List<String>,
-    selected: String?,
-    onSelect: (String?) -> Unit,
+    selected: Set<String>,
+    onSelectedChange: (Set<String>) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Row(
         modifier = modifier.horizontalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        FilterChip(selected = selected == null, onClick = { onSelect(null) }, label = { Text("All") })
+        FilterChip(selected = selected.isEmpty(), onClick = { onSelectedChange(emptySet()) }, label = { Text("All") })
         buildings.forEach { building ->
             FilterChip(
-                selected = selected == building,
-                onClick = { onSelect(if (selected == building) null else building) },
+                selected = building in selected,
+                onClick = { onSelectedChange(if (building in selected) selected - building else selected + building) },
                 label = { Text(building) },
             )
         }
@@ -40,6 +40,6 @@ fun BuildingChips(
 @Composable
 private fun BuildingChipsPreview() {
     LabTheme {
-        Surface { BuildingChips(buildings = listOf("Home", "U14"), selected = "U14", onSelect = {}) }
+        Surface { BuildingChips(buildings = listOf("Home", "U14"), selected = setOf("U14"), onSelectedChange = {}) }
     }
 }

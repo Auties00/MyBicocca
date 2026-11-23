@@ -1,5 +1,7 @@
 package it.unimib.indoornav.lab
 
+import it.unimib.indoornav.lab.ui.map.MapScreen
+import androidx.compose.material.icons.filled.Map
 import android.os.Bundle
 import android.widget.Toast
 import android.view.KeyEvent
@@ -126,7 +128,7 @@ class MainActivity : ComponentActivity() {
                 val currentRoute = backStack?.destination?.route ?: "record"
 
                 LaunchedEffect(currentRoute) {
-                    if (currentRoute != "survey" && currentRoute != "inventory") {
+                    if (currentRoute != "survey" && currentRoute != "inventory" && currentRoute != "map") {
                         app.surveyManager.release()
                     }
                 }
@@ -173,6 +175,16 @@ class MainActivity : ComponentActivity() {
                                     },
                                     icon = { Icon(Icons.Default.Inventory2, contentDescription = null) },
                                     label = { Text("Inventory") },
+                                )
+                                NavigationBarItem(
+                                    selected = currentRoute == "map",
+                                    onClick = {
+                                        navController.navigate("map") {
+                                            popUpTo("record")
+                                        }
+                                    },
+                                    icon = { Icon(Icons.Default.Map, contentDescription = null) },
+                                    label = { Text("Map") },
                                 )
                                 NavigationBarItem(
                                     selected = currentRoute == "sessions",
@@ -242,6 +254,15 @@ class MainActivity : ComponentActivity() {
                                         surveyManager = app.surveyManager,
                                         inventoryRepository = app.beaconInventoryRepository,
                                         onUpdateConfig = { app.preferences.update(it) },
+                                    )
+                                }
+                                composable("map") {
+                                    MapScreen(
+                                        surveyState = surveyState,
+                                        config = config,
+                                        isRecording = recordingState.isRecording,
+                                        surveyManager = app.surveyManager,
+                                        inventoryRepository = app.beaconInventoryRepository,
                                     )
                                 }
                                 composable("inventory") {

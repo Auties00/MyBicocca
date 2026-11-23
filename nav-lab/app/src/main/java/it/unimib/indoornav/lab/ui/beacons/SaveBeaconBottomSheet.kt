@@ -1,5 +1,15 @@
 package it.unimib.indoornav.lab.ui.beacons
 
+import it.unimib.indoornav.lab.inventory.BeaconPhotos
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.Image
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.compose.rememberLauncherForActivityResult
+import android.graphics.BitmapFactory
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -115,6 +125,14 @@ private fun SaveBeaconSheetContent(
         )
     }
     var batteryResetAt by remember(tile.tileKey) { mutableStateOf(existing?.batteryResetAtMs) }
+    var photoFile by remember(tile.tileKey) { mutableStateOf(existing?.photoFile) }
+    val context = LocalContext.current
+    val entryId = remember(tile.tileKey) { existing?.id ?: UUID.randomUUID().toString() }
+    val photoPicker = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        if (uri != null) {
+            runCatching { BeaconPhotos.importPhoto(context, uri, entryId) }.onSuccess { photoFile = it }
+        }
+    }
 
     val focusManager = LocalFocusManager.current
     val closeWith: (() -> Unit) -> Unit = { action ->
@@ -216,6 +234,14 @@ private fun SaveBeaconSheetContent(
             modifier = Modifier.fillMaxWidth(),
         )
 
+        PhotoSection(
+            photoFile = photoFile,
+            onPick = {
+                photoPicker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            },
+            onRemove = { photoFile = null },
+        )
+
         BatterySection(
             intervalText = intervalText,
             onIntervalChange = { intervalText = it.filter(Char::isDigit).take(5) },
@@ -248,7 +274,7 @@ private fun SaveBeaconSheetContent(
                     }.filter { it.isNotBlank() }.distinct()
                     val now = System.currentTimeMillis()
                     val entry = SavedBeaconEntry(
-                        id = existing?.id ?: UUID.randomUUID().toString(),
+                        id = entryId,
                         canonicalKey = live?.identityKey ?: existing?.canonicalKey ?: tile.canonicalKey,
                         macAddress = live?.macAddress?.ifBlank { existing?.macAddress ?: "" }
                             ?: existing?.macAddress
@@ -272,7 +298,11 @@ private fun SaveBeaconSheetContent(
                         advIntervalMs = intervalText.toIntOrNull()?.coerceIn(20, 10_000)
                             ?: BeaconBattery.DEFAULT_INTERVAL_MS,
                         activeSlots = slots,
+                        x = existing?.x,
+                        y = existing?.y,
+                        photoFile = photoFile,
                     )
+                    if (existing?.photoFile != photoFile) BeaconPhotos.delete(context, existing?.photoFile)
                     closeWith { onSave(entry) }
                 },
             ) {
@@ -303,6 +333,46 @@ private fun SaveBeaconSheetContent(
                 }
             },
         )
+    }
+}
+
+@Composable
+private fun PhotoSection(photoFile: String?, onPick: () -> Unit, onRemove: () -> Unit) {
+    val context = LocalContext.current
+    val bitmap = remember(photoFile) {
+        photoFile?.let { runCatching { BitmapFactory.decodeFile(BeaconPhotos.file(context, it).path)?.asImageBitmap() }.getOrNull() }
+    }
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceContainer,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Row(
+            modifier = Modifier.padding(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            if (bitmap != null) {
+                Image(
+                    bitmap = bitmap,
+                    contentDescription = "Reference photo",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(RoundedCornerShape(10.dp)),
+                )
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Text("Reference photo", fontWeight = FontWeight.Bold)
+                Text(
+                    if (bitmap != null) "Shown in the beacon's detail screen" else "A photo of where it is mounted",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            if (bitmap != null) TextButton(onClick = onRemove) { Text("Remove") }
+            OutlinedButton(onClick = onPick) { Text(if (bitmap != null) "Replace" else "Add") }
+        }
     }
 }
 

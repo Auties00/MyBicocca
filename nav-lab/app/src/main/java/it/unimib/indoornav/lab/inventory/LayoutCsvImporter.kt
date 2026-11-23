@@ -40,6 +40,8 @@ object LayoutCsvImporter {
                 building = if (status == "spare") "Home" else building,
                 floor = if (floor.isNotEmpty()) "Floor $floor" else "",
                 positionDescription = positionOf(row = row, col = ::col, status = status),
+                x = col(row, "x").toDoubleOrNull(),
+                y = col(row, "y").toDoubleOrNull(),
                 seenFrameTypes = frames.mapNotNull { frameOf(it) }.toSet(),
                 createdAtMs = nowMs,
                 updatedAtMs = nowMs,
@@ -63,8 +65,7 @@ object LayoutCsvImporter {
         val y = col(row, "y")
         val wall = col(row, "wall")
         return when {
-            x.isNotEmpty() && y.isNotEmpty() ->
-                listOfNotNull("x $x m, y $y m", wall.takeIf { it.isNotEmpty() }?.let { "$it wall" }).joinToString(", ")
+            x.isNotEmpty() && y.isNotEmpty() -> wall.takeIf { it.isNotEmpty() }?.let { "$it wall" } ?: ""
             status == "found" -> "Mounted, position not known yet"
             status == "spare" -> "Spare, not mounted"
             else -> ""

@@ -1,5 +1,8 @@
 package it.unimib.indoornav.lab.ui
 
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import it.unimib.indoornav.lab.inventory.NaturalOrderComparator
 import it.unimib.indoornav.lab.ui.components.BuildingChips
 import it.unimib.indoornav.lab.ui.components.BeaconFilterField
@@ -149,7 +152,8 @@ fun InventoryScreen(
     var editingTile by remember { mutableStateOf<ResolvedBeaconTile?>(null) }
     var filterQuery by rememberSaveable { mutableStateOf("") }
     var filterRegex by rememberSaveable { mutableStateOf(false) }
-    var buildingFilter by rememberSaveable { mutableStateOf<String?>(null) }
+    var buildingFilter by remember { mutableStateOf(emptySet<String>()) }
+    var searchOpen by rememberSaveable { mutableStateOf(false) }
 
     val sortedTiles = remember(resolvedTiles, sortOption) {
         BeaconGrouping.sortInventoryTiles(resolvedTiles, sortOption)
@@ -158,7 +162,7 @@ fun InventoryScreen(
         sortedTiles.map { it.building.trim() }.filter { it.isNotEmpty() }.distinct().sortedWith(NaturalOrderComparator)
     }
     val filteredTiles = remember(sortedTiles, filterQuery, filterRegex, buildingFilter) {
-        val inBuilding = buildingFilter?.let { b -> sortedTiles.filter { it.building.trim() == b } } ?: sortedTiles
+        val inBuilding = if (buildingFilter.isEmpty()) sortedTiles else sortedTiles.filter { it.building.trim() in buildingFilter }
         BeaconFilter.apply(inBuilding, filterQuery, filterRegex)
     }
     // Keeps the detail drawable while it animates out after its beacon was removed.
@@ -174,16 +178,25 @@ fun InventoryScreen(
             InventoryContent(
                 tiles = filteredTiles ?: emptyList(),
                 totalCount = sortedTiles.size,
-                filter = {
-                    if (buildings.size > 1 || buildingFilter != null) {
-                        BuildingChips(buildings = buildings, selected = buildingFilter, onSelect = { buildingFilter = it })
-                    }
+                searchOpen = searchOpen,
+                onSearchOpenChange = { open ->
+                    searchOpen = open
+                    if (!open) filterQuery = ""
+                },
+                search = {
                     BeaconFilterField(
                         query = filterQuery,
                         onQueryChange = { filterQuery = it },
                         regex = filterRegex,
                         onRegexChange = { filterRegex = it },
                         invalid = filteredTiles == null,
+                    )
+                },
+                chips = {
+                    BuildingChips(
+                        buildings = buildings,
+                        selected = buildingFilter,
+                        onSelectedChange = { buildingFilter = it },
                     )
                 },
                 viewMode = viewMode,
@@ -244,7 +257,10 @@ fun InventoryScreen(
 private fun InventoryContent(
     tiles: List<ResolvedBeaconTile>,
     totalCount: Int,
-    filter: @Composable () -> Unit,
+    searchOpen: Boolean,
+    onSearchOpenChange: (Boolean) -> Unit,
+    search: @Composable () -> Unit,
+    chips: @Composable () -> Unit,
     viewMode: BeaconViewMode,
     sortOption: InventorySortOption,
     isRecording: Boolean,
@@ -259,6 +275,7 @@ private fun InventoryContent(
     gridState: LazyGridState,
 ) {
     var sortMenuExpanded by remember { mutableStateOf(false) }
+    var moreMenuExpanded by remember { mutableStateOf(false) }
     val onlineCount = tiles.count { it.isOnline }
 
     Column(
@@ -267,37 +284,65 @@ private fun InventoryContent(
             .padding(horizontal = 14.dp, vertical = 12.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "Beacon Inventory",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    text = if (tiles.size < totalCount) {
-                "$onlineCount online · ${tiles.size} of $totalCount shown"
-            } else {
-                "$onlineCount online · ${tiles.size} saved"
-            },
-                    fontSize = 12.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+        if (searchOpen) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                IconButton(onClick = { onSearchOpenChange(false) }) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Close search")
+                }
+                Box(modifier = Modifier.weight(1f)) { search() }
             }
-            IconButton(onClick = onImportLayout) {
-                Icon(Icons.Default.FileUpload, contentDescription = "Import layout CSV")
-            }
-            OutlinedButton(
-                onClick = onExportCsv,
-                enabled = tiles.isNotEmpty(),
+        } else {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Icon(Icons.Default.FileDownload, contentDescription = null, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.width(6.dp))
-                Text("Export CSV", fontSize = 12.sp)
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Beacon Inventory",
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    Text(
+                        text = if (tiles.size < totalCount) {
+                            "$onlineCount online · ${tiles.size} of $totalCount shown"
+                        } else {
+                            "$onlineCount online · ${tiles.size} saved"
+                        },
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                IconButton(onClick = { onSearchOpenChange(true) }) {
+                    Icon(Icons.Default.Search, contentDescription = "Search beacons")
+                }
+                Box {
+                    IconButton(onClick = { moreMenuExpanded = true }) {
+                        Icon(Icons.Default.MoreVert, contentDescription = "More options")
+                    }
+                    DropdownMenu(
+                        expanded = moreMenuExpanded,
+                        onDismissRequest = { moreMenuExpanded = false },
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text("Import layout CSV") },
+                            leadingIcon = { Icon(Icons.Default.FileUpload, contentDescription = null) },
+                            onClick = {
+                                moreMenuExpanded = false
+                                onImportLayout()
+                            },
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Export CSV") },
+                            leadingIcon = { Icon(Icons.Default.FileDownload, contentDescription = null) },
+                            enabled = totalCount > 0,
+                            onClick = {
+                                moreMenuExpanded = false
+                                onExportCsv()
+                            },
+                        )
+                    }
+                }
             }
         }
 
@@ -363,19 +408,15 @@ private fun InventoryContent(
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box {
                 AssistChip(
                     onClick = { sortMenuExpanded = true },
-                    label = { Text("Sort: ${sortOption.label}", fontSize = 12.sp) },
+                    label = { Text("Sort") },
                     leadingIcon = {
-                        Icon(
-                            Icons.AutoMirrored.Filled.Sort,
-                            contentDescription = null,
-                            modifier = Modifier.size(16.dp),
-                        )
+                        Icon(Icons.AutoMirrored.Filled.Sort, contentDescription = null, modifier = Modifier.size(16.dp))
                     },
                 )
                 DropdownMenu(
@@ -399,14 +440,8 @@ private fun InventoryContent(
                     }
                 }
             }
-            Text(
-                text = "Offline after 20 s",
-                fontSize = 11.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+            Box(modifier = Modifier.weight(1f)) { chips() }
         }
-
-        if (totalCount > 0) filter()
 
         if (tiles.isEmpty() && totalCount > 0) {
             Text(
@@ -561,7 +596,10 @@ private fun InventoryContentPreview() {
         Surface {
             InventoryContent(
                 totalCount = sampleTiles.size,
-                filter = {},
+                searchOpen = false,
+                onSearchOpenChange = {},
+                search = {},
+                chips = {},
                 tiles = sampleTiles,
                 viewMode = BeaconViewMode.LIST,
                 sortOption = InventorySortOption.AVAILABILITY_THEN_LABEL,
