@@ -143,6 +143,7 @@ fun BeaconDetailOverlay(
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             TopAppBar(
+                modifier = Modifier.heroCeiling(),
                 // The screen around it already sits below the status bar.
                 windowInsets = WindowInsets(0, 0, 0, 0),
                 colors = TopAppBarDefaults.topAppBarColors(

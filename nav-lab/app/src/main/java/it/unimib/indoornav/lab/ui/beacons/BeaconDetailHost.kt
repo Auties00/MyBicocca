@@ -31,6 +31,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.lerp
@@ -78,6 +80,9 @@ class BeaconHeroState internal constructor(
 
     // Written only by the detail copy: the card copy recomposing on the way back must not reset it.
     internal val detailHaloRotations = mutableStateMapOf<String, Float>()
+
+    // Bottom edge, in root coordinates, of the detail screen's top bar.
+    internal var detailBarBottom by mutableStateOf<Float?>(null)
 
     internal fun flightRects(): Pair<Rect, Rect>? {
         val k = key ?: return null
@@ -143,6 +148,7 @@ fun BeaconDetailHost(
                 next.detailRects.putAll(old.detailRects)
                 next.looks.putAll(old.looks)
                 next.detailHaloRotations.putAll(old.detailHaloRotations)
+                next.detailBarBottom = old.detailBarBottom
             }
         }
     }
@@ -164,6 +170,10 @@ fun BeaconDetailHost(
             val p = heroProgress.value
             val rect = lerp(flight.first, flight.second, p)
             val density = LocalDensity.current
+            // A model scrolled under the detail's top bar comes out from under it instead of covering it:
+            // the flying copy is cut at the bar's bottom edge, which slides up to the top as it lands.
+            val barBottom = hero.detailBarBottom ?: hostOrigin.y
+            val clipEdge = hostOrigin.y + (barBottom - hostOrigin.y) * p
             HeroVisual(
                 look = look,
                 progress = p,
@@ -175,10 +185,23 @@ fun BeaconDetailHost(
                             (rect.top - hostOrigin.y).roundToInt(),
                         )
                     }
-                    .size(with(density) { rect.width.toDp() }, with(density) { rect.height.toDp() }),
+                    .size(with(density) { rect.width.toDp() }, with(density) { rect.height.toDp() })
+                    .drawWithContent {
+                        val far = size.maxDimension * 4
+                        clipRect(left = -far, top = clipEdge - rect.top, right = far, bottom = far) {
+                            this@drawWithContent.drawContent()
+                        }
+                    },
             )
         }
     }
+}
+
+/** Marks the detail screen's top bar, so a flying beacon never draws over it. */
+@Composable
+fun Modifier.heroCeiling(): Modifier {
+    val hero = LocalBeaconHero.current ?: return this
+    return onGloballyPositioned { hero.detailBarBottom = it.positionInRoot().y + it.size.height }
 }
 
 /**
