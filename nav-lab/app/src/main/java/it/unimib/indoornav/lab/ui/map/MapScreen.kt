@@ -177,8 +177,9 @@ fun MapScreen(
     var placingKey by remember { mutableStateOf<String?>(null) }
     var detailKey by remember { mutableStateOf<String?>(null) }
     var editingTile by remember { mutableStateOf<ResolvedBeaconTile?>(null) }
-    // Kept outside the detail host, which drops the map while a beacon's detail is open.
-    var view by remember(building, floor) { mutableStateOf<PlanView?>(null) }
+    // Kept outside the detail host, which drops the map while a beacon's detail is open. Not reset on a
+    // floor change: all floors share one frame, so the same view shows the same spot one floor up or down.
+    var view by remember(building) { mutableStateOf<PlanView?>(null) }
     val lastKnownTiles = remember { mutableMapOf<String, ResolvedBeaconTile>() }
     remember(tiles) { tiles.forEach { lastKnownTiles[it.tileKey] = it } }
 
