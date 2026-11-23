@@ -3,6 +3,7 @@ package it.unimib.indoornav.lab.data
 import android.content.Context
 import it.unimib.indoornav.lab.format.ExperimentTemplate
 import it.unimib.indoornav.lab.format.ProjectConstants
+import it.unimib.indoornav.lab.ui.model.ModelRenderer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -31,6 +32,7 @@ data class SetupConfig(
     val bleInventoryMode: Boolean = false,
     val bleStoreEverything: Boolean = false,
     val universitySsids: List<String> = ProjectConstants.DEFAULT_UNIVERSITY_SSIDS,
+    val modelRenderer: ModelRenderer = ModelRenderer.GL,
 )
 
 class LabPreferences(context: Context) {
@@ -63,6 +65,9 @@ class LabPreferences(context: Context) {
             ProjectConstants.DEFAULT_UNIVERSITY_SSIDS
         }
 
+        val rendererRaw = prefs.getString(KEY_MODEL_RENDERER, ModelRenderer.GL.name)
+        val modelRenderer = ModelRenderer.entries.firstOrNull { it.name == rendererRaw } ?: ModelRenderer.GL
+
         val raw = SetupConfig(
             operator = prefs.getString(KEY_OPERATOR, "") ?: "",
             marker = prefs.getString(KEY_MARKER, "") ?: "",
@@ -83,6 +88,7 @@ class LabPreferences(context: Context) {
             bleInventoryMode = prefs.getBoolean(KEY_BLE_INVENTORY, false),
             bleStoreEverything = prefs.getBoolean(KEY_BLE_STORE_ALL, false),
             universitySsids = ssids,
+            modelRenderer = modelRenderer,
         )
         return normalizeConfig(raw)
     }
@@ -132,6 +138,7 @@ class LabPreferences(context: Context) {
             .putBoolean(KEY_BLE_INVENTORY, next.bleInventoryMode)
             .putBoolean(KEY_BLE_STORE_ALL, next.bleStoreEverything)
             .putString(KEY_UNIVERSITY_SSIDS, json.encodeToString(next.universitySsids))
+            .putString(KEY_MODEL_RENDERER, next.modelRenderer.name)
             .apply()
     }
 
@@ -151,5 +158,6 @@ class LabPreferences(context: Context) {
         const val KEY_BLE_INVENTORY = "ble_inventory"
         const val KEY_BLE_STORE_ALL = "ble_store_all"
         const val KEY_UNIVERSITY_SSIDS = "university_ssids"
+        const val KEY_MODEL_RENDERER = "model_renderer"
     }
 }

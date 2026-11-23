@@ -23,6 +23,7 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -45,10 +46,12 @@ import it.unimib.indoornav.lab.inventory.BeaconGrouping
 import it.unimib.indoornav.lab.ui.InventoryScreen
 import it.unimib.indoornav.lab.ui.RecordingSummarySheet
 import it.unimib.indoornav.lab.ui.LiveRecordingScreen
+import it.unimib.indoornav.lab.ui.ModelBenchmarkScreen
 import it.unimib.indoornav.lab.ui.PermissionsHelper
 import it.unimib.indoornav.lab.ui.SessionsScreen
 import it.unimib.indoornav.lab.ui.SetupScreen
 import it.unimib.indoornav.lab.ui.SurveyScreen
+import it.unimib.indoornav.lab.ui.model.LocalModelRenderer
 import it.unimib.indoornav.lab.ui.theme.LabTheme
 
 class MainActivity : ComponentActivity() {
@@ -138,10 +141,11 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                Scaffold(
-                    bottomBar = {
-                        if (!recordingState.isRecording) {
-                            NavigationBar(
+                CompositionLocalProvider(LocalModelRenderer provides config.modelRenderer) {
+                    Scaffold(
+                        bottomBar = {
+                            if (!recordingState.isRecording && currentRoute != "model_benchmark") {
+                                NavigationBar(
                                 containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
                             ) {
                                 NavigationBarItem(
@@ -255,7 +259,20 @@ class MainActivity : ComponentActivity() {
                                     )
                                 }
                                 composable("sessions") {
-                                    SessionsScreen(repository = app.sessionRepository)
+                                    SessionsScreen(
+                                        repository = app.sessionRepository,
+                                        currentRenderer = config.modelRenderer,
+                                        onOpenRendererBenchmark = { navController.navigate("model_benchmark") },
+                                    )
+                                }
+                                composable("model_benchmark") {
+                                    ModelBenchmarkScreen(
+                                        selectedRenderer = config.modelRenderer,
+                                        onSelectRenderer = { next ->
+                                            app.preferences.update { it.copy(modelRenderer = next) }
+                                        },
+                                        onBack = { navController.popBackStack() },
+                                    )
                                 }
                             }
                         }
@@ -272,6 +289,7 @@ class MainActivity : ComponentActivity() {
                             onDismiss = { app.recordingCoordinator.dismissSummary() },
                         )
                     }
+                }
                 }
             }
         }
