@@ -63,7 +63,7 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component.t
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component.MensaFoodCatalogPage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component.MensaHubPage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component.MensaLoginPage
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component.MensaRegisterPage
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component.MensaSignUpRoute
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component.MensaMenuPage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component.MensaOrderSummaryPage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component.MensaReservationDetailPage
@@ -596,7 +596,7 @@ fun MensaPage(
                     initialEmail = loginPrefillEmail,
                 )
 
-                MensaSubPage.Register -> MensaRegisterPage(onActivated = viewModel::finishRegistration)
+                MensaSubPage.Register -> MensaSignUpRoute(onActivated = viewModel::finishRegistration)
 
                 MensaSubPage.TakeawayOrder -> MensaTakeawayPage(
                     services = takeawayServices,

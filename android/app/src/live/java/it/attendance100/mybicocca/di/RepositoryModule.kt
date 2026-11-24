@@ -70,6 +70,8 @@ import it.attendance100.mybicocca.domain.repository.MensaAllergenPreferencesRepo
 import it.attendance100.mybicocca.domain.repository.MensaFavouritesRepository
 import it.attendance100.mybicocca.domain.repository.MensaEligibilityProvider
 import it.attendance100.mybicocca.domain.repository.MensaRepository
+import it.attendance100.mybicocca.domain.repository.MensaSignUpRepository
+import it.attendance100.mybicocca.data.repository.MensaSignUpRepositoryImpl
 import it.attendance100.mybicocca.domain.repository.PdfViewerSettingsRepository
 import it.attendance100.mybicocca.domain.repository.PrivacySettingsRepository
 import it.attendance100.mybicocca.domain.repository.QuestionnaireRepository
@@ -202,6 +204,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindMensaEligibilityProvider(impl: BundledMensaEligibilityProvider): MensaEligibilityProvider
+
+    // One per sign-up: each instance holds that sign-up's session.
+    @Binds
+    abstract fun bindMensaSignUpRepository(impl: MensaSignUpRepositoryImpl): MensaSignUpRepository
 
     @Binds
     @Singleton

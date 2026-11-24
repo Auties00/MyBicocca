@@ -1,12 +1,14 @@
 """Checks that Compass's sign-up page still looks the way the app's in-app sign-up expects.
 
-The Mensa sign-up (MensaRegisterPage.kt) opens Compass's web form after the app's session entry,
-reads the email and password fields to sign in once the account is activated, hides the site's
-header and footer and restyles the form. None of that has an API contract, so this check fetches
-the page the same way and fails when something the app relies on is gone.
+The Mensa sign-up drives these pages over HTTP from its own form (CompassSignUpClient in data-api)
+and falls back to showing them in a web view (MensaRegisterPage.kt), which reads the email and
+password fields, hides the site's header and footer and restyles the form. None of that has an API
+contract, so this check fetches the page the same way and fails when something the app relies on
+is gone.
 
 Standard library only. Exit code 0 when everything is in place, 1 otherwise (with the reasons).
 """
+import re
 import sys
 import urllib.request
 from http.cookiejar import CookieJar
@@ -71,6 +73,13 @@ def main() -> int:
                  "span.input-group-addon", "div.bs-callout"):
         if hook not in page.tags_with_class:
             problems.append(f"no element matches {hook}")
+
+    # The native form also reads the email check's key and shows the captcha image.
+    if not re.search(r"check_email'\s*,\s*\{\s*email\s*:\s*email\s*,\s*v\s*:\s*'[^']+'", html):
+        problems.append("the email check's key is no longer in the page")
+    captcha = opener.open(ORIGIN + "/api/utilities/captcha", timeout=30)
+    if not captcha.headers.get("Content-Type", "").startswith("image/"):
+        problems.append(f"the captcha is no longer an image ({captcha.headers.get('Content-Type')})")
 
     if problems:
         print("Compass's sign-up page changed; the in-app sign-up needs a look:")
