@@ -235,9 +235,9 @@ private fun BookingBox(booking: MensaReservation, onClick: () -> Unit, modifier:
     HubBox(
         tag = MensaTestTags.HUB_BOOKING,
         label = stringResource(R.string.mensa_hub_booking_label),
-        title = listOfNotNull(day, booking.mealTypeName).joinToString(" · "),
-        // The pickup slot, then the code on a line of its own: it is long and must not break.
-        body = listOfNotNull(booking.shiftName?.takeIf { it.isNotBlank() }, booking.code).joinToString("\n"),
+        // When, and the pickup shift; the code and the rest are one tap away in the booking.
+        title = day,
+        body = booking.shiftName?.takeIf { it.isNotBlank() } ?: booking.mealTypeName.orEmpty(),
         onClick = onClick,
         modifier = modifier,
     ) {
