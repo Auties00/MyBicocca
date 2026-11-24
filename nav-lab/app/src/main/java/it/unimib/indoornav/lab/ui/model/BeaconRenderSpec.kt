@@ -224,7 +224,7 @@ object BeaconRenderSpec {
         if (ledOn) {
             val ledX = width * 0.75f
             val ledY = 30f
-            val glowR = 34f
+            val glowR = 20f
             val glow = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                 shader = android.graphics.RadialGradient(
                     ledX, ledY, glowR,

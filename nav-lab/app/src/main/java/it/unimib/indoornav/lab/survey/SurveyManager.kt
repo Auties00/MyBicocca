@@ -237,6 +237,7 @@ class SurveyManager(
     private var manualBeaconScanWanted = false
     private var inventoryTabActive = false
     private var lastBeaconScanStartElapsedMs = 0L
+    private var lastBleResultElapsedMs = 0L
     private var wifiAutoJob: Job? = null
     private var rttJob: Job? = null
     private var connectedApJob: Job? = null
@@ -253,6 +254,15 @@ class SurveyManager(
         override fun onScanResult(callbackType: Int, result: ScanResult) {
             mainHandler.post {
                 if (_state.value.beaconScanning) processBleResult(result)
+            }
+        }
+
+        override fun onScanFailed(errorCode: Int) {
+            mainHandler.post {
+                _state.value = _state.value.copy(beaconScanning = false, statusMessage = "BLE scan failed ($errorCode), retrying")
+                beaconRefreshJob?.cancel()
+                beaconRefreshJob = null
+                syncBeaconScanning(isRecording = false)
             }
         }
 
@@ -294,7 +304,17 @@ class SurveyManager(
         syncBeaconScanning(isRecording = false)
     }
 
-    private fun syncBeaconScanning(isRecording: Boolean) {
+    /**
+     * Stops and starts the inventory scan again, keeping what was heard so far. Android quietly
+     * downgrades an unfiltered scan after about 30 minutes, which shows as every beacon going offline.
+     */
+    fun restartBeaconScan() {
+        if (!(inventoryTabActive || manualBeaconScanWanted)) return
+        stopBeaconScanInternal()
+        syncBeaconScanning(isRecording = false, fresh = false)
+    }
+
+    private fun syncBeaconScanning(isRecording: Boolean, fresh: Boolean = true) {
         if (isRecording) {
             inventoryTabActive = false
             manualBeaconScanWanted = false
@@ -320,13 +340,13 @@ class SurveyManager(
         if (remainingMs <= 0L) {
             pendingBeaconStartJob?.cancel()
             pendingBeaconStartJob = null
-            startBeaconScanInternal()
+            startBeaconScanInternal(fresh)
         } else if (pendingBeaconStartJob?.isActive != true) {
             _state.value = _state.value.copy(beaconScanPending = true)
             pendingBeaconStartJob = scope.launch {
                 delay(remainingMs)
                 if (inventoryTabActive || manualBeaconScanWanted) {
-                    startBeaconScanInternal()
+                    startBeaconScanInternal(fresh)
                 } else {
                     _state.value = _state.value.copy(beaconScanPending = false)
                 }
@@ -335,7 +355,7 @@ class SurveyManager(
     }
 
     @SuppressLint("MissingPermission")
-    private fun startBeaconScanInternal() {
+    private fun startBeaconScanInternal(fresh: Boolean = true) {
         if (_state.value.beaconScanning) return
         val adapter = bluetoothManager?.adapter
         if (adapter == null || !adapter.isEnabled || !hasBlePermission()) {
@@ -355,9 +375,11 @@ class SurveyManager(
             return
         }
         bleScanner = scanner
-        beaconTrackers.clear()
-        lastUidByAddr.clear()
-        tlmByAddr.clear()
+        if (fresh) {
+            beaconTrackers.clear()
+            lastUidByAddr.clear()
+            tlmByAddr.clear()
+        }
         otherBleCounter = 0
 
         val settings = ScanSettings.Builder()
@@ -390,6 +412,12 @@ class SurveyManager(
             while (_state.value.beaconScanning) {
                 publishBeaconSnapshot()
                 otherBleCounter = 0
+                val now = SystemClock.elapsedRealtime()
+                val silentMs = now - maxOf(lastBleResultElapsedMs, lastBeaconScanStartElapsedMs)
+                if (silentMs > SCAN_SILENCE_RESTART_MS || now - lastBeaconScanStartElapsedMs > SCAN_MAX_RUN_MS) {
+                    restartBeaconScan()
+                    return@launch
+                }
                 delay(1_000L)
             }
         }
@@ -412,6 +440,7 @@ class SurveyManager(
     }
 
     private fun processBleResult(result: ScanResult) {
+        lastBleResultElapsedMs = SystemClock.elapsedRealtime()
         val rawBytes = result.scanRecord?.bytes ?: ByteArray(0)
         val parsed = BeaconFrameParser.parseRawAdvertisement(rawBytes)
         if (parsed == null) {
@@ -1106,5 +1135,11 @@ class SurveyManager(
     private companion object {
         // Android throttles >5 BLE scan starts per 30 s, so tab switches are debounced to >=7 s.
         const val MIN_BEACON_SCAN_RESTART_MS = 7_000L
+
+        // Nothing at all heard for this long means the scan has stalled.
+        const val SCAN_SILENCE_RESTART_MS = 15_000L
+
+        // Restarted before Android's 30-minute limit on unfiltered scans.
+        const val SCAN_MAX_RUN_MS = 25 * 60_000L
     }
 }

@@ -11,6 +11,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.Dispatchers
 import it.unimib.indoornav.lab.inventory.LayoutCsvImporter
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.IconButton
 import androidx.compose.material.icons.filled.FileUpload
 import androidx.activity.result.contract.ActivityResultContracts
@@ -216,6 +218,7 @@ fun InventoryScreen(
                     }
                 },
                 onSelectTile = { detailTileKey = it.tileKey },
+                onRefresh = surveyManager::restartBeaconScan,
                 listState = listState,
                 gridState = gridState,
             )
@@ -260,6 +263,7 @@ fun InventoryScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun InventoryContent(
     tiles: List<ResolvedBeaconTile>,
@@ -280,7 +284,16 @@ private fun InventoryContent(
     onSelectTile: (ResolvedBeaconTile) -> Unit,
     listState: LazyListState,
     gridState: LazyGridState,
+    onRefresh: () -> Unit = {},
 ) {
+    // Pull down to restart the scan; the spinner stays up briefly so the gesture reads as done.
+    var refreshing by remember { mutableStateOf(false) }
+    LaunchedEffect(refreshing) {
+        if (refreshing) {
+            delay(900)
+            refreshing = false
+        }
+    }
     var sortMenuExpanded by remember { mutableStateOf(false) }
     var moreMenuExpanded by remember { mutableStateOf(false) }
     val onlineCount = tiles.count { it.isOnline }
@@ -493,7 +506,14 @@ private fun InventoryContent(
                     }
                 }
             }
-        } else if (viewMode == BeaconViewMode.LIST) {
+        } else PullToRefreshBox(
+            isRefreshing = refreshing || scanPending,
+            onRefresh = {
+                refreshing = true
+                onRefresh()
+            },
+            modifier = Modifier.fillMaxSize(),
+        ) { if (viewMode == BeaconViewMode.LIST) {
             LazyColumn(
                 state = listState,
                 modifier = Modifier.fillMaxSize(),
@@ -525,7 +545,7 @@ private fun InventoryContent(
                     )
                 }
             }
-        }
+        } }
     }
 }
 
