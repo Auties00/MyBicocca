@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -118,6 +119,25 @@ internal fun MensaPlate(
             .size(size)
             .clearAndSetSemantics { },
     )
+}
+
+/**
+ * Salad, pasta and dessert overlapping, the pasta raised and larger in the middle: the canteen's
+ * art on the sign-in page and the menu card. Everything scales with [middleSize].
+ */
+@Composable
+internal fun MensaPlateTrio(middleSize: Dp, modifier: Modifier = Modifier) {
+    val scale = middleSize / 100.dp
+    Row(modifier = modifier, horizontalArrangement = Arrangement.spacedBy((-20).dp * scale)) {
+        listOf(MensaArt.SALAD, MensaArt.PASTA_TOMATO, MensaArt.DESSERT).forEachIndexed { index, art ->
+            val middle = index == 1
+            MensaPlate(
+                art = art,
+                size = if (middle) middleSize else middleSize * 0.84f,
+                modifier = Modifier.offset(y = if (middle) 0.dp else 12.dp * scale),
+            )
+        }
+    }
 }
 
 private val PlateSize = 92.dp

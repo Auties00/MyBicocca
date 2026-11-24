@@ -218,6 +218,7 @@ internal fun MensaReservationDetailPage(
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
+            MensaBookingBagHero(reservationId = reservation.id, dishes = reservation.dishes)
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(22.dp),

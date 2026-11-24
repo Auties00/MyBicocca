@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -52,7 +51,6 @@ import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.ui.component.input.PasswordTextField
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.MensaTestTags
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.MensaArt
 import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
 
 /**
@@ -180,15 +178,7 @@ internal fun MensaLoginPage(
 @Composable
 private fun LoginPlates() {
     Box(modifier = Modifier.fillMaxWidth().height(112.dp), contentAlignment = Alignment.Center) {
-        Row(horizontalArrangement = Arrangement.spacedBy((-20).dp)) {
-            listOf(MensaArt.SALAD, MensaArt.PASTA_TOMATO, MensaArt.DESSERT).forEachIndexed { index, art ->
-                MensaPlate(
-                    art = art,
-                    size = if (index == 1) 100.dp else 84.dp,
-                    modifier = Modifier.offset(y = if (index == 1) 0.dp else 12.dp),
-                )
-            }
-        }
+        MensaPlateTrio(middleSize = 100.dp)
     }
 }
 

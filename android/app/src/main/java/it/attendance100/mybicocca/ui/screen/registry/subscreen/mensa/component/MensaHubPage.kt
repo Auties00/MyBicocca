@@ -13,8 +13,6 @@ import androidx.compose.foundation.indication
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.ui.res.painterResource
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -54,7 +52,6 @@ import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.mensa.MensaSession
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.MensaTestTags
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.MensaArt
 import it.attendance100.mybicocca.domain.model.mensa.MensaReservation
 import it.attendance100.mybicocca.core.os.currentLocale
 import it.attendance100.mybicocca.core.time.AppClock
@@ -93,7 +90,7 @@ internal fun MensaHubPage(
                     body = stringResource(R.string.mensa_hub_menu_body),
                     onClick = onOpenMenu,
                     modifier = Modifier.weight(1f),
-                ) { HubPlates(listOf(MensaArt.PASTA_TOMATO, MensaArt.SALAD)) }
+                ) { MensaPlateTrio(middleSize = 72.dp, modifier = Modifier.align(Alignment.TopEnd).offset(x = (-4).dp, y = 16.dp)) }
                 BookingBox(booking = booking, onClick = { onOpenBooking(booking) }, modifier = Modifier.weight(1f))
             }
         } else {
@@ -103,7 +100,7 @@ internal fun MensaHubPage(
                 body = stringResource(R.string.mensa_hub_menu_body),
                 onClick = onOpenMenu,
                 modifier = Modifier.fillMaxWidth(),
-            ) { HubPlates(listOf(MensaArt.PASTA_TOMATO, MensaArt.MEAT, MensaArt.SALAD, MensaArt.SANDWICH)) }
+            ) { MensaPlateTrio(middleSize = 100.dp, modifier = Modifier.align(Alignment.TopEnd).offset(x = (-12).dp, y = 12.dp)) }
             HubRow(
                 tag = MensaTestTags.HUB_ORDERS,
                 icon = Icons.AutoMirrored.Outlined.ReceiptLong,
@@ -160,14 +157,14 @@ private fun HubBox(
     val press = remember { MutableInteractionSource() }
     Box(
         modifier = modifier
-            .height(184.dp)
+            .height(192.dp)
             .testTag(tag)
             .clickable(interactionSource = press, indication = null) { haptic.tap(); onClick() },
     ) {
         Surface(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = 44.dp),
+                .padding(top = 52.dp),
             shape = RoundedCornerShape(28.dp),
             color = scheme.primaryContainer,
             contentColor = scheme.onPrimaryContainer,
@@ -202,25 +199,6 @@ private fun HubBox(
     }
 }
 
-/** A string of plates at the card's top-right, staggered so it reads as a spread of dishes. */
-@Composable
-private fun BoxScope.HubPlates(arts: List<MensaArt>) {
-    Row(
-        modifier = Modifier
-            .align(Alignment.TopEnd)
-            .offset(x = 6.dp),
-        horizontalArrangement = Arrangement.spacedBy((-22).dp),
-    ) {
-        arts.forEachIndexed { index, art ->
-            MensaPlate(
-                art = art,
-                size = 92.dp,
-                modifier = Modifier.offset(y = if (index % 2 == 0) 0.dp else 14.dp),
-            )
-        }
-    }
-}
-
 /** The next booking to pick up, as big as the menu card: when, which meal, where, and its code. */
 @Composable
 private fun BookingBox(booking: MensaReservation, onClick: () -> Unit, modifier: Modifier = Modifier) {
@@ -241,12 +219,12 @@ private fun BookingBox(booking: MensaReservation, onClick: () -> Unit, modifier:
         onClick = onClick,
         modifier = modifier,
     ) {
-        Image(
-            painter = painterResource(R.drawable.mensa_art_takeaway_bag),
-            contentDescription = null,
+        MensaBookingBag(
+            reservationId = booking.id,
+            width = 128.dp,
             modifier = Modifier
                 .align(Alignment.TopEnd)
-                .size(104.dp),
+                .offset(x = 4.dp),
         )
     }
 }
