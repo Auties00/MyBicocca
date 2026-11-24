@@ -41,6 +41,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component.MensaNewAccount
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
@@ -668,10 +669,42 @@ class MensaViewModel @Inject constructor(
         push(MensaSubPage.Register)
     }
 
-    /** The sign-up form has led back to the login: the user signs in on our page with the new account. */
-    fun finishRegistration() {
+    private val _loginPrefillEmail = MutableStateFlow<String?>(null)
+
+    /** The email of an account just created, so the login page does not ask for it again. */
+    val loginPrefillEmail: StateFlow<String?> = _loginPrefillEmail.asStateFlow()
+
+    /**
+     * The sign-up form has finished. With the credentials typed in it, the new account is signed in
+     * straight away and the login page is skipped; without them (or if Compass refuses them), the
+     * login page stays, with the email filled in.
+     */
+    fun finishRegistration(account: MensaNewAccount?) {
         if (_backStack.value.lastOrNull() == MensaSubPage.Register) {
             _backStack.value = _backStack.value.dropLast(1)
+        }
+        _loginPrefillEmail.value = account?.email
+        if (account == null) {
+            viewModelScope.launch { _events.send(MensaEvent.SignUpNeedsLogin) }
+            return
+        }
+        if (_loginSubmitting.value) return
+        _loginSubmitting.value = true
+        viewModelScope.launch {
+            runCatching { repository.login(account.email.asMensaLoginEmail(), account.password) }.fold(
+                onSuccess = {
+                    if (_backStack.value.lastOrNull() == MensaSubPage.Login) {
+                        _backStack.value = _backStack.value.dropLast(1)
+                    }
+                    _loginPrefillEmail.value = null
+                    _events.send(MensaEvent.SignedUp(account.email, account.password))
+                    runCatching { fetchTakeawayServicesInternal() }
+                    runCatching { fetchReservationsInternal() }
+                    pendingAfterLogin = null
+                },
+                onFailure = { _events.send(MensaEvent.SignUpNeedsLogin) },
+            )
+            _loginSubmitting.value = false
         }
     }
 

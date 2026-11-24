@@ -2152,11 +2152,10 @@
     <string name="mensa_logout_action">Sign out</string>
     <string name="mensa_my_orders">My orders</string>
     <string name="mensa_book_takeaway">Order Take-Away</string>
-    <string name="mensa_login_title">Sign in to Fresh &amp; Natural</string>
-    <string name="mensa_login_subtitle">Enter your RistoCloud / Fresh &amp; Natural credentials.</string>
+    <string name="mensa_login_title">Sign in</string>
     <string name="mensa_login_email">Email</string>
     <string name="mensa_login_password">Password</string>
-    <string name="mensa_login_submit">Sign in to Fresh &amp; Natural</string>
+    <string name="mensa_login_submit">Sign in</string>
     <string name="mensa_login_failed">Sign in failed</string>
     <string name="mensa_dish_ingredients">Ingredients</string>
     <string name="mensa_dish_allergens_major">Major allergens</string>
@@ -2234,7 +2233,9 @@
     <string name="mensa_setup_meal">Meal</string>
     <string name="mensa_setup_confirm">Show the menu</string>
     <string name="mensa_login_new_account">Create an account</string>
-    <string name="mensa_login_new_account_hint">You sign up on the Compass website, right here in the app. Once you have confirmed your email, sign in with the new account.</string>
+    <string name="mensa_login_or">or</string>
+    <string name="mensa_signup_activated_title">Account activated</string>
+    <string name="mensa_signup_activated_body">Sign in with the email and password you chose.</string>
     <string name="mensa_register_title">Create an account</string>
     <string name="mensa_register_subtitle">Fresh &amp; Natural</string>
     <string name="mensa_register_failed">Couldn\'t open the sign-up page. Check your connection.</string>
@@ -2355,5 +2356,4 @@
     <string name="mensa_art_bar">Bar</string>
     <string name="mensa_art_gluten_free">Gluten free</string>
     <string name="mensa_map_bar_action">Bar menu</string>
-    <string name="mensa_login_email_hint">With your university email the username is enough: we add @campus.unimib.it</string>
 </resources>

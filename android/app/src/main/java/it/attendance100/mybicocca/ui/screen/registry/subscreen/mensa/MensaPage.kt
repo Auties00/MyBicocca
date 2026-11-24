@@ -18,6 +18,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import android.content.Context
+import androidx.credentials.CreatePasswordRequest
+import androidx.credentials.CredentialManager
+import it.attendance100.mybicocca.ui.screen.lock.findFragmentActivity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -94,6 +98,8 @@ fun MensaPage(
     val strDeletionTitle = stringResource(R.string.mensa_delete_requested_title)
     val strDeletionBody = stringResource(R.string.mensa_delete_requested_body)
     val strDeletionFailed = stringResource(R.string.mensa_delete_failed)
+    val strSignUpActivatedTitle = stringResource(R.string.mensa_signup_activated_title)
+    val strSignUpActivatedBody = stringResource(R.string.mensa_signup_activated_body)
     val todayLabel = stringResource(R.string.mensa_today)
     val tomorrowLabel = stringResource(R.string.mensa_tomorrow)
     val locale = currentLocale()
@@ -153,11 +159,19 @@ fun MensaPage(
     val catalogStatus by viewModel.catalogStatus.collectAsStateWithLifecycle()
     val eligibility by viewModel.eligibility.collectAsStateWithLifecycle()
     val accountBusy by viewModel.accountBusy.collectAsStateWithLifecycle()
+    val loginPrefillEmail by viewModel.loginPrefillEmail.collectAsStateWithLifecycle()
 
     LaunchedEffect(Unit) {
         viewModel.events.collect { event ->
             when (event) {
                 MensaEvent.LoginSucceeded -> Unit
+                // Signed in already: the only thing left is to let the password manager keep the
+                // password, for this app, so the next sign-in fills itself.
+                is MensaEvent.SignedUp -> offerToSavePassword(context, event.email, event.password)
+                MensaEvent.SignUpNeedsLogin -> {
+                    outcomeTitle = strSignUpActivatedTitle
+                    outcome = SheetOutcome.Success(strSignUpActivatedTitle, strSignUpActivatedBody)
+                }
                 is MensaEvent.LoginFailed -> {
                     outcomeTitle = strLoginFailed
                     outcome = SheetOutcome.Error(strLoginFailed, event.cause)
@@ -322,7 +336,7 @@ fun MensaPage(
                         MensaSubPage.Allergens -> stringResource(if (onFavourites) R.string.mensa_favourites_subtitle else R.string.mensa_allergens_subtitle)
                         MensaSubPage.Account -> session?.email
                         is MensaSubPage.AccountEdit -> session?.email
-                        MensaSubPage.Login -> null
+                        MensaSubPage.Login -> stringResource(R.string.mensa_register_subtitle)
                         MensaSubPage.Register -> stringResource(R.string.mensa_register_subtitle)
                         MensaSubPage.OrderSummary -> stringResource(R.string.mensa_summary_subtitle)
                         MensaSubPage.TakeawayOrder -> stringResource(R.string.mensa_takeaway_subtitle)
@@ -568,9 +582,10 @@ fun MensaPage(
                     submitting = loginSubmitting,
                     onLogin = viewModel::login,
                     onCreateAccount = viewModel::openRegister,
+                    initialEmail = loginPrefillEmail,
                 )
 
-                MensaSubPage.Register -> MensaRegisterPage(onDone = viewModel::finishRegistration)
+                MensaSubPage.Register -> MensaRegisterPage(onActivated = viewModel::finishRegistration)
 
                 MensaSubPage.TakeawayOrder -> MensaTakeawayPage(
                     services = takeawayServices,
@@ -645,3 +660,16 @@ private fun displayKey(display: MensaDisplay): String = when (display) {
     MensaDisplay.ConfirmCancel -> "confirm_cancel"
     MensaDisplay.Outcome -> "outcome"
 }
+
+/**
+ * Asks the user's password manager to keep the new account's password. The prompt saves it for this
+ * app (and mybicocca.it, through the asset links), not for compasscloud.it where the form lived.
+ * Declining or having no password manager is fine: nothing else depends on it.
+ */
+private suspend fun offerToSavePassword(context: Context, email: String, password: String) {
+    val activity = context.findFragmentActivity() ?: return
+    runCatching {
+        CredentialManager.create(activity).createCredential(activity, CreatePasswordRequest(id = email, password = password))
+    }
+}
+

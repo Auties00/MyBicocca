@@ -106,6 +106,12 @@ enum class MensaAccountField { PROFILE, EMAIL, PASSWORD }
 /** One-shot events emitted by [it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.MensaViewModel]. */
 sealed interface MensaEvent {
     data object LoginSucceeded : MensaEvent
+
+    /** A new account was created and signed in to; the page offers to save its password. */
+    data class SignedUp(val email: String, val password: String) : MensaEvent
+
+    /** A new account is activated but not signed in to (credentials unknown or refused). */
+    data object SignUpNeedsLogin : MensaEvent
     data class AccountUpdated(val field: MensaAccountField) : MensaEvent
     data class AccountUpdateFailed(val cause: Throwable) : MensaEvent
     data class AccountDeletionRequested(val message: String?) : MensaEvent

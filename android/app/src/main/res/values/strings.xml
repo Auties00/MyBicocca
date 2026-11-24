@@ -2157,11 +2157,10 @@
     <string name="mensa_logout_action">Esci</string>
     <string name="mensa_my_orders">I miei ordini</string>
     <string name="mensa_book_takeaway">Ordina Take-Away</string>
-    <string name="mensa_login_title">Accedi a Fresh &amp; Natural</string>
-    <string name="mensa_login_subtitle">Inserisci le credenziali del tuo account RistoCloud / Fresh &amp; Natural.</string>
+    <string name="mensa_login_title">Accedi</string>
     <string name="mensa_login_email">Email</string>
     <string name="mensa_login_password">Password</string>
-    <string name="mensa_login_submit">Accedi a Fresh &amp; Natural</string>
+    <string name="mensa_login_submit">Accedi</string>
     <string name="mensa_login_failed">Accesso non riuscito</string>
     <string name="mensa_dish_ingredients">Ingredienti</string>
     <string name="mensa_dish_allergens_major">Allergeni principali</string>
@@ -2239,7 +2238,9 @@
     <string name="mensa_setup_meal">Pasto</string>
     <string name="mensa_setup_confirm">Mostra il menù</string>
     <string name="mensa_login_new_account">Crea un account</string>
-    <string name="mensa_login_new_account_hint">Ti registri sul sito di Compass, qui nell\'app. Dopo aver confermato l\'email, accedi con l\'account nuovo.</string>
+    <string name="mensa_login_or">oppure</string>
+    <string name="mensa_signup_activated_title">Account attivato</string>
+    <string name="mensa_signup_activated_body">Accedi con l\'email e la password che hai scelto.</string>
     <string name="mensa_register_title">Crea un account</string>
     <string name="mensa_register_subtitle">Fresh &amp; Natural</string>
     <string name="mensa_register_failed">Non riesco ad aprire la registrazione. Controlla la connessione.</string>
@@ -2360,5 +2361,4 @@
     <string name="mensa_art_bar">Bar</string>
     <string name="mensa_art_gluten_free">Senza glutine</string>
     <string name="mensa_map_bar_action">Menù bar</string>
-    <string name="mensa_login_email_hint">Con l\'email universitaria basta il nome utente: aggiungiamo noi @campus.unimib.it</string>
 </resources>

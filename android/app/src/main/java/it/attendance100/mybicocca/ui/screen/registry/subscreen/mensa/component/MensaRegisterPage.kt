@@ -5,6 +5,7 @@ import android.content.Intent
 import android.graphics.Bitmap
 import android.net.Uri
 import android.view.MotionEvent
+import android.webkit.JavascriptInterface
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
@@ -28,6 +29,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -45,18 +47,53 @@ private const val COMPASS_ORIGIN = "https://$COMPASS_HOST"
 private const val APP_ENTRY_URL = "$COMPASS_ORIGIN/api/apps/v1/mylunch/auth/getToken"
 private const val REGISTER_URL = "$COMPASS_ORIGIN/area-riservata/register"
 
+/** The page that ends the flow, once the emailed code has been accepted ("il tuo account è stato attivato"). */
+private val ACTIVATED_TEXT = Regex("stato attivato|stata attivata|been activated|is now active", RegexOption.IGNORE_CASE)
+
+/**
+ * The site's header, its title band (it repeats the sheet's title, and its "back to services"
+ * duplicates the sheet's back) and its footer: only the form and its messages stay.
+ */
+private const val HIDE_CHROME_CSS =
+    "header.header,.frontend_header,footer.footer,.back-to-top{display:none!important}" +
+        "body{padding-top:0!important;margin-top:0!important}"
+
+/**
+ * Follows what is typed in the sign-up form, so the new account can be signed in to as soon as it
+ * is activated. Re-run on every page: a refused submission comes back as a new page with the form.
+ */
+private val WATCH_FORM_JS = """
+    (function() {
+      var s = document.createElement('style');
+      s.textContent = '$HIDE_CHROME_CSS';
+      document.head.appendChild(s);
+      var f = document.querySelector('form.registration_form');
+      if (!f || f.dataset.mybicocca) return;
+      f.dataset.mybicocca = '1';
+      var send = function() {
+        var e = f.querySelector('[name=email]'), p = f.querySelector('[name=password]');
+        if (e && p) MyBicoccaSignUp.update(e.value, p.value);
+      };
+      ['input', 'change', 'submit'].forEach(function(t) { f.addEventListener(t, send, true); });
+    })();
+""".trimIndent()
+
+/** The email and password the user chose while signing up, kept in memory only. */
+data class MensaNewAccount(val email: String, val password: String)
+
 /**
  * Compass's own sign-up form, shown in place: there is no sign-up API, and the form carries a
- * captcha and an email check that only the website can run. Once the form leads back to the login
- * (its "back to services" link, or the end of the activation), [onDone] returns to our login page.
+ * captcha and an email check that only the website can run. When the activation page appears the
+ * form closes at once and [onActivated] gets the credentials typed in it (null if they were typed
+ * in an earlier session), so the caller can sign in without asking for them again.
  */
-@SuppressLint("SetJavaScriptEnabled")
+@SuppressLint("SetJavaScriptEnabled", "JavascriptInterface")
 @Composable
 internal fun MensaRegisterPage(
-    onDone: () -> Unit,
+    onActivated: (MensaNewAccount?) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val currentOnDone by rememberUpdatedState(onDone)
+    val currentOnActivated by rememberUpdatedState(onActivated)
     var loading by remember { mutableStateOf(true) }
     var failed by remember { mutableStateOf(false) }
     var webView by remember { mutableStateOf<WebView?>(null) }
@@ -68,23 +105,28 @@ internal fun MensaRegisterPage(
                 WebView(context).apply {
                     settings.javaScriptEnabled = true
                     settings.domStorageEnabled = true
-                    // The sheet would take the page's vertical swipes as drags of its own; the
-                    // form keeps them, and the sheet still moves by its handle and closes with back.
+                    // The page keeps its vertical swipes; without this the sheet's own gestures
+                    // would cancel them a few pixels in.
                     setOnTouchListener { view, event ->
                         if (event.actionMasked == MotionEvent.ACTION_DOWN) view.parent?.requestDisallowInterceptTouchEvent(true)
                         false
                     }
+                    val form = SignUpFormBridge()
+                    addJavascriptInterface(form, "MyBicoccaSignUp")
                     webViewClient = RegisterClient(
                         onLoading = { loading = it },
                         onFailed = { failed = true },
-                        onDone = { currentOnDone() },
+                        onActivated = { currentOnActivated(form.account()) },
                     )
                     loadUrl(APP_ENTRY_URL)
                     webView = this
                 }
             },
             onRelease = { it.destroy() },
-            modifier = Modifier.fillMaxSize(),
+            // Hidden while a page loads, so the site's header never flashes before it is hidden.
+            modifier = Modifier
+                .fillMaxSize()
+                .alpha(if (loading || failed) 0f else 1f),
         )
 
         if (loading && !failed) {
@@ -115,24 +157,36 @@ internal fun MensaRegisterPage(
     }
 }
 
+/** Receives the form's fields from [WATCH_FORM_JS]; called on the WebView's JavaScript thread. */
+private class SignUpFormBridge {
+    @Volatile private var email: String = ""
+    @Volatile private var password: String = ""
+
+    @JavascriptInterface
+    fun update(email: String?, password: String?) {
+        this.email = email.orEmpty().trim()
+        this.password = password.orEmpty()
+    }
+
+    fun account(): MensaNewAccount? =
+        MensaNewAccount(email, password).takeIf { email.isNotBlank() && password.isNotEmpty() }
+}
+
 private class RegisterClient(
     private val onLoading: (Boolean) -> Unit,
     private val onFailed: () -> Unit,
-    private val onDone: () -> Unit,
+    private val onActivated: () -> Unit,
 ) : WebViewClient() {
 
     /** Set once the form has been shown; before that the login pages are just the way in. */
     private var formShown = false
+    private var finished = false
 
     override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
         val url = request.url
         if (url.host != COMPASS_HOST) {
             // The privacy policy and certifications live on other sites: the browser opens them.
             runCatching { view.context.startActivity(Intent(Intent.ACTION_VIEW, url).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
-            return true
-        }
-        if (formShown && url.leadsToLogin()) {
-            onDone()
             return true
         }
         return false
@@ -143,21 +197,32 @@ private class RegisterClient(
     }
 
     override fun onPageFinished(view: WebView, url: String?) {
+        if (finished) return
         val path = url?.let(Uri::parse)?.takeIf { it.host == COMPASS_HOST }?.path.orEmpty()
-        when {
-            !formShown && path.startsWith("/area-riservata/regist") -> formShown = true
+        if (!formShown && !path.startsWith("/area-riservata")) {
             // The app entry has landed on the login page: the session is now the app's.
-            !formShown && path.startsWith("/auth") -> {
+            if (path.startsWith("/auth")) {
+                formShown = true
                 view.loadUrl(REGISTER_URL)
-                return
             }
-            // A redirect, not a link, can also bring the finished flow back to the login.
-            formShown && url?.let(Uri::parse)?.leadsToLogin() == true -> {
-                onDone()
-                return
+            return
+        }
+        // Back on the site's login after the form: the flow is over, whether it ended on the
+        // activation page or not, and signing in is our login page's job.
+        if (formShown && path.startsWith("/auth")) {
+            finished = true
+            onActivated()
+            return
+        }
+        view.evaluateJavascript(WATCH_FORM_JS, null)
+        view.evaluateJavascript("document.body ? document.body.innerText : ''") { text ->
+            if (!finished && text != null && ACTIVATED_TEXT.containsMatchIn(text)) {
+                finished = true
+                onActivated()
+            } else {
+                onLoading(false)
             }
         }
-        onLoading(false)
     }
 
     override fun onReceivedError(view: WebView, request: WebResourceRequest, error: WebResourceError) {
@@ -165,10 +230,5 @@ private class RegisterClient(
             onLoading(false)
             onFailed()
         }
-    }
-
-    private fun Uri.leadsToLogin(): Boolean {
-        val path = path.orEmpty().trimEnd('/')
-        return path == "/area-riservata" || path == "/auth" || path.startsWith("/auth/")
     }
 }
