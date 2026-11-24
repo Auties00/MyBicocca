@@ -65,7 +65,9 @@ import it.attendance100.mybicocca.domain.repository.FileOpenPreferenceRepository
 import it.attendance100.mybicocca.domain.repository.HapticSettingsRepository
 import it.attendance100.mybicocca.domain.repository.LibraryRepository
 import it.attendance100.mybicocca.domain.repository.MapRepository
+import it.attendance100.mybicocca.data.repository.MensaFavouritesRepositoryImpl
 import it.attendance100.mybicocca.domain.repository.MensaAllergenPreferencesRepository
+import it.attendance100.mybicocca.domain.repository.MensaFavouritesRepository
 import it.attendance100.mybicocca.domain.repository.MensaEligibilityProvider
 import it.attendance100.mybicocca.domain.repository.MensaRepository
 import it.attendance100.mybicocca.domain.repository.PdfViewerSettingsRepository
@@ -192,6 +194,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindMensaAllergenPreferencesRepository(impl: MensaAllergenPreferencesRepositoryImpl): MensaAllergenPreferencesRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindMensaFavouritesRepository(impl: MensaFavouritesRepositoryImpl): MensaFavouritesRepository
 
     @Binds
     @Singleton

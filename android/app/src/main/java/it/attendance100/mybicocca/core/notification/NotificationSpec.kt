@@ -47,6 +47,9 @@ sealed interface NotificationRoute {
      * choosing. The app installs the APK it recorded downloading, or nothing.
      */
     data object InstallApk : NotificationRoute
+
+    /** The Mensa sheet, on its home. */
+    data object Mensa : NotificationRoute
 }
 
 /** What an action button does when tapped. */

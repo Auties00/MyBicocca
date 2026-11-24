@@ -50,6 +50,13 @@
       android:supportsRtl="true"
       android:theme="@style/Theme.MyBicocca.AnimatedSplash"
       tools:targetApi="33">
+    <!-- Ties the app to mybicocca.it, so password managers file its sign-ins under the site's
+         name and icon rather than the package id. The site lists this app in
+         /.well-known/assetlinks.json. -->
+    <meta-data
+        android:name="asset_statements"
+        android:resource="@string/asset_statements" />
+
     <meta-data
         android:name="com.google.android.gms.version"
         android:value="@integer/google_play_services_version" />

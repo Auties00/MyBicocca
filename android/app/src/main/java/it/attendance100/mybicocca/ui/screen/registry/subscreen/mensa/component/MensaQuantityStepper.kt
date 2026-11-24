@@ -75,6 +75,14 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.abs
+import androidx.compose.material3.ripple
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.ui.semantics.contentDescription
 
 private const val MENSA_MAX_QUANTITY = MENSA_MAX_CART_QUANTITY
 
@@ -95,10 +103,18 @@ internal fun MensaQuantityStepper(
     onEdit: () -> Unit,
     modifier: Modifier = Modifier,
     size: Dp = 52.dp,
+    interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+    singlePick: Boolean = false,
 ) {
+    if (singlePick) {
+        MensaPickToggle(picked = quantity > 0, onPick = onAdd, onUnpick = onDecrement, modifier = modifier, size = size, interactionSource = interactionSource)
+        return
+    }
     val scheme = MaterialTheme.colorScheme
     val haptic = rememberHapticManager()
     val scope = rememberCoroutineScope()
+    // One swipe changes the quantity by one, however far it goes.
+    var steppedThisDrag by remember { mutableStateOf(false) }
     val stepPx = with(LocalDensity.current) { StepDistance.toPx() }
 
     // The number on show moves with the finger, so it is tracked here and caught up with the real
@@ -129,19 +145,22 @@ internal fun MensaQuantityStepper(
         settling?.cancel()
         offset += delta
         // Down adds, up removes: the new number follows the finger in from the side it came from.
-        while (offset >= stepPx && shown < MENSA_MAX_QUANTITY) {
+        if (!steppedThisDrag && offset >= stepPx && shown < MENSA_MAX_QUANTITY) {
             offset -= stepPx
             shown += 1
+            steppedThisDrag = true
             onAdd()
             haptic.feather()
         }
-        while (offset <= -stepPx && shown > 0) {
+        if (!steppedThisDrag && offset <= -stepPx && shown > 0) {
             offset += stepPx
             shown -= 1
+            steppedThisDrag = true
             onDecrement()
             haptic.feather()
         }
-        offset = offset.coerceIn(-stepPx, stepPx)
+        // After the step the number only gives a little, so it reads as done until the next swipe.
+        offset = if (steppedThisDrag) offset.coerceIn(-stepPx * 0.3f, stepPx * 0.3f) else offset.coerceIn(-stepPx, stepPx)
     }
 
     val increase = stringResource(R.string.mensa_quantity_increase)
@@ -165,13 +184,15 @@ internal fun MensaQuantityStepper(
                         .draggable(
                             state = dragState,
                             orientation = Orientation.Vertical,
+                            interactionSource = interactionSource,
+                            onDragStarted = { steppedThisDrag = false },
                             onDragStopped = { settle { animate(offset, 0f, animationSpec = spring(stiffness = Spring.StiffnessMediumLow)) { v, _ -> offset = v } } },
                         )
                 } else {
                     Modifier
                 },
             )
-            .clickable { haptic.tap(); if (quantity > 0) onEdit() else onAdd() },
+            .clickable(interactionSource = interactionSource, indication = ripple()) { haptic.tap(); if (quantity > 0) onEdit() else onAdd() },
     ) {
         if (quantity > 0) {
             Box(modifier = Modifier.clipToBounds(), contentAlignment = Alignment.Center) {
@@ -189,6 +210,57 @@ internal fun MensaQuantityStepper(
                     contentDescription = stringResource(R.string.mensa_dish_add_takeaway),
                     modifier = Modifier.size(24.dp),
                 )
+            }
+        }
+    }
+}
+
+/**
+ * The order button for a menu that takes one of each dish: a plus that turns into a 1 once the dish
+ * is in the order, and back into a plus when tapped again.
+ */
+@Composable
+private fun MensaPickToggle(
+    picked: Boolean,
+    onPick: () -> Unit,
+    onUnpick: () -> Unit,
+    modifier: Modifier,
+    size: Dp,
+    interactionSource: MutableInteractionSource,
+) {
+    val scheme = MaterialTheme.colorScheme
+    val haptic = rememberHapticManager()
+    val remove = stringResource(R.string.mensa_dish_remove_takeaway)
+    val add = stringResource(R.string.mensa_dish_add_takeaway)
+    Surface(
+        shape = RoundedCornerShape(16.dp),
+        color = scheme.primary,
+        contentColor = scheme.onPrimary,
+        modifier = modifier
+            .size(size)
+            .semantics {
+                stateDescription = if (picked) "1" else ""
+                contentDescription = if (picked) remove else add
+            }
+            .clickable(interactionSource = interactionSource, indication = ripple()) {
+                if (picked) { haptic.tap(); onUnpick() } else { haptic.spring(); onPick() }
+            },
+    ) {
+        AnimatedContent(
+            targetState = picked,
+            transitionSpec = {
+                (scaleIn(initialScale = 0.4f, animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)) + fadeIn(tween(120)))
+                    .togetherWith(scaleOut(targetScale = 0.4f, animationSpec = tween(110)) + fadeOut(tween(90)))
+            },
+            contentAlignment = Alignment.Center,
+            label = "pick",
+        ) { isPicked ->
+            Box(contentAlignment = Alignment.Center) {
+                if (isPicked) {
+                    Text(text = "1", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                } else {
+                    Icon(Icons.Outlined.Add, contentDescription = null, modifier = Modifier.size(24.dp))
+                }
             }
         }
     }

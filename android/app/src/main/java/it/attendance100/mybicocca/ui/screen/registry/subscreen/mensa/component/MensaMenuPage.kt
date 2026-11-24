@@ -143,6 +143,9 @@ internal fun MensaMenuPage(
     signInHintDismissed: Boolean,
     onDismissSignInHint: () -> Unit,
     modifier: Modifier = Modifier,
+    favouriteIds: Set<Int> = emptySet(),
+    onToggleFavourite: ((MensaDish) -> Unit)? = null,
+    singlePick: Boolean = false,
 ) {
     val scheduleMap = schedule.valueOrNull().orEmpty()
     val availableMeals = selectedDate?.let { scheduleMap[it] }?.mealTypes.orEmpty()
@@ -207,6 +210,9 @@ internal fun MensaMenuPage(
                     onSignIn = onSignIn,
                     signInHintDismissed = signInHintDismissed,
                     onDismissSignInHint = onDismissSignInHint,
+                    favouriteIds = favouriteIds,
+                    onToggleFavourite = onToggleFavourite,
+                    singlePick = singlePick,
                 )
             }
         }
@@ -235,6 +241,9 @@ private fun MenuBrowser(
     onSignIn: () -> Unit,
     signInHintDismissed: Boolean,
     onDismissSignInHint: () -> Unit,
+    favouriteIds: Set<Int>,
+    onToggleFavourite: ((MensaDish) -> Unit)?,
+    singlePick: Boolean,
 ) {
     val canOrder = orderAvailability is MensaOrderAvailability.Available
     val scope = rememberCoroutineScope()
@@ -330,6 +339,9 @@ private fun MenuBrowser(
                         onDecrement = onDecrementDish,
                         onFocusMenuRow = { row -> listState.requestScrollToItem(row) },
                         canOrder = canOrder,
+                        favouriteIds = favouriteIds,
+                        onToggleFavourite = onToggleFavourite,
+                        singlePick = singlePick,
                     )
                 } else {
                     MenuGrid(
@@ -346,6 +358,9 @@ private fun MenuBrowser(
                         onSignIn = onSignIn,
                         signInHintDismissed = signInHintDismissed,
                         onDismissSignInHint = onDismissSignInHint,
+                        favouriteIds = favouriteIds,
+                        onToggleFavourite = onToggleFavourite,
+                        singlePick = singlePick,
                     )
                 }
             }
@@ -377,6 +392,9 @@ private fun MenuGrid(
     onSignIn: () -> Unit,
     signInHintDismissed: Boolean,
     onDismissSignInHint: () -> Unit,
+    favouriteIds: Set<Int>,
+    onToggleFavourite: ((MensaDish) -> Unit)?,
+    singlePick: Boolean,
 ) {
     val canOrder = orderAvailability is MensaOrderAvailability.Available
     val cartCount = if (canOrder) cartDishes.values.sumOf { it.quantity } else 0
@@ -419,6 +437,9 @@ private fun MenuGrid(
                                 onDecrement = { onDecrementDish(dish.id) },
                                 onEditQuantity = { onEditQuantity(dish) },
                                 modifier = Modifier.weight(1f),
+                                isFavourite = dish.id in favouriteIds,
+                                onToggleFavourite = onToggleFavourite?.let { toggle -> { toggle(dish) } },
+                                singlePick = singlePick,
                             )
                         }
                         if (item.dishes.size == 1) Spacer(Modifier.weight(1f))

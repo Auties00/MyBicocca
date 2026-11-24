@@ -5,13 +5,12 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.IntrinsicSize
-import androidx.compose.foundation.indication
-import androidx.compose.material3.ripple
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -30,6 +29,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -63,6 +63,25 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.Men
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.MensaDishArtwork
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.MensaDishDrawings
 import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.interaction.collectIsDraggedAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.Crossfade
+import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material3.IconButton
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.testTag
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.MensaTestTags
 
 /** Top-down illustration of a dish. It is decorative, so it carries no description. */
 @Composable
@@ -103,10 +122,23 @@ internal fun MensaDishPlateCard(
     onDecrement: () -> Unit,
     modifier: Modifier = Modifier,
     onEditQuantity: () -> Unit = {},
+    isFavourite: Boolean = false,
+    onToggleFavourite: (() -> Unit)? = null,
+    singlePick: Boolean = false,
 ) {
     val scheme = MaterialTheme.colorScheme
     val haptic = rememberHapticManager()
-    val cardShape = remember(showAdd) { NotchedCardShape(notch = if (showAdd) 60.dp else 0.dp) }
+    // Pressing the order button swells it, and the notch in the card opens up to make room, as if
+    // the button were pushing into the card.
+    val addPress = remember { MutableInteractionSource() }
+    val pressed by addPress.collectIsPressedAsState()
+    val dragged by addPress.collectIsDraggedAsState()
+    val impact by animateFloatAsState(
+        targetValue = if (showAdd && (pressed || dragged)) 1f else 0f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
+        label = "add impact",
+    )
+    val cardShape = NotchedCardShape(notch = if (showAdd) 60.dp + 8.dp * impact else 0.dp)
     // The press is taken by the whole card, plate included, and drawn on the card itself.
     val press = remember { MutableInteractionSource() }
 
@@ -191,7 +223,63 @@ internal fun MensaDishPlateCard(
                 onDecrement = onDecrement,
                 onEdit = onEditQuantity,
                 modifier = Modifier.align(Alignment.BottomEnd),
-                size = AddButtonSize,
+                size = AddButtonSize + 7.dp * impact,
+                interactionSource = addPress,
+                singlePick = singlePick,
+            )
+        }
+
+        if (onToggleFavourite != null) {
+            // In the card's own corner, beside the plate rather than on it.
+            MensaFavouriteButton(
+                isFavourite = isFavourite,
+                onToggle = onToggleFavourite,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = PlateOverlap + 2.dp, end = 2.dp),
+            )
+        }
+    }
+}
+
+/**
+ * The heart that adds a dish to the favourites or takes it off. It pops when it fills and
+ * shrinks back when it empties, with a haptic for each.
+ */
+@Composable
+internal fun MensaFavouriteButton(
+    isFavourite: Boolean,
+    onToggle: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val scheme = MaterialTheme.colorScheme
+    val haptic = rememberHapticManager()
+    val scale = remember { Animatable(1f) }
+    var toggled by remember { mutableIntStateOf(0) }
+    LaunchedEffect(toggled) {
+        if (toggled == 0) return@LaunchedEffect
+        if (isFavourite) {
+            scale.animateTo(1.35f, tween(110, easing = FastOutSlowInEasing))
+            scale.animateTo(1f, spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium))
+        } else {
+            scale.animateTo(0.75f, tween(90))
+            scale.animateTo(1f, spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessMedium))
+        }
+    }
+    IconButton(
+        onClick = {
+            if (isFavourite) haptic.tap() else haptic.spring()
+            onToggle()
+            toggled++
+        },
+        modifier = modifier.testTag(MensaTestTags.FAVOURITE_TOGGLE),
+    ) {
+        Crossfade(targetState = isFavourite, animationSpec = tween(160), label = "favourite") { filled ->
+            Icon(
+                imageVector = if (filled) Icons.Rounded.Favorite else Icons.Outlined.FavoriteBorder,
+                contentDescription = stringResource(if (filled) R.string.mensa_favourite_remove else R.string.mensa_favourite_add),
+                tint = if (filled) scheme.primary else scheme.onSurfaceVariant,
+                modifier = Modifier.graphicsLayer { scaleX = scale.value; scaleY = scale.value },
             )
         }
     }
@@ -305,8 +393,9 @@ internal fun MensaCourseStrip(
         modifier = modifier
             .fillMaxWidth()
             .horizontalScroll(rememberScrollState())
-            .padding(horizontal = 20.dp),
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
+            .padding(horizontal = 20.dp)
+            .padding(end = 30.dp),
+        horizontalArrangement = Arrangement.spacedBy(1.dp),
     ) {
         tiles.forEach { tile ->
             MensaCourseTileButton(
@@ -330,9 +419,11 @@ internal fun MensaCourseTileButton(
     val haptic = rememberHapticManager()
     Column(
         modifier = modifier
+            .padding(end = if (selected) 10.dp else 0.dp)
             .width(76.dp)
             .clip(RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp, bottomStart = 24.dp, bottomEnd = 24.dp))
-            .clickable { haptic.tap(); onClick() }.padding(bottom = 6.dp),
+            .clickable { haptic.tap(); onClick() }
+            .padding(bottom = 6.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(5.dp),
     ) {

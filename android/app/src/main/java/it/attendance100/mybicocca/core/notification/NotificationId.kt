@@ -16,6 +16,8 @@ sealed class NotificationId(val value: Int) {
     data object UpdateReady : NotificationId(3)
     /** Separate slot so a nightly discovery doesn't overwrite a pending stable notification. */
     data object NightlyUpdateAvailable : NotificationId(4)
+    /** Today's favourite dishes; each day's post replaces the last. */
+    data object MensaFavourites : NotificationId(5)
 
     /**
      * One instance per thing, so a re-post updates the notification about *that* course or exam

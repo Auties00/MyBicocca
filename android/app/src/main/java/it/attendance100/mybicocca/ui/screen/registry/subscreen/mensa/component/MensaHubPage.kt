@@ -52,14 +52,21 @@ import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.mensa.MensaSession
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.MensaTestTags
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.MensaArt
+import it.attendance100.mybicocca.domain.model.mensa.MensaReservation
+import it.attendance100.mybicocca.core.os.currentLocale
+import it.attendance100.mybicocca.core.time.AppClock
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 /** Landing page of the Mensa sheet: the two things people come for, plus account shortcuts. */
 @Composable
 internal fun MensaHubPage(
     session: MensaSession?,
     allergenPreferences: MensaAllergenPreferences,
+    favouriteCount: Int,
+    upcomingBooking: MensaReservation?,
     onOpenMenu: () -> Unit,
-    onOpenOrders: () -> Unit,
+    onOpenBooking: (MensaReservation) -> Unit,
     onOpenAllergens: () -> Unit,
     onOpenWallet: () -> Unit,
     modifier: Modifier = Modifier,
@@ -94,30 +101,21 @@ internal fun MensaHubPage(
             onClick = onOpenWallet,
         )
 
-        if (session != null) {
-            HubRow(
-                tag = MensaTestTags.HUB_ORDERS,
-                icon = Icons.AutoMirrored.Outlined.ReceiptLong,
-                title = stringResource(R.string.mensa_my_orders),
-                body = stringResource(R.string.mensa_orders_subtitle),
-                trailing = Icons.Outlined.ChevronRight,
-                onClick = onOpenOrders,
-            )
+        // Only while there is something to pick up; past orders live under the account.
+        if (session != null && upcomingBooking != null) {
+            BookingCard(booking = upcomingBooking, onClick = { onOpenBooking(upcomingBooking) })
         }
 
         HubRow(
             tag = MensaTestTags.HUB_PERSONALIZE,
             icon = MensaAllergenIcon,
             title = stringResource(R.string.mensa_hub_personalize_title),
-            body = if (allergenPreferences.isActive) {
-                pluralStringResource(
-                    R.plurals.mensa_hub_personalize_active,
-                    allergenPreferences.allergenIds.size,
-                    allergenPreferences.allergenIds.size,
-                )
-            } else {
-                stringResource(R.string.mensa_hub_personalize_body)
-            },
+            body = listOfNotNull(
+                favouriteCount.takeIf { it > 0 }?.let { pluralStringResource(R.plurals.mensa_hub_favourites, it, it) },
+                allergenPreferences.allergenIds.size.takeIf { it > 0 }?.let {
+                    pluralStringResource(R.plurals.mensa_hub_personalize_active, it, it)
+                },
+            ).joinToString(" · ").ifBlank { stringResource(R.string.mensa_hub_personalize_body) },
             trailing = Icons.Outlined.ChevronRight,
             onClick = onOpenAllergens,
         )
@@ -189,6 +187,58 @@ private fun HubBox(
                     modifier = Modifier.offset(y = if (index % 2 == 0) 0.dp else 14.dp),
                 )
             }
+        }
+    }
+}
+
+/** The next booking to pick up: when, which meal, where, and its code. */
+@Composable
+private fun BookingCard(booking: MensaReservation, onClick: () -> Unit) {
+    val scheme = MaterialTheme.colorScheme
+    val haptic = rememberHapticManager()
+    val locale = currentLocale()
+    val today = remember { LocalDate.now(AppClock.clock) }
+    val day = when (booking.date) {
+        today -> stringResource(R.string.mensa_today)
+        today.plusDays(1) -> stringResource(R.string.mensa_tomorrow)
+        null -> booking.rawDate
+        else -> booking.date.format(DateTimeFormatter.ofPattern("EEE d MMM", locale)).replaceFirstChar { it.titlecase(locale) }
+    }
+    Surface(
+        onClick = { haptic.tap(); onClick() },
+        modifier = Modifier.fillMaxWidth().testTag(MensaTestTags.HUB_ORDERS),
+        shape = RoundedCornerShape(24.dp),
+        color = scheme.tertiaryContainer,
+        contentColor = scheme.onTertiaryContainer,
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            Surface(shape = CircleShape, color = scheme.tertiary, contentColor = scheme.onTertiary, modifier = Modifier.size(44.dp)) {
+                Box(contentAlignment = Alignment.Center) {
+                    Icon(Icons.AutoMirrored.Outlined.ReceiptLong, contentDescription = null, modifier = Modifier.size(22.dp))
+                }
+            }
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(stringResource(R.string.mensa_hub_booking_label), style = MaterialTheme.typography.labelMedium)
+                Text(
+                    text = listOfNotNull(day, booking.mealTypeName).joinToString(" · "),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Text(
+                    text = listOfNotNull(booking.deliveryAddress?.takeIf { it.isNotBlank() } ?: booking.canteenName, booking.code)
+                        .joinToString(" · "),
+                    style = MaterialTheme.typography.bodySmall,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+            Icon(Icons.Outlined.ChevronRight, contentDescription = null, modifier = Modifier.size(20.dp))
         }
     }
 }
@@ -305,7 +355,9 @@ private fun HubSignedInPreview(@PreviewParameter(MensaPreviewThemeProvider::clas
             session = MensaPreviewData.session,
             allergenPreferences = MensaPreviewData.glutenSelected,
             onOpenMenu = {},
-            onOpenOrders = {},
+            favouriteCount = 2,
+            upcomingBooking = MensaPreviewOrders.reservation,
+            onOpenBooking = {},
             onOpenAllergens = {},
             onOpenWallet = {},
         )
@@ -320,7 +372,9 @@ private fun HubSignedOutPreview(@PreviewParameter(MensaPreviewThemeProvider::cla
             session = null,
             allergenPreferences = MensaAllergenPreferences(),
             onOpenMenu = {},
-            onOpenOrders = {},
+            favouriteCount = 2,
+            upcomingBooking = MensaPreviewOrders.reservation,
+            onOpenBooking = {},
             onOpenAllergens = {},
             onOpenWallet = {},
         )

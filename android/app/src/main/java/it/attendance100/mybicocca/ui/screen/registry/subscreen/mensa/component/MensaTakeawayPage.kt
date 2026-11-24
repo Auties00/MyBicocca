@@ -70,6 +70,7 @@ import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
 import it.attendance100.mybicocca.ui.theme.LocalIsOnline
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import androidx.compose.material.icons.outlined.Delete
 
 private val TakeawayDateFormat: DateTimeFormatter
     @Composable
@@ -101,6 +102,7 @@ internal fun MensaTakeawayPage(
     onSubmitOrder: () -> Unit,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
+    singlePick: Boolean = false,
 ) {
     val scheme = MaterialTheme.colorScheme
     val dark = LocalDarkTheme.current
@@ -291,7 +293,14 @@ internal fun MensaTakeawayPage(
                                             overflow = TextOverflow.Ellipsis,
                                             modifier = Modifier.weight(1f),
                                         )
-                                        Row(
+                                        if (singlePick) {
+                                            FilledTonalIconButton(
+                                                onClick = { haptic.tap(); onDecrementDish(entry.dish.id) },
+                                                modifier = Modifier.size(36.dp),
+                                            ) {
+                                                Icon(Icons.Outlined.Delete, contentDescription = stringResource(R.string.mensa_quantity_remove), modifier = Modifier.size(18.dp))
+                                            }
+                                        } else Row(
                                             verticalAlignment = Alignment.CenterVertically,
                                             horizontalArrangement = Arrangement.spacedBy(4.dp),
                                         ) {

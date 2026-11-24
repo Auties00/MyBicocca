@@ -47,6 +47,10 @@ import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
 import java.time.LocalDate
+import it.attendance100.mybicocca.domain.model.mensa.MensaFavourite
+import it.attendance100.mybicocca.domain.model.mensa.MensaFavouriteSettings
+import it.attendance100.mybicocca.domain.repository.MensaFavouritesRepository
+import it.attendance100.mybicocca.data.mensa.MensaFavouritesScheduler
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MensaViewModelTest {
@@ -59,6 +63,9 @@ class MensaViewModelTest {
     private val preferencesFlow = MutableStateFlow(MensaAllergenPreferences())
     private val preferencesRepository: MensaAllergenPreferencesRepository = mockk(relaxed = true)
     private val eligibilityProvider: MensaEligibilityProvider = mockk()
+    private val favouritesFlow = MutableStateFlow<List<MensaFavourite>>(emptyList())
+    private val favouritesRepository: MensaFavouritesRepository = mockk(relaxed = true)
+    private val favouritesScheduler: MensaFavouritesScheduler = mockk(relaxed = true)
     private val eligibility = MensaEligibility(LocalDate.of(2026, 11, 18), listOf(MensaMealRule(MensaMealRuleId.FULL_MENU, 660)))
 
     private val today: LocalDate = LocalDate.now(AppClock.clock)
@@ -201,7 +208,9 @@ class MensaViewModelTest {
         coEvery { repository.getTakeawayReservations() } returns reservations
         every { preferencesRepository.observe() } returns preferencesFlow
         coEvery { eligibilityProvider.getEligibility() } returns eligibility
-        return MensaViewModel(repository, preferencesRepository, eligibilityProvider)
+        every { favouritesRepository.observeFavourites() } returns favouritesFlow
+        every { favouritesRepository.observeSettings() } returns MutableStateFlow(MensaFavouriteSettings())
+        return MensaViewModel(repository, preferencesRepository, eligibilityProvider, favouritesRepository, favouritesScheduler)
     }
 
     @Test
@@ -505,6 +514,70 @@ class MensaViewModelTest {
     }
 
     @Test
+    fun `the canteen takes one dish per course and a new pick replaces the old one`() = runTest {
+        val vm = createViewModel()
+        advanceUntilIdle()
+        vm.selectMenu(400)
+        advanceUntilIdle()
+        assertThat(vm.onePerCourse.value).isTrue()
+
+        val otherPrimo = sampleDish.copy(id = 101016, name = "Pasta al pesto")
+        val secondo = sampleDish.copy(id = 101017, name = "Pollo", courseId = 2, courseName = "Secondi")
+        vm.addDishToCart(sampleDish)
+        vm.addDishToCart(sampleDish)
+        vm.incrementCartDish(sampleDish.id)
+        assertThat(vm.cartDishes.value[sampleDish.id]?.quantity).isEqualTo(1)
+
+        vm.addDishToCart(secondo)
+        vm.addDishToCart(otherPrimo)
+        assertThat(vm.cartDishes.value.keys).containsExactly(otherPrimo.id, secondo.id)
+        assertThat(vm.cartDishes.value.values.map { it.quantity }).containsExactly(1, 1)
+    }
+
+    @Test
+    fun `a bar counts any number of the same dish`() = runTest {
+        val vm = createViewModel()
+        advanceUntilIdle()
+        vm.selectMenu(701)
+        advanceUntilIdle()
+        assertThat(vm.onePerCourse.value).isFalse()
+
+        vm.addDishToCart(sampleDish)
+        vm.addDishToCart(sampleDish)
+        vm.incrementCartDish(sampleDish.id)
+        assertThat(vm.cartDishes.value[sampleDish.id]?.quantity).isEqualTo(3)
+    }
+
+    @Test
+    fun `the heart adds a dish to the favourites and takes it off again`() = runTest {
+        val vm = createViewModel()
+        advanceUntilIdle()
+
+        vm.toggleFavourite(sampleDish)
+        advanceUntilIdle()
+        coVerify { favouritesRepository.setFavourite(MensaFavourite(sampleDish.id, sampleDish.name), true) }
+
+        favouritesFlow.value = listOf(MensaFavourite(sampleDish.id, sampleDish.name))
+        advanceUntilIdle()
+        vm.toggleFavourite(sampleDish)
+        advanceUntilIdle()
+        coVerify { favouritesRepository.setFavourite(MensaFavourite(sampleDish.id, sampleDish.name), false) }
+    }
+
+    @Test
+    fun `turning the favourites reminder on plans the daily check and runs one now`() = runTest {
+        val vm = createViewModel()
+        advanceUntilIdle()
+
+        vm.setFavouriteNotify(true)
+        advanceUntilIdle()
+
+        coVerify { favouritesRepository.setNotify(true) }
+        io.mockk.verify { favouritesScheduler.apply(true) }
+        io.mockk.verify { favouritesScheduler.checkNow() }
+    }
+
+    @Test
     fun `the cart belongs to the menu, so changing the menu empties it`() = runTest {
         val vm = createViewModel()
         advanceUntilIdle()
@@ -572,10 +645,10 @@ class MensaViewModelTest {
         assertThat(vm.cartDishes.value[101015]?.quantity).isEqualTo(1)
         assertThat((vm.cartPricing.value as Loadable.Loaded).value.total).isEqualTo(3.5)
 
+        // The canteen takes one of each, so there is no second portion to add.
         vm.incrementCartDish(101015)
-        assertThat(vm.cartDishes.value[101015]?.quantity).isEqualTo(2)
+        assertThat(vm.cartDishes.value[101015]?.quantity).isEqualTo(1)
 
-        vm.decrementCartDish(101015)
         vm.decrementCartDish(101015)
         assertThat(vm.cartDishes.value).isEmpty()
     }

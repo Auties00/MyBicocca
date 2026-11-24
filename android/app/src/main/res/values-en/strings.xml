@@ -2090,6 +2090,11 @@
     <string name="settings_nightly_commit"> [commit %1$s]</string>
 
     <!-- Notifications: channels as they appear in Android's system settings -->
+    <string name="notification_group_mensa">Canteen</string>
+    <string name="notification_channel_mensa_favourites_name">Favourite dishes on the menu</string>
+    <string name="notification_channel_mensa_favourites_desc">Lets you know when one of your favourite dishes is on today\'s or the next days\' menu.</string>
+    <string name="mensa_favourites_notification_more">%1$s and %2$d more</string>
+    <string name="mensa_favourites_notification_title">Your favourites at the canteen</string>
     <string name="notification_group_updates">Updates</string>
     <string name="notification_channel_update_progress_name">Download in progress</string>
     <string name="notification_channel_update_progress_desc">Progress of an update download. [Silent]</string>
@@ -2182,6 +2187,7 @@
     <string name="mensa_dish_nutrition_100g">100 g</string>
     <string name="mensa_dish_gda">Reference Intake (GDA)</string>
     <string name="mensa_dish_add_takeaway">Add to Take-Away</string>
+    <string name="mensa_dish_remove_takeaway">Remove from Take-Away</string>
     <string name="mensa_takeaway_title">Order Take-Away</string>
     <string name="mensa_takeaway_subtitle">Pick a time slot and confirm</string>
     <string name="mensa_takeaway_service">Service</string>
@@ -2228,7 +2234,10 @@
     <string name="mensa_setup_meal">Meal</string>
     <string name="mensa_setup_confirm">Show the menu</string>
     <string name="mensa_login_new_account">Create an account</string>
-    <string name="mensa_login_new_account_hint">Accounts are created in the Fresh &amp; Natural app: sign up there, then sign in here.</string>
+    <string name="mensa_login_new_account_hint">You sign up on the Compass website, right here in the app. Once you have confirmed your email, sign in with the new account.</string>
+    <string name="mensa_register_title">Create an account</string>
+    <string name="mensa_register_subtitle">Fresh &amp; Natural</string>
+    <string name="mensa_register_failed">Couldn\'t open the sign-up page. Check your connection.</string>
     <string name="mensa_delete_action">Delete account</string>
     <string name="mensa_delete_body">You can ask for your account data to be deleted. The system first runs a few automatic checks to see whether it is possible; an operator then carries out the deletion and sends you a confirmation mail.</string>
     <string name="mensa_delete_note">By law, some information about you will be kept.</string>
@@ -2237,6 +2246,19 @@
     <string name="mensa_delete_requested_title">Request sent</string>
     <string name="mensa_delete_requested_body">An operator will complete the deletion and you will receive a confirmation mail.</string>
     <string name="mensa_delete_failed">Request failed</string>
+    <string name="mensa_hub_booking_label">Your booking</string>
+    <string name="mensa_favourites_title">Favourites</string>
+    <string name="mensa_favourites_subtitle">The dishes you like</string>
+    <string name="mensa_favourites_empty">Tap the heart on a dish to add it to your favourites.</string>
+    <string name="mensa_favourites_browse">Pick from all dishes</string>
+    <string name="mensa_favourite_remove">Remove from favourites</string>
+    <string name="mensa_favourite_add">Add to favourites</string>
+    <string name="mensa_favourites_notify_title">Tell me when they are on</string>
+    <string name="mensa_favourites_notify_body">Every morning we check the canteen and bar menus and let you know if one of your favourites is on.</string>
+    <string name="mensa_favourites_lookahead">Which days</string>
+    <string name="mensa_favourites_lookahead_today">Today</string>
+    <string name="mensa_favourites_lookahead_tomorrow">2 days</string>
+    <string name="mensa_favourites_lookahead_all">5 days</string>
     <string name="mensa_hub_menu_title">Menu and orders</string>
     <string name="mensa_hub_menu_body">Pick where you eat, see the menu and order take-away</string>
     <string name="mensa_hub_wallet_title">Wallet and payments</string>
@@ -2244,6 +2266,10 @@
     <string name="mensa_hub_wallet_body_balance">Balance €%1$.2f · top up in the Fresh &amp; Natural app</string>
     <string name="mensa_hub_personalize_title">Personalize</string>
     <string name="mensa_hub_personalize_body">Flag dishes with your allergens</string>
+    <plurals name="mensa_hub_favourites">
+        <item quantity="one">%d favourite dish</item>
+        <item quantity="other">%d favourite dishes</item>
+    </plurals>
     <plurals name="mensa_hub_personalize_active">
         <item quantity="one">%1$d allergen flagged</item>
         <item quantity="other">%1$d allergens flagged</item>

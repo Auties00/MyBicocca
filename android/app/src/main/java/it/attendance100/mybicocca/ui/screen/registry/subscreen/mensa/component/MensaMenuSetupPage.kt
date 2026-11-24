@@ -65,6 +65,11 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.MensaTestTa
 import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.ui.res.painterResource
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.MENSA_MENU_CARD_ASPECT
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.mensaMenuCardArt
 
 private val DateChipFormatter: DateTimeFormatter
     @Composable
@@ -152,6 +157,7 @@ internal fun MensaMenuSetupPage(
                     selectedPlace?.let { place ->
                         ChosenRow(
                             identity = place.identity(),
+                            place = place,
                             label = stringResource(R.string.mensa_setup_place),
                             name = place.displayName,
                             tag = MensaTestTags.MENU_SETUP_CHANGE_PLACE,
@@ -163,6 +169,7 @@ internal fun MensaMenuSetupPage(
                         currentMenu?.let { menu ->
                             ChosenRow(
                                 identity = menu.identity(),
+                                place = selectedPlace,
                                 label = stringResource(R.string.mensa_setup_menu),
                                 name = menu.identity().displayName,
                                 tag = MensaTestTags.MENU_SETUP_CHANGE,
@@ -236,6 +243,7 @@ private fun StepLabel(text: String) {
 @Composable
 private fun ChosenRow(
     identity: MensaMenuIdentity,
+    place: MensaPlace?,
     label: String,
     name: String,
     tag: String,
@@ -257,7 +265,11 @@ private fun ChosenRow(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            MensaMenuCard(identity, Modifier.height(64.dp), showLabels = false, corner = 0.dp)
+            Image(
+                painter = painterResource(mensaMenuCardArt(identity, place)),
+                contentDescription = null,
+                modifier = Modifier.height(64.dp).aspectRatio(MENSA_MENU_CARD_ASPECT),
+            )
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
                     text = label,

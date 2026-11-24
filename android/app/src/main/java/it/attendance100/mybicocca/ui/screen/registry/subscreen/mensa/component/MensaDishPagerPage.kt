@@ -88,9 +88,21 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.state.Mensa
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.state.MensaDishPagerRequest
 import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.ui.unit.Dp
+import androidx.compose.animation.core.VectorConverter
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.material3.DividerDefaults
+import androidx.compose.foundation.layout.wrapContentHeight
 import kotlin.math.abs
+import androidx.compose.material.icons.outlined.FavoriteBorder
+import androidx.compose.material.icons.rounded.Favorite
+import androidx.compose.material3.IconButton
+import androidx.compose.material.icons.outlined.Delete
 
 private val PlateSize = 196.dp
+private val MaxPlateSize = 264.dp
 
 /**
  * The dish carousel on its own page (opened from the canteen catalogue): the course strip above the
@@ -110,6 +122,9 @@ internal fun MensaDishPagerPage(
     onDecrement: (Int) -> Unit,
     modifier: Modifier = Modifier,
     canOrder: Boolean = true,
+    favouriteIds: Set<Int> = emptySet(),
+    onToggleFavourite: ((MensaDish) -> Unit)? = null,
+    singlePick: Boolean = false,
 ) {
     val dishes = request.dishes
     val scope = rememberCoroutineScope()
@@ -141,6 +156,9 @@ internal fun MensaDishPagerPage(
             onDecrement = onDecrement,
             modifier = Modifier.weight(1f),
             canOrder = canOrder,
+            favouriteIds = favouriteIds,
+            onToggleFavourite = onToggleFavourite,
+            singlePick = singlePick,
         )
     }
 }
@@ -172,6 +190,9 @@ internal fun MensaDishCarousel(
     modifier: Modifier = Modifier,
     onFocusMenuRow: (Int) -> Unit = {},
     canOrder: Boolean = true,
+    favouriteIds: Set<Int> = emptySet(),
+    onToggleFavourite: ((MensaDish) -> Unit)? = null,
+    singlePick: Boolean = false,
 ) {
     val dishes = request.dishes
     val current = dishes[pagerState.currentPage.coerceIn(dishes.indices)]
@@ -211,88 +232,130 @@ internal fun MensaDishCarousel(
             .collect { (page, fraction) -> infoState.scrollToPage(page, fraction.coerceIn(-0.5f, 0.5f)) }
     }
 
+    // The plates resize when the dish changes, so a scroll that started at the old size can stop
+    // short of the page; once it stops, finish the way to the page.
+    LaunchedEffect(pagerState) {
+        snapshotFlow { pagerState.isScrollInProgress }.collect { scrolling ->
+            if (!scrolling && abs(pagerState.currentPageOffsetFraction) > 0.001f) {
+                pagerState.animateScrollToPage(pagerState.currentPage, animationSpec = mensaScrollSpec())
+            }
+        }
+    }
+
+    // The details take the height the current dish needs and the plates grow into the rest, so a
+    // short page leaves no gap under it; a long one scrolls under its title.
+    val naturalHeights = remember { mutableStateMapOf<Int, Int>() }
     Column(
         modifier = modifier
             .fillMaxSize()
             .testTag(MensaTestTags.DISH_PAGER),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-            val pageWidth = PlateSize + 36.dp
-            val sidePadding = ((maxWidth - pageWidth) / 2).coerceAtLeast(0.dp)
-            val slideDistance = with(density) { 140.dp.toPx() }
-            HorizontalPager(
-                state = pagerState,
-                pageSize = PageSize.Fixed(pageWidth),
-                contentPadding = PaddingValues(horizontal = sidePadding),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(PlateSize + 20.dp),
-            ) { page ->
-                val dish = dishes[page]
-                val distance = abs(pagerState.currentPage - page + pagerState.currentPageOffsetFraction).coerceIn(0f, 1f)
-                val isStart = page == request.startIndex
-                val direction = if (page < request.startIndex) -1f else 1f
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .graphicsLayer {
-                            val scale = lerp(1f, 0.62f, distance)
-                            scaleX = scale
-                            scaleY = scale
-                            alpha = lerp(1f, 0.55f, distance) * if (isStart) 1f else reveal.value
-                            translationX = if (isStart) 0f else (1f - reveal.value) * direction * slideDistance
-                        },
+        BoxWithConstraints(modifier = Modifier.fillMaxWidth().weight(1f)) {
+            val maxInfo = (maxHeight - PlateSize - 28.dp).coerceAtLeast(0.dp)
+            val natural = naturalHeights[pagerState.currentPage]?.let { with(density) { it.toDp() } + DividerDefaults.Thickness }
+            val target = natural?.coerceAtMost(maxInfo) ?: maxInfo
+            val infoAnim = remember { Animatable(target, Dp.VectorConverter) }
+            var measured by remember { mutableStateOf(false) }
+            LaunchedEffect(target) {
+                // The first measure lands at once, so the plate the hero flies into already has its size.
+                if (!measured && natural != null) {
+                    measured = true
+                    infoAnim.snapTo(target)
+                } else {
+                    infoAnim.animateTo(target, spring(dampingRatio = Spring.DampingRatioNoBouncy, stiffness = Spring.StiffnessMediumLow))
+                }
+            }
+            val infoHeight = infoAnim.value
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                BoxWithConstraints(
+                    modifier = Modifier.fillMaxWidth().weight(1f),
                     contentAlignment = Alignment.Center,
                 ) {
-                    MensaPlateWithBadge(
+                    val plateSize = minOf(maxHeight - 20.dp, maxWidth * 0.62f).coerceIn(PlateSize, MaxPlateSize)
+                    val pageWidth = plateSize + 36.dp
+                    val sidePadding = ((maxWidth - pageWidth) / 2).coerceAtLeast(0.dp)
+                    val slideDistance = with(density) { 140.dp.toPx() }
+                    HorizontalPager(
+                        state = pagerState,
+                        pageSize = PageSize.Fixed(pageWidth),
+                        contentPadding = PaddingValues(horizontal = sidePadding),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(plateSize + 20.dp),
+                    ) { page ->
+                        val dish = dishes[page]
+                        val distance = abs(pagerState.currentPage - page + pagerState.currentPageOffsetFraction).coerceIn(0f, 1f)
+                        val isStart = page == request.startIndex
+                        val direction = if (page < request.startIndex) -1f else 1f
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .graphicsLayer {
+                                    val scale = lerp(1f, 0.62f, distance)
+                                    scaleX = scale
+                                    scaleY = scale
+                                    alpha = lerp(1f, 0.55f, distance) * if (isStart) 1f else reveal.value
+                                    translationX = if (isStart) 0f else (1f - reveal.value) * direction * slideDistance
+                                },
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            MensaPlateWithBadge(
+                                dish = dish,
+                                art = MensaDishArtwork.forDish(dish),
+                                allergenMatch = dish.allergenMatch(allergenPreferences),
+                                size = plateSize,
+                                badgeFraction = 0.25f,
+                                sharedElement = page == pagerState.currentPage,
+                                portionLabel = (details[dish.id] as? MensaDishDetailState.Loaded)
+                                    ?.detail?.netQuantityGrams?.takeIf { it > 0 }
+                                    ?.let { "${formatStat(it)}g" },
+                            )
+                        }
+                    }
+                }
+
+                // The whole area swipes between dishes, not just the plates, and runs edge to edge; each
+                // page keeps its own side padding and scrolls vertically under its pinned title. A page
+                // shrinks and sinks as it leaves, like the plates above it.
+                val layoutDirection = LocalLayoutDirection.current
+                val sink = with(density) { 28.dp.toPx() }
+                HorizontalPager(
+                    state = infoState,
+                    userScrollEnabled = false,
+                    beyondViewportPageCount = 1,
+                    modifier = Modifier
+                        .height(infoHeight)
+                        .scrollable(
+                            state = pagerState,
+                            orientation = Orientation.Horizontal,
+                            flingBehavior = PagerDefaults.flingBehavior(pagerState),
+                            reverseDirection = ScrollableDefaults.reverseDirection(layoutDirection, Orientation.Horizontal, reverseScrolling = false),
+                        ),
+                ) { page ->
+                    val dish = dishes[page]
+                    DishInfoPage(
                         dish = dish,
-                        art = MensaDishArtwork.forDish(dish),
-                        allergenMatch = dish.allergenMatch(allergenPreferences),
-                        size = PlateSize,
-                        badgeFraction = 0.25f,
-                        sharedElement = page == pagerState.currentPage,
-                        portionLabel = (details[dish.id] as? MensaDishDetailState.Loaded)
-                            ?.detail?.netQuantityGrams?.takeIf { it > 0 }
-                            ?.let { "${formatStat(it)}g" },
+                        state = details[dish.id],
+                        allergenPreferences = allergenPreferences,
+                        onRetry = { onRetryDetail(dish.id) },
+                        isFavourite = dish.id in favouriteIds,
+                        onToggleFavourite = onToggleFavourite?.let { toggle -> { toggle(dish) } },
+                        onNaturalHeight = { naturalHeights[page] = it },
+                        modifier = Modifier.graphicsLayer {
+                            val away = abs(pagerState.currentPage - page + pagerState.currentPageOffsetFraction).coerceIn(0f, 1f)
+                            val scale = lerp(1f, 0.9f, away)
+                            scaleX = scale
+                            scaleY = scale
+                            translationY = away * sink
+                            alpha = lerp(1f, 0.55f, away)
+                        },
                     )
                 }
             }
-        }
-
-        // The whole area swipes between dishes, not just the plates, and runs edge to edge; each
-        // page keeps its own side padding and scrolls vertically under its pinned title. A page
-        // shrinks and sinks as it leaves, like the plates above it.
-        val layoutDirection = LocalLayoutDirection.current
-        val sink = with(density) { 28.dp.toPx() }
-        HorizontalPager(
-            state = infoState,
-            userScrollEnabled = false,
-            beyondViewportPageCount = 1,
-            modifier = Modifier
-                .weight(1f)
-                .scrollable(
-                    state = pagerState,
-                    orientation = Orientation.Horizontal,
-                    flingBehavior = PagerDefaults.flingBehavior(pagerState),
-                    reverseDirection = ScrollableDefaults.reverseDirection(layoutDirection, Orientation.Horizontal, reverseScrolling = false),
-                ),
-        ) { page ->
-            val dish = dishes[page]
-            DishInfoPage(
-                dish = dish,
-                state = details[dish.id],
-                allergenPreferences = allergenPreferences,
-                onRetry = { onRetryDetail(dish.id) },
-                modifier = Modifier.graphicsLayer {
-                    val away = abs(pagerState.currentPage - page + pagerState.currentPageOffsetFraction).coerceIn(0f, 1f)
-                    val scale = lerp(1f, 0.9f, away)
-                    scaleX = scale
-                    scaleY = scale
-                    translationY = away * sink
-                    alpha = lerp(1f, 0.55f, away)
-                },
-            )
         }
 
         if (canOrder) {
@@ -301,6 +364,7 @@ internal fun MensaDishCarousel(
                 quantity = cartDishes[current.id]?.quantity ?: 0,
                 onAdd = { onAdd(current) },
                 onDecrement = { onDecrement(current.id) },
+                singlePick = singlePick,
             )
         }
     }
@@ -318,9 +382,17 @@ private fun DishInfoPage(
     allergenPreferences: MensaAllergenPreferences,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
+    isFavourite: Boolean = false,
+    onToggleFavourite: (() -> Unit)? = null,
+    onNaturalHeight: (Int) -> Unit = {},
 ) {
     val scheme = MaterialTheme.colorScheme
     val scroll = rememberScrollState()
+    var headerHeight by remember { mutableIntStateOf(0) }
+    var bodyHeight by remember { mutableIntStateOf(0) }
+    LaunchedEffect(headerHeight, bodyHeight) {
+        if (headerHeight > 0 && bodyHeight > 0) onNaturalHeight(headerHeight + bodyHeight)
+    }
     val haptic = rememberHapticManager()
     val divider by animateFloatAsState(if (scroll.value > 0) 1f else 0f, label = "title divider")
     var showDetails by remember { mutableStateOf(false) }
@@ -328,14 +400,22 @@ private fun DishInfoPage(
 
     Column(modifier = modifier.fillMaxSize().padding(horizontal = 20.dp)) {
         Column(
-            modifier = Modifier.padding(top = 4.dp, bottom = 8.dp),
+            modifier = Modifier
+                .onSizeChanged { headerHeight = it.height }
+                .padding(top = 4.dp, bottom = 8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text(
-                text = dish.name.toDishDisplayName(),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-            )
+            Row(verticalAlignment = Alignment.Top) {
+                Text(
+                    text = dish.name.toDishDisplayName(),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.weight(1f),
+                )
+                if (onToggleFavourite != null) {
+                    MensaFavouriteButton(isFavourite = isFavourite, onToggle = onToggleFavourite)
+                }
+            }
             // The calories are in the row below, so only the dietary badges are chips.
             if (dish.dietaryBadges.isNotEmpty()) {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -348,6 +428,9 @@ private fun DishInfoPage(
             modifier = Modifier
                 .weight(1f)
                 .verticalScroll(scroll)
+                // The scroll passes the viewport down as a minimum; dropping it measures the content's own height.
+                .wrapContentHeight(Alignment.Top)
+                .onSizeChanged { bodyHeight = it.height }
                 .padding(top = 8.dp, bottom = 12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
@@ -453,6 +536,7 @@ private fun AddToOrderBar(
     quantity: Int,
     onAdd: () -> Unit,
     onDecrement: () -> Unit,
+    singlePick: Boolean = false,
 ) {
     val scheme = MaterialTheme.colorScheme
     val dark = LocalDarkTheme.current
@@ -473,6 +557,23 @@ private fun AddToOrderBar(
             Icon(Icons.Outlined.AddShoppingCart, contentDescription = null, modifier = Modifier.size(20.dp))
             Text(
                 text = "  " + stringResource(R.string.mensa_dish_add_takeaway),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+            )
+        }
+    } else if (singlePick) {
+        // One of each: the dish is either in the order or not, so the bar only offers to take it out.
+        FilledTonalButton(
+            onClick = { haptic.tap(); onDecrement() },
+            shapes = ButtonDefaults.shapes(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 20.dp, end = 20.dp, bottom = 20.dp, top = 4.dp)
+                .height(ButtonDefaults.MediumContainerHeight),
+        ) {
+            Icon(Icons.Outlined.Delete, contentDescription = null, modifier = Modifier.size(20.dp))
+            Text(
+                text = "  " + stringResource(R.string.mensa_dish_remove_takeaway),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
             )

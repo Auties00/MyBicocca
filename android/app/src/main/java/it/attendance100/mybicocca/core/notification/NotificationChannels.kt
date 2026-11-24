@@ -18,6 +18,7 @@ enum class NotificationChannelGroupId(
 ) {
     UPDATES("updates", R.string.notification_group_updates),
     MEDIA("media", R.string.notification_group_media),
+    MENSA("mensa", R.string.notification_group_mensa),
 }
 
 /**
@@ -65,6 +66,15 @@ enum class NotificationChannelId(
         importance = NotificationImportance.LOW,
         nameRes = R.string.notification_channel_media_playback_name,
         descriptionRes = R.string.notification_channel_media_playback_desc,
+    ),
+
+    /** A favourite dish is on a menu today or in the next days: at most one post a day. */
+    MENSA_FAVOURITES(
+        id = "mensa_favourites_v1",
+        group = NotificationChannelGroupId.MENSA,
+        importance = NotificationImportance.DEFAULT,
+        nameRes = R.string.notification_channel_mensa_favourites_name,
+        descriptionRes = R.string.notification_channel_mensa_favourites_desc,
     ),
 }
 

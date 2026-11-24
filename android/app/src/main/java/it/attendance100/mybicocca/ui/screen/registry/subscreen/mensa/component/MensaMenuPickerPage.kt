@@ -52,6 +52,11 @@ import it.attendance100.mybicocca.ui.component.modal.SheetMessage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.MensaTestTags
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.MENSA_MENU_ART_STYLE
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.MensaMenuCard
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.ui.res.painterResource
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.MENSA_MENU_CARD_ASPECT
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.mensaMenuCardArt
 
 /** First step of the menu flow: where. One card per canteen and bar; tapping one moves on. */
 @Composable
@@ -73,6 +78,7 @@ internal fun MensaPlacePickerPage(
                 row.forEach { place ->
                     MensaPickerCard(
                         identity = place.identity(),
+                        place = place,
                         subtitle = when {
                             !place.isCanteen -> stringResource(R.string.mensa_menu_card_building, place.building)
                             place.lunchOnly -> stringResource(R.string.mensa_place_lunch_only)
@@ -145,6 +151,7 @@ internal fun MensaMenuPickerPage(
                         row.forEach { menu ->
                             MensaPickerCard(
                                 identity = menu.identity(),
+                                place = place,
                                 subtitle = place?.displayName.orEmpty(),
                                 onClick = { haptic.tap(); onPick(menu.id) },
                                 modifier = Modifier
@@ -160,8 +167,8 @@ internal fun MensaMenuPickerPage(
     }
 }
 
-private val ArtWidth = 124.dp
-private const val ArtAspect = 0.82f
+private val ArtWidth = 104.dp
+private const val ArtAspect = MENSA_MENU_CARD_ASPECT
 private val ArtHeight = ArtWidth / ArtAspect
 private val ArtOutside = ArtHeight * 0.55f
 
@@ -173,6 +180,7 @@ private val ArtOutside = ArtHeight * 0.55f
 @Composable
 private fun MensaPickerCard(
     identity: MensaMenuIdentity,
+    place: MensaPlace?,
     subtitle: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -213,12 +221,13 @@ private fun MensaPickerCard(
                 )
             }
         }
-        MensaMenuCard(
-            identity = identity,
-            style = MENSA_MENU_ART_STYLE,
-            showLabels = false,
-            aspect = ArtAspect,
-            modifier = Modifier.align(Alignment.TopCenter).width(ArtWidth),
+        Image(
+            painter = painterResource(mensaMenuCardArt(identity, place)),
+            contentDescription = null,
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .width(ArtWidth)
+                .aspectRatio(ArtAspect),
         )
     }
 }

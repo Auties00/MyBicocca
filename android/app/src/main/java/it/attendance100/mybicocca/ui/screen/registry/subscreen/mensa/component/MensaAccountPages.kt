@@ -60,12 +60,14 @@ import it.attendance100.mybicocca.domain.model.mensa.MensaSession
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.MensaTestTags
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.state.MensaAccountField
 import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
+import androidx.compose.material.icons.automirrored.outlined.ReceiptLong
 
 /** Account overview: who is signed in, the editable details, and sign-out. */
 @Composable
 internal fun MensaAccountPage(
     session: MensaSession,
     onEdit: (MensaAccountField) -> Unit,
+    onOpenOrders: () -> Unit,
     onLogout: () -> Unit,
     onDeleteAccount: () -> Unit,
     modifier: Modifier = Modifier,
@@ -122,6 +124,9 @@ internal fun MensaAccountPage(
         }
         AccountRow(Icons.Outlined.AlternateEmail, stringResource(R.string.mensa_account_change_email), session.email) {
             onEdit(MensaAccountField.EMAIL)
+        }
+        AccountRow(Icons.AutoMirrored.Outlined.ReceiptLong, stringResource(R.string.mensa_my_orders), stringResource(R.string.mensa_orders_subtitle)) {
+            onOpenOrders()
         }
         AccountRow(Icons.Outlined.Lock, stringResource(R.string.mensa_account_change_password), "••••••••") {
             onEdit(MensaAccountField.PASSWORD)
@@ -330,6 +335,7 @@ private fun AccountPreview(@PreviewParameter(MensaPreviewThemeProvider::class) t
         MensaAccountPage(
             session = MensaPreviewData.session,
             onEdit = {},
+            onOpenOrders = {},
             onLogout = {},
             onDeleteAccount = {},
         )

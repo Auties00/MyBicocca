@@ -7,6 +7,12 @@ package it.attendance100.mybicocca.domain.model.mensa
  */
 enum class MensaMenuKind { CANTEEN, GLUTEN_FREE, BAR }
 
+/**
+ * The canteen menus are set meals: Compass takes one dish per course and refuses a second portion
+ * or a second dish of the same course. The bars sell any number of anything.
+ */
+val MensaMenuKind.onePerCourse: Boolean get() = this != MensaMenuKind.BAR
+
 data class MensaMenuIdentity(
     val kind: MensaMenuKind,
     val displayName: String,

@@ -151,12 +151,12 @@ internal val AllergenBentoCells = mapOf(
     44 to BentoCell(3, 5), // Nocciole
     38 to BentoCell(2, 6), // Pistacchio
     42 to BentoCell(3, 6), // Anacardi
-    39 to BentoCell(0, 7), // Macadamia
+    39 to BentoCell(2, 8, 2, 1), // Macadamia
     40 to BentoCell(1, 7), // Pecan
     41 to BentoCell(2, 7, 2, 1), // Noci del Brasile
     9 to BentoCell(0, 8, 1, 2), // Sedano
     10 to BentoCell(1, 8), // Senape
-    11 to BentoCell(2, 8, 2, 1), // Sesamo
+    11 to BentoCell(0, 7), // Sesamo
     13 to BentoCell(1, 9), // Lupini
     24 to BentoCell(2, 9, 2, 1), // Solfiti
 )

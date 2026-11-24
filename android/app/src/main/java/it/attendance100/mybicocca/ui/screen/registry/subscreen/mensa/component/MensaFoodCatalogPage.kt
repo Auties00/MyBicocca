@@ -60,12 +60,26 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.Men
 import java.text.Normalizer
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SizeTransform
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.ScrollState
+import androidx.compose.runtime.CompositionLocalProvider
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.state.MensaDishDetailState
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.state.MensaDishPagerRequest
+import it.attendance100.mybicocca.ui.component.modal.rememberLastNonNull
 
 /**
  * Every dish on the menus of the university canteens right now, with the meal combinations the
  * canteen accepts. The menu service only publishes the coming days, so this is "what is on offer",
  * not everything the kitchens could ever serve.
  */
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 internal fun MensaFoodCatalogPage(
     catalog: Loadable<List<MensaDish>>,
@@ -75,15 +89,89 @@ internal fun MensaFoodCatalogPage(
     onOpenDishes: (dishes: List<MensaDish>, startIndex: Int) -> Unit,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
+    carouselOpen: Boolean = false,
+    pager: MensaDishPagerRequest? = null,
+    scrollState: ScrollState = rememberScrollState(),
+    dishDetails: Map<Int, MensaDishDetailState> = emptyMap(),
+    favouriteIds: Set<Int> = emptySet(),
+    onToggleFavourite: ((MensaDish) -> Unit)? = null,
+    onCloseCarousel: () -> Unit = {},
+    onRequestDetail: (Int) -> Unit = {},
+    onRetryDetail: (Int) -> Unit = {},
 ) {
+    // Search and course filter live here, above the grid, so they survive a trip to the carousel.
     var query by rememberSaveable { mutableStateOf("") }
     var courseFilter by rememberSaveable { mutableStateOf<Int?>(null) }
+    val shownRequest = rememberLastNonNull(pager.takeIf { carouselOpen })
+    val transition = rememberCarouselTransition(carouselOpen, onCloseCarousel)
+    val outerShared = LocalMensaShared.current
+
+    transition.AnimatedContent(
+        modifier = modifier.fillMaxSize(),
+        transitionSpec = {
+            (fadeIn(tween(200)) togetherWith fadeOut(tween(160))).using(SizeTransform(clip = false) { _, _ -> snap() })
+        },
+        contentAlignment = Alignment.TopStart,
+    ) { open ->
+        CompositionLocalProvider(LocalMensaShared provides outerShared?.let { MensaSharedScopes(it.transition, this) }) {
+            if (open && shownRequest != null) {
+                MensaDishPagerPage(
+                    request = shownRequest,
+                    details = dishDetails,
+                    cartDishes = emptyMap(),
+                    allergenPreferences = allergenPreferences,
+                    onRequestDetail = onRequestDetail,
+                    onRetryDetail = onRetryDetail,
+                    onAdd = {},
+                    onDecrement = {},
+                    canOrder = false,
+                    favouriteIds = favouriteIds,
+                    onToggleFavourite = onToggleFavourite,
+                )
+            } else {
+                CatalogGrid(
+                    catalog = catalog,
+                    status = status,
+                    eligibility = eligibility,
+                    allergenPreferences = allergenPreferences,
+                    query = query,
+                    onQueryChange = { query = it },
+                    courseFilter = courseFilter,
+                    onCourseFilterChange = { courseFilter = it },
+                    scrollState = scrollState,
+                    favouriteIds = favouriteIds,
+                    onToggleFavourite = onToggleFavourite,
+                    onOpenDishes = onOpenDishes,
+                    onRetry = onRetry,
+                )
+            }
+        }
+    }
+}
+
+/** The searchable grid of every dish, filtered by course; tapping a dish opens the carousel. */
+@Composable
+private fun CatalogGrid(
+    catalog: Loadable<List<MensaDish>>,
+    status: SyncStatus,
+    eligibility: MensaEligibility?,
+    allergenPreferences: MensaAllergenPreferences,
+    query: String,
+    onQueryChange: (String) -> Unit,
+    courseFilter: Int?,
+    onCourseFilterChange: (Int?) -> Unit,
+    scrollState: ScrollState,
+    favouriteIds: Set<Int>,
+    onToggleFavourite: ((MensaDish) -> Unit)?,
+    onOpenDishes: (dishes: List<MensaDish>, startIndex: Int) -> Unit,
+    onRetry: () -> Unit,
+) {
     val dishes = catalog.valueOrNull().orEmpty()
 
     Column(
-        modifier = modifier
+        modifier = Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
+            .verticalScroll(scrollState)
             .padding(bottom = 24.dp)
             .testTag(MensaTestTags.FOOD_CATALOG_PAGE),
         verticalArrangement = Arrangement.spacedBy(14.dp),
@@ -117,7 +205,7 @@ internal fun MensaFoodCatalogPage(
             else -> {
                 OutlinedTextField(
                     value = query,
-                    onValueChange = { query = it },
+                    onValueChange = onQueryChange,
                     singleLine = true,
                     leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) },
                     placeholder = { Text(stringResource(R.string.mensa_catalog_search)) },
@@ -136,16 +224,20 @@ internal fun MensaFoodCatalogPage(
                             MensaCourseTile(id, list.first().courseName ?: "", MensaDishArtwork.forCourse(id))
                         }
                 }
-                MensaCourseStrip(tiles = tiles, selectedId = courseFilter, onSelect = { courseFilter = it })
+                MensaCourseStrip(tiles = tiles, selectedId = courseFilter, onSelect = onCourseFilterChange)
 
                 val normalizedQuery = remember(query) { query.normalizedForSearch() }
-                val visible = remember(dishes, courseFilter, normalizedQuery, allergenPreferences) {
+                // The course filter narrows the grid only: the carousel gets every searched dish,
+                // so its own strip still offers all the courses.
+                val searched = remember(dishes, normalizedQuery, allergenPreferences) {
                     dishes.filter { dish ->
-                        (courseFilter == null || dish.courseId == courseFilter) &&
-                            (normalizedQuery.isEmpty() || dish.name.normalizedForSearch().contains(normalizedQuery)) &&
+                        (normalizedQuery.isEmpty() || dish.name.normalizedForSearch().contains(normalizedQuery)) &&
                             !(allergenPreferences.hideMatchingDishes &&
                                 dish.allergenMatch(allergenPreferences) != MensaAllergenMatch.NONE)
                     }.sortedWith(compareBy({ courseRank(it.courseId) }, { it.name }))
+                }
+                val visible = remember(searched, courseFilter) {
+                    searched.filter { courseFilter == null || it.courseId == courseFilter }
                 }
 
                 Text(
@@ -170,10 +262,12 @@ internal fun MensaFoodCatalogPage(
                             allergenMatch = dish.allergenMatch(allergenPreferences),
                             cartQty = 0,
                             showAdd = false,
-                            onClick = { onOpenDishes(visible, visible.indexOfFirst { it.id == dish.id }) },
+                            onClick = { onOpenDishes(searched, searched.indexOfFirst { it.id == dish.id }) },
                             onAdd = {},
                             onDecrement = {},
                             modifier = cardModifier,
+                            isFavourite = dish.id in favouriteIds,
+                            onToggleFavourite = onToggleFavourite?.let { toggle -> { toggle(dish) } },
                         )
                     }
                 }

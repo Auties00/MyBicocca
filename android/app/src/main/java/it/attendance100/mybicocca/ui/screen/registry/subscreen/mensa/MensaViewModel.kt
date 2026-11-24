@@ -48,6 +48,13 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import javax.inject.Inject
+import it.attendance100.mybicocca.domain.model.mensa.MensaFavourite
+import it.attendance100.mybicocca.domain.model.mensa.MensaFavouriteSettings
+import it.attendance100.mybicocca.domain.repository.MensaFavouritesRepository
+import it.attendance100.mybicocca.data.mensa.MensaFavouritesScheduler
+import kotlinx.coroutines.flow.first
+import it.attendance100.mybicocca.domain.model.mensa.onePerCourse
+import it.attendance100.mybicocca.domain.model.mensa.mensaMenuIdentity
 
 /**
  * Single owner of the Mensa modal sheet (`unibicocca.compasscloud.it`): daily/weekly canteen menu
@@ -59,7 +66,37 @@ class MensaViewModel @Inject constructor(
     private val repository: MensaRepository,
     private val allergenPreferencesRepository: MensaAllergenPreferencesRepository,
     private val eligibilityProvider: MensaEligibilityProvider,
+    private val favouritesRepository: MensaFavouritesRepository,
+    private val favouritesScheduler: MensaFavouritesScheduler,
 ) : ViewModel() {
+
+    val favourites: StateFlow<List<MensaFavourite>> = favouritesRepository.observeFavourites()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
+    val favouriteSettings: StateFlow<MensaFavouriteSettings> = favouritesRepository.observeSettings()
+        .stateIn(viewModelScope, SharingStarted.Eagerly, MensaFavouriteSettings())
+
+    fun toggleFavourite(dish: MensaDish) {
+        val isFavourite = favourites.value.none { it.dishId == dish.id }
+        viewModelScope.launch { favouritesRepository.setFavourite(MensaFavourite(dish.id, dish.name), isFavourite) }
+    }
+
+    fun removeFavourite(favourite: MensaFavourite) {
+        viewModelScope.launch { favouritesRepository.setFavourite(favourite, false) }
+    }
+
+    /** Turning the reminder on also runs a check straight away, so it is not a day before it says anything. */
+    fun setFavouriteNotify(notify: Boolean) {
+        viewModelScope.launch {
+            favouritesRepository.setNotify(notify)
+            favouritesScheduler.apply(notify)
+            if (notify) favouritesScheduler.checkNow()
+        }
+    }
+
+    fun setFavouriteLookahead(days: Int) {
+        viewModelScope.launch { favouritesRepository.setLookaheadDays(days) }
+    }
 
     private val _backStack = MutableStateFlow<List<MensaSubPage>>(listOf(MensaSubPage.Home))
     val backStack: StateFlow<List<MensaSubPage>> = _backStack.asStateFlow()
@@ -228,6 +265,8 @@ class MensaViewModel @Inject constructor(
 
     init {
         viewModelScope.launch { fetchMenus() }
+        // Keeps the daily check planned for anyone who turned it on, after a reinstall or a cleared job.
+        viewModelScope.launch { if (favouritesRepository.observeSettings().first().notify) favouritesScheduler.apply(true) }
         viewModelScope.launch {
             if (repository.isLoggedIn()) {
                 runCatching { repository.refreshAccountInfo() }
@@ -625,6 +664,17 @@ class MensaViewModel @Inject constructor(
         push(MensaSubPage.Login)
     }
 
+    fun openRegister() {
+        push(MensaSubPage.Register)
+    }
+
+    /** The sign-up form has led back to the login: the user signs in on our page with the new account. */
+    fun finishRegistration() {
+        if (_backStack.value.lastOrNull() == MensaSubPage.Register) {
+            _backStack.value = _backStack.value.dropLast(1)
+        }
+    }
+
     private fun openLoginThen(next: MensaSubPage) {
         pendingAfterLogin = next
         openLogin()
@@ -666,8 +716,27 @@ class MensaViewModel @Inject constructor(
         }
     }
 
+    /** Whether the selected menu takes one dish per course, so dishes are picked rather than counted. */
+    val onePerCourse: StateFlow<Boolean> = combine(_menus, _selectedMenuId) { menus, id -> isOnePerCourse(menus.valueOrNull(), id) }
+        .stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    private fun isOnePerCourse(menus: List<MensaMenuSummary>?, id: Int?): Boolean {
+        id ?: return false
+        val identity = menus?.firstOrNull { it.id == id }?.identity() ?: mensaMenuIdentity(id, "")
+        return identity.kind.onePerCourse
+    }
+
     fun addDishToCart(dish: MensaDish) {
         val current = _cartDishes.value.toMutableMap()
+        if (isOnePerCourse(_menus.value.valueOrNull(), _selectedMenuId.value)) {
+            // Picking a second dish of a course swaps it in for the first, as the server would
+            // refuse both.
+            if (dish.courseId != null) current.values.removeAll { it.dish.courseId == dish.courseId }
+            current[dish.id] = MensaCartEntry(dish = dish, quantity = 1)
+            _cartDishes.value = current
+            recalculateCartPricing()
+            return
+        }
         val existing = current[dish.id]
         val nextQty = ((existing?.quantity ?: 0) + 1).coerceAtMost(MENSA_MAX_CART_QUANTITY)
         current[dish.id] = MensaCartEntry(dish = dish, quantity = nextQty)
@@ -676,6 +745,7 @@ class MensaViewModel @Inject constructor(
     }
 
     fun incrementCartDish(dishId: Int) {
+        if (isOnePerCourse(_menus.value.valueOrNull(), _selectedMenuId.value)) return
         val existing = _cartDishes.value[dishId] ?: return
         val current = _cartDishes.value.toMutableMap()
         current[dishId] = existing.copy(quantity = (existing.quantity + 1).coerceAtMost(MENSA_MAX_CART_QUANTITY))

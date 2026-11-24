@@ -55,6 +55,11 @@ sealed interface MensaSubPage {
         override val key: String = "login"
     }
 
+    /** Compass's sign-up form, opened from the login page. */
+    data object Register : MensaSubPage {
+        override val key: String = "register"
+    }
+
     data object OrderSummary : MensaSubPage {
         override val key: String = "order_summary"
     }

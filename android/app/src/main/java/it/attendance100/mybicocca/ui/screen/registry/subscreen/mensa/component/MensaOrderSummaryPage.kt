@@ -47,6 +47,7 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.MensaTestTa
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.MensaDishArtwork
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.MensaDishDrawings
 import it.attendance100.mybicocca.ui.theme.LocalDarkTheme
+import androidx.compose.material.icons.outlined.Delete
 
 /**
  * The order as it stands, before pickup is chosen. It needs no account: the dishes can be
@@ -65,6 +66,7 @@ internal fun MensaOrderSummaryPage(
     onBrowseDishes: () -> Unit,
     onContinue: () -> Unit,
     modifier: Modifier = Modifier,
+    singlePick: Boolean = false,
 ) {
     val scheme = MaterialTheme.colorScheme
     val dark = LocalDarkTheme.current
@@ -133,7 +135,14 @@ internal fun MensaOrderSummaryPage(
                                 overflow = TextOverflow.Ellipsis,
                                 modifier = Modifier.weight(1f),
                             )
-                            Row(
+                            if (singlePick) {
+                                FilledTonalIconButton(
+                                    onClick = { haptic.tap(); onDecrement(entry.dish.id) },
+                                    modifier = Modifier.size(36.dp),
+                                ) {
+                                    Icon(Icons.Outlined.Delete, contentDescription = stringResource(R.string.mensa_quantity_remove), modifier = Modifier.size(18.dp))
+                                }
+                            } else Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(4.dp),
                             ) {
@@ -180,8 +189,9 @@ internal fun MensaOrderSummaryPage(
                                 style = MaterialTheme.typography.titleSmall,
                                 fontWeight = FontWeight.SemiBold,
                             )
-                            // The price comes from the service chosen next, so it only shows once known.
-                            (cartPricing as? Loadable.Loaded)?.value?.let { pricing ->
+                            // The price comes from the service chosen next, so it only shows once known. The
+                            // canteen sends none, being paid at the till, so a zero means there is no price.
+                            (cartPricing as? Loadable.Loaded)?.value?.takeIf { it.total > 0.0 }?.let { pricing ->
                                 Text(
                                     text = "${pricing.currencySymbol} ${"%.2f".format(pricing.total)}",
                                     style = MaterialTheme.typography.titleMedium,

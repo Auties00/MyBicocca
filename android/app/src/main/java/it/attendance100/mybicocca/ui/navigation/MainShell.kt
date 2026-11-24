@@ -656,6 +656,8 @@ fun MainShell(
                     if (!updateEventsViewModel.installDownloadedApk()) {
                         snackbarController.showInfo(strShellUpdateGone)
                     }
+
+                is NotificationRoute.Mensa -> navigator.navigate(SheetRoute.Mensa)
             }
             updateEventsViewModel.onNotificationRouteHandled()
         }
