@@ -1,0 +1,25 @@
+name: Compass sign-up page
+
+# The Mensa in-app sign-up shows Compass's own web form, reads its fields and restyles it. Compass
+# can change that page at any time without notice, so once a week this checks that what the app
+# relies on is still there: see android/tools/compass/check_signup_page.py.
+on:
+  schedule:
+    # Every Monday morning.
+    - cron: '30 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check the sign-up page
+        run: python android/tools/compass/check_signup_page.py
