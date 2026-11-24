@@ -1,5 +1,9 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component
 
+import it.attendance100.mybicocca.domain.model.mensa.mensaDishNameWithoutPlaceNote
+import it.attendance100.mybicocca.domain.model.mensa.MensaDishAvailability
+import androidx.compose.ui.draw.alpha
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -83,6 +87,22 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.testTag
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.MensaTestTags
 
+/**
+ * Whether a dish can be ordered where the user is ordering from. Provided by the Mensa page, which
+ * knows the place and the menu; previews and screens outside an order leave every dish orderable.
+ */
+internal val LocalMensaDishAvailability = staticCompositionLocalOf<(MensaDish) -> MensaDishAvailability> {
+    { MensaDishAvailability.Orderable }
+}
+
+/** Why a dish cannot be ordered here, or null when it can. */
+@Composable
+internal fun MensaDishAvailability.reason(): String? = when (this) {
+    MensaDishAvailability.Orderable -> null
+    is MensaDishAvailability.OnlyAt -> stringResource(R.string.mensa_dish_only_at, building)
+    MensaDishAvailability.NotForTakeaway -> stringResource(R.string.mensa_dish_not_for_takeaway)
+}
+
 /** Top-down illustration of a dish. It is decorative, so it carries no description. */
 @Composable
 internal fun MensaPlate(
@@ -128,22 +148,27 @@ internal fun MensaDishPlateCard(
 ) {
     val scheme = MaterialTheme.colorScheme
     val haptic = rememberHapticManager()
+    // A dish that cannot be ordered here stays on the menu, greyed, with the reason instead of the button.
+    val unavailable = if (showAdd) LocalMensaDishAvailability.current(dish).reason() else null
+    val canAdd = showAdd && unavailable == null
     // Pressing the order button swells it, and the notch in the card opens up to make room, as if
     // the button were pushing into the card.
     val addPress = remember { MutableInteractionSource() }
     val pressed by addPress.collectIsPressedAsState()
     val dragged by addPress.collectIsDraggedAsState()
     val impact by animateFloatAsState(
-        targetValue = if (showAdd && (pressed || dragged)) 1f else 0f,
+        targetValue = if (canAdd && (pressed || dragged)) 1f else 0f,
         animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium),
         label = "add impact",
     )
-    val cardShape = NotchedCardShape(notch = if (showAdd) 60.dp + 8.dp * impact else 0.dp)
+    val cardShape = NotchedCardShape(notch = if (canAdd) 60.dp + 8.dp * impact else 0.dp)
     // The press is taken by the whole card, plate included, and drawn on the card itself.
     val press = remember { MutableInteractionSource() }
 
     Box(
-        modifier = modifier.clickable(interactionSource = press, indication = null) { haptic.tap(); onClick() },
+        modifier = modifier
+            .alpha(if (unavailable != null) 0.5f else 1f)
+            .clickable(interactionSource = press, indication = null) { haptic.tap(); onClick() },
     ) {
         Surface(
             modifier = Modifier
@@ -204,7 +229,18 @@ internal fun MensaDishPlateCard(
                         )
                     }
                 }
-                if (showAdd) Spacer(Modifier.height(AddButtonSize - 36.dp))
+                if (unavailable != null) {
+                    Text(
+                        text = unavailable,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = scheme.onSurfaceVariant,
+                        maxLines = 2,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                } else if (showAdd) {
+                    Spacer(Modifier.height(AddButtonSize - 36.dp))
+                }
             }
         }
 
@@ -216,7 +252,7 @@ internal fun MensaDishPlateCard(
             modifier = Modifier.align(Alignment.TopCenter),
         )
 
-        if (showAdd) {
+        if (canAdd) {
             MensaQuantityStepper(
                 quantity = cartQty,
                 onAdd = onAdd,
@@ -484,7 +520,7 @@ internal fun MensaDishGrid(
 
 /** Turns the operator's ALL-CAPS dish names into sentence case, keeping the usual codes upper case. */
 internal fun String.toDishDisplayName(): String {
-    val trimmed = trim()
+    val trimmed = mensaDishNameWithoutPlaceNote(this)
     if (trimmed.any { it.isLowerCase() }) return trimmed
     return trimmed.lowercase()
         .replaceFirstChar { it.uppercase() }

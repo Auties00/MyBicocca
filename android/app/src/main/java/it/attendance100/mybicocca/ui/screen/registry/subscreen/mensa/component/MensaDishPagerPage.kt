@@ -363,6 +363,7 @@ internal fun MensaDishCarousel(
 
         if (canOrder) {
             AddToOrderBar(
+                unavailable = LocalMensaDishAvailability.current(current).reason(),
                 dish = current,
                 quantity = cartDishes[current.id]?.quantity ?: 0,
                 onAdd = { onAdd(current) },
@@ -535,6 +536,7 @@ private fun formatStat(value: Double): String =
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun AddToOrderBar(
+    unavailable: String?,
     dish: MensaDish,
     quantity: Int,
     onAdd: () -> Unit,
@@ -547,7 +549,19 @@ private fun AddToOrderBar(
     val bg = if (dark) scheme.primaryContainer else scheme.primary
     val fg = if (dark) scheme.onPrimaryContainer else scheme.onPrimary
 
-    if (quantity == 0) {
+    if (unavailable != null && quantity == 0) {
+        Button(
+            onClick = {},
+            enabled = false,
+            shapes = ButtonDefaults.shapes(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 20.dp, end = 20.dp, bottom = 20.dp, top = 4.dp)
+                .height(ButtonDefaults.MediumContainerHeight),
+        ) {
+            Text(text = unavailable, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+        }
+    } else if (quantity == 0) {
         Button(
             onClick = { haptic.tap(); onAdd() },
             shapes = ButtonDefaults.shapes(),

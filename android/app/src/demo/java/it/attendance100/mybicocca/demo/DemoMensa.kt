@@ -112,6 +112,8 @@ object DemoMensa {
         dish(91057, "FILETTO DI MERLUZZO DORATO", 2, "Secondi Piatti", contains = listOf("Pesce", "Glutine")),
         dish(101632, "ARROSTO DI MAIALE ALLA BIRRA E SENAPE", 2, "Secondi Piatti", calories = "Calorico", contains = listOf("Solfiti")),
         dish(69427, "FRITTATA AI CARCIOFI", 2, "Secondi Piatti", contains = listOf("Uova")),
+        // Served at U12 only: the menu is shared, so U6 shows it greyed.
+        dish(80927, "GRIGLIA (SOLO IN MENSA U12)", 2, "Secondi Piatti"),
         dish(101027, "PATATE RUSTICHE", 4, "Contorni", badges = listOf(vegan)),
         dish(69415, "SPINACI AL VAPORE", 4, "Contorni", calories = "Leggero", badges = listOf(vegan)),
         dish(81675, "CAVOLFIORE GRATINATO", 4, "Contorni", contains = listOf("Latte", "Glutine")),
@@ -123,6 +125,8 @@ object DemoMensa {
         dish(101015, "POKE RISO VENERE, SALMONE, ZUCCHINE JULIENNE, POMODORINI", 14, "Piatto unico", contains = listOf("Pesce", "Soia", "Sesamo")),
         dish(91031, "INSALATA, CETRIOLO, POMODORO, FETA DOP", 17, "Insalatone", calories = "Leggero", contains = listOf("Latte")),
         dish(74197, "INSALATA, POMODORO, OLIVE, MOZZARELLA", 17, "Insalatone", calories = "Leggero", badges = listOf(vegan)),
+        // On the canteen menu but never accepted for take-away from it.
+        dish(88465, "PIZZA MARGHERITA", 12, "Pizze", contains = listOf("Glutine", "Latte")),
     )
 
     private val u3Dishes = listOf(

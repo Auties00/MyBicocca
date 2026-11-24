@@ -2187,6 +2187,8 @@
     <string name="mensa_dish_gda">Reference Intake (GDA)</string>
     <string name="mensa_dish_add_takeaway">Add to Take-Away</string>
     <string name="mensa_dish_remove_takeaway">Remove from Take-Away</string>
+    <string name="mensa_dish_only_at">Only at canteen %1$s</string>
+    <string name="mensa_dish_not_for_takeaway">Not available for take-away</string>
     <string name="mensa_takeaway_title">Order Take-Away</string>
     <string name="mensa_takeaway_subtitle">Pick a time slot and confirm</string>
     <string name="mensa_takeaway_service">Service</string>
@@ -2341,7 +2343,6 @@
     <string name="mensa_place_lunch_dinner">Lunch and dinner</string>
     <string name="mensa_place_lunch_only">Lunch only</string>
     <string name="mensa_setup_place">Where</string>
-    <string name="mensa_setup_bookable_hint">You can order on the marked days</string>
     <string name="mensa_order_sign_in_hint">Sign in to order dishes</string>
     <string name="mensa_order_sign_in">Sign in</string>
     <string name="mensa_order_already_booked">You have already booked this meal: it is in My orders.</string>

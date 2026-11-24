@@ -1,5 +1,8 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa
 
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component.LocalMensaDishAvailability
+import it.attendance100.mybicocca.domain.model.mensa.availabilityAt
+import it.attendance100.mybicocca.domain.model.mensa.MensaDishAvailability
 import androidx.compose.material.icons.Icons
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material.icons.automirrored.outlined.List
@@ -386,7 +389,14 @@ fun MensaPage(
             )
         },
     ) { shown ->
-        CompositionLocalProvider(LocalMensaShared provides MensaSharedScopes(sharedScope, this)) {
+        val orderMenuKind = menus.valueOrNull()?.firstOrNull { it.id == selectedMenuId }?.identity()?.kind
+        val dishAvailability: (MensaDish) -> MensaDishAvailability = remember(orderMenuKind, selectedPlace) {
+            { dish -> dish.availabilityAt(orderMenuKind, selectedPlace) }
+        }
+        CompositionLocalProvider(
+            LocalMensaShared provides MensaSharedScopes(sharedScope, this),
+            LocalMensaDishAvailability provides dishAvailability,
+        ) {
         when (shown) {
             MensaDisplay.Outcome -> outcome?.let { currentOutcome ->
                 SheetResultPage(outcome = currentOutcome, onDismiss = { outcome = null })
@@ -417,6 +427,7 @@ fun MensaPage(
                     upcomingBooking = upcomingBooking,
                     onOpenMenu = viewModel::openMenu,
                     onOpenBooking = viewModel::openReservationDetail,
+                    onOpenOrders = viewModel::openReservations,
                     onOpenAllergens = viewModel::openAllergens,
                     onOpenWallet = { context.openFreshAndNatural() },
                 )

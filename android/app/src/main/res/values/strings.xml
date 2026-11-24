@@ -2192,6 +2192,8 @@
     <string name="mensa_dish_gda">Assunzioni di riferimento (GDA)</string>
     <string name="mensa_dish_add_takeaway">Aggiungi al Take-Away</string>
     <string name="mensa_dish_remove_takeaway">Togli dal Take-Away</string>
+    <string name="mensa_dish_only_at">Solo in mensa %1$s</string>
+    <string name="mensa_dish_not_for_takeaway">Non prenotabile per l\'asporto</string>
     <string name="mensa_takeaway_title">Ordina Take-Away</string>
     <string name="mensa_takeaway_subtitle">Scegli la fascia oraria e conferma</string>
     <string name="mensa_takeaway_service">Servizio</string>
@@ -2346,7 +2348,6 @@
     <string name="mensa_place_lunch_dinner">Pranzo e cena</string>
     <string name="mensa_place_lunch_only">Solo pranzo</string>
     <string name="mensa_setup_place">Dove</string>
-    <string name="mensa_setup_bookable_hint">Si può ordinare nei giorni segnati</string>
     <string name="mensa_order_sign_in_hint">Accedi per ordinare i piatti</string>
     <string name="mensa_order_sign_in">Accedi</string>
     <string name="mensa_order_already_booked">Hai già prenotato questo pasto: lo trovi in I miei ordini.</string>
