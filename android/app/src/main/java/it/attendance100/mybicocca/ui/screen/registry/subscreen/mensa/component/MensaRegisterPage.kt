@@ -30,6 +30,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -58,14 +60,59 @@ private const val HIDE_CHROME_CSS =
     "header.header,.frontend_header,footer.footer,.back-to-top{display:none!important}" +
         "body{padding-top:0!important;margin-top:0!important}"
 
+/** The app's colours, as CSS hex, for restyling the form. */
+private class FormPalette(
+    val background: String,
+    val text: String,
+    val muted: String,
+    val field: String,
+    val container: String,
+    val outline: String,
+    val primary: String,
+    val onPrimary: String,
+    val error: String,
+)
+
 /**
- * Follows what is typed in the sign-up form, so the new account can be signed in to as soon as it
- * is activated. Re-run on every page: a refused submission comes back as a new page with the form.
+ * Restyles Compass's Bootstrap form in the app's palette. It only targets the form's own classes:
+ * if Compass rebuilds the page, the rules stop matching and the page falls back to its own look.
  */
-private val WATCH_FORM_JS = """
+private fun themeCss(p: FormPalette): String =
+    "html,body{background:${p.background}!important;color:${p.muted}!important;font-family:Roboto,system-ui,sans-serif!important}" +
+        "label,.form-label{color:${p.text}!important;font-weight:500}" +
+        "p,.text-center,.text-left{color:${p.muted}!important}" +
+        "a{color:${p.primary}!important}" +
+        ".form-control{background:${p.field}!important;color:${p.text}!important;border:1px solid ${p.outline}!important;" +
+        "border-radius:14px!important;height:48px!important;box-shadow:none!important}" +
+        ".form-control:focus{border:2px solid ${p.primary}!important}" +
+        // The site marks required fields with a thick orange left border, on a more specific rule.
+        "form.registration_form input.form-control.required{border-left:1px solid ${p.outline}!important}" +
+        "form.registration_form input.form-control.required:focus{border-left:2px solid ${p.primary}!important}" +
+        ".input-group .form-control{border-radius:14px 0 0 14px!important;border-right:none!important}" +
+        ".input-group-addon{background:${p.container}!important;border:1px solid ${p.outline}!important;border-left:none!important;" +
+        "border-radius:0 14px 14px 0!important}" +
+        ".fa-check{color:${p.primary}!important}.fa-exclamation{color:${p.error}!important}" +
+        ".btn-link,.btn-link i{color:${p.primary}!important}.btn-link{border:none!important;background:none!important}" +
+        ".bs-callout{background:${p.container}!important;border:none!important;border-left:6px solid ${p.primary}!important;border-radius:16px!important}" +
+        ".bs-callout h3{color:${p.primary}!important}" +
+        ".btn-secondary{background:${p.container}!important;color:${p.text}!important;border:none!important;border-radius:12px!important}" +
+        ".btn-info,.btn-primary,.btn-success{background:${p.primary}!important;color:${p.onPrimary}!important;border:none!important;" +
+        "border-radius:999px!important;min-height:52px!important;font-weight:600!important}" +
+        ".btn-info.disabled,.btn-info:disabled{opacity:.4!important}" +
+        "input[type=checkbox]{accent-color:${p.primary}}" +
+        "img{border-radius:10px}" +
+        ".modal-content{background:${p.background}!important;color:${p.text}!important;border-radius:24px!important}"
+
+/**
+ * Hides the site's chrome, applies [css], and follows what is typed in the sign-up form, so the new
+ * account can be signed in to as soon as it is activated. Re-run on every page: a refused submission
+ * comes back as a new page with the form.
+ */
+private fun watchFormJs(css: String): String = """
     (function() {
-      var s = document.createElement('style');
-      s.textContent = '$HIDE_CHROME_CSS';
+      var s = document.getElementById('mybicocca-style') || document.createElement('style');
+      s.id = 'mybicocca-style';
+      s.textContent = '$HIDE_CHROME_CSS$css';
       document.head.appendChild(s);
       var f = document.querySelector('form.registration_form');
       if (!f || f.dataset.mybicocca) return;
@@ -77,6 +124,8 @@ private val WATCH_FORM_JS = """
       ['input', 'change', 'submit'].forEach(function(t) { f.addEventListener(t, send, true); });
     })();
 """.trimIndent()
+
+private fun Color.css(): String = "#%06X".format(toArgb() and 0xFFFFFF)
 
 /** The email and password the user chose while signing up, kept in memory only. */
 data class MensaNewAccount(val email: String, val password: String)
@@ -97,7 +146,22 @@ internal fun MensaRegisterPage(
     var loading by remember { mutableStateOf(true) }
     var failed by remember { mutableStateOf(false) }
     var webView by remember { mutableStateOf<WebView?>(null) }
+    val clientHolder = remember { arrayOfNulls<RegisterClient>(1) }
     val scheme = MaterialTheme.colorScheme
+    val sheetColor = scheme.surfaceContainerLow
+    val css = themeCss(
+        FormPalette(
+            background = sheetColor.css(),
+            text = scheme.onSurface.css(),
+            muted = scheme.onSurfaceVariant.css(),
+            field = scheme.surfaceContainerHighest.css(),
+            container = scheme.surfaceContainerHigh.css(),
+            outline = scheme.outline.css(),
+            primary = scheme.primary.css(),
+            onPrimary = scheme.onPrimary.css(),
+            error = scheme.error.css(),
+        ),
+    )
 
     Box(modifier = modifier.fillMaxSize()) {
         AndroidView(
@@ -105,6 +169,7 @@ internal fun MensaRegisterPage(
                 WebView(context).apply {
                     settings.javaScriptEnabled = true
                     settings.domStorageEnabled = true
+                    setBackgroundColor(sheetColor.toArgb())
                     // The page keeps its vertical swipes; without this the sheet's own gestures
                     // would cancel them a few pixels in.
                     setOnTouchListener { view, event ->
@@ -114,12 +179,23 @@ internal fun MensaRegisterPage(
                     val form = SignUpFormBridge()
                     addJavascriptInterface(form, "MyBicoccaSignUp")
                     webViewClient = RegisterClient(
+                        pageScript = watchFormJs(css),
                         onLoading = { loading = it },
                         onFailed = { failed = true },
                         onActivated = { currentOnActivated(form.account()) },
-                    )
+                    ).also { clientHolder[0] = it }
                     loadUrl(APP_ENTRY_URL)
                     webView = this
+                }
+            },
+            // A theme change while the form is open restyles it in place.
+            update = { view ->
+                val client = clientHolder[0] ?: return@AndroidView
+                val script = watchFormJs(css)
+                if (client.pageScript != script) {
+                    client.pageScript = script
+                    view.setBackgroundColor(sheetColor.toArgb())
+                    view.evaluateJavascript(script, null)
                 }
             },
             onRelease = { it.destroy() },
@@ -173,6 +249,7 @@ private class SignUpFormBridge {
 }
 
 private class RegisterClient(
+    var pageScript: String,
     private val onLoading: (Boolean) -> Unit,
     private val onFailed: () -> Unit,
     private val onActivated: () -> Unit,
@@ -214,7 +291,7 @@ private class RegisterClient(
             onActivated()
             return
         }
-        view.evaluateJavascript(WATCH_FORM_JS, null)
+        view.evaluateJavascript(pageScript, null)
         view.evaluateJavascript("document.body ? document.body.innerText : ''") { text ->
             if (!finished && text != null && ACTIVATED_TEXT.containsMatchIn(text)) {
                 finished = true
