@@ -1,0 +1,28 @@
+name: Private paths
+
+# Fails if a private checkout that lives inside this tree (see the end of .gitignore) gets tracked,
+# including as an embedded-repository pointer from `git add .`.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: No private paths tracked
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check
+        run: |
+          tracked=$(git ls-files -- nav-lab android/nav-lab)
+          if [ -n "$tracked" ]; then
+            echo "::error::Private paths are tracked and must be removed from the index:"
+            echo "$tracked"
+            exit 1
+          fi

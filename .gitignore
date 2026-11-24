@@ -80,3 +80,8 @@ app.*.symbols
 # Swift Package Manager
 **/.build/
 **/.swiftpm/
+
+# Private team checkout of the indoor-navigation Lab, cloned inside this tree on purpose.
+# Never tracked here; the private-paths workflow fails if it ever is.
+/nav-lab/
+/android/nav-lab/
