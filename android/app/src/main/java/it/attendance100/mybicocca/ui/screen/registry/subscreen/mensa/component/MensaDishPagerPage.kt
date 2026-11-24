@@ -267,8 +267,19 @@ internal fun MensaDishCarousel(
                 }
             }
             val infoHeight = infoAnim.value
+            val layoutDirection = LocalLayoutDirection.current
+            // The whole area swipes between dishes, gaps included: the plates' pager takes its own
+            // touches, and anything else (the strip between plate and title, the space around the
+            // plate, the details) drives the same pager from here.
             Column(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .scrollable(
+                        state = pagerState,
+                        orientation = Orientation.Horizontal,
+                        flingBehavior = PagerDefaults.flingBehavior(pagerState),
+                        reverseDirection = ScrollableDefaults.reverseDirection(layoutDirection, Orientation.Horizontal, reverseScrolling = false),
+                    ),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 BoxWithConstraints(
@@ -318,23 +329,15 @@ internal fun MensaDishCarousel(
                     }
                 }
 
-                // The whole area swipes between dishes, not just the plates, and runs edge to edge; each
-                // page keeps its own side padding and scrolls vertically under its pinned title. A page
-                // shrinks and sinks as it leaves, like the plates above it.
-                val layoutDirection = LocalLayoutDirection.current
+                // The details run edge to edge; each page keeps its own side padding and scrolls
+                // vertically under its pinned title. A page shrinks and sinks as it leaves, like the
+                // plates above it.
                 val sink = with(density) { 28.dp.toPx() }
                 HorizontalPager(
                     state = infoState,
                     userScrollEnabled = false,
                     beyondViewportPageCount = 1,
-                    modifier = Modifier
-                        .height(infoHeight)
-                        .scrollable(
-                            state = pagerState,
-                            orientation = Orientation.Horizontal,
-                            flingBehavior = PagerDefaults.flingBehavior(pagerState),
-                            reverseDirection = ScrollableDefaults.reverseDirection(layoutDirection, Orientation.Horizontal, reverseScrolling = false),
-                        ),
+                    modifier = Modifier.height(infoHeight),
                 ) { page ->
                     val dish = dishes[page]
                     DishInfoPage(
