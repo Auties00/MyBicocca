@@ -1,6 +1,5 @@
 package it.unimib.indoornav.lab.ui.beacons
 
-import it.unimib.indoornav.lab.ui.components.PacketRateText
 import it.unimib.indoornav.lab.ui.components.SlotBadge
 import it.unimib.indoornav.lab.inventory.SlotPills
 import androidx.compose.material.icons.filled.Map
@@ -302,6 +301,7 @@ fun BeaconDetailOverlay(
                         subLabel = subLabel,
                         online = tile.isOnline,
                         stale = tile.isStale,
+                        trackerKeys = tile.trackerKeys(),
                         cardShape = OrganicShapes.cardShapeFor(tile.tileKey),
                         inDetail = true,
                         size = HERO_SIZE,
@@ -327,25 +327,19 @@ fun BeaconDetailOverlay(
                             SlotPills.of(tile).forEach { (slot, state) -> SlotBadge(slot, state) }
                         }
 
-                        if (tile.isOnline && tile.currentRssi != null) {
-                            CornerPill(highlighted = true, modifier = Modifier.padding(start = 6.dp)) {
-                                PacketRateText(
-                                    packetsPerSec = tile.packetsPerSec ?: 0.0,
-                                    trackerKeys = tile.trackerKeys(),
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    mono = true,
-                                    suffix = " · Tx ${tile.txPowerAdv ?: "-"} · ${tile.currentRssi} dBm",
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                                )
-                            }
+                        val telemetryText = if (tile.isOnline && tile.currentRssi != null) {
+                            val pps = "%.1f pkt/s".format(Locale.US, tile.packetsPerSec ?: 0.0)
+                            val tx = tile.txPowerAdv?.toString() ?: "-"
+                            "$pps · Tx $tx · ${tile.currentRssi} dBm"
                         } else {
-                            CornerPill(
-                                text = "Offline",
-                                highlighted = false,
-                                mono = true,
-                                modifier = Modifier.padding(start = 6.dp),
-                            )
+                            "Offline"
                         }
+                        CornerPill(
+                            text = telemetryText,
+                            highlighted = tile.isOnline,
+                            mono = true,
+                            modifier = Modifier.padding(start = 6.dp),
+                        )
                     }
                 }
 
@@ -567,7 +561,12 @@ private fun CornerPill(
     mono: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
-    CornerPill(highlighted, modifier) {
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(999.dp),
+        color = MaterialTheme.colorScheme.surfaceContainerHigh,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+    ) {
         Text(
             text = text,
             fontSize = 11.sp,
@@ -582,21 +581,6 @@ private fun CornerPill(
             maxLines = 1,
         )
     }
-}
-
-@Composable
-private fun CornerPill(
-    highlighted: Boolean,
-    modifier: Modifier = Modifier,
-    content: @Composable () -> Unit,
-) {
-    Surface(
-        modifier = modifier,
-        shape = RoundedCornerShape(999.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerHigh,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-        content = content,
-    )
 }
 
 @Composable

@@ -25,6 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
@@ -65,6 +66,7 @@ private data class BeaconBitmapKey(
     val label: String,
     val subLabel: String,
     val size: IntSize,
+    val ledOn: Boolean = false,
 )
 
 private object BeaconBitmapCache {
@@ -81,7 +83,7 @@ private object BeaconBitmapCache {
 
     fun put(key: BeaconBitmapKey, bitmap: ImageBitmap) {
         synchronized(cache) { cache.put(key, bitmap) }
-        if (key.step == 0 || key.step == TRANSITION_STEPS) latest[Triple(key.label, key.subLabel, key.step)] = bitmap
+        if (!key.ledOn && (key.step == 0 || key.step == TRANSITION_STEPS)) latest[Triple(key.label, key.subLabel, key.step)] = bitmap
     }
 }
 
@@ -94,7 +96,7 @@ private object FrameStore {
         BeaconBitmapCache.get(key)?.let { return it }
         return inFlight.computeIfAbsent(key) {
             scope.async {
-                render(mesh, key.label, key.subLabel, key.step, key.size)
+                render(mesh, key.label, key.subLabel, key.step, key.size, key.ledOn)
                     ?.also { BeaconBitmapCache.put(key, it) }
                     .also { inFlight.remove(key) }
             }
@@ -141,6 +143,7 @@ fun BeaconModelView(
     progress: Float,
     online: Boolean,
     modifier: Modifier = Modifier,
+    ledTrackerKeys: Set<String> = emptySet(),
 ) {
     val context = LocalContext.current
     val inPreview = LocalInspectionMode.current
@@ -155,10 +158,19 @@ fun BeaconModelView(
     var restBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
     var liveBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
     val latestProgress by rememberUpdatedState(progress)
+    var ledBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
+    val ledPulse = rememberPacketPulse(ledTrackerKeys)
 
     LaunchedEffect(mesh, label, subLabel, sizePx, restStep) {
         if (mesh == null || sizePx.width <= 0 || sizePx.height <= 0) return@LaunchedEffect
         restBitmap = FrameStore.get(mesh, BeaconBitmapKey(restStep, label, subLabel, sizePx))
+    }
+
+    // The same pose with the LED lit, laid over the unlit one and faded with each packet.
+    LaunchedEffect(mesh, label, subLabel, sizePx, restStep, ledTrackerKeys.isNotEmpty()) {
+        ledBitmap = null
+        if (mesh == null || ledTrackerKeys.isEmpty() || sizePx.width <= 0 || sizePx.height <= 0) return@LaunchedEffect
+        ledBitmap = FrameStore.get(mesh, BeaconBitmapKey(restStep, label, subLabel, sizePx, ledOn = true))
     }
 
     LaunchedEffect(mesh, label, subLabel) {
@@ -190,13 +202,31 @@ fun BeaconModelView(
                 contentScale = ContentScale.Fit,
                 modifier = Modifier.fillMaxSize(),
             )
+            val lit = ledBitmap
+            if (atEnd && lit != null) {
+                Image(
+                    bitmap = lit,
+                    contentDescription = null,
+                    contentScale = ContentScale.Fit,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer { alpha = ledPulse.value },
+                )
+            }
         } else if (inPreview || mesh == null) {
             FallbackTag(label = label, modifier = Modifier.fillMaxSize())
         }
     }
 }
 
-private suspend fun render(mesh: VikingMesh, label: String, subLabel: String, step: Int, size: IntSize): ImageBitmap? {
+private suspend fun render(
+    mesh: VikingMesh,
+    label: String,
+    subLabel: String,
+    step: Int,
+    size: IntSize,
+    ledOn: Boolean,
+): ImageBitmap? {
     val progress = step.toFloat() / TRANSITION_STEPS
     return withContext(Dispatchers.Default) {
         runCatching {
@@ -208,6 +238,7 @@ private suspend fun render(mesh: VikingMesh, label: String, subLabel: String, st
                 widthPx = size.width,
                 heightPx = size.height,
                 zoom = zoomAt(progress, minOf(size.width, size.height).toFloat()),
+                ledOn = ledOn,
             ).bitmap.asImageBitmap()
         }.getOrNull()
     }

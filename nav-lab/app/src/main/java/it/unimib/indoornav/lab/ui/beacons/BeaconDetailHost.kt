@@ -65,6 +65,7 @@ internal data class HeroLook(
     val online: Boolean,
     val cardShape: SmoothCookieShape,
     val stale: Boolean,
+    val trackerKeys: Set<String> = emptySet(),
 )
 
 /**
@@ -221,9 +222,10 @@ fun BeaconHero(
     modifier: Modifier = Modifier,
     haloRotation: Float = 0f,
     stale: Boolean = false,
+    trackerKeys: Set<String> = emptySet(),
 ) {
     val hero = LocalBeaconHero.current
-    val look = HeroLook(label, subLabel, online, cardShape, stale)
+    val look = HeroLook(label, subLabel, online, cardShape, stale, trackerKeys)
     if (hero != null) {
         SideEffect {
             hero.looks[tileKey] = look
@@ -273,6 +275,7 @@ private fun HeroVisual(look: HeroLook, progress: Float, detailHaloRotation: Floa
             subLabel = look.subLabel,
             progress = progress,
             online = look.online,
+            ledTrackerKeys = look.trackerKeys,
             modifier = Modifier
                 .requiredSize(MODEL_LAYOUT_SIZE)
                 .graphicsLayer {

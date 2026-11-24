@@ -84,6 +84,7 @@ fun BeaconCardGrid(
                 subLabel = subLabel,
                 online = tile.isOnline,
                 stale = tile.isStale,
+                trackerKeys = tile.trackerKeys(),
                 cardShape = OrganicShapes.cardShapeFor(tile.tileKey),
                 inDetail = false,
                 size = 112.dp,

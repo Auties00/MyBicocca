@@ -709,6 +709,7 @@ private fun MapMarker(tile: ResolvedBeaconTile, editMode: Boolean, modifier: Mod
             subLabel = subLabel,
             online = tile.isOnline,
             stale = tile.isStale,
+            trackerKeys = tile.trackerKeys(),
             cardShape = OrganicShapes.cardShapeFor(tile.tileKey),
             inDetail = false,
             size = MARKER_SIZE,

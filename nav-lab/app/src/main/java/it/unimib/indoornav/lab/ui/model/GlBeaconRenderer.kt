@@ -155,11 +155,11 @@ private class GlSceneResources(private val mesh: VikingMesh) {
         GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, 0)
     }
 
-    fun updateLabelIfNeeded(label: String, subLabel: String) {
-        val key = "$label|$subLabel"
+    fun updateLabelIfNeeded(label: String, subLabel: String, ledOn: Boolean = false) {
+        val key = "$label|$subLabel|$ledOn"
         if (key == cachedLabelKey) return
         cachedLabelKey = key
-        val bmp = BeaconRenderSpec.renderLabelBitmap(label, subLabel)
+        val bmp = BeaconRenderSpec.renderLabelBitmap(label, subLabel, ledOn)
         GLES30.glBindTexture(GLES30.GL_TEXTURE_2D, labelTexId)
         GLUtils.texImage2D(GLES30.GL_TEXTURE_2D, 0, bmp, 0)
         GLES30.glGenerateMipmap(GLES30.GL_TEXTURE_2D)
@@ -174,8 +174,9 @@ private class GlSceneResources(private val mesh: VikingMesh) {
         label: String,
         subLabel: String,
         zoom: Float = 1f,
+        ledOn: Boolean = false,
     ) {
-        updateLabelIfNeeded(label, subLabel)
+        updateLabelIfNeeded(label, subLabel, ledOn)
 
         val rotM = BeaconRenderSpec.makeRotationMatrix(pose.pitchDeg, pose.yawDeg, pose.rollDeg)
         val modelM = BeaconRenderSpec.makeGlModelMatrix(rotM)
@@ -504,6 +505,7 @@ object GlBeaconOffscreenRenderer {
         widthPx: Int,
         heightPx: Int,
         zoom: Float = 1f,
+        ledOn: Boolean = false,
     ): GlRenderResult {
         val w = widthPx.coerceAtLeast(1)
         val h = heightPx.coerceAtLeast(1)
@@ -518,7 +520,7 @@ object GlBeaconOffscreenRenderer {
                     val s = scene!!
                     val startNs = System.nanoTime()
                     GLES30.glBindFramebuffer(GLES30.GL_FRAMEBUFFER, msaaFbo)
-                    s.draw(w, h, pose, label, subLabel, zoom)
+                    s.draw(w, h, pose, label, subLabel, zoom, ledOn)
 
                     GLES30.glBindFramebuffer(GLES30.GL_READ_FRAMEBUFFER, msaaFbo)
                     GLES30.glBindFramebuffer(GLES30.GL_DRAW_FRAMEBUFFER, resolveFbo)

@@ -202,6 +202,7 @@ object BeaconRenderSpec {
         height: Float,
         label: String,
         subLabel: String,
+        ledOn: Boolean = false,
     ) {
         val mainText = label.trim().ifEmpty { "—" }
         val subText = subLabel.trim()
@@ -218,6 +219,30 @@ object BeaconRenderSpec {
             moveTo(width - 14f, height - 34f); lineTo(width - 14f, height - 16f); lineTo(width - 32f, height - 16f)
         }
         canvas.drawPath(ticks, tickPaint)
+
+        // Status LED, top centre: an unlit lens, or lit red with a soft glow.
+        val ledX = width * 0.5f
+        val ledY = 40f
+        val ledR = 11f
+        if (ledOn) {
+            val glow = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                shader = android.graphics.RadialGradient(
+                    ledX, ledY, ledR * 3.2f,
+                    intArrayOf(Color.argb(170, 255, 60, 60), Color.argb(0, 255, 60, 60)),
+                    null, android.graphics.Shader.TileMode.CLAMP,
+                )
+            }
+            canvas.drawCircle(ledX, ledY, ledR * 3.2f, glow)
+            canvas.drawCircle(ledX, ledY, ledR, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.rgb(255, 46, 46) })
+            canvas.drawCircle(ledX - 3f, ledY - 3f, ledR * 0.35f, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.argb(200, 255, 220, 220) })
+        } else {
+            canvas.drawCircle(ledX, ledY, ledR, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.rgb(92, 40, 44) })
+            canvas.drawCircle(ledX, ledY, ledR, Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                style = Paint.Style.STROKE
+                strokeWidth = 2f
+                color = Color.argb(90, 24, 22, 26)
+            })
+        }
 
         val boldTypeface = Typeface.create(Typeface.SANS_SERIF, 800, false)
         val mainPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -251,13 +276,14 @@ object BeaconRenderSpec {
     fun renderLabelBitmap(
         label: String,
         subLabel: String,
+        ledOn: Boolean = false,
         width: Int = 512,
         height: Int = 592,
     ): Bitmap {
         val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
         canvas.scale(width / DECAL_VIRTUAL_W, height / DECAL_VIRTUAL_H)
-        drawLabelContent(canvas, DECAL_VIRTUAL_W, DECAL_VIRTUAL_H, label, subLabel)
+        drawLabelContent(canvas, DECAL_VIRTUAL_W, DECAL_VIRTUAL_H, label, subLabel, ledOn)
         return bitmap
     }
 }
