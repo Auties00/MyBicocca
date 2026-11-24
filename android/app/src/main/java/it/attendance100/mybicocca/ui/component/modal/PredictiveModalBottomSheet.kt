@@ -115,6 +115,8 @@ class ModalSheetController {
  * idempotent: Material can report the same dismissal from more than one path.
  * @param gesturesEnabled while false the sheet cannot be dragged — for content where dismissal
  * must stay an explicit act (e.g. mid-wizard). The drag handle stays visible but muted.
+ * @param dragToDismiss while false only the drag is off: back still slides the sheet out and the
+ * scrim still closes it, unlike [gesturesEnabled].
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -125,9 +127,10 @@ fun PredictiveModalBottomSheet(
     scrimColor: Color = BottomSheetDefaults.ScrimColor,
     confirmDismiss: () -> Boolean = { true },
     gesturesEnabled: Boolean = true,
+    dragToDismiss: Boolean = true,
     controller: ModalSheetController? = null,
     contentWindowInsets: @Composable () -> WindowInsets = { BottomSheetDefaults.modalWindowInsets },
-    dragHandle: @Composable (() -> Unit)? = { SheetDragHandle(gesturesEnabled) },
+    dragHandle: @Composable (() -> Unit)? = { SheetDragHandle(gesturesEnabled && dragToDismiss) },
     content: @Composable () -> Unit,
 ) {
     val latestConfirmDismiss by rememberUpdatedState(confirmDismiss)
@@ -154,7 +157,7 @@ fun PredictiveModalBottomSheet(
             }
         },
         sheetState = sheetState,
-        sheetGesturesEnabled = gesturesEnabled,
+        sheetGesturesEnabled = gesturesEnabled && dragToDismiss,
         dragHandle = dragHandle,
         shape = shape,
         scrimColor = scrimColor,

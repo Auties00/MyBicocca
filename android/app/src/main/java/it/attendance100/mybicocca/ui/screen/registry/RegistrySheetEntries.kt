@@ -5,6 +5,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation3.runtime.EntryProviderScope
 import androidx.navigation3.runtime.NavKey
 import it.attendance100.mybicocca.core.state.valueOrNull
+import it.attendance100.mybicocca.ui.component.modal.SheetContainerStyle
 import it.attendance100.mybicocca.ui.component.modal.SheetPage
 import it.attendance100.mybicocca.ui.navigation.PopWhenMissing
 import it.attendance100.mybicocca.ui.navigation.requireAppNavigator
@@ -12,6 +13,7 @@ import it.attendance100.mybicocca.ui.navigation.route.AppRoute
 import it.attendance100.mybicocca.ui.navigation.route.SheetRoute
 import it.attendance100.mybicocca.ui.navigation.sheetHeader
 import it.attendance100.mybicocca.ui.navigation.sheetHeaderInPage
+import it.attendance100.mybicocca.ui.navigation.sheetStyle
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.AppelliPage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appelli.BookedExamsViewModel
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.appointments.AppointmentsPage
@@ -216,7 +218,8 @@ fun EntryProviderScope<NavKey>.registrySheetEntries(
     entry<SheetRoute.Library>(metadata = sheetHeaderInPage()) {
         LibraryPage(viewModel = libraryViewModel)
     }
-    entry<SheetRoute.Mensa>(metadata = sheetHeaderInPage()) {
+    // Mensa is a long flow (menu, carousel, order): a swipe down while scrolling must not drop it.
+    entry<SheetRoute.Mensa>(metadata = sheetHeaderInPage() + sheetStyle(SheetContainerStyle(dragToDismiss = false))) {
         MensaPage(viewModel = mensaViewModel)
     }
 

@@ -160,6 +160,7 @@ private fun ModalSheetHost(
     PredictiveModalBottomSheet(
         onDismiss = { navigator.pop(rootId) },
         gesturesEnabled = gesturesEnabled,
+        dragToDismiss = style?.dragToDismiss ?: true,
         confirmDismiss = { latestTopControl.confirmDismiss() },
         controller = controller,
         shape = style?.shape ?: BottomSheetDefaults.ExpandedShape,
@@ -168,7 +169,7 @@ private fun ModalSheetHost(
         dragHandle = when {
             style?.hideDragHandle == true -> null
             style?.dragHandle != null -> style.dragHandle
-            else -> { { SheetDragHandle(gesturesEnabled) } }
+            else -> { { SheetDragHandle(gesturesEnabled && style?.dragToDismiss != false) } }
         },
     ) {
         SheetPagerImpl(
