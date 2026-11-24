@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <external-files-path
+        name="external_sessions"
+        path="sessions/" />
+    <files-path
+        name="internal_sessions"
+        path="sessions/" />
+    <cache-path
+        name="shared_zips"
+        path="zips/" />
+</paths>

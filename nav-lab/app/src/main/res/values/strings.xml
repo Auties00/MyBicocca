@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Lab</string>
+    <string name="recording_channel_name">Recording</string>
+    <string name="recording_channel_desc">Foreground sensor recording notification</string>
+</resources>

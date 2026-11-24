@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>MyBicocca Beacons — Material 3 Interactive Prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      min-height: 100%;
+      font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+    .studio-root {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: background-color 0.22s ease;
+    }
+    .studio-bar {
+      position: sticky;
+      top: 0;
+      z-index: 60;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 10px 18px;
+      border-bottom: 1px solid transparent;
+    }
+    .pill-tabs {
+      display: inline-flex;
+      padding: 3px;
+      border-radius: 999px;
+      gap: 4px;
+    }
+    .pill-tabs button {
+      border: none;
+      border-radius: 999px;
+      padding: 6px 13px;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background-color 0.16s, color 0.16s;
+    }
+    .studio-link-btn, .studio-toggle-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border: none;
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-family: inherit;
+      font-size: 12.5px;
+      font-weight: 700;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .studio-stage {
+      flex: 1;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 20px 20px 44px;
+      overflow-x: auto;
+    }
+    .phone-bezel-wrap {
+      display: flex;
+      justify-content: center;
+      width: 100%;
+    }
+    .phone-bezel {
+      width: 390px;
+      height: 844px;
+      border-radius: 42px;
+      overflow: hidden;
+      position: relative;
+      flex-shrink: 0;
+    }
+    .phone-bezel-mini {
+      border-radius: 34px;
+      overflow: hidden;
+      position: relative;
+      flex-shrink: 0;
+    }
+    .phone-screen {
+      width: 390px;
+      height: 844px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+    }
+    .phone-scroll {
+      overflow-y: auto;
+      scrollbar-width: none;
+    }
+    .phone-scroll::-webkit-scrollbar { display: none; }
+
+    .m3-icon-btn {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: none;
+      background: transparent;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background-color 0.15s;
+    }
+    .m3-icon-btn:hover { background-color: rgba(128, 128, 128, 0.12); }
+
+    .m3-card-btn {
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      transition: transform 0.15s cubic-bezier(0.2, 0.9, 0.3, 1), border-radius 0.16s ease, filter 0.15s;
+    }
+    .m3-card-btn:active {
+      transform: scale(0.985);
+    }
+    .m3-press-tight:active {
+      border-radius: 12px !important;
+    }
+
+    @keyframes pulseDot {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.45); opacity: 0.45; }
+    }
+    .live-dot {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      animation: pulseDot 1.6s ease-in-out infinite;
+    }
+
+    /* Comparison Canvas */
+    .comparison-grid {
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+      padding: 6px 10px;
+      flex-wrap: nowrap;
+    }
+    .comparison-col {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+      width: 312px;
+      flex-shrink: 0;
+    }
+    .comparison-meta {
+      width: 100%;
+      border-radius: 18px;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    /* Tweaks Floating Panel */
+    .tweaks-panel {
+      position: fixed;
+      right: 18px;
+      bottom: 18px;
+      width: 312px;
+      max-width: calc(100vw - 36px);
+      border-radius: 24px;
+      padding: 14px;
+      box-shadow: 0 18px 48px rgba(0,0,0,0.22);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      z-index: 70;
+    }
+    .tweaks-section {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .tweaks-label {
+      font-size: 10.5px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .tweak-chip {
+      border: 1.5px solid transparent;
+      border-radius: 11px;
+      padding: 7px 8px;
+      font-family: inherit;
+      font-size: 11.5px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      white-space: nowrap;
+    }
+    .swatch {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    @media (max-width: 980px) {
+      .tweaks-panel {
+        position: static;
+        margin: 0 auto 24px;
+      }
+      .studio-stage {
+        padding-bottom: 16px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <script src="viking-slim-mesh.js?v=18"></script>
+  <script src="beacon-3d.js?v=18"></script>
+  <script type="text/babel" src="data.jsx?v=18"></script>
+  <script type="text/babel" src="app.jsx?v=18"></script>
+</body>
+</html>
