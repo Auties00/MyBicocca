@@ -13,6 +13,9 @@ import androidx.compose.foundation.indication
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.ui.res.painterResource
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -67,6 +70,7 @@ internal fun MensaHubPage(
     upcomingBooking: MensaReservation?,
     onOpenMenu: () -> Unit,
     onOpenBooking: (MensaReservation) -> Unit,
+    onOpenOrders: () -> Unit,
     onOpenAllergens: () -> Unit,
     onOpenWallet: () -> Unit,
     modifier: Modifier = Modifier,
@@ -79,16 +83,36 @@ internal fun MensaHubPage(
             .testTag(MensaTestTags.HOME_PAGE),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        HubBox(
-            tag = MensaTestTags.HUB_MENU,
-            title = stringResource(R.string.mensa_hub_menu_title),
-            body = stringResource(R.string.mensa_hub_menu_body),
-            arts = listOf(MensaArt.PASTA_TOMATO, MensaArt.MEAT, MensaArt.SALAD, MensaArt.SANDWICH),
-            container = MaterialTheme.colorScheme.primaryContainer,
-            content = MaterialTheme.colorScheme.onPrimaryContainer,
-            onClick = onOpenMenu,
-            modifier = Modifier.fillMaxWidth(),
-        )
+        val booking = upcomingBooking?.takeIf { session != null }
+        if (booking != null) {
+            // A booking to pick up matters as much as the menu, so it shares the menu's row.
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                HubBox(
+                    tag = MensaTestTags.HUB_MENU,
+                    title = stringResource(R.string.mensa_hub_menu_title),
+                    body = stringResource(R.string.mensa_hub_menu_body),
+                    onClick = onOpenMenu,
+                    modifier = Modifier.weight(1f),
+                ) { HubPlates(listOf(MensaArt.PASTA_TOMATO, MensaArt.SALAD)) }
+                BookingBox(booking = booking, onClick = { onOpenBooking(booking) }, modifier = Modifier.weight(1f))
+            }
+        } else {
+            HubBox(
+                tag = MensaTestTags.HUB_MENU,
+                title = stringResource(R.string.mensa_hub_menu_title),
+                body = stringResource(R.string.mensa_hub_menu_body),
+                onClick = onOpenMenu,
+                modifier = Modifier.fillMaxWidth(),
+            ) { HubPlates(listOf(MensaArt.PASTA_TOMATO, MensaArt.MEAT, MensaArt.SALAD, MensaArt.SANDWICH)) }
+            HubRow(
+                tag = MensaTestTags.HUB_ORDERS,
+                icon = Icons.AutoMirrored.Outlined.ReceiptLong,
+                title = stringResource(R.string.mensa_orders_title),
+                body = stringResource(R.string.mensa_orders_subtitle),
+                trailing = Icons.Outlined.ChevronRight,
+                onClick = onOpenOrders,
+            )
+        }
 
         HubRow(
             tag = "mensa_hub_wallet",
@@ -100,11 +124,6 @@ internal fun MensaHubPage(
             trailing = Icons.AutoMirrored.Outlined.OpenInNew,
             onClick = onOpenWallet,
         )
-
-        // Only while there is something to pick up; past orders live under the account.
-        if (session != null && upcomingBooking != null) {
-            BookingCard(booking = upcomingBooking, onClick = { onOpenBooking(upcomingBooking) })
-        }
 
         HubRow(
             tag = MensaTestTags.HUB_PERSONALIZE,
@@ -122,18 +141,21 @@ internal fun MensaHubPage(
     }
 }
 
-/** A wide card with a string of plates overflowing its top edge; the plates answer the tap too. */
+/**
+ * A big card with its artwork (plates, the bag) overflowing its top edge; the artwork answers the
+ * tap too. [label] is a small line above the title.
+ */
 @Composable
 private fun HubBox(
     tag: String,
     title: String,
     body: String,
-    arts: List<MensaArt>,
-    container: Color,
-    content: Color,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    label: String? = null,
+    artwork: @Composable BoxScope.() -> Unit,
 ) {
+    val scheme = MaterialTheme.colorScheme
     val haptic = rememberHapticManager()
     val press = remember { MutableInteractionSource() }
     Box(
@@ -147,8 +169,8 @@ private fun HubBox(
                 .fillMaxSize()
                 .padding(top = 44.dp),
             shape = RoundedCornerShape(28.dp),
-            color = container,
-            contentColor = content,
+            color = scheme.primaryContainer,
+            contentColor = scheme.onPrimaryContainer,
         ) {
             Column(
                 modifier = Modifier
@@ -157,6 +179,9 @@ private fun HubBox(
                     .padding(16.dp),
                 verticalArrangement = Arrangement.Bottom,
             ) {
+                if (label != null) {
+                    Text(text = label, style = MaterialTheme.typography.labelMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
                 Text(
                     text = title,
                     style = MaterialTheme.typography.titleMedium,
@@ -173,29 +198,32 @@ private fun HubBox(
                 )
             }
         }
-        Row(
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .offset(x = 6.dp),
-            horizontalArrangement = Arrangement.spacedBy((-22).dp),
-        ) {
-            arts.forEachIndexed { index, art ->
-                // The plates stagger, so the string reads as a spread of dishes rather than a row.
-                MensaPlate(
-                    art = art,
-                    size = 92.dp,
-                    modifier = Modifier.offset(y = if (index % 2 == 0) 0.dp else 14.dp),
-                )
-            }
+        artwork()
+    }
+}
+
+/** A string of plates at the card's top-right, staggered so it reads as a spread of dishes. */
+@Composable
+private fun BoxScope.HubPlates(arts: List<MensaArt>) {
+    Row(
+        modifier = Modifier
+            .align(Alignment.TopEnd)
+            .offset(x = 6.dp),
+        horizontalArrangement = Arrangement.spacedBy((-22).dp),
+    ) {
+        arts.forEachIndexed { index, art ->
+            MensaPlate(
+                art = art,
+                size = 92.dp,
+                modifier = Modifier.offset(y = if (index % 2 == 0) 0.dp else 14.dp),
+            )
         }
     }
 }
 
-/** The next booking to pick up: when, which meal, where, and its code. */
+/** The next booking to pick up, as big as the menu card: when, which meal, where, and its code. */
 @Composable
-private fun BookingCard(booking: MensaReservation, onClick: () -> Unit) {
-    val scheme = MaterialTheme.colorScheme
-    val haptic = rememberHapticManager()
+private fun BookingBox(booking: MensaReservation, onClick: () -> Unit, modifier: Modifier = Modifier) {
     val locale = currentLocale()
     val today = remember { LocalDate.now(AppClock.clock) }
     val day = when (booking.date) {
@@ -204,42 +232,22 @@ private fun BookingCard(booking: MensaReservation, onClick: () -> Unit) {
         null -> booking.rawDate
         else -> booking.date.format(DateTimeFormatter.ofPattern("EEE d MMM", locale)).replaceFirstChar { it.titlecase(locale) }
     }
-    Surface(
-        onClick = { haptic.tap(); onClick() },
-        modifier = Modifier.fillMaxWidth().testTag(MensaTestTags.HUB_ORDERS),
-        shape = RoundedCornerShape(24.dp),
-        color = scheme.tertiaryContainer,
-        contentColor = scheme.onTertiaryContainer,
+    HubBox(
+        tag = MensaTestTags.HUB_BOOKING,
+        label = stringResource(R.string.mensa_hub_booking_label),
+        title = listOfNotNull(day, booking.mealTypeName).joinToString(" · "),
+        // The pickup slot, then the code on a line of its own: it is long and must not break.
+        body = listOfNotNull(booking.shiftName?.takeIf { it.isNotBlank() }, booking.code).joinToString("\n"),
+        onClick = onClick,
+        modifier = modifier,
     ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
-        ) {
-            Surface(shape = CircleShape, color = scheme.tertiary, contentColor = scheme.onTertiary, modifier = Modifier.size(44.dp)) {
-                Box(contentAlignment = Alignment.Center) {
-                    Icon(Icons.AutoMirrored.Outlined.ReceiptLong, contentDescription = null, modifier = Modifier.size(22.dp))
-                }
-            }
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(stringResource(R.string.mensa_hub_booking_label), style = MaterialTheme.typography.labelMedium)
-                Text(
-                    text = listOfNotNull(day, booking.mealTypeName).joinToString(" · "),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                Text(
-                    text = listOfNotNull(booking.deliveryAddress?.takeIf { it.isNotBlank() } ?: booking.canteenName, booking.code)
-                        .joinToString(" · "),
-                    style = MaterialTheme.typography.bodySmall,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-            Icon(Icons.Outlined.ChevronRight, contentDescription = null, modifier = Modifier.size(20.dp))
-        }
+        Image(
+            painter = painterResource(R.drawable.mensa_art_takeaway_bag),
+            contentDescription = null,
+            modifier = Modifier
+                .align(Alignment.TopEnd)
+                .size(104.dp),
+        )
     }
 }
 
@@ -358,6 +366,7 @@ private fun HubSignedInPreview(@PreviewParameter(MensaPreviewThemeProvider::clas
             favouriteCount = 2,
             upcomingBooking = MensaPreviewOrders.reservation,
             onOpenBooking = {},
+            onOpenOrders = {},
             onOpenAllergens = {},
             onOpenWallet = {},
         )
@@ -375,6 +384,7 @@ private fun HubSignedOutPreview(@PreviewParameter(MensaPreviewThemeProvider::cla
             favouriteCount = 2,
             upcomingBooking = MensaPreviewOrders.reservation,
             onOpenBooking = {},
+            onOpenOrders = {},
             onOpenAllergens = {},
             onOpenWallet = {},
         )

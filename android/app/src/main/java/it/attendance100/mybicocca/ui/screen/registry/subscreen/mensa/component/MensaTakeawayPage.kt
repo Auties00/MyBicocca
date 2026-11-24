@@ -38,7 +38,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,7 +54,6 @@ import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.core.state.SyncStatus
 import it.attendance100.mybicocca.core.state.valueOrNull
-import it.attendance100.mybicocca.core.time.AppClock
 import it.attendance100.mybicocca.domain.model.mensa.MensaCartPricing
 import it.attendance100.mybicocca.domain.model.mensa.MensaPlace
 import it.attendance100.mybicocca.domain.model.mensa.MensaTakeawayService
@@ -71,11 +69,6 @@ import it.attendance100.mybicocca.ui.theme.LocalIsOnline
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import androidx.compose.material.icons.outlined.Delete
-
-private val TakeawayDateFormat: DateTimeFormatter
-    @Composable
-    @ReadOnlyComposable
-    get() = DateTimeFormatter.ofPattern("EEE d MMM", currentLocale())
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -116,9 +109,6 @@ internal fun MensaTakeawayPage(
     val dayMeals = selectedDate?.let { currentService?.scheduleByDate?.get(it) }.orEmpty()
     val activeMeal = dayMeals.firstOrNull { it.id == selectedMealTypeId }
     val slots = activeMeal?.timeSlots.orEmpty()
-    val today = remember { LocalDate.now(AppClock.clock) }
-    val tomorrow = remember(today) { today.plusDays(1) }
-    val dateFormat = TakeawayDateFormat
     val locale = currentLocale()
 
     Column(
@@ -156,13 +146,9 @@ internal fun MensaTakeawayPage(
                 ) {
                     SectionLabel(stringResource(R.string.mensa_takeaway_pickup_summary))
                     val pickupName = currentService?.pickupLocations?.firstOrNull { it.id == selectedPickupLocationId }?.name
-                    val dayLabel = selectedDate?.let { date ->
-                        when (date) {
-                            today -> stringResource(R.string.mensa_today)
-                            tomorrow -> stringResource(R.string.mensa_tomorrow)
-                            else -> date.format(dateFormat).replaceFirstChar { it.titlecase(locale) }
-                        }
-                    }
+                    // The full date, never "tomorrow": an order placed around midnight must say which day it is for.
+                    val dayLabel = selectedDate?.format(DateTimeFormatter.ofPattern("EEEE d MMMM", locale))
+                        ?.replaceFirstChar { it.titlecase(locale) }
                     Surface(
                         modifier = Modifier
                             .fillMaxWidth()

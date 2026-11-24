@@ -1,0 +1,29 @@
+<!-- A kraft take-away bag in the flat style of the dish plates: base colour, a darker side, a light edge. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Soft shadow under the bag -->
+    <path android:fillColor="#22000000" android:pathData="M 22,96 A 35,6 0 1,0 92,96 A 35,6 0 1,0 22,96 Z" />
+    <!-- Rope handle, behind the bag's top edge -->
+    <path android:fillColor="#7A4E24" android:pathData="M 40,44 C 39,20 69,20 68,44 L 63.5,44 C 64,26 44,26 44.5,44 Z" />
+    <path android:fillColor="#9A6633" android:pathData="M 41.5,40 C 41.5,25 66.5,25 66.5,40 L 65,40 C 64.5,28 43.5,28 43,40 Z" />
+    <!-- Side panel -->
+    <path android:fillColor="#B98448" android:pathData="M 76,40 L 87,45 L 90,92 L 80,95 Z" />
+    <path android:fillColor="#A5733C" android:pathData="M 76,40 L 87,45 L 87.4,52 L 76.4,48 Z" />
+    <!-- Front panel -->
+    <path android:fillColor="#D9A866" android:pathData="M 28,40 L 76,40 L 80,95 L 24,95 Z" />
+    <!-- Folded top band -->
+    <path android:fillColor="#C8934F" android:pathData="M 28,40 L 76,40 L 76.6,48 L 27.4,48 Z" />
+    <!-- Light left edge -->
+    <path android:fillColor="#E9C083" android:pathData="M 27.4,48 L 31.4,48 L 28.6,95 L 24,95 Z" />
+    <!-- Crease near the bottom -->
+    <path android:fillColor="#C8934F" android:pathData="M 25,86 L 79.3,86 L 79.5,88 L 24.8,88 Z" />
+    <!-- Round sticker with a leaf -->
+    <path android:fillColor="#FBF9F4" android:pathData="M 40,66 A 12,12 0 1,0 64,66 A 12,12 0 1,0 40,66 Z" />
+    <path android:fillColor="#E8E2D6" android:pathData="M 43,66 A 9,9 0 1,0 61,66 A 9,9 0 1,0 43,66 Z" />
+    <path android:fillColor="#689E34" android:pathData="M 46,71 Q 46,59 58,60 Q 59,72 46,71 Z" />
+    <path android:fillColor="#8CC152" android:pathData="M 47.5,69.5 Q 48,61.5 56.5,61.5 Q 56.5,69.5 47.5,69.5 Z" />
+    <path android:fillColor="#5A8A2C" android:pathData="M 46.6,70.6 L 55.6,62.2 L 56.2,62.8 L 47.3,71.2 Z" />
+</vector>

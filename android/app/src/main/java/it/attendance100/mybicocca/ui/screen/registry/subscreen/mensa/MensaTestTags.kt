@@ -6,6 +6,7 @@ object MensaTestTags {
     const val HUB_MENU = "mensa_hub_menu"
     const val HUB_PERSONALIZE = "mensa_hub_personalize"
     const val HUB_ORDERS = "mensa_hub_orders"
+    const val HUB_BOOKING = "mensa_hub_booking"
     const val ACCOUNT_BUTTON = "mensa_account_button"
     const val CATALOG_BUTTON = "mensa_catalog_button"
     const val MENU_PAGE = "mensa_menu_page"

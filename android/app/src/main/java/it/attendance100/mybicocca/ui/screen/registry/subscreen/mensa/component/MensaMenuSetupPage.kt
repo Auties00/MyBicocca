@@ -186,14 +186,6 @@ internal fun MensaMenuSetupPage(
                         bookableDates = bookableDates,
                         onSelectDate = onSelectDate,
                     )
-                    if (bookableDates.isNotEmpty()) {
-                        Text(
-                            text = stringResource(R.string.mensa_setup_bookable_hint),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = scheme.onSurfaceVariant,
-                            modifier = Modifier.padding(horizontal = 24.dp),
-                        )
-                    }
 
                     if (meals.size > 1) {
                         StepLabel(stringResource(R.string.mensa_setup_meal))
