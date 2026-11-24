@@ -220,28 +220,20 @@ object BeaconRenderSpec {
         }
         canvas.drawPath(ticks, tickPaint)
 
-        // Status LED, top centre: an unlit lens, or lit red with a soft glow.
-        val ledX = width * 0.5f
-        val ledY = 40f
-        val ledR = 11f
+        // Status LED under the white case: nothing shows while it is off, a diffuse red glow when lit.
         if (ledOn) {
+            val ledX = width * 0.75f
+            val ledY = 30f
+            val glowR = 34f
             val glow = Paint(Paint.ANTI_ALIAS_FLAG).apply {
                 shader = android.graphics.RadialGradient(
-                    ledX, ledY, ledR * 3.2f,
-                    intArrayOf(Color.argb(170, 255, 60, 60), Color.argb(0, 255, 60, 60)),
-                    null, android.graphics.Shader.TileMode.CLAMP,
+                    ledX, ledY, glowR,
+                    intArrayOf(Color.argb(255, 255, 30, 30), Color.argb(190, 255, 50, 50), Color.argb(0, 255, 80, 80)),
+                    floatArrayOf(0f, 0.45f, 1f),
+                    android.graphics.Shader.TileMode.CLAMP,
                 )
             }
-            canvas.drawCircle(ledX, ledY, ledR * 3.2f, glow)
-            canvas.drawCircle(ledX, ledY, ledR, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.rgb(255, 46, 46) })
-            canvas.drawCircle(ledX - 3f, ledY - 3f, ledR * 0.35f, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.argb(200, 255, 220, 220) })
-        } else {
-            canvas.drawCircle(ledX, ledY, ledR, Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.rgb(92, 40, 44) })
-            canvas.drawCircle(ledX, ledY, ledR, Paint(Paint.ANTI_ALIAS_FLAG).apply {
-                style = Paint.Style.STROKE
-                strokeWidth = 2f
-                color = Color.argb(90, 24, 22, 26)
-            })
+            canvas.drawCircle(ledX, ledY, glowR, glow)
         }
 
         val boldTypeface = Typeface.create(Typeface.SANS_SERIF, 800, false)
