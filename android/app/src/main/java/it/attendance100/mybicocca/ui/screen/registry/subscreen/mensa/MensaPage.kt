@@ -122,6 +122,7 @@ fun MensaPage(
     val backStack by viewModel.backStack.collectAsStateWithLifecycle()
     val session by viewModel.session.collectAsStateWithLifecycle()
     val menus by viewModel.menus.collectAsStateWithLifecycle()
+    val hubTray by viewModel.hubTray.collectAsStateWithLifecycle()
     val menusStatus by viewModel.menusStatus.collectAsStateWithLifecycle()
     val selectedPlace by viewModel.selectedPlace.collectAsStateWithLifecycle()
     val orderAvailability by viewModel.orderAvailability.collectAsStateWithLifecycle()
@@ -430,6 +431,9 @@ fun MensaPage(
                     onOpenOrders = viewModel::openReservations,
                     onOpenAllergens = viewModel::openAllergens,
                     onOpenWallet = { context.openFreshAndNatural() },
+                    tray = hubTray,
+                    playTrayIntro = !viewModel.hubTrayIntroPlayed,
+                    onTrayIntroPlayed = viewModel::markHubTrayIntroPlayed,
                 )
 
                 MensaSubPage.PlacePicker -> MensaPlacePickerPage(onPick = viewModel::pickPlace)

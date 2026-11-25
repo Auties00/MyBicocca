@@ -221,6 +221,19 @@ class MensaViewModel @Inject constructor(
         }.stateIn(viewModelScope, SharingStarted.Eagerly, MensaOrderAvailability.Checking)
     }
 
+    /** Today's primo and secondo from the menu loaded on start, for the tray on the hub. */
+    val hubTray: StateFlow<MensaHubTray> = combine(_currentSchedule, _selectedMealTypeId) { schedule, mealId ->
+        hubTrayOf(schedule.valueOrNull()?.get(LocalDate.now(AppClock.clock)), mealId)
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, MensaHubTray())
+
+    /** Whether the tray has slid out of the menu card since the sheet opened; it slides once per opening. */
+    var hubTrayIntroPlayed: Boolean = false
+        private set
+
+    fun markHubTrayIntroPlayed() {
+        hubTrayIntroPlayed = true
+    }
+
     private data class OrderInputs(
         val session: MensaSession?,
         val services: Loadable<List<MensaTakeawayService>>,
@@ -294,6 +307,7 @@ class MensaViewModel @Inject constructor(
      */
     fun resetNavigation() {
         pendingAfterLogin = null
+        hubTrayIntroPlayed = false
         _menuContextConfirmed.value = false
         _selectedPlace.value = null
         _signInHintDismissed.value = false

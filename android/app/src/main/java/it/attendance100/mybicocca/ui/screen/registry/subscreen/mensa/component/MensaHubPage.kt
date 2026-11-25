@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.mensa.MensaSession
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.MensaHubTray
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.MensaTestTags
 import it.attendance100.mybicocca.domain.model.mensa.MensaReservation
 import it.attendance100.mybicocca.core.os.currentLocale
@@ -71,6 +72,9 @@ internal fun MensaHubPage(
     onOpenAllergens: () -> Unit,
     onOpenWallet: () -> Unit,
     modifier: Modifier = Modifier,
+    tray: MensaHubTray = MensaHubTray(),
+    playTrayIntro: Boolean = false,
+    onTrayIntroPlayed: () -> Unit = {},
 ) {
     Column(
         modifier = modifier
@@ -94,13 +98,12 @@ internal fun MensaHubPage(
                 BookingBox(booking = booking, onClick = { onOpenBooking(booking) }, modifier = Modifier.weight(1f))
             }
         } else {
-            HubBox(
-                tag = MensaTestTags.HUB_MENU,
-                title = stringResource(R.string.mensa_hub_menu_title),
-                body = stringResource(R.string.mensa_hub_menu_body),
+            MensaMenuTrayCard(
+                tray = tray,
+                playIntro = playTrayIntro,
+                onIntroPlayed = onTrayIntroPlayed,
                 onClick = onOpenMenu,
-                modifier = Modifier.fillMaxWidth(),
-            ) { MensaPlateTrio(middleSize = 100.dp, modifier = Modifier.align(Alignment.TopEnd).offset(x = (-12).dp, y = 12.dp)) }
+            )
             HubRow(
                 tag = MensaTestTags.HUB_ORDERS,
                 icon = Icons.AutoMirrored.Outlined.ReceiptLong,
