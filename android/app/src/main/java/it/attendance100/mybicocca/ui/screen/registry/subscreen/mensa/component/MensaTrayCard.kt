@@ -72,10 +72,10 @@ import kotlinx.coroutines.delay
 /** How far the tray rises above the card. */
 private val TrayRise = 46.dp
 private val CardHeight = 150.dp
-private val TrayHeight = 116.dp
+private val TrayHeight = 140.dp
 
 /** Room above the tray for its raised left end once tilted. */
-private val TrayTop = 24.dp
+private val TrayTop = 18.dp
 private val TrayHandle = 10.dp
 private val TrayCorner = 18.dp
 
@@ -89,9 +89,9 @@ private val TrayEdge = Color(0xFFB8634F)
 private val TrayBevel = Color(0xFF8E4640)
 
 /** The share of the card the tray takes on the right; the text has the rest. */
-private const val TRAY_SHARE = 0.5f
+private const val TRAY_SHARE = 0.56f
 private const val TRAY_TILT = 14f
-private val TrayPlate = 64.dp
+private val TrayPlate = 76.dp
 
 /**
  * The menu card on the hub without a booking: a canteen tray, with today's primo and secondo, a
@@ -216,14 +216,14 @@ private fun MensaTray(tray: MensaHubTray, modifier: Modifier = Modifier) {
         )
         TrayPlate(
             drawable = tray.primo.trayDrawable(MensaArt.PASTA_TOMATO),
-            modifier = Modifier.offset(x = left + 40.dp, y = 42.dp),
+            modifier = Modifier.offset(x = left + 46.dp, y = 52.dp),
         )
         TrayPlate(
             drawable = tray.secondo.trayDrawable(MensaArt.MEAT),
-            modifier = Modifier.offset(x = left + 40.dp + TrayPlate - 10.dp, y = 36.dp),
+            modifier = Modifier.offset(x = left + 46.dp + TrayPlate - 12.dp, y = 44.dp),
         )
-        TrayItem(R.drawable.mensa_art_tray_bread, size = 48.dp, modifier = Modifier.offset(x = left + 44.dp, y = 2.dp).rotate(-12f))
-        TrayItem(R.drawable.mensa_art_tray_apple, size = 42.dp, modifier = Modifier.offset(x = left + 104.dp, y = 0.dp))
+        TrayItem(R.drawable.mensa_art_tray_bread, size = 58.dp, modifier = Modifier.offset(x = left + 50.dp, y = 2.dp).rotate(-12f))
+        TrayItem(R.drawable.mensa_art_tray_apple, size = 50.dp, modifier = Modifier.offset(x = left + 124.dp, y = 2.dp))
     }
 }
 
