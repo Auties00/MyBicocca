@@ -10,12 +10,27 @@ on:
       - 'android/app/src/main/res/**'
       - 'android/app/src/demo/**'
       - 'android/tools/screenshots/capture-screenshots.py'
+      - 'web/web-app/src/**'
+      - 'web/web-app/messages/**'
+      - 'web/web-app/static/**'
+      - 'web/web-app/project.inlang/**'
+      - 'web/web-app/tools/screenshots/capture-screenshots.ts'
+      - 'web/web-app/tools/screenshots/screenshots.json'
   # Adding "screenshots" to a pull request captures only the new, changed or missing images on
-  # that PR's branch; "screenshots:full" retakes every image. The label is removed afterwards, so
-  # adding it again runs it again.
+  # that PR's branch; "screenshots:full" retakes every image for the platform(s) the PR touches.
+  # The label is removed afterwards, so adding it again runs it again.
   pull_request:
     types: [labeled]
   workflow_dispatch:
+    inputs:
+      platform:
+        description: Which platform screenshots to retake
+        type: choice
+        default: all
+        options:
+          - all
+          - android
+          - web
 
 permissions:
   contents: write
@@ -29,8 +44,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  screenshots:
-    name: Retake screenshots (demo build, emulator)
+  plan:
+    name: Resolve screenshot targets
     # A pull request runs only for the "screenshots" or "screenshots:full" label, and only when its
     # branch lives in this repository: a fork's token cannot push, and its code should not run with
     # write access.
@@ -39,41 +54,105 @@ jobs:
       ((github.event.label.name == 'screenshots' || github.event.label.name == 'screenshots:full') &&
        github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 10
+    outputs:
+      android: ${{ steps.resolve.outputs.android }}
+      android_flags: ${{ steps.resolve.outputs.android_flags }}
+      web: ${{ steps.resolve.outputs.web }}
+      web_flags: ${{ steps.resolve.outputs.web_flags }}
     steps:
       # For a labelled pull request, the branch itself rather than the merge commit GitHub would
-      # check out, so the new images can be committed straight onto it. Full history is fetched so
-      # diff mode can compare against the PR's base branch.
+      # check out, so diff mode compares against the PR's base branch accurately.
       - name: Checkout
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.ref || github.ref }}
           fetch-depth: 0
 
-      - name: Resolve target screenshots
-        id: target
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Resolve platforms and target screenshots
+        id: resolve
         env:
           EVENT: ${{ github.event_name }}
           LABEL: ${{ github.event.label.name }}
           BASE: ${{ github.event.pull_request.base.ref }}
+          BEFORE: ${{ github.event.before }}
+          SHA: ${{ github.sha }}
+          PLATFORM: ${{ inputs.platform }}
         run: |
-          if [ "$EVENT" = "pull_request" ] && [ "$LABEL" = "screenshots" ]; then
-            CHANGED=$(python3 android/tools/screenshots/capture-screenshots.py --list-changed "origin/$BASE")
-            if [ -z "$CHANGED" ]; then
-              echo "No new, changed or missing screenshots relative to origin/$BASE."
-              echo "skip=true" >> "$GITHUB_OUTPUT"
-              exit 0
+          ANDROID=false
+          ANDROID_FLAGS=""
+          WEB=false
+          WEB_FLAGS=""
+
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            if [ "$PLATFORM" = "all" ] || [ "$PLATFORM" = "android" ]; then ANDROID=true; fi
+            if [ "$PLATFORM" = "all" ] || [ "$PLATFORM" = "web" ]; then WEB=true; fi
+          elif [ "$EVENT" = "push" ]; then
+            if [ -n "$BEFORE" ] && [ "$BEFORE" != "0000000000000000000000000000000000000000" ] && git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then
+              FILES=$(git diff --name-only "$BEFORE" "$SHA")
+            else
+              FILES=$(git diff-tree --no-commit-id --name-only -r "$SHA")
             fi
-            echo "Target screenshots:"
-            echo "$CHANGED"
-            echo "flags=--changed origin/$BASE" >> "$GITHUB_OUTPUT"
-          else
-            echo "flags=" >> "$GITHUB_OUTPUT"
+            if printf '%s\n' "$FILES" | grep -qE '^(android/app/src/main/(java|res)/|android/app/src/demo/|android/tools/screenshots/capture-screenshots\.py$)'; then
+              ANDROID=true
+            fi
+            if printf '%s\n' "$FILES" | grep -qE '^(web/web-app/(src|messages|static|project\.inlang)/|web/web-app/tools/screenshots/(capture-screenshots\.ts|screenshots\.json)$)'; then
+              WEB=true
+            fi
+          elif [ "$EVENT" = "pull_request" ] && [ "$LABEL" = "screenshots" ]; then
+            ANDROID_CHANGED=$(python3 android/tools/screenshots/capture-screenshots.py --list-changed "origin/$BASE")
+            if [ -n "$ANDROID_CHANGED" ]; then
+              echo "Android target screenshots:"
+              echo "$ANDROID_CHANGED"
+              ANDROID=true
+              ANDROID_FLAGS="--changed origin/$BASE"
+            fi
+            WEB_CHANGED=$(node web/web-app/tools/screenshots/capture-screenshots.ts --list-changed "origin/$BASE")
+            if [ -n "$WEB_CHANGED" ]; then
+              echo "Web target screenshots:"
+              echo "$WEB_CHANGED"
+              WEB=true
+              WEB_FLAGS="--changed origin/$BASE"
+            fi
+          elif [ "$EVENT" = "pull_request" ] && [ "$LABEL" = "screenshots:full" ]; then
+            FILES=$(git diff --name-only "origin/$BASE...HEAD")
+            if printf '%s\n' "$FILES" | grep -q '^android/' || ! python3 android/tools/screenshots/capture-screenshots.py --check-missing >/dev/null 2>&1; then
+              ANDROID=true
+            fi
+            if printf '%s\n' "$FILES" | grep -q '^web/web-app/' || ! node web/web-app/tools/screenshots/capture-screenshots.ts --check-missing >/dev/null 2>&1; then
+              WEB=true
+            fi
+            if [ "$ANDROID" = "false" ] && [ "$WEB" = "false" ]; then
+              ANDROID=true
+              WEB=true
+            fi
           fi
-          echo "skip=false" >> "$GITHUB_OUTPUT"
+
+          echo "android=$ANDROID" >> "$GITHUB_OUTPUT"
+          echo "android_flags=$ANDROID_FLAGS" >> "$GITHUB_OUTPUT"
+          echo "web=$WEB" >> "$GITHUB_OUTPUT"
+          echo "web_flags=$WEB_FLAGS" >> "$GITHUB_OUTPUT"
+          echo "Plan: android=$ANDROID ($ANDROID_FLAGS), web=$WEB ($WEB_FLAGS)"
+
+  android:
+    name: Retake Android screenshots (demo build, emulator)
+    needs: plan
+    if: needs.plan.outputs.android == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref || github.ref }}
+          fetch-depth: 0
 
       - name: Set up JDK 17
-        if: steps.target.outputs.skip != 'true'
         uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -83,20 +162,17 @@ jobs:
       # here (and left as JAVA_HOME) so Gradle finds it instead of downloading it: the download links
       # pinned in that file no longer resolve.
       - name: Set up the Gradle daemon JDK (JetBrains 21)
-        if: steps.target.outputs.skip != 'true'
         uses: actions/setup-java@v4
         with:
           distribution: jetbrains
           java-version: '21'
 
       - name: Set up Android SDK
-        if: steps.target.outputs.skip != 'true'
         uses: android-actions/setup-android@v4
         with:
           packages: platform-tools
 
       - name: Install the compileSdk platform
-        if: steps.target.outputs.skip != 'true'
         run: |
           sdkmanager --channel=3 "platforms;android-37.0"
           sdk_root="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
@@ -105,28 +181,23 @@ jobs:
           fi
 
       - name: Set up Gradle
-        if: steps.target.outputs.skip != 'true'
         uses: gradle/actions/setup-gradle@v4
 
       - name: Raise Gradle heap for CI
-        if: steps.target.outputs.skip != 'true'
         run: |
           mkdir -p "$HOME/.gradle"
           echo "org.gradle.jvmargs=-Xmx5g -Dfile.encoding=UTF-8" >> "$HOME/.gradle/gradle.properties"
 
       - name: Make gradlew executable
-        if: steps.target.outputs.skip != 'true'
         run: chmod +x android/gradlew
 
       # Checked and built before the emulator boots so a compile or catalogue error fails fast and
       # the emulator's time is spent on screenshots only. The script then runs with --skip-build.
       - name: Check and build the demo APK
-        if: steps.target.outputs.skip != 'true'
         working-directory: android
         run: ./gradlew :app:demoCheck --stacktrace
 
       - name: Enable KVM
-        if: steps.target.outputs.skip != 'true'
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
@@ -135,61 +206,163 @@ jobs:
       # The committed images are 1440x3120, which is the Pixel 7 Pro; the same profile keeps a rerun
       # from differing in size and so from rewriting every file.
       - name: Capture screenshots on an emulator
-        if: steps.target.outputs.skip != 'true'
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
           arch: x86_64
           target: google_apis
           profile: pixel_7_pro
-          script: python3 android/tools/screenshots/capture-screenshots.py --skip-build ${{ steps.target.outputs.flags }}
+          script: python3 android/tools/screenshots/capture-screenshots.py --skip-build ${{ needs.plan.outputs.android_flags }}
 
-      - name: Upload the captured screenshots
-        if: ${{ always() && steps.target.outputs.skip != 'true' }}
+      - name: Upload the captured Android screenshots
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: screenshots
+          name: android-screenshots
           path: android/tools/screenshots/
           retention-days: 14
           if-no-files-found: ignore
 
+  web:
+    name: Retake Web screenshots (demo build, Chrome)
+    needs: plan
+    if: needs.plan.outputs.web == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref || github.ref }}
+          fetch-depth: 0
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web/web-app/package-lock.json
+
+      - name: Verify Chrome
+        run: google-chrome --version
+
+      - name: Install dependencies
+        working-directory: web/web-app
+        run: npm ci
+
+      # Build the demo before starting Chrome so a compile error fails fast; capture then skips it.
+      - name: Build the demo
+        working-directory: web/web-app
+        run: npm run build:demo
+
+      - name: Capture screenshots in headless Chrome
+        working-directory: web/web-app
+        run: npm run screens -- --skip-build ${{ needs.plan.outputs.web_flags }}
+
+      - name: Upload the captured Web screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-screenshots
+          path: web/web-app/tools/screenshots/
+          retention-days: 14
+          if-no-files-found: ignore
+
+  publish:
+    name: Publish updated screenshots
+    needs: [plan, android, web]
+    if: always() && needs.plan.result == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      # Taken off even when capture fails, so the label works as a button: adding it again retries.
+      # The REST call, because `gh pr edit` can fail on a deprecated GraphQL field.
+      - name: Remove the label
+        if: always() && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.number }}
+          LABEL: ${{ github.event.label.name }}
+        run: gh api -X DELETE "repos/${{ github.repository }}/issues/$PR/labels/$LABEL"
+
+      - name: Verify capture jobs succeeded
+        env:
+          ANDROID_RESULT: ${{ needs.android.result }}
+          WEB_RESULT: ${{ needs.web.result }}
+        run: |
+          if [ "$ANDROID_RESULT" = "failure" ] || [ "$ANDROID_RESULT" = "cancelled" ] || [ "$WEB_RESULT" = "failure" ] || [ "$WEB_RESULT" = "cancelled" ]; then
+            echo "Screenshot capture failed (android=$ANDROID_RESULT, web=$WEB_RESULT)."
+            exit 1
+          fi
+
+      - name: Comment when no screenshots needed retaking
+        if: github.event_name == 'pull_request' && needs.plan.outputs.android != 'true' && needs.plan.outputs.web != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.number }}
+          BASE: ${{ github.event.pull_request.base.ref }}
+        run: gh pr comment "$PR" --body "No new, changed or missing screenshots found relative to \`$BASE\`. Add \`screenshots:full\` to retake every screenshot."
+
+      - name: Checkout
+        if: needs.plan.outputs.android == 'true' || needs.plan.outputs.web == 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref || github.ref }}
+          fetch-depth: 0
+
+      - name: Download Android screenshots
+        if: needs.android.result == 'success'
+        uses: actions/download-artifact@v4
+        with:
+          name: android-screenshots
+          path: android/tools/screenshots
+
+      - name: Download Web screenshots
+        if: needs.web.result == 'success'
+        uses: actions/download-artifact@v4
+        with:
+          name: web-screenshots
+          path: web/web-app/tools/screenshots
+
       # The same branch every time: the action force-updates it and keeps one open PR, so reruns
-      # refresh that PR instead of piling up new ones. No diff, no PR. Only android/tools/screenshots is
-      # added, so nothing else the build touched can end up in the commit.
+      # refresh that PR instead of piling up new ones. No diff, no PR. Only the screenshot folders
+      # are added, so nothing else the build touched can end up in the commit.
       - name: Open or update the screenshots PR
-        if: ${{ github.event_name != 'pull_request' }}
+        if: github.event_name != 'pull_request' && (needs.plan.outputs.android == 'true' || needs.plan.outputs.web == 'true')
         uses: peter-evans/create-pull-request@v7
         with:
           branch: automation/update-screenshots
           base: main
-          add-paths: android/tools/screenshots/
+          add-paths: |
+            android/tools/screenshots/
+            web/web-app/tools/screenshots/
           commit-message: 'chore(screenshots): retake demo screenshots'
           title: 'chore(screenshots): retake demo screenshots'
           body: |
-            Retaken from the demo build on an emulator by the **Update Screenshots** workflow,
+            Retaken from the demo builds by the **Update Screenshots** workflow,
             from commit ${{ github.sha }}.
 
             Check the changed images before merging. Where nothing on screen should have changed, a
             diff is a regression or rendering noise.
           delete-branch: true
 
+      - name: Set up Node
+        if: github.event_name == 'pull_request' && (needs.plan.outputs.android == 'true' || needs.plan.outputs.web == 'true')
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
       # A labelled pull request gets the images on its own branch. The push is made with the default
       # token, which does not start other workflows, so this cannot loop back into this one.
       - name: Commit the screenshots to the pull request
-        if: ${{ github.event_name == 'pull_request' }}
+        if: github.event_name == 'pull_request' && (needs.plan.outputs.android == 'true' || needs.plan.outputs.web == 'true')
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
           BRANCH: ${{ github.event.pull_request.head.ref }}
-          BASE: ${{ github.event.pull_request.base.ref }}
           PR: ${{ github.event.pull_request.number }}
-          SKIP: ${{ steps.target.outputs.skip }}
         run: |
-          if [ "$SKIP" = "true" ]; then
-            gh pr comment "$PR" --body "No new, changed or missing screenshots found relative to \`$BASE\`. Add \`screenshots:full\` to retake every screenshot."
-            exit 0
-          fi
-          git add android/tools/screenshots/
+          git add android/tools/screenshots/ web/web-app/tools/screenshots/
           if git diff --cached --quiet; then
             gh pr comment "$PR" --body "Retook the screenshots: nothing changed."
           else
@@ -207,13 +380,10 @@ jobs:
               gh api -X DELETE "repos/$REPO/issues/comments/$COMMENT_ID" || true
             fi
           fi
-
-      # Taken off even when the run fails, so the label works as a button: adding it again retries.
-      # The REST call, because `gh pr edit` can fail on a deprecated GraphQL field.
-      - name: Remove the label
-        if: ${{ always() && github.event_name == 'pull_request' }}
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR: ${{ github.event.pull_request.number }}
-          LABEL: ${{ github.event.label.name }}
-        run: gh api -X DELETE "repos/${{ github.repository }}/issues/$PR/labels/$LABEL"
+          if node web/web-app/tools/screenshots/capture-screenshots.ts --check-missing >/dev/null 2>&1; then
+            MARKER="<!-- missing-web-screenshots-reminder -->"
+            COMMENT_ID=$(gh api "repos/$REPO/issues/$PR/comments" --paginate --jq ".[] | select(.body | contains(\"$MARKER\")) | .id" | head -n 1 || true)
+            if [ -n "$COMMENT_ID" ]; then
+              gh api -X DELETE "repos/$REPO/issues/comments/$COMMENT_ID" || true
+            fi
+          fi
