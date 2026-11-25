@@ -2,6 +2,15 @@ package it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component
 
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.Crossfade
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.key
+import androidx.compose.runtime.getValue
+import androidx.compose.animation.graphics.vector.AnimatedImageVector
+import androidx.compose.animation.graphics.res.rememberAnimatedVectorPainter
+import androidx.compose.animation.graphics.res.animatedVectorResource
+import androidx.compose.animation.graphics.ExperimentalAnimationGraphicsApi
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
@@ -78,7 +87,7 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 /** How far the tray rises above the card. */
-private val TrayRise = 46.dp
+private val TrayRise = 32.dp
 private val CardHeight = 176.dp
 private val CardCorner = 28.dp
 private val TrayHeight = 156.dp
@@ -91,7 +100,7 @@ private val TrayShadow = 4.dp
 
 /** Where the tray's top-left corner sits: across the card's width, and down from the top. */
 private const val TRAY_LEFT = 0.6f
-private val TrayTop = 16.dp
+private val TrayTop = 2.dp
 private const val TRAY_TILT = 21f
 
 /** The tray slides in from past the card's bottom-right corner, along this angle. */
@@ -103,7 +112,7 @@ private val TrayWell = Color(0xFF7A3634)
 private val TrayEdge = Color(0xFFB8634F)
 private val TrayBevel = Color(0xFF8E4640)
 
-private val TrayPlate = 80.dp
+private val TrayPlate = 76.dp
 
 /**
  * The menu card on the hub without a booking: a tilted canteen tray, with today's primo and
@@ -128,9 +137,10 @@ internal fun MensaMenuTrayCard(
     LaunchedEffect(Unit) {
         if (slide.value < 1f) {
             onIntroPlayed()
-            // Just after the sheet starts coming up.
-            delay(80)
-            slide.animateTo(1f, spring(dampingRatio = 0.8f, stiffness = Spring.StiffnessVeryLow))
+            // Right away, while the sheet is still coming up.
+            // The default end threshold (1/100) is a jump of over ten pixels across the card's
+            // width; settle to well under a pixel instead.
+            slide.animateTo(1f, spring(dampingRatio = 0.8f, stiffness = Spring.StiffnessVeryLow, visibilityThreshold = 0.0004f))
         }
     }
     val open = { haptic.tap(); onClick() }
@@ -253,21 +263,47 @@ private fun MensaTray(tray: MensaHubTray, modifier: Modifier = Modifier) {
             painter = painterResource(R.drawable.mensa_art_tray_cutlery),
             contentDescription = null,
             modifier = Modifier
-                .offset(x = body + 8.dp, y = 22.dp)
+                .offset(x = body + 13.dp, y = 22.dp)
                 .height(TrayHeight - 44.dp)
                 .aspectRatio(48f / 108f)
                 .rotate(-4f),
         )
         TrayPlate(
             drawable = tray.primo.trayDrawable(MensaArt.PASTA_TOMATO),
-            modifier = Modifier.offset(x = body + 52.dp, y = 64.dp),
+            modifier = Modifier.offset(x = body + 52.dp, y = 70.dp),
         )
         TrayPlate(
             drawable = tray.secondo.trayDrawable(MensaArt.MEAT),
-            modifier = Modifier.offset(x = body + 52.dp + TrayPlate - 14.dp, y = 58.dp),
+            modifier = Modifier.offset(x = body + 122.dp, y = 42.dp),
         )
-        TrayItem(R.drawable.mensa_art_tray_bread, size = 56.dp, modifier = Modifier.offset(x = body + 56.dp, y = 10.dp).rotate(-12f))
-        TrayItem(R.drawable.mensa_art_tray_apple, size = 46.dp, modifier = Modifier.offset(x = body + 116.dp, y = 10.dp))
+        TrayCola(size = 42.dp, modifier = Modifier.offset(x = body + 56.dp, y = 14.dp))
+        TrayItem(R.drawable.mensa_art_tray_bread, size = 46.dp, modifier = Modifier.offset(x = body + 96.dp, y = 10.dp).rotate(-12f))
+        TrayItem(R.drawable.mensa_art_tray_apple, size = 38.dp, modifier = Modifier.offset(x = body + 136.dp, y = 4.dp))
+    }
+}
+
+/** How long one round of the cola's bubbles lasts; the drawing starts and ends with none showing. */
+private const val COLA_LOOP_MS = 2400L
+
+/** The cup of cola, its bubbles rising and popping over and over. */
+@OptIn(ExperimentalAnimationGraphicsApi::class)
+@Composable
+private fun TrayCola(size: Dp, modifier: Modifier = Modifier) {
+    val image = AnimatedImageVector.animatedVectorResource(R.drawable.mensa_art_tray_cola)
+    var round by remember { mutableIntStateOf(0) }
+    // A fresh painter each round plays the bubbles again from the start, rather than in reverse.
+    key(round) {
+        var atEnd by remember { mutableStateOf(false) }
+        LaunchedEffect(Unit) {
+            atEnd = true
+            delay(COLA_LOOP_MS)
+            round++
+        }
+        Image(
+            painter = rememberAnimatedVectorPainter(image, atEnd),
+            contentDescription = null,
+            modifier = modifier.size(size),
+        )
     }
 }
 
