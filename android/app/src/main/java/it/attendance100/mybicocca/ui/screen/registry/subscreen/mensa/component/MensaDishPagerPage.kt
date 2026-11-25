@@ -129,7 +129,8 @@ internal fun MensaDishPagerPage(
     val dishes = request.dishes
     val scope = rememberCoroutineScope()
     val pagerState = rememberPagerState(initialPage = request.startIndex) { dishes.size }
-    val current = dishes[pagerState.currentPage.coerceIn(dishes.indices)]
+    val jumper = rememberMensaCarouselJumper()
+    val current = dishes[jumper.dishIndex(pagerState.currentPage).coerceIn(dishes.indices)]
     val tiles = remember(dishes) { courseTiles(dishes) }
 
     Column(
@@ -141,12 +142,13 @@ internal fun MensaDishPagerPage(
             selectedId = current.courseId,
             onSelect = { courseId ->
                 val target = dishes.indexOfFirst { it.courseId == courseId }
-                if (target >= 0) scope.launch { pagerState.animateScrollToPage(target, animationSpec = mensaScrollSpec()) }
+                if (target >= 0) scope.launch { jumper.jumpTo(pagerState, target, mensaScrollSpec()) }
             },
         )
         MensaDishCarousel(
             request = request,
             pagerState = pagerState,
+            jumper = jumper,
             details = details,
             cartDishes = cartDishes,
             allergenPreferences = allergenPreferences,
@@ -188,6 +190,7 @@ internal fun MensaDishCarousel(
     onAdd: (MensaDish) -> Unit,
     onDecrement: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    jumper: MensaCarouselJumper = rememberMensaCarouselJumper(),
     onFocusMenuRow: (Int) -> Unit = {},
     canOrder: Boolean = true,
     favouriteIds: Set<Int> = emptySet(),
@@ -195,7 +198,9 @@ internal fun MensaDishCarousel(
     singlePick: Boolean = false,
 ) {
     val dishes = request.dishes
-    val current = dishes[pagerState.currentPage.coerceIn(dishes.indices)]
+    // A page shows the dish jumper.dishIndex(page) points at, which differs from the page only
+    // while a jump across the carousel borrows it.
+    val current = dishes[jumper.dishIndex(pagerState.currentPage).coerceIn(dishes.indices)]
     val density = LocalDensity.current
 
     // The side plates slide in from the edges once, when the carousel opens.
@@ -204,14 +209,14 @@ internal fun MensaDishCarousel(
 
     LaunchedEffect(pagerState.currentPage) {
         val page = pagerState.currentPage
-        for (index in (page - 1)..(page + 1)) dishes.getOrNull(index)?.let { onRequestDetail(it.id) }
+        for (index in (page - 1)..(page + 1)) dishes.getOrNull(jumper.dishIndex(index))?.let { onRequestDetail(it.id) }
     }
 
     // The menu underneath follows the carousel, so when the way back starts the dish being shown
     // already has its card in view for the plate to land on.
     LaunchedEffect(pagerState) {
         snapshotFlow { pagerState.currentPage }.collect { page ->
-            request.menuRows?.getOrNull(page)?.let(onFocusMenuRow)
+            request.menuRows?.getOrNull(jumper.dishIndex(page))?.let(onFocusMenuRow)
         }
     }
 
@@ -253,7 +258,7 @@ internal fun MensaDishCarousel(
     ) {
         BoxWithConstraints(modifier = Modifier.fillMaxWidth().weight(1f)) {
             val maxInfo = (maxHeight - PlateSize - 28.dp).coerceAtLeast(0.dp)
-            val natural = naturalHeights[pagerState.currentPage]?.let { with(density) { it.toDp() } + DividerDefaults.Thickness }
+            val natural = naturalHeights[jumper.dishIndex(pagerState.currentPage)]?.let { with(density) { it.toDp() } + DividerDefaults.Thickness }
             val target = natural?.coerceAtMost(maxInfo) ?: maxInfo
             val infoAnim = remember { Animatable(target, Dp.VectorConverter) }
             var measured by remember { mutableStateOf(false) }
@@ -298,7 +303,7 @@ internal fun MensaDishCarousel(
                             .fillMaxWidth()
                             .height(plateSize + 20.dp),
                     ) { page ->
-                        val dish = dishes[page]
+                        val dish = dishes[jumper.dishIndex(page)]
                         val distance = abs(pagerState.currentPage - page + pagerState.currentPageOffsetFraction).coerceIn(0f, 1f)
                         val isStart = page == request.startIndex
                         val direction = if (page < request.startIndex) -1f else 1f
@@ -339,7 +344,7 @@ internal fun MensaDishCarousel(
                     beyondViewportPageCount = 1,
                     modifier = Modifier.height(infoHeight),
                 ) { page ->
-                    val dish = dishes[page]
+                    val dish = dishes[jumper.dishIndex(page)]
                     DishInfoPage(
                         dish = dish,
                         state = details[dish.id],
@@ -347,7 +352,7 @@ internal fun MensaDishCarousel(
                         onRetry = { onRetryDetail(dish.id) },
                         isFavourite = dish.id in favouriteIds,
                         onToggleFavourite = onToggleFavourite?.let { toggle -> { toggle(dish) } },
-                        onNaturalHeight = { naturalHeights[page] = it },
+                        onNaturalHeight = { naturalHeights[jumper.dishIndex(page)] = it },
                         modifier = Modifier.graphicsLayer {
                             val away = abs(pagerState.currentPage - page + pagerState.currentPageOffsetFraction).coerceIn(0f, 1f)
                             val scale = lerp(1f, 0.9f, away)

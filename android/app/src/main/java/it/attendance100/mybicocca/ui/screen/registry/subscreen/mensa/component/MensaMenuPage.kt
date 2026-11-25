@@ -274,7 +274,8 @@ private fun MenuBrowser(
             }
         }
     }
-    val carouselCourse = shownRequest?.dishes?.getOrNull(pagerState.currentPage)?.courseId
+    val jumper = key(shownRequest) { rememberMensaCarouselJumper() }
+    val carouselCourse = shownRequest?.dishes?.getOrNull(jumper.dishIndex(pagerState.currentPage))?.courseId
 
     // One transition drives grid and carousel, seekable so the back gesture can scrub it. Both
     // pages hang off the same sheet page, so nothing above them moves.
@@ -309,7 +310,7 @@ private fun MenuBrowser(
                 if (carouselOpen) {
                     val dishes = shownRequest?.dishes.orEmpty()
                     val target = dishes.indexOfFirst { it.courseId == courseId }
-                    if (target >= 0) scope.launch { pagerState.animateScrollToPage(target, animationSpec = mensaScrollSpec()) }
+                    if (target >= 0) scope.launch { jumper.jumpTo(pagerState, target, mensaScrollSpec()) }
                 } else {
                     val target = layout.headerOfCourse[courseId] ?: return@MensaCourseStrip
                     scope.launch { listState.animateToItemSlow(target) }
@@ -330,6 +331,7 @@ private fun MenuBrowser(
                     MensaDishCarousel(
                         request = shownRequest,
                         pagerState = pagerState,
+                        jumper = jumper,
                         details = dishDetails,
                         cartDishes = cartDishes,
                         allergenPreferences = allergenPreferences,
