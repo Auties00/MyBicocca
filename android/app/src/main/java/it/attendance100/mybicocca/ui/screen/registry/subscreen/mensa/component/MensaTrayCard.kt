@@ -63,8 +63,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.rememberHapticManager
+import it.attendance100.mybicocca.ui.component.modal.LocalSheetBackProgress
 import it.attendance100.mybicocca.domain.model.mensa.MensaDish
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.MensaHubTray
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.MensaTestTags
@@ -79,18 +81,21 @@ import kotlin.math.sin
 private val TrayRise = 46.dp
 private val CardHeight = 176.dp
 private val CardCorner = 28.dp
-private val TrayHeight = 142.dp
+private val TrayHeight = 156.dp
 
 /** The tray's long side; most of it runs past the card's right and bottom edges, cut off by them. */
 private val TrayLength = 280.dp
-private val TrayHandle = 10.dp
+private val TrayHandle = 14.dp
 private val TrayCorner = 18.dp
 private val TrayShadow = 4.dp
 
 /** Where the tray's top-left corner sits: across the card's width, and down from the top. */
-private const val TRAY_LEFT = 0.52f
+private const val TRAY_LEFT = 0.6f
 private val TrayTop = 16.dp
 private const val TRAY_TILT = 21f
+
+/** The tray slides in from past the card's bottom-right corner, along this angle. */
+private const val SLIDE_ANGLE = 40.0
 
 // A terracotta canteen tray, the same in every palette.
 private val TrayRim = Color(0xFFA35143)
@@ -98,7 +103,7 @@ private val TrayWell = Color(0xFF7A3634)
 private val TrayEdge = Color(0xFFB8634F)
 private val TrayBevel = Color(0xFF8E4640)
 
-private val TrayPlate = 84.dp
+private val TrayPlate = 80.dp
 
 /**
  * The menu card on the hub without a booking: a tilted canteen tray, with today's primo and
@@ -123,12 +128,13 @@ internal fun MensaMenuTrayCard(
     LaunchedEffect(Unit) {
         if (slide.value < 1f) {
             onIntroPlayed()
-            // Once the sheet has come up.
-            delay(250)
+            // Just after the sheet starts coming up.
+            delay(80)
             slide.animateTo(1f, spring(dampingRatio = 0.8f, stiffness = Spring.StiffnessVeryLow))
         }
     }
     val open = { haptic.tap(); onClick() }
+    val sheetBack = LocalSheetBackProgress.current
 
     BoxWithConstraints(
         modifier = modifier
@@ -148,7 +154,6 @@ internal fun MensaMenuTrayCard(
             contentColor = scheme.onPrimaryContainer,
         ) {
             Box(modifier = Modifier.fillMaxSize().indication(press, ripple())) {
-                // The tray's left edge slants inwards going down, so each line stops a little sooner.
                 Column(
                     modifier = Modifier
                         .fillMaxHeight()
@@ -157,19 +162,20 @@ internal fun MensaMenuTrayCard(
                 ) {
                     Text(
                         text = stringResource(R.string.mensa_hub_menu_title),
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontSize = 20.sp,
                         fontWeight = FontWeight.Bold,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.widthIn(max = trayLeft - 56.dp),
+                        modifier = Modifier.widthIn(max = trayLeft - 52.dp),
                     )
-                    Spacer(Modifier.height(2.dp))
+                    Spacer(Modifier.height(8.dp))
                     Text(
                         text = stringResource(R.string.mensa_hub_menu_body),
                         style = MaterialTheme.typography.bodySmall,
                         maxLines = 4,
                         overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.widthIn(max = trayLeft - 72.dp),
+                        modifier = Modifier.widthIn(max = trayLeft - 56.dp),
                     )
                     Spacer(Modifier.height(12.dp))
                     Button(
@@ -203,9 +209,11 @@ internal fun MensaMenuTrayCard(
                         // Turned about the tray's top-left corner, which stays where it is placed.
                         transformOrigin = TransformOrigin(TrayHandle.toPx() / size.width, 0f)
                         rotationZ = TRAY_TILT
-                        // Slides in along its own length, from past the card's right edge.
-                        val away = (1f - slide.value) * cardWidth.toPx()
-                        val angle = Math.toRadians(TRAY_TILT.toDouble())
+                        // In from past the card's bottom-right corner, and back out that way as the back
+                        // gesture pulls the sheet closed, gone a little before the gesture ends.
+                        val shown = slide.value * (1f - (sheetBack() * 1.25f).coerceAtMost(1f))
+                        val away = (1f - shown) * cardWidth.toPx()
+                        val angle = Math.toRadians(SLIDE_ANGLE)
                         translationX = away * cos(angle).toFloat()
                         translationY = away * sin(angle).toFloat()
                     },
@@ -239,27 +247,27 @@ private fun Modifier.clipToCardEnd(): Modifier = drawWithContent {
 private fun MensaTray(tray: MensaHubTray, modifier: Modifier = Modifier) {
     Box(modifier = modifier.clearAndSetSemantics { }) {
         Canvas(modifier = Modifier.fillMaxSize()) { drawTray() }
-        // Laid out from the tray's left end; only about its first 190dp shows inside the card.
+        // Laid out from the tray's left end; only about its first 160dp shows inside the card.
         val body = TrayHandle
         Image(
             painter = painterResource(R.drawable.mensa_art_tray_cutlery),
             contentDescription = null,
             modifier = Modifier
-                .offset(x = body + 10.dp, y = 12.dp)
-                .height(TrayHeight - 24.dp)
+                .offset(x = body + 8.dp, y = 22.dp)
+                .height(TrayHeight - 44.dp)
                 .aspectRatio(48f / 108f)
                 .rotate(-4f),
         )
         TrayPlate(
             drawable = tray.primo.trayDrawable(MensaArt.PASTA_TOMATO),
-            modifier = Modifier.offset(x = body + 64.dp, y = 50.dp),
+            modifier = Modifier.offset(x = body + 52.dp, y = 64.dp),
         )
         TrayPlate(
             drawable = tray.secondo.trayDrawable(MensaArt.MEAT),
-            modifier = Modifier.offset(x = body + 64.dp + TrayPlate - 10.dp, y = 44.dp),
+            modifier = Modifier.offset(x = body + 52.dp + TrayPlate - 14.dp, y = 58.dp),
         )
-        TrayItem(R.drawable.mensa_art_tray_bread, size = 60.dp, modifier = Modifier.offset(x = body + 68.dp, y = 6.dp).rotate(-12f))
-        TrayItem(R.drawable.mensa_art_tray_apple, size = 54.dp, modifier = Modifier.offset(x = body + 136.dp, y = 4.dp))
+        TrayItem(R.drawable.mensa_art_tray_bread, size = 56.dp, modifier = Modifier.offset(x = body + 56.dp, y = 10.dp).rotate(-12f))
+        TrayItem(R.drawable.mensa_art_tray_apple, size = 46.dp, modifier = Modifier.offset(x = body + 116.dp, y = 10.dp))
     }
 }
 
@@ -292,19 +300,7 @@ private fun DrawScope.drawTray() {
         size = Size(size.width - handle, bodyHeight),
         cornerRadius = corner,
     )
-    // The handle: a tab along half the left side, tapering into the rim at both ends.
-    val handleTop = bodyHeight * 0.24f
-    val handleBottom = bodyHeight * 0.76f
-    val taper = 14.dp.toPx()
-    val tab = Path().apply {
-        moveTo(handle + 2.dp.toPx(), handleTop - 4.dp.toPx())
-        quadraticTo(handle * 0.3f, handleTop, handle * 0.15f, handleTop + taper)
-        lineTo(handle * 0.15f, handleBottom - taper)
-        quadraticTo(handle * 0.3f, handleBottom, handle + 2.dp.toPx(), handleBottom + 4.dp.toPx())
-        close()
-    }
-    drawPath(tab, color = TrayRim)
-    // Rim, its lit edge, and the well inside with a bevel along its edge
+    // Rim and its lit edge
     drawRoundRect(color = TrayRim, topLeft = Offset(handle, 0f), size = Size(size.width - handle, bodyHeight), cornerRadius = corner)
     drawRoundRect(
         color = TrayEdge,
@@ -312,6 +308,15 @@ private fun DrawScope.drawTray() {
         size = Size(size.width - handle - 2.dp.toPx(), bodyHeight - 2.dp.toPx()),
         cornerRadius = corner,
         style = Stroke(width = 1.5.dp.toPx()),
+    )
+    // The handle: a thick, flat tab in the rim's colour, drawn over the lit edge so the two read
+    // as one piece.
+    val handleHeight = bodyHeight * 0.42f
+    drawRoundRect(
+        color = TrayRim,
+        topLeft = Offset(0f, (bodyHeight - handleHeight) / 2),
+        size = Size(handle + 6.dp.toPx(), handleHeight),
+        cornerRadius = CornerRadius(8.dp.toPx()),
     )
     val inset = 8.dp.toPx()
     drawRoundRect(

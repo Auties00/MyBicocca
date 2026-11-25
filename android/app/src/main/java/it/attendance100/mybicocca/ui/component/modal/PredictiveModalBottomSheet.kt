@@ -14,6 +14,8 @@ import androidx.compose.material3.SheetState
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
@@ -118,6 +120,13 @@ class ModalSheetController {
  * @param dragToDismiss while false only the drag is off: back still slides the sheet out and the
  * scrim still closes it, unlike [gesturesEnabled].
  */
+/**
+ * How far the back gesture has pulled the sheet towards closing, from 0 to 1, for content that
+ * leaves along with the sheet. Read it in a draw or layer block, so following the finger only
+ * redraws.
+ */
+val LocalSheetBackProgress = staticCompositionLocalOf<() -> Float> { { 0f } }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PredictiveModalBottomSheet(
@@ -198,12 +207,15 @@ fun PredictiveModalBottomSheet(
             }
         }
         val bodyScroll = remember { SheetBodyScrollConnection() }
+        val backProgress = remember(sheetController) { { sheetController.backProgress.value } }
         Box(
             Modifier
                 .nestedScroll(bodyScroll)
-                .backSlide(sheetController) { sheetController.backProgress.value },
+                .backSlide(sheetController, backProgress),
         ) {
-            SnackbarScope { content() }
+            CompositionLocalProvider(LocalSheetBackProgress provides backProgress) {
+                SnackbarScope { content() }
+            }
         }
     }
 }
