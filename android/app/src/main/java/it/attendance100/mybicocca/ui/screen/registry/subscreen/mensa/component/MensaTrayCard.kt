@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,11 +25,13 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.ChevronRight
+import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -36,19 +39,20 @@ import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -68,19 +72,25 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.Men
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.MensaDishArtwork
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.MensaDishDrawings
 import kotlinx.coroutines.delay
+import kotlin.math.cos
+import kotlin.math.sin
 
 /** How far the tray rises above the card. */
 private val TrayRise = 46.dp
-private val CardHeight = 150.dp
-private val TrayHeight = 140.dp
+private val CardHeight = 176.dp
+private val CardCorner = 28.dp
+private val TrayHeight = 142.dp
 
-/** Room above the tray for its raised left end once tilted. */
-private val TrayTop = 18.dp
+/** The tray's long side; most of it runs past the card's right and bottom edges, cut off by them. */
+private val TrayLength = 280.dp
 private val TrayHandle = 10.dp
 private val TrayCorner = 18.dp
+private val TrayShadow = 4.dp
 
-/** The tray's right end, past the card's edge and cut off by it. */
-private val TrayHidden = 44.dp
+/** Where the tray's top-left corner sits: across the card's width, and down from the top. */
+private const val TRAY_LEFT = 0.52f
+private val TrayTop = 16.dp
+private const val TRAY_TILT = 21f
 
 // A terracotta canteen tray, the same in every palette.
 private val TrayRim = Color(0xFFA35143)
@@ -88,15 +98,12 @@ private val TrayWell = Color(0xFF7A3634)
 private val TrayEdge = Color(0xFFB8634F)
 private val TrayBevel = Color(0xFF8E4640)
 
-/** The share of the card the tray takes on the right; the text has the rest. */
-private const val TRAY_SHARE = 0.56f
-private const val TRAY_TILT = 14f
-private val TrayPlate = 76.dp
+private val TrayPlate = 84.dp
 
 /**
- * The menu card on the hub without a booking: a canteen tray, with today's primo and secondo, a
- * bread roll, an apple and the cutlery, sticking out of the card's right side and over its top. It slides out of
- * the card when the sheet opens.
+ * The menu card on the hub without a booking: a tilted canteen tray, with today's primo and
+ * secondo, a bread roll, an apple and the cutlery, rising over the card's top and cut off by its
+ * right and bottom edges. It slides out of the card when the sheet opens.
  *
  * @param playIntro whether the tray slides out now; false shows it in place, as when coming back
  * to the hub from a page inside the sheet.
@@ -121,29 +128,30 @@ internal fun MensaMenuTrayCard(
             slide.animateTo(1f, spring(dampingRatio = 0.8f, stiffness = Spring.StiffnessVeryLow))
         }
     }
+    val open = { haptic.tap(); onClick() }
 
     BoxWithConstraints(
         modifier = modifier
             .fillMaxWidth()
             .height(TrayRise + CardHeight)
             .testTag(MensaTestTags.HUB_MENU)
-            .clickable(interactionSource = press, indication = null) { haptic.tap(); onClick() },
+            .clickable(interactionSource = press, indication = null, onClick = open),
     ) {
-        val trayVisible = maxWidth * TRAY_SHARE
-        val textWidth = maxWidth - trayVisible
+        val trayLeft = maxWidth * TRAY_LEFT
+        val cardWidth = maxWidth
         Surface(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(top = TrayRise),
-            shape = RoundedCornerShape(28.dp),
+            shape = RoundedCornerShape(CardCorner),
             color = scheme.primaryContainer,
             contentColor = scheme.onPrimaryContainer,
         ) {
             Box(modifier = Modifier.fillMaxSize().indication(press, ripple())) {
+                // The tray's left edge slants inwards going down, so each line stops a little sooner.
                 Column(
                     modifier = Modifier
                         .fillMaxHeight()
-                        .width(textWidth)
                         .padding(16.dp),
                     verticalArrangement = Arrangement.Bottom,
                 ) {
@@ -153,77 +161,105 @@ internal fun MensaMenuTrayCard(
                         fontWeight = FontWeight.Bold,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.widthIn(max = trayLeft - 56.dp),
                     )
                     Spacer(Modifier.height(2.dp))
                     Text(
                         text = stringResource(R.string.mensa_hub_menu_body),
                         style = MaterialTheme.typography.bodySmall,
-                        maxLines = 3,
+                        maxLines = 4,
                         overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.widthIn(max = trayLeft - 72.dp),
                     )
-                    Spacer(Modifier.height(10.dp))
-                    Surface(
-                        shape = CircleShape,
-                        color = scheme.onPrimaryContainer.copy(alpha = 0.12f),
-                        modifier = Modifier.size(34.dp),
+                    Spacer(Modifier.height(12.dp))
+                    Button(
+                        onClick = open,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = scheme.onPrimaryContainer,
+                            contentColor = scheme.primaryContainer,
+                        ),
+                        contentPadding = PaddingValues(start = 16.dp, end = 12.dp),
+                        modifier = Modifier.height(40.dp),
                     ) {
-                        Box(contentAlignment = Alignment.Center) {
-                            Icon(Icons.Outlined.ChevronRight, contentDescription = null, modifier = Modifier.size(20.dp))
-                        }
+                        Text(
+                            text = stringResource(R.string.mensa_hub_menu_browse),
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.Bold,
+                            maxLines = 1,
+                        )
+                        Spacer(Modifier.width(6.dp))
+                        Icon(Icons.AutoMirrored.Outlined.ArrowForward, contentDescription = null, modifier = Modifier.size(18.dp))
                     }
                 }
             }
         }
-        // Cut only at the card's right edge, so the tray can rise above the card.
-        Box(modifier = Modifier.fillMaxSize().clipAtEnd()) {
+        Box(modifier = Modifier.fillMaxSize().clipToCardEnd()) {
             MensaTray(
                 tray = tray,
                 modifier = Modifier
-                    .align(Alignment.TopEnd)
-                    .offset(x = TrayHidden, y = TrayTop)
-                    .size(width = trayVisible + TrayHidden, height = TrayHeight)
+                    .offset(x = trayLeft - TrayHandle, y = TrayTop)
+                    .size(width = TrayHandle + TrayLength, height = TrayHeight + TrayShadow)
                     .graphicsLayer {
-                        translationX = (1f - slide.value) * size.width
+                        // Turned about the tray's top-left corner, which stays where it is placed.
+                        transformOrigin = TransformOrigin(TrayHandle.toPx() / size.width, 0f)
                         rotationZ = TRAY_TILT
+                        // Slides in along its own length, from past the card's right edge.
+                        val away = (1f - slide.value) * cardWidth.toPx()
+                        val angle = Math.toRadians(TRAY_TILT.toDouble())
+                        translationX = away * cos(angle).toFloat()
+                        translationY = away * sin(angle).toFloat()
                     },
             )
         }
     }
 }
 
-/** Clips at this element's end edge only; what it draws above, below or before stays visible. */
-private fun Modifier.clipAtEnd(): Modifier = drawWithContent {
-    clipRect(left = -size.width, top = -size.height, right = size.width, bottom = size.height * 2) {
-        this@drawWithContent.drawContent()
+/**
+ * Clips to the card's right and bottom edges, with its rounded bottom-right corner; what is drawn
+ * above the card or before it stays visible.
+ */
+private fun Modifier.clipToCardEnd(): Modifier = drawWithContent {
+    val corner = CornerRadius(CardCorner.toPx())
+    val bounds = Path().apply {
+        addRoundRect(
+            RoundRect(
+                left = -size.width,
+                top = -size.height,
+                right = size.width,
+                bottom = size.height,
+                bottomRightCornerRadius = corner,
+            ),
+        )
     }
+    clipPath(bounds) { this@drawWithContent.drawContent() }
 }
 
-/** The tray and what is on it, its left end showing a handle; the right end is cut off by the card. */
+/** The tray and what is on it, its left end showing a handle; the rest runs past the card. */
 @Composable
 private fun MensaTray(tray: MensaHubTray, modifier: Modifier = Modifier) {
     Box(modifier = modifier.clearAndSetSemantics { }) {
         Canvas(modifier = Modifier.fillMaxSize()) { drawTray() }
-        val left = TrayHandle + 10.dp
+        // Laid out from the tray's left end; only about its first 190dp shows inside the card.
+        val body = TrayHandle
         Image(
             painter = painterResource(R.drawable.mensa_art_tray_cutlery),
             contentDescription = null,
             modifier = Modifier
-                .align(Alignment.CenterStart)
-                .offset(x = left)
-                .height(TrayHeight - 20.dp)
+                .offset(x = body + 10.dp, y = 12.dp)
+                .height(TrayHeight - 24.dp)
                 .aspectRatio(48f / 108f)
                 .rotate(-4f),
         )
         TrayPlate(
             drawable = tray.primo.trayDrawable(MensaArt.PASTA_TOMATO),
-            modifier = Modifier.offset(x = left + 46.dp, y = 52.dp),
+            modifier = Modifier.offset(x = body + 64.dp, y = 50.dp),
         )
         TrayPlate(
             drawable = tray.secondo.trayDrawable(MensaArt.MEAT),
-            modifier = Modifier.offset(x = left + 46.dp + TrayPlate - 12.dp, y = 44.dp),
+            modifier = Modifier.offset(x = body + 64.dp + TrayPlate - 10.dp, y = 44.dp),
         )
-        TrayItem(R.drawable.mensa_art_tray_bread, size = 58.dp, modifier = Modifier.offset(x = left + 50.dp, y = 2.dp).rotate(-12f))
-        TrayItem(R.drawable.mensa_art_tray_apple, size = 50.dp, modifier = Modifier.offset(x = left + 124.dp, y = 2.dp))
+        TrayItem(R.drawable.mensa_art_tray_bread, size = 60.dp, modifier = Modifier.offset(x = body + 68.dp, y = 6.dp).rotate(-12f))
+        TrayItem(R.drawable.mensa_art_tray_apple, size = 54.dp, modifier = Modifier.offset(x = body + 136.dp, y = 4.dp))
     }
 }
 
@@ -248,7 +284,7 @@ private fun MensaDish?.trayDrawable(standIn: MensaArt): Int =
 private fun DrawScope.drawTray() {
     val handle = TrayHandle.toPx()
     val corner = CornerRadius(TrayCorner.toPx())
-    val bodyHeight = size.height - 4.dp.toPx()
+    val bodyHeight = size.height - TrayShadow.toPx()
     // Shadow on the card
     drawRoundRect(
         color = Color.Black.copy(alpha = 0.22f),

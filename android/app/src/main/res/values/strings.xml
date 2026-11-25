@@ -2293,6 +2293,7 @@
     <string name="mensa_favourites_lookahead_all">5 giorni</string>
     <string name="mensa_hub_menu_title">Menù e ordini</string>
     <string name="mensa_hub_menu_body">Scegli dove mangi, guarda il menù e ordina il Take-Away</string>
+    <string name="mensa_hub_menu_browse">Sfoglia i menù</string>
     <string name="mensa_hub_wallet_title">Borsellino e pagamenti</string>
     <string name="mensa_hub_wallet_body">Ricarica e paga nell\'app Fresh &amp; Natural</string>
     <string name="mensa_hub_wallet_body_balance">Saldo %1$.2f € · ricarica nell\'app Fresh &amp; Natural</string>

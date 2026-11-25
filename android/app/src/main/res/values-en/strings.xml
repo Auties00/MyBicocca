@@ -2288,6 +2288,7 @@
     <string name="mensa_favourites_lookahead_all">5 days</string>
     <string name="mensa_hub_menu_title">Menu and orders</string>
     <string name="mensa_hub_menu_body">Pick where you eat, see the menu and order take-away</string>
+    <string name="mensa_hub_menu_browse">Browse menus</string>
     <string name="mensa_hub_wallet_title">Wallet and payments</string>
     <string name="mensa_hub_wallet_body">Top up and pay in the Fresh &amp; Natural app</string>
     <string name="mensa_hub_wallet_body_balance">Balance €%1$.2f · top up in the Fresh &amp; Natural app</string>
