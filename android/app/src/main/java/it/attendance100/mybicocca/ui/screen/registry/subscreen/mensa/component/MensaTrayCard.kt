@@ -169,7 +169,7 @@ internal fun MensaMenuTrayCard(
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.widthIn(max = trayLeft - 52.dp),
                     )
-                    Spacer(Modifier.height(14.dp))
+                    Spacer(Modifier.height(22.dp))
                     Text(
                         text = stringResource(R.string.mensa_hub_menu_body),
                         style = MaterialTheme.typography.bodySmall,
