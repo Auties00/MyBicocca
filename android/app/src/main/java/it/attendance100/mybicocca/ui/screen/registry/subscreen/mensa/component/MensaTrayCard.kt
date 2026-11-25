@@ -12,7 +12,6 @@ import androidx.compose.animation.graphics.res.rememberAnimatedVectorPainter
 import androidx.compose.animation.graphics.res.animatedVectorResource
 import androidx.compose.animation.graphics.ExperimentalAnimationGraphicsApi
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -103,6 +102,9 @@ private const val TRAY_LEFT = 0.6f
 private val TrayTop = 2.dp
 private const val TRAY_TILT = 21f
 
+/** The slide-in spring: a spring's time goes with 1/sqrt(stiffness), so this is about 35% shorter than StiffnessVeryLow (50). */
+private const val TRAY_SLIDE_STIFFNESS = 118f
+
 /** The tray slides in from past the card's bottom-right corner, along this angle. */
 private const val SLIDE_ANGLE = 40.0
 
@@ -140,7 +142,7 @@ internal fun MensaMenuTrayCard(
             // Right away, while the sheet is still coming up.
             // The default end threshold (1/100) is a jump of over ten pixels across the card's
             // width; settle to well under a pixel instead.
-            slide.animateTo(1f, spring(dampingRatio = 0.8f, stiffness = Spring.StiffnessVeryLow, visibilityThreshold = 0.0004f))
+            slide.animateTo(1f, spring(dampingRatio = 0.8f, stiffness = TRAY_SLIDE_STIFFNESS, visibilityThreshold = 0.0004f))
         }
     }
     val open = { haptic.tap(); onClick() }
