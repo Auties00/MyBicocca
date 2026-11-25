@@ -25,6 +25,7 @@ enum class MensaArt(@DrawableRes val drawable: Int) {
     FRUIT(R.drawable.mensa_art_fruit),
     DESSERT(R.drawable.mensa_art_dessert),
     DRINK(R.drawable.mensa_art_drink),
+    DRINK_CUP(R.drawable.mensa_art_drink_cola_still),
 }
 
 /**
@@ -41,7 +42,7 @@ object MensaDishArtwork {
         4 -> MensaArt.VEGETABLES
         6 -> MensaArt.DESSERT
         7 -> MensaArt.BREAD
-        9 -> MensaArt.DRINK
+        9 -> MensaArt.DRINK_CUP
         12 -> MensaArt.PIZZA
         13 -> MensaArt.SANDWICH
         14 -> MensaArt.RISOTTO

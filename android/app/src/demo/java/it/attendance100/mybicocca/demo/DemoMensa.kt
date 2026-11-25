@@ -122,6 +122,9 @@ object DemoMensa {
         dish(38782, "PANE INTEGRALE BIO", 7, "Pane e Prodotti da forno", contains = listOf("Glutine"), badges = listOf(organic)),
         dish(38622, "GRISSINI", 7, "Pane e Prodotti da forno", contains = listOf("Glutine")),
         dish(38626, "ACQUA NATURALE 0,5 L", 9, "Bevande", calories = "Leggero"),
+        dish(38627, "ACQUA GASSATA 0,5 L", 9, "Bevande", calories = "Leggero"),
+        // The canteen really writes this one in lowercase.
+        dish(88508, "bibita", 9, "Bevande"),
         dish(101015, "POKE RISO VENERE, SALMONE, ZUCCHINE JULIENNE, POMODORINI", 14, "Piatto unico", contains = listOf("Pesce", "Soia", "Sesamo")),
         dish(91031, "INSALATA, CETRIOLO, POMODORO, FETA DOP", 17, "Insalatone", calories = "Leggero", contains = listOf("Latte")),
         dish(74197, "INSALATA, POMODORO, OLIVE, MOZZARELLA", 17, "Insalatone", calories = "Leggero", badges = listOf(vegan)),

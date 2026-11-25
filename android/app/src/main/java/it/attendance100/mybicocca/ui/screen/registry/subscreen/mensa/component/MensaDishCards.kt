@@ -61,6 +61,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.MensaLoopingArt
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.MensaAnimatedArt
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.mensa.MensaAllergenMatch
 import it.attendance100.mybicocca.domain.model.mensa.MensaDish
@@ -104,7 +106,10 @@ internal fun MensaDishAvailability.reason(): String? = when (this) {
     MensaDishAvailability.NotForTakeaway -> stringResource(R.string.mensa_dish_not_for_takeaway)
 }
 
-/** Top-down illustration of a dish. It is decorative, so it carries no description. */
+/**
+ * Top-down illustration of a dish, playing on a loop when its drawing moves (the drinks). It is
+ * decorative, so it carries no description.
+ */
 @Composable
 internal fun MensaPlate(
     art: MensaArt,
@@ -112,13 +117,15 @@ internal fun MensaPlate(
     modifier: Modifier = Modifier,
     @DrawableRes drawable: Int = art.drawable,
 ) {
-    Image(
-        painter = painterResource(drawable),
-        contentDescription = null,
-        modifier = modifier
-            .size(size)
-            .clearAndSetSemantics { },
-    )
+    val plateModifier = modifier
+        .size(size)
+        .clearAndSetSemantics { }
+    val loop = MensaAnimatedArt.loopMillis(drawable)
+    if (loop != null) {
+        MensaLoopingArt(drawable = drawable, loopMillis = loop, modifier = plateModifier)
+    } else {
+        Image(painter = painterResource(drawable), contentDescription = null, modifier = plateModifier)
+    }
 }
 
 /**

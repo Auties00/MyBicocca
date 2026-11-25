@@ -2,15 +2,6 @@ package it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component
 
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.Crossfade
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.key
-import androidx.compose.runtime.getValue
-import androidx.compose.animation.graphics.vector.AnimatedImageVector
-import androidx.compose.animation.graphics.res.rememberAnimatedVectorPainter
-import androidx.compose.animation.graphics.res.animatedVectorResource
-import androidx.compose.animation.graphics.ExperimentalAnimationGraphicsApi
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.Canvas
@@ -78,10 +69,11 @@ import it.attendance100.mybicocca.ui.component.modal.LocalSheetBackProgress
 import it.attendance100.mybicocca.domain.model.mensa.MensaDish
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.MensaHubTray
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.MensaTestTags
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.MensaAnimatedArt
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.MensaArt
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.MensaLoopingArt
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.MensaDishArtwork
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.MensaDishDrawings
-import kotlinx.coroutines.delay
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -278,34 +270,13 @@ private fun MensaTray(tray: MensaHubTray, modifier: Modifier = Modifier) {
             drawable = tray.secondo.trayDrawable(MensaArt.MEAT),
             modifier = Modifier.offset(x = body + 122.dp, y = 42.dp),
         )
-        TrayCola(size = 42.dp, modifier = Modifier.offset(x = body + 56.dp, y = 14.dp))
+        MensaLoopingArt(
+            drawable = R.drawable.mensa_art_drink_cola,
+            loopMillis = MensaAnimatedArt.loopMillis(R.drawable.mensa_art_drink_cola) ?: 8000L,
+            modifier = Modifier.offset(x = body + 56.dp, y = 14.dp).size(42.dp),
+        )
         TrayItem(R.drawable.mensa_art_tray_bread, size = 46.dp, modifier = Modifier.offset(x = body + 96.dp, y = 10.dp).rotate(-12f))
         TrayItem(R.drawable.mensa_art_tray_apple, size = 38.dp, modifier = Modifier.offset(x = body + 136.dp, y = 4.dp))
-    }
-}
-
-/** How long one round of the cola's bubbles lasts; the drawing starts and ends with none showing. */
-private const val COLA_LOOP_MS = 2400L
-
-/** The cup of cola, its bubbles rising and popping over and over. */
-@OptIn(ExperimentalAnimationGraphicsApi::class)
-@Composable
-private fun TrayCola(size: Dp, modifier: Modifier = Modifier) {
-    val image = AnimatedImageVector.animatedVectorResource(R.drawable.mensa_art_tray_cola)
-    var round by remember { mutableIntStateOf(0) }
-    // A fresh painter each round plays the bubbles again from the start, rather than in reverse.
-    key(round) {
-        var atEnd by remember { mutableStateOf(false) }
-        LaunchedEffect(Unit) {
-            atEnd = true
-            delay(COLA_LOOP_MS)
-            round++
-        }
-        Image(
-            painter = rememberAnimatedVectorPainter(image, atEnd),
-            contentDescription = null,
-            modifier = modifier.size(size),
-        )
     }
 }
 

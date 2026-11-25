@@ -23,8 +23,8 @@ internal object MensaDishDrawings {
         38623 to R.drawable.mensa_dish_69399, // Frutta Fresca
         38624 to R.drawable.mensa_dish_38624, // Yogurt Bio
         38625 to R.drawable.mensa_dish_38625, // Dessert 100G
-        38626 to R.drawable.mensa_dish_38626, // Acqua Naturale 0,5 L
-        38627 to R.drawable.mensa_dish_38627, // Acqua Gassata 0,5 L
+        38626 to R.drawable.mensa_art_drink_still_water, // Acqua Naturale 0,5 L
+        38627 to R.drawable.mensa_art_drink_sparkling_water, // Acqua Gassata 0,5 L
         38628 to R.drawable.mensa_dish_38628, // Macedonia Di Frutta 150G
         38661 to R.drawable.mensa_dish_38661, // Broccoli All'Olio
         38673 to R.drawable.mensa_dish_38673, // Pasta All'Amatriciana
@@ -128,7 +128,7 @@ internal object MensaDishDrawings {
         88505 to R.drawable.mensa_dish_88505, // Schiacciata Romana Con Mortadella
         88506 to R.drawable.mensa_dish_88506, // Focaccia Alle Verdure
         88507 to R.drawable.mensa_dish_88507, // Focaccia Quadrata
-        88508 to R.drawable.mensa_dish_88508, // Bibita
+        88508 to R.drawable.mensa_art_drink_cola, // Bibita
         88510 to R.drawable.mensa_dish_88510, // Caffè
         88543 to R.drawable.mensa_dish_61290, // Pasta S/G E Fagioli
         88600 to R.drawable.mensa_dish_90989, // Zuppa Di Legumi S/G
