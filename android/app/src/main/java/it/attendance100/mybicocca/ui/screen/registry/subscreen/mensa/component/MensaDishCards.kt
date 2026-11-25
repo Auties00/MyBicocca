@@ -541,7 +541,8 @@ internal fun MensaDishGrid(
 /** Turns the operator's ALL-CAPS dish names into sentence case, keeping the usual codes upper case. */
 internal fun String.toDishDisplayName(): String {
     val trimmed = mensaDishNameWithoutPlaceNote(this)
-    if (trimmed.any { it.isLowerCase() }) return trimmed
+    // Already in mixed case, or all lowercase ("bibita"): only the first letter needs a capital.
+    if (trimmed.any { it.isLowerCase() }) return trimmed.replaceFirstChar { it.uppercase() }
     return trimmed.lowercase()
         .replaceFirstChar { it.uppercase() }
         .replace(CODES) { it.value.uppercase() }
