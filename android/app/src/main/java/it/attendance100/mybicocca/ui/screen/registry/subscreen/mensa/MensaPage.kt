@@ -107,6 +107,7 @@ fun MensaPage(
     val strLoginFailed = stringResource(R.string.mensa_login_failed)
     val strOrderSubmittedTitle = stringResource(R.string.mensa_takeaway_submitted_title)
     val strOrderSubmittedBody = stringResource(R.string.mensa_takeaway_submitted_body)
+    val strOrderSubmittedNoCode = stringResource(R.string.mensa_takeaway_submitted_body_no_code)
     val strOrderFailed = stringResource(R.string.mensa_takeaway_failed)
     val strOrderCancelledTitle = stringResource(R.string.mensa_order_cancelled_title)
     val strOrderCancelledBody = stringResource(R.string.mensa_order_cancelled_body)
@@ -221,7 +222,7 @@ fun MensaPage(
                     outcomeTitle = strOrderSubmittedTitle
                     outcome = SheetOutcome.Success(
                         title = strOrderSubmittedTitle,
-                        body = strOrderSubmittedBody.format(event.reservationCode ?: "Take-Away"),
+                        body = event.reservationCode?.let { strOrderSubmittedBody.format(it) } ?: strOrderSubmittedNoCode,
                     )
                     // In the same frame as the success page, so the emptied order page never shows.
                     viewModel.showPlacedOrder(event.reservationId)

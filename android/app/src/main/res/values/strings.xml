@@ -2133,7 +2133,7 @@
 
     <!-- Mensa (Compass / Fresh & Natural) -->
     <string name="registry_mensa">Mensa</string>
-    <string name="registry_mensa_desc">Menù del giorno, allergeni e Take-Away</string>
+    <string name="registry_mensa_desc">Menù del giorno, allergeni e prenotazioni</string>
     <string name="mensa_title">Mensa</string>
     <string name="mensa_subtitle_logged_in">Account Fresh &amp; Natural attivo</string>
     <string name="mensa_order_gone_title">Prenotazione non più disponibile</string>
@@ -2144,12 +2144,12 @@
     <string name="mensa_loading_menus">Caricamento menù…</string>
     <string name="mensa_loading_schedule">Caricamento piatti…</string>
     <string name="mensa_loading_dish">Caricamento scheda piatto…</string>
-    <string name="mensa_loading_services">Caricamento servizi Take-Away…</string>
+    <string name="mensa_loading_services">Caricamento delle prenotazioni…</string>
     <string name="mensa_loading_reservations">Caricamento prenotazioni…</string>
     <string name="mensa_menus_load_failed">Impossibile caricare i menù</string>
     <string name="mensa_schedule_load_failed">Impossibile caricare i piatti</string>
     <string name="mensa_dish_load_failed">Impossibile caricare il piatto</string>
-    <string name="mensa_services_load_failed">Impossibile caricare il Take-Away</string>
+    <string name="mensa_services_load_failed">Impossibile caricare le prenotazioni</string>
     <string name="mensa_reservations_load_failed">Impossibile caricare gli ordini</string>
     <string name="mensa_no_menus">Nessun menù disponibile</string>
     <string name="mensa_no_dishes_for_day">Nessun piatto previsto per questa data</string>
@@ -2159,7 +2159,7 @@
     <string name="mensa_login_action">Accedi</string>
     <string name="mensa_logout_action">Esci</string>
     <string name="mensa_my_orders">I miei ordini</string>
-    <string name="mensa_book_takeaway">Ordina Take-Away</string>
+    <string name="mensa_book_takeaway">Prenota il pasto</string>
     <string name="mensa_login_title">Accedi</string>
     <string name="mensa_login_email">Email</string>
     <string name="mensa_login_password">Password</string>
@@ -2194,11 +2194,11 @@
     <string name="mensa_dish_nutrition_portion">Porzione</string>
     <string name="mensa_dish_nutrition_100g">100 g</string>
     <string name="mensa_dish_gda">Assunzioni di riferimento (GDA)</string>
-    <string name="mensa_dish_add_takeaway">Aggiungi al Take-Away</string>
-    <string name="mensa_dish_remove_takeaway">Togli dal Take-Away</string>
+    <string name="mensa_dish_add_takeaway">Aggiungi alla prenotazione</string>
+    <string name="mensa_dish_remove_takeaway">Togli dalla prenotazione</string>
     <string name="mensa_dish_only_at">Solo in mensa %1$s</string>
-    <string name="mensa_dish_not_for_takeaway">Non prenotabile per l\'asporto</string>
-    <string name="mensa_takeaway_title">Ordina Take-Away</string>
+    <string name="mensa_dish_not_for_takeaway">Non prenotabile</string>
+    <string name="mensa_takeaway_title">Prenota il pasto</string>
     <string name="mensa_takeaway_subtitle">Scegli la fascia oraria e conferma</string>
     <string name="mensa_takeaway_service">Servizio</string>
     <string name="mensa_takeaway_location">Punto di ritiro</string>
@@ -2213,20 +2213,21 @@
     <string name="mensa_takeaway_price_total">Totale stimato</string>
     <string name="mensa_takeaway_confirm">Conferma ordine</string>
     <string name="mensa_takeaway_submitted_title">Ordine inviato</string>
-    <string name="mensa_takeaway_submitted_body">Prenotazione Take-Away registrata: %1$s</string>
+    <string name="mensa_takeaway_submitted_body_no_code">Prenotazione registrata.</string>
+    <string name="mensa_takeaway_submitted_body">Prenotazione registrata: %1$s</string>
     <string name="mensa_takeaway_failed">Invio ordine non riuscito</string>
     <string name="mensa_orders_title">I miei ordini</string>
-    <string name="mensa_orders_subtitle">Prenotazioni Take-Away attive e passate</string>
+    <string name="mensa_orders_subtitle">Prenotazioni attive e passate</string>
     <string name="mensa_orders_tab_active">Da ritirare</string>
     <string name="mensa_orders_tab_history">Storico</string>
-    <string name="mensa_orders_active_subtitle">Ordini Take-Away ancora da ritirare</string>
+    <string name="mensa_orders_active_subtitle">Ordini ancora da ritirare</string>
     <string name="mensa_orders_history_subtitle">Ordini ritirati e passati</string>
     <string name="mensa_orders_active_empty_title">Niente da ritirare</string>
-    <string name="mensa_orders_active_empty_body">I tuoi prossimi ordini Take-Away compariranno qui, con il codice per il ritiro.</string>
+    <string name="mensa_orders_active_empty_body">I tuoi prossimi ordini compariranno qui, con il codice per il ritiro.</string>
     <string name="mensa_orders_history_empty_title">Nessun ordine passato</string>
     <string name="mensa_orders_history_empty_body">Gli ordini ritirati o scaduti finiranno qui.</string>
     <string name="mensa_orders_empty_title">Nessuna prenotazione</string>
-    <string name="mensa_orders_empty_body">Qui compariranno i tuoi ordini Take-Away con il codice a barre per il ritiro.</string>
+    <string name="mensa_orders_empty_body">Qui compariranno i tuoi ordini con il codice a barre per il ritiro.</string>
     <string name="mensa_order_detail_title">Dettaglio ordine</string>
     <string name="mensa_order_barcode_label">CODICE RITIRO CASSA</string>
     <string name="mensa_order_pickup_label">PUNTO DI RITIRO</string>
@@ -2240,7 +2241,7 @@
     <string name="mensa_order_cancel_confirmation">Conferma annullamento</string>
     <string name="mensa_order_confirm_cancel">Vuoi davvero annullare la prenotazione %1$s?</string>
     <string name="mensa_order_cancelled_title">Ordine annullato</string>
-    <string name="mensa_order_cancelled_body">La prenotazione Take-Away è stata annullata.</string>
+    <string name="mensa_order_cancelled_body">La prenotazione è stata annullata.</string>
     <string name="mensa_order_cancel_failed">Annullamento non riuscito</string>
     <string name="mensa_takeaway_pay_wallet">Il costo viene addebitato sul tuo borsellino Fresh &amp; Natural. Se il saldo non basta, ricaricalo nell\'app Fresh &amp; Natural.</string>
     <string name="mensa_takeaway_wallet_short">Il saldo del borsellino (%1$.2f €) non basta per questo ordine: ricaricalo nell\'app Fresh &amp; Natural.</string>
@@ -2260,7 +2261,7 @@
     <string name="mensa_register_title">Crea un account</string>
     <string name="mensa_register_subtitle">Fresh &amp; Natural</string>
     <string name="mensa_signout_title">Uscire?</string>
-    <string name="mensa_signout_body">I tuoi ordini Take-Away restano validi, ma non li vedrai qui finché non accedi di nuovo.</string>
+    <string name="mensa_signout_body">I tuoi ordini restano validi, ma non li vedrai qui finché non accedi di nuovo.</string>
     <string name="mensa_signup_leave_title">Uscire dalla registrazione?</string>
     <string name="mensa_signup_leave_body">Quello che hai inserito andrà perso.</string>
     <string name="mensa_signup_leave_confirm">Esci</string>
@@ -2314,7 +2315,7 @@
     <string name="mensa_favourites_lookahead_tomorrow">2 giorni</string>
     <string name="mensa_favourites_lookahead_all">5 giorni</string>
     <string name="mensa_hub_menu_title">Menù e ordini</string>
-    <string name="mensa_hub_menu_body">Scegli dove mangi, guarda il menù e ordina il Take-Away</string>
+    <string name="mensa_hub_menu_body">Scegli dove mangi, guarda il menù e prenota il pasto</string>
     <string name="mensa_hub_menu_browse">Sfoglia i menù</string>
     <string name="mensa_hub_catalog_title">Tutti i piatti e i prezzi</string>
     <string name="mensa_hub_catalog_body">Ogni piatto dei menù, con il suo prezzo e le combinazioni dei pasti</string>
