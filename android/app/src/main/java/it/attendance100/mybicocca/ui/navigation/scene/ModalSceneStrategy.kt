@@ -161,6 +161,7 @@ private fun ModalSheetHost(
         onDismiss = { navigator.pop(rootId) },
         gesturesEnabled = gesturesEnabled,
         dragToDismiss = style?.dragToDismiss ?: true,
+        firmDrag = style?.firmDrag ?: false,
         confirmDismiss = { latestTopControl.confirmDismiss() },
         controller = controller,
         shape = style?.shape ?: BottomSheetDefaults.ExpandedShape,

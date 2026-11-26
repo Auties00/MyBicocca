@@ -12,8 +12,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SheetState
 import androidx.compose.material3.SheetValue
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.runtime.DisposableEffect
@@ -137,6 +139,7 @@ fun PredictiveModalBottomSheet(
     confirmDismiss: () -> Boolean = { true },
     gesturesEnabled: Boolean = true,
     dragToDismiss: Boolean = true,
+    firmDrag: Boolean = false,
     controller: ModalSheetController? = null,
     contentWindowInsets: @Composable () -> WindowInsets = { BottomSheetDefaults.modalWindowInsets },
     dragHandle: @Composable (() -> Unit)? = { SheetDragHandle(gesturesEnabled && dragToDismiss) },
@@ -145,12 +148,31 @@ fun PredictiveModalBottomSheet(
     val latestConfirmDismiss by rememberUpdatedState(confirmDismiss)
     val latestOnDismiss by rememberUpdatedState(onDismiss)
     val sheetController = controller ?: remember { ModalSheetController() }
-    val sheetState = rememberModalBottomSheetState(
-        skipPartiallyExpanded = true,
-        confirmValueChange = { target ->
-            target != SheetValue.Hidden || sheetController.closing || latestConfirmDismiss()
-        },
-    )
+    val density = LocalDensity.current
+    // Material's own thresholds are 56dp of pull or a 125dp/s fling; a firm sheet wants a clear intent.
+    val positionalThreshold = remember(density, firmDrag) { { with(density) { (if (firmDrag) 120.dp else 56.dp).toPx() } } }
+    val velocityThreshold = remember(density, firmDrag) { { with(density) { (if (firmDrag) 900.dp else 125.dp).toPx() } } }
+    val confirmValueChange: (SheetValue) -> Boolean = { target ->
+        target != SheetValue.Hidden || sheetController.closing || latestConfirmDismiss()
+    }
+    val sheetState = rememberSaveable(
+        saver = SheetState.Saver(
+            skipPartiallyExpanded = true,
+            positionalThreshold = positionalThreshold,
+            velocityThreshold = velocityThreshold,
+            confirmValueChange = confirmValueChange,
+            skipHiddenState = false,
+        ),
+    ) {
+        SheetState(
+            skipPartiallyExpanded = true,
+            positionalThreshold = positionalThreshold,
+            velocityThreshold = velocityThreshold,
+            initialValue = SheetValue.Hidden,
+            confirmValueChange = confirmValueChange,
+            skipHiddenState = false,
+        )
+    }
     DisposableEffect(sheetController, sheetState) {
         sheetController.state = sheetState
         onDispose { if (sheetController.state === sheetState) sheetController.state = null }

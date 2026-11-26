@@ -219,7 +219,7 @@ fun EntryProviderScope<NavKey>.registrySheetEntries(
         LibraryPage(viewModel = libraryViewModel)
     }
     // Mensa is a long flow (menu, carousel, order): a swipe down while scrolling must not drop it.
-    entry<SheetRoute.Mensa>(metadata = sheetHeaderInPage() + sheetStyle(SheetContainerStyle(dragToDismiss = false))) {
+    entry<SheetRoute.Mensa>(metadata = sheetHeaderInPage() + sheetStyle(SheetContainerStyle(firmDrag = true))) {
         MensaPage(viewModel = mensaViewModel)
     }
 
