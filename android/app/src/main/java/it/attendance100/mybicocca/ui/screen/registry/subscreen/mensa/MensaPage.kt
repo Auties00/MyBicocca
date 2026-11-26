@@ -286,6 +286,8 @@ fun MensaPage(
     // The sign-up form asks before it is left with something typed in it, by back or by closing the sheet.
     var signUpDirty by remember { mutableStateOf(false) }
     var leaveSignUp by remember { mutableStateOf<SignUpLeave?>(null) }
+    // Signing out asks first: getting back in takes the account's password.
+    var confirmSignOut by remember { mutableStateOf(false) }
     val guardSignUp = current == MensaSubPage.Register && signUpDirty && !busy
     val dismissControl = LocalSheetDismissControl.current
     SideEffect {
@@ -317,6 +319,7 @@ fun MensaPage(
         outcome != null -> MensaDisplay.Outcome
         pendingCancel != null -> MensaDisplay.ConfirmCancel
         leaveSignUp != null -> MensaDisplay.ConfirmLeaveSignUp
+        confirmSignOut -> MensaDisplay.ConfirmSignOut
         else -> currentDisplay
     }
 
@@ -324,11 +327,14 @@ fun MensaPage(
         MensaDisplay.Outcome -> if (pendingCancel != null) MensaDisplay.ConfirmCancel else currentDisplay
         MensaDisplay.ConfirmCancel -> currentDisplay
         MensaDisplay.ConfirmLeaveSignUp -> currentDisplay
+        MensaDisplay.ConfirmSignOut -> currentDisplay
         is MensaDisplay.Page if guardSignUp -> MensaDisplay.ConfirmLeaveSignUp
         // The carousel closes through its own back handler, which scrubs the transition inside the page.
         is MensaDisplay.Page -> if (depth > 0 && !busy && !display.inMenu) MensaDisplay.Page(backStack[depth - 1], depth - 1) else null
     }
     val shownCancel = rememberLastNonNull(pendingCancel)
+    // Kept while the confirmation slides away after signing out, when the session is gone.
+    val shownSignOutEmail = rememberLastNonNull(session?.email)
     val bagStage = remember { MensaBagStage() }
 
     SharedTransitionLayout {
@@ -342,6 +348,7 @@ fun MensaPage(
                 MensaDisplay.Outcome -> outcome = null
                 MensaDisplay.ConfirmCancel -> pendingCancel = null
                 MensaDisplay.ConfirmLeaveSignUp -> leaveSignUp = null
+                MensaDisplay.ConfirmSignOut -> confirmSignOut = false
                 is MensaDisplay.Page -> if (guardSignUp) leaveSignUp = SignUpLeave.Back else viewModel.back()
             }
         },
@@ -359,6 +366,7 @@ fun MensaPage(
                     MensaDisplay.Outcome -> outcomeTitle.ifBlank { stringResource(R.string.mensa_title) }
                     MensaDisplay.ConfirmCancel -> stringResource(R.string.mensa_order_cancel_confirmation)
                     MensaDisplay.ConfirmLeaveSignUp -> stringResource(R.string.mensa_signup_leave_title)
+                    MensaDisplay.ConfirmSignOut -> stringResource(R.string.mensa_signout_title)
                     is MensaDisplay.Page -> when (val page = target.host ?: target.page) {
                         MensaSubPage.Home -> stringResource(R.string.mensa_title)
                         MensaSubPage.PlacePicker -> stringResource(R.string.mensa_menu_title)
@@ -387,6 +395,7 @@ fun MensaPage(
                     MensaDisplay.Outcome -> stringResource(R.string.mensa_title)
                     MensaDisplay.ConfirmCancel -> shownCancel?.canteenName ?: shownCancel?.code
                     MensaDisplay.ConfirmLeaveSignUp -> stringResource(R.string.mensa_register_subtitle)
+                    MensaDisplay.ConfirmSignOut -> shownSignOutEmail
                     is MensaDisplay.Page -> when (val page = target.host ?: target.page) {
                         // No balance: Bicocca's canteen does not take payments through the wallet.
                         MensaSubPage.Home -> if (session != null) stringResource(R.string.mensa_subtitle_logged_in) else null
@@ -416,6 +425,7 @@ fun MensaPage(
                     MensaDisplay.Outcome -> false
                     MensaDisplay.ConfirmCancel -> true
                     MensaDisplay.ConfirmLeaveSignUp -> true
+                    MensaDisplay.ConfirmSignOut -> true
                     is MensaDisplay.Page -> !busy && depth > 0
                 },
                 trailing = when ((target as? MensaDisplay.Page)?.takeUnless { it.inMenu }?.page) {
@@ -490,6 +500,17 @@ fun MensaPage(
                     }
                 },
                 onKeep = { leaveSignUp = null },
+            )
+
+            MensaDisplay.ConfirmSignOut -> SheetConfirmPage(
+                body = stringResource(R.string.mensa_signout_body),
+                confirmLabel = stringResource(R.string.mensa_logout_action),
+                onConfirm = {
+                    confirmSignOut = false
+                    viewModel.logout()
+                },
+                onKeep = { confirmSignOut = false },
+                confirmIsPrimary = true,
             )
 
             // A carousel opened from the menu or the catalog is that page with its carousel up, drawn
@@ -647,7 +668,7 @@ fun MensaPage(
                         session = it,
                         onEdit = viewModel::openAccountEdit,
                         onOpenOrders = viewModel::openReservations,
-                        onLogout = viewModel::logout,
+                        onLogout = { confirmSignOut = true },
                         onDeleteAccount = viewModel::openAccountDelete,
                     )
                 }
@@ -780,6 +801,7 @@ private sealed interface MensaDisplay {
     }
     data object ConfirmCancel : MensaDisplay
     data object ConfirmLeaveSignUp : MensaDisplay
+    data object ConfirmSignOut : MensaDisplay
     data object Outcome : MensaDisplay
 }
 
@@ -787,6 +809,7 @@ private fun displayDepth(display: MensaDisplay): Int = when (display) {
     is MensaDisplay.Page -> display.level
     MensaDisplay.ConfirmCancel -> 100
     MensaDisplay.ConfirmLeaveSignUp -> 100
+    MensaDisplay.ConfirmSignOut -> 100
     MensaDisplay.Outcome -> 101
 }
 
@@ -794,6 +817,7 @@ private fun displayKey(display: MensaDisplay): String = when (display) {
     is MensaDisplay.Page -> display.host?.key ?: display.page.key
     MensaDisplay.ConfirmCancel -> "confirm_cancel"
     MensaDisplay.ConfirmLeaveSignUp -> "confirm_leave_sign_up"
+    MensaDisplay.ConfirmSignOut -> "confirm_sign_out"
     MensaDisplay.Outcome -> "outcome"
 }
 

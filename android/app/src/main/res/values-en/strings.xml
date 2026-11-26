@@ -2254,6 +2254,8 @@
     <string name="mensa_signup_activated_body">Sign in with the email and password you chose.</string>
     <string name="mensa_register_title">Create an account</string>
     <string name="mensa_register_subtitle">Fresh &amp; Natural</string>
+    <string name="mensa_signout_title">Sign out?</string>
+    <string name="mensa_signout_body">Your Take-Away orders stay valid, but you won\'t see them here until you sign in again.</string>
     <string name="mensa_signup_leave_title">Leave the sign-up?</string>
     <string name="mensa_signup_leave_body">What you have entered will be lost.</string>
     <string name="mensa_signup_leave_confirm">Leave</string>
