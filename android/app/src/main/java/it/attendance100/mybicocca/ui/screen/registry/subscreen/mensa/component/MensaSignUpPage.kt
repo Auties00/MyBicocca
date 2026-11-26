@@ -20,8 +20,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.ui.semantics.Role
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.AlternateEmail
 import androidx.compose.material.icons.outlined.CheckCircle
@@ -31,7 +29,6 @@ import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.RadioButtonUnchecked
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalIconButton
@@ -88,6 +85,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.ui.component.input.ConsentCheckboxCard
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.domain.model.mensa.MensaEmailCheck
 import it.attendance100.mybicocca.domain.model.mensa.MensaPasswordRule
@@ -219,6 +217,7 @@ private fun FormStep(
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             OutlinedTextField(
+                shape = MensaFieldShape,
                 value = state.firstName,
                 onValueChange = onFirstName,
                 singleLine = true,
@@ -227,6 +226,7 @@ private fun FormStep(
                 modifier = Modifier.weight(1f).semantics { contentType = ContentType.PersonFirstName },
             )
             OutlinedTextField(
+                shape = MensaFieldShape,
                 value = state.lastName,
                 onValueChange = onLastName,
                 singleLine = true,
@@ -237,6 +237,8 @@ private fun FormStep(
         }
 
         OutlinedTextField(
+
+            shape = MensaFieldShape,
             value = state.email,
             onValueChange = onEmail,
             singleLine = true,
@@ -259,6 +261,7 @@ private fun FormStep(
 
         // A new password: password managers offer to generate one here.
         PasswordTextField(
+            shape = MensaFieldShape,
             value = state.password,
             onValueChange = onPassword,
             labelRes = R.string.mensa_login_password,
@@ -273,6 +276,7 @@ private fun FormStep(
             }
         }
         PasswordTextField(
+            shape = MensaFieldShape,
             value = state.passwordConfirm,
             onValueChange = onPasswordConfirm,
             labelRes = R.string.mensa_signup_password_confirm,
@@ -283,24 +287,16 @@ private fun FormStep(
 
         CaptchaBlock(state, onCaptcha, onRefreshCaptcha)
 
-        // The whole line ticks the box; only the link inside it opens the notice.
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .toggleable(value = state.privacyAccepted, role = Role.Checkbox, onValueChange = onPrivacy),
-        ) {
-            Checkbox(checked = state.privacyAccepted, onCheckedChange = null, modifier = Modifier.padding(12.dp))
-            Text(
-                text = buildAnnotatedString {
-                    append(stringResource(R.string.mensa_signup_privacy_prefix))
-                    withLink(LinkAnnotation.Url(PRIVACY_URL, TextLinkStyles(SpanStyle(color = scheme.primary, fontWeight = FontWeight.SemiBold)))) {
-                        append(stringResource(R.string.mensa_signup_privacy_link))
-                    }
-                },
-                style = MaterialTheme.typography.bodyMedium,
-            )
-        }
+        ConsentCheckboxCard(
+            checked = state.privacyAccepted,
+            onCheckedChange = onPrivacy,
+            text = buildAnnotatedString {
+                append(stringResource(R.string.mensa_signup_privacy_prefix))
+                withLink(LinkAnnotation.Url(PRIVACY_URL, TextLinkStyles(SpanStyle(color = scheme.primary, fontWeight = FontWeight.SemiBold)))) {
+                    append(stringResource(R.string.mensa_signup_privacy_link))
+                }
+            },
+        )
 
         state.refusal?.let { reasons -> RefusalCard(reasons) }
         if (state.connectionError) {
@@ -341,6 +337,7 @@ private fun CaptchaBlock(state: MensaSignUpState, onCaptcha: (String) -> Unit, o
         }
     }
     OutlinedTextField(
+        shape = MensaFieldShape,
         value = state.captcha,
         onValueChange = onCaptcha,
         singleLine = true,

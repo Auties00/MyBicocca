@@ -209,7 +209,7 @@ private fun CatalogGrid(
                     singleLine = true,
                     leadingIcon = { Icon(Icons.Outlined.Search, contentDescription = null) },
                     placeholder = { Text(stringResource(R.string.mensa_catalog_search)) },
-                    shape = RoundedCornerShape(20.dp),
+                    shape = MensaFieldShape,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 20.dp),

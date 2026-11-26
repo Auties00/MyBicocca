@@ -100,6 +100,7 @@ internal fun MensaLoginPage(
         LoginPlates()
         Spacer(Modifier.height(4.dp))
         OutlinedTextField(
+            shape = MensaFieldShape,
             value = email,
             onValueChange = { email = it },
             enabled = !submitting,
@@ -112,6 +113,7 @@ internal fun MensaLoginPage(
                 .semantics { contentType = ContentType.Username + ContentType.EmailAddress },
         )
         PasswordTextField(
+            shape = MensaFieldShape,
             value = password,
             onValueChange = { password = it },
             enabled = !submitting,

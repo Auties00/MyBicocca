@@ -31,6 +31,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -66,6 +68,7 @@ fun PasswordTextField(
     leadingIcon: (@Composable () -> Unit)? = null,
     imeAction: ImeAction = ImeAction.Done,
     onImeAction: (() -> Unit)? = null,
+    shape: Shape = OutlinedTextFieldDefaults.shape,
 ) {
     val haptic = rememberHapticManager()
     var visible by rememberSaveable { mutableStateOf(false) }
@@ -124,6 +127,7 @@ fun PasswordTextField(
             imeAction = imeAction
         ),
         onKeyboardAction = onImeAction?.let { action -> KeyboardActionHandler { action() } },
+        shape = shape,
     )
 }
 

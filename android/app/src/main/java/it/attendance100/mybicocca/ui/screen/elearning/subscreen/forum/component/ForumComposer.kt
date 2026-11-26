@@ -30,7 +30,6 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -41,6 +40,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.TextField
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
@@ -114,23 +119,48 @@ fun ForumComposer(
             if (target is ComposerTarget.NewDiscussion && groups.isNotEmpty()) {
                 GroupSelector(groups = groups, selectedGroupId = selectedGroupId, onSelect = onSelectGroup)
             }
-            OutlinedTextField(
-                value = subject,
-                onValueChange = onSubjectChange,
-                label = { Text(stringResource(R.string.elearning_forum_subject)) },
-                singleLine = true,
-                shape = RoundedCornerShape(18.dp),
+            // Subject and message in one card, like a mail being written; it lights up like a field
+            // while either part has the focus.
+            val subjectFocus = remember { MutableInteractionSource() }
+            val messageFocus = remember { MutableInteractionSource() }
+            val focused = subjectFocus.collectIsFocusedAsState().value || messageFocus.collectIsFocusedAsState().value
+            val fieldColors = TextFieldDefaults.colors(
+                focusedContainerColor = Color.Transparent,
+                unfocusedContainerColor = Color.Transparent,
+                disabledContainerColor = Color.Transparent,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent,
+                disabledIndicatorColor = Color.Transparent,
+            )
+            Surface(
+                shape = RoundedCornerShape(16.dp),
+                color = Color.Transparent,
+                border = BorderStroke(if (focused) 2.dp else 1.dp, if (focused) scheme.primary else scheme.outline),
                 modifier = Modifier.fillMaxWidth(),
-            )
-            OutlinedTextField(
-                value = message,
-                onValueChange = onMessageChange,
-                label = { Text(stringResource(R.string.elearning_forum_message)) },
-                shape = RoundedCornerShape(18.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 140.dp),
-            )
+            ) {
+                Column {
+                    TextField(
+                        value = subject,
+                        onValueChange = onSubjectChange,
+                        label = { Text(stringResource(R.string.elearning_forum_subject)) },
+                        singleLine = true,
+                        colors = fieldColors,
+                        interactionSource = subjectFocus,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    HorizontalDivider(color = scheme.outlineVariant, modifier = Modifier.padding(horizontal = 16.dp))
+                    TextField(
+                        value = message,
+                        onValueChange = onMessageChange,
+                        label = { Text(stringResource(R.string.elearning_forum_message)) },
+                        colors = fieldColors,
+                        interactionSource = messageFocus,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 140.dp),
+                    )
+                }
+            }
 
             existingAttachments.forEach { attachment ->
                 Surface(
