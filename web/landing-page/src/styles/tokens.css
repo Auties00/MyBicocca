@@ -24,14 +24,19 @@
 	--border-strong: rgba(255, 255, 255, 0.14);
 	--border-hover: rgba(255, 255, 255, 0.22);
 
+	/* Bicocca crimson brand tokens (matching web-app dark mode) */
+	--brand: oklch(56% 0.2 14.4);
+	--brand-deep: oklch(38% 0.13 6);
+	--brand-text: oklch(70% 0.16 14.4);
+
 	/* Surgical Bicocca Crimson accent (used sparingly like Linear's timeline dot & active indicator) */
 	--accent: #d92b57;
 	--accent-muted: rgba(217, 43, 87, 0.16);
 
-	/* Monochrome high-contrast primary CTA (Linear white pill on #08090A) */
-	--btn-primary-bg: #f7f8f8;
-	--btn-primary-hover: #ffffff;
-	--btn-primary-ink: #08090a;
+	/* Primary CTA button (matching web-app solid button in dark mode) */
+	--btn-primary-bg: oklch(56% 0.2 14.4);
+	--btn-primary-hover: oklch(52% 0.2 14.4);
+	--btn-primary-ink: oklch(100% 0 0);
 
 	/* Header backdrop */
 	--header-bg: rgba(8, 9, 10, 0.8);
@@ -55,4 +60,10 @@
 
 	/* Restraint motion curve */
 	--ease: cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+@media (color-gamut: p3) {
+	:root {
+		--btn-primary-bg: oklch(56% 0.24 14.4);
+	}
 }

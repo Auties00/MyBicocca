@@ -157,7 +157,7 @@ export const it = {
 		web: {
 			name: 'Web App',
 			spec: 'Desktop e browser mobile · Installabile come app su computer',
-			cta: 'Apri web.mybicocca.it'
+			cta: 'Apri la web app'
 		},
 		android: {
 			name: 'Android',

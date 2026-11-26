@@ -12,8 +12,7 @@ import Wordmark from '../ui/Wordmark.astro';
 		<div class="footer-grid">
 			<div class="footer-mark">
 				<a href="#top" class="footer-brand" aria-label="MyBicocca">
-					<Wordmark size="md" iconOnly />
-					<span class="footer-brand-name" translate="no">MyBicocca</span>
+					<Wordmark size="md" />
 				</a>
 			</div>
 
@@ -77,17 +76,7 @@ import Wordmark from '../ui/Wordmark.astro';
 
 	.footer-brand {
 		display: inline-flex;
-		flex-direction: column;
-		align-items: flex-start;
-		gap: 10px;
-	}
-
-	.footer-brand-name {
-		font-family: var(--font-sans);
-		font-size: 0.9rem;
-		font-weight: 580;
-		letter-spacing: -0.02em;
-		color: var(--text);
+		align-items: center;
 	}
 
 	.footer-col {
