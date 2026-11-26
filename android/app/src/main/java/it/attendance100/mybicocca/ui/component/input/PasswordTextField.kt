@@ -7,23 +7,27 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.KeyboardActionHandler
+import androidx.compose.foundation.text.input.TextObfuscationMode
+import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
+import androidx.compose.material3.OutlinedSecureTextField
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
+import androidx.compose.runtime.remember
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -34,26 +38,19 @@ import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentType
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.OffsetMapping
-import androidx.compose.ui.text.input.TransformedText
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.ui.theme.BicoccaTheme
-import kotlinx.coroutines.delay
-
-/** How long a typed character stays readable before it turns into a dot. */
-private const val REVEAL_MILLIS = 1000L
 
 /**
  * Shared password entry field: single-line, password keyboard + autofill semantics, and a built-in
- * show/hide toggle. Like the platform's password fields, a character typed on its own stays
- * readable for a second, unless the system's "Show passwords" setting is off.
+ * show/hide toggle. It is a secure text field, so it is announced as a password, offers no copy or
+ * cut, and, like the platform's own, shows the last character typed for a moment, unless the
+ * system's "Show passwords" setting is off.
  * @param errorText when non-null, shown as the supporting text and puts the field in the error state.
  * @param onImeAction invoked when the IME action key is pressed; null leaves the default.
  */
@@ -73,23 +70,24 @@ fun PasswordTextField(
     val haptic = rememberHapticManager()
     var visible by rememberSaveable { mutableStateOf(false) }
     val revealAllowed = rememberShowPasswordsSetting()
-    var revealIndex by remember { mutableIntStateOf(-1) }
-    // Bumped on every keystroke, so typing at the same position again restarts the timer.
-    var revealSerial by remember { mutableIntStateOf(0) }
-    LaunchedEffect(revealSerial) {
-        if (revealIndex >= 0) {
-            delay(REVEAL_MILLIS)
-            revealIndex = -1
+
+    // The secure field keeps its text in a state of its own; the caller still owns the value, so
+    // the two follow each other: typing reports up, and a value set from outside (cleared after a
+    // failed sign-in) comes down.
+    val state = rememberTextFieldState(value)
+    val latestValue by rememberUpdatedState(value)
+    val latestOnValueChange by rememberUpdatedState(onValueChange)
+    LaunchedEffect(value) {
+        if (state.text.toString() != value) state.setTextAndPlaceCursorAtEnd(value)
+    }
+    LaunchedEffect(state) {
+        snapshotFlow { state.text.toString() }.collect { typed ->
+            if (typed != latestValue) latestOnValueChange(typed)
         }
     }
 
-    OutlinedTextField(
-        value = value,
-        onValueChange = { new ->
-            revealIndex = if (revealAllowed) singleInsertionIndex(value, new) else -1
-            revealSerial++
-            onValueChange(new)
-        },
+    OutlinedSecureTextField(
+        state = state,
         modifier = modifier.semantics { contentType = ContentType.Password },
         label = { Text(stringResource(labelRes)) },
         leadingIcon = leadingIcon,
@@ -105,28 +103,19 @@ fun PasswordTextField(
             }
         },
         enabled = enabled,
-        singleLine = true,
         isError = isError || errorText != null,
         supportingText = errorText?.let { { Text(it) } },
-        visualTransformation = if (visible) VisualTransformation.None else RevealOneTransformation(revealIndex),
+        textObfuscationMode = when {
+            visible -> TextObfuscationMode.Visible
+            revealAllowed -> TextObfuscationMode.RevealLastTyped
+            else -> TextObfuscationMode.Hidden
+        },
         keyboardOptions = KeyboardOptions(
             keyboardType = KeyboardType.Password,
             imeAction = imeAction
         ),
-        keyboardActions = onImeAction
-            ?.let { action -> KeyboardActions(onDone = { action() }, onGo = { action() }) }
-            ?: KeyboardActions.Default,
+        onKeyboardAction = onImeAction?.let { action -> KeyboardActionHandler { action() } },
     )
-}
-
-/**
- * Where [new] gained exactly one character over [old], or -1 for anything else: deletions,
- * pastes and autofill stay hidden.
- */
-internal fun singleInsertionIndex(old: String, new: String): Int {
-    if (new.length != old.length + 1) return -1
-    val at = old.commonPrefixWith(new).length
-    return if (new.regionMatches(at + 1, old, at, old.length - at)) at else -1
 }
 
 /** The system's "Show passwords" switch, read once; on unless the user turned it off. */
@@ -137,16 +126,6 @@ private fun rememberShowPasswordsSetting(): Boolean {
     return remember(resolver) {
         runCatching { Settings.System.getInt(resolver, Settings.System.TEXT_SHOW_PASSWORD, 1) == 1 }
             .getOrDefault(true)
-    }
-}
-
-/** Masks every character as a dot, except the one at [revealIndex]. */
-private data class RevealOneTransformation(val revealIndex: Int) : VisualTransformation {
-    override fun filter(text: AnnotatedString): TransformedText {
-        val masked = buildString(text.length) {
-            text.text.forEachIndexed { i, c -> append(if (i == revealIndex) c else '•') }
-        }
-        return TransformedText(AnnotatedString(masked), OffsetMapping.Identity)
     }
 }
 
