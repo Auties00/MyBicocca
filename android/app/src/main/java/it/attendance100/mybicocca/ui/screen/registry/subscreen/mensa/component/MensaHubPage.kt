@@ -46,7 +46,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
-import it.attendance100.mybicocca.core.os.currentLocale
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.time.AppClock
 import it.attendance100.mybicocca.domain.model.mensa.MensaAllergenPreferences
@@ -55,7 +54,6 @@ import it.attendance100.mybicocca.domain.model.mensa.MensaSession
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.MensaHubTray
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.MensaTestTags
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 
 /** Landing page of the Mensa sheet: the two things people come for, plus account shortcuts. */
 @Composable
@@ -104,15 +102,16 @@ internal fun MensaHubPage(
                 onIntroPlayed = onTrayIntroPlayed,
                 onClick = onOpenMenu,
             )
-            HubRow(
-                tag = MensaTestTags.HUB_ORDERS,
-                icon = Icons.AutoMirrored.Outlined.ReceiptLong,
-                title = stringResource(R.string.mensa_orders_title),
-                body = stringResource(R.string.mensa_orders_subtitle),
-                trailing = Icons.Outlined.ChevronRight,
-                onClick = onOpenOrders,
-            )
         }
+        // Also beside a booking: the tile opens that one, this the others and the history.
+        HubRow(
+            tag = MensaTestTags.HUB_ORDERS,
+            icon = Icons.AutoMirrored.Outlined.ReceiptLong,
+            title = stringResource(R.string.mensa_orders_title),
+            body = stringResource(R.string.mensa_orders_subtitle),
+            trailing = Icons.Outlined.ChevronRight,
+            onClick = onOpenOrders,
+        )
 
         HubRow(
             tag = MensaTestTags.HUB_CATALOG,
@@ -209,13 +208,7 @@ private fun BookingBox(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val locale = currentLocale()
-    val day = when (booking.date) {
-        today -> stringResource(R.string.mensa_today)
-        today.plusDays(1) -> stringResource(R.string.mensa_tomorrow)
-        null -> booking.rawDate
-        else -> booking.date.format(DateTimeFormatter.ofPattern("EEE d MMM", locale)).replaceFirstChar { it.titlecase(locale) }
-    }
+    val day = mensaBookingDay(booking, today)
     HubBox(
         tag = MensaTestTags.HUB_BOOKING,
         label = stringResource(R.string.mensa_hub_booking_label),

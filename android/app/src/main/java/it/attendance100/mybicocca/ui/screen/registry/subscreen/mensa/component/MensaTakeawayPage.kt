@@ -24,7 +24,6 @@ import androidx.compose.material.icons.outlined.Remove
 import androidx.compose.material.icons.outlined.Restaurant
 import androidx.compose.material.icons.outlined.StarOutline
 import androidx.compose.material.icons.rounded.Star
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
@@ -49,6 +48,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.Preview
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.ui.component.button.ConnectedButtonPair
+import it.attendance100.mybicocca.ui.component.button.PairButtonLabel
 import it.attendance100.mybicocca.core.os.currentLocale
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.state.Loadable
@@ -93,6 +94,7 @@ internal fun MensaTakeawayPage(
     onNoteChange: (String) -> Unit,
     onBrowseDishes: () -> Unit,
     onSubmitOrder: () -> Unit,
+    onBack: () -> Unit,
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
     singlePick: Boolean = false,
@@ -246,7 +248,7 @@ internal fun MensaTakeawayPage(
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = scheme.onSurfaceVariant,
                                 )
-                                FilledTonalButton(onClick = { haptic.tap(); onBrowseDishes() }) {
+                                FilledTonalButton(onClick = { haptic.tap(); onBrowseDishes() }, enabled = !submitting) {
                                     Icon(Icons.Outlined.Restaurant, contentDescription = null, modifier = Modifier.size(18.dp))
                                     Spacer(Modifier.width(6.dp))
                                     Text(stringResource(R.string.mensa_takeaway_browse_dishes))
@@ -406,26 +408,22 @@ internal fun MensaTakeawayPage(
                     selectedTimeSlotId != null &&
                     cartDishes.isNotEmpty()
 
-                Button(
-                    onClick = { haptic.tap(); onSubmitOrder() },
-                    enabled = canSubmit,
-                    shapes = ButtonDefaults.shapes(),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = ButtonDefaults.MediumContainerHeight)
-                        .padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 20.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = brandBg, contentColor = brandFg),
-                ) {
-                    if (submitting) {
-                        LoadingIndicator(modifier = Modifier.size(30.dp), color = brandFg)
-                    } else {
-                        Text(
-                            text = stringResource(R.string.mensa_takeaway_confirm),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold,
-                        )
-                    }
-                }
+                ConnectedButtonPair(
+                    secondary = { PairButtonLabel(stringResource(R.string.appointments_back)) },
+                    onSecondary = onBack,
+                    secondaryEnabled = !submitting,
+                    primary = {
+                        if (submitting) {
+                            LoadingIndicator(modifier = Modifier.size(30.dp), color = brandFg)
+                        } else {
+                            PairButtonLabel(stringResource(R.string.mensa_takeaway_confirm))
+                        }
+                    },
+                    onPrimary = onSubmitOrder,
+                    primaryEnabled = canSubmit,
+                    primaryColors = ButtonDefaults.buttonColors(containerColor = brandBg, contentColor = brandFg),
+                    modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 20.dp),
+                )
             }
         }
     }
@@ -486,6 +484,7 @@ private fun TakeawayPreviewPage(service: MensaTakeawayService, place: MensaPlace
         onNoteChange = {},
         onBrowseDishes = {},
         onSubmitOrder = {},
+        onBack = {},
         onRetry = {},
     )
 }

@@ -8,10 +8,10 @@ import kotlinx.coroutines.flow.update
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** In-memory pickup points: the demo student's booking was made in the app, for Mensa U12. */
+/** In-memory pickup points: the demo student's bookings made in the app, at Mensa U12 and U6. */
 @Singleton
 class DemoMensaPickupPointRepository @Inject constructor() : MensaPickupPointRepository {
-    private val points = MutableStateFlow(mapOf(1201989 to "Mensa U12"))
+    private val points = MutableStateFlow(mapOf(1201989 to "Mensa U12", 1201544 to "Mensa U6", 1201011 to "Mensa U12"))
 
     override fun observe(): Flow<Map<Int, String>> = points.asStateFlow()
 

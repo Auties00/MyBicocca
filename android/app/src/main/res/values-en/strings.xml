@@ -2168,6 +2168,7 @@
     <string name="mensa_allergens_section_diet">Foods to avoid</string>
     <string name="mensa_summary_title">Your order</string>
     <string name="mensa_summary_subtitle">Review your dishes before choosing pickup</string>
+    <string name="mensa_summary_add_more">Add dishes</string>
     <string name="mensa_summary_continue">Choose pickup</string>
     <string name="mensa_summary_continue_signin">Continue and sign in</string>
     <string name="mensa_summary_empty">Your order is empty</string>
@@ -2205,12 +2206,20 @@
     <string name="mensa_takeaway_browse_dishes">Browse menu dishes</string>
     <string name="mensa_takeaway_note">Kitchen note (optional)</string>
     <string name="mensa_takeaway_price_total">Estimated total</string>
-    <string name="mensa_takeaway_confirm">Confirm Take-Away order</string>
+    <string name="mensa_takeaway_confirm">Confirm order</string>
     <string name="mensa_takeaway_submitted_title">Order submitted</string>
     <string name="mensa_takeaway_submitted_body">Take-Away booking registered: %1$s</string>
     <string name="mensa_takeaway_failed">Order submission failed</string>
     <string name="mensa_orders_title">My orders</string>
     <string name="mensa_orders_subtitle">Active and past Take-Away bookings</string>
+    <string name="mensa_orders_tab_active">To pick up</string>
+    <string name="mensa_orders_tab_history">History</string>
+    <string name="mensa_orders_active_subtitle">Take-Away orders still to pick up</string>
+    <string name="mensa_orders_history_subtitle">Collected and past orders</string>
+    <string name="mensa_orders_active_empty_title">Nothing to pick up</string>
+    <string name="mensa_orders_active_empty_body">Your next Take-Away orders will show here, with their pickup code.</string>
+    <string name="mensa_orders_history_empty_title">No past orders</string>
+    <string name="mensa_orders_history_empty_body">Orders you collected or missed end up here.</string>
     <string name="mensa_orders_empty_title">No bookings</string>
     <string name="mensa_orders_empty_body">Your Take-Away orders and pickup barcodes will appear here.</string>
     <string name="mensa_order_detail_title">Order detail</string>
@@ -2221,6 +2230,7 @@
     <string name="mensa_order_shift_label">PICKUP SLOT</string>
     <string name="mensa_order_date_label">DATE</string>
     <string name="mensa_order_dishes_label">ORDERED DISHES</string>
+    <string name="mensa_order_show_on_map">Show on map</string>
     <string name="mensa_order_cancel">Cancel order</string>
     <string name="mensa_order_cancel_confirmation">Confirm cancellation</string>
     <string name="mensa_order_confirm_cancel">Cancel reservation %1$s?</string>

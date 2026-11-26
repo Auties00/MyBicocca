@@ -40,6 +40,7 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.state.Mensa
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.state.MensaEvent
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.state.MensaOrderAvailability
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.state.MensaSubPage
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -656,14 +657,15 @@ class MensaViewModelTest {
     }
 
     @Test
-    fun `submitTakeawayOrder clears cart and navigates to reservations`() = runTest {
+    fun `a placed order stays on its page until the success page covers it, then opens the booking`() = runTest {
         sessionFlow.value = MensaSession("student@campus.unimib.it", "Mario Rossi", "U-1", 5.0)
         coEvery { repository.calculateCartPricing(any(), any(), any()) } returns MensaCartPricing(
             "€", 3.5, 0.0, 0.0, 3.5, 0.0, null, null, null,
         )
+        val placed = CompletableDeferred<Pair<Int?, String?>>()
         coEvery {
             repository.submitTakeawayOrder(435, 400, 3, 120, today, 10, mapOf(101015 to 1), "")
-        } returns (1201989 to "2026-LU111201989")
+        } coAnswers { placed.await() }
 
         val vm = createViewModel(loggedIn = true)
         advanceUntilIdle()
@@ -674,10 +676,30 @@ class MensaViewModelTest {
         vm.events.test {
             vm.submitTakeawayOrder()
             advanceUntilIdle()
+            assertThat(vm.submittingOrder.value).isTrue()
 
-            assertThat(awaitItem()).isEqualTo(MensaEvent.OrderSubmitted("2026-LU111201989"))
+            placed.complete(1201989 to "2026-LU111201989")
+            advanceUntilIdle()
+            assertThat(awaitItem()).isEqualTo(MensaEvent.OrderSubmitted("2026-LU111201989", 1201989))
+            // Until the success page is up, the order page still shows the order, still sending.
+            assertThat(vm.cartDishes.value).isNotEmpty()
+            assertThat(vm.submittingOrder.value).isTrue()
+            assertThat(vm.backStack.value.last()).isEqualTo(MensaSubPage.TakeawayOrder)
         }
+
+        vm.showPlacedOrder(1201989)
         assertThat(vm.cartDishes.value).isEmpty()
+        assertThat(vm.submittingOrder.value).isFalse()
+        assertThat(vm.backStack.value).containsExactly(MensaSubPage.Home, MensaSubPage.ReservationDetail(1201989)).inOrder()
+    }
+
+    @Test
+    fun `a placed order missing from the refreshed bookings opens the list instead`() = runTest {
+        val vm = createViewModel(loggedIn = true)
+        advanceUntilIdle()
+
+        vm.showPlacedOrder(999)
+
         assertThat(vm.backStack.value.last()).isEqualTo(MensaSubPage.Reservations)
     }
 

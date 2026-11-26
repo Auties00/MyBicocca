@@ -82,6 +82,7 @@ fun EntryProviderScope<NavKey>.registrySheetEntries(
     appointmentsViewModel: AppointmentsViewModel,
     libraryViewModel: LibraryViewModel,
     mensaViewModel: MensaViewModel,
+    onShowMensaPickup: (building: String) -> Unit,
 ) {
     entry<SheetRoute.Enrollments>(
         metadata = sheetHeader<SheetRoute.Enrollments> {
@@ -220,7 +221,7 @@ fun EntryProviderScope<NavKey>.registrySheetEntries(
     }
     // Mensa is a long flow (menu, carousel, order): a swipe down while scrolling must not drop it.
     entry<SheetRoute.Mensa>(metadata = sheetHeaderInPage() + sheetStyle(SheetContainerStyle(firmDrag = true))) {
-        MensaPage(viewModel = mensaViewModel)
+        MensaPage(viewModel = mensaViewModel, onShowPickupBuilding = onShowMensaPickup)
     }
 
     // The scadenzario reads the same deadline spine as the landing's Scadenze banner. Its header

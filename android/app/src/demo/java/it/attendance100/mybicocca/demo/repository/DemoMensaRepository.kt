@@ -31,7 +31,7 @@ class DemoMensaRepository @Inject constructor() : MensaRepository {
 
     private val today: LocalDate = DemoClock.now.toLocalDate()
     private val session = MutableStateFlow<MensaSession?>(DemoMensa.session)
-    private val reservations = MutableStateFlow(listOf(bookedOrder()))
+    private val reservations = MutableStateFlow(listOf(bookedOrder()) + pastOrders())
 
     override fun observeSession(): Flow<MensaSession?> = session.asStateFlow()
 
@@ -152,7 +152,13 @@ class DemoMensaRepository @Inject constructor() : MensaRepository {
         placeId: Int?,
         dishesQty: Map<Int, Int>,
         userNote: String?,
-    ): Pair<Int?, String?> = 1202020 to "2026-GI111202020"
+    ): Pair<Int?, String?> {
+        val id = 1202020 + reservations.value.size
+        val code = "2026-GI11$id"
+        val dishes = dishesQty.keys.mapNotNull { dishId -> DemoMensa.allDishes.firstOrNull { it.id == dishId } }
+        reservations.value = listOf(order(id, code, date, dishes)) + reservations.value
+        return id to code
+    }
 
     override suspend fun getTakeawayReservations(): List<MensaReservation> = reservations.value
 
@@ -160,29 +166,55 @@ class DemoMensaRepository @Inject constructor() : MensaRepository {
         reservations.value = reservations.value.filterNot { it.id == reservationId }
     }
 
-    private fun bookedOrder(): MensaReservation {
-        val date = DemoMensa.serviceDays().getOrElse(1) { today }
-        return MensaReservation(
-            id = 1201989,
-            code = "2026-VE111201989",
-            date = date,
-            rawDate = date.toString(),
-            createdAt = null,
-            deliveryAddress = "",
-            menuName = "Menù Bicocca",
-            mealTypeName = "Pranzo",
-            canteenName = "Prenotazione ristorazione base",
-            shiftName = "Pranzo (11:45 - 14:30)",
-            confirmed = true,
-            deletable = true,
-            active = true,
-            provided = false,
-            statusDescription = "confermata",
-            statusColorHex = "#66bb6a",
-            dishes = DemoMensa.allDishes.filter { it.id in listOf(38612, 42239, 101027, 69399) },
-            barcodeValue = "P-1201989",
-            cfpFinalValue = null,
-            cfpUnit = null,
+    private fun bookedOrder(): MensaReservation = order(
+        id = 1201989,
+        code = "2026-VE111201989",
+        date = DemoMensa.serviceDays().getOrElse(1) { today },
+        dishes = DemoMensa.allDishes.filter { it.id in listOf(38612, 42239, 101027, 69399) },
+    )
+
+    /** What the history shows: two take-aways collected and one never picked up. */
+    private fun pastOrders(): List<MensaReservation> {
+        val dishes = DemoMensa.allDishes
+        return listOf(
+            order(1201544, "2026-GI111201544", today.minusDays(5), dishes.take(3), Status.COLLECTED),
+            order(1201320, "2026-LU111201320", today.minusDays(8), dishes.drop(3).take(2), Status.MISSED),
+            order(1201011, "2026-MA111201011", today.minusDays(16), dishes.drop(5).take(4), Status.COLLECTED),
         )
     }
+
+    private enum class Status(val description: String, val colorHex: String) {
+        BOOKED("confermata", "#66bb6a"),
+        COLLECTED("ritirata", "#42a5f5"),
+        MISSED("non ritirata", "#ef5350"),
+    }
+
+    private fun order(
+        id: Int,
+        code: String,
+        date: LocalDate,
+        dishes: List<MensaDish>,
+        status: Status = Status.BOOKED,
+    ) = MensaReservation(
+        id = id,
+        code = code,
+        date = date,
+        rawDate = date.toString(),
+        createdAt = null,
+        deliveryAddress = "",
+        menuName = "Menù Bicocca",
+        mealTypeName = "Pranzo",
+        canteenName = "Prenotazione ristorazione base",
+        shiftName = "Pranzo (11:45 - 14:30)",
+        confirmed = true,
+        deletable = status == Status.BOOKED,
+        active = status == Status.BOOKED,
+        provided = status == Status.COLLECTED,
+        statusDescription = status.description,
+        statusColorHex = status.colorHex,
+        dishes = dishes,
+        barcodeValue = "P-$id",
+        cfpFinalValue = null,
+        cfpUnit = null,
+    )
 }

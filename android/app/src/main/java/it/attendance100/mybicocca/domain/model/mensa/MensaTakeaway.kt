@@ -81,6 +81,10 @@ data class MensaReservation(
     val cfpUnit: String?,
 )
 
+/** Still to be picked up: booked for [today] or later, not collected, and not cancelled. */
+fun MensaReservation.isUpcoming(today: LocalDate): Boolean =
+    (active || deletable) && !provided && date?.isBefore(today) == false
+
 private val TimeRange = Regex("""\d{1,2}:\d{2}(\s*-\s*\d{1,2}:\d{2})?""")
 
 /**

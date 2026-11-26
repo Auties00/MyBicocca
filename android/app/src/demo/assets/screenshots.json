@@ -48,6 +48,7 @@
     { "name": "Screenshot_MensaSummary", "tab": "Registry", "routes": [{ "type": "SheetRoute.Mensa" }], "tap": ["mensa_hub_menu_title", "text:Mensa U12", "text:Menù Bicocca", "mensa_setup_confirm", "mensa_dish_add_takeaway", "text:Secondi", "mensa_dish_add_takeaway", "plural:mensa_cart_footer:2"] },
     { "name": "Screenshot_MensaOrder", "tab": "Registry", "routes": [{ "type": "SheetRoute.Mensa" }], "tap": ["mensa_hub_menu_title", "text:Mensa U12", "text:Menù Bicocca", "mensa_setup_confirm", "mensa_dish_add_takeaway", "text:Secondi", "mensa_dish_add_takeaway", "plural:mensa_cart_footer:2", "mensa_summary_continue"] },
     { "name": "Screenshot_MensaOrders", "tab": "Registry", "routes": [{ "type": "SheetRoute.Mensa" }], "tap": ["mensa_account_title", "mensa_my_orders"] },
+    { "name": "Screenshot_MensaOrdersHistory", "tab": "Registry", "routes": [{ "type": "SheetRoute.Mensa" }], "tap": ["mensa_account_title", "mensa_my_orders", "mensa_orders_tab_history"] },
     { "name": "Screenshot_Fees", "tab": "Registry", "routes": [{ "type": "SheetRoute.Taxes" }] },
     { "name": "Screenshot_Isee", "tab": "Registry", "routes": [{ "type": "SheetRoute.Isee" }] },
     { "name": "Screenshot_IseeDetail", "tab": "Registry", "routes": [{ "type": "SheetRoute.Isee" }, { "type": "SheetRoute.IseeDetail", "year": 2025 }] },

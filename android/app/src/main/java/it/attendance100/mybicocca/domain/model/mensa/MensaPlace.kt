@@ -51,6 +51,9 @@ private val BuildingWord = Regex("""\bU(\d+)\b""", RegexOption.IGNORE_CASE)
 private fun MensaPickupLocation.mentions(building: String): Boolean =
     BuildingWord.findAll(name).any { it.value.equals(building, ignoreCase = true) }
 
+/** The campus building a pickup point names ("Mensa U6 -1" gives "U6"), or null when it names none. */
+fun mensaPickupBuilding(pickupPoint: String): String? = BuildingWord.find(pickupPoint)?.value?.uppercase()
+
 /** The operator marks a pickup place that closes after lunch in its name. */
 val MensaPickupLocation.lunchOnly: Boolean
     get() = name.contains("solo pranzo", ignoreCase = true)

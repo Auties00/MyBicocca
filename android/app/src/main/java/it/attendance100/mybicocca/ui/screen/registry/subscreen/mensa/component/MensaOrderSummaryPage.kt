@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -18,7 +17,6 @@ import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.Remove
 import androidx.compose.material.icons.outlined.Restaurant
 import androidx.compose.material.icons.outlined.ShoppingBag
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
@@ -39,6 +37,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
 import it.attendance100.mybicocca.R
+import it.attendance100.mybicocca.ui.component.button.ConnectedButtonPair
+import it.attendance100.mybicocca.ui.component.button.PairButtonLabel
 import it.attendance100.mybicocca.core.os.rememberHapticManager
 import it.attendance100.mybicocca.core.state.Loadable
 import it.attendance100.mybicocca.domain.model.mensa.MensaCartPricing
@@ -232,23 +232,20 @@ internal fun MensaOrderSummaryPage(
         if (entries.isNotEmpty()) {
             val bg = if (dark) scheme.primaryContainer else scheme.primary
             val fg = if (dark) scheme.onPrimaryContainer else scheme.onPrimary
-            Button(
-                onClick = { haptic.tap(); onContinue() },
-                enabled = pricingError == null,
-                shapes = ButtonDefaults.shapes(),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 20.dp)
-                    .heightIn(min = ButtonDefaults.MediumContainerHeight),
-                colors = ButtonDefaults.buttonColors(containerColor = bg, contentColor = fg),
-            ) {
-                Icon(Icons.Outlined.ShoppingBag, contentDescription = null, modifier = Modifier.size(20.dp))
-                Text(
-                    text = "  " + stringResource(if (signedIn) R.string.mensa_summary_continue else R.string.mensa_summary_continue_signin),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                )
-            }
+            ConnectedButtonPair(
+                secondary = { PairButtonLabel(stringResource(R.string.mensa_summary_add_more)) },
+                onSecondary = onBrowseDishes,
+                primary = {
+                    PairButtonLabel(
+                        text = stringResource(if (signedIn) R.string.mensa_summary_continue else R.string.mensa_summary_continue_signin),
+                        icon = Icons.Outlined.ShoppingBag,
+                    )
+                },
+                onPrimary = onContinue,
+                primaryEnabled = pricingError == null,
+                primaryColors = ButtonDefaults.buttonColors(containerColor = bg, contentColor = fg),
+                modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 8.dp, bottom = 20.dp),
+            )
         }
     }
 }

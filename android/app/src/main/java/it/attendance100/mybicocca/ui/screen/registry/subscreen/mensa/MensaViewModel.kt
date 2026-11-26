@@ -1013,17 +1013,31 @@ class MensaViewModel @Inject constructor(
                     if (reservationId != null && !pickupPoint.isNullOrBlank()) {
                         runCatching { pickupPointRepository.remember(reservationId, pickupPoint) }
                     }
-                    clearCart()
-                    _orderNote.value = ""
+                    // Fetched while the order page still shows its spinner, so the new booking can open next.
                     runCatching { fetchReservationsInternal() }
                     runCatching { repository.refreshAccountInfo() }
-                    _backStack.value = listOf(MensaSubPage.Home, MensaSubPage.Reservations)
-                    _events.send(MensaEvent.OrderSubmitted(code))
+                    // The order stays on its page, still submitting, until the success page covers it.
+                    _events.send(MensaEvent.OrderSubmitted(code, reservationId))
                 },
-                onFailure = { _events.send(MensaEvent.OrderFailed(it)) },
+                onFailure = {
+                    _submittingOrder.value = false
+                    _events.send(MensaEvent.OrderFailed(it))
+                },
             )
-            _submittingOrder.value = false
         }
+    }
+
+    /**
+     * The success page of order [reservationId] is up, covering the order page, so the order is
+     * cleared under it. Leaving that page then opens the new booking, or the list of bookings when
+     * the booking is not in it yet.
+     */
+    fun showPlacedOrder(reservationId: Int?) {
+        clearCart()
+        _orderNote.value = ""
+        val placed = reservationId?.takeIf { id -> _reservations.value.valueOrNull().orEmpty().any { it.id == id } }
+        _backStack.value = listOf(MensaSubPage.Home, placed?.let { MensaSubPage.ReservationDetail(it) } ?: MensaSubPage.Reservations)
+        _submittingOrder.value = false
     }
 
     fun openReservations() {

@@ -2,6 +2,8 @@ package it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa
 
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component.LocalMensaDishAvailability
 import it.attendance100.mybicocca.domain.model.mensa.availabilityAt
+import it.attendance100.mybicocca.domain.model.mensa.isUpcoming
+import it.attendance100.mybicocca.domain.model.mensa.mensaPickupBuilding
 import it.attendance100.mybicocca.domain.model.mensa.MensaDishAvailability
 import androidx.compose.material.icons.Icons
 import androidx.compose.foundation.layout.Row
@@ -83,6 +85,7 @@ import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.state.Mensa
 import androidx.compose.foundation.pager.rememberPagerState
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component.MensaPersonalizePage
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component.MensaPersonalizeTab
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component.MensaOrdersTab
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component.MensaFavouritesPage
 import androidx.compose.foundation.rememberScrollState
 
@@ -94,6 +97,7 @@ import androidx.compose.foundation.rememberScrollState
 @Composable
 fun MensaPage(
     viewModel: MensaViewModel,
+    onShowPickupBuilding: (building: String) -> Unit = {},
 ) {
     val strLoginFailed = stringResource(R.string.mensa_login_failed)
     val strOrderSubmittedTitle = stringResource(R.string.mensa_takeaway_submitted_title)
@@ -145,6 +149,8 @@ fun MensaPage(
     // Owned here so the sheet header can follow which Personalize page is showing.
     val personalizePager = rememberPagerState { MensaPersonalizeTab.entries.size }
     val onFavourites = personalizePager.targetPage == MensaPersonalizeTab.FAVOURITES.ordinal
+    val ordersPager = rememberPagerState { MensaOrdersTab.entries.size }
+    val onPastOrders = ordersPager.targetPage == MensaOrdersTab.HISTORY.ordinal
     val bookableDates by viewModel.bookableDates.collectAsStateWithLifecycle()
     val selectedMenuId by viewModel.selectedMenuId.collectAsStateWithLifecycle()
     val selectedDate by viewModel.selectedDate.collectAsStateWithLifecycle()
@@ -212,6 +218,8 @@ fun MensaPage(
                         title = strOrderSubmittedTitle,
                         body = strOrderSubmittedBody.format(event.reservationCode ?: "Take-Away"),
                     )
+                    // In the same frame as the success page, so the emptied order page never shows.
+                    viewModel.showPlacedOrder(event.reservationId)
                 }
                 is MensaEvent.OrderFailed -> {
                     outcomeTitle = strOrderFailed
@@ -241,8 +249,14 @@ fun MensaPage(
     val upcomingBooking = remember(reservationList) {
         val today = LocalDate.now(AppClock.clock)
         reservationList
-            .filter { (it.active || it.deletable) && !it.provided && it.date?.isBefore(today) == false }
+            .filter { it.isUpcoming(today) }
             .minByOrNull { it.date!! }
+    }
+    // Each visit to the bookings starts on what is still to pick up, or on the history when nothing is.
+    val inOrders = MensaSubPage.Reservations in backStack
+    val hasUpcoming = upcomingBooking != null
+    LaunchedEffect(inOrders) {
+        if (inOrders) ordersPager.scrollToPage(if (hasUpcoming) MensaOrdersTab.ACTIVE.ordinal else MensaOrdersTab.HISTORY.ordinal)
     }
     val menuContext = remember(menus, selectedPlace, selectedMenuId, selectedDate, selectedMealTypeId, schedule, todayLabel, tomorrowLabel, locale) {
         val today = LocalDate.now(AppClock.clock)
@@ -378,7 +392,7 @@ fun MensaPage(
                         MensaSubPage.Register -> stringResource(R.string.mensa_register_subtitle)
                         MensaSubPage.OrderSummary -> stringResource(R.string.mensa_summary_subtitle)
                         MensaSubPage.TakeawayOrder -> stringResource(R.string.mensa_takeaway_subtitle)
-                        MensaSubPage.Reservations -> stringResource(R.string.mensa_orders_subtitle)
+                        MensaSubPage.Reservations -> stringResource(if (onPastOrders) R.string.mensa_orders_history_subtitle else R.string.mensa_orders_active_subtitle)
                         is MensaSubPage.ReservationDetail -> reservationList
                             .firstOrNull { it.id == page.reservationId }
                             ?.statusDescription
@@ -664,10 +678,12 @@ fun MensaPage(
                     selectedMealTypeId = selectedMealTypeId,
                     selectedPickupLocationId = selectedPickupLocationId,
                     selectedTimeSlotId = selectedTimeSlotId,
-                    cartDishes = cartDishes,
-                    cartPricing = cartPricing,
-                    orderNote = orderNote,
-                    submitting = submittingOrder,
+                    // Once placed, the order is cleared in the frame the success page takes over, while
+                    // this page is still on screen: it keeps showing the order it sent, not an empty one.
+                    cartDishes = heldWhile(shown != display, cartDishes),
+                    cartPricing = heldWhile(shown != display, cartPricing),
+                    orderNote = heldWhile(shown != display, orderNote),
+                    submitting = heldWhile(shown != display, submittingOrder),
                     pricingError = cartPricingError,
                     walletBalance = session?.walletBalance,
                     onSelectTimeSlot = viewModel::selectTimeSlot,
@@ -676,13 +692,16 @@ fun MensaPage(
                     onNoteChange = viewModel::setOrderNote,
                     onBrowseDishes = viewModel::browseDishes,
                     onSubmitOrder = viewModel::submitTakeawayOrder,
+                    onBack = viewModel::back,
                     onRetry = viewModel::refreshTakeawayServices,
                     singlePick = onePerCourse,
                 )
 
                 MensaSubPage.Reservations -> MensaReservationsPage(
+                    pagerState = ordersPager,
                     reservations = reservations,
                     status = reservationsStatus,
+                    pickupPoints = pickupPoints,
                     onOpenReservation = viewModel::openReservationDetail,
                     onRetry = viewModel::refreshReservations,
                 )
@@ -690,12 +709,19 @@ fun MensaPage(
                 is MensaSubPage.ReservationDetail -> {
                     val reservation = reservationList.firstOrNull { it.id == page.reservationId }
                     when {
-                        reservation != null -> MensaReservationDetailPage(
-                            reservation = reservation,
-                            pickupPoint = pickupPoints[reservation.id],
-                            isCancelling = cancellingId == reservation.id,
-                            onCancel = { pendingCancel = it },
-                        )
+                        reservation != null -> {
+                            val pickupPoint = pickupPoints[reservation.id]
+                            // Only while there is still something to collect there.
+                            val building = pickupPoint?.let(::mensaPickupBuilding)
+                                ?.takeIf { reservation.isUpcoming(LocalDate.now(AppClock.clock)) }
+                            MensaReservationDetailPage(
+                                reservation = reservation,
+                                pickupPoint = pickupPoint,
+                                isCancelling = cancellingId == reservation.id,
+                                onCancel = { pendingCancel = it },
+                                onShowOnMap = building?.let { { onShowPickupBuilding(it) } },
+                            )
+                        }
                         reservations !is Loadable.Loaded -> SheetLoadingIndicator(label = stringResource(R.string.mensa_orders_loading))
                         // Gone since the page opened: expired, or removed by a refresh.
                         else -> SheetMessage(
@@ -717,6 +743,16 @@ fun MensaPage(
     }
     }
 }
+
+/** [value], except while [leaving], when it keeps the value it last showed. */
+@Composable
+private fun <T> heldWhile(leaving: Boolean, value: T): T {
+    val held = remember { HeldValue(value) }
+    if (!leaving) held.value = value
+    return held.value
+}
+
+private class HeldValue<T>(var value: T)
 
 private sealed interface MensaDisplay {
     /**

@@ -1,5 +1,8 @@
 package it.attendance100.mybicocca.ui.navigation
 
+import androidx.core.net.toUri
+import android.net.Uri
+import android.content.Intent
 import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.BackHandler
@@ -266,6 +269,24 @@ fun MainShell(
     val elearningViewModel: ElearningViewModel = hiltViewModel()
     val addCourseViewModel: AddCourseViewModel = hiltViewModel()
     val mapViewModel: MapViewModel = hiltViewModel()
+    // Kept loaded so a pickup point can tell whether the campus map has its building.
+    val mapCatalog by mapViewModel.allBuildings.collectAsStateWithLifecycle()
+    val mapsContext = LocalContext.current
+    val showMensaPickup: (String) -> Unit = { building ->
+        val code = BuildingCode("U" + building.drop(1).padStart(2, '0'))
+        if (mapCatalog.valueOrNull()?.any { it.code == code } == true) {
+            navigator.popToRoot()
+            scope.launch { pagerState.scrollToPage(ShellTab.Map.ordinal) }
+            mapViewModel.selectBuilding(code)
+        } else {
+            // Not on the campus map yet: a maps app finds it by name.
+            val query = Uri.encode("Edificio $building Università di Milano-Bicocca")
+            runCatching {
+                mapsContext.startActivity(Intent(Intent.ACTION_VIEW, "geo:0,0?q=$query".toUri()).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            }
+        }
+    }
+
     val bookedExamsViewModel: BookedExamsViewModel = hiltViewModel()
     val bookableExamsViewModel: BookableExamsViewModel = hiltViewModel()
 
@@ -1014,6 +1035,7 @@ fun MainShell(
                                     appointmentsViewModel = appointmentsViewModel,
                                     libraryViewModel = libraryViewModel,
                                     mensaViewModel = mensaViewModel,
+                                    onShowMensaPickup = showMensaPickup,
                                 )
                                 calendarSheetEntries(
                                     calendarViewModel = calendarViewModel,

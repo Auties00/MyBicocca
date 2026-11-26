@@ -117,7 +117,7 @@ sealed interface MensaEvent {
     data class AccountDeletionRequested(val message: String?) : MensaEvent
     data class AccountDeletionFailed(val cause: Throwable) : MensaEvent
     data class LoginFailed(val cause: Throwable) : MensaEvent
-    data class OrderSubmitted(val reservationCode: String?) : MensaEvent
+    data class OrderSubmitted(val reservationCode: String?, val reservationId: Int?) : MensaEvent
     data class OrderFailed(val cause: Throwable) : MensaEvent
     data object OrderCancelled : MensaEvent
     data class CancelFailed(val cause: Throwable) : MensaEvent

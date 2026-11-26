@@ -2173,6 +2173,7 @@
     <string name="mensa_allergens_section_diet">Alimenti da evitare</string>
     <string name="mensa_summary_title">Il tuo ordine</string>
     <string name="mensa_summary_subtitle">Controlla i piatti prima di scegliere il ritiro</string>
+    <string name="mensa_summary_add_more">Aggiungi piatti</string>
     <string name="mensa_summary_continue">Scegli il ritiro</string>
     <string name="mensa_summary_continue_signin">Continua e accedi</string>
     <string name="mensa_summary_empty">Il tuo ordine è vuoto</string>
@@ -2210,12 +2211,20 @@
     <string name="mensa_takeaway_browse_dishes">Scegli piatti dal menù</string>
     <string name="mensa_takeaway_note">Nota per la cucina (opzionale)</string>
     <string name="mensa_takeaway_price_total">Totale stimato</string>
-    <string name="mensa_takeaway_confirm">Conferma ordine Take-Away</string>
+    <string name="mensa_takeaway_confirm">Conferma ordine</string>
     <string name="mensa_takeaway_submitted_title">Ordine inviato</string>
     <string name="mensa_takeaway_submitted_body">Prenotazione Take-Away registrata: %1$s</string>
     <string name="mensa_takeaway_failed">Invio ordine non riuscito</string>
     <string name="mensa_orders_title">I miei ordini</string>
     <string name="mensa_orders_subtitle">Prenotazioni Take-Away attive e passate</string>
+    <string name="mensa_orders_tab_active">Da ritirare</string>
+    <string name="mensa_orders_tab_history">Storico</string>
+    <string name="mensa_orders_active_subtitle">Ordini Take-Away ancora da ritirare</string>
+    <string name="mensa_orders_history_subtitle">Ordini ritirati e passati</string>
+    <string name="mensa_orders_active_empty_title">Niente da ritirare</string>
+    <string name="mensa_orders_active_empty_body">I tuoi prossimi ordini Take-Away compariranno qui, con il codice per il ritiro.</string>
+    <string name="mensa_orders_history_empty_title">Nessun ordine passato</string>
+    <string name="mensa_orders_history_empty_body">Gli ordini ritirati o scaduti finiranno qui.</string>
     <string name="mensa_orders_empty_title">Nessuna prenotazione</string>
     <string name="mensa_orders_empty_body">Qui compariranno i tuoi ordini Take-Away con il codice a barre per il ritiro.</string>
     <string name="mensa_order_detail_title">Dettaglio ordine</string>
@@ -2226,6 +2235,7 @@
     <string name="mensa_order_shift_label">FASCIA RITIRO</string>
     <string name="mensa_order_date_label">DATA</string>
     <string name="mensa_order_dishes_label">PIATTI ORDINATI</string>
+    <string name="mensa_order_show_on_map">Mostra sulla mappa</string>
     <string name="mensa_order_cancel">Annulla ordine</string>
     <string name="mensa_order_cancel_confirmation">Conferma annullamento</string>
     <string name="mensa_order_confirm_cancel">Vuoi davvero annullare la prenotazione %1$s?</string>
