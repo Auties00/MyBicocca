@@ -42,6 +42,8 @@ NODE = re.compile(r'text="([^"]*)"[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"')
 # Icon-only controls show no text, so they are found by their content description instead.
 DESCRIBED_NODE = re.compile(r'content-desc="([^"]*)"[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"')
 STRING = re.compile(r'<string name="([^"]+)"[^>]*>(.*?)</string>', re.S)
+PLURALS = re.compile(r'<plurals name="([^"]+)"[^>]*>(.*?)</plurals>', re.S)
+PLURAL_ITEM = re.compile(r'<item quantity="([^"]+)"[^>]*>(.*?)</item>', re.S)
 
 # Subscreen folders whose name differs from the route class they render.
 SUBSCREEN_ROUTES = {
@@ -83,9 +85,10 @@ class Device:
                 time.sleep(gap)
             self.shell("uiautomator dump /sdcard/window.xml")
             xml = self.shell("cat /sdcard/window.xml")
-            # The app may restyle a label (the calendar switcher upper-cases its own), so compare without case.
+            # The app may restyle a label (the calendar switcher upper-cases its own), so compare without
+            # case, and without the spaces a label with an inline icon starts with ("  Choose pickup").
             for text, *bounds in NODE.findall(xml) + DESCRIBED_NODE.findall(xml):
-                if html.unescape(text).casefold() == label.casefold():
+                if html.unescape(text).strip().casefold() == label.strip().casefold():
                     left, top, right, bottom = map(int, bounds)
                     self.shell(f"input tap {(left + right) // 2} {(top + bottom) // 2}")
                     return True
@@ -165,6 +168,29 @@ def strings_for(language):
             for name, value in STRING.findall(file.read_text(encoding="utf-8")):
                 strings[name] = html.unescape(value).replace("\\'", "'").replace('\\"', '"').strip()
     return strings
+
+
+def plurals_for(language):
+    """Plural resources for a language, as {name: {quantity: text}}, its own values over the default ones."""
+    plurals = {}
+    for folder in (RES / "values", RES / f"values-{language}"):
+        for file in sorted(folder.glob("strings*.xml")):
+            for name, body in PLURALS.findall(file.read_text(encoding="utf-8")):
+                plurals[name] = {
+                    quantity: html.unescape(text).replace("\'", "'").replace('\\"', '"').strip()
+                    for quantity, text in PLURAL_ITEM.findall(body)
+                }
+    return plurals
+
+
+def plural_label(plurals, key):
+    """The text of a "plural:<name>:<count>" tap for this language, or None. Only "one" and "other" are needed so far."""
+    _, name, count = key.split(":")
+    forms = plurals.get(name)
+    if not forms:
+        return None
+    text = forms.get("one" if int(count) == 1 else "other") or forms.get("other")
+    return text.replace("%1$d", count) if text else None
 
 
 def shot_folder(out, language, palette, mode):
@@ -292,7 +318,7 @@ def steady_frame(device, attempts=8, gap=0.7):
     return previous
 
 
-def capture(device, shot, folder, where, strings, args, problems):
+def capture(device, shot, folder, where, strings, plurals, args, problems):
     for attempt in range(2):
         device.send("shot", shot["name"])
         time.sleep(args.settle)
@@ -308,7 +334,13 @@ def capture(device, shot, folder, where, strings, args, problems):
         return
     for key in shot.get("tap", []):
         # "text:..." taps text the app shows that is not a string resource, such as a demo dish name.
-        label = key[len("text:"):] if key.startswith("text:") else strings.get(key)
+        # "plural:<name>:<count>" taps a plural resource as shown for that count.
+        if key.startswith("text:"):
+            label = key[len("text:"):]
+        elif key.startswith("plural:"):
+            label = plural_label(plurals, key)
+        else:
+            label = strings.get(key)
         if label is None:
             problems.append(f"{where}: no string resource named {key}")
         elif not device.tap_label(label):
@@ -389,6 +421,7 @@ def main():
     try:
         for language in args.languages:
             strings = strings_for(language)
+            plurals = plurals_for(language)
             for palette in args.palettes:
                 for mode in args.modes:
                     folder = shot_folder(args.out, language, palette, mode)
@@ -400,7 +433,7 @@ def main():
                     launch(device, args.launch_wait)
                     for shot in shots:
                         where = f"{language}/{folder.name}/{shot['name']}"
-                        capture(device, shot, folder, where, strings, args, problems)
+                        capture(device, shot, folder, where, strings, plurals, args, problems)
     finally:
         device.status_bar("exit")
         device.shell(f"cmd uimode night {'yes' if was_night else 'no'}")

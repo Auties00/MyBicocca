@@ -67,8 +67,15 @@ class ScreenshotCatalogTest {
         val strings = File("src/main/res/values").listFiles { file -> file.name.startsWith("strings") }.orEmpty()
             .flatMap { STRING_NAME.findAll(it.readText()).map { match -> match.groupValues[1] } }
             .toSet()
-        // "text:..." taps text the app shows that is not a string resource, such as a demo dish name.
-        val unknown = catalog.shots.flatMap { it.tap }.filterNot { it.startsWith("text:") || it in strings }
+        val plurals = File("src/main/res/values").listFiles { file -> file.name.startsWith("strings") }.orEmpty()
+            .flatMap { PLURALS_NAME.findAll(it.readText()).map { match -> match.groupValues[1] } }
+            .toSet()
+        // "text:..." taps text the app shows that is not a string resource, such as a demo dish name;
+        // "plural:<name>:<count>" taps a plural resource as shown for that count.
+        val unknown = catalog.shots.flatMap { it.tap }.filterNot {
+            it.startsWith("text:") || it in strings ||
+                (it.startsWith("plural:") && it.split(":").let { parts -> parts.size == 3 && parts[1] in plurals && parts[2].toIntOrNull() != null })
+        }
         assertWithMessage("Tap steps that are not string resource names").that(unknown).isEmpty()
     }
 
@@ -133,6 +140,7 @@ class ScreenshotCatalogTest {
 
     private companion object {
         val STRING_NAME = Regex("""<string name="([^"]+)"""")
+        val PLURALS_NAME = Regex("""<plurals name="([^"]+)"""")
         val buildingJson = Json { ignoreUnknownKeys = true }
     }
 
