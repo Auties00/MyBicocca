@@ -46,16 +46,9 @@ jobs:
         working-directory: web/web-app
         run: npm run lint
 
-      - name: Type-check service worker
+      - name: Type-check app & service worker
         working-directory: web/web-app
-        run: npm run i18n && npx svelte-kit sync && npx tsc -p src/service-worker
-
-      # TODO: remove continue-on-error once pre-existing MoodleWebAttendance type errors in
-      # src/lib/features/attendance/* (introduced when 17583ab5 updated data-api) are resolved.
-      - name: Type-check Svelte app
-        working-directory: web/web-app
-        continue-on-error: true
-        run: npx svelte-check --tsconfig ./tsconfig.json
+        run: npm run check
 
       - name: Type-check workspaces
         working-directory: web/web-app

@@ -40,12 +40,19 @@ export function certifyOutcome(result: EasyStaffCertifyAttendanceResult): CheckI
 	return { kind: 'failed', reason: 'generic', message };
 }
 
+const normalizeSpace = (text: string): string => text.trim().replace(/\s+/g, ' ');
+
 /**
  * Reads marking's outcome off the template `mobile_view_activity` renders after it. Every
  * blocking condition is a message; otherwise marking drops the session's button and shows its
- * status, the last heading. A session still offering its button wasn't marked: it closed.
+ * status in the last non-empty heading. A session still offering its button wasn't marked: it
+ * closed.
  */
-export function markOutcome(page: MoodleWebAttendanceMarkPage, sessionId: string): CheckInOutcome {
+export function markOutcome(
+	page: MoodleWebAttendanceMarkPage,
+	sessionId: string,
+	sessionTime?: string
+): CheckInOutcome {
 	const keys = new Set(page.messages.map((message) => message.key));
 	if (keys.has('incorrectpasswordshort')) return { kind: 'wrong-credential', message: null };
 	if (keys.has('preventsharederror')) return { kind: 'device-already-used' };
@@ -53,8 +60,22 @@ export function markOutcome(page: MoodleWebAttendanceMarkPage, sessionId: string
 	if (keys.has('attendance_no_status') || keys.has('invalidstatus')) {
 		return { kind: 'failed', reason: 'generic', message: null };
 	}
-	if (page.markActions.some((action) => action.sessionId === sessionId)) {
+	const matching =
+		sessionTime === undefined
+			? page.sessions
+			: page.sessions.filter((item) => normalizeSpace(item.time) === normalizeSpace(sessionTime));
+	const items = matching.length > 0 ? matching : page.sessions;
+	if (items.some((item) => item.markActions.some((action) => action.sessionId === sessionId))) {
 		return { kind: 'not-open', reason: 'closed' };
 	}
-	return { kind: 'recorded', status: page.headings.at(-1)?.trim() || null, message: null };
+	const status =
+		items
+			.map((item) =>
+				item.headings
+					.map((heading) => heading.trim())
+					.filter(Boolean)
+					.at(-1)
+			)
+			.find((heading) => heading !== undefined) ?? null;
+	return { kind: 'recorded', status, message: null };
 }

@@ -134,7 +134,7 @@ async function registersOf(
 				{
 					cmId: module.cmId,
 					name: module.name,
-					attended: summary.attendedSessions,
+					attended: summary.takenSessions,
 					recordedPercentage: summary.takenSessionsPercentage
 				}
 			];
