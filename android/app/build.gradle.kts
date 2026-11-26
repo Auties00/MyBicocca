@@ -331,6 +331,8 @@ dependencies {
     implementation("androidx.compose.foundation:foundation")
     // Animated vector drawables in Compose (AnimatedImageVector, e.g. the crash screen's bug wiggle)
     implementation("androidx.compose.animation:animation-graphics")
+    // An animated vector drawable whose frame can be set, so a back gesture can scrub it (the Mensa bag)
+    implementation("androidx.vectordrawable:vectordrawable-seekable:1.0.0")
 
     // Core library desugaring for java.time API on older Android versions
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")

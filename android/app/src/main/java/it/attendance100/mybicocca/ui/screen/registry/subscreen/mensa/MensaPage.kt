@@ -1,5 +1,9 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa
 
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component.MENSA_BAG_RETURN_MS
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component.LocalMensaBagOpenness
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateMapOf
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component.LocalMensaDishAvailability
 import it.attendance100.mybicocca.domain.model.mensa.availabilityAt
 import it.attendance100.mybicocca.domain.model.mensa.isUpcoming
@@ -55,6 +59,7 @@ import it.attendance100.mybicocca.ui.component.modal.SheetConfirmPage
 import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
 import it.attendance100.mybicocca.ui.component.modal.SheetOutcome
 import it.attendance100.mybicocca.ui.component.modal.SheetPager
+import it.attendance100.mybicocca.ui.component.screen.FullScreenBrightness
 import it.attendance100.mybicocca.ui.component.modal.SheetResultPage
 import it.attendance100.mybicocca.ui.component.modal.rememberLastNonNull
 import it.attendance100.mybicocca.ui.navigation.DisposableEffectOnPop
@@ -324,6 +329,7 @@ fun MensaPage(
         is MensaDisplay.Page -> if (depth > 0 && !busy && !display.inMenu) MensaDisplay.Page(backStack[depth - 1], depth - 1) else null
     }
     val shownCancel = rememberLastNonNull(pendingCancel)
+    val bagOpenness = remember { mutableStateMapOf<Int, State<Float>>() }
 
     SharedTransitionLayout {
     val sharedScope = this
@@ -341,6 +347,12 @@ fun MensaPage(
         },
         modifier = Modifier.testTag(MensaTestTags.ROOT),
         key = { displayKey(it) },
+        // Leaving a booking, the page waits for its bag to take the dishes back before moving.
+        holdMillis = { from, to ->
+            val leaving = ((from as? MensaDisplay.Page)?.page as? MensaSubPage.ReservationDetail)?.reservationId
+            val hasDishes = leaving != null && reservationList.any { it.id == leaving && it.dishes.isNotEmpty() }
+            if (hasDishes && displayDepth(to) < displayDepth(from)) MENSA_BAG_RETURN_MS else 0
+        },
         header = { target ->
             SheetHeaderSpec(
                 title = when (target) {
@@ -439,6 +451,7 @@ fun MensaPage(
         }
         CompositionLocalProvider(
             LocalMensaShared provides MensaSharedScopes(sharedScope, this),
+            LocalMensaBagOpenness provides bagOpenness,
             LocalMensaDishAvailability provides dishAvailability,
         ) {
         // Only the handle and the header move the sheet: a scroll or drag in a page never closes it.
@@ -711,9 +724,11 @@ fun MensaPage(
                     when {
                         reservation != null -> {
                             val pickupPoint = pickupPoints[reservation.id]
+                            val upcoming = reservation.isUpcoming(LocalDate.now(AppClock.clock))
+                            // Its barcode is shown at the till: a booking still to collect lights the screen up.
+                            if (upcoming) FullScreenBrightness()
                             // Only while there is still something to collect there.
-                            val building = pickupPoint?.let(::mensaPickupBuilding)
-                                ?.takeIf { reservation.isUpcoming(LocalDate.now(AppClock.clock)) }
+                            val building = pickupPoint?.let(::mensaPickupBuilding)?.takeIf { upcoming }
                             MensaReservationDetailPage(
                                 reservation = reservation,
                                 pickupPoint = pickupPoint,
