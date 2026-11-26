@@ -1,9 +1,9 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa
 
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component.MENSA_BAG_RETURN_MS
-import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component.LocalMensaBagOpenness
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component.LocalMensaBagStage
+import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component.MensaBagStage
 import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateMapOf
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component.LocalMensaDishAvailability
 import it.attendance100.mybicocca.domain.model.mensa.availabilityAt
 import it.attendance100.mybicocca.domain.model.mensa.isUpcoming
@@ -329,7 +329,7 @@ fun MensaPage(
         is MensaDisplay.Page -> if (depth > 0 && !busy && !display.inMenu) MensaDisplay.Page(backStack[depth - 1], depth - 1) else null
     }
     val shownCancel = rememberLastNonNull(pendingCancel)
-    val bagOpenness = remember { mutableStateMapOf<Int, State<Float>>() }
+    val bagStage = remember { MensaBagStage() }
 
     SharedTransitionLayout {
     val sharedScope = this
@@ -451,7 +451,7 @@ fun MensaPage(
         }
         CompositionLocalProvider(
             LocalMensaShared provides MensaSharedScopes(sharedScope, this),
-            LocalMensaBagOpenness provides bagOpenness,
+            LocalMensaBagStage provides bagStage,
             LocalMensaDishAvailability provides dishAvailability,
         ) {
         // Only the handle and the header move the sheet: a scroll or drag in a page never closes it.

@@ -157,15 +157,7 @@ internal fun <P : Any> SheetPagerImpl(
     PredictiveBackHandler(enabled = backTo != null) { progress ->
         val target = backTo ?: return@PredictiveBackHandler
         try {
-            progress.collect { event ->
-                // A page that holds before changing lets the finger scrub only that hold: what the
-                // leaving page plays first. The page change itself runs once the gesture commits,
-                // as an animation, since scrubbing a shared element's flight restarts it each frame.
-                val holdNanos = holdMillis(state.currentState, target) * 1_000_000L
-                val totalNanos = transition.totalDurationNanos
-                val reach = if (holdNanos > 0 && totalNanos > holdNanos) holdNanos.toFloat() / totalNanos else 1f
-                state.seekTo(event.progress * reach, targetState = target)
-            }
+            progress.collect { event -> state.seekTo(event.progress, targetState = target) }
         } catch (cancelled: CancellationException) {
             rewindScope.launch { state.rewindTo(latestPage, transition.totalDurationNanos) }
             throw cancelled

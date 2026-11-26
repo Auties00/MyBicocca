@@ -1,17 +1,23 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component
 
 import android.content.Context
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.boundsInWindow
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.getValue
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.keyframes
+import androidx.compose.animation.SharedTransitionScope
 import androidx.annotation.DrawableRes
-import androidx.compose.animation.BoundsTransform
 import androidx.compose.animation.EnterExitState
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.core.EaseOutBack
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.VisibilityThreshold
 import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
@@ -27,7 +33,6 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,7 +44,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -84,76 +88,89 @@ private const val RISE_MS = 700
 private const val HERO_MS = RISE_START_MS + RISE_MS + BAG_OPEN_MS
 
 /**
- * Going back, the booking page holds still this long while the same sequence plays backwards: the
- * bag opens, takes the dishes back and closes. Only then does it fly home.
+ * Going back, the booking page holds still this long while the bag opens and takes the dishes
+ * back; it closes again on its way home, as the page changes.
  */
-internal const val MENSA_BAG_RETURN_MS = 560
+internal const val MENSA_BAG_RETURN_MS = 240
+
+/** Where the timeline is once every dish is back in the bag: the start of their rise. */
+private const val DISHES_IN = RISE_START_MS.toFloat() / HERO_MS
 
 /** The two halves of the bag, each its own shared element so the dishes can come out between them. */
 private enum class BagLayer { Back, Front }
 
 /**
- * How open each booking's bag is in the booking page on screen (0 shut, 1 open), by reservation id.
- * While that page leaves, the bag flying home is drawn by the page it lands on, which reads the
- * same value so the bag keeps opening and closing on the way.
+ * The bags of the Mensa sheet's pages, by reservation id. A booking page on screen puts in how
+ * open its bag is; a card with a shut bag puts in where that bag sits on screen, which is where the
+ * booking's bag flies when its page is left.
  */
-internal val LocalMensaBagOpenness = staticCompositionLocalOf<SnapshotStateMap<Int, State<Float>>?> { null }
+internal class MensaBagStage {
+    val bookings = mutableStateMapOf<Int, State<Float>>()
+    val homes = mutableStateMapOf<Int, Rect>()
+}
+
+internal val LocalMensaBagStage = staticCompositionLocalOf<MensaBagStage?> { null }
 
 /**
- * The take-away bag of booking [reservationId]. In the Mensa sheet it is a shared element, so the
- * bag on the hub's card flies to the top of the booking it opens, and back.
+ * The take-away bag of booking [reservationId] on a card. In the Mensa sheet it is a shared element,
+ * so it flies to the top of the booking it opens; coming back, that booking's own bag flies here.
  */
 @Composable
 internal fun MensaBookingBag(reservationId: Int, width: Dp, modifier: Modifier = Modifier) {
-    val openness = LocalMensaBagOpenness.current?.get(reservationId)
-    Box(modifier.width(width).aspectRatio(BAG_ASPECT_RATIO)) {
-        if (openness != null) {
-            // Standing in for the booking's bag on its way home: open as much as that one is.
-            BagLayerImage(R.drawable.mensa_art_takeaway_bag_open_back, openness, reservationId, BagLayer.Back)
-            BagLayerImage(R.drawable.mensa_art_takeaway_bag_open_front, openness, reservationId, BagLayer.Front)
-        } else {
-            // A shut bag is one drawing; the back half's place is kept for the booking's two halves.
-            Spacer(Modifier.matchParentSize().mensaBagElement(reservationId, BagLayer.Back))
-            Image(
-                painter = painterResource(R.drawable.mensa_art_takeaway_bag_simple),
-                contentDescription = null,
-                modifier = Modifier.matchParentSize().mensaBagElement(reservationId, BagLayer.Front),
-            )
-        }
+    val stage = LocalMensaBagStage.current
+    // While the booking's page is on screen its bag is the one to see, also on its way back here.
+    val inBooking = stage?.bookings?.containsKey(reservationId) == true
+    DisposableEffect(stage, reservationId) {
+        onDispose { stage?.homes?.remove(reservationId) }
+    }
+    Box(
+        modifier
+            .width(width)
+            .aspectRatio(BAG_ASPECT_RATIO)
+            .onGloballyPositioned { stage?.homes?.set(reservationId, it.boundsInWindow()) }
+            .graphicsLayer { alpha = if (inBooking) 0f else 1f },
+    ) {
+        // A shut bag is one drawing; the back half's place is kept for the booking's two halves.
+        Spacer(Modifier.matchParentSize().mensaBagElement(reservationId, BagLayer.Back))
+        Image(
+            painter = painterResource(R.drawable.mensa_art_takeaway_bag_simple),
+            contentDescription = null,
+            modifier = Modifier.matchParentSize().mensaBagElement(reservationId, BagLayer.Front),
+        )
     }
 }
 
+/**
+ * The bag as a shared element, flying from its card into the booking. [shared] turns it off: the
+ * booking's bag makes its own way back, following the page change, so a back gesture can scrub it.
+ */
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-private fun Modifier.mensaBagElement(reservationId: Int, layer: BagLayer): Modifier {
+private fun Modifier.mensaBagElement(reservationId: Int, layer: BagLayer, shared: () -> Boolean = { true }): Modifier {
     val scopes = LocalMensaShared.current ?: return this
-    val heroWidthPx = with(LocalDensity.current) { HeroBagWidth.toPx() }
-    val boundsTransform = remember(heroWidthPx) { bagBoundsTransform(heroWidthPx) }
+    val config = remember(shared) { BagShareConfig(shared) }
     return with(scopes.transition) {
         this@mensaBagElement.sharedElement(
-            sharedContentState = rememberSharedContentState(key = "mensa_bag_${layer.name}_$reservationId"),
+            sharedContentState = rememberSharedContentState(key = "mensa_bag_${layer.name}_$reservationId", config = config),
             animatedVisibilityScope = scopes.visibility,
-            boundsTransform = boundsTransform,
             zIndexInOverlay = layer.ordinal.toFloat(),
         )
     }
 }
 
-/** Leaving a booking, the bag waits for its dishes to go back in before it flies home. */
 @OptIn(ExperimentalSharedTransitionApi::class)
-private fun bagBoundsTransform(heroWidthPx: Float) = BoundsTransform { initial, target ->
-    val leavingBooking = abs(initial.width - heroWidthPx) < 1f && target.width < initial.width
-    if (leavingBooking) {
-        tween(SheetMotion.PAGE_MS, delayMillis = MENSA_BAG_RETURN_MS, easing = FastOutSlowInEasing)
-    } else {
-        spring(stiffness = Spring.StiffnessMediumLow, visibilityThreshold = Rect.VisibilityThreshold)
-    }
+private class BagShareConfig(private val shared: () -> Boolean) : SharedTransitionScope.SharedContentConfig {
+    override val SharedTransitionScope.SharedContentState.isEnabled: Boolean get() = shared()
+
+    // Off at once, even mid-flight: the bag's own way back takes over from there.
+    override val shouldKeepEnabledForOngoingAnimation: Boolean get() = false
 }
 
 /**
  * The top of a booking: its bag, which once landed opens, lets the ordered dishes rise out of it
- * and closes again. The whole sequence is part of the page change, so a back gesture plays it
- * backwards as the finger moves, and a cancelled one plays it forwards again.
+ * and closes again. Leaving the page it plays backwards, quicker: the page holds while the bag
+ * opens and takes the dishes back, then the bag closes as it flies home. All of it is part of the
+ * page change, so a back gesture scrubs it as the finger moves, and a cancelled one plays it back.
  */
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -161,12 +178,16 @@ internal fun MensaBookingBagHero(reservationId: Int, dishes: List<MensaDish>, mo
     val shown = dishes.take(MAX_PLATES)
     val timeline = rememberHeroTimeline(shown.isNotEmpty())
     val openness = remember(timeline) { derivedStateOf { bagOpenness(timeline.value) } }
-    val registry = LocalMensaBagOpenness.current
-    DisposableEffect(registry, reservationId, openness) {
-        registry?.set(reservationId, openness)
-        onDispose { if (registry?.get(reservationId) === openness) registry.remove(reservationId) }
+    val stage = LocalMensaBagStage.current
+    DisposableEffect(stage, reservationId, openness) {
+        stage?.bookings?.set(reservationId, openness)
+        onDispose { if (stage?.bookings?.get(reservationId) === openness) stage.bookings.remove(reservationId) }
     }
     val scopes = LocalMensaShared.current
+    val visibility = scopes?.visibility
+    val leaving = remember(visibility) { { visibility?.transition?.targetState == EnterExitState.PostExit } }
+    val flight = rememberBagFlight()
+    val flightOf = remember(stage, reservationId) { BagFlight(stage, reservationId) }
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -174,14 +195,20 @@ internal fun MensaBookingBagHero(reservationId: Int, dishes: List<MensaDish>, mo
     ) {
         BagLayerImage(
             R.drawable.mensa_art_takeaway_bag_open_back, openness, reservationId, BagLayer.Back,
-            Modifier.align(Alignment.BottomCenter).width(HeroBagWidth),
+            Modifier
+                .align(Alignment.BottomCenter)
+                .width(HeroBagWidth)
+                .flyingHome(flightOf, flight, leaving, BagLayer.Back, reportStart = true),
+            shared = { !leaving() },
         )
         // Between the bag's two halves, so a dish still inside is hidden behind the front; during a
         // page change too, when the halves are drawn above the pages.
         shown.forEachIndexed { index, dish ->
             val art = remember(dish) { MensaDishArtwork.forDish(dish) }
             val betweenHalves = if (scopes != null) {
-                with(scopes.transition) { Modifier.renderInSharedTransitionScopeOverlay(zIndexInOverlay = 0.5f) }
+                with(scopes.transition) {
+                    Modifier.renderInSharedTransitionScopeOverlay(renderInOverlay = { isTransitionActive || leaving() }, zIndexInOverlay = 0.5f)
+                }
             } else {
                 Modifier
             }
@@ -197,9 +224,72 @@ internal fun MensaBookingBagHero(reservationId: Int, dishes: List<MensaDish>, mo
         }
         BagLayerImage(
             R.drawable.mensa_art_takeaway_bag_open_front, openness, reservationId, BagLayer.Front,
-            Modifier.align(Alignment.BottomCenter).width(HeroBagWidth),
+            Modifier
+                .align(Alignment.BottomCenter)
+                .width(HeroBagWidth)
+                .flyingHome(flightOf, flight, leaving, BagLayer.Front, reportStart = false),
+            shared = { !leaving() },
         )
     }
+}
+
+/** Where a booking's bag starts its way home from, and the card it flies to. */
+private class BagFlight(private val stage: MensaBagStage?, private val reservationId: Int) {
+    var start by mutableStateOf<Rect?>(null)
+    val home: Rect? get() = stage?.homes?.get(reservationId)
+}
+
+/**
+ * Takes a leaving booking's bag half to its card's bag, as far as [flight] says, drawn above the
+ * pages so it does not fade with the one it leaves. With no card to land on it stays and fades.
+ */
+@OptIn(ExperimentalSharedTransitionApi::class)
+@Composable
+private fun Modifier.flyingHome(
+    bag: BagFlight,
+    flight: State<Float>,
+    leaving: () -> Boolean,
+    layer: BagLayer,
+    reportStart: Boolean,
+): Modifier {
+    val scopes = LocalMensaShared.current ?: return this
+    val measured = if (reportStart) onGloballyPositioned { bag.start = it.boundsInWindow() } else this
+    return with(scopes.transition) {
+        measured
+            .renderInSharedTransitionScopeOverlay(
+                // Its own flight, not a shared element's, so this is not counted as a transition in progress.
+                renderInOverlay = { leaving() && bag.home != null },
+                zIndexInOverlay = layer.ordinal.toFloat(),
+            )
+            .graphicsLayer {
+                val from = bag.start
+                val home = bag.home
+                val t = flight.value
+                if (from == null || home == null || t <= 0f || from.width <= 0f) return@graphicsLayer
+                transformOrigin = TransformOrigin(0f, 0f)
+                val scale = lerp(1f, home.width / from.width, t)
+                scaleX = scale
+                scaleY = scale
+                translationX = (home.left - from.left) * t
+                translationY = (home.top - from.top) * t
+            }
+    }
+}
+
+/** 0 until the page leaves, then 1 once the bag is home: its flight, after the page's hold. */
+@Composable
+private fun rememberBagFlight(): State<Float> {
+    val visibility = LocalMensaShared.current?.visibility ?: return remember { mutableFloatStateOf(0f) }
+    return visibility.transition.animateFloat(
+        transitionSpec = {
+            if (targetState == EnterExitState.PostExit) {
+                tween(SheetMotion.PAGE_MS, delayMillis = MENSA_BAG_RETURN_MS, easing = FastOutSlowInEasing)
+            } else {
+                snap()
+            }
+        },
+        label = "mensa_bag_flight",
+    ) { if (it == EnterExitState.PostExit) 1f else 0f }
 }
 
 /** One half of the bag, drawn at the frame [openness] gives it. */
@@ -210,6 +300,7 @@ private fun BoxScope.BagLayerImage(
     reservationId: Int,
     layer: BagLayer,
     modifier: Modifier = Modifier.matchParentSize(),
+    shared: () -> Boolean = { true },
 ) {
     val context = LocalContext.current
     val painter = remember(drawable, openness) { BagLayerPainter(BagLayers.get(context, drawable)) { openness.value } }
@@ -217,7 +308,7 @@ private fun BoxScope.BagLayerImage(
         painter = painter,
         contentDescription = null,
         modifier = modifier
-            .mensaBagElement(reservationId, layer)
+            .mensaBagElement(reservationId, layer, shared)
             .aspectRatio(BAG_ASPECT_RATIO),
     )
 }
@@ -261,7 +352,7 @@ private fun bagOpenness(timeline: Float): Float {
 /**
  * 0 with the bag shut and every dish inside, 1 once they are all out and it has shut again;
  * follows the page's own transition, so it is seekable with it. Leaving the page it runs back to
- * 0 while the page holds still, before the bag flies home.
+ * where the dishes are in while the page holds still, and on to 0 as the bag flies home.
  */
 @Composable
 private fun rememberHeroTimeline(hasDishes: Boolean): State<Float> {
@@ -273,7 +364,12 @@ private fun rememberHeroTimeline(hasDishes: Boolean): State<Float> {
                 // Once the bag has landed.
                 tween(durationMillis = HERO_MS, delayMillis = SheetMotion.PAGE_MS, easing = LinearEasing)
             } else {
-                tween(durationMillis = MENSA_BAG_RETURN_MS, easing = LinearEasing)
+                // The bag opens and the dishes go in while the page holds; it shuts on its way home.
+                keyframes {
+                    durationMillis = MENSA_BAG_RETURN_MS + SheetMotion.PAGE_MS / 2
+                    1f at 0
+                    DISHES_IN at MENSA_BAG_RETURN_MS
+                }
             }
         },
         label = "mensa_bag_hero",
