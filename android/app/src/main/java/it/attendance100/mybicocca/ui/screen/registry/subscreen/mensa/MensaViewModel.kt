@@ -530,15 +530,16 @@ class MensaViewModel @Inject constructor(
     }
 
     /**
-     * Pre-selects a place from the Campus Map and opens the sheet on the day step, since the place
-     * and its menu are known. Someone who avoids gluten gets the gluten-free menu in the canteen's place.
+     * Pre-selects a place from the Campus Map. A canteen opens on its choice of menu, the place being
+     * known; a bar has one menu, so it opens on the day step. For someone who avoids gluten the
+     * canteen's choice starts on the gluten-free menu.
      */
     fun preselectPlace(place: MensaPlace) {
         _selectedPlace.value = place
         selectMenu(defaultMenuFor(place))
         ensureMealAllowed()
         _menuContextConfirmed.value = false
-        _backStack.value = listOf(MensaSubPage.Home, MensaSubPage.MenuSetup)
+        _backStack.value = listOf(MensaSubPage.Home, if (place.hasMenuChoice) MensaSubPage.MenuPicker else MensaSubPage.MenuSetup)
     }
 
     /** Opens the Menu so dishes can be added to the order; goes back when it is already underneath. */

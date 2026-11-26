@@ -425,6 +425,21 @@ class MensaViewModelTest {
     }
 
     @Test
+    fun `a canteen picked on the campus map asks which menu, then the day`() = runTest {
+        val vm = createViewModel()
+        advanceUntilIdle()
+
+        vm.preselectPlace(MensaPlace.CANTEEN_U12)
+        advanceUntilIdle()
+        assertThat(vm.selectedPlace.value).isEqualTo(MensaPlace.CANTEEN_U12)
+        assertThat(vm.backStack.value).containsExactly(MensaSubPage.Home, MensaSubPage.MenuPicker).inOrder()
+
+        vm.pickMenu(598)
+        assertThat(vm.selectedMenuId.value).isEqualTo(598)
+        assertThat(vm.backStack.value).containsExactly(MensaSubPage.Home, MensaSubPage.MenuPicker, MensaSubPage.MenuSetup).inOrder()
+    }
+
+    @Test
     fun `the canteen from the map becomes the gluten-free menu for someone avoiding gluten`() = runTest {
         preferencesFlow.value = MensaAllergenPreferences(allergenIds = setOf(37))
         val vm = createViewModel()
