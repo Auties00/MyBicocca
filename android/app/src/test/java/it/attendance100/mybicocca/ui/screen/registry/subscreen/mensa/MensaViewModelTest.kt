@@ -51,6 +51,7 @@ import it.attendance100.mybicocca.domain.model.mensa.MensaFavourite
 import it.attendance100.mybicocca.domain.model.mensa.MensaFavouriteSettings
 import it.attendance100.mybicocca.domain.repository.MensaFavouritesRepository
 import it.attendance100.mybicocca.data.mensa.MensaFavouritesScheduler
+import it.attendance100.mybicocca.domain.repository.MensaPickupPointRepository
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MensaViewModelTest {
@@ -66,6 +67,7 @@ class MensaViewModelTest {
     private val favouritesFlow = MutableStateFlow<List<MensaFavourite>>(emptyList())
     private val favouritesRepository: MensaFavouritesRepository = mockk(relaxed = true)
     private val favouritesScheduler: MensaFavouritesScheduler = mockk(relaxed = true)
+    private val pickupPointRepository: MensaPickupPointRepository = mockk(relaxed = true)
     private val eligibility = MensaEligibility(LocalDate.of(2026, 11, 18), listOf(MensaMealRule(MensaMealRuleId.FULL_MENU, 660)))
 
     private val today: LocalDate = LocalDate.now(AppClock.clock)
@@ -210,7 +212,7 @@ class MensaViewModelTest {
         coEvery { eligibilityProvider.getEligibility() } returns eligibility
         every { favouritesRepository.observeFavourites() } returns favouritesFlow
         every { favouritesRepository.observeSettings() } returns MutableStateFlow(MensaFavouriteSettings())
-        return MensaViewModel(repository, preferencesRepository, eligibilityProvider, favouritesRepository, favouritesScheduler)
+        return MensaViewModel(repository, preferencesRepository, eligibilityProvider, favouritesRepository, favouritesScheduler, pickupPointRepository)
     }
 
     @Test

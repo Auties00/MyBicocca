@@ -72,6 +72,7 @@ internal fun MensaHubPage(
     modifier: Modifier = Modifier,
     tray: MensaHubTray = MensaHubTray(),
     today: LocalDate = LocalDate.now(AppClock.clock),
+    pickupPoints: Map<Int, String> = emptyMap(),
     playTrayIntro: Boolean = false,
     onTrayIntroPlayed: () -> Unit = {},
 ) {
@@ -94,7 +95,7 @@ internal fun MensaHubPage(
                     onClick = onOpenMenu,
                     modifier = Modifier.weight(1f),
                 ) { MensaPlateTrio(middleSize = 72.dp, modifier = Modifier.align(Alignment.TopEnd).offset(x = (-4).dp, y = 16.dp)) }
-                BookingBox(booking = booking, today = today, onClick = { onOpenBooking(booking) }, modifier = Modifier.weight(1f))
+                BookingBox(booking = booking, today = today, pickupPoint = pickupPoints[booking.id], onClick = { onOpenBooking(booking) }, modifier = Modifier.weight(1f))
             }
         } else {
             MensaMenuTrayCard(
@@ -201,7 +202,13 @@ private fun HubBox(
 
 /** The next booking to pick up, as big as the menu card: when, which meal, where, and its code. */
 @Composable
-private fun BookingBox(booking: MensaReservation, today: LocalDate, onClick: () -> Unit, modifier: Modifier = Modifier) {
+private fun BookingBox(
+    booking: MensaReservation,
+    today: LocalDate,
+    pickupPoint: String?,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val locale = currentLocale()
     val day = when (booking.date) {
         today -> stringResource(R.string.mensa_today)
@@ -214,7 +221,11 @@ private fun BookingBox(booking: MensaReservation, today: LocalDate, onClick: () 
         label = stringResource(R.string.mensa_hub_booking_label),
         // When, and the pickup shift; the code and the rest are one tap away in the booking.
         title = day,
-        body = booking.shiftName?.takeIf { it.isNotBlank() } ?: booking.mealTypeName.orEmpty(),
+        // The shift, and where to collect it when the booking was made here.
+        body = listOfNotNull(
+            booking.shiftName?.takeIf { it.isNotBlank() } ?: booking.mealTypeName,
+            pickupPoint,
+        ).joinToString("\n"),
         onClick = onClick,
         modifier = modifier,
     ) {

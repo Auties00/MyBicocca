@@ -2220,6 +2220,7 @@
     <string name="mensa_orders_empty_body">Qui compariranno i tuoi ordini Take-Away con il codice a barre per il ritiro.</string>
     <string name="mensa_order_detail_title">Dettaglio ordine</string>
     <string name="mensa_order_barcode_label">CODICE RITIRO CASSA</string>
+    <string name="mensa_order_pickup_label">PUNTO DI RITIRO</string>
     <string name="mensa_order_code_label">CODICE PRENOTAZIONE</string>
     <string name="mensa_order_canteen_label">MENSA</string>
     <string name="mensa_order_shift_label">FASCIA RITIRO</string>

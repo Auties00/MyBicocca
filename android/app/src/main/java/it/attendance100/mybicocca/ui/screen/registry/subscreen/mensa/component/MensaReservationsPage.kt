@@ -25,6 +25,7 @@ import androidx.compose.material.icons.outlined.ConfirmationNumber
 import androidx.compose.material.icons.outlined.QrCode2
 import androidx.compose.material.icons.outlined.Restaurant
 import androidx.compose.material.icons.outlined.Schedule
+import androidx.compose.material.icons.outlined.Storefront
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -194,6 +195,7 @@ internal fun MensaReservationsPage(
 @Composable
 internal fun MensaReservationDetailPage(
     reservation: MensaReservation,
+    pickupPoint: String?,
     isCancelling: Boolean,
     onCancel: (MensaReservation) -> Unit,
     modifier: Modifier = Modifier,
@@ -269,6 +271,13 @@ internal fun MensaReservationDetailPage(
                 }
             }
 
+            pickupPoint?.let { place ->
+                DetailFactCard(
+                    icon = Icons.Outlined.Storefront,
+                    label = stringResource(R.string.mensa_order_pickup_label),
+                    value = place,
+                )
+            }
             if (reservation.code.isNotBlank()) {
                 DetailFactCard(
                     icon = Icons.Outlined.ConfirmationNumber,
@@ -367,6 +376,6 @@ private fun ReservationsPreview(@PreviewParameter(MensaPreviewThemeProvider::cla
 @Composable
 private fun ReservationDetailPreview(@PreviewParameter(MensaPreviewThemeProvider::class) theme: MensaPreviewTheme) {
     MensaPreviewHost(theme) {
-        MensaReservationDetailPage(reservation = MensaPreviewOrders.reservation, isCancelling = false, onCancel = {})
+        MensaReservationDetailPage(reservation = MensaPreviewOrders.reservation, pickupPoint = "Mensa U12", isCancelling = false, onCancel = {})
     }
 }

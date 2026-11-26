@@ -2215,6 +2215,7 @@
     <string name="mensa_orders_empty_body">Your Take-Away orders and pickup barcodes will appear here.</string>
     <string name="mensa_order_detail_title">Order detail</string>
     <string name="mensa_order_barcode_label">PICKUP BARCODE</string>
+    <string name="mensa_order_pickup_label">PICKUP POINT</string>
     <string name="mensa_order_code_label">BOOKING CODE</string>
     <string name="mensa_order_canteen_label">CANTEEN</string>
     <string name="mensa_order_shift_label">PICKUP SLOT</string>

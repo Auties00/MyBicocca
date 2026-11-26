@@ -132,6 +132,7 @@ fun MensaPage(
     val menus by viewModel.menus.collectAsStateWithLifecycle()
     val hubTray by viewModel.hubTray.collectAsStateWithLifecycle()
     val today by viewModel.today.collectAsStateWithLifecycle()
+    val pickupPoints by viewModel.pickupPoints.collectAsStateWithLifecycle()
     val menusStatus by viewModel.menusStatus.collectAsStateWithLifecycle()
     val selectedPlace by viewModel.selectedPlace.collectAsStateWithLifecycle()
     val orderAvailability by viewModel.orderAvailability.collectAsStateWithLifecycle()
@@ -479,6 +480,7 @@ fun MensaPage(
                     onOpenCatalog = viewModel::openFoodCatalog,
                     tray = hubTray,
                     today = today,
+                    pickupPoints = pickupPoints,
                     playTrayIntro = !viewModel.hubTrayIntroPlayed,
                     onTrayIntroPlayed = viewModel::markHubTrayIntroPlayed,
                 )
@@ -690,6 +692,7 @@ fun MensaPage(
                     when {
                         reservation != null -> MensaReservationDetailPage(
                             reservation = reservation,
+                            pickupPoint = pickupPoints[reservation.id],
                             isCancelling = cancellingId == reservation.id,
                             onCancel = { pendingCancel = it },
                         )

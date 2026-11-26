@@ -1,5 +1,6 @@
 package it.attendance100.mybicocca.di
 
+import it.attendance100.mybicocca.demo.repository.DemoMensaPickupPointRepository
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -68,6 +69,7 @@ import it.attendance100.mybicocca.domain.repository.MapRepository
 import it.attendance100.mybicocca.demo.repository.DemoMensaFavouritesRepository
 import it.attendance100.mybicocca.domain.repository.MensaAllergenPreferencesRepository
 import it.attendance100.mybicocca.domain.repository.MensaFavouritesRepository
+import it.attendance100.mybicocca.domain.repository.MensaPickupPointRepository
 import it.attendance100.mybicocca.domain.repository.MensaEligibilityProvider
 import it.attendance100.mybicocca.domain.repository.MensaRepository
 import it.attendance100.mybicocca.domain.repository.MensaSignUpRepository
@@ -200,6 +202,10 @@ abstract class RepositoryModule {
     @Binds
     @Singleton
     abstract fun bindMensaFavouritesRepository(impl: DemoMensaFavouritesRepository): MensaFavouritesRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindMensaPickupPointRepository(impl: DemoMensaPickupPointRepository): MensaPickupPointRepository
 
     @Binds
     @Singleton

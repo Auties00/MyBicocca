@@ -57,6 +57,7 @@ import javax.inject.Inject
 import it.attendance100.mybicocca.domain.model.mensa.MensaFavourite
 import it.attendance100.mybicocca.domain.model.mensa.MensaFavouriteSettings
 import it.attendance100.mybicocca.domain.repository.MensaFavouritesRepository
+import it.attendance100.mybicocca.domain.repository.MensaPickupPointRepository
 import it.attendance100.mybicocca.data.mensa.MensaFavouritesScheduler
 import kotlinx.coroutines.flow.first
 import it.attendance100.mybicocca.domain.model.mensa.onePerCourse
@@ -74,7 +75,12 @@ class MensaViewModel @Inject constructor(
     private val eligibilityProvider: MensaEligibilityProvider,
     private val favouritesRepository: MensaFavouritesRepository,
     private val favouritesScheduler: MensaFavouritesScheduler,
+    private val pickupPointRepository: MensaPickupPointRepository,
 ) : ViewModel() {
+
+    /** Where each booking made in this app is picked up, by reservation id. */
+    val pickupPoints: StateFlow<Map<Int, String>> = pickupPointRepository.observe()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyMap())
 
     val favourites: StateFlow<List<MensaFavourite>> = favouritesRepository.observeFavourites()
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
@@ -985,6 +991,9 @@ class MensaViewModel @Inject constructor(
         val turnId = _selectedTimeSlotId.value ?: return
         val qtyMap = _cartDishes.value.mapValues { it.value.quantity }.filterValues { it > 0 }
         if (qtyMap.isEmpty()) return
+        // The name the order page shows for where to collect it, kept with the booking.
+        val pickupPoint = _selectedPlace.value?.displayName
+            ?: service.pickupLocations.firstOrNull { it.id == _selectedPickupLocationId.value }?.name
 
         _submittingOrder.value = true
         viewModelScope.launch {
@@ -1000,7 +1009,10 @@ class MensaViewModel @Inject constructor(
                     userNote = _orderNote.value,
                 )
             }.fold(
-                onSuccess = { (_, code) ->
+                onSuccess = { (reservationId, code) ->
+                    if (reservationId != null && !pickupPoint.isNullOrBlank()) {
+                        runCatching { pickupPointRepository.remember(reservationId, pickupPoint) }
+                    }
                     clearCart()
                     _orderNote.value = ""
                     runCatching { fetchReservationsInternal() }
