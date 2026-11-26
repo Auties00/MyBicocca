@@ -1,0 +1,337 @@
+---
+import { site } from '../../config/site.ts';
+import { en } from '../../i18n/en.ts';
+import { it } from '../../i18n/it.ts';
+import Icon from '../ui/Icon.astro';
+import L from '../ui/L.astro';
+import Wordmark from '../ui/Wordmark.astro';
+---
+
+<header class="nav" data-header>
+	<div class="container nav-inner">
+		<a href="/" class="brand" aria-label="MyBicocca">
+			<Wordmark size="md" />
+		</a>
+
+		<div class="nav-right">
+			<nav aria-label="Primary">
+				<ul class="nav-links" data-nav-links>
+					<li><a href="#features"><L it={it.nav.features} en={en.nav.features} /></a></li>
+					<li><a href="#privacy"><L it={it.nav.privacy} en={en.nav.privacy} /></a></li>
+					<li><a href="#download"><L it={it.nav.download} en={en.nav.download} /></a></li>
+				</ul>
+			</nav>
+
+			<span class="nav-sep" aria-hidden="true"></span>
+
+			<div class="nav-utils">
+				<div class="lang-dropdown" data-lang-dropdown>
+					<button
+						type="button"
+						class="lang-trigger"
+						data-lang-trigger
+						aria-haspopup="menu"
+						aria-expanded="false"
+						aria-label="Language"
+					>
+						<span class="l-it-flex">
+							<svg class="flag" viewBox="0 0 24 16" aria-hidden="true">
+								<rect width="8" height="16" fill="#009246" />
+								<rect x="8" width="8" height="16" fill="#ffffff" />
+								<rect x="16" width="8" height="16" fill="#ce2b37" />
+							</svg>
+							<span class="lang-code">IT</span>
+						</span>
+						<span class="l-en-flex">
+							<svg class="flag" viewBox="0 0 24 16" aria-hidden="true">
+								<clipPath id="uk-trigger-clip"><rect width="24" height="16" rx="2" /></clipPath>
+								<g clip-path="url(#uk-trigger-clip)">
+									<rect width="24" height="16" fill="#012169" />
+									<path d="M0 0l24 16M24 0L0 16" stroke="#ffffff" stroke-width="3.2" />
+									<path d="M0 0l24 16M24 0L0 16" stroke="#c8102e" stroke-width="1.6" />
+									<path d="M12 0v16M0 8h24" stroke="#ffffff" stroke-width="5" />
+									<path d="M12 0v16M0 8h24" stroke="#c8102e" stroke-width="2.8" />
+								</g>
+							</svg>
+							<span class="lang-code">EN</span>
+						</span>
+						<svg class="chevron" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+							<path d="m6 9 6 6 6-6" />
+						</svg>
+					</button>
+
+					<div class="lang-menu" role="menu" data-lang-menu hidden>
+						<button type="button" role="menuitemradio" aria-checked="true" class="lang-option" data-set-lang="it">
+							<svg class="flag" viewBox="0 0 24 16" aria-hidden="true">
+								<rect width="8" height="16" fill="#009246" />
+								<rect x="8" width="8" height="16" fill="#ffffff" />
+								<rect x="16" width="8" height="16" fill="#ce2b37" />
+							</svg>
+							<span>Italiano</span>
+							<Icon name="check" size={14} class="lang-check" />
+						</button>
+						<button type="button" role="menuitemradio" aria-checked="false" class="lang-option" data-set-lang="en">
+							<svg class="flag" viewBox="0 0 24 16" aria-hidden="true">
+								<clipPath id="uk-menu-clip"><rect width="24" height="16" rx="2" /></clipPath>
+								<g clip-path="url(#uk-menu-clip)">
+									<rect width="24" height="16" fill="#012169" />
+									<path d="M0 0l24 16M24 0L0 16" stroke="#ffffff" stroke-width="3.2" />
+									<path d="M0 0l24 16M24 0L0 16" stroke="#c8102e" stroke-width="1.6" />
+									<path d="M12 0v16M0 8h24" stroke="#ffffff" stroke-width="5" />
+									<path d="M12 0v16M0 8h24" stroke="#c8102e" stroke-width="2.8" />
+								</g>
+							</svg>
+							<span>English</span>
+							<Icon name="check" size={14} class="lang-check" />
+						</button>
+					</div>
+				</div>
+			</div>
+
+			<!-- Scroll-revealed primary CTA -->
+			<div class="nav-actions" id="nav-actions" data-nav-actions>
+				<div class="nav-actions-inner">
+					<a href={site.webApp} class="btn btn-primary nav-cta not-android">
+						<span class="nav-cta-label"><L it={it.nav.openWeb} en={en.nav.openWeb} /></span>
+					</a>
+					<a href={site.releases} class="btn btn-primary nav-cta only-android" target="_blank" rel="noopener noreferrer">
+						<span class="nav-cta-label"><L it={it.nav.getAndroid} en={en.nav.getAndroid} /></span>
+					</a>
+				</div>
+			</div>
+			<script is:inline>
+				if ('IntersectionObserver' in window && document.getElementById('nav-actions')) {
+					document.getElementById('nav-actions').classList.add('no-anim', 'is-hidden');
+				}
+			</script>
+		</div>
+	</div>
+</header>
+
+<style>
+	.nav {
+		position: sticky;
+		inset-block-start: 0;
+		z-index: 40;
+		background: var(--header-bg);
+		backdrop-filter: blur(12px);
+		-webkit-backdrop-filter: blur(12px);
+		border-block-end: 1px solid var(--border);
+	}
+
+	.nav-inner {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 24px;
+		block-size: 64px;
+	}
+
+	.brand {
+		display: inline-flex;
+		align-items: center;
+		flex-shrink: 0;
+	}
+
+	.nav-right {
+		display: flex;
+		align-items: center;
+		min-inline-size: 0;
+	}
+
+	.nav-links {
+		display: flex;
+		align-items: center;
+		gap: 26px;
+	}
+
+	.nav-links a {
+		font-size: 0.875rem;
+		font-weight: 480;
+		color: var(--text-muted);
+		transition: color 140ms var(--ease);
+	}
+
+	.nav-links a:hover,
+	.nav-links a.is-current {
+		color: var(--text);
+	}
+
+	.nav-sep {
+		display: block;
+		inline-size: 1px;
+		block-size: 16px;
+		margin-inline: 20px;
+		background: var(--border-strong);
+	}
+
+	.nav-utils {
+		display: flex;
+		align-items: center;
+		flex-shrink: 0;
+	}
+
+	.lang-dropdown {
+		position: relative;
+	}
+
+	.lang-trigger {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		block-size: 32px;
+		padding-inline: 8px;
+		border-radius: var(--r-xs);
+		font-size: 0.8125rem;
+		font-weight: 520;
+		color: var(--text-muted);
+		transition:
+			color 140ms var(--ease),
+			background-color 140ms var(--ease);
+	}
+
+	.lang-trigger:hover,
+	.lang-trigger[aria-expanded='true'] {
+		color: var(--text);
+		background: rgba(255, 255, 255, 0.06);
+	}
+
+	.flag {
+		inline-size: 17px;
+		block-size: 12px;
+		border-radius: 2px;
+		flex-shrink: 0;
+	}
+
+	.lang-code {
+		letter-spacing: 0.03em;
+	}
+
+	.chevron {
+		transition: transform 160ms var(--ease);
+	}
+
+	.lang-trigger[aria-expanded='true'] .chevron {
+		transform: rotate(180deg);
+	}
+
+	.lang-menu {
+		position: absolute;
+		inset-block-start: calc(100% + 8px);
+		inset-inline-end: 0;
+		z-index: 60;
+		display: grid;
+		gap: 2px;
+		min-inline-size: 148px;
+		padding: 4px;
+		border-radius: var(--r-sm);
+		background: var(--surface);
+		border: 1px solid var(--border-strong);
+		box-shadow: 0 16px 40px rgba(0, 0, 0, 0.55);
+	}
+
+	.lang-menu[hidden] {
+		display: none;
+	}
+
+	.lang-option {
+		display: flex;
+		align-items: center;
+		gap: 9px;
+		inline-size: 100%;
+		padding: 7px 9px;
+		border-radius: var(--r-xs);
+		font-size: 0.84rem;
+		font-weight: 500;
+		color: var(--text-muted);
+		text-align: start;
+		transition:
+			background-color 120ms var(--ease),
+			color 120ms var(--ease);
+	}
+
+	.lang-option:hover {
+		background: rgba(255, 255, 255, 0.06);
+		color: var(--text);
+	}
+
+	:root:not([data-lang='en']) .lang-option[data-set-lang='it'],
+	:root[data-lang='en'] .lang-option[data-set-lang='en'] {
+		color: var(--text);
+		background: rgba(255, 255, 255, 0.05);
+	}
+
+	.lang-option :global(.lang-check) {
+		display: none;
+		margin-inline-start: auto;
+		color: var(--text);
+	}
+
+	:root:not([data-lang='en']) .lang-option[data-set-lang='it'] :global(.lang-check),
+	:root[data-lang='en'] .lang-option[data-set-lang='en'] :global(.lang-check) {
+		display: block;
+	}
+
+	/* Scroll-reveal actions container */
+	.nav-actions {
+		inline-size: var(--actions-w, auto);
+		flex: 0 0 auto;
+		overflow: hidden;
+		transition: inline-size 320ms var(--ease);
+	}
+
+	.nav-actions-inner {
+		display: flex;
+		align-items: center;
+		padding-inline-start: 14px;
+		inline-size: max-content;
+		opacity: 1;
+		transform: translateX(0);
+		transition:
+			opacity 200ms 80ms,
+			transform 320ms var(--ease);
+	}
+
+	.nav-actions.is-hidden {
+		inline-size: 0;
+	}
+
+	.nav-actions.is-hidden .nav-actions-inner {
+		opacity: 0;
+		visibility: hidden;
+		pointer-events: none;
+		transform: translateX(12px);
+		transition:
+			opacity 140ms,
+			transform 320ms var(--ease),
+			visibility linear 320ms;
+	}
+
+	.nav-actions.no-anim,
+	.nav-actions.no-anim .nav-actions-inner {
+		transition: none !important;
+	}
+
+	.nav-cta {
+		min-block-size: 32px;
+		padding-inline: 14px;
+		font-size: 0.8125rem;
+	}
+
+	@media (width <= 760px) {
+		.nav-links,
+		.nav-sep {
+			display: none;
+		}
+	}
+
+	@media (width <= 640px) {
+		.nav-utils {
+			display: none;
+		}
+
+		.nav-actions-inner {
+			padding-inline-start: 0;
+		}
+	}
+</style>

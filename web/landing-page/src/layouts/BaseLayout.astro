@@ -1,0 +1,119 @@
+---
+import '../styles/fonts.css';
+import '../styles/tokens.css';
+import '../styles/global.css';
+import { site } from '../config/site.ts';
+import { en } from '../i18n/en.ts';
+import { it } from '../i18n/it.ts';
+import L from '../components/ui/L.astro';
+
+const metaTitles = { it: it.meta.title, en: en.meta.title };
+const metaDescs = { it: it.meta.description, en: en.meta.description };
+---
+
+<!doctype html>
+<html lang="it" data-lang="it" data-device="desktop">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+		<meta name="color-scheme" content="dark" />
+		<meta name="theme-color" content="#08090a" />
+		<title>{it.meta.title}</title>
+		<meta name="description" content={it.meta.description} />
+
+		<link rel="canonical" href={`${site.url}/`} />
+		<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+		<link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+		<link
+			rel="preload"
+			href="/fonts/instrument-sans-latin.woff2"
+			as="font"
+			type="font/woff2"
+			crossorigin
+		/>
+
+		<meta property="og:type" content="website" />
+		<meta property="og:site_name" content={site.name} />
+		<meta property="og:title" content={it.meta.title} />
+		<meta property="og:description" content={it.meta.description} />
+		<meta property="og:url" content={`${site.url}/`} />
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content={it.meta.title} />
+		<meta name="twitter:description" content={it.meta.description} />
+
+		<script is:inline define:vars={{ metaTitles, metaDescs }}>
+			(function () {
+				var root = document.documentElement;
+				root.classList.add('js-ready');
+				var lang = 'it';
+				try {
+					var saved = localStorage.getItem('mybicocca:lang');
+					if (saved === 'it' || saved === 'en') {
+						lang = saved;
+					} else {
+						var langs = navigator.languages || [navigator.language || 'it'];
+						for (var i = 0; i < langs.length; i++) {
+							var code = String(langs[i]).toLowerCase().split('-')[0];
+							if (code === 'it' || code === 'en') {
+								lang = code;
+								break;
+							}
+						}
+					}
+				} catch (e) {}
+				root.lang = lang;
+				root.dataset.lang = lang;
+				if (metaTitles[lang]) document.title = metaTitles[lang];
+				var desc = document.querySelector('meta[name="description"]');
+				if (desc && metaDescs[lang]) desc.setAttribute('content', metaDescs[lang]);
+				try {
+					var ua = navigator.userAgent || '';
+					var params = new URLSearchParams(location.search);
+					var forced = params.get('device');
+					if (forced === 'desktop' || forced === 'android' || forced === 'ios') {
+						root.dataset.device = forced;
+					} else if (/Android/i.test(ua)) {
+						root.dataset.device = 'android';
+					} else if (
+						/iPhone|iPad|iPod/i.test(ua) ||
+						(/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1)
+					) {
+						root.dataset.device = 'ios';
+					} else {
+						root.dataset.device = 'desktop';
+					}
+				} catch (e) {}
+			})();
+		</script>
+	</head>
+	<body>
+		<a class="sr-only skip-link" href="#main">
+			<L it={it.nav.skip} en={en.nav.skip} />
+		</a>
+		<slot />
+		<script>
+			import '../scripts/main.ts';
+		</script>
+	</body>
+</html>
+
+<style>
+	.skip-link:focus {
+		position: fixed;
+		inset-block-start: 12px;
+		inset-inline-start: 12px;
+		z-index: 100;
+		inline-size: auto;
+		block-size: auto;
+		margin: 0;
+		padding: 8px 14px;
+		clip-path: none;
+		border-radius: var(--r-pill);
+		background: var(--btn-primary-bg);
+		color: var(--btn-primary-ink);
+		font-size: 0.875rem;
+		font-weight: 560;
+	}
+</style>
