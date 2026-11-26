@@ -252,7 +252,7 @@ section[id] {
 	display: none !important;
 }
 
-/* Browser-stored language visibility (zero-FOUC via pre-paint data-lang) */
+/* Browser language visibility (zero-FOUC via pre-paint data-lang) */
 .l-it-block,
 .l-en-block {
 	display: block;
@@ -265,15 +265,15 @@ section[id] {
 	gap: 7px;
 }
 
-:root:not([data-lang='en']) .l-en,
-:root:not([data-lang='en']) .l-en-block,
-:root:not([data-lang='en']) .l-en-flex {
+:root[data-lang='it'] .l-en,
+:root[data-lang='it'] .l-en-block,
+:root[data-lang='it'] .l-en-flex {
 	display: none !important;
 }
 
-:root[data-lang='en'] .l-it,
-:root[data-lang='en'] .l-it-block,
-:root[data-lang='en'] .l-it-flex {
+:root:not([data-lang='it']) .l-it,
+:root:not([data-lang='it']) .l-it-block,
+:root:not([data-lang='it']) .l-it-flex {
 	display: none !important;
 }
 

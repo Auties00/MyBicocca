@@ -1,89 +1,6 @@
-const LANG_KEY = 'mybicocca:lang';
-
-type Locale = 'it' | 'en';
-
-const META: Record<Locale, { title: string; description: string }> = {
-	it: {
-		title: 'MyBicocca: tutta la tua università, in un solo posto',
-		description:
-			'Orario lezioni, esami Esse3, e-learning Moodle, mappa del campus e posti in biblioteca per gli studenti di Milano-Bicocca. Su Web, Android e presto iOS.'
-	},
-	en: {
-		title: 'MyBicocca: your entire university, in one place',
-		description:
-			'Timetable, Esse3 exams, Moodle e-learning, campus map and library seat bookings for Milano-Bicocca students. On Web, Android, and soon iOS.'
-	}
-};
-
-function currentLang(): Locale {
-	return document.documentElement.dataset.lang === 'en' ? 'en' : 'it';
-}
-
-function setupLanguage(onLangChange?: () => void) {
-	const root = document.querySelector<HTMLElement>('[data-lang-dropdown]');
-	const trigger = root?.querySelector<HTMLButtonElement>('[data-lang-trigger]');
-	const menu = root?.querySelector<HTMLElement>('[data-lang-menu]');
-
-	const setOpen = (open: boolean) => {
-		if (!trigger || !menu) return;
-		trigger.setAttribute('aria-expanded', String(open));
-		menu.hidden = !open;
-	};
-
-	const syncLangUi = (lang: Locale) => {
-		for (const item of document.querySelectorAll<HTMLElement>('[role="menuitemradio"][data-set-lang]')) {
-			item.setAttribute('aria-checked', String(item.dataset.setLang === lang));
-		}
-		document.title = META[lang].title;
-		const desc = document.querySelector('meta[name="description"]');
-		if (desc) desc.setAttribute('content', META[lang].description);
-	};
-
-	const applyLang = (lang: Locale) => {
-		document.documentElement.lang = lang;
-		document.documentElement.dataset.lang = lang;
-		try {
-			localStorage.setItem(LANG_KEY, lang);
-		} catch {
-			/* ignore storage restrictions */
-		}
-		syncLangUi(lang);
-		setOpen(false);
-		onLangChange?.();
-	};
-
-	syncLangUi(currentLang());
-
-	for (const button of document.querySelectorAll<HTMLButtonElement>('[data-set-lang]')) {
-		button.addEventListener('click', () => {
-			const next = button.dataset.setLang;
-			if (next === 'it' || next === 'en') applyLang(next);
-		});
-	}
-
-	if (!root || !trigger || !menu) return;
-
-	trigger.addEventListener('click', (event) => {
-		event.stopPropagation();
-		setOpen(menu.hidden);
-	});
-
-	document.addEventListener('click', (event) => {
-		if (!menu.hidden && !root.contains(event.target as Node)) setOpen(false);
-	});
-
-	document.addEventListener('keydown', (event) => {
-		if (event.key === 'Escape' && !menu.hidden) {
-			setOpen(false);
-			trigger.focus();
-		}
-	});
-}
-
-function setupNavBehavior(): () => void {
+function setupNavBehavior() {
 	const actions = document.querySelector<HTMLElement>('[data-nav-actions]');
 	const heroCta = document.getElementById('hero-cta');
-	let remeasure = () => {};
 
 	if (actions && heroCta && 'IntersectionObserver' in window) {
 		const inner = actions.querySelector<HTMLElement>('.nav-actions-inner');
@@ -92,7 +9,6 @@ function setupNavBehavior(): () => void {
 			const w = Math.ceil(inner.getBoundingClientRect().width);
 			if (w > 0) actions.style.setProperty('--actions-w', `${w}px`);
 		};
-		remeasure = measure;
 
 		measure();
 		window.addEventListener('resize', measure, { passive: true });
@@ -116,7 +32,7 @@ function setupNavBehavior(): () => void {
 	}
 
 	const links = [...document.querySelectorAll<HTMLAnchorElement>('[data-nav-links] a[href^="#"]')];
-	if (links.length === 0) return remeasure;
+	if (links.length === 0) return;
 
 	const pairs = links
 		.map((link) => {
@@ -139,7 +55,6 @@ function setupNavBehavior(): () => void {
 
 	updateCurrent();
 	window.addEventListener('scroll', updateCurrent, { passive: true });
-	return remeasure;
 }
 
 function setupReveals() {
@@ -178,9 +93,9 @@ function setupReveals() {
 	window.addEventListener('hashchange', () => setTimeout(revealAboveFold, 60));
 }
 
-function setupFeaturePlatform(): () => void {
+function setupFeaturePlatform() {
 	const root = document.querySelector<HTMLElement>('[data-features-group]');
-	if (!root) return () => {};
+	if (!root) return;
 
 	const bar = root.querySelector<HTMLElement>('[data-platform-bar]');
 	const barInner = root.querySelector<HTMLElement>('[data-platform-bar-inner]');
@@ -294,14 +209,8 @@ function setupFeaturePlatform(): () => void {
 		window.addEventListener('resize', updateCollapse, { passive: true });
 	}
 	if (document.fonts?.ready) document.fonts.ready.then(updateCollapse);
-
-	return updateCollapse;
 }
 
-const remeasureNav = setupNavBehavior();
-const remeasurePlatforms = setupFeaturePlatform();
-setupLanguage(() => {
-	remeasureNav();
-	remeasurePlatforms();
-});
+setupNavBehavior();
+setupFeaturePlatform();
 setupReveals();

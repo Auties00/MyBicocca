@@ -12,14 +12,14 @@ const metaDescs = { it: it.meta.description, en: en.meta.description };
 ---
 
 <!doctype html>
-<html lang="it" data-lang="it" data-device="desktop">
+<html lang="en" data-lang="en" data-device="desktop">
 	<head>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 		<meta name="color-scheme" content="dark" />
 		<meta name="theme-color" content="#08090a" />
-		<title>{it.meta.title}</title>
-		<meta name="description" content={it.meta.description} />
+		<title>{en.meta.title}</title>
+		<meta name="description" content={en.meta.description} />
 
 		<link rel="canonical" href={`${site.url}/`} />
 		<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -36,33 +36,26 @@ const metaDescs = { it: it.meta.description, en: en.meta.description };
 
 		<meta property="og:type" content="website" />
 		<meta property="og:site_name" content={site.name} />
-		<meta property="og:title" content={it.meta.title} />
-		<meta property="og:description" content={it.meta.description} />
+		<meta property="og:title" content={en.meta.title} />
+		<meta property="og:description" content={en.meta.description} />
 		<meta property="og:url" content={`${site.url}/`} />
 		<meta name="twitter:card" content="summary_large_image" />
-		<meta name="twitter:title" content={it.meta.title} />
-		<meta name="twitter:description" content={it.meta.description} />
+		<meta name="twitter:title" content={en.meta.title} />
+		<meta name="twitter:description" content={en.meta.description} />
 
 		<script is:inline define:vars={{ metaTitles, metaDescs }}>
 			(function () {
 				var root = document.documentElement;
 				root.classList.add('js-ready');
-				var lang = 'it';
-				try {
-					var saved = localStorage.getItem('mybicocca:lang');
-					if (saved === 'it' || saved === 'en') {
-						lang = saved;
-					} else {
-						var langs = navigator.languages || [navigator.language || 'it'];
-						for (var i = 0; i < langs.length; i++) {
-							var code = String(langs[i]).toLowerCase().split('-')[0];
-							if (code === 'it' || code === 'en') {
-								lang = code;
-								break;
-							}
-						}
+				var lang = 'en';
+				var languages = navigator.languages?.length ? navigator.languages : [navigator.language];
+				for (var preference of languages) {
+					var code = preference?.toLowerCase().split('-')[0];
+					if (code === 'it' || code === 'en') {
+						lang = code;
+						break;
 					}
-				} catch (e) {}
+				}
 				root.lang = lang;
 				root.dataset.lang = lang;
 				if (metaTitles[lang]) document.title = metaTitles[lang];
