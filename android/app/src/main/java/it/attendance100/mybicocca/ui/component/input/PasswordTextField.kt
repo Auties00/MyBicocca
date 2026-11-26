@@ -77,12 +77,21 @@ fun PasswordTextField(
     val state = rememberTextFieldState(value)
     val latestValue by rememberUpdatedState(value)
     val latestOnValueChange by rememberUpdatedState(onValueChange)
+    // The last text reported up. Its echo can come back after newer typing, so only a value that
+    // is not an echo replaces the field's text; otherwise fast typing would lose characters.
+    val reported = remember { mutableStateOf(value) }
     LaunchedEffect(value) {
-        if (state.text.toString() != value) state.setTextAndPlaceCursorAtEnd(value)
+        if (value != reported.value && state.text.toString() != value) {
+            reported.value = value
+            state.setTextAndPlaceCursorAtEnd(value)
+        }
     }
     LaunchedEffect(state) {
         snapshotFlow { state.text.toString() }.collect { typed ->
-            if (typed != latestValue) latestOnValueChange(typed)
+            if (typed != latestValue) {
+                reported.value = typed
+                latestOnValueChange(typed)
+            }
         }
     }
 
