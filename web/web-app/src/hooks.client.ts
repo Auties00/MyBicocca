@@ -1,6 +1,7 @@
 // First: the language strategy must be defined before any message resolves a locale.
 import '#lib/features/settings/languageStrategy.ts';
 import type { ClientInit } from '@sveltejs/kit/hooks';
+import { installPreloadRecovery } from '#lib/data/preloadRecovery.ts';
 import { session } from '#lib/data/session.svelte.ts';
 
 /**
@@ -8,4 +9,7 @@ import { session } from '#lib/data/session.svelte.ts';
  * is not awaited: the layouts that need the session await it in their `load`, while the page's
  * code downloads alongside.
  */
-export const init: ClientInit = () => void session.load();
+export const init: ClientInit = () => {
+	installPreloadRecovery();
+	void session.load();
+};

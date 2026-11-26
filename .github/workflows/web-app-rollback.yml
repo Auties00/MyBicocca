@@ -1,0 +1,80 @@
+name: Web App Rollback
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_id:
+        description: Target Cloudflare Version ID (leave blank to roll back to the previous deployment)
+        type: string
+        required: false
+        default: ''
+      reason:
+        description: Reason for rolling back
+        type: string
+        required: true
+        default: Emergency rollback
+
+permissions:
+  contents: read
+
+concurrency:
+  group: web-app-refs/heads/main
+  cancel-in-progress: false
+
+jobs:
+  rollback:
+    name: Roll back web.mybicocca.it
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: production
+      url: https://web.mybicocca.it
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web/web-app/package-lock.json
+
+      - name: Install dependencies
+        working-directory: web/web-app
+        run: npm ci
+
+      - name: Roll back Cloudflare Worker
+        working-directory: web/web-app
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          VERSION_ID: ${{ inputs.version_id }}
+          REASON: ${{ inputs.reason }}
+        run: |
+          if [ -n "$VERSION_ID" ]; then
+            npx wrangler rollback "$VERSION_ID" --yes --message "$REASON"
+          else
+            npx wrangler rollback --yes --message "$REASON"
+          fi
+
+      - name: Verify production origin
+        working-directory: web/web-app
+        run: node scripts/smoke.ts https://web.mybicocca.it
+
+      - name: Record active deployments
+        working-directory: web/web-app
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          REASON: ${{ inputs.reason }}
+        run: |
+          {
+            echo "### Rolled back \`mybicocca-web\`"
+            echo ""
+            printf '**Reason:** %s\n' "$REASON"
+            echo ""
+            echo '```'
+            npx wrangler deployments list
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
