@@ -18,48 +18,51 @@ const { size = 'md', iconOnly = false } = Astro.props;
 			d="M0,0v41.4h41.4V0H0ZM36.1,5l-8.27,12.36L10.5,5h25.6ZM35.4,36.4H12.8l15.03,-10.63 7.57,10.63ZM4.9,7l18.73,14.56 -18.73,13.94V7ZM36.3,27.3l-4.26,-5.74 4.26,-7.66v13.4Z"
 		></path>
 	</svg>
-	{!iconOnly && <span class="name">MyBicocca</span>}
+	{!iconOnly && <span class="name">My<span class="accent">Bicocca</span></span>}
 </span>
 
 <style>
 	.wordmark {
-		--mark: 21px;
+		--mark: 22px;
 		display: inline-flex;
 		align-items: center;
-		gap: 9px;
-		font-family: var(--font-sans);
-		font-weight: 580;
-		font-size: 0.96rem;
-		line-height: 1;
-		letter-spacing: -0.02em;
+		gap: calc(var(--mark) * 0.4);
 		color: var(--text);
+		font: 650 calc(var(--mark) * 0.78) / 1 var(--font-sans);
+		letter-spacing: -0.015em;
 		white-space: nowrap;
 	}
 
 	.wordmark.sm {
 		--mark: 18px;
-		gap: 8px;
-		font-size: 0.9rem;
+	}
+
+	.wordmark.md {
+		font-size: 1.0625rem;
 	}
 
 	.wordmark.lg {
-		--mark: 26px;
-		gap: 11px;
-		font-size: 1.15rem;
+		--mark: 32px;
+		font-size: 1.625rem;
+		letter-spacing: -0.025em;
 	}
 
 	.mark {
 		inline-size: var(--mark);
 		block-size: var(--mark);
-		border-radius: 4px;
+		border-radius: calc(var(--mark) * 0.14);
 		flex-shrink: 0;
 	}
 
 	.frame {
-		fill: var(--text);
+		fill: var(--brand);
 	}
 
 	.cut {
-		fill: var(--accent);
+		fill: var(--brand-deep);
+	}
+
+	.accent {
+		color: var(--brand-text);
 	}
 </style>

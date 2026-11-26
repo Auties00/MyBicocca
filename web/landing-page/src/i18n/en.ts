@@ -159,7 +159,7 @@ export const en = {
 		web: {
 			name: 'Web App',
 			spec: 'Desktop & mobile browsers · Installable as a desktop app',
-			cta: 'Open web.mybicocca.it'
+			cta: 'Open web app'
 		},
 		android: {
 			name: 'Android',
