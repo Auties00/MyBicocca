@@ -61,6 +61,12 @@ data class MensaSignUpState(
 
     val canActivate: Boolean get() = !submitting && code.isNotBlank()
 
+    /** Something typed that leaving would throw away; the web form's own fields are not seen here. */
+    val isDirty: Boolean
+        get() = step == MensaSignUpStep.CODE || firstName.isNotBlank() || lastName.isNotBlank() ||
+            email.isNotBlank() || password.isNotEmpty() || passwordConfirm.isNotEmpty() ||
+            captcha.isNotBlank() || privacyAccepted
+
     private companion object {
         val EmailShape = Regex("""^[^\s@]+@[^\s@]+\.[^\s@]{2,}$""")
     }

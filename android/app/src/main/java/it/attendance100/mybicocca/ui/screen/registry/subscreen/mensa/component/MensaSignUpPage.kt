@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -28,7 +27,6 @@ import androidx.compose.material.icons.outlined.AlternateEmail
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.CloudOff
 import androidx.compose.material.icons.outlined.ErrorOutline
-import androidx.compose.material.icons.outlined.MarkEmailRead
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.RadioButtonUnchecked
 import androidx.compose.material3.Button
@@ -45,12 +43,29 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.alpha
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.border
+import androidx.compose.foundation.background
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
@@ -95,10 +110,15 @@ private const val PRIVACY_URL = "https://unibicocca.compasscloud.it/privacy"
 internal fun MensaSignUpRoute(
     onActivated: (MensaNewAccount?) -> Unit,
     modifier: Modifier = Modifier,
+    onDirtyChange: (Boolean) -> Unit = {},
 ) {
     val viewModel: MensaSignUpViewModel = hiltViewModel()
     val state by viewModel.state.collectAsStateWithLifecycle()
     val currentOnActivated by rememberUpdatedState(onActivated)
+    val currentOnDirtyChange by rememberUpdatedState(onDirtyChange)
+    // The sheet asks before leaving a form with something in it.
+    LaunchedEffect(state.isDirty) { currentOnDirtyChange(state.isDirty) }
+    DisposableEffect(Unit) { onDispose { currentOnDirtyChange(false) } }
     LaunchedEffect(viewModel) {
         viewModel.ensureStarted()
         viewModel.activated.collect { currentOnActivated(it) }
@@ -383,9 +403,11 @@ private fun CodeStep(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(14.dp),
     ) {
-        Surface(shape = CircleShape, color = scheme.primaryContainer, contentColor = scheme.onPrimaryContainer, modifier = Modifier.size(72.dp)) {
-            Box(contentAlignment = Alignment.Center) { Icon(Icons.Outlined.MarkEmailRead, contentDescription = null, modifier = Modifier.size(34.dp)) }
-        }
+        Image(
+            painter = painterResource(R.drawable.mensa_art_signup_code),
+            contentDescription = null,
+            modifier = Modifier.width(180.dp).aspectRatio(160f / 120f),
+        )
         Text(stringResource(R.string.mensa_signup_code_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
         Text(
             text = stringResource(R.string.mensa_signup_code_body, state.codeEmail),
@@ -393,16 +415,16 @@ private fun CodeStep(
             color = scheme.onSurfaceVariant,
             textAlign = TextAlign.Center,
         )
-        OutlinedTextField(
-            value = state.code,
-            onValueChange = onCode,
-            singleLine = true,
-            label = { Text(stringResource(R.string.mensa_signup_code)) },
+        CodeBoxes(
+            code = state.code,
+            onCode = onCode,
             isError = state.codeError != null,
-            supportingText = state.codeError?.let { { Text(it) } },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword, imeAction = ImeAction.Done),
-                modifier = Modifier.fillMaxWidth().semantics { contentType = ContentType.SmsOtpCode },
+            enabled = !state.submitting,
+            onComplete = onActivate,
         )
+        state.codeError?.let { error ->
+            Text(error, style = MaterialTheme.typography.bodyMedium, color = scheme.error, textAlign = TextAlign.Center)
+        }
         if (state.connectionError) {
             Text(stringResource(R.string.mensa_signup_connection), style = MaterialTheme.typography.bodyMedium, color = scheme.error)
         }
@@ -420,6 +442,88 @@ private fun CodeStep(
         )
         TextButton(onClick = onEditForm, enabled = !state.submitting) { Text(stringResource(R.string.mensa_signup_edit)) }
     }
+}
+
+/** How many digits Compass's activation code has. */
+private const val CODE_LENGTH = 6
+
+/**
+ * The emailed code as six boxes, a dash between the third and the fourth. One hidden field takes
+ * the typing (and the keyboard's suggestion of the code from the email); the boxes only show it.
+ * The sixth digit sends the code.
+ */
+@Composable
+private fun CodeBoxes(
+    code: String,
+    onCode: (String) -> Unit,
+    isError: Boolean,
+    enabled: Boolean,
+    onComplete: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val scheme = MaterialTheme.colorScheme
+    val focus = remember { FocusRequester() }
+    var focused by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { focus.requestFocus() }
+    val shape = RoundedCornerShape(14.dp)
+    BasicTextField(
+        value = code,
+        onValueChange = { typed ->
+            val digits = typed.filter(Char::isDigit).take(CODE_LENGTH)
+            if (digits == code) return@BasicTextField
+            onCode(digits)
+            if (digits.length == CODE_LENGTH) onComplete()
+        },
+        enabled = enabled,
+        singleLine = true,
+        textStyle = TextStyle(color = Color.Transparent),
+        cursorBrush = SolidColor(Color.Transparent),
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword, imeAction = ImeAction.Done),
+        keyboardActions = KeyboardActions(onDone = { if (code.length == CODE_LENGTH) onComplete() }),
+        modifier = modifier
+            .fillMaxWidth()
+            .focusRequester(focus)
+            .onFocusChanged { focused = it.isFocused }
+            .semantics { contentType = ContentType.SmsOtpCode },
+        decorationBox = { field ->
+            Box {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    repeat(CODE_LENGTH) { index ->
+                        if (index == CODE_LENGTH / 2) {
+                            Text("–", style = MaterialTheme.typography.titleLarge, color = scheme.onSurfaceVariant)
+                        }
+                        val current = focused && index == code.length.coerceAtMost(CODE_LENGTH - 1)
+                        val edge = when {
+                            isError -> scheme.error
+                            current -> scheme.primary
+                            else -> scheme.outlineVariant
+                        }
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .aspectRatio(0.8f)
+                                .clip(shape)
+                                .background(scheme.surfaceContainerHigh)
+                                .border(if (current || isError) 2.dp else 1.dp, edge, shape),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(
+                                text = code.getOrNull(index)?.toString().orEmpty(),
+                                style = MaterialTheme.typography.headlineSmall,
+                                fontWeight = FontWeight.SemiBold,
+                            )
+                        }
+                    }
+                }
+                // The field itself stays, invisible, so it keeps the keyboard and the autofill.
+                Box(modifier = Modifier.matchParentSize().alpha(0f)) { field() }
+            }
+        },
+    )
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)

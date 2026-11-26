@@ -12,6 +12,13 @@ class MensaDishNameTest {
     }
 
     @Test
+    fun `litres keep their capital L`() {
+        assertThat("ACQUA NATURALE 0,5 L".toDishDisplayName()).isEqualTo("Acqua naturale 0,5 L")
+        assertThat("COCA COLA 1,5L".toDishDisplayName()).isEqualTo("Coca cola 1,5L")
+        assertThat("INSALATA LEGGERA".toDishDisplayName()).isEqualTo("Insalata leggera")
+    }
+
+    @Test
     fun `an all-lowercase name gets a capital first letter`() {
         assertThat("bibita".toDishDisplayName()).isEqualTo("Bibita")
         assertThat("acqua naturale".toDishDisplayName()).isEqualTo("Acqua naturale")

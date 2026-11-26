@@ -2130,8 +2130,11 @@
     <string name="registry_mensa">Canteen</string>
     <string name="registry_mensa_desc">Daily menus, allergens &amp; Take-Away</string>
     <string name="mensa_title">Canteen</string>
-    <string name="mensa_subtitle_wallet">Balance: %1$.2f €</string>
     <string name="mensa_subtitle_logged_in">Fresh &amp; Natural account active</string>
+    <string name="mensa_order_gone_title">Booking no longer available</string>
+    <string name="mensa_order_gone_body">It has expired or been cancelled in the meantime.</string>
+    <string name="mensa_order_gone_back">Go back</string>
+    <string name="mensa_orders_loading">Loading your bookings…</string>
     <string name="mensa_map_action">Canteen menu</string>
     <string name="mensa_loading_menus">Loading menus…</string>
     <string name="mensa_loading_schedule">Loading dishes…</string>
@@ -2240,6 +2243,10 @@
     <string name="mensa_signup_activated_body">Sign in with the email and password you chose.</string>
     <string name="mensa_register_title">Create an account</string>
     <string name="mensa_register_subtitle">Fresh &amp; Natural</string>
+    <string name="mensa_signup_leave_title">Leave the sign-up?</string>
+    <string name="mensa_signup_leave_body">What you have entered will be lost.</string>
+    <string name="mensa_signup_leave_confirm">Leave</string>
+    <string name="mensa_signup_leave_keep">Keep going</string>
     <string name="mensa_register_failed">Couldn\'t open the sign-up page. Check your connection.</string>
     <string name="mensa_signup_opening">Opening the sign-up…</string>
     <string name="mensa_signup_first_name">First name</string>

@@ -2135,8 +2135,11 @@
     <string name="registry_mensa">Mensa</string>
     <string name="registry_mensa_desc">Menù del giorno, allergeni e Take-Away</string>
     <string name="mensa_title">Mensa</string>
-    <string name="mensa_subtitle_wallet">Saldo: %1$.2f €</string>
     <string name="mensa_subtitle_logged_in">Account Fresh &amp; Natural attivo</string>
+    <string name="mensa_order_gone_title">Prenotazione non più disponibile</string>
+    <string name="mensa_order_gone_body">È scaduta o è stata annullata nel frattempo.</string>
+    <string name="mensa_order_gone_back">Torna indietro</string>
+    <string name="mensa_orders_loading">Carico le prenotazioni…</string>
     <string name="mensa_map_action">Menù mensa</string>
     <string name="mensa_loading_menus">Caricamento menù…</string>
     <string name="mensa_loading_schedule">Caricamento piatti…</string>
@@ -2245,6 +2248,10 @@
     <string name="mensa_signup_activated_body">Accedi con l\'email e la password che hai scelto.</string>
     <string name="mensa_register_title">Crea un account</string>
     <string name="mensa_register_subtitle">Fresh &amp; Natural</string>
+    <string name="mensa_signup_leave_title">Uscire dalla registrazione?</string>
+    <string name="mensa_signup_leave_body">Quello che hai inserito andrà perso.</string>
+    <string name="mensa_signup_leave_confirm">Esci</string>
+    <string name="mensa_signup_leave_keep">Continua</string>
     <string name="mensa_register_failed">Non riesco ad aprire la registrazione. Controlla la connessione.</string>
     <string name="mensa_signup_opening">Apro la registrazione…</string>
     <string name="mensa_signup_first_name">Nome</string>

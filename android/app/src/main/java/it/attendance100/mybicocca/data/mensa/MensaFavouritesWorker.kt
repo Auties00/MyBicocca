@@ -108,7 +108,7 @@ internal object MensaFavouriteNotifications {
     /** The operator writes names in capitals; the notification reads them in sentence case. */
     private fun dishName(raw: String): String {
         val trimmed = raw.trim()
-        val cased = if (trimmed.any { it.isLowerCase() }) trimmed else trimmed.lowercase()
+        val cased = if (trimmed.any { it.isLowerCase() }) trimmed else trimmed.lowercase().replace(Regex("""(\d\s?)l\b"""), "$1L")
         return cased.replaceFirstChar { it.uppercase() }
     }
 }

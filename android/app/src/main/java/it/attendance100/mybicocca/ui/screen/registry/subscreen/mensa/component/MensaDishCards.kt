@@ -553,7 +553,11 @@ internal fun String.toDishDisplayName(): String {
     return trimmed.lowercase()
         .replaceFirstChar { it.uppercase() }
         .replace(CODES) { it.value.uppercase() }
+        .replace(LITRES, "$1L")
 }
+
+/** A quantity in litres ("0,5 L", "1,5L"), whose unit stays a capital. */
+private val LITRES = Regex("""(\d\s?)l\b""")
 
 private val CODES = Regex("\\b(s/g|s/glut|sg|igp|dop|u12|u6|u3)\\b")
 

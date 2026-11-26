@@ -12,6 +12,15 @@ import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.Box
+import it.attendance100.mybicocca.ui.component.modal.holdSheetFromContent
+import androidx.compose.runtime.SideEffect
+import androidx.compose.material3.Text
+import it.attendance100.mybicocca.core.state.Loadable
+import androidx.compose.material3.FilledTonalButton
+import it.attendance100.mybicocca.ui.component.modal.SheetMessage
+import it.attendance100.mybicocca.ui.component.modal.SheetLoadingIndicator
+import androidx.compose.material.icons.outlined.EventBusy
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -39,7 +48,7 @@ import it.attendance100.mybicocca.domain.model.mensa.MensaMenuKind
 import it.attendance100.mybicocca.domain.model.mensa.identity
 import it.attendance100.mybicocca.domain.model.mensa.MensaReservation
 import it.attendance100.mybicocca.domain.repository.MensaServerMessageException
-import it.attendance100.mybicocca.ui.component.modal.LockSheetWhile
+import it.attendance100.mybicocca.ui.component.modal.LocalSheetDismissControl
 import it.attendance100.mybicocca.ui.component.modal.SheetConfirmPage
 import it.attendance100.mybicocca.ui.component.modal.SheetHeaderSpec
 import it.attendance100.mybicocca.ui.component.modal.SheetOutcome
@@ -254,7 +263,26 @@ fun MensaPage(
         listOfNotNull(canteen, day, meal).joinToString(" · ").ifBlank { null }
     }
 
-    LockSheetWhile(busy)
+    // The sign-up form asks before it is left with something typed in it, by back or by closing the sheet.
+    var signUpDirty by remember { mutableStateOf(false) }
+    var leaveSignUp by remember { mutableStateOf<SignUpLeave?>(null) }
+    val guardSignUp = current == MensaSubPage.Register && signUpDirty && !busy
+    val dismissControl = LocalSheetDismissControl.current
+    SideEffect {
+        // Material does not take a veto while a drag settles (the sheet would end hidden but open), so
+        // a sheet that would ask first is not draggable at all; back and the scrim still ask.
+        dismissControl?.gesturesEnabled = !busy && !guardSignUp
+        dismissControl?.confirmDismiss = {
+            when {
+                busy -> false
+                guardSignUp -> {
+                    leaveSignUp = SignUpLeave.CloseSheet
+                    false
+                }
+                else -> true
+            }
+        }
+    }
 
     // A different canteen, day or meal is a different list, so it starts from the top.
     LaunchedEffect(selectedMenuId, selectedDate, selectedMealTypeId) { menuListState.requestScrollToItem(0) }
@@ -268,12 +296,15 @@ fun MensaPage(
     val display: MensaDisplay = when {
         outcome != null -> MensaDisplay.Outcome
         pendingCancel != null -> MensaDisplay.ConfirmCancel
+        leaveSignUp != null -> MensaDisplay.ConfirmLeaveSignUp
         else -> currentDisplay
     }
 
     val backTo: MensaDisplay? = when (display) {
         MensaDisplay.Outcome -> if (pendingCancel != null) MensaDisplay.ConfirmCancel else currentDisplay
         MensaDisplay.ConfirmCancel -> currentDisplay
+        MensaDisplay.ConfirmLeaveSignUp -> currentDisplay
+        is MensaDisplay.Page if guardSignUp -> MensaDisplay.ConfirmLeaveSignUp
         // The carousel closes through its own back handler, which scrubs the transition inside the page.
         is MensaDisplay.Page -> if (depth > 0 && !busy && !display.inMenu) MensaDisplay.Page(backStack[depth - 1], depth - 1) else null
     }
@@ -289,7 +320,8 @@ fun MensaPage(
             when (display) {
                 MensaDisplay.Outcome -> outcome = null
                 MensaDisplay.ConfirmCancel -> pendingCancel = null
-                is MensaDisplay.Page -> viewModel.back()
+                MensaDisplay.ConfirmLeaveSignUp -> leaveSignUp = null
+                is MensaDisplay.Page -> if (guardSignUp) leaveSignUp = SignUpLeave.Back else viewModel.back()
             }
         },
         modifier = Modifier.testTag(MensaTestTags.ROOT),
@@ -299,6 +331,7 @@ fun MensaPage(
                 title = when (target) {
                     MensaDisplay.Outcome -> outcomeTitle.ifBlank { stringResource(R.string.mensa_title) }
                     MensaDisplay.ConfirmCancel -> stringResource(R.string.mensa_order_cancel_confirmation)
+                    MensaDisplay.ConfirmLeaveSignUp -> stringResource(R.string.mensa_signup_leave_title)
                     is MensaDisplay.Page -> when (val page = target.host ?: target.page) {
                         MensaSubPage.Home -> stringResource(R.string.mensa_title)
                         MensaSubPage.PlacePicker -> stringResource(R.string.mensa_menu_title)
@@ -326,10 +359,10 @@ fun MensaPage(
                 subtitle = when (target) {
                     MensaDisplay.Outcome -> stringResource(R.string.mensa_title)
                     MensaDisplay.ConfirmCancel -> shownCancel?.canteenName ?: shownCancel?.code
+                    MensaDisplay.ConfirmLeaveSignUp -> stringResource(R.string.mensa_register_subtitle)
                     is MensaDisplay.Page -> when (val page = target.host ?: target.page) {
-                        MensaSubPage.Home -> session?.walletBalance?.let {
-                            stringResource(R.string.mensa_subtitle_wallet, it)
-                        } ?: if (session != null) stringResource(R.string.mensa_subtitle_logged_in) else null
+                        // No balance: Bicocca's canteen does not take payments through the wallet.
+                        MensaSubPage.Home -> if (session != null) stringResource(R.string.mensa_subtitle_logged_in) else null
                         MensaSubPage.PlacePicker -> stringResource(R.string.mensa_place_picker_subtitle)
                         MensaSubPage.MenuPicker -> stringResource(R.string.mensa_picker_subtitle)
                         MensaSubPage.Menu -> menuContext ?: stringResource(R.string.mensa_menu_subtitle)
@@ -355,6 +388,7 @@ fun MensaPage(
                 showBack = when (target) {
                     MensaDisplay.Outcome -> false
                     MensaDisplay.ConfirmCancel -> true
+                    MensaDisplay.ConfirmLeaveSignUp -> true
                     is MensaDisplay.Page -> !busy && depth > 0
                 },
                 trailing = when ((target as? MensaDisplay.Page)?.takeUnless { it.inMenu }?.page) {
@@ -392,6 +426,8 @@ fun MensaPage(
             LocalMensaShared provides MensaSharedScopes(sharedScope, this),
             LocalMensaDishAvailability provides dishAvailability,
         ) {
+        // Only the handle and the header move the sheet: a scroll or drag in a page never closes it.
+        Box(modifier = Modifier.holdSheetFromContent()) {
         when (shown) {
             MensaDisplay.Outcome -> outcome?.let { currentOutcome ->
                 SheetResultPage(outcome = currentOutcome, onDismiss = { outcome = null })
@@ -411,6 +447,22 @@ fun MensaPage(
                     confirmIsPrimary = true,
                 )
             }
+
+            MensaDisplay.ConfirmLeaveSignUp -> SheetConfirmPage(
+                body = stringResource(R.string.mensa_signup_leave_body),
+                confirmLabel = stringResource(R.string.mensa_signup_leave_confirm),
+                keepLabel = stringResource(R.string.mensa_signup_leave_keep),
+                onConfirm = {
+                    val leave = leaveSignUp
+                    leaveSignUp = null
+                    signUpDirty = false
+                    when (leave) {
+                        SignUpLeave.CloseSheet -> dismissControl?.dismiss?.invoke()
+                        else -> viewModel.back()
+                    }
+                },
+                onKeep = { leaveSignUp = null },
+            )
 
             // A carousel opened from the menu or the catalog is that page with its carousel up, drawn
             // from the same call, so the page keeps its state and the plate can fly between the two.
@@ -596,7 +648,10 @@ fun MensaPage(
                     initialEmail = loginPrefillEmail,
                 )
 
-                MensaSubPage.Register -> MensaSignUpRoute(onActivated = viewModel::finishRegistration)
+                MensaSubPage.Register -> MensaSignUpRoute(
+                    onActivated = viewModel::finishRegistration,
+                    onDirtyChange = { signUpDirty = it },
+                )
 
                 MensaSubPage.TakeawayOrder -> MensaTakeawayPage(
                     services = takeawayServices,
@@ -632,15 +687,28 @@ fun MensaPage(
 
                 is MensaSubPage.ReservationDetail -> {
                     val reservation = reservationList.firstOrNull { it.id == page.reservationId }
-                    if (reservation != null) {
-                        MensaReservationDetailPage(
+                    when {
+                        reservation != null -> MensaReservationDetailPage(
                             reservation = reservation,
                             isCancelling = cancellingId == reservation.id,
                             onCancel = { pendingCancel = it },
                         )
+                        reservations !is Loadable.Loaded -> SheetLoadingIndicator(label = stringResource(R.string.mensa_orders_loading))
+                        // Gone since the page opened: expired, or removed by a refresh.
+                        else -> SheetMessage(
+                            icon = Icons.Outlined.EventBusy,
+                            title = stringResource(R.string.mensa_order_gone_title),
+                            body = stringResource(R.string.mensa_order_gone_body),
+                            action = {
+                                FilledTonalButton(onClick = { haptic.tap(); viewModel.back() }) {
+                                    Text(stringResource(R.string.mensa_order_gone_back))
+                                }
+                            },
+                        )
                     }
                 }
             }
+        }
         }
         }
     }
@@ -657,18 +725,21 @@ private sealed interface MensaDisplay {
         val inMenu: Boolean get() = host != null
     }
     data object ConfirmCancel : MensaDisplay
+    data object ConfirmLeaveSignUp : MensaDisplay
     data object Outcome : MensaDisplay
 }
 
 private fun displayDepth(display: MensaDisplay): Int = when (display) {
     is MensaDisplay.Page -> display.level
     MensaDisplay.ConfirmCancel -> 100
+    MensaDisplay.ConfirmLeaveSignUp -> 100
     MensaDisplay.Outcome -> 101
 }
 
 private fun displayKey(display: MensaDisplay): String = when (display) {
     is MensaDisplay.Page -> display.host?.key ?: display.page.key
     MensaDisplay.ConfirmCancel -> "confirm_cancel"
+    MensaDisplay.ConfirmLeaveSignUp -> "confirm_leave_sign_up"
     MensaDisplay.Outcome -> "outcome"
 }
 
@@ -684,3 +755,6 @@ private suspend fun offerToSavePassword(context: Context, email: String, passwor
     }
 }
 
+
+/** How the user tried to leave a sign-up with something typed in it, so confirming does the same. */
+private enum class SignUpLeave { Back, CloseSheet }
