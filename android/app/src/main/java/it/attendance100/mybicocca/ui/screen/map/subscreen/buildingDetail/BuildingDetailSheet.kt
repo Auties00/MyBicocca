@@ -213,6 +213,9 @@ internal fun BuildingPageBody(
     val motion = MaterialTheme.motionScheme
     val sizeSpec = remember(motion) { motion.defaultSpatialSpec<IntSize>() }
 
+    val targets = if (onOpenMensa != null) canteens else emptyList()
+    val hasFooter = onDirections != null || targets.isNotEmpty()
+
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -241,7 +244,7 @@ internal fun BuildingPageBody(
                     .fillMaxWidth()
                     .heightIn(max = 560.dp)
                     .padding(horizontal = 16.dp),
-                contentPadding = PaddingValues(bottom = if (onDirections != null) 12.dp else 24.dp),
+                contentPadding = PaddingValues(bottom = if (hasFooter) 0.dp else 24.dp),
                 verticalArrangement = Arrangement.spacedBy(2.dp),
                 horizontalArrangement = Arrangement.spacedBy(2.dp),
             ) {
@@ -279,7 +282,7 @@ internal fun BuildingPageBody(
             }
         }
 
-        val targets = if (onOpenMensa != null) canteens else emptyList()
+        // The gap above the buttons sits outside the grid, so scrolled rooms never run into them.
         when {
             // One menu to open: it shares a row with the directions.
             onDirections != null && targets.size == 1 -> {
@@ -291,7 +294,7 @@ internal fun BuildingPageBody(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(start = 16.dp, end = 16.dp, bottom = 24.dp),
+                        .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 24.dp),
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
                     CanteenButton(
@@ -328,8 +331,9 @@ internal fun BuildingPageBody(
             targets.isNotEmpty() -> Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 16.dp, end = 16.dp, bottom = 24.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                    .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 24.dp),
+                // The same gap as between the two menus, so the three read as one group.
+                verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     targets.forEachIndexed { index, target ->
@@ -352,7 +356,7 @@ internal fun BuildingPageBody(
                 onClick = onDirections,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 16.dp, end = 16.dp, bottom = 24.dp),
+                    .padding(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 24.dp),
             )
         }
     }
