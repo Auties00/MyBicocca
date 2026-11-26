@@ -1,0 +1,133 @@
+---
+import { site } from '../../config/site.ts';
+import { en } from '../../i18n/en.ts';
+import { it } from '../../i18n/it.ts';
+import L from '../ui/L.astro';
+import Wordmark from '../ui/Wordmark.astro';
+---
+
+<!-- Linear-style minimal monochrome 5-column footer (NO language toggle) -->
+<footer class="footer divider-top">
+	<div class="container">
+		<div class="footer-grid">
+			<div class="footer-mark">
+				<a href="#top" class="footer-brand" aria-label="MyBicocca">
+					<Wordmark size="md" iconOnly />
+					<span class="footer-brand-name" translate="no">MyBicocca</span>
+				</a>
+			</div>
+
+			<nav class="footer-col" aria-label="Product">
+				<h3><L it={it.footer.columns.product} en={en.footer.columns.product} /></h3>
+				<a href="#features"><L it={it.footer.links.features} en={en.footer.links.features} /></a>
+				<a href="#privacy"><L it={it.footer.links.privacy} en={en.footer.links.privacy} /></a>
+				<a href="#download"><L it={it.footer.links.download} en={en.footer.links.download} /></a>
+			</nav>
+
+			<nav class="footer-col" aria-label="Platforms">
+				<h3><L it={it.footer.columns.platforms} en={en.footer.columns.platforms} /></h3>
+				<a href={site.webApp}><L it={it.footer.links.webApp} en={en.footer.links.webApp} /></a>
+				<a href={site.releases} target="_blank" rel="noopener noreferrer">
+					<L it={it.footer.links.android} en={en.footer.links.android} />
+				</a>
+				<span class="footer-disabled" aria-disabled="true">
+					<L it={it.footer.links.ios} en={en.footer.links.ios} />
+				</span>
+			</nav>
+
+			<nav class="footer-col" aria-label="Project">
+				<h3><L it={it.footer.columns.project} en={en.footer.columns.project} /></h3>
+				<a href={site.repository} target="_blank" rel="noopener noreferrer">
+					<L it={it.footer.links.source} en={en.footer.links.source} />
+				</a>
+				<a href={site.license} target="_blank" rel="noopener noreferrer">
+					<L it={it.footer.links.license} en={en.footer.links.license} />
+				</a>
+			</nav>
+
+			<nav class="footer-col" aria-label="Community">
+				<h3><L it={it.footer.columns.community} en={en.footer.columns.community} /></h3>
+				<a href={`${site.repository}/issues`} target="_blank" rel="noopener noreferrer">
+					<L it={it.footer.links.reportBug} en={en.footer.links.reportBug} />
+				</a>
+				<a href={site.repository} target="_blank" rel="noopener noreferrer">
+					<L it={it.footer.links.contribute} en={en.footer.links.contribute} />
+				</a>
+			</nav>
+		</div>
+	</div>
+</footer>
+
+<style>
+	.footer {
+		background: var(--bg);
+		padding-block: clamp(48px, 6vw, 72px) clamp(36px, 5vw, 52px);
+	}
+
+	.footer-grid {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 36px 24px;
+		align-items: start;
+	}
+
+	.footer-mark {
+		grid-column: 1 / -1;
+	}
+
+	.footer-brand {
+		display: inline-flex;
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 10px;
+	}
+
+	.footer-brand-name {
+		font-family: var(--font-sans);
+		font-size: 0.9rem;
+		font-weight: 580;
+		letter-spacing: -0.02em;
+		color: var(--text);
+	}
+
+	.footer-col {
+		display: grid;
+		gap: 11px;
+		align-content: start;
+	}
+
+	.footer-col h3 {
+		font-size: 0.8125rem;
+		font-weight: 560;
+		color: var(--text);
+		margin-block-end: 4px;
+	}
+
+	.footer-col a {
+		font-size: 0.8125rem;
+		color: var(--text-muted);
+		inline-size: fit-content;
+		transition: color 140ms var(--ease);
+	}
+
+	.footer-col a:hover {
+		color: var(--text);
+	}
+
+	.footer-disabled {
+		font-size: 0.8125rem;
+		color: rgba(255, 255, 255, 0.24);
+		cursor: default;
+		user-select: none;
+	}
+
+	@media (width >= 820px) {
+		.footer-grid {
+			grid-template-columns: minmax(0, 1fr) repeat(4, minmax(0, 1fr));
+		}
+
+		.footer-mark {
+			grid-column: auto;
+		}
+	}
+</style>

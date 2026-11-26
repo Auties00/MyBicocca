@@ -1,0 +1,38 @@
+---
+import Footer from '../components/layout/Footer.astro';
+import Header from '../components/layout/Header.astro';
+import L from '../components/ui/L.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout>
+	<Header />
+	<main id="main" class="not-found">
+		<div class="container box">
+			<span class="mono-label">404</span>
+			<h1 class="display-h2"><L it="Pagina non trovata." en="Page not found." /></h1>
+			<p class="lead-copy">
+				<L
+					it="La pagina richiesta non esiste su mybicocca.it."
+					en="The page you requested does not exist on mybicocca.it."
+				/>
+			</p>
+			<a href="/" class="btn btn-primary">
+				<L it="Torna alla home" en="Back to home" />
+			</a>
+		</div>
+	</main>
+	<Footer />
+</BaseLayout>
+
+<style>
+	.not-found {
+		padding-block: clamp(80px, 14vw, 150px);
+	}
+
+	.box {
+		display: grid;
+		justify-items: start;
+		gap: 16px;
+	}
+</style>

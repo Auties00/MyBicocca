@@ -1,0 +1,47 @@
+---
+import { Picture } from 'astro:assets';
+import type { LocalizedScreen } from '../../lib/screens.ts';
+
+interface Props {
+	screen: LocalizedScreen;
+	altIt: string;
+	altEn: string;
+	widths: number[];
+	sizes: string;
+	priority?: boolean;
+	class?: string;
+}
+
+const { screen, altIt, altEn, widths, sizes, priority = false, class: className } = Astro.props;
+const loading = priority ? 'eager' : 'lazy';
+const fetchpriority = priority ? 'high' : undefined;
+---
+
+<span class:list={['screen-wrap', className]}>
+	<span class="l-it-block">
+		<Picture
+			src={screen.it}
+			widths={widths}
+			sizes={sizes}
+			formats={['avif', 'webp']}
+			fallbackFormat="webp"
+			alt={altIt}
+			loading={loading}
+			fetchpriority={fetchpriority}
+			decoding={priority ? 'sync' : 'async'}
+		/>
+	</span>
+	<span class="l-en-block">
+		<Picture
+			src={screen.en}
+			widths={widths}
+			sizes={sizes}
+			formats={['avif', 'webp']}
+			fallbackFormat="webp"
+			alt={altEn}
+			loading={loading}
+			fetchpriority={fetchpriority}
+			decoding={priority ? 'sync' : 'async'}
+		/>
+	</span>
+</span>

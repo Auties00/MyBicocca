@@ -1,0 +1,151 @@
+---
+import { site } from '../../config/site.ts';
+import { en } from '../../i18n/en.ts';
+import { it } from '../../i18n/it.ts';
+import Icon from '../ui/Icon.astro';
+import L from '../ui/L.astro';
+---
+
+<section class="download divider-top" id="download" aria-labelledby="download-heading">
+	<div class="container">
+		<div class="callout" data-reveal>
+			<h2 id="download-heading" class="display-h2">
+				<span><L it={it.download.titleLine1} en={en.download.titleLine1} /></span>
+				<br />
+				<span class="muted"><L it={it.download.titleLine2} en={en.download.titleLine2} /></span>
+			</h2>
+		</div>
+
+		<!-- Clean 3-row hairline platform specification list -->
+		<div class="platform-list" data-reveal>
+			<!-- Web App -->
+			<div class="plat-row">
+				<div class="plat-name">
+					<Icon name="globe" size={16} />
+					<span><L it={it.download.web.name} en={en.download.web.name} /></span>
+				</div>
+				<p class="plat-spec">
+					<L it={it.download.web.spec} en={en.download.web.spec} />
+				</p>
+				<div class="plat-links">
+					<a href={site.webApp} class="inline-link plat-cta">
+						<span><L it={it.download.web.cta} en={en.download.web.cta} /></span>
+						<Icon name="arrow-right" size={14} />
+					</a>
+				</div>
+			</div>
+
+			<!-- Android (GitHub APK only) -->
+			<div class="plat-row">
+				<div class="plat-name">
+					<Icon name="android" size={16} />
+					<span><L it={it.download.android.name} en={en.download.android.name} /></span>
+				</div>
+				<p class="plat-spec">
+					<L it={it.download.android.spec} en={en.download.android.spec} />
+				</p>
+				<div class="plat-links">
+					<a
+						href={site.releases}
+						class="inline-link plat-cta"
+						target="_blank"
+						rel="noopener noreferrer"
+					>
+						<span><L it={it.download.android.apk} en={en.download.android.apk} /></span>
+						<Icon name="arrow-up-right" size={14} />
+					</a>
+				</div>
+			</div>
+
+			<!-- iOS & iPadOS (Coming soon, non-linked) -->
+			<div class="plat-row">
+				<div class="plat-name">
+					<Icon name="apple" size={16} />
+					<span><L it={it.download.ios.name} en={en.download.ios.name} /></span>
+				</div>
+				<p class="plat-spec">
+					<L it={it.download.ios.spec} en={en.download.ios.spec} />
+				</p>
+				<div class="plat-links">
+					<span class="plat-soon">
+						<L it={it.download.ios.soon} en={en.download.ios.soon} />
+					</span>
+				</div>
+			</div>
+		</div>
+	</div>
+</section>
+
+<style>
+	.download {
+		padding-block: clamp(72px, 9vw, 128px);
+	}
+
+	.callout {
+		margin-block-end: clamp(44px, 5.5vw, 68px);
+	}
+
+	.muted {
+		color: var(--text-muted);
+	}
+
+	/* Razor-thin hairline table */
+	.platform-list {
+		border-block-start: 1px solid var(--border);
+	}
+
+	.plat-row {
+		display: grid;
+		gap: 10px 24px;
+		align-items: center;
+		padding-block: 22px;
+		border-block-end: 1px solid var(--border);
+	}
+
+	.plat-name {
+		display: inline-flex;
+		align-items: center;
+		gap: 10px;
+		font-size: 0.95rem;
+		font-weight: 560;
+		color: var(--text);
+	}
+
+	.plat-name :global(.icon) {
+		color: var(--text-muted);
+	}
+
+	.plat-spec {
+		font-size: 0.875rem;
+		color: var(--text-muted);
+		text-wrap: balance;
+	}
+
+	.plat-links {
+		display: flex;
+		align-items: center;
+	}
+
+	.plat-cta {
+		color: var(--text);
+		font-size: 0.875rem;
+		white-space: nowrap;
+	}
+
+	.plat-soon {
+		font-size: 0.875rem;
+		font-weight: 500;
+		color: var(--text-subtle);
+		white-space: nowrap;
+	}
+
+	@media (width >= 820px) {
+		.plat-row {
+			grid-template-columns: 168px minmax(0, 1fr) 220px;
+		}
+
+		.plat-links {
+			justify-content: flex-end;
+		}
+	}
+</style>

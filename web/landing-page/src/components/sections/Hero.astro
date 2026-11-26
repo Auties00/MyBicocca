@@ -1,0 +1,268 @@
+---
+import { site } from '../../config/site.ts';
+import { en } from '../../i18n/en.ts';
+import { it } from '../../i18n/it.ts';
+import { androidScreens, webScreens } from '../../lib/screens.ts';
+import ThemedScreen from '../media/ThemedScreen.astro';
+import Icon from '../ui/Icon.astro';
+import L from '../ui/L.astro';
+---
+
+<section class="hero" id="top" aria-labelledby="hero-heading">
+	<div class="container">
+		<div class="hero-copy">
+			<h1 id="hero-heading" class="hero-title">
+				<span><L it={it.hero.titleStart} en={en.hero.titleStart} /></span>
+				<span><L it={it.hero.titleAccent} en={en.hero.titleAccent} /></span>
+			</h1>
+
+			<p class="hero-lead">
+				<L it={it.hero.lead} en={en.hero.lead} />
+			</p>
+
+			<!-- Single platform-aware primary CTA (Desktop & iOS -> Web App; Android -> GitHub Releases APK) -->
+			<div id="hero-cta" class="hero-cta">
+				<a href={site.webApp} class="btn btn-primary btn-lg not-android">
+					<span><L it={it.hero.cta.web} en={en.hero.cta.web} /></span>
+					<Icon name="arrow-right" size={16} />
+				</a>
+
+				<a
+					href={site.releases}
+					class="btn btn-primary btn-lg only-android"
+					target="_blank"
+					rel="noopener noreferrer"
+				>
+					<Icon name="android" size={16} />
+					<span><L it={it.hero.cta.android} en={en.hero.cta.android} /></span>
+				</a>
+			</div>
+		</div>
+
+		<!-- Monumental Linear-style masked interface canvas emerging from #08090A -->
+		<div class="hero-showcase">
+			<!-- Desktop: full-width dark Web App + hairline-framed Android phone -->
+			<div class="showcase-desktop only-desktop-block">
+				<div class="window-shell">
+					<div class="window-chrome" aria-hidden="true">
+						<span class="chrome-dots"><i></i><i></i><i></i></span>
+						<span class="chrome-host" translate="no">web.mybicocca.it</span>
+						<span class="chrome-spacer"></span>
+					</div>
+					<div class="window-viewport">
+						<ThemedScreen
+							screen={webScreens('desktop', 'calendar')}
+							altIt={it.hero.altDesktop}
+							altEn={en.hero.altDesktop}
+							widths={[760, 1120, 1680]}
+							sizes="(width >= 1120px) 1120px, calc(100vw - 40px)"
+							priority
+						/>
+					</div>
+				</div>
+
+				<div class="phone-companion">
+					<div class="phone-shell">
+						<ThemedScreen
+							screen={androidScreens('map')}
+							altIt={it.hero.altAndroid}
+							altEn={en.hero.altAndroid}
+							widths={[260, 400, 540]}
+							sizes="256px"
+							priority
+						/>
+					</div>
+				</div>
+			</div>
+
+			<!-- Android mobile -->
+			<div class="showcase-mobile only-android-block">
+				<div class="phone-shell mobile-hero-phone">
+					<ThemedScreen
+						screen={androidScreens('calendar')}
+						altIt={it.hero.altAndroidHero}
+						altEn={en.hero.altAndroidHero}
+						widths={[320, 480, 640]}
+						sizes="min(82vw, 320px)"
+						priority
+					/>
+				</div>
+			</div>
+
+			<!-- iOS mobile -->
+			<div class="showcase-mobile only-ios-block">
+				<div class="phone-shell mobile-hero-phone">
+					<ThemedScreen
+						screen={webScreens('mobile', 'calendar')}
+						altIt={it.hero.altMobileWeb}
+						altEn={en.hero.altMobileWeb}
+						widths={[320, 480, 640]}
+						sizes="min(82vw, 320px)"
+						priority
+					/>
+				</div>
+			</div>
+		</div>
+	</div>
+</section>
+
+<style>
+	.hero {
+		padding-block: clamp(64px, 9.5vw, 120px) clamp(40px, 6vw, 72px);
+	}
+
+	.hero-copy {
+		display: grid;
+		justify-items: start;
+		gap: 20px;
+		max-inline-size: 760px;
+	}
+
+	.hero-title {
+		display: grid;
+		font-size: clamp(2.5rem, 1.5rem + 3.4vw, 4.15rem);
+		font-weight: 540;
+		line-height: 1.02;
+		letter-spacing: -0.032em;
+		color: var(--text);
+		animation: linear-in 520ms var(--ease) both;
+	}
+
+	.hero-lead {
+		font-size: clamp(1rem, 0.94rem + 0.25vw, 1.125rem);
+		line-height: 1.55;
+		color: var(--text-muted);
+		max-inline-size: 52ch;
+		animation: linear-in 540ms var(--ease) 70ms both;
+	}
+
+	.hero-cta {
+		margin-block-start: 6px;
+		animation: linear-in 560ms var(--ease) 130ms both;
+	}
+
+	/* Monumental full-width masked interface canvas (linear.app style) */
+	.hero-showcase {
+		margin-block-start: clamp(44px, 6vw, 72px);
+		animation: linear-in 680ms var(--ease) 180ms both;
+	}
+
+	.showcase-desktop {
+		position: relative;
+		padding-block-end: 12px;
+	}
+
+	.window-shell {
+		position: relative;
+		border-radius: 14px;
+		overflow: hidden;
+		background: #0f1012;
+		border: 1px solid var(--border-strong);
+		box-shadow:
+			inset 0 1px 0 rgba(255, 255, 255, 0.07),
+			0 32px 80px rgba(0, 0, 0, 0.65);
+		mask-image: linear-gradient(to bottom, #000 62%, rgba(0, 0, 0, 0.45) 86%, transparent 100%);
+		-webkit-mask-image: linear-gradient(to bottom, #000 62%, rgba(0, 0, 0, 0.45) 86%, transparent 100%);
+	}
+
+	.window-chrome {
+		display: grid;
+		grid-template-columns: 56px 1fr 56px;
+		align-items: center;
+		block-size: 36px;
+		padding-inline: 14px;
+		background: #0c0d0f;
+		border-block-end: 1px solid var(--border);
+	}
+
+	.chrome-dots {
+		display: flex;
+		gap: 6px;
+	}
+
+	.chrome-dots i {
+		display: block;
+		inline-size: 8px;
+		block-size: 8px;
+		border-radius: 50%;
+		background: rgba(255, 255, 255, 0.14);
+	}
+
+	.chrome-host {
+		justify-self: center;
+		font-family: var(--font-mono);
+		font-size: 0.7rem;
+		color: var(--text-subtle);
+		letter-spacing: 0.02em;
+	}
+
+	.window-viewport {
+		aspect-ratio: 16 / 9.2;
+		overflow: hidden;
+		background: #141111;
+	}
+
+	.phone-companion {
+		display: none;
+	}
+
+	.phone-shell {
+		border-radius: 30px;
+		overflow: hidden;
+		background: #0f1012;
+		padding: 6px;
+		border: 1px solid var(--border-strong);
+		box-shadow:
+			inset 0 1px 0 rgba(255, 255, 255, 0.08),
+			0 28px 70px rgba(0, 0, 0, 0.82);
+	}
+
+	.phone-shell :global(img) {
+		border-radius: 24px;
+	}
+
+	.showcase-mobile {
+		display: flex;
+		justify-content: center;
+	}
+
+	.mobile-hero-phone {
+		inline-size: min(82vw, 310px);
+		margin-inline: auto;
+		mask-image: linear-gradient(to bottom, #000 72%, transparent 100%);
+		-webkit-mask-image: linear-gradient(to bottom, #000 72%, transparent 100%);
+	}
+
+	@media (width >= 900px) {
+		.phone-companion {
+			display: block;
+			position: absolute;
+			inset-inline-end: 28px;
+			inset-block-end: 0;
+			inline-size: clamp(210px, 21vw, 256px);
+			z-index: 2;
+			mask-image: linear-gradient(to bottom, #000 74%, rgba(0, 0, 0, 0.3) 94%, transparent 100%);
+			-webkit-mask-image: linear-gradient(to bottom, #000 74%, rgba(0, 0, 0, 0.3) 94%, transparent 100%);
+		}
+	}
+
+	@keyframes linear-in {
+		from {
+			opacity: 0;
+			transform: translateY(10px);
+		}
+		to {
+			opacity: 1;
+			transform: translateY(0);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.hero-title,
+		.hero-lead,
+		.hero-cta,
+		.hero-showcase {
+			animation: none;
+		}
+	}
+</style>
