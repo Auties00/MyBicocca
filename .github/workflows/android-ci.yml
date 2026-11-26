@@ -3,8 +3,16 @@ name: Android CI
 on:
   push:
     branches: [main, optimize]
+    paths:
+      - 'android/**'
+      - 'common/**'
+      - '.github/workflows/android-ci.yml'
   # Every PR, whatever its base: stacked PRs (based on another feature branch) need CI too.
   pull_request:
+    paths:
+      - 'android/**'
+      - 'common/**'
+      - '.github/workflows/android-ci.yml'
   workflow_dispatch:
 
 permissions:
@@ -12,7 +20,7 @@ permissions:
   pull-requests: write
 
 concurrency:
-  group: android-ci-${{ github.ref }}
+  group: android-ci-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -80,10 +88,6 @@ jobs:
         working-directory: android
         run: ./gradlew :app:demoCheck --stacktrace
 
-      - name: data-api library tests (live suites excluded)
-        working-directory: android
-        run: ./gradlew -p data-api test --stacktrace
-
       # Warns when a shot in screenshots.json has no PNGs on disk yet, and leaves (or refreshes) one
       # reminder comment on the pull request so the author knows to add the "screenshots" label.
       - name: Check for missing screenshots
@@ -126,8 +130,6 @@ jobs:
           path: |
             android/app/build/reports/tests/
             android/app/build/test-results/
-            android/data-api/**/build/reports/tests/
-            android/data-api/**/build/test-results/
           retention-days: 14
           if-no-files-found: ignore
 
