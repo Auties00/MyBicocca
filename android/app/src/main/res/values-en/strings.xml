@@ -2168,7 +2168,6 @@
     <string name="mensa_allergens_section_diet">Foods to avoid</string>
     <string name="mensa_summary_title">Your order</string>
     <string name="mensa_summary_subtitle">Review your dishes before choosing pickup</string>
-    <string name="mensa_signup_email_university">Your university address, the same as everywhere else</string>
     <string name="mensa_summary_add_more">Add dishes</string>
     <string name="mensa_summary_continue">Choose pickup</string>
     <string name="mensa_summary_continue_signin">Continue and sign in</string>

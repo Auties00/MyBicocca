@@ -252,11 +252,7 @@ private fun FormStep(
                 }
             },
             isError = emailRefused != null,
-            supportingText = when {
-                emailRefused != null -> { { Text(emailRefused.message) } }
-                state.emailIsUniversity -> { { Text(stringResource(R.string.mensa_signup_email_university)) } }
-                else -> null
-            },
+            supportingText = emailRefused?.let { { Text(it.message) } },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
             modifier = Modifier
                 .fillMaxWidth()
