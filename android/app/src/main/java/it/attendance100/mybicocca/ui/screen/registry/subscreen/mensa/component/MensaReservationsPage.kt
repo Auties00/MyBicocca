@@ -1,6 +1,11 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.component
 
 import androidx.compose.foundation.background
+import it.attendance100.mybicocca.ui.component.modal.SheetMotion
+import it.attendance100.mybicocca.ui.component.modal.LocalSheetBackScrub
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.offset
@@ -424,109 +429,115 @@ internal fun MensaReservationDetailPage(
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             MensaBookingBagHero(reservationId = reservation.id, dishes = reservation.dishes)
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(22.dp),
-                color = Color.White,
+            // Everything under the bag leaves together, so the page it opens onto never shows through it.
+            Column(
+                modifier = Modifier.leavingBelowBag(),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    Text(
-                        text = stringResource(R.string.mensa_order_barcode_label),
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Color(0xFF444444),
-                    )
-                    val encoded = URLEncoder.encode(reservation.barcodeValue, "UTF-8")
-                    AsyncImage(
-                        model = "https://unibicocca.compasscloud.it/api/utilities/barcode/render?data=$encoded&width=480&height=140",
-                        contentDescription = reservation.barcodeValue,
-                        contentScale = ContentScale.Fit,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(84.dp)
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(Color.White),
-                    )
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Outlined.QrCode2,
-                            contentDescription = null,
-                            tint = Color(0xFF1A1A1A),
-                            modifier = Modifier.size(18.dp),
-                        )
-                        Text(
-                            text = reservation.barcodeValue,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontFamily = FontFamily.Monospace,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF1A1A1A),
-                        )
-                    }
-                }
-            }
-
-            pickupPoint?.let { place ->
-                DetailFactCard(
-                    icon = Icons.Outlined.Storefront,
-                    label = stringResource(R.string.mensa_order_pickup_label),
-                    value = place,
-                )
-            }
-            if (reservation.code.isNotBlank()) {
-                DetailFactCard(
-                    icon = Icons.Outlined.ConfirmationNumber,
-                    label = stringResource(R.string.mensa_order_code_label),
-                    value = reservation.code,
-                    mono = true,
-                )
-            }
-            DetailFactCard(
-                icon = Icons.Outlined.Restaurant,
-                label = stringResource(R.string.mensa_order_canteen_label),
-                value = listOfNotNull(reservation.canteenName, reservation.menuName, reservation.deliveryAddress).joinToString(" · "),
-            )
-            DetailFactCard(
-                icon = Icons.Outlined.CalendarMonth,
-                label = stringResource(R.string.mensa_order_date_label),
-                value = formattedDate,
-            )
-            reservation.shiftName?.let { shift ->
-                DetailFactCard(
-                    icon = Icons.Outlined.Schedule,
-                    label = stringResource(R.string.mensa_order_shift_label),
-                    value = listOfNotNull(shift, reservation.mealTypeName).joinToString(" · "),
-                )
-            }
-            if (reservation.dishes.isNotEmpty()) {
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(20.dp),
-                    color = scheme.surfaceContainer,
+                    shape = RoundedCornerShape(22.dp),
+                    color = Color.White,
                 ) {
                     Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(6.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         Text(
-                            text = stringResource(R.string.mensa_order_dishes_label),
+                            text = stringResource(R.string.mensa_order_barcode_label),
                             style = MaterialTheme.typography.labelSmall,
                             fontWeight = FontWeight.SemiBold,
-                            color = scheme.onSurfaceVariant,
+                            color = Color(0xFF444444),
                         )
-                        reservation.dishes.forEach { dish ->
-                            Text(
-                                text = "• ${dish.name.toDishDisplayName()}",
-                                style = MaterialTheme.typography.bodyMedium,
+                        val encoded = URLEncoder.encode(reservation.barcodeValue, "UTF-8")
+                        AsyncImage(
+                            model = "https://unibicocca.compasscloud.it/api/utilities/barcode/render?data=$encoded&width=480&height=140",
+                            contentDescription = reservation.barcodeValue,
+                            contentScale = ContentScale.Fit,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(84.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(Color.White),
+                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.QrCode2,
+                                contentDescription = null,
+                                tint = Color(0xFF1A1A1A),
+                                modifier = Modifier.size(18.dp),
                             )
+                            Text(
+                                text = reservation.barcodeValue,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontFamily = FontFamily.Monospace,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF1A1A1A),
+                            )
+                        }
+                    }
+                }
+
+                pickupPoint?.let { place ->
+                    DetailFactCard(
+                        icon = Icons.Outlined.Storefront,
+                        label = stringResource(R.string.mensa_order_pickup_label),
+                        value = place,
+                    )
+                }
+                if (reservation.code.isNotBlank()) {
+                    DetailFactCard(
+                        icon = Icons.Outlined.ConfirmationNumber,
+                        label = stringResource(R.string.mensa_order_code_label),
+                        value = reservation.code,
+                        mono = true,
+                    )
+                }
+                DetailFactCard(
+                    icon = Icons.Outlined.Restaurant,
+                    label = stringResource(R.string.mensa_order_canteen_label),
+                    value = listOfNotNull(reservation.canteenName, reservation.menuName, reservation.deliveryAddress).joinToString(" · "),
+                )
+                DetailFactCard(
+                    icon = Icons.Outlined.CalendarMonth,
+                    label = stringResource(R.string.mensa_order_date_label),
+                    value = formattedDate,
+                )
+                reservation.shiftName?.let { shift ->
+                    DetailFactCard(
+                        icon = Icons.Outlined.Schedule,
+                        label = stringResource(R.string.mensa_order_shift_label),
+                        value = listOfNotNull(shift, reservation.mealTypeName).joinToString(" · "),
+                    )
+                }
+                if (reservation.dishes.isNotEmpty()) {
+                    Surface(
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(20.dp),
+                        color = scheme.surfaceContainer,
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(6.dp),
+                        ) {
+                            Text(
+                                text = stringResource(R.string.mensa_order_dishes_label),
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.SemiBold,
+                                color = scheme.onSurfaceVariant,
+                            )
+                            reservation.dishes.forEach { dish ->
+                                Text(
+                                    text = "• ${dish.name.toDishDisplayName()}",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                )
+                            }
                         }
                     }
                 }
@@ -550,13 +561,13 @@ internal fun MensaReservationDetailPage(
                 secondaryColors = ConnectedButtonPairDefaults.destructiveColors(),
                 primary = onShowOnMap?.let { map },
                 onPrimary = { onShowOnMap?.invoke() },
-                modifier = Modifier.padding(top = 10.dp),
+                modifier = Modifier.padding(top = 10.dp).leavingBelowBag(),
             )
             onShowOnMap != null -> ConnectedButtonPair(
                 secondary = map,
                 onSecondary = onShowOnMap,
                 secondaryColors = ConnectedButtonPairDefaults.primaryColors(),
-                modifier = Modifier.padding(top = 10.dp),
+                modifier = Modifier.padding(top = 10.dp).leavingBelowBag(),
             )
         }
     }
@@ -605,5 +616,25 @@ private fun ReservationsHistoryPreview(@PreviewParameter(MensaPreviewThemeProvid
 private fun ReservationDetailPreview(@PreviewParameter(MensaPreviewThemeProvider::class) theme: MensaPreviewTheme) {
     MensaPreviewHost(theme) {
         MensaReservationDetailPage(reservation = MensaPreviewOrders.reservation, pickupPoint = "Mensa U12", isCancelling = false, onCancel = {}, onShowOnMap = {})
+    }
+}
+
+/**
+ * Leaving a booking, what is under its bag slides down out of the sheet and fades: with a back
+ * gesture while the bag takes the dishes back, following the finger; otherwise with the page change.
+ */
+@Composable
+private fun Modifier.leavingBelowBag(): Modifier {
+    val visibility = LocalMensaShared.current?.visibility ?: return this
+    // Scrubbed, it is gone by the time the bag sets off; otherwise it leaves with the page change,
+    // so the page coming in fades up behind it rather than after it.
+    val scrubbed = LocalSheetBackScrub.current()
+    val slideMs = if (scrubbed) MENSA_BAG_RETURN_MS else SheetMotion.PAGE_MS
+    val fadeMs = if (scrubbed) MENSA_BAG_RETURN_MS else SheetMotion.PAGE_MS * 2 / 3
+    return with(visibility) {
+        this@leavingBelowBag.animateEnterExit(
+            enter = EnterTransition.None,
+            exit = slideOutVertically(tween(slideMs, easing = FastOutSlowInEasing)) { it } + fadeOut(tween(fadeMs)),
+        )
     }
 }

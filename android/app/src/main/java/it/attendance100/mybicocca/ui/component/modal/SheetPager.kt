@@ -21,6 +21,10 @@ import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
@@ -64,7 +68,8 @@ import kotlin.coroutines.cancellation.CancellationException
  * Off for a pager whose pages all fill the sheet: their height follows the header's, and
  * animating it chased that header frame by frame and stretched the page change to seconds.
  * @param holdMillis how long a change from one page to another holds still before moving, so the
- * leaving page can finish something of its own first (the Mensa bag taking its dishes back).
+ * leaving page can finish something of its own first (the Mensa bag taking its dishes back). Only a
+ * back gesture being scrubbed holds; a quick one, or the back arrow, moves at once.
  * @param content a page's body; its [AnimatedContentScope] lets it animate parts of itself with
  * the page change.
  */
@@ -136,6 +141,9 @@ internal fun <P : Any> SheetPagerImpl(
     val latestOnBack by rememberUpdatedState(onBack)
     // A cancelled gesture cancels the handler's own job, so the rewind must run elsewhere.
     val rewindScope = rememberCoroutineScope()
+    // A back gesture is being scrubbed: the pages follow the finger, and a page change may hold.
+    var scrubbing by remember { mutableStateOf(false) }
+    val holdFor: (P, P) -> Int = { from, to -> if (scrubbing) holdMillis(from, to) else 0 }
 
     // Programmatic navigation (a tap, a ViewModel result, a popped back-stack entry): animate to
     // the new page. A page that is already the settled state (e.g. right after a predictive back
@@ -152,14 +160,27 @@ internal fun <P : Any> SheetPagerImpl(
             key(state.targetState) == pageKey -> state.animateTo(state.targetState)
             else -> state.animateTo(page)
         }
+        scrubbing = false
     }
 
     PredictiveBackHandler(enabled = backTo != null) { progress ->
         val target = backTo ?: return@PredictiveBackHandler
         try {
-            progress.collect { event -> state.seekTo(event.progress, targetState = target) }
+            val startNanos = System.nanoTime()
+            progress.collect { event ->
+                // A flick is decided on release, like the back arrow: the pages only follow a finger
+                // still down after a moment, so a page's own motion never runs at flick speed.
+                if (!scrubbing) {
+                    if ((System.nanoTime() - startNanos) / 1_000_000 < QUICK_BACK_MS) return@collect
+                    scrubbing = true
+                }
+                state.seekTo(event.progress, targetState = target)
+            }
         } catch (cancelled: CancellationException) {
-            rewindScope.launch { state.rewindTo(latestPage, transition.totalDurationNanos) }
+            rewindScope.launch {
+                state.rewindTo(latestPage, transition.totalDurationNanos)
+                scrubbing = false
+            }
             throw cancelled
         }
         // Commit first, then let the page change finish the motion from where the finger left it
@@ -168,10 +189,12 @@ internal fun <P : Any> SheetPagerImpl(
         // cancels this handler's job before it gets to commit.
         latestOnBack()
         // If the owner vetoed the step, return to wherever it is now instead of leaving the pager
-        // parked on a page it is not on.
+        // parked on a page it is not on. Only then: when the step went through, the page change
+        // above is already on its way, and a second one started here would cut it short.
         rewindScope.launch {
             withFrameNanos { }
-            if (key(latestPage) != key(state.targetState)) state.animateTo(latestPage)
+            val vetoed = key(latestPage) == key(state.currentState) && key(state.targetState) != key(latestPage)
+            if (vetoed) state.animateTo(latestPage)
         }
     }
 
@@ -190,7 +213,7 @@ internal fun <P : Any> SheetPagerImpl(
             // own (held before the change, or played after it), which the header does not wait for.
             progress = {
                 val totalMs = transition.totalDurationNanos / 1_000_000f
-                val holdMs = holdMillis(transition.currentState, transition.targetState).toFloat()
+                val holdMs = holdFor(transition.currentState, transition.targetState).toFloat()
                 val changeMs = minOf(SheetMotion.PAGE_MS.toFloat(), totalMs - holdMs)
                 if (changeMs <= 0f) state.fraction else ((state.fraction * totalMs - holdMs) / changeMs).coerceIn(0f, 1f)
             },
@@ -202,11 +225,11 @@ internal fun <P : Any> SheetPagerImpl(
                     slide = slide,
                     forward = depth(targetState) >= depth(initialState),
                     morphHeight = morphHeight,
-                    hold = holdMillis(initialState, targetState),
+                    hold = holdFor(initialState, targetState),
                 )
             },
             contentKey = key,
-        ) { shown -> content(fresh(shown)) }
+        ) { shown -> CompositionLocalProvider(LocalSheetBackScrub provides { scrubbing }) { content(fresh(shown)) } }
     }
 }
 
@@ -255,6 +278,15 @@ private suspend fun <P : Any> SeekableTransitionState<P>.rewindTo(page: P, total
     }
     snapTo(page)
 }
+
+/** A back gesture released this soon is a flick: it is not scrubbed. */
+private const val QUICK_BACK_MS = 150L
+
+/**
+ * Whether the page change under way follows a back gesture's finger, rather than running on its
+ * own (a tap, the back arrow, a flick). A page can play its leaving differently for each.
+ */
+val LocalSheetBackScrub = compositionLocalOf<() -> Boolean> { { false } }
 
 /** The longest a cancelled gesture takes to rewind, however far it went. */
 private const val MAX_REWIND_NANOS = 450_000_000L

@@ -53,6 +53,7 @@ import androidx.compose.ui.util.lerp
 import androidx.vectordrawable.graphics.drawable.SeekableAnimatedVectorDrawable
 import it.attendance100.mybicocca.R
 import it.attendance100.mybicocca.domain.model.mensa.MensaDish
+import it.attendance100.mybicocca.ui.component.modal.LocalSheetBackScrub
 import it.attendance100.mybicocca.ui.component.modal.SheetMotion
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.MensaDishArtwork
 import it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa.artwork.mensaDishDrawable
@@ -93,6 +94,9 @@ private const val HERO_MS = RISE_START_MS + RISE_MS + BAG_OPEN_MS
  */
 internal const val MENSA_BAG_RETURN_MS = 240
 
+/** Leaving with no gesture to follow, the dishes fade out this fast instead of going back in. */
+private const val QUICK_DISHES_OUT_MS = 150
+
 /** Where the timeline is once every dish is back in the bag: the start of their rise. */
 private const val DISHES_IN = RISE_START_MS.toFloat() / HERO_MS
 
@@ -118,8 +122,6 @@ internal val LocalMensaBagStage = staticCompositionLocalOf<MensaBagStage?> { nul
 @Composable
 internal fun MensaBookingBag(reservationId: Int, width: Dp, modifier: Modifier = Modifier) {
     val stage = LocalMensaBagStage.current
-    // While the booking's page is on screen its bag is the one to see, also on its way back here.
-    val inBooking = stage?.bookings?.containsKey(reservationId) == true
     DisposableEffect(stage, reservationId) {
         onDispose { stage?.homes?.remove(reservationId) }
     }
@@ -128,7 +130,9 @@ internal fun MensaBookingBag(reservationId: Int, width: Dp, modifier: Modifier =
             .width(width)
             .aspectRatio(BAG_ASPECT_RATIO)
             .onGloballyPositioned { stage?.homes?.set(reservationId, it.boundsInWindow()) }
-            .graphicsLayer { alpha = if (inBooking) 0f else 1f },
+            // While the booking's page is on screen its bag is the one to see, also on its way back
+            // here. Read while drawing, so this one shows in the very frame that one is gone.
+            .graphicsLayer { alpha = if (stage?.bookings?.containsKey(reservationId) == true) 0f else 1f },
     ) {
         // A shut bag is one drawing; the back half's place is kept for the booking's two halves.
         Spacer(Modifier.matchParentSize().mensaBagElement(reservationId, BagLayer.Back))
@@ -176,7 +180,9 @@ private class BagShareConfig(private val shared: () -> Boolean) : SharedTransiti
 @Composable
 internal fun MensaBookingBagHero(reservationId: Int, dishes: List<MensaDish>, modifier: Modifier = Modifier) {
     val shown = dishes.take(MAX_PLATES)
-    val timeline = rememberHeroTimeline(shown.isNotEmpty())
+    val scrubbed = LocalSheetBackScrub.current
+    val timeline = rememberHeroTimeline(shown.isNotEmpty(), scrubbed)
+    val dishesShown = rememberDishesShown(scrubbed)
     val openness = remember(timeline) { derivedStateOf { bagOpenness(timeline.value) } }
     val stage = LocalMensaBagStage.current
     DisposableEffect(stage, reservationId, openness) {
@@ -186,7 +192,7 @@ internal fun MensaBookingBagHero(reservationId: Int, dishes: List<MensaDish>, mo
     val scopes = LocalMensaShared.current
     val visibility = scopes?.visibility
     val leaving = remember(visibility) { { visibility?.transition?.targetState == EnterExitState.PostExit } }
-    val flight = rememberBagFlight()
+    val flight = rememberBagFlight(scrubbed)
     val flightOf = remember(stage, reservationId) { BagFlight(stage, reservationId) }
     Box(
         modifier = modifier
@@ -219,7 +225,8 @@ internal fun MensaBookingBagHero(reservationId: Int, dishes: List<MensaDish>, mo
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .then(betweenHalves)
-                    .risingOutOfBag(timeline, index, shown.size),
+                    .risingOutOfBag(timeline, index, shown.size)
+                    .graphicsLayer { alpha = dishesShown.value },
             )
         }
         BagLayerImage(
@@ -276,14 +283,26 @@ private fun Modifier.flyingHome(
     }
 }
 
+/** 1 while the dishes show, fading to 0 when the page is left with no gesture to follow. */
+@Composable
+private fun rememberDishesShown(scrubbed: () -> Boolean): State<Float> {
+    val visibility = LocalMensaShared.current?.visibility ?: return remember { mutableFloatStateOf(1f) }
+    return visibility.transition.animateFloat(
+        transitionSpec = {
+            if (targetState == EnterExitState.PostExit && !scrubbed()) tween(QUICK_DISHES_OUT_MS) else snap()
+        },
+        label = "mensa_bag_dishes_shown",
+    ) { if (it == EnterExitState.PostExit && !scrubbed()) 0f else 1f }
+}
+
 /** 0 until the page leaves, then 1 once the bag is home: its flight, after the page's hold. */
 @Composable
-private fun rememberBagFlight(): State<Float> {
+private fun rememberBagFlight(scrubbed: () -> Boolean): State<Float> {
     val visibility = LocalMensaShared.current?.visibility ?: return remember { mutableFloatStateOf(0f) }
     return visibility.transition.animateFloat(
         transitionSpec = {
             if (targetState == EnterExitState.PostExit) {
-                tween(SheetMotion.PAGE_MS, delayMillis = MENSA_BAG_RETURN_MS, easing = FastOutSlowInEasing)
+                tween(SheetMotion.PAGE_MS, delayMillis = if (scrubbed()) MENSA_BAG_RETURN_MS else 0, easing = FastOutSlowInEasing)
             } else {
                 snap()
             }
@@ -355,7 +374,7 @@ private fun bagOpenness(timeline: Float): Float {
  * where the dishes are in while the page holds still, and on to 0 as the bag flies home.
  */
 @Composable
-private fun rememberHeroTimeline(hasDishes: Boolean): State<Float> {
+private fun rememberHeroTimeline(hasDishes: Boolean, scrubbed: () -> Boolean): State<Float> {
     val visibility = LocalMensaShared.current?.visibility
     if (visibility == null || !hasDishes) return remember { mutableFloatStateOf(1f) }
     return visibility.transition.animateFloat(
@@ -363,6 +382,9 @@ private fun rememberHeroTimeline(hasDishes: Boolean): State<Float> {
             if (targetState == EnterExitState.Visible) {
                 // Once the bag has landed.
                 tween(durationMillis = HERO_MS, delayMillis = SheetMotion.PAGE_MS, easing = LinearEasing)
+            } else if (!scrubbed()) {
+                // No finger to follow: the bag stays shut and the dishes fade out where they are.
+                snap(delayMillis = QUICK_DISHES_OUT_MS)
             } else {
                 // The bag opens and the dishes go in while the page holds; it shuts on its way home.
                 keyframes {
