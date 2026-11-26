@@ -1,0 +1,20 @@
+---
+import Footer from '../components/layout/Footer.astro';
+import Header from '../components/layout/Header.astro';
+import Download from '../components/sections/Download.astro';
+import FeatureSections from '../components/sections/FeatureSections.astro';
+import Hero from '../components/sections/Hero.astro';
+import Privacy from '../components/sections/Privacy.astro';
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+
+<BaseLayout>
+	<Header />
+	<main id="main">
+		<Hero />
+		<FeatureSections />
+		<Privacy />
+		<Download />
+	</main>
+	<Footer />
+</BaseLayout>

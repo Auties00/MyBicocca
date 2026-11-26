@@ -3,13 +3,18 @@ package it.attendance100.mybicocca.data.remote.esse3.dto
 
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerializationException
+import kotlinx.serialization.builtins.MapSerializer
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonDecoder
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.JsonTransformingSerializer
 
 /** Booleans, also sent as `0`/`1` or as strings (`"true"`, `"1"`), as lenient servers send them. */
 object Esse3BooleanSerializer : KSerializer<Boolean> {
@@ -26,4 +31,16 @@ object Esse3BooleanSerializer : KSerializer<Boolean> {
             else -> throw SerializationException("Expected a boolean, found $element")
         }
     }
+}
+
+/** Maps, also sent as PHP's `[]` when empty, or as an array of single-key objects. */
+class Esse3MapSerializer<K, V>(keySerializer: KSerializer<K>, valueSerializer: KSerializer<V>) :
+    JsonTransformingSerializer<Map<K, V>>(MapSerializer(keySerializer, valueSerializer)) {
+    override fun transformDeserialize(element: JsonElement): JsonElement = foldObjects(element)
+}
+
+/** Merges an array of objects into one object, as some servers send objects and maps. */
+private fun foldObjects(element: JsonElement): JsonElement = when (element) {
+    is JsonArray -> JsonObject(element.filterIsInstance<JsonObject>().flatMap { it.entries }.associate { it.key to it.value })
+    else -> element
 }

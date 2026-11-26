@@ -22,6 +22,7 @@ export * from "./Esse3PermissionLevel.js";
 export * from "./Esse3PersonalDataTypes.js";
 export * from "./Esse3PlansTypes.js";
 export * from "./Esse3QuestionnairesTypes.js";
+export * from "./Esse3RatingsTypes.js";
 export * from "./Esse3RecordsTypes.js";
 export * from "./Esse3Scrapers.js";
 export * from "./Esse3ServicesTypes.js";

@@ -14,7 +14,6 @@
 		<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 		<link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
 		<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-		<link rel="manifest" href="/manifest.webmanifest" />
 		<link
 			rel="preload"
 			href="/fonts/instrument-sans-latin.woff2"
@@ -49,6 +48,24 @@
 				if (saved.mode === 'light' || saved.mode === 'dark') root.dataset.theme = saved.mode;
 				if (saved.palette === 'oceano' || saved.palette === 'bosco')
 					root.dataset.palette = saved.palette;
+			} catch (e) {}
+			/* Attach the web app manifest only on desktop; mobile uses the native apps instead of a PWA. */
+			try {
+				var ua = navigator.userAgent || '';
+				var mobile =
+					Boolean(navigator.userAgentData && navigator.userAgentData.mobile) ||
+					/Android|iPhone|iPad|iPod|Mobile|Tablet|IEMobile|Opera Mini/i.test(ua) ||
+					(/Macintosh/i.test(ua) && navigator.maxTouchPoints > 1);
+				if (!mobile) {
+					var manifest = document.createElement('link');
+					manifest.rel = 'manifest';
+					manifest.href = '/manifest.webmanifest';
+					document.head.appendChild(manifest);
+				} else {
+					window.addEventListener('beforeinstallprompt', function (event) {
+						event.preventDefault();
+					});
+				}
 			} catch (e) {}
 		</script>
 		%sveltekit.head%

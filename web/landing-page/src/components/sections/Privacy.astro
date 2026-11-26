@@ -1,0 +1,807 @@
+---
+import { en } from '../../i18n/en.ts';
+import { it } from '../../i18n/it.ts';
+import Icon from '../ui/Icon.astro';
+import L from '../ui/L.astro';
+import Wordmark from '../ui/Wordmark.astro';
+
+const curves = [
+	{ id: 'esse3', y: 28, d: 'M 0 160 L 176 160 C 280 160, 324 28, 460 28', outDelay: '0s', inDelay: '0.5s' },
+	{ id: 'moodle', y: 94, d: 'M 0 160 L 176 160 C 284 160, 332 94, 460 94', outDelay: '0.7s', inDelay: '1.2s' },
+	{ id: 'easystaff', y: 160, d: 'M 0 160 L 460 160', outDelay: '1.4s', inDelay: '1.9s' },
+	{ id: 'affluences', y: 226, d: 'M 0 160 L 176 160 C 284 160, 332 226, 460 226', outDelay: '2.1s', inDelay: '2.6s' },
+	{ id: 'kaltura', y: 292, d: 'M 0 160 L 176 160 C 280 160, 324 292, 460 292', outDelay: '2.8s', inDelay: '3.3s' }
+] as const;
+---
+
+<section class="privacy divider-top" id="privacy" aria-labelledby="privacy-heading">
+	<div class="container">
+		<!-- Linear split editorial header -->
+		<div class="split-head" data-reveal>
+			<h2 id="privacy-heading" class="display-h2">
+				<span><L it={it.privacy.title1} en={en.privacy.title1} /></span>
+				<br />
+				<span class="muted"><L it={it.privacy.title2} en={en.privacy.title2} /></span>
+			</h2>
+
+			<p class="lead-copy privacy-lead">
+				<L it={it.privacy.lead} en={en.privacy.lead} />
+			</p>
+		</div>
+
+		<!-- Full-width obsidian direct phone <-> official university servers animated model -->
+		<div class="flow-frame" data-reveal>
+			<div class="flow-canvas">
+				<div class="flow-stage">
+					<!-- Left: Buttonless Minimal Phone with MyBicocca Icon -->
+					<div class="client-col">
+						<span class="col-caption">
+							<L it={it.privacy.diagram.clientCaption} en={en.privacy.diagram.clientCaption} />
+						</span>
+
+						<div class="phone-device">
+							<div class="phone-screen">
+								<span class="phone-notch" aria-hidden="true"></span>
+
+								<div class="phone-center">
+									<div class="app-halo" aria-hidden="true">
+										<span class="halo-outer"></span>
+										<span class="halo-pulse"></span>
+										<span class="app-tile">
+											<Wordmark size="lg" iconOnly />
+										</span>
+									</div>
+									<span class="phone-app-name" translate="no">MyBicocca</span>
+								</div>
+
+								<span class="phone-home" aria-hidden="true"></span>
+							</div>
+
+							<span class="client-socket" aria-hidden="true">
+								<i></i>
+							</span>
+						</div>
+					</div>
+
+					<!-- Center (Desktop): Bidirectional SVG Optical Fan-Out Conduit -->
+					<div class="conduit-col" aria-hidden="true">
+						<svg class="conduit-svg" viewBox="0 0 460 320" preserveAspectRatio="none">
+							<defs>
+								<linearGradient id="beam-out" x1="0%" y1="0%" x2="100%" y2="0%">
+									<stop offset="0%" stop-color="#d92b57" stop-opacity="0.15" />
+									<stop offset="55%" stop-color="#d92b57" stop-opacity="0.95" />
+									<stop offset="100%" stop-color="#ff7a99" stop-opacity="1" />
+								</linearGradient>
+								<linearGradient id="beam-in" x1="100%" y1="0%" x2="0%" y2="0%">
+									<stop offset="0%" stop-color="#f7f8f8" stop-opacity="0.08" />
+									<stop offset="65%" stop-color="#f7f8f8" stop-opacity="0.58" />
+									<stop offset="100%" stop-color="#ffffff" stop-opacity="0.9" />
+								</linearGradient>
+							</defs>
+
+							{curves.map((curve) => (
+								<g class={`wire-group wire-${curve.id}`}>
+									<path class="wire-glow" d={curve.d} />
+									<path class="wire-base" d={curve.d} />
+									<path
+										class="wire-out"
+										d={curve.d}
+										pathLength="100"
+										style={`animation-delay: ${curve.outDelay};`}
+									/>
+									<path
+										class="wire-in"
+										d={curve.d}
+										pathLength="100"
+										style={`animation-delay: ${curve.inDelay};`}
+									/>
+								</g>
+							))}
+
+							<!-- Junction pin where encrypted trunk fans cleanly into 5 official endpoints -->
+							<circle class="junction-ring" cx="176" cy="160" r="5" />
+							<circle class="junction-core" cx="176" cy="160" r="2" />
+						</svg>
+					</div>
+
+					<!-- Center (Mobile): Compact Vertical Animated Conduit -->
+					<div class="conduit-mobile" aria-hidden="true">
+						<span class="mob-wire">
+							<i class="mob-beam-out"></i>
+							<i class="mob-beam-in"></i>
+						</span>
+					</div>
+
+					<!-- Right: Official Milano-Bicocca Server Endpoints -->
+					<div class="servers-col">
+						<span class="col-caption">
+							<L it={it.privacy.diagram.serversCaption} en={en.privacy.diagram.serversCaption} />
+						</span>
+
+						<ul class="server-stack">
+							{it.privacy.diagram.services.map((srv, i) => {
+								const curve = curves[i];
+								return (
+									<li class={`server-node srv-${curve.id}`}>
+										<span
+											class="srv-port"
+											style={`--pulse-delay: ${curve.outDelay};`}
+											aria-hidden="true"
+										></span>
+										<span class="srv-name" translate="no">{srv.name}</span>
+										<span class="srv-lock" aria-hidden="true">
+											<Icon name="lock" size={13} />
+										</span>
+									</li>
+								);
+							})}
+						</ul>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- 4-column balanced hairline guarantees strip -->
+		<div class="guarantees-row" data-reveal>
+			{it.privacy.items.map((itemIt, i) => {
+				const itemEn = en.privacy.items[i];
+				return (
+					<div class="guarantee-col">
+						<div class="guarantee-head">
+							<Icon name={itemIt.icon} size={15} />
+							<h3><L it={itemIt.title} en={itemEn.title} /></h3>
+						</div>
+						<p><L it={itemIt.body} en={itemEn.body} /></p>
+					</div>
+				);
+			})}
+		</div>
+	</div>
+</section>
+
+<style>
+	.privacy {
+		padding-block: clamp(72px, 9vw, 128px);
+	}
+
+	.split-head {
+		display: grid;
+		gap: 20px 48px;
+		align-items: end;
+		margin-block-end: clamp(36px, 5vw, 56px);
+	}
+
+	.muted {
+		color: var(--text-muted);
+	}
+
+	.privacy-lead {
+		max-inline-size: 50ch;
+	}
+
+	/* Full-width obsidian frame matching the 6 feature showcases */
+	.flow-frame {
+		overflow: hidden;
+		background: #0c0d0f;
+		border: 1px solid var(--border-strong);
+		border-radius: 14px;
+		box-shadow:
+			inset 0 1px 0 rgba(255, 255, 255, 0.06),
+			0 28px 72px rgba(0, 0, 0, 0.65);
+		margin-block-end: clamp(32px, 4.5vw, 48px);
+	}
+
+	/* Recessed precision dot-matrix canvas */
+	.flow-canvas {
+		position: relative;
+		padding: clamp(28px, 4.5vw, 52px) clamp(20px, 3.8vw, 44px);
+		background-color: #08090a;
+		overflow: hidden;
+	}
+
+	.flow-canvas::before {
+		content: '';
+		position: absolute;
+		inset: 0;
+		background-image: radial-gradient(rgba(255, 255, 255, 0.075) 1px, transparent 1px);
+		background-size: 22px 22px;
+		mask-image: radial-gradient(ellipse 84% 78% at 50% 50%, #000 35%, transparent 100%);
+		-webkit-mask-image: radial-gradient(ellipse 84% 78% at 50% 50%, #000 35%, transparent 100%);
+		pointer-events: none;
+	}
+
+	.flow-stage {
+		position: relative;
+		z-index: 1;
+		display: grid;
+		gap: 0;
+	}
+
+	.col-caption {
+		display: block;
+		margin-block-end: 12px;
+		font-family: var(--font-sans);
+		font-size: 0.75rem;
+		font-weight: 500;
+		letter-spacing: 0.01em;
+		color: var(--text-subtle);
+	}
+
+	/* Left: Minimal Buttonless Phone Mockup with MyBicocca Icon */
+	.client-col {
+		position: relative;
+		display: grid;
+		justify-items: center;
+	}
+
+	.phone-device {
+		position: relative;
+		inline-size: 162px;
+		block-size: 268px;
+		padding: 6px;
+		border-radius: 30px;
+		background: linear-gradient(180deg, #17191e 0%, #0d0e11 100%);
+		border: 1px solid rgba(255, 255, 255, 0.16);
+		box-shadow:
+			inset 0 1px 0 rgba(255, 255, 255, 0.1),
+			0 24px 56px rgba(0, 0, 0, 0.68);
+	}
+
+	.phone-screen {
+		position: relative;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: space-between;
+		inline-size: 100%;
+		block-size: 100%;
+		padding: 12px 14px 10px;
+		border-radius: 24px;
+		background:
+			radial-gradient(circle at 50% 46%, rgba(217, 43, 87, 0.09) 0%, rgba(11, 12, 15, 0.96) 58%, #08090b 100%);
+		border: 1px solid rgba(255, 255, 255, 0.06);
+		overflow: hidden;
+	}
+
+	.phone-notch {
+		inline-size: 38px;
+		block-size: 4px;
+		border-radius: 999px;
+		background: rgba(255, 255, 255, 0.13);
+	}
+
+	.phone-center {
+		display: grid;
+		justify-items: center;
+		gap: 14px;
+	}
+
+	.app-halo {
+		position: relative;
+		display: grid;
+		place-items: center;
+		inline-size: 62px;
+		block-size: 62px;
+	}
+
+	.halo-outer {
+		position: absolute;
+		inset: -16px;
+		border-radius: 28px;
+		border: 1px solid rgba(255, 255, 255, 0.055);
+	}
+
+	.halo-pulse {
+		position: absolute;
+		inset: -6px;
+		border-radius: 20px;
+		border: 1px solid rgba(217, 43, 87, 0.3);
+		opacity: 0;
+		animation: halo-breathe 3.8s var(--ease) infinite;
+	}
+
+	@keyframes halo-breathe {
+		0% {
+			transform: scale(0.95);
+			opacity: 0;
+		}
+		35% {
+			opacity: 0.9;
+		}
+		100% {
+			transform: scale(1.18);
+			opacity: 0;
+		}
+	}
+
+	.app-tile {
+		position: relative;
+		display: grid;
+		place-items: center;
+		inline-size: 58px;
+		block-size: 58px;
+		border-radius: 15px;
+		background: #0a0b0d;
+		border: 1px solid rgba(255, 255, 255, 0.15);
+		box-shadow:
+			inset 0 1px 0 rgba(255, 255, 255, 0.08),
+			0 12px 28px rgba(0, 0, 0, 0.65);
+	}
+
+	.app-tile :global(.wordmark) {
+		--mark: 31px;
+	}
+
+	.phone-app-name {
+		font-family: var(--font-sans);
+		font-size: 0.8125rem;
+		font-weight: 560;
+		letter-spacing: -0.015em;
+		color: var(--text);
+	}
+
+	.phone-home {
+		inline-size: 46px;
+		block-size: 3px;
+		border-radius: 999px;
+		background: rgba(255, 255, 255, 0.18);
+	}
+
+	.client-socket {
+		display: none;
+	}
+
+	/* Center: Desktop SVG Conduit (hidden on mobile) */
+	.conduit-col {
+		display: none;
+	}
+
+	/* Center: Mobile Vertical Conduit */
+	.conduit-mobile {
+		position: relative;
+		display: grid;
+		place-items: center;
+		block-size: 46px;
+		margin-block: 4px 12px;
+	}
+
+	.mob-wire {
+		position: absolute;
+		inset-block: 0;
+		inset-inline-start: 50%;
+		inline-size: 1px;
+		background: rgba(255, 255, 255, 0.14);
+		overflow: hidden;
+	}
+
+	.conduit-mobile::after {
+		content: '';
+		position: absolute;
+		inset-block-end: -3px;
+		inset-inline-start: 50%;
+		transform: translateX(-50%);
+		inline-size: 5px;
+		block-size: 5px;
+		border-radius: 50%;
+		background: var(--accent);
+	}
+
+	.mob-beam-out,
+	.mob-beam-in {
+		position: absolute;
+		inset-inline-start: 0;
+		inline-size: 1px;
+		block-size: 20px;
+	}
+
+	.mob-beam-out {
+		inset-block-start: -20px;
+		background: linear-gradient(to bottom, transparent, var(--accent));
+		animation: mob-down 2.2s var(--ease) infinite;
+	}
+
+	.mob-beam-in {
+		inset-block-end: -20px;
+		background: linear-gradient(to top, transparent, rgba(247, 248, 248, 0.75));
+		animation: mob-up 2.6s var(--ease) 1.1s infinite;
+	}
+
+	@keyframes mob-down {
+		0% {
+			transform: translateY(0);
+			opacity: 0;
+		}
+		20% {
+			opacity: 1;
+		}
+		80% {
+			opacity: 1;
+		}
+		100% {
+			transform: translateY(78px);
+			opacity: 0;
+		}
+	}
+
+	@keyframes mob-up {
+		0% {
+			transform: translateY(0);
+			opacity: 0;
+		}
+		20% {
+			opacity: 1;
+		}
+		80% {
+			opacity: 1;
+		}
+		100% {
+			transform: translateY(-78px);
+			opacity: 0;
+		}
+	}
+
+	/* Right: Official University Servers Stack */
+	.servers-col {
+		position: relative;
+	}
+
+	.servers-col .col-caption {
+		text-align: center;
+	}
+
+	.server-stack {
+		display: grid;
+		gap: 10px;
+	}
+
+	.server-node {
+		position: relative;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 12px;
+		min-block-size: 56px;
+		padding: 10px 16px;
+		border-radius: 10px;
+		background: #0e0f12;
+		border: 1px solid var(--border);
+		box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035);
+		transition:
+			border-color 160ms var(--ease),
+			background-color 160ms var(--ease);
+	}
+
+	.server-node:hover {
+		background: #121418;
+		border-color: rgba(255, 255, 255, 0.2);
+	}
+
+	.srv-port {
+		display: none;
+	}
+
+	.srv-name {
+		font-size: 0.875rem;
+		font-weight: 560;
+		letter-spacing: -0.01em;
+		color: var(--text);
+	}
+
+	.srv-lock {
+		display: inline-flex;
+		color: rgba(255, 255, 255, 0.2);
+		flex-shrink: 0;
+		transition: color 160ms var(--ease);
+	}
+
+	.server-node:hover .srv-lock {
+		color: var(--text-secondary);
+	}
+
+	/* 4-column hairline guarantees strip */
+	.guarantees-row {
+		display: grid;
+		gap: 24px 32px;
+		padding-block-start: 28px;
+		border-block-start: 1px solid var(--border);
+	}
+
+	.guarantee-col {
+		display: grid;
+		align-content: start;
+		gap: 8px;
+	}
+
+	.guarantee-head {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		color: var(--text);
+	}
+
+	.guarantee-head :global(.icon) {
+		color: var(--text-muted);
+	}
+
+	.guarantee-head h3 {
+		font-size: 0.9375rem;
+		font-weight: 560;
+		letter-spacing: -0.012em;
+		color: var(--text);
+	}
+
+	.guarantee-col p {
+		font-size: 0.875rem;
+		line-height: 1.56;
+		color: var(--text-muted);
+	}
+
+	@media (width >= 640px) {
+		.guarantees-row {
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+		}
+	}
+
+	@media (width >= 860px) {
+		.split-head {
+			grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+		}
+	}
+
+	/* Desktop horizontal 3-zone synchronized 320px coordinate stage */
+	@media (width >= 900px) {
+		.flow-canvas {
+			padding-block: 60px 44px;
+			padding-inline: clamp(32px, 4.5vw, 56px);
+		}
+
+		.flow-stage {
+			grid-template-columns: 168px minmax(0, 1fr) 292px;
+			align-items: center;
+			min-block-size: 320px;
+		}
+
+		.col-caption {
+			position: absolute;
+			inset-block-start: -28px;
+			inset-inline-start: 2px;
+			margin: 0;
+			text-align: start;
+		}
+
+		.servers-col .col-caption {
+			text-align: start;
+		}
+
+		.client-col .col-caption {
+			inset-inline: 0;
+			text-align: center;
+		}
+
+		.client-col {
+			display: block;
+			block-size: 320px;
+		}
+
+		.phone-device {
+			inline-size: 168px;
+			block-size: 320px;
+		}
+
+		.client-socket {
+			position: absolute;
+			inset-inline-end: -6px;
+			inset-block-start: 50%;
+			transform: translateY(-50%);
+			display: grid;
+			place-items: center;
+			inline-size: 12px;
+			block-size: 12px;
+			border-radius: 50%;
+			background: #0d0e11;
+			border: 1px solid rgba(217, 43, 87, 0.65);
+			z-index: 3;
+		}
+
+		.client-socket i {
+			display: block;
+			inline-size: 5px;
+			block-size: 5px;
+			border-radius: 50%;
+			background: var(--accent);
+		}
+
+		.conduit-mobile {
+			display: none;
+		}
+
+		.conduit-col {
+			position: relative;
+			display: block;
+			inline-size: 100%;
+			block-size: 320px;
+		}
+
+		.conduit-svg {
+			display: block;
+			inline-size: 100%;
+			block-size: 320px;
+			overflow: visible;
+		}
+
+		.wire-glow {
+			fill: none;
+			stroke: rgba(255, 255, 255, 0.03);
+			stroke-width: 4;
+		}
+
+		.wire-base {
+			fill: none;
+			stroke: rgba(255, 255, 255, 0.11);
+			stroke-width: 1;
+			vector-effect: non-scaling-stroke;
+			transition:
+				stroke 180ms var(--ease),
+				opacity 180ms var(--ease);
+		}
+
+		.wire-out {
+			fill: none;
+			stroke: url(#beam-out);
+			stroke-width: 1.9;
+			stroke-linecap: round;
+			stroke-dasharray: 16 100;
+			stroke-dashoffset: 16;
+			vector-effect: non-scaling-stroke;
+			animation: flow-out 3.5s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+		}
+
+		.wire-in {
+			fill: none;
+			stroke: url(#beam-in);
+			stroke-width: 1.25;
+			stroke-linecap: round;
+			stroke-dasharray: 11 100;
+			stroke-dashoffset: -100;
+			vector-effect: non-scaling-stroke;
+			animation: flow-in 3.8s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+		}
+
+		@keyframes flow-out {
+			0% {
+				stroke-dashoffset: 16;
+				opacity: 0;
+			}
+			10% {
+				opacity: 1;
+			}
+			86% {
+				opacity: 1;
+			}
+			100% {
+				stroke-dashoffset: -100;
+				opacity: 0;
+			}
+		}
+
+		@keyframes flow-in {
+			0% {
+				stroke-dashoffset: -100;
+				opacity: 0;
+			}
+			12% {
+				opacity: 0.9;
+			}
+			85% {
+				opacity: 0.9;
+			}
+			100% {
+				stroke-dashoffset: 11;
+				opacity: 0;
+			}
+		}
+
+		.junction-ring {
+			fill: #08090a;
+			stroke: rgba(255, 255, 255, 0.22);
+			stroke-width: 1;
+		}
+
+		.junction-core {
+			fill: var(--accent);
+		}
+
+		.server-stack {
+			grid-template-rows: repeat(5, 56px);
+			gap: 10px;
+			block-size: 320px;
+		}
+
+		.server-node {
+			block-size: 56px;
+		}
+
+		.srv-port {
+			position: absolute;
+			inset-inline-start: -4px;
+			inset-block-start: 50%;
+			transform: translateY(-50%);
+			display: block;
+			inline-size: 7px;
+			block-size: 7px;
+			border-radius: 50%;
+			background: #0e0f12;
+			border: 1px solid rgba(255, 255, 255, 0.24);
+			z-index: 2;
+			animation: port-ping 3.5s var(--ease) var(--pulse-delay) infinite;
+		}
+
+		@keyframes port-ping {
+			0%,
+			74%,
+			100% {
+				border-color: rgba(255, 255, 255, 0.24);
+				background: #0e0f12;
+			}
+			84% {
+				border-color: var(--accent);
+				background: var(--accent);
+			}
+		}
+
+		/* Pure CSS hover path highlighting when inspecting any individual university service */
+		.flow-stage:has(.server-node:hover) .wire-group {
+			opacity: 0.3;
+		}
+
+		.flow-stage:has(.srv-esse3:hover) .wire-esse3,
+		.flow-stage:has(.srv-moodle:hover) .wire-moodle,
+		.flow-stage:has(.srv-easystaff:hover) .wire-easystaff,
+		.flow-stage:has(.srv-affluences:hover) .wire-affluences,
+		.flow-stage:has(.srv-kaltura:hover) .wire-kaltura {
+			opacity: 1;
+		}
+
+		.flow-stage:has(.srv-esse3:hover) .wire-esse3 .wire-base,
+		.flow-stage:has(.srv-moodle:hover) .wire-moodle .wire-base,
+		.flow-stage:has(.srv-easystaff:hover) .wire-easystaff .wire-base,
+		.flow-stage:has(.srv-affluences:hover) .wire-affluences .wire-base,
+		.flow-stage:has(.srv-kaltura:hover) .wire-kaltura .wire-base {
+			stroke: rgba(217, 43, 87, 0.52);
+		}
+	}
+
+	@media (width >= 960px) {
+		.guarantees-row {
+			grid-template-columns: repeat(4, minmax(0, 1fr));
+			gap: 0;
+		}
+
+		.guarantee-col {
+			padding-inline: 24px;
+		}
+
+		.guarantee-col:first-child {
+			padding-inline-start: 0;
+		}
+
+		.guarantee-col:last-child {
+			padding-inline-end: 0;
+		}
+
+		.guarantee-col + .guarantee-col {
+			border-inline-start: 1px solid var(--border);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.halo-pulse,
+		.wire-out,
+		.wire-in,
+		.srv-port,
+		.mob-beam-out,
+		.mob-beam-in {
+			animation: none;
+		}
+	}
+</style>

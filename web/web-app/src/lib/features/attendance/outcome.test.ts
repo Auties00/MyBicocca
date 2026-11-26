@@ -1,4 +1,7 @@
-import type { MoodleWebAttendanceMarkPage } from '@mybicocca/data-api/elearning';
+import type {
+	MoodleWebAttendanceMarkPage,
+	MoodleWebAttendanceMarkSession
+} from '@mybicocca/data-api/elearning';
 import { describe, expect, it } from 'vitest';
 import { certifyOutcome, markOutcome } from './outcome.ts';
 
@@ -26,6 +29,14 @@ describe('certifyOutcome', () => {
 });
 
 describe('markOutcome', () => {
+	const session = (
+		overrides: Partial<MoodleWebAttendanceMarkSession> = {}
+	): MoodleWebAttendanceMarkSession => ({
+		time: 'mer 18 nov 2026 2PM - 4PM',
+		markActions: [],
+		headings: [],
+		...overrides
+	});
 	const page = (
 		overrides: Partial<MoodleWebAttendanceMarkPage> = {}
 	): MoodleWebAttendanceMarkPage => ({
@@ -33,58 +44,72 @@ describe('markOutcome', () => {
 		sessions: [],
 		...overrides
 	});
-	const SESSION = { id: '9', time: 'mer 18 nov 2026 2PM - 4PM' };
-	const item = (markActions: { sessionId: string }[], headings: string[], time = SESSION.time) => ({
-		time,
-		markActions,
-		headings
-	});
 	const messages = (...keys: string[]) => keys.map((key) => ({ key }));
 
 	it('ranks the blocking messages as the plugin does', () => {
 		expect(
-			markOutcome(page({ messages: messages('subnetwrong', 'incorrectpasswordshort') }), SESSION)
+			markOutcome(page({ messages: messages('subnetwrong', 'incorrectpasswordshort') }), '9')
 		).toEqual({
 			kind: 'wrong-credential',
 			message: null
 		});
 		expect(
-			markOutcome(page({ messages: messages('subnetwrong', 'preventsharederror') }), SESSION)
+			markOutcome(page({ messages: messages('subnetwrong', 'preventsharederror') }), '9')
 		).toEqual({
 			kind: 'device-already-used'
 		});
-		expect(markOutcome(page({ messages: messages('subnetwrong') }), SESSION)).toEqual({
+		expect(markOutcome(page({ messages: messages('subnetwrong') }), '9')).toEqual({
 			kind: 'network-restricted'
 		});
-		expect(markOutcome(page({ messages: messages('invalidstatus') }), SESSION)).toMatchObject({
+		expect(markOutcome(page({ messages: messages('invalidstatus') }), '9')).toMatchObject({
 			kind: 'failed'
 		});
 	});
 
 	it('reads a session that kept its button as closed', () => {
 		expect(
-			markOutcome(page({ sessions: [item([{ sessionId: '9' }], ['Gruppo A'])] }), SESSION)
+			markOutcome(
+				page({
+					sessions: [session({ markActions: [{ sessionId: '9' }], headings: ['Gruppo A'] })]
+				}),
+				'9'
+			)
 		).toEqual({ kind: 'not-open', reason: 'closed' });
 	});
 
-	it("records the status of the last heading of the session's own item", () => {
+	it('records the status of the last heading, whatever other sessions offer', () => {
 		expect(
 			markOutcome(
 				page({
 					sessions: [
-						item([{ sessionId: '10' }], ['Gruppo B'], 'mer 18 nov 2026 4PM - 6PM'),
-						item([], ['Gruppo A', ' Presente '], ' mer 18 nov 2026  2PM - 4PM ')
+						session({ markActions: [{ sessionId: '10' }], headings: ['Gruppo A', ' Presente '] })
 					]
 				}),
-				SESSION
+				'9'
 			)
 		).toEqual({ kind: 'recorded', status: 'Presente', message: null });
+		expect(markOutcome(page(), '9')).toEqual({ kind: 'recorded', status: null, message: null });
 	});
 
-	it('does not confirm a marking whose session the page leaves out, or that shows no status', () => {
-		expect(markOutcome(page(), SESSION)).toMatchObject({ kind: 'failed' });
-		expect(markOutcome(page({ sessions: [item([], [' '])] }), SESSION)).toMatchObject({
-			kind: 'failed'
-		});
+	it('reads the matching session when multiple sessions are listed', () => {
+		expect(
+			markOutcome(
+				page({
+					sessions: [
+						session({
+							time: 'mer 18 nov 2026 10AM - 12PM',
+							markActions: [{ sessionId: '10' }],
+							headings: ['Gruppo A', 'Assente']
+						}),
+						session({
+							time: 'mer 18 nov 2026  2PM - 4PM',
+							headings: ['Gruppo B', ' Presente ']
+						})
+					]
+				}),
+				'9',
+				'mer 18 nov 2026 2PM - 4PM'
+			)
+		).toEqual({ kind: 'recorded', status: 'Presente', message: null });
 	});
 });

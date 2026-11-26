@@ -1,0 +1,706 @@
+---
+import { en } from '../../i18n/en.ts';
+import { it } from '../../i18n/it.ts';
+import { androidScreens, trackScreens, type Shot, type TrackId } from '../../lib/screens.ts';
+import ThemedScreen from '../media/ThemedScreen.astro';
+import Icon from '../ui/Icon.astro';
+import L from '../ui/L.astro';
+
+interface TrackConfig {
+	id: TrackId;
+	kind: 'desktop' | 'tablet' | 'phone';
+	widths: number[];
+	sizes: string;
+}
+
+const tracks: TrackConfig[] = [
+	{
+		id: 'web-desktop',
+		kind: 'desktop',
+		widths: [720, 1120, 1680],
+		sizes: '(width >= 1120px) 1120px, calc(100vw - 40px)'
+	},
+	{
+		id: 'web-tablet',
+		kind: 'tablet',
+		widths: [420, 680, 920],
+		sizes: 'min(76vw, 440px)'
+	},
+	{
+		id: 'web-mobile',
+		kind: 'phone',
+		widths: [300, 480, 640],
+		sizes: 'min(74vw, 290px)'
+	},
+	{
+		id: 'android',
+		kind: 'phone',
+		widths: [300, 480, 640],
+		sizes: 'min(74vw, 290px)'
+	}
+];
+
+/* Pair a foreground Android companion phone on Map & Library in desktop mode for editorial variety */
+const pairedPhoneShots = new Set<Shot>(['map', 'library']);
+
+const disabledPlatforms = ['android-tablet', 'iphone', 'ipad'] as const;
+---
+
+<div id="features" class="features-group" data-features-group data-platform="web-desktop">
+	<!-- Clean sticky Linear platform switcher bar (auto-collapses to dropdown when tight) -->
+	<div class="platform-bar divider-top" data-platform-bar>
+		<div class="container platform-bar-inner" data-platform-bar-inner>
+			<span class="platform-bar-label" data-platform-label>
+				<L it={it.features.platformLabel} en={en.features.platformLabel} />
+			</span>
+
+			<div class="platform-tabs" role="tablist" aria-label="Platform" data-platform-tabs>
+				{tracks.map((track) => (
+					<button
+						type="button"
+						role="tab"
+						class="p-tab"
+						data-select-platform={track.id}
+						aria-selected={track.id === 'web-desktop' ? 'true' : 'false'}
+					>
+						<L it={it.features.platforms[track.id]} en={en.features.platforms[track.id]} />
+					</button>
+				))}
+				{disabledPlatforms.map((key) => (
+					<span class="p-tab is-disabled" aria-disabled="true">
+						<L it={it.features.platforms[key]} en={en.features.platforms[key]} />
+					</span>
+				))}
+				<span class="p-tabs-ink" data-platform-ink aria-hidden="true"></span>
+			</div>
+
+			<div class="platform-dropdown" data-platform-dropdown>
+				<button
+					type="button"
+					class="p-drop-trigger"
+					data-platform-trigger
+					aria-haspopup="menu"
+					aria-expanded="false"
+				>
+					{tracks.map((track) => (
+						<span class="p-drop-current" data-current-label={track.id}>
+							<L it={it.features.platforms[track.id]} en={en.features.platforms[track.id]} />
+						</span>
+					))}
+					<svg
+						class="p-chevron"
+						width="11"
+						height="11"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2.2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						aria-hidden="true"
+					>
+						<path d="m6 9 6 6 6-6" />
+					</svg>
+				</button>
+
+				<div class="p-drop-menu" role="menu" data-platform-menu hidden>
+					{tracks.map((track) => (
+						<button
+							type="button"
+							role="menuitemradio"
+							class="p-drop-opt"
+							data-select-platform={track.id}
+							aria-checked={track.id === 'web-desktop' ? 'true' : 'false'}
+						>
+							<span><L it={it.features.platforms[track.id]} en={en.features.platforms[track.id]} /></span>
+							<Icon name="check" size={14} class="p-drop-check" />
+						</button>
+					))}
+					{disabledPlatforms.map((key) => (
+						<span class="p-drop-opt is-disabled" role="menuitemradio" aria-checked="false" aria-disabled="true">
+							<span><L it={it.features.platforms[key]} en={en.features.platforms[key]} /></span>
+						</span>
+					))}
+				</div>
+			</div>
+		</div>
+	</div>
+
+	{it.features.sections.map((secIt, idx) => {
+		const secEn = en.features.sections[idx];
+		const hasCompanion = pairedPhoneShots.has(secIt.id);
+		return (
+			<section
+				class="feature-section divider-top"
+				id={`feature-${secIt.id}`}
+				aria-labelledby={`heading-${secIt.id}`}
+			>
+				<div class="container">
+					<!-- Linear split header -->
+					<div class="split-head" data-reveal>
+						<h2 id={`heading-${secIt.id}`} class="display-h2">
+							<span><L it={secIt.title1} en={secEn.title1} /></span>
+							<br />
+							<span><L it={secIt.title2} en={secEn.title2} /></span>
+						</h2>
+
+						<p class="lead-copy sec-lead">
+							<L it={secIt.lead} en={secEn.lead} />
+						</p>
+					</div>
+
+					<!-- Monumental dark hairline showcase (switches cleanly with the platform bar) -->
+					<div class="showcase" data-reveal>
+						{tracks.map((track) => (
+							<div
+								class:list={[
+									'track-view',
+									`is-${track.kind}`,
+									{ 'has-companion': hasCompanion && track.id === 'web-desktop' }
+								]}
+								data-track-view={track.id}
+							>
+								<div class:list={['frame', `frame-${track.kind}`]}>
+									{track.kind === 'desktop' && (
+										<div class="mini-chrome" aria-hidden="true">
+											<span class="mc-dots"><i></i><i></i><i></i></span>
+											<span class="mc-host" translate="no">web.mybicocca.it</span>
+											<span></span>
+										</div>
+									)}
+									<div class="frame-screen">
+										<ThemedScreen
+											screen={trackScreens(track.id, secIt.id)}
+											altIt={`${secIt.alt} (${it.features.platforms[track.id]})`}
+											altEn={`${secEn.alt} (${en.features.platforms[track.id]})`}
+											widths={track.widths}
+											sizes={track.sizes}
+										/>
+									</div>
+								</div>
+
+								{hasCompanion && track.id === 'web-desktop' && (
+									<div class="companion-phone">
+										<div class="frame frame-phone">
+											<div class="frame-screen">
+												<ThemedScreen
+													screen={androidScreens(secIt.id)}
+													altIt={`${secIt.alt} (Android)`}
+													altEn={`${secEn.alt} (Android)`}
+													widths={[240, 380, 520]}
+													sizes="240px"
+												/>
+											</div>
+										</div>
+									</div>
+								)}
+							</div>
+						))}
+					</div>
+
+					<!-- Linear's crisp 3-column hairline feature specifications underneath -->
+					<div class="spec-row" data-reveal>
+						{secIt.details.map((detIt, j) => {
+							const detEn = secEn.details[j];
+							return (
+								<div class="spec-col">
+									<h3><L it={detIt.title} en={detEn.title} /></h3>
+									<p><L it={detIt.body} en={detEn.body} /></p>
+								</div>
+							);
+						})}
+					</div>
+				</div>
+			</section>
+		);
+	})}
+</div>
+
+<style>
+	.features-group {
+		position: relative;
+		scroll-margin-top: 64px;
+	}
+
+	/* Quiet sticky platform bar tucked cleanly beneath the 64px site header */
+	.platform-bar {
+		position: sticky;
+		inset-block-start: 64px;
+		z-index: 30;
+		background: rgba(8, 9, 10, 0.86);
+		backdrop-filter: blur(12px);
+		-webkit-backdrop-filter: blur(12px);
+		border-block-end: 1px solid var(--border);
+	}
+
+	.platform-bar-inner {
+		position: relative;
+		display: flex;
+		flex-wrap: nowrap;
+		align-items: center;
+		justify-content: space-between;
+		gap: 16px;
+		block-size: 46px;
+	}
+
+	.platform-bar-label {
+		font-family: var(--font-sans);
+		font-size: 0.8125rem;
+		font-weight: 500;
+		letter-spacing: -0.006em;
+		color: var(--text-subtle);
+		white-space: nowrap;
+		flex-shrink: 0;
+	}
+
+	.platform-tabs {
+		position: relative;
+		display: flex;
+		flex-wrap: nowrap;
+		align-items: center;
+		gap: 18px;
+		white-space: nowrap;
+	}
+
+	.p-tab {
+		position: relative;
+		padding-block: 12px;
+		font-size: 0.8125rem;
+		font-weight: 500;
+		letter-spacing: -0.006em;
+		color: var(--text-muted);
+		white-space: nowrap;
+		transition: color 160ms var(--ease);
+	}
+
+	.p-tab::after {
+		content: '';
+		position: absolute;
+		inset-inline: 0;
+		inset-block-end: -1px;
+		block-size: 1px;
+		background: var(--text);
+		opacity: 0;
+		transition: opacity 150ms var(--ease);
+	}
+
+	.platform-tabs[data-ink-ready='true'] .p-tab::after {
+		display: none;
+	}
+
+	.p-tabs-ink {
+		position: absolute;
+		inset-inline-start: 0;
+		inset-block-end: -1px;
+		block-size: 1px;
+		inline-size: var(--ink-w, 0px);
+		transform: translateX(var(--ink-x, 0px));
+		background: var(--text);
+		opacity: 0;
+		pointer-events: none;
+		transition:
+			transform 320ms cubic-bezier(0.22, 1, 0.36, 1),
+			inline-size 320ms cubic-bezier(0.22, 1, 0.36, 1),
+			opacity 160ms var(--ease);
+	}
+
+	.platform-tabs[data-ink-ready='true'] .p-tabs-ink {
+		opacity: 1;
+	}
+
+	.p-tab:hover {
+		color: var(--text-secondary);
+	}
+
+	.p-tab[aria-selected='true'] {
+		color: var(--text);
+	}
+
+	.p-tab[aria-selected='true']::after {
+		opacity: 1;
+	}
+
+	.p-tab.is-disabled {
+		color: rgba(255, 255, 255, 0.22);
+		cursor: default;
+		user-select: none;
+	}
+
+	.p-tab.is-disabled:hover {
+		color: rgba(255, 255, 255, 0.22);
+	}
+
+	/* Collapsed platform dropdown (mirrors Header language menu craft) */
+	.platform-dropdown {
+		position: relative;
+		display: none;
+		flex-shrink: 0;
+	}
+
+	/* Collapse cleanly whenever ResizeObserver detects insufficient room (plus no-JS fallback < 920px) */
+	.platform-bar[data-collapsed='true'] .platform-tabs {
+		position: absolute;
+		inset-inline-end: 0;
+		visibility: hidden;
+		pointer-events: none;
+	}
+
+	.platform-bar[data-collapsed='true'] .platform-dropdown {
+		display: block;
+	}
+
+	@media (width < 920px) {
+		.platform-bar:not([data-collapsed='false']) .platform-tabs {
+			position: absolute;
+			inset-inline-end: 0;
+			visibility: hidden;
+			pointer-events: none;
+		}
+
+		.platform-bar:not([data-collapsed='false']) .platform-dropdown {
+			display: block;
+		}
+	}
+
+	.p-drop-trigger {
+		display: inline-flex;
+		align-items: center;
+		gap: 7px;
+		block-size: 32px;
+		padding-inline: 10px;
+		border-radius: var(--r-xs);
+		border: 1px solid var(--border-strong);
+		background: rgba(255, 255, 255, 0.03);
+		font-size: 0.8125rem;
+		font-weight: 520;
+		letter-spacing: -0.006em;
+		color: var(--text);
+		transition:
+			background-color 140ms var(--ease),
+			border-color 140ms var(--ease);
+	}
+
+	.p-drop-trigger:hover,
+	.p-drop-trigger[aria-expanded='true'] {
+		background: rgba(255, 255, 255, 0.07);
+		border-color: var(--border-hover);
+	}
+
+	.p-drop-current {
+		display: none;
+	}
+
+	.features-group[data-platform='web-desktop'] [data-current-label='web-desktop'],
+	.features-group[data-platform='web-tablet'] [data-current-label='web-tablet'],
+	.features-group[data-platform='web-mobile'] [data-current-label='web-mobile'],
+	.features-group[data-platform='android'] [data-current-label='android'] {
+		display: inline;
+	}
+
+	.p-chevron {
+		color: var(--text-muted);
+		transition: transform 160ms var(--ease);
+	}
+
+	.p-drop-trigger[aria-expanded='true'] .p-chevron {
+		transform: rotate(180deg);
+	}
+
+	.p-drop-menu {
+		position: absolute;
+		inset-block-start: calc(100% + 8px);
+		inset-inline-end: 0;
+		z-index: 60;
+		display: grid;
+		gap: 2px;
+		min-inline-size: 196px;
+		padding: 4px;
+		border-radius: var(--r-sm);
+		background: var(--surface);
+		border: 1px solid var(--border-strong);
+		box-shadow: 0 16px 40px rgba(0, 0, 0, 0.62);
+	}
+
+	.p-drop-menu[hidden] {
+		display: none;
+	}
+
+	.p-drop-opt {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		gap: 12px;
+		inline-size: 100%;
+		padding: 7px 10px;
+		border-radius: var(--r-xs);
+		font-size: 0.8125rem;
+		font-weight: 500;
+		color: var(--text-muted);
+		text-align: start;
+		white-space: nowrap;
+		transition:
+			background-color 120ms var(--ease),
+			color 120ms var(--ease);
+	}
+
+	.p-drop-opt:not(.is-disabled):hover {
+		background: rgba(255, 255, 255, 0.06);
+		color: var(--text);
+	}
+
+	.p-drop-opt[aria-checked='true'] {
+		background: rgba(255, 255, 255, 0.05);
+		color: var(--text);
+	}
+
+	.p-drop-opt :global(.p-drop-check) {
+		display: none;
+		color: var(--text);
+	}
+
+	.p-drop-opt[aria-checked='true'] :global(.p-drop-check) {
+		display: block;
+	}
+
+	.p-drop-opt.is-disabled {
+		color: rgba(255, 255, 255, 0.22);
+		cursor: default;
+		user-select: none;
+	}
+
+	/* Dedicated section per feature */
+	.feature-section {
+		padding-block: clamp(68px, 8.5vw, 120px);
+		scroll-margin-top: 112px;
+	}
+
+	.feature-section:first-of-type {
+		border-block-start: 0;
+	}
+
+	.split-head {
+		display: grid;
+		gap: 20px 48px;
+		align-items: end;
+		margin-block-end: clamp(36px, 5vw, 56px);
+	}
+
+	.sec-lead {
+		max-inline-size: 48ch;
+	}
+
+	/* Showcase: grid-stacked layers prevent scroll jumping & enable silky cross-morph transitions */
+	.showcase {
+		position: relative;
+		display: grid;
+		place-items: center;
+		margin-block-end: clamp(32px, 4.5vw, 48px);
+	}
+
+	.track-view {
+		grid-area: 1 / 1;
+		position: relative;
+		inline-size: 100%;
+		opacity: 0;
+		transform: scale(0.96) translateY(8px);
+		filter: blur(5px);
+		visibility: hidden;
+		pointer-events: none;
+		z-index: 0;
+		will-change: opacity, transform, filter;
+		transition:
+			opacity 300ms cubic-bezier(0.22, 1, 0.36, 1),
+			transform 400ms cubic-bezier(0.22, 1, 0.36, 1),
+			filter 300ms cubic-bezier(0.22, 1, 0.36, 1),
+			visibility 0ms linear 300ms;
+	}
+
+	.track-view.is-desktop {
+		max-inline-size: 1120px;
+	}
+
+	.track-view.is-tablet {
+		max-inline-size: 420px;
+	}
+
+	.track-view.is-phone {
+		max-inline-size: 290px;
+	}
+
+	@media (width < 760px) {
+		.track-view {
+			position: absolute;
+			inset-block-start: 0;
+			inset-inline: 0;
+			margin-inline: auto;
+		}
+
+		.features-group[data-platform='web-desktop'] [data-track-view='web-desktop'],
+		.features-group[data-platform='web-tablet'] [data-track-view='web-tablet'],
+		.features-group[data-platform='web-mobile'] [data-track-view='web-mobile'],
+		.features-group[data-platform='android'] [data-track-view='android'] {
+			position: relative;
+		}
+	}
+
+	.features-group[data-platform='web-desktop'] [data-track-view='web-desktop'],
+	.features-group[data-platform='web-tablet'] [data-track-view='web-tablet'],
+	.features-group[data-platform='web-mobile'] [data-track-view='web-mobile'],
+	.features-group[data-platform='android'] [data-track-view='android'] {
+		opacity: 1;
+		transform: scale(1) translateY(0);
+		filter: blur(0);
+		visibility: visible;
+		pointer-events: auto;
+		z-index: 1;
+		transition:
+			opacity 380ms cubic-bezier(0.22, 1, 0.36, 1) 45ms,
+			transform 460ms cubic-bezier(0.22, 1, 0.36, 1) 20ms,
+			filter 380ms cubic-bezier(0.22, 1, 0.36, 1) 45ms,
+			visibility 0ms linear 0ms;
+	}
+
+	/* Razor-thin 1px hairline dark frames (zero side buttons) */
+	.frame {
+		overflow: hidden;
+		background: #0f1012;
+		border: 1px solid var(--border-strong);
+		box-shadow:
+			inset 0 1px 0 rgba(255, 255, 255, 0.06),
+			0 28px 72px rgba(0, 0, 0, 0.65);
+	}
+
+	.frame-desktop {
+		border-radius: 14px;
+		mask-image: linear-gradient(to bottom, #000 76%, rgba(0, 0, 0, 0.45) 95%, transparent 100%);
+		-webkit-mask-image: linear-gradient(to bottom, #000 76%, rgba(0, 0, 0, 0.45) 95%, transparent 100%);
+	}
+
+	.frame-tablet {
+		padding: 8px;
+		border-radius: 24px;
+	}
+
+	.frame-tablet .frame-screen {
+		border-radius: 16px;
+		overflow: hidden;
+	}
+
+	.frame-phone {
+		padding: 6px;
+		border-radius: 32px;
+	}
+
+	.frame-phone .frame-screen {
+		border-radius: 26px;
+		overflow: hidden;
+	}
+
+	.mini-chrome {
+		display: grid;
+		grid-template-columns: 52px 1fr 52px;
+		align-items: center;
+		block-size: 34px;
+		padding-inline: 14px;
+		background: #0c0d0f;
+		border-block-end: 1px solid var(--border);
+	}
+
+	.mc-dots {
+		display: flex;
+		gap: 6px;
+	}
+
+	.mc-dots i {
+		display: block;
+		inline-size: 7px;
+		block-size: 7px;
+		border-radius: 50%;
+		background: rgba(255, 255, 255, 0.14);
+	}
+
+	.mc-host {
+		justify-self: center;
+		font-family: var(--font-mono);
+		font-size: 0.6875rem;
+		color: var(--text-subtle);
+	}
+
+	.companion-phone {
+		display: none;
+	}
+
+	/* 3-column hairline specification strip underneath each feature */
+	.spec-row {
+		display: grid;
+		gap: 24px 32px;
+		padding-block-start: 28px;
+		border-block-start: 1px solid var(--border);
+	}
+
+	.spec-col {
+		display: grid;
+		align-content: start;
+		gap: 6px;
+	}
+
+	.spec-col h3 {
+		font-size: 0.9375rem;
+		font-weight: 560;
+		letter-spacing: -0.012em;
+		color: var(--text);
+	}
+
+	.spec-col p {
+		font-size: 0.875rem;
+		line-height: 1.55;
+		color: var(--text-muted);
+	}
+
+	@media (width >= 860px) {
+		.split-head {
+			grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+		}
+
+		.spec-row {
+			grid-template-columns: repeat(3, minmax(0, 1fr));
+			gap: 0;
+		}
+
+		.spec-col {
+			padding-inline: 28px;
+		}
+
+		.spec-col:first-child {
+			padding-inline-start: 0;
+		}
+
+		.spec-col:last-child {
+			padding-inline-end: 0;
+		}
+
+		.spec-col + .spec-col {
+			border-inline-start: 1px solid var(--border);
+		}
+
+		.companion-phone {
+			display: block;
+			position: absolute;
+			inset-inline-end: 26px;
+			inset-block-end: -6px;
+			inline-size: clamp(200px, 20vw, 240px);
+			z-index: 2;
+			mask-image: linear-gradient(to bottom, #000 76%, rgba(0, 0, 0, 0.3) 96%, transparent 100%);
+			-webkit-mask-image: linear-gradient(to bottom, #000 76%, rgba(0, 0, 0, 0.3) 96%, transparent 100%);
+		}
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		.track-view,
+		.p-tabs-ink {
+			transition: none;
+			filter: none;
+			transform: none;
+		}
+	}
+</style>

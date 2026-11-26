@@ -38,8 +38,7 @@ async function template(
 interface OpenSession {
 	module: AttendanceModule;
 	statuses: MoodleWebAttendanceStatusOption[];
-	/** The session's date and time, which the marking page titles its item with. */
-	time: string;
+	sessionTime: string;
 }
 
 /**
@@ -55,8 +54,8 @@ async function openSession(
 	for (const module of modules) {
 		try {
 			const view = await attendanceView(scope, module.cmId);
-			const open = view?.submittableSessions.find((session) => session.id === sessionId);
-			if (open === undefined) continue;
+			const submittable = view?.submittableSessions.find((session) => session.id === sessionId);
+			if (!submittable) continue;
 			const html = await template(scope, 'mobile_user_form', {
 				cmid: String(module.cmId),
 				courseid: String(module.courseId),
@@ -67,8 +66,9 @@ async function openSession(
 				html === undefined
 					? undefined
 					: scrapeMoodleWebAttendanceSessionForm(scrape.document(html, SITE));
-			if (form && form.refusal === null)
-				return { module, statuses: form.statuses, time: open.time };
+			if (form && form.refusal === null) {
+				return { module, statuses: form.statuses, sessionTime: submittable.time };
+			}
 		} catch {
 			// A register that can't be read can't hold the session.
 		}
@@ -100,7 +100,7 @@ async function markSession(
 	const page =
 		html === undefined ? undefined : scrapeMoodleWebAttendanceMarkPage(scrape.document(html, SITE));
 	if (page === undefined) return { kind: 'failed', reason: 'generic', message: null };
-	return markOutcome(page, { id: sessionId, time: target.time });
+	return markOutcome(page, sessionId, target.sessionTime);
 }
 
 /** Certifies a lesson with EasyBadge, which knows the student by number and this browser. */

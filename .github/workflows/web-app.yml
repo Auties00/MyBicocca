@@ -1,0 +1,280 @@
+name: Web App
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'web/web-app/**'
+      - 'android/app/src/main/assets/map/**'
+      - '.github/workflows/web-app.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'web/web-app/**'
+      - 'android/app/src/main/assets/map/**'
+      - '.github/workflows/web-app.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: web-app-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  check:
+    name: Check, test & build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: web/web-app/package-lock.json
+
+      - name: Install dependencies
+        working-directory: web/web-app
+        run: npm ci
+
+      - name: Lint
+        working-directory: web/web-app
+        run: npm run lint
+
+      - name: Type-check app & service worker
+        working-directory: web/web-app
+        run: npm run check
+
+      - name: Type-check workspaces
+        working-directory: web/web-app
+        run: npm run typecheck
+
+      - name: Unit tests
+        working-directory: web/web-app
+        run: npm test
+
+      - name: Build production bundle
+        working-directory: web/web-app
+        run: npm run build
+
+      - name: Verify Wrangler bundle
+        working-directory: web/web-app
+        run: npx wrangler versions upload --dry-run
+
+      - name: Upload built app
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-app-build
+          path: web/web-app/build
+          retention-days: 1
+
+  preview:
+    name: Upload & verify PR preview
+    needs: check
+    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: web/web-app/package-lock.json
+
+      - name: Install dependencies
+        working-directory: web/web-app
+        run: npm ci
+
+      - name: Download built app
+        uses: actions/download-artifact@v4
+        with:
+          name: web-app-build
+          path: web/web-app/build
+
+      - name: Upload immutable preview version
+        id: upload
+        working-directory: web/web-app
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          SHORT_SHA="${HEAD_SHA::7}"
+          OUTPUT_FILE="$RUNNER_TEMP/wrangler-upload.ndjson"
+          rm -f "$OUTPUT_FILE"
+          WRANGLER_OUTPUT_FILE_PATH="$OUTPUT_FILE" npx wrangler versions upload \
+            --preview-alias "pr-${PR_NUMBER}" \
+            --tag "pr-${PR_NUMBER}-${SHORT_SHA}" \
+            --message "PR #${PR_NUMBER} (${SHORT_SHA})"
+          node -e '
+            const fs = require("node:fs");
+            const lines = fs.readFileSync(process.argv[1], "utf8").trim().split(/\r?\n/).filter(Boolean);
+            const entry = lines.map((line) => JSON.parse(line)).find((item) => item.type === "version-upload");
+            if (!entry?.version_id) throw new Error("Missing version_id in Wrangler output");
+            const out = process.env.GITHUB_OUTPUT;
+            fs.appendFileSync(out, `version_id=${entry.version_id}\n`);
+            fs.appendFileSync(out, `preview_url=${entry.preview_url ?? ""}\n`);
+            fs.appendFileSync(out, `preview_alias_url=${entry.preview_alias_url ?? ""}\n`);
+          ' "$OUTPUT_FILE"
+
+      - name: Smoke-test live preview
+        working-directory: web/web-app
+        env:
+          SMOKE_URL: ${{ steps.upload.outputs.preview_alias_url || steps.upload.outputs.preview_url }}
+        run: |
+          if [ -z "$SMOKE_URL" ]; then
+            echo "Preview URL unavailable. Claim a workers.dev subdomain in Cloudflare Dashboard to enable live PR previews."
+            exit 1
+          fi
+          node scripts/smoke.ts "$SMOKE_URL"
+
+      - name: Post or update PR preview comment
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          VERSION_ID: ${{ steps.upload.outputs.version_id }}
+          PREVIEW_URL: ${{ steps.upload.outputs.preview_url }}
+          PREVIEW_ALIAS_URL: ${{ steps.upload.outputs.preview_alias_url }}
+        run: |
+          MARKER="<!-- mybicocca-web-preview -->"
+          SHORT_SHA="${HEAD_SHA::7}"
+          BODY=$(cat <<EOF
+          ${MARKER}
+          ### Web App Preview Ready
+
+          | | |
+          | --- | --- |
+          | **Preview URL** | ${PREVIEW_ALIAS_URL:-$PREVIEW_URL} |
+          | **Immutable Version URL** | ${PREVIEW_URL} |
+          | **Version ID** | \`${VERSION_ID}\` |
+          | **Commit** | \`${SHORT_SHA}\` |
+
+          Smoke checks passed against the live Cloudflare Workers preview (HTML shell, immutable JS chunk, service worker, SPA fallback, and \`/relay/*\` worker).
+          EOF
+          )
+          COMMENT_ID=$(gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" --paginate --jq ".[] | select(.body | contains(\"${MARKER}\")) | .id" | head -n 1 || true)
+          if [ -n "$COMMENT_ID" ]; then
+            gh api -X PATCH "repos/${REPO}/issues/comments/${COMMENT_ID}" -f body="$BODY" >/dev/null
+          else
+            gh api -X POST "repos/${REPO}/issues/${PR_NUMBER}/comments" -f body="$BODY" >/dev/null
+          fi
+
+  release:
+    name: Upload, verify & promote to web.mybicocca.it
+    needs: check
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment:
+      name: production
+      url: https://web.mybicocca.it
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: web/web-app/package-lock.json
+
+      - name: Install dependencies
+        working-directory: web/web-app
+        run: npm ci
+
+      - name: Download built app
+        uses: actions/download-artifact@v4
+        with:
+          name: web-app-build
+          path: web/web-app/build
+
+      - name: Upload immutable version (0% traffic)
+        id: upload
+        working-directory: web/web-app
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          SHORT_SHA="${GITHUB_SHA::7}"
+          OUTPUT_FILE="$RUNNER_TEMP/wrangler-upload.ndjson"
+          rm -f "$OUTPUT_FILE"
+          WRANGLER_OUTPUT_FILE_PATH="$OUTPUT_FILE" npx wrangler versions upload \
+            --tag "sha-${SHORT_SHA}" \
+            --message "Release ${SHORT_SHA} (run ${GITHUB_RUN_ID})"
+          node -e '
+            const fs = require("node:fs");
+            const lines = fs.readFileSync(process.argv[1], "utf8").trim().split(/\r?\n/).filter(Boolean);
+            const entry = lines.map((line) => JSON.parse(line)).find((item) => item.type === "version-upload");
+            if (!entry?.version_id) throw new Error("Missing version_id in Wrangler output");
+            const out = process.env.GITHUB_OUTPUT;
+            fs.appendFileSync(out, `version_id=${entry.version_id}\n`);
+            fs.appendFileSync(out, `preview_url=${entry.preview_url ?? ""}\n`);
+          ' "$OUTPUT_FILE"
+
+      - name: Smoke-test immutable version before promoting
+        working-directory: web/web-app
+        env:
+          PREVIEW_URL: ${{ steps.upload.outputs.preview_url }}
+        run: |
+          if [ -z "$PREVIEW_URL" ]; then
+            echo "Version URL unavailable. Claim a workers.dev subdomain in Cloudflare Dashboard to enable pre-promotion smoke checks."
+            exit 1
+          fi
+          node scripts/smoke.ts "$PREVIEW_URL"
+
+      - name: Promote immutable version to 100%
+        working-directory: web/web-app
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          VERSION_ID: ${{ steps.upload.outputs.version_id }}
+        run: |
+          SHORT_SHA="${GITHUB_SHA::7}"
+          npx wrangler versions deploy "${VERSION_ID}@100%" \
+            --yes \
+            --message "Promote ${SHORT_SHA} after smoke checks"
+
+      - name: Sync custom domain triggers
+        working-directory: web/web-app
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: npx wrangler triggers deploy
+
+      - name: Verify production origin
+        working-directory: web/web-app
+        run: node scripts/smoke.ts https://web.mybicocca.it
+
+      - name: Write release summary
+        env:
+          VERSION_ID: ${{ steps.upload.outputs.version_id }}
+          PREVIEW_URL: ${{ steps.upload.outputs.preview_url }}
+        run: |
+          SHORT_SHA="${GITHUB_SHA::7}"
+          {
+            echo "### Deployed \`mybicocca-web\` to https://web.mybicocca.it"
+            echo ""
+            echo "| Field | Value |"
+            echo "| --- | --- |"
+            echo "| **Commit** | \`${SHORT_SHA}\` |"
+            echo "| **Version ID** | \`${VERSION_ID}\` |"
+            echo "| **Immutable Version URL** | ${PREVIEW_URL} |"
+            echo "| **Rollback** | Run **Actions → Web App Rollback** or \`npx wrangler rollback\` |"
+          } >> "$GITHUB_STEP_SUMMARY"

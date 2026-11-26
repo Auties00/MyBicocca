@@ -1,0 +1,58 @@
+/*
+ * Linear-inspired precision monochrome design system for mybicocca.it.
+ * Pure #08090A obsidian ground, hairline borders, high-contrast grotesque type,
+ * and surgical Bicocca Crimson micro-accent.
+ */
+:root {
+	color-scheme: dark;
+
+	/* Pure neutral monochrome surfaces (matching linear.app #08090A) */
+	--bg: #08090a;
+	--bg-elevated: #0e0f11;
+	--surface: #111215;
+	--surface-hover: #16181c;
+	--surface-subtle: rgba(255, 255, 255, 0.03);
+
+	/* Text hierarchy */
+	--text: #f7f8f8;
+	--text-secondary: #d0d6e0;
+	--text-muted: #8a8f98;
+	--text-subtle: #62666d;
+
+	/* Razor-thin structural borders */
+	--border: rgba(255, 255, 255, 0.08);
+	--border-strong: rgba(255, 255, 255, 0.14);
+	--border-hover: rgba(255, 255, 255, 0.22);
+
+	/* Surgical Bicocca Crimson accent (used sparingly like Linear's timeline dot & active indicator) */
+	--accent: #d92b57;
+	--accent-muted: rgba(217, 43, 87, 0.16);
+
+	/* Monochrome high-contrast primary CTA (Linear white pill on #08090A) */
+	--btn-primary-bg: #f7f8f8;
+	--btn-primary-hover: #ffffff;
+	--btn-primary-ink: #08090a;
+
+	/* Header backdrop */
+	--header-bg: rgba(8, 9, 10, 0.8);
+
+	/* Typography (strictly upright clean grotesque + precision monospace) */
+	--font-sans:
+		'Instrument Sans Variable', 'Instrument Sans Fallback', -apple-system, BlinkMacSystemFont,
+		'Segoe UI', Roboto, sans-serif;
+	--font-mono: ui-monospace, 'SFMono-Regular', 'SF Mono', Menlo, Consolas, monospace;
+
+	/* Layout (Linear 1024px–1120px architectural measure) */
+	--w-page: 1120px;
+	--gutter: clamp(20px, 4vw, 40px);
+
+	/* Radii */
+	--r-xs: 6px;
+	--r-sm: 8px;
+	--r-md: 12px;
+	--r-lg: 16px;
+	--r-pill: 999px;
+
+	/* Restraint motion curve */
+	--ease: cubic-bezier(0.25, 1, 0.5, 1);
+}
