@@ -1,5 +1,6 @@
 package it.attendance100.mybicocca.ui.screen.map.ext
 
+import it.attendance100.mybicocca.domain.model.map.BuildingCategory
 import it.attendance100.mybicocca.domain.model.map.MapBuilding
 import it.attendance100.mybicocca.domain.model.mensa.MensaPlace
 
@@ -29,3 +30,7 @@ fun MapBuilding.canteenTargets(): List<CanteenTarget> {
         else -> emptyList()
     }
 }
+
+/** Whether the building has rooms to list: a canteen-only one, like U12, has none. */
+val MapBuilding.hasRooms: Boolean
+    get() = category != BuildingCategory.CANTEEN

@@ -73,6 +73,7 @@ import it.attendance100.mybicocca.ui.screen.map.component.labelRes
 import it.attendance100.mybicocca.ui.screen.map.ext.buildingDisplayName
 import it.attendance100.mybicocca.ui.screen.map.ext.CanteenTarget
 import it.attendance100.mybicocca.ui.screen.map.ext.canteenTargets
+import it.attendance100.mybicocca.ui.screen.map.ext.hasRooms
 import it.attendance100.mybicocca.ui.screen.map.ext.openBuildingInMaps
 import it.attendance100.mybicocca.ui.screen.map.subscreen.buildingDetail.state.RoomStatus
 import it.attendance100.mybicocca.ui.screen.map.subscreen.buildingDetail.state.roomStatus
@@ -146,6 +147,7 @@ fun BuildingDetailSheet(
                 onRetry = onRetryRooms,
                 canteens = canteens,
                 onOpenMensa = onOpenMensa,
+                hasRooms = building.hasRooms,
             )
 
             is BuildingDetailPage.Room -> RoomDetailPage(
@@ -189,6 +191,7 @@ internal fun BuildingPageBody(
     onRetry: (() -> Unit)? = null,
     canteens: List<CanteenTarget> = emptyList(),
     onOpenMensa: ((MensaPlace) -> Unit)? = null,
+    hasRooms: Boolean = true,
 ) {
     val now = remember(daySchedule) { LocalDateTime.now(AppClock.clock) }
     val scheduleMap = (daySchedule as? Loadable.Loaded)?.value
@@ -222,6 +225,9 @@ internal fun BuildingPageBody(
             .animateContentSize(animationSpec = sizeSpec)
     ) {
         when {
+            // A canteen-only building: just its menus and the way there.
+            !hasRooms -> Unit
+
             roomList.isNullOrEmpty() && failure != null -> SheetMessage(
                 icon = Icons.Outlined.CloudOff,
                 title = stringResource(R.string.map_rooms_load_failed),

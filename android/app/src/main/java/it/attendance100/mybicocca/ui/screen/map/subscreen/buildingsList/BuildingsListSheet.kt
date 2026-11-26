@@ -68,6 +68,7 @@ import it.attendance100.mybicocca.ui.component.modal.SheetPager
 import it.attendance100.mybicocca.ui.screen.map.component.labelRes
 import it.attendance100.mybicocca.ui.screen.map.ext.buildingDisplayName
 import it.attendance100.mybicocca.ui.screen.map.ext.canteenTargets
+import it.attendance100.mybicocca.ui.screen.map.ext.hasRooms
 import it.attendance100.mybicocca.ui.screen.map.ext.openBuildingInMaps
 import it.attendance100.mybicocca.ui.screen.map.ext.splitLegacyAlias
 import it.attendance100.mybicocca.ui.screen.map.subscreen.buildingDetail.BuildingPageBody
@@ -155,6 +156,7 @@ fun BuildingsListSheet(
                         onRetry = onRetryRooms,
                         canteens = canteens,
                         onOpenMensa = onOpenMensa,
+                        hasRooms = building.hasRooms,
                     )
                 }
 
