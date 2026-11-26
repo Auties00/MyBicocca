@@ -3,9 +3,12 @@
 	import { m } from '#lib/paraglide/messages.js';
 	import { primaryDestinations } from '#lib/ui/destinations.ts';
 	import { activeDestination, shellHref } from './nav.ts';
+	import { shownPath } from './pending.svelte.ts';
 
 	const active = $derived(activeDestination(page.url.pathname));
-	const index = $derived(primaryDestinations.findIndex((d) => d.id === active));
+	/* A tap is answered at once: the destination being loaded already shows as current. */
+	const shown = $derived(activeDestination(shownPath()));
+	const index = $derived(primaryDestinations.findIndex((d) => d.id === shown));
 </script>
 
 <!-- data-shell-tabbar: base.css keeps focus and anchor scrolling clear of the bar while it is here. -->
@@ -17,11 +20,11 @@
 >
 	<span class={['indicator', { hidden: index < 0 }]} aria-hidden="true"></span>
 	{#each primaryDestinations as destination (destination.id)}
-		{@const current = destination.id === active}
+		{@const current = destination.id === shown}
 		<a
 			class={['tab', { current }]}
 			href={shellHref(destination.path)}
-			aria-current={current ? 'page' : undefined}
+			aria-current={destination.id === active ? 'page' : undefined}
 		>
 			<span class="icon" aria-hidden="true">
 				<destination.icon class="regular" />

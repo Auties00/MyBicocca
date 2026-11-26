@@ -13,6 +13,11 @@
 		oklch(91% calc(0.062 * var(--sw-c)) var(--sw-h)),
 		oklch(33% calc(0.07 * var(--sw-c)) var(--sw-h))
 	);
+	/* The open event: lighter than its resting fill in the dark theme, darker in the light one. */
+	--sw-container-selected: light-dark(
+		oklch(86.5% calc(0.07 * var(--sw-c)) var(--sw-h)),
+		oklch(39% calc(0.08 * var(--sw-c)) var(--sw-h))
+	);
 	--sw-accent: light-dark(
 		oklch(60% calc(0.16 * var(--sw-c)) var(--sw-h)),
 		oklch(74% calc(0.14 * var(--sw-c)) var(--sw-h))

@@ -12,7 +12,7 @@
 
 <div class="frame">
 	<header class="bar">
-		<span class="brand"><Wordmark size="lg" /></span>
+		<span class="brand"><Wordmark /></span>
 	</header>
 	<main id="main" class="content" tabindex="-1">
 		{@render children()}
@@ -24,9 +24,10 @@
 
 <style>
 	/*
-	 * The wordmark and the footer stand on the page's own column, which the page names with
-	 * data-auth-column: narrow (the form alone), wide (the career picker) or spread (the form beside
-	 * the cover, from 1024 px).
+	 * The app's own frame: from 1024 px a sidebar-wide pane holds the wordmark and the language, as
+	 * the shell holds its wordmark and account, and the page sits in the pane beside it. Below that
+	 * the wordmark is a bar and the page fills the width. The page names its column with
+	 * data-auth-column (narrow, or wide for the career picker).
 	 */
 	.frame {
 		--column: 440px;
@@ -35,14 +36,7 @@
 		min-block-size: 100dvh;
 		padding-inline: max(var(--gutter), env(safe-area-inset-left))
 			max(var(--gutter), env(safe-area-inset-right));
-		/* Crimson ink soaking into the paper from the top corner: a static wash, nothing animates. */
-		background:
-			radial-gradient(
-				ellipse 70% 55% at 0% 0%,
-				color-mix(in oklch, var(--c3) 75%, transparent),
-				transparent 72%
-			),
-			var(--bg);
+		background: var(--bg);
 	}
 
 	.frame:has(:global([data-auth-column='wide'])) {
@@ -59,7 +53,8 @@
 	.bar {
 		display: flex;
 		align-items: center;
-		padding-block: calc(var(--safe-top) + 28px) 8px;
+		min-block-size: 44px;
+		padding-block: calc(var(--safe-top) + 20px) 8px;
 	}
 
 	.brand {
@@ -69,7 +64,7 @@
 	/* The wordmark settles in once, when the sign-in pages first open. */
 	@media (prefers-reduced-motion: no-preference) {
 		.brand {
-			animation: brand-in 700ms var(--spring-pop) both;
+			animation: brand-in 500ms var(--ease-out-expo) both;
 		}
 	}
 
@@ -82,11 +77,11 @@
 
 	.content {
 		display: grid;
-		align-items: center;
+		align-items: start;
 		inline-size: 100%;
-		max-inline-size: 1180px;
+		max-inline-size: var(--column);
 		margin-inline: auto;
-		padding-block: 24px 32px;
+		padding-block: 16px 32px;
 		outline: none;
 	}
 
@@ -97,27 +92,41 @@
 	}
 
 	@media (width >= 1024px) {
+		.frame {
+			grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
+			padding-inline: 0;
+		}
+
+		/* The sidebar's edge, running the page's full height as the shell's does. */
+		.frame::before {
+			content: '';
+			grid-column: 1;
+			grid-row: 1 / -1;
+			box-shadow: inset -1px 0 0 var(--hairline);
+		}
+
+		.bar,
+		.foot {
+			grid-column: 1;
+			max-inline-size: none;
+			margin-inline: 0;
+			padding-inline: 20px;
+		}
+
 		.bar {
-			padding-block-start: calc(var(--safe-top) + 36px);
+			grid-row: 1;
+			padding-block: calc(var(--safe-top) + 16px) 8px;
 		}
 
-		.frame:has(:global([data-auth-column='spread'])) {
-			--column: 1180px;
-		}
-
-		.frame:has(:global([data-auth-column='spread'])) .foot {
-			justify-content: flex-end;
-		}
-	}
-
-	/* Very wide screens give the spread more room, never the text lines. */
-	@media (width >= 1800px) {
-		.frame:has(:global([data-auth-column='spread'])) {
-			--column: 1360px;
+		.foot {
+			grid-row: 3;
+			justify-content: flex-start;
 		}
 
 		.content {
-			max-inline-size: 1360px;
+			grid-column: 2;
+			grid-row: 1 / -1;
+			padding: clamp(40px, 14vh, 144px) var(--gutter) 48px;
 		}
 	}
 

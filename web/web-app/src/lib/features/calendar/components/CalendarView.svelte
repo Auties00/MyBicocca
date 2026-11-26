@@ -1,5 +1,6 @@
 <script lang="ts">
 	import '../swatch.css';
+	import '../weekColumns.css';
 	import { m } from '#lib/paraglide/messages.js';
 	import { registerShortcuts } from '#lib/ui/shortcuts.svelte.ts';
 	import { CalendarController } from '../controller.svelte.ts';
@@ -13,6 +14,9 @@
 		{ keys: [['t']], label: m.calendar_go_to_today() },
 		{ keys: [['d'], ['w'], ['m']], label: m.calendar_keys_views() },
 		{ keys: [['left'], ['right']], label: m.calendar_keys_step() },
+		...(ctl.view === 'month'
+			? [{ keys: [['up'], ['down']], label: m.calendar_keys_step_month() }]
+			: []),
 		...(ctl.view === 'month' ? [] : [{ keys: [['+'], ['-']], label: m.calendar_keys_zoom() }]),
 		...(ctl.nav.eventId && ctl.docked
 			? [{ keys: [['esc']], label: m.calendar_detail_close() }]

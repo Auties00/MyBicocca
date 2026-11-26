@@ -85,13 +85,14 @@
 				{m.auth_back_to_app()}
 			</Button>
 		</div>
-		<header class="head">
-			<h1 id="{id}-title" class="title add" tabindex="-1">{m.auth_add_title()}</h1>
-			<p class="tagline">{m.auth_add_tagline()}</p>
-		</header>
-	{:else}
-		<h2 id="{id}-title" class="title">{m.auth_tagline()}</h2>
 	{/if}
+
+	<header class="head">
+		<h1 id="{id}-title" class="title" tabindex="-1">
+			{back ? m.auth_add_title() : m.auth_sign_in_button()}
+		</h1>
+		<p class="tagline">{back ? m.auth_add_tagline() : m.auth_tagline()}</p>
+	</header>
 
 	{#if !online}
 		<Banner tone="warning" icon={IconWifiSlash} message={m.auth_offline()} role="status" />
@@ -154,22 +155,15 @@
 			</p>
 		</div>
 	</form>
+
+	<p class="sources" translate="no">{m.auth_index_sources()}</p>
 </section>
 
 <style>
 	.card {
 		display: grid;
-		gap: 24px;
+		gap: 20px;
 		inline-size: 100%;
-	}
-
-	@media (width >= 600px) {
-		.card {
-			padding: 32px;
-			border-radius: var(--r-xl);
-			background: var(--surface);
-			box-shadow: var(--elev-3), var(--inner-light);
-		}
 	}
 
 	.back {
@@ -179,30 +173,38 @@
 
 	.head {
 		display: grid;
-		gap: 4px;
+		gap: 6px;
 	}
 
+	/* A page title as the app's pages have it: the one serif line, over a quiet sentence. */
 	.title {
-		font: var(--type-title-m);
-		letter-spacing: var(--track-title-m);
-	}
-
-	.title.add {
 		outline: none;
-		font: var(--type-title-l);
-		letter-spacing: var(--track-title-l);
+		font: var(--type-display-m);
+		letter-spacing: var(--track-display-m);
+		text-wrap: balance;
 	}
 
 	.tagline {
+		max-inline-size: 52ch;
 		color: var(--text-muted);
-		font: var(--type-ui);
-		font-weight: 400;
+		font: var(--type-body);
 		text-wrap: pretty;
 	}
 
+	.sources {
+		color: var(--text-muted);
+		font: var(--type-meta);
+		letter-spacing: var(--track-meta);
+	}
+
+	/* One grouped surface, like a settings group: what you fill in, and the button that sends it. */
 	.form {
 		display: grid;
 		gap: 16px;
+		padding: 20px;
+		border-radius: var(--r-lg);
+		background: var(--surface);
+		box-shadow: var(--inner-light);
 	}
 
 	.password {

@@ -1,0 +1,56 @@
+/*
+ * The seven weekday columns, shared by the week's head, the timeline's columns and the month grid.
+ * An element with the `wk-scope` class owns four animated numbers (set inline by the calendar):
+ * how wide Saturday and Sunday are, in weekday columns; how much of the head's day numbers shows
+ * (1 in day and week, 0 in month); and the gap between columns. Everything inside reads them, so a
+ * change of view moves all of it together, frame by frame.
+ */
+@property --wk-sat {
+	syntax: '<number>';
+	inherits: true;
+	initial-value: 1;
+}
+
+@property --wk-sun {
+	syntax: '<number>';
+	inherits: true;
+	initial-value: 1;
+}
+
+@property --wk-figure {
+	syntax: '<number>';
+	inherits: true;
+	initial-value: 1;
+}
+
+@property --wk-gap {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 0px;
+}
+
+.wk-scope {
+	--wk-sum: calc(5 + var(--wk-sat) + var(--wk-sun));
+	--wk-unit: calc((100% - 6 * var(--wk-gap)) / var(--wk-sum));
+	--wk-tracks: repeat(5, var(--wk-unit)) calc(var(--wk-unit) * var(--wk-sat))
+		calc(var(--wk-unit) * var(--wk-sun));
+	transition:
+		--wk-sat var(--dur-sheet) var(--ease-out-expo),
+		--wk-sun var(--dur-sheet) var(--ease-out-expo),
+		--wk-figure var(--dur-sheet) var(--ease-out-expo),
+		--wk-gap var(--dur-sheet) var(--ease-out-expo);
+}
+
+/* The calendar's side column: its width folds to nothing in month, and back. */
+@property --side-w {
+	syntax: '<length>';
+	inherits: true;
+	initial-value: 0px;
+}
+
+/* How much of a month tile's outline shows: the month grid fades it in and out as months scroll. */
+@property --edge {
+	syntax: '<number>';
+	inherits: true;
+	initial-value: 1;
+}

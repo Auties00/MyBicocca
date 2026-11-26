@@ -38,7 +38,9 @@
 </script>
 
 <section class={['legend', variant]} aria-labelledby={headingId}>
-	<h2 id={headingId} class="title">{m.calendar_sources()}</h2>
+	<h2 id={headingId} class={['title', { 'sr-only': variant === 'inline' }]}>
+		{m.calendar_sources()}
+	</h2>
 	<ul>
 		{#each eventSources as source (source)}
 			<li>

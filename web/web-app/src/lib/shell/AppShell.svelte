@@ -12,6 +12,7 @@
 	import type { AccountModel } from './account.ts';
 	import { catalogProvider, keywordList, type CatalogItem } from './catalog.ts';
 	import CommandPalette from './CommandPalette.svelte';
+	import NavProgress from './NavProgress.svelte';
 	import NavSidebar from './NavSidebar.svelte';
 	import { shellHref } from './nav.ts';
 	import OfflineBand, { type BandStatus } from './OfflineBand.svelte';
@@ -131,6 +132,7 @@
 	$effect(() => registerPaletteProvider(catalogProvider(actions)));
 </script>
 
+<NavProgress />
 <a class="skip" href="#main">{m.shell_skip_to_content()}</a>
 
 <div

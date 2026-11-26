@@ -104,7 +104,7 @@ const own = path.resolve(root, '../../LICENSE');
 const app: Licence = {
 	name: 'MyBicocca',
 	version: String(JSON.parse(readFileSync(path.join(root, 'package.json'), 'utf8')).version),
-	licence: 'MIT',
+	licence: 'AGPL-3.0',
 	url: 'https://github.com/Auties00/MyBicocca',
 	text: existsSync(own) ? readFileSync(own, 'utf8').trim() : undefined
 };

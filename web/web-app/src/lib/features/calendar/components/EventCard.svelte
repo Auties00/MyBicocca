@@ -1,4 +1,5 @@
 <script lang="ts">
+	import IconProhibit from '~icons/ph/prohibit-bold';
 	import { m } from '#lib/paraglide/messages.js';
 	import { clockTime, displayTitle, kindLabel, timeRange } from '../format.ts';
 	import { ICON_PADDING, type Density } from '../layout.ts';
@@ -106,6 +107,13 @@
 		</span>
 		{#if place}<span class="place" aria-hidden="true">{place}</span>{/if}
 	{/if}
+	{#if event.cancelled && (density === 'full' || density === 'tight' || density === 'compact')}
+		<span class="flag" aria-hidden="true">
+			<IconProhibit />
+			<!-- The word where the card is wide enough to keep it clear of the time. -->
+			{#if widthPx >= 200}{m.calendar_cancelled_flag()}{/if}
+		</span>
+	{/if}
 </button>
 
 <style>
@@ -147,7 +155,7 @@
 	}
 
 	.card:active {
-		transform: scale(0.98);
+		transform: scale(0.992);
 		transition-duration: var(--dur-instant);
 	}
 
@@ -157,23 +165,63 @@
 		z-index: 3;
 	}
 
-	.selected {
+	/* No ring: it would be clipped by the card's rounded corner. The fill changes instead. */
+	.card.selected {
 		z-index: 2;
-		box-shadow:
-			inset 3px 0 0 var(--sw-accent),
-			0 0 0 2px var(--sw-accent),
-			var(--elev-2);
+		background: var(--sw-container-selected);
 	}
 
+	/*
+	 * Cancelled: the fill is mixed into the page's own colour rather than made see-through, so what
+	 * sits on it (the sticky lead inherits it) never shows as a darker box; the outline is dashed
+	 * and the accent's own colour; the title is struck through; a flag says so where it fits.
+	 */
 	.cancelled {
-		background: color-mix(in oklch, var(--sw-container) 55%, transparent);
-		box-shadow: inset 3px 0 0 color-mix(in oklch, var(--sw-accent) 45%, transparent);
-		outline: 1.5px dashed color-mix(in oklch, var(--sw-accent) 60%, transparent);
+		--cancelled-fill: color-mix(in oklch, var(--sw-container) 40%, var(--calendar-bg, var(--bg)));
+		background: var(--cancelled-fill);
+		box-shadow: none;
+		outline: 1.5px dashed var(--sw-accent);
 		outline-offset: -1.5px;
 	}
 
-	.cancelled .title {
+	@media (hover: hover) {
+		.card.cancelled:hover {
+			background: var(--cancelled-fill);
+		}
+	}
+
+	.cancelled .lead,
+	.cancelled .line {
+		opacity: 0.8;
+	}
+
+	.cancelled .title,
+	.cancelled .line {
 		text-decoration: line-through;
+		text-decoration-thickness: 1.5px;
+	}
+
+	.flag {
+		position: absolute;
+		inset-block-start: 6px;
+		inset-inline-end: 6px;
+		display: flex;
+		align-items: center;
+		gap: 4px;
+		padding: 3px 6px;
+		border-radius: var(--r-pill);
+		background: var(--sw-ink);
+		color: var(--cancelled-fill);
+		font: 700 0.5625rem / 1 var(--font-ui);
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		pointer-events: none;
+	}
+
+	.flag :global(svg) {
+		flex: none;
+		inline-size: 10px;
+		block-size: 10px;
 	}
 
 	/* A card cut by the top of the grid keeps its time and title in view, under the day heads. */

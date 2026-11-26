@@ -166,6 +166,25 @@
 		box-shadow: var(--inner-light);
 		content-visibility: auto;
 		contain-intrinsic-size: auto 56px;
+		interpolate-size: allow-keywords;
+	}
+
+	/*
+	 * The licence slides open and shut instead of snapping: the details' content is a box of its own
+	 * whose height can transition. Browsers without ::details-content keep the instant toggle.
+	 */
+	@media (prefers-reduced-motion: no-preference) {
+		.item::details-content {
+			block-size: 0;
+			overflow: clip;
+			transition:
+				block-size var(--dur-sheet) var(--ease-out),
+				content-visibility var(--dur-sheet) allow-discrete;
+		}
+
+		.item[open]::details-content {
+			block-size: auto;
+		}
 	}
 
 	.item:first-child {
@@ -249,7 +268,7 @@
 	}
 
 	.text {
-		max-block-size: 18rem;
+		max-block-size: 36rem;
 		margin: 0;
 		padding: 12px 14px;
 		overflow: auto;

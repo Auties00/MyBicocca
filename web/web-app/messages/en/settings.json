@@ -138,7 +138,7 @@
 	"settings_about_version": "Version {version}",
 	"settings_about_build": "built on {date}",
 	"settings_about_tagline": "Lectures, exams, e-learning, the campus map and services of Milano-Bicocca, in one place.",
-	"settings_about_licence": "MIT licence",
+	"settings_about_licence": "AGPL-3.0 licence",
 	"settings_update_check_title": "Check for updates",
 	"settings_update_checking": "Checking…",
 	"settings_update_current": "You’re on the latest version · checked {time}",
@@ -204,7 +204,7 @@
 	"settings_licences_subtitle": "Open-source software",
 	"settings_licences_page_subtitle": "The free software MyBicocca is built on.",
 	"settings_licences_own_title": "MyBicocca is open source",
-	"settings_licences_own_body": "The code of the Android app and of the site is public on GitHub under the MIT licence: read it, use it and improve it.",
+	"settings_licences_own_body": "The code of the Android app and of the site is public on GitHub under the AGPL-3.0 licence: read it, use it and improve it.",
 	"settings_licences_packages": [
 		{
 			"declarations": ["input count", "local countPlural = count: plural"],
