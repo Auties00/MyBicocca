@@ -1,0 +1,100 @@
+<animated-vector xmlns:aapt="http://schemas.android.com/aapt" xmlns:android="http://schemas.android.com/apk/res/android">
+    <aapt:attr name="android:drawable">
+        <vector android:width="108dp" android:height="84.9dp" android:viewportWidth="1077.8" android:viewportHeight="847.1">
+            <group android:name="shadow">
+                <path android:name="shadow_p" android:fillColor="#FF000000" android:fillAlpha="0.13" android:pathData="M 220,726.1 C 220,759.2 376.7,786.1 570,786.1 C 763.3,786.1 920,759.2 920,726.1 C 920,693 763.3,666.1 570,666.1 C 376.7,666.1 220,693 220,726.1 Z" />
+            </group>
+            <group android:name="handle_back" android:pivotX="593.7" android:pivotY="0">
+                <path android:fillColor="#9a6633" android:fillAlpha="0.9" android:strokeAlpha="0.9" android:pathData="M693.3,168.7c-0.1,-55.1 -19.3,-86.8 -35.9,-103.8 -17.4,-17.9 -40,-27.8 -63.6,-27.8s-46.2,9.9 -63.6,27.8c-16.6,17 -35.8,48.7 -35.9,103.8h-30.3c-1.1,-65 21.9,-103.3 41.9,-124 23.4,-24.4 54.6,-37.8 88,-37.8s64.6,13.4 88,37.8c19.9,20.8 43,59 41.9,124h-30.3Z" />
+                <path android:fillColor="#7a4e24" android:fillAlpha="0.9" android:strokeAlpha="0.9" android:pathData="M593.7,13.6c31.5,0 61,12.7 83.1,35.7 25.9,27 39.6,65.7 40,112.5h-16.8c-1.6,-53.2 -21,-84.5 -37.7,-101.7 -18.7,-19.3 -43.1,-29.9 -68.5,-29.9s-49.8,10.6 -68.5,29.9c-16.7,17.2 -36.1,48.5 -37.7,101.7h-16.8c0.4,-46.8 14.1,-85.5 40,-112.5 22.1,-23 51.6,-35.7 83.1,-35.7M593.7,0c-70.7,0 -141.4,58.5 -136.5,175.5h43.9c-2.4,-87.7 45.1,-131.6 92.6,-131.6s95.1,43.9 92.6,131.6h43.9C735.1,58.5 664.4,0 593.7,0h0Z" />
+            </group>
+            <group android:name="back">
+                <path android:name="back_rim" android:fillColor="#895f36" android:pathData="M 831.4,152.4 L 334.2,152.4 L 399.7,160.7 L 279.9,166.1 L 327.8,166.1 L 770.4,166.1 L 831.2,152.4 Z" />
+                <path android:name="back_fold_lt" android:fillColor="#f4d2a8" android:fillAlpha="1" android:pathData="M 334.2,152.4 L 334.2,163.4 L 399.7,160.7 Z" />
+                <path android:name="back_fold_ld" android:fillColor="#755336" android:fillAlpha="1" android:pathData="M 399.8,160.7 L 399.8,166.1 L 280,166.1 Z" />
+                <path android:name="back_fold_r" android:fillColor="#916540" android:fillAlpha="1" android:pathData="M 713.2,159.3 L 713.2,166.2 L 770.5,166.2 Z" />
+            </group>
+            <group android:name="opening">
+                <path android:name="opening_mid" android:fillColor="#7A4E2A" android:fillAlpha="0" android:pathData="M 336,154 L 827,154 L 769,166.1 L 284,166.1 Z" />
+                <path android:name="opening_back_light" android:fillColor="#9A6A3A" android:fillAlpha="0" android:pathData="M 336,154 L 827,154 L 804.96,158.6 L 336,158.6 Z" />
+                <path android:name="opening_left_wall" android:fillColor="#6E4625" android:fillAlpha="0" android:pathData="M 284,166.1 L 336,154 L 336,166.1 Z" />
+                <path android:name="opening_deep" android:fillColor="#5C3A1E" android:fillAlpha="0" android:pathData="M 302.2,161.87 L 789.3,161.87 L 769,166.1 L 284,166.1 Z" />
+            </group>
+            </vector>
+    </aapt:attr>
+    <target android:name="handle_back">
+        <aapt:attr name="android:animation">
+            <set android:ordering="together">
+                <objectAnimator android:propertyName="translateX" android:duration="450" android:valueFrom="0" android:valueTo="44" android:valueType="floatType" android:interpolator="@android:interpolator/fast_out_slow_in" />
+                <objectAnimator android:propertyName="scaleX" android:duration="450" android:valueFrom="1" android:valueTo="0.96" android:valueType="floatType" android:interpolator="@android:interpolator/fast_out_slow_in" />
+                <objectAnimator android:propertyName="scaleY" android:duration="450" android:valueFrom="1" android:valueTo="0.82" android:valueType="floatType" android:interpolator="@android:interpolator/fast_out_slow_in" />
+            </set>
+        </aapt:attr>
+    </target>
+    <target android:name="shadow_p">
+        <aapt:attr name="android:animation">
+            <objectAnimator android:propertyName="pathData" android:duration="450" android:valueFrom="M 220,726.1 C 220,759.2 376.7,786.1 570,786.1 C 763.3,786.1 920,759.2 920,726.1 C 920,693 763.3,666.1 570,666.1 C 376.7,666.1 220,693 220,726.1 Z" android:valueTo="M 192,737 C 192,775.1 361.2,806 570,806 C 778.8,806 948,775.1 948,737 C 948,698.9 778.8,668 570,668 C 361.2,668 192,698.9 192,737 Z" android:valueType="pathType" android:interpolator="@android:interpolator/fast_out_slow_in" />
+        </aapt:attr>
+    </target>
+    <target android:name="back_rim">
+        <aapt:attr name="android:animation">
+            <objectAnimator android:propertyName="pathData" android:duration="450" android:valueFrom="M 831.4,152.4 L 334.2,152.4 L 399.7,160.7 L 279.9,166.1 L 327.8,166.1 L 770.4,166.1 L 831.2,152.4 Z" android:valueTo="M 882,114 L 388,114 L 323.4,144.55 L 258.8,179.1 L 306.8,179.1 L 764.01,179.1 L 882,114 Z" android:valueType="pathType" android:interpolator="@android:interpolator/fast_out_slow_in" />
+        </aapt:attr>
+    </target>
+    <target android:name="back_fold_lt">
+        <aapt:attr name="android:animation">
+            <set android:ordering="together">
+                <objectAnimator android:propertyName="pathData" android:duration="450" android:valueFrom="M 334.2,152.4 L 334.2,163.4 L 399.7,160.7 Z" android:valueTo="M 388,114 L 355.7,129.28 L 447.28,114 Z" android:valueType="pathType" android:interpolator="@android:interpolator/fast_out_slow_in" />
+                <objectAnimator android:propertyName="fillAlpha" android:duration="450" android:valueFrom="1" android:valueTo="0" android:valueType="floatType" android:interpolator="@android:interpolator/fast_out_slow_in" />
+            </set>
+        </aapt:attr>
+    </target>
+    <target android:name="back_fold_ld">
+        <aapt:attr name="android:animation">
+            <set android:ordering="together">
+                <objectAnimator android:propertyName="pathData" android:duration="450" android:valueFrom="M 399.8,160.7 L 399.8,166.1 L 280,166.1 Z" android:valueTo="M 336.32,138.44 L 310.48,150.66 L 258.8,175.1 Z" android:valueType="pathType" android:interpolator="@android:interpolator/fast_out_slow_in" />
+                <objectAnimator android:propertyName="fillAlpha" android:duration="450" android:valueFrom="1" android:valueTo="0" android:valueType="floatType" android:interpolator="@android:interpolator/fast_out_slow_in" />
+            </set>
+        </aapt:attr>
+    </target>
+    <target android:name="back_fold_r">
+        <aapt:attr name="android:animation">
+            <set android:ordering="together">
+                <objectAnimator android:propertyName="pathData" android:duration="450" android:valueFrom="M 713.2,159.3 L 713.2,166.2 L 770.5,166.2 Z" android:valueTo="M 823.01,144.55 L 799.41,156.77 L 764.01,175.1 Z" android:valueType="pathType" android:interpolator="@android:interpolator/fast_out_slow_in" />
+                <objectAnimator android:propertyName="fillAlpha" android:duration="450" android:valueFrom="1" android:valueTo="0" android:valueType="floatType" android:interpolator="@android:interpolator/fast_out_slow_in" />
+            </set>
+        </aapt:attr>
+    </target>
+    <target android:name="opening_mid">
+        <aapt:attr name="android:animation">
+            <set android:ordering="together">
+                <objectAnimator android:propertyName="pathData" android:duration="450" android:valueFrom="M 336,154 L 827,154 L 769,166.1 L 284,166.1 Z" android:valueTo="M 392.5,118.5 L 876.5,118.5 L 762.01,181.1 L 265.8,181.1 Z" android:valueType="pathType" android:interpolator="@android:interpolator/fast_out_slow_in" />
+                <objectAnimator android:propertyName="fillAlpha" android:duration="450" android:valueFrom="0" android:valueTo="1" android:valueType="floatType" android:interpolator="@android:interpolator/fast_out_slow_in" />
+            </set>
+        </aapt:attr>
+    </target>
+    <target android:name="opening_back_light">
+        <aapt:attr name="android:animation">
+            <set android:ordering="together">
+                <objectAnimator android:propertyName="pathData" android:duration="450" android:valueFrom="M 336,154 L 827,154 L 804.96,158.6 L 336,158.6 Z" android:valueTo="M 392.5,118.5 L 876.5,118.5 L 836.27,140.5 L 392.5,140.5 Z" android:valueType="pathType" android:interpolator="@android:interpolator/fast_out_slow_in" />
+                <objectAnimator android:propertyName="fillAlpha" android:duration="450" android:valueFrom="0" android:valueTo="1" android:valueType="floatType" android:interpolator="@android:interpolator/fast_out_slow_in" />
+            </set>
+        </aapt:attr>
+    </target>
+    <target android:name="opening_left_wall">
+        <aapt:attr name="android:animation">
+            <set android:ordering="together">
+                <objectAnimator android:propertyName="pathData" android:duration="450" android:valueFrom="M 284,166.1 L 336,154 L 336,166.1 Z" android:valueTo="M 265.8,181.1 L 392.5,118.5 L 392.5,181.1 Z" android:valueType="pathType" android:interpolator="@android:interpolator/fast_out_slow_in" />
+                <objectAnimator android:propertyName="fillAlpha" android:duration="450" android:valueFrom="0" android:valueTo="1" android:valueType="floatType" android:interpolator="@android:interpolator/fast_out_slow_in" />
+            </set>
+        </aapt:attr>
+    </target>
+    <target android:name="opening_deep">
+        <aapt:attr name="android:animation">
+            <set android:ordering="together">
+                <objectAnimator android:propertyName="pathData" android:duration="450" android:valueFrom="M 302.2,161.87 L 789.3,161.87 L 769,166.1 L 284,166.1 Z" android:valueTo="M 315.59,156.5 L 807,156.5 L 762.01,181.1 L 265.8,181.1 Z" android:valueType="pathType" android:interpolator="@android:interpolator/fast_out_slow_in" />
+                <objectAnimator android:propertyName="fillAlpha" android:duration="450" android:valueFrom="0" android:valueTo="1" android:valueType="floatType" android:interpolator="@android:interpolator/fast_out_slow_in" />
+            </set>
+        </aapt:attr>
+    </target>
+    </animated-vector>

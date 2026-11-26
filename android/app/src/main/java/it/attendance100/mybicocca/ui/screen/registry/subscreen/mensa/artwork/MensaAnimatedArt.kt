@@ -36,7 +36,7 @@ internal object MensaAnimatedArt {
         88508 to R.drawable.mensa_art_drink_cola, // Bibita
     )
 
-    /** Parsed drawings, shared by every card that shows one: a drink's XML runs to hundreds of KB. */
+    /** Parsed drawings, shared by every card that shows one: a drink's or the bag's XML runs to over 100 KB. */
     private val parsed = HashMap<Int, AnimatedImageVector>()
 
     /** How long [drawable]'s loop lasts, or null when it is a still drawing. */
@@ -60,13 +60,19 @@ internal object MensaAnimatedArt {
 internal fun mensaDishDrawable(dishId: Int, @DrawableRes fallback: Int): Int =
     MensaAnimatedArt.ofDish(dishId) ?: MensaDishDrawings.of(dishId) ?: fallback
 
+/** The animated drawing [drawable], parsed once for the whole app. */
+@OptIn(ExperimentalAnimationGraphicsApi::class)
+@Composable
+internal fun mensaAnimatedImage(@DrawableRes drawable: Int): AnimatedImageVector =
+    // Composition runs on the main thread, so the cache needs no lock.
+    MensaAnimatedArt.cached(drawable)
+        ?: AnimatedImageVector.animatedVectorResource(drawable).also { MensaAnimatedArt.keep(drawable, it) }
+
 /** Plays the animated drawing [drawable] over and over, a round every [loopMillis]. */
 @OptIn(ExperimentalAnimationGraphicsApi::class)
 @Composable
 internal fun MensaLoopingArt(@DrawableRes drawable: Int, loopMillis: Long, modifier: Modifier = Modifier) {
-    // Parsed once for the whole app; composition runs on the main thread, so the cache needs no lock.
-    val image = MensaAnimatedArt.cached(drawable)
-        ?: AnimatedImageVector.animatedVectorResource(drawable).also { MensaAnimatedArt.keep(drawable, it) }
+    val image = mensaAnimatedImage(drawable)
     var round by remember(drawable) { mutableIntStateOf(0) }
     // A fresh painter each round plays the drawing again from the start, rather than in reverse.
     key(drawable, round) {
