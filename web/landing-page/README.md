@@ -2,7 +2,7 @@
 
 The Astro static landing page for [mybicocca.it](https://mybicocca.it), presenting MyBicocca
 across Web ([web.mybicocca.it](https://web.mybicocca.it)), Android (GitHub Releases APK), and
-iOS & iPadOS (coming soon), with instant Italian/English switching stored in the browser.
+iOS & iPadOS (coming soon), using the first supported browser language (Italian or English) and falling back to English.
 
 ```sh
 npm install

@@ -1,6 +1,6 @@
 /**
  * Cloudflare Worker redirecting legacy `/it` and `/en` paths cleanly to `/`
- * since language preference is stored client-side in the browser.
+ * where the landing page picks a language from the browser preferences.
  */
 interface Env {
 	ASSETS: {
