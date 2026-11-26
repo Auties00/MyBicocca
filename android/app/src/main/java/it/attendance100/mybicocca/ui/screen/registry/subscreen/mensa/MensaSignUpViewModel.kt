@@ -1,5 +1,8 @@
 package it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa
 
+import kotlinx.coroutines.flow.first
+import it.attendance100.mybicocca.domain.model.mensa.asMensaLoginEmail
+import it.attendance100.mybicocca.domain.usecase.account.ObserveActiveAccountUseCase
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -30,6 +33,8 @@ data class MensaSignUpState(
     val firstName: String = "",
     val lastName: String = "",
     val email: String = "",
+    /** The student's university address, put in the email field when the form opened. */
+    val universityEmail: String = "",
     val password: String = "",
     val passwordConfirm: String = "",
     val captcha: String = "",
@@ -52,6 +57,9 @@ data class MensaSignUpState(
     val emailLooksValid: Boolean get() = EmailShape.matches(email.trim())
     val passwordsMatch: Boolean get() = passwordConfirm.isEmpty() || passwordConfirm == password
 
+    /** The email is still the university address it opened with. */
+    val emailIsUniversity: Boolean get() = universityEmail.isNotEmpty() && email.trim() == universityEmail
+
     val canSubmit: Boolean
         get() = !submitting &&
             firstName.trim().length >= 2 && lastName.trim().length >= 2 &&
@@ -64,7 +72,7 @@ data class MensaSignUpState(
     /** Something typed that leaving would throw away; the web form's own fields are not seen here. */
     val isDirty: Boolean
         get() = step == MensaSignUpStep.CODE || firstName.isNotBlank() || lastName.isNotBlank() ||
-            email.isNotBlank() || password.isNotEmpty() || passwordConfirm.isNotEmpty() ||
+            (email.isNotBlank() && !emailIsUniversity) || password.isNotEmpty() || passwordConfirm.isNotEmpty() ||
             captcha.isNotBlank() || privacyAccepted
 
     private companion object {
@@ -79,6 +87,7 @@ data class MensaSignUpState(
 @HiltViewModel
 class MensaSignUpViewModel @Inject constructor(
     private val repository: MensaSignUpRepository,
+    private val observeActiveAccount: ObserveActiveAccountUseCase,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(MensaSignUpState())
@@ -104,8 +113,22 @@ class MensaSignUpViewModel @Inject constructor(
         launchGuarded {
             repository.start()
             _state.update { it.copy(step = MensaSignUpStep.FORM) }
+            prefillUniversityEmail()
             loadCaptcha()
         }
+    }
+
+    /**
+     * Starts the email on the student's university address, so the canteen account matches every
+     * other one; it can still be changed. Checked like a typed one, so an address that already has
+     * an account says so before anything else is filled in.
+     */
+    private suspend fun prefillUniversityEmail() {
+        if (_state.value.email.isNotBlank()) return
+        val university = observeActiveAccount().first()?.username?.asMensaLoginEmail().orEmpty()
+        if (university.isEmpty()) return
+        _state.update { it.copy(universityEmail = university) }
+        setEmail(university)
     }
 
     fun setFirstName(value: String) = _state.update { it.copy(firstName = value) }

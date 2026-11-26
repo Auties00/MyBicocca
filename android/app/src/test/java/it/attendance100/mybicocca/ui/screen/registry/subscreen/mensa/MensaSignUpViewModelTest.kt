@@ -3,6 +3,10 @@ package it.attendance100.mybicocca.ui.screen.registry.subscreen.mensa
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
 import io.mockk.coEvery
+import kotlinx.coroutines.flow.MutableStateFlow
+import it.attendance100.mybicocca.domain.usecase.account.ObserveActiveAccountUseCase
+import it.attendance100.mybicocca.domain.model.account.Account
+import io.mockk.every
 import io.mockk.coVerify
 import io.mockk.mockk
 import it.attendance100.mybicocca.domain.model.mensa.MensaActivationResult
@@ -25,6 +29,11 @@ class MensaSignUpViewModelTest {
         coEvery { captcha() } returns byteArrayOf(1, 2, 3)
     }
 
+    private val activeAccount = MutableStateFlow<Account?>(null)
+    private val observeActiveAccount = mockk<ObserveActiveAccountUseCase> {
+        every { this@mockk.invoke() } returns activeAccount
+    }
+
     private fun filled(vm: MensaSignUpViewModel) {
         vm.setFirstName("Giulia")
         vm.setLastName("Demo")
@@ -38,7 +47,7 @@ class MensaSignUpViewModelTest {
 
     @Test
     fun `starting opens the form with a captcha`() = runTest {
-        val vm = MensaSignUpViewModel(repository)
+        val vm = MensaSignUpViewModel(repository, observeActiveAccount)
         vm.ensureStarted()
         assertThat(vm.state.value.step).isEqualTo(MensaSignUpStep.FORM)
         assertThat(vm.state.value.captchaImage).isNotNull()
@@ -46,9 +55,24 @@ class MensaSignUpViewModelTest {
     }
 
     @Test
+    fun `the form opens on the university address, which alone does not count as typed`() = runTest {
+        activeAccount.value = mockk { every { username } returns "g.demo1" }
+        val vm = MensaSignUpViewModel(repository, observeActiveAccount)
+        vm.ensureStarted()
+
+        assertThat(vm.state.value.email).isEqualTo("g.demo1@campus.unimib.it")
+        assertThat(vm.state.value.emailIsUniversity).isTrue()
+        assertThat(vm.state.value.isDirty).isFalse()
+
+        vm.setEmail("giulia.demo@example.org")
+        assertThat(vm.state.value.emailIsUniversity).isFalse()
+        assertThat(vm.state.value.isDirty).isTrue()
+    }
+
+    @Test
     fun `a refused submission shows the reasons and asks for a new captcha`() = runTest {
         coEvery { repository.submit(any()) } returns MensaSignUpResult.Refused(listOf("Captcha non valido."))
-        val vm = MensaSignUpViewModel(repository)
+        val vm = MensaSignUpViewModel(repository, observeActiveAccount)
         vm.ensureStarted()
         filled(vm)
         assertThat(vm.state.value.captcha).isEqualTo("ABCDE")
@@ -61,7 +85,7 @@ class MensaSignUpViewModelTest {
     @Test
     fun `a page Compass changed switches to the web form`() = runTest {
         coEvery { repository.start() } throws MensaSignUpUnavailableException("changed")
-        val vm = MensaSignUpViewModel(repository)
+        val vm = MensaSignUpViewModel(repository, observeActiveAccount)
         vm.ensureStarted()
         assertThat(vm.state.value.step).isEqualTo(MensaSignUpStep.WEB_FORM)
     }
@@ -70,7 +94,7 @@ class MensaSignUpViewModelTest {
     fun `the right code activates and hands over the credentials`() = runTest {
         coEvery { repository.submit(any()) } returns MensaSignUpResult.NeedsCode("giulia.demo@example.org")
         coEvery { repository.activate(any(), "123456") } returns MensaActivationResult.Activated
-        val vm = MensaSignUpViewModel(repository)
+        val vm = MensaSignUpViewModel(repository, observeActiveAccount)
         vm.ensureStarted()
         filled(vm)
         vm.submit()
@@ -88,7 +112,7 @@ class MensaSignUpViewModelTest {
     fun `a wrong code stays on the code step with Compass's explanation`() = runTest {
         coEvery { repository.submit(any()) } returns MensaSignUpResult.NeedsCode("giulia.demo@example.org")
         coEvery { repository.activate(any(), any()) } returns MensaActivationResult.Failed("Codice errato")
-        val vm = MensaSignUpViewModel(repository)
+        val vm = MensaSignUpViewModel(repository, observeActiveAccount)
         vm.ensureStarted()
         filled(vm)
         vm.submit()

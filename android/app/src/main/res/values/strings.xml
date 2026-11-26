@@ -2173,6 +2173,7 @@
     <string name="mensa_allergens_section_diet">Alimenti da evitare</string>
     <string name="mensa_summary_title">Il tuo ordine</string>
     <string name="mensa_summary_subtitle">Controlla i piatti prima di scegliere il ritiro</string>
+    <string name="mensa_signup_email_university">Il tuo indirizzo universitario, lo stesso degli altri servizi</string>
     <string name="mensa_summary_add_more">Aggiungi piatti</string>
     <string name="mensa_summary_continue">Scegli il ritiro</string>
     <string name="mensa_summary_continue_signin">Continua e accedi</string>
