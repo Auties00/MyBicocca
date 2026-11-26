@@ -41,10 +41,7 @@
 	 * head, the timeline and the month grid read them (weekColumns.css).
 	 */
 	const weekend = $derived(
-		weekendWeights(
-			view === 'month' ? monthWeeks(monthOf(date)).flat() : weekDays(date),
-			data.byDay
-		)
+		weekendWeights(view === 'month' ? monthWeeks(monthOf(date)).flat() : weekDays(date), data.byDay)
 	);
 
 	/*
@@ -59,7 +56,8 @@
 			element,
 			'wheel',
 			(event) => {
-				if (event.ctrlKey || event.metaKey || Math.abs(event.deltaY) < Math.abs(event.deltaX)) return;
+				if (event.ctrlKey || event.metaKey || Math.abs(event.deltaY) < Math.abs(event.deltaX))
+					return;
 				event.preventDefault();
 				const now = performance.now();
 				if (now < settledAt) return;
@@ -188,7 +186,11 @@
 <SyncStatus {data} />
 {#if !data.failed}
 	<div
-		class={['frame', 'panes', { docked, sided: view !== 'month', large: ctl.size === 'large', resizing }]}
+		class={[
+			'frame',
+			'panes',
+			{ docked, sided: view !== 'month', large: ctl.size === 'large', resizing }
+		]}
 		bind:this={frame}
 		style:--pane-user={paneUser}
 	>

@@ -32,7 +32,11 @@
 </script>
 
 <!-- In month the grid below names its own days: this row is only the weekday names there. -->
-<div class={['heads', mode]} inert={mode === 'month'} aria-hidden={mode === 'month' ? true : undefined}>
+<div
+	class={['heads', mode]}
+	inert={mode === 'month'}
+	aria-hidden={mode === 'month' ? true : undefined}
+>
 	{#each days as day (day)}
 		{@const selected = day === date}
 		<button
@@ -117,7 +121,11 @@
 	}
 
 	.selected .weekday {
-		color: color-mix(in oklch, var(--on-accent) calc(var(--wk-figure, 1) * 100%), var(--text-muted));
+		color: color-mix(
+			in oklch,
+			var(--on-accent) calc(var(--wk-figure, 1) * 100%),
+			var(--text-muted)
+		);
 	}
 
 	.selected .number {

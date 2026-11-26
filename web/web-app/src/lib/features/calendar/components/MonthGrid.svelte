@@ -143,7 +143,11 @@
 		// The outgoing month is a copy outside Svelte's tree, removed when the scroll ends.
 		// eslint-disable-next-line svelte/no-dom-manipulating
 		stage.append(copy);
-		const timing = { duration: 420, easing: 'cubic-bezier(0.16, 1, 0.3, 1)', fill: 'both' } as const;
+		const timing = {
+			duration: 420,
+			easing: 'cubic-bezier(0.16, 1, 0.3, 1)',
+			fill: 'both'
+		} as const;
 		// The outline fades on a gentler curve than the scroll, so the fade can be seen.
 		const fade = { duration: 420, easing: 'ease-in-out', fill: 'both' } as const;
 		scrolling = [
@@ -456,7 +460,8 @@
 		overflow: hidden;
 		border-radius: var(--r-sm);
 		background: var(--surface);
-		box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--hairline) calc(var(--edge, 1) * 100%), transparent);
+		box-shadow: inset 0 0 0 1px
+			color-mix(in oklch, var(--hairline) calc(var(--edge, 1) * 100%), transparent);
 		color: var(--text);
 		cursor: pointer;
 	}
